@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use super::{
     collect_into::par_map_fil_collect_into::{merge_bag_and_positions, ParMapFilterCollectInto},
     par_map::ParMap,
@@ -5,10 +7,11 @@ use super::{
 };
 use crate::core::{
     map_fil_cnt::map_fil_cnt,
-    map_fil_col::map_fil_col,
+    map_fil_col::{par_map_fil_col, seq_map_fil_col},
     map_fil_find::map_fil_find,
     map_fil_red::map_fil_red,
-    params::{Params, RunParams},
+    params::Params,
+    run_params::RunParams,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
@@ -102,19 +105,27 @@ where
         Push: FnMut(O),
     {
         let (params, iter, map, filter) = (self.run_params(), self.iter, self.map, self.filter);
-        let bag = ConcurrentBag::new();
-        match iter.try_get_len() {
-            Some(len) => {
-                let positions = ConcurrentOrderedBag::with_fixed_capacity(len);
-                let (bag, positions) = map_fil_col(params, iter, map, filter, bag, positions);
-                merge_bag_and_positions(bag, &positions, &mut push);
+
+        match params.is_sequential() {
+            true => seq_map_fil_col(iter, map, filter, push),
+            _ => {
+                let bag = ConcurrentBag::new();
+                match iter.try_get_len() {
+                    Some(len) => {
+                        let positions = ConcurrentOrderedBag::with_fixed_capacity(len);
+                        let (bag, positions) =
+                            par_map_fil_col(params, iter, map, filter, bag, positions);
+                        merge_bag_and_positions(bag, &positions, &mut push);
+                    }
+                    None => {
+                        let positions = ConcurrentOrderedBag::new();
+                        let (bag, positions) =
+                            par_map_fil_col(params, iter, map, filter, bag, positions);
+                        merge_bag_and_positions(bag, &positions, &mut push);
+                    }
+                };
             }
-            None => {
-                let positions = ConcurrentOrderedBag::new();
-                let (bag, positions) = map_fil_col(params, iter, map, filter, bag, positions);
-                merge_bag_and_positions(bag, &positions, &mut push);
-            }
-        };
+        }
     }
 
     pub fn collect_vec(self) -> Vec<O>
@@ -170,6 +181,7 @@ where
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync,
     F: Fn(&O) -> bool + Send + Sync,
+    O: Debug,
 {
     fn reduce<R>(self, reduce: R) -> Option<O>
     where

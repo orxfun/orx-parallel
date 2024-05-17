@@ -45,10 +45,11 @@ where
         + Add<Idx, Output = Idx>
         + Sub<Idx, Output = Idx>
         + Ord,
+    Range<Idx>: Iterator<Item = Idx>,
 {
     type ConIter = ConIterOfRange<Idx>;
     fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self.into_con_iter())
+        Par::new(self.con_iter())
     }
 }
 impl<Idx> IntoPar for ConIterOfRange<Idx>
@@ -62,6 +63,7 @@ where
         + Add<Idx, Output = Idx>
         + Sub<Idx, Output = Idx>
         + Ord,
+    Range<Idx>: Iterator<Item = Idx>,
 {
     type ConIter = ConIterOfRange<Idx>;
     fn into_par(self) -> Par<Self::ConIter> {

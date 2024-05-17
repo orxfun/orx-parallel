@@ -1,12 +1,11 @@
-use std::cmp::Ordering;
-
-use super::params::RunParams;
+use super::run_params::RunParams;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::PinnedVec;
+use std::cmp::Ordering;
 
-pub fn map_fil_col<I, Out, Map, Fil, P, Q>(
+pub fn par_map_fil_col<I, Out, Map, Fil, P, Q>(
     params: RunParams,
     iter: I,
     map: Map,
@@ -22,12 +21,14 @@ where
     P: PinnedVec<Out>,
     Q: PinnedVec<usize>,
 {
-    let (num_threads, chunk_size) = (params.num_threads, params.chunk_size);
     let offset = collected.len();
 
     std::thread::scope(|s| {
-        for _ in 0..num_threads {
-            s.spawn(|| match chunk_size {
+        let mut num_spawned_threads = 0;
+        while params.do_spawn_new(num_spawned_threads, iter.has_more()) {
+            num_spawned_threads += 1;
+
+            s.spawn(|| match params.chunk_size() {
                 1 => {
                     while let Some(x) = iter.next_id_and_value() {
                         let value = map(x.value);
@@ -39,7 +40,7 @@ where
                         unsafe { positions.set_value(idx, position) };
                     }
                 }
-                _ => {
+                chunk_size => {
                     let mut buffered = iter.buffered_iter(chunk_size);
                     let mut local = vec![0usize; chunk_size];
                     while let Some(chunk) = buffered.next() {
@@ -70,4 +71,18 @@ where
     (collected.into_inner(), unsafe {
         positions.into_inner().unwrap_only_if_counts_match()
     })
+}
+
+pub fn seq_map_fil_col<I, Out, Map, Fil, Push>(iter: I, map: Map, filter: Fil, mut push: Push)
+where
+    I: ConcurrentIter,
+    Out: Send + Sync,
+    Map: Fn(I::Item) -> Out + Send + Sync,
+    Fil: Fn(&Out) -> bool + Send + Sync,
+    Push: FnMut(Out),
+{
+    let iter = iter.into_seq_iter();
+    for x in iter.map(map).filter(filter) {
+        push(x);
+    }
 }

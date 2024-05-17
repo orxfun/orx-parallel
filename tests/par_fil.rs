@@ -169,6 +169,7 @@ fn par_fil_collect_into_vec() {
             assert_eq!(result2.get(i).cloned(), Some(x));
         }
     }
+
     test_different_params(test)
 }
 

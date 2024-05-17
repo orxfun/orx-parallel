@@ -1,14 +1,13 @@
+use std::fmt::Debug;
+
 use super::{
     collect_into::par_map_fil_collect_into::ParMapFilterCollectInto, par_map::ParMap,
     reduce::Reduce,
 };
 use crate::{
     core::{
-        default_fns::map_self,
-        map_fil_cnt::map_fil_cnt,
-        map_fil_find::map_fil_find,
-        map_fil_red::map_fil_red,
-        params::{Params, RunParams},
+        default_fns::map_self, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
+        map_fil_red::map_fil_red, params::Params, run_params::RunParams,
     },
     ParMapFilter,
 };
@@ -133,6 +132,7 @@ impl<I, F> Reduce<I::Item> for ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync,
+    I::Item: Debug,
 {
     fn reduce<R>(self, reduce: R) -> Option<I::Item>
     where

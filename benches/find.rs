@@ -30,6 +30,10 @@ fn rayon(inputs: &[usize]) -> Option<usize> {
         .copied()
 }
 
+fn orx_parallel_default(inputs: &[usize]) -> Option<usize> {
+    inputs.into_par().find(|x| predicate(**x)).map(|x| *x.1)
+}
+
 fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
     inputs
         .into_par()
@@ -40,12 +44,8 @@ fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Opti
 }
 
 fn find(c: &mut Criterion) {
-    // let lengths = [65_536, 262_144];
-    // let positions = [[34_487, 64_987, usize::MAX], [147_324, 261_887, usize::MAX]];
-    // let params = [(8, 64)];
-
-    let lengths = [262_144];
-    let positions = [[200_324, usize::MAX]];
+    let lengths = [65_536, 262_144];
+    let positions = [[34_487, usize::MAX], [147_324, usize::MAX]];
     let params = [(8, 64)];
 
     let mut group = c.benchmark_group("find");
@@ -56,12 +56,12 @@ fn find(c: &mut Criterion) {
             let input = inputs(*len, pos);
             let name = format!("n{}-p{}", len, pos);
 
-            // group.bench_with_input(BenchmarkId::new("seq", name.clone()), &name, |b, _| {
-            //     b.iter(|| {
-            //         let result = seq(black_box(&input));
-            //         assert_eq!(result, expected);
-            //     })
-            // });
+            group.bench_with_input(BenchmarkId::new("seq", name.clone()), &name, |b, _| {
+                b.iter(|| {
+                    let result = seq(black_box(&input));
+                    assert_eq!(result, expected);
+                })
+            });
 
             group.bench_with_input(BenchmarkId::new("rayon", name.clone()), &name, |b, _| {
                 b.iter(|| {
@@ -69,6 +69,17 @@ fn find(c: &mut Criterion) {
                     assert_eq!(result, expected);
                 })
             });
+
+            group.bench_with_input(
+                BenchmarkId::new("orx-parallel-default", name.clone()),
+                &name,
+                |b, _| {
+                    b.iter(|| {
+                        let result = orx_parallel_default(black_box(&input));
+                        assert_eq!(result, expected);
+                    })
+                },
+            );
 
             for (t, c) in params {
                 let params = format!("orx-parallel-t{}-c{}", t, c);

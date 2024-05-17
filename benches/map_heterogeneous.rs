@@ -34,6 +34,10 @@ fn rayon(inputs: &[u32]) -> Vec<u32> {
     inputs.into_par_iter().map(fibonacci).collect()
 }
 
+fn orx_parallel_default(inputs: &[u32]) -> Vec<u32> {
+    inputs.into_par().map(fibonacci).collect_vec()
+}
+
 fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<u32> {
     inputs
         .into_par()
@@ -44,23 +48,24 @@ fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<u3
 }
 
 fn map_heterogeneous(c: &mut Criterion) {
-    // let treatments = vec![65_536, 26 2_144];
-    // let params = [(4, 64), (8, 64)];
-
-    let treatments = vec![262_144 * 4];
-    let params = [(8, 64)];
+    let treatments = vec![65_536, 262_144 * 4];
+    let params = [(1, 1), (4, 256), (8, 512), (8, 1024)];
 
     let mut group = c.benchmark_group("map_heterogeneous");
 
     for n in &treatments {
         let input = inputs(*n);
 
-        // group.bench_with_input(BenchmarkId::new("seq", n), n, |b, _| {
-        //     b.iter(|| seq(black_box(&input)))
-        // });
+        group.bench_with_input(BenchmarkId::new("seq", n), n, |b, _| {
+            b.iter(|| seq(black_box(&input)))
+        });
 
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
             b.iter(|| rayon(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx-parallel-default", n), n, |b, _| {
+            b.iter(|| orx_parallel_default(black_box(&input)))
         });
 
         for (t, c) in params {

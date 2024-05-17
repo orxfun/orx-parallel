@@ -1,10 +1,13 @@
+use std::fmt::Debug;
+
 use super::{par_fil::ParFilter, par_map::ParMap, reduce::Reduce};
 use crate::core::{
     default_fns::{map_self, no_filter},
     map_fil_cnt::map_fil_cnt,
     map_fil_find::map_fil_find,
     map_fil_red::map_fil_red,
-    params::{Params, RunParams},
+    params::Params,
+    run_params::RunParams,
 };
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -92,6 +95,7 @@ where
 impl<I> Reduce<I::Item> for Par<I>
 where
     I: ConcurrentIter,
+    I::Item: Debug,
 {
     fn reduce<R>(self, reduce: R) -> Option<I::Item>
     where

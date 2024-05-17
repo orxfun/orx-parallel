@@ -86,6 +86,10 @@ fn rayon(inputs: &[usize]) -> Vec<LargeOutput> {
     inputs.into_par_iter().map(to_large_output).collect()
 }
 
+fn orx_parallel_default(inputs: &[usize]) -> Vec<LargeOutput> {
+    inputs.into_par().map(to_large_output).collect_vec()
+}
+
 fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Vec<LargeOutput> {
     inputs
         .into_par()
@@ -96,11 +100,8 @@ fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Vec<
 }
 
 fn map_to_large_type(c: &mut Criterion) {
-    // let treatments = vec![65_536, 262_144];
-    // let params = [(4, 64), (8, 64), (8, 1), (8, 8)];
-
     let treatments = vec![65_536];
-    let params = [(8, 512)];
+    let params = [(1, 1), (4, 256), (8, 512), (8, 1024)];
 
     let mut group = c.benchmark_group("map_to_large_type");
 
@@ -113,6 +114,10 @@ fn map_to_large_type(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
             b.iter(|| rayon(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx-parallel-default", n), n, |b, _| {
+            b.iter(|| orx_parallel_default(black_box(&input)))
         });
 
         for (t, c) in params {

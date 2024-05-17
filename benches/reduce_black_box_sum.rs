@@ -39,9 +39,13 @@ fn orx_parallel(inputs: &[usize], num_threads: usize) -> Option<usize> {
         .reduce(red)
 }
 
+fn orx_parallel_default(inputs: &[usize]) -> Option<usize> {
+    inputs.into_con_iter().cloned().into_par().reduce(red)
+}
+
 fn reduce_black_box_sum(c: &mut Criterion) {
     let lengths = [262_144 * 16];
-    let params = [8];
+    let params = [(1, 1), (8, 1024), (16, 1024), (32, 1024)];
 
     let mut group = c.benchmark_group("reduce_black_box_sum");
 
@@ -68,19 +72,30 @@ fn reduce_black_box_sum(c: &mut Criterion) {
             },
         );
 
-        // group.bench_with_input(
-        //     BenchmarkId::new("rayon_reduce_with", name.clone()),
-        //     &name,
-        //     |b, _| {
-        //         b.iter(|| {
-        //             let result = rayon_reduce_with(black_box(&input));
-        //             assert_eq!(result, expected);
-        //         })
-        //     },
-        // );
+        group.bench_with_input(
+            BenchmarkId::new("rayon_reduce_with", name.clone()),
+            &name,
+            |b, _| {
+                b.iter(|| {
+                    let result = rayon_reduce_with(black_box(&input));
+                    assert_eq!(result, expected);
+                })
+            },
+        );
 
-        for t in params {
-            let params = format!("orx-parallel-t{}", t);
+        group.bench_with_input(
+            BenchmarkId::new("orx-parallel-default", name.clone()),
+            &name,
+            |b, _| {
+                b.iter(|| {
+                    let result = orx_parallel_default(black_box(&input));
+                    assert_eq!(result, expected);
+                })
+            },
+        );
+
+        for (t, c) in params {
+            let params = format!("orx-parallel-t{}-c{}", t, c);
             group.bench_with_input(BenchmarkId::new(params, name.clone()), &name, |b, _| {
                 b.iter(|| {
                     let result = orx_parallel(black_box(&input), t);

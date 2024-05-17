@@ -30,40 +30,47 @@ fn rayon_reduce_with(inputs: &[usize]) -> Option<usize> {
     inputs.into_par_iter().copied().reduce_with(red)
 }
 
-fn orx_parallel_reduce(inputs: &[usize], num_threads: usize) -> Option<usize> {
+fn orx_parallel_reduce(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
     inputs
         .into_con_iter()
         .cloned()
         .into_par()
         .num_threads(num_threads)
+        .chunk_size(chunk_size)
         .reduce(red)
 }
 
-fn orx_parallel_fold(inputs: &[usize], num_threads: usize) -> Option<usize> {
+fn orx_parallel_fold(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
     Some(
         inputs
             .into_con_iter()
             .cloned()
             .into_par()
             .num_threads(num_threads)
+            .chunk_size(chunk_size)
             .fold(|| 0, red),
     )
 }
 
-fn orx_parallel_sum(inputs: &[usize], num_threads: usize) -> Option<usize> {
+fn orx_parallel_sum(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
     Some(
         inputs
             .into_con_iter()
             .cloned()
             .into_par()
             .num_threads(num_threads)
+            .chunk_size(chunk_size)
             .sum(),
     )
 }
 
+fn orx_parallel_default(inputs: &[usize]) -> Option<usize> {
+    Some(inputs.into_con_iter().cloned().into_par().sum())
+}
+
 fn reduce_sum(c: &mut Criterion) {
     let lengths = [262_144 * 16];
-    let params = [8];
+    let params = [(1, 1), (8, 1024), (16, 1024), (32, 1024)];
 
     let mut group = c.benchmark_group("reduce_sum");
 
@@ -90,38 +97,51 @@ fn reduce_sum(c: &mut Criterion) {
             },
         );
 
-        // group.bench_with_input(
-        //     BenchmarkId::new("rayon_reduce_with", name.clone()),
-        //     &name,
-        //     |b, _| {
-        //         b.iter(|| {
-        //             let result = rayon_reduce_with(black_box(&input));
-        //             assert_eq!(result, expected);
-        //         })
-        //     },
-        // );
-
-        for t in params {
-            let params = format!("orx-parallel-reduce-t{}", t);
-            group.bench_with_input(BenchmarkId::new(params, name.clone()), &name, |b, _| {
+        group.bench_with_input(
+            BenchmarkId::new("rayon_reduce_with", name.clone()),
+            &name,
+            |b, _| {
                 b.iter(|| {
-                    let result = orx_parallel_reduce(black_box(&input), t);
+                    let result = rayon_reduce_with(black_box(&input));
                     assert_eq!(result, expected);
                 })
-            });
+            },
+        );
 
-            let params = format!("orx-parallel-fold-t{}", t);
-            group.bench_with_input(BenchmarkId::new(params, name.clone()), &name, |b, _| {
+        group.bench_with_input(
+            BenchmarkId::new("orx-parallel-default", name.clone()),
+            &name,
+            |b, _| {
                 b.iter(|| {
-                    let result = orx_parallel_fold(black_box(&input), t);
+                    let result = orx_parallel_default(black_box(&input));
                     assert_eq!(result, expected);
                 })
-            });
+            },
+        );
 
-            let params = format!("orx-parallel-sum-t{}", t);
-            group.bench_with_input(BenchmarkId::new(params, name.clone()), &name, |b, _| {
+        let t = 8;
+        let c = 1024;
+        let par_str = format!("orx-parallel-reduce-t{}-c{}", t, c);
+        group.bench_with_input(BenchmarkId::new(par_str, name.clone()), &name, |b, _| {
+            b.iter(|| {
+                let result = orx_parallel_reduce(black_box(&input), t, c);
+                assert_eq!(result, expected);
+            })
+        });
+
+        let par_str = format!("orx-parallel-fold-t{}-c{}", t, c);
+        group.bench_with_input(BenchmarkId::new(par_str, name.clone()), &name, |b, _| {
+            b.iter(|| {
+                let result = orx_parallel_fold(black_box(&input), t, c);
+                assert_eq!(result, expected);
+            })
+        });
+
+        for (t, c) in params {
+            let par_str = format!("orx-parallel-sum-t{}-c{}", t, c);
+            group.bench_with_input(BenchmarkId::new(par_str, name.clone()), &name, |b, _| {
                 b.iter(|| {
-                    let result = orx_parallel_sum(black_box(&input), t);
+                    let result = orx_parallel_sum(black_box(&input), t, c);
                     assert_eq!(result, expected);
                 })
             });

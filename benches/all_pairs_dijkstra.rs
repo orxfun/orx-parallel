@@ -43,33 +43,40 @@ fn single_source_all_destinations(weights: &Weights, s: usize) -> Distances {
 }
 
 fn seq(weights: &Weights) -> Weights {
-    let len = weights.len();
-    (0..len)
+    (0..weights.len())
         .map(|s| single_source_all_destinations(weights, s))
         .collect()
 }
 
 fn rayon(weights: &Weights) -> Weights {
-    let len = weights.len();
-    (0..len)
+    (0..weights.len())
         .into_par_iter()
         .map(|s| single_source_all_destinations(weights, s))
         .collect()
 }
 
-fn orx_parallel(weights: &Weights, num_threads: usize, chunk_size: usize) -> Weights {
-    let len = weights.len();
-    (0..len)
+fn orx_parallel_default(weights: &Weights) -> Weights {
+    (0..weights.len())
         .into_par()
-        .num_threads(num_threads)
-        .chunk_size(chunk_size)
         .map(|s| single_source_all_destinations(weights, s))
         .collect_vec()
 }
 
+fn orx_parallel(weights: &Weights, num_threads: Option<usize>, chunk_size: usize) -> Weights {
+    let len = weights.len();
+    let mut par = (0..len).into_par().chunk_size(chunk_size);
+
+    if let Some(num_threads) = num_threads {
+        par = par.num_threads(num_threads);
+    }
+
+    par.map(|s| single_source_all_destinations(weights, s))
+        .collect_vec()
+}
+
 fn all_pairs_dijkstra(c: &mut Criterion) {
-    let treatments = [512];
-    let params = [(8, 16)];
+    let treatments = [64, 512];
+    let params = [(Some(1), 16), (Some(8), 16), (None, 16)];
 
     let mut group = c.benchmark_group("all_pairs_dijkstra");
 
@@ -91,8 +98,15 @@ fn all_pairs_dijkstra(c: &mut Criterion) {
             })
         });
 
+        group.bench_with_input(BenchmarkId::new("orx-parallel-default", n), n, |b, _| {
+            b.iter(|| {
+                let result = orx_parallel_default(black_box(&weights));
+                assert_eq!(result[3][2], expected);
+            })
+        });
+
         for (t, c) in params {
-            let name = format!("orx-parallel-t{}-c{}", t, c);
+            let name = format!("orx-parallel-t{}-c{}", t.unwrap_or(0), c);
             group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
                 b.iter(|| {
                     let result = orx_parallel(black_box(&weights), t, c);
