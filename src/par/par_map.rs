@@ -14,6 +14,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
+use std::fmt::Debug;
 
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
@@ -21,7 +22,7 @@ use orx_split_vec::SplitVec;
 pub struct ParMap<I, O, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Default + Debug,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     iter: I,
@@ -32,7 +33,7 @@ where
 impl<I, O, M> ParIter for ParMap<I, O, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Default + Debug,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     type Item = O;
@@ -53,7 +54,7 @@ where
 
     fn map<O2, M2>(self, map: M2) -> ParMap<I, O2, impl Fn(I::Item) -> O2 + Send + Sync + Clone>
     where
-        O2: Send + Sync + Default,
+        O2: Send + Sync + Default + Debug,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, map1) = (self.params, self.iter, self.map);
@@ -66,7 +67,7 @@ where
         fmap: FM,
     ) -> ParFMap<I, O2, OI, impl Fn(<I as ConcurrentIter>::Item) -> OI + Clone>
     where
-        O2: Send + Sync + Default,
+        O2: Send + Sync + Default + Debug,
         OI: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
@@ -122,7 +123,7 @@ where
 impl<I, O, M> ParMap<I, O, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Default + Debug,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     pub(crate) fn new(iter: I, params: Params, map: M) -> Self {
@@ -233,7 +234,7 @@ where
 impl<I, O, M> Reduce<O> for ParMap<I, O, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Default + Debug,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     fn reduce<R>(self, reduce: R) -> Option<O>

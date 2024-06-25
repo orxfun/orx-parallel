@@ -4,6 +4,7 @@ use crate::ParIter;
 use crate::{core::default_fns::no_filter, Params};
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
+use std::fmt::Debug;
 use std::iter::Map;
 
 /// An iterator that maps the elements of the iterator with a given map function.
@@ -12,7 +13,7 @@ use std::iter::Map;
 pub struct ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Debug + Default,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -24,7 +25,7 @@ where
 impl<I, O, OI, M> ParIter for ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Debug + Default,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -54,7 +55,7 @@ where
         impl Fn(<I as ConcurrentIter>::Item) -> Map<<OI as IntoIterator>::IntoIter, M2> + Clone,
     >
     where
-        O2: Send + Sync + Default,
+        O2: Send + Sync + Debug + Default,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, map1) = (self.params, self.iter, self.fmap);
@@ -68,7 +69,7 @@ where
 
     fn flat_map<O2, OI2, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, O2, OI2, FM>
     where
-        O2: Send + Sync + Default,
+        O2: Send + Sync + Default + Debug,
         OI2: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
@@ -132,7 +133,7 @@ where
 impl<I, O, OI, M> ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Default + Debug,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -144,7 +145,7 @@ where
 impl<I, O, OI, M> Reduce<O> for ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
+    O: Send + Sync + Default + Debug,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
     O:,

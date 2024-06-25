@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use super::{
     collect_into::par_collect_into::ParCollectInto, par_fil::ParFilter, par_fmap::ParFMap,
     par_map::ParMap, reduce::Reduce,
@@ -21,7 +23,7 @@ use orx_split_vec::SplitVec;
 pub struct Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default,
+    I::Item: Default + Debug,
 {
     iter: I,
     params: Params,
@@ -30,7 +32,7 @@ where
 impl<I> ParIter for Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default,
+    I::Item: Default + Debug,
 {
     type Item = I::Item;
 
@@ -50,7 +52,7 @@ where
 
     fn map<O, M>(self, map: M) -> ParMap<I, O, M>
     where
-        O: Send + Sync + Default,
+        O: Send + Sync + Default + Debug,
         M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
         ParMap::new(self.iter, self.params, map)
@@ -58,7 +60,7 @@ where
 
     fn flat_map<O, OI, FM>(self, fmap: FM) -> ParFMap<I, O, OI, FM>
     where
-        O: Send + Sync + Default,
+        O: Send + Sync + Default + Debug,
         OI: IntoIterator<Item = O>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
@@ -108,7 +110,7 @@ where
 impl<I> Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default,
+    I::Item: Default + Debug,
 {
     pub(crate) fn new(iter: I) -> Self {
         Self {
@@ -208,7 +210,7 @@ where
 impl<I> Reduce<I::Item> for Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default,
+    I::Item: Default + Debug,
 {
     fn reduce<R>(self, reduce: R) -> Option<I::Item>
     where

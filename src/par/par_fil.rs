@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use super::{
     collect_into::par_collect_into::ParCollectInto, par_fmap::ParFMap, par_map::ParMap,
     reduce::Reduce,
@@ -19,6 +21,7 @@ pub struct ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
+    I::Item: Default + Debug,
 {
     iter: I,
     params: Params,
@@ -29,7 +32,7 @@ impl<I, F> ParIter for ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
-    I::Item: Default,
+    I::Item: Default + Debug,
 {
     type Item = I::Item;
 
@@ -49,7 +52,7 @@ where
 
     fn map<O, M>(self, map: M) -> ParMap<ConIterOfVec<<I as ConcurrentIter>::Item>, O, M>
     where
-        O: Send + Sync + Default,
+        O: Send + Sync + Default + Debug,
         M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
         let params = self.params;
@@ -63,7 +66,7 @@ where
         fmap: FM,
     ) -> ParFMap<ConIterOfVec<<I as ConcurrentIter>::Item>, O, OI, FM>
     where
-        O: Send + Sync + Default,
+        O: Send + Sync + Default + Debug,
         OI: IntoIterator<Item = O>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
@@ -118,6 +121,7 @@ impl<I, F> ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
+    I::Item: Default + Debug,
 {
     pub(crate) fn new(iter: I, params: Params, filter: F) -> Self {
         Self {
@@ -220,6 +224,7 @@ impl<I, F> Reduce<I::Item> for ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
+    I::Item: Default + Debug,
 {
     fn reduce<R>(self, reduce: R) -> Option<I::Item>
     where

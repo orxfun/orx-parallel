@@ -2,11 +2,12 @@ use crate::{
     par::collect_into::par_collect_into::ParCollectInto, ChunkSize, NumThreads, Params, Reduce,
 };
 use orx_split_vec::SplitVec;
+use std::fmt::Debug;
 
 /// An iterator used to define a computation that can be executed in parallel.
 pub trait ParIter: Reduce<Self::Item> {
     /// Type of the items that the iterator yields.
-    type Item: Send + Sync + Default;
+    type Item: Send + Sync + Debug + Default;
 
     /// Parameters of the parallel computation which can be set by `num_threads` and `chunk_size` methods.
     fn params(&self) -> Params;
@@ -162,7 +163,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn map<O, M>(self, map: M) -> impl ParIter<Item = O>
     where
-        O: Send + Sync + Default,
+        O: Send + Sync + Debug + Default,
         M: Fn(Self::Item) -> O + Send + Sync + Clone;
 
     /// Takes the closure `fmap` and creates an iterator which calls that closure on each element and flattens the result.
@@ -177,7 +178,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn flat_map<O, OI, FM>(self, fmap: FM) -> impl ParIter<Item = O>
     where
-        O: Send + Sync + Default,
+        O: Send + Sync + Debug + Default,
         OI: IntoIterator<Item = O>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone;
 

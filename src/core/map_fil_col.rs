@@ -122,16 +122,21 @@ fn task<I, Out, Map, Fil, P, Q, L>(
     }
 }
 
-pub fn seq_map_fil_col<I, Out, Map, Fil, Push>(iter: I, map: Map, filter: Fil, mut push: Push)
-where
+pub fn seq_map_fil_col<I, Out, Map, Fil, Output, Push>(
+    iter: I,
+    map: Map,
+    filter: Fil,
+    output: &mut Output,
+    mut push: Push,
+) where
     I: ConcurrentIter,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
-    Push: FnMut(Out),
+    Push: FnMut(&mut Output, Out),
 {
     let iter = iter.into_seq_iter();
     for x in iter.map(map).filter(filter) {
-        push(x);
+        push(output, x);
     }
 }

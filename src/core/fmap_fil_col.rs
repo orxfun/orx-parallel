@@ -18,7 +18,7 @@ pub fn par_fmap_fil_col<I, OutIter, Out, Map, Fil, P, Q>(
 where
     I: ConcurrentIter,
     OutIter: IntoIterator<Item = Out>,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -46,7 +46,7 @@ fn par_fmap_fil_col_core<I, OutIter, Out, Map, Fil, P, Q, L>(
 where
     I: ConcurrentIter,
     OutIter: IntoIterator<Item = Out>,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -75,7 +75,7 @@ fn task<I, OutIter, Out, Map, Fil, P, Q, L>(
 ) where
     I: ConcurrentIter,
     OutIter: IntoIterator<Item = Out>,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -118,10 +118,11 @@ fn task<I, OutIter, Out, Map, Fil, P, Q, L>(
     }
 }
 
-pub fn seq_fmap_fil_col<I, OutIter, Out, Map, Fil, Push>(
+pub fn seq_fmap_fil_col<I, OutIter, Out, Map, Fil, Output, Push>(
     iter: I,
     map: Map,
     filter: Fil,
+    output: &mut Output,
     mut push: Push,
 ) where
     I: ConcurrentIter,
@@ -129,10 +130,10 @@ pub fn seq_fmap_fil_col<I, OutIter, Out, Map, Fil, Push>(
     Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
-    Push: FnMut(Out),
+    Push: FnMut(&mut Output, Out),
 {
     let iter = iter.into_seq_iter();
     for x in iter.flat_map(map).filter(filter) {
-        push(x);
+        push(output, x);
     }
 }

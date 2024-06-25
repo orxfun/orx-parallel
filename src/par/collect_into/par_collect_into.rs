@@ -2,8 +2,9 @@ use crate::{par::par_fmap_fil::ParFMapFilter, ParMap, ParMapFilter};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::PinnedVec;
+use std::{fmt::Debug, mem::ManuallyDrop};
 
-pub trait ParCollectInto<O: Send + Sync + Default> {
+pub trait ParCollectInto<O: Send + Sync + Default + Debug> {
     type BridgePinnedVec: PinnedVec<O>;
 
     /// Performs the parallel map operation, collecting the results into this collection.
@@ -30,27 +31,77 @@ pub trait ParCollectInto<O: Send + Sync + Default> {
     fn from_concurrent_bag(bag: ConcurrentBag<O, Self::BridgePinnedVec>) -> Self;
 }
 
-pub(crate) fn merge_bag_and_pos_len<T, P, Q, Push>(mut bag: P, pos_len: &Q, push: &mut Push)
+const ERR_SRC: &str = "is in bounds";
+const ERR_DST: &str = "output has enough capacity";
+
+pub(crate) fn merge_bag_and_pos_len<T, P, Q, O>(mut bag: P, pos_len: &Q, output: &mut O)
 where
-    T: Default,
-    P: PinnedVec<T>,
-    Q: PinnedVec<(usize, usize)>,
-    Push: FnMut(T),
+    T: Debug,
+    P: PinnedVec<T> + Debug,
+    O: PinnedVec<T> + Debug,
+    Q: PinnedVec<(usize, usize)> + Debug,
 {
-    // TODO: inefficient! SplitVec into_iter might solve it
-    for &x in pos_len.iter().filter(|x| x.0 < usize::MAX && x.1 > 0) {
-        let (begin_idx, len) = (x.0, x.1);
-        for i in 0..len {
-            let mut value = Default::default();
-            let idx = begin_idx + i;
-            let b = bag.get_mut(idx).expect("is-some");
-            std::mem::swap(b, &mut value);
-            push(value);
+    // dbg!(output.len(), output.capacity(), bag.len());
+    // dbg!(&bag, pos_len);
+
+    match bag.is_empty() {
+        true => {}
+        false => {
+            assert!(output.capacity() >= bag.len());
+
+            let mut des_idx = output.len();
+
+            for &x in pos_len.iter().filter(|x| x.0 < usize::MAX && x.1 > 0) {
+                let (begin_idx, len) = (x.0, x.1);
+
+                for i in 0..len {
+                    let src_idx = begin_idx + i;
+
+                    let source_ptr = unsafe { bag.get_ptr_mut(src_idx) }.expect(ERR_SRC);
+                    let destination_ptr = unsafe { output.get_ptr_mut(des_idx) }.expect(ERR_DST);
+
+                    unsafe { destination_ptr.write(source_ptr.read()) };
+
+                    des_idx += 1;
+                }
+            }
+
+            unsafe { output.set_len(des_idx) };
+            let _ = ManuallyDrop::new(bag);
         }
     }
 }
 
-pub(crate) fn merge_bag_and_positions<T, P, Q, Push>(mut bag: P, positions: &Q, push: &mut Push)
+pub(crate) fn merge_bag_and_positions<T, P, Q, O>(mut bag: P, positions: &Q, output: &mut O)
+where
+    T: Debug,
+    P: PinnedVec<T>,
+    Q: PinnedVec<usize>,
+    O: PinnedVec<T> + Debug,
+{
+    match bag.is_empty() {
+        true => {}
+        false => {
+            assert!(output.capacity() >= bag.len());
+
+            let mut des_idx = output.len();
+
+            for &src_idx in positions.iter().filter(|x| **x < usize::MAX) {
+                let source_ptr = unsafe { bag.get_ptr_mut(src_idx) }.expect(ERR_SRC);
+                let destination_ptr = unsafe { output.get_ptr_mut(des_idx) }.expect(ERR_DST);
+
+                unsafe { destination_ptr.write(source_ptr.read()) };
+
+                des_idx += 1;
+            }
+
+            unsafe { output.set_len(des_idx) };
+            let _ = ManuallyDrop::new(bag);
+        }
+    }
+}
+
+pub(crate) fn merge_bag_and_positions_zzz<T, P, Q, Push>(mut bag: P, positions: &Q, push: &mut Push)
 where
     T: Default,
     P: PinnedVec<T>,
