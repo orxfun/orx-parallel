@@ -41,7 +41,7 @@ fn rayon_12() -> usize {
 
 fn orx_parallel_1(num_threads: usize, chunk_size: usize) -> usize {
     (0..LEN_1)
-        .into_par()
+        .par()
         .num_threads(num_threads)
         .chunk_size(chunk_size)
         .map(|x| {
@@ -54,7 +54,7 @@ fn orx_parallel_1(num_threads: usize, chunk_size: usize) -> usize {
 
 fn orx_parallel_defaults_1() -> usize {
     (0..LEN_1)
-        .into_par()
+        .par()
         .map(|x| {
             (0..LEN_2)
                 .map(|y| (0..LEN_3).map(|z| black_box(x * y * z)).sum::<usize>())
@@ -65,10 +65,10 @@ fn orx_parallel_defaults_1() -> usize {
 
 fn orx_parallel_defaults_12() -> usize {
     (0..LEN_1)
-        .into_par()
+        .par()
         .map(|x| {
             (0..LEN_2)
-                .into_par()
+                .par()
                 .map(|y| (0..LEN_3).map(|z| black_box(x * y * z)).sum::<usize>())
                 .sum()
         })
@@ -77,12 +77,12 @@ fn orx_parallel_defaults_12() -> usize {
 
 fn orx_parallel_12(num_threads: usize, chunk_size: usize) -> usize {
     (0..LEN_1)
-        .into_par()
+        .par()
         .num_threads(num_threads)
         .chunk_size(chunk_size)
         .map(|x| {
             (0..LEN_2)
-                .into_par()
+                .par()
                 .num_threads(num_threads)
                 .chunk_size(chunk_size)
                 .map(|y| (0..LEN_3).map(|z| black_box(x * y * z)).sum())

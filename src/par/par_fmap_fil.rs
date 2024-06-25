@@ -1,17 +1,17 @@
 use super::{
-    collect_into::par_map_fil_collect_into::{merge_bag_and_positions, ParMapFilterCollectInto},
+    collect_into::par_fmap_fil_collect_into::{merge_bag_and_pos_len, ParFMapFilterCollectInto},
     par_fmap::ParFMap,
-    par_map::ParMap,
     reduce::Reduce,
 };
 use crate::{
     core::{
-        map_fil_cnt::map_fil_cnt,
-        map_fil_col::{par_map_fil_col, seq_map_fil_col},
-        map_fil_find::map_fil_find,
-        map_fil_red::map_fil_red,
+        fmap_fil_cnt::fmap_fil_cnt,
+        fmap_fil_col::{par_fmap_fil_col, seq_fmap_fil_col},
+        fmap_fil_colx::{par_fmap_fil_colx, seq_fmap_fil_colx},
+        fmap_fil_find::fmap_fil_find,
+        fmap_fil_red::fmap_fil_red,
     },
-    ParIter, Params,
+    ParIter, ParMap, Params,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -22,25 +22,27 @@ use orx_split_vec::SplitVec;
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
 /// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`ParMap::num_threads`] and [`ParMap::chunk_size`] methods.
-pub struct ParMapFilter<I, O, M, F>
+pub struct ParFMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
+    OI: IntoIterator<Item = O>,
+    M: Fn(I::Item) -> OI + Send + Sync,
+    F: Fn(&O) -> bool + Send + Sync,
 {
     iter: I,
     params: Params,
-    map: M,
+    fmap: M,
     filter: F,
 }
 
-impl<I, O, M, F> ParIter for ParMapFilter<I, O, M, F>
+impl<I, O, OI, M, F> ParIter for ParFMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter. Default is temporary also
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
+    OI: IntoIterator<Item = O>,
+    M: Fn(I::Item) -> OI + Send + Sync,
+    F: Fn(&O) -> bool + Send + Sync,
 {
     type Item = O;
 
@@ -54,7 +56,7 @@ where
         self
     }
 
-    fn map<O2, M2>(self, map: M2) -> ParMap<impl ConcurrentIter<Item = O>, O2, M2>
+    fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     where
         O2: Send + Sync + Default,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
@@ -65,11 +67,11 @@ where
         ParMap::new(iter, params, map)
     }
 
-    fn flat_map<O2, OI, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, O2, OI, FM>
+    fn flat_map<O2, OI2, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, OI2::Item, OI2, FM>
     where
         O2: Send + Sync + Default,
-        OI: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
+        OI2: IntoIterator<Item = O2>,
+        FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -77,38 +79,36 @@ where
         ParFMap::new(iter, params, fmap)
     }
 
-    fn filter<F2>(
-        self,
-        filter: F2,
-    ) -> ParMapFilter<I, O, M, impl Fn(&O) -> bool + Send + Sync + Clone>
+    fn filter<F2>(self, filter: F2) -> ParFMapFilter<I, O, OI, M, impl Fn(&O) -> bool + Send + Sync>
     where
-        F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        F2: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        let (params, iter, map, filter1) = (self.params, self.iter, self.map, self.filter);
+        let (params, iter, fmap, filter1) = (self.params, self.iter, self.fmap, self.filter);
         let composed = move |x: &O| filter1(x) && filter(x);
-        ParMapFilter::new(iter, params, map, composed)
+        ParFMapFilter::new(iter, params, fmap, composed)
     }
 
     fn count(self) -> usize {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
-        map_fil_cnt(params, iter, map, filter)
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        fmap_fil_cnt(params, iter, fmap, filter)
     }
 }
 
-impl<I, O, M, F> ParMapFilter<I, O, M, F>
+impl<I, O, OI, M, F> ParFMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
+    OI: IntoIterator<Item = O>,
+    M: Fn(I::Item) -> OI + Send + Sync,
+    F: Fn(&O) -> bool + Send + Sync,
 {
     // define
 
-    pub(crate) fn new(iter: I, params: Params, map: M, filter: F) -> Self {
+    pub(crate) fn new(iter: I, params: Params, fmap: M, filter: F) -> Self {
         Self {
             iter,
             params,
-            map,
+            fmap,
             filter,
         }
     }
@@ -134,7 +134,7 @@ where
     // /// let doubles = (0..5).into_par().map(|x| x * 2).collect_vec();
     // /// assert_eq!(&doubles[..], &[0, 2, 4, 6, 8]);
     // /// ```
-    // pub fn map<O2, M2>(self, map: M2) -> ParMap<impl ConcurrentIter<Item = O>, O2, M2>
+    // pub fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     // where
     //     O2: Send + Sync + Default,
     //     M2: Fn(O) -> O2 + Send + Sync + Clone,
@@ -156,11 +156,10 @@ where
     // /// let numbers = (0..5).into_par().flat_map(|x| vec![x; x]).collect_vec();
     // /// assert_eq!(&numbers[..], &[1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
     // /// ```
-    // pub fn flat_map<O2, OI2, M2>(self, fmap: M2) -> ParFMap<ConIterOfVec<O>, O2, OI2, M2>
+    // pub fn flat_map<OI2, M2>(self, fmap: M2) -> ParFMap<ConIterOfVec<O>, OI2::Item, OI2, M2>
     // where
-    //     O2: Send + Sync + Default,
-    //     OI2: IntoIterator<Item = O2> + Send + Sync + Clone,
     //     M2: Fn(O) -> OI2 + Send + Sync + Clone,
+    //     OI2: IntoIterator<Item = O>,
     //     O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter. Default is temporary also
     // {
     //     let params = self.params;
@@ -182,13 +181,13 @@ where
     // pub fn filter<F2>(
     //     self,
     //     filter: F2,
-    // ) -> ParMapFilter<I, O, M, impl Fn(&O) -> bool + Send + Sync + Clone>
+    // ) -> ParFMapFilter<I, O, OI, M, impl Fn(&O) -> bool + Send + Sync>
     // where
-    //     F2: Fn(&O) -> bool + Send + Sync + Clone,
+    //     F2: Fn(&O) -> bool + Send + Sync,
     // {
-    //     let (params, iter, map, filter1) = (self.params, self.iter, self.map, self.filter);
+    //     let (params, iter, fmap, filter1) = (self.params, self.iter, self.fmap, self.filter);
     //     let composed = move |x: &O| filter1(x) && filter(x);
-    //     ParMapFilter::new(iter, params, map, composed)
+    //     ParFMapFilter::new(iter, params, fmap, composed)
     // }
 
     // collect
@@ -198,26 +197,15 @@ where
         O: Default,
         Push: FnMut(O),
     {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
 
         match params.is_sequential() {
-            true => seq_map_fil_col(iter, map, filter, push),
+            true => seq_fmap_fil_col(iter, fmap, filter, push),
             _ => {
                 let bag = ConcurrentBag::new();
-                match iter.try_get_len() {
-                    Some(len) => {
-                        let positions = ConcurrentOrderedBag::with_fixed_capacity(len);
-                        let (bag, positions) =
-                            par_map_fil_col(params, iter, map, filter, bag, positions);
-                        merge_bag_and_positions(bag, &positions, &mut push);
-                    }
-                    None => {
-                        let positions = ConcurrentOrderedBag::new();
-                        let (bag, positions) =
-                            par_map_fil_col(params, iter, map, filter, bag, positions);
-                        merge_bag_and_positions(bag, &positions, &mut push);
-                    }
-                };
+                let positions = ConcurrentOrderedBag::new();
+                let (bag, pos_len) = par_fmap_fil_col(params, iter, fmap, filter, bag, positions);
+                merge_bag_and_pos_len(bag, &pos_len, &mut push);
             }
         }
     }
@@ -293,11 +281,115 @@ where
     /// let output_vec = evens.collect_into(output_vec);
     /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
     /// ```
-    pub fn collect_into<C: ParMapFilterCollectInto<O>>(self, output: C) -> C
+    pub fn collect_into<C: ParFMapFilterCollectInto<O>>(self, output: C) -> C
     where
         O: Default,
     {
-        output.map_filter_into(self)
+        output.fmap_filter_into(self)
+    }
+
+    // collect-x
+
+    pub(crate) fn collect_bag_x<P>(self, collected: ConcurrentBag<O, P>) -> ConcurrentBag<O, P>
+    where
+        O: Default,
+        P: PinnedVec<O>,
+    {
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        match params.is_sequential() {
+            true => seq_fmap_fil_colx(iter, fmap, filter, collected),
+            false => par_fmap_fil_colx(params, iter, fmap, filter, collected),
+        }
+    }
+
+    /// Transforms the iterator into a collection.
+    ///
+    /// In this case, the result is transformed into a standard vector; i.e., `std::vec::Vec`.
+    ///
+    /// `collect_x_vec` differs from `collect_vec` method by the following:
+    /// * `collect_vec` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
+    /// `collect_x_vec`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
+    /// * `collect_x_vec` might perform faster than `collect_vec` in certain situations.
+    ///
+    /// Due to above `collect_x_vec` can be preferred over `collect_vec` in performance-critical operations where the order of elements in the output is not important.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let mut output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x_vec();
+    /// output.sort();
+    /// assert_eq!(output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
+    /// ```
+    pub fn collect_x_vec(self) -> Vec<O>
+    where
+        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
+    {
+        self.collect_bag_x(ConcurrentBag::new()).into_inner().into()
+    }
+
+    /// Transforms the iterator into a collection.
+    ///
+    /// In this case, the result is transformed into the split vector which is the underlying [`PinnedVec`](https://crates.io/crates/orx-pinned-vec) used to collect the results concurrently;
+    /// i.e., [`SplitVec`](https://crates.io/crates/orx-split-vec).
+    ///
+    /// `collect_x` differs from `collect` method by the following:
+    /// * `collect` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
+    /// `collect_x`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
+    /// * `collect_x` might perform faster than `collect` in certain situations.
+    ///
+    /// Due to above `collect_x` can be preferred over `collect` in performance-critical operations where the order of elements in the output is not important.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    /// use orx_split_vec::*;
+    ///
+    /// let output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x();
+    /// let mut sorted_output = output.to_vec();
+    /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
+    /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
+    /// ```
+    pub fn collect_x(self) -> SplitVec<O>
+    where
+        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
+    {
+        self.collect_bag_x(ConcurrentBag::new()).into_inner()
+    }
+
+    /// Collects elements yielded by the iterator into the given `output` collection.
+    ///
+    /// Note that `output` does not need to be empty; hence, this method allows extending collections from the parallel iterator.
+    ///
+    /// `collect_x_into` differs from `collect_into` method by the following:
+    /// * `collect_into` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
+    /// `collect_x_into`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
+    /// * `collect_x_into` might perform faster than `collect_into` in certain situations.
+    ///
+    /// Due to above `collect_x_into` can be preferred over `collect_into` in performance-critical operations where the order of elements in the output is not important.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    /// use orx_split_vec::*;
+    ///
+    /// let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    /// output.push(42);
+    ///
+    /// let output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x_into(output);
+    /// let mut sorted_output = output.to_vec();
+    /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
+    /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 42]);
+    /// ```
+    pub fn collect_x_into<P, B: Into<ConcurrentBag<O, P>>>(self, output: B) -> P
+    where
+        O: Default,
+        P: PinnedVec<O>,
+    {
+        self.collect_bag_x(output.into()).into_inner()
     }
 
     // count
@@ -313,52 +405,11 @@ where
     /// assert_eq!(evens.count(), 5);
     /// ```
     pub fn count(self) -> usize {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
-        map_fil_cnt(params, iter, map, filter)
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        fmap_fil_cnt(params, iter, fmap, filter)
     }
 
     // find
-
-    /// Returns the first element of the iterator; returns None if the iterator is empty.
-    ///
-    /// If an element is found, the output is the tuple of:
-    /// * the index of the element in the original collection, and
-    /// * the value.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().filter(is_prime).first_with_index();
-    /// assert_eq!(first_prime, Some((2, 23)));
-    ///
-    /// let first_prime = (24..28).into_par().filter(is_prime).first_with_index();
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn first_with_index(self) -> Option<(usize, O)> {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
-        map_fil_find(params, iter, map, filter)
-    }
 
     /// Returns the first element of the iterator; returns None if the iterator is empty.
     ///
@@ -393,52 +444,8 @@ where
     /// assert_eq!(first_prime, None);
     /// ```
     pub fn first(self) -> Option<O> {
-        self.first_with_index().map(|x| x.1)
-    }
-
-    /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
-    ///
-    /// If an element is found, the output is the tuple of:
-    /// * the index of the element in the original collection, and
-    /// * the value.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().find_with_index(is_prime);
-    /// assert_eq!(first_prime, Some((2, 23)));
-    ///
-    /// let first_prime = (24..28).into_par().find_with_index(is_prime);
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn find_with_index<P>(self, predicate: P) -> Option<(usize, O)>
-    where
-        P: Fn(&O) -> bool + Send + Sync,
-    {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
-        let composed = move |x: &O| filter(x) && predicate(x);
-        map_fil_find(params, iter, map, composed)
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        fmap_fil_find(params, iter, fmap, filter)
     }
 
     /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
@@ -477,21 +484,24 @@ where
     where
         P: Fn(&O) -> bool + Send + Sync,
     {
-        self.find_with_index(predicate).map(|x| x.1)
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        let composed = move |x: &O| filter(x) && predicate(x);
+        fmap_fil_find(params, iter, fmap, composed)
     }
 }
 
-impl<I, O, M, F> Reduce<O> for ParMapFilter<I, O, M, F>
+impl<I, O, OI, M, F> Reduce<O> for ParFMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
+    O: Send + Sync,
+    OI: IntoIterator<Item = O>,
+    M: Fn(I::Item) -> OI + Send + Sync,
+    F: Fn(&O) -> bool + Send + Sync,
 {
     fn reduce<R>(self, reduce: R) -> Option<O>
     where
         R: Fn(O, O) -> O + Send + Sync,
     {
-        map_fil_red(self.params, self.iter, self.map, self.filter, reduce)
+        fmap_fil_red(self.params, self.iter, self.fmap, self.filter, reduce)
     }
 }

@@ -2,16 +2,14 @@ mod reduce_i64;
 mod reduce_string;
 mod utils;
 
+use crate::utils::{test_different_params, test_reduce};
 use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_parallel::*;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
-use std::num::NonZeroUsize;
-
-use crate::utils::{test_different_params, test_reduce};
 
 #[test]
-fn par_fil_into_par() {
+fn par_fil_par() {
     let vec = vec![1, 4, 2, 1, 5, 6];
     let par: Par<_> = vec.into_par();
 
@@ -21,24 +19,24 @@ fn par_fil_into_par() {
     assert_eq!(
         par.params(),
         Params {
-            chunk_size: Some(NonZeroUsize::new(64).unwrap()),
-            num_threads: Some(NonZeroUsize::new(8).unwrap())
+            chunk_size: 64.into(),
+            num_threads: 8.into()
         }
     );
 }
 
 #[test]
-#[should_panic]
-fn par_fil_panics_when_zero_num_threads() {
+fn par_fil_auto_when_zero_num_threads() {
     let vec = vec![1, 4, 2, 1, 5, 6];
-    let _ = vec.into_par().filter(|x| x > &2).num_threads(0);
+    let par = vec.into_par().filter(|x| x > &2).num_threads(0);
+    assert_eq!(par.params().num_threads, NumThreads::Auto);
 }
 
 #[test]
-#[should_panic]
-fn par_fil_panics_when_zero_chunk_size() {
+fn par_fil_auto_when_zero_chunk_size() {
     let vec = vec![1, 4, 2, 1, 5, 6];
-    let _ = vec.into_par().filter(|x| x <= &2).chunk_size(0);
+    let par = vec.into_par().filter(|x| x <= &2).chunk_size(0);
+    assert_eq!(par.params().chunk_size, ChunkSize::Auto);
 }
 
 #[test]
@@ -56,6 +54,33 @@ fn par_fil_map() {
     let result = map.collect_vec();
 
     assert_eq!(result.as_slice(), &[42, 15]);
+}
+
+#[test]
+fn par_fil_fmap() {
+    let iter = [1, 42, 2, 111, 15, 9876]
+        .map(|x| x.to_string())
+        .into_iter()
+        .skip(1);
+
+    let par = iter.into_con_iter().into_par();
+    let filter = par.filter(|x| x.len() == 2).num_threads(2);
+    let map = filter.flat_map(|x| x.chars().collect::<Vec<_>>());
+    let result = map.collect_vec();
+
+    assert_eq!(result.as_slice(), &['4', '2', '1', '5']);
+}
+
+#[test]
+fn par_fil_fmap_option() {
+    let iter = [1, 42, 2, 111, 15, 9876].into_iter().skip(1);
+
+    let par = iter.into_con_iter().into_par();
+    let filter = par.filter(|x| x.to_string().len() == 2).num_threads(2);
+    let map = filter.flat_map(|x| if x % 2 == 1 { Some(x) } else { None });
+    let result = map.collect_vec();
+
+    assert_eq!(result.as_slice(), &[15]);
 }
 
 #[test]
@@ -194,7 +219,7 @@ fn par_fil_next() {
         let par = (13..4785).into_con_iter().into_par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
-        assert_eq!(par.next(), Some((312 - 13, 312)));
+        assert_eq!(par.first_with_index(), Some((312 - 13, 312)));
     }
     test_different_params(test);
 
@@ -202,7 +227,7 @@ fn par_fil_next() {
         let par = (0..0).into_con_iter().into_par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
-        assert_eq!(par.next(), None);
+        assert_eq!(par.first_with_index(), None);
     }
     test_different_params(test_empty);
 }
@@ -213,7 +238,7 @@ fn par_fil_find() {
         let par = (13..4785).into_con_iter().into_par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
-        assert_eq!(par.find(|x| x >= &500), Some((624 - 13, 624)));
+        assert_eq!(par.find_with_index(|x| x >= &500), Some((624 - 13, 624)));
     }
     test_different_params(test);
 
@@ -221,7 +246,7 @@ fn par_fil_find() {
         let par = (13..4785).into_con_iter().into_par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
-        assert_eq!(par.find(|x| x > &13333), None);
+        assert_eq!(par.find_with_index(|x| x > &13333), None);
     }
     test_different_params(test_empty);
 }

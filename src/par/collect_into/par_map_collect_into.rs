@@ -5,18 +5,20 @@ use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{Growth, SplitVec};
 
-pub trait ParMapCollectInto<O: Send + Sync> {
+/// Collections into which parallel map computations can be collected.
+pub trait ParMapCollectInto<O: Default + Send + Sync> {
+    /// Performs the parallel map operation, collecting the results into this collection.
     fn map_into<I, M>(self, par_map: ParMap<I, O, M>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync;
+        M: Fn(I::Item) -> O + Send + Sync + Clone;
 }
 
-impl<O: Send + Sync> ParMapCollectInto<O> for Vec<O> {
+impl<O: Default + Send + Sync> ParMapCollectInto<O> for Vec<O> {
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
     {
         if let Some(iter_len) = par_map.iter_len() {
             self.reserve(iter_len);
@@ -28,11 +30,11 @@ impl<O: Send + Sync> ParMapCollectInto<O> for Vec<O> {
     }
 }
 
-impl<O: Send + Sync> ParMapCollectInto<O> for FixedVec<O> {
+impl<O: Default + Send + Sync> ParMapCollectInto<O> for FixedVec<O> {
     fn map_into<I, M>(self, par_map: ParMap<I, O, M>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
     {
         let mut vec: Vec<_> = self.into();
 
@@ -46,11 +48,11 @@ impl<O: Send + Sync> ParMapCollectInto<O> for FixedVec<O> {
     }
 }
 
-impl<O: Send + Sync, G: Growth> ParMapCollectInto<O> for SplitVec<O, G> {
+impl<O: Default + Send + Sync, G: Growth> ParMapCollectInto<O> for SplitVec<O, G> {
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
     {
         if let Some(iter_len) = par_map.iter_len() {
             let required_len = self.len() + iter_len;

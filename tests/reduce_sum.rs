@@ -1,4 +1,4 @@
-use orx_concurrent_iter::IntoConcurrentIter;
+use orx_concurrent_iter::*;
 use orx_parallel::*;
 use test_case::test_case;
 
@@ -31,8 +31,6 @@ where
 {
     let inputs = inputs(LEN);
     let expected = seq(&inputs, &reduce);
-
-    dbg!(expected);
 
     let result = inputs
         .as_slice()

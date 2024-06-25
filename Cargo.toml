@@ -4,14 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-orx-concurrent-bag = "1.13"
-orx-concurrent-iter = { path = "../orx-concurrent-iter" }
-orx-concurrent-ordered-bag = "1.1"
-orx-fixed-vec = "2.9"
-orx-pinned-concurrent-col = "1.2"
-orx-pinned-vec = "2.9"
-orx-split-vec = "2.11"
-
+orx-concurrent-bag = "1.14"
+orx-concurrent-iter = "1.19"
+orx-concurrent-ordered-bag = "1.2"
+orx-pinned-concurrent-col = "1.4"
+orx-fixed-vec = "2.11"
+orx-pinned-vec = "2.11"
+orx-split-vec = "2.13"
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -24,3 +23,10 @@ test-case = "3.3.1"
 [[bench]]
 name = "all_pairs_dijkstra"
 harness = false
+
+[features]
+default = []
+with_diagnostics = []
+
+[lib]
+doctest = false

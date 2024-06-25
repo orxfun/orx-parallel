@@ -11,6 +11,7 @@ where
     Q: PinnedVec<usize>,
     Push: FnMut(T),
 {
+    // TODO: inefficient!
     for &x in positions.iter().filter(|x| **x < usize::MAX) {
         let mut value = Default::default();
         let b = bag.get_mut(x).expect("is-some");
@@ -23,16 +24,16 @@ pub trait ParMapFilterCollectInto<O: Send + Sync + Default> {
     fn map_filter_into<I, M, F>(self, par: ParMapFilter<I, O, M, F>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync,
-        F: Fn(&O) -> bool + Send + Sync;
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
+        F: Fn(&O) -> bool + Send + Sync + Clone;
 }
 
 impl<O: Send + Sync + Default> ParMapFilterCollectInto<O> for Vec<O> {
     fn map_filter_into<I, M, F>(mut self, par: ParMapFilter<I, O, M, F>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync,
-        F: Fn(&O) -> bool + Send + Sync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
+        F: Fn(&O) -> bool + Send + Sync + Clone,
     {
         par.collect_bag(|x| self.push(x));
         self
@@ -43,8 +44,8 @@ impl<O: Send + Sync + Default> ParMapFilterCollectInto<O> for FixedVec<O> {
     fn map_filter_into<I, M, F>(self, par: ParMapFilter<I, O, M, F>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync,
-        F: Fn(&O) -> bool + Send + Sync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
+        F: Fn(&O) -> bool + Send + Sync + Clone,
     {
         let mut vec: Vec<_> = self.into();
 
@@ -61,8 +62,8 @@ impl<O: Send + Sync + Default, G: Growth> ParMapFilterCollectInto<O> for SplitVe
     fn map_filter_into<I, M, F>(mut self, par: ParMapFilter<I, O, M, F>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync,
-        F: Fn(&O) -> bool + Send + Sync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
+        F: Fn(&O) -> bool + Send + Sync + Clone,
     {
         if let Some(iter_len) = par.iter_len() {
             let required_len = self.len() + iter_len;

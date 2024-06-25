@@ -31,7 +31,10 @@ fn rayon(inputs: &[usize]) -> Option<usize> {
 }
 
 fn orx_parallel_default(inputs: &[usize]) -> Option<usize> {
-    inputs.into_par().find(|x| predicate(**x)).map(|x| *x.1)
+    inputs
+        .into_par()
+        .find_with_index(|x| predicate(**x))
+        .map(|x| *x.1)
 }
 
 fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
@@ -39,7 +42,7 @@ fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Opti
         .into_par()
         .chunk_size(chunk_size)
         .num_threads(num_threads)
-        .find(|x| predicate(**x))
+        .find_with_index(|x| predicate(**x))
         .map(|x| *x.1)
 }
 
