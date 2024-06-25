@@ -122,74 +122,6 @@ where
         self.params
     }
 
-    // transform
-
-    // /// Takes the closure `map` and creates an iterator which calls that closure on each element.
-    // ///
-    // /// # Examples
-    // ///
-    // /// ```rust
-    // /// use orx_parallel::*;
-    // ///
-    // /// let doubles = (0..5).into_par().map(|x| x * 2).collect_vec();
-    // /// assert_eq!(&doubles[..], &[0, 2, 4, 6, 8]);
-    // /// ```
-    // pub fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
-    // where
-    //     O2: Send + Sync + Default,
-    //     M2: Fn(O) -> O2 + Send + Sync + Clone,
-    //     O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter. Default is temporary also
-    // {
-    //     let params = self.params;
-    //     let vec = self.collect_vec();
-    //     let iter = vec.into_con_iter();
-    //     ParMap::new(iter, params, map)
-    // }
-
-    // /// Takes the closure `fmap` and creates an iterator which calls that closure on each element and flattens the result.
-    // ///
-    // /// # Examples
-    // ///
-    // /// ```rust
-    // /// use orx_parallel::*;
-    // ///
-    // /// let numbers = (0..5).into_par().flat_map(|x| vec![x; x]).collect_vec();
-    // /// assert_eq!(&numbers[..], &[1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
-    // /// ```
-    // pub fn flat_map<OI2, M2>(self, fmap: M2) -> ParFMap<ConIterOfVec<O>, OI2::Item, OI2, M2>
-    // where
-    //     M2: Fn(O) -> OI2 + Send + Sync + Clone,
-    //     OI2: IntoIterator<Item = O>,
-    //     O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter. Default is temporary also
-    // {
-    //     let params = self.params;
-    //     let vec = self.collect_vec();
-    //     let iter = vec.into_con_iter();
-    //     ParFMap::new(iter, params, fmap)
-    // }
-
-    // /// Creates an iterator which uses the closure `filter` to determine if an element should be yielded.
-    // ///
-    // /// # Examples
-    // ///
-    // /// ```rust
-    // /// use orx_parallel::*;
-    // ///
-    // /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect_vec();
-    // /// assert_eq!(&evens[..], &[0, 2, 4, 6, 8]);
-    // /// ```
-    // pub fn filter<F2>(
-    //     self,
-    //     filter: F2,
-    // ) -> ParFMapFilter<I, O, OI, M, impl Fn(&O) -> bool + Send + Sync>
-    // where
-    //     F2: Fn(&O) -> bool + Send + Sync,
-    // {
-    //     let (params, iter, fmap, filter1) = (self.params, self.iter, self.fmap, self.filter);
-    //     let composed = move |x: &O| filter1(x) && filter(x);
-    //     ParFMapFilter::new(iter, params, fmap, composed)
-    // }
-
     // collect
 
     pub(crate) fn collect_bag<Push>(self, mut push: Push)
@@ -390,23 +322,6 @@ where
         P: PinnedVec<O>,
     {
         self.collect_bag_x(output.into()).into_inner()
-    }
-
-    // count
-
-    /// Consumes the iterator, counting the number of iterations and returning it.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
-    /// assert_eq!(evens.count(), 5);
-    /// ```
-    pub fn count(self) -> usize {
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
-        fmap_fil_cnt(params, iter, fmap, filter)
     }
 
     // find
