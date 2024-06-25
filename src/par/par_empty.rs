@@ -1,4 +1,7 @@
-use super::{par_fil::ParFilter, par_fmap::ParFMap, par_map::ParMap, reduce::Reduce};
+use super::{
+    collect_into::par_collect_into::ParCollectInto, par_fil::ParFilter, par_fmap::ParFMap,
+    par_map::ParMap, reduce::Reduce,
+};
 use crate::{
     core::{
         default_fns::{map_self, no_filter},
@@ -10,6 +13,7 @@ use crate::{
     ChunkSize, NumThreads, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
+use orx_split_vec::SplitVec;
 
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
@@ -67,6 +71,33 @@ where
     fn count(self) -> usize {
         let (params, iter) = (self.params, self.iter);
         map_fil_cnt(params, iter, map_self, no_filter)
+    }
+
+    // find
+
+    fn find<P>(self, predicate: P) -> Option<Self::Item>
+    where
+        P: Fn(&Self::Item) -> bool + Send + Sync,
+    {
+        self.find_with_index(predicate).map(|x| x.1)
+    }
+
+    fn first(self) -> Option<Self::Item> {
+        self.first_with_index().map(|x| x.1)
+    }
+
+    // collect
+
+    fn collect_vec(self) -> Vec<Self::Item> {
+        todo!()
+    }
+
+    fn collect(self) -> SplitVec<Self::Item> {
+        todo!()
+    }
+
+    fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
+        todo!()
     }
 }
 
@@ -132,42 +163,6 @@ where
         map_fil_find(params, iter, map_self, no_filter)
     }
 
-    /// Returns the first element of the iterator; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().filter(is_prime).first();
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).into_par().filter(is_prime).first();
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn first(self) -> Option<I::Item> {
-        self.first_with_index().map(|x| x.1)
-    }
-
     /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
     ///
     /// If an element is found, the output is the tuple of:
@@ -210,45 +205,6 @@ where
     {
         let (params, iter) = (self.params, self.iter);
         map_fil_find(params, iter, map_self, predicate)
-    }
-
-    /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().find(is_prime);
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).into_par().find(is_prime);
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn find<P>(self, predicate: P) -> Option<I::Item>
-    where
-        P: Fn(&I::Item) -> bool + Send + Sync,
-    {
-        self.find_with_index(predicate).map(|x| x.1)
     }
 }
 

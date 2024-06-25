@@ -12,7 +12,7 @@ where
     Q: PinnedVec<(usize, usize)>,
     Push: FnMut(T),
 {
-    // TODO: inefficient! SPlitVec into_iter might solve it
+    // TODO: inefficient! SplitVec into_iter might solve it
     for &x in pos_len.iter().filter(|x| x.0 < usize::MAX && x.1 > 0) {
         let (begin_idx, len) = (x.0, x.1);
         for i in 0..len {

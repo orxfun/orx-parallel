@@ -1,5 +1,8 @@
 use super::{
-    collect_into::par_map_fil_collect_into::{merge_bag_and_positions, ParMapFilterCollectInto},
+    collect_into::{
+        par_collect_into::ParCollectInto,
+        par_map_fil_collect_into::{merge_bag_and_positions, ParMapFilterCollectInto},
+    },
     par_fmap::ParFMap,
     par_map::ParMap,
     reduce::Reduce,
@@ -93,6 +96,36 @@ where
         let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
         map_fil_cnt(params, iter, map, filter)
     }
+
+    // find
+    fn find<P>(self, predicate: P) -> Option<Self::Item>
+    where
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        self.find_with_index(predicate).map(|x| x.1)
+    }
+
+    fn first(self) -> Option<Self::Item> {
+        self.first_with_index().map(|x| x.1)
+    }
+
+    // collect
+
+    fn collect_vec(self) -> Vec<Self::Item> {
+        let mut vec = vec![];
+        self.collect_bag(|x| vec.push(x));
+        vec
+    }
+
+    fn collect(self) -> SplitVec<Self::Item> {
+        let mut vec = SplitVec::new();
+        self.collect_bag(|x| vec.push(x));
+        vec
+    }
+
+    fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
+        output.map_filter_into(self)
+    }
 }
 
 impl<I, O, M, F> ParMapFilter<I, O, M, F>
@@ -153,84 +186,6 @@ where
         }
     }
 
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into a standard vector; i.e., `std::vec::Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect_vec();
-    /// assert_eq!(evens, vec![0, 2, 4, 6, 8]);
-    /// ```
-    pub fn collect_vec(self) -> Vec<O>
-    where
-        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
-    {
-        let mut vec = vec![];
-        self.collect_bag(|x| vec.push(x));
-        vec
-    }
-
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into the split vector which is the underlying [`PinnedVec`](https://crates.io/crates/orx-pinned-vec) used to collect the results concurrently;
-    /// i.e., [`SplitVec`](https://crates.io/crates/orx-split-vec).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect();
-    /// assert_eq!(evens, SplitVec::from_iter([0, 2, 4, 6, 8]));
-    /// ```
-    pub fn collect(self) -> SplitVec<O>
-    where
-        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
-    {
-        let mut vec = SplitVec::new();
-        self.collect_bag(|x| vec.push(x));
-        vec
-    }
-
-    /// Collects elements yielded by the iterator into the given `output` collection.
-    ///
-    /// Note that `output` does not need to be empty; hence, this method allows extending collections from the parallel iterator.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let output_vec = vec![42];
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
-    /// let output_vec = evens.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
-    ///
-    /// let odds = (0..10).into_par().filter(|x| x % 2 == 1);
-    /// let output_vec = odds.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8, 1, 3, 5, 7, 9]);
-    ///
-    /// // alternatively, any `PinnedVec` can be used
-    /// let output_vec: SplitVec<_> = [42].into_iter().collect();
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
-    /// let output_vec = evens.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
-    /// ```
-    pub fn collect_into<C: ParMapFilterCollectInto<O>>(self, output: C) -> C
-    where
-        O: Default,
-    {
-        output.map_filter_into(self)
-    }
-
     // find
 
     /// Returns the first element of the iterator; returns None if the iterator is empty.
@@ -272,42 +227,6 @@ where
     pub fn first_with_index(self) -> Option<(usize, O)> {
         let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
         map_fil_find(params, iter, map, filter)
-    }
-
-    /// Returns the first element of the iterator; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().filter(is_prime).first();
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).into_par().filter(is_prime).first();
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn first(self) -> Option<O> {
-        self.first_with_index().map(|x| x.1)
     }
 
     /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
@@ -353,45 +272,6 @@ where
         let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
         let composed = move |x: &O| filter(x) && predicate(x);
         map_fil_find(params, iter, map, composed)
-    }
-
-    /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().find(is_prime);
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).into_par().find(is_prime);
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn find<P>(self, predicate: P) -> Option<O>
-    where
-        P: Fn(&O) -> bool + Send + Sync,
-    {
-        self.find_with_index(predicate).map(|x| x.1)
     }
 }
 

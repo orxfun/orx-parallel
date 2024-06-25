@@ -1,5 +1,8 @@
 use super::{
-    collect_into::par_fmap_fil_collect_into::{merge_bag_and_pos_len, ParFMapFilterCollectInto},
+    collect_into::{
+        par_collect_into::ParCollectInto,
+        par_fmap_fil_collect_into::{merge_bag_and_pos_len, ParFMapFilterCollectInto},
+    },
     par_fmap::ParFMap,
     reduce::Reduce,
 };
@@ -92,6 +95,52 @@ where
         let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
         fmap_fil_cnt(params, iter, fmap, filter)
     }
+
+    // find
+    fn find<P>(self, predicate: P) -> Option<Self::Item>
+    where
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        let composed = move |x: &O| filter(x) && predicate(x);
+        fmap_fil_find(params, iter, fmap, composed)
+    }
+
+    fn first(self) -> Option<Self::Item> {
+        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        fmap_fil_find(params, iter, fmap, filter)
+    }
+
+    // collect
+
+    fn collect_vec(self) -> Vec<Self::Item> {
+        let mut vec = vec![];
+        self.collect_bag(|x| vec.push(x));
+        vec
+    }
+
+    fn collect(self) -> SplitVec<Self::Item> {
+        let mut vec = SplitVec::new();
+        self.collect_bag(|x| vec.push(x));
+        vec
+    }
+
+    fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
+        output.fmap_filter_into(self)
+    }
+
+    fn collect_x_vec(self) -> Vec<Self::Item> {
+        self.collect_bag_x(ConcurrentBag::new()).into_inner().into()
+    }
+
+    fn collect_x(self) -> SplitVec<Self::Item> {
+        self.collect_bag_x(ConcurrentBag::new()).into_inner()
+    }
+
+    fn collect_x_into<B: ParCollectInto<Self::Item>>(self, output: B) -> B {
+        let x = self.collect_bag_x(output.into_concurrent_bag());
+        B::from_concurrent_bag(x)
+    }
 }
 
 impl<I, O, OI, M, F> ParFMapFilter<I, O, OI, M, F>
@@ -142,86 +191,6 @@ where
         }
     }
 
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into a standard vector; i.e., `std::vec::Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect_vec();
-    /// assert_eq!(evens, vec![0, 2, 4, 6, 8]);
-    /// ```
-    pub fn collect_vec(self) -> Vec<O>
-    where
-        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
-    {
-        let mut vec = vec![];
-        self.collect_bag(|x| vec.push(x));
-        vec
-    }
-
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into the split vector which is the underlying [`PinnedVec`](https://crates.io/crates/orx-pinned-vec) used to collect the results concurrently;
-    /// i.e., [`SplitVec`](https://crates.io/crates/orx-split-vec).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect();
-    /// assert_eq!(evens, SplitVec::from_iter([0, 2, 4, 6, 8]));
-    /// ```
-    pub fn collect(self) -> SplitVec<O>
-    where
-        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
-    {
-        let mut vec = SplitVec::new();
-        self.collect_bag(|x| vec.push(x));
-        vec
-    }
-
-    /// Collects elements yielded by the iterator into the given `output` collection.
-    ///
-    /// Note that `output` does not need to be empty; hence, this method allows extending collections from the parallel iterator.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let output_vec = vec![42];
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
-    /// let output_vec = evens.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
-    ///
-    /// let odds = (0..10).into_par().filter(|x| x % 2 == 1);
-    /// let output_vec = odds.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8, 1, 3, 5, 7, 9]);
-    ///
-    /// // alternatively, any `PinnedVec` can be used
-    /// let output_vec: SplitVec<_> = [42].into_iter().collect();
-    ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
-    /// let output_vec = evens.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
-    /// ```
-    pub fn collect_into<C: ParFMapFilterCollectInto<O>>(self, output: C) -> C
-    where
-        O: Default,
-    {
-        output.fmap_filter_into(self)
-    }
-
-    // collect-x
-
     pub(crate) fn collect_bag_x<P>(self, collected: ConcurrentBag<O, P>) -> ConcurrentBag<O, P>
     where
         O: Default,
@@ -232,176 +201,6 @@ where
             true => seq_fmap_fil_colx(iter, fmap, filter, collected),
             false => par_fmap_fil_colx(params, iter, fmap, filter, collected),
         }
-    }
-
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into a standard vector; i.e., `std::vec::Vec`.
-    ///
-    /// `collect_x_vec` differs from `collect_vec` method by the following:
-    /// * `collect_vec` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
-    /// `collect_x_vec`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
-    /// * `collect_x_vec` might perform faster than `collect_vec` in certain situations.
-    ///
-    /// Due to above `collect_x_vec` can be preferred over `collect_vec` in performance-critical operations where the order of elements in the output is not important.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let mut output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x_vec();
-    /// output.sort();
-    /// assert_eq!(output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
-    /// ```
-    pub fn collect_x_vec(self) -> Vec<O>
-    where
-        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
-    {
-        self.collect_bag_x(ConcurrentBag::new()).into_inner().into()
-    }
-
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into the split vector which is the underlying [`PinnedVec`](https://crates.io/crates/orx-pinned-vec) used to collect the results concurrently;
-    /// i.e., [`SplitVec`](https://crates.io/crates/orx-split-vec).
-    ///
-    /// `collect_x` differs from `collect` method by the following:
-    /// * `collect` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
-    /// `collect_x`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
-    /// * `collect_x` might perform faster than `collect` in certain situations.
-    ///
-    /// Due to above `collect_x` can be preferred over `collect` in performance-critical operations where the order of elements in the output is not important.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x();
-    /// let mut sorted_output = output.to_vec();
-    /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
-    /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
-    /// ```
-    pub fn collect_x(self) -> SplitVec<O>
-    where
-        O: Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter
-    {
-        self.collect_bag_x(ConcurrentBag::new()).into_inner()
-    }
-
-    /// Collects elements yielded by the iterator into the given `output` collection.
-    ///
-    /// Note that `output` does not need to be empty; hence, this method allows extending collections from the parallel iterator.
-    ///
-    /// `collect_x_into` differs from `collect_into` method by the following:
-    /// * `collect_into` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
-    /// `collect_x_into`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
-    /// * `collect_x_into` might perform faster than `collect_into` in certain situations.
-    ///
-    /// Due to above `collect_x_into` can be preferred over `collect_into` in performance-critical operations where the order of elements in the output is not important.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-    /// output.push(42);
-    ///
-    /// let output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x_into(output);
-    /// let mut sorted_output = output.to_vec();
-    /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
-    /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 42]);
-    /// ```
-    pub fn collect_x_into<P, B: Into<ConcurrentBag<O, P>>>(self, output: B) -> P
-    where
-        O: Default,
-        P: PinnedVec<O>,
-    {
-        self.collect_bag_x(output.into()).into_inner()
-    }
-
-    // find
-
-    /// Returns the first element of the iterator; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().filter(is_prime).first();
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).into_par().filter(is_prime).first();
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn first(self) -> Option<O> {
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
-        fmap_fil_find(params, iter, fmap, filter)
-    }
-
-    /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).into_par().find(is_prime);
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).into_par().find(is_prime);
-    /// assert_eq!(first_prime, None);
-    /// ```
-    pub fn find<P>(self, predicate: P) -> Option<O>
-    where
-        P: Fn(&O) -> bool + Send + Sync,
-    {
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
-        let composed = move |x: &O| filter(x) && predicate(x);
-        fmap_fil_find(params, iter, fmap, composed)
     }
 }
 
