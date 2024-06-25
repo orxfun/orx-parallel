@@ -1,11 +1,15 @@
+use crate::{
+    par::collect_into::par_collect_into::ParCollectInto, ChunkSize, NumThreads, Params, Reduce,
+};
 use orx_split_vec::SplitVec;
-
-use crate::{par::collect_into::par_collect_into::ParCollectInto, ChunkSize, NumThreads, Reduce};
 
 /// An iterator used to define a computation that can be executed in parallel.
 pub trait ParIter: Reduce<Self::Item> {
     /// Type of the items that the iterator yields.
     type Item: Send + Sync + Default;
+
+    /// Parameters of the parallel computation which can be set by `num_threads` and `chunk_size` methods.
+    fn params(&self) -> Params;
 
     /// Transforms the parallel computation with a new one with the given `num_threads`.
     ///

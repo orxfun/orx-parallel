@@ -46,6 +46,10 @@ where
 {
     type Item = O;
 
+    fn params(&self) -> Params {
+        self.params
+    }
+
     fn num_threads(mut self, num_threads: impl Into<crate::NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
@@ -161,11 +165,6 @@ where
 
     pub(crate) fn iter_len(&self) -> Option<usize> {
         self.iter.try_get_len()
-    }
-
-    /// Parameters of the parallel computation which can be set by `num_threads` and `chunk_size` methods.
-    pub fn params(&self) -> Params {
-        self.params
     }
 
     // collect
