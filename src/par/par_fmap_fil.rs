@@ -1,8 +1,5 @@
 use super::{
-    collect_into::{
-        par_collect_into::ParCollectInto,
-        par_fmap_fil_collect_into::{merge_bag_and_pos_len, ParFMapFilterCollectInto},
-    },
+    collect_into::par_collect_into::{merge_bag_and_pos_len, ParCollectInto},
     par_fmap::ParFMap,
     reduce::Reduce,
 };

@@ -1,9 +1,6 @@
 use orx_split_vec::SplitVec;
 
-use crate::{
-    par::collect_into::par_collect_into::ParCollectInto, ChunkSize, NumThreads, ParMapCollectInto,
-    Reduce,
-};
+use crate::{par::collect_into::par_collect_into::ParCollectInto, ChunkSize, NumThreads, Reduce};
 
 /// An iterator used to define a computation that can be executed in parallel.
 pub trait ParIter: Reduce<Self::Item> {

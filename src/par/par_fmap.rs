@@ -1,13 +1,8 @@
 use super::collect_into::par_collect_into::ParCollectInto;
-use super::{
-    collect_into::par_fmap_fil_collect_into::ParFMapFilterCollectInto, par_fmap_fil::ParFMapFilter,
-    reduce::Reduce,
-};
+use super::{par_fmap_fil::ParFMapFilter, reduce::Reduce};
 use crate::ParIter;
 use crate::{core::default_fns::no_filter, Params};
-use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
-use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 use std::iter::Map;
 

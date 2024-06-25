@@ -24,7 +24,7 @@ mod params;
 pub use chunk_size::ChunkSize;
 pub use into_par::{IntoPar, IterPar};
 pub use num_threads::NumThreads;
-pub use par::collect_into::par_map_collect_into::ParMapCollectInto;
+pub use par::collect_into::par_collect_into::ParCollectInto;
 pub use par::{
     par_empty::Par, par_fil::ParFilter, par_map::ParMap, par_map_fil::ParMapFilter, reduce::Reduce,
 };

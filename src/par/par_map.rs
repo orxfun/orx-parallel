@@ -1,7 +1,5 @@
 use super::{
-    collect_into::{par_collect_into::ParCollectInto, par_map_collect_into::ParMapCollectInto},
-    par_fmap::ParFMap,
-    par_map_fil::ParMapFilter,
+    collect_into::par_collect_into::ParCollectInto, par_fmap::ParFMap, par_map_fil::ParMapFilter,
     reduce::Reduce,
 };
 use crate::{

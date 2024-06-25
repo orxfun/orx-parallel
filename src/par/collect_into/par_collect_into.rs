@@ -29,3 +29,39 @@ pub trait ParCollectInto<O: Send + Sync + Default> {
 
     fn from_concurrent_bag(bag: ConcurrentBag<O, Self::BridgePinnedVec>) -> Self;
 }
+
+pub(crate) fn merge_bag_and_pos_len<T, P, Q, Push>(mut bag: P, pos_len: &Q, push: &mut Push)
+where
+    T: Default,
+    P: PinnedVec<T>,
+    Q: PinnedVec<(usize, usize)>,
+    Push: FnMut(T),
+{
+    // TODO: inefficient! SplitVec into_iter might solve it
+    for &x in pos_len.iter().filter(|x| x.0 < usize::MAX && x.1 > 0) {
+        let (begin_idx, len) = (x.0, x.1);
+        for i in 0..len {
+            let mut value = Default::default();
+            let idx = begin_idx + i;
+            let b = bag.get_mut(idx).expect("is-some");
+            std::mem::swap(b, &mut value);
+            push(value);
+        }
+    }
+}
+
+pub(crate) fn merge_bag_and_positions<T, P, Q, Push>(mut bag: P, positions: &Q, push: &mut Push)
+where
+    T: Default,
+    P: PinnedVec<T>,
+    Q: PinnedVec<usize>,
+    Push: FnMut(T),
+{
+    // TODO: inefficient!
+    for &x in positions.iter().filter(|x| **x < usize::MAX) {
+        let mut value = Default::default();
+        let b = bag.get_mut(x).expect("is-some");
+        std::mem::swap(b, &mut value);
+        push(value);
+    }
+}
