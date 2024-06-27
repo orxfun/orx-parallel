@@ -1,6 +1,7 @@
 use super::diagnostics::ParThreadLogger;
 use super::runner::{ParTask, Runner};
 use super::utils::maybe_reduce;
+use crate::fn_sync::FnSync;
 use crate::{Fallible, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -15,7 +16,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
-    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
+    FilterMap: Fn(I::Item) -> FO + FnSync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     Red: Fn(Out, Out) -> Out + Send + Sync,
 {
@@ -46,7 +47,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
-    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
+    FilterMap: Fn(I::Item) -> FO + FnSync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     Red: Fn(Out, Out) -> Out + Send + Sync,
     L: ParThreadLogger,
@@ -71,7 +72,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
-    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
+    FilterMap: Fn(I::Item) -> FO + FnSync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     Red: Fn(Out, Out) -> Out + Send + Sync,
     L: ParThreadLogger,

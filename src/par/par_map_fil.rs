@@ -8,6 +8,7 @@ use crate::{
         map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
+    fn_sync::FnSync,
     par::collect_into::collect_into_core::merge_bag_and_positions,
     Fallible, ParCollectInto, ParIter, Params,
 };
@@ -26,8 +27,8 @@ pub struct ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
+    M: Fn(I::Item) -> O + FnSync,
+    F: Fn(&O) -> bool + FnSync,
 {
     iter: I,
     params: Params,
@@ -35,148 +36,13 @@ where
     filter: F,
 }
 
-impl<I, O, M, F> ParIter for ParMapFilter<I, O, M, F>
-where
-    I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
-{
-    type Item = O;
-
-    fn params(&self) -> Params {
-        self.params
-    }
-
-    fn num_threads(mut self, num_threads: impl Into<crate::NumThreads>) -> Self {
-        self.params = self.params.with_num_threads(num_threads);
-        self
-    }
-
-    fn chunk_size(mut self, chunk_size: impl Into<crate::ChunkSize>) -> Self {
-        self.params = self.params.with_chunk_size(chunk_size);
-        self
-    }
-
-    // transform
-
-    fn map<O2, M2>(self, map: M2) -> ParMap<impl ConcurrentIter<Item = O>, O2, M2>
-    where
-        O2: Send + Sync + Debug,
-        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
-    {
-        let params = self.params;
-        let vec = self.collect_vec();
-        let iter = vec.into_con_iter();
-        ParMap::new(iter, params, map)
-    }
-
-    fn flat_map<O2, OI, FM>(self, flat_map: FM) -> ParFlatMap<ConIterOfVec<O>, O2, OI, FM>
-    where
-        O2: Send + Sync + Debug,
-        OI: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
-    {
-        let params = self.params;
-        let vec = self.collect_vec();
-        let iter = vec.into_con_iter();
-        ParFlatMap::new(iter, params, flat_map)
-    }
-
-    fn filter<F2>(
-        self,
-        filter: F2,
-    ) -> ParMapFilter<I, O, M, impl Fn(&O) -> bool + Send + Sync + Clone>
-    where
-        F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
-    {
-        let (params, iter, map, filter1) = (self.params, self.iter, self.map, self.filter);
-        let composed = move |x: &O| filter1(x) && filter(x);
-        ParMapFilter::new(iter, params, map, composed)
-    }
-
-    fn filter_map<O2, FO, FM>(
-        self,
-        filter_map: FM,
-    ) -> ParFilterMap<
-        I,
-        Option<O2>,
-        O2,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
-    >
-    where
-        O2: Send + Sync + Debug,
-        FO: Fallible<O2> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
-    {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
-        let composed = move |x| {
-            let mapped = map(x);
-            match filter(&mapped) {
-                false => None,
-                true => filter_map(mapped).into_option(),
-            }
-        };
-        ParFilterMap::new(iter, params, composed)
-    }
-
-    // reduce
-
-    fn count(self) -> usize {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
-        map_fil_cnt(params, iter, map, filter)
-    }
-
-    // find
-
-    fn find<P>(self, predicate: P) -> Option<Self::Item>
-    where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
-    {
-        self.find_with_index(predicate).map(|x| x.1)
-    }
-
-    fn first(self) -> Option<Self::Item> {
-        self.first_with_index().map(|x| x.1)
-    }
-
-    // collect
-
-    fn collect_vec(self) -> Vec<Self::Item> {
-        match self.params.is_sequential() {
-            true => self.collect_bag_seq(Vec::new(), |v, x| v.push(x)),
-            false => self.collect_bag_par(|len| FixedVec::new(len)).into(),
-        }
-    }
-
-    fn collect(self) -> SplitVec<Self::Item> {
-        match self.params.is_sequential() {
-            true => self.collect_bag_seq(SplitVec::new(), |v, x| v.push(x)),
-            false => {
-                let new_output = |len| {
-                    let mut vec = SplitVec::new();
-                    unsafe { _ = vec.grow_to(len, false) };
-                    vec
-                };
-                self.collect_bag_par(new_output)
-            }
-        }
-    }
-
-    fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
-        output.map_filter_into(self)
-    }
-}
-
 impl<I, O, M, F> ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
+    M: Fn(I::Item) -> O + FnSync,
+    F: Fn(&O) -> bool + FnSync,
 {
-    // define
-
     pub(crate) fn new(iter: I, params: Params, map: M, filter: F) -> Self {
         Self {
             iter,
@@ -184,6 +50,10 @@ where
             map,
             filter,
         }
+    }
+
+    fn destruct(self) -> (Params, I, M, F) {
+        (self.params, self.iter, self.map, self.filter)
     }
 
     // collect
@@ -195,7 +65,7 @@ where
     {
         debug_assert!(!self.params.is_sequential());
 
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
+        let (params, iter, map, filter) = self.destruct();
 
         let bag = ConcurrentBag::new();
         match iter.try_get_len() {
@@ -222,7 +92,7 @@ where
     {
         debug_assert!(self.params.is_sequential());
 
-        let (iter, map, filter) = (self.iter, self.map, self.filter);
+        let (_, iter, map, filter) = self.destruct();
         seq_map_fil_col(iter, map, filter, &mut output, push);
         output
     }
@@ -266,7 +136,7 @@ where
     /// assert_eq!(first_prime, None);
     /// ```
     pub fn first_with_index(self) -> Option<(usize, O)> {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
+        let (params, iter, map, filter) = self.destruct();
         map_fil_find(params, iter, map, filter)
     }
 
@@ -310,9 +180,144 @@ where
     where
         P: Fn(&O) -> bool + Send + Sync,
     {
-        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
+        let (params, iter, map, filter) = self.destruct();
         let composed = move |x: &O| filter(x) && predicate(x);
         map_fil_find(params, iter, map, composed)
+    }
+}
+
+impl<I, O, M, F> ParIter for ParMapFilter<I, O, M, F>
+where
+    I: ConcurrentIter,
+    O: Send + Sync + Debug,
+    M: Fn(I::Item) -> O + FnSync,
+    F: Fn(&O) -> bool + FnSync,
+{
+    type Item = O;
+
+    fn params(&self) -> Params {
+        self.params
+    }
+
+    fn num_threads(mut self, num_threads: impl Into<crate::NumThreads>) -> Self {
+        self.params = self.params.with_num_threads(num_threads);
+        self
+    }
+
+    fn chunk_size(mut self, chunk_size: impl Into<crate::ChunkSize>) -> Self {
+        self.params = self.params.with_chunk_size(chunk_size);
+        self
+    }
+
+    // transform
+
+    fn map<O2, M2>(
+        self,
+        map: M2,
+    ) -> ParFilterMap<I, Option<O2>, O2, impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + FnSync>
+    where
+        O2: Send + Sync + Debug,
+        M2: Fn(Self::Item) -> O2 + FnSync,
+    {
+        let (params, iter, map1, filter) = self.destruct();
+
+        let composed_filter_map = move |x: I::Item| {
+            let value = map1(x);
+            match filter(&value) {
+                false => None,
+                true => Some(map(value)),
+            }
+        };
+
+        ParFilterMap::new(iter, params, composed_filter_map)
+    }
+
+    fn flat_map<O2, OI, FM>(self, flat_map: FM) -> ParFlatMap<ConIterOfVec<O>, O2, OI, FM>
+    where
+        O2: Send + Sync + Debug,
+        OI: IntoIterator<Item = O2>,
+        FM: Fn(Self::Item) -> OI + FnSync,
+    {
+        let params = self.params;
+        let vec = self.collect_vec();
+        let iter = vec.into_con_iter();
+        ParFlatMap::new(iter, params, flat_map)
+    }
+
+    fn filter<F2>(self, filter: F2) -> ParMapFilter<I, O, M, impl Fn(&O) -> bool + FnSync>
+    where
+        F2: Fn(&Self::Item) -> bool + FnSync,
+    {
+        let (params, iter, map, filter1) = self.destruct();
+        let composed = move |x: &O| filter1(x) && filter(x);
+        ParMapFilter::new(iter, params, map, composed)
+    }
+
+    fn filter_map<O2, FO, FM>(
+        self,
+        filter_map: FM,
+    ) -> ParFilterMap<I, Option<O2>, O2, impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + FnSync>
+    where
+        O2: Send + Sync + Debug,
+        FO: Fallible<O2> + Send + Sync + Debug,
+        FM: Fn(Self::Item) -> FO + FnSync,
+    {
+        let (params, iter, map, filter) = self.destruct();
+        let composed = move |x| {
+            let mapped = map(x);
+            match filter(&mapped) {
+                false => None,
+                true => filter_map(mapped).into_option(),
+            }
+        };
+        ParFilterMap::new(iter, params, composed)
+    }
+
+    // reduce
+
+    fn count(self) -> usize {
+        let (params, iter, map, filter) = self.destruct();
+        map_fil_cnt(params, iter, map, filter)
+    }
+
+    // find
+
+    fn find<P>(self, predicate: P) -> Option<Self::Item>
+    where
+        P: Fn(&Self::Item) -> bool + FnSync,
+    {
+        self.find_with_index(predicate).map(|x| x.1)
+    }
+
+    fn first(self) -> Option<Self::Item> {
+        self.first_with_index().map(|x| x.1)
+    }
+
+    // collect
+
+    fn collect_vec(self) -> Vec<Self::Item> {
+        match self.params.is_sequential() {
+            true => self.collect_bag_seq(Vec::new(), |v, x| v.push(x)),
+            false => self.collect_bag_par(|len| FixedVec::new(len)).into(),
+        }
+    }
+
+    fn collect(self) -> SplitVec<Self::Item> {
+        match self.params.is_sequential() {
+            true => self.collect_bag_seq(SplitVec::new(), |v, x| v.push(x)),
+            false => {
+                let new_output = |len| {
+                    let mut vec = SplitVec::new();
+                    unsafe { _ = vec.grow_to(len, false) };
+                    vec
+                };
+                self.collect_bag_par(new_output)
+            }
+        }
+    }
+
+    fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
+        output.map_filter_into(self)
     }
 }
 
@@ -320,8 +325,8 @@ impl<I, O, M, F> Reduce<O> for ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-    F: Fn(&O) -> bool + Send + Sync + Clone,
+    M: Fn(I::Item) -> O + FnSync,
+    F: Fn(&O) -> bool + FnSync,
 {
     fn reduce<R>(self, reduce: R) -> Option<O>
     where

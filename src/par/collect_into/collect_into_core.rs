@@ -1,4 +1,5 @@
 use crate::{
+    fn_sync::FnSync,
     par::{par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter},
     Fallible, ParMap, ParMapFilter,
 };
@@ -14,13 +15,13 @@ pub trait ParCollectIntoCore<O: Send + Sync + Debug> {
     fn map_into<I, M>(self, par_map: ParMap<I, O, M>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync + Clone;
+        M: Fn(I::Item) -> O + FnSync;
 
     fn map_filter_into<I, M, F>(self, par: ParMapFilter<I, O, M, F>) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync + Clone,
-        F: Fn(&O) -> bool + Send + Sync + Clone;
+        M: Fn(I::Item) -> O + FnSync,
+        F: Fn(&O) -> bool + FnSync;
 
     fn flatmap_filter_into<I, OI, M, F>(self, par: ParFlatMapFilter<I, O, OI, M, F>) -> Self
     where
@@ -33,8 +34,8 @@ pub trait ParCollectIntoCore<O: Send + Sync + Debug> {
     where
         I: ConcurrentIter,
         FO: Fallible<O> + Send + Sync + Debug,
-        M: Fn(I::Item) -> FO + Send + Sync + Clone,
-        F: Fn(&O) -> bool + Send + Sync + Clone;
+        M: Fn(I::Item) -> FO + FnSync,
+        F: Fn(&O) -> bool + FnSync;
 
     fn into_concurrent_bag(self) -> ConcurrentBag<O, Self::BridgePinnedVec>;
 

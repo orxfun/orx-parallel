@@ -15,6 +15,7 @@
 
 mod chunk_size;
 mod core;
+mod fn_sync;
 mod into_par;
 mod num_threads;
 mod par;

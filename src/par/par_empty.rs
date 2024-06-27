@@ -10,6 +10,7 @@ use crate::{
         map_fil_red::map_fil_red,
     },
     par_iter::ParIter,
+    fn_sync::FnSync,
     ChunkSize, Fallible, NumThreads, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -54,7 +55,7 @@ where
     fn map<O, M>(self, map: M) -> ParMap<I, O, M>
     where
         O: Send + Sync + Debug,
-        M: Fn(Self::Item) -> O + Send + Sync + Clone,
+        M: Fn(Self::Item) -> O + FnSync,
     {
         ParMap::new(self.iter, self.params, map)
     }
@@ -63,14 +64,14 @@ where
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
-        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
+        FM: Fn(Self::Item) -> OI + FnSync,
     {
         ParFlatMap::new(self.iter, self.params, flat_map)
     }
 
     fn filter<F>(self, filter: F) -> ParFilter<I, F>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        F: Fn(&Self::Item) -> bool + FnSync,
     {
         ParFilter::new(self.iter, self.params, filter)
     }
@@ -79,7 +80,7 @@ where
     where
         O: Send + Sync + Debug,
         FO: Fallible<O> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
+        FM: Fn(Self::Item) -> FO + FnSync,
     {
         ParFilterMap::new(self.iter, self.params, filter_map)
     }
