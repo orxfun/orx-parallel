@@ -1,5 +1,6 @@
 use super::diagnostics::ParThreadLogger;
 use super::runner::{ParTask, Runner};
+use crate::fn_sync::FnSync;
 use crate::{Fallible, Params};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -20,7 +21,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync + Debug,
     Out: Send + Sync + Debug,
-    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
+    FilterMap: Fn(I::Item) -> FO + FnSync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
     Q: PinnedVec<usize>,
@@ -48,7 +49,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync + Debug,
     Out: Send + Sync + Debug,
-    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
+    FilterMap: Fn(I::Item) -> FO + FnSync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
     Q: PinnedVec<usize>,
@@ -86,7 +87,7 @@ fn task<I, FO, Out, FilterMap, Fil, P, Q, L>(
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync + Debug,
     Out: Send + Sync + Debug,
-    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
+    FilterMap: Fn(I::Item) -> FO + FnSync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
     Q: PinnedVec<usize>,
@@ -159,7 +160,7 @@ pub fn seq_filtermap_fil_col<I, FO, Out, FilterMap, Fil, Output, Push>(
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync + Debug,
     Out: Send + Sync,
-    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
+    FilterMap: Fn(I::Item) -> FO + FnSync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     Push: FnMut(&mut Output, Out),
 {

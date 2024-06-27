@@ -7,6 +7,7 @@ use crate::{
         flatmap_fil_find::fmap_fil_find,
         flatmap_fil_red::fmap_fil_red,
     },
+    fn_sync::FnSync,
     par::collect_into::collect_into_core::merge_bag_and_pos_len,
     ParCollectInto, ParIter, ParMap, Params,
 };
@@ -31,8 +32,73 @@ where
 {
     iter: I,
     params: Params,
-    fmap: M,
+    flat_map: M,
     filter: F,
+}
+
+impl<I, O, OI, M, F> ParFlatMapFilter<I, O, OI, M, F>
+where
+    I: ConcurrentIter,
+    O: Send + Sync + Debug,
+    OI: IntoIterator<Item = O>,
+    M: Fn(I::Item) -> OI + Send + Sync,
+    F: Fn(&O) -> bool + Send + Sync,
+{
+    pub(crate) fn new(iter: I, params: Params, flat_map: M, filter: F) -> Self {
+        Self {
+            iter,
+            params,
+            flat_map,
+            filter,
+        }
+    }
+
+    fn destruct(self) -> (Params, I, M, F) {
+        (self.params, self.iter, self.flat_map, self.filter)
+    }
+
+    // collect
+
+    pub(crate) fn collect_bag_par<Output, NewOutput>(self, new_output: NewOutput) -> Output
+    where
+        Output: PinnedVec<O> + Debug,
+        NewOutput: FnOnce(usize) -> Output,
+    {
+        debug_assert!(!self.params.is_sequential());
+
+        let (params, iter, flat_map, filter) = self.destruct();
+
+        let bag = ConcurrentBag::new();
+        let positions = ConcurrentOrderedBag::new();
+        let (bag, pos_len) = par_fmap_fil_col(params, iter, flat_map, filter, bag, positions);
+        let mut output = new_output(bag.len());
+        merge_bag_and_pos_len(bag, &pos_len, &mut output);
+        output
+    }
+
+    pub(crate) fn collect_bag_seq<Output, Push>(self, mut output: Output, push: Push) -> Output
+    where
+        Push: FnMut(&mut Output, O),
+    {
+        debug_assert!(self.params.is_sequential());
+
+        let (_, iter, flat_map, filter) = self.destruct();
+
+        seq_fmap_fil_col(iter, flat_map, filter, &mut output, push);
+        output
+    }
+
+    pub(crate) fn collect_bag_x<P>(self, collected: ConcurrentBag<O, P>) -> ConcurrentBag<O, P>
+    where
+        P: PinnedVec<O>,
+    {
+        let (params, iter, flat_map, filter) = self.destruct();
+
+        match params.is_sequential() {
+            true => seq_fmap_fil_colx(iter, flat_map, filter, collected),
+            false => par_fmap_fil_colx(params, iter, flat_map, filter, collected),
+        }
+    }
 }
 
 impl<I, O, OI, M, F> ParIter for ParFlatMapFilter<I, O, OI, M, F>
@@ -64,7 +130,7 @@ where
     fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     where
         O2: Send + Sync + Debug,
-        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
+        M2: Fn(Self::Item) -> O2 + FnSync,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -76,7 +142,7 @@ where
     where
         O2: Send + Sync + Debug,
         OI2: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
+        FM: Fn(Self::Item) -> OI2 + FnSync,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -91,16 +157,16 @@ where
     where
         F2: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        let (params, iter, fmap, filter1) = (self.params, self.iter, self.fmap, self.filter);
+        let (params, iter, flat_map, filter1) = self.destruct();
         let composed = move |x: &O| filter1(x) && filter(x);
-        ParFlatMapFilter::new(iter, params, fmap, composed)
+        ParFlatMapFilter::new(iter, params, flat_map, composed)
     }
 
     fn filter_map<O2, FO, FM>(self, filter_map: FM) -> ParFilterMap<ConIterOfVec<O>, FO, O2, FM>
     where
         O2: Send + Sync + Debug,
         FO: crate::Fallible<O2> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
+        FM: Fn(Self::Item) -> FO + FnSync,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -111,23 +177,23 @@ where
     // reduce
 
     fn count(self) -> usize {
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
-        fmap_fil_cnt(params, iter, fmap, filter)
+        let (params, iter, flat_map, filter) = self.destruct();
+        fmap_fil_cnt(params, iter, flat_map, filter)
     }
 
     // find
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        P: Fn(&Self::Item) -> bool + FnSync,
     {
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
+        let (params, iter, flat_map, filter) = self.destruct();
         let composed = move |x: &O| filter(x) && predicate(x);
-        fmap_fil_find(params, iter, fmap, composed)
+        fmap_fil_find(params, iter, flat_map, composed)
     }
 
     fn first(self) -> Option<Self::Item> {
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
-        fmap_fil_find(params, iter, fmap, filter)
+        let (params, iter, flat_map, filter) = self.destruct();
+        fmap_fil_find(params, iter, flat_map, filter)
     }
 
     // collect
@@ -171,64 +237,6 @@ where
     }
 }
 
-impl<I, O, OI, M, F> ParFlatMapFilter<I, O, OI, M, F>
-where
-    I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    OI: IntoIterator<Item = O>,
-    M: Fn(I::Item) -> OI + Send + Sync,
-    F: Fn(&O) -> bool + Send + Sync,
-{
-    pub(crate) fn new(iter: I, params: Params, fmap: M, filter: F) -> Self {
-        Self {
-            iter,
-            params,
-            fmap,
-            filter,
-        }
-    }
-
-    // collect
-
-    pub(crate) fn collect_bag_par<Output, NewOutput>(self, new_output: NewOutput) -> Output
-    where
-        Output: PinnedVec<O> + Debug,
-        NewOutput: FnOnce(usize) -> Output,
-    {
-        debug_assert!(!self.params.is_sequential());
-
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
-        let bag = ConcurrentBag::new();
-        let positions = ConcurrentOrderedBag::new();
-        let (bag, pos_len) = par_fmap_fil_col(params, iter, fmap, filter, bag, positions);
-        let mut output = new_output(bag.len());
-        merge_bag_and_pos_len(bag, &pos_len, &mut output);
-        output
-    }
-
-    pub(crate) fn collect_bag_seq<Output, Push>(self, mut output: Output, push: Push) -> Output
-    where
-        Push: FnMut(&mut Output, O),
-    {
-        debug_assert!(self.params.is_sequential());
-
-        let (iter, fmap, filter) = (self.iter, self.fmap, self.filter);
-        seq_fmap_fil_col(iter, fmap, filter, &mut output, push);
-        output
-    }
-
-    pub(crate) fn collect_bag_x<P>(self, collected: ConcurrentBag<O, P>) -> ConcurrentBag<O, P>
-    where
-        P: PinnedVec<O>,
-    {
-        let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
-        match params.is_sequential() {
-            true => seq_fmap_fil_colx(iter, fmap, filter, collected),
-            false => par_fmap_fil_colx(params, iter, fmap, filter, collected),
-        }
-    }
-}
-
 impl<I, O, OI, M, F> Reduce<O> for ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
@@ -241,6 +249,6 @@ where
     where
         R: Fn(O, O) -> O + Send + Sync,
     {
-        fmap_fil_red(self.params, self.iter, self.fmap, self.filter, reduce)
+        fmap_fil_red(self.params, self.iter, self.flat_map, self.filter, reduce)
     }
 }

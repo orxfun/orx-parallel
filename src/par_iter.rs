@@ -1,4 +1,4 @@
-use crate::{ChunkSize, Fallible, NumThreads, ParCollectInto, Params, Reduce};
+use crate::{fn_sync::FnSync, ChunkSize, Fallible, NumThreads, ParCollectInto, Params, Reduce};
 use orx_split_vec::SplitVec;
 use std::fmt::Debug;
 
@@ -164,7 +164,7 @@ pub trait ParIter: Reduce<Self::Item> {
     fn map<O, M>(self, map: M) -> impl ParIter<Item = O>
     where
         O: Send + Sync + Debug,
-        M: Fn(Self::Item) -> O + Send + Sync + Clone;
+        M: Fn(Self::Item) -> O + FnSync;
 
     /// Takes the closure `fmap` and creates an iterator which calls that closure on each element and flattens the result.
     ///
@@ -180,7 +180,7 @@ pub trait ParIter: Reduce<Self::Item> {
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
-        FM: Fn(Self::Item) -> OI + Send + Sync + Clone;
+        FM: Fn(Self::Item) -> OI + FnSync;
 
     /// Creates an iterator which uses the closure `filter` to determine if an element should be yielded.
     ///
@@ -194,13 +194,13 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn filter<F>(self, filter: F) -> impl ParIter<Item = Self::Item>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync + Clone;
+        F: Fn(&Self::Item) -> bool + FnSync;
 
     fn filter_map<O, FO, FM>(self, filter_map: FM) -> impl ParIter<Item = O>
     where
         O: Send + Sync + Debug,
         FO: Fallible<O> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + Send + Sync + Clone;
+        FM: Fn(Self::Item) -> FO + FnSync;
 
     //reduce
 
@@ -252,7 +252,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone;
+        P: Fn(&Self::Item) -> bool + FnSync;
 
     /// Returns the first element of the iterator; returns None if the iterator is empty.
     ///

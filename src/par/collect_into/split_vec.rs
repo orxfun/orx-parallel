@@ -1,5 +1,6 @@
 use super::collect_into_core::ParCollectIntoCore;
 use crate::{
+    fn_sync::FnSync,
     par::{par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter},
     ParCollectInto, ParIter, ParMap, ParMapFilter,
 };
@@ -16,7 +17,7 @@ impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for Spli
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync + Clone,
+        M: Fn(I::Item) -> O + FnSync,
     {
         if let Some(len) = par_map.iter_len() {
             self.try_reserve_maximum_concurrent_capacity(self.len() + len)
@@ -30,8 +31,8 @@ impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for Spli
     fn map_filter_into<I, M, F>(mut self, par: ParMapFilter<I, O, M, F>) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync + Clone,
-        F: Fn(&O) -> bool + Send + Sync + Clone,
+        M: Fn(I::Item) -> O + FnSync,
+        F: Fn(&O) -> bool + FnSync,
     {
         match par.params().is_sequential() {
             true => par.collect_bag_seq(self, |v, x| v.push(x)),
@@ -68,8 +69,8 @@ impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for Spli
     where
         I: orx_concurrent_iter::ConcurrentIter,
         FO: crate::Fallible<O> + Send + Sync + Debug,
-        M: Fn(I::Item) -> FO + Send + Sync + Clone,
-        F: Fn(&O) -> bool + Send + Sync + Clone,
+        M: Fn(I::Item) -> FO + FnSync,
+        F: Fn(&O) -> bool + FnSync,
     {
         match par.params().is_sequential() {
             true => par.collect_bag_seq(self, |v, x| v.push(x)),
