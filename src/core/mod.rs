@@ -1,8 +1,15 @@
 pub mod default_fns;
+pub mod diagnostics;
+pub mod fmap_fil_cnt;
+pub mod fmap_fil_col;
+pub mod fmap_fil_colx;
+pub mod fmap_fil_find;
+pub mod fmap_fil_red;
 pub mod map_col;
 pub mod map_fil_cnt;
 pub mod map_fil_col;
 pub mod map_fil_find;
 pub mod map_fil_red;
-pub mod params;
-pub mod run_params;
+mod runner;
+mod runner_settings;
+mod utils;

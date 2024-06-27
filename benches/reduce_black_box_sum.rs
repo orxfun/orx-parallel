@@ -30,12 +30,13 @@ fn rayon_reduce_with(inputs: &[usize]) -> Option<usize> {
     inputs.into_par_iter().copied().reduce_with(red)
 }
 
-fn orx_parallel(inputs: &[usize], num_threads: usize) -> Option<usize> {
+fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
     inputs
         .into_con_iter()
         .cloned()
         .into_par()
         .num_threads(num_threads)
+        .chunk_size(chunk_size)
         .reduce(red)
 }
 
@@ -98,7 +99,7 @@ fn reduce_black_box_sum(c: &mut Criterion) {
             let params = format!("orx-parallel-t{}-c{}", t, c);
             group.bench_with_input(BenchmarkId::new(params, name.clone()), &name, |b, _| {
                 b.iter(|| {
-                    let result = orx_parallel(black_box(&input), t);
+                    let result = orx_parallel(black_box(&input), t, c);
                     assert_eq!(result, expected);
                 })
             });

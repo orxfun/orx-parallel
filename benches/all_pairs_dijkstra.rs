@@ -57,14 +57,14 @@ fn rayon(weights: &Weights) -> Weights {
 
 fn orx_parallel_default(weights: &Weights) -> Weights {
     (0..weights.len())
-        .into_par()
+        .par()
         .map(|s| single_source_all_destinations(weights, s))
         .collect_vec()
 }
 
 fn orx_parallel(weights: &Weights, num_threads: Option<usize>, chunk_size: usize) -> Weights {
     let len = weights.len();
-    let mut par = (0..len).into_par().chunk_size(chunk_size);
+    let mut par = (0..len).par().chunk_size(chunk_size);
 
     if let Some(num_threads) = num_threads {
         par = par.num_threads(num_threads);
@@ -75,8 +75,8 @@ fn orx_parallel(weights: &Weights, num_threads: Option<usize>, chunk_size: usize
 }
 
 fn all_pairs_dijkstra(c: &mut Criterion) {
-    let treatments = [64, 512];
-    let params = [(Some(1), 16), (Some(8), 16), (None, 16)];
+    let treatments = [64, 512, 1024];
+    let params = [(Some(1), 16), (Some(8), 16), (Some(16), 16)];
 
     let mut group = c.benchmark_group("all_pairs_dijkstra");
 
