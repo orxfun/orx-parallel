@@ -17,7 +17,7 @@ pub fn par_map_fil_col<I, Out, Map, Fil, P, Q>(
 ) -> (P, Q)
 where
     I: ConcurrentIter,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -44,7 +44,7 @@ fn par_map_fil_col_core<I, Out, Map, Fil, P, Q, L>(
 ) -> (P, Q)
 where
     I: ConcurrentIter,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -72,7 +72,7 @@ fn task<I, Out, Map, Fil, P, Q, L>(
     chunk_size: usize,
 ) where
     I: ConcurrentIter,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,

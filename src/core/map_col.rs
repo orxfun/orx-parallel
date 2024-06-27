@@ -15,7 +15,7 @@ pub fn map_col<I, Out, Map, P>(
 ) -> P
 where
     I: ConcurrentIter,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     P: PinnedVec<Out>,
 {
@@ -41,7 +41,7 @@ fn par_map_col<I, Out, Map, P, L>(
 ) -> P
 where
     I: ConcurrentIter,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     P: PinnedVec<Out>,
     L: ParThreadLogger,
@@ -62,7 +62,7 @@ fn task<I, Out, Map, P, L>(
     chunk_size: usize,
 ) where
     I: ConcurrentIter,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     P: PinnedVec<Out>,
     L: ParThreadLogger,
@@ -88,7 +88,7 @@ fn task<I, Out, Map, P, L>(
 fn seq_map_col<I, Out, Map, P>(iter: I, map: Map, collected: ConcurrentOrderedBag<Out, P>) -> P
 where
     I: ConcurrentIter,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     P: PinnedVec<Out>,
 {

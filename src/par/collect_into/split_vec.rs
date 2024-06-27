@@ -1,12 +1,13 @@
-use super::par_collect_into::ParCollectInto;
-use crate::{par::par_fmap_fil::ParFMapFilter, ParIter, ParMap, ParMapFilter};
+use super::collect_into_core::ParCollectIntoCore;
+use crate::{par::par_fmap_fil::ParFMapFilter, ParCollectInto, ParIter, ParMap, ParMapFilter};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_pinned_vec::PinnedVec;
-use orx_split_vec::{Growth, SplitVec};
+use orx_split_vec::*;
 use std::fmt::Debug;
 
-impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectInto<O> for SplitVec<O, G> {
+impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectInto<O> for SplitVec<O, G> {}
+
+impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G> {
     type BridgePinnedVec = Self;
 
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
@@ -39,15 +40,6 @@ impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectInto<O> for SplitVec
                 })
                 .into(),
         }
-
-        // if let Some(iter_len) = par.iter_len() {
-        //     let required_len = self.len() + iter_len;
-        //     self.try_reserve_maximum_concurrent_capacity(required_len)
-        //         .expect("Failed to reserve sufficient capacity");
-        // }
-
-        // par.collect_bag_zzz(|x| self.push(x));
-        // self
     }
 
     fn fmap_filter_into<I, OI, M, F>(mut self, par: ParFMapFilter<I, O, OI, M, F>) -> Self
@@ -75,5 +67,12 @@ impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectInto<O> for SplitVec
 
     fn from_concurrent_bag(bag: ConcurrentBag<O, Self::BridgePinnedVec>) -> Self {
         bag.into_inner().into()
+    }
+
+    fn seq_extend<I: Iterator<Item = O>>(mut self, iter: I) -> Self {
+        for x in iter {
+            self.push(x)
+        }
+        self
     }
 }

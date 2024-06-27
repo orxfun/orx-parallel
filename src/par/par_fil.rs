@@ -1,18 +1,14 @@
-use std::fmt::Debug;
-
-use super::{
-    collect_into::par_collect_into::ParCollectInto, par_fmap::ParFMap, par_map::ParMap,
-    reduce::Reduce,
-};
+use super::{par_fmap::ParFMap, par_map::ParMap, reduce::Reduce};
 use crate::{
     core::{
         default_fns::map_self, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    ParIter, ParMapFilter, Params,
+    ParCollectInto, ParIter, ParMapFilter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
+use std::fmt::Debug;
 
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
@@ -21,7 +17,7 @@ pub struct ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     iter: I,
     params: Params,
@@ -32,7 +28,7 @@ impl<I, F> ParIter for ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     type Item = I::Item;
 
@@ -52,7 +48,7 @@ where
 
     fn map<O, M>(self, map: M) -> ParMap<ConIterOfVec<<I as ConcurrentIter>::Item>, O, M>
     where
-        O: Send + Sync + Default + Debug,
+        O: Send + Sync + Debug,
         M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
         let params = self.params;
@@ -66,7 +62,7 @@ where
         fmap: FM,
     ) -> ParFMap<ConIterOfVec<<I as ConcurrentIter>::Item>, O, OI, FM>
     where
-        O: Send + Sync + Default + Debug,
+        O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
@@ -121,7 +117,7 @@ impl<I, F> ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     pub(crate) fn new(iter: I, params: Params, filter: F) -> Self {
         Self {
@@ -224,7 +220,7 @@ impl<I, F> Reduce<I::Item> for ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     fn reduce<R>(self, reduce: R) -> Option<I::Item>
     where

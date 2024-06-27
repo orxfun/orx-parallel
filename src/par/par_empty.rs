@@ -1,9 +1,4 @@
-use std::fmt::Debug;
-
-use super::{
-    collect_into::par_collect_into::ParCollectInto, par_fil::ParFilter, par_fmap::ParFMap,
-    par_map::ParMap, reduce::Reduce,
-};
+use super::{par_fil::ParFilter, par_fmap::ParFMap, par_map::ParMap, reduce::Reduce};
 use crate::{
     core::{
         default_fns::{map_self, no_filter},
@@ -12,10 +7,11 @@ use crate::{
         map_fil_red::map_fil_red,
     },
     par_iter::ParIter,
-    ChunkSize, NumThreads, Params,
+    ChunkSize, NumThreads, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::SplitVec;
+use std::fmt::Debug;
 
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
@@ -23,7 +19,7 @@ use orx_split_vec::SplitVec;
 pub struct Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     iter: I,
     params: Params,
@@ -32,7 +28,7 @@ where
 impl<I> ParIter for Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     type Item = I::Item;
 
@@ -52,7 +48,7 @@ where
 
     fn map<O, M>(self, map: M) -> ParMap<I, O, M>
     where
-        O: Send + Sync + Default + Debug,
+        O: Send + Sync + Debug,
         M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
         ParMap::new(self.iter, self.params, map)
@@ -60,7 +56,7 @@ where
 
     fn flat_map<O, OI, FM>(self, fmap: FM) -> ParFMap<I, O, OI, FM>
     where
-        O: Send + Sync + Default + Debug,
+        O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
@@ -95,22 +91,22 @@ where
     // collect
 
     fn collect_vec(self) -> Vec<Self::Item> {
-        todo!()
+        self.iter.into_seq_iter().collect()
     }
 
     fn collect(self) -> SplitVec<Self::Item> {
-        todo!()
+        self.iter.into_seq_iter().collect()
     }
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
-        todo!()
+        output.seq_extend(self.iter.into_seq_iter())
     }
 }
 
 impl<I> Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     pub(crate) fn new(iter: I) -> Self {
         Self {
@@ -210,7 +206,7 @@ where
 impl<I> Reduce<I::Item> for Par<I>
 where
     I: ConcurrentIter,
-    I::Item: Default + Debug,
+    I::Item: Debug,
 {
     fn reduce<R>(self, reduce: R) -> Option<I::Item>
     where

@@ -5,6 +5,7 @@ mod utils;
 use crate::utils::{test_different_params, test_reduce};
 use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_parallel::*;
+use orx_split_vec::*;
 
 #[test]
 fn par_empty_par() {
@@ -91,6 +92,86 @@ fn par_empty_filter() {
     let result = filter.collect_vec();
 
     assert_eq!(result.as_slice(), [42, 9876].map(|x| x.to_string()));
+}
+
+// collect
+
+#[test]
+fn par_empty_collect() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let vec = (54..5448).collect::<Vec<_>>();
+        let iter = vec.into_iter().take(10000).into_con_iter().into_par();
+        let iter = iter.num_threads(num_threads).chunk_size(chunk_size);
+        let result = iter.collect();
+
+        assert_eq!(result.len(), 5448 - 54);
+        for (i, x) in (54..5448).enumerate() {
+            assert_eq!(result.get(i).cloned(), Some(x));
+        }
+    }
+    test_different_params(test)
+}
+
+#[test]
+fn par_empty_collect_vec() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let iter = (54..5448).collect::<Vec<_>>().into_par();
+        let iter = iter.num_threads(num_threads).chunk_size(chunk_size);
+        let result = iter.collect_vec();
+
+        assert_eq!(result.len(), 5448 - 54);
+        for (i, x) in (54..5448).enumerate() {
+            assert_eq!(result.get(i).cloned(), Some(x));
+        }
+    }
+    test_different_params(test)
+}
+
+#[test]
+fn par_empty_collect_into() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let iter = (54..5448).collect::<Vec<_>>().into_par();
+        let iter = iter.num_threads(num_threads).chunk_size(chunk_size);
+        let result1 = iter.collect_into(SplitVec::new());
+
+        assert_eq!(result1.len(), 5448 - 54);
+        for (i, x) in (54..5448).enumerate() {
+            assert_eq!(result1.get(i).cloned(), Some(x));
+        }
+
+        let iter = (5448..6000).collect::<Vec<_>>().into_par();
+        let iter = iter.num_threads(num_threads).chunk_size(chunk_size);
+        let result2 = iter.collect_into(result1);
+        assert_eq!(result2.len(), 6000 - 54);
+        for (i, x) in (54..6000).enumerate() {
+            assert_eq!(result2.get(i).cloned(), Some(x));
+        }
+    }
+    test_different_params(test)
+}
+
+#[test]
+fn par_empty_collect_into_vec() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let iter = (54..5448).collect::<Vec<_>>().into_par();
+        let iter = iter.num_threads(num_threads).chunk_size(chunk_size);
+        let result1 = iter.collect_into(vec![]);
+
+        assert_eq!(result1.len(), 5448 - 54);
+        for (i, x) in (54..5448).enumerate() {
+            assert_eq!(result1.get(i).cloned(), Some(x));
+        }
+
+        let iter = (5448..6000).collect::<Vec<_>>().into_par();
+        let iter = iter.num_threads(num_threads).chunk_size(chunk_size);
+        let result2 = iter.collect_into(result1);
+        assert_eq!(result2.len(), 6000 - 54);
+        for (i, x) in (54..6000).enumerate() {
+            assert_eq!(result2.get(i).cloned(), Some(x));
+        }
+    }
+
+    test_different_params(test)
 }
 
 // count

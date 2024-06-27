@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 orx-concurrent-bag = "1.14"
-orx-concurrent-iter = "1.19"
+orx-concurrent-iter = { path = "../orx-concurrent-iter" }
 orx-concurrent-ordered-bag = "1.2"
 orx-pinned-concurrent-col = "1.4"
 orx-fixed-vec = "2.11"

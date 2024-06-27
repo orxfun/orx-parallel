@@ -1,11 +1,4 @@
-use std::fmt::Debug;
-
-use super::{
-    collect_into::par_collect_into::{merge_bag_and_positions, ParCollectInto},
-    par_fmap::ParFMap,
-    par_map::ParMap,
-    reduce::Reduce,
-};
+use super::{par_fmap::ParFMap, par_map::ParMap, reduce::Reduce};
 use crate::{
     core::{
         map_fil_cnt::map_fil_cnt,
@@ -13,7 +6,8 @@ use crate::{
         map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    ParIter, Params,
+    par::collect_into::collect_into_core::merge_bag_and_positions,
+    ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -21,6 +15,7 @@ use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
+use std::fmt::Debug;
 
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
@@ -41,7 +36,7 @@ where
 impl<I, O, M, F> ParIter for ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default + Debug, // todo!: temporary requirement, must replace with PinnedVec::into_iter. Default is temporary also
+    O: Send + Sync + Debug,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
     F: Fn(&O) -> bool + Send + Sync + Clone,
 {
@@ -63,7 +58,7 @@ where
 
     fn map<O2, M2>(self, map: M2) -> ParMap<impl ConcurrentIter<Item = O>, O2, M2>
     where
-        O2: Send + Sync + Default + Debug,
+        O2: Send + Sync + Debug,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let params = self.params;
@@ -74,7 +69,7 @@ where
 
     fn flat_map<O2, OI, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, O2, OI, FM>
     where
-        O2: Send + Sync + Default + Debug,
+        O2: Send + Sync + Debug,
         OI: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
@@ -137,10 +132,6 @@ where
                 self.collect_bag_par(new_output)
             }
         }
-
-        // let mut vec = SplitVec::new();
-        // self.collect_bag_zzz(|x| vec.push(x));
-        // vec
     }
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
@@ -166,15 +157,10 @@ where
         }
     }
 
-    pub(crate) fn iter_len(&self) -> Option<usize> {
-        self.iter.try_get_len()
-    }
-
     // collect
 
     pub(crate) fn collect_bag_par<Output, NewOutput>(self, new_output: NewOutput) -> Output
     where
-        O: Default,
         Output: PinnedVec<O> + Debug,
         NewOutput: FnOnce(usize) -> Output,
     {
@@ -211,35 +197,6 @@ where
         seq_map_fil_col(iter, map, filter, &mut output, push);
         output
     }
-
-    // pub(crate) fn collect_bag_zzz<Push>(self, mut push: Push)
-    // where
-    //     O: Default,
-    //     Push: FnMut(O),
-    // {
-    //     let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
-
-    //     match params.is_sequential() {
-    //         true => seq_map_fil_col(iter, map, filter, push),
-    //         _ => {
-    //             let bag = ConcurrentBag::new();
-    //             match iter.try_get_len() {
-    //                 Some(len) => {
-    //                     let positions = ConcurrentOrderedBag::with_fixed_capacity(len);
-    //                     let (bag, positions) =
-    //                         par_map_fil_col(params, iter, map, filter, bag, positions);
-    //                     merge_bag_and_positions_zzz(bag, &positions, &mut push);
-    //                 }
-    //                 None => {
-    //                     let positions = ConcurrentOrderedBag::new();
-    //                     let (bag, positions) =
-    //                         par_map_fil_col(params, iter, map, filter, bag, positions);
-    //                     merge_bag_and_positions_zzz(bag, &positions, &mut push);
-    //                 }
-    //             };
-    //         }
-    //     }
-    // }
 
     // find
 
@@ -333,7 +290,7 @@ where
 impl<I, O, M, F> Reduce<O> for ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default + Debug,
+    O: Send + Sync + Debug,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
     F: Fn(&O) -> bool + Send + Sync + Clone,
 {

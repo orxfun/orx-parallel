@@ -1,7 +1,6 @@
-use super::collect_into::par_collect_into::ParCollectInto;
 use super::{par_fmap_fil::ParFMapFilter, reduce::Reduce};
-use crate::ParIter;
 use crate::{core::default_fns::no_filter, Params};
+use crate::{ParCollectInto, ParIter};
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
 use std::fmt::Debug;
@@ -13,7 +12,7 @@ use std::iter::Map;
 pub struct ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug + Default,
+    O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -25,7 +24,7 @@ where
 impl<I, O, OI, M> ParIter for ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug + Default,
+    O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -55,7 +54,7 @@ where
         impl Fn(<I as ConcurrentIter>::Item) -> Map<<OI as IntoIterator>::IntoIter, M2> + Clone,
     >
     where
-        O2: Send + Sync + Debug + Default,
+        O2: Send + Sync + Debug,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, map1) = (self.params, self.iter, self.fmap);
@@ -69,7 +68,7 @@ where
 
     fn flat_map<O2, OI2, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, O2, OI2, FM>
     where
-        O2: Send + Sync + Default + Debug,
+        O2: Send + Sync + Debug,
         OI2: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
@@ -133,7 +132,7 @@ where
 impl<I, O, OI, M> ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default + Debug,
+    O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -145,7 +144,7 @@ where
 impl<I, O, OI, M> Reduce<O> for ParFMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Default + Debug,
+    O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
     O:,

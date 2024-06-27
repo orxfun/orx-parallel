@@ -1,8 +1,4 @@
-use super::{
-    collect_into::par_collect_into::{merge_bag_and_pos_len, ParCollectInto},
-    par_fmap::ParFMap,
-    reduce::Reduce,
-};
+use super::{par_fmap::ParFMap, reduce::Reduce};
 use crate::{
     core::{
         fmap_fil_cnt::fmap_fil_cnt,
@@ -11,7 +7,8 @@ use crate::{
         fmap_fil_find::fmap_fil_find,
         fmap_fil_red::fmap_fil_red,
     },
-    ParIter, ParMap, Params,
+    par::collect_into::collect_into_core::merge_bag_and_pos_len,
+    ParCollectInto, ParIter, ParMap, Params,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -41,7 +38,7 @@ where
 impl<I, O, OI, M, F> ParIter for ParFMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug + Default, // todo!: temporary requirement, must replace with PinnedVec::into_iter. Default is temporary also
+    O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync,
     F: Fn(&O) -> bool + Send + Sync,
@@ -64,7 +61,7 @@ where
 
     fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     where
-        O2: Send + Sync + Default + Debug,
+        O2: Send + Sync + Debug,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let params = self.params;
@@ -75,7 +72,7 @@ where
 
     fn flat_map<O2, OI2, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, OI2::Item, OI2, FM>
     where
-        O2: Send + Sync + Default + Debug,
+        O2: Send + Sync + Debug,
         OI2: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
@@ -203,7 +200,6 @@ where
 
     pub(crate) fn collect_bag_x<P>(self, collected: ConcurrentBag<O, P>) -> ConcurrentBag<O, P>
     where
-        O: Default,
         P: PinnedVec<O>,
     {
         let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);

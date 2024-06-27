@@ -15,7 +15,7 @@ pub fn par_fmap_fil_colx<I, OutIter, Out, Map, Fil, P>(
 where
     I: ConcurrentIter,
     OutIter: IntoIterator<Item = Out>,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -42,7 +42,7 @@ fn par_fmap_fil_colx_core<I, OutIter, Out, Map, Fil, P, L>(
 ) where
     I: ConcurrentIter,
     OutIter: IntoIterator<Item = Out>,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -63,7 +63,7 @@ fn task<I, OutIter, Out, Map, Fil, P, L>(
 ) where
     I: ConcurrentIter,
     OutIter: IntoIterator<Item = Out>,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
@@ -86,9 +86,6 @@ fn task<I, OutIter, Out, Map, Fil, P, L>(
                 assert!(buffer.is_empty());
                 buffer.extend(chunk.values.flat_map(map).filter(filter));
                 collected.extend(buffer.drain(0..buffer.len()));
-
-                // let buffer: Vec<_> = chunk.values.flat_map(map).filter(filter).collect();
-                // collected.extend(buffer);
             }
         }
     }
@@ -103,7 +100,7 @@ pub fn seq_fmap_fil_colx<I, OutIter, Out, Map, Fil, P>(
 where
     I: ConcurrentIter,
     OutIter: IntoIterator<Item = Out>,
-    Out: Default + Send + Sync,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
