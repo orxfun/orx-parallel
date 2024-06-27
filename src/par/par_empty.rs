@@ -1,4 +1,7 @@
-use super::{par_fil::ParFilter, par_fmap::ParFMap, par_map::ParMap, reduce::Reduce};
+use super::{
+    par_fil::ParFilter, par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map::ParMap,
+    reduce::Reduce,
+};
 use crate::{
     core::{
         default_fns::{map_self, no_filter},
@@ -7,7 +10,7 @@ use crate::{
         map_fil_red::map_fil_red,
     },
     par_iter::ParIter,
-    ChunkSize, NumThreads, ParCollectInto, Params,
+    ChunkSize, Fallible, NumThreads, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::SplitVec;
@@ -46,6 +49,8 @@ where
         self
     }
 
+    // transform
+
     fn map<O, M>(self, map: M) -> ParMap<I, O, M>
     where
         O: Send + Sync + Debug,
@@ -54,13 +59,13 @@ where
         ParMap::new(self.iter, self.params, map)
     }
 
-    fn flat_map<O, OI, FM>(self, fmap: FM) -> ParFMap<I, O, OI, FM>
+    fn flat_map<O, OI, FM>(self, flat_map: FM) -> ParFlatMap<I, O, OI, FM>
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
-        ParFMap::new(self.iter, self.params, fmap)
+        ParFlatMap::new(self.iter, self.params, flat_map)
     }
 
     fn filter<F>(self, filter: F) -> ParFilter<I, F>
@@ -69,6 +74,17 @@ where
     {
         ParFilter::new(self.iter, self.params, filter)
     }
+
+    fn filter_map<O, FO, FM>(self, filter_map: FM) -> ParFilterMap<I, FO, O, FM>
+    where
+        O: Send + Sync + Debug,
+        FO: Fallible<O> + Send + Sync + Debug,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
+    {
+        ParFilterMap::new(self.iter, self.params, filter_map)
+    }
+
+    // reduce
 
     fn count(self) -> usize {
         let (params, iter) = (self.params, self.iter);

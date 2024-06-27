@@ -2,7 +2,7 @@ mod reduce_i64;
 mod reduce_string;
 mod utils;
 
-use crate::utils::{test_different_params, test_reduce};
+use crate::utils::*;
 use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_parallel::*;
@@ -105,6 +105,19 @@ fn par_fmap_filter_filter() {
     let fmap = par.flat_map(|x| vec![x, x + 1, x + 2]).num_threads(4);
     let fmap = fmap.flat_map(|x| if x % 2 == 1 { Some(x) } else { None });
     let filter = fmap.filter(|x| x > &2);
+    let result = filter.collect_vec();
+
+    assert_eq!(result.as_slice(), &[3, 5, 3, 3]);
+}
+
+#[test]
+fn par_fmap_filter_filtermap() {
+    let iter = [999, 3, 1, 0, 2].into_iter().skip(1);
+
+    let par = iter.into_con_iter().into_par();
+    let fmap = par.flat_map(|x| vec![x, x + 1, x + 2]).num_threads(4);
+    let fmap = fmap.flat_map(|x| if x % 2 == 1 { Some(x) } else { None });
+    let filter = fmap.filter_map(|x| some_if(x, |x| x > &2));
     let result = filter.collect_vec();
 
     assert_eq!(result.as_slice(), &[3, 5, 3, 3]);

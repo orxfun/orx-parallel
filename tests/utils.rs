@@ -39,3 +39,17 @@ where
         test(len, num_threads, chunk_size);
     }
 }
+
+pub fn some_if<T, F: Fn(&T) -> bool>(value: T, condition: F) -> Option<T> {
+    match condition(&value) {
+        true => Some(value),
+        false => None,
+    }
+}
+
+pub fn ok_if<T, F: Fn(&T) -> bool>(value: T, condition: F) -> Result<T, String> {
+    match condition(&value) {
+        true => Ok(value),
+        false => Err("not-okay".to_string()),
+    }
+}

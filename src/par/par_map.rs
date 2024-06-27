@@ -1,11 +1,13 @@
-use super::{par_fmap::ParFMap, par_map_fil::ParMapFilter, reduce::Reduce};
+use super::{
+    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map_fil::ParMapFilter, reduce::Reduce,
+};
 use crate::{
     core::{
         default_fns::no_filter, map_col::map_col, map_fil_cnt::map_fil_cnt,
         map_fil_find::map_fil_find, map_fil_red::map_fil_red,
     },
     par_iter::ParIter,
-    ParCollectInto, Params,
+    Fallible, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -49,6 +51,8 @@ where
         self
     }
 
+    // transform
+
     fn map<O2, M2>(self, map: M2) -> ParMap<I, O2, impl Fn(I::Item) -> O2 + Send + Sync + Clone>
     where
         O2: Send + Sync + Debug,
@@ -61,16 +65,16 @@ where
 
     fn flat_map<O2, OI, FM>(
         self,
-        fmap: FM,
-    ) -> ParFMap<I, O2, OI, impl Fn(<I as ConcurrentIter>::Item) -> OI + Clone>
+        flat_map: FM,
+    ) -> ParFlatMap<I, O2, OI, impl Fn(<I as ConcurrentIter>::Item) -> OI + Clone>
     where
         O2: Send + Sync + Debug,
         OI: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
         let (params, iter, map) = (self.params, self.iter, self.map);
-        let composed = move |x: I::Item| fmap(map(x));
-        ParFMap::new(iter, params, composed)
+        let composed = move |x| flat_map(map(x));
+        ParFlatMap::new(iter, params, composed)
     }
 
     fn filter<F>(self, filter: F) -> ParMapFilter<I, O, M, F>
@@ -79,6 +83,22 @@ where
     {
         ParMapFilter::new(self.iter, self.params, self.map, filter)
     }
+
+    fn filter_map<O2, FO, FM>(
+        self,
+        filter_map: FM,
+    ) -> ParFilterMap<I, FO, O2, impl Fn(<I as ConcurrentIter>::Item) -> FO + Send + Sync + Clone>
+    where
+        O2: Send + Sync + Debug,
+        FO: Fallible<O2> + Send + Sync + Debug,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
+    {
+        let (params, iter, map) = (self.params, self.iter, self.map);
+        let composed = move |x| filter_map(map(x));
+        ParFilterMap::new(iter, params, composed)
+    }
+
+    // reduce
 
     fn count(self) -> usize {
         let (params, iter, map) = (self.params, self.iter, self.map);

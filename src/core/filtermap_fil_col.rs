@@ -1,59 +1,71 @@
 use super::diagnostics::ParThreadLogger;
 use super::runner::{ParTask, Runner};
-use crate::Params;
+use crate::{Fallible, Params};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::PinnedVec;
 use std::cmp::Ordering;
+use std::fmt::Debug;
 
-pub fn par_map_fil_col<I, Out, Map, Fil, P, Q>(
+pub fn par_filtermap_fil_col<I, FO, Out, FilterMap, Fil, P, Q>(
     params: Params,
     iter: I,
-    map: Map,
+    map: FilterMap,
     filter: Fil,
     collected: ConcurrentBag<Out, P>,
     positions: ConcurrentOrderedBag<usize, Q>,
 ) -> (P, Q)
 where
     I: ConcurrentIter,
-    Out: Send + Sync,
-    Map: Fn(I::Item) -> Out + Send + Sync,
+    FO: Fallible<Out> + Send + Sync + Debug,
+    Out: Send + Sync + Debug,
+    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
     Q: PinnedVec<usize>,
 {
     #[cfg(feature = "with_diagnostics")]
-    return par_map_fil_col_core::<_, _, _, _, _, _, super::diagnostics::ParLogger>(
+    return par_filtermap_fil_col_core::<_, _, _, _, _, _, _, super::diagnostics::ParLogger>(
         params, iter, map, filter, collected, positions,
     );
 
     #[cfg(not(feature = "with_diagnostics"))]
-    par_map_fil_col_core::<_, _, _, _, _, _, super::diagnostics::NoLogger>(
+    par_filtermap_fil_col_core::<_, _, _, _, _, _, _, super::diagnostics::NoLogger>(
         params, iter, map, filter, collected, positions,
     )
 }
 
-fn par_map_fil_col_core<I, Out, Map, Fil, P, Q, L>(
+fn par_filtermap_fil_col_core<I, FO, Out, FilterMap, Fil, P, Q, L>(
     params: Params,
     iter: I,
-    map: Map,
+    filter_map: FilterMap,
     filter: Fil,
     collected: ConcurrentBag<Out, P>,
     positions: ConcurrentOrderedBag<usize, Q>,
 ) -> (P, Q)
 where
     I: ConcurrentIter,
-    Out: Send + Sync,
-    Map: Fn(I::Item) -> Out + Send + Sync,
+    FO: Fallible<Out> + Send + Sync + Debug,
+    Out: Send + Sync + Debug,
+    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
     Q: PinnedVec<usize>,
     L: ParThreadLogger,
 {
     let offset = collected.len();
-    let task =
-        |c| task::<_, _, _, _, _, _, L>(&iter, &map, &filter, &collected, &positions, offset, c);
+    let task = |c| {
+        task::<_, _, _, _, _, _, _, L>(
+            &iter,
+            &filter_map,
+            &filter,
+            &collected,
+            &positions,
+            offset,
+            c,
+        )
+    };
     let num_spawned = Runner::run(params, ParTask::Collect, &iter, &task);
 
     L::log_num_spawned(num_spawned);
@@ -62,9 +74,9 @@ where
     })
 }
 
-fn task<I, Out, Map, Fil, P, Q, L>(
+fn task<I, FO, Out, FilterMap, Fil, P, Q, L>(
     iter: &I,
-    map: &Map,
+    filter_map: &FilterMap,
     filter: &Fil,
     collected: &ConcurrentBag<Out, P>,
     positions: &ConcurrentOrderedBag<usize, Q>,
@@ -72,8 +84,9 @@ fn task<I, Out, Map, Fil, P, Q, L>(
     chunk_size: usize,
 ) where
     I: ConcurrentIter,
-    Out: Send + Sync,
-    Map: Fn(I::Item) -> Out + Send + Sync,
+    FO: Fallible<Out> + Send + Sync + Debug,
+    Out: Send + Sync + Debug,
+    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     P: PinnedVec<Out>,
     Q: PinnedVec<usize>,
@@ -83,10 +96,16 @@ fn task<I, Out, Map, Fil, P, Q, L>(
     match chunk_size {
         1 => {
             while let Some(x) = iter.next_id_and_value() {
-                let value = map(x.value);
-                let position = match filter(&value) {
-                    true => collected.push(value),
+                let maybe = filter_map(x.value);
+                let position = match maybe.has_value() {
                     false => usize::MAX,
+                    true => {
+                        let value = maybe.unwrap();
+                        match filter(&value) {
+                            true => collected.push(value),
+                            false => usize::MAX,
+                        }
+                    }
                 };
                 let idx = offset + x.idx;
                 unsafe { positions.set_value(idx, position) };
@@ -101,10 +120,17 @@ fn task<I, Out, Map, Fil, P, Q, L>(
                 let count = chunk.values.len();
                 let begin_idx = offset + chunk.begin_idx;
 
-                for (i, value) in chunk.values.map(&map).enumerate() {
-                    let position = match filter(&value) {
-                        true => collected.push(value),
+                for (i, value) in chunk.values.enumerate() {
+                    let maybe = filter_map(value);
+                    let position = match maybe.has_value() {
                         false => usize::MAX,
+                        true => {
+                            let value = maybe.unwrap();
+                            match filter(&value) {
+                                true => collected.push(value),
+                                false => usize::MAX,
+                            }
+                        }
                     };
                     local[i] = position;
                 }
@@ -112,6 +138,7 @@ fn task<I, Out, Map, Fil, P, Q, L>(
                 unsafe {
                     match count.cmp(&c) {
                         Ordering::Less => {
+                            // TODO: memcpy here! all .set_values calls can improve by memcpy
                             positions.set_values(begin_idx, local.iter().take(count).copied())
                         }
                         _ => positions.set_values(begin_idx, local.iter().copied()),
@@ -122,21 +149,27 @@ fn task<I, Out, Map, Fil, P, Q, L>(
     }
 }
 
-pub fn seq_map_fil_col<I, Out, Map, Fil, Output, Push>(
+pub fn seq_filtermap_fil_col<I, FO, Out, FilterMap, Fil, Output, Push>(
     iter: I,
-    map: Map,
+    filter_map: FilterMap,
     filter: Fil,
     output: &mut Output,
     mut push: Push,
 ) where
     I: ConcurrentIter,
+    FO: Fallible<Out> + Send + Sync + Debug,
     Out: Send + Sync,
-    Map: Fn(I::Item) -> Out + Send + Sync,
+    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     Push: FnMut(&mut Output, Out),
 {
     let iter = iter.into_seq_iter();
-    for x in iter.map(map).filter(filter) {
+    for x in iter
+        .map(filter_map)
+        .filter(|x| x.has_value())
+        .map(|x| x.unwrap())
+        .filter(filter)
+    {
         push(output, x);
     }
 }

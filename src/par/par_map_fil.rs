@@ -1,4 +1,6 @@
-use super::{par_fmap::ParFMap, par_map::ParMap, reduce::Reduce};
+use super::{
+    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map::ParMap, reduce::Reduce,
+};
 use crate::{
     core::{
         map_fil_cnt::map_fil_cnt,
@@ -7,7 +9,7 @@ use crate::{
         map_fil_red::map_fil_red,
     },
     par::collect_into::collect_into_core::merge_bag_and_positions,
-    ParCollectInto, ParIter, Params,
+    Fallible, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -56,6 +58,8 @@ where
         self
     }
 
+    // transform
+
     fn map<O2, M2>(self, map: M2) -> ParMap<impl ConcurrentIter<Item = O>, O2, M2>
     where
         O2: Send + Sync + Debug,
@@ -67,7 +71,7 @@ where
         ParMap::new(iter, params, map)
     }
 
-    fn flat_map<O2, OI, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, O2, OI, FM>
+    fn flat_map<O2, OI, FM>(self, flat_map: FM) -> ParFlatMap<ConIterOfVec<O>, O2, OI, FM>
     where
         O2: Send + Sync + Debug,
         OI: IntoIterator<Item = O2>,
@@ -76,7 +80,7 @@ where
         let params = self.params;
         let vec = self.collect_vec();
         let iter = vec.into_con_iter();
-        ParFMap::new(iter, params, fmap)
+        ParFlatMap::new(iter, params, flat_map)
     }
 
     fn filter<F2>(
@@ -91,12 +95,40 @@ where
         ParMapFilter::new(iter, params, map, composed)
     }
 
+    fn filter_map<O2, FO, FM>(
+        self,
+        filter_map: FM,
+    ) -> ParFilterMap<
+        I,
+        Option<O2>,
+        O2,
+        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+    >
+    where
+        O2: Send + Sync + Debug,
+        FO: Fallible<O2> + Send + Sync + Debug,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
+    {
+        let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
+        let composed = move |x| {
+            let mapped = map(x);
+            match filter(&mapped) {
+                false => None,
+                true => filter_map(mapped).into_option(),
+            }
+        };
+        ParFilterMap::new(iter, params, composed)
+    }
+
+    // reduce
+
     fn count(self) -> usize {
         let (params, iter, map, filter) = (self.params, self.iter, self.map, self.filter);
         map_fil_cnt(params, iter, map, filter)
     }
 
     // find
+
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
         P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
@@ -115,9 +147,6 @@ where
             true => self.collect_bag_seq(Vec::new(), |v, x| v.push(x)),
             false => self.collect_bag_par(|len| FixedVec::new(len)).into(),
         }
-        // let mut vec = vec![];
-        // self.collect_bag_zzz(|x| vec.push(x));
-        // vec
     }
 
     fn collect(self) -> SplitVec<Self::Item> {
