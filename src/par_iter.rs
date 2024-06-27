@@ -1,4 +1,4 @@
-use crate::{ChunkSize, NumThreads, ParCollectInto, Params, Reduce};
+use crate::{ChunkSize, Fallible, NumThreads, ParCollectInto, Params, Reduce};
 use orx_split_vec::SplitVec;
 use std::fmt::Debug;
 
@@ -149,6 +149,8 @@ pub trait ParIter: Reduce<Self::Item> {
     /// For more critical operations, this `ChunkSize::Exact` and `ChunkSize::Min` options can be used to tune the execution for the class of the relevant input data.
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
+    // transform
+
     /// Takes the closure `map` and creates an iterator which calls that closure on each element.
     ///
     /// # Examples
@@ -174,7 +176,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// let numbers = (0..5).into_par().flat_map(|x| vec![x; x]).collect_vec();
     /// assert_eq!(&numbers[..], &[1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
     /// ```
-    fn flat_map<O, OI, FM>(self, fmap: FM) -> impl ParIter<Item = O>
+    fn flat_map<O, OI, FM>(self, flat_map: FM) -> impl ParIter<Item = O>
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
@@ -193,6 +195,14 @@ pub trait ParIter: Reduce<Self::Item> {
     fn filter<F>(self, filter: F) -> impl ParIter<Item = Self::Item>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync + Clone;
+
+    fn filter_map<O, FO, FM>(self, filter_map: FM) -> impl ParIter<Item = O>
+    where
+        O: Send + Sync + Debug,
+        FO: Fallible<O> + Send + Sync + Debug,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone;
+
+    //reduce
 
     /// Consumes the iterator, counting the number of iterations and returning it.
     ///

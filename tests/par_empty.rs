@@ -2,7 +2,7 @@ mod reduce_i64;
 mod reduce_string;
 mod utils;
 
-use crate::utils::{test_different_params, test_reduce};
+use crate::utils::*;
 use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_parallel::*;
 use orx_split_vec::*;
@@ -89,6 +89,22 @@ fn par_empty_filter() {
 
     let par = iter.into_con_iter().into_par();
     let filter = par.filter(|x| x.len() % 2 == 0).num_threads(2);
+    let result = filter.collect_vec();
+
+    assert_eq!(result.as_slice(), [42, 9876].map(|x| x.to_string()));
+}
+
+#[test]
+fn par_empty_filtermap() {
+    let iter = [11, 42, 2, 111, 5, 9876]
+        .map(|x| x.to_string())
+        .into_iter()
+        .skip(1);
+
+    let par = iter.into_con_iter().into_par();
+    let filter = par
+        .filter_map(|x| some_if(x, |x| x.len() % 2 == 0))
+        .num_threads(2);
     let result = filter.collect_vec();
 
     assert_eq!(result.as_slice(), [42, 9876].map(|x| x.to_string()));

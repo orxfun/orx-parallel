@@ -1,6 +1,7 @@
-use super::{par_fmap_fil::ParFMapFilter, reduce::Reduce};
+use super::par_filtermap::ParFilterMap;
+use super::{par_flatmap_fil::ParFlatMapFilter, reduce::Reduce};
 use crate::{core::default_fns::no_filter, Params};
-use crate::{ParCollectInto, ParIter};
+use crate::{Fallible, ParCollectInto, ParIter};
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
 use std::fmt::Debug;
@@ -9,7 +10,7 @@ use std::iter::Map;
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
 /// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`ParMap::num_threads`] and [`ParMap::chunk_size`] methods.
-pub struct ParFMap<I, O, OI, M>
+pub struct ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
@@ -21,7 +22,7 @@ where
     fmap: M,
 }
 
-impl<I, O, OI, M> ParIter for ParFMap<I, O, OI, M>
+impl<I, O, OI, M> ParIter for ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
@@ -44,10 +45,12 @@ where
         self
     }
 
+    // transform
+
     fn map<O2, M2>(
         self,
         map: M2,
-    ) -> ParFMap<
+    ) -> ParFlatMap<
         I,
         O2,
         Map<<OI as IntoIterator>::IntoIter, M2>,
@@ -58,15 +61,15 @@ where
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, map1) = (self.params, self.iter, self.fmap);
-        let composed = move |x: I::Item| {
+        let composed = move |x| {
             let map1 = map1.clone();
             let values = map1(x);
             values.into_iter().map(map.clone())
         };
-        ParFMap::new(iter, params, composed)
+        ParFlatMap::new(iter, params, composed)
     }
 
-    fn flat_map<O2, OI2, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, O2, OI2, FM>
+    fn flat_map<O2, OI2, FM>(self, flat_map: FM) -> ParFlatMap<ConIterOfVec<O>, O2, OI2, FM>
     where
         O2: Send + Sync + Debug,
         OI2: IntoIterator<Item = O2>,
@@ -76,15 +79,26 @@ where
         let params = self.params;
         let vec = self.collect_vec();
         let iter = vec.into_con_iter();
-        ParFMap::new(iter, params, fmap)
+        ParFlatMap::new(iter, params, flat_map)
     }
 
-    fn filter<F>(self, filter: F) -> ParFMapFilter<I, O, OI, M, F>
+    fn filter<F>(self, filter: F) -> ParFlatMapFilter<I, O, OI, M, F>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        ParFMapFilter::new(self.iter, self.params, self.fmap, filter)
+        ParFlatMapFilter::new(self.iter, self.params, self.fmap, filter)
     }
+
+    fn filter_map<O2, FO, FM>(self, filter_map: FM) -> ParFilterMap<ConIterOfVec<O>, FO, O2, FM>
+    where
+        O2: Send + Sync + Debug,
+        FO: Fallible<O2> + Send + Sync + Debug,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
+    {
+        self.filter(no_filter).filter_map(filter_map)
+    }
+
+    // reduce
 
     fn count(self) -> usize {
         self.filter(no_filter).count()
@@ -129,7 +143,7 @@ where
     }
 }
 
-impl<I, O, OI, M> ParFMap<I, O, OI, M>
+impl<I, O, OI, M> ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
@@ -141,7 +155,7 @@ where
     }
 }
 
-impl<I, O, OI, M> Reduce<O> for ParFMap<I, O, OI, M>
+impl<I, O, OI, M> Reduce<O> for ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,

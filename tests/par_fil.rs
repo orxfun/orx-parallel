@@ -2,7 +2,7 @@ mod reduce_i64;
 mod reduce_string;
 mod utils;
 
-use crate::utils::{test_different_params, test_reduce};
+use crate::utils::*;
 use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_parallel::*;
 use orx_pinned_vec::PinnedVec;
@@ -94,6 +94,23 @@ fn par_fil_filter() {
     let filter = par.filter(|x| x.len() == 2).num_threads(4);
     let filter = filter
         .filter(|x| x.parse::<usize>().expect("is-ok") % 3 == 0)
+        .chunk_size(2);
+    let result = filter.collect_vec();
+
+    assert_eq!(result.as_slice(), [15.to_string()]);
+}
+
+#[test]
+fn par_fil_filtermap() {
+    let iter = [42, 11, 2, 111, 15, 9876]
+        .map(|x| x.to_string())
+        .into_iter()
+        .skip(1);
+
+    let par = iter.into_con_iter().into_par();
+    let filter = par.filter(|x| x.len() == 2).num_threads(4);
+    let filter = filter
+        .filter_map(|x| some_if(x, |x| x.parse::<usize>().expect("is-ok") % 3 == 0))
         .chunk_size(2);
     let result = filter.collect_vec();
 

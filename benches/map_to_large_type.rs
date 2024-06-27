@@ -8,6 +8,7 @@ const SEED: u64 = 2356;
 const FIB_UPPER_BOUND: u32 = 99;
 
 #[allow(dead_code)]
+#[derive(Debug)]
 struct LargeOutput {
     name: String,
     numbers: [i64; 64],

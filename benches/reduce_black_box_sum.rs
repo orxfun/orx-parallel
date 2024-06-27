@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_concurrent_iter::IntoConcurrentIter;
+use orx_concurrent_iter::*;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;

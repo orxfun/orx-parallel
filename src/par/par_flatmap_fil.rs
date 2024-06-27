@@ -1,11 +1,11 @@
-use super::{par_fmap::ParFMap, reduce::Reduce};
+use super::{par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, reduce::Reduce};
 use crate::{
     core::{
-        fmap_fil_cnt::fmap_fil_cnt,
-        fmap_fil_col::{par_fmap_fil_col, seq_fmap_fil_col},
-        fmap_fil_colx::{par_fmap_fil_colx, seq_fmap_fil_colx},
-        fmap_fil_find::fmap_fil_find,
-        fmap_fil_red::fmap_fil_red,
+        flatmap_fil_cnt::fmap_fil_cnt,
+        flatmap_fil_col::{par_fmap_fil_col, seq_fmap_fil_col},
+        flatmap_fil_colx::{par_fmap_fil_colx, seq_fmap_fil_colx},
+        flatmap_fil_find::fmap_fil_find,
+        flatmap_fil_red::fmap_fil_red,
     },
     par::collect_into::collect_into_core::merge_bag_and_pos_len,
     ParCollectInto, ParIter, ParMap, Params,
@@ -21,7 +21,7 @@ use std::fmt::Debug;
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
 /// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`ParMap::num_threads`] and [`ParMap::chunk_size`] methods.
-pub struct ParFMapFilter<I, O, OI, M, F>
+pub struct ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
@@ -35,7 +35,7 @@ where
     filter: F,
 }
 
-impl<I, O, OI, M, F> ParIter for ParFMapFilter<I, O, OI, M, F>
+impl<I, O, OI, M, F> ParIter for ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
@@ -59,6 +59,8 @@ where
         self
     }
 
+    // transform
+
     fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     where
         O2: Send + Sync + Debug,
@@ -70,7 +72,7 @@ where
         ParMap::new(iter, params, map)
     }
 
-    fn flat_map<O2, OI2, FM>(self, fmap: FM) -> ParFMap<ConIterOfVec<O>, OI2::Item, OI2, FM>
+    fn flat_map<O2, OI2, FM>(self, flat_map: FM) -> ParFlatMap<ConIterOfVec<O>, OI2::Item, OI2, FM>
     where
         O2: Send + Sync + Debug,
         OI2: IntoIterator<Item = O2>,
@@ -79,17 +81,34 @@ where
         let params = self.params;
         let vec = self.collect_vec();
         let iter = vec.into_con_iter();
-        ParFMap::new(iter, params, fmap)
+        ParFlatMap::new(iter, params, flat_map)
     }
 
-    fn filter<F2>(self, filter: F2) -> ParFMapFilter<I, O, OI, M, impl Fn(&O) -> bool + Send + Sync>
+    fn filter<F2>(
+        self,
+        filter: F2,
+    ) -> ParFlatMapFilter<I, O, OI, M, impl Fn(&O) -> bool + Send + Sync>
     where
         F2: Fn(&Self::Item) -> bool + Send + Sync,
     {
         let (params, iter, fmap, filter1) = (self.params, self.iter, self.fmap, self.filter);
         let composed = move |x: &O| filter1(x) && filter(x);
-        ParFMapFilter::new(iter, params, fmap, composed)
+        ParFlatMapFilter::new(iter, params, fmap, composed)
     }
+
+    fn filter_map<O2, FO, FM>(self, filter_map: FM) -> ParFilterMap<ConIterOfVec<O>, FO, O2, FM>
+    where
+        O2: Send + Sync + Debug,
+        FO: crate::Fallible<O2> + Send + Sync + Debug,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
+    {
+        let params = self.params;
+        let vec = self.collect_vec();
+        let iter = vec.into_con_iter();
+        ParFilterMap::new(iter, params, filter_map)
+    }
+
+    // reduce
 
     fn count(self) -> usize {
         let (params, iter, fmap, filter) = (self.params, self.iter, self.fmap, self.filter);
@@ -135,7 +154,7 @@ where
     }
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
-        output.fmap_filter_into(self)
+        output.flatmap_filter_into(self)
     }
 
     fn collect_x_vec(self) -> Vec<Self::Item> {
@@ -152,7 +171,7 @@ where
     }
 }
 
-impl<I, O, OI, M, F> ParFMapFilter<I, O, OI, M, F>
+impl<I, O, OI, M, F> ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
@@ -210,7 +229,7 @@ where
     }
 }
 
-impl<I, O, OI, M, F> Reduce<O> for ParFMapFilter<I, O, OI, M, F>
+impl<I, O, OI, M, F> Reduce<O> for ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,

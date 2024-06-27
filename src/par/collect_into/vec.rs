@@ -1,5 +1,8 @@
 use super::collect_into_core::ParCollectIntoCore;
-use crate::{par::par_fmap_fil::ParFMapFilter, ParCollectInto, ParIter, ParMap, ParMapFilter};
+use crate::{
+    par::{par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter},
+    ParCollectInto, ParIter, ParMap, ParMapFilter,
+};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::FixedVec;
@@ -41,12 +44,30 @@ impl<O: Default + Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
         }
     }
 
-    fn fmap_filter_into<I, OI, M, F>(mut self, par: ParFMapFilter<I, O, OI, M, F>) -> Self
+    fn flatmap_filter_into<I, OI, M, F>(mut self, par: ParFlatMapFilter<I, O, OI, M, F>) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
         OI: IntoIterator<Item = O>,
         M: Fn(I::Item) -> OI + Send + Sync,
         F: Fn(&O) -> bool + Send + Sync,
+    {
+        match par.params().is_sequential() {
+            true => par.collect_bag_seq(self, |v, x| v.push(x)),
+            false => par
+                .collect_bag_par(|len| {
+                    self.reserve(len);
+                    FixedVec::from(self)
+                })
+                .into(),
+        }
+    }
+
+    fn filtermap_filter_into<I, FO, M, F>(mut self, par: ParFilterMapFilter<I, FO, O, M, F>) -> Self
+    where
+        I: orx_concurrent_iter::ConcurrentIter,
+        FO: crate::Fallible<O> + Send + Sync + Debug,
+        M: Fn(I::Item) -> FO + Send + Sync + Clone,
+        F: Fn(&O) -> bool + Send + Sync + Clone,
     {
         match par.params().is_sequential() {
             true => par.collect_bag_seq(self, |v, x| v.push(x)),

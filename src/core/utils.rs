@@ -1,3 +1,4 @@
+#[inline(always)]
 pub fn maybe_reduce<T, R>(reduce: R, a: Option<T>, b: Option<T>) -> Option<T>
 where
     R: Fn(T, T) -> T,

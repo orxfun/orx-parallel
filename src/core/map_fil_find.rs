@@ -111,6 +111,8 @@ where
     iter.into_seq_iter()
         .map(map)
         .enumerate()
-        .filter(|x| filter(&x.1))
-        .min_by_key(|x| x.0)
+        .find_map(|x| match filter(&x.1) {
+            false => None,
+            true => Some(x),
+        })
 }
