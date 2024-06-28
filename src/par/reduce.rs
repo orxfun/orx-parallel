@@ -1,10 +1,4 @@
-use std::{
-    cmp::Ordering,
-    fmt::Debug,
-    ops::{Add, Deref},
-};
-
-use crate::ParIter;
+use std::{cmp::Ordering, ops::Add};
 
 /// Trait defining reduction operations.
 ///

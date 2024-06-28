@@ -1,3 +1,4 @@
+pub mod cloned_copied;
 pub mod collect_into;
 pub mod fallible;
 pub mod par_empty;

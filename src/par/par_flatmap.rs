@@ -3,7 +3,7 @@ use super::{par_flatmap_fil::ParFlatMapFilter, reduce::Reduce};
 use crate::fn_sync::FnSync;
 use crate::{core::default_fns::no_filter, Params};
 use crate::{Fallible, ParCollectInto, ParIter};
-use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter};
 use orx_split_vec::SplitVec;
 use std::fmt::Debug;
 use std::iter::Map;

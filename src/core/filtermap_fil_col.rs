@@ -101,7 +101,7 @@ fn task<I, FO, Out, FilterMap, Fil, P, Q, L>(
                 let position = match maybe.has_value() {
                     false => usize::MAX,
                     true => {
-                        let value = maybe.unwrap();
+                        let value = maybe.value();
                         match filter(&value) {
                             true => collected.push(value),
                             false => usize::MAX,
@@ -126,7 +126,7 @@ fn task<I, FO, Out, FilterMap, Fil, P, Q, L>(
                     let position = match maybe.has_value() {
                         false => usize::MAX,
                         true => {
-                            let value = maybe.unwrap();
+                            let value = maybe.value();
                             match filter(&value) {
                                 true => collected.push(value),
                                 false => usize::MAX,
@@ -168,7 +168,7 @@ pub fn seq_filtermap_fil_col<I, FO, Out, FilterMap, Fil, Output, Push>(
     for x in iter
         .map(filter_map)
         .filter(|x| x.has_value())
-        .map(|x| x.unwrap())
+        .map(|x| x.value())
         .filter(filter)
     {
         push(output, x);

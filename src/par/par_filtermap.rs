@@ -1,6 +1,4 @@
-use super::{
-    par_filtermap_fil::ParFilterMapFilter, par_flatmap::ParFlatMap, par_map::ParMap, reduce::Reduce,
-};
+use super::{par_filtermap_fil::ParFilterMapFilter, par_flatmap::ParFlatMap, reduce::Reduce};
 use crate::{
     core::default_fns::no_filter, fn_sync::FnSync, ChunkSize, Fallible, NumThreads, ParCollectInto,
     ParIter, Params,
@@ -117,7 +115,7 @@ where
             match mapped.has_value() {
                 false => None,
                 true => {
-                    let value = mapped.unwrap();
+                    let value = mapped.value();
                     filter_map(value).into_option()
                 }
             }

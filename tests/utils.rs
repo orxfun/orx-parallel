@@ -40,6 +40,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub fn some_if<T, F: Fn(&T) -> bool>(value: T, condition: F) -> Option<T> {
     match condition(&value) {
         true => Some(value),
@@ -47,6 +48,7 @@ pub fn some_if<T, F: Fn(&T) -> bool>(value: T, condition: F) -> Option<T> {
     }
 }
 
+#[allow(dead_code)]
 pub fn ok_if<T, F: Fn(&T) -> bool>(value: T, condition: F) -> Result<T, String> {
     match condition(&value) {
         true => Ok(value),

@@ -1,6 +1,4 @@
-use super::{
-    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map::ParMap, reduce::Reduce,
-};
+use super::{par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, reduce::Reduce};
 use crate::{
     core::{
         filtermap_fil_cnt::filtermap_fil_cnt,
@@ -158,7 +156,7 @@ where
             match maybe.has_value() {
                 false => None,
                 true => {
-                    let value = maybe.unwrap();
+                    let value = maybe.value();
                     match filter(&value) {
                         false => None,
                         true => Some(map(value)),
@@ -207,7 +205,7 @@ where
             match mapped.has_value() {
                 false => None,
                 true => {
-                    let value = mapped.unwrap();
+                    let value = mapped.value();
                     match filter(&value) {
                         false => None,
                         true => filter_map(value).into_option(),

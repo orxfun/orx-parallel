@@ -196,6 +196,45 @@ pub trait ParIter: Reduce<Self::Item> {
     where
         F: Fn(&Self::Item) -> bool + FnSync;
 
+    /// Creates an iterator that both filters and maps.
+    ///
+    /// The returned iterator yields only the values for which the supplied closure returns a successful value of the fallible type such as:
+    /// * `Some` variant for `Option`,
+    /// * `Ok` variant for `Result`, etc.
+    ///
+    /// See [`crate::Fallible`] trait for details of the fallible types and extending.
+    ///
+    /// Filter_map can be used to make chains of filter and map more concise.
+    /// The example below shows how a map().filter().map() can be shortened to a single call to filter_map.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = ["1", "two", "NaN", "four", "5"];
+    ///
+    /// let numbers = a.par().filter_map(|s| s.parse::<u64>()).collect_vec();
+    /// assert_eq!(numbers, [1, 5]);
+    /// ```
+    ///
+    /// Here's the same example, but with [`filter`] and [`map`]:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = ["1", "two", "NaN", "four", "5"];
+    ///
+    /// let numbers = a
+    ///    .par()
+    ///    .map(|s| s.parse::<u64>())
+    ///    .filter(|x| x.is_ok())
+    ///    .map(|x| x.unwrap())
+    ///    .collect_vec();
+    /// assert_eq!(numbers, [1, 5]);
+    /// ```
     fn filter_map<O, FO, FM>(self, filter_map: FM) -> impl ParIter<Item = O>
     where
         O: Send + Sync + Debug,

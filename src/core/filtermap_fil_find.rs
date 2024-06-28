@@ -79,7 +79,7 @@ where
                 .find_map(|x| match x.1.has_value() {
                     false => None,
                     true => {
-                        let value = x.1.unwrap();
+                        let value = x.1.value();
                         match filter(&value) {
                             false => None,
                             true => Some((x.0, value)),
@@ -105,7 +105,7 @@ where
                     .find_map(|x| match x.1.has_value() {
                         false => None,
                         true => {
-                            let value = x.1.unwrap();
+                            let value = x.1.value();
                             match filter(&value) {
                                 false => None,
                                 true => Some((chunk.begin_idx + x.0, value)),
@@ -141,7 +141,7 @@ where
         .find_map(|x| match x.1.has_value() {
             false => None,
             true => {
-                let value = x.1.unwrap();
+                let value = x.1.value();
                 match filter(&value) {
                     false => None,
                     true => Some((x.0, value)),
