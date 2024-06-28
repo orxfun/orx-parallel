@@ -1,4 +1,4 @@
-use crate::par::par_empty::Par;
+use crate::par::par_empty::ParEmpty;
 use iter::atomic_iter::AtomicIter;
 use orx_concurrent_iter::*;
 use std::{
@@ -19,6 +19,10 @@ use std::{
 ///
 /// ```rust
 /// use orx_parallel::*;
+///
+/// let seq: usize = (0..1024).sum();
+/// let par = (0..1024).into_par().sum();
+/// assert_eq!(par, seq);
 ///
 /// let seq = vec![10; 42].into_iter().sum();
 /// let par = vec![10; 42].into_par().sum();
@@ -64,7 +68,7 @@ pub trait IntoPar {
     /// let par = names.as_slice().into_par().map(|x| x.len()).reduce(|a, b| a + b);
     /// assert_eq!(par, seq);
     /// ```
-    fn into_par(self) -> Par<Self::ConIter>
+    fn into_par(self) -> ParEmpty<Self::ConIter>
     where
         <Self::ConIter as ConcurrentIter>::Item: Debug;
 }
@@ -72,25 +76,25 @@ pub trait IntoPar {
 // array
 impl<const N: usize, T: Send + Sync + Debug + Default> IntoPar for [T; N] {
     type ConIter = ConIterOfArray<N, T>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self.into_con_iter())
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self.into_con_iter())
     }
 }
 impl<const N: usize, T: Send + Sync + Debug + Default> IntoPar for ConIterOfArray<N, T> {
     type ConIter = ConIterOfArray<N, T>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self)
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self)
     }
 }
 
-// iter
+// con-iter
 impl<T: Send + Sync + Debug, Iter> IntoPar for ConIterOfIter<T, Iter>
 where
     Iter: Iterator<Item = T>,
 {
     type ConIter = ConIterOfIter<T, Iter>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self)
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self)
     }
 }
 
@@ -110,8 +114,8 @@ where
     Range<Idx>: Iterator<Item = Idx>,
 {
     type ConIter = ConIterOfRange<Idx>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self.con_iter())
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self.con_iter())
     }
 }
 impl<Idx> IntoPar for ConIterOfRange<Idx>
@@ -129,29 +133,26 @@ where
     Range<Idx>: Iterator<Item = Idx>,
 {
     type ConIter = ConIterOfRange<Idx>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self)
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self)
     }
 }
 
 // slice
 impl<'a, T: Send + Sync + Debug> IntoPar for &'a [T] {
     type ConIter = ConIterOfSlice<'a, T>;
-    fn into_par(self) -> Par<Self::ConIter>
+    fn into_par(self) -> ParEmpty<Self::ConIter>
     where
         <Self::ConIter as ConcurrentIter>::Item: Debug,
     {
-        Par::new(self.into_con_iter())
+        ParEmpty::new(self.into_con_iter())
     }
 }
 
 impl<'a, T: Send + Sync + Debug> IntoPar for ConIterOfSlice<'a, T> {
     type ConIter = ConIterOfSlice<'a, T>;
-    fn into_par(self) -> Par<Self::ConIter>
-// where
-    //     <Self::ConIter as ConcurrentIter>::Item: Default,
-    {
-        Par::new(self)
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self)
     }
 }
 
@@ -161,133 +162,21 @@ impl<'a, T: Send + Sync + Debug + Clone, C: AtomicIter<&'a T> + ConcurrentIter<I
     IntoPar for Cloned<'a, T, C>
 {
     type ConIter = Cloned<'a, T, C>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self)
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self)
     }
 }
 
 // vec
-impl<T: Send + Sync + Debug + Default> IntoPar for Vec<T> {
+impl<T: Send + Sync + Debug> IntoPar for Vec<T> {
     type ConIter = ConIterOfVec<T>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self.into_con_iter())
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self.into_con_iter())
     }
 }
-impl<T: Send + Sync + Debug + Default> IntoPar for ConIterOfVec<T> {
+impl<T: Send + Sync + Debug> IntoPar for ConIterOfVec<T> {
     type ConIter = ConIterOfVec<T>;
-    fn into_par(self) -> Par<Self::ConIter> {
-        Par::new(self)
-    }
-}
-
-// IterIntoConIter
-
-/// Conversion into a parallel iterator.
-///
-/// Every regular iterator implementing [`Iterator`] also implements `IterIntoPar`.
-///
-/// See [`IntoPar`] for conversion of common collections into parallel iterator.
-///
-/// Converting into a parallel iterator is achieved using the `par()` method.
-///
-/// # Examples
-///
-/// ```rust
-/// use orx_parallel::*;
-///
-/// let numbers = || (0..24).filter(|x| x % 2 == 0);
-/// let seq: usize = numbers().sum();
-/// let par = numbers().par().sum();
-/// assert_eq!(seq, par);
-///
-/// let numbers: Vec<_> = (10..420).collect();
-/// let iter = || numbers.iter().cloned().skip(10);
-/// let seq: Vec<_> = iter()
-///     .filter(|x| x % 3 == 1)
-///     .map(|x| x * 4)
-///     .filter(|x| x < &456)
-///     .flat_map(|x| [x, x + 1, x * 7])
-///     .collect();
-/// let par = iter()
-///     .par()
-///     .filter(|x| x % 3 == 1)
-///     .map(|x| x * 4)
-///     .filter(|x| x < &456)
-///     .flat_map(|x| [x, x + 1, x * 7])
-///     .collect_vec();
-/// assert_eq!(par, seq);
-/// ```
-pub trait IterPar<Iter: Iterator>
-where
-    Iter::Item: Send + Sync + Debug,
-{
-    /// Underlying concurrent iterator which provides the input elements to the defined parallel computation.
-    type ConIter: ConcurrentIter;
-
-    /// Conversion into a parallel iterator.
-    ///
-    /// Every regular iterator implementing [`Iterator`] also implements `IterIntoPar`.
-    ///
-    /// See [`IntoPar`] for conversion of common collections into parallel iterator.
-    ///
-    /// Converting into a parallel iterator is achieved using the `par()` method.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let numbers = || (0..24).filter(|x| x % 2 == 0);
-    /// let seq: usize = numbers().sum();
-    /// let par = numbers().par().sum();
-    /// assert_eq!(seq, par);
-    ///
-    /// let numbers: Vec<_> = (10..420).collect();
-    /// let iter = || numbers.iter().cloned().skip(10);
-    /// let seq: Vec<_> = iter()
-    ///     .filter(|x| x % 3 == 1)
-    ///     .map(|x| x * 4)
-    ///     .filter(|x| x < &456)
-    ///     .flat_map(|x| [x, x + 1, x * 7])
-    ///     .collect();
-    /// let par = iter()
-    ///     .par()
-    ///     .filter(|x| x % 3 == 1)
-    ///     .map(|x| x * 4)
-    ///     .filter(|x| x < &456)
-    ///     .flat_map(|x| [x, x + 1, x * 7])
-    ///     .collect_vec();
-    /// assert_eq!(par, seq);
-    /// ```
-    fn par(self) -> Par<Self::ConIter>
-    where
-        <Self::ConIter as ConcurrentIter>::Item: Debug;
-}
-
-impl<Iter: Iterator> IterPar<Iter> for Iter
-where
-    Iter::Item: Send + Sync + Debug,
-{
-    type ConIter = ConIterOfIter<Iter::Item, Iter>;
-
-    fn par(self) -> Par<Self::ConIter>
-// where
-    //     <Self::ConIter as ConcurrentIter>::Item: Default,
-    {
-        Par::new(self.into_con_iter())
-    }
-}
-
-impl<Iter: Iterator> IterPar<Iter> for ConIterOfIter<Iter::Item, Iter>
-where
-    Iter::Item: Send + Sync + Debug,
-{
-    type ConIter = ConIterOfIter<Iter::Item, Iter>;
-
-    fn par(self) -> Par<Self::ConIter>
-// where
-    //     <Self::ConIter as ConcurrentIter>::Item: Default,
-    {
-        Par::new(self)
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
+        ParEmpty::new(self)
     }
 }

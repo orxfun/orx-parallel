@@ -9,8 +9,8 @@ use crate::{
         map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    par_iter::ParIter,
     fn_sync::FnSync,
+    par_iter::ParIter,
     ChunkSize, Fallible, NumThreads, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -20,7 +20,7 @@ use std::fmt::Debug;
 /// An iterator that maps the elements of the iterator with a given map function.
 ///
 /// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`ParMap::num_threads`] and [`ParMap::chunk_size`] methods.
-pub struct Par<I>
+pub struct ParEmpty<I>
 where
     I: ConcurrentIter,
     I::Item: Debug,
@@ -29,7 +29,7 @@ where
     params: Params,
 }
 
-impl<I> ParIter for Par<I>
+impl<I> ParIter for ParEmpty<I>
 where
     I: ConcurrentIter,
     I::Item: Debug,
@@ -120,7 +120,7 @@ where
     }
 }
 
-impl<I> Par<I>
+impl<I> ParEmpty<I>
 where
     I: ConcurrentIter,
     I::Item: Debug,
@@ -220,7 +220,7 @@ where
     }
 }
 
-impl<I> Reduce<I::Item> for Par<I>
+impl<I> Reduce<I::Item> for ParEmpty<I>
 where
     I: ConcurrentIter,
     I::Item: Debug,

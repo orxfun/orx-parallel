@@ -9,9 +9,9 @@ use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::FixedVec;
 use std::fmt::Debug;
 
-impl<O: Default + Send + Sync + Debug> ParCollectInto<O> for Vec<O> {}
+impl<O: Send + Sync + Debug> ParCollectInto<O> for Vec<O> {}
 
-impl<O: Default + Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
+impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
     type BridgePinnedVec = FixedVec<O>;
 
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
