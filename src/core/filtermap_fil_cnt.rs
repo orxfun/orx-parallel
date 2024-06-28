@@ -75,14 +75,14 @@ where
             for x in iter.values() {
                 let maybe = filter_map(x);
                 if maybe.has_value() {
-                    let x = maybe.unwrap();
+                    let x = maybe.value();
                     if filter(&x) {
                         let mut acc = 1;
 
                         for x in iter.values() {
                             let maybe = filter_map(x);
                             if maybe.has_value() {
-                                let x = maybe.unwrap();
+                                let x = maybe.value();
                                 if filter(&x) {
                                     acc += 1;
                                 }
@@ -104,7 +104,7 @@ where
                     .values
                     .map(filter_map)
                     .filter(|x| x.has_value())
-                    .map(|x| x.unwrap())
+                    .map(|x| x.value())
                     .filter(filter)
                     .count();
                 acc += x;
@@ -129,7 +129,7 @@ where
     iter.into_seq_iter()
         .map(filter_map)
         .filter(|x| x.has_value())
-        .map(|x| x.unwrap())
+        .map(|x| x.value())
         .filter(filter)
         .count()
 }

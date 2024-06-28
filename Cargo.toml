@@ -27,6 +27,3 @@ harness = false
 [features]
 default = []
 with_diagnostics = []
-
-[lib]
-doctest = false

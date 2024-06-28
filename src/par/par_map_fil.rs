@@ -1,6 +1,4 @@
-use super::{
-    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map::ParMap, reduce::Reduce,
-};
+use super::{par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, reduce::Reduce};
 use crate::{
     core::{
         map_fil_cnt::map_fil_cnt,
