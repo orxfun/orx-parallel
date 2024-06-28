@@ -9,9 +9,9 @@ use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_split_vec::*;
 use std::fmt::Debug;
 
-impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectInto<O> for SplitVec<O, G> {}
+impl<O: Send + Sync + Debug, G: Growth> ParCollectInto<O> for SplitVec<O, G> {}
 
-impl<O: Default + Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G> {
+impl<O: Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G> {
     type BridgePinnedVec = Self;
 
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self

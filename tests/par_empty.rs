@@ -10,7 +10,7 @@ use orx_split_vec::*;
 #[test]
 fn par_empty_par() {
     let vec = vec![1, 4, 2, 1, 5, 6];
-    let par: Par<_> = vec.into_par();
+    let par: ParEmpty<_> = vec.into_par();
 
     assert_eq!(par.params(), Params::default());
 
