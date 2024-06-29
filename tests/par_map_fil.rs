@@ -7,6 +7,7 @@ use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_parallel::*;
 use orx_pinned_vec::*;
 use orx_split_vec::SplitVec;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
 fn par_map_fil_par() {
@@ -58,7 +59,7 @@ fn par_map_fil_map() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let filter = map.filter(|x| *x >= 2);
     let map = filter.map(|x| x * 2).chunk_size(2);
@@ -74,7 +75,7 @@ fn par_map_fil_fmap() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let filter = map.filter(|x| *x >= 2);
     let map = filter.flat_map(|x| x.to_string().chars().collect::<Vec<_>>());
@@ -90,7 +91,7 @@ fn par_map_fil_fmap_option() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let filter = map.filter(|x| *x >= 2);
     let map = filter.flat_map(|x| if x % 2 == 0 { Some(x) } else { None });
@@ -106,7 +107,7 @@ fn par_map_fil_filter() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let filter = map.filter(|x| *x >= 2);
     let filter = filter.filter(|&x| x < 3);
@@ -122,7 +123,7 @@ fn par_map_fil_filtermap() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let filter = map.filter(|x| *x >= 2);
     let filter = filter.filter_map(|x| some_if(x, |&x| x < 3));
@@ -137,7 +138,7 @@ fn par_map_fil_filtermap() {
 fn par_map_fil_collect() {
     fn test(num_threads: usize, chunk_size: usize) {
         let vec = (54..5448).collect::<Vec<_>>();
-        let iter = vec.iter().cloned().take(10000).into_con_iter().into_par();
+        let iter = vec.iter().cloned().take(10000).par();
         let par = iter
             .map(|x| x * 2)
             .filter(|x| x % 3 == 0)
@@ -161,7 +162,7 @@ fn par_map_fil_collect() {
 fn par_map_fil_collect_vec() {
     fn test(num_threads: usize, chunk_size: usize) {
         let vec = (54..5448).collect::<Vec<_>>();
-        let iter = vec.iter().cloned().take(10000).into_con_iter().into_par();
+        let iter = vec.iter().cloned().take(10000).par();
         let par = iter
             .map(|x| x * 2)
             .filter(|x| x % 3 == 0)
@@ -258,11 +259,29 @@ fn par_map_fil_collect_into_vec() {
 #[test]
 fn par_map_fil_count() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x + 7);
         let par = par.filter(|x| x % 3 == 2);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.count(), (13..4785).filter(|x| x % 3 == 2).count());
+    }
+    test_different_params(test)
+}
+
+#[test]
+fn par_map_fil_foreach() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = (13..4785).par();
+        let par = par.map(|x| x + 7).filter(|x| x % 3 == 2);
+        let par = par.num_threads(num_threads).chunk_size(chunk_size);
+        let count = AtomicUsize::new(0);
+        par.for_each(|x| {
+            count.fetch_add(x, Ordering::AcqRel);
+        });
+        assert_eq!(
+            count.load(Ordering::Relaxed),
+            (13..4785).map(|x| x + 7).filter(|x| x % 3 == 2).sum()
+        );
     }
     test_different_params(test)
 }
@@ -272,7 +291,7 @@ fn par_map_fil_count() {
 #[test]
 fn par_map_fil_next() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x + 7);
         let par = par.filter(|x| x % 3487 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
@@ -281,7 +300,7 @@ fn par_map_fil_next() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (0..0).into_con_iter().into_par();
+        let par = (0..0).par();
         let par = par.map(|x| x + 7);
         let par = par.filter(|x| x % 3487 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
@@ -293,7 +312,7 @@ fn par_map_fil_next() {
 #[test]
 fn par_map_fil_find() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x + 7);
         let par = par.filter(|x| x % 1000 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
@@ -305,7 +324,7 @@ fn par_map_fil_find() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x + 7);
         let par = par.filter(|x| x % 1000 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);

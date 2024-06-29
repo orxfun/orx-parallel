@@ -7,6 +7,7 @@ use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_parallel::*;
 use orx_split_vec::*;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
 fn par_fmap_filter_par() {
@@ -58,7 +59,7 @@ fn par_fmap_filter_map() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let fmap = par
         .flat_map(|x| x.chars().collect::<Vec<_>>())
         .filter(|x| ['1', '9'].contains(x))
@@ -73,7 +74,7 @@ fn par_fmap_filter_map() {
 fn par_fmap_filter_fmap() {
     let iter = [999, 3, 1, 0, 2].into_iter().skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let fmap = par.flat_map(|x| vec![x; x]).num_threads(2);
     let fmap = fmap.flat_map(|x| vec![x.to_string(), (x + 1).to_string()]);
     let filter = fmap.filter(|x| x.parse::<usize>().unwrap() > 2);
@@ -89,7 +90,7 @@ fn par_fmap_filter_fmap() {
 fn par_fmap_filter_fmap_option() {
     let iter = [999, 3, 1, 0, 2].into_iter().skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let fmap = par.flat_map(|x| vec![x, x + 1, x + 2]).num_threads(4);
     let fmap = fmap.flat_map(|x| if x % 2 == 1 { Some(x) } else { None });
     let result = fmap.collect_vec();
@@ -101,7 +102,7 @@ fn par_fmap_filter_fmap_option() {
 fn par_fmap_filter_filter() {
     let iter = [999, 3, 1, 0, 2].into_iter().skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let fmap = par.flat_map(|x| vec![x, x + 1, x + 2]).num_threads(4);
     let fmap = fmap.flat_map(|x| if x % 2 == 1 { Some(x) } else { None });
     let filter = fmap.filter(|x| x > &2);
@@ -114,7 +115,7 @@ fn par_fmap_filter_filter() {
 fn par_fmap_filter_filtermap() {
     let iter = [999, 3, 1, 0, 2].into_iter().skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let fmap = par.flat_map(|x| vec![x, x + 1, x + 2]).num_threads(4);
     let fmap = fmap.flat_map(|x| if x % 2 == 1 { Some(x) } else { None });
     let filter = fmap.filter_map(|x| some_if(x, |x| x > &2));
@@ -262,7 +263,7 @@ fn par_fmap_filter_collect_into_vec() {
 fn par_fmap_filter_collect_into_fixed_capacity_does_not_panic() {
     // TODO! this might be due to the todo in `merge_bag_and_pos_len` method. Revise afterwards.
     let vec = (54..5648).collect::<Vec<_>>();
-    let iter = vec.into_iter().take(10000).into_con_iter().into_par();
+    let iter = vec.into_iter().take(10000).par();
     let fmap = iter
         .flat_map(|x| [x * 2])
         .filter(|x| x % 2 == 0)
@@ -275,7 +276,7 @@ fn par_fmap_filter_collect_into_fixed_capacity_does_not_panic() {
 fn par_fmap_filter_collect_into_split_capacity_does_not_panic() {
     // TODO! this might be due to the todo in `merge_bag_and_pos_len` method. Revise afterwards.
     let vec = (54..5648).collect::<Vec<_>>();
-    let iter = vec.into_iter().take(10000).into_con_iter().into_par();
+    let iter = vec.into_iter().take(10000).par();
     let map = iter
         .flat_map(|x| [x * 2])
         .filter(|x| x % 2 == 0)
@@ -289,7 +290,7 @@ fn par_fmap_filter_collect_into_split_capacity_does_not_panic() {
 #[test]
 fn par_fmap_filter_count() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.flat_map(|x| [x * 3, x * 2, x]).filter(|x| x % 2 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         let expected = (13..4785)
@@ -301,12 +302,33 @@ fn par_fmap_filter_count() {
     test_different_params(test)
 }
 
+#[test]
+fn par_fmap_filter_foreach() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = (13..4785).par();
+        let par = par.flat_map(|x| [x * 3, x * 2, x]).filter(|x| x % 2 == 0);
+        let par = par.num_threads(num_threads).chunk_size(chunk_size);
+        let count = AtomicUsize::new(0);
+        par.for_each(|x| {
+            count.fetch_add(x, Ordering::AcqRel);
+        });
+        assert_eq!(
+            count.load(Ordering::Relaxed),
+            (13..4785)
+                .flat_map(|x| [x * 3, x * 2, x])
+                .filter(|x| x % 2 == 0)
+                .sum()
+        );
+    }
+    test_different_params(test)
+}
+
 // find
 
 #[test]
 fn par_fmap_filter_next() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.flat_map(|x| [x * 3, x * 2, x]).filter(|x| x % 2 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         let expected = (13..4785)
@@ -318,7 +340,7 @@ fn par_fmap_filter_next() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (0..0).into_con_iter().into_par();
+        let par = (0..0).par();
         let par = par.flat_map(|x| [x * 3]);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.first(), None);
@@ -329,7 +351,7 @@ fn par_fmap_filter_next() {
 #[test]
 fn par_fmap_filter_find() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.flat_map(|x| [x * 3, x * 2, x]).filter(|x| x % 2 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         let expected = (13..4785)
@@ -342,7 +364,7 @@ fn par_fmap_filter_find() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.flat_map(|x| [x / 3, x + 3, x - 12]);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.find(|x| x % 13333 == 0), None);

@@ -7,6 +7,7 @@ use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_parallel::*;
 use orx_split_vec::*;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
 fn par_map_par() {
@@ -46,7 +47,7 @@ fn par_map_map() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let map = map.map(|x| x * 2).chunk_size(2);
     let result = map.collect_vec();
@@ -61,7 +62,7 @@ fn par_map_fmap() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let map = map.flat_map(|x| x.to_string().chars().collect::<Vec<_>>());
     let result = map.collect_vec();
@@ -76,7 +77,7 @@ fn par_map_fmap_option() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let map = map.flat_map(|x| if x % 2 == 0 { Some(x) } else { None });
     let result = map.collect_vec();
@@ -91,7 +92,7 @@ fn par_map_filter() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let filter = map.filter(|x| x % 2 == 0).num_threads(2);
     let result = filter.collect_vec();
@@ -106,7 +107,7 @@ fn par_map_filtermap() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let map = par.map(|x| x.len()).num_threads(2);
     let filter = map.filter_map(|x| ok_if(x, |x| x % 2 == 0)).num_threads(2);
     let result = filter.collect_vec();
@@ -251,10 +252,28 @@ fn par_map_collect_into_split_capacity_panic() {
 #[test]
 fn par_map_count() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x * 3);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.count(), 4785 - 13);
+    }
+    test_different_params(test)
+}
+
+#[test]
+fn par_map_foreach() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = (13..4785).par();
+        let par = par.map(|x| x + 7);
+        let par = par.num_threads(num_threads).chunk_size(chunk_size);
+        let count = AtomicUsize::new(0);
+        par.for_each(|x| {
+            count.fetch_add(x, Ordering::AcqRel);
+        });
+        assert_eq!(
+            count.load(Ordering::Relaxed),
+            (13..4785).map(|x| x + 7).sum()
+        );
     }
     test_different_params(test)
 }
@@ -264,7 +283,7 @@ fn par_map_count() {
 #[test]
 fn par_map_next() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x * 3);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.first_with_index(), Some((0, 13 * 3)));
@@ -272,7 +291,7 @@ fn par_map_next() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (0..0).into_con_iter().into_par();
+        let par = (0..0).par();
         let par = par.map(|x| x * 3);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.first_with_index(), None);
@@ -283,7 +302,7 @@ fn par_map_next() {
 #[test]
 fn par_map_find() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x * 3);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.find_with_index(|x| x >= &40), Some((14 - 13, 42)));
@@ -291,7 +310,7 @@ fn par_map_find() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.map(|x| x / 3);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.find_with_index(|x| x % 13333 == 0), None);
