@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-orx-concurrent-bag = "1.14"
+orx-concurrent-bag = { path = "../orx-concurrent-bag" }
 orx-concurrent-iter = { path = "../orx-concurrent-iter" }
-orx-concurrent-ordered-bag = "1.2"
-orx-pinned-concurrent-col = "1.4"
-orx-fixed-vec = "2.11"
-orx-pinned-vec = "2.11"
-orx-split-vec = "2.13"
+orx-concurrent-ordered-bag = { path = "../orx-concurrent-ordered-bag" }
+orx-pinned-concurrent-col = { path = "../orx-pinned-concurrent-col" }
+orx-fixed-vec = "2.12"
+orx-pinned-vec = "2.12"
+orx-split-vec = "2.14"
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -21,7 +21,7 @@ rayon = "1.9.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "filtermap_collect"
+name = "map_filter_collect"
 harness = false
 
 [features]

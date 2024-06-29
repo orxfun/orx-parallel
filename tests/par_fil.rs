@@ -3,10 +3,10 @@ mod reduce_string;
 mod utils;
 
 use crate::utils::*;
-use orx_concurrent_iter::IterIntoConcurrentIter;
 use orx_parallel::*;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
 fn par_fil_par() {
@@ -46,7 +46,7 @@ fn par_fil_map() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let filter = par.filter(|x| x.len() == 2).num_threads(2);
     let map = filter
         .map(|x| x.parse::<usize>().expect("is-ok"))
@@ -63,7 +63,7 @@ fn par_fil_fmap() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let filter = par.filter(|x| x.len() == 2).num_threads(2);
     let map = filter.flat_map(|x| x.chars().collect::<Vec<_>>());
     let result = map.collect_vec();
@@ -75,7 +75,7 @@ fn par_fil_fmap() {
 fn par_fil_fmap_option() {
     let iter = [1, 42, 2, 111, 15, 9876].into_iter().skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let filter = par.filter(|x| x.to_string().len() == 2).num_threads(2);
     let map = filter.flat_map(|x| if x % 2 == 1 { Some(x) } else { None });
     let result = map.collect_vec();
@@ -90,7 +90,7 @@ fn par_fil_filter() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let filter = par.filter(|x| x.len() == 2).num_threads(4);
     let filter = filter
         .filter(|x| x.parse::<usize>().expect("is-ok") % 3 == 0)
@@ -107,7 +107,7 @@ fn par_fil_filtermap() {
         .into_iter()
         .skip(1);
 
-    let par = iter.into_con_iter().into_par();
+    let par = iter.par();
     let filter = par.filter(|x| x.len() == 2).num_threads(4);
     let filter = filter
         .filter_map(|x| some_if(x, |x| x.parse::<usize>().expect("is-ok") % 3 == 0))
@@ -123,7 +123,7 @@ fn par_fil_filtermap() {
 fn par_fil_collect() {
     fn test(num_threads: usize, chunk_size: usize) {
         let vec = (54..5448).collect::<Vec<_>>();
-        let iter = vec.into_iter().take(10000).into_con_iter().into_par();
+        let iter = vec.into_iter().take(10000).par();
         let filter = iter
             .filter(|x| x % 3 == 0)
             .num_threads(num_threads)
@@ -220,10 +220,28 @@ fn par_fil_collect_into_vec() {
 #[test]
 fn par_fil_count() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.filter(|x| x % 3 == 2);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.count(), (13..4785).filter(|x| x % 3 == 2).count());
+    }
+    test_different_params(test)
+}
+
+#[test]
+fn par_fil_foreach() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = (13..4785).par();
+        let par = par.filter(|x| x % 3 == 2);
+        let par = par.num_threads(num_threads).chunk_size(chunk_size);
+        let count = AtomicUsize::new(0);
+        par.for_each(|x| {
+            count.fetch_add(x, Ordering::AcqRel);
+        });
+        assert_eq!(
+            count.load(Ordering::Relaxed),
+            (13..4785).filter(|x| x % 3 == 2).sum()
+        );
     }
     test_different_params(test)
 }
@@ -233,7 +251,7 @@ fn par_fil_count() {
 #[test]
 fn par_fil_next() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.first_with_index(), Some((312 - 13, 312)));
@@ -241,7 +259,7 @@ fn par_fil_next() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (0..0).into_con_iter().into_par();
+        let par = (0..0).par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.first_with_index(), None);
@@ -252,7 +270,7 @@ fn par_fil_next() {
 #[test]
 fn par_fil_find() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.find_with_index(|x| x >= &500), Some((624 - 13, 624)));
@@ -260,7 +278,7 @@ fn par_fil_find() {
     test_different_params(test);
 
     fn test_empty(num_threads: usize, chunk_size: usize) {
-        let par = (13..4785).into_con_iter().into_par();
+        let par = (13..4785).par();
         let par = par.filter(|x| x % 312 == 0);
         let par = par.num_threads(num_threads).chunk_size(chunk_size);
         assert_eq!(par.find_with_index(|x| x > &13333), None);
