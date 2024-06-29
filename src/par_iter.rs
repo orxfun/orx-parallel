@@ -243,6 +243,60 @@ pub trait ParIter: Reduce<Self::Item> {
 
     //reduce
 
+    /// Calls a closure on each element of an iterator.
+    ///
+    /// Unlike the for_each operation on a sequential iterator; parallel for_each method might apply the closure on the elements in different orders in every execution.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// (0..100).par().for_each(|x| println!("{:?}", x));
+    /// ```
+    ///
+    /// For a more detailed use case, see below which involves a complex computation and writing the results to the database.
+    /// In addition, a concurrent bag is used to collect some information while applying the closure.
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    /// use orx_concurrent_bag::*;
+    ///
+    /// #[derive(Debug)]
+    /// struct Input(usize);
+    ///
+    /// #[derive(Debug)]
+    /// struct Output(String);
+    ///
+    /// fn computation(input: Input) -> Output {
+    ///     Output(input.0.to_string())
+    /// }
+    ///
+    /// fn write_output_to_db(_output: Output) -> Result<(), &'static str> {
+    ///     Ok(())
+    /// }
+    ///
+    /// let results_bag = ConcurrentBag::new();
+    /// let inputs = (0..1024).map(|x| Input(x));
+    ///
+    /// inputs.par().for_each(|input| {
+    ///     let output = computation(input);
+    ///     let result = write_output_to_db(output);
+    ///     results_bag.push(result);
+    /// });
+    ///
+    /// let results = results_bag.into_inner();
+    /// assert_eq!(1024, results.len());
+    /// assert!(results.iter().all(|x| x.is_ok()));
+    /// ```
+    fn for_each<F>(self, f: F)
+    where
+        F: Fn(Self::Item) + FnSync,
+    {
+        let map = |item: Self::Item| f(item);
+        _ = self.map(map).count();
+    }
+
     /// Consumes the iterator, counting the number of iterations and returning it.
     ///
     /// # Examples
