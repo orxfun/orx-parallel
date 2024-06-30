@@ -278,6 +278,25 @@ fn par_map_foreach() {
     test_different_params(test)
 }
 
+#[test]
+fn par_map_all_any() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = || {
+            (13..4785)
+                .par()
+                .map(|x| x + 7)
+                .num_threads(num_threads)
+                .chunk_size(chunk_size)
+        };
+
+        assert!(par().all(|x| x >= &20));
+        assert!(!par().all(|x| *x <= 4788));
+        assert!(par().any(|x| *x > 3333));
+        assert!(!par().any(|x| x < &20));
+    }
+    test_different_params(test)
+}
+
 // find
 
 #[test]
