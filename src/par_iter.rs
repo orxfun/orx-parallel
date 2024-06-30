@@ -309,6 +309,53 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn count(self) -> usize;
 
+    /// Returns true if any of the elements of the iterator satisfies the given `predicate`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let mut a: Vec<_> = (0..4242).map(|x| 2 * x).collect();
+    ///
+    /// let any_odd = a.par().any(|x| *x % 2 == 1);
+    /// assert!(!any_odd);
+    ///
+    /// a.push(7);
+    /// let any_odd = a.par().any(|x| *x % 2 == 1);
+    /// assert!(any_odd);
+    /// ```
+    fn any<P>(self, predicate: P) -> bool
+    where
+        P: Fn(&Self::Item) -> bool + FnSync,
+    {
+        self.find(predicate).is_some()
+    }
+
+    /// Returns true if all of the elements of the iterator satisfies the given `predicate`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let mut a: Vec<_> = (0..4242).map(|x| 2 * x).collect();
+    ///
+    /// let all_even = a.par().all(|x| *x % 2 == 0);
+    /// assert!(all_even);
+    ///
+    /// a.push(7);
+    /// let all_even = a.par().all(|x| *x % 2 == 0);
+    /// assert!(!all_even);
+    /// ```
+    fn all<P>(self, predicate: P) -> bool
+    where
+        P: Fn(&Self::Item) -> bool + FnSync,
+    {
+        let negated_predicate = |x: &Self::Item| !predicate(x);
+        self.find(negated_predicate).is_none()
+    }
+
     // find
 
     /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.

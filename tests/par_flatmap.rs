@@ -269,6 +269,25 @@ fn par_fmap_foreach() {
     test_different_params(test)
 }
 
+#[test]
+fn par_fmap_all_any() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = || {
+            (13..4785)
+                .par()
+                .flat_map(|x| [x * 3, x * 2, x])
+                .num_threads(num_threads)
+                .chunk_size(chunk_size)
+        };
+
+        assert!(par().all(|x| *x <= 3 * 4784));
+        assert!(!par().all(|x| *x <= 3 * 4783));
+        assert!(par().any(|x| *x > 3 * 3000));
+        assert!(!par().any(|x| *x >= 3 * 4785));
+    }
+    test_different_params(test)
+}
+
 // find
 
 #[test]

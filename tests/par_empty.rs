@@ -216,6 +216,24 @@ fn par_empty_foreach() {
     test_different_params(test)
 }
 
+#[test]
+fn par_empty_all_any() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = || {
+            (13..4785)
+                .par()
+                .num_threads(num_threads)
+                .chunk_size(chunk_size)
+        };
+
+        assert!(par().all(|x| x > &1));
+        assert!(!par().all(|x| x < &4784));
+        assert!(par().any(|x| x > &100));
+        assert!(!par().any(|x| x < &10));
+    }
+    test_different_params(test)
+}
+
 // find
 
 #[test]

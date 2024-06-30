@@ -264,6 +264,25 @@ fn par_filtermap_foreach() {
     test_different_params(test)
 }
 
+#[test]
+fn par_filtermap_all_any() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let par = || {
+            (13..4785)
+                .par()
+                .filter_map(|x| some_if(x, |x| x % 2 == 1))
+                .num_threads(num_threads)
+                .chunk_size(chunk_size)
+        };
+
+        assert!(par().all(|x| x % 2 == 1));
+        assert!(!par().all(|x| x < &4754));
+        assert!(par().any(|x| x > &3000));
+        assert!(!par().any(|x| x % 2 == 0));
+    }
+    test_different_params(test)
+}
+
 // find
 
 #[test]
