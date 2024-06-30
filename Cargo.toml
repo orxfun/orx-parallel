@@ -21,7 +21,7 @@ rayon = "1.9.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "map_filter_collect"
+name = "map_find_expensive"
 harness = false
 
 [features]
