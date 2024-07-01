@@ -29,10 +29,6 @@ pub use par::collect_into::par_collect_into::ParCollectInto;
 pub use par::fallible::Fallible;
 pub use par::{
     cloned_copied::{ParIntoCloned, ParIntoCopied},
-    par_empty::ParEmpty,
-    par_fil::ParFilter,
-    par_map::ParMap,
-    par_map_fil::ParMapFilter,
     reduce::Reduce,
 };
 pub use par_iter::ParIter;

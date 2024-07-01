@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 #[test]
 fn par_filtermap_fil_par() {
     let vec = vec![1, 4, 2, 1, 5, 6];
-    let par: ParEmpty<_> = vec.into_par();
+    let par = vec.into_par();
 
     assert_eq!(par.params(), Params::default());
 

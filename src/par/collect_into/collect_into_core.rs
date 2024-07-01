@@ -1,7 +1,10 @@
 use crate::{
     fn_sync::FnSync,
-    par::{par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter},
-    Fallible, ParMap, ParMapFilter,
+    par::{
+        par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter, par_map::ParMap,
+        par_map_fil::ParMapFilter,
+    },
+    Fallible,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;

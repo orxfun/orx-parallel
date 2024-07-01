@@ -7,6 +7,9 @@ use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
 use std::{fmt::Debug, marker::PhantomData};
 
+/// A parallel iterator.
+///
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
 pub struct ParFilterMap<I, FO, O, M>
 where
     I: ConcurrentIter,
