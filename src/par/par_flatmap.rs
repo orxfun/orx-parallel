@@ -8,9 +8,9 @@ use orx_split_vec::SplitVec;
 use std::fmt::Debug;
 use std::iter::Map;
 
-/// An iterator that maps the elements of the iterator with a given map function.
+/// A parallel iterator.
 ///
-/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`ParMap::num_threads`] and [`ParMap::chunk_size`] methods.
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
 pub struct ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,

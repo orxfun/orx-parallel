@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-orx-concurrent-bag = { path = "../orx-concurrent-bag" }
-orx-concurrent-iter = { path = "../orx-concurrent-iter" }
-orx-concurrent-ordered-bag = { path = "../orx-concurrent-ordered-bag" }
-orx-pinned-concurrent-col = { path = "../orx-pinned-concurrent-col" }
+orx-concurrent-bag = "1.15"
+orx-concurrent-iter = "1.22"
+orx-concurrent-ordered-bag = "1.3"
 orx-fixed-vec = "2.12"
+orx-pinned-concurrent-col = "1.5"
 orx-pinned-vec = "2.12"
 orx-split-vec = "2.14"
 

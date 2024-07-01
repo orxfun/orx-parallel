@@ -1,8 +1,11 @@
 use super::collect_into_core::ParCollectIntoCore;
 use crate::{
     fn_sync::FnSync,
-    par::{par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter},
-    ParCollectInto, ParIter, ParMap, ParMapFilter,
+    par::{
+        par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter, par_map::ParMap,
+        par_map_fil::ParMapFilter,
+    },
+    ParCollectInto, ParIter,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;

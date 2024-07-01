@@ -6,7 +6,7 @@ use std::fmt::Debug;
 ///
 /// Every type that implements `IntoConcurrentIter` implements `AsPar`.
 ///
-/// See [`IntoPar`] for consuming conversion of common collections into parallel iterator.
+/// See [`crate::IntoPar`] for consuming conversion of common collections into parallel iterator.
 ///
 /// Converting into a parallel iterator is achieved using the `par()` method.
 ///
@@ -37,7 +37,7 @@ pub trait AsPar<'a, T: Send + Sync + Debug> {
     ///
     /// Every type that implements `IntoConcurrentIter` implements `AsPar`.
     ///
-    /// See [`IntoPar`] for consuming conversion of common collections into parallel iterator.
+    /// See [`crate::IntoPar`] for consuming conversion of common collections into parallel iterator.
     ///
     /// Converting into a parallel iterator is achieved using the `par()` method.
     ///

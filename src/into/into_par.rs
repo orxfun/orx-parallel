@@ -11,7 +11,7 @@ use std::{
 /// Every type implementing [`orx_concurrent_iter::ConcurrentIter`] or [`orx_concurrent_iter::IntoConcurrentIter`] also implements `IntoPar`.
 /// These types include common collections/views such as range, vector or slice.
 ///
-/// See [`IterPar`] for conversion of any regular iterator into parallel iterator.
+/// See [`crate::IterIntoPar`] for conversion of any regular iterator into parallel iterator.
 ///
 /// Converting into a parallel iterator is achieved using the `into_par()` method.
 ///
@@ -46,7 +46,7 @@ pub trait IntoPar {
     /// Every type implementing [`orx_concurrent_iter::ConcurrentIter`] or [`orx_concurrent_iter::IntoConcurrentIter`] also implements `IntoPar`.
     /// These types include common collections/views such as range, vector or slice.
     ///
-    /// See [`IterIntoPar`] for conversion of any regular iterator into parallel iterator.
+    /// See [`crate::IterIntoPar`] for conversion of any regular iterator into parallel iterator.
     ///
     /// Converting into a parallel iterator is achieved using the `into_par()` method.
     ///

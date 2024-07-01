@@ -18,6 +18,9 @@ use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 use std::{fmt::Debug, marker::PhantomData};
 
+/// A parallel iterator.
+///
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
 pub struct ParFilterMapFilter<I, FO, O, M, F>
 where
     I: ConcurrentIter,

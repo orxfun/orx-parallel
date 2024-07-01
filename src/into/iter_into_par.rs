@@ -6,7 +6,7 @@ use std::fmt::Debug;
 ///
 /// Every regular iterator implementing [`Iterator`] also implements `IterIntoPar`.
 ///
-/// See [`IntoPar`] for conversion of common collections into parallel iterator.
+/// See [`crate::IntoPar`] for conversion of common collections into parallel iterator.
 ///
 /// Converting into a parallel iterator is achieved using the `par()` method.
 ///
@@ -48,7 +48,7 @@ where
     ///
     /// Every regular iterator implementing [`Iterator`] also implements `IterIntoPar`.
     ///
-    /// See [`IntoPar`] for conversion of common collections into parallel iterator.
+    /// See [`crate::IntoPar`] for conversion of common collections into parallel iterator.
     ///
     /// Converting into a parallel iterator is achieved using the `par()` method.
     ///

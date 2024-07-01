@@ -1,19 +1,21 @@
-use super::{par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, reduce::Reduce};
+use super::{
+    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map_fil::ParMapFilter, reduce::Reduce,
+};
 use crate::{
     core::{
         default_fns::map_self, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
     fn_sync::FnSync,
-    Fallible, ParCollectInto, ParIter, ParMapFilter, Params,
+    Fallible, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
 use std::fmt::Debug;
 
-/// An iterator that maps the elements of the iterator with a given map function.
+/// A parallel iterator.
 ///
-/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`ParMap::num_threads`] and [`ParMap::chunk_size`] methods.
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
 pub struct ParFilter<I, F>
 where
     I: ConcurrentIter,

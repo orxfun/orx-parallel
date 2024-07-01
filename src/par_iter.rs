@@ -220,7 +220,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// assert_eq!(numbers, [1, 5]);
     /// ```
     ///
-    /// Here's the same example, but with [`filter`] and [`map`]:
+    /// Here's the same example, but with [`crate::ParIter::filter`] and [`crate::ParIter::map`]:
     ///
     /// ```
     /// use orx_parallel::*;
