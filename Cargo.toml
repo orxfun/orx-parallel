@@ -1,7 +1,14 @@
 [package]
 name = "orx-parallel"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
+description = "A high performance, convenient and configurable parallel processing library."
+license = "MIT"
+repository = "https://github.com/orxfun/orx-parallel/"
+keywords = ["parallel", "concurrency", "performance", "thread", "iterator"]
+categories = ["concurrency", "algorithms"]
+
 
 [dependencies]
 orx-concurrent-bag = "1.15"
@@ -13,6 +20,7 @@ orx-pinned-vec = "2.12"
 orx-split-vec = "2.14"
 
 [dev-dependencies]
+chrono = "0.4.38"
 criterion = "0.5.1"
 orx-priority-queue = "1.1.5"
 rand = "0.8"
@@ -21,7 +29,7 @@ rayon = "1.9.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "map_find_expensive"
+name = "all_pairs_dijkstra"
 harness = false
 
 [features]
