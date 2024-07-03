@@ -121,7 +121,7 @@ fn map_collect(c: &mut Criterion) {
             b.iter(|| orx_parallel_split_vec(black_box(&input)))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx-default-vec", n), n, |b, _| {
+        group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
             assert_eq!(&expected, &orx_parallel_vec(&input));
             b.iter(|| orx_parallel_vec(black_box(&input)))
         });
