@@ -1,5 +1,6 @@
 use super::collect_into_core::ParCollectIntoCore;
 use crate::{
+    core::map_col::map_col,
     fn_sync::FnSync,
     par::{
         par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter, par_map::ParMap,
@@ -22,13 +23,19 @@ impl<O: Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G>
         I: orx_concurrent_iter::ConcurrentIter,
         M: Fn(I::Item) -> O + FnSync,
     {
-        if let Some(len) = par_map.iter_len() {
-            self.try_reserve_maximum_concurrent_capacity(self.len() + len)
-                .expect("Failed to reserve sufficient capacity");
+        match par_map.iter_len() {
+            None => {
+                self.try_reserve_maximum_concurrent_capacity(1 << 32)
+                    .expect("Failed to reserve sufficient capacity");
+            }
+            Some(len) => {
+                self.try_reserve_maximum_concurrent_capacity(self.len() + len)
+                    .expect("Failed to reserve sufficient capacity");
+            }
         }
-
         let bag: ConcurrentOrderedBag<_, _> = self.into();
-        par_map.collect_bag(bag)
+        let (params, iter, map) = par_map.destruct();
+        map_col(params, iter, map, bag).into()
     }
 
     fn map_filter_into<I, M, F>(mut self, par: ParMapFilter<I, O, M, F>) -> Self

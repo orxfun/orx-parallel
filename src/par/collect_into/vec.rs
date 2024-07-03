@@ -1,5 +1,6 @@
 use super::collect_into_core::ParCollectIntoCore;
 use crate::{
+    core::map_col::map_col,
     fn_sync::FnSync,
     par::{
         par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter, par_map::ParMap,
@@ -10,6 +11,7 @@ use crate::{
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
 use std::fmt::Debug;
 
 impl<O: Send + Sync + Debug> ParCollectInto<O> for Vec<O> {}
@@ -22,13 +24,19 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
         I: orx_concurrent_iter::ConcurrentIter,
         M: Fn(I::Item) -> O + FnSync,
     {
-        if let Some(iter_len) = par_map.iter_len() {
-            self.reserve(iter_len);
+        match par_map.iter_len() {
+            None => SplitVec::with_doubling_growth_and_fragments_capacity(32)
+                .map_into(par_map)
+                .to_vec(),
+            Some(iter_len) => {
+                let additional = iter_len.saturating_sub(self.len());
+                self.reserve(additional);
+                let fixed: FixedVec<_> = self.into();
+                let bag: ConcurrentOrderedBag<_, _> = fixed.into();
+                let (params, iter, map) = par_map.destruct();
+                map_col(params, iter, map, bag).into()
+            }
         }
-
-        let fixed: FixedVec<_> = self.into();
-        let bag: ConcurrentOrderedBag<_, _> = fixed.into();
-        par_map.collect_bag(bag).into()
     }
 
     fn map_filter_into<I, M, F>(mut self, par: ParMapFilter<I, O, M, F>) -> Self

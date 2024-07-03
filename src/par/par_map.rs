@@ -1,18 +1,17 @@
 use super::{
-    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map_fil::ParMapFilter, reduce::Reduce,
+    collect_into::collect_into_core::ParCollectIntoCore, par_filtermap::ParFilterMap,
+    par_flatmap::ParFlatMap, par_map_fil::ParMapFilter, reduce::Reduce,
 };
 use crate::{
     core::{
-        default_fns::no_filter, map_col::map_col, map_fil_cnt::map_fil_cnt,
-        map_fil_find::map_fil_find, map_fil_red::map_fil_red,
+        default_fns::no_filter, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
+        map_fil_red::map_fil_red,
     },
     fn_sync::FnSync,
     par_iter::ParIter,
     Fallible, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 use std::fmt::Debug;
 
@@ -40,18 +39,12 @@ where
         Self { iter, params, map }
     }
 
-    fn destruct(self) -> (Params, I, M) {
+    pub(crate) fn destruct(self) -> (Params, I, M) {
         (self.params, self.iter, self.map)
     }
 
     pub(crate) fn iter_len(&self) -> Option<usize> {
         self.iter.try_get_len()
-    }
-
-    // collect
-
-    pub(crate) fn collect_bag<P: PinnedVec<O>>(self, collected: ConcurrentOrderedBag<O, P>) -> P {
-        map_col(self.params, self.iter, self.map, collected)
     }
 
     // find
@@ -233,16 +226,11 @@ where
     // collect
 
     fn collect_vec(self) -> Vec<Self::Item> {
-        match self.iter_len() {
-            Some(len) => self
-                .collect_bag(ConcurrentOrderedBag::with_fixed_capacity(len))
-                .into(),
-            None => self.collect_bag(ConcurrentOrderedBag::new()).into(),
-        }
+        Vec::new().map_into(self)
     }
 
     fn collect(self) -> SplitVec<Self::Item> {
-        self.collect_bag(ConcurrentOrderedBag::new())
+        SplitVec::with_doubling_growth_and_fragments_capacity(32).map_into(self)
     }
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
