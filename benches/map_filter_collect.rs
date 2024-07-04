@@ -1,11 +1,12 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use orx_parallel::*;
+use orx_split_vec::SplitVec;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const SEED: u64 = 745;
-const FIB_UPPER_BOUND: u32 = 9999;
+const SEED: u64 = 9874;
+const FIB_UPPER_BOUND: u32 = 999;
 
 fn fibonacci(n: &u32) -> u32 {
     let mut a = 0;
@@ -42,7 +43,11 @@ fn rayon(inputs: &[u32]) -> Vec<u32> {
         .collect()
 }
 
-fn orx_parallel_default(inputs: &[u32]) -> Vec<u32> {
+fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<u32> {
+    inputs.into_par().map(fibonacci).filter(filter).collect()
+}
+
+fn orx_parallel_vec(inputs: &[u32]) -> Vec<u32> {
     inputs
         .into_par()
         .map(fibonacci)
@@ -75,26 +80,25 @@ fn map_filter_collect(c: &mut Criterion) {
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
-            b.iter(|| {
-                let result = rayon(black_box(&input));
-                assert_eq!(result, expected);
-            })
+            assert_eq!(rayon(&input), expected);
+            b.iter(|| rayon(black_box(&input)))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx-parallel-default", n), n, |b, _| {
-            b.iter(|| {
-                let result = orx_parallel_default(black_box(&input));
-                assert_eq!(result, expected);
-            })
+        group.bench_with_input(BenchmarkId::new("orx-parallel-split-vec", n), n, |b, _| {
+            assert_eq!(orx_parallel_split_vec(&input), expected);
+            b.iter(|| orx_parallel_split_vec(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
+            assert_eq!(orx_parallel_vec(&input), expected);
+            b.iter(|| orx_parallel_vec(black_box(&input)))
         });
 
         for (t, c) in params {
             let name = format!("orx-parallel-t{}-c{}", t, c);
             group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
-                b.iter(|| {
-                    let result = orx_parallel(black_box(&input), t, c);
-                    assert_eq!(result, expected);
-                })
+                assert_eq!(orx_parallel(&input, t, c), expected);
+                b.iter(|| orx_parallel(black_box(&input), t, c))
             });
         }
     }
