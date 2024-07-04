@@ -21,8 +21,7 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for FixedVec<O> {
         I: orx_concurrent_iter::ConcurrentIter,
         M: Fn(I::Item) -> O + FnSync,
     {
-        let vec: Vec<_> = self.into();
-        vec.map_into(par_map).into()
+        self.into_inner().map_into(par_map).into()
     }
 
     fn map_filter_into<I, M, F>(self, par: ParMapFilter<I, O, M, F>) -> Self
@@ -31,18 +30,8 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for FixedVec<O> {
         M: Fn(I::Item) -> O + FnSync,
         F: Fn(&O) -> bool + FnSync,
     {
-        match par.params().is_sequential() {
-            true => par
-                .collect_bag_seq(Vec::from(self), |v, x| v.push(x))
-                .into(),
-            false => par
-                .collect_bag_par(|len| {
-                    let mut vec: Vec<_> = self.into();
-                    vec.reserve(len);
-                    FixedVec::from(vec)
-                })
-                .into(),
-        }
+        let vec = self.into_inner().map_filter_into(par);
+        FixedVec::from(vec)
     }
 
     fn flatmap_filter_into<I, OI, M, F>(self, par: ParFlatMapFilter<I, O, OI, M, F>) -> Self

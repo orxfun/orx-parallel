@@ -127,6 +127,53 @@ impl Runner {
         num_spawned
     }
 
+    pub fn run_map<I, F, Out>(
+        params: Params,
+        task_type: ParTask,
+        iter: &I,
+        thread_task: &F,
+    ) -> Vec<Out>
+    where
+        I: ConcurrentIter,
+        F: Fn(usize) -> Out + Sync,
+        Out: Send + Sync,
+    {
+        let runner = Self::new(params, task_type, iter.try_get_len());
+
+        let mut num_spawned = 0;
+
+        std::thread::scope(|s| {
+            let mut handles = vec![];
+            let mut chunk: usize = runner.chunk_size.inner();
+            'lag_period: loop {
+                for _ in 0..LAG_PERIODICITY {
+                    match runner.do_spawn(num_spawned, iter.has_more()) {
+                        false => break 'lag_period,
+                        true => {
+                            handles.push(s.spawn(move || thread_task(chunk)));
+                            num_spawned += 1;
+                        }
+                    }
+                }
+
+                lag();
+                match runner.next_chunk_size(num_spawned, iter.has_more()) {
+                    None => break 'lag_period,
+                    Some(c) => chunk = c,
+                }
+            }
+
+            handles.push(s.spawn(move || thread_task(chunk)));
+            num_spawned += 1;
+
+            let mut vec = vec![];
+            for x in handles {
+                vec.push(x.join().expect("failed to join the thread"));
+            }
+            vec
+        })
+    }
+
     pub fn reduce<I, F, T, R>(
         params: Params,
         task_type: ParTask,

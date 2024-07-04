@@ -197,7 +197,6 @@ fn par_map_collect_into_vec() {
             .num_threads(num_threads)
             .chunk_size(chunk_size);
         let result1 = map.collect_into(vec![]);
-
         assert_eq!(result1.len(), 5648 - 54);
         for i in 54..5648 {
             assert_eq!(result1.get(i - 54).cloned(), Some(i * 2));
@@ -219,8 +218,7 @@ fn par_map_collect_into_vec() {
 }
 
 #[test]
-#[should_panic]
-fn par_map_collect_into_fixed_capacity_panic() {
+fn par_map_collect_into_fixed_capacity_does_not_panic() {
     let vec = (54..5648).collect::<Vec<_>>();
     let iter = vec
         .into_iter()
@@ -233,9 +231,7 @@ fn par_map_collect_into_fixed_capacity_panic() {
 }
 
 #[test]
-#[should_panic]
-fn par_map_collect_into_split_capacity_panic() {
-    // TODO: there is no reason for Doubling and Recursive to panic
+fn par_map_collect_into_split_capacity_does_not_panic() {
     let vec = (54..5648).collect::<Vec<_>>();
     let iter = vec
         .into_iter()

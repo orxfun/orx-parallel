@@ -97,7 +97,7 @@ where
     match bag.is_empty() {
         true => {}
         false => {
-            assert!(output.capacity() >= bag.len());
+            // assert!(output.capacity() >= bag.len());
 
             let mut des_idx = output.len();
 

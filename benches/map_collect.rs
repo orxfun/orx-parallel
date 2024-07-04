@@ -87,13 +87,13 @@ fn orx_parallel_split_vec(inputs: &[usize]) -> SplitVec<LargeOutput> {
     inputs.into_par().map(to_large_output).collect()
 }
 
-fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Vec<LargeOutput> {
+fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> SplitVec<LargeOutput> {
     inputs
         .into_par()
         .chunk_size(chunk_size)
         .num_threads(num_threads)
         .map(to_large_output)
-        .collect_vec()
+        .collect()
 }
 
 fn map_collect(c: &mut Criterion) {
