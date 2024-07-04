@@ -4,7 +4,7 @@ use crate::fn_sync::FnSync;
 use crate::{core::default_fns::no_filter, Params};
 use crate::{Fallible, ParCollectInto, ParIter};
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter};
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use std::fmt::Debug;
 use std::iter::Map;
 
@@ -158,7 +158,7 @@ where
         self.filter(no_filter).collect_x_vec()
     }
 
-    fn collect_x(self) -> SplitVec<Self::Item> {
+    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
         self.filter(no_filter).collect_x()
     }
 
