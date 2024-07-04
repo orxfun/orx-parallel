@@ -18,7 +18,7 @@ use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use std::fmt::Debug;
 
 /// A parallel iterator.
@@ -229,8 +229,8 @@ where
         self.collect_bag_x(ConcurrentBag::new()).into_inner().into()
     }
 
-    fn collect_x(self) -> SplitVec<Self::Item> {
-        self.collect_bag_x(ConcurrentBag::new()).into_inner()
+    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
+        self.collect_bag_x(ConcurrentBag::new()).into_inner().into()
     }
 
     fn collect_x_into<B: ParCollectInto<Self::Item>>(self, output: B) -> B {

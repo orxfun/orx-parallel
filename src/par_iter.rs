@@ -1,5 +1,5 @@
 use crate::{fn_sync::FnSync, ChunkSize, Fallible, NumThreads, ParCollectInto, Params, Reduce};
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use std::fmt::Debug;
 
 /// An iterator used to define a computation that can be executed in parallel.
@@ -536,8 +536,8 @@ pub trait ParIter: Reduce<Self::Item> {
     /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
     /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
     /// ```
-    fn collect_x(self) -> SplitVec<Self::Item> {
-        self.collect()
+    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
+        self.collect().into()
     }
 
     /// Collects elements yielded by the iterator into the given `output` collection.

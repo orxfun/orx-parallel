@@ -3,12 +3,15 @@ use super::{
     par_flatmap::ParFlatMap, reduce::Reduce,
 };
 use crate::{
-    core::{map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find, map_fil_red::map_fil_red},
+    core::{
+        map_fil_cnt::map_fil_cnt, map_fil_col_x::par_map_fil_col_x_rec, map_fil_find::map_fil_find,
+        map_fil_red::map_fil_red,
+    },
     fn_sync::FnSync,
     Fallible, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use std::fmt::Debug;
 
 /// A parallel iterator.
@@ -255,6 +258,19 @@ where
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
         output.map_filter_into(self)
+    }
+
+    /// TODO: define the advantage!
+    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
+        let mut recursive = SplitVec::with_recursive_growth();
+        match self.params().is_sequential() {
+            true => self.collect_into(recursive),
+            false => {
+                let (params, iter, map, filter) = self.destruct();
+                par_map_fil_col_x_rec(params, iter, map, filter, &mut recursive);
+                recursive
+            }
+        }
     }
 }
 

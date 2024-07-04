@@ -159,6 +159,31 @@ fn par_map_fil_collect() {
 }
 
 #[test]
+fn par_map_fil_collect_x() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let vec = (54..5448).collect::<Vec<_>>();
+        let iter = vec.iter().cloned().take(10000).par();
+        let par = iter
+            .map(|x| x * 2)
+            .filter(|x| x % 3 == 0)
+            .num_threads(num_threads)
+            .chunk_size(chunk_size);
+        let mut result = par.collect_x().to_vec();
+        result.sort();
+
+        let expected: Vec<_> = vec
+            .into_iter()
+            .map(|x| x * 2)
+            .filter(|x| x % 3 == 0)
+            .collect();
+
+        assert_eq!(result.len(), expected.len());
+        assert_eq!(result, expected);
+    }
+    test_different_params(test)
+}
+
+#[test]
 fn par_map_fil_collect_vec() {
     fn test(num_threads: usize, chunk_size: usize) {
         let vec = (54..5448).collect::<Vec<_>>();
