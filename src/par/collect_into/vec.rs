@@ -1,6 +1,7 @@
 use super::collect_into_core::ParCollectIntoCore;
 use crate::{
     core::{
+        filtermap_fil_col::{par_filtermap_fil_col_vec, seq_filtermap_fil_col_vec},
         flatmap_fil_col::{par_flatmap_fil_col_vec, seq_flatmap_fil_col_vec},
         map_col::map_col,
         map_fil_col::{par_map_fil_col_vec, seq_map_fil_col_vec},
@@ -10,7 +11,7 @@ use crate::{
         par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter, par_map::ParMap,
         par_map_fil::ParMapFilter,
     },
-    ParCollectInto, ParIter,
+    ParCollectInto,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -80,15 +81,13 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
         M: Fn(I::Item) -> FO + FnSync,
         F: Fn(&O) -> bool + FnSync,
     {
-        match par.params().is_sequential() {
-            true => par.collect_bag_seq(self, |v, x| v.push(x)),
-            false => par
-                .collect_bag_par(|len| {
-                    self.reserve(len);
-                    FixedVec::from(self)
-                })
-                .into(),
+        let (params, iter, filter_map, filter) = par.destruct();
+
+        match params.is_sequential() {
+            true => seq_filtermap_fil_col_vec(iter, filter_map, filter, &mut self),
+            false => par_filtermap_fil_col_vec(params, iter, filter_map, filter, &mut self),
         }
+        self
     }
 
     fn into_concurrent_bag(self) -> ConcurrentBag<O, Self::BridgePinnedVec> {
