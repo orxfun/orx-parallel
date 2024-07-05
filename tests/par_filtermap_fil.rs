@@ -150,6 +150,27 @@ fn par_filtermap_fil_collect() {
 }
 
 #[test]
+fn par_filtermap_fil_collect_x() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let iter = (54..5648).collect::<Vec<_>>().into_par();
+        let filtermap = iter
+            .filter_map(|x| ok_if(x, |x| x % 2 == 0))
+            .filter(|x| x > &35)
+            .num_threads(num_threads)
+            .chunk_size(chunk_size);
+        let mut result = filtermap.collect_x().to_vec();
+        result.sort();
+
+        assert_eq!(result.len(), (5648 - 54) / 2);
+
+        for i in (54..5648).step_by(2) {
+            assert_eq!(result.get((i - 54) / 2).cloned(), Some(i));
+        }
+    }
+    test_different_params(test)
+}
+
+#[test]
 fn par_filtermap_fil_collect_vec() {
     fn test(num_threads: usize, chunk_size: usize) {
         let iter = (54..5648)
