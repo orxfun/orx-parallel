@@ -1,10 +1,7 @@
 use crate::par::par_empty::ParEmpty;
 use iter::atomic_iter::AtomicIter;
 use orx_concurrent_iter::*;
-use std::{
-    fmt::Debug,
-    ops::{Add, Range, Sub},
-};
+use std::ops::{Add, Range, Sub};
 
 /// Conversion into a parallel iterator.
 ///
@@ -68,19 +65,17 @@ pub trait IntoPar {
     /// let par = names.as_slice().into_par().map(|x| x.len()).reduce(|a, b| a + b);
     /// assert_eq!(par, seq);
     /// ```
-    fn into_par(self) -> ParEmpty<Self::ConIter>
-    where
-        <Self::ConIter as ConcurrentIter>::Item: Debug;
+    fn into_par(self) -> ParEmpty<Self::ConIter>;
 }
 
 // array
-impl<const N: usize, T: Send + Sync + Debug + Default> IntoPar for [T; N] {
+impl<const N: usize, T: Send + Sync + Default> IntoPar for [T; N] {
     type ConIter = ConIterOfArray<N, T>;
     fn into_par(self) -> ParEmpty<Self::ConIter> {
         ParEmpty::new(self.into_con_iter())
     }
 }
-impl<const N: usize, T: Send + Sync + Debug + Default> IntoPar for ConIterOfArray<N, T> {
+impl<const N: usize, T: Send + Sync + Default> IntoPar for ConIterOfArray<N, T> {
     type ConIter = ConIterOfArray<N, T>;
     fn into_par(self) -> ParEmpty<Self::ConIter> {
         ParEmpty::new(self)
@@ -88,7 +83,7 @@ impl<const N: usize, T: Send + Sync + Debug + Default> IntoPar for ConIterOfArra
 }
 
 // con-iter
-impl<T: Send + Sync + Debug, Iter> IntoPar for ConIterOfIter<T, Iter>
+impl<T: Send + Sync, Iter> IntoPar for ConIterOfIter<T, Iter>
 where
     Iter: Iterator<Item = T>,
 {
@@ -109,8 +104,7 @@ where
         + Into<usize>
         + Add<Idx, Output = Idx>
         + Sub<Idx, Output = Idx>
-        + Ord
-        + Debug,
+        + Ord,
     Range<Idx>: Iterator<Item = Idx>,
 {
     type ConIter = ConIterOfRange<Idx>;
@@ -128,8 +122,7 @@ where
         + Into<usize>
         + Add<Idx, Output = Idx>
         + Sub<Idx, Output = Idx>
-        + Ord
-        + Debug,
+        + Ord,
     Range<Idx>: Iterator<Item = Idx>,
 {
     type ConIter = ConIterOfRange<Idx>;
@@ -139,17 +132,14 @@ where
 }
 
 // slice
-impl<'a, T: Send + Sync + Debug> IntoPar for &'a [T] {
+impl<'a, T: Send + Sync> IntoPar for &'a [T] {
     type ConIter = ConIterOfSlice<'a, T>;
-    fn into_par(self) -> ParEmpty<Self::ConIter>
-    where
-        <Self::ConIter as ConcurrentIter>::Item: Debug,
-    {
+    fn into_par(self) -> ParEmpty<Self::ConIter> {
         ParEmpty::new(self.into_con_iter())
     }
 }
 
-impl<'a, T: Send + Sync + Debug> IntoPar for ConIterOfSlice<'a, T> {
+impl<'a, T: Send + Sync> IntoPar for ConIterOfSlice<'a, T> {
     type ConIter = ConIterOfSlice<'a, T>;
     fn into_par(self) -> ParEmpty<Self::ConIter> {
         ParEmpty::new(self)
@@ -158,8 +148,8 @@ impl<'a, T: Send + Sync + Debug> IntoPar for ConIterOfSlice<'a, T> {
 
 // cloned
 
-impl<'a, T: Send + Sync + Debug + Clone, C: AtomicIter<&'a T> + ConcurrentIter<Item = &'a T>>
-    IntoPar for Cloned<'a, T, C>
+impl<'a, T: Send + Sync + Clone, C: AtomicIter<&'a T> + ConcurrentIter<Item = &'a T>> IntoPar
+    for Cloned<'a, T, C>
 {
     type ConIter = Cloned<'a, T, C>;
     fn into_par(self) -> ParEmpty<Self::ConIter> {
@@ -168,13 +158,13 @@ impl<'a, T: Send + Sync + Debug + Clone, C: AtomicIter<&'a T> + ConcurrentIter<I
 }
 
 // vec
-impl<T: Send + Sync + Debug> IntoPar for Vec<T> {
+impl<T: Send + Sync> IntoPar for Vec<T> {
     type ConIter = ConIterOfVec<T>;
     fn into_par(self) -> ParEmpty<Self::ConIter> {
         ParEmpty::new(self.into_con_iter())
     }
 }
-impl<T: Send + Sync + Debug> IntoPar for ConIterOfVec<T> {
+impl<T: Send + Sync> IntoPar for ConIterOfVec<T> {
     type ConIter = ConIterOfVec<T>;
     fn into_par(self) -> ParEmpty<Self::ConIter> {
         ParEmpty::new(self)

@@ -16,11 +16,10 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
-use std::fmt::Debug;
 
-impl<O: Send + Sync + Debug> ParCollectInto<O> for Vec<O> {}
+impl<O: Send + Sync> ParCollectInto<O> for Vec<O> {}
 
-impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
+impl<O: Send + Sync> ParCollectIntoCore<O> for Vec<O> {
     type BridgePinnedVec = FixedVec<O>;
 
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
@@ -76,7 +75,7 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
     fn filtermap_filter_into<I, FO, M, F>(mut self, par: ParFilterMapFilter<I, FO, O, M, F>) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
-        FO: crate::Fallible<O> + Send + Sync + Debug,
+        FO: crate::Fallible<O> + Send + Sync,
         M: Fn(I::Item) -> FO + Send + Sync + Clone,
         F: Fn(&O) -> bool + Send + Sync + Clone,
     {

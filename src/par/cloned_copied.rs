@@ -1,5 +1,4 @@
 use crate::ParIter;
-use std::fmt::Debug;
 
 /// Transforms a parallel iterator yielding &T into one that yields T by cloning each element.
 ///
@@ -22,7 +21,7 @@ use std::fmt::Debug;
 /// ```
 pub trait ParIntoCloned<'a, T>: ParIter<Item = &'a T>
 where
-    T: Send + Sync + Debug + Clone + 'a,
+    T: Send + Sync + Clone + 'a,
 {
     /// Transforms a parallel iterator yielding &T into one that yields T by cloning each element.
     ///
@@ -50,7 +49,7 @@ where
 
 impl<'a, T, P> ParIntoCloned<'a, T> for P
 where
-    T: Send + Sync + Debug + Clone + 'a,
+    T: Send + Sync + Clone + 'a,
     P: ParIter<Item = &'a T>,
 {
 }
@@ -73,7 +72,7 @@ where
 /// ```
 pub trait ParIntoCopied<'a, T>: ParIter<Item = &'a T>
 where
-    T: Send + Sync + Debug + Copy + 'a,
+    T: Send + Sync + Copy + 'a,
 {
     /// Transforms a parallel iterator yielding &T into one that yields T by copying each element.
     ///
@@ -98,7 +97,7 @@ where
 
 impl<'a, T, P> ParIntoCopied<'a, T> for P
 where
-    T: Send + Sync + Debug + Copy + 'a,
+    T: Send + Sync + Copy + 'a,
     P: ParIter<Item = &'a T>,
 {
 }

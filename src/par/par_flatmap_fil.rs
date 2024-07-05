@@ -11,7 +11,6 @@ use crate::{
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
-use std::fmt::Debug;
 
 /// A parallel iterator.
 ///
@@ -19,7 +18,7 @@ use std::fmt::Debug;
 pub struct ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
+    O: Send + Sync,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync,
     F: Fn(&O) -> bool + Send + Sync,
@@ -33,7 +32,7 @@ where
 impl<I, O, OI, M, F> ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
+    O: Send + Sync,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync,
     F: Fn(&O) -> bool + Send + Sync,
@@ -55,7 +54,7 @@ where
 impl<I, O, OI, M, F> ParIter for ParFlatMapFilter<I, O, OI, M, F>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
+    O: Send + Sync,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync,
     F: Fn(&O) -> bool + Send + Sync,
@@ -80,7 +79,7 @@ where
 
     fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     where
-        O2: Send + Sync + Debug,
+        O2: Send + Sync,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let params = self.params;
@@ -91,7 +90,7 @@ where
 
     fn flat_map<O2, OI2, FM>(self, flat_map: FM) -> ParFlatMap<ConIterOfVec<O>, OI2::Item, OI2, FM>
     where
-        O2: Send + Sync + Debug,
+        O2: Send + Sync,
         OI2: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
@@ -115,8 +114,8 @@ where
 
     fn filter_map<O2, FO, FM>(self, filter_map: FM) -> ParFilterMap<ConIterOfVec<O>, FO, O2, FM>
     where
-        O2: Send + Sync + Debug,
-        FO: crate::Fallible<O2> + Send + Sync + Debug,
+        O2: Send + Sync,
+        FO: crate::Fallible<O2> + Send + Sync,
         FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         let params = self.params;

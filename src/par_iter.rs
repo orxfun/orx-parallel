@@ -1,6 +1,6 @@
 use crate::{ChunkSize, Fallible, NumThreads, ParCollectInto, Params};
 use orx_split_vec::{Recursive, SplitVec};
-use std::{cmp::Ordering, fmt::Debug, ops::Add};
+use std::{cmp::Ordering, ops::Add};
 
 /// An iterator used to define a computation that can be executed in parallel.
 pub trait ParIter
@@ -8,7 +8,7 @@ where
     Self: Sized,
 {
     /// Type of the items that the iterator yields.
-    type Item: Send + Sync + Debug;
+    type Item: Send + Sync;
 
     /// Parameters of the parallel computation which can be set by `num_threads` and `chunk_size` methods.
     fn params(&self) -> Params;
@@ -166,7 +166,7 @@ where
     /// ```
     fn map<O, M>(self, map: M) -> impl ParIter<Item = O>
     where
-        O: Send + Sync + Debug,
+        O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync + Clone;
 
     /// Takes the closure `fmap` and creates an iterator which calls that closure on each element and flattens the result.
@@ -181,7 +181,7 @@ where
     /// ```
     fn flat_map<O, OI, FM>(self, flat_map: FM) -> impl ParIter<Item = O>
     where
-        O: Send + Sync + Debug,
+        O: Send + Sync,
         OI: IntoIterator<Item = O>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone;
 
@@ -240,8 +240,8 @@ where
     /// ```
     fn filter_map<O, FO, FM>(self, filter_map: FM) -> impl ParIter<Item = O>
     where
-        O: Send + Sync + Debug,
-        FO: Fallible<O> + Send + Sync + Debug,
+        O: Send + Sync,
+        FO: Fallible<O> + Send + Sync,
         FM: Fn(Self::Item) -> FO + Send + Sync + Clone;
 
     //reduce
@@ -286,10 +286,8 @@ where
     /// use orx_parallel::*;
     /// use orx_concurrent_bag::*;
     ///
-    /// #[derive(Debug)]
     /// struct Input(usize);
     ///
-    /// #[derive(Debug)]
     /// struct Output(String);
     ///
     /// fn computation(input: Input) -> Output {

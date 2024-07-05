@@ -4,7 +4,7 @@ use crate::{
 };
 use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
-use std::{fmt::Debug, marker::PhantomData};
+use std::marker::PhantomData;
 
 /// A parallel iterator.
 ///
@@ -12,8 +12,8 @@ use std::{fmt::Debug, marker::PhantomData};
 pub struct ParFilterMap<I, FO, O, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    FO: Fallible<O> + Send + Sync + Debug,
+    O: Send + Sync,
+    FO: Fallible<O> + Send + Sync,
     M: Fn(I::Item) -> FO + Send + Sync + Clone,
 {
     iter: I,
@@ -25,8 +25,8 @@ where
 impl<I, FO, O, M> ParFilterMap<I, FO, O, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    FO: Fallible<O> + Send + Sync + Debug,
+    O: Send + Sync,
+    FO: Fallible<O> + Send + Sync,
     M: Fn(I::Item) -> FO + Send + Sync + Clone,
 {
     pub(crate) fn new(iter: I, params: Params, filter_map: M) -> Self {
@@ -46,8 +46,8 @@ where
 impl<I, FO, O, M> ParIter for ParFilterMap<I, FO, O, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    FO: Fallible<O> + Send + Sync + Debug,
+    O: Send + Sync,
+    FO: Fallible<O> + Send + Sync,
     M: Fn(I::Item) -> FO + Send + Sync + Clone,
 {
     type Item = O;
@@ -78,7 +78,7 @@ where
         impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
-        O2: Send + Sync + Debug,
+        O2: Send + Sync,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, filter_map) = self.destruct();
@@ -89,7 +89,7 @@ where
 
     fn flat_map<O2, OI, FM>(self, flat_map: FM) -> impl ParIter<Item = O2>
     where
-        O2: Send + Sync + Debug,
+        O2: Send + Sync,
         OI: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
@@ -116,8 +116,8 @@ where
         impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
-        O2: Send + Sync + Debug,
-        FO2: Fallible<O2> + Send + Sync + Debug,
+        O2: Send + Sync,
+        FO2: Fallible<O2> + Send + Sync,
         FM: Fn(Self::Item) -> FO2 + Send + Sync + Clone,
     {
         let (params, iter, filter_map1) = self.destruct();

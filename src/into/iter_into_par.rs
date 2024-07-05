@@ -1,6 +1,5 @@
 use crate::par::par_empty::ParEmpty;
 use orx_concurrent_iter::*;
-use std::fmt::Debug;
 
 /// Conversion into a parallel iterator.
 ///
@@ -39,7 +38,7 @@ use std::fmt::Debug;
 /// ```
 pub trait IterIntoPar<Iter: Iterator>
 where
-    Iter::Item: Send + Sync + Debug,
+    Iter::Item: Send + Sync,
 {
     /// Underlying concurrent iterator which provides the input elements to the defined parallel computation.
     type ConIter: ConcurrentIter;
@@ -79,16 +78,14 @@ where
     ///     .collect_vec();
     /// assert_eq!(par, seq);
     /// ```
-    fn par(self) -> ParEmpty<Self::ConIter>
-    where
-        <Self::ConIter as ConcurrentIter>::Item: Debug;
+    fn par(self) -> ParEmpty<Self::ConIter>;
 }
 
 // iter
 
 impl<Iter: Iterator> IterIntoPar<Iter> for Iter
 where
-    Iter::Item: Send + Sync + Debug,
+    Iter::Item: Send + Sync,
 {
     type ConIter = ConIterOfIter<Iter::Item, Iter>;
 
@@ -99,7 +96,7 @@ where
 
 impl<Iter: Iterator> IterIntoPar<Iter> for ConIterOfIter<Iter::Item, Iter>
 where
-    Iter::Item: Send + Sync + Debug,
+    Iter::Item: Send + Sync,
 {
     type ConIter = ConIterOfIter<Iter::Item, Iter>;
 

@@ -43,13 +43,11 @@ assert_eq!(par_result, 286);
 Complexity of distribution of work to parallel threads is boiled down to two straightforward parameters:
 * [`NumThreads`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.NumThreads.html) represents the degree of parallelization. It can be one of the two variants:
   * `Auto`: The library aims to select the best value in order to minimize computation time **[a]**.
-  * `Max(n)`: The computation can spawn at most `n` threads.
+  * `Max(n)`: The computation can spawn at most `n` threads, corresponds to sequential computation when `n` is one.
 * [`ChunkSize`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.ChunkSize.html) represents the number of elements a worker will pull and process every time it becomes idle. This parameter aims to balance the overhead of parallelization and cost of heterogeneity of tasks. It can be one of the three variants:
   * `Auto`: The library aims to select the best value in order to minimize computation time.
   * `Exact(c)`: Chunk sizes will be `c`. This variant gives the control completely to the caller, and hence, suits best to computations to be tuned for specific input set.
   * `Min(c)`: Chunk sizes will be at least `c`. However, the execution is allowed to pull more elements depending on characteristics of the inputs and used number of threads **[b]**.
-
-Rather than globally, each computation can be configured separately. This feature is particularly important when parallel processing is used in an already concurrent environment such as an api serving for cpu-bound computation requests. In such a scenario over-utilization of available CPU resources to gain smaller marginal computation time reductions is likely to be sub-optimal for the overall efficiency of the api. A good idea might be to limit the level of parallelization per request. This value can be tuned depending on the traffic and marginal efficiency gain per added resource to the computation.
 
 ```rust
 use orx_parallel::*;
@@ -62,8 +60,8 @@ let _ = (0..42).par().num_threads(NumThreads::sequential()).sum(); // also seque
 let _ = (0..42).par().num_threads(0).sum(); // shorthand for NumThreads::Auto
 
 let _ = (0..42).par().chunk_size(16).sum(); // chunks of exactly 16 elements
-let c = NonZeroUsize::new(16).unwrap();
-let _ = (0..42).par().chunk_size(ChunkSize::Min(c)).sum(); // min 16 elements
+let c = NonZeroUsize::new(64).unwrap();
+let _ = (0..42).par().chunk_size(ChunkSize::Min(c)).sum(); // min 64 elements
 let _ = (0..42).par().chunk_size(0).sum(); // shorthand for ChunkSize::Auto
 
 let _ = (0..42).par().num_threads(4).chunk_size(16).sum(); // set both
@@ -73,6 +71,27 @@ let _ = (0..42).par().num_threads(4).chunk_size(16).sum(); // set both
 
 **[b]**: *When the computation is not sufficiently challenging and a small chunk size leads to the parallelization overhead to overweigh the actual computation, the execution dynamically increases the chunk size.*
 
+Rather than globally, each computation can be configured separately. This feature is helpful in different ways in different scenarios.
+
+### Better Strategy by Problem Knowledge
+
+Both number of threads and chunk size have `Auto` settings which perform efficiently in general. However, there is no general strategy which is optimum for all computation types or input characteristics. In some cases, we know a better strategy.
+
+For instance, consider a problem where we want to `find` the first feasible or acceptable solution. Assume that finding a solution is expensive. Therefore, we want the computation to terminate as soon as possible once a solution is found.
+* Setting chunk size to 1 allows for the quickest termination once the solution is found. However, it would have the greatest parallelization overhead.
+* Setting a sufficiently large chunk size would have the least parallelization overhead. However, once a thread finds a solution, the other threads would still need to complete their chunk before termination.
+
+In this scenario where the computation is challenging, parallelization overhead is negligible. Therefore, a good strategy could be to set the chunk size to one (`ChunkSize::Exact(1)`). This trivial strategy seems to be the optimal. A similar example is constructed in [benches/map_find_expensive.rs](https://github.com/orxfun/orx-parallel/blob/main/benches/map_find_expensive.rs).
+* `Auto` chunk size settings, as well as, `rayon`'s default settings find the solution in slightly more time than the sequential computation. This is an unfortunate outcome of a parallel execution.
+* On the other hand, simply setting the chunk size to 1, we observe that `ParIter` finds the solution ~15 times faster than the sequential.
+
+### Better Strategy by Tuning
+
+Being able to easily set these parameters allow to benchmark and tune performance-critical computations for the relevant inputs on target platforms.
+
+### Parallelization in a Concurrent Application
+
+Consider an api responding to cpu-heavy computation requests. The api will compute for multiple requests in parallel. Limiting the maximum number of threads per request/computation allows for uniform distribution of computing resources to requests and more deterministic response times. Further, number of threads per computation might be increased and decreased dynamically depending on the traffic.
 
 ## Generalization of Sequential and Parallel Computation
 

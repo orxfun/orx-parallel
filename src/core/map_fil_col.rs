@@ -3,7 +3,6 @@ use crate::Params;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::PinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
-use std::fmt::Debug;
 
 fn task<I, Out, Map, Fil>(iter: &I, map: &Map, filter: &Fil, chunk_size: usize) -> Vec<(usize, Out)>
 where
@@ -109,7 +108,7 @@ pub fn par_map_fil_col_vec<I, Out, Map, Fil>(
     output: &mut Vec<Out>,
 ) where
     I: ConcurrentIter,
-    Out: Send + Sync + Debug,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
 {
