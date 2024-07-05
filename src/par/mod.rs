@@ -9,4 +9,3 @@ pub mod par_flatmap;
 pub mod par_flatmap_fil;
 pub mod par_map;
 pub mod par_map_fil;
-pub mod reduce;

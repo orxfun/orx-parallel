@@ -1,6 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use orx_parallel::*;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
+use orx_split_vec::{Recursive, SplitVec};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -8,6 +9,8 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 const SEED: u64 = 74135;
 type Distances = Vec<u64>;
 type Weights = Vec<Distances>;
+type WeightsSplit = SplitVec<Distances>;
+type WeightsSplitRec = SplitVec<Distances, Recursive>;
 
 fn weights(len: usize) -> Weights {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
@@ -55,28 +58,40 @@ fn rayon(weights: &Weights) -> Weights {
         .collect()
 }
 
-fn orx_parallel_default(weights: &Weights) -> Weights {
+fn orx_parallel_vec(weights: &Weights) -> Weights {
     (0..weights.len())
         .par()
         .map(|s| single_source_all_destinations(weights, s))
         .collect_vec()
 }
 
-fn orx_parallel(weights: &Weights, num_threads: Option<usize>, chunk_size: usize) -> Weights {
+fn orx_parallel_split_vec(weights: &Weights) -> WeightsSplit {
+    (0..weights.len())
+        .par()
+        .map(|s| single_source_all_destinations(weights, s))
+        .collect()
+}
+
+fn orx_parallel_split_rec(weights: &Weights) -> WeightsSplitRec {
+    (0..weights.len())
+        .par()
+        .map(|s| single_source_all_destinations(weights, s))
+        .collect_x()
+}
+
+fn orx_parallel(weights: &Weights, num_threads: usize, chunk_size: usize) -> WeightsSplit {
     let len = weights.len();
-    let mut par = (0..len).par().chunk_size(chunk_size);
-
-    if let Some(num_threads) = num_threads {
-        par = par.num_threads(num_threads);
-    }
-
-    par.map(|s| single_source_all_destinations(weights, s))
-        .collect_vec()
+    (0..len)
+        .par()
+        .chunk_size(chunk_size)
+        .num_threads(num_threads)
+        .map(|s| single_source_all_destinations(weights, s))
+        .collect()
 }
 
 fn all_pairs_dijkstra(c: &mut Criterion) {
     let treatments = [64, 512, 1024];
-    let params = [(Some(1), 16), (Some(8), 16), (Some(16), 16)];
+    let params: Vec<(usize, usize)> = vec![(0, 1), (16, 1)];
 
     let mut group = c.benchmark_group("all_pairs_dijkstra");
 
@@ -98,15 +113,28 @@ fn all_pairs_dijkstra(c: &mut Criterion) {
             })
         });
 
-        group.bench_with_input(BenchmarkId::new("orx-parallel-default", n), n, |b, _| {
+        group.bench_with_input(BenchmarkId::new("orx-parallel-split-vec", n), n, |b, _| {
             b.iter(|| {
-                let result = orx_parallel_default(black_box(&weights));
+                let result = orx_parallel_split_vec(black_box(&weights));
                 assert_eq!(result[3][2], expected);
             })
         });
 
-        for (t, c) in params {
-            let name = format!("orx-parallel-t{}-c{}", t.unwrap_or(0), c);
+        group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
+            b.iter(|| {
+                let result = orx_parallel_vec(black_box(&weights));
+                assert_eq!(result[3][2], expected);
+            })
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx-parallel-rec", n), n, |b, _| {
+            b.iter(|| {
+                let _result = orx_parallel_split_rec(black_box(&weights));
+            })
+        });
+
+        for (t, c) in params.iter().copied() {
+            let name = format!("orx-parallel-t{}-c{}", t, c);
             group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
                 b.iter(|| {
                     let result = orx_parallel(black_box(&weights), t, c);

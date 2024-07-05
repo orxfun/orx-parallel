@@ -1,6 +1,6 @@
 use super::{
     collect_into::collect_into_core::ParCollectIntoCore, par_filtermap::ParFilterMap,
-    par_flatmap::ParFlatMap, par_map_fil::ParMapFilter, reduce::Reduce,
+    par_flatmap::ParFlatMap, par_map_fil::ParMapFilter,
 };
 use crate::{
     core::{
@@ -206,6 +206,13 @@ where
 
     // reduce
 
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+    {
+        map_fil_red(self.params, self.iter, self.map, no_filter, reduce)
+    }
+
     fn count(self) -> usize {
         let (params, iter, map) = self.destruct();
         map_fil_cnt(params, iter, map, no_filter)
@@ -240,19 +247,5 @@ where
     /// TODO: define the advantage!
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
         self.filter(no_filter).collect_x()
-    }
-}
-
-impl<I, O, M> Reduce<O> for ParMap<I, O, M>
-where
-    I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
-{
-    fn reduce<R>(self, reduce: R) -> Option<O>
-    where
-        R: Fn(O, O) -> O + Send + Sync,
-    {
-        map_fil_red(self.params, self.iter, self.map, no_filter, reduce)
     }
 }

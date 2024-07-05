@@ -1,6 +1,6 @@
 use super::{
     collect_into::collect_into_core::ParCollectIntoCore, par_filtermap::ParFilterMap,
-    par_flatmap::ParFlatMap, reduce::Reduce,
+    par_flatmap::ParFlatMap,
 };
 use crate::{
     core::{
@@ -174,6 +174,13 @@ where
 
     // reduce
 
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+    {
+        filtermap_fil_red(self.params, self.iter, self.filter_map, self.filter, reduce)
+    }
+
     fn count(self) -> usize {
         let (params, iter, map, filter) = (self.params, self.iter, self.filter_map, self.filter);
         filtermap_fil_cnt(params, iter, map, filter)
@@ -216,21 +223,5 @@ where
                 recursive
             }
         }
-    }
-}
-
-impl<I, FO, O, M, F> Reduce<O> for ParFilterMapFilter<I, FO, O, M, F>
-where
-    I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    FO: Fallible<O> + Send + Sync + Debug,
-    M: Fn(I::Item) -> FO + FnSync,
-    F: Fn(&O) -> bool + FnSync,
-{
-    fn reduce<R>(self, reduce: R) -> Option<O>
-    where
-        R: Fn(O, O) -> O + Send + Sync,
-    {
-        filtermap_fil_red(self.params, self.iter, self.filter_map, self.filter, reduce)
     }
 }

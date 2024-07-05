@@ -9,7 +9,7 @@ fn some_if(condition: bool, value: String) -> Option<String> {
     }
 }
 
-pub fn reduce<R: Reduce<String>>(par: R, len: usize) {
+pub fn reduce<R: ParIter<Item = String>>(par: R, len: usize) {
     fn add(a: String, b: String) -> String {
         let a: i64 = a.parse().expect("ok");
         let b: i64 = b.parse().expect("ok");
@@ -20,13 +20,13 @@ pub fn reduce<R: Reduce<String>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn min<R: Reduce<String>>(par: R, len: usize) {
+pub fn min<R: ParIter<Item = String>>(par: R, len: usize) {
     let expected = some_if(len > 0, 0.to_string());
     let result = par.min();
     assert_eq!(result, expected);
 }
 
-pub fn max<R: Reduce<String>>(par: R, len: usize) {
+pub fn max<R: ParIter<Item = String>>(par: R, len: usize) {
     let expected = some_if(
         len > 0,
         match len {
@@ -45,7 +45,7 @@ pub fn max<R: Reduce<String>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn min_by<R: Reduce<String>>(par: R, len: usize) {
+pub fn min_by<R: ParIter<Item = String>>(par: R, len: usize) {
     #[allow(clippy::ptr_arg)]
     fn compare(a: &String, b: &String) -> Ordering {
         let a: i64 = a.parse().expect("ok");
@@ -60,7 +60,7 @@ pub fn min_by<R: Reduce<String>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn max_by<R: Reduce<String>>(par: R, len: usize) {
+pub fn max_by<R: ParIter<Item = String>>(par: R, len: usize) {
     #[allow(clippy::ptr_arg)]
     fn compare(a: &String, b: &String) -> Ordering {
         let a: i64 = a.parse().expect("ok");
@@ -76,7 +76,7 @@ pub fn max_by<R: Reduce<String>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn min_by_key<R: Reduce<String>>(par: R, len: usize) {
+pub fn min_by_key<R: ParIter<Item = String>>(par: R, len: usize) {
     #[allow(clippy::ptr_arg)]
     fn get_key(a: &String) -> usize {
         let a: i64 = a.parse().expect("ok");
@@ -90,7 +90,7 @@ pub fn min_by_key<R: Reduce<String>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn max_by_key<R: Reduce<String>>(par: R, len: usize) {
+pub fn max_by_key<R: ParIter<Item = String>>(par: R, len: usize) {
     #[allow(clippy::ptr_arg)]
     fn get_key(a: &String) -> usize {
         let a: i64 = a.parse().expect("ok");

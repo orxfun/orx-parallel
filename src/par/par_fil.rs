@@ -1,6 +1,4 @@
-use super::{
-    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map_fil::ParMapFilter, reduce::Reduce,
-};
+use super::{par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map_fil::ParMapFilter};
 use crate::{
     core::{
         default_fns::map_self, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
@@ -109,6 +107,13 @@ where
     }
 
     // reduce
+
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+    {
+        map_fil_red(self.params, self.iter, map_self, self.filter, reduce)
+    }
 
     fn count(self) -> usize {
         let (params, iter, filter) = (self.params, self.iter, self.filter);
@@ -242,19 +247,5 @@ where
         let (params, iter, filter) = (self.params, self.iter, self.filter);
         let composed = move |x: &I::Item| filter(x) && predicate(x);
         map_fil_find(params, iter, map_self, composed)
-    }
-}
-
-impl<I, F> Reduce<I::Item> for ParFilter<I, F>
-where
-    I: ConcurrentIter,
-    F: Fn(&I::Item) -> bool + FnSync,
-    I::Item: Debug,
-{
-    fn reduce<R>(self, reduce: R) -> Option<I::Item>
-    where
-        R: Fn(I::Item, I::Item) -> I::Item + Send + Sync,
-    {
-        map_fil_red(self.params, self.iter, map_self, self.filter, reduce)
     }
 }

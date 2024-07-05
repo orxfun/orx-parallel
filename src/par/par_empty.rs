@@ -1,6 +1,5 @@
 use super::{
     par_fil::ParFilter, par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map::ParMap,
-    reduce::Reduce,
 };
 use crate::{
     core::{
@@ -86,6 +85,13 @@ where
     }
 
     // reduce
+
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+    {
+        map_fil_red(self.params, self.iter, map_self, no_filter, reduce)
+    }
 
     fn count(self) -> usize {
         let (params, iter) = (self.params, self.iter);
@@ -217,18 +223,5 @@ where
     {
         let (params, iter) = (self.params, self.iter);
         map_fil_find(params, iter, map_self, predicate)
-    }
-}
-
-impl<I> Reduce<I::Item> for ParEmpty<I>
-where
-    I: ConcurrentIter,
-    I::Item: Debug,
-{
-    fn reduce<R>(self, reduce: R) -> Option<I::Item>
-    where
-        R: Fn(I::Item, I::Item) -> I::Item + Send + Sync,
-    {
-        map_fil_red(self.params, self.iter, map_self, no_filter, reduce)
     }
 }

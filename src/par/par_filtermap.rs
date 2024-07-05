@@ -1,4 +1,4 @@
-use super::{par_filtermap_fil::ParFilterMapFilter, par_flatmap::ParFlatMap, reduce::Reduce};
+use super::{par_filtermap_fil::ParFilterMapFilter, par_flatmap::ParFlatMap};
 use crate::{
     core::default_fns::no_filter, fn_sync::FnSync, ChunkSize, Fallible, NumThreads, ParCollectInto,
     ParIter, Params,
@@ -128,6 +128,13 @@ where
 
     // reduce
 
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+    {
+        self.filter(no_filter).reduce(reduce)
+    }
+
     fn count(self) -> usize {
         self.filter(no_filter).count()
     }
@@ -161,20 +168,5 @@ where
 
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
         self.filter(no_filter).collect_x()
-    }
-}
-
-impl<I, FO, O, M> Reduce<O> for ParFilterMap<I, FO, O, M>
-where
-    I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    FO: Fallible<O> + Send + Sync + Debug,
-    M: Fn(I::Item) -> FO + FnSync,
-{
-    fn reduce<R>(self, reduce: R) -> Option<O>
-    where
-        R: Fn(O, O) -> O + Send + Sync,
-    {
-        self.filter(no_filter).reduce(reduce)
     }
 }
