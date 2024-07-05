@@ -1,6 +1,5 @@
 use super::diagnostics::ParThreadLogger;
 use super::runner::{ParTask, Runner};
-use crate::fn_sync::FnSync;
 use crate::{Fallible, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -14,7 +13,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
-    FilterMap: Fn(I::Item) -> FO + FnSync,
+    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
 {
     match params.is_sequential() {
@@ -43,7 +42,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
-    FilterMap: Fn(I::Item) -> FO + FnSync,
+    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     L: ParThreadLogger,
 {
@@ -65,7 +64,7 @@ where
     I: ConcurrentIter,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
-    FilterMap: Fn(I::Item) -> FO + FnSync,
+    FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     L: ParThreadLogger,
 {

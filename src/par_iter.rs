@@ -1,4 +1,4 @@
-use crate::{fn_sync::FnSync, ChunkSize, Fallible, NumThreads, ParCollectInto, Params};
+use crate::{ChunkSize, Fallible, NumThreads, ParCollectInto, Params};
 use orx_split_vec::{Recursive, SplitVec};
 use std::{cmp::Ordering, fmt::Debug, ops::Add};
 
@@ -167,7 +167,7 @@ where
     fn map<O, M>(self, map: M) -> impl ParIter<Item = O>
     where
         O: Send + Sync + Debug,
-        M: Fn(Self::Item) -> O + FnSync;
+        M: Fn(Self::Item) -> O + Send + Sync + Clone;
 
     /// Takes the closure `fmap` and creates an iterator which calls that closure on each element and flattens the result.
     ///
@@ -183,7 +183,7 @@ where
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
-        FM: Fn(Self::Item) -> OI + FnSync;
+        FM: Fn(Self::Item) -> OI + Send + Sync + Clone;
 
     /// Creates an iterator which uses the closure `filter` to determine if an element should be yielded.
     ///
@@ -197,7 +197,7 @@ where
     /// ```
     fn filter<F>(self, filter: F) -> impl ParIter<Item = Self::Item>
     where
-        F: Fn(&Self::Item) -> bool + FnSync;
+        F: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
     /// Creates an iterator that both filters and maps.
     ///
@@ -242,7 +242,7 @@ where
     where
         O: Send + Sync + Debug,
         FO: Fallible<O> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync;
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone;
 
     //reduce
 
@@ -265,7 +265,7 @@ where
     /// ```
     fn reduce<R>(self, reduce: R) -> Option<Self::Item>
     where
-        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync;
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone;
 
     /// Calls a closure on each element of an iterator.
     ///
@@ -315,7 +315,7 @@ where
     /// ```
     fn for_each<F>(self, f: F)
     where
-        F: Fn(Self::Item) + FnSync,
+        F: Fn(Self::Item) + Send + Sync + Clone,
     {
         let map = |item: Self::Item| f(item);
         _ = self.map(map).count();
@@ -351,7 +351,7 @@ where
     /// ```
     fn any<P>(self, predicate: P) -> bool
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find(predicate).is_some()
     }
@@ -374,7 +374,7 @@ where
     /// ```
     fn all<P>(self, predicate: P) -> bool
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let negated_predicate = |x: &Self::Item| !predicate(x);
         self.find(negated_predicate).is_none()
@@ -416,7 +416,7 @@ where
     /// ```
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync;
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
     /// Returns the first element of the iterator; returns None if the iterator is empty.
     ///
@@ -567,7 +567,7 @@ where
     fn fold<Id, F>(self, identity: Id, fold: F) -> Self::Item
     where
         Id: Fn() -> Self::Item,
-        F: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
         self.reduce(fold).unwrap_or_else(identity)
     }

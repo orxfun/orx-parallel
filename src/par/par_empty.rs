@@ -8,7 +8,6 @@ use crate::{
         map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    fn_sync::FnSync,
     par_iter::ParIter,
     ChunkSize, Fallible, NumThreads, ParCollectInto, Params,
 };
@@ -54,7 +53,7 @@ where
     fn map<O, M>(self, map: M) -> ParMap<I, O, M>
     where
         O: Send + Sync + Debug,
-        M: Fn(Self::Item) -> O + FnSync,
+        M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
         ParMap::new(self.iter, self.params, map)
     }
@@ -63,14 +62,14 @@ where
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
-        FM: Fn(Self::Item) -> OI + FnSync,
+        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
         ParFlatMap::new(self.iter, self.params, flat_map)
     }
 
     fn filter<F>(self, filter: F) -> ParFilter<I, F>
     where
-        F: Fn(&Self::Item) -> bool + FnSync,
+        F: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         ParFilter::new(self.iter, self.params, filter)
     }
@@ -79,7 +78,7 @@ where
     where
         O: Send + Sync + Debug,
         FO: Fallible<O> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         ParFilterMap::new(self.iter, self.params, filter_map)
     }
@@ -88,7 +87,7 @@ where
 
     fn reduce<R>(self, reduce: R) -> Option<Self::Item>
     where
-        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
         map_fil_red(self.params, self.iter, map_self, no_filter, reduce)
     }

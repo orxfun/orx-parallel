@@ -7,7 +7,6 @@ use crate::{
         default_fns::no_filter, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    fn_sync::FnSync,
     par_iter::ParIter,
     Fallible, ParCollectInto, Params,
 };
@@ -22,7 +21,7 @@ pub struct ParMap<I, O, M>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     iter: I,
     params: Params,
@@ -33,7 +32,7 @@ impl<I, O, M> ParMap<I, O, M>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     pub(crate) fn new(iter: I, params: Params, map: M) -> Self {
         Self { iter, params, map }
@@ -128,7 +127,7 @@ where
     /// ```
     pub fn find_with_index<P>(self, predicate: P) -> Option<(usize, O)>
     where
-        P: Fn(&O) -> bool + FnSync,
+        P: Fn(&O) -> bool + Send + Sync + Clone,
     {
         let (params, iter, map) = self.destruct();
         map_fil_find(params, iter, map, predicate)
@@ -139,7 +138,7 @@ impl<I, O, M> ParIter for ParMap<I, O, M>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     type Item = O;
 
@@ -159,10 +158,10 @@ where
 
     // transform
 
-    fn map<O2, M2>(self, map: M2) -> ParMap<I, O2, impl Fn(I::Item) -> O2 + FnSync>
+    fn map<O2, M2>(self, map: M2) -> ParMap<I, O2, impl Fn(I::Item) -> O2 + Send + Sync + Clone>
     where
         O2: Send + Sync + Debug,
-        M2: Fn(Self::Item) -> O2 + FnSync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, map1) = self.destruct();
         let composed = move |x| map(map1(x));
@@ -176,7 +175,7 @@ where
     where
         O2: Send + Sync + Debug,
         OI: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI + FnSync,
+        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
         let (params, iter, map) = self.destruct();
         let composed = move |x| flat_map(map(x));
@@ -185,7 +184,7 @@ where
 
     fn filter<F>(self, filter: F) -> ParMapFilter<I, O, M, F>
     where
-        F: Fn(&Self::Item) -> bool + FnSync,
+        F: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         ParMapFilter::new(self.iter, self.params, self.map, filter)
     }
@@ -193,11 +192,11 @@ where
     fn filter_map<O2, FO, FM>(
         self,
         filter_map: FM,
-    ) -> ParFilterMap<I, FO, O2, impl Fn(<I as ConcurrentIter>::Item) -> FO + FnSync>
+    ) -> ParFilterMap<I, FO, O2, impl Fn(<I as ConcurrentIter>::Item) -> FO + Send + Sync + Clone>
     where
         O2: Send + Sync + Debug,
         FO: Fallible<O2> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         let (params, iter, map) = self.destruct();
         let composed = move |x| filter_map(map(x));
@@ -208,7 +207,7 @@ where
 
     fn reduce<R>(self, reduce: R) -> Option<Self::Item>
     where
-        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
         map_fil_red(self.params, self.iter, self.map, no_filter, reduce)
     }
@@ -221,7 +220,7 @@ where
     // find
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find_with_index(predicate).map(|x| x.1)
     }

@@ -7,7 +7,6 @@ use crate::{
         filtermap_fil_cnt::filtermap_fil_cnt, filtermap_fil_col_x::par_filtermap_fil_col_x_rec,
         filtermap_fil_find::filtermap_fil_find, filtermap_fil_red::filtermap_fil_red,
     },
-    fn_sync::FnSync,
     ChunkSize, Fallible, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -22,8 +21,8 @@ where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
     FO: Fallible<O> + Send + Sync + Debug,
-    M: Fn(I::Item) -> FO + FnSync,
-    F: Fn(&O) -> bool + FnSync,
+    M: Fn(I::Item) -> FO + Send + Sync + Clone,
+    F: Fn(&O) -> bool + Send + Sync + Clone,
 {
     iter: I,
     params: Params,
@@ -37,8 +36,8 @@ where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
     FO: Fallible<O> + Send + Sync + Debug,
-    M: Fn(I::Item) -> FO + FnSync,
-    F: Fn(&O) -> bool + FnSync,
+    M: Fn(I::Item) -> FO + Send + Sync + Clone,
+    F: Fn(&O) -> bool + Send + Sync + Clone,
 {
     pub(crate) fn new(iter: I, params: Params, filter_map: M, filter: F) -> Self {
         Self {
@@ -76,8 +75,8 @@ where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
     FO: Fallible<O> + Send + Sync + Debug,
-    M: Fn(I::Item) -> FO + FnSync,
-    F: Fn(&O) -> bool + FnSync,
+    M: Fn(I::Item) -> FO + Send + Sync + Clone,
+    F: Fn(&O) -> bool + Send + Sync + Clone,
 {
     type Item = O;
 
@@ -100,10 +99,15 @@ where
     fn map<O2, M2>(
         self,
         map: M2,
-    ) -> ParFilterMap<I, Option<O2>, O2, impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + FnSync>
+    ) -> ParFilterMap<
+        I,
+        Option<O2>,
+        O2,
+        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+    >
     where
         O2: Send + Sync + Debug,
-        M2: Fn(Self::Item) -> O2 + FnSync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, filter_map, filter) = self.destruct();
 
@@ -128,7 +132,7 @@ where
     where
         O2: Send + Sync + Debug,
         OI: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI + FnSync,
+        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -136,9 +140,12 @@ where
         ParFlatMap::new(iter, params, flat_map)
     }
 
-    fn filter<F2>(self, filter: F2) -> ParFilterMapFilter<I, FO, O, M, impl Fn(&O) -> bool + FnSync>
+    fn filter<F2>(
+        self,
+        filter: F2,
+    ) -> ParFilterMapFilter<I, FO, O, M, impl Fn(&O) -> bool + Send + Sync + Clone>
     where
-        F2: Fn(&Self::Item) -> bool + FnSync,
+        F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let (params, iter, filter_map, filter1) = self.destruct();
         let composed_filter = move |x: &O| filter1(x) && filter(x);
@@ -148,11 +155,16 @@ where
     fn filter_map<O2, FO2, FM>(
         self,
         filter_map: FM,
-    ) -> ParFilterMap<I, Option<O2>, O2, impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + FnSync>
+    ) -> ParFilterMap<
+        I,
+        Option<O2>,
+        O2,
+        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+    >
     where
         O2: Send + Sync + Debug,
         FO2: Fallible<O2> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO2 + FnSync,
+        FM: Fn(Self::Item) -> FO2 + Send + Sync + Clone,
     {
         let (params, iter, filter_map1, filter) = self.destruct();
 
@@ -176,7 +188,7 @@ where
 
     fn reduce<R>(self, reduce: R) -> Option<Self::Item>
     where
-        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
         filtermap_fil_red(self.params, self.iter, self.filter_map, self.filter, reduce)
     }
@@ -190,7 +202,7 @@ where
 
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find_with_index(predicate).map(|x| x.1)
     }

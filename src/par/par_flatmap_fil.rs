@@ -7,7 +7,6 @@ use crate::{
         flatmap_fil_cnt::fmap_fil_cnt, flatmap_fil_col_x::par_flatmap_fil_col_x_rec,
         flatmap_fil_find::fmap_fil_find, flatmap_fil_red::fmap_fil_red,
     },
-    fn_sync::FnSync,
     ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -82,7 +81,7 @@ where
     fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     where
         O2: Send + Sync + Debug,
-        M2: Fn(Self::Item) -> O2 + FnSync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -94,7 +93,7 @@ where
     where
         O2: Send + Sync + Debug,
         OI2: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI2 + FnSync,
+        FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -118,7 +117,7 @@ where
     where
         O2: Send + Sync + Debug,
         FO: crate::Fallible<O2> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -130,7 +129,7 @@ where
 
     fn reduce<R>(self, reduce: R) -> Option<Self::Item>
     where
-        R: Fn(Self::Item, Self::Item) -> Self::Item + FnSync,
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
         fmap_fil_red(self.params, self.iter, self.flat_map, self.filter, reduce)
     }
@@ -143,7 +142,7 @@ where
     // find
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let (params, iter, flat_map, filter) = self.destruct();
         let composed = move |x: &O| filter(x) && predicate(x);
