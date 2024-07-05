@@ -1,6 +1,5 @@
 use super::par_filtermap::ParFilterMap;
-use super::{par_flatmap_fil::ParFlatMapFilter, reduce::Reduce};
-use crate::fn_sync::FnSync;
+use super::par_flatmap_fil::ParFlatMapFilter;
 use crate::{core::default_fns::no_filter, Params};
 use crate::{Fallible, ParCollectInto, ParIter};
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter};
@@ -16,7 +15,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
-    M: Fn(I::Item) -> OI + FnSync,
+    M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
     iter: I,
     params: Params,
@@ -28,7 +27,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
-    M: Fn(I::Item) -> OI + FnSync,
+    M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
     pub(crate) fn new(iter: I, params: Params, flat_map: M) -> Self {
         Self {
@@ -48,7 +47,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
     OI: IntoIterator<Item = O>,
-    M: Fn(I::Item) -> OI + FnSync,
+    M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
     type Item = O;
 
@@ -79,7 +78,7 @@ where
     >
     where
         O2: Send + Sync + Debug,
-        M2: Fn(Self::Item) -> O2 + FnSync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, flat_map) = self.destruct();
 
@@ -94,7 +93,7 @@ where
     where
         O2: Send + Sync + Debug,
         OI2: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI2 + FnSync,
+        FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
         let (params, iter, flat_map1) = self.destruct();
 
@@ -117,12 +116,19 @@ where
     where
         O2: Send + Sync + Debug,
         FO: Fallible<O2> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         self.filter(no_filter).filter_map(filter_map)
     }
 
     // reduce
+
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
+    {
+        self.filter(no_filter).reduce(reduce)
+    }
 
     fn count(self) -> usize {
         self.filter(no_filter).count()
@@ -131,7 +137,7 @@ where
     // find
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.filter(no_filter).find(predicate)
     }
@@ -156,21 +162,5 @@ where
 
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
         self.filter(no_filter).collect_x()
-    }
-}
-
-impl<I, O, OI, M> Reduce<O> for ParFlatMap<I, O, OI, M>
-where
-    I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    OI: IntoIterator<Item = O>,
-    M: Fn(I::Item) -> OI + FnSync,
-    O:,
-{
-    fn reduce<R>(self, reduce: R) -> Option<O>
-    where
-        R: Fn(O, O) -> O + Send + Sync,
-    {
-        self.filter(no_filter).reduce(reduce)
     }
 }

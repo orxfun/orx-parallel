@@ -1,12 +1,9 @@
-use super::{
-    par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map_fil::ParMapFilter, reduce::Reduce,
-};
+use super::{par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, par_map_fil::ParMapFilter};
 use crate::{
     core::{
         default_fns::map_self, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    fn_sync::FnSync,
     Fallible, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -19,7 +16,7 @@ use std::fmt::Debug;
 pub struct ParFilter<I, F>
 where
     I: ConcurrentIter,
-    F: Fn(&I::Item) -> bool + FnSync,
+    F: Fn(&I::Item) -> bool + Send + Sync + Clone,
     I::Item: Debug,
 {
     iter: I,
@@ -30,7 +27,7 @@ where
 impl<I, F> ParIter for ParFilter<I, F>
 where
     I: ConcurrentIter,
-    F: Fn(&I::Item) -> bool + FnSync,
+    F: Fn(&I::Item) -> bool + Send + Sync + Clone,
     I::Item: Debug,
 {
     type Item = I::Item;
@@ -54,10 +51,15 @@ where
     fn map<O, M>(
         self,
         map: M,
-    ) -> ParFilterMap<I, Option<O>, O, impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + FnSync>
+    ) -> ParFilterMap<
+        I,
+        Option<O>,
+        O,
+        impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + Send + Sync + Clone,
+    >
     where
         O: Send + Sync + Debug,
-        M: Fn(Self::Item) -> O + FnSync,
+        M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
         let (params, iter, filter) = (self.params, self.iter, self.filter);
         let composed_filter_map = move |x| match filter(&x) {
@@ -74,7 +76,7 @@ where
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
-        FM: Fn(Self::Item) -> OI + FnSync,
+        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -82,9 +84,9 @@ where
         ParFlatMap::new(iter, params, flat_map)
     }
 
-    fn filter<F2>(self, filter: F2) -> ParFilter<I, impl Fn(&I::Item) -> bool + FnSync>
+    fn filter<F2>(self, filter: F2) -> ParFilter<I, impl Fn(&I::Item) -> bool + Send + Sync + Clone>
     where
-        F2: Fn(&Self::Item) -> bool + FnSync,
+        F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let (params, iter, filter1) = (self.params, self.iter, self.filter);
         let composed_filter = move |x: &I::Item| filter1(x) && filter(x);
@@ -94,11 +96,16 @@ where
     fn filter_map<O, FO, FM>(
         self,
         filter_map: FM,
-    ) -> ParFilterMap<I, Option<O>, O, impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + FnSync>
+    ) -> ParFilterMap<
+        I,
+        Option<O>,
+        O,
+        impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + Send + Sync + Clone,
+    >
     where
         O: Send + Sync + Debug,
         FO: Fallible<O> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         let (params, iter, filter) = (self.params, self.iter, self.filter);
         let composed_filter_map = move |x| match filter(&x) {
@@ -110,6 +117,13 @@ where
 
     // reduce
 
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
+    {
+        map_fil_red(self.params, self.iter, map_self, self.filter, reduce)
+    }
+
     fn count(self) -> usize {
         let (params, iter, filter) = (self.params, self.iter, self.filter);
         map_fil_cnt(params, iter, map_self, filter)
@@ -118,7 +132,7 @@ where
     // find
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find_with_index(predicate).map(|x| x.1)
     }
@@ -145,7 +159,7 @@ where
 impl<I, F> ParFilter<I, F>
 where
     I: ConcurrentIter,
-    F: Fn(&I::Item) -> bool + FnSync,
+    F: Fn(&I::Item) -> bool + Send + Sync + Clone,
     I::Item: Debug,
 {
     pub(crate) fn new(iter: I, params: Params, filter: F) -> Self {
@@ -242,19 +256,5 @@ where
         let (params, iter, filter) = (self.params, self.iter, self.filter);
         let composed = move |x: &I::Item| filter(x) && predicate(x);
         map_fil_find(params, iter, map_self, composed)
-    }
-}
-
-impl<I, F> Reduce<I::Item> for ParFilter<I, F>
-where
-    I: ConcurrentIter,
-    F: Fn(&I::Item) -> bool + FnSync,
-    I::Item: Debug,
-{
-    fn reduce<R>(self, reduce: R) -> Option<I::Item>
-    where
-        R: Fn(I::Item, I::Item) -> I::Item + Send + Sync,
-    {
-        map_fil_red(self.params, self.iter, map_self, self.filter, reduce)
     }
 }

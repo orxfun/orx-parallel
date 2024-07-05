@@ -15,7 +15,6 @@
 
 mod chunk_size;
 mod core;
-mod fn_sync;
 mod into;
 mod num_threads;
 mod par;
@@ -25,11 +24,8 @@ mod params;
 pub use chunk_size::ChunkSize;
 pub use into::{as_par::AsPar, into_par::IntoPar, iter_into_par::IterIntoPar};
 pub use num_threads::NumThreads;
+pub use par::cloned_copied::{ParIntoCloned, ParIntoCopied};
 pub use par::collect_into::par_collect_into::ParCollectInto;
 pub use par::fallible::Fallible;
-pub use par::{
-    cloned_copied::{ParIntoCloned, ParIntoCopied},
-    reduce::Reduce,
-};
 pub use par_iter::ParIter;
 pub use params::Params;

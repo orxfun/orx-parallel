@@ -1,13 +1,12 @@
 use super::{
     collect_into::collect_into_core::ParCollectIntoCore, par_filtermap::ParFilterMap,
-    par_flatmap::ParFlatMap, reduce::Reduce,
+    par_flatmap::ParFlatMap,
 };
 use crate::{
     core::{
         map_fil_cnt::map_fil_cnt, map_fil_col_x::par_map_fil_col_x_rec, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    fn_sync::FnSync,
     Fallible, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
@@ -21,8 +20,8 @@ pub struct ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
-    F: Fn(&O) -> bool + FnSync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
+    F: Fn(&O) -> bool + Send + Sync + Clone,
 {
     iter: I,
     params: Params,
@@ -34,8 +33,8 @@ impl<I, O, M, F> ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
-    F: Fn(&O) -> bool + FnSync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
+    F: Fn(&O) -> bool + Send + Sync + Clone,
 {
     pub(crate) fn new(iter: I, params: Params, map: M, filter: F) -> Self {
         Self {
@@ -143,8 +142,8 @@ impl<I, O, M, F> ParIter for ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
-    F: Fn(&O) -> bool + FnSync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
+    F: Fn(&O) -> bool + Send + Sync + Clone,
 {
     type Item = O;
 
@@ -167,10 +166,15 @@ where
     fn map<O2, M2>(
         self,
         map: M2,
-    ) -> ParFilterMap<I, Option<O2>, O2, impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + FnSync>
+    ) -> ParFilterMap<
+        I,
+        Option<O2>,
+        O2,
+        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+    >
     where
         O2: Send + Sync + Debug,
-        M2: Fn(Self::Item) -> O2 + FnSync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, map1, filter) = self.destruct();
 
@@ -189,7 +193,7 @@ where
     where
         O2: Send + Sync + Debug,
         OI: IntoIterator<Item = O2>,
-        FM: Fn(Self::Item) -> OI + FnSync,
+        FM: Fn(Self::Item) -> OI + Send + Sync + Clone,
     {
         let params = self.params;
         let vec = self.collect_vec();
@@ -197,9 +201,12 @@ where
         ParFlatMap::new(iter, params, flat_map)
     }
 
-    fn filter<F2>(self, filter: F2) -> ParMapFilter<I, O, M, impl Fn(&O) -> bool + FnSync>
+    fn filter<F2>(
+        self,
+        filter: F2,
+    ) -> ParMapFilter<I, O, M, impl Fn(&O) -> bool + Send + Sync + Clone>
     where
-        F2: Fn(&Self::Item) -> bool + FnSync,
+        F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let (params, iter, map, filter1) = self.destruct();
         let composed = move |x: &O| filter1(x) && filter(x);
@@ -209,11 +216,16 @@ where
     fn filter_map<O2, FO, FM>(
         self,
         filter_map: FM,
-    ) -> ParFilterMap<I, Option<O2>, O2, impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + FnSync>
+    ) -> ParFilterMap<
+        I,
+        Option<O2>,
+        O2,
+        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+    >
     where
         O2: Send + Sync + Debug,
         FO: Fallible<O2> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync,
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         let (params, iter, map, filter) = self.destruct();
         let composed = move |x| {
@@ -228,6 +240,13 @@ where
 
     // reduce
 
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
+    {
+        map_fil_red(self.params, self.iter, self.map, self.filter, reduce)
+    }
+
     fn count(self) -> usize {
         let (params, iter, map, filter) = self.destruct();
         map_fil_cnt(params, iter, map, filter)
@@ -237,7 +256,7 @@ where
 
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find_with_index(predicate).map(|x| x.1)
     }
@@ -271,20 +290,5 @@ where
                 recursive
             }
         }
-    }
-}
-
-impl<I, O, M, F> Reduce<O> for ParMapFilter<I, O, M, F>
-where
-    I: ConcurrentIter,
-    O: Send + Sync + Debug,
-    M: Fn(I::Item) -> O + FnSync,
-    F: Fn(&O) -> bool + FnSync,
-{
-    fn reduce<R>(self, reduce: R) -> Option<O>
-    where
-        R: Fn(O, O) -> O + Send + Sync,
-    {
-        map_fil_red(self.params, self.iter, self.map, self.filter, reduce)
     }
 }

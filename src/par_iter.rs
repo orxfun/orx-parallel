@@ -1,9 +1,12 @@
-use crate::{fn_sync::FnSync, ChunkSize, Fallible, NumThreads, ParCollectInto, Params, Reduce};
+use crate::{ChunkSize, Fallible, NumThreads, ParCollectInto, Params};
 use orx_split_vec::{Recursive, SplitVec};
-use std::fmt::Debug;
+use std::{cmp::Ordering, fmt::Debug, ops::Add};
 
 /// An iterator used to define a computation that can be executed in parallel.
-pub trait ParIter: Reduce<Self::Item> {
+pub trait ParIter
+where
+    Self: Sized,
+{
     /// Type of the items that the iterator yields.
     type Item: Send + Sync + Debug;
 
@@ -164,7 +167,7 @@ pub trait ParIter: Reduce<Self::Item> {
     fn map<O, M>(self, map: M) -> impl ParIter<Item = O>
     where
         O: Send + Sync + Debug,
-        M: Fn(Self::Item) -> O + FnSync;
+        M: Fn(Self::Item) -> O + Send + Sync + Clone;
 
     /// Takes the closure `fmap` and creates an iterator which calls that closure on each element and flattens the result.
     ///
@@ -180,7 +183,7 @@ pub trait ParIter: Reduce<Self::Item> {
     where
         O: Send + Sync + Debug,
         OI: IntoIterator<Item = O>,
-        FM: Fn(Self::Item) -> OI + FnSync;
+        FM: Fn(Self::Item) -> OI + Send + Sync + Clone;
 
     /// Creates an iterator which uses the closure `filter` to determine if an element should be yielded.
     ///
@@ -194,7 +197,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn filter<F>(self, filter: F) -> impl ParIter<Item = Self::Item>
     where
-        F: Fn(&Self::Item) -> bool + FnSync;
+        F: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
     /// Creates an iterator that both filters and maps.
     ///
@@ -239,9 +242,30 @@ pub trait ParIter: Reduce<Self::Item> {
     where
         O: Send + Sync + Debug,
         FO: Fallible<O> + Send + Sync + Debug,
-        FM: Fn(Self::Item) -> FO + FnSync;
+        FM: Fn(Self::Item) -> FO + Send + Sync + Clone;
 
     //reduce
+
+    /// Reduces the elements to a single one, by repeatedly applying the `reduce` operation.
+    ///
+    /// If the iterator is empty, returns None; otherwise, returns the result of the reduction.
+    ///
+    /// The reducing function is a closure with two arguments: an ‘accumulator’, and an element.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let reduced = (1..10).into_par().reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, Some(45));
+    ///
+    /// let reduced = (1..10).into_par().filter(|x| *x > 10).reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, None);
+    /// ```
+    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
+    where
+        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone;
 
     /// Calls a closure on each element of an iterator.
     ///
@@ -291,7 +315,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn for_each<F>(self, f: F)
     where
-        F: Fn(Self::Item) + FnSync,
+        F: Fn(Self::Item) + Send + Sync + Clone,
     {
         let map = |item: Self::Item| f(item);
         _ = self.map(map).count();
@@ -327,7 +351,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn any<P>(self, predicate: P) -> bool
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find(predicate).is_some()
     }
@@ -350,7 +374,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn all<P>(self, predicate: P) -> bool
     where
-        P: Fn(&Self::Item) -> bool + FnSync,
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let negated_predicate = |x: &Self::Item| !predicate(x);
         self.find(negated_predicate).is_none()
@@ -392,7 +416,7 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + FnSync;
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
     /// Returns the first element of the iterator; returns None if the iterator is empty.
     ///
@@ -514,5 +538,252 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
         self.collect().into()
+    }
+
+    // reduced - provided
+
+    /// Folds the elements to a single one, by repeatedly applying the `fold` operation starting from the `identity`.
+    ///
+    /// If the iterator is empty, returns back the `identity`; otherwise, returns the result of the fold.
+    ///
+    /// The fold function is a closure with two arguments: an ‘accumulator’, and an element.
+    ///
+    /// Note that, unlike its sequential counterpart, parallel fold requires the `identity` and `fold` to satisfy the following:
+    /// * `fold(a, b)` is equal to `fold(b, a)`,
+    /// * `fold(a, fold(b, c))` is equal to `fold(fold(a, b), c)`,
+    /// * `fold(identity, a)` is equal to `a`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let fold = (1..10).into_par().fold(|| 0, |acc, e| acc + e);
+    /// assert_eq!(fold, 45);
+    ///
+    /// let fold = (1..10).into_par().filter(|x| *x > 10).fold(|| 1, |acc, e| acc * e);
+    /// assert_eq!(fold, 1);
+    /// ```
+    fn fold<Id, F>(self, identity: Id, fold: F) -> Self::Item
+    where
+        Id: Fn() -> Self::Item,
+        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
+    {
+        self.reduce(fold).unwrap_or_else(identity)
+    }
+
+    /// Sums up the items in the iterator.
+    ///
+    /// Note that the order in items will be reduced is not specified, so if the + operator is not truly associative (as is the case for floating point numbers), then the results are not fully deterministic.
+    ///
+    /// Basically equivalent to `self.fold(|| 0, |a, b| a + b)`, except that the type of 0 and the + operation may vary depending on the type of value being produced.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let sum = (1..10).into_par().sum();
+    /// assert_eq!(sum, 45);
+    ///
+    /// let sum = (1..10).into_par().map(|x| x as f32).sum();
+    /// assert!((sum - 45.0).abs() < f32::EPSILON);
+    ///
+    /// let sum = (1..10).into_par().filter(|x| *x > 10).sum();
+    /// assert_eq!(sum, 0);
+    /// ```
+    fn sum(self) -> Self::Item
+    where
+        Self::Item: Default + Add<Output = Self::Item>,
+    {
+        self.reduce(|x, y| x + y).unwrap_or(Self::Item::default())
+    }
+
+    /// Computes the minimum of all the items in the iterator. If the iterator is empty, None is returned; otherwise, Some(min) is returned.
+    ///
+    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
+    ///     
+    /// Basically equivalent to `self.reduce(|a, b| Ord::min(a, b))`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let min = (1..10).into_par().filter(|x| *x > 6).min();
+    /// assert_eq!(min, Some(7));
+    ///
+    /// let min = (1..10).into_par().filter(|x| *x > 10).min();
+    /// assert_eq!(min, None);
+    /// ```
+    fn min(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord,
+    {
+        self.reduce(Ord::min)
+    }
+
+    /// Computes the maximum of all the items in the iterator. If the iterator is empty, None is returned; otherwise, Some(max) is returned.
+    ///
+    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
+    ///     
+    /// Basically equivalent to `self.reduce(|a, b| Ord::max(a, b))`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let max = (1..10).into_par().filter(|x| *x < 6).max();
+    /// assert_eq!(max, Some(5));
+    ///
+    /// let max = (1..10).into_par().filter(|x| *x > 10).max();
+    /// assert_eq!(max, None);
+    /// ```
+    fn max(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord,
+    {
+        self.reduce(Ord::max)
+    }
+
+    /// Computes the minimum of all the items in the iterator with respect to the given comparison function.
+    /// If the iterator is empty, None is returned; otherwise, Some(min) is returned.
+    ///
+    /// Note that the order in which the items will be reduced is not specified, so if the comparison function is not associative, then the results are not deterministic.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
+    ///     .map(String::from)
+    ///     .into_iter()
+    ///     .collect();
+    ///
+    /// let min = names.as_slice().into_par().min_by(|a, b| a.len().cmp(&b.len()));
+    /// assert_eq!(min.map(|x| x.as_ref()), Some("doe"));
+    ///
+    /// let min = names
+    ///     .as_slice()
+    ///     .into_par()
+    ///     .filter(|x| x.starts_with('x'))
+    ///     .min_by(|a, b| a.len().cmp(&b.len()));
+    /// assert_eq!(min, None);
+    /// ```
+    fn min_by<F>(self, compare: F) -> Option<Self::Item>
+    where
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+    {
+        self.reduce(|x, y| match compare(&x, &y) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        })
+    }
+
+    /// Computes the maximum of all the items in the iterator with respect to the given comparison function.
+    /// If the iterator is empty, None is returned; otherwise, Some(max) is returned.
+    ///
+    /// Note that the order in which the items will be reduced is not specified, so if the comparison function is not associative, then the results are not deterministic.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
+    ///     .map(String::from)
+    ///     .into_iter()
+    ///     .collect();
+    ///
+    /// let max = names.as_slice().into_par().max_by(|a, b| a.len().cmp(&b.len()));
+    /// assert_eq!(max.map(|x| x.as_ref()), Some("grumpy"));
+    ///
+    /// let max = names
+    ///     .as_slice()
+    ///     .into_par()
+    ///     .filter(|x| x.starts_with('x'))
+    ///     .max_by(|a, b| a.len().cmp(&b.len()));
+    /// assert_eq!(max, None);
+    /// ```
+    fn max_by<F>(self, compare: F) -> Option<Self::Item>
+    where
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+    {
+        self.reduce(|x, y| match compare(&x, &y) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        })
+    }
+
+    /// Computes the item that yields the minimum value for the given function. If the iterator is empty, None is returned; otherwise, Some(min) is returned.
+    ///
+    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
+    ///     .map(String::from)
+    ///     .into_iter()
+    ///     .collect();
+    ///
+    /// let min = names.as_slice().into_par().min_by_key(|x| x.len());
+    /// assert_eq!(min.map(|x| x.as_ref()), Some("doe"));
+    ///
+    /// let min = names
+    ///     .as_slice()
+    ///     .into_par()
+    ///     .filter(|x| x.starts_with('x'))
+    ///     .min_by_key(|x| x.len());
+    /// assert_eq!(min, None);
+    /// ```
+    fn min_by_key<B, F>(self, get_key: F) -> Option<Self::Item>
+    where
+        B: Ord,
+        F: Fn(&Self::Item) -> B + Sync,
+    {
+        self.reduce(|x, y| match get_key(&x).cmp(&get_key(&y)) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        })
+    }
+
+    /// Computes the item that yields the maximum value for the given function. If the iterator is empty, None is returned; otherwise, Some(max) is returned.
+    ///
+    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
+    ///     .map(String::from)
+    ///     .into_iter()
+    ///     .collect();
+    ///
+    /// let max = names.as_slice().into_par().max_by_key(|x| x.len());
+    /// assert_eq!(max.map(|x| x.as_ref()), Some("grumpy"));
+    ///
+    /// let max = names
+    ///     .as_slice()
+    ///     .into_par()
+    ///     .filter(|x| x.starts_with('x'))
+    ///     .max_by_key(|x| x.len());
+    /// assert_eq!(max, None);
+    /// ```
+    fn max_by_key<B, F>(self, get_key: F) -> Option<Self::Item>
+    where
+        B: Ord,
+        F: Fn(&Self::Item) -> B + Sync,
+    {
+        self.reduce(|x, y| match get_key(&x).cmp(&get_key(&y)) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        })
     }
 }

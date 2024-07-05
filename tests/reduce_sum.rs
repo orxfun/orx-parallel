@@ -27,7 +27,7 @@ where
 #[test_case(4, 65536, sum)]
 fn reduce_sum<F>(num_threads: usize, chunk_size: usize, reduce: F)
 where
-    F: Fn(usize, usize) -> usize + Send + Sync,
+    F: Fn(usize, usize) -> usize + Send + Sync + Clone,
 {
     let inputs = inputs(LEN);
     let expected = seq(&inputs, &reduce);

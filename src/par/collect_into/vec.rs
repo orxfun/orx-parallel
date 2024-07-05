@@ -6,7 +6,6 @@ use crate::{
         map_col::map_col,
         map_fil_col::{par_map_fil_col_vec, seq_map_fil_col_vec},
     },
-    fn_sync::FnSync,
     par::{
         par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter, par_map::ParMap,
         par_map_fil::ParMapFilter,
@@ -27,7 +26,7 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
-        M: Fn(I::Item) -> O + FnSync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
     {
         match par_map.iter_len() {
             None => SplitVec::with_doubling_growth_and_fragments_capacity(32)
@@ -46,8 +45,8 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
     fn map_filter_into<I, M, F>(mut self, par: ParMapFilter<I, O, M, F>) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
-        M: Fn(I::Item) -> O + FnSync,
-        F: Fn(&O) -> bool + FnSync,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
+        F: Fn(&O) -> bool + Send + Sync + Clone,
     {
         let (params, iter, map, filter) = par.destruct();
 
@@ -78,8 +77,8 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
     where
         I: orx_concurrent_iter::ConcurrentIter,
         FO: crate::Fallible<O> + Send + Sync + Debug,
-        M: Fn(I::Item) -> FO + FnSync,
-        F: Fn(&O) -> bool + FnSync,
+        M: Fn(I::Item) -> FO + Send + Sync + Clone,
+        F: Fn(&O) -> bool + Send + Sync + Clone,
     {
         let (params, iter, filter_map, filter) = par.destruct();
 
