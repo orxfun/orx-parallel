@@ -491,30 +491,6 @@ pub trait ParIter: Reduce<Self::Item> {
 
     /// Transforms the iterator into a collection.
     ///
-    /// In this case, the result is transformed into a standard vector; i.e., `std::vec::Vec`.
-    ///
-    /// `collect_x_vec` differs from `collect_vec` method by the following:
-    /// * `collect_vec` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
-    /// `collect_x_vec`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
-    /// * `collect_x_vec` might perform faster than `collect_vec` in certain situations.
-    ///
-    /// Due to above `collect_x_vec` can be preferred over `collect_vec` in performance-critical operations where the order of elements in the output is not important.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let mut output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x_vec();
-    /// output.sort();
-    /// assert_eq!(output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
-    /// ```
-    fn collect_x_vec(self) -> Vec<Self::Item> {
-        self.collect_vec()
-    }
-
-    /// Transforms the iterator into a collection.
-    ///
     /// In this case, the result is transformed into the split vector which is the underlying [`PinnedVec`](https://crates.io/crates/orx-pinned-vec) used to collect the results concurrently;
     /// i.e., [`SplitVec`](https://crates.io/crates/orx-split-vec).
     ///
@@ -538,34 +514,5 @@ pub trait ParIter: Reduce<Self::Item> {
     /// ```
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
         self.collect().into()
-    }
-
-    /// Collects elements yielded by the iterator into the given `output` collection.
-    ///
-    /// Note that `output` does not need to be empty; hence, this method allows extending collections from the parallel iterator.
-    ///
-    /// `collect_x_into` differs from `collect_into` method by the following:
-    /// * `collect_into` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
-    /// `collect_x_into`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
-    /// * `collect_x_into` might perform faster than `collect_into` in certain situations.
-    ///
-    /// Due to above `collect_x_into` can be preferred over `collect_into` in performance-critical operations where the order of elements in the output is not important.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-    /// output.push(42);
-    ///
-    /// let output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x_into(output);
-    /// let mut sorted_output = output.to_vec();
-    /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
-    /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 42]);
-    /// ```
-    fn collect_x_into<B: ParCollectInto<Self::Item>>(self, output: B) -> B {
-        self.collect_into(output)
     }
 }

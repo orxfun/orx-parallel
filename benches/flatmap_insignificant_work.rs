@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use orx_parallel::*;
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
@@ -34,6 +34,10 @@ fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<usize> {
 
 fn orx_parallel_vec(inputs: &[u32]) -> Vec<usize> {
     inputs.into_par().flat_map(map).collect_vec()
+}
+
+fn orx_parallel_split_rec(inputs: &[u32]) -> SplitVec<usize, Recursive> {
+    inputs.into_par().flat_map(map).collect_x()
 }
 
 fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<usize> {
@@ -73,6 +77,15 @@ fn flat_map_insignificant_work(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
             assert_eq!(orx_parallel_vec(&input), expected);
             b.iter(|| orx_parallel_vec(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx-parallel-split-rec", n), n, |b, _| {
+            let mut result = orx_parallel_split_rec(&input).to_vec();
+            result.sort();
+            let mut expected = expected.clone();
+            expected.sort();
+            assert_eq!(result, expected);
+            b.iter(|| orx_parallel_split_rec(black_box(&input)))
         });
 
         for (t, c) in params {

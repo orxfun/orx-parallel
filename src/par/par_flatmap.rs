@@ -154,16 +154,8 @@ where
         self.filter(no_filter).collect_into(output)
     }
 
-    fn collect_x_vec(self) -> Vec<Self::Item> {
-        self.filter(no_filter).collect_x_vec()
-    }
-
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
         self.filter(no_filter).collect_x()
-    }
-
-    fn collect_x_into<B: ParCollectInto<Self::Item>>(self, output: B) -> B {
-        self.filter(no_filter).collect_x_into(output)
     }
 }
 

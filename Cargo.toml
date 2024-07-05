@@ -30,7 +30,7 @@ rayon = "1.9.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "flatmap_insignificant_work"
+name = "flatmap"
 harness = false
 
 [features]
