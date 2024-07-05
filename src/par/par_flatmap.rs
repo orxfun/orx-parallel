@@ -4,7 +4,6 @@ use crate::{core::default_fns::no_filter, Params};
 use crate::{Fallible, ParCollectInto, ParIter};
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
-use std::fmt::Debug;
 use std::iter::Map;
 
 /// A parallel iterator.
@@ -13,7 +12,7 @@ use std::iter::Map;
 pub struct ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
+    O: Send + Sync,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -25,7 +24,7 @@ where
 impl<I, O, OI, M> ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
+    O: Send + Sync,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -45,7 +44,7 @@ where
 impl<I, O, OI, M> ParIter for ParFlatMap<I, O, OI, M>
 where
     I: ConcurrentIter,
-    O: Send + Sync + Debug,
+    O: Send + Sync,
     OI: IntoIterator<Item = O>,
     M: Fn(I::Item) -> OI + Send + Sync + Clone,
 {
@@ -77,7 +76,7 @@ where
         impl Fn(<I as ConcurrentIter>::Item) -> Map<<OI as IntoIterator>::IntoIter, M2> + Clone,
     >
     where
-        O2: Send + Sync + Debug,
+        O2: Send + Sync,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
     {
         let (params, iter, flat_map) = self.destruct();
@@ -91,7 +90,7 @@ where
 
     fn flat_map<O2, OI2, FM>(self, flat_map: FM) -> impl ParIter<Item = O2>
     where
-        O2: Send + Sync + Debug,
+        O2: Send + Sync,
         OI2: IntoIterator<Item = O2>,
         FM: Fn(Self::Item) -> OI2 + Send + Sync + Clone,
     {
@@ -114,8 +113,8 @@ where
 
     fn filter_map<O2, FO, FM>(self, filter_map: FM) -> ParFilterMap<ConIterOfVec<O>, FO, O2, FM>
     where
-        O2: Send + Sync + Debug,
-        FO: Fallible<O2> + Send + Sync + Debug,
+        O2: Send + Sync,
+        FO: Fallible<O2> + Send + Sync,
         FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
         self.filter(no_filter).filter_map(filter_map)

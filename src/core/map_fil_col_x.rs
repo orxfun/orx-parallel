@@ -2,7 +2,6 @@ use super::runner::{ParTask, Runner};
 use crate::Params;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
-use std::fmt::Debug;
 
 fn task<I, Out, Map, Fil>(iter: &I, map: &Map, filter: &Fil, chunk_size: usize) -> Vec<Out>
 where
@@ -31,7 +30,7 @@ pub fn par_map_fil_col_x_rec<I, Out, Map, Fil>(
     output: &mut SplitVec<Out, Recursive>,
 ) where
     I: ConcurrentIter,
-    Out: Send + Sync + Debug,
+    Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
 {

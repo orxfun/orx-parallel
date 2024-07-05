@@ -8,9 +8,8 @@ use crate::{
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::PinnedVec;
-use std::fmt::Debug;
 
-pub trait ParCollectIntoCore<O: Send + Sync + Debug> {
+pub trait ParCollectIntoCore<O: Send + Sync> {
     type BridgePinnedVec: PinnedVec<O>;
 
     /// Performs the parallel map operation, collecting the results into this collection.
@@ -35,7 +34,7 @@ pub trait ParCollectIntoCore<O: Send + Sync + Debug> {
     fn filtermap_filter_into<I, FO, M, F>(self, par: ParFilterMapFilter<I, FO, O, M, F>) -> Self
     where
         I: ConcurrentIter,
-        FO: Fallible<O> + Send + Sync + Debug,
+        FO: Fallible<O> + Send + Sync,
         M: Fn(I::Item) -> FO + Send + Sync + Clone,
         F: Fn(&O) -> bool + Send + Sync + Clone;
 
