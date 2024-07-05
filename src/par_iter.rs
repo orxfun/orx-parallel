@@ -27,31 +27,31 @@ where
     /// use orx_parallel::*;
     /// use std::num::NonZeroUsize;
     ///
-    /// let expected = (0..(1 << 20)).sum();
+    /// let expected = (0..(1 << 10)).sum();
     ///
     /// // unset/default -> NumThreads::Auto
-    /// let sum = (0..(1 << 20)).into_par().sum();
+    /// let sum = (0..(1 << 10)).par().sum();
     /// assert_eq!(sum, expected);
     ///
     /// // A: NumThreads::Auto
-    /// let sum = (0..(1 << 20)).into_par().num_threads(0).sum();
+    /// let sum = (0..(1 << 10)).par().num_threads(0).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// let sum = (0..(1 << 20)).into_par().num_threads(NumThreads::Auto).sum();
+    /// let sum = (0..(1 << 10)).par().num_threads(NumThreads::Auto).sum();
     /// assert_eq!(sum, expected);
     ///
     /// // B: with a limit on the number of threads
-    /// let sum = (0..(1 << 20)).into_par().num_threads(4).sum();
+    /// let sum = (0..(1 << 10)).par().num_threads(4).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// let sum = (0..(1 << 20)).into_par().num_threads(NumThreads::Max(NonZeroUsize::new(4).unwrap())).sum();
+    /// let sum = (0..(1 << 10)).par().num_threads(NumThreads::Max(NonZeroUsize::new(4).unwrap())).sum();
     /// assert_eq!(sum, expected);
     ///
     /// // C: sequential execution
-    /// let sum = (0..(1 << 20)).into_par().num_threads(1).sum();
+    /// let sum = (0..(1 << 10)).par().num_threads(1).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// let sum = (0..(1 << 20)).into_par().num_threads(NumThreads::sequential()).sum();
+    /// let sum = (0..(1 << 10)).par().num_threads(NumThreads::sequential()).sum();
     /// assert_eq!(sum, expected);
     /// ```
     ///
@@ -84,28 +84,28 @@ where
     /// use orx_parallel::*;
     /// use std::num::NonZeroUsize;
     ///
-    /// let expected = (0..(1 << 20)).sum();
+    /// let expected = (0..(1 << 10)).sum();
     ///
     /// // unset/default -> ChunkSize::Auto
-    /// let sum = (0..(1 << 20)).into_par().sum();
+    /// let sum = (0..(1 << 10)).par().sum();
     /// assert_eq!(sum, expected);
     ///
     /// // A: ChunkSize::Auto
-    /// let sum = (0..(1 << 20)).into_par().chunk_size(0).sum();
+    /// let sum = (0..(1 << 10)).par().chunk_size(0).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Auto).sum();
+    /// let sum = (0..(1 << 10)).par().chunk_size(ChunkSize::Auto).sum();
     /// assert_eq!(sum, expected);
     ///
     /// // B: with an exact chunk size
-    /// let sum = (0..(1 << 20)).into_par().chunk_size(1024).sum();
+    /// let sum = (0..(1 << 10)).par().chunk_size(1024).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Exact(NonZeroUsize::new(1024).unwrap())).sum();
+    /// let sum = (0..(1 << 10)).par().chunk_size(ChunkSize::Exact(NonZeroUsize::new(1024).unwrap())).sum();
     /// assert_eq!(sum, expected);
     ///
     /// // C: with lower bound on the chunk size, execution may increase chunk size whenever it improves performance
-    /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Min(NonZeroUsize::new(1024).unwrap())).sum();
+    /// let sum = (0..(1 << 10)).par().chunk_size(ChunkSize::Min(NonZeroUsize::new(1024).unwrap())).sum();
     /// assert_eq!(sum, expected);
     /// ```
     ///
@@ -161,7 +161,7 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let doubles = (0..5).into_par().map(|x| x * 2).collect_vec();
+    /// let doubles = (0..5).par().map(|x| x * 2).collect_vec();
     /// assert_eq!(&doubles[..], &[0, 2, 4, 6, 8]);
     /// ```
     fn map<O, M>(self, map: M) -> impl ParIter<Item = O>
@@ -176,7 +176,7 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let numbers = (0..5).into_par().flat_map(|x| vec![x; x]).collect_vec();
+    /// let numbers = (0..5).par().flat_map(|x| vec![x; x]).collect_vec();
     /// assert_eq!(&numbers[..], &[1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
     /// ```
     fn flat_map<O, OI, FM>(self, flat_map: FM) -> impl ParIter<Item = O>
@@ -192,7 +192,7 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect_vec();
+    /// let evens = (0..10).par().filter(|x| x % 2 == 0).collect_vec();
     /// assert_eq!(&evens[..], &[0, 2, 4, 6, 8]);
     /// ```
     fn filter<F>(self, filter: F) -> impl ParIter<Item = Self::Item>
@@ -257,10 +257,10 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let reduced = (1..10).into_par().reduce(|acc, e| acc + e);
+    /// let reduced = (1..10).par().reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, Some(45));
     ///
-    /// let reduced = (1..10).into_par().filter(|x| *x > 10).reduce(|acc, e| acc + e);
+    /// let reduced = (1..10).par().filter(|x| *x > 10).reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, None);
     /// ```
     fn reduce<R>(self, reduce: R) -> Option<Self::Item>
@@ -326,7 +326,7 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
+    /// let evens = (0..10).par().filter(|x| x % 2 == 0);
     /// assert_eq!(evens.count(), 5);
     /// ```
     fn count(self) -> usize;
@@ -406,10 +406,10 @@ where
     ///     }
     /// }
     ///
-    /// let first_prime = (21..100).into_par().find(is_prime);
+    /// let first_prime = (21..100).par().find(is_prime);
     /// assert_eq!(first_prime, Some(23));
     ///
-    /// let first_prime = (24..28).into_par().find(is_prime);
+    /// let first_prime = (24..28).par().find(is_prime);
     /// assert_eq!(first_prime, None);
     /// ```
     fn find<P>(self, predicate: P) -> Option<Self::Item>
@@ -442,10 +442,10 @@ where
     ///     }
     /// }
     ///
-    /// let first_prime = (21..100).into_par().filter(is_prime).first();
+    /// let first_prime = (21..100).par().filter(is_prime).first();
     /// assert_eq!(first_prime, Some(23));
     ///
-    /// let first_prime = (24..28).into_par().filter(is_prime).first();
+    /// let first_prime = (24..28).par().filter(is_prime).first();
     /// assert_eq!(first_prime, None);
     /// ```
     fn first(self) -> Option<Self::Item>;
@@ -461,7 +461,7 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect_vec();
+    /// let evens = (0..10).par().filter(|x| x % 2 == 0).collect_vec();
     /// assert_eq!(evens, vec![0, 2, 4, 6, 8]);
     /// ```
     fn collect_vec(self) -> Vec<Self::Item>;
@@ -477,7 +477,7 @@ where
     /// use orx_parallel::*;
     /// use orx_split_vec::*;
     ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0).collect();
+    /// let evens = (0..10).par().filter(|x| x % 2 == 0).collect();
     /// assert_eq!(evens, SplitVec::from_iter([0, 2, 4, 6, 8]));
     /// ```
     fn collect(self) -> SplitVec<Self::Item>;
@@ -494,34 +494,31 @@ where
     ///
     /// let output_vec = vec![42];
     ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
+    /// let evens = (0..10).par().filter(|x| x % 2 == 0);
     /// let output_vec = evens.collect_into(output_vec);
     /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
     ///
-    /// let odds = (0..10).into_par().filter(|x| x % 2 == 1);
+    /// let odds = (0..10).par().filter(|x| x % 2 == 1);
     /// let output_vec = odds.collect_into(output_vec);
     /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8, 1, 3, 5, 7, 9]);
     ///
     /// // alternatively, any `PinnedVec` can be used
     /// let output_vec: SplitVec<_> = [42].into_iter().collect();
     ///
-    /// let evens = (0..10).into_par().filter(|x| x % 2 == 0);
+    /// let evens = (0..10).par().filter(|x| x % 2 == 0);
     /// let output_vec = evens.collect_into(output_vec);
     /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
     /// ```
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C;
 
-    /// Transforms the iterator into a collection.
+    /// Transforms the iterator into a collection, where the results are collected in arbitrary order.
+    /// This method can be used when preserving the order is not critical.
+    /// In certain scenarios, this might improve the performance.
     ///
-    /// In this case, the result is transformed into the split vector which is the underlying [`PinnedVec`](https://crates.io/crates/orx-pinned-vec) used to collect the results concurrently;
-    /// i.e., [`SplitVec`](https://crates.io/crates/orx-split-vec).
-    ///
-    /// `collect_x` differs from `collect` method by the following:
-    /// * `collect` will  return a result which contains yielded elements in the same order. Therefore, it results in a deterministic output.
-    /// `collect_x`, on the other hand, does not try to preserve the order. The order of elements in the output depends on the execution speeds of different threads.
-    /// * `collect_x` might perform faster than `collect` in certain situations.
-    ///
-    /// Due to above `collect_x` can be preferred over `collect` in performance-critical operations where the order of elements in the output is not important.
+    /// In this case, the result is transformed into the split vector with recursive growth [`SplitVec<Self::Item, Recursive>`](https://docs.rs/orx-split-vec/latest/orx_split_vec/struct.Recursive.html):
+    /// * Note that the `SplitVec` returned by the `collect` method uses the `Doubling` growth which allows for efficient constant time random access.
+    /// On the other hand, `Recursive` growth does not allow for constant time random access.
+    /// * On the other hand, `Recursive` growth allows for zero cost `append` method to append another vector to the end.
     ///
     /// # Examples
     ///
@@ -529,7 +526,7 @@ where
     /// use orx_parallel::*;
     /// use orx_split_vec::*;
     ///
-    /// let output = (0..5).into_par().flat_map(|x| vec![x; x]).collect_x();
+    /// let output = (0..5).par().flat_map(|x| vec![x; x]).collect_x();
     /// let mut sorted_output = output.to_vec();
     /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
     /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
@@ -556,10 +553,10 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let fold = (1..10).into_par().fold(|| 0, |acc, e| acc + e);
+    /// let fold = (1..10).par().fold(|| 0, |acc, e| acc + e);
     /// assert_eq!(fold, 45);
     ///
-    /// let fold = (1..10).into_par().filter(|x| *x > 10).fold(|| 1, |acc, e| acc * e);
+    /// let fold = (1..10).par().filter(|x| *x > 10).fold(|| 1, |acc, e| acc * e);
     /// assert_eq!(fold, 1);
     /// ```
     fn fold<Id, F>(self, identity: Id, fold: F) -> Self::Item
@@ -581,13 +578,13 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let sum = (1..10).into_par().sum();
+    /// let sum = (1..10).par().sum();
     /// assert_eq!(sum, 45);
     ///
-    /// let sum = (1..10).into_par().map(|x| x as f32).sum();
+    /// let sum = (1..10).par().map(|x| x as f32).sum();
     /// assert!((sum - 45.0).abs() < f32::EPSILON);
     ///
-    /// let sum = (1..10).into_par().filter(|x| *x > 10).sum();
+    /// let sum = (1..10).par().filter(|x| *x > 10).sum();
     /// assert_eq!(sum, 0);
     /// ```
     fn sum(self) -> Self::Item
@@ -608,10 +605,10 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let min = (1..10).into_par().filter(|x| *x > 6).min();
+    /// let min = (1..10).par().filter(|x| *x > 6).min();
     /// assert_eq!(min, Some(7));
     ///
-    /// let min = (1..10).into_par().filter(|x| *x > 10).min();
+    /// let min = (1..10).par().filter(|x| *x > 10).min();
     /// assert_eq!(min, None);
     /// ```
     fn min(self) -> Option<Self::Item>
@@ -632,10 +629,10 @@ where
     /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let max = (1..10).into_par().filter(|x| *x < 6).max();
+    /// let max = (1..10).par().filter(|x| *x < 6).max();
     /// assert_eq!(max, Some(5));
     ///
-    /// let max = (1..10).into_par().filter(|x| *x > 10).max();
+    /// let max = (1..10).par().filter(|x| *x > 10).max();
     /// assert_eq!(max, None);
     /// ```
     fn max(self) -> Option<Self::Item>
@@ -660,12 +657,11 @@ where
     ///     .into_iter()
     ///     .collect();
     ///
-    /// let min = names.as_slice().into_par().min_by(|a, b| a.len().cmp(&b.len()));
+    /// let min = names.par().min_by(|a, b| a.len().cmp(&b.len()));
     /// assert_eq!(min.map(|x| x.as_ref()), Some("doe"));
     ///
     /// let min = names
-    ///     .as_slice()
-    ///     .into_par()
+    ///     .par()
     ///     .filter(|x| x.starts_with('x'))
     ///     .min_by(|a, b| a.len().cmp(&b.len()));
     /// assert_eq!(min, None);
@@ -695,12 +691,11 @@ where
     ///     .into_iter()
     ///     .collect();
     ///
-    /// let max = names.as_slice().into_par().max_by(|a, b| a.len().cmp(&b.len()));
+    /// let max = names.par().max_by(|a, b| a.len().cmp(&b.len()));
     /// assert_eq!(max.map(|x| x.as_ref()), Some("grumpy"));
     ///
     /// let max = names
-    ///     .as_slice()
-    ///     .into_par()
+    ///     .par()
     ///     .filter(|x| x.starts_with('x'))
     ///     .max_by(|a, b| a.len().cmp(&b.len()));
     /// assert_eq!(max, None);
@@ -729,12 +724,11 @@ where
     ///     .into_iter()
     ///     .collect();
     ///
-    /// let min = names.as_slice().into_par().min_by_key(|x| x.len());
+    /// let min = names.par().min_by_key(|x| x.len());
     /// assert_eq!(min.map(|x| x.as_ref()), Some("doe"));
     ///
     /// let min = names
-    ///     .as_slice()
-    ///     .into_par()
+    ///     .par()
     ///     .filter(|x| x.starts_with('x'))
     ///     .min_by_key(|x| x.len());
     /// assert_eq!(min, None);
@@ -764,12 +758,11 @@ where
     ///     .into_iter()
     ///     .collect();
     ///
-    /// let max = names.as_slice().into_par().max_by_key(|x| x.len());
+    /// let max = names.par().max_by_key(|x| x.len());
     /// assert_eq!(max.map(|x| x.as_ref()), Some("grumpy"));
     ///
     /// let max = names
-    ///     .as_slice()
-    ///     .into_par()
+    ///     .par()
     ///     .filter(|x| x.starts_with('x'))
     ///     .max_by_key(|x| x.len());
     /// assert_eq!(max, None);
