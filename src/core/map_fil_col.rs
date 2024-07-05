@@ -34,7 +34,10 @@ where
     collected
 }
 
-fn join_vec<Out>(mut vectors: Vec<Vec<(usize, Out)>>, output: &mut Vec<Out>) {
+pub(crate) fn heap_sort_into_vec<Out, Key>(mut vectors: Vec<Vec<(Key, Out)>>, output: &mut Vec<Out>)
+where
+    Key: Copy + PartialOrd,
+{
     let mut queue = BinaryHeap::with_capacity(vectors.len());
     let mut indices = vec![0; vectors.len()];
 
@@ -63,8 +66,11 @@ fn join_vec<Out>(mut vectors: Vec<Vec<(usize, Out)>>, output: &mut Vec<Out>) {
     }
 }
 
-fn join_pinned_vec<Out, P>(mut vectors: Vec<Vec<(usize, Out)>>, output: &mut P)
-where
+pub(crate) fn heap_sort_into_pinned_vec<Out, Key, P>(
+    mut vectors: Vec<Vec<(Key, Out)>>,
+    output: &mut P,
+) where
+    Key: PartialOrd + Copy,
     P: PinnedVec<Out>,
 {
     let mut queue = BinaryHeap::with_capacity(vectors.len());
@@ -109,7 +115,7 @@ pub fn par_map_fil_col_vec<I, Out, Map, Fil>(
 {
     let task = |c| task(&iter, &map, &filter, c);
     let vectors = Runner::run_map(params, ParTask::Collect, &iter, &task);
-    join_vec(vectors, output);
+    heap_sort_into_vec(vectors, output);
 }
 
 pub fn par_map_fil_col_pinned_vec<I, Out, Map, Fil, P>(
@@ -127,7 +133,7 @@ pub fn par_map_fil_col_pinned_vec<I, Out, Map, Fil, P>(
 {
     let task = |c| task(&iter, &map, &filter, c);
     let vectors = Runner::run_map(params, ParTask::Collect, &iter, &task);
-    join_pinned_vec(vectors, output);
+    heap_sort_into_pinned_vec(vectors, output);
 }
 
 pub fn seq_map_fil_col_vec<I, Out, Map, Fil>(iter: I, map: Map, filter: Fil, output: &mut Vec<Out>)

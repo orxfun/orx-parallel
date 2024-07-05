@@ -52,41 +52,6 @@ pub trait ParCollectIntoCore<O: Send + Sync + Debug> {
 const ERR_SRC: &str = "is in bounds";
 const ERR_DST: &str = "output has enough capacity";
 
-pub fn merge_bag_and_pos_len<T, P, Q, O>(mut bag: P, pos_len: &Q, output: &mut O)
-where
-    T: Debug,
-    P: PinnedVec<T> + Debug,
-    O: PinnedVec<T> + Debug,
-    Q: PinnedVec<(usize, usize)> + Debug,
-{
-    match bag.is_empty() {
-        true => {}
-        false => {
-            assert!(output.capacity() >= bag.len());
-
-            let mut des_idx = output.len();
-
-            for &x in pos_len.iter().filter(|x| x.0 < usize::MAX && x.1 > 0) {
-                let (begin_idx, len) = (x.0, x.1);
-
-                for i in 0..len {
-                    let src_idx = begin_idx + i;
-
-                    let source_ptr = unsafe { bag.get_ptr_mut(src_idx) }.expect(ERR_SRC);
-                    let destination_ptr = unsafe { output.get_ptr_mut(des_idx) }.expect(ERR_DST);
-
-                    unsafe { destination_ptr.write(source_ptr.read()) };
-
-                    des_idx += 1;
-                }
-            }
-
-            unsafe { output.set_len(des_idx) };
-            let _ = ManuallyDrop::new(bag);
-        }
-    }
-}
-
 pub fn merge_bag_and_positions<T, P, Q, O>(mut bag: P, positions: &Q, output: &mut O)
 where
     T: Debug,

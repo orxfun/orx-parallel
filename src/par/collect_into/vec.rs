@@ -1,6 +1,10 @@
 use super::collect_into_core::ParCollectIntoCore;
 use crate::{
-    core::{map_col::map_col, map_fil_col::par_map_fil_col_vec, map_fil_col::seq_map_fil_col_vec},
+    core::{
+        flatmap_fil_col::{par_flatmap_fil_col_vec, seq_flatmap_fil_col_vec},
+        map_col::map_col,
+        map_fil_col::{par_map_fil_col_vec, seq_map_fil_col_vec},
+    },
     fn_sync::FnSync,
     par::{
         par_filtermap_fil::ParFilterMapFilter, par_flatmap_fil::ParFlatMapFilter, par_map::ParMap,
@@ -60,15 +64,13 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for Vec<O> {
         M: Fn(I::Item) -> OI + Send + Sync,
         F: Fn(&O) -> bool + Send + Sync,
     {
-        match par.params().is_sequential() {
-            true => par.collect_bag_seq(self, |v, x| v.push(x)),
-            false => par
-                .collect_bag_par(|len| {
-                    self.reserve(len);
-                    FixedVec::from(self)
-                })
-                .into(),
+        let (params, iter, flat_map, filter) = par.destruct();
+
+        match params.is_sequential() {
+            true => seq_flatmap_fil_col_vec(iter, flat_map, filter, &mut self),
+            false => par_flatmap_fil_col_vec(params, iter, flat_map, filter, &mut self),
         }
+        self
     }
 
     fn filtermap_filter_into<I, FO, M, F>(mut self, par: ParFilterMapFilter<I, FO, O, M, F>) -> Self

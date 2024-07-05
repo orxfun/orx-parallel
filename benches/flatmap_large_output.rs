@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use orx_parallel::*;
+use orx_split_vec::SplitVec;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
@@ -14,18 +15,6 @@ struct LargeOutput {
     name: String,
     numbers: [i64; 64],
     vectors: Vec<Vec<i64>>,
-}
-
-// todo! why do we need Default?
-impl Default for LargeOutput {
-    fn default() -> Self {
-        Self {
-            idx: 0,
-            name: Default::default(),
-            numbers: [0; 64],
-            vectors: Default::default(),
-        }
-    }
 }
 
 fn to_large_output(idx: u32) -> LargeOutput {
@@ -109,17 +98,12 @@ fn rayon(inputs: &[u32]) -> Vec<LargeOutput> {
     inputs.into_par_iter().flat_map(fmap).collect()
 }
 
-fn orx_parallel_default(inputs: &[u32]) -> Vec<LargeOutput> {
-    inputs.into_par().flat_map(fmap).collect_vec()
+fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<LargeOutput> {
+    inputs.into_par().flat_map(fmap).collect()
 }
 
-fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<LargeOutput> {
-    inputs
-        .into_par()
-        .chunk_size(ChunkSize::Exact(NonZeroUsize::new(chunk_size).unwrap()))
-        .num_threads(num_threads)
-        .flat_map(fmap)
-        .collect_vec()
+fn orx_parallel_vec(inputs: &[u32]) -> Vec<LargeOutput> {
+    inputs.into_par().flat_map(fmap).collect_vec()
 }
 
 fn orx_parallel_x_default(inputs: &[u32]) -> Vec<LargeOutput> {
@@ -147,58 +131,26 @@ fn flat_map_large_output(c: &mut Criterion) {
 
     for n in &treatments {
         let input = inputs(*n);
-        let mut expected = seq(&input);
-        expected.sort();
-
-        let params = [(32, n / 32)];
+        let expected = seq(&input);
 
         group.bench_with_input(BenchmarkId::new("seq", n), n, |b, _| {
-            b.iter(|| {
-                let result = seq(black_box(&input));
-                validate(result, &expected);
-            })
+            b.iter(|| seq(black_box(&input)))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
-            b.iter(|| {
-                let result = rayon(black_box(&input));
-                validate(result, &expected);
-            })
+            assert_eq!(rayon(&input), expected);
+            b.iter(|| rayon(black_box(&input)))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx-parallel-default", n), n, |b, _| {
-            b.iter(|| {
-                let result = orx_parallel_default(black_box(&input));
-                validate(result, &expected);
-            })
+        group.bench_with_input(BenchmarkId::new("orx-parallel-split-vec", n), n, |b, _| {
+            assert_eq!(orx_parallel_split_vec(&input), expected);
+            b.iter(|| orx_parallel_split_vec(black_box(&input)))
         });
 
-        for (t, c) in params {
-            let name = format!("orx-parallel-t{}-c{}", t, c);
-            group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
-                b.iter(|| {
-                    let result = orx_parallel(black_box(&input), t, c);
-                    validate(result, &expected);
-                })
-            });
-        }
-
-        group.bench_with_input(BenchmarkId::new("orx-parallel-x-default", n), n, |b, _| {
-            b.iter(|| {
-                let result = orx_parallel_x_default(black_box(&input));
-                validate(result, &expected);
-            })
+        group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
+            assert_eq!(orx_parallel_vec(&input), expected);
+            b.iter(|| orx_parallel_vec(black_box(&input)))
         });
-
-        for (t, c) in params {
-            let name = format!("orx-parallel-x-t{}-c{}", t, c);
-            group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
-                b.iter(|| {
-                    let result = orx_parallel_x(black_box(&input), t, c);
-                    validate(result, &expected);
-                })
-            });
-        }
     }
 
     group.finish();

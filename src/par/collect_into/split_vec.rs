@@ -1,8 +1,9 @@
 use super::collect_into_core::ParCollectIntoCore;
 use crate::{
     core::{
-        map_col::map_col, map_fil_col::par_map_fil_col_pinned_vec,
-        map_fil_col::seq_map_fil_col_pinned_vec,
+        flatmap_fil_col::{par_flatmap_fil_col_pinned_vec, seq_flatmap_fil_col_pinned_vec},
+        map_col::map_col,
+        map_fil_col::{par_map_fil_col_pinned_vec, seq_map_fil_col_pinned_vec},
     },
     fn_sync::FnSync,
     par::{
@@ -38,7 +39,7 @@ impl<O: Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G>
         }
         let bag: ConcurrentOrderedBag<_, _> = self.into();
         let (params, iter, map) = par_map.destruct();
-        map_col(params, iter, map, bag).into()
+        map_col(params, iter, map, bag)
     }
 
     fn map_filter_into<I, M, F>(mut self, par: ParMapFilter<I, O, M, F>) -> Self
@@ -63,16 +64,13 @@ impl<O: Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G>
         M: Fn(I::Item) -> OI + Send + Sync,
         F: Fn(&O) -> bool + Send + Sync,
     {
-        match par.params().is_sequential() {
-            true => par.collect_bag_seq(self, |v, x| v.push(x)),
-            false => par
-                .collect_bag_par(|len| {
-                    unsafe { self.grow_to(self.len() + len, false) }
-                        .expect("Failed to reserve sufficient capacity");
-                    self
-                })
-                .into(),
+        let (params, iter, flat_map, filter) = par.destruct();
+
+        match params.is_sequential() {
+            true => seq_flatmap_fil_col_pinned_vec(iter, flat_map, filter, &mut self),
+            false => par_flatmap_fil_col_pinned_vec(params, iter, flat_map, filter, &mut self),
         }
+        self
     }
 
     fn filtermap_filter_into<I, FO, M, F>(mut self, par: ParFilterMapFilter<I, FO, O, M, F>) -> Self
@@ -84,13 +82,11 @@ impl<O: Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G>
     {
         match par.params().is_sequential() {
             true => par.collect_bag_seq(self, |v, x| v.push(x)),
-            false => par
-                .collect_bag_par(|len| {
-                    unsafe { self.grow_to(self.len() + len, false) }
-                        .expect("Failed to reserve sufficient capacity");
-                    self
-                })
-                .into(),
+            false => par.collect_bag_par(|len| {
+                unsafe { self.grow_to(self.len() + len, false) }
+                    .expect("Failed to reserve sufficient capacity");
+                self
+            }),
         }
     }
 
@@ -99,7 +95,7 @@ impl<O: Send + Sync + Debug, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G>
     }
 
     fn from_concurrent_bag(bag: ConcurrentBag<O, Self::BridgePinnedVec>) -> Self {
-        bag.into_inner().into()
+        bag.into_inner()
     }
 
     fn seq_extend<I: Iterator<Item = O>>(mut self, iter: I) -> Self {

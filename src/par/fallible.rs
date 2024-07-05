@@ -91,7 +91,7 @@ pub trait Fallible<T> {
 impl<T> Fallible<T> for Option<T> {
     #[inline(always)]
     fn value(self) -> T {
-        self.unwrap()
+        self.expect("`value` called on failure (None).")
     }
 
     #[inline(always)]
@@ -103,7 +103,7 @@ impl<T> Fallible<T> for Option<T> {
 impl<T, E: Debug> Fallible<T> for Result<T, E> {
     #[inline(always)]
     fn value(self) -> T {
-        self.unwrap()
+        self.expect("`value` called on failure (Err).")
     }
 
     #[inline(always)]

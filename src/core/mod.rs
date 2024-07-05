@@ -6,6 +6,7 @@ pub mod filtermap_fil_find;
 pub mod filtermap_fil_red;
 pub mod flatmap_fil_cnt;
 pub mod flatmap_fil_col;
+// pub mod flatmap_fil_col_deprecated;
 pub mod flatmap_fil_colx;
 pub mod flatmap_fil_find;
 pub mod flatmap_fil_red;
