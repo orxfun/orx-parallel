@@ -70,7 +70,8 @@ fn orx_parallel_default(inputs: &[usize]) -> Option<usize> {
 
 fn reduce_sum(c: &mut Criterion) {
     let lengths = [262_144 * 16];
-    let params = [(1, 1), (8, 1024), (16, 1024), (32, 1024)];
+    let _params = [(1, 1), (8, 1024), (16, 1024), (32, 1024)];
+    let params = [];
 
     let mut group = c.benchmark_group("reduce_sum");
 
