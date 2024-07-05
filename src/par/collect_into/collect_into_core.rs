@@ -9,7 +9,7 @@ use crate::{
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::PinnedVec;
-use std::{fmt::Debug, mem::ManuallyDrop};
+use std::fmt::Debug;
 
 pub trait ParCollectIntoCore<O: Send + Sync + Debug> {
     type BridgePinnedVec: PinnedVec<O>;
@@ -47,36 +47,4 @@ pub trait ParCollectIntoCore<O: Send + Sync + Debug> {
     fn seq_extend<I: Iterator<Item = O>>(self, iter: I) -> Self
     where
         Self: Sized;
-}
-
-const ERR_SRC: &str = "is in bounds";
-const ERR_DST: &str = "output has enough capacity";
-
-pub fn merge_bag_and_positions<T, P, Q, O>(mut bag: P, positions: &Q, output: &mut O)
-where
-    T: Debug,
-    P: PinnedVec<T>,
-    Q: PinnedVec<usize>,
-    O: PinnedVec<T> + Debug,
-{
-    match bag.is_empty() {
-        true => {}
-        false => {
-            // assert!(output.capacity() >= bag.len());
-
-            let mut des_idx = output.len();
-
-            for &src_idx in positions.iter().filter(|x| **x < usize::MAX) {
-                let source_ptr = unsafe { bag.get_ptr_mut(src_idx) }.expect(ERR_SRC);
-                let destination_ptr = unsafe { output.get_ptr_mut(des_idx) }.expect(ERR_DST);
-
-                unsafe { destination_ptr.write(source_ptr.read()) };
-
-                des_idx += 1;
-            }
-
-            unsafe { output.set_len(des_idx) };
-            let _ = ManuallyDrop::new(bag);
-        }
-    }
 }

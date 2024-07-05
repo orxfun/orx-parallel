@@ -1,20 +1,16 @@
-use super::{par_filtermap::ParFilterMap, par_flatmap::ParFlatMap, reduce::Reduce};
+use super::{
+    collect_into::collect_into_core::ParCollectIntoCore, par_filtermap::ParFilterMap,
+    par_flatmap::ParFlatMap, reduce::Reduce,
+};
 use crate::{
     core::{
-        filtermap_fil_cnt::filtermap_fil_cnt,
-        filtermap_fil_col::{par_filtermap_fil_col, seq_filtermap_fil_col},
-        filtermap_fil_find::filtermap_fil_find,
+        filtermap_fil_cnt::filtermap_fil_cnt, filtermap_fil_find::filtermap_fil_find,
         filtermap_fil_red::filtermap_fil_red,
     },
     fn_sync::FnSync,
-    par::collect_into::collect_into_core::merge_bag_and_positions,
     ChunkSize, Fallible, NumThreads, ParCollectInto, ParIter, Params,
 };
-use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_fixed_vec::FixedVec;
-use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -54,51 +50,8 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I, M, F) {
+    pub(crate) fn destruct(self) -> (Params, I, M, F) {
         (self.params, self.iter, self.filter_map, self.filter)
-    }
-
-    // collect
-
-    pub(crate) fn collect_bag_par<Output, NewOutput>(self, new_output: NewOutput) -> Output
-    where
-        Output: PinnedVec<O> + Debug,
-        NewOutput: FnOnce(usize) -> Output,
-    {
-        debug_assert!(!self.params.is_sequential());
-
-        let (params, iter, filter_map, filter) = self.destruct();
-
-        let bag = ConcurrentBag::new();
-        match iter.try_get_len() {
-            Some(len) => {
-                let positions = ConcurrentOrderedBag::with_fixed_capacity(len);
-                let (bag, positions) =
-                    par_filtermap_fil_col(params, iter, filter_map, filter, bag, positions);
-                let mut output = new_output(bag.len());
-                merge_bag_and_positions(bag, &positions, &mut output);
-                output
-            }
-            None => {
-                let positions = ConcurrentOrderedBag::new();
-                let (bag, positions) =
-                    par_filtermap_fil_col(params, iter, filter_map, filter, bag, positions);
-                let mut output = new_output(bag.len());
-                merge_bag_and_positions(bag, &positions, &mut output);
-                output
-            }
-        }
-    }
-
-    pub(crate) fn collect_bag_seq<Output, Push>(self, mut output: Output, push: Push) -> Output
-    where
-        Push: FnMut(&mut Output, O),
-    {
-        debug_assert!(self.params.is_sequential());
-
-        let (_, iter, filter_map, filter) = self.destruct();
-        seq_filtermap_fil_col(iter, filter_map, filter, &mut output, push);
-        output
     }
 
     // find
@@ -242,24 +195,11 @@ where
     // collect
 
     fn collect_vec(self) -> Vec<Self::Item> {
-        match self.params.is_sequential() {
-            true => self.collect_bag_seq(Vec::new(), |v, x| v.push(x)),
-            false => self.collect_bag_par(|len| FixedVec::new(len)).into(),
-        }
+        Vec::new().filtermap_filter_into(self)
     }
 
     fn collect(self) -> SplitVec<Self::Item> {
-        match self.params.is_sequential() {
-            true => self.collect_bag_seq(SplitVec::new(), |v, x| v.push(x)),
-            false => {
-                let new_output = |len| {
-                    let mut vec = SplitVec::new();
-                    unsafe { _ = vec.grow_to(len, false) };
-                    vec
-                };
-                self.collect_bag_par(new_output)
-            }
-        }
+        SplitVec::new().filtermap_filter_into(self)
     }
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
