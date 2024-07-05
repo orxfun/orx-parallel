@@ -94,15 +94,15 @@ pub trait ParIter: Reduce<Self::Item> {
     /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Auto).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// // B: with lower bound on the chunk size, execution may increase chunk size whenever it improves performance
+    /// // B: with an exact chunk size
     /// let sum = (0..(1 << 20)).into_par().chunk_size(1024).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Min(NonZeroUsize::new(1024).unwrap())).sum();
+    /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Exact(NonZeroUsize::new(1024).unwrap())).sum();
     /// assert_eq!(sum, expected);
     ///
-    /// // C: with an exact chunk size
-    /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Exact(NonZeroUsize::new(1024).unwrap())).sum();
+    /// // C: with lower bound on the chunk size, execution may increase chunk size whenever it improves performance
+    /// let sum = (0..(1 << 20)).into_par().chunk_size(ChunkSize::Min(NonZeroUsize::new(1024).unwrap())).sum();
     /// assert_eq!(sum, expected);
     /// ```
     ///

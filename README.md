@@ -46,8 +46,8 @@ Complexity of distribution of work to parallel threads is boiled down to two str
   * `Max(n)`: The computation can spawn at most `n` threads.
 * [`ChunkSize`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.ChunkSize.html) represents the number of elements a worker will pull and process every time it becomes idle. This parameter aims to balance the overhead of parallelization and cost of heterogeneity of tasks. It can be one of the three variants:
   * `Auto`: The library aims to select the best value in order to minimize computation time.
-  * `Min(c)`: Chunk sizes will at least be `c`. However, the execution is allowed to pull more elements depending on characteristics of the inputs and used number of threads **[b]**.
-  * `Exact(c)`: This variant gives the control completely to the caller, and hence, suits best to computations to be tuned for specific input set.
+  * `Exact(c)`: Chunk sizes will be `c`. This variant gives the control completely to the caller, and hence, suits best to computations to be tuned for specific input set.
+  * `Min(c)`: Chunk sizes will be at least `c`. However, the execution is allowed to pull more elements depending on characteristics of the inputs and used number of threads **[b]**.
 
 Rather than globally, each computation can be configured separately. This feature is particularly important when parallel processing is used in an already concurrent environment such as an api serving for cpu-bound computation requests. In such a scenario over-utilization of available CPU resources to gain smaller marginal computation time reductions is likely to be sub-optimal for the overall efficiency of the api. A good idea might be to limit the level of parallelization per request. This value can be tuned depending on the traffic and marginal efficiency gain per added resource to the computation.
 
@@ -61,9 +61,9 @@ let _ = (0..42).par().num_threads(1).sum(); // sequential
 let _ = (0..42).par().num_threads(NumThreads::sequential()).sum(); // also sequential
 let _ = (0..42).par().num_threads(0).sum(); // shorthand for NumThreads::Auto
 
-let _ = (0..42).par().chunk_size(16).sum(); // chunks of at least 16 elements
+let _ = (0..42).par().chunk_size(16).sum(); // chunks of exactly 16 elements
 let c = NonZeroUsize::new(16).unwrap();
-let _ = (0..42).par().chunk_size(ChunkSize::Exact(c)).sum(); // exactly 16 elements
+let _ = (0..42).par().chunk_size(ChunkSize::Min(c)).sum(); // min 16 elements
 let _ = (0..42).par().chunk_size(0).sum(); // shorthand for ChunkSize::Auto
 
 let _ = (0..42).par().num_threads(4).chunk_size(16).sum(); // set both

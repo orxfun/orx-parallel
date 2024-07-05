@@ -30,7 +30,7 @@ use crate::{chunk_size::ChunkSize, num_threads::NumThreads};
 ///
 /// let params = Params {
 ///     num_threads: 8.into(), // positive num threads maps to NumThreads::Max
-///     chunk_size: 32.into(), // positive chunk size maps to ChunkSize::Min
+///     chunk_size: 32.into(), // positive chunk size maps to ChunkSize::Exact
 /// };
 /// assert_eq!(params.num_threads, 8.into());
 /// assert_eq!(params.chunk_size, 32.into());
@@ -44,10 +44,10 @@ use crate::{chunk_size::ChunkSize, num_threads::NumThreads};
 ///
 /// let params = Params {
 ///     num_threads: 8.into(),
-///     chunk_size: ChunkSize::Exact(NonZeroUsize::new(64).unwrap()), // ChunkSize::Exact requires setting explicitly
+///     chunk_size: ChunkSize::Min(NonZeroUsize::new(64).unwrap()), // ChunkSize::Min requires setting explicitly
 /// };
 /// assert_eq!(params.num_threads, 8.into());
-/// assert_eq!(params.chunk_size, ChunkSize::Exact(NonZeroUsize::new(64).unwrap()));
+/// assert_eq!(params.chunk_size, ChunkSize::Min(NonZeroUsize::new(64).unwrap()));
 /// ```
 ///
 /// # Rules of Thumb / Guidelines
