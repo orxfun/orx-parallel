@@ -4,14 +4,14 @@ use super::{
 };
 use crate::{
     core::{
-        filtermap_fil_cnt::filtermap_fil_cnt, filtermap_fil_find::filtermap_fil_find,
-        filtermap_fil_red::filtermap_fil_red,
+        filtermap_fil_cnt::filtermap_fil_cnt, filtermap_fil_col_x::par_filtermap_fil_col_x_rec,
+        filtermap_fil_find::filtermap_fil_find, filtermap_fil_red::filtermap_fil_red,
     },
     fn_sync::FnSync,
     ChunkSize, Fallible, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use std::{fmt::Debug, marker::PhantomData};
 
 /// A parallel iterator.
@@ -204,6 +204,18 @@ where
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
         output.filtermap_filter_into(self)
+    }
+
+    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
+        match self.params().is_sequential() {
+            true => SplitVec::from(self.collect()),
+            false => {
+                let mut recursive = SplitVec::with_recursive_growth();
+                let (params, iter, map, filter) = self.destruct();
+                par_filtermap_fil_col_x_rec(params, iter, map, filter, &mut recursive);
+                recursive
+            }
+        }
     }
 }
 

@@ -2,7 +2,7 @@ pub mod default_fns;
 pub mod diagnostics;
 pub mod filtermap_fil_cnt;
 pub mod filtermap_fil_col;
-
+pub mod filtermap_fil_col_x;
 pub mod filtermap_fil_find;
 pub mod filtermap_fil_red;
 pub mod flatmap_fil_cnt;
@@ -19,7 +19,3 @@ pub mod map_fil_red;
 mod runner;
 mod runner_settings;
 mod utils;
-// pub mod flatmap_fil_col_deprecated;
-// pub mod flatmap_fil_colx_deprecated;
-// pub mod map_fil_col_deprecated;
-// pub mod filtermap_fil_col_deprecated;

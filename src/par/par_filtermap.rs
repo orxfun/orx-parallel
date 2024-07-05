@@ -4,7 +4,7 @@ use crate::{
     ParIter, Params,
 };
 use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use std::{fmt::Debug, marker::PhantomData};
 
 /// A parallel iterator.
@@ -157,6 +157,10 @@ where
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
         self.filter(no_filter).collect_into(output)
+    }
+
+    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
+        self.filter(no_filter).collect_x()
     }
 }
 
