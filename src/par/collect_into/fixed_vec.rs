@@ -41,18 +41,8 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for FixedVec<O> {
         M: Fn(I::Item) -> OI + Send + Sync,
         F: Fn(&O) -> bool + Send + Sync,
     {
-        match par.params().is_sequential() {
-            true => par
-                .collect_bag_seq(Vec::from(self), |v, x| v.push(x))
-                .into(),
-            false => par
-                .collect_bag_par(|len| {
-                    let mut vec: Vec<_> = self.into();
-                    vec.reserve(len);
-                    FixedVec::from(vec)
-                })
-                .into(),
-        }
+        let vec = self.into_inner().flatmap_filter_into(par);
+        FixedVec::from(vec)
     }
 
     fn filtermap_filter_into<I, FO, M, F>(self, par: ParFilterMapFilter<I, FO, O, M, F>) -> Self
@@ -66,13 +56,11 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for FixedVec<O> {
             true => par
                 .collect_bag_seq(Vec::from(self), |v, x| v.push(x))
                 .into(),
-            false => par
-                .collect_bag_par(|len| {
-                    let mut vec: Vec<_> = self.into();
-                    vec.reserve(len);
-                    FixedVec::from(vec)
-                })
-                .into(),
+            false => par.collect_bag_par(|len| {
+                let mut vec: Vec<_> = self.into();
+                vec.reserve(len);
+                FixedVec::from(vec)
+            }),
         }
     }
 
@@ -81,7 +69,7 @@ impl<O: Send + Sync + Debug> ParCollectIntoCore<O> for FixedVec<O> {
     }
 
     fn from_concurrent_bag(bag: ConcurrentBag<O, Self::BridgePinnedVec>) -> Self {
-        bag.into_inner().into()
+        bag.into_inner()
     }
 
     fn seq_extend<I: Iterator<Item = O>>(self, iter: I) -> Self {

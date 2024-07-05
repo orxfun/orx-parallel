@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use orx_parallel::*;
+use orx_split_vec::SplitVec;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
@@ -41,7 +42,11 @@ fn rayon(inputs: &[u32]) -> Vec<usize> {
     inputs.into_par_iter().flat_map(map).collect()
 }
 
-fn orx_parallel_default(inputs: &[u32]) -> Vec<usize> {
+fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<usize> {
+    inputs.into_par().flat_map(map).collect()
+}
+
+fn orx_parallel_vec(inputs: &[u32]) -> Vec<usize> {
     inputs.into_par().flat_map(map).collect_vec()
 }
 
@@ -56,7 +61,8 @@ fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<us
 
 fn flat_map(c: &mut Criterion) {
     let treatments = vec![65_536, 262_144 * 4];
-    let params = [(1, 1), (4, 256), (8, 1024), (32, 1024)];
+    let _params = [(1, 1), (4, 256), (8, 1024), (32, 1024)];
+    let params = [];
 
     let mut group = c.benchmark_group("flat_map");
 
@@ -69,17 +75,18 @@ fn flat_map(c: &mut Criterion) {
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
-            b.iter(|| {
-                let result = rayon(black_box(&input));
-                assert_eq!(result, expected);
-            })
+            assert_eq!(rayon(&input), expected);
+            b.iter(|| rayon(black_box(&input)))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx-parallel-default", n), n, |b, _| {
-            b.iter(|| {
-                let result = orx_parallel_default(black_box(&input));
-                assert_eq!(result, expected);
-            })
+        group.bench_with_input(BenchmarkId::new("orx-parallel-split-vec", n), n, |b, _| {
+            assert_eq!(orx_parallel_split_vec(&input), expected);
+            b.iter(|| orx_parallel_split_vec(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
+            assert_eq!(orx_parallel_vec(&input), expected);
+            b.iter(|| orx_parallel_vec(black_box(&input)))
         });
 
         for (t, c) in params {
