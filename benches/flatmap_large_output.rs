@@ -1,15 +1,14 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use orx_parallel::*;
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
-use std::num::NonZeroUsize;
 
 const SEED: u64 = 89774;
 const FIB_UPPER_BOUND: u32 = 30;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 struct LargeOutput {
     idx: usize,
     name: String,
@@ -102,26 +101,12 @@ fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<LargeOutput> {
     inputs.into_par().flat_map(fmap).collect()
 }
 
+fn orx_parallel_split_rec(inputs: &[u32]) -> SplitVec<LargeOutput, Recursive> {
+    inputs.into_par().flat_map(fmap).collect_x()
+}
+
 fn orx_parallel_vec(inputs: &[u32]) -> Vec<LargeOutput> {
     inputs.into_par().flat_map(fmap).collect_vec()
-}
-
-fn orx_parallel_x_default(inputs: &[u32]) -> Vec<LargeOutput> {
-    inputs.into_par().flat_map(fmap).collect_x_vec()
-}
-
-fn orx_parallel_x(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<LargeOutput> {
-    inputs
-        .into_par()
-        .chunk_size(chunk_size)
-        .num_threads(num_threads)
-        .flat_map(fmap)
-        .collect_x_vec()
-}
-
-fn validate(mut first: Vec<LargeOutput>, second: &[LargeOutput]) {
-    first.sort();
-    assert_eq!(first, second);
 }
 
 fn flat_map_large_output(c: &mut Criterion) {
@@ -150,6 +135,15 @@ fn flat_map_large_output(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
             assert_eq!(orx_parallel_vec(&input), expected);
             b.iter(|| orx_parallel_vec(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx-parallel-split-rec", n), n, |b, _| {
+            let mut result = orx_parallel_split_rec(&input).to_vec();
+            result.sort();
+            let mut expected = expected.clone();
+            expected.sort();
+            assert_eq!(result, expected);
+            b.iter(|| orx_parallel_split_rec(black_box(&input)))
         });
     }
 

@@ -133,6 +133,27 @@ fn par_fmap_collect() {
 }
 
 #[test]
+fn par_fmap_collect_x() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let range = || 54..5648;
+
+        let expected: Vec<_> = range().flat_map(|x| [x * 2, x * 2 + 1]).collect();
+
+        let mut result = range()
+            .par()
+            .flat_map(|x| [x * 2, x * 2 + 1])
+            .num_threads(num_threads)
+            .chunk_size(chunk_size)
+            .collect_x()
+            .to_vec();
+        result.sort();
+
+        assert_eq!(result, expected);
+    }
+    test_different_params(test);
+}
+
+#[test]
 fn par_fmap_collect_vec() {
     fn test(num_threads: usize, chunk_size: usize) {
         let iter = (54..5648)

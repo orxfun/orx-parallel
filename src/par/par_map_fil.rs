@@ -262,10 +262,10 @@ where
 
     /// TODO: define the advantage!
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
-        let mut recursive = SplitVec::with_recursive_growth();
         match self.params().is_sequential() {
-            true => self.collect_into(recursive),
+            true => SplitVec::from(self.collect()),
             false => {
+                let mut recursive = SplitVec::with_recursive_growth();
                 let (params, iter, map, filter) = self.destruct();
                 par_map_fil_col_x_rec(params, iter, map, filter, &mut recursive);
                 recursive

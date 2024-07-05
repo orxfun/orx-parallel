@@ -4,17 +4,13 @@ use super::{
 };
 use crate::{
     core::{
-        flatmap_fil_cnt::fmap_fil_cnt,
-        flatmap_fil_colx::{par_fmap_fil_colx, seq_fmap_fil_colx},
-        flatmap_fil_find::fmap_fil_find,
-        flatmap_fil_red::fmap_fil_red,
+        flatmap_fil_cnt::fmap_fil_cnt, flatmap_fil_col_x::par_flatmap_fil_col_x_rec,
+        flatmap_fil_find::fmap_fil_find, flatmap_fil_red::fmap_fil_red,
     },
     fn_sync::FnSync,
     ParCollectInto, ParIter, Params,
 };
-use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
-use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{Recursive, SplitVec};
 use std::fmt::Debug;
 
@@ -54,19 +50,6 @@ where
 
     pub(crate) fn destruct(self) -> (Params, I, M, F) {
         (self.params, self.iter, self.flat_map, self.filter)
-    }
-
-    // collect
-    pub(crate) fn collect_bag_x<P>(self, collected: ConcurrentBag<O, P>) -> ConcurrentBag<O, P>
-    where
-        P: PinnedVec<O>,
-    {
-        let (params, iter, flat_map, filter) = self.destruct();
-
-        match params.is_sequential() {
-            true => seq_fmap_fil_colx(iter, flat_map, filter, collected),
-            false => par_fmap_fil_colx(params, iter, flat_map, filter, collected),
-        }
     }
 }
 
@@ -179,17 +162,17 @@ where
         output.flatmap_filter_into(self)
     }
 
-    fn collect_x_vec(self) -> Vec<Self::Item> {
-        self.collect_bag_x(ConcurrentBag::new()).into_inner().into()
-    }
-
+    /// TODO: define the advantage!
     fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
-        self.collect_bag_x(ConcurrentBag::new()).into_inner().into()
-    }
-
-    fn collect_x_into<B: ParCollectInto<Self::Item>>(self, output: B) -> B {
-        let x = self.collect_bag_x(output.into_concurrent_bag());
-        B::from_concurrent_bag(x)
+        match self.params().is_sequential() {
+            true => SplitVec::from(self.collect()),
+            false => {
+                let mut recursive = SplitVec::with_recursive_growth();
+                let (params, iter, map, filter) = self.destruct();
+                par_flatmap_fil_col_x_rec(params, iter, map, filter, &mut recursive);
+                recursive
+            }
+        }
     }
 }
 

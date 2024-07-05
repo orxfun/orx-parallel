@@ -148,6 +148,31 @@ fn par_fmap_filter_collect() {
 }
 
 #[test]
+fn par_fmap_fil_collect_x() {
+    fn test(num_threads: usize, chunk_size: usize) {
+        let range = || 54..5648;
+
+        let expected: Vec<_> = range()
+            .flat_map(|x| [x * 2, x * 2 + 1])
+            .filter(|x| x % 2 == 0)
+            .collect();
+
+        let mut result = range()
+            .par()
+            .flat_map(|x| [x * 2, x * 2 + 1])
+            .filter(|x| x % 2 == 0)
+            .num_threads(num_threads)
+            .chunk_size(chunk_size)
+            .collect_x()
+            .to_vec();
+        result.sort();
+
+        assert_eq!(result, expected);
+    }
+    test_different_params(test);
+}
+
+#[test]
 fn par_fmap_filter_collect_vec() {
     fn test(num_threads: usize, chunk_size: usize) {
         let range = || 54..5648;

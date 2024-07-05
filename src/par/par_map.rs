@@ -12,7 +12,7 @@ use crate::{
     Fallible, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Recursive, SplitVec};
 use std::fmt::Debug;
 
 /// A parallel iterator.
@@ -235,6 +235,11 @@ where
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
         output.map_into(self)
+    }
+
+    /// TODO: define the advantage!
+    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
+        self.filter(no_filter).collect_x()
     }
 }
 
