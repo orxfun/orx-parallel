@@ -1,4 +1,3 @@
-use super::diagnostics::ParThreadLogger;
 use super::runner::{ParTask, Runner};
 use super::utils::maybe_reduce;
 use crate::{Fallible, Params};
@@ -21,21 +20,11 @@ where
 {
     match params.is_sequential() {
         true => seq_filtermap_fil_red(iter, map, filter, reduce),
-        false => {
-            #[cfg(feature = "with_diagnostics")]
-            return par_filtermap_fil_red::<_, _, _, _, _, _, super::diagnostics::ParLogger>(
-                params, iter, map, filter, reduce,
-            );
-
-            #[cfg(not(feature = "with_diagnostics"))]
-            par_filtermap_fil_red::<_, _, _, _, _, _, super::diagnostics::NoLogger>(
-                params, iter, map, filter, reduce,
-            )
-        }
+        false => par_filtermap_fil_red(params, iter, map, filter, reduce),
     }
 }
 
-fn par_filtermap_fil_red<I, FO, Out, FilterMap, Fil, Red, L>(
+fn par_filtermap_fil_red<I, FO, Out, FilterMap, Fil, Red>(
     params: Params,
     iter: I,
     map: FilterMap,
@@ -49,18 +38,16 @@ where
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     Red: Fn(Out, Out) -> Out + Send + Sync,
-    L: ParThreadLogger,
 {
-    let task = |c| task::<_, _, _, _, _, _, L>(&iter, &map, &filter, &reduce, c);
+    let task = |c| task(&iter, &map, &filter, &reduce, c);
     let reduce_outer = |a: Option<Out>, b: Option<Out>| maybe_reduce(&reduce, a, b);
-    let (num_spawned, reduced) =
+    let (_num_spawned, reduced) =
         Runner::reduce(params, ParTask::Reduce, &iter, &task, reduce_outer);
 
-    L::log_num_spawned(num_spawned);
     reduced.flatten()
 }
 
-fn task<I, FO, Out, FilterMap, Fil, Red, L>(
+fn task<I, FO, Out, FilterMap, Fil, Red>(
     iter: &I,
     filter_map: &FilterMap,
     filter: &Fil,
@@ -74,9 +61,7 @@ where
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
     Fil: Fn(&Out) -> bool + Send + Sync,
     Red: Fn(Out, Out) -> Out + Send + Sync,
-    L: ParThreadLogger,
 {
-    let logger = L::new(chunk_size);
     match chunk_size {
         1 => {
             for x in iter.values() {
@@ -106,7 +91,6 @@ where
             let mut acc = None;
             let mut buffered = iter.buffered_iter(c);
             while let Some(chunk) = buffered.next() {
-                logger.next_chunk(chunk.values.len());
                 let x = chunk
                     .values
                     .map(filter_map)
