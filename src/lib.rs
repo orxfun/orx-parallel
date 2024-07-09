@@ -42,11 +42,11 @@
 //! Complexity of distribution of work to parallel threads is boiled down to two straightforward parameters which are easy to reason about:
 //! * [`NumThreads`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.NumThreads.html) represents the degree of parallelization. It can be set to one of the two variants:
 //!   * `Auto`: The library aims to select the best value in order to minimize computation time. Note that in some scenarios where the computation is not sufficiently challenging and does not justify spawning new threads, it will not, and hence, will lead to an efficient use of resources.
-//!   * `Max(n)`: The computation can spawn at most `n` threads. `NumThreads::Max(1)` corresponds to sequential computation.
+//!   * `Max(n)`: The computation can spawn at most n threads. NumThreads::Max(1) corresponds to sequential computation.
 //! * [`ChunkSize`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.ChunkSize.html) represents the number of elements a parallel worker will pull and process every time it becomes idle. This parameter aims to balance the overhead of parallelization and cost of heterogeneity of tasks. It can be set to one of the three variants:
 //!   * `Auto`: The library aims to select the best value in order to minimize computation time, dynamically adjusting the chunk size for the computation.
-//!   * `Exact(c)`: Chunk sizes will be `c`. This variant gives the control completely to the caller, and hence, suits best to computations to be tuned.
-//!   * `Min(c)`: Chunk sizes will be at least `c`. However, the execution is allowed to pull more elements depending on characteristics of the inputs and used number of threads in order to reduce the impact of parallelization overhead.
+//!   * `Exact(c)`: Chunk sizes will be c. This variant gives the control completely to the caller, and hence, suits best to computations to be tuned.
+//!   * `Min(c)`: Chunk sizes will be at least c. However, the execution is allowed to pull more elements depending on characteristics of the inputs and used number of threads in order to reduce the impact of parallelization overhead.
 //!
 //! ```rust
 //! use orx_parallel::*;
