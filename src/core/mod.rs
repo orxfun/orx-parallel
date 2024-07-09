@@ -1,5 +1,4 @@
 pub mod default_fns;
-pub mod diagnostics;
 pub mod filtermap_fil_cnt;
 pub mod filtermap_fil_col;
 pub mod filtermap_fil_col_x;
