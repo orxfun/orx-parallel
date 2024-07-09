@@ -5,8 +5,6 @@
 //!
 //! A high performance, convenient and configurable parallel processing library.
 //!
-//! # Features
-//!
 //! ## Parallel Computation by Iterators
 //!
 //! Parallel computation is achieved conveniently by the parallel iterator trait [`ParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html). This allows for changing sequential code that is defined as a composition of functions through iterators into its counterpart by adding one word: `par` or `into_par`.
@@ -39,7 +37,7 @@
 //! assert_eq!(par_result, 286);
 //! ```
 //!
-//! ## Easily Configurable
+//! ## Conveniently Configurable
 //!
 //! Complexity of distribution of work to parallel threads is boiled down to two straightforward parameters which are easy to reason about:
 //! * [`NumThreads`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.NumThreads.html) represents the degree of parallelization. It can be set to one of the two variants:
@@ -71,7 +69,7 @@
 //!
 //! Each computation can be configured independently. This feature is helpful in different ways in different scenarios.
 //!
-//! ### |> Better Strategy by Problem Knowledge
+//! **|> Better Strategy by Problem Knowledge**
 //!
 //! Both number of threads and chunk size have `Auto` settings which perform efficiently in general. However, there is no one strategy that performs best for all computations or input characteristics. Sometimes we know better.
 //!
@@ -83,13 +81,13 @@
 //! * `Auto` chunk size settings, as well as, `rayon`'s default settings find the solution in slightly longer time than the sequential computation. This is a sad but possible outcome of a parallel execution.
 //! * On the other hand, simply setting the chunk size to 1, we observe that `ParIter` finds the solution ~15 times faster than the sequential.
 //!
-//! ### |> Better Strategy by Tuning
+//! **|> Better Strategy by Tuning**
 //!
 //! A well known concern in parallelization is the diminishing returns from added resources. Doubling the number of threads usually does not halve the computation time. We usually seek a *sweet spot* where the gain is justified by the allocated resources. Further, as the extreme example above demonstrates, same computation might perform significantly differently for different inputs.
 //!
 //! Being able to have complete control on these parameters allows to benchmark and tune performance-critical computations for the relevant inputs on target platforms.
 //!
-//! ### |> Parallelization in a Concurrent Application
+//! **|> Parallelization in a Concurrent Application**
 //!
 //! Consider the following two extreme strategies for an api responding to cpu-heavy computation requests:
 //!
@@ -121,7 +119,7 @@
 //! }
 //! ```
 //!
-//! # Underlying Approach
+//! ## Underlying Approach
 //!
 //! This crate has developed as a natural follow up of the [`ConcurrentIter`](https://crates.io/crates/orx-concurrent-iter). You may already find example parallel map, fold and find implementations in the examples. Especially when combined with concurrent collections such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) and [`ConcurrentOrderedBag`](https://crates.io/crates/orx-concurrent-ordered-bag), implementation of parallel computation has been very straightforward:
 //!
@@ -159,7 +157,7 @@
 //!
 //! ## Contributing
 //!
-//! Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR. The goal of v1 is to allow `ParIter` to cover practical use cases, please open an issue if you have a computation that you cannot represent with it. The experimental goal of v2, on the other hand, is to provide a more dynamic and smart parallel executor, please see the related discussion [here](https://github.com/orxfun/orx-parallel/discussions/26).
+//! Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR. The goal of v1 is to allow `ParIter` to cover practical use cases, please open an issue if you have a computation that you cannot express and compute with it. The experimental goal of v2, on the other hand, is to provide a more dynamic and smart parallel executor, please see the related discussion [here](https://github.com/orxfun/orx-parallel/discussions/26).
 //!
 //! ## License
 //!
