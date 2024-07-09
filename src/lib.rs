@@ -159,7 +159,7 @@
 //!
 //! ## Contributing
 //!
-//! Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR.
+//! Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR. The goal of v1 is to allow `ParIter` to cover practical use cases, please open an issue if you have a computation that you cannot represent with it. The experimental goal of v2, on the other hand, is to provide a more dynamic and smart parallel executor, please see the related discussion [here](https://github.com/orxfun/orx-parallel/discussions/26).
 //!
 //! ## License
 //!
