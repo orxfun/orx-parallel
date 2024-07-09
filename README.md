@@ -148,14 +148,14 @@ fn parallel_map(num_threads: usize, iter: impl ConcurrentIter<Item = u64>) -> Sp
 }
 ```
 
-## Comparison to rayon
+## Relation to rayon
 
-Defining parallel computation through the iterator methods is almost identical in this crate and in rayon. Just as in regular iterators, this is certainly a very nice and composable way to represent the computation.
+See [RelationToRayon](https://github.com/orxfun/orx-parallel/blob/main/docs/RelationToRayon.md) section for a discussion on orx-parallel's similarities and differences from rayon.
 
-Underlying approaches are different. As described in this amazing [blog post](https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/), rayon takes a very simple and elegant approach, and builds on top of the `join` primitive. The library is very mature and efficient. I have been able to use rayon in almost all time-critical computation requirements I had so far. Then, why another parallel computation library?
-* Because they are different, which is nice.
-* It is convenient to have a generalized definition of a computation which can be sequential or parallel to any degree.
-* It is easily configurable per computation, and hence, conveniently gives control to the caller and allows for tuning computations over relevant sets of inputs.
-* `ParIter` aims to be resource efficient; i.e., it does not use an additional thread if the job is not demanding enough to justify using an additional resource.
-* Benchmarks are tricky, even trickier in parallel context. At least in many benchmarks defined in this crate, we observe that rayon and orx-parallel perform comparably. `ParIter` performs particularly well in benchmarks which involves collection of results. A special case is [`flat_map`](https://github.com/orxfun/orx-parallel/blob/main/benches/flatmap.rs) where the improvement is more significant.
-* Although, rayon's primitive is simple to understand, things gets complicated as we move to higher levels, at least for me. On the other hand, in this crate things are simpler to understand in the high level, as can be seen in the parallel map example above. This simplicity makes it easy to experiment and tune different strategies. Hope this simplicity enables further performance optimizations.
+## Contributing
+
+Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR.
+
+## License
+
+This library is licensed under MIT license. See LICENSE for details.
