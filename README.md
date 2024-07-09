@@ -69,29 +69,36 @@ let _ = (0..42).par().chunk_size(0).sum(); // shorthand for ChunkSize::Auto
 let _ = (0..42).par().num_threads(4).chunk_size(16).sum(); // set both
 ```
 
-**Each computation can be configured independently.** This feature is helpful in different ways in different scenarios.
+Each computation can be configured independently. This feature is helpful in different ways in different scenarios.
 
-### Better Strategy by Problem Knowledge
+### |> Better Strategy by Problem Knowledge
 
-Both number of threads and chunk size have `Auto` settings which perform efficiently in general. However, there is no one strategy that performs best for all computations or input characteristics. In some cases, we know a better strategy.
+Both number of threads and chunk size have `Auto` settings which perform efficiently in general. However, there is no one strategy that performs best for all computations or input characteristics. Sometimes we know better.
 
-For instance, consider a problem where we want to `find` the first feasible or acceptable solution. Assume that finding a solution is expensive. Therefore, we want the computation to terminate as soon as possible once a solution is found.
+For instance, consider a problem where we want to `find` the first feasible or acceptable solution. Assume that finding a solution is expensive. Of course, we want the computation to terminate as soon as possible once a solution is found.
 * Setting chunk size to 1 allows for the quickest termination once the solution is found. However, it would have the greatest parallelization overhead.
 * Setting a sufficiently large chunk size would have much lower parallelization overhead. However, once a thread finds a solution, the other threads would still need to complete their chunk before termination.
 
-In this scenario where the computation is challenging, parallelization overhead is negligible. Therefore, a good strategy could be to set the chunk size to one (`ChunkSize::Exact(1)`). This trivial strategy indeed turns out to be optimal. A similar example is constructed in [benches/map_find_expensive.rs](https://github.com/orxfun/orx-parallel/blob/main/benches/map_find_expensive.rs).
-* `Auto` chunk size settings, as well as, `rayon`'s default settings find the solution in slightly longer time than the sequential computation. This is an unfortunate outcome of a parallel execution.
+In this scenario where the computation is challenging, parallelization overhead is negligible. Therefore, we could set the chunk size to one (`ChunkSize::Exact(1)`). This trivial strategy indeed turns out to be optimal. A similar example is constructed in [benches/map_find_expensive.rs](https://github.com/orxfun/orx-parallel/blob/main/benches/map_find_expensive.rs).
+* `Auto` chunk size settings, as well as, `rayon`'s default settings find the solution in slightly longer time than the sequential computation. This is a sad but possible outcome of a parallel execution.
 * On the other hand, simply setting the chunk size to 1, we observe that `ParIter` finds the solution ~15 times faster than the sequential.
 
-### Better Strategy by Tuning
+### |> Better Strategy by Tuning
 
-Being able to easily set these parameters allow to benchmark and tune performance-critical computations for the relevant inputs on target platforms.
+A well known concern in parallelization is the diminishing returns from added resources. Doubling the number of threads usually does not halve the computation time. We usually seek a *sweet spot* where the gain is justified by the allocated resources. Further, as the extreme example above demonstrates, same computation might perform significantly differently for different inputs.
 
-A well known concern relevant for majority of practical use cases is the diminishing returns from parallelization. In brief, doubling the number of threads usually does not halve the computation time. We usually seek a *sweet spot* where the gain is justified by the allocated resources.
+Being able to have complete control on these parameters allows to benchmark and tune performance-critical computations for the relevant inputs on target platforms.
 
-### Parallelization in a Concurrent Application
+### |> Parallelization in a Concurrent Application
 
-Consider an api responding to cpu-heavy computation requests. The api will compute for multiple requests in parallel. Limiting the maximum number of threads per request/computation allows for uniform distribution of computing resources to requests and more deterministic response times. Further, number of threads per computation might be increased and decreased dynamically depending on the traffic and available resources.
+Consider the following two extreme strategies for an api responding to cpu-heavy computation requests:
+
+* **sequential**: We can handle each request sequentially. Since the api will serve multiple requests concurrently, we could still utilize available resources. However, we could be under-utilizing in low-traffic time intervals. On the other hand, utilizing available resources under high-traffic does not necessarily mean that we are achieving a desired response time.
+* **all-in**: We might allow each request to utilize all available resources. Under low-traffic, this could cut down the response time of as much as possible. However, due to the diminishing returns of additional computing resources allocated to one computation, we could be utilizing the resources very inefficiently. We could be worse off due to longer waiting time for resources to become available.
+
+A simple strategy could be to limit the maximum level of parallelization of each computation (`NumThreads::Max`). We can set the limit to an empirical sweet spot that achieves the required response time while still using the resources efficiently. This could already prevent the problems observed in the extreme cases defined above.
+
+A more complicated approach could be to implement a resource allocator which dynamically decides on the number of threads of a request depending on the traffic and utilization of resources at the instant the request arrives.
 
 ## Generalization of Sequential and Parallel Computation
 
@@ -114,9 +121,7 @@ fn execute<C: ParIter<Item = Output>>(computation: C) -> Vec<Output> {
 }
 ```
 
-# Some Details on the Underlying Approach
-
-## Relation with concurrent iterators and concurrent collections
+# Underlying Approach
 
 This crate has developed as a natural follow up of the [`ConcurrentIter`](https://crates.io/crates/orx-concurrent-iter). You may already find example parallel map, fold and find implementations in the examples. Especially when combined with concurrent collections such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) and [`ConcurrentOrderedBag`](https://crates.io/crates/orx-concurrent-ordered-bag), implementation of parallel computation has been very straightforward:
 

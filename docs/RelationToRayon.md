@@ -38,7 +38,7 @@ This turns out to be sufficient to build a parallel executor that is arguably as
 * each thread pulls tasks from the iterator, executes them, and pulls more from the remaining tasks whenever they are idle again,
 * the computation returns once the iterator is consumed (or an early exit condition is satisfied as in `find` method).
 
-This is super simple to understand and reason about. There are only two straightforward decisions to take:
+There exist only two straightforward decisions to take that are easy to reason about:
 * how many threads to spawn?
 * how many tasks to pull each time a thread is idle?
 
