@@ -71,7 +71,8 @@ fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<u3
 
 fn map_filter_collect(c: &mut Criterion) {
     let treatments = vec![65_536, 262_144 * 4];
-    let params = [(1, 1), (4, 256), (8, 1024), (32, 1024)];
+    let _params = [(1, 1), (4, 256), (8, 1024), (32, 1024)];
+    let params = [];
 
     let mut group = c.benchmark_group("map_filter_collect");
 
