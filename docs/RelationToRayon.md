@@ -9,11 +9,13 @@
 [blog]: https://smallcultfollowing.com/babysteps/blog/2015/12/18/rayon-data-parallelism-in-rust/
 [video]: https://www.youtube.com/watch?v=gof_OEv71Aw
 
-Rayon is a very mature library allowing us to execute complex tasks in parallel since I do rust. Then why another library? Because it is different and simple which is fun & exciting.
+Rayon is a very mature library allowing us to execute complex tasks in parallel since I do rust.
+
+Then why another crate? Because it is different and simple -> that is fun & exciting.
 
 ### Usage
 
-Defining parallel computation through the iterator methods is almost identical in this crate and in rayon. Just as in regular iterators we love, this is an ergonomic and composable way to represent the computation.
+Defining parallel computation through the iterator methods is almost identical in this crate and in rayon. Just as in regular iterators we love, this is an ergonomic, composable and less error-prone way to represent the computation.
 
 ### Underlying Approach
 
@@ -21,7 +23,7 @@ Underlying approaches, however, are quite different.
 
 #### |> rayon
 
-Please refer to the blog mentioned above or to the repository for details. To the best of my understanding, rayon utilizes the primitive `join` method. In the following example, the two tasks are to be executed before the method returns. It is very elegant to build on this simple primitive. Further, its recursive nature allows it to be used in many different use cases.
+Please refer to the blog mentioned above or to the repository for details. To the best of my understanding, rayon utilizes the primitive `join` method. In the following example, the two tasks are to be executed before the method returns. It is very elegant to build on this simple primitive. Further, its recursive nature allows it to be used, I believe, anywhere.
 
 ```rust
 join(|| do_something(), || do_something_else())
@@ -38,7 +40,7 @@ This turns out to be sufficient to build a parallel executor that is arguably as
 * each thread pulls tasks from the iterator, executes them, and pulls more from the remaining tasks whenever they are idle again,
 * the computation returns once the iterator is consumed (or an early exit condition is satisfied as in `find` method).
 
-There exist only two straightforward decisions to take that are easy to reason about:
+There exist only two straightforward decisions to take:
 * how many threads to spawn?
 * how many tasks to pull each time a thread is idle?
 
@@ -47,25 +49,37 @@ The caller can have complete control on these two settings. This is particularly
 Alternatively, the caller can leave the decisions completely to the heuristic implemented in this crate. Current heuristic has been a quick implementation without much thought on it yet; however, it achieves a high performance computation. This is possible due to the simplicity of the approach. To demonstrate this, consider the following parallel map implementation, which has been the starting point of this crate. It is a little simplified version of the current implementation; however, not really far from it. 
 
 ```rust
+use orx_concurrent_ordered_bag::*;
 use orx_concurrent_iter::*;
-use orx_concurrent_bag::*;
 
 fn map(input: u64) -> String {
     input.to_string()
 }
 
-fn parallel_map(num_threads: usize, iter: impl ConcurrentIter<Item = u64>) -> SplitVec<String> {
-    let outputs = ConcurrentBag::new();
+fn parallel_map(
+    num_threads: usize,
+    chunk_size: usize,
+    iter: impl ConcurrentIter<Item = u64>,
+) -> SplitVec<String> {
+    let outputs = ConcurrentOrderedBag::new();
     std::thread::scope(|s| {
         for _ in 0..num_threads {
-            s.spawn(|| {
-                for output in iter.values().map(map) {
-                    outputs.push(output);
+            s.spawn(|| match chunk_size {
+                1 => {
+                    iter.ids_and_values()
+                        .map(|(idx, value)| (idx, map(value)))
+                        .for_each(|(idx, value)| unsafe { outputs.set_value(idx, value) });
+                }
+                c => {
+                    while let Some(chunk) = iter.next_chunk(c) {
+                        let begin_idx = chunk.begin_idx;
+                        unsafe { outputs.set_values(begin_idx, chunk.values.map(&map)) };
+                    }
                 }
             });
         }
     });
-    outputs.into_inner()
+    unsafe { outputs.into_inner().unwrap() }
 }
 ```
 
