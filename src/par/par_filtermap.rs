@@ -1,6 +1,6 @@
 use super::{par_filtermap_fil::ParFilterMapFilter, par_flatmap::ParFlatMap};
 use crate::{
-    core::default_fns::no_filter, ChunkSize, Fallible, NumThreads, ParCollectInto, ParIter, Params,
+    core::default_fns::no_filter, ChunkSize, Fallible, NumThreads, ParCollectInto, Par, Params,
 };
 use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 
 /// A parallel iterator.
 ///
-/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::Par::num_threads`] and [`crate::Par::chunk_size`] methods.
 pub struct ParFilterMap<I, FO, O, M>
 where
     I: ConcurrentIter,
@@ -43,7 +43,7 @@ where
     }
 }
 
-impl<I, FO, O, M> ParIter for ParFilterMap<I, FO, O, M>
+impl<I, FO, O, M> Par for ParFilterMap<I, FO, O, M>
 where
     I: ConcurrentIter,
     O: Send + Sync,
@@ -87,7 +87,7 @@ where
         ParFilterMap::new(iter, params, composed_filter_map)
     }
 
-    fn flat_map<O2, OI, FM>(self, flat_map: FM) -> impl ParIter<Item = O2>
+    fn flat_map<O2, OI, FM>(self, flat_map: FM) -> impl Par<Item = O2>
     where
         O2: Send + Sync,
         OI: IntoIterator<Item = O2>,
@@ -99,7 +99,7 @@ where
         ParFlatMap::new(iter, params, flat_map)
     }
 
-    fn filter<F2>(self, filter: F2) -> impl ParIter<Item = Self::Item>
+    fn filter<F2>(self, filter: F2) -> impl Par<Item = Self::Item>
     where
         F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {

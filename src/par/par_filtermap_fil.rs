@@ -7,7 +7,7 @@ use crate::{
         filtermap_fil_cnt::filtermap_fil_cnt, filtermap_fil_col_x::par_filtermap_fil_col_x_rec,
         filtermap_fil_find::filtermap_fil_find, filtermap_fil_red::filtermap_fil_red,
     },
-    ChunkSize, Fallible, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, Fallible, NumThreads, ParCollectInto, Par, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
@@ -15,7 +15,7 @@ use std::marker::PhantomData;
 
 /// A parallel iterator.
 ///
-/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::Par::num_threads`] and [`crate::Par::chunk_size`] methods.
 pub struct ParFilterMapFilter<I, FO, O, M, F>
 where
     I: ConcurrentIter,
@@ -70,7 +70,7 @@ where
     }
 }
 
-impl<I, FO, O, M, F> ParIter for ParFilterMapFilter<I, FO, O, M, F>
+impl<I, FO, O, M, F> Par for ParFilterMapFilter<I, FO, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync,

@@ -33,7 +33,7 @@ These two tasks will *potentially* be executed in parallel. Depending on the ava
 
 #### |> orx-parallel
 
-`ParIter` defined in this crate is built on top of [`ConcurrentIter`](https://crates.io/crates/orx-concurrent-iter) which does nothing but allows to iterate over its elements concurrently from multiple threads.
+`Par` defined in this crate is built on top of [`ConcurrentIter`](https://crates.io/crates/orx-concurrent-iter) which does nothing but allows to iterate over its elements concurrently from multiple threads.
 
 This turns out to be sufficient to build a parallel executor that is arguably as simple as it could be:
 * it spawns threads,
@@ -87,6 +87,4 @@ fn parallel_map(
 
 Benchmarks are tricky, even trickier in parallel context. At least in most of the [benchmarks](https://github.com/orxfun/orx-parallel/blob/main/benches) defined in this crate, we observe that rayon and orx-parallel perform comparably.
 
-Using concurrent collectors such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag), `ParIter` is particularly efficient in scenarios where the results are collected, the improvement is most significant in the [`flat_map`](https://github.com/orxfun/orx-parallel/blob/main/benches/flatmap.rs) examples.
-
-PLACEHOLDER
+Using concurrent collectors such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) or [`ConcurrentOrderedBag`](https://crates.io/crates/orx-concurrent-ordered-bag), `Par` is particularly efficient in scenarios where the results are collected, the improvement is most significant in the [`flat_map`](https://github.com/orxfun/orx-parallel/blob/main/benches/flatmap.rs) examples.

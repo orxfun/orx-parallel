@@ -9,7 +9,7 @@ fn some_if(condition: bool, value: i64) -> Option<i64> {
     }
 }
 
-pub fn reduce<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn reduce<R: Par<Item = i64>>(par: R, len: usize) {
     fn add(a: i64, b: i64) -> i64 {
         a + b
     }
@@ -18,25 +18,25 @@ pub fn reduce<R: ParIter<Item = i64>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn sum<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn sum<R: Par<Item = i64>>(par: R, len: usize) {
     let expected = (0..len).sum::<usize>() as i64;
     let result = par.sum();
     assert_eq!(result, expected);
 }
 
-pub fn min<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn min<R: Par<Item = i64>>(par: R, len: usize) {
     let expected = some_if(len > 0, 0);
     let result = par.min();
     assert_eq!(result, expected);
 }
 
-pub fn max<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn max<R: Par<Item = i64>>(par: R, len: usize) {
     let expected = some_if(len > 0, len as i64 - 1);
     let result = par.max();
     assert_eq!(result, expected);
 }
 
-pub fn min_by<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn min_by<R: Par<Item = i64>>(par: R, len: usize) {
     fn compare(a: &i64, b: &i64) -> Ordering {
         match b % 2 {
             0 => a.cmp(b),
@@ -48,7 +48,7 @@ pub fn min_by<R: ParIter<Item = i64>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn max_by<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn max_by<R: Par<Item = i64>>(par: R, len: usize) {
     fn compare(a: &i64, b: &i64) -> Ordering {
         match b % 2 {
             0 => a.cmp(b),
@@ -61,7 +61,7 @@ pub fn max_by<R: ParIter<Item = i64>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn min_by_key<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn min_by_key<R: Par<Item = i64>>(par: R, len: usize) {
     fn get_key(a: &i64) -> usize {
         match a % 2 {
             0 => usize::MAX,
@@ -73,7 +73,7 @@ pub fn min_by_key<R: ParIter<Item = i64>>(par: R, len: usize) {
     assert_eq!(result, expected);
 }
 
-pub fn max_by_key<R: ParIter<Item = i64>>(par: R, len: usize) {
+pub fn max_by_key<R: Par<Item = i64>>(par: R, len: usize) {
     fn get_key(a: &i64) -> usize {
         match a % 2 {
             0 => 0,

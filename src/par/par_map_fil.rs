@@ -7,14 +7,14 @@ use crate::{
         map_fil_cnt::map_fil_cnt, map_fil_col_x::par_map_fil_col_x_rec, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    Fallible, ParCollectInto, ParIter, Params,
+    Fallible, Par, ParCollectInto, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
 
 /// A parallel iterator.
 ///
-/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::Par::num_threads`] and [`crate::Par::chunk_size`] methods.
 pub struct ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
@@ -137,7 +137,7 @@ where
     }
 }
 
-impl<I, O, M, F> ParIter for ParMapFilter<I, O, M, F>
+impl<I, O, M, F> Par for ParMapFilter<I, O, M, F>
 where
     I: ConcurrentIter,
     O: Send + Sync,
