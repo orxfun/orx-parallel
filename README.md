@@ -3,11 +3,11 @@
 [![orx-parallel crate](https://img.shields.io/crates/v/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 
-A performant and configurable parallel computing library for computations defined as composition of iterator methods.
+A performant and configurable parallel computing library for computations defined as compositions of iterator methods.
 
 ## Parallel Computation by Iterators
 
-Parallel computation is achieved conveniently by the parallel iterator trait [`Par`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.Par.html). This allows for changing sequential code that is defined as a composition of functions through iterators into its counterpart by adding one word: `par` or `into_par`.
+Parallel computation is achieved conveniently by the parallel iterator trait [`Par`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.Par.html). This allows for changing sequential code that is defined as a composition of functions through iterators into its parallel counterpart by adding one word: `par` or `into_par`.
 
 ```rust
 use orx_parallel::*;
@@ -43,7 +43,7 @@ Below code block includes some basic examples demonstrating different sources pr
 use orx_parallel::*;
 use std::collections::*;
 
-fn test<I: Par<Item = usize>>(iter: I) {
+fn test<P: Par<Item = usize>>(iter: P) {
     let result = iter.filter(|x| x % 2 == 1).map(|x| x + 1).sum();
     assert_eq!(6, result);
 }
@@ -103,36 +103,8 @@ let _ = (0..42).par().chunk_size(0).sum(); // shorthand for ChunkSize::Auto
 let _ = (0..42).par().num_threads(4).chunk_size(16).sum(); // set both params
 ```
 
-As the example demonstrates, each computation can be configured independently.
-
-**|> Better Strategy by Problem Knowledge**
-
-Both number of threads and chunk size have `Auto` settings which perform well in general. However, there exists no strategy that performs best for all computations or input characteristics. Sometimes we know the best configuration.
-
-For instance, consider a problem where we want to `find` the first feasible or acceptable solution, where each trial is computationally expensive. Of course, we want the computation to terminate as soon as possible once a solution is found.
-* Setting chunk size to 1 allows for the quickest termination once the solution is found. However, it would have the greatest parallelization overhead.
-* Setting a sufficiently large chunk size would have much lower parallelization overhead. However, once a thread finds a solution, the other threads would still need to complete their chunk before termination.
-
-In this scenario where the computation is challenging, parallelization overhead is negligible. Therefore, we could simply set the chunk size to one.  A similar example is constructed in [benches/map_find_expensive.rs](https://github.com/orxfun/orx-parallel/blob/main/benches/map_find_expensive.rs), where this trivial strategy indeed turns out to be optimal.
-* `Auto` chunk size settings, as well as, `rayon`'s default settings find the solution in slightly longer time than the sequential computation. This is an example case where parallelization can backfire.
-* On the other hand, simply setting the chunk size to 1, we observe that `Par` finds the solution ~15 times faster than the sequential.
-
-**|> Better Strategy by Tuning**
-
-A well known concern in parallelization is the diminishing returns from added resources. Doubling the number of threads usually does not halve the computation time. We usually seek a *sweet spot* where the gain is justified by the allocated resources. Further, same computation might perform significantly differently for different input sets.
-
-Being able to have complete control on these parameters allows to benchmark and tune performance-critical computations for the relevant inputs on target platforms.
-
-**|> Parallelization in a Concurrent Application**
-
-Consider the following two extreme strategies for an api responding to cpu-heavy computation requests:
-
-* **sequential**: We can handle each request sequentially. Since the api will serve multiple requests concurrently, we could still utilize available resources. However, we could be under-utilizing in low-traffic time intervals. Further, we might not be achieving desired average response time per request.
-* **all-in**: We might allow each request to utilize all available resources when it arrives. Under low-traffic, this could minimize the response time. However, recall the diminishing improvements of additional computing resources allocated to one computation. Although we are keeping resources busy, we could be utilizing them very inefficiently and we could perform worse than than the sequential strategy in high traffic periods.
-
-A simple strategy could be to limit maximum number of threads to be used per computation. The limit can be a sweet spot discovered empirically. This could already help in preventing the extreme problems discussed above.
-
-A more complicated approach could be to implement a smart resource allocator which dynamically decides on the number of threads of a request depending on the traffic and utilization of resources at the instant the request arrives.
+Having control on these two parameters and being able to configure each computation easily and individually is useful in various ways. See 
+[EasyConfiguration](https://github.com/orxfun/orx-parallel/blob/main/docs/EasyConfiguration.md) section for examples.
 
 ## Generalization of Sequential and Parallel Computation
 
