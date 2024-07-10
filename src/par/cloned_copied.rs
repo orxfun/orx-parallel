@@ -1,4 +1,4 @@
-use crate::ParIter;
+use crate::Par;
 
 /// Transforms a parallel iterator yielding &T into one that yields T by cloning each element.
 ///
@@ -19,7 +19,7 @@ use crate::ParIter;
 ///
 /// assert_eq!(new_names, &[String::from("john!"), String::from("doe!")]);
 /// ```
-pub trait ParIntoCloned<'a, T>: ParIter<Item = &'a T>
+pub trait ParIntoCloned<'a, T>: Par<Item = &'a T>
 where
     T: Send + Sync + Clone + 'a,
 {
@@ -42,7 +42,7 @@ where
     ///
     /// assert_eq!(new_names, &[String::from("john!"), String::from("doe!")]);
     /// ```
-    fn cloned(self) -> impl ParIter<Item = T> {
+    fn cloned(self) -> impl Par<Item = T> {
         self.map(|x| x.clone())
     }
 }
@@ -50,7 +50,7 @@ where
 impl<'a, T, P> ParIntoCloned<'a, T> for P
 where
     T: Send + Sync + Clone + 'a,
-    P: ParIter<Item = &'a T>,
+    P: Par<Item = &'a T>,
 {
 }
 
@@ -70,7 +70,7 @@ where
 /// assert_eq!(sum, 10);
 /// assert_eq!(product, 24);
 /// ```
-pub trait ParIntoCopied<'a, T>: ParIter<Item = &'a T>
+pub trait ParIntoCopied<'a, T>: Par<Item = &'a T>
 where
     T: Send + Sync + Copy + 'a,
 {
@@ -90,7 +90,7 @@ where
     /// assert_eq!(sum, 10);
     /// assert_eq!(product, 24);
     /// ```
-    fn copied(self) -> impl ParIter<Item = T> {
+    fn copied(self) -> impl Par<Item = T> {
         self.map(|x| *x)
     }
 }
@@ -98,6 +98,6 @@ where
 impl<'a, T, P> ParIntoCopied<'a, T> for P
 where
     T: Send + Sync + Copy + 'a,
-    P: ParIter<Item = &'a T>,
+    P: Par<Item = &'a T>,
 {
 }

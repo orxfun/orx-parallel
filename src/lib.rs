@@ -3,11 +3,11 @@
 //! [![orx-parallel crate](https://img.shields.io/crates/v/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 //! [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 //!
-//! A performant and configurable parallel computing library, representing computations as composition of convenient iterator methods.
+//! A performant and configurable parallel computing library for computations defined as composition of iterator methods.
 //!
 //! ## Parallel Computation by Iterators
 //!
-//! Parallel computation is achieved conveniently by the parallel iterator trait [`ParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html). This allows for changing sequential code that is defined as a composition of functions through iterators into its counterpart by adding one word: `par` or `into_par`.
+//! Parallel computation is achieved conveniently by the parallel iterator trait [`Par`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.Par.html). This allows for changing sequential code that is defined as a composition of functions through iterators into its counterpart by adding one word: `par` or `into_par`.
 //!
 //! ```rust
 //! use orx_parallel::*;
@@ -43,7 +43,7 @@
 //! use orx_parallel::*;
 //! use std::collections::*;
 //!
-//! fn test<I: ParIter<Item = usize>>(iter: I) {
+//! fn test<I: Par<Item = usize>>(iter: I) {
 //!     let result = iter.filter(|x| x % 2 == 1).map(|x| x + 1).sum();
 //!     assert_eq!(6, result);
 //! }
@@ -115,7 +115,7 @@
 //!
 //! In this scenario where the computation is challenging, parallelization overhead is negligible. Therefore, we could simply set the chunk size to one.  A similar example is constructed in [benches/map_find_expensive.rs](https://github.com/orxfun/orx-parallel/blob/main/benches/map_find_expensive.rs), where this trivial strategy indeed turns out to be optimal.
 //! * `Auto` chunk size settings, as well as, `rayon`'s default settings find the solution in slightly longer time than the sequential computation. This is an example case where parallelization can backfire.
-//! * On the other hand, simply setting the chunk size to 1, we observe that `ParIter` finds the solution ~15 times faster than the sequential.
+//! * On the other hand, simply setting the chunk size to 1, we observe that `Par` finds the solution ~15 times faster than the sequential.
 //!
 //! **|> Better Strategy by Tuning**
 //!
@@ -136,9 +136,9 @@
 //!
 //! ## Generalization of Sequential and Parallel Computation
 //!
-//! Executing a parallel computation with `NumThreads::Max(1)` is equivalent to a sequential computation, without any parallelization overhead. In this sense, `ParIter` is a generalization of sequential and parallel computation.
+//! Executing a parallel computation with `NumThreads::Max(1)` is equivalent to a sequential computation, without any parallelization overhead. In this sense, `Par` is a generalization of sequential and parallel computation.
 //!
-//! In order to illustrate, consider the following function which accepts the definition of a computation as a `ParIter`. Note that just as sequential iterators, `ParIter` is lazy. In other words, it is just the definition of the computation. Such a `computation` is passed to the `execute` method together with its settings that can be accessed by `computation.params()`.
+//! In order to illustrate, consider the following function which accepts the definition of a computation as a `Par`. Note that just as sequential iterators, `Par` is lazy. In other words, it is just the definition of the computation. Such a `computation` is passed to the `execute` method together with its settings that can be accessed by `computation.params()`.
 //!
 //! However, since the method owns the `computation`, it may decide how to execute it. This implementation will go with the given parallel settings. Unless it is Monday, then it will run sequentially.
 //!
@@ -147,7 +147,7 @@
 //! use chrono::{Datelike, Local, Weekday};
 //! type Output = String;
 //!
-//! fn execute<C: ParIter<Item = Output>>(computation: C) -> Vec<Output> {
+//! fn execute<C: Par<Item = Output>>(computation: C) -> Vec<Output> {
 //!     match Local::now().weekday() {
 //!         Weekday::Mon => computation.num_threads(1).collect_vec(),
 //!         _ => computation.collect_vec(),
@@ -155,9 +155,11 @@
 //! }
 //! ```
 //!
-//! ## Underlying Approach
+//! ## Underlying Approach & Performance
 //!
 //! This crate has developed as a natural follow up of the [`ConcurrentIter`](https://crates.io/crates/orx-concurrent-iter). You may already find example parallel map, fold and find implementations in the examples. Especially when combined with concurrent collections such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) and [`ConcurrentOrderedBag`](https://crates.io/crates/orx-concurrent-ordered-bag), implementation of parallel computation has been very straightforward. You may find some details in this [section](https://github.com/orxfun/orx-parallel/blob/main/docs/RelationToRayon.md) and this [discussion](https://github.com/orxfun/orx-parallel/discussions/26).
+//!
+//! In the [benchmarks](https://github.com/orxfun/orx-parallel/blob/main/benches) defined in this repository, we observe that `Par` is very performant, often on-par with rayon. Using the above-mentioned concurrent collections it also suits well where the results of the computation are collected.
 //!
 //!
 //! ## Relation to rayon
@@ -168,9 +170,9 @@
 //!
 //! Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR.
 //!
-//! The goal of v1 is to allow `ParIter` to cover practical use cases, please open an issue if you have a computation that you cannot express and compute with it.
+//! The goal of v1 is to allow `Par` to cover practical use cases, please open an issue if you have a computation that you cannot express and compute with it.
 //!
-//! The goal of v2, although a little experimental, is to provide a more dynamic and smart parallel executor, please see and join the related discussion [here](https://github.com/orxfun/orx-parallel/discussions/26).
+//! The goal of v2 is to provide a more dynamic and smart parallel executor, please see and join the related discussion [here](https://github.com/orxfun/orx-parallel/discussions/26).
 //!
 //! ## License
 //!
@@ -203,5 +205,5 @@ pub use num_threads::NumThreads;
 pub use par::cloned_copied::{ParIntoCloned, ParIntoCopied};
 pub use par::collect_into::par_collect_into::ParCollectInto;
 pub use par::fallible::Fallible;
-pub use par_iter::ParIter;
+pub use par_iter::Par;
 pub use params::Params;

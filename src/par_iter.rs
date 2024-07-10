@@ -3,7 +3,7 @@ use orx_split_vec::{Recursive, SplitVec};
 use std::{cmp::Ordering, ops::Add};
 
 /// An iterator used to define a computation that can be executed in parallel.
-pub trait ParIter
+pub trait Par
 where
     Self: Sized,
 {
@@ -164,7 +164,7 @@ where
     /// let doubles = (0..5).par().map(|x| x * 2).collect_vec();
     /// assert_eq!(&doubles[..], &[0, 2, 4, 6, 8]);
     /// ```
-    fn map<O, M>(self, map: M) -> impl ParIter<Item = O>
+    fn map<O, M>(self, map: M) -> impl Par<Item = O>
     where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync + Clone;
@@ -179,7 +179,7 @@ where
     /// let numbers = (0..5).par().flat_map(|x| vec![x; x]).collect_vec();
     /// assert_eq!(&numbers[..], &[1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
     /// ```
-    fn flat_map<O, OI, FM>(self, flat_map: FM) -> impl ParIter<Item = O>
+    fn flat_map<O, OI, FM>(self, flat_map: FM) -> impl Par<Item = O>
     where
         O: Send + Sync,
         OI: IntoIterator<Item = O>,
@@ -195,7 +195,7 @@ where
     /// let evens = (0..10).par().filter(|x| x % 2 == 0).collect_vec();
     /// assert_eq!(&evens[..], &[0, 2, 4, 6, 8]);
     /// ```
-    fn filter<F>(self, filter: F) -> impl ParIter<Item = Self::Item>
+    fn filter<F>(self, filter: F) -> impl Par<Item = Self::Item>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
@@ -223,7 +223,7 @@ where
     /// assert_eq!(numbers, [1, 5]);
     /// ```
     ///
-    /// Here's the same example, but with [`crate::ParIter::filter`] and [`crate::ParIter::map`]:
+    /// Here's the same example, but with [`crate::Par::filter`] and [`crate::Par::map`]:
     ///
     /// ```
     /// use orx_parallel::*;
@@ -238,7 +238,7 @@ where
     ///    .collect_vec();
     /// assert_eq!(numbers, [1, 5]);
     /// ```
-    fn filter_map<O, FO, FM>(self, filter_map: FM) -> impl ParIter<Item = O>
+    fn filter_map<O, FO, FM>(self, filter_map: FM) -> impl Par<Item = O>
     where
         O: Send + Sync,
         FO: Fallible<O> + Send + Sync,

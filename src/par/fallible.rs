@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 /// Trait representing results which might be missing.
-/// This trait is useful in defining a common interface for [`crate::ParIter::filter_map`] inputs.
+/// This trait is useful in defining a common interface for [`crate::Par::filter_map`] inputs.
 ///
 /// Two common examples of fallible types are `Option` and `Result` which might or not have a successful value.
 ///

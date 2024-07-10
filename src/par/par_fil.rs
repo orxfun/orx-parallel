@@ -4,14 +4,14 @@ use crate::{
         default_fns::map_self, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
-    Fallible, ParCollectInto, ParIter, Params,
+    Fallible, Par, ParCollectInto, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
 
 /// A parallel iterator.
 ///
-/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::ParIter::num_threads`] and [`crate::ParIter::chunk_size`] methods.
+/// The iterator can be executed in parallel or sequentially with different chunk sizes; see [`crate::Par::num_threads`] and [`crate::Par::chunk_size`] methods.
 pub struct ParFilter<I, F>
 where
     I: ConcurrentIter,
@@ -22,7 +22,7 @@ where
     filter: F,
 }
 
-impl<I, F> ParIter for ParFilter<I, F>
+impl<I, F> Par for ParFilter<I, F>
 where
     I: ConcurrentIter,
     F: Fn(&I::Item) -> bool + Send + Sync + Clone,

@@ -2,7 +2,7 @@ use orx_parallel::*;
 
 pub(crate) fn test_string_owned<P>(par: P, input_len: usize)
 where
-    P: ParIter<Item = String>,
+    P: Par<Item = String>,
 {
     let result = par
         .map(|x| {
@@ -30,7 +30,7 @@ where
 
 pub(crate) fn test_string_ref<'a, P>(par: P, input_len: usize)
 where
-    P: ParIter<Item = &'a String>,
+    P: Par<Item = &'a String>,
 {
     let result = par
         .map(|x| (x, x.len()))
@@ -51,7 +51,7 @@ where
 
 pub(crate) fn test_numbers_owned<P>(par: P, input_len: usize)
 where
-    P: ParIter<Item = usize>,
+    P: Par<Item = usize>,
 {
     let result = par
         .map(|x| x.to_string())
@@ -80,7 +80,7 @@ where
 
 pub(crate) fn test_numbers_ref<'a, P>(par: P, input_len: usize)
 where
-    P: ParIter<Item = &'a usize>,
+    P: Par<Item = &'a usize>,
 {
     let result = par
         .map(|x| x.to_string())
