@@ -170,3 +170,63 @@ impl<T: Send + Sync> IntoPar for ConIterOfVec<T> {
         ParEmpty::new(self)
     }
 }
+
+// std collections
+
+mod impl_std_collections {
+
+    use crate::{par::par_empty::ParEmpty, IntoPar};
+    use orx_concurrent_iter::*;
+    use std::collections::{
+        BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque,
+    };
+
+    impl<T: Send + Sync> IntoPar for VecDeque<T> {
+        type ConIter = ConIterOfIter<T, std::collections::vec_deque::IntoIter<T>>;
+        fn into_par(self) -> ParEmpty<Self::ConIter> {
+            ParEmpty::new(self.into_iter().into_con_iter())
+        }
+    }
+
+    impl<T: Send + Sync> IntoPar for BTreeSet<T> {
+        type ConIter = ConIterOfIter<T, std::collections::btree_set::IntoIter<T>>;
+        fn into_par(self) -> ParEmpty<Self::ConIter> {
+            ParEmpty::new(self.into_iter().into_con_iter())
+        }
+    }
+
+    impl<T: Send + Sync> IntoPar for HashSet<T> {
+        type ConIter = ConIterOfIter<T, std::collections::hash_set::IntoIter<T>>;
+        fn into_par(self) -> ParEmpty<Self::ConIter> {
+            ParEmpty::new(self.into_iter().into_con_iter())
+        }
+    }
+
+    impl<K: Send + Sync, V: Send + Sync> IntoPar for BTreeMap<K, V> {
+        type ConIter = ConIterOfIter<(K, V), std::collections::btree_map::IntoIter<K, V>>;
+        fn into_par(self) -> ParEmpty<Self::ConIter> {
+            ParEmpty::new(self.into_iter().into_con_iter())
+        }
+    }
+
+    impl<K: Send + Sync, V: Send + Sync> IntoPar for HashMap<K, V> {
+        type ConIter = ConIterOfIter<(K, V), std::collections::hash_map::IntoIter<K, V>>;
+        fn into_par(self) -> ParEmpty<Self::ConIter> {
+            ParEmpty::new(self.into_iter().into_con_iter())
+        }
+    }
+
+    impl<T: Send + Sync> IntoPar for LinkedList<T> {
+        type ConIter = ConIterOfIter<T, std::collections::linked_list::IntoIter<T>>;
+        fn into_par(self) -> ParEmpty<Self::ConIter> {
+            ParEmpty::new(self.into_iter().into_con_iter())
+        }
+    }
+
+    impl<T: Send + Sync> IntoPar for BinaryHeap<T> {
+        type ConIter = ConIterOfIter<T, std::collections::binary_heap::IntoIter<T>>;
+        fn into_par(self) -> ParEmpty<Self::ConIter> {
+            ParEmpty::new(self.into_iter().into_con_iter())
+        }
+    }
+}
