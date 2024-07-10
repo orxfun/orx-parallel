@@ -46,7 +46,7 @@ There exist only two straightforward decisions to take:
 
 The caller can have complete control on these two settings. This is particularly useful for tuning or for putting limits on resource usage per computation.
 
-Alternatively, the caller can leave the decisions completely to the heuristic implemented in this crate. Current heuristic has been a quick implementation without much thought on it yet; however, it achieves a high performance computation. This is possible due to the simplicity of the approach. To demonstrate this, consider the following parallel map implementation, which has been the starting point of this crate. It is a little simplified version of the current implementation; however, not really far from it. 
+Alternatively, the caller can leave the decisions completely to the heuristic implemented in this crate. Current heuristic has been a quick implementation without much thought on it yet; however, it achieves performant computations. This is possible due to the simplicity of the approach. To demonstrate this, consider the following parallel map implementation, which has been the starting point of this crate. It is a little simplified version of the current implementation; however, not really far from it. 
 
 ```rust
 use orx_concurrent_ordered_bag::*;
