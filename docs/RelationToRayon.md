@@ -11,7 +11,7 @@
 
 Rayon is a very mature library allowing us to execute complex tasks in parallel since I do rust.
 
-Then why another crate? Because it is different and simple -> that is fun & exciting.
+Then why another crate? Because they are different, this is great. Also it is simple, exciting and promising.
 
 ### Usage
 
@@ -82,9 +82,3 @@ fn parallel_map(
     unsafe { outputs.into_inner().unwrap() }
 }
 ```
-
-### Performance
-
-Benchmarks are tricky, even trickier in parallel context. At least in most of the [benchmarks](https://github.com/orxfun/orx-parallel/blob/main/benches) defined in this crate, we observe that rayon and orx-parallel perform comparably.
-
-Using concurrent collectors such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) or [`ConcurrentOrderedBag`](https://crates.io/crates/orx-concurrent-ordered-bag), `Par` is particularly efficient in scenarios where the results are collected, the improvement is most significant in the [`flat_map`](https://github.com/orxfun/orx-parallel/blob/main/benches/flatmap.rs) examples.

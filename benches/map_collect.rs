@@ -98,9 +98,10 @@ fn orx_parallel(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Spli
 
 fn map_collect(c: &mut Criterion) {
     let treatments = [65_536, 65_536 * 4];
-    let params = [(1, 1), (32, 1024)];
+    let _params = [(1, 1), (32, 1024)];
+    let params = [];
 
-    let mut group = c.benchmark_group("map_to_large_type");
+    let mut group = c.benchmark_group("map_collect");
 
     for n in &treatments {
         let input = inputs(*n);

@@ -131,7 +131,7 @@
 //!
 //! This crate has developed as a natural follow up of the [`ConcurrentIter`](https://crates.io/crates/orx-concurrent-iter). You may already find example parallel map, fold and find implementations in the examples. Especially when combined with concurrent collections such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) and [`ConcurrentOrderedBag`](https://crates.io/crates/orx-concurrent-ordered-bag), implementation of parallel computation has been very straightforward. You may find some details in this [section](https://github.com/orxfun/orx-parallel/blob/main/docs/RelationToRayon.md) and this [discussion](https://github.com/orxfun/orx-parallel/discussions/26).
 //!
-//! In the [benchmarks](https://github.com/orxfun/orx-parallel/blob/main/benches) defined in this repository, we observe that `Par` is very performant, often on-par with rayon. Using the above-mentioned concurrent collections it also suits well where the results of the computation are collected.
+//! Benchmarks are tricky, even more in parallel context. Nevertheless, results of [benchmarks](https://github.com/orxfun/orx-parallel/blob/main/benches) defined in this repository are very promising for `Par`. Its performance is often on-par with rayon. It can provide significant improvements in scenarios where the results are collected, such as [map |> filter |> collect](https://github.com/orxfun/orx-parallel/blob/main/benches/map_filter_collect.rs) or [flat_map |> collect](https://github.com/orxfun/orx-parallel/blob/main/benches/flatmap.rs), etc.
 //!
 //!
 //! ## Relation to rayon
