@@ -5,26 +5,18 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const SEED: u64 = 745;
+const SEED: u64 = 3134;
 const FIB_UPPER_BOUND: u32 = 999;
 
-fn fibonacci(n: &u32) -> u32 {
+fn fibonacci(n: u32) -> usize {
     let mut a = 0;
     let mut b = 1;
-    for _ in 0..*n {
+    for _ in 0..n {
         let c = a + b;
         a = b;
         b = c;
     }
-    a
-}
-
-fn filter_map(n: &u32) -> Option<u32> {
-    let value = fibonacci(n);
-    match value % 3 == 0 {
-        true => None,
-        false => Some(n + 1),
-    }
+    a as usize
 }
 
 fn inputs(len: usize) -> Vec<u32> {
@@ -34,61 +26,47 @@ fn inputs(len: usize) -> Vec<u32> {
         .collect()
 }
 
-fn seq(inputs: &[u32]) -> Vec<u32> {
-    inputs.iter().filter_map(filter_map).collect()
+fn map(a: &u32) -> Vec<usize> {
+    let len = a % 100;
+    (0..len).map(fibonacci).into_iter().collect()
 }
 
-fn rayon(inputs: &[u32]) -> Vec<u32> {
+fn seq(inputs: &[u32]) -> Vec<usize> {
+    inputs.iter().flat_map(map).collect()
+}
+
+fn rayon(inputs: &[u32]) -> Vec<usize> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().filter_map(filter_map).collect()
+    inputs.into_par_iter().flat_map(map).collect()
 }
 
-fn rayon_chain(inputs: &[u32]) -> Vec<u32> {
-    use rayon::iter::ParallelIterator;
-    inputs
-        .into_par_iter()
-        .map(filter_map)
-        .filter(|x| x.is_some())
-        .map(|x| x.expect("is-some"))
-        .collect()
+fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<usize> {
+    inputs.into_par().flat_map(map).collect()
 }
 
-fn orx_parallel_split_vec_chain(inputs: &[u32]) -> SplitVec<u32> {
-    inputs
-        .into_par()
-        .map(filter_map)
-        .filter(|x| x.is_some())
-        .map(|x| x.expect("is-some"))
-        .collect()
+fn orx_parallel_split_rec(inputs: &[u32]) -> SplitVec<usize, Recursive> {
+    inputs.into_par().flat_map(map).collect_x()
 }
 
-fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<u32> {
-    inputs.into_par().filter_map(filter_map).collect()
+fn orx_parallel_vec(inputs: &[u32]) -> Vec<usize> {
+    inputs.into_par().flat_map(map).collect_vec()
 }
 
-fn orx_parallel_split_rec(inputs: &[u32]) -> SplitVec<u32, Recursive> {
-    inputs.into_par().filter_map(filter_map).collect_x()
-}
-
-fn orx_parallel_vec(inputs: &[u32]) -> Vec<u32> {
-    inputs.into_par().filter_map(filter_map).collect_vec()
-}
-
-fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<u32> {
+fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<usize> {
     inputs
         .into_par()
         .chunk_size(chunk_size)
         .num_threads(num_threads)
-        .filter_map(filter_map)
+        .flat_map(map)
         .collect_vec()
 }
 
-fn filtermap_collect(c: &mut Criterion) {
-    let treatments = vec![65_536, 262_144];
+fn flatmap_heterogeneous(c: &mut Criterion) {
+    let treatments = vec![65_536, 262_144 * 4];
     let _params = [(1, 1), (4, 256), (8, 1024), (32, 1024)];
     let params = [];
 
-    let mut group = c.benchmark_group("filtermap_collect");
+    let mut group = c.benchmark_group("flatmap_heterogeneous");
 
     for n in &treatments {
         let input = inputs(*n);
@@ -122,29 +100,11 @@ fn filtermap_collect(c: &mut Criterion) {
             b.iter(|| orx_parallel_split_rec(black_box(&input)))
         });
 
-        group.bench_with_input(
-            BenchmarkId::new("orx-parallel-split-vec-chain", n),
-            n,
-            |b, _| {
-                b.iter(|| {
-                    assert_eq!(orx_parallel_split_vec_chain(&input), expected);
-                    orx_parallel_split_vec_chain(black_box(&input))
-                })
-            },
-        );
-
-        group.bench_with_input(BenchmarkId::new("rayon-chain", n), n, |b, _| {
-            assert_eq!(rayon_chain(&input), expected);
-            b.iter(|| rayon_chain(black_box(&input)))
-        });
-
         for (t, c) in params {
             let name = format!("orx-parallel-t{}-c{}", t, c);
             group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
-                b.iter(|| {
-                    let result = orx_parallel(black_box(&input), t, c);
-                    assert_eq!(result, expected);
-                })
+                assert_eq!(orx_parallel(black_box(&input), t, c), expected);
+                b.iter(|| orx_parallel(black_box(&input), t, c))
             });
         }
     }
@@ -152,5 +112,5 @@ fn filtermap_collect(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, filtermap_collect);
+criterion_group!(benches, flatmap_heterogeneous);
 criterion_main!(benches);
