@@ -62,7 +62,7 @@ fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<us
 }
 
 fn flatmap_heterogeneous(c: &mut Criterion) {
-    let treatments = vec![65_536, 262_144 * 4];
+    let treatments = vec![65_536, 262_144];
     let _params = [(1, 1), (4, 256), (8, 1024), (32, 1024)];
     let params = [];
 
