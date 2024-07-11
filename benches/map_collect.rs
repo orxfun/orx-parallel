@@ -9,7 +9,7 @@ const NUM_NUMBERS: usize = 64;
 const NUM_VECTORS: usize = 4;
 const LEN_VECTORS: usize = 16;
 const SEED: u64 = 5426;
-const FIB_UPPER_BOUND: u32 = 99;
+const FIB_UPPER_BOUND: u32 = 999;
 
 #[derive(Debug, PartialEq, Eq)]
 struct LargeOutput {
