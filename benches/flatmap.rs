@@ -105,10 +105,8 @@ fn flat_map(c: &mut Criterion) {
         for (t, c) in params {
             let name = format!("orx-parallel-t{}-c{}", t, c);
             group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
-                b.iter(|| {
-                    let result = orx_parallel(black_box(&input), t, c);
-                    assert_eq!(result, expected);
-                })
+                assert_eq!(orx_parallel(black_box(&input), t, c), expected);
+                b.iter(|| orx_parallel(black_box(&input), t, c))
             });
         }
     }

@@ -20,7 +20,7 @@ fn fibonacci(n: &u32) -> u32 {
 }
 
 fn filter(a: &u32) -> bool {
-    a % 10 == 0 || a % 3 == 1
+    a % 10 == 0 || a % 3 != 1
 }
 
 fn inputs(len: usize) -> Vec<u32> {
@@ -70,7 +70,7 @@ fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Vec<u3
 }
 
 fn map_filter_collect(c: &mut Criterion) {
-    let treatments = vec![65_536, 262_144 * 4];
+    let treatments = vec![65_536, 262_144];
     let _params = [(1, 1), (4, 256), (8, 1024), (32, 1024)];
     let params = [];
 
