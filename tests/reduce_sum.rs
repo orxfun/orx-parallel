@@ -1,4 +1,3 @@
-use orx_concurrent_iter::*;
 use orx_parallel::*;
 use test_case::test_case;
 
@@ -33,10 +32,8 @@ where
     let expected = seq(&inputs, &reduce);
 
     let result = inputs
-        .as_slice()
-        .into_con_iter()
+        .par()
         .cloned()
-        .into_par()
         .chunk_size(chunk_size)
         .num_threads(num_threads)
         .reduce(reduce);

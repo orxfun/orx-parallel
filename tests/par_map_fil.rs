@@ -3,10 +3,7 @@ mod reduce_string;
 mod utils;
 
 use crate::utils::*;
-use orx_concurrent_iter::IterIntoConcurrentIter;
-use orx_parallel::*;
-use orx_pinned_vec::*;
-use orx_split_vec::SplitVec;
+use orx_parallel::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
@@ -218,8 +215,7 @@ fn par_map_fil_collect_into() {
             .collect::<Vec<_>>()
             .into_iter()
             .take(10000)
-            .into_con_iter()
-            .into_par()
+            .par()
             .num_threads(num_threads)
             .chunk_size(chunk_size)
             .map(|x| x * 2)
@@ -227,8 +223,7 @@ fn par_map_fil_collect_into() {
         let result1 = par.collect_into(SplitVec::new());
 
         let par = (n1..n2)
-            .into_con_iter()
-            .into_par()
+            .par()
             .num_threads(num_threads)
             .chunk_size(chunk_size)
             .map(|x| x * 2)
@@ -254,8 +249,7 @@ fn par_map_fil_collect_into_vec() {
             .collect::<Vec<_>>()
             .into_iter()
             .take(10000)
-            .into_con_iter()
-            .into_par()
+            .par()
             .num_threads(num_threads)
             .chunk_size(chunk_size)
             .map(|x| x * 2)
@@ -263,8 +257,7 @@ fn par_map_fil_collect_into_vec() {
         let result1 = par.collect_into(vec![]);
 
         let par = (n1..n2)
-            .into_con_iter()
-            .into_par()
+            .par()
             .num_threads(num_threads)
             .chunk_size(chunk_size)
             .map(|x| x * 2)

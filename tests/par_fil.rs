@@ -3,9 +3,7 @@ mod reduce_string;
 mod utils;
 
 use crate::utils::*;
-use orx_parallel::*;
-use orx_pinned_vec::PinnedVec;
-use orx_split_vec::SplitVec;
+use orx_parallel::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
