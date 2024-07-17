@@ -1,6 +1,6 @@
 [package]
 name = "orx-parallel"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 description = "A performant and configurable parallel computing library for computations defined as compositions of iterator methods."
@@ -28,7 +28,7 @@ rayon = "1.9.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "map_filter_collect"
+name = "map_collect"
 harness = false
 
 [features]

@@ -3,10 +3,7 @@ mod reduce_string;
 mod utils;
 
 use crate::utils::*;
-use orx_concurrent_iter::IterIntoConcurrentIter;
-use orx_fixed_vec::FixedVec;
-use orx_parallel::*;
-use orx_split_vec::*;
+use orx_parallel::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
@@ -156,12 +153,7 @@ fn par_fmap_collect_x() {
 #[test]
 fn par_fmap_collect_vec() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let iter = (54..5648)
-            .collect::<Vec<_>>()
-            .into_iter()
-            .take(10000)
-            .into_con_iter()
-            .into_par();
+        let iter = (54..5648).collect::<Vec<_>>().into_iter().take(10000).par();
         let fmap = iter
             .flat_map(|x| [x * 2, x * 2 + 1])
             .num_threads(num_threads)
@@ -243,7 +235,6 @@ fn par_fmap_collect_into_vec() {
 
 #[test]
 fn par_fmap_collect_into_fixed_capacity_does_not_panic() {
-    // TODO! this might be due to the todo in `merge_bag_and_pos_len` method. Revise afterwards.
     let vec = (54..5648).collect::<Vec<_>>();
     let iter = vec.into_iter().take(10000).par();
     let fmap = iter.flat_map(|x| [x * 2]).num_threads(14).chunk_size(64);
@@ -252,7 +243,6 @@ fn par_fmap_collect_into_fixed_capacity_does_not_panic() {
 
 #[test]
 fn par_fmap_collect_into_split_capacity_does_not_panic() {
-    // TODO! this might be due to the todo in `merge_bag_and_pos_len` method. Revise afterwards.
     let vec = (54..5648).collect::<Vec<_>>();
     let iter = vec.into_iter().take(10000).par();
     let map = iter.flat_map(|x| [x * 2]).num_threads(2).chunk_size(64);

@@ -3,10 +3,7 @@ mod reduce_string;
 mod utils;
 
 use crate::utils::*;
-use orx_concurrent_iter::IterIntoConcurrentIter;
-use orx_fixed_vec::FixedVec;
-use orx_parallel::*;
-use orx_split_vec::*;
+use orx_parallel::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
@@ -182,12 +179,7 @@ fn par_fmap_filter_collect_vec() {
             .filter(|x| x % 2 == 0)
             .collect();
 
-        let iter = range()
-            .collect::<Vec<_>>()
-            .into_iter()
-            .take(10000)
-            .into_con_iter()
-            .into_par();
+        let iter = range().collect::<Vec<_>>().into_iter().take(10000).par();
         let result = iter
             .flat_map(|x| [x * 2, x * 2 + 1])
             .filter(|x| x % 2 == 0)
@@ -212,8 +204,7 @@ fn par_fmap_filter_collect_into() {
             .collect();
 
         let result = range1()
-            .into_con_iter()
-            .into_par()
+            .par()
             .flat_map(|x| [x * 2, x * 2 + 1])
             .filter(|x| x % 2 == 0)
             .num_threads(num_threads)
@@ -254,8 +245,7 @@ fn par_fmap_filter_collect_into_vec() {
             .collect();
 
         let result = range1()
-            .into_con_iter()
-            .into_par()
+            .par()
             .flat_map(|x| [x * 2, x * 2 + 1])
             .filter(|x| x % 2 == 0)
             .num_threads(num_threads)

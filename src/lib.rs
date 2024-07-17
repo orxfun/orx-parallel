@@ -170,6 +170,8 @@ mod num_threads;
 mod par;
 mod par_iter;
 mod params;
+/// Common structs, enums and traits.
+pub mod prelude;
 
 pub use chunk_size::ChunkSize;
 pub use into::{as_par::AsPar, into_par::IntoPar, iter_into_par::IterIntoPar};

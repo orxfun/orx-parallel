@@ -3,10 +3,7 @@ mod reduce_string;
 mod utils;
 
 use crate::utils::*;
-use orx_concurrent_iter::IterIntoConcurrentIter;
-use orx_fixed_vec::FixedVec;
-use orx_parallel::*;
-use orx_split_vec::*;
+use orx_parallel::prelude::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[test]
@@ -138,12 +135,7 @@ fn par_map_collect() {
 #[test]
 fn par_map_collect_vec() {
     fn test(num_threads: usize, chunk_size: usize) {
-        let iter = (54..5648)
-            .collect::<Vec<_>>()
-            .into_iter()
-            .take(10000)
-            .into_con_iter()
-            .into_par();
+        let iter = (54..5648).collect::<Vec<_>>().into_iter().take(10000).par();
         let map = iter
             .map(|x| x * 2)
             .num_threads(num_threads)
@@ -220,12 +212,7 @@ fn par_map_collect_into_vec() {
 #[test]
 fn par_map_collect_into_fixed_capacity_does_not_panic() {
     let vec = (54..5648).collect::<Vec<_>>();
-    let iter = vec
-        .into_iter()
-        .take(10000)
-        .filter(|x| x < &50000)
-        .into_con_iter()
-        .into_par();
+    let iter = vec.into_iter().take(10000).filter(|x| x < &50000).par();
     let map = iter.map(|x| x * 2).num_threads(2).chunk_size(64);
     let _ = map.collect_into(FixedVec::new(5648 - 54 - 1));
 }
@@ -233,12 +220,7 @@ fn par_map_collect_into_fixed_capacity_does_not_panic() {
 #[test]
 fn par_map_collect_into_split_capacity_does_not_panic() {
     let vec = (54..5648).collect::<Vec<_>>();
-    let iter = vec
-        .into_iter()
-        .take(10000)
-        .filter(|x| x < &87544)
-        .into_con_iter()
-        .into_par();
+    let iter = vec.into_iter().take(10000).filter(|x| x < &87544).par();
     let map = iter.map(|x| x * 2).num_threads(2).chunk_size(64);
     let _ = map.collect_into(SplitVec::new());
 }
