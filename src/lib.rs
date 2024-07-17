@@ -10,7 +10,7 @@
 //! Parallel computation is achieved conveniently by the parallel iterator trait [`Par`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.Par.html). This allows for changing sequential code that is defined as a composition of functions through iterators into its parallel counterpart by adding one word: `par` or `into_par`.
 //!
 //! ```rust
-//! use orx_parallel::*;
+//! use orx_parallel::prelude::*;
 //!
 //! struct Input(String);
 //! struct Output(usize);
@@ -40,7 +40,7 @@
 //! Below code block includes some basic examples demonstrating different sources providing references or values as inputs of the parallel computation.
 //!
 //! ```rust
-//! use orx_parallel::*;
+//! use orx_parallel::prelude::*;
 //! use std::collections::*;
 //!
 //! fn test<P: Par<Item = usize>>(iter: P) {
@@ -85,7 +85,7 @@
 //!   * `Min(c)`: Chunk sizes will be at least c. However, the execution is allowed to pull more elements depending on characteristics of the inputs and used number of threads in order to reduce the impact of parallelization overhead.
 //!
 //! ```rust
-//! use orx_parallel::*;
+//! use orx_parallel::prelude::*;
 //! use std::num::NonZeroUsize;
 //!
 //! let _ = (0..42).par().sum(); // both settings at Auto
@@ -115,7 +115,7 @@
 //! However, since the method owns the `computation`, it may decide how to execute it. This implementation will go with the given parallel settings. Unless it is Monday, then it will run sequentially.
 //!
 //! ```rust
-//! use orx_parallel::*;
+//! use orx_parallel::prelude::*;
 //! use chrono::{Datelike, Local, Weekday};
 //! type Output = String;
 //!
