@@ -2,7 +2,7 @@ use super::runner::{ParTask, Runner};
 use crate::Params;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_fixed_vec::PinnedVec;
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 
 pub fn map_col<I, Out, Map, P>(
     params: Params,
@@ -14,7 +14,7 @@ where
     I: ConcurrentIter,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
-    P: PinnedVec<Out>,
+    P: IntoConcurrentPinnedVec<Out>,
 {
     match params.is_sequential() {
         true => seq_map_col(iter, map, collected),
@@ -37,7 +37,7 @@ fn task<I, Out, Map, P>(
     I: ConcurrentIter,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
-    P: PinnedVec<Out>,
+    P: IntoConcurrentPinnedVec<Out>,
 {
     match chunk_size {
         1 => {
@@ -59,7 +59,7 @@ where
     I: ConcurrentIter,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
-    P: PinnedVec<Out>,
+    P: IntoConcurrentPinnedVec<Out>,
 {
     let mut output = unsafe { collected.into_inner().unwrap_only_if_counts_match() };
     let iter = iter.into_seq_iter();

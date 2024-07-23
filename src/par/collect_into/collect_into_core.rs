@@ -7,10 +7,10 @@ use crate::{
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::PinnedVec;
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 
 pub trait ParCollectIntoCore<O: Send + Sync> {
-    type BridgePinnedVec: PinnedVec<O>;
+    type BridgePinnedVec: IntoConcurrentPinnedVec<O>;
 
     /// Performs the parallel map operation, collecting the results into this collection.
     fn map_into<I, M>(self, par_map: ParMap<I, O, M>) -> Self
