@@ -16,9 +16,9 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_split_vec::*;
 
-impl<O: Send + Sync, G: Growth> ParCollectInto<O> for SplitVec<O, G> {}
+impl<O: Send + Sync, G: GrowthWithConstantTimeAccess> ParCollectInto<O> for SplitVec<O, G> {}
 
-impl<O: Send + Sync, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G> {
+impl<O: Send + Sync, G: GrowthWithConstantTimeAccess> ParCollectIntoCore<O> for SplitVec<O, G> {
     type BridgePinnedVec = Self;
 
     fn map_into<I, M>(mut self, par_map: ParMap<I, O, M>) -> Self
@@ -27,15 +27,9 @@ impl<O: Send + Sync, G: Growth> ParCollectIntoCore<O> for SplitVec<O, G> {
         M: Fn(I::Item) -> O + Send + Sync + Clone,
     {
         match par_map.iter_len() {
-            None => {
-                self.try_reserve_maximum_concurrent_capacity(1 << 32)
-                    .expect("Failed to reserve sufficient capacity");
-            }
-            Some(len) => {
-                self.try_reserve_maximum_concurrent_capacity(self.len() + len)
-                    .expect("Failed to reserve sufficient capacity");
-            }
-        }
+            None => self.reserve_maximum_concurrent_capacity(1 << 32),
+            Some(len) => self.reserve_maximum_concurrent_capacity(self.len() + len),
+        };
         let bag: ConcurrentOrderedBag<_, _> = self.into();
         let (params, iter, map) = par_map.destruct();
         map_col(params, iter, map, bag)
