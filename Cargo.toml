@@ -10,15 +10,15 @@ keywords = ["parallel", "concurrency", "performance", "thread", "iterator"]
 categories = ["concurrency", "algorithms"]
 
 [dependencies]
-orx-pseudo-default = "1.0"
-orx-concurrent-iter = "1.22"
-orx-priority-queue = "1.2"
-orx-pinned-vec = "3.0"
-orx-fixed-vec = "3.1"
-orx-split-vec = "3.1"
-orx-pinned-concurrent-col = "2.1"
-orx-concurrent-bag = "2.1"
-orx-concurrent-ordered-bag = "2.1"
+orx-pseudo-default = "1.2.0"
+orx-concurrent-iter = "1.22.1"
+orx-priority-queue = "1.2.0"
+orx-pinned-vec = "3.2.0"
+orx-fixed-vec = "3.2.0"
+orx-split-vec = "3.2.0"
+orx-pinned-concurrent-col = "2.2.0"
+orx-concurrent-bag = "2.2.0"
+orx-concurrent-ordered-bag = "2.2.0"
 
 [dev-dependencies]
 chrono = "0.4.38"
