@@ -20,6 +20,7 @@ let select = |output: &Output| output.0.is_power_of_two();
 
 let inputs = || (0..1024).map(|x| Input(x.to_string())).collect::<Vec<_>>();
 
+// sequential computation with regular iterator
 let seq_result: usize = inputs()
     .into_iter()
     .map(compute)
@@ -28,6 +29,7 @@ let seq_result: usize = inputs()
     .sum();
 assert_eq!(seq_result, 286);
 
+// parallel computation with Par
 let par_result = inputs()
     .into_par() // parallelize with default settings
     .map(compute)
@@ -124,6 +126,56 @@ fn execute<C: Par<Item = Output>>(computation: C) -> Vec<Output> {
         Weekday::Mon => computation.num_threads(1).collect_vec(),
         _ => computation.collect_vec(),
     }
+}
+```
+
+This features saves us from defining the same computation twice. We are often required to write code like below where we need to run sequentially or in parallel depending on an input argument. This is repetitive, error-prone and difficult to maintain.
+
+```rust
+use orx_parallel::prelude::*;
+struct Input(String);
+struct Output(usize);
+fn compute(input: Input) -> Output {
+    Output(input.0.len())
+}
+fn select(output: &Output) -> bool {
+    output.0.is_power_of_two()
+}
+
+fn execute_conditionally(inputs: impl Iterator<Item = Input>, parallelize: bool) -> usize {
+    match parallelize {
+        true => inputs
+            .into_iter()
+            .par()
+            .map(compute)
+            .filter(select)
+            .map(|x| x.0)
+            .sum(),
+        false => inputs
+            .into_iter()
+            .map(compute)
+            .filter(select)
+            .map(|x| x.0)
+            .sum(),
+    }
+}
+```
+
+Using `Par`, we can have a single version which will not have any overhead when executed sequentially.
+
+```rust
+fn execute_unified(inputs: impl Iterator<Item = Input>, parallelize: bool) -> usize {
+    let num_threads = match parallelize {
+        true => NumThreads::Auto,
+        false => NumThreads::sequential(),
+    };
+    inputs
+        .par()
+        .num_threads(num_threads)
+        .map(compute)
+        .filter(select)
+        .map(|x| x.0)
+        .sum()
 }
 ```
 
