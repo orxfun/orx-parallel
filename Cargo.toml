@@ -1,6 +1,6 @@
 [package]
 name = "orx-parallel"
-version = "1.5.0"
+version = "1.6.0"
 edition = "2021"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 description = "A performant and configurable parallel computing library for computations defined as compositions of iterator methods."
@@ -11,14 +11,14 @@ categories = ["concurrency", "algorithms"]
 
 [dependencies]
 orx-pseudo-default = "1.4"
-orx-pinned-vec = "3.4"
-orx-fixed-vec = "3.4"
-orx-split-vec = "3.4"
-orx-pinned-concurrent-col = "2.4"
-orx-concurrent-bag = "2.4"
-orx-concurrent-ordered-bag = "2.4"
+orx-pinned-vec = "3.7"
+orx-fixed-vec = "3.7"
+orx-split-vec = "3.7"
+orx-pinned-concurrent-col = "2.6"
+orx-concurrent-bag = "2.6"
+orx-concurrent-ordered-bag = "2.6"
 orx-priority-queue = "1.2.1"
-orx-concurrent-iter = "1.22.1"
+orx-concurrent-iter = "1.23"
 
 [dev-dependencies]
 chrono = "0.4.38"
