@@ -68,20 +68,6 @@ pub trait IntoPar {
     fn into_par(self) -> ParEmpty<Self::ConIter>;
 }
 
-// array
-impl<const N: usize, T: Send + Sync + Default> IntoPar for [T; N] {
-    type ConIter = ConIterOfArray<N, T>;
-    fn into_par(self) -> ParEmpty<Self::ConIter> {
-        ParEmpty::new(self.into_con_iter())
-    }
-}
-impl<const N: usize, T: Send + Sync + Default> IntoPar for ConIterOfArray<N, T> {
-    type ConIter = ConIterOfArray<N, T>;
-    fn into_par(self) -> ParEmpty<Self::ConIter> {
-        ParEmpty::new(self)
-    }
-}
-
 // con-iter
 impl<T: Send + Sync, Iter> IntoPar for ConIterOfIter<T, Iter>
 where

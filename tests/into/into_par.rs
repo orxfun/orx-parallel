@@ -25,15 +25,6 @@ fn into_par_slice() {
 }
 
 #[test]
-fn into_par_array() {
-    let mut array = [0usize; INPUT_LEN];
-    for (i, x) in array.iter_mut().enumerate() {
-        *x = i;
-    }
-    test_numbers_owned(array.into_par(), INPUT_LEN);
-}
-
-#[test]
 fn into_par_iter() {
     let vec: Vec<_> = (0..INPUT_LEN).map(|i| i.to_string()).collect();
     let iter = vec
