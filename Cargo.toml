@@ -1,6 +1,6 @@
 [package]
 name = "orx-parallel"
-version = "1.7.0"
+version = "1.8.0"
 edition = "2021"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 description = "A performant and configurable parallel computing library for computations defined as compositions of iterator methods."
