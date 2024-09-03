@@ -9,7 +9,7 @@ use crate::{
     },
     Par, ParCollectInto, Params,
 };
-use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
 
 /// A parallel iterator.
@@ -48,6 +48,15 @@ where
 
     pub(crate) fn destruct(self) -> (Params, I, M, F) {
         (self.params, self.iter, self.flat_map, self.filter)
+    }
+
+    pub(crate) fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, M, F) {
+        (
+            self.params,
+            self.iter.into_concurrent_iter_x(),
+            self.flat_map,
+            self.filter,
+        )
     }
 }
 
@@ -130,11 +139,12 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        fmap_fil_red(self.params, self.iter, self.flat_map, self.filter, reduce)
+        let (params, iter, flat_map, filter) = self.destruct_x();
+        fmap_fil_red(params, iter, flat_map, filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter, flat_map, filter) = self.destruct();
+        let (params, iter, flat_map, filter) = self.destruct_x();
         fmap_fil_cnt(params, iter, flat_map, filter)
     }
 

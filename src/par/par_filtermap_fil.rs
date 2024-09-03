@@ -53,6 +53,15 @@ where
         (self.params, self.iter, self.filter_map, self.filter)
     }
 
+    pub(crate) fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, M, F) {
+        (
+            self.params,
+            self.iter.into_concurrent_iter_x(),
+            self.filter_map,
+            self.filter,
+        )
+    }
+
     // find
 
     pub fn first_with_index(self) -> Option<(usize, O)> {
@@ -190,12 +199,13 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        filtermap_fil_red(self.params, self.iter, self.filter_map, self.filter, reduce)
+        let (params, iter, filter_map, filter) = self.destruct_x();
+        filtermap_fil_red(params, iter, filter_map, filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter, map, filter) = (self.params, self.iter, self.filter_map, self.filter);
-        filtermap_fil_cnt(params, iter, map, filter)
+        let (params, iter, filter_map, filter) = self.destruct_x();
+        filtermap_fil_cnt(params, iter, filter_map, filter)
     }
 
     // find

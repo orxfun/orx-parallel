@@ -48,6 +48,15 @@ where
         (self.params, self.iter, self.map, self.filter)
     }
 
+    pub(crate) fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, M, F) {
+        (
+            self.params,
+            self.iter.into_concurrent_iter_x(),
+            self.map,
+            self.filter,
+        )
+    }
+
     // find
 
     /// Returns the first element of the iterator; returns None if the iterator is empty.
@@ -243,11 +252,12 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        map_fil_red(self.params, self.iter, self.map, self.filter, reduce)
+        let (params, iter, map, filter) = self.destruct_x();
+        map_fil_red(params, iter, map, filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter, map, filter) = self.destruct();
+        let (params, iter, map, filter) = self.destruct_x();
         map_fil_cnt(params, iter, map, filter)
     }
 

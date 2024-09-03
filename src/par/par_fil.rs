@@ -22,6 +22,20 @@ where
     filter: F,
 }
 
+impl<I, F> ParFilter<I, F>
+where
+    I: ConcurrentIter,
+    F: Fn(&I::Item) -> bool + Send + Sync + Clone,
+{
+    fn destruct(self) -> (Params, I, F) {
+        (self.params, self.iter, self.filter)
+    }
+
+    fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, F) {
+        (self.params, self.iter.into_concurrent_iter_x(), self.filter)
+    }
+}
+
 impl<I, F> Par for ParFilter<I, F>
 where
     I: ConcurrentIter,
@@ -58,7 +72,7 @@ where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
-        let (params, iter, filter) = (self.params, self.iter, self.filter);
+        let (params, iter, filter) = self.destruct();
         let composed_filter_map = move |x| match filter(&x) {
             false => None,
             true => Some(map(x)),
@@ -85,7 +99,7 @@ where
     where
         F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
-        let (params, iter, filter1) = (self.params, self.iter, self.filter);
+        let (params, iter, filter1) = self.destruct();
         let composed_filter = move |x: &I::Item| filter1(x) && filter(x);
         ParFilter::new(iter, params, composed_filter)
     }
@@ -104,7 +118,7 @@ where
         FO: Fallible<O> + Send + Sync,
         FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
-        let (params, iter, filter) = (self.params, self.iter, self.filter);
+        let (params, iter, filter) = self.destruct();
         let composed_filter_map = move |x| match filter(&x) {
             false => None,
             true => filter_map(x).into_option(),
@@ -118,11 +132,12 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        map_fil_red(self.params, self.iter, map_self, self.filter, reduce)
+        let (params, iter, filter) = self.destruct_x();
+        map_fil_red(params, iter, map_self, filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter, filter) = (self.params, self.iter, self.filter);
+        let (params, iter, filter) = self.destruct_x();
         map_fil_cnt(params, iter, map_self, filter)
     }
 

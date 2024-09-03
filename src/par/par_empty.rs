@@ -86,11 +86,12 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        map_fil_red(self.params, self.iter, map_self, no_filter, reduce)
+        let (params, iter) = (self.params, self.iter.into_concurrent_iter_x());
+        map_fil_red(params, iter, map_self, no_filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter) = (self.params, self.iter);
+        let (params, iter) = (self.params, self.iter.into_concurrent_iter_x());
         map_fil_cnt(params, iter, map_self, no_filter)
     }
 
