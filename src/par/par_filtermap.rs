@@ -1,8 +1,8 @@
 use super::{par_filtermap_fil::ParFilterMapFilter, par_flatmap::ParFlatMap};
 use crate::{
-    core::default_fns::no_filter, ChunkSize, Fallible, NumThreads, ParCollectInto, Par, Params,
+    core::default_fns::no_filter, ChunkSize, Fallible, NumThreads, Par, ParCollectInto, Params,
 };
-use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
 use std::marker::PhantomData;
 
@@ -75,7 +75,7 @@ where
         I,
         Option<O2>,
         O2,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
         O2: Send + Sync,
@@ -113,7 +113,7 @@ where
         I,
         Option<O2>,
         O2,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
         O2: Send + Sync,

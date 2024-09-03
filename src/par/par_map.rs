@@ -10,7 +10,7 @@ use crate::{
     par_iter::Par,
     Fallible, ParCollectInto, Params,
 };
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterX};
 use orx_split_vec::{Recursive, SplitVec};
 
 /// A parallel iterator.
@@ -170,7 +170,7 @@ where
     fn flat_map<O2, OI, FM>(
         self,
         flat_map: FM,
-    ) -> ParFlatMap<I, O2, OI, impl Fn(<I as ConcurrentIter>::Item) -> OI + Clone>
+    ) -> ParFlatMap<I, O2, OI, impl Fn(<I as ConcurrentIterX>::Item) -> OI + Clone>
     where
         O2: Send + Sync,
         OI: IntoIterator<Item = O2>,
@@ -191,7 +191,7 @@ where
     fn filter_map<O2, FO, FM>(
         self,
         filter_map: FM,
-    ) -> ParFilterMap<I, FO, O2, impl Fn(<I as ConcurrentIter>::Item) -> FO + Send + Sync + Clone>
+    ) -> ParFilterMap<I, FO, O2, impl Fn(<I as ConcurrentIterX>::Item) -> FO + Send + Sync + Clone>
     where
         O2: Send + Sync,
         FO: Fallible<O2> + Send + Sync,

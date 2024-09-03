@@ -1,5 +1,4 @@
 use crate::par::par_empty::ParEmpty;
-use iter::atomic_iter::AtomicIter;
 use orx_concurrent_iter::*;
 use std::ops::{Add, Range, Sub};
 
@@ -134,9 +133,7 @@ impl<'a, T: Send + Sync> IntoPar for ConIterOfSlice<'a, T> {
 
 // cloned
 
-impl<'a, T: Send + Sync + Clone, C: AtomicIter<&'a T> + ConcurrentIter<Item = &'a T>> IntoPar
-    for Cloned<'a, T, C>
-{
+impl<'a, T: Send + Sync + Clone, C: ConcurrentIter<Item = &'a T>> IntoPar for Cloned<'a, T, C> {
     type ConIter = Cloned<'a, T, C>;
     fn into_par(self) -> ParEmpty<Self::ConIter> {
         ParEmpty::new(self)

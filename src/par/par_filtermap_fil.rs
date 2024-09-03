@@ -7,9 +7,9 @@ use crate::{
         filtermap_fil_cnt::filtermap_fil_cnt, filtermap_fil_col_x::par_filtermap_fil_col_x_rec,
         filtermap_fil_find::filtermap_fil_find, filtermap_fil_red::filtermap_fil_red,
     },
-    ChunkSize, Fallible, NumThreads, ParCollectInto, Par, Params,
+    ChunkSize, Fallible, NumThreads, Par, ParCollectInto, Params,
 };
-use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
 use std::marker::PhantomData;
 
@@ -103,7 +103,7 @@ where
         I,
         Option<O2>,
         O2,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
         O2: Send + Sync,
@@ -159,7 +159,7 @@ where
         I,
         Option<O2>,
         O2,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
         O2: Send + Sync,

@@ -2,7 +2,7 @@ use super::par_filtermap::ParFilterMap;
 use super::par_flatmap_fil::ParFlatMapFilter;
 use crate::{core::default_fns::no_filter, Params};
 use crate::{Fallible, Par, ParCollectInto};
-use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter};
+use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, ConcurrentIterX};
 use orx_split_vec::{Recursive, SplitVec};
 use std::iter::Map;
 
@@ -73,7 +73,7 @@ where
         I,
         O2,
         Map<<OI as IntoIterator>::IntoIter, M2>,
-        impl Fn(<I as ConcurrentIter>::Item) -> Map<<OI as IntoIterator>::IntoIter, M2> + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Map<<OI as IntoIterator>::IntoIter, M2> + Clone,
     >
     where
         O2: Send + Sync,

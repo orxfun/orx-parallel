@@ -6,7 +6,7 @@ use crate::{
     },
     Fallible, Par, ParCollectInto, Params,
 };
-use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
 use orx_split_vec::SplitVec;
 
 /// A parallel iterator.
@@ -52,7 +52,7 @@ where
         I,
         Option<O>,
         O,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O> + Send + Sync + Clone,
     >
     where
         O: Send + Sync,
@@ -69,7 +69,7 @@ where
     fn flat_map<O, OI, FM>(
         self,
         flat_map: FM,
-    ) -> ParFlatMap<ConIterOfVec<<I as ConcurrentIter>::Item>, O, OI, FM>
+    ) -> ParFlatMap<ConIterOfVec<<I as ConcurrentIterX>::Item>, O, OI, FM>
     where
         O: Send + Sync,
         OI: IntoIterator<Item = O>,
@@ -97,7 +97,7 @@ where
         I,
         Option<O>,
         O,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O> + Send + Sync + Clone,
     >
     where
         O: Send + Sync,
