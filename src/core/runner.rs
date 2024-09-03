@@ -3,7 +3,7 @@ use crate::{
     core::runner_settings::{chunk_size, num_threads},
     Params,
 };
-use orx_concurrent_iter::{ConcurrentIter, HasMore};
+use orx_concurrent_iter::{ConcurrentIterX, HasMore};
 use std::hint::black_box;
 
 const LAG_PERIODICITY: usize = 4;
@@ -93,7 +93,7 @@ impl Runner {
 
     pub fn run<I, F>(params: Params, task_type: ParTask, iter: &I, thread_task: &F) -> usize
     where
-        I: ConcurrentIter,
+        I: ConcurrentIterX,
         F: Fn(usize) + Sync,
     {
         let runner = Self::new(params, task_type, iter.try_get_len());
@@ -134,7 +134,7 @@ impl Runner {
         thread_task: &F,
     ) -> Vec<Out>
     where
-        I: ConcurrentIter,
+        I: ConcurrentIterX,
         F: Fn(usize) -> Out + Sync,
         Out: Send + Sync,
     {
@@ -182,7 +182,7 @@ impl Runner {
         reduce: R,
     ) -> (usize, Option<T>)
     where
-        I: ConcurrentIter,
+        I: ConcurrentIterX,
         F: Fn(usize) -> T + Sync,
         T: Send,
         R: Fn(T, T) -> T,

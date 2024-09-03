@@ -1,6 +1,6 @@
 use super::runner::{ParTask, Runner};
 use crate::Params;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterX};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
@@ -56,7 +56,7 @@ fn task<I, Out, Map, P>(
 
 fn seq_map_col<I, Out, Map, P>(iter: I, map: Map, collected: ConcurrentOrderedBag<Out, P>) -> P
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     P: IntoConcurrentPinnedVec<Out>,

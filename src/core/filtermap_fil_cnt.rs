@@ -1,6 +1,6 @@
 use super::runner::{ParTask, Runner};
 use crate::{Fallible, Params};
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::ConcurrentIterX;
 
 pub fn filtermap_fil_cnt<I, FO, Out, FilterMap, Fil>(
     params: Params,
@@ -9,7 +9,7 @@ pub fn filtermap_fil_cnt<I, FO, Out, FilterMap, Fil>(
     filter: Fil,
 ) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
@@ -28,7 +28,7 @@ fn par_filtermap_fil_cnt<I, FO, Out, FilterMap, Fil>(
     filter: Fil,
 ) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
@@ -48,7 +48,7 @@ fn task<I, FO, Out, FilterMap, Fil>(
     chunk_size: usize,
 ) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
@@ -81,9 +81,8 @@ where
         }
         c => {
             let mut acc = 0;
-            while let Some(chunk) = iter.next_chunk(c) {
+            while let Some(chunk) = iter.next_chunk_x(c) {
                 let x = chunk
-                    .values
                     .map(filter_map)
                     .filter(|x| x.has_value())
                     .map(|x| x.value())
@@ -102,7 +101,7 @@ fn seq_filtermap_fil_cnt<I, FO, Out, FilterMap, Fil>(
     filter: Fil,
 ) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync,

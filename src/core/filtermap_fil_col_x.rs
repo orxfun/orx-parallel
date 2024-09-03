@@ -1,6 +1,6 @@
 use super::runner::{ParTask, Runner};
 use crate::{Fallible, Params};
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::ConcurrentIterX;
 use orx_split_vec::{Recursive, SplitVec};
 
 fn task<I, FO, Out, FilterMap, Fil>(
@@ -10,7 +10,7 @@ fn task<I, FO, Out, FilterMap, Fil>(
     chunk_size: usize,
 ) -> Vec<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync,
@@ -26,10 +26,9 @@ where
             .collect(),
         c => {
             let mut collected = vec![];
-            while let Some(chunk) = iter.next_chunk(c) {
+            while let Some(chunk) = iter.next_chunk_x(c) {
                 collected.extend(
                     chunk
-                        .values
                         .map(&filter_map)
                         .filter(|x| x.has_value())
                         .map(|x| x.value())
@@ -48,7 +47,7 @@ pub fn par_filtermap_fil_col_x_rec<I, FO, Out, FilterMap, Fil>(
     filter: Fil,
     output: &mut SplitVec<Out, Recursive>,
 ) where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync,

@@ -1,10 +1,10 @@
 use super::runner::{ParTask, Runner};
 use crate::Params;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::ConcurrentIterX;
 
 pub fn map_fil_cnt<I, Out, Map, Fil>(params: Params, iter: I, map: Map, filter: Fil) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
@@ -17,7 +17,7 @@ where
 
 fn par_map_fil_cnt<I, Out, Map, Fil>(params: Params, iter: I, map: Map, filter: Fil) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
@@ -31,7 +31,7 @@ where
 
 fn task<I, Out, Map, Fil>(iter: &I, map: &Map, filter: &Fil, chunk_size: usize) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
@@ -40,8 +40,8 @@ where
         1 => iter.values().map(&map).filter(&filter).count(),
         c => {
             let mut count = 0;
-            while let Some(chunk) = iter.next_chunk(c) {
-                count += chunk.values.map(&map).filter(&filter).count();
+            while let Some(chunk) = iter.next_chunk_x(c) {
+                count += chunk.map(&map).filter(&filter).count();
             }
             count
         }
@@ -50,7 +50,7 @@ where
 
 fn seq_map_fil_cnt<I, Out, Map, Fil>(iter: I, map: Map, filter: Fil) -> usize
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,

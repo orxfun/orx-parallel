@@ -1,7 +1,7 @@
 use super::map_fil_col::{heap_sort_into_pinned_vec, heap_sort_into_vec};
 use super::runner::{ParTask, Runner};
 use crate::Params;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterX};
 use orx_fixed_vec::PinnedVec;
 
 fn task<I, OutIter, Out, FlatMap, Fil>(
@@ -91,7 +91,7 @@ pub fn seq_flatmap_fil_col_vec<I, OutIter, Out, FlatMap, Fil>(
     filter: Fil,
     output: &mut Vec<Out>,
 ) where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     FlatMap: Fn(I::Item) -> OutIter + Send + Sync,
@@ -109,7 +109,7 @@ pub fn seq_flatmap_fil_col_pinned_vec<I, OutIter, Out, FlatMap, Fil, P>(
     filter: Fil,
     output: &mut P,
 ) where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     FlatMap: Fn(I::Item) -> OutIter + Send + Sync,

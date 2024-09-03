@@ -1,7 +1,7 @@
 use super::runner::{ParTask, Runner};
 use super::utils::maybe_reduce;
 use crate::{Fallible, Params};
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::ConcurrentIterX;
 
 pub fn filtermap_fil_red<I, FO, Out, FilterMap, Fil, Red>(
     params: Params,
@@ -11,7 +11,7 @@ pub fn filtermap_fil_red<I, FO, Out, FilterMap, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
@@ -32,7 +32,7 @@ fn par_filtermap_fil_red<I, FO, Out, FilterMap, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
@@ -55,7 +55,7 @@ fn task<I, FO, Out, FilterMap, Fil, Red>(
     chunk_size: usize,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync + Clone,
@@ -89,10 +89,9 @@ where
         }
         c => {
             let mut acc = None;
-            let mut buffered = iter.buffered_iter(c);
-            while let Some(chunk) = buffered.next() {
+            let mut buffered = iter.buffered_iter_x(c);
+            while let Some(chunk) = buffered.next_x() {
                 let x = chunk
-                    .values
                     .map(filter_map)
                     .filter(|x| x.has_value())
                     .map(|x| x.value())
@@ -112,7 +111,7 @@ fn seq_filtermap_fil_red<I, FO, Out, FilterMap, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     FO: Fallible<Out> + Send + Sync,
     Out: Send + Sync,
     FilterMap: Fn(I::Item) -> FO + Send + Sync,

@@ -1,7 +1,7 @@
 use super::runner::{ParTask, Runner};
 use super::utils::maybe_reduce;
 use crate::Params;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::ConcurrentIterX;
 
 pub fn map_fil_red<I, Out, Map, Fil, Red>(
     params: Params,
@@ -11,7 +11,7 @@ pub fn map_fil_red<I, Out, Map, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
@@ -31,7 +31,7 @@ fn par_map_fil_red<I, Out, Map, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
@@ -53,7 +53,7 @@ fn task<I, Out, Map, Fil, Red>(
     chunk_size: usize,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
@@ -63,8 +63,8 @@ where
         1 => iter.values().map(map).filter(filter).reduce(reduce),
         c => {
             let mut acc = None;
-            while let Some(chunk) = iter.next_chunk(c) {
-                let x = chunk.values.map(map).filter(filter).reduce(reduce);
+            while let Some(chunk) = iter.next_chunk_x(c) {
+                let x = chunk.map(map).filter(filter).reduce(reduce);
                 acc = maybe_reduce(reduce, acc, x);
             }
             acc
@@ -79,7 +79,7 @@ fn seq_map_fil_red<I, Out, Map, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     Out: Send + Sync,
     Map: Fn(I::Item) -> Out + Send + Sync,
     Fil: Fn(&Out) -> bool + Send + Sync,
