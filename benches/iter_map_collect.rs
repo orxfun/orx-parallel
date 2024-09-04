@@ -1,19 +1,16 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_concurrent_iter::IterIntoConcurrentIter;
-use orx_parallel::*;
-use orx_split_vec::SplitVec;
-use prelude::Recursive;
+use orx_parallel::prelude::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelBridge};
 
-const NUM_NUMBERS: usize = 64;
+const NUM_NUMBERS: usize = 4;
 const NUM_VECTORS: usize = 4;
-const LEN_VECTORS: usize = 16;
+const LEN_VECTORS: usize = 4;
 const SEED: u64 = 5426;
 const FIB_UPPER_BOUND: u32 = 999;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct LargeOutput {
     name: String,
     numbers: [i64; NUM_NUMBERS],
@@ -111,8 +108,7 @@ fn orx_parallel_split_vec(inputs: &[usize]) -> SplitVec<LargeOutput, Recursive> 
         .iter()
         .filter(|x| *x % 3 > 0)
         .map(|x| x + 1)
-        .into_con_iter()
-        .into_par()
+        .par()
         .chunk_size(64)
         .map(to_large_output)
         .collect_x()
@@ -127,12 +123,17 @@ fn orx_parallel(
         .iter()
         .filter(|x| *x % 3 > 0)
         .map(|x| x + 1)
-        .into_con_iter()
-        .into_par()
+        .par()
         .chunk_size(chunk_size)
         .num_threads(num_threads)
         .map(to_large_output)
         .collect_x()
+}
+
+fn validate(expected: &[LargeOutput], mut output: Vec<LargeOutput>) {
+    output.sort();
+    assert_eq!(expected.len(), output.len());
+    assert_eq!(expected, output);
 }
 
 fn iter_map_collect(c: &mut Criterion) {
@@ -144,32 +145,33 @@ fn iter_map_collect(c: &mut Criterion) {
 
     for n in &treatments {
         let input = inputs(*n);
-        // let expected = seq(&input);
+        let mut expected = seq(&input);
+        expected.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", n), n, |b, _| {
-            // assert_eq!(&expected, &seq(&input));
+            validate(&expected, seq(&input));
             b.iter(|| seq(black_box(&input)))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
-            // assert_eq!(&expected, &rayon(&input));
+            validate(&expected, rayon(&input));
             b.iter(|| rayon(black_box(&input)))
         });
 
         group.bench_with_input(BenchmarkId::new("orx-parallel-split-vec", n), n, |b, _| {
-            // assert_eq!(&expected, &orx_parallel_split_vec(&input));
+            validate(&expected, orx_parallel_split_vec(&input).to_vec());
             b.iter(|| orx_parallel_split_vec(black_box(&input)))
         });
 
         group.bench_with_input(BenchmarkId::new("orx-parallel-vec", n), n, |b, _| {
-            // assert_eq!(&expected, &orx_parallel_vec(&input));
+            validate(&expected, orx_parallel_vec(&input));
             b.iter(|| orx_parallel_vec(black_box(&input)))
         });
 
         for (t, c) in params {
             let name = format!("orx-parallel-t{}-c{}", t, c);
             group.bench_with_input(BenchmarkId::new(name, n), n, |b, _| {
-                // assert_eq!(&expected, &orx_parallel(&input, t, c));
+                validate(&expected, orx_parallel(&input, t, c).to_vec());
                 b.iter(|| orx_parallel(black_box(&input), t, c))
             });
         }

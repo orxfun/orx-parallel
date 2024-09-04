@@ -1,5 +1,4 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_concurrent_iter::*;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -53,9 +52,9 @@ fn rayon_reduce_with(inputs: &[usize]) -> Option<usize> {
 
 fn orx_parallel_reduce(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
     inputs
-        .into_con_iter()
+        .iter()
         .cloned()
-        .into_par()
+        .par()
         .num_threads(num_threads)
         .chunk_size(chunk_size)
         .map(map)
@@ -66,9 +65,9 @@ fn orx_parallel_reduce(inputs: &[usize], num_threads: usize, chunk_size: usize) 
 fn orx_parallel_sum(inputs: &[usize], num_threads: usize, chunk_size: usize) -> Option<usize> {
     Some(
         inputs
-            .into_con_iter()
+            .iter()
             .cloned()
-            .into_par()
+            .par()
             .num_threads(num_threads)
             .chunk_size(chunk_size)
             .sum()
@@ -77,7 +76,7 @@ fn orx_parallel_sum(inputs: &[usize], num_threads: usize, chunk_size: usize) -> 
 }
 
 fn orx_parallel_default(inputs: &[usize]) -> Option<usize> {
-    Some(inputs.into_con_iter().cloned().into_par().sum() / inputs.len())
+    Some(inputs.iter().cloned().par().sum() / inputs.len())
 }
 
 fn map_reduce_avg(c: &mut Criterion) {

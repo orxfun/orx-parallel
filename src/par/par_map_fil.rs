@@ -294,7 +294,7 @@ where
             true => SplitVec::from(self.collect()),
             false => {
                 let mut recursive = SplitVec::with_recursive_growth();
-                let (params, iter, map, filter) = self.destruct();
+                let (params, iter, map, filter) = self.destruct_x();
                 par_map_fil_col_x_rec(params, iter, map, filter, &mut recursive);
                 recursive
             }

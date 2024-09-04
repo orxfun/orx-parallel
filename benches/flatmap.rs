@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_parallel::*;
-use orx_split_vec::{Recursive, SplitVec};
+use orx_parallel::prelude::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;

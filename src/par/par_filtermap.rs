@@ -3,7 +3,7 @@ use crate::{
     core::default_fns::no_filter, ChunkSize, Fallible, NumThreads, Par, ParCollectInto, Params,
 };
 use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
-use orx_split_vec::{Recursive, SplitVec};
+use orx_split_vec::{Growth, SplitVec};
 use std::marker::PhantomData;
 
 /// A parallel iterator.
@@ -175,7 +175,7 @@ where
         self.filter(no_filter).collect_into(output)
     }
 
-    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
+    fn collect_x(self) -> SplitVec<Self::Item, impl Growth> {
         self.filter(no_filter).collect_x()
     }
 }

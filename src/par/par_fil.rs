@@ -7,7 +7,7 @@ use crate::{
     Fallible, Par, ParCollectInto, Params,
 };
 use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Growth, SplitVec};
 
 /// A parallel iterator.
 ///
@@ -156,15 +156,23 @@ where
     // collect
 
     fn collect_vec(self) -> Vec<Self::Item> {
-        ParMapFilter::new(self.iter, self.params, map_self, self.filter).collect_vec()
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect_vec()
     }
 
     fn collect(self) -> SplitVec<Self::Item> {
-        ParMapFilter::new(self.iter, self.params, map_self, self.filter).collect()
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect()
     }
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
-        ParMapFilter::new(self.iter, self.params, map_self, self.filter).collect_into(output)
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect_into(output)
+    }
+
+    fn collect_x(self) -> SplitVec<Self::Item, impl Growth> {
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect_x()
     }
 }
 
