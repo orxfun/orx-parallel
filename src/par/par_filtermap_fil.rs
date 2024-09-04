@@ -56,7 +56,7 @@ where
     pub(crate) fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, M, F) {
         (
             self.params,
-            self.iter.into_concurrent_iter_x(),
+            self.iter.into_con_iter_x(),
             self.filter_map,
             self.filter,
         )

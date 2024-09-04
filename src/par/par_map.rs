@@ -42,7 +42,7 @@ where
     }
 
     pub(crate) fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, M) {
-        (self.params, self.iter.into_concurrent_iter_x(), self.map)
+        (self.params, self.iter.into_con_iter_x(), self.map)
     }
 
     pub(crate) fn iter_len(&self) -> Option<usize> {

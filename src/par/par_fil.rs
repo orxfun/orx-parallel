@@ -32,7 +32,7 @@ where
     }
 
     fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, F) {
-        (self.params, self.iter.into_concurrent_iter_x(), self.filter)
+        (self.params, self.iter.into_con_iter_x(), self.filter)
     }
 }
 
