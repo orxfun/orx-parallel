@@ -7,9 +7,9 @@ use crate::{
         filtermap_fil_cnt::filtermap_fil_cnt, filtermap_fil_col_x::par_filtermap_fil_col_x_rec,
         filtermap_fil_find::filtermap_fil_find, filtermap_fil_red::filtermap_fil_red,
     },
-    ChunkSize, Fallible, NumThreads, ParCollectInto, Par, Params,
+    ChunkSize, Fallible, NumThreads, Par, ParCollectInto, Params,
 };
-use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
 use orx_split_vec::{Recursive, SplitVec};
 use std::marker::PhantomData;
 
@@ -51,6 +51,15 @@ where
 
     pub(crate) fn destruct(self) -> (Params, I, M, F) {
         (self.params, self.iter, self.filter_map, self.filter)
+    }
+
+    pub(crate) fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, M, F) {
+        (
+            self.params,
+            self.iter.into_con_iter_x(),
+            self.filter_map,
+            self.filter,
+        )
     }
 
     // find
@@ -103,7 +112,7 @@ where
         I,
         Option<O2>,
         O2,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
         O2: Send + Sync,
@@ -159,7 +168,7 @@ where
         I,
         Option<O2>,
         O2,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O2> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O2> + Send + Sync + Clone,
     >
     where
         O2: Send + Sync,
@@ -190,12 +199,13 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        filtermap_fil_red(self.params, self.iter, self.filter_map, self.filter, reduce)
+        let (params, iter, filter_map, filter) = self.destruct_x();
+        filtermap_fil_red(params, iter, filter_map, filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter, map, filter) = (self.params, self.iter, self.filter_map, self.filter);
-        filtermap_fil_cnt(params, iter, map, filter)
+        let (params, iter, filter_map, filter) = self.destruct_x();
+        filtermap_fil_cnt(params, iter, filter_map, filter)
     }
 
     // find
@@ -230,7 +240,7 @@ where
             true => SplitVec::from(self.collect()),
             false => {
                 let mut recursive = SplitVec::with_recursive_growth();
-                let (params, iter, map, filter) = self.destruct();
+                let (params, iter, map, filter) = self.destruct_x();
                 par_filtermap_fil_col_x_rec(params, iter, map, filter, &mut recursive);
                 recursive
             }

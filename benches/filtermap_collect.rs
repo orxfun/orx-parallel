@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_parallel::*;
-use orx_split_vec::{Recursive, SplitVec};
+use orx_parallel::prelude::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
@@ -66,7 +65,7 @@ fn orx_parallel_split_vec(inputs: &[u32]) -> SplitVec<u32> {
     inputs.into_par().filter_map(filter_map).collect()
 }
 
-fn orx_parallel_split_rec(inputs: &[u32]) -> SplitVec<u32, Recursive> {
+fn orx_parallel_split_rec(inputs: &[u32]) -> SplitVec<u32, impl Growth + '_> {
     inputs.into_par().filter_map(filter_map).collect_x()
 }
 

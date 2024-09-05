@@ -1,5 +1,4 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_concurrent_iter::*;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -64,9 +63,9 @@ fn orx_parallel_custom_reduce(
     chunk_size: usize,
 ) -> Option<usize> {
     inputs
-        .into_con_iter()
+        .iter()
         .cloned()
-        .into_par()
+        .par()
         .num_threads(num_threads)
         .chunk_size(chunk_size)
         .reduce(reduce)

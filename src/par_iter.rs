@@ -1,5 +1,5 @@
 use crate::{ChunkSize, Fallible, NumThreads, ParCollectInto, Params};
-use orx_split_vec::{Recursive, SplitVec};
+use orx_split_vec::{Growth, SplitVec};
 use std::{cmp::Ordering, ops::Add};
 
 /// An iterator used to define a computation that can be executed in parallel.
@@ -531,9 +531,7 @@ where
     /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
     /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
     /// ```
-    fn collect_x(self) -> SplitVec<Self::Item, Recursive> {
-        self.collect().into()
-    }
+    fn collect_x(self) -> SplitVec<Self::Item, impl Growth>;
 
     // reduced - provided
 

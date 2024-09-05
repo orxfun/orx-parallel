@@ -1,7 +1,7 @@
 use super::runner::{ParTask, Runner};
 use super::utils::maybe_reduce;
 use crate::Params;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::ConcurrentIterX;
 
 pub fn fmap_fil_red<I, OutIter, Out, Map, Fil, Red>(
     params: Params,
@@ -11,7 +11,7 @@ pub fn fmap_fil_red<I, OutIter, Out, Map, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
@@ -32,7 +32,7 @@ fn par_fmap_fil_red<I, OutIter, Out, Map, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
@@ -55,7 +55,7 @@ fn task<I, OutIter, Out, Map, Fil, Red>(
     chunk_size: usize,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,
@@ -66,9 +66,9 @@ where
         1 => iter.values().flat_map(fmap).filter(filter).reduce(reduce),
         c => {
             let mut acc = None;
-            let mut buffered = iter.buffered_iter(c);
-            while let Some(chunk) = buffered.next() {
-                let x = chunk.values.flat_map(fmap).filter(filter).reduce(reduce);
+            let mut buffered = iter.buffered_iter_x(c);
+            while let Some(chunk) = buffered.next_x() {
+                let x = chunk.flat_map(fmap).filter(filter).reduce(reduce);
                 acc = maybe_reduce(reduce, acc, x);
             }
             acc
@@ -83,7 +83,7 @@ fn seq_fmap_fil_red<I, OutIter, Out, Map, Fil, Red>(
     reduce: Red,
 ) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter,

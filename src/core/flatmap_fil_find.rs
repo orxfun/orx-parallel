@@ -1,7 +1,7 @@
 use super::runner::{ParTask, Runner};
 use crate::core::utils::maybe_reduce;
 use crate::Params;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterX};
 
 pub fn fmap_fil_find<I, OutIter, Out, Map, Fil>(
     params: Params,
@@ -96,7 +96,7 @@ where
 
 fn seq_fmap_fil_find<I, OutIter, Out, Map, Fil>(iter: I, map: Map, filter: Fil) -> Option<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     Map: Fn(I::Item) -> OutIter + Send + Sync,

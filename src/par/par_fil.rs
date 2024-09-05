@@ -6,8 +6,8 @@ use crate::{
     },
     Fallible, Par, ParCollectInto, Params,
 };
-use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, IntoConcurrentIter};
-use orx_split_vec::SplitVec;
+use orx_concurrent_iter::{ConIterOfVec, ConcurrentIter, ConcurrentIterX, IntoConcurrentIter};
+use orx_split_vec::{Growth, SplitVec};
 
 /// A parallel iterator.
 ///
@@ -20,6 +20,20 @@ where
     iter: I,
     params: Params,
     filter: F,
+}
+
+impl<I, F> ParFilter<I, F>
+where
+    I: ConcurrentIter,
+    F: Fn(&I::Item) -> bool + Send + Sync + Clone,
+{
+    fn destruct(self) -> (Params, I, F) {
+        (self.params, self.iter, self.filter)
+    }
+
+    fn destruct_x(self) -> (Params, impl ConcurrentIterX<Item = I::Item>, F) {
+        (self.params, self.iter.into_con_iter_x(), self.filter)
+    }
 }
 
 impl<I, F> Par for ParFilter<I, F>
@@ -52,13 +66,13 @@ where
         I,
         Option<O>,
         O,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O> + Send + Sync + Clone,
     >
     where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync + Clone,
     {
-        let (params, iter, filter) = (self.params, self.iter, self.filter);
+        let (params, iter, filter) = self.destruct();
         let composed_filter_map = move |x| match filter(&x) {
             false => None,
             true => Some(map(x)),
@@ -69,7 +83,7 @@ where
     fn flat_map<O, OI, FM>(
         self,
         flat_map: FM,
-    ) -> ParFlatMap<ConIterOfVec<<I as ConcurrentIter>::Item>, O, OI, FM>
+    ) -> ParFlatMap<ConIterOfVec<<I as ConcurrentIterX>::Item>, O, OI, FM>
     where
         O: Send + Sync,
         OI: IntoIterator<Item = O>,
@@ -85,7 +99,7 @@ where
     where
         F2: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
-        let (params, iter, filter1) = (self.params, self.iter, self.filter);
+        let (params, iter, filter1) = self.destruct();
         let composed_filter = move |x: &I::Item| filter1(x) && filter(x);
         ParFilter::new(iter, params, composed_filter)
     }
@@ -97,14 +111,14 @@ where
         I,
         Option<O>,
         O,
-        impl Fn(<I as ConcurrentIter>::Item) -> Option<O> + Send + Sync + Clone,
+        impl Fn(<I as ConcurrentIterX>::Item) -> Option<O> + Send + Sync + Clone,
     >
     where
         O: Send + Sync,
         FO: Fallible<O> + Send + Sync,
         FM: Fn(Self::Item) -> FO + Send + Sync + Clone,
     {
-        let (params, iter, filter) = (self.params, self.iter, self.filter);
+        let (params, iter, filter) = self.destruct();
         let composed_filter_map = move |x| match filter(&x) {
             false => None,
             true => filter_map(x).into_option(),
@@ -118,11 +132,12 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        map_fil_red(self.params, self.iter, map_self, self.filter, reduce)
+        let (params, iter, filter) = self.destruct_x();
+        map_fil_red(params, iter, map_self, filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter, filter) = (self.params, self.iter, self.filter);
+        let (params, iter, filter) = self.destruct_x();
         map_fil_cnt(params, iter, map_self, filter)
     }
 
@@ -141,15 +156,23 @@ where
     // collect
 
     fn collect_vec(self) -> Vec<Self::Item> {
-        ParMapFilter::new(self.iter, self.params, map_self, self.filter).collect_vec()
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect_vec()
     }
 
     fn collect(self) -> SplitVec<Self::Item> {
-        ParMapFilter::new(self.iter, self.params, map_self, self.filter).collect()
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect()
     }
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
-        ParMapFilter::new(self.iter, self.params, map_self, self.filter).collect_into(output)
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect_into(output)
+    }
+
+    fn collect_x(self) -> SplitVec<Self::Item, impl Growth> {
+        let (params, iter, filter) = self.destruct();
+        ParMapFilter::new(iter, params, map_self, filter).collect_x()
     }
 }
 

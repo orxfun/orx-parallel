@@ -36,8 +36,9 @@ use orx_concurrent_iter::*;
 ///     .collect_vec();
 /// assert_eq!(par, seq);
 /// ```
-pub trait IterIntoPar<Iter: Iterator>
+pub trait IterIntoPar<Iter>
 where
+    Iter: Iterator,
     Iter::Item: Send + Sync,
 {
     /// Underlying concurrent iterator which provides the input elements to the defined parallel computation.
@@ -83,8 +84,9 @@ where
 
 // iter
 
-impl<Iter: Iterator> IterIntoPar<Iter> for Iter
+impl<Iter> IterIntoPar<Iter> for Iter
 where
+    Iter: Iterator,
     Iter::Item: Send + Sync,
 {
     type ConIter = ConIterOfIter<Iter::Item, Iter>;
@@ -94,8 +96,9 @@ where
     }
 }
 
-impl<Iter: Iterator> IterIntoPar<Iter> for ConIterOfIter<Iter::Item, Iter>
+impl<Iter> IterIntoPar<Iter> for ConIterOfIter<Iter::Item, Iter>
 where
+    Iter: Iterator,
     Iter::Item: Send + Sync,
 {
     type ConIter = ConIterOfIter<Iter::Item, Iter>;

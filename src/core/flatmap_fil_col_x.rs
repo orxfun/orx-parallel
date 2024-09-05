@@ -1,6 +1,6 @@
 use super::runner::{ParTask, Runner};
 use crate::Params;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::ConcurrentIterX;
 use orx_split_vec::{Recursive, SplitVec};
 
 fn task<I, OutIter, Out, FlatMap, Fil>(
@@ -10,7 +10,7 @@ fn task<I, OutIter, Out, FlatMap, Fil>(
     chunk_size: usize,
 ) -> Vec<Out>
 where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     FlatMap: Fn(I::Item) -> OutIter + Send + Sync,
@@ -20,8 +20,8 @@ where
         1 => iter.values().flat_map(&flat_map).filter(&filter).collect(),
         c => {
             let mut collected = vec![];
-            while let Some(chunk) = iter.next_chunk(c) {
-                collected.extend(chunk.values.flat_map(&flat_map).filter(&filter));
+            while let Some(chunk) = iter.next_chunk_x(c) {
+                collected.extend(chunk.flat_map(&flat_map).filter(&filter));
             }
             collected
         }
@@ -35,7 +35,7 @@ pub fn par_flatmap_fil_col_x_rec<I, OutIter, Out, FlatMap, Fil>(
     filter: Fil,
     output: &mut SplitVec<Out, Recursive>,
 ) where
-    I: ConcurrentIter,
+    I: ConcurrentIterX,
     OutIter: IntoIterator<Item = Out>,
     Out: Send + Sync,
     FlatMap: Fn(I::Item) -> OutIter + Send + Sync,

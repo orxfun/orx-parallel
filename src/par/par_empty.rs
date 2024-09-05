@@ -12,7 +12,7 @@ use crate::{
     ChunkSize, Fallible, NumThreads, ParCollectInto, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Growth, SplitVec};
 
 /// A parallel iterator.
 ///
@@ -86,11 +86,12 @@ where
     where
         R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
     {
-        map_fil_red(self.params, self.iter, map_self, no_filter, reduce)
+        let (params, iter) = (self.params, self.iter.into_con_iter_x());
+        map_fil_red(params, iter, map_self, no_filter, reduce)
     }
 
     fn count(self) -> usize {
-        let (params, iter) = (self.params, self.iter);
+        let (params, iter) = (self.params, self.iter.into_con_iter_x());
         map_fil_cnt(params, iter, map_self, no_filter)
     }
 
@@ -119,6 +120,10 @@ where
 
     fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C {
         output.seq_extend(self.iter.into_seq_iter())
+    }
+
+    fn collect_x(self) -> SplitVec<Self::Item, impl Growth> {
+        self.collect()
     }
 }
 

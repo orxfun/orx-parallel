@@ -1,10 +1,8 @@
-use std::num::NonZeroUsize;
-
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
+use std::num::NonZeroUsize;
 
 const SEED: u64 = 745;
 const FIB_UPPER_BOUND: u32 = 9999;
