@@ -1,4 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
@@ -44,12 +45,12 @@ fn rayon(inputs: &[u32]) -> Option<u32> {
 }
 
 fn orx_parallel_default(inputs: &[u32]) -> Option<u32> {
-    inputs.into_par().map(map).find(predicate)
+    inputs.par().map(map).find(predicate)
 }
 
 fn orx_parallel(inputs: &[u32], num_threads: usize, chunk_size: usize) -> Option<u32> {
     inputs
-        .into_par()
+        .par()
         .chunk_size(ChunkSize::Exact(NonZeroUsize::new(chunk_size).unwrap()))
         .num_threads(num_threads)
         .map(map)
