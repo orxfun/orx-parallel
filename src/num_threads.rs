@@ -16,7 +16,7 @@ use std::num::NonZeroUsize;
 ///
 /// Lastly, `NumThreads::Max(t)` where `t >= 2` can be used in the following scenarios:
 /// * We have a strict limit on the resources that we can use for this computation, even if the hardware has more resources.
-/// Parallel execution will ensure that `t` will never be exceeded.
+///   Parallel execution will ensure that `t` will never be exceeded.
 /// * We have a computation which is extremely time-critical and our benchmarks show that `t` outperforms the `NumThreads::Auto` on the corresponding system.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NumThreads {
@@ -31,7 +31,7 @@ pub enum NumThreads {
     ///
     /// Lastly, `NumThreads::Max(t)` where `t >= 2` can be used in the following scenarios:
     /// * We have a strict limit on the resources that we can use for this computation, even if the hardware has more resources.
-    /// Parallel execution will ensure that `t` will never be exceeded.
+    ///   Parallel execution will ensure that `t` will never be exceeded.
     /// * We have a computation which is extremely time-critical and our benchmarks show that `t` outperforms the `NumThreads::Auto` on the corresponding system.
     Max(NonZeroUsize),
 }
