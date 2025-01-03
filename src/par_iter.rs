@@ -67,7 +67,7 @@ where
     ///
     /// Lastly, `NumThreads::Max(t)` where `t >= 2` can be used in the following scenarios:
     /// * We have a strict limit on the resources that we can use for this computation, even if the hardware has more resources.
-    /// Parallel execution will ensure that `t` will never be exceeded.
+    ///   Parallel execution will ensure that `t` will never be exceeded.
     /// * We have a computation which is extremely time-critical and our benchmarks show that `t` outperforms the `NumThreads::Auto` on the corresponding system.
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -118,15 +118,15 @@ where
     ///
     /// * **Perfect Sharing of Tasks**
     ///   * Setting chunk size to 4 provides a perfect division of tasks in terms of quantity.
-    /// Each thread will retrieve 4 elements at once in one pull and process them.
-    /// This *one pull* per thread can be considered as the parallelization overhead and this is the best/minimum we can achieve.
+    ///     Each thread will retrieve 4 elements at once in one pull and process them.
+    ///     This *one pull* per thread can be considered as the parallelization overhead and this is the best/minimum we can achieve.
     ///   * Drawback of this approach, on the other hand, is observed when the execution time of each job is significantly different; i.e., when we have heterogeneous tasks.
     ///   * Assume, for instance, that the first element requires 7 units of time while all remaining elements require 1 unit of time.
     ///   * Roughly, the parallel execution with a chunk size of 4 would complete in 10 units of time, which is the execution time of the first thread (7 + 3*1).
     ///   * The second thread will complete its 4 tasks in 4 units of time and will remain idle for 6 units of time.
     /// * **Perfect Handling of Heterogeneity**
     ///   * Setting chunk size to 1 provides a perfect way to deal with heterogeneous tasks, minimizing the idle time of threads.
-    /// Each thread will retrieve elements one by one whenever they become idle.
+    ///     Each thread will retrieve elements one by one whenever they become idle.
     ///   * Considering the heterogeneous example above, the parallel execution with a chunk size of 1 would complete around 7 units of time.
     ///     * This is again the execution time of the first thread, which will only execute the first element.
     ///     * The second thread will execute the remaining 7 elements, again in 7 units in time.
@@ -517,7 +517,7 @@ where
     ///
     /// In this case, the result is transformed into the split vector with recursive growth [`SplitVec<Self::Item, Recursive>`](https://docs.rs/orx-split-vec/latest/orx_split_vec/struct.Recursive.html):
     /// * Note that the `SplitVec` returned by the `collect` method uses the `Doubling` growth which allows for efficient constant time random access.
-    /// On the other hand, `Recursive` growth does not allow for constant time random access.
+    ///   On the other hand, `Recursive` growth does not allow for constant time random access.
     /// * On the other hand, `Recursive` growth allows for zero cost `append` method to append another vector to the end.
     ///
     /// # Examples
