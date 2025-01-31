@@ -285,6 +285,7 @@ where
     /// ```rust
     /// use orx_parallel::*;
     /// use orx_concurrent_bag::*;
+    /// use orx_iterable::*;
     ///
     /// struct Input(usize);
     ///
