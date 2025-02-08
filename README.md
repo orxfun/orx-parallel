@@ -1,6 +1,7 @@
 # orx-parallel
 
 [![orx-parallel crate](https://img.shields.io/crates/v/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
+[![orx-parallel crate](https://img.shields.io/crates/d/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 
 A performant and configurable parallel computing library for computations defined as compositions of iterator methods.
@@ -200,4 +201,4 @@ The goal of v2 is to provide a more dynamic and smart parallel executor, please 
 
 ## License
 
-This library is licensed under MIT license. See LICENSE for details.
+Dual-licensed under [Apache 2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT).
