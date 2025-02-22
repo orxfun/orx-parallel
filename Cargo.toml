@@ -11,14 +11,14 @@ categories = ["concurrency", "algorithms"]
 
 [dependencies]
 orx-pseudo-default = { version = "2.0.0", default-features = false }
-orx-pinned-vec = "3.15"
-orx-fixed-vec = "3.15"
-orx-split-vec = "3.15"
-orx-pinned-concurrent-col = "2.12"
-orx-concurrent-bag = "2.11"
-orx-concurrent-ordered-bag = "2.11"
-orx-priority-queue = "1.5.0"
-orx-concurrent-iter = "1.30.0"
+orx-pinned-vec = { path = "../orx-pinned-vec" }
+orx-fixed-vec = { path = "../orx-fixed-vec" }
+orx-split-vec = { path = "../orx-split-vec" }
+orx-pinned-concurrent-col = { path = "../orx-pinned-concurrent-col" }
+orx-concurrent-ordered-bag = { path = "../orx-concurrent-ordered-bag" }
+orx-concurrent-bag = { path = "../orx-concurrent-bag" }
+orx-priority-queue = { path = "../orx-priority-queue" }
+orx-concurrent-iter = { path = "../orx-concurrent-iter" }
 
 [dev-dependencies]
 chrono = "0.4.39"
@@ -32,3 +32,6 @@ test-case = "3.3.1"
 [[bench]]
 name = "flatmap"
 harness = false
+
+[lib]
+doctest = false

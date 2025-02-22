@@ -212,7 +212,7 @@
 //! This library is licensed under MIT license. See LICENSE for details.
 
 #![warn(
-    missing_docs,
+    // missing_docs,
     clippy::unwrap_in_result,
     clippy::unwrap_used,
     clippy::panic,
@@ -223,22 +223,3 @@
     clippy::todo
 )]
 #![allow(refining_impl_trait)]
-
-mod chunk_size;
-mod core;
-mod into;
-mod num_threads;
-mod par;
-mod par_iter;
-mod params;
-/// Common structs, enums and traits.
-pub mod prelude;
-
-pub use chunk_size::ChunkSize;
-pub use into::{as_par::AsPar, into_par::IntoPar, iter_into_par::IterIntoPar};
-pub use num_threads::NumThreads;
-pub use par::cloned_copied::{ParIntoCloned, ParIntoCopied};
-pub use par::collect_into::par_collect_into::ParCollectInto;
-pub use par::fallible::Fallible;
-pub use par_iter::Par;
-pub use params::Params;
