@@ -72,20 +72,3 @@ impl From<usize> for ChunkSize {
         }
     }
 }
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ResolvedChunkSize {
-    Min(usize),
-    Exact(usize),
-}
-
-impl ResolvedChunkSize {
-    pub(crate) fn validate(self) -> Self {
-        let inner = match self {
-            Self::Min(x) => x,
-            Self::Exact(x) => x,
-        };
-        assert!(inner > 0, "Chunk size must be positive");
-        self
-    }
-}
