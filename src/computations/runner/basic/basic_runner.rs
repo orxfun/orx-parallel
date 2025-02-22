@@ -7,59 +7,46 @@ use orx_concurrent_iter::ConcurrentIter;
 
 const LAG_PERIODICITY: usize = 4;
 
-pub struct BasicRunner;
+pub struct BasicRunner {
+    initial_len: Option<usize>,
+    resolved_chunk_size: ResolvedChunkSize,
+    max_num_threads: usize,
+}
 
 impl BasicRunner {
-    fn spawn_new(max_num_threads: usize, num_spawned: usize, remaining: Option<usize>) -> bool {
+    fn spawn_new(&self, num_spawned: usize, remaining: Option<usize>) -> bool {
         match (num_spawned, remaining) {
             (_, Some(0)) => false,
-            (x, _) if x >= max_num_threads => false,
+            (x, _) if x >= self.max_num_threads => false,
             _ => true,
         }
     }
 
-    fn next_chunk(
-        max_num_threads: usize,
-        num_spawned: usize,
-        resolved_chunk_size: ResolvedChunkSize,
-        initial_len: Option<usize>,
-        remaining_len: Option<usize>,
-    ) -> Option<usize> {
-        match (initial_len, remaining_len) {
-            (Some(initial_len), Some(remaining_len)) => Self::next_chunk_size_known_len(
-                max_num_threads,
-                num_spawned,
-                initial_len,
-                resolved_chunk_size,
-                remaining_len,
-            ),
-            _ => {
-                Self::next_chunk_size_unknown_len(max_num_threads, num_spawned, resolved_chunk_size)
+    fn next_chunk(&self, num_spawned: usize, remaining_len: Option<usize>) -> Option<usize> {
+        match (self.initial_len, remaining_len) {
+            (Some(initial_len), Some(remaining_len)) => {
+                self.next_chunk_size_known_len(num_spawned, initial_len, remaining_len)
             }
+            _ => self.next_chunk_size_unknown_len(num_spawned),
         }
     }
 
-    fn next_chunk_size_unknown_len(
-        max_num_threads: usize,
-        num_spawned: usize,
-        resolved_chunk_size: ResolvedChunkSize,
-    ) -> Option<usize> {
+    fn next_chunk_size_unknown_len(&self, num_spawned: usize) -> Option<usize> {
         match num_spawned {
-            x if x >= max_num_threads => None,
-            _ => Some(resolved_chunk_size.chunk_size()),
+            x if x >= self.max_num_threads => None,
+            _ => Some(self.resolved_chunk_size.chunk_size()),
         }
     }
 
     fn next_chunk_size_known_len(
-        max_num_threads: usize,
+        &self,
         num_spawned: usize,
         initial_len: usize,
-        resolved_chunk_size: ResolvedChunkSize,
         remaining_len: usize,
     ) -> Option<usize> {
         match num_spawned {
-            x if x >= max_num_threads => None,
-            _ => match resolved_chunk_size {
+            x if x >= self.max_num_threads => None,
+            _ => match self.resolved_chunk_size {
                 ResolvedChunkSize::Exact(x) => Some(x),
                 ResolvedChunkSize::Min(x) => {
                     let chunk_size = match num_spawned {
@@ -81,27 +68,29 @@ impl BasicRunner {
 }
 
 impl ParallelRunner for BasicRunner {
-    fn run<I, T1, TN>(
-        params: Params,
-        kind: ComputationKind,
-        iter: &I,
-        execution_by_one: &T1,
-        execution_in_chunk: &TN,
-    ) -> usize
-    where
-        I: ConcurrentIter,
-        T1: Fn() + Sync,
-        TN: Fn(usize) + Sync,
-    {
+    fn new(params: Params, kind: ComputationKind, iter: &impl ConcurrentIter) -> Self {
         let initial_len = remaining_len(iter);
         let max_num_threads = maximum_num_threads(initial_len, params.num_threads);
         let resolved_chunk_size =
             ResolvedChunkSize::new(kind, initial_len, max_num_threads, params.chunk_size);
 
+        Self {
+            initial_len,
+            resolved_chunk_size,
+            max_num_threads,
+        }
+    }
+
+    fn run<I, T1, TN>(&self, iter: &I, execution_by_one: &T1, execution_in_chunk: &TN) -> usize
+    where
+        I: ConcurrentIter,
+        T1: Fn() + Sync,
+        TN: Fn(usize) + Sync,
+    {
         let mut num_spawned = 0;
 
         std::thread::scope(|s| {
-            let mut chunk = resolved_chunk_size.chunk_size();
+            let mut chunk = self.resolved_chunk_size.chunk_size();
 
             match chunk {
                 1 => s.spawn(|| execution_by_one()),
@@ -111,7 +100,7 @@ impl ParallelRunner for BasicRunner {
 
             'lag_period: loop {
                 for _ in 0..LAG_PERIODICITY {
-                    match Self::spawn_new(max_num_threads, num_spawned, remaining_len(iter)) {
+                    match self.spawn_new(num_spawned, remaining_len(iter)) {
                         false => break 'lag_period,
                         true => {
                             match chunk {
@@ -125,13 +114,7 @@ impl ParallelRunner for BasicRunner {
 
                 lag();
 
-                match Self::next_chunk(
-                    max_num_threads,
-                    num_spawned,
-                    resolved_chunk_size,
-                    initial_len,
-                    remaining_len(iter),
-                ) {
+                match self.next_chunk(num_spawned, remaining_len(iter)) {
                     Some(c) => chunk = c,
                     None => break 'lag_period,
                 }
