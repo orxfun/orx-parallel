@@ -222,4 +222,8 @@
     clippy::missing_panics_doc,
     clippy::todo
 )]
-#![allow(refining_impl_trait)]
+// #![allow(refining_impl_trait)]
+
+mod computations;
+mod par_iter;
+mod parameters;
