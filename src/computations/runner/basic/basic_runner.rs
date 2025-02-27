@@ -81,21 +81,17 @@ impl ParallelRunner for BasicRunner {
         }
     }
 
-    fn run<I, T1, TN>(&self, iter: &I, execution_by_one: &T1, execution_in_chunk: &TN) -> usize
+    fn run<I, R>(&self, iter: &I, execute: &R) -> usize
     where
         I: ConcurrentIter,
-        T1: Fn() + Sync,
-        TN: Fn(usize) + Sync,
+        R: Fn(usize) + Sync,
     {
         let mut num_spawned = 0;
 
         std::thread::scope(|s| {
             let mut chunk = self.resolved_chunk_size.chunk_size();
+            s.spawn(move || execute(chunk));
 
-            match chunk {
-                1 => s.spawn(|| execution_by_one()),
-                n => s.spawn(move || execution_in_chunk(n)),
-            };
             num_spawned += 1;
 
             'lag_period: loop {
@@ -103,10 +99,7 @@ impl ParallelRunner for BasicRunner {
                     match self.spawn_new(num_spawned, remaining_len(iter)) {
                         false => break 'lag_period,
                         true => {
-                            match chunk {
-                                1 => s.spawn(|| execution_by_one()),
-                                n => s.spawn(move || execution_in_chunk(n)),
-                            };
+                            s.spawn(move || execute(chunk));
                             num_spawned += 1;
                         }
                     }
