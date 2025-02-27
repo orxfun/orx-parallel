@@ -11,6 +11,7 @@ categories = ["concurrency", "algorithms"]
 
 [dependencies]
 orx-pseudo-default = { version = "2.0.0", default-features = false }
+orx-iterable = "1.2.0"
 orx-pinned-vec = { path = "../orx-pinned-vec" }
 orx-fixed-vec = { path = "../orx-fixed-vec" }
 orx-split-vec = { path = "../orx-split-vec" }
@@ -23,7 +24,6 @@ orx-concurrent-iter = { path = "../orx-concurrent-iter" }
 [dev-dependencies]
 chrono = "0.4.39"
 criterion = "0.5.1"
-orx-iterable = "1.2.0"
 rand = "0.8"
 rand_chacha = "0.3"
 rayon = "1.10.0"

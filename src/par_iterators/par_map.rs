@@ -1,26 +1,39 @@
 use super::par_iter::{ParIter, ParIterCore};
-use crate::{collect_into::ParCollectInto, computations::ParallelRunner, parameters::Params};
+use crate::{
+    collect_into::ParCollectInto,
+    computations::{DefaultRunner, ParallelRunner},
+    parameters::Params,
+};
 use orx_concurrent_iter::ConcurrentIter;
+use std::marker::PhantomData;
 
-pub struct ParMap<I, O, M>
+pub struct ParMap<I, O, M, R = DefaultRunner>
 where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
+    R: ParallelRunner,
 {
     params: Params,
     iter: I,
     map: M,
+    phantom: PhantomData<R>,
 }
 
-impl<I, O, M> ParMap<I, O, M>
+impl<I, O, M, R> ParMap<I, O, M, R>
 where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
+    R: ParallelRunner,
 {
     pub(crate) fn new(params: Params, iter: I, map: M) -> Self {
-        Self { params, iter, map }
+        Self {
+            params,
+            iter,
+            map,
+            phantom: PhantomData,
+        }
     }
 
     fn destruct(self) -> (Params, I, M) {
@@ -28,18 +41,19 @@ where
     }
 }
 
-impl<I, O, M> ParIterCore for ParMap<I, O, M>
+impl<I, O, M, R> ParIterCore for ParMap<I, O, M, R>
 where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
+    R: ParallelRunner,
 {
     fn input_len(&self) -> Option<usize> {
         self.iter.try_get_len()
     }
 }
 
-impl<I, O, M, R> ParIter<R> for ParMap<I, O, M>
+impl<I, O, M, R> ParIter<R> for ParMap<I, O, M, R>
 where
     I: ConcurrentIter,
     O: Send + Sync,

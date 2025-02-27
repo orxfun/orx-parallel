@@ -1,31 +1,40 @@
 use super::par_iter::{ParIter, ParIterCore};
 use crate::{
-    collect_into::ParCollectInto, computations::ParallelRunner, par_iterators::par_map::ParMap,
+    collect_into::ParCollectInto,
+    computations::{DefaultRunner, ParallelRunner},
+    par_iterators::par_map::ParMap,
     parameters::Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
+use std::marker::PhantomData;
 
-pub struct Par<I>
+pub struct Par<I, R = DefaultRunner>
 where
     I: ConcurrentIter,
+    R: ParallelRunner,
 {
     iter: I,
     params: Params,
+    phantom: PhantomData<R>,
 }
 
 impl<I: ConcurrentIter> Par<I> {
     pub(crate) fn new(iter: I, params: Params) -> Self {
-        Self { iter, params }
+        Self {
+            iter,
+            params,
+            phantom: PhantomData,
+        }
     }
 }
 
-impl<I: ConcurrentIter> ParIterCore for Par<I> {
+impl<I: ConcurrentIter, R: ParallelRunner> ParIterCore for Par<I, R> {
     fn input_len(&self) -> Option<usize> {
         self.iter.try_get_len()
     }
 }
 
-impl<I, R> ParIter<R> for Par<I>
+impl<I, R> ParIter<R> for Par<I, R>
 where
     I: ConcurrentIter,
     R: ParallelRunner,

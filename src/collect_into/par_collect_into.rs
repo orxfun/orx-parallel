@@ -1,8 +1,9 @@
 use crate::{computations::ParallelRunner, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
+use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub trait ParCollectIntoCore<T: Send + Sync> {
+pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
     type BridgePinnedVec: IntoConcurrentPinnedVec<T>;
 
     fn empty(iter_len: Option<usize>) -> Self;
@@ -12,6 +13,24 @@ pub trait ParCollectIntoCore<T: Send + Sync> {
         I: ConcurrentIter,
         M: Fn(I::Item) -> T + Send + Sync + Clone,
         R: ParallelRunner;
+
+    // test
+
+    #[cfg(test)]
+    fn is_equal_to<'a>(&self, mut b: impl Iterator<Item = &'a T>) -> bool
+    where
+        T: PartialEq + 'a,
+    {
+        for x in self.iter() {
+            match b.next() {
+                Some(y) if x != y => return false,
+                None => return false,
+                _ => {}
+            }
+        }
+
+        b.next().is_none()
+    }
 }
 
 pub trait ParCollectInto<O: Send + Sync>: ParCollectIntoCore<O> {}
