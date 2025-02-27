@@ -1,9 +1,6 @@
 use crate::{
-    collect_into::{ParCollectInto, ParCollectIntoCore},
-    into_par::IntoPar,
-    par_iterators::ParIter,
-    parallelizable::Parallelizable,
-    parallelizable_collection::ParallelizableCollection,
+    collect_into::ParCollectInto, into_par::IntoPar, par_iterators::ParIter,
+    parallelizable::Parallelizable, parallelizable_collection::ParallelizableCollection,
 };
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
