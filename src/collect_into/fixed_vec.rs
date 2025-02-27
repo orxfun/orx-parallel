@@ -23,4 +23,11 @@ where
         let vec = self.into_inner();
         vec.map_into::<_, _, R>(params, iter, map).into()
     }
+
+    // test
+
+    #[cfg(test)]
+    fn length(&self) -> usize {
+        self.len()
+    }
 }

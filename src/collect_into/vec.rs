@@ -43,6 +43,13 @@ where
             }
         }
     }
+
+    // test
+
+    #[cfg(test)]
+    fn length(&self) -> usize {
+        self.len()
+    }
 }
 
 fn extend_from_split<T, G>(mut initial_vec: Vec<T>, collected_split_vec: SplitVec<T, G>) -> Vec<T>

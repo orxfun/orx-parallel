@@ -3,7 +3,7 @@ use crate::{
     collect_into::ParCollectInto,
     computations::{DefaultRunner, ParallelRunner},
     par_iterators::par_map::ParMap,
-    parameters::Params,
+    parameters::{ChunkSize, NumThreads, Params},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -40,6 +40,18 @@ where
     R: ParallelRunner,
 {
     type Item = I::Item;
+
+    // transform
+
+    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+        self.params = self.params.with_num_threads(num_threads);
+        self
+    }
+
+    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+        self.params = self.params.with_chunk_size(chunk_size);
+        self
+    }
 
     // collect
 

@@ -17,10 +17,19 @@ pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
     // test
 
     #[cfg(test)]
-    fn is_equal_to<'a>(&self, mut b: impl Iterator<Item = &'a T>) -> bool
+    fn length(&self) -> usize;
+
+    #[cfg(test)]
+    fn is_empty(&self) -> bool {
+        self.length() == 0
+    }
+
+    #[cfg(test)]
+    fn is_equal_to<'a>(&self, b: &impl Collection<Item = T>) -> bool
     where
         T: PartialEq + 'a,
     {
+        let mut b = b.iter();
         for x in self.iter() {
             match b.next() {
                 Some(y) if x != y => return false,

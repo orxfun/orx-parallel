@@ -33,6 +33,13 @@ where
         let (_num_spawned, bag) = MapCollect::new(params, iter, map, bag).compute::<R>();
         unsafe { bag.into_inner().unwrap_only_if_counts_match() }
     }
+
+    // test
+
+    #[cfg(test)]
+    fn length(&self) -> usize {
+        self.len()
+    }
 }
 
 fn reserve<T, G: GrowthWithConstantTimeAccess>(

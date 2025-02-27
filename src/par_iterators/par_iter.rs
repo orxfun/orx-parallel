@@ -1,6 +1,7 @@
 use crate::{
     collect_into::ParCollectInto,
     computations::{DefaultRunner, ParallelRunner},
+    parameters::{ChunkSize, NumThreads},
 };
 
 pub trait ParIterCore {
@@ -12,6 +13,12 @@ where
     R: ParallelRunner,
 {
     type Item: Send + Sync;
+
+    // transform
+
+    fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
+
+    fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
     // collect
 
