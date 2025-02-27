@@ -1,5 +1,8 @@
 use super::par::{Par, ParCore};
-use crate::{collect_into::ParCollectInto, parameters::Params};
+use crate::{
+    collect_into::ParCollectInto, computations::ParallelRunner, par_iter::par_map::ParMap,
+    parameters::Params,
+};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParEmpty<I>
@@ -16,9 +19,10 @@ impl<I: ConcurrentIter> ParCore for ParEmpty<I> {
     }
 }
 
-impl<I> Par for ParEmpty<I>
+impl<I, R> Par<R> for ParEmpty<I>
 where
     I: ConcurrentIter,
+    R: ParallelRunner,
 {
     type Item = I::Item;
 
@@ -28,6 +32,12 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        todo!()
+        let map = ParMap::new(self.params, self.iter, no_ops_map);
+        Par::<R>::collect_into(map, output)
     }
+}
+
+#[inline(always)]
+fn no_ops_map<T>(input: T) -> T {
+    input
 }

@@ -13,14 +13,18 @@ where
     map: M,
 }
 
-impl<I, O, M> From<ParMap<I, O, M>> for (Params, I, M)
+impl<I, O, M> ParMap<I, O, M>
 where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
-    fn from(value: ParMap<I, O, M>) -> Self {
-        (value.params, value.iter, value.map)
+    pub(crate) fn new(params: Params, iter: I, map: M) -> Self {
+        Self { params, iter, map }
+    }
+
+    fn destruct(self) -> (Params, I, M) {
+        (self.params, self.iter, self.map)
     }
 }
 
@@ -50,7 +54,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        let (params, iter, map) = self.into();
+        let (params, iter, map) = self.destruct();
         C::map_into::<_, _, R>(output, params, iter, map)
     }
 }

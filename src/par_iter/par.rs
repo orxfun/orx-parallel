@@ -17,10 +17,7 @@ where
 
     fn collect_into<C>(self, output: C) -> C
     where
-        C: ParCollectInto<Self::Item>,
-    {
-        todo!()
-    }
+        C: ParCollectInto<Self::Item>;
 
     fn collect<C>(self) -> C
     where
