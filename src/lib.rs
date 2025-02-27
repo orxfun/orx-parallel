@@ -224,6 +224,7 @@
 )]
 // #![allow(refining_impl_trait)]
 
+mod collect_into;
 mod computations;
 mod par_iter;
 mod parameters;
