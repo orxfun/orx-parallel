@@ -12,8 +12,15 @@ impl<T, G> ParCollectIntoCore<T> for SplitVec<T, G>
 where
     T: Send + Sync,
     G: GrowthWithConstantTimeAccess,
+    Self: Default,
 {
     type BridgePinnedVec = Self;
+
+    fn empty(iter_len: Option<usize>) -> Self {
+        let mut vec = Self::default();
+        reserve(&mut vec, iter_len);
+        vec
+    }
 
     fn map_into<I, M, R>(mut self, params: Params, iter: I, map: M) -> Self
     where

@@ -5,6 +5,8 @@ use orx_pinned_vec::IntoConcurrentPinnedVec;
 pub trait ParCollectIntoCore<T: Send + Sync> {
     type BridgePinnedVec: IntoConcurrentPinnedVec<T>;
 
+    fn empty(iter_len: Option<usize>) -> Self;
+
     fn map_into<I, M, R>(self, params: Params, iter: I, map: M) -> Self
     where
         I: ConcurrentIter,

@@ -14,6 +14,13 @@ where
 {
     type BridgePinnedVec = FixedVec<T>;
 
+    fn empty(iter_len: Option<usize>) -> Self {
+        match iter_len {
+            Some(len) => Vec::with_capacity(len),
+            None => vec![],
+        }
+    }
+
     fn map_into<I, M, R>(mut self, params: Params, iter: I, map: M) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
