@@ -1,5 +1,5 @@
 use super::par::Par;
-use crate::parameters::Params;
+use crate::{collect_into::ParCollectInto, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParEmpty<I>
@@ -17,4 +17,11 @@ where
     type Item = I::Item;
 
     // collect
+
+    fn collect_into<C>(self, output: C) -> C
+    where
+        C: ParCollectInto<Self::Item>,
+    {
+        todo!()
+    }
 }
