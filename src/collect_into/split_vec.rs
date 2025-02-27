@@ -1,9 +1,8 @@
+use super::par_collect_into::ParCollectIntoCore;
 use crate::{
     computations::{MapCollect, ParallelRunner},
     parameters::Params,
 };
-
-use super::par_collect_into::ParCollectIntoCore;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::PinnedVec;
@@ -22,15 +21,19 @@ where
         M: Fn(I::Item) -> T + Send + Sync + Clone,
         R: ParallelRunner,
     {
-        match iter.try_get_len() {
-            None => self.reserve_maximum_concurrent_capacity(1 << 32),
-            Some(len) => self.reserve_maximum_concurrent_capacity(self.len() + len),
-        };
-
+        reserve(&mut self, iter.try_get_len());
         let bag: ConcurrentOrderedBag<_, _> = self.into();
-
         let (_num_spawned, bag) = MapCollect::new(params, iter, map, bag).compute::<R>();
-
         unsafe { bag.into_inner().unwrap_only_if_counts_match() }
     }
+}
+
+fn reserve<T, G: GrowthWithConstantTimeAccess>(
+    split_vec: &mut SplitVec<T, G>,
+    len_to_extend: Option<usize>,
+) {
+    match len_to_extend {
+        None => split_vec.reserve_maximum_concurrent_capacity(1 << 32),
+        Some(len) => split_vec.reserve_maximum_concurrent_capacity(split_vec.len() + len),
+    };
 }
