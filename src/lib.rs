@@ -229,4 +229,5 @@ mod computations;
 mod into_par;
 mod par_iter;
 mod parallelizable;
+mod parallelizable_collection;
 mod parameters;

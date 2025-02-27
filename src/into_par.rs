@@ -5,19 +5,19 @@ use orx_concurrent_iter::{
 };
 
 pub trait IntoPar {
-    type Item: Send + Sync;
+    type ParItem: Send + Sync;
 
-    type IntoIter: ConcurrentIter<Item = Self::Item>;
+    type ParIntoIter: ConcurrentIter<Item = Self::ParItem>;
 
-    fn into_par(self) -> ParEmpty<Self::IntoIter>;
+    fn into_par(self) -> ParEmpty<Self::ParIntoIter>;
 }
 
 impl<I: IntoConcurrentIter> IntoPar for I {
-    type Item = I::Item;
+    type ParItem = I::Item;
 
-    type IntoIter = I::IntoIter;
+    type ParIntoIter = I::IntoIter;
 
-    fn into_par(self) -> ParEmpty<Self::IntoIter> {
+    fn into_par(self) -> ParEmpty<Self::ParIntoIter> {
         ParEmpty::new(self.into_concurrent_iter(), Params::default())
     }
 }
@@ -27,6 +27,8 @@ where
     Self: Sized + Iterator,
     Self::Item: Send + Sync,
 {
+    type ParItem: Send + Sync;
+
     fn iter_into_par(self) -> ParEmpty<ConIterOfIter<Self, Regular>>;
 }
 
@@ -35,6 +37,8 @@ where
     I: Sized + Iterator,
     I::Item: Send + Sync,
 {
+    type ParItem = Self::Item;
+
     fn iter_into_par(self) -> ParEmpty<ConIterOfIter<Self, Regular>> {
         ParEmpty::new(self.iter_into_concurrent_iter(), Params::default())
     }

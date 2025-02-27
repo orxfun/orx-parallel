@@ -2,18 +2,22 @@ use crate::{par_iter::ParEmpty, parameters::Params};
 use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterable};
 
 pub trait Parallelizable {
-    type ConcurrentIter: ConcurrentIter;
+    type ParItem;
 
-    fn par(&self) -> ParEmpty<Self::ConcurrentIter>;
+    type ParIter: ConcurrentIter;
+
+    fn par(&self) -> ParEmpty<Self::ParIter>;
 }
 
 impl<I> Parallelizable for I
 where
     I: ConcurrentIterable,
 {
-    type ConcurrentIter = I::Iter;
+    type ParItem = I::Item;
 
-    fn par(&self) -> ParEmpty<Self::ConcurrentIter> {
+    type ParIter = I::Iter;
+
+    fn par(&self) -> ParEmpty<Self::ParIter> {
         ParEmpty::new(self.concurrent_iter(), Params::default())
     }
 }
