@@ -1,5 +1,5 @@
-use crate::{par_iter::ParEmpty, parallelizable::Parallelizable};
-use orx_concurrent_iter::ConcurrentIter;
+use crate::{into_par::IntoPar, par_iter::ParEmpty, parallelizable::Parallelizable};
+use orx_concurrent_iter::IntoConcurrentIter;
 
 pub trait ParallelizableCollection {
     type ParItem;
@@ -10,7 +10,24 @@ pub trait ParallelizableCollection {
 
     fn as_parallelizable(&self) -> Self::Parallelizable<'_>;
 
-    fn par(&self) -> ParEmpty<<Self::Parallelizable<'_> as Parallelizable>::ParIter> {
+    fn par(&self) -> ParEmpty<<Self::Parallelizable<'_> as Parallelizable>::ConIter> {
         self.as_parallelizable().par()
+    }
+}
+
+impl<X> ParallelizableCollection for X
+where
+    X: IntoConcurrentIter,
+    for<'a> &'a X: IntoConcurrentIter<Item = &'a <X as IntoConcurrentIter>::Item>,
+{
+    type ParItem = <X as IntoPar>::ParItem;
+
+    type Parallelizable<'i>
+        = &'i X
+    where
+        Self: 'i;
+
+    fn as_parallelizable(&self) -> Self::Parallelizable<'_> {
+        self
     }
 }
