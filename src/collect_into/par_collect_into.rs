@@ -1,10 +1,12 @@
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub trait ParCollectInto<O: Send + Sync>: ParCollectIntoCore<O> {}
-
 pub trait ParCollectIntoCore<O: Send + Sync> {
     type BridgePinnedVec: IntoConcurrentPinnedVec<O>;
+
+    fn collect_into<I>(self, con_iter: I) -> Self
+    where
+        I: ConcurrentIter;
 
     // /// Performs the parallel map operation, collecting the results into this collection.
     // fn map_into<I, M>(self, par_map: ParMap<I, O, M>) -> Self
@@ -40,3 +42,7 @@ pub trait ParCollectIntoCore<O: Send + Sync> {
     // where
     //     Self: Sized;
 }
+
+pub trait ParCollectInto<O: Send + Sync>: ParCollectIntoCore<O> {}
+
+impl<O: Send + Sync, C: ParCollectIntoCore<O>> ParCollectInto<O> for C {}

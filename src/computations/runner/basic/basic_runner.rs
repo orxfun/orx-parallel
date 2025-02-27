@@ -69,7 +69,7 @@ impl BasicRunner {
 
 impl ParallelRunner for BasicRunner {
     fn new(params: Params, kind: ComputationKind, iter: &impl ConcurrentIter) -> Self {
-        let initial_len = remaining_len(iter);
+        let initial_len = iter.try_get_len();
         let max_num_threads = maximum_num_threads(initial_len, params.num_threads);
         let resolved_chunk_size =
             ResolvedChunkSize::new(kind, initial_len, max_num_threads, params.chunk_size);
@@ -96,7 +96,7 @@ impl ParallelRunner for BasicRunner {
 
             'lag_period: loop {
                 for _ in 0..LAG_PERIODICITY {
-                    match self.spawn_new(num_spawned, remaining_len(iter)) {
+                    match self.spawn_new(num_spawned, iter.try_get_len()) {
                         false => break 'lag_period,
                         true => {
                             s.spawn(move || execute(chunk));
@@ -107,7 +107,7 @@ impl ParallelRunner for BasicRunner {
 
                 lag();
 
-                match self.next_chunk(num_spawned, remaining_len(iter)) {
+                match self.next_chunk(num_spawned, iter.try_get_len()) {
                     Some(c) => chunk = c,
                     None => break 'lag_period,
                 }
@@ -115,13 +115,6 @@ impl ParallelRunner for BasicRunner {
         });
 
         num_spawned
-    }
-}
-
-fn remaining_len<I: ConcurrentIter>(iter: &I) -> Option<usize> {
-    match iter.size_hint() {
-        (_, None) => None,
-        (_, Some(upper)) => Some(upper),
     }
 }
 

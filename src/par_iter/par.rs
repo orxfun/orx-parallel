@@ -1,3 +1,3 @@
-pub trait ParIter {
+pub trait Par {
     type Item: Send + Sync;
 }
