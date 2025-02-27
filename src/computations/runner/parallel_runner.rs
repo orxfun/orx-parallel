@@ -1,11 +1,12 @@
 use crate::{computations::computation_kind::ComputationKind, parameters::Params};
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, Enumeration};
 
 pub trait ParallelRunner {
-    fn new(params: Params, kind: ComputationKind, iter: &impl ConcurrentIter) -> Self;
+    fn new(kind: ComputationKind, params: Params, initial_len: Option<usize>) -> Self;
 
-    fn run<I, R>(&self, iter: &I, run: &R) -> usize
+    fn run<I, E, R>(&self, iter: &I, run: &R) -> usize
     where
-        I: ConcurrentIter,
+        E: Enumeration,
+        I: ConcurrentIter<E>,
         R: Fn(usize) + Sync;
 }

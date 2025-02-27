@@ -1,9 +1,9 @@
-use super::data::MapCollectData;
+use super::data::MapCollect;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Enumerated};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-pub fn map_col<I, O, Map, P>(x: &MapCollectData<I, O, Map, P>, chunk_size: usize)
+pub fn map_col<I, O, Map, P>(x: &MapCollect<I, O, Map, P>, chunk_size: usize)
 where
     I: ConcurrentIter<Enumerated>,
     O: Send + Sync,

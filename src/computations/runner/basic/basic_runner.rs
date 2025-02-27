@@ -3,7 +3,7 @@ use crate::{
     computations::{computation_kind::ComputationKind, runner::parallel_runner::ParallelRunner},
     parameters::Params,
 };
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, Enumeration};
 
 const LAG_PERIODICITY: usize = 4;
 
@@ -68,8 +68,7 @@ impl BasicRunner {
 }
 
 impl ParallelRunner for BasicRunner {
-    fn new(params: Params, kind: ComputationKind, iter: &impl ConcurrentIter) -> Self {
-        let initial_len = iter.try_get_len();
+    fn new(kind: ComputationKind, params: Params, initial_len: Option<usize>) -> Self {
         let max_num_threads = maximum_num_threads(initial_len, params.num_threads);
         let resolved_chunk_size =
             ResolvedChunkSize::new(kind, initial_len, max_num_threads, params.chunk_size);
@@ -81,9 +80,10 @@ impl ParallelRunner for BasicRunner {
         }
     }
 
-    fn run<I, R>(&self, iter: &I, execute: &R) -> usize
+    fn run<I, E, R>(&self, iter: &I, execute: &R) -> usize
     where
-        I: ConcurrentIter,
+        E: Enumeration,
+        I: ConcurrentIter<E>,
         R: Fn(usize) + Sync,
     {
         let mut num_spawned = 0;
