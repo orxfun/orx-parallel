@@ -58,27 +58,28 @@ where
                 }
             }
             false => {
+                let offset = self.bag.len();
                 let len = self.iter.try_get_len();
                 let runner = R::new(ComputationKind::Collect, self.params, len);
-                let thread_task = |chunk_size| self.thread_task(chunk_size);
+                let thread_task = |chunk_size| self.thread_task(offset, chunk_size);
                 runner.run(&self.iter, &thread_task);
             }
         }
     }
 
-    pub fn thread_task(&self, chunk_size: usize) {
+    pub fn thread_task(&self, offset: usize, chunk_size: usize) {
         match chunk_size {
-            0 | 1 => self.pull_into_bag(self.iter.item_puller()),
-            c => self.pull_into_bag(self.iter.chunk_puller(c).flattened()),
+            0 | 1 => self.pull_into_bag(offset, self.iter.item_puller()),
+            c => self.pull_into_bag(offset, self.iter.chunk_puller(c).flattened()),
         }
     }
 
-    fn pull_into_bag<EI>(&self, puller: EI)
+    fn pull_into_bag<EI>(&self, offset: usize, puller: EI)
     where
         EI: Iterator<Item = (usize, I::Item)>,
     {
         for (i, value) in puller {
-            unsafe { self.bag.set_value(i, (self.map)(value)) };
+            unsafe { self.bag.set_value(offset + i, (self.map)(value)) };
         }
     }
 }
