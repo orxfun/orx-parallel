@@ -3,7 +3,11 @@ use crate::{
     computations::{DefaultRunner, ParallelRunner},
 };
 
-pub trait Par<R = DefaultRunner>: Sized
+pub trait ParCore {
+    fn input_len(&self) -> Option<usize>;
+}
+
+pub trait Par<R = DefaultRunner>: ParCore + Sized
 where
     R: ParallelRunner,
 {
@@ -16,5 +20,13 @@ where
         C: ParCollectInto<Self::Item>,
     {
         todo!()
+    }
+
+    fn collect<C>(self) -> C
+    where
+        C: ParCollectInto<Self::Item>,
+    {
+        let output = C::empty(self.input_len());
+        self.collect_into(output)
     }
 }

@@ -1,4 +1,4 @@
-use super::par::Par;
+use super::par::{Par, ParCore};
 use crate::{collect_into::ParCollectInto, computations::ParallelRunner, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -21,6 +21,17 @@ where
 {
     fn from(value: ParMap<I, O, M>) -> Self {
         (value.params, value.iter, value.map)
+    }
+}
+
+impl<I, O, M> ParCore for ParMap<I, O, M>
+where
+    I: ConcurrentIter,
+    O: Send + Sync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
+{
+    fn input_len(&self) -> Option<usize> {
+        self.iter.try_get_len()
     }
 }
 

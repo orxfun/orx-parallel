@@ -17,7 +17,7 @@ where
     fn empty(iter_len: Option<usize>) -> Self {
         match iter_len {
             Some(len) => Vec::with_capacity(len),
-            None => vec![],
+            None => Vec::new(),
         }
     }
 
