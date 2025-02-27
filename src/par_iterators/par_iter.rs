@@ -14,11 +14,18 @@ where
 {
     type Item: Send + Sync;
 
-    // transform
+    // params
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
+
+    // transform
+
+    fn map<O2, M2>(self, map: M2) -> impl ParIter<Item = O2>
+    where
+        O2: Send + Sync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone;
 
     // collect
 

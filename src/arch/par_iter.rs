@@ -152,7 +152,7 @@ where
     /// For more critical operations, this `ChunkSize::Exact` and `ChunkSize::Min` options can be used to tune the execution for the class of the relevant input data.
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
-    // transform
+    // params
 
     /// Takes the closure `map` and creates an iterator which calls that closure on each element.
     ///

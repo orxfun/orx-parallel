@@ -64,7 +64,7 @@ where
         self
     }
 
-    // transform
+    // params
 
     fn map<O2, M2>(
         self,

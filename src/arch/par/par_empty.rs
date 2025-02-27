@@ -45,7 +45,7 @@ where
         self
     }
 
-    // transform
+    // params
 
     fn map<O, M>(self, map: M) -> ParMap<I, O, M>
     where

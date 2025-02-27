@@ -18,13 +18,17 @@ where
     phantom: PhantomData<R>,
 }
 
-impl<I: ConcurrentIter> Par<I> {
+impl<I: ConcurrentIter, R: ParallelRunner> Par<I, R> {
     pub(crate) fn new(iter: I, params: Params) -> Self {
         Self {
             iter,
             params,
             phantom: PhantomData,
         }
+    }
+
+    fn destruct(self) -> (Params, I) {
+        (self.params, self.iter)
     }
 }
 
@@ -41,7 +45,7 @@ where
 {
     type Item = I::Item;
 
-    // transform
+    // params
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
@@ -51,6 +55,17 @@ where
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
         self
+    }
+
+    // transform
+
+    fn map<O2, M2>(self, map: M2) -> impl ParIter<Item = O2>
+    where
+        O2: Send + Sync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
+    {
+        let (params, iter) = self.destruct();
+        ParMap::new(params, iter, map)
     }
 
     // collect

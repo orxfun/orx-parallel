@@ -62,7 +62,7 @@ where
 {
     type Item = O;
 
-    // transform
+    // params
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
@@ -72,6 +72,18 @@ where
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
         self
+    }
+
+    // transform
+
+    fn map<O2, M2>(self, map: M2) -> impl ParIter<Item = O2>
+    where
+        O2: Send + Sync,
+        M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,
+    {
+        let (params, iter, map1) = self.destruct();
+        let map = move |x| map(map1(x));
+        ParMap::new(params, iter, map)
     }
 
     // collect

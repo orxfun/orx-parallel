@@ -2,6 +2,8 @@ use crate::{
     collect_into::{ParCollectInto, ParCollectIntoCore},
     into_par::IntoPar,
     par_iterators::ParIter,
+    parallelizable::Parallelizable,
+    parallelizable_collection::ParallelizableCollection,
 };
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
@@ -37,15 +39,10 @@ fn expected(with_offset: bool, input: &[String]) -> Vec<String> {
     }
 }
 
+// collect
+
 #[test_matrix(
-    [
-        Vec::<String>::new(),
-        SplitVec::<String>::new(),
-        FixedVec::<String>::new(0),
-        Vec::<String>::from_iter(offset()),
-        SplitVec::<String>::from_iter(offset()),
-        FixedVec::<String>::from_iter(offset())
-    ],
+    [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0), Vec::<String>::from_iter(offset()), SplitVec::<String>::from_iter(offset()), FixedVec::<String>::from_iter(offset()) ],
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024])
@@ -59,14 +56,7 @@ fn empty_collect_into<C: ParCollectInto<String>>(output: C, n: usize, nt: usize,
 }
 
 #[test_matrix(
-    [
-        Vec::<String>::new(),
-        SplitVec::<String>::new(),
-        FixedVec::<String>::new(0),
-        Vec::<String>::from_iter(offset()),
-        SplitVec::<String>::from_iter(offset()),
-        FixedVec::<String>::from_iter(offset())
-    ],
+    [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0), Vec::<String>::from_iter(offset()), SplitVec::<String>::from_iter(offset()), FixedVec::<String>::from_iter(offset()) ],
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024])
@@ -77,4 +67,24 @@ fn empty_collect<C: ParCollectInto<String>>(_: C, n: usize, nt: usize, chunk: us
     let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output: C = par.collect();
     assert!(output.is_equal_to(&expected));
+}
+
+// into - as
+
+#[test]
+fn parallelizable() {
+    fn take<'a>(a: impl Parallelizable<ParItem = &'a String>) {
+        let _ = a.par();
+    }
+    let input = input(7, |x| (x + 10).to_string());
+    take(&input);
+}
+
+#[test]
+fn parallelizable_collection() {
+    fn take(a: &impl ParallelizableCollection<ParItem = String>) {
+        let _ = a.par();
+    }
+    let input = input(7, |x| (x + 10).to_string());
+    take(&input);
 }

@@ -57,7 +57,7 @@ where
         self
     }
 
-    // transform
+    // params
 
     fn map<O, M>(
         self,
