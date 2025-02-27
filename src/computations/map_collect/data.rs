@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::{
     computations::{computation_kind::ComputationKind, ParallelRunner},
     parameters::Params,
@@ -8,52 +6,48 @@ use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Enumerated};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-pub struct MapCollect<I, O, Map, P, R>
+pub struct MapCollect<I, O, Map, P>
 where
     I: ConcurrentIter<Enumerated>,
     O: Send + Sync,
     Map: Fn(I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
-    R: ParallelRunner,
 {
     params: Params,
     iter: I,
     map: Map,
     bag: ConcurrentOrderedBag<O, P>,
-    phantom: PhantomData<R>,
 }
 
-unsafe impl<I, O, Map, P, R> Sync for MapCollect<I, O, Map, P, R>
+unsafe impl<I, O, Map, P> Sync for MapCollect<I, O, Map, P>
 where
     I: ConcurrentIter<Enumerated>,
     O: Send + Sync,
     Map: Fn(I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
-    R: ParallelRunner,
 {
 }
 
-impl<I, O, Map, P, R> MapCollect<I, O, Map, P, R>
+impl<I, O, Map, P> MapCollect<I, O, Map, P>
 where
     I: ConcurrentIter<Enumerated>,
     O: Send + Sync,
     Map: Fn(I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
-    R: ParallelRunner,
 {
-    pub fn run(params: Params, iter: I, map: Map, bag: ConcurrentOrderedBag<O, P>) {
-        let map_collect = Self {
+    pub fn new<J>(params: Params, iter: J, map: Map, bag: ConcurrentOrderedBag<O, P>) -> Self
+    where
+        J: ConcurrentIter<EnumerationOf<Enumerated> = I>,
+    {
+        Self {
             params,
-            iter,
+            iter: iter.enumerated(),
             map,
             bag,
-            phantom: PhantomData,
-        };
-
-        map_collect.compute();
+        }
     }
 
-    fn compute(self) {
+    pub fn compute<R: ParallelRunner>(self) {
         match self.params.is_sequential() {
             true => {
                 // # SAFETY: collected is just wrapped as a concurrent-ordered-bag and is not mutated by par-iters,
@@ -72,13 +66,7 @@ where
         }
     }
 
-    pub fn thread_task(&self, chunk_size: usize)
-    where
-        I: ConcurrentIter<Enumerated>,
-        O: Send + Sync,
-        Map: Fn(I::Item) -> O + Send + Sync,
-        P: IntoConcurrentPinnedVec<O>,
-    {
+    pub fn thread_task(&self, chunk_size: usize) {
         match chunk_size {
             0 | 1 => self.pull_into_bag(self.iter.item_puller()),
             c => self.pull_into_bag(self.iter.chunk_puller(c).flattened()),
