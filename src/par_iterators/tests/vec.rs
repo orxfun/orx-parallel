@@ -57,3 +57,24 @@ fn empty_collect_into<C: ParCollectInto<String>>(output: C, n: usize, nt: usize,
     let output = par.collect_into(output);
     assert!(output.is_equal_to(&expected));
 }
+
+#[test_matrix(
+    [
+        Vec::<String>::new(),
+        SplitVec::<String>::new(),
+        FixedVec::<String>::new(0),
+        Vec::<String>::from_iter(offset()),
+        SplitVec::<String>::from_iter(offset()),
+        FixedVec::<String>::from_iter(offset())
+    ],
+    [0, 1, N[0], N[1]],
+    [1, 2, 4],
+    [1, 64, 1024])
+]
+fn empty_collect<C: ParCollectInto<String>>(_: C, n: usize, nt: usize, chunk: usize) {
+    let input = input(n, |x| (x + 10).to_string());
+    let expected = expected(false, &input);
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: C = par.collect();
+    assert!(output.is_equal_to(&expected));
+}
