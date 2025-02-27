@@ -4,7 +4,7 @@ use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterable};
 pub trait Parallelizable {
     type ParItem;
 
-    type ParIter: ConcurrentIter;
+    type ParIter: ConcurrentIter<Item = Self::ParItem>;
 
     fn par(&self) -> ParEmpty<Self::ParIter>;
 }
