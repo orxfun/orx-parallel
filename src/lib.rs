@@ -226,5 +226,6 @@
 
 mod collect_into;
 mod computations;
+mod into_par_iter;
 mod par_iter;
 mod parameters;

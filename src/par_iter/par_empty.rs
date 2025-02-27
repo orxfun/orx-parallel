@@ -13,6 +13,12 @@ where
     params: Params,
 }
 
+impl<I: ConcurrentIter> ParEmpty<I> {
+    pub(crate) fn new(iter: I, params: Params) -> Self {
+        Self { iter, params }
+    }
+}
+
 impl<I: ConcurrentIter> ParCore for ParEmpty<I> {
     fn input_len(&self) -> Option<usize> {
         self.iter.try_get_len()
