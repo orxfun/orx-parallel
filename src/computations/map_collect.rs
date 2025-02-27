@@ -47,7 +47,7 @@ where
         }
     }
 
-    pub fn compute<R: ParallelRunner>(self) {
+    pub fn compute<R: ParallelRunner>(self) -> (usize, ConcurrentOrderedBag<O, P>) {
         match self.params.is_sequential() {
             true => {
                 // # SAFETY: collected is just wrapped as a concurrent-ordered-bag and is not mutated by par-iters,
@@ -56,13 +56,15 @@ where
                 for x in self.iter.into_seq_iter().map(self.map) {
                     vec.push(x);
                 }
+                (0, vec.into())
             }
             false => {
                 let offset = self.bag.len();
                 let len = self.iter.try_get_len();
                 let runner = R::new(ComputationKind::Collect, self.params, len);
                 let thread_task = |chunk_size| self.thread_task(offset, chunk_size);
-                runner.run(&self.iter, &thread_task);
+                let num_spawned = runner.run(&self.iter, &thread_task);
+                (num_spawned, self.bag)
             }
         }
     }
