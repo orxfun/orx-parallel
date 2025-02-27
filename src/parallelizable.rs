@@ -1,4 +1,4 @@
-use crate::{par_iter::ParEmpty, parameters::Params};
+use crate::{par_iterators::Par, parameters::Params};
 use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterable};
 
 pub trait Parallelizable: ConcurrentIterable {
@@ -6,7 +6,7 @@ pub trait Parallelizable: ConcurrentIterable {
 
     type ConIter: ConcurrentIter<Item = Self::ParItem>;
 
-    fn par(&self) -> ParEmpty<Self::ConIter>;
+    fn par(&self) -> Par<Self::ConIter>;
 }
 
 impl<I> Parallelizable for I
@@ -17,7 +17,7 @@ where
 
     type ConIter = I::Iter;
 
-    fn par(&self) -> ParEmpty<Self::ConIter> {
-        ParEmpty::new(self.concurrent_iter(), Params::default())
+    fn par(&self) -> Par<Self::ConIter> {
+        Par::new(self.concurrent_iter(), Params::default())
     }
 }

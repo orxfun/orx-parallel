@@ -227,7 +227,7 @@
 mod collect_into;
 mod computations;
 mod into_par;
-mod par_iter;
+mod par_iterators;
 mod parallelizable;
 mod parallelizable_collection;
 mod parameters;

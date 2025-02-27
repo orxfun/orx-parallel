@@ -1,4 +1,4 @@
-use super::par::{Par, ParCore};
+use super::par_iter::{ParIter, ParIterCore};
 use crate::{collect_into::ParCollectInto, computations::ParallelRunner, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<I, O, M> ParCore for ParMap<I, O, M>
+impl<I, O, M> ParIterCore for ParMap<I, O, M>
 where
     I: ConcurrentIter,
     O: Send + Sync,
@@ -39,7 +39,7 @@ where
     }
 }
 
-impl<I, O, M, R> Par<R> for ParMap<I, O, M>
+impl<I, O, M, R> ParIter<R> for ParMap<I, O, M>
 where
     I: ConcurrentIter,
     O: Send + Sync,

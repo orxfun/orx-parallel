@@ -3,11 +3,11 @@ use crate::{
     computations::{DefaultRunner, ParallelRunner},
 };
 
-pub trait ParCore {
+pub trait ParIterCore {
     fn input_len(&self) -> Option<usize>;
 }
 
-pub trait Par<R = DefaultRunner>: ParCore + Sized
+pub trait ParIter<R = DefaultRunner>: ParIterCore + Sized
 where
     R: ParallelRunner,
 {

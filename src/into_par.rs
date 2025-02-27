@@ -1,4 +1,4 @@
-use crate::{par_iter::ParEmpty, parameters::Params};
+use crate::{par_iterators::Par, parameters::Params};
 use orx_concurrent_iter::{
     implementations::ConIterOfIter, ConcurrentIter, IntoConcurrentIter, IterIntoConcurrentIter,
     Regular,
@@ -9,7 +9,7 @@ pub trait IntoPar: IntoConcurrentIter {
 
     type ConIntoIter: ConcurrentIter<Item = Self::ParItem>;
 
-    fn into_par(self) -> ParEmpty<Self::ConIntoIter>;
+    fn into_par(self) -> Par<Self::ConIntoIter>;
 }
 
 impl<I: IntoConcurrentIter> IntoPar for I {
@@ -17,8 +17,8 @@ impl<I: IntoConcurrentIter> IntoPar for I {
 
     type ConIntoIter = I::IntoIter;
 
-    fn into_par(self) -> ParEmpty<Self::ConIntoIter> {
-        ParEmpty::new(self.into_concurrent_iter(), Params::default())
+    fn into_par(self) -> Par<Self::ConIntoIter> {
+        Par::new(self.into_concurrent_iter(), Params::default())
     }
 }
 
@@ -29,7 +29,7 @@ where
 {
     type ParItem: Send + Sync;
 
-    fn iter_into_par(self) -> ParEmpty<ConIterOfIter<Self, Regular>>;
+    fn iter_into_par(self) -> Par<ConIterOfIter<Self, Regular>>;
 }
 
 impl<I> IteratorIntoPar for I
@@ -39,7 +39,7 @@ where
 {
     type ParItem = Self::Item;
 
-    fn iter_into_par(self) -> ParEmpty<ConIterOfIter<Self, Regular>> {
-        ParEmpty::new(self.iter_into_concurrent_iter(), Params::default())
+    fn iter_into_par(self) -> Par<ConIterOfIter<Self, Regular>> {
+        Par::new(self.iter_into_concurrent_iter(), Params::default())
     }
 }
