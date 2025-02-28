@@ -85,3 +85,21 @@ where
     let output = par.map(map).collect_into(output);
     assert!(output.is_equal_to(&expected));
 }
+
+#[test_matrix(
+    [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0)],
+    [0, 1, N[0], N[1]],
+    [1, 2, 4],
+    [1, 64, 1024])
+]
+fn map_collect<C>(_: C, n: usize, nt: usize, chunk: usize)
+where
+    C: ParCollectInto<String>,
+{
+    let map = |x: usize| x.to_string();
+    let input = 0..n;
+    let expected = expected(false, input.clone(), map);
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: C = par.map(map).collect();
+    assert!(output.is_equal_to(&expected));
+}
