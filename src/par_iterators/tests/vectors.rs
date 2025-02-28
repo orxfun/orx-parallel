@@ -18,14 +18,6 @@ fn offset() -> Vec<String> {
     vec!["x".to_string(); N_OFFSET]
 }
 
-fn input2(n: usize, elem: impl Fn(usize) -> String) -> Vec<String> {
-    let mut vec = Vec::with_capacity(n + 17);
-    for i in 0..n {
-        vec.push(elem(i));
-    }
-    vec
-}
-
 fn input<O: FromIterator<String>>(n: usize) -> O {
     let elem = |x: usize| (x + 10).to_string();
     (0..n).map(elem).collect()
@@ -126,24 +118,4 @@ where
     let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output: C = par.map(map).collect();
     assert!(output.is_equal_to(&expected));
-}
-
-// into - as
-
-#[test]
-fn parallelizable() {
-    fn take<'a>(a: impl Parallelizable<ParItem = &'a String>) {
-        let _ = a.par();
-    }
-    let input = input2(7, |x| (x + 10).to_string());
-    take(&input);
-}
-
-#[test]
-fn parallelizable_collection() {
-    fn take(a: &impl ParallelizableCollection<ParItem = String>) {
-        let _ = a.par();
-    }
-    let input = input2(7, |x| (x + 10).to_string());
-    take(&input);
 }

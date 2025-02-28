@@ -1,4 +1,4 @@
-use crate::parallelizable::Parallelizable;
+use orx_parallel::Parallelizable;
 
 fn take_parallelizable<T>(a: impl Parallelizable<ParItem = T>) {
     let _ = a.par();

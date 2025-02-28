@@ -231,3 +231,7 @@ mod par_iterators;
 mod parallelizable;
 mod parallelizable_collection;
 mod parameters;
+
+pub use into_par::{IntoPar, IteratorIntoPar};
+pub use parallelizable::Parallelizable;
+pub use parallelizable_collection::ParallelizableCollection;

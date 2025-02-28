@@ -1,4 +1,4 @@
-use crate::into_par::IntoPar;
+use orx_parallel::IntoPar;
 
 fn take_into_par<T>(a: impl IntoPar<ParItem = T>) {
     let _ = a.into_par();

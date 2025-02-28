@@ -1,4 +1,4 @@
-use crate::parallelizable_collection::ParallelizableCollection;
+use orx_parallel::ParallelizableCollection;
 
 fn take_parallelizable_collection<T>(a: impl ParallelizableCollection<ParItem = T>) {
     let _ = a.par();
