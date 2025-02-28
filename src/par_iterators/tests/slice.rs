@@ -1,11 +1,7 @@
-use crate::{
-    collect_into::{ParCollectInto, ParCollectIntoCore},
-    into_par::IntoPar,
-    par_iterators::ParIter,
-};
+use crate::{collect_into::ParCollectIntoCore, into_par::IntoPar, par_iterators::ParIter};
 use orx_fixed_vec::FixedVec;
-use orx_iterable::{Collection, IntoCloningIterable, Iterable};
-use orx_split_vec::{Doubling, Linear, PseudoDefault, Recursive, SplitVec};
+use orx_iterable::Collection;
+use orx_split_vec::{Doubling, Linear, PseudoDefault, SplitVec};
 use test_case::test_matrix;
 
 #[cfg(miri)]

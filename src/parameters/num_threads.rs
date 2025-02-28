@@ -62,9 +62,6 @@ impl NumThreads {
     }
 
     pub fn is_sequential(self) -> bool {
-        match self {
-            Self::Max(n) if n == SEQUENTIAL_NUM_THREADS => true,
-            _ => false,
-        }
+        matches!(self, Self::Max(n) if n == SEQUENTIAL_NUM_THREADS)
     }
 }
