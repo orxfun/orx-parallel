@@ -4,8 +4,9 @@ use crate::{
     computations::{DefaultRunner, ParallelRunner},
     par_iterators::par_map::ParMap,
     parameters::{ChunkSize, NumThreads, Params},
+    IntoPar,
 };
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 use std::marker::PhantomData;
 
 pub struct Par<I, R = DefaultRunner>
@@ -18,7 +19,11 @@ where
     phantom: PhantomData<R>,
 }
 
-impl<I: ConcurrentIter, R: ParallelRunner> Par<I, R> {
+impl<I, R> Par<I, R>
+where
+    I: ConcurrentIter,
+    R: ParallelRunner,
+{
     pub(crate) fn new(iter: I, params: Params) -> Self {
         Self {
             iter,
@@ -32,7 +37,39 @@ impl<I: ConcurrentIter, R: ParallelRunner> Par<I, R> {
     }
 }
 
-impl<I: ConcurrentIter, R: ParallelRunner> ParIterCore for Par<I, R> {
+// impl<I, R> IntoConcurrentIter for Par<I, R>
+// where
+//     I: ConcurrentIter,
+//     R: ParallelRunner,
+// {
+//     type Item = I::Item;
+
+//     type IntoIter = I;
+
+//     fn into_concurrent_iter(self) -> Self::IntoIter {
+//         self.iter
+//     }
+// }
+
+// impl<I, R> IntoPar for Par<I, R>
+// where
+//     I: ConcurrentIter,
+//     R: ParallelRunner,
+// {
+//     type ParItem = I::Item;
+
+//     type ConIntoIter = I;
+
+//     fn into_par(self) -> Par<Self::ConIntoIter> {
+//         self
+//     }
+// }
+
+impl<I, R> ParIterCore for Par<I, R>
+where
+    I: ConcurrentIter,
+    R: ParallelRunner,
+{
     fn input_len(&self) -> Option<usize> {
         self.iter.try_get_len()
     }

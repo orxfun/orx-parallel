@@ -1,9 +1,16 @@
-use crate::{par_iterators::Par, parameters::Params};
+use crate::{
+    computations::{DefaultRunner, ParallelRunner},
+    par_iterators::Par,
+    parameters::Params,
+};
 use orx_concurrent_iter::{
     implementations::ConIterOfIter, ConcurrentIter, IntoConcurrentIter, IterIntoConcurrentIter,
 };
 
-pub trait IntoPar: IntoConcurrentIter {
+pub trait IntoPar<R = DefaultRunner>
+where
+    R: ParallelRunner,
+{
     type ParItem: Send + Sync;
 
     type ConIntoIter: ConcurrentIter<Item = Self::ParItem>;
@@ -21,7 +28,7 @@ impl<I: IntoConcurrentIter> IntoPar for I {
     }
 }
 
-pub trait IteratorIntoPar: IterIntoConcurrentIter
+pub trait IteratorIntoPar
 where
     Self: Sized + Iterator,
     Self::Item: Send + Sync,
