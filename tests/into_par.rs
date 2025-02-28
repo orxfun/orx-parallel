@@ -1,4 +1,4 @@
-use orx_parallel::IntoPar;
+use orx_parallel::{IntoPar, IteratorIntoPar};
 
 fn take_into_par<T>(a: impl IntoPar<ParItem = T>) {
     let _ = a.into_par();
@@ -27,6 +27,6 @@ fn range_into_par() {
 fn iter_into_par() {
     let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
     let iter = vec.iter().filter(|x| x.as_str() != "x");
-
-    // take_into_par::<&String>(iter);
+    let par_iter = iter.iter_into_par();
+    take_into_par(par_iter);
 }

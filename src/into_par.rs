@@ -15,7 +15,7 @@ where
 
     type ConIntoIter: ConcurrentIter<Item = Self::ParItem>;
 
-    fn into_par(self) -> Par<Self::ConIntoIter>;
+    fn into_par(self) -> Par<Self::ConIntoIter, R>;
 }
 
 impl<I: IntoConcurrentIter> IntoPar for I {

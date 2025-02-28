@@ -37,33 +37,19 @@ where
     }
 }
 
-// impl<I, R> IntoConcurrentIter for Par<I, R>
-// where
-//     I: ConcurrentIter,
-//     R: ParallelRunner,
-// {
-//     type Item = I::Item;
+impl<I, R> IntoPar<R> for Par<I, R>
+where
+    I: ConcurrentIter,
+    R: ParallelRunner,
+{
+    type ParItem = I::Item;
 
-//     type IntoIter = I;
+    type ConIntoIter = I;
 
-//     fn into_concurrent_iter(self) -> Self::IntoIter {
-//         self.iter
-//     }
-// }
-
-// impl<I, R> IntoPar for Par<I, R>
-// where
-//     I: ConcurrentIter,
-//     R: ParallelRunner,
-// {
-//     type ParItem = I::Item;
-
-//     type ConIntoIter = I;
-
-//     fn into_par(self) -> Par<Self::ConIntoIter> {
-//         self
-//     }
-// }
+    fn into_par(self) -> Par<Self::ConIntoIter, R> {
+        self
+    }
+}
 
 impl<I, R> ParIterCore for Par<I, R>
 where
