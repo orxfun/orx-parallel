@@ -25,7 +25,7 @@ pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
     }
 
     #[cfg(test)]
-    fn is_equal_to<'a>(&self, b: &impl Collection<Item = T>) -> bool
+    fn is_equal_to<'a>(&self, b: impl orx_iterable::Iterable<Item = &'a T>) -> bool
     where
         T: PartialEq + 'a,
     {
@@ -33,6 +33,23 @@ pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
         for x in self.iter() {
             match b.next() {
                 Some(y) if x != y => return false,
+                None => return false,
+                _ => {}
+            }
+        }
+
+        b.next().is_none()
+    }
+
+    #[cfg(test)]
+    fn is_equal_to_ref(&self, b: impl orx_iterable::Iterable<Item = T>) -> bool
+    where
+        T: PartialEq,
+    {
+        let mut b = b.iter();
+        for x in self.iter() {
+            match b.next() {
+                Some(y) if x != &y => return false,
                 None => return false,
                 _ => {}
             }
