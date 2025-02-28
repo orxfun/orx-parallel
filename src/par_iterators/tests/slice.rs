@@ -5,19 +5,13 @@ use crate::{
 };
 use orx_fixed_vec::FixedVec;
 use orx_iterable::{Collection, IntoCloningIterable, Iterable};
-use orx_split_vec::SplitVec;
+use orx_split_vec::{Doubling, Linear, PseudoDefault, Recursive, SplitVec};
 use test_case::test_matrix;
 
 #[cfg(miri)]
 const N: [usize; 2] = [37, 125];
 #[cfg(not(miri))]
 const N: [usize; 2] = [1025, 4735];
-
-const N_OFFSET: usize = 13;
-
-fn offset() -> Vec<String> {
-    vec!["x".to_string(); N_OFFSET]
-}
 
 fn input<O: FromIterator<String>>(n: usize) -> O {
     let elem = |x: usize| (x + 10).to_string();
@@ -42,67 +36,82 @@ fn empty_collect_into(n: usize, nt: usize, chunk: usize) {
 
     let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output = par.collect_into(Vec::new());
+    assert!(output.is_equal_to_ref(expected.as_slice()));
 
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output = par.collect_into(FixedVec::pseudo_default());
+    assert!(output.is_equal_to_ref(expected.as_slice()));
+
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output = par.collect_into(SplitVec::<_, Doubling>::pseudo_default());
+    assert!(output.is_equal_to_ref(expected.as_slice()));
+
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output = par.collect_into(SplitVec::<_, Linear>::pseudo_default());
     assert!(output.is_equal_to_ref(expected.as_slice()));
 }
 
-// #[test_matrix(
-//     [Vec::<String>::new()],
-//     [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0)],
-//     [0, 1, N[0], N[1]],
-//     [1, 2, 4],
-//     [1, 64, 1024])
-// ]
-// fn empty_collect<I, C>(_: I, _: C, n: usize, nt: usize, chunk: usize)
-// where
-//     I: FromIterator<String> + Collection<Item = String> + IntoPar<ParItem = String>,
-//     C: ParCollectInto<String>,
-// {
-//     let input = input::<Vec<_>>(n);
-//     let expected = expected(false, &input, |x| x);
-//     let par = input.into_par().num_threads(nt).chunk_size(chunk);
-//     let output: C = par.collect();
-//     assert!(output.is_equal_to(&expected));
-// }
+#[test_matrix(
+    [0, 1, N[0], N[1]],
+    [1, 2, 4],
+    [1, 64, 1024])
+]
+fn empty_collect(n: usize, nt: usize, chunk: usize) {
+    let vec = input::<Vec<String>>(n);
+    let input = vec.as_slice();
+    let expected = expected(&vec, |x| x);
 
-// // collect - map
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: Vec<&String> = par.collect();
+    assert!(output.is_equal_to_ref(expected.as_slice()));
 
-// #[test_matrix(
-//     [Vec::<String>::new()],
-//     [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0), Vec::<String>::from_iter(offset()), SplitVec::<String>::from_iter(offset()), FixedVec::<String>::from_iter(offset()) ],
-//     [0, 1, N[0], N[1]],
-//     [1, 2, 4],
-//     [1, 64, 1024])
-// ]
-// fn map_collect_into<I, C>(_: I, output: C, n: usize, nt: usize, chunk: usize)
-// where
-//     I: FromIterator<String> + Collection<Item = String> + IntoPar<ParItem = String>,
-//     C: ParCollectInto<String>,
-// {
-//     let map = |x| format!("{}!", x);
-//     let input = input::<Vec<_>>(n);
-//     let expected = expected(!output.is_empty(), &input, map);
-//     let par = input.into_par().num_threads(nt).chunk_size(chunk);
-//     let output = par.map(map).collect_into(output);
-//     assert!(output.is_equal_to(&expected));
-// }
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: FixedVec<&String> = par.collect();
+    assert!(output.is_equal_to_ref(expected.as_slice()));
 
-// #[test_matrix(
-//     [Vec::<String>::new()],
-//     [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0)],
-//     [0, 1, N[0], N[1]],
-//     [1, 2, 4],
-//     [1, 64, 1024])
-// ]
-// fn map_collect<I, C>(_: I, _: C, n: usize, nt: usize, chunk: usize)
-// where
-//     I: FromIterator<String> + Collection<Item = String> + IntoPar<ParItem = String>,
-//     C: ParCollectInto<String>,
-// {
-//     let map = |x| format!("{}!", x);
-//     let input = input::<Vec<_>>(n);
-//     let expected = expected(false, &input, map);
-//     let par = input.into_par().num_threads(nt).chunk_size(chunk);
-//     let output: C = par.map(map).collect();
-//     assert!(output.is_equal_to(&expected));
-// }
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: SplitVec<&String, Doubling> = par.collect();
+    assert!(output.is_equal_to_ref(expected.as_slice()));
+
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: SplitVec<&String, Linear> = par.collect();
+    assert!(output.is_equal_to_ref(expected.as_slice()));
+}
+
+// collect - map
+
+#[test_matrix(
+    [0, 1, N[0], N[1]],
+    [1, 2, 4],
+    [1, 64, 1024])
+]
+fn map_collect_into(n: usize, nt: usize, chunk: usize) {
+    let map = |x: &String| format!("{}!", x);
+    let map2 = |x: String| format!("{}!", x);
+
+    let vec = input::<Vec<String>>(n);
+    let input = vec.as_slice();
+    let expected = expected(&vec, map2);
+
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: Vec<String> = par.map(map).collect_into(vec![]);
+    assert!(output.is_equal_to(expected.as_slice()));
+}
+
+#[test_matrix(
+    [0, 1, N[0], N[1]],
+    [1, 2, 4],
+    [1, 64, 1024])
+]
+fn map_collect(n: usize, nt: usize, chunk: usize) {
+    let map = |x: &String| format!("{}!", x);
+    let map2 = |x: String| format!("{}!", x);
+
+    let vec = input::<Vec<String>>(n);
+    let input = vec.as_slice();
+    let expected = expected(&vec, map2);
+
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output: Vec<String> = par.map(map).collect();
+    assert!(output.is_equal_to(expected.as_slice()));
+}

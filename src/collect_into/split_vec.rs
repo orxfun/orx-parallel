@@ -6,18 +6,18 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::PinnedVec;
-use orx_split_vec::{GrowthWithConstantTimeAccess, SplitVec};
+use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
 impl<T, G> ParCollectIntoCore<T> for SplitVec<T, G>
 where
     T: Send + Sync,
     G: GrowthWithConstantTimeAccess,
-    Self: Default,
+    Self: PseudoDefault,
 {
     type BridgePinnedVec = Self;
 
     fn empty(iter_len: Option<usize>) -> Self {
-        let mut vec = Self::default();
+        let mut vec = Self::pseudo_default();
         reserve(&mut vec, iter_len);
         vec
     }
