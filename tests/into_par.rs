@@ -7,6 +7,10 @@ fn take_into_par<T>(a: impl IntoPar<ParItem = T>) {
 #[test]
 fn vec_into_par() {
     let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
+
+    let par_iter = vec.clone().into_par();
+    take_into_par::<String>(par_iter);
+
     take_into_par::<String>(vec);
 }
 
@@ -14,6 +18,10 @@ fn vec_into_par() {
 fn slice_into_par() {
     let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
     let slice = vec.as_slice();
+
+    let par_iter = slice.into_par();
+    take_into_par::<&String>(par_iter);
+
     take_into_par::<&String>(slice);
 }
 

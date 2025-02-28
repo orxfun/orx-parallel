@@ -2,9 +2,10 @@ use crate::{
     computations::{DefaultRunner, ParallelRunner},
     par_iterators::Par,
     parameters::Params,
+    ParIter,
 };
 use orx_concurrent_iter::{
-    implementations::ConIterOfIter, ConcurrentIter, IntoConcurrentIter, IterIntoConcurrentIter,
+    implementations::ConIterOfIter, IntoConcurrentIter, IterIntoConcurrentIter,
 };
 
 pub trait IntoPar<R = DefaultRunner>
@@ -13,17 +14,13 @@ where
 {
     type ParItem: Send + Sync;
 
-    type ConIntoIter: ConcurrentIter<Item = Self::ParItem>;
-
-    fn into_par(self) -> Par<Self::ConIntoIter, R>;
+    fn into_par(self) -> impl ParIter<R, Item = Self::ParItem>;
 }
 
 impl<I: IntoConcurrentIter> IntoPar for I {
     type ParItem = I::Item;
 
-    type ConIntoIter = I::IntoIter;
-
-    fn into_par(self) -> Par<Self::ConIntoIter> {
+    fn into_par(self) -> impl ParIter<Item = Self::ParItem> {
         Par::new(self.into_concurrent_iter(), Params::default())
     }
 }

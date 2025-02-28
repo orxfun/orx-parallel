@@ -3,6 +3,7 @@ use crate::{
     collect_into::ParCollectInto,
     computations::{DefaultRunner, ParallelRunner},
     parameters::{ChunkSize, NumThreads, Params},
+    IntoPar,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -38,6 +39,20 @@ where
 
     fn destruct(self) -> (Params, I, M) {
         (self.params, self.iter, self.map)
+    }
+}
+
+impl<I, O, M, R> IntoPar<R> for ParMap<I, O, M, R>
+where
+    I: ConcurrentIter,
+    O: Send + Sync,
+    M: Fn(I::Item) -> O + Send + Sync + Clone,
+    R: ParallelRunner,
+{
+    type ParItem = O;
+
+    fn into_par(self) -> impl ParIter<R, Item = Self::ParItem> {
+        self
     }
 }
 

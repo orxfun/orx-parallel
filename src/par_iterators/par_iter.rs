@@ -2,13 +2,15 @@ use crate::{
     collect_into::ParCollectInto,
     computations::{DefaultRunner, ParallelRunner},
     parameters::{ChunkSize, NumThreads},
+    IntoPar,
 };
 
 pub trait ParIterCore {
     fn input_len(&self) -> Option<usize>;
 }
 
-pub trait ParIter<R = DefaultRunner>: ParIterCore + Sized
+pub trait ParIter<R = DefaultRunner>:
+    ParIterCore + Sized + IntoPar<R, ParItem = Self::Item>
 where
     R: ParallelRunner,
 {
