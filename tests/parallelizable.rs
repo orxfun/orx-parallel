@@ -1,3 +1,4 @@
+use orx_iterable::IntoCloningIterable;
 use orx_parallel::Parallelizable;
 
 fn take_parallelizable<T>(a: impl Parallelizable<ParItem = T>) {
@@ -28,4 +29,6 @@ fn range_parallelizable() {
 fn cloning_iter_parallelizable() {
     let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
     let iter = vec.iter().filter(|x| x.as_str() != "x");
+    let cloning = iter.into_iterable();
+    take_parallelizable(cloning);
 }
