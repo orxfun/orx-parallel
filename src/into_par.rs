@@ -1,7 +1,6 @@
 use crate::{par_iterators::Par, parameters::Params};
 use orx_concurrent_iter::{
     implementations::ConIterOfIter, ConcurrentIter, IntoConcurrentIter, IterIntoConcurrentIter,
-    Regular,
 };
 
 pub trait IntoPar: IntoConcurrentIter {
@@ -29,7 +28,7 @@ where
 {
     type ParItem: Send + Sync;
 
-    fn iter_into_par(self) -> Par<ConIterOfIter<Self, Regular>>;
+    fn iter_into_par(self) -> Par<ConIterOfIter<Self>>;
 }
 
 impl<I> IteratorIntoPar for I
@@ -39,7 +38,7 @@ where
 {
     type ParItem = Self::Item;
 
-    fn iter_into_par(self) -> Par<ConIterOfIter<Self, Regular>> {
+    fn iter_into_par(self) -> Par<ConIterOfIter<Self>> {
         Par::new(self.iter_into_concurrent_iter(), Params::default())
     }
 }

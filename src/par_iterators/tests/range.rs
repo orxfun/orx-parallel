@@ -1,6 +1,6 @@
 use crate::{collect_into::ParCollectInto, into_par::IntoPar, par_iterators::ParIter};
 use orx_fixed_vec::FixedVec;
-use orx_iterable::{Collection, Iterable};
+use orx_iterable::Iterable;
 use orx_split_vec::SplitVec;
 use test_case::test_matrix;
 
