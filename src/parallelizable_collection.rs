@@ -1,10 +1,10 @@
 use crate::{into_par::IntoPar, par_iterators::Par, parallelizable::Parallelizable};
 use orx_concurrent_iter::IntoConcurrentIter;
 
-pub trait ParallelizableCollection {
+pub trait ParallelizableCollection: IntoPar {
     type ParItem;
 
-    type Parallelizable<'i>: Parallelizable<ParItem = &'i Self::ParItem>
+    type Parallelizable<'i>: Parallelizable<ParItem = &'i <Self as IntoPar>::ParItem>
     where
         Self: 'i;
 
