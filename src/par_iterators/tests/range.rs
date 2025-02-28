@@ -15,18 +15,14 @@ fn offset() -> Vec<usize> {
     vec![9; N_OFFSET]
 }
 
-fn input<O: FromIterator<usize>>(n: usize) -> O {
-    (0..n).collect()
-}
-
-fn expected(
+fn expected<T>(
     with_offset: bool,
     input: impl Iterable<Item = usize>,
-    map: impl Fn(usize) -> usize,
-) -> Vec<usize> {
+    map: impl Fn(usize) -> T + Copy,
+) -> Vec<T> {
     match with_offset {
         true => {
-            let mut vec = offset();
+            let mut vec: Vec<_> = offset().into_iter().map(map).collect();
             vec.extend(input.iter().map(map));
             vec
         }
@@ -67,5 +63,25 @@ where
     let expected = expected(false, input.clone(), |x| x);
     let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output: C = par.collect();
+    assert!(output.is_equal_to(&expected));
+}
+
+// collect - map
+
+#[test_matrix(
+    [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0)],
+    [0, 1, N[0], N[1]],
+    [1, 2, 4],
+    [1, 64, 1024])
+]
+fn map_collect_into<C>(output: C, n: usize, nt: usize, chunk: usize)
+where
+    C: ParCollectInto<String>,
+{
+    let map = |x: usize| x.to_string();
+    let input = 0..n;
+    let expected = expected(!output.is_empty(), input.clone(), map);
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
+    let output = par.map(map).collect_into(output);
     assert!(output.is_equal_to(&expected));
 }
