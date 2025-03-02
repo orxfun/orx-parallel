@@ -7,7 +7,10 @@ pub trait ParallelRunner: Sized {
 
     type ThreadRunner: ThreadRunner<SharedState = Self::SharedState>;
 
-    fn new_shared_state() -> Self::SharedState;
+    fn new_shared_state<E, I>(kind: ComputationKind, params: Params, iter: &I) -> Self::SharedState
+    where
+        E: Enumeration,
+        I: ConcurrentIter<E>;
 
     fn do_spawn_new<E, I>(num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool
     where
@@ -20,7 +23,7 @@ pub trait ParallelRunner: Sized {
         I: ConcurrentIter<E>,
         T: Fn(<E::Element as Element>::ElemOf<I::Item>) + Sync,
     {
-        let state = Self::new_shared_state();
+        let state = Self::new_shared_state(kind, params, iter);
         let shared_state = &state;
         let chunk_size = params.chunk_size;
 
