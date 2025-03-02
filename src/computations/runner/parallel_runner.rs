@@ -2,25 +2,23 @@ use super::thread_runner::ThreadRunner;
 use crate::{computations::computation_kind::ComputationKind, parameters::Params};
 use orx_concurrent_iter::{ConcurrentIter, Element, Enumeration};
 
-pub trait ParallelRunner: Sized {
+pub trait ParallelRunner<E, I>: Sized
+where
+    E: Enumeration,
+    I: ConcurrentIter<E>,
+{
     type SharedState: Send + Sync;
 
-    type ThreadRunner: ThreadRunner<SharedState = Self::SharedState>;
+    type ThreadRunner: ThreadRunner<E, I, SharedState = Self::SharedState>;
 
-    fn new_shared_state<E, I>(kind: ComputationKind, params: Params, iter: &I) -> Self::SharedState
-    where
-        E: Enumeration,
-        I: ConcurrentIter<E>;
+    fn new(kind: ComputationKind, params: Params, iter: &I) -> Self;
 
-    fn do_spawn_new<E, I>(num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool
-    where
-        E: Enumeration,
-        I: ConcurrentIter<E>;
+    fn new_shared_state(kind: ComputationKind, params: Params, iter: &I) -> Self::SharedState;
 
-    fn run<E, I, T>(kind: ComputationKind, params: Params, iter: &I, transform: &T)
+    fn do_spawn_new(num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool;
+
+    fn run<T>(kind: ComputationKind, params: Params, iter: &I, transform: &T)
     where
-        E: Enumeration,
-        I: ConcurrentIter<E>,
         T: Fn(<E::Element as Element>::ElemOf<I::Item>) + Sync,
     {
         let state = Self::new_shared_state(kind, params, iter);
