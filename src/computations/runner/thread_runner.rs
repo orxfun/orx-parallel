@@ -1,5 +1,5 @@
 use crate::parameters::Params;
-use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Enumerated};
+use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Element, Enumeration};
 
 pub trait ThreadRunner: Sized {
     type SharedState;
@@ -12,27 +12,11 @@ pub trait ThreadRunner: Sized {
 
     fn complete_chunk(&mut self, shared_state: &Self::SharedState, chunk_size: usize);
 
-    fn run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, transform: &T)
+    fn run<E, I, T>(mut self, iter: &I, shared_state: &Self::SharedState, transform: &T)
     where
-        I: ConcurrentIter,
-        T: Fn(I::Item),
-    {
-        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => transform_chunk(iter.item_puller(), transform),
-                c => transform_chunk(iter.chunk_puller(c).flattened(), transform),
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-    }
-
-    fn run_enumerated<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, transform: &T)
-    where
-        I: ConcurrentIter<Enumerated>,
-        T: Fn((usize, I::Item)),
+        E: Enumeration,
+        I: ConcurrentIter<E>,
+        T: Fn(<E::Element as Element>::ElemOf<I::Item>),
     {
         while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
             self.begin_chunk(chunk_size);
