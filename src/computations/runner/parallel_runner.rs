@@ -1,5 +1,5 @@
 use super::thread_runner::ThreadRunner;
-use crate::parameters::Params;
+use crate::{computations::computation_kind::ComputationKind, parameters::Params};
 use orx_concurrent_iter::{ConcurrentIter, Element, Enumeration};
 
 pub trait ParallelRunner: Sized {
@@ -14,7 +14,7 @@ pub trait ParallelRunner: Sized {
         E: Enumeration,
         I: ConcurrentIter<E>;
 
-    fn run<E, I, T>(params: Params, iter: &I, transform: &T)
+    fn run<E, I, T>(kind: ComputationKind, params: Params, iter: &I, transform: &T)
     where
         E: Enumeration,
         I: ConcurrentIter<E>,
@@ -22,14 +22,14 @@ pub trait ParallelRunner: Sized {
     {
         let state = Self::new_shared_state();
         let shared_state = &state;
-        let mut num_spawned = 0;
+        let chunk_size = params.chunk_size;
 
+        let mut num_spawned = 0;
         std::thread::scope(|s| {
             while Self::do_spawn_new(num_spawned, shared_state, iter) {
                 num_spawned += 1;
                 s.spawn(move || {
-                    let thread_runner = Self::ThreadRunner::new(params.chunk_size);
-                    thread_runner.run(iter, shared_state, transform);
+                    Self::ThreadRunner::new().run(kind, chunk_size, iter, shared_state, transform);
                 });
             }
         });

@@ -1,5 +1,5 @@
 use super::parallel_runner::ParallelRunner;
-use crate::parameters::ChunkSize;
+use crate::{computations::computation_kind::ComputationKind, parameters::ChunkSize};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Element, Enumeration};
 
 pub trait ThreadRunner: Sized {
@@ -7,7 +7,7 @@ pub trait ThreadRunner: Sized {
 
     type ParallelRunner: ParallelRunner<SharedState = Self::SharedState>;
 
-    fn new(chunk_size: ChunkSize) -> Self;
+    fn new() -> Self;
 
     fn next_chunk_size<E, I>(&self, shared_state: &Self::SharedState, iter: &I) -> Option<usize>
     where
@@ -20,8 +20,14 @@ pub trait ThreadRunner: Sized {
 
     fn complete_task(&mut self, shared_state: &Self::SharedState);
 
-    fn run<E, I, T>(mut self, iter: &I, shared_state: &Self::SharedState, transform: &T)
-    where
+    fn run<E, I, T>(
+        mut self,
+        kind: ComputationKind,
+        chunk_size: ChunkSize,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        transform: &T,
+    ) where
         E: Enumeration,
         I: ConcurrentIter<E>,
         T: Fn(<E::Element as Element>::ElemOf<I::Item>),
