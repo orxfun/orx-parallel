@@ -17,9 +17,9 @@ where
 
     fn do_spawn_new(num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool;
 
-    fn new_thread_runner(&self) -> Self::ThreadRunner;
+    fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner;
 
-    fn run<T>(&self, kind: ComputationKind, params: Params, iter: &I, transform: &T)
+    fn run<T>(&self, iter: &I, transform: &T)
     where
         T: Fn(<E::Element as Element>::ElemOf<I::Item>) + Sync,
     {
@@ -31,7 +31,7 @@ where
             while Self::do_spawn_new(num_spawned, shared_state, iter) {
                 num_spawned += 1;
                 s.spawn(move || {
-                    let thread_runner = self.new_thread_runner();
+                    let thread_runner = self.new_thread_runner(shared_state);
                     thread_runner.run(iter, shared_state, transform);
                 });
             }

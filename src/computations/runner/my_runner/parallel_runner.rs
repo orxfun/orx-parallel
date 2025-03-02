@@ -6,7 +6,7 @@ use crate::{
     parameters::Params,
 };
 use orx_concurrent_iter::{ConcurrentIter, Enumeration};
-use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct MyParallelRunner {
     initial_len: Option<usize>,
@@ -42,5 +42,11 @@ where
 
     fn do_spawn_new(num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool {
         todo!()
+    }
+
+    fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner {
+        Self::ThreadRunner {
+            chunk_size: shared_state.load(Ordering::Relaxed),
+        }
     }
 }
