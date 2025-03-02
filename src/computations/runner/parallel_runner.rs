@@ -15,7 +15,7 @@ where
 
     fn new_shared_state(&self) -> Self::SharedState;
 
-    fn do_spawn_new(num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool;
+    fn do_spawn_new(&self, num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool;
 
     fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner;
 
@@ -28,7 +28,7 @@ where
 
         let mut num_spawned = 0;
         std::thread::scope(|s| {
-            while Self::do_spawn_new(num_spawned, shared_state, iter) {
+            while self.do_spawn_new(num_spawned, shared_state, iter) {
                 num_spawned += 1;
                 s.spawn(move || {
                     let thread_runner = self.new_thread_runner(shared_state);
