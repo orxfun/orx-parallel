@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::{MapCollect, ParallelRunner},
+    computations::{MapCollect, ParallelRunnerToArchive},
     parameters::Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -26,7 +26,7 @@ where
     where
         I: ConcurrentIter,
         M: Fn(I::Item) -> T + Send + Sync + Clone,
-        R: ParallelRunner,
+        R: ParallelRunnerToArchive,
     {
         reserve(&mut self, iter.try_get_len());
         let bag: ConcurrentOrderedBag<_, _> = self.into();

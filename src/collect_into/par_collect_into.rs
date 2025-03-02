@@ -1,4 +1,4 @@
-use crate::{computations::ParallelRunner, parameters::Params};
+use crate::{computations::ParallelRunnerToArchive, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
@@ -12,7 +12,7 @@ pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
     where
         I: ConcurrentIter,
         M: Fn(I::Item) -> T + Send + Sync + Clone,
-        R: ParallelRunner;
+        R: ParallelRunnerToArchive;
 
     // test
 

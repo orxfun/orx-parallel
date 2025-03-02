@@ -1,5 +1,5 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::{computations::ParallelRunner, parameters::Params};
+use crate::{computations::ParallelRunnerToArchive, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
@@ -18,7 +18,7 @@ where
     where
         I: ConcurrentIter,
         M: Fn(I::Item) -> T + Send + Sync + Clone,
-        R: ParallelRunner,
+        R: ParallelRunnerToArchive,
     {
         let vec = self.into_inner();
         vec.map_into::<_, _, R>(params, iter, map).into()

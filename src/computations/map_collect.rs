@@ -1,5 +1,5 @@
 use crate::{
-    computations::{computation_kind::ComputationKind, ParallelRunner},
+    computations::{computation_kind::ComputationKind, ParallelRunnerToArchive},
     parameters::Params,
 };
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Enumerated};
@@ -47,7 +47,7 @@ where
         }
     }
 
-    pub fn compute<R: ParallelRunner>(self) -> (usize, ConcurrentOrderedBag<O, P>) {
+    pub fn compute<R: ParallelRunnerToArchive>(self) -> (usize, ConcurrentOrderedBag<O, P>) {
         match self.params.is_sequential() {
             true => {
                 // # SAFETY: collected is just wrapped as a concurrent-ordered-bag and is not mutated by par-iters,

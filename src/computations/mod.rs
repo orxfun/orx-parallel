@@ -4,4 +4,4 @@ mod runner;
 
 pub(crate) use map_collect::MapCollect;
 
-pub use runner::{BasicRunner, DefaultRunner, ParallelRunner};
+pub use runner::{BasicRunner, DefaultRunner, ParallelRunnerToArchive};

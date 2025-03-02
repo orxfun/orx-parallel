@@ -1,6 +1,8 @@
 use super::{chunk_size::ResolvedChunkSize, num_threads::maximum_num_threads};
 use crate::{
-    computations::{computation_kind::ComputationKind, runner::parallel_runner::ParallelRunner},
+    computations::{
+        computation_kind::ComputationKind, runner::parallel_runner_to_arch::ParallelRunnerToArchive,
+    },
     parameters::Params,
 };
 use orx_concurrent_iter::{ConcurrentIter, Enumeration};
@@ -67,7 +69,7 @@ impl BasicRunner {
     }
 }
 
-impl ParallelRunner for BasicRunner {
+impl ParallelRunnerToArchive for BasicRunner {
     fn new(kind: ComputationKind, params: Params, initial_len: Option<usize>) -> Self {
         let max_num_threads = maximum_num_threads(initial_len, params.num_threads);
         let resolved_chunk_size =
