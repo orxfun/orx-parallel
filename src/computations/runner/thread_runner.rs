@@ -1,7 +1,10 @@
+use crate::parameters::Params;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Enumerated};
 
 pub trait ThreadRunner: Sized {
     type SharedState;
+
+    fn new(params: Params) -> Self;
 
     fn next_chunk_size<I>(&self, shared_state: &Self::SharedState, iter: &I) -> Option<usize>;
 
