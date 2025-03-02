@@ -5,7 +5,11 @@ use std::sync::atomic::AtomicUsize;
 
 pub struct MyThreadRunner;
 
-impl ThreadRunner for MyThreadRunner {
+impl<E, I> ThreadRunner<E, I> for MyThreadRunner
+where
+    E: Enumeration,
+    I: ConcurrentIter<E>,
+{
     type SharedState = AtomicUsize;
 
     type ParallelRunner = MyParallelRunner;
@@ -14,11 +18,7 @@ impl ThreadRunner for MyThreadRunner {
         Self
     }
 
-    fn next_chunk_size<E, I>(&self, shared_state: &Self::SharedState, iter: &I) -> Option<usize>
-    where
-        E: Enumeration,
-        I: ConcurrentIter<E>,
-    {
+    fn next_chunk_size(&self, shared_state: &Self::SharedState, iter: &I) -> Option<usize> {
         todo!()
     }
 
