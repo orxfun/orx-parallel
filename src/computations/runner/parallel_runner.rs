@@ -7,21 +7,14 @@ pub trait ParallelRunner: Sized {
 
     type ThreadRunner: ThreadRunner<SharedState = Self::SharedState>;
 
-    fn new() -> Self;
-
     fn new_shared_state() -> Self::SharedState;
 
-    fn do_spawn_new<E, I>(
-        &self,
-        num_spawned: usize,
-        shared_state: &Self::SharedState,
-        iter: &I,
-    ) -> bool
+    fn do_spawn_new<E, I>(num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool
     where
         E: Enumeration,
         I: ConcurrentIter<E>;
 
-    fn run<E, I, T>(self, params: Params, iter: &I, transform: &T)
+    fn run<E, I, T>(params: Params, iter: &I, transform: &T)
     where
         E: Enumeration,
         I: ConcurrentIter<E>,
@@ -32,18 +25,13 @@ pub trait ParallelRunner: Sized {
         let mut num_spawned = 0;
 
         std::thread::scope(|s| {
-            while self.do_spawn_new(num_spawned, shared_state, iter) {
+            while Self::do_spawn_new(num_spawned, shared_state, iter) {
                 num_spawned += 1;
                 s.spawn(move || {
                     let thread_runner = Self::ThreadRunner::new(params.chunk_size);
                     thread_runner.run(iter, shared_state, transform);
                 });
             }
-            // loop {
-            // match self.do_spawn_new(num_spawned, &shared_state, iter) {
-            //     true => {}
-            //     false => break,
-            // }
         });
     }
 }
