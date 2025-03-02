@@ -1,7 +1,4 @@
-use crate::{
-    collect_into::ParCollectIntoCore, into_par::IntoPar, par_iterators::ParIter, IteratorIntoPar,
-    Parallelizable,
-};
+use crate::{collect_into::ParCollectIntoCore, par_iterators::ParIter, Parallelizable};
 use orx_fixed_vec::FixedVec;
 use orx_iterable::{Collection, IntoCloningIterable};
 use orx_split_vec::{Doubling, Linear, PseudoDefault, SplitVec};

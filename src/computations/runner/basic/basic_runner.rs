@@ -90,8 +90,8 @@ impl ParallelRunner for BasicRunner {
 
         std::thread::scope(|s| {
             let mut chunk = self.resolved_chunk_size.chunk_size();
-            s.spawn(move || execute(chunk));
 
+            s.spawn(move || execute(chunk));
             num_spawned += 1;
 
             'lag_period: loop {
