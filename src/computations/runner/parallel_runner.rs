@@ -7,10 +7,7 @@ pub trait ParallelRunner: Sized + Sync {
 
     type ThreadRunner: ThreadRunner<SharedState = Self::SharedState>;
 
-    fn new<E, I>(kind: ComputationKind, params: Params, iter: &I) -> Self
-    where
-        E: Enumeration,
-        I: ConcurrentIter<E>;
+    fn new(kind: ComputationKind, params: Params, initial_input_len: Option<usize>) -> Self;
 
     fn new_shared_state(&self) -> Self::SharedState;
 

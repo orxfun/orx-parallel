@@ -58,9 +58,10 @@ where
             }
             false => {
                 let offset = self.bag.len();
+                let initial_len = self.iter.try_get_len();
                 let transform =
                     |(i, value)| unsafe { self.bag.set_value(offset + i, (self.map)(value)) };
-                let runner = R::new(ComputationKind::Collect, self.params, &self.iter);
+                let runner = R::new(ComputationKind::Collect, self.params, initial_len);
                 runner.run(&self.iter, &transform);
                 (0, self.bag)
             }

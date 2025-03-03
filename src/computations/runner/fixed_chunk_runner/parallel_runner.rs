@@ -77,12 +77,7 @@ impl ParallelRunner for FixedChunkRunner {
 
     type ThreadRunner = FixedChunkThreadRunner;
 
-    fn new<E, I>(kind: ComputationKind, params: Params, iter: &I) -> Self
-    where
-        E: Enumeration,
-        I: ConcurrentIter<E>,
-    {
-        let initial_len = iter.try_get_len();
+    fn new(kind: ComputationKind, params: Params, initial_len: Option<usize>) -> Self {
         let max_num_threads = maximum_num_threads(initial_len, params.num_threads);
         let resolved_chunk_size =
             ResolvedChunkSize::new(kind, initial_len, max_num_threads, params.chunk_size);

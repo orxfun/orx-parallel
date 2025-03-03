@@ -36,11 +36,7 @@ impl ParallelRunner for BatchOfFourParallelRunner {
 
     type ThreadRunner = BatchOfFourThreadRunner;
 
-    fn new<E, I>(_: ComputationKind, params: Params, _: &I) -> Self
-    where
-        E: Enumeration,
-        I: ConcurrentIter<E>,
-    {
+    fn new(_: ComputationKind, params: Params, _: Option<usize>) -> Self {
         Self(params)
     }
 
