@@ -1,7 +1,7 @@
 use super::par_iter::{ParIter, ParIterCore};
 use crate::{
     collect_into::ParCollectInto,
-    computations::{DefaultRunner, ParallelRunnerToArchive},
+    computations::{DefaultRunner, ParallelRunner},
     parameters::{ChunkSize, NumThreads, Params},
     IntoPar,
 };
@@ -13,7 +13,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     params: Params,
     iter: I,
@@ -26,7 +26,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     pub(crate) fn new(params: Params, iter: I, map: M) -> Self {
         Self {
@@ -47,7 +47,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     type ParItem = O;
 
@@ -61,7 +61,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     fn input_len(&self) -> Option<usize> {
         self.iter.try_get_len()
@@ -73,7 +73,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     type Item = O;
 

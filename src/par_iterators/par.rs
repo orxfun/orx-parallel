@@ -1,7 +1,7 @@
 use super::par_iter::{ParIter, ParIterCore};
 use crate::{
     collect_into::ParCollectInto,
-    computations::{DefaultRunner, ParallelRunnerToArchive},
+    computations::{DefaultRunner, ParallelRunner},
     par_iterators::par_map::ParMap,
     parameters::{ChunkSize, NumThreads, Params},
     IntoPar,
@@ -12,7 +12,7 @@ use std::marker::PhantomData;
 pub struct Par<I, R = DefaultRunner>
 where
     I: ConcurrentIter,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     iter: I,
     params: Params,
@@ -22,7 +22,7 @@ where
 impl<I, R> Par<I, R>
 where
     I: ConcurrentIter,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     pub(crate) fn new(iter: I, params: Params) -> Self {
         Self {
@@ -40,7 +40,7 @@ where
 impl<I, R> IntoPar<R> for Par<I, R>
 where
     I: ConcurrentIter,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     type ParItem = I::Item;
 
@@ -52,7 +52,7 @@ where
 impl<I, R> ParIterCore for Par<I, R>
 where
     I: ConcurrentIter,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     fn input_len(&self) -> Option<usize> {
         self.iter.try_get_len()
@@ -62,7 +62,7 @@ where
 impl<I, R> ParIter<R> for Par<I, R>
 where
     I: ConcurrentIter,
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     type Item = I::Item;
 

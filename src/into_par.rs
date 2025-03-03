@@ -1,5 +1,5 @@
 use crate::{
-    computations::{DefaultRunner, ParallelRunnerToArchive},
+    computations::{DefaultRunner, ParallelRunner},
     par_iterators::Par,
     parameters::Params,
     ParIter,
@@ -10,7 +10,7 @@ use orx_concurrent_iter::{
 
 pub trait IntoPar<R = DefaultRunner>
 where
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     type ParItem: Send + Sync;
 

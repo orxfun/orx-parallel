@@ -1,6 +1,6 @@
 use crate::{
     collect_into::ParCollectInto,
-    computations::{DefaultRunner, ParallelRunnerToArchive},
+    computations::{DefaultRunner, ParallelRunner},
     parameters::{ChunkSize, NumThreads},
     IntoPar,
 };
@@ -12,7 +12,7 @@ pub trait ParIterCore {
 pub trait ParIter<R = DefaultRunner>:
     ParIterCore + Sized + IntoPar<R, ParItem = Self::Item>
 where
-    R: ParallelRunnerToArchive,
+    R: ParallelRunner,
 {
     type Item: Send + Sync;
 

@@ -10,4 +10,4 @@ pub use parallel_runner_to_arch::ParallelRunnerToArchive;
 pub use fixed_chunk_runner::FixedChunkRunner;
 pub use parallel_runner::ParallelRunner;
 
-pub type DefaultRunner = BasicRunnerToArch;
+pub type DefaultRunner = FixedChunkRunner;

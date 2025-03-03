@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::{MapCollect, ParallelRunnerToArchive},
+    computations::{MapCollect, ParallelRunner},
     parameters::Params,
 };
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -25,7 +25,7 @@ where
     where
         I: orx_concurrent_iter::ConcurrentIter,
         M: Fn(I::Item) -> T + Send + Sync + Clone,
-        R: ParallelRunnerToArchive,
+        R: ParallelRunner,
     {
         match iter.try_get_len() {
             None => {
@@ -37,8 +37,7 @@ where
                 self.reserve(len);
                 let fixed = FixedVec::from(self);
                 let bag = ConcurrentOrderedBag::from(fixed);
-                let (_num_spawned, bag) =
-                    MapCollect::new(params, iter, map, bag).compute_to_arch::<R>();
+                let (_num_spawned, bag) = MapCollect::new(params, iter, map, bag).compute::<R>();
                 let fixed = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
                 Vec::from(fixed)
             }
