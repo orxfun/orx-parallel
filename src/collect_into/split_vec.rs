@@ -30,7 +30,7 @@ where
     {
         reserve(&mut self, iter.try_get_len());
         let bag: ConcurrentOrderedBag<_, _> = self.into();
-        let (_num_spawned, bag) = MapCollect::new(params, iter, map, bag).compute::<R>();
+        let (_num_spawned, bag) = MapCollect::new(params, iter, map, bag).compute_to_arch::<R>();
         unsafe { bag.into_inner().unwrap_only_if_counts_match() }
     }
 

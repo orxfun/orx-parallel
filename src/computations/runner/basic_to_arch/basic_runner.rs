@@ -1,22 +1,21 @@
-use super::{
-    chunk_size::ResolvedChunkSize, num_threads::maximum_num_threads, thread_runner::MyThreadRunner,
-};
+use super::{chunk_size::ResolvedChunkSize, num_threads::maximum_num_threads};
 use crate::{
-    computations::{computation_kind::ComputationKind, runner::parallel_runner::ParallelRunner},
+    computations::{
+        computation_kind::ComputationKind, runner::parallel_runner_to_arch::ParallelRunnerToArchive,
+    },
     parameters::Params,
 };
 use orx_concurrent_iter::{ConcurrentIter, Enumeration};
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 const LAG_PERIODICITY: usize = 4;
 
-pub struct MyParallelRunner {
+pub struct BasicRunnerToArch {
     initial_len: Option<usize>,
     resolved_chunk_size: ResolvedChunkSize,
     max_num_threads: usize,
 }
 
-impl MyParallelRunner {
+impl BasicRunnerToArch {
     fn spawn_new(&self, num_spawned: usize, remaining: Option<usize>) -> bool {
         match (num_spawned, remaining) {
             (_, Some(0)) => false,
@@ -70,17 +69,8 @@ impl MyParallelRunner {
     }
 }
 
-impl<E, I> ParallelRunner<E, I> for MyParallelRunner
-where
-    E: Enumeration,
-    I: ConcurrentIter<E>,
-{
-    type SharedState = AtomicUsize;
-
-    type ThreadRunner = MyThreadRunner;
-
-    fn new(kind: ComputationKind, params: Params, iter: &I) -> Self {
-        let initial_len = iter.try_get_len();
+impl ParallelRunnerToArchive for BasicRunnerToArch {
+    fn new(kind: ComputationKind, params: Params, initial_len: Option<usize>) -> Self {
         let max_num_threads = maximum_num_threads(initial_len, params.num_threads);
         let resolved_chunk_size =
             ResolvedChunkSize::new(kind, initial_len, max_num_threads, params.chunk_size);
@@ -92,26 +82,41 @@ where
         }
     }
 
-    fn new_shared_state(&self) -> Self::SharedState {
-        self.resolved_chunk_size.chunk_size().into()
-    }
+    fn run<I, E, R>(&self, iter: &I, execute: &R) -> usize
+    where
+        E: Enumeration,
+        I: ConcurrentIter<E>,
+        R: Fn(usize) + Sync,
+    {
+        let mut num_spawned = 0;
 
-    fn do_spawn_new(&self, num_spawned: usize, shared_state: &Self::SharedState, iter: &I) -> bool {
-        if num_spawned % LAG_PERIODICITY == 0 {
-            lag();
-            match self.next_chunk(num_spawned, iter.try_get_len()) {
-                Some(c) => shared_state.store(c, Ordering::Relaxed),
-                None => return false,
+        std::thread::scope(|s| {
+            let mut chunk = self.resolved_chunk_size.chunk_size();
+
+            s.spawn(move || execute(chunk));
+            num_spawned += 1;
+
+            'lag_period: loop {
+                for _ in 0..LAG_PERIODICITY {
+                    match self.spawn_new(num_spawned, iter.try_get_len()) {
+                        false => break 'lag_period,
+                        true => {
+                            s.spawn(move || execute(chunk));
+                            num_spawned += 1;
+                        }
+                    }
+                }
+
+                lag();
+
+                match self.next_chunk(num_spawned, iter.try_get_len()) {
+                    Some(c) => chunk = c,
+                    None => break 'lag_period,
+                }
             }
-        }
+        });
 
-        self.spawn_new(num_spawned, iter.try_get_len())
-    }
-
-    fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner {
-        Self::ThreadRunner {
-            chunk_size: shared_state.load(Ordering::Relaxed),
-        }
+        num_spawned
     }
 }
 
