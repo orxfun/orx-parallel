@@ -78,13 +78,15 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q> {
+    fn with_runner<Q: ParallelRunner>(
+        self,
+    ) -> impl ParIter<Q, Item = Self::Item, ParItem = Self::ParItem> {
         Par::new(self.params, self.iter)
     }
 
     // transform
 
-    fn map<O2, M2>(self, map: M2) -> impl ParIter<Item = O2>
+    fn map<O2, M2>(self, map: M2) -> impl ParIter<R, Item = O2>
     where
         O2: Send + Sync,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone,

@@ -22,11 +22,13 @@ where
 
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q>;
+    fn with_runner<Q: ParallelRunner>(
+        self,
+    ) -> impl ParIter<Q, Item = Self::Item, ParItem = Self::ParItem>;
 
     // transform
 
-    fn map<O2, M2>(self, map: M2) -> impl ParIter<Item = O2>
+    fn map<O2, M2>(self, map: M2) -> impl ParIter<R, Item = O2>
     where
         O2: Send + Sync,
         M2: Fn(Self::Item) -> O2 + Send + Sync + Clone;
