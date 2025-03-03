@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod fixed_chunk_runner;
 mod parallel_runner;
 mod thread_runner;
