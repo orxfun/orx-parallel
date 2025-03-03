@@ -77,7 +77,7 @@ where
 {
     type Item = O;
 
-    // params
+    // transformations
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
@@ -87,6 +87,10 @@ where
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
         self
+    }
+
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q> {
+        ParMap::new(self.params, self.iter, self.map)
     }
 
     // transform

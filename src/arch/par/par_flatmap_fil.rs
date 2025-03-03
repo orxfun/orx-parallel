@@ -84,7 +84,7 @@ where
         self
     }
 
-    // params
+    // transformations
 
     fn map<O2, M2>(self, map: M2) -> ParMap<ConIterOfVec<O>, O2, M2>
     where

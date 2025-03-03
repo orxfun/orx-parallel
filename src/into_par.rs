@@ -21,7 +21,7 @@ impl<I: IntoConcurrentIter> IntoPar for I {
     type ParItem = I::Item;
 
     fn into_par(self) -> impl ParIter<Item = Self::ParItem> {
-        Par::new(self.into_concurrent_iter(), Params::default())
+        Par::new(Params::default(), self.into_concurrent_iter())
     }
 }
 
@@ -43,6 +43,6 @@ where
     type ParItem = Self::Item;
 
     fn iter_into_par(self) -> Par<ConIterOfIter<Self>> {
-        Par::new(self.iter_into_concurrent_iter(), Params::default())
+        Par::new(Params::default(), self.iter_into_concurrent_iter())
     }
 }

@@ -159,7 +159,7 @@ where
         self
     }
 
-    // params
+    // transformations
 
     fn map<O2, M2>(self, map: M2) -> ParMap<I, O2, impl Fn(I::Item) -> O2 + Send + Sync + Clone>
     where

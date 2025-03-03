@@ -16,11 +16,13 @@ where
 {
     type Item: Send + Sync;
 
-    // params
+    // transformations
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
+
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q>;
 
     // transform
 

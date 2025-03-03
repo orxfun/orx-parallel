@@ -18,6 +18,6 @@ where
     type ConIter = I::Iter;
 
     fn par(&self) -> Par<Self::ConIter> {
-        Par::new(self.concurrent_iter(), Params::default())
+        Par::new(Params::default(), self.concurrent_iter())
     }
 }
