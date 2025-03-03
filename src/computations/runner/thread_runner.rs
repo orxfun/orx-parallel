@@ -1,13 +1,12 @@
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Element, Enumeration};
 
-pub trait ThreadRunner<E, I>: Sized
-where
-    E: Enumeration,
-    I: ConcurrentIter<E>,
-{
+pub trait ThreadRunner: Sized {
     type SharedState;
 
-    fn next_chunk_size(&self, shared_state: &Self::SharedState, iter: &I) -> Option<usize>;
+    fn next_chunk_size<E, I>(&self, shared_state: &Self::SharedState, iter: &I) -> Option<usize>
+    where
+        E: Enumeration,
+        I: ConcurrentIter<E>;
 
     fn begin_chunk(&mut self, chunk_size: usize);
 
@@ -15,8 +14,10 @@ where
 
     fn complete_task(&mut self, shared_state: &Self::SharedState);
 
-    fn run<T>(mut self, iter: &I, shared_state: &Self::SharedState, transform: &T)
+    fn run<E, I, T>(mut self, iter: &I, shared_state: &Self::SharedState, transform: &T)
     where
+        E: Enumeration,
+        I: ConcurrentIter<E>,
         T: Fn(<E::Element as Element>::ElemOf<I::Item>),
     {
         while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {

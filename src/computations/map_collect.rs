@@ -1,3 +1,4 @@
+use super::{runner::FixedChunkRunner, ParallelRunner};
 use crate::{
     computations::{computation_kind::ComputationKind, ParallelRunnerToArchive},
     parameters::Params,
@@ -5,9 +6,6 @@ use crate::{
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter, Enumerated};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
-use rayon::iter::Enumerate;
-
-use super::ParallelRunner;
 
 pub struct MapCollect<I, O, Map, P>
 where
@@ -50,7 +48,7 @@ where
         }
     }
 
-    pub fn compute<R: ParallelRunner<Enumerated, I>>(self) -> (usize, ConcurrentOrderedBag<O, P>) {
+    pub fn compute<R: ParallelRunner>(self) -> (usize, ConcurrentOrderedBag<O, P>) {
         match self.params.is_sequential() {
             true => {
                 // # SAFETY: collected is just wrapped as a concurrent-ordered-bag and is not mutated by par-iters,

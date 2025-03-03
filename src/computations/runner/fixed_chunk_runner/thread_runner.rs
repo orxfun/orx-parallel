@@ -5,14 +5,14 @@ pub struct FixedChunkThreadRunner {
     pub(super) chunk_size: usize,
 }
 
-impl<E, I> ThreadRunner<E, I> for FixedChunkThreadRunner
-where
-    E: Enumeration,
-    I: ConcurrentIter<E>,
-{
+impl ThreadRunner for FixedChunkThreadRunner {
     type SharedState = ();
 
-    fn next_chunk_size(&self, _: &Self::SharedState, iter: &I) -> Option<usize> {
+    fn next_chunk_size<E, I>(&self, _: &Self::SharedState, iter: &I) -> Option<usize>
+    where
+        E: Enumeration,
+        I: ConcurrentIter<E>,
+    {
         match iter.try_get_len() {
             Some(0) => None,
             _ => Some(self.chunk_size),

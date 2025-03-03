@@ -72,16 +72,16 @@ impl FixedChunkRunner {
     }
 }
 
-impl<E, I> ParallelRunner<E, I> for FixedChunkRunner
-where
-    E: Enumeration,
-    I: ConcurrentIter<E>,
-{
+impl ParallelRunner for FixedChunkRunner {
     type SharedState = ();
 
     type ThreadRunner = FixedChunkThreadRunner;
 
-    fn new(kind: ComputationKind, params: Params, iter: &I) -> Self {
+    fn new<E, I>(kind: ComputationKind, params: Params, iter: &I) -> Self
+    where
+        E: Enumeration,
+        I: ConcurrentIter<E>,
+    {
         let initial_len = iter.try_get_len();
         let max_num_threads = maximum_num_threads(initial_len, params.num_threads);
         let resolved_chunk_size =
@@ -97,7 +97,11 @@ where
 
     fn new_shared_state(&self) -> Self::SharedState {}
 
-    fn do_spawn_new(&self, num_spawned: usize, _: &Self::SharedState, iter: &I) -> bool {
+    fn do_spawn_new<E, I>(&self, num_spawned: usize, _: &Self::SharedState, iter: &I) -> bool
+    where
+        E: Enumeration,
+        I: ConcurrentIter<E>,
+    {
         if num_spawned % LAG_PERIODICITY == 0 {
             lag();
             match self.next_chunk(num_spawned, iter.try_get_len()) {
