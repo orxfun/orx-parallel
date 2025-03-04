@@ -224,7 +224,7 @@
 )]
 // #![allow(refining_impl_trait)]
 
-// mod collect_into;
+mod collect_into;
 mod par_iter;
 mod parameters;
 mod runner;

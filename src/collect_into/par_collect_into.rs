@@ -1,4 +1,4 @@
-use crate::parameters::Params;
+use crate::{parameters::Params, runner::ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;

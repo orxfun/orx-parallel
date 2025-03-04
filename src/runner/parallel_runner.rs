@@ -41,4 +41,6 @@ pub trait ParallelRunner: Sized + Sync {
             }
         });
     }
+
+    // fn run_with_idx<I,T>
 }
