@@ -1,8 +1,5 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::{
-    computations::{MapCollect, ParallelRunner},
-    parameters::Params,
-};
+use crate::{computations::MapCollect, parameters::Params, runner::ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::PinnedVec;

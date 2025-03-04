@@ -7,9 +7,9 @@ use orx_concurrent_iter::ConcurrentIter;
 pub trait ParIter: Sized {
     type Item: Send + Sync;
 
-    // params transformations
+    fn con_iter(&self) -> &impl ConcurrentIter;
 
-    fn con_iter(&self) -> impl ConcurrentIter<Item = Self::Item>;
+    // params transformations
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 

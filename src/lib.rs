@@ -225,7 +225,13 @@
 // #![allow(refining_impl_trait)]
 
 mod collect_into;
+pub mod computational_variants;
 mod computations;
+mod into_par_iter;
 mod par_iter;
 mod parameters;
-mod runner;
+pub mod runner;
+
+pub use collect_into::ParCollectInto;
+pub use par_iter::ParIter;
+pub use parameters::{ChunkSize, NumThreads, Params};
