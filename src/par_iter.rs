@@ -1,10 +1,14 @@
 use crate::{
     collect_into::ParCollectInto,
     parameters::{ChunkSize, NumThreads},
+    runner::{DefaultRunner, ParallelRunner},
 };
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParIter: Sized {
+pub trait ParIter<R = DefaultRunner>: Sized
+where
+    R: ParallelRunner,
+{
     type Item: Send + Sync;
 
     fn con_iter(&self) -> &impl ConcurrentIter;

@@ -1,24 +1,33 @@
 use super::map::ParMap;
 use crate::{
-    into_par_iter::IntoParIter, runner::DefaultRunner, ChunkSize, NumThreads, ParCollectInto,
-    ParIter, Params,
+    into_par_iter::IntoParIter,
+    runner::{DefaultRunner, ParallelRunner},
+    ChunkSize, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
+use std::marker::PhantomData;
 
-pub struct Par<I>
+pub struct Par<I, R = DefaultRunner>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     iter: I,
     params: Params,
+    phantom: PhantomData<R>,
 }
 
-impl<I> Par<I>
+impl<I, R> Par<I, R>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     pub(crate) fn new(params: Params, iter: I) -> Self {
-        Self { iter, params }
+        Self {
+            iter,
+            params,
+            phantom: PhantomData,
+        }
     }
 
     fn destruct(self) -> (Params, I) {
@@ -26,19 +35,21 @@ where
     }
 }
 
-impl<I> IntoParIter for Par<I>
+impl<I, R> IntoParIter<R> for Par<I, R>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     type Item = I::Item;
 
-    fn into_par(self) -> impl ParIter<Item = Self::Item> {
+    fn into_par(self) -> impl ParIter<R, Item = Self::Item> {
         self
     }
 }
 
-impl<I> ParIter for Par<I>
+impl<I, R> ParIter<R> for Par<I, R>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     type Item = I::Item;
@@ -77,7 +88,7 @@ where
         C: ParCollectInto<Self::Item>,
     {
         let (params, iter) = self.destruct();
-        C::map_into::<_, _, DefaultRunner>(output, params, iter, no_ops_map)
+        C::map_into::<_, _, R>(output, params, iter, no_ops_map)
     }
 }
 

@@ -1,11 +1,14 @@
 use crate::{
-    into_par_iter::IntoParIter, runner::DefaultRunner, ChunkSize, NumThreads, ParCollectInto,
-    ParIter, Params,
+    into_par_iter::IntoParIter,
+    runner::{DefaultRunner, ParallelRunner},
+    ChunkSize, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
+use std::marker::PhantomData;
 
-pub struct ParMap<I, O, M>
+pub struct ParMap<I, O, M, R = DefaultRunner>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
@@ -13,16 +16,23 @@ where
     iter: I,
     params: Params,
     map: M,
+    phantom: PhantomData<R>,
 }
 
-impl<I, O, M> ParMap<I, O, M>
+impl<I, O, M, R> ParMap<I, O, M, R>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     pub(crate) fn new(params: Params, iter: I, map: M) -> Self {
-        Self { iter, params, map }
+        Self {
+            iter,
+            params,
+            map,
+            phantom: PhantomData,
+        }
     }
 
     fn destruct(self) -> (Params, I, M) {
@@ -30,21 +40,23 @@ where
     }
 }
 
-impl<I, O, M> IntoParIter for ParMap<I, O, M>
+impl<I, O, M, R> IntoParIter<R> for ParMap<I, O, M, R>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     type Item = O;
 
-    fn into_par(self) -> impl ParIter<Item = Self::Item> {
+    fn into_par(self) -> impl ParIter<R, Item = Self::Item> {
         self
     }
 }
 
-impl<I, O, M> ParIter for ParMap<I, O, M>
+impl<I, O, M, R> ParIter<R> for ParMap<I, O, M, R>
 where
+    R: ParallelRunner,
     I: ConcurrentIter,
     O: Send + Sync,
     M: Fn(I::Item) -> O + Send + Sync + Clone,
@@ -86,6 +98,6 @@ where
         C: ParCollectInto<Self::Item>,
     {
         let (params, iter, map) = self.destruct();
-        C::map_into::<_, _, DefaultRunner>(output, params, iter, map)
+        C::map_into::<_, _, R>(output, params, iter, map)
     }
 }

@@ -230,8 +230,10 @@ mod computations;
 mod into_par_iter;
 mod par_iter;
 mod parameters;
+
 pub mod runner;
 
 pub use collect_into::ParCollectInto;
+pub use into_par_iter::IntoParIter;
 pub use par_iter::ParIter;
 pub use parameters::{ChunkSize, NumThreads, Params};
