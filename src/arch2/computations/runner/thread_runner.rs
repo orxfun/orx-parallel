@@ -36,6 +36,8 @@ pub trait ThreadRunner: Sized {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
+                    let chunk = chunk_puller.pull().unwrap();
+
                     let mut flattened = chunk_puller.flattened();
                     for value in flattened.by_ref() {
                         transform(value);

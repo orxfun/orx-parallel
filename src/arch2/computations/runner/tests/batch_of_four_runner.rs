@@ -18,10 +18,13 @@ impl ThreadRunner for BatchOfFourThreadRunner {
         E: Enumeration,
         I: ConcurrentIter<E>,
     {
-        match iter.try_get_len() {
+        let x = match iter.try_get_len() {
             Some(0) => None,
+            Some(x) if x < 100 => None,
             _ => Some(4),
-        }
+        };
+        dbg!(iter.try_get_len(), &x);
+        x
     }
 
     fn begin_chunk(&mut self, _: usize) {}
