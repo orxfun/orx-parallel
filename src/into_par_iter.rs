@@ -1,6 +1,7 @@
 use crate::{
+    computational_variants::Par,
     runner::{DefaultRunner, ParallelRunner},
-    ParIter,
+    ParIter, Params,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 
@@ -13,10 +14,14 @@ where
     fn into_par(self) -> impl ParIter<R, Item = Self::Item>;
 }
 
-// impl<I: IntoConcurrentIter> IntoParIter for I {
-//     type Item = I::Item;
+impl<I, R> IntoParIter<R> for I
+where
+    I: IntoConcurrentIter,
+    R: ParallelRunner,
+{
+    type Item = I::Item;
 
-//     fn into_par(self) -> impl ParIter<Item = Self::Item> {
-//         todo!()
-//     }
-// }
+    fn into_par(self) -> impl ParIter<R, Item = Self::Item> {
+        Par::new(Params::default(), self.into_con_iter())
+    }
+}
