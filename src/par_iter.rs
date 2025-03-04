@@ -19,6 +19,8 @@ where
 
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item>;
+
     // computation transformations
 
     fn map<Out, Map>(self, map: Map) -> impl ParIter<Item = Out>

@@ -70,6 +70,10 @@ where
         self
     }
 
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
+        Par::new(self.params, self.iter)
+    }
+
     // computation transformations
 
     fn map<Out, Map>(self, map: Map) -> impl ParIter<Item = Out>
