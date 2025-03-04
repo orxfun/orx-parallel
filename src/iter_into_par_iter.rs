@@ -17,6 +17,7 @@ where
 impl<I, R> IterIntoParIter<R> for I
 where
     I: IterIntoConcurrentIter,
+    I::Item: Send + Sync,
     R: ParallelRunner,
 {
     type Item = I::Item;
