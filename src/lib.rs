@@ -228,6 +228,7 @@ mod collect_into;
 pub mod computational_variants;
 mod computations;
 mod into_par_iter;
+mod iter_into_par_iter;
 mod par_iter;
 mod parameters;
 
