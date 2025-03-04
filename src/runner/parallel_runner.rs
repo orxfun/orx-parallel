@@ -42,5 +42,23 @@ pub trait ParallelRunner: Sized + Sync {
         });
     }
 
-    // fn run_with_idx<I,T>
+    fn run_with_idx<I, T>(&self, iter: &I, transform: &T)
+    where
+        I: ConcurrentIter,
+        T: Fn((usize, I::Item)) + Sync,
+    {
+        let state = self.new_shared_state();
+        let shared_state = &state;
+
+        let mut num_spawned = 0;
+        std::thread::scope(|s| {
+            while self.do_spawn_new(num_spawned, shared_state, iter) {
+                num_spawned += 1;
+                s.spawn(move || {
+                    let thread_runner = self.new_thread_runner(shared_state);
+                    thread_runner.run_with_idx(iter, shared_state, transform);
+                });
+            }
+        });
+    }
 }
