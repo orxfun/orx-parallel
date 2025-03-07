@@ -35,14 +35,13 @@ where
     }
 }
 
-impl<I, R> IntoParIter<R> for Par<I, R>
+impl<I> IntoParIter for Par<I, DefaultRunner>
 where
-    R: ParallelRunner,
     I: ConcurrentIter,
 {
     type Item = I::Item;
 
-    fn into_par(self) -> impl ParIter<R, Item = Self::Item> {
+    fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
         self
     }
 }

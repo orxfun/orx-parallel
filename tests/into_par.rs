@@ -1,40 +1,38 @@
-// use orx_parallel::{IntoPar, IteratorIntoPar};
+use orx_concurrent_iter::IntoConcurrentIter;
+use orx_parallel::IntoParIter;
 
-// fn take_into_par<T>(a: impl IntoPar<ParItem = T>) {
-//     let _ = a.into_par();
-// }
+fn take_into_par_into_par_bounds<T>(a: impl IntoParIter<Item = T>) {
+    let _ = a.into_par();
+}
 
-// #[test]
-// fn vec_into_par() {
-//     let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
+fn take_into_par_into_con_iter_bounds<T>(a: impl IntoConcurrentIter<Item = T>) {
+    let _ = a.into_par();
+}
 
-//     let par_iter = vec.clone().into_par();
-//     take_into_par::<String>(par_iter);
+#[test]
+fn vec_into_par_iter() {
+    let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
 
-//     take_into_par::<String>(vec);
-// }
+    take_into_par_into_par_bounds::<String>(vec.clone());
 
-// #[test]
-// fn slice_into_par() {
-//     let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
-//     let slice = vec.as_slice();
+    take_into_par_into_con_iter_bounds::<String>(vec);
+}
 
-//     let par_iter = slice.into_par();
-//     take_into_par::<&String>(par_iter);
+#[test]
+fn slice_into_par_iter() {
+    let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
+    let slice = vec.as_slice();
 
-//     take_into_par::<&String>(slice);
-// }
+    take_into_par_into_par_bounds::<&String>(slice);
 
-// #[test]
-// fn range_into_par() {
-//     let range = 0..10;
-//     take_into_par::<usize>(range);
-// }
+    take_into_par_into_con_iter_bounds::<&String>(slice);
+}
 
-// #[test]
-// fn iter_into_par() {
-//     let vec: Vec<_> = (0..10).map(|x| x.to_string()).collect();
-//     let iter = vec.iter().filter(|x| x.as_str() != "x");
-//     let par_iter = iter.iter_into_par();
-//     take_into_par(par_iter);
-// }
+#[test]
+fn range_into_par_iter() {
+    let range = 0..10;
+
+    take_into_par_into_par_bounds::<usize>(range.clone());
+
+    take_into_par_into_con_iter_bounds::<usize>(range);
+}
