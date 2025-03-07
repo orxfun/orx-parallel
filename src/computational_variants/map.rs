@@ -40,18 +40,18 @@ where
     }
 }
 
-impl<I, O, M> IntoParIter for ParMap<I, O, M, DefaultRunner>
-where
-    I: ConcurrentIter,
-    O: Send + Sync,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
-{
-    type Item = O;
+// impl<I, O, M> IntoParIter for ParMap<I, O, M, DefaultRunner>
+// where
+//     I: ConcurrentIter,
+//     O: Send + Sync,
+//     M: Fn(I::Item) -> O + Send + Sync + Clone,
+// {
+//     type Item = O;
 
-    fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
-        self
-    }
-}
+//     fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
+//         self
+//     }
+// }
 
 impl<I, O, M, R> ParIter<R> for ParMap<I, O, M, R>
 where

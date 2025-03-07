@@ -4,7 +4,7 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, NumThreads, ParCollectInto, ParIter, Params,
 };
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 use std::marker::PhantomData;
 
 pub struct Par<I, R = DefaultRunner>
@@ -35,16 +35,14 @@ where
     }
 }
 
-impl<I> IntoParIter for Par<I, DefaultRunner>
-where
-    I: ConcurrentIter,
-{
-    type Item = I::Item;
-
-    fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
-        self
-    }
-}
+// impl<I> IntoParIter for Par<I, DefaultRunner>
+// where
+//     I: IntoConcurrentIter,
+// {
+//     fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
+//         self
+//     }
+// }
 
 impl<I, R> ParIter<R> for Par<I, R>
 where
