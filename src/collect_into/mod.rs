@@ -4,3 +4,6 @@ mod split_vec;
 mod vec;
 
 pub use par_collect_into::ParCollectInto;
+
+#[cfg(test)]
+pub use par_collect_into::ParCollectIntoCore;

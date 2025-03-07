@@ -1,2 +1,5 @@
 mod iter_consuming;
-mod map;
+mod iter_ref;
+mod range;
+mod slice;
+mod vectors;

@@ -49,10 +49,9 @@ where
     I: FromIterator<String> + Collection<Item = String> + IntoParIter<Item = String>,
     C: ParCollectInto<String>,
 {
-    let vec = input::<Vec<_>>(n);
-    let expected = expected(!output.is_empty(), &vec, |x| x);
-    let input = vec.into_iter().filter(|x| x.as_str() != "?");
-    let par = input.iter_into_par().num_threads(nt).chunk_size(chunk);
+    let input = input::<Vec<_>>(n);
+    let expected = expected(!output.is_empty(), &input, |x| x);
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output = par.collect_into(output);
     assert!(output.is_equal_to(&expected));
 }
@@ -69,10 +68,9 @@ where
     I: FromIterator<String> + Collection<Item = String> + IntoParIter<Item = String>,
     C: ParCollectInto<String>,
 {
-    let vec = input::<Vec<_>>(n);
-    let expected = expected(false, &vec, |x| x);
-    let input = vec.into_iter().filter(|x| x.as_str() != "?");
-    let par = input.iter_into_par().num_threads(nt).chunk_size(chunk);
+    let input = input::<Vec<_>>(n);
+    let expected = expected(false, &input, |x| x);
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output: C = par.collect();
     assert!(output.is_equal_to(&expected));
 }
@@ -92,10 +90,9 @@ where
     C: ParCollectInto<String>,
 {
     let map = |x| format!("{}!", x);
-    let vec = input::<Vec<_>>(n);
-    let expected = expected(!output.is_empty(), &vec, map);
-    let input = vec.into_iter().filter(|x| x.as_str() != "?");
-    let par = input.iter_into_par().num_threads(nt).chunk_size(chunk);
+    let input = input::<Vec<_>>(n);
+    let expected = expected(!output.is_empty(), &input, map);
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output = par.map(map).collect_into(output);
     assert!(output.is_equal_to(&expected));
 }
@@ -113,10 +110,9 @@ where
     C: ParCollectInto<String>,
 {
     let map = |x| format!("{}!", x);
-    let vec = input::<Vec<_>>(n);
-    let expected = expected(false, &vec, map);
-    let input = vec.into_iter().filter(|x| x.as_str() != "?");
-    let par = input.iter_into_par().num_threads(nt).chunk_size(chunk);
+    let input = input::<Vec<_>>(n);
+    let expected = expected(false, &input, map);
+    let par = input.into_par().num_threads(nt).chunk_size(chunk);
     let output: C = par.map(map).collect();
     assert!(output.is_equal_to(&expected));
 }
