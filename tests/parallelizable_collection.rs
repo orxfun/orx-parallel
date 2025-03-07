@@ -1,6 +1,6 @@
-// use orx_parallel::ParallelizableCollection;
+use orx_parallel::ParallelizableCollection;
 
-// fn take_parallelizable_collection<T>(a: impl ParallelizableCollection<ParItem = T>) {
+// fn take_parallelizable_collection<T>(a: impl ParallelizableCollection<Item = T>) {
 //     let _ = a.par();
 //     let _ = a.par();
 //     let _ = a.into_par();
