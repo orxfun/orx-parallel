@@ -1,7 +1,7 @@
-use crate::{computational_variants::Par, runner::DefaultRunner, IntoParIter, Params};
+use crate::{computational_variants::Par, runner::DefaultRunner, Params};
 use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 
-pub trait ParallelizableCollection: ConcurrentCollection + IntoParIter {
+pub trait ParallelizableCollection: ConcurrentCollection {
     fn par(
         &self,
     ) -> Par<
@@ -12,4 +12,4 @@ pub trait ParallelizableCollection: ConcurrentCollection + IntoParIter {
     }
 }
 
-impl<X> ParallelizableCollection for X where X: ConcurrentCollection + IntoParIter {}
+impl<X> ParallelizableCollection for X where X: ConcurrentCollection {}
