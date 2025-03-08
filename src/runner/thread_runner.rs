@@ -34,11 +34,11 @@ pub trait ThreadRunner: Sized {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    let mut flattened = chunk_puller.flattened();
-                    for value in flattened.by_ref() {
-                        transform(value);
+                    if let Some(chunk) = chunk_puller.pull() {
+                        for value in chunk {
+                            transform(value);
+                        }
                     }
-                    chunk_puller = flattened.into_chunk_puller();
                 }
             }
 
@@ -69,11 +69,11 @@ pub trait ThreadRunner: Sized {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    let mut flattened = chunk_puller.flattened_with_idx();
-                    for value in flattened.by_ref() {
-                        transform(value);
+                    if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
+                        for (i, value) in chunk.enumerate() {
+                            transform((begin_idx + i, value));
+                        }
                     }
-                    chunk_puller = flattened.into_chunk_puller();
                 }
             }
 
