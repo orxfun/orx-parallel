@@ -22,7 +22,7 @@ pub trait ParallelRunner: Sized + Sync {
 
     fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner;
 
-    fn run<I, T>(&self, iter: &I, transform: &T)
+    fn run<I, T>(&self, iter: &I, transform: &T) -> usize
     where
         I: ConcurrentIter,
         T: Fn(I::Item) + Sync,
@@ -40,9 +40,10 @@ pub trait ParallelRunner: Sized + Sync {
                 });
             }
         });
+        num_spawned
     }
 
-    fn run_with_idx<I, T>(&self, iter: &I, transform: &T)
+    fn run_with_idx<I, T>(&self, iter: &I, transform: &T) -> usize
     where
         I: ConcurrentIter,
         T: Fn((usize, I::Item)) + Sync,
@@ -60,5 +61,6 @@ pub trait ParallelRunner: Sized + Sync {
                 });
             }
         });
+        num_spawned
     }
 }

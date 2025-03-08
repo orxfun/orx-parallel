@@ -61,8 +61,8 @@ where
                 let transform =
                     |(i, value)| unsafe { self.bag.set_value(offset + i, (self.map)(value)) };
                 let runner = R::new(ComputationKind::Collect, self.params, initial_len);
-                runner.run_with_idx(&self.iter, &transform);
-                (0, self.bag)
+                let num_spawned = runner.run_with_idx(&self.iter, &transform);
+                (num_spawned, self.bag)
             }
         }
     }
