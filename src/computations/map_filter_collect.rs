@@ -1,11 +1,12 @@
 use crate::{
     parameters::Params,
-    runner::{ComputationKind, ParallelRunner},
+    runner::{ComputationKind, DefaultRunner, ParallelRunner},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 
 pub struct MapFilterCollect<I, O, Map, Filter, P>
@@ -39,11 +40,15 @@ where
     }
 
     fn parallel_compute_in_place<R: ParallelRunner>(self) -> (usize, ConcurrentBag<O, P>) {
-        let offset = self.pinned.len();
         let initial_len = self.iter.try_get_len();
 
+        let mut indices = SplitVec::new();
+        for i in 0..self.pinned.len() {
+            indices.push(i);
+        }
+        let indices = ConcurrentOrderedBag::from(indices);
+
         let values: ConcurrentBag<O, P> = self.pinned.into();
-        let indices = ConcurrentOrderedBag::with_doubling_growth();
 
         let transform = |(input_idx, value)| {
             let value = (self.map)(value);
@@ -58,4 +63,37 @@ where
 
         (num_spawned, values)
     }
+}
+
+#[test]
+fn abc() {
+    use orx_concurrent_iter::*;
+    use std::*;
+
+    let n = 25;
+    let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
+    let map = |x: String| format!("{}!", x);
+    let filter = |x: &String| x.len() > 2;
+
+    let expected: Vec<_> = input
+        .clone()
+        .into_iter()
+        .map(&map)
+        .filter(&filter)
+        .collect();
+
+    let mfc = MapFilterCollect {
+        iter: input.into_con_iter(),
+        params: Default::default(),
+        pinned: SplitVec::new(),
+        filter,
+        map,
+    };
+
+    // let (_, x) = mfc.parallel_compute_in_place::<DefaultRunner>();
+    // let x = x.into_inner();
+    // dbg!(&x);
+
+    // assert_eq!(expected, x.to_vec());
+    // assert_eq!(n, 11);
 }
