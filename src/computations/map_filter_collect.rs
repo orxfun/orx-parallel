@@ -46,19 +46,19 @@ where
         let initial_len = self.iter.try_get_len();
         let offset = self.pinned_vec.len();
 
-        let idx =
-            ConcurrentOrderedBag::from(SplitVec::with_doubling_growth_and_fragments_capacity(32));
-        let pos =
-            ConcurrentOrderedBag::from(SplitVec::with_doubling_growth_and_fragments_capacity(32));
+        // idx & values has len offset+m where m is the number of added elements
+        let idx = ConcurrentOrderedBag::new();
         let values: ConcurrentBag<O, P> = self.pinned_vec.into();
+        // pos has len offset+n where n is the length of the input, filtered out values are usize::MAX
+        let pos = ConcurrentOrderedBag::new();
 
         let transform = |(input_idx, value)| {
             let value = (self.map)(value);
             match (self.filter)(&value) {
                 true => {
                     let output_idx = values.push(value);
-                    unsafe { pos.set_value(input_idx, output_idx) };
-                    unsafe { idx.set_value(output_idx, input_idx) };
+                    unsafe { pos.set_value(input_idx, output_idx) }; // input_idx in 0..n
+                    unsafe { idx.set_value(output_idx, input_idx) }; // output_idx in 0..m
                 }
                 false => unsafe { pos.set_value(input_idx, usize::MAX) },
             }
@@ -71,21 +71,30 @@ where
         let mut idx = unsafe { idx.into_inner().unwrap_only_if_counts_match() };
         let mut pos = unsafe { pos.into_inner().unwrap_only_if_counts_match() };
 
-        let mut i = 0;
-        for p in 0..pos.len() {
-            let pi = pos[p];
-            if pi < usize::MAX {
-                if i != pi {
-                    let ii = idx[i];
+        // SAFETY: to avoid reading position values pos_i by index operator such as pos[i]
+        // note that we read positions by value and this piece is single threaded
+        let pos_write = unsafe { &mut *((&mut pos) as *mut SplitVec<usize>) };
 
-                    vals.swap(i, pi);
-                    idx.swap(i, pi);
-                    pos.swap(i, ii);
+        let mut m = 0;
+        for (i, pos_i) in pos.iter().cloned().enumerate() {
+            match pos_i {
+                usize::MAX => {}       // filtered out
+                x if x == m => m += 1, // in place
+                _ => {
+                    let idx_m = idx[m];
+                    debug_assert!(idx_m >= i);
+                    debug_assert!(pos_i >= m);
+
+                    vals.swap(m, pos_i);
+                    idx.swap(m, pos_i);
+                    pos_write[idx_m] = pos_i; // shorthand for: swap(idx_m, i)
+
+                    m += 1;
                 }
-
-                i += 1;
             }
         }
+
+        debug_assert_eq!(m, vals.len());
 
         (num_spawned, vals)
     }
@@ -96,10 +105,10 @@ fn abc() {
     use orx_concurrent_iter::*;
     use std::*;
 
-    let n = 1000;
+    let n = 32752;
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let map = |x: String| format!("{}!", x);
-    let filter = |x: &String| x.len() > 0;
+    let filter = |x: &String| x.len() > 2;
 
     let expected: Vec<_> = input
         .clone()
