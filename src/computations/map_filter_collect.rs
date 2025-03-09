@@ -56,7 +56,7 @@ where
             let value = (self.map)(value);
             match (self.filter)(&value) {
                 true => {
-                    let output_idx = values.push(value);
+                    let output_idx = values.push(value) - offset;
                     unsafe { pos.set_value(input_idx, output_idx) }; // input_idx in 0..n
                     unsafe { idx.set_value(output_idx, input_idx) }; // output_idx in 0..m
                 }
@@ -85,7 +85,7 @@ where
                     debug_assert!(idx_m >= i);
                     debug_assert!(pos_i >= m);
 
-                    vals.swap(m, pos_i);
+                    vals.swap(offset + m, offset + pos_i);
                     idx.swap(m, pos_i);
                     pos_write[idx_m] = pos_i; // shorthand for: swap(idx_m, i)
 
@@ -94,7 +94,7 @@ where
             }
         }
 
-        debug_assert_eq!(m, vals.len());
+        debug_assert_eq!(offset + m, vals.len());
 
         (num_spawned, vals)
     }
@@ -105,22 +105,26 @@ fn abc() {
     use orx_concurrent_iter::*;
     use std::*;
 
-    let n = 32752;
+    let offset = 33;
+    let n = 159;
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let map = |x: String| format!("{}!", x);
-    let filter = |x: &String| x.len() > 2;
+    let filter = |x: &String| x.len() > 3;
 
-    let expected: Vec<_> = input
-        .clone()
-        .into_iter()
-        .map(&map)
-        .filter(&filter)
-        .collect();
+    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut expected = Vec::new();
+
+    for i in 0..offset {
+        output.push(format!("x{}", i));
+        expected.push(format!("x{}", i));
+    }
+
+    expected.extend(input.clone().into_iter().map(&map).filter(&filter));
 
     let mfc = MapFilterCollect {
         iter: input.into_con_iter(),
         params: Default::default(),
-        pinned_vec: SplitVec::with_doubling_growth_and_fragments_capacity(32),
+        pinned_vec: output,
         filter,
         map,
     };
@@ -129,5 +133,5 @@ fn abc() {
     dbg!(&x);
 
     assert_eq!(expected, x.to_vec());
-    // assert_eq!(n, 11);
+    assert_eq!(n, 11);
 }
