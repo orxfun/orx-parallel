@@ -96,7 +96,7 @@ pub trait ThreadRunner: Sized {
     ) -> Vec<O>
     where
         I: ConcurrentIter,
-        T: Fn((usize, I::Item)) -> O,
+        T: Fn((usize, I::Item)) -> Option<O>,
     {
         let mut output = new_vec(capacity);
         let mut chunk_puller = iter.chunk_puller(0);
@@ -106,8 +106,8 @@ pub trait ThreadRunner: Sized {
             self.begin_chunk(chunk_size);
 
             match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some(value) => output.push(transform(value)),
+                0 | 1 => match item_puller.next().and_then(transform) {
+                    Some(value) => output.push(value),
                     None => break,
                 },
                 c => {
@@ -117,8 +117,9 @@ pub trait ThreadRunner: Sized {
 
                     if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
                         for (i, value) in chunk.enumerate() {
-                            let value = transform((begin_idx + i, value));
-                            output.push(value);
+                            if let Some(value) = transform((begin_idx + i, value)) {
+                                output.push(value)
+                            }
                         }
                     }
                 }

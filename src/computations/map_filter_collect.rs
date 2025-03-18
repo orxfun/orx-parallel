@@ -102,6 +102,21 @@ where
     fn parallel_compute_heap_sort<R: ParallelRunner>(self) {
         let initial_len = self.iter.try_get_len();
         let offset = self.pinned_vec.len();
+
+        let transform = |(input_idx, value)| {
+            let value = (self.map)(value);
+            if (self.filter)(&value) {
+                //
+            }
+            match (self.filter)(&value) {
+                true => {
+                    let output_idx = values.push(value) - offset;
+                    unsafe { pos.set_value(input_idx, output_idx) }; // input_idx in 0..n
+                    unsafe { idx.set_value(output_idx, input_idx) }; // output_idx in 0..m
+                }
+                false => unsafe { pos.set_value(input_idx, usize::MAX) },
+            }
+        };
     }
 }
 
