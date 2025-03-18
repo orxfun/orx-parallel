@@ -3,6 +3,7 @@ use std::usize;
 use crate::{
     parameters::Params,
     runner::{ComputationKind, DefaultRunner, ParallelRunner},
+    CollectOrdering,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -36,6 +37,15 @@ where
     Filter: Fn(&O) -> bool + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
+    pub fn compute<R: ParallelRunner>(self) -> (usize, P) {
+        match (self.params.is_sequential(), self.params.collect_ordering) {
+            (true, _) => (0, self.sequential_fill_bag()),
+            (false, CollectOrdering::Arbitrary) => todo!(),
+            (false, CollectOrdering::SortInPlace) => self.parallel_compute_in_place::<R>(),
+            (false, CollectOrdering::SortWithHeap) => self.parallel_compute_heap_sort::<R>(),
+        }
+    }
+
     fn sequential_fill_bag(mut self) -> P {
         for x in self.iter.into_seq_iter().map(self.map).filter(self.filter) {
             self.pinned_vec.push(x);
@@ -43,14 +53,34 @@ where
         self.pinned_vec
     }
 
+    fn parallel_compute_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
+        let initial_len = self.iter.try_get_len();
+
+        // values has length of offset+m where m is the number of added elements
+        let values: ConcurrentBag<O, P> = self.pinned_vec.into();
+
+        let transform = |value| {
+            let value = (self.map)(value);
+            if (self.filter)(&value) {
+                values.push(value);
+            }
+        };
+
+        let runner = R::new(ComputationKind::Collect, self.params, initial_len);
+        let num_spawned = runner.run(&self.iter, &transform);
+
+        let values = values.into_inner();
+        (num_spawned, values)
+    }
+
     fn parallel_compute_in_place<R: ParallelRunner>(self) -> (usize, P) {
         let initial_len = self.iter.try_get_len();
         let offset = self.pinned_vec.len();
 
-        // idx & values has len offset+m where m is the number of added elements
+        // idx & values has length of offset+m where m is the number of added elements
         let idx = ConcurrentOrderedBag::new();
         let values: ConcurrentBag<O, P> = self.pinned_vec.into();
-        // pos has len offset+n where n is the length of the input, filtered out values are usize::MAX
+        // pos has length of offset+n where n is the length of the input, filtered out values are usize::MAX
         let pos = ConcurrentOrderedBag::new();
 
         let transform = |(input_idx, value)| {
@@ -68,7 +98,7 @@ where
         let runner = R::new(ComputationKind::Collect, self.params, initial_len);
         let num_spawned = runner.run_with_idx(&self.iter, &transform);
 
-        let mut vals = values.into_inner();
+        let mut values = values.into_inner();
         let mut idx = unsafe { idx.into_inner().unwrap_only_if_counts_match() };
         let mut pos = unsafe { pos.into_inner().unwrap_only_if_counts_match() };
 
@@ -86,7 +116,7 @@ where
                     debug_assert!(idx_m >= i);
                     debug_assert!(pos_i >= m);
 
-                    vals.swap(offset + m, offset + pos_i);
+                    values.swap(offset + m, offset + pos_i);
                     idx.swap(m, pos_i);
                     pos_write[idx_m] = pos_i; // shorthand for: swap(idx_m, i)
 
@@ -95,9 +125,9 @@ where
             }
         }
 
-        debug_assert_eq!(offset + m, vals.len());
+        debug_assert_eq!(offset + m, values.len());
 
-        (num_spawned, vals)
+        (num_spawned, values)
     }
 
     fn parallel_compute_heap_sort<R: ParallelRunner>(mut self) -> (usize, P) {
@@ -172,6 +202,46 @@ fn abc() {
 
     // let (_, x) = mfc.parallel_compute_in_place::<DefaultRunner>();
     dbg!(&x);
+
+    assert_eq!(expected, x.to_vec());
+}
+
+#[test]
+fn def() {
+    use orx_concurrent_iter::*;
+    use std::*;
+
+    let offset = 33;
+    let n = 159;
+    let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
+    let map = |x: String| format!("{}!", x);
+    let filter = |x: &String| x.len() > 3;
+
+    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut expected = Vec::new();
+
+    for i in 0..offset {
+        output.push(format!("x{}", i));
+        expected.push(format!("x{}", i));
+    }
+
+    expected.extend(input.clone().into_iter().map(&map).filter(&filter));
+
+    let mfc = MapFilterCollect {
+        iter: input.into_con_iter(),
+        params: Default::default(),
+        pinned_vec: output,
+        filter,
+        map,
+    };
+
+    let (_, mut x) = mfc.parallel_compute_in_arbitrary::<DefaultRunner>();
+
+    // let (_, x) = mfc.parallel_compute_in_place::<DefaultRunner>();
+    dbg!(&x);
+
+    expected.sort();
+    x.sort();
 
     assert_eq!(expected, x.to_vec());
 }

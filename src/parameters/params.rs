@@ -4,7 +4,7 @@ use super::{chunk_size::ChunkSize, collect_ordering::CollectOrdering, num_thread
 pub struct Params {
     pub num_threads: NumThreads,
     pub chunk_size: ChunkSize,
-    pub collect: CollectOrdering,
+    pub collect_ordering: CollectOrdering,
 }
 
 impl Params {
@@ -18,7 +18,7 @@ impl Params {
         Self {
             num_threads: num_threads.into(),
             chunk_size: self.chunk_size,
-            collect: self.collect,
+            collect_ordering: self.collect_ordering,
         }
     }
 
@@ -26,15 +26,15 @@ impl Params {
         Self {
             num_threads: self.num_threads,
             chunk_size: chunk_size.into(),
-            collect: self.collect,
+            collect_ordering: self.collect_ordering,
         }
     }
 
-    pub(crate) fn with_collect_ordering(self, collect: CollectOrdering) -> Self {
+    pub(crate) fn with_collect_ordering(self, collect_ordering: CollectOrdering) -> Self {
         Self {
             num_threads: self.num_threads,
             chunk_size: self.chunk_size,
-            collect,
+            collect_ordering,
         }
     }
 }
