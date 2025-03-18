@@ -1,5 +1,3 @@
-use std::usize;
-
 use crate::{
     parameters::Params,
     runner::{ComputationKind, DefaultRunner, ParallelRunner},
