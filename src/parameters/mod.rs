@@ -1,4 +1,5 @@
 mod chunk_size;
+mod collect;
 mod num_threads;
 mod params;
 
