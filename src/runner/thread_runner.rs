@@ -87,18 +87,27 @@ pub trait ThreadRunner: Sized {
 
     // run - into vec
 
-    fn run_with_idx_into_vec<I, T, O>(
+    fn collect_into_vec_with_idx<I, O, M, F>(
         mut self,
         iter: &I,
         shared_state: &Self::SharedState,
-        transform: &T,
+        map: &M,
+        filter: &F,
         capacity: Option<usize>,
-    ) -> Vec<O>
+    ) -> Vec<(usize, O)>
     where
         I: ConcurrentIter,
-        T: Fn((usize, I::Item)) -> Option<O>,
+        M: Fn(I::Item) -> O,
+        F: Fn(&O) -> bool,
     {
-        let mut output = new_vec(capacity);
+        let mut out_vec = new_vec(capacity);
+        let mut push_if_in = |i: usize, input: I::Item| {
+            let output = map(input);
+            if filter(&output) {
+                out_vec.push((i, output))
+            }
+        };
+
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller_with_idx();
 
@@ -106,8 +115,8 @@ pub trait ThreadRunner: Sized {
             self.begin_chunk(chunk_size);
 
             match chunk_size {
-                0 | 1 => match item_puller.next().and_then(transform) {
-                    Some(value) => output.push(value),
+                0 | 1 => match item_puller.next() {
+                    Some((i, input)) => push_if_in(i, input),
                     None => break,
                 },
                 c => {
@@ -116,10 +125,8 @@ pub trait ThreadRunner: Sized {
                     }
 
                     if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
-                        for (i, value) in chunk.enumerate() {
-                            if let Some(value) = transform((begin_idx + i, value)) {
-                                output.push(value)
-                            }
+                        for (i, input) in chunk.enumerate() {
+                            push_if_in(begin_idx + i, input);
                         }
                     }
                 }
@@ -129,7 +136,7 @@ pub trait ThreadRunner: Sized {
         }
 
         self.complete_task(shared_state);
-        output
+        out_vec
     }
 }
 
