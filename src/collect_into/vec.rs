@@ -34,9 +34,9 @@ where
                 self.reserve(len);
                 let fixed = FixedVec::from(self);
                 let bag = ConcurrentOrderedBag::from(fixed);
-                let (_num_spawned, bag) = MapCollect::new(params, iter, map, bag).compute::<R>();
-                let fixed = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
-                Vec::from(fixed)
+                let (_num_spawned, pinned_vec) =
+                    MapCollect::new(params, iter, map, bag).compute::<R>();
+                Vec::from(pinned_vec)
             }
         }
     }

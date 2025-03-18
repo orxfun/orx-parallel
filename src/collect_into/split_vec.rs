@@ -27,8 +27,8 @@ where
     {
         reserve(&mut self, iter.try_get_len());
         let bag: ConcurrentOrderedBag<_, _> = self.into();
-        let (_num_spawned, bag) = MapCollect::new(params, iter, map, bag).compute::<R>();
-        unsafe { bag.into_inner().unwrap_only_if_counts_match() }
+        let (_num_spawned, pinned_vec) = MapCollect::new(params, iter, map, bag).compute::<R>();
+        pinned_vec
     }
 
     // test
