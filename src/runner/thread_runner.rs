@@ -100,13 +100,8 @@ pub trait ThreadRunner: Sized {
         M: Fn(I::Item) -> O,
         F: Fn(&O) -> bool,
     {
-        let mut out_vec = new_vec(capacity);
-        let mut push_if_in = |i: usize, input: I::Item| {
-            let output = map(input);
-            if filter(&output) {
-                out_vec.push((i, output))
-            }
-        };
+        let mut collected = new_vec(capacity);
+        let out_vec = &mut collected;
 
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller_with_idx();
@@ -116,7 +111,7 @@ pub trait ThreadRunner: Sized {
 
             match chunk_size {
                 0 | 1 => match item_puller.next() {
-                    Some((i, input)) => push_if_in(i, input),
+                    Some((i, input)) => push_if_in(out_vec, i, input, map, filter),
                     None => break,
                 },
                 c => {
@@ -126,7 +121,7 @@ pub trait ThreadRunner: Sized {
 
                     if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
                         for (i, input) in chunk.enumerate() {
-                            push_if_in(begin_idx + i, input);
+                            push_if_in(out_vec, begin_idx + i, input, map, filter);
                         }
                     }
                 }
@@ -136,7 +131,19 @@ pub trait ThreadRunner: Sized {
         }
 
         self.complete_task(shared_state);
-        out_vec
+        collected
+    }
+}
+
+#[inline(always)]
+fn push_if_in<T, O, M, F>(out_vec: &mut Vec<(usize, O)>, i: usize, input: T, map: M, filter: F)
+where
+    M: Fn(T) -> O,
+    F: Fn(&O) -> bool,
+{
+    let output = map(input);
+    if filter(&output) {
+        out_vec.push((i, output))
     }
 }
 
