@@ -72,7 +72,7 @@ where
         let mut pos = unsafe { pos.into_inner().unwrap_only_if_counts_match() };
 
         // SAFETY: to avoid reading position values pos_i by index operator such as pos[i]
-        // note that we read positions by value and this piece is single threaded
+        // note that we read positions by value and this code block is single threaded
         let pos_write = unsafe { &mut *((&mut pos) as *mut SplitVec<usize>) };
 
         let mut m = 0;
@@ -97,6 +97,11 @@ where
         debug_assert_eq!(offset + m, vals.len());
 
         (num_spawned, vals)
+    }
+
+    fn parallel_compute_heap_sort<R: ParallelRunner>(self) {
+        let initial_len = self.iter.try_get_len();
+        let offset = self.pinned_vec.len();
     }
 }
 
