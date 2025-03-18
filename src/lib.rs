@@ -242,4 +242,4 @@ pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
 pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;
-pub use parameters::{ChunkSize, NumThreads, Params};
+pub use parameters::{ChunkSize, CollectOrdering, NumThreads, Params};

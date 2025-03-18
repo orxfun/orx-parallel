@@ -1,10 +1,10 @@
-use super::{chunk_size::ChunkSize, collect::Collect, num_threads::NumThreads};
+use super::{chunk_size::ChunkSize, collect_ordering::CollectOrdering, num_threads::NumThreads};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Params {
     pub num_threads: NumThreads,
     pub chunk_size: ChunkSize,
-    pub collect: Collect,
+    pub collect: CollectOrdering,
 }
 
 impl Params {
@@ -30,7 +30,7 @@ impl Params {
         }
     }
 
-    pub(crate) fn with_collect_approach(self, collect: Collect) -> Self {
+    pub(crate) fn with_collect_ordering(self, collect: CollectOrdering) -> Self {
         Self {
             num_threads: self.num_threads,
             chunk_size: self.chunk_size,

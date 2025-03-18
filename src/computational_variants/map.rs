@@ -1,6 +1,6 @@
 use crate::{
     runner::{DefaultRunner, ParallelRunner},
-    ChunkSize, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -61,6 +61,11 @@ where
 
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
+        self
+    }
+
+    fn collect_ordering(mut self, collect: CollectOrdering) -> Self {
+        self.params = self.params.with_collect_ordering(collect);
         self
     }
 

@@ -1,6 +1,6 @@
 use crate::{
     collect_into::ParCollectInto,
-    parameters::{ChunkSize, NumThreads},
+    parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -18,6 +18,8 @@ where
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
+
+    fn collect_ordering(self, collect: CollectOrdering) -> Self;
 
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item>;
 
