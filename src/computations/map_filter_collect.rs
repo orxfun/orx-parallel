@@ -10,6 +10,7 @@ use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_iterable::Collection;
 use orx_pinned_vec::PinnedVec;
+use orx_priority_queue::{BinaryHeap, PriorityQueue};
 use orx_split_vec::SplitVec;
 
 pub struct MapFilterCollect<I, O, Map, Filter, P>
@@ -99,21 +100,42 @@ where
         (num_spawned, vals)
     }
 
-    fn parallel_compute_heap_sort<R: ParallelRunner>(self) {
+    fn parallel_compute_heap_sort<R: ParallelRunner>(mut self) -> (usize, P) {
         let initial_len = self.iter.try_get_len();
-        let offset = self.pinned_vec.len();
+        let runner = R::new(ComputationKind::Collect, self.params, initial_len);
+        let (num_spawned, mut vectors) =
+            runner.collect_into_vec_with_idx(&self.iter, &self.map, &self.filter);
 
-        // let transform = |(input_idx, value)| {
-        //     let value = (self.map)(value);
-        //     match (self.filter)(&value) {
-        //         true => {
-        //             let output_idx = values.push(value) - offset;
-        //             unsafe { pos.set_value(input_idx, output_idx) }; // input_idx in 0..n
-        //             unsafe { idx.set_value(output_idx, input_idx) }; // output_idx in 0..m
-        //         }
-        //         false => unsafe { pos.set_value(input_idx, usize::MAX) },
-        //     }
-        // };
+        let mut queue = BinaryHeap::with_capacity(vectors.len());
+        let mut indices = vec![0; vectors.len()];
+
+        for (v, vec) in vectors.iter().enumerate() {
+            if let Some(x) = vec.get(indices[v]) {
+                queue.push(v, x.0);
+            }
+        }
+        let mut curr_v = queue.pop_node();
+
+        while let Some(v) = curr_v {
+            let idx = indices[v];
+            indices[v] += 1;
+
+            curr_v = match vectors[v].get(indices[v]) {
+                Some(x) => Some(queue.push_then_pop(v, x.0).0),
+                None => queue.pop_node(),
+            };
+
+            let ptr = vectors[v].as_mut_ptr();
+            self.pinned_vec.push(unsafe { ptr.add(idx).read().1 });
+        }
+
+        for vec in vectors.iter_mut() {
+            // SAFETY: this prevents to drop the elements which are already moved to pinned_vec
+            // allocation within vec.capacity() will still be reclaimed; however, as uninitialized memory
+            unsafe { vec.set_len(0) };
+        }
+
+        (num_spawned, self.pinned_vec)
     }
 }
 
@@ -146,7 +168,9 @@ fn abc() {
         map,
     };
 
-    let (_, x) = mfc.parallel_compute_in_place::<DefaultRunner>();
+    let (_, x) = mfc.parallel_compute_heap_sort::<DefaultRunner>();
+
+    // let (_, x) = mfc.parallel_compute_in_place::<DefaultRunner>();
     dbg!(&x);
 
     assert_eq!(expected, x.to_vec());
