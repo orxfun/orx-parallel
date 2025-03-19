@@ -33,7 +33,10 @@ where
         let iter = self.iter.into_seq_iter();
         for maybe in iter.map(self.filter_map) {
             if maybe.has_value() {
-                self.pinned_vec.push(maybe.value_unchecked());
+                let value = maybe.value_unchecked();
+                if (self.filter)(&value) {
+                    self.pinned_vec.push(value);
+                }
             }
         }
         self.pinned_vec
