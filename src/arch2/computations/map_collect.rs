@@ -2,7 +2,7 @@ use super::ParallelRunner;
 use crate::{computations::computation_kind::ComputationKind, parameters::Params};
 use orx_concurrent_iter::{ConcurrentIter, Enumerated};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 
 pub struct MapCollect<I, O, Map, P>
 where

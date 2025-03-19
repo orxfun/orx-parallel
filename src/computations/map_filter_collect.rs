@@ -6,8 +6,8 @@ use crate::{
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_iterable::Collection;
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 use orx_split_vec::SplitVec;
