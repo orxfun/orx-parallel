@@ -87,7 +87,120 @@ pub trait ThreadRunner: Sized {
 
     // run - into vec
 
-    fn collect_into_vec_with_idx<I, O, M, F>(
+    fn mfm_collect_with_idx<I, T, O, M1, F, M2>(
+        mut self,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        map1: &M1,
+        filter: &F,
+        map2: &M2,
+    ) -> Vec<(usize, O)>
+    where
+        I: ConcurrentIter,
+        M1: Fn(I::Item) -> T,
+        F: Fn(&T) -> bool,
+        M2: Fn(T) -> O,
+    {
+        let mut collected = Vec::new();
+        let out_vec = &mut collected;
+
+        let mut chunk_puller = iter.chunk_puller(0);
+        let mut item_puller = iter.item_puller_with_idx();
+
+        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
+            self.begin_chunk(chunk_size);
+
+            match chunk_size {
+                0 | 1 => match item_puller.next() {
+                    Some((i, input)) => {
+                        let intermediate = map1(input);
+                        if filter(&intermediate) {
+                            out_vec.push((i, map2(intermediate)));
+                        }
+                    }
+                    None => break,
+                },
+                c => {
+                    if c > chunk_puller.chunk_size() {
+                        chunk_puller = iter.chunk_puller(c);
+                    }
+
+                    if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
+                        for (i, input) in chunk.enumerate() {
+                            let intermediate = map1(input);
+                            if filter(&intermediate) {
+                                out_vec.push((begin_idx + i, map2(intermediate)));
+                            }
+                        }
+                    }
+                }
+            }
+
+            self.complete_chunk(shared_state, chunk_size);
+        }
+
+        self.complete_task(shared_state);
+        collected
+    }
+
+    fn collect_into_vec_with_idx<I, T, O, M1, F, M2>(
+        mut self,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        map1: &M1,
+        filter: &F,
+        map2: &M2,
+        capacity: Option<usize>,
+    ) -> Vec<(usize, O)>
+    where
+        I: ConcurrentIter,
+        M1: Fn(I::Item) -> T,
+        F: Fn(&T) -> bool,
+        M2: Fn(T) -> O,
+    {
+        let mut collected = new_vec(capacity);
+        let out_vec = &mut collected;
+
+        let mut chunk_puller = iter.chunk_puller(0);
+        let mut item_puller = iter.item_puller_with_idx();
+
+        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
+            self.begin_chunk(chunk_size);
+
+            match chunk_size {
+                0 | 1 => match item_puller.next() {
+                    Some((i, input)) => {
+                        let intermediate = map1(input);
+                        if filter(&intermediate) {
+                            out_vec.push((i, map2(intermediate)));
+                        }
+                    }
+                    None => break,
+                },
+                c => {
+                    if c > chunk_puller.chunk_size() {
+                        chunk_puller = iter.chunk_puller(c);
+                    }
+
+                    if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
+                        for (i, input) in chunk.enumerate() {
+                            let intermediate = map1(input);
+                            if filter(&intermediate) {
+                                out_vec.push((begin_idx + i, map2(intermediate)));
+                            }
+                        }
+                    }
+                }
+            }
+
+            self.complete_chunk(shared_state, chunk_size);
+        }
+
+        self.complete_task(shared_state);
+        collected
+    }
+
+    fn collect_into_vec_with_idx2<I, O, M, F>(
         mut self,
         iter: &I,
         shared_state: &Self::SharedState,

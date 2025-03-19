@@ -48,7 +48,7 @@ pub trait Maybe<T> {
     /// let absent: Result<char, String> = Err("failed".to_string());
     /// // let _ = absent.value(); // panics!
     /// ```
-    fn value_unchecked(self) -> T;
+    fn unwrap(self) -> T;
 
     /// Returns whether or not the maybe has a successful value.
     ///
@@ -71,27 +71,20 @@ pub trait Maybe<T> {
     /// ```
     fn has_value(&self) -> bool;
 
+    fn has_value_and(&self, filter: impl Fn(&T) -> bool) -> bool;
+
     /// Converts the maybe into an option.
     ///
     /// Returns
     ///
     /// * `Some(self.value())` if `self.has_value()` is true,
     /// * `None` otherwise.
-    #[inline(always)]
-    fn into_option(self) -> Option<T>
-    where
-        Self: Sized,
-    {
-        match self.has_value() {
-            false => None,
-            true => Some(self.value_unchecked()),
-        }
-    }
+    fn into_option(self) -> Option<T>;
 }
 
 impl<T> Maybe<T> for Option<T> {
     #[inline(always)]
-    fn value_unchecked(self) -> T {
+    fn unwrap(self) -> T {
         self.expect("`value` called on the variant where the success value is absent (None).")
     }
 
@@ -99,16 +92,36 @@ impl<T> Maybe<T> for Option<T> {
     fn has_value(&self) -> bool {
         self.is_some()
     }
+
+    #[inline(always)]
+    fn has_value_and(&self, filter: impl Fn(&T) -> bool) -> bool {
+        self.as_ref().map(filter).unwrap_or(false)
+    }
+
+    #[inline(always)]
+    fn into_option(self) -> Option<T> {
+        self
+    }
 }
 
 impl<T, E: Debug> Maybe<T> for Result<T, E> {
     #[inline(always)]
-    fn value_unchecked(self) -> T {
+    fn unwrap(self) -> T {
         self.expect("`value` called on the variant where the success value is absent (Err).")
     }
 
     #[inline(always)]
     fn has_value(&self) -> bool {
         self.is_ok()
+    }
+
+    #[inline(always)]
+    fn has_value_and(&self, filter: impl Fn(&T) -> bool) -> bool {
+        self.as_ref().map(filter).unwrap_or(false)
+    }
+
+    #[inline(always)]
+    fn into_option(self) -> Option<T> {
+        self.ok()
     }
 }
