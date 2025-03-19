@@ -33,13 +33,17 @@ where
     P: IntoConcurrentPinnedVec<O>,
     O: Send + Sync,
 {
-    pub fn compute<R: ParallelRunner>(self) -> (usize, P) {
-        let params = &self.mfm.params;
+    pub fn compute<R: ParallelRunner>(
+        mfm: Mfm<I, T, O, Map1, Filter, Map2>,
+        pinned_vec: P,
+    ) -> (usize, P) {
+        let mfm_collect = Self { mfm, pinned_vec };
+        let params = &mfm_collect.mfm.params;
         match (params.is_sequential(), params.collect_ordering) {
-            (true, _) => (0, self.sequential_fill_bag()),
+            (true, _) => (0, mfm_collect.sequential_fill_bag()),
             (false, CollectOrdering::Arbitrary) => todo!(),
-            (false, CollectOrdering::SortInPlace) => self.parallel_compute_in_place::<R>(),
-            (false, CollectOrdering::SortWithHeap) => self.parallel_compute_heap_sort::<R>(),
+            (false, CollectOrdering::SortInPlace) => mfm_collect.parallel_compute_in_place::<R>(),
+            (false, CollectOrdering::SortWithHeap) => mfm_collect.parallel_compute_heap_sort::<R>(),
         }
     }
 
