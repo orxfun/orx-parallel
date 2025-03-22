@@ -1,7 +1,4 @@
-use super::{
-    mfm::Mfm,
-    values::{Atom, Values},
-};
+use super::{mfm::Mfm, values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<I, T, Vt, O, Vo, M1, F, M2> Mfm<I, T, Vt, O, Vo, M1, F, M2>
@@ -14,18 +11,35 @@ where
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
 {
-    pub fn map<Map, Q>(
+    pub fn map<M, Q>(
         self,
-        map: Map,
-    ) -> Mfm<I, T, Vt, Q, Vo::Mapped<Map, Q>, M1, F, impl Fn(T) -> Vo::Mapped<Map, Q>>
+        map: M,
+    ) -> Mfm<I, T, Vt, Q, Vo::Mapped<M, Q>, M1, F, impl Fn(T) -> Vo::Mapped<M, Q>>
     where
-        Map: Fn(O) -> Q + Send + Sync + Clone,
+        M: Fn(O) -> Q + Send + Sync + Clone,
         Q: Send + Sync,
     {
         let (params, iter, map1, filter, map2) = self.destruct();
         let map2 = move |t| {
             let vo = map2(t);
             vo.map(map.clone())
+        };
+        Mfm::new(params, iter, map1, filter, map2)
+    }
+
+    pub fn flat_map<Fm, Vq>(
+        self,
+        flat_map: Fm,
+    ) -> Mfm<I, T, Vt, Vq::Item, Vo::FlatMapped<Fm, Vq>, M1, F, impl Fn(T) -> Vo::FlatMapped<Fm, Vq>>
+    where
+        Fm: Fn(O) -> Vq + Send + Sync + Clone,
+        Vq: IntoIterator,
+        Vq::Item: Send + Sync,
+    {
+        let (params, iter, map1, filter, map2) = self.destruct();
+        let map2 = move |t| {
+            let vo = map2(t);
+            vo.flat_map(flat_map.clone())
         };
         Mfm::new(params, iter, map1, filter, map2)
     }

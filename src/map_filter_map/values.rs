@@ -9,6 +9,11 @@ pub trait Values {
     where
         M: Fn(Self::Item) -> O;
 
+    type FlatMapped<Fm, Vo>: Values<Item = Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
     fn push_to_pinned_vec<P>(self, vector: &mut P)
@@ -25,6 +30,11 @@ pub trait Values {
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
         M: Fn(Self::Item) -> O;
+
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
 
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
@@ -71,6 +81,12 @@ impl<T> Values for Atom<T> {
     where
         M: Fn(Self::Item) -> O;
 
+    type FlatMapped<Fm, Vo>
+        = Vector<Vo>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     fn values(self) -> impl IntoIterator<Item = T> {
         core::iter::once(self.0)
     }
@@ -103,6 +119,15 @@ impl<T> Values for Atom<T> {
         M: Fn(Self::Item) -> O,
     {
         Atom(map(self.0))
+    }
+
+    #[inline(always)]
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo,
+    {
+        Vector(flat_map(self.0))
     }
 
     #[inline(always)]
@@ -176,6 +201,12 @@ where
     where
         M: Fn(Self::Item) -> O;
 
+    type FlatMapped<Fm, Vo>
+        = Vector<core::iter::FlatMap<I::IntoIter, Vo, Fm>>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
     }
@@ -214,6 +245,15 @@ where
         M: Fn(Self::Item) -> O,
     {
         Vector(self.0.into_iter().map(map))
+    }
+
+    #[inline(always)]
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo,
+    {
+        Vector(self.0.into_iter().flat_map(flat_map))
     }
 
     #[inline]
