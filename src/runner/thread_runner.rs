@@ -1,3 +1,4 @@
+use crate::map_filter_map::Values;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub trait ThreadRunner: Sized {
@@ -131,6 +132,62 @@ pub trait ThreadRunner: Sized {
                             if filter(&intermediate) {
                                 out_vec.push((begin_idx + i, map2(intermediate)));
                             }
+                        }
+                    }
+                }
+            }
+
+            self.complete_chunk(shared_state, chunk_size);
+        }
+
+        self.complete_task(shared_state);
+        collected
+    }
+
+    fn mfm_collect<I, T, Vt, O, Vo, M1, F, M2>(
+        mut self,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        map1: &M1,
+        filter: &F,
+        map2: &M2,
+    ) -> Vec<(usize, O)>
+    where
+        I: ConcurrentIter,
+        Vt: Values<T>,
+        O: Send + Sync,
+        Vo: Values<O>,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&T) -> bool + Send + Sync,
+        M2: Fn(T) -> Vo + Send + Sync,
+    {
+        let mut collected = Vec::new();
+        let out_vec = &mut collected;
+
+        let mut chunk_puller = iter.chunk_puller(0);
+        let mut item_puller = iter.item_puller_with_idx();
+
+        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
+            self.begin_chunk(chunk_size);
+
+            match chunk_size {
+                0 | 1 => match item_puller.next() {
+                    Some((i_idx, i)) => {
+                        let vt = map1(i);
+                        vt.filter_map_collect_heap(i_idx, filter, map2, out_vec);
+                    }
+                    None => break,
+                },
+                c => {
+                    if c > chunk_puller.chunk_size() {
+                        chunk_puller = iter.chunk_puller(c);
+                    }
+
+                    if let Some((chunk_begin_idx, chunk)) = chunk_puller.pull_with_idx() {
+                        for (i_idx, i) in chunk.enumerate() {
+                            let i_idx = chunk_begin_idx + i_idx;
+                            let vt = map1(i);
+                            vt.filter_map_collect_heap(i_idx, filter, map2, out_vec);
                         }
                     }
                 }

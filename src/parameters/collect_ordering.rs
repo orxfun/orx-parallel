@@ -3,5 +3,4 @@ pub enum CollectOrdering {
     Arbitrary,
     #[default]
     SortWithHeap,
-    SortInPlace,
 }

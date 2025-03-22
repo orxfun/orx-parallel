@@ -42,7 +42,7 @@ where
         match (params.is_sequential(), params.collect_ordering) {
             (true, _) => (0, mfm_collect.sequential_fill_bag()),
             (false, CollectOrdering::Arbitrary) => todo!(),
-            (false, CollectOrdering::SortInPlace) => mfm_collect.parallel_compute_in_place::<R>(),
+            // (false, CollectOrdering::SortInPlace) => mfm_collect.parallel_compute_in_place::<R>(),
             (false, CollectOrdering::SortWithHeap) => mfm_collect.parallel_compute_heap_sort::<R>(),
         }
     }

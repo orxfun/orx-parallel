@@ -41,7 +41,7 @@ where
         match (self.params.is_sequential(), self.params.collect_ordering) {
             (true, _) => (0, self.sequential_fill_bag()),
             (false, CollectOrdering::Arbitrary) => todo!(),
-            (false, CollectOrdering::SortInPlace) => self.parallel_compute_in_place::<R>(),
+            // (false, CollectOrdering::SortInPlace) => self.parallel_compute_in_place::<R>(),
             (false, CollectOrdering::SortWithHeap) => self.parallel_compute_heap_sort::<R>(),
         }
     }
