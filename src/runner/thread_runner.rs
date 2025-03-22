@@ -154,9 +154,9 @@ pub trait ThreadRunner: Sized {
     ) -> Vec<(usize, O)>
     where
         I: ConcurrentIter,
-        Vt: Values<T>,
+        Vt: Values<Item = T>,
         O: Send + Sync,
-        Vo: Values<O>,
+        Vo: Values<Item = O>,
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync,

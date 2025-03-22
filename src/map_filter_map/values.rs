@@ -2,26 +2,32 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
-pub trait Values<T> {
-    fn values(self) -> impl IntoIterator<Item = T>;
+pub trait Values {
+    type Item;
+
+    fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
     fn push_to_pinned_vec<P>(self, vector: &mut P)
     where
-        P: PinnedVec<T>;
+        P: PinnedVec<Self::Item>;
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<T, P>)
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
     where
-        P: IntoConcurrentPinnedVec<T>,
-        T: Send + Sync;
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send + Sync;
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, T)>);
+    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>);
+
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
+    where
+        M: Fn(Self::Item) -> O;
 
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
         Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
         P: IntoConcurrentPinnedVec<O>;
 
     fn filter_map_collect_arbitrary<F, M2, P, Vo, O>(
@@ -31,9 +37,9 @@ pub trait Values<T> {
         bag: &ConcurrentBag<O, P>,
     ) where
         Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
         P: IntoConcurrentPinnedVec<O>,
         O: Send + Sync;
 
@@ -45,15 +51,17 @@ pub trait Values<T> {
         vec: &mut Vec<(usize, O)>,
     ) where
         Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
         O: Send + Sync;
 }
 
 pub struct Atom<T>(pub T);
 
-impl<T> Values<T> for Atom<T> {
+impl<T> Values for Atom<T> {
+    type Item = T;
+
     fn values(self) -> impl IntoIterator<Item = T> {
         core::iter::once(self.0)
     }
@@ -81,12 +89,20 @@ impl<T> Values<T> for Atom<T> {
     }
 
     #[inline(always)]
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
+    where
+        M: Fn(Self::Item) -> O,
+    {
+        Atom(map(self.0))
+    }
+
+    #[inline(always)]
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
         Self: Sized,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        Vo: Values<Item = O>,
         P: IntoConcurrentPinnedVec<O>,
     {
         if filter(&self.0) {
@@ -105,7 +121,7 @@ impl<T> Values<T> for Atom<T> {
         Self: Sized,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        Vo: Values<Item = O>,
         P: IntoConcurrentPinnedVec<O>,
         O: Send + Sync,
     {
@@ -126,7 +142,7 @@ impl<T> Values<T> for Atom<T> {
         Self: Sized,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        Vo: Values<Item = O>,
         O: Send + Sync,
     {
         if filter(&self.0) {
@@ -140,18 +156,20 @@ pub struct Vector<I>(pub I)
 where
     I: IntoIterator;
 
-impl<T, I> Values<T> for Vector<I>
+impl<I> Values for Vector<I>
 where
-    I: IntoIterator<Item = T>,
+    I: IntoIterator,
 {
-    fn values(self) -> impl IntoIterator<Item = T> {
+    type Item = I::Item;
+
+    fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
     }
 
     #[inline(always)]
     fn push_to_pinned_vec<P>(self, vector: &mut P)
     where
-        P: PinnedVec<T>,
+        P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
             vector.push(x);
@@ -159,10 +177,10 @@ where
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<T, P>)
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
     where
-        P: IntoConcurrentPinnedVec<T>,
-        T: Send + Sync,
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send + Sync,
     {
         for x in self.0 {
             bag.push(x);
@@ -170,19 +188,27 @@ where
     }
 
     #[inline(always)]
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, T)>) {
+    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) {
         for x in self.0 {
             vec.push((idx, x))
         }
+    }
+
+    #[inline(always)]
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
+    where
+        M: Fn(Self::Item) -> O,
+    {
+        Vector(self.0.into_iter().map(map))
     }
 
     #[inline]
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
         Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
         P: IntoConcurrentPinnedVec<O>,
     {
         for t in self.0 {
@@ -201,9 +227,9 @@ where
         bag: &ConcurrentBag<O, P>,
     ) where
         Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
         P: IntoConcurrentPinnedVec<O>,
         O: Send + Sync,
     {
@@ -224,9 +250,9 @@ where
         vec: &mut Vec<(usize, O)>,
     ) where
         Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<O>,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
         O: Send + Sync,
     {
         for t in self.0 {

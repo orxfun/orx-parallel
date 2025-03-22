@@ -12,8 +12,8 @@ use orx_priority_queue::{BinaryHeap, PriorityQueue};
 pub struct MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<T>,
-    Vo: Values<O>,
+    Vt: Values<Item = T>,
+    Vo: Values<Item = O>,
     O: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
@@ -27,8 +27,8 @@ where
 impl<I, T, Vt, O, Vo, M1, F, M2, P> MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<T>,
-    Vo: Values<O>,
+    Vt: Values<Item = T>,
+    Vo: Values<Item = O>,
     O: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,

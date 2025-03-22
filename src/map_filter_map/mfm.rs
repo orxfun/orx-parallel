@@ -6,9 +6,9 @@ use std::marker::PhantomData;
 pub struct Mfm<I, T, Vt, O, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Vt: Values<T>,
+    Vt: Values<Item = T>,
     O: Send + Sync,
-    Vo: Values<O>,
+    Vo: Values<Item = O>,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
@@ -24,9 +24,9 @@ where
 impl<I, T, Vt, O, Vo, M1, F, M2> Mfm<I, T, Vt, O, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Vt: Values<T>,
+    Vt: Values<Item = T>,
     O: Send + Sync,
-    Vo: Values<O>,
+    Vo: Values<Item = O>,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
