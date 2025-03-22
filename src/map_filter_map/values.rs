@@ -5,6 +5,10 @@ use orx_pinned_vec::PinnedVec;
 pub trait Values {
     type Item;
 
+    type Mapped<M, O>: Values<Item = O>
+    where
+        M: Fn(Self::Item) -> O;
+
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
     fn push_to_pinned_vec<P>(self, vector: &mut P)
@@ -18,7 +22,7 @@ pub trait Values {
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>);
 
-    fn map<M, O>(self, map: M) -> impl Values<Item = O>
+    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
         M: Fn(Self::Item) -> O;
 
@@ -62,6 +66,11 @@ pub struct Atom<T>(pub T);
 impl<T> Values for Atom<T> {
     type Item = T;
 
+    type Mapped<M, O>
+        = Atom<O>
+    where
+        M: Fn(Self::Item) -> O;
+
     fn values(self) -> impl IntoIterator<Item = T> {
         core::iter::once(self.0)
     }
@@ -89,7 +98,7 @@ impl<T> Values for Atom<T> {
     }
 
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> impl Values<Item = O>
+    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
         M: Fn(Self::Item) -> O,
     {
@@ -162,6 +171,11 @@ where
 {
     type Item = I::Item;
 
+    type Mapped<M, O>
+        = Vector<core::iter::Map<I::IntoIter, M>>
+    where
+        M: Fn(Self::Item) -> O;
+
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
     }
@@ -195,7 +209,7 @@ where
     }
 
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> impl Values<Item = O>
+    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
         M: Fn(Self::Item) -> O,
     {

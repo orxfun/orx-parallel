@@ -14,18 +14,19 @@ where
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
 {
-    // pub fn map<Map, Q>(self, map: Map) -> Mfm<I, T, Vt, Q, Atom<Q>, M1, F, impl Fn(T) -> Atom<Q>>
-    // where
-    //     Map: Fn(O) -> Q + Send + Sync,
-    //     Q: Send + Sync,
-    // {
-    //     let (params, iter, map1, filter, map2) = self.destruct();
-    //     let map2 = |t| {
-    //         let vo = map2(t);
-    //         for o in vo.values() {
-    //             let x = map(o);
-    //         }
-    //     };
-    //     Mfm::new(params, iter, map1, filter, map2)
-    // }
+    pub fn map<Map, Q>(
+        self,
+        map: Map,
+    ) -> Mfm<I, T, Vt, Q, Vo::Mapped<Map, Q>, M1, F, impl Fn(T) -> Vo::Mapped<Map, Q>>
+    where
+        Map: Fn(O) -> Q + Send + Sync + Clone,
+        Q: Send + Sync,
+    {
+        let (params, iter, map1, filter, map2) = self.destruct();
+        let map2 = move |t| {
+            let vo = map2(t);
+            vo.map(map.clone())
+        };
+        Mfm::new(params, iter, map1, filter, map2)
+    }
 }
