@@ -8,6 +8,18 @@ pub struct Params {
 }
 
 impl Params {
+    pub fn new(
+        num_threads: impl Into<NumThreads>,
+        chunk_size: impl Into<ChunkSize>,
+        collect_ordering: CollectOrdering,
+    ) -> Self {
+        Self {
+            num_threads: num_threads.into(),
+            chunk_size: chunk_size.into(),
+            collect_ordering,
+        }
+    }
+
     pub fn is_sequential(self) -> bool {
         self.num_threads.is_sequential()
     }
