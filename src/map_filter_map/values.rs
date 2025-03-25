@@ -1,5 +1,5 @@
 use orx_concurrent_bag::ConcurrentBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
 pub trait Values {
