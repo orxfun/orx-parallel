@@ -1,4 +1,5 @@
 use orx_concurrent_bag::ConcurrentBag;
+use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
@@ -21,6 +22,11 @@ pub trait Values {
         P: PinnedVec<Self::Item>;
 
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
+    where
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send + Sync;
+
+    fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send + Sync;
@@ -69,6 +75,20 @@ pub trait Values {
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values<Item = O>,
         O: Send + Sync;
+
+    fn filter_map_collect_in_input_order<F, M2, P, Vo, O>(
+        self,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        o_bag: &ConcurrentOrderedBag<O, P>,
+    ) where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        P: IntoConcurrentPinnedVec<O>,
+        O: Send + Sync;
 }
 
 pub struct Atom<T>(pub T);
@@ -106,6 +126,17 @@ impl<T> Values for Atom<T> {
         T: Send + Sync,
     {
         bag.push(self.0);
+    }
+
+    #[inline(always)]
+    fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
+    where
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send + Sync,
+    {
+        unsafe {
+            o_bag.set_value(idx, self.0);
+        }
     }
 
     #[inline(always)]
@@ -184,6 +215,26 @@ impl<T> Values for Atom<T> {
             vo.push_to_vec_with_idx(input_idx, vec);
         }
     }
+
+    fn filter_map_collect_in_input_order<F, M2, P, Vo, O>(
+        self,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        o_bag: &ConcurrentOrderedBag<O, P>,
+    ) where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        P: IntoConcurrentPinnedVec<O>,
+        O: Send + Sync,
+    {
+        if filter(&self.0) {
+            let vo = map2(self.0);
+            vo.push_to_ordered_bag(input_idx, o_bag);
+        }
+    }
 }
 
 pub struct Vector<I>(pub I)
@@ -229,6 +280,17 @@ where
     {
         for x in self.0 {
             bag.push(x);
+        }
+    }
+
+    #[inline(always)]
+    fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
+    where
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send + Sync,
+    {
+        for x in self.0 {
+            unsafe { o_bag.set_value(idx, x) }
         }
     }
 
@@ -313,6 +375,28 @@ where
             if filter(&t) {
                 let vo = map2(t);
                 vo.push_to_vec_with_idx(input_idx, vec);
+            }
+        }
+    }
+
+    fn filter_map_collect_in_input_order<F, M2, P, Vo, O>(
+        self,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        o_bag: &ConcurrentOrderedBag<O, P>,
+    ) where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        P: IntoConcurrentPinnedVec<O>,
+        O: Send + Sync,
+    {
+        for t in self.0 {
+            if filter(&t) {
+                let vo = map2(t);
+                vo.push_to_ordered_bag(input_idx, o_bag);
             }
         }
     }

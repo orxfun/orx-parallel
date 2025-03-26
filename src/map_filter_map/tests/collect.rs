@@ -20,9 +20,10 @@ const N: [usize; 2] = [1025, 4735];
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
+    [true, false],
     [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary])
 ]
-fn xyz_m(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
+fn xyz_m(n: usize, nt: usize, chunk: usize, in_input_order: bool, ordering: CollectOrdering) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -42,7 +43,7 @@ fn xyz_m(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let iter = input.into_con_iter();
     let mfm = Mfm::new(params, iter, map, |_| true, |x| Atom(x));
 
-    let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
+    let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(in_input_order, output);
 
     if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
         expected.sort();

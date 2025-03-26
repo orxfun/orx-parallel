@@ -5,12 +5,14 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const SEED: u64 = 132;
-const FIB_UPPER_BOUND: u32 = 111;
+const LARGE_OUTPUT_LEN: usize = 64;
+const SEED: u64 = 5426;
+const FIB_UPPER_BOUND: u32 = 999;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Output {
     name: String,
+    numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
 fn to_large_output(idx: &usize) -> Output {
@@ -22,7 +24,16 @@ fn to_large_output(idx: &usize) -> Output {
     };
     let fib = fibonacci(&(idx as u32));
     let name = format!("{}-fib-{}", prefix, fib);
-    Output { name }
+
+    let mut numbers = [0i64; LARGE_OUTPUT_LEN];
+    for (i, x) in numbers.iter_mut().enumerate() {
+        *x = match (idx * 7 + i) % 3 {
+            0 => idx as i64 + i as i64,
+            _ => idx as i64 - i as i64,
+        };
+    }
+
+    Output { name, numbers }
 }
 
 fn fibonacci(n: &u32) -> u32 {

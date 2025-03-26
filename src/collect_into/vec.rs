@@ -26,6 +26,7 @@ where
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         mut self,
         mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        in_input_order: bool,
     ) -> Self
     where
         R: ParallelRunner,
@@ -40,13 +41,14 @@ where
         match mfm.par_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-                let split_vec = split_vec.collect_into::<R, _, _, _, _, _, _, _>(mfm);
+                let split_vec =
+                    split_vec.collect_into::<R, _, _, _, _, _, _, _>(mfm, in_input_order);
                 extend_from_split(self, split_vec)
             }
             Some(len) => {
                 self.reserve(len);
-                let split_vec = FixedVec::from(self);
-                let fixed_vec = split_vec.collect_into::<R, _, _, _, _, _, _, _>(mfm);
+                let fixed_vec = FixedVec::from(self);
+                let (_num_spawned, fixed_vec) = mfm.collect_into::<R, _>(in_input_order, fixed_vec);
                 Vec::from(fixed_vec)
             }
         }

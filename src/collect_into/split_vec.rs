@@ -27,6 +27,7 @@ where
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         mut self,
         mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        in_input_order: bool,
     ) -> Self
     where
         R: ParallelRunner,
@@ -39,7 +40,7 @@ where
         M2: Fn(T) -> Vo + Send + Sync,
     {
         reserve(&mut self, mfm.par_len());
-        let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(self);
+        let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(in_input_order, self);
         pinned_vec
     }
 

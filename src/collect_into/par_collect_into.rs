@@ -12,7 +12,11 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
 
     fn empty(iter_len: Option<usize>) -> Self;
 
-    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(self, mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>) -> Self
+    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+        self,
+        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        in_input_order: bool,
+    ) -> Self
     where
         R: ParallelRunner,
         I: orx_concurrent_iter::ConcurrentIter,

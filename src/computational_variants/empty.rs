@@ -101,7 +101,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.collect_into::<R, _, _, _, _, _, _, _>(self.mfm())
+        output.collect_into::<R, _, _, _, _, _, _, _>(self.mfm(), true)
     }
 }
 

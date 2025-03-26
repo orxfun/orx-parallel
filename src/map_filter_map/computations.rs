@@ -13,11 +13,11 @@ where
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
 {
-    pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
+    pub fn collect_into<R, P>(self, in_input_order: bool, pinned_vec: P) -> (usize, P)
     where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<O>,
     {
-        MfmCollect::compute::<R>(self, pinned_vec)
+        MfmCollect::compute::<R>(self, in_input_order, pinned_vec)
     }
 }

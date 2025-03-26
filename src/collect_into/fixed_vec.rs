@@ -18,7 +18,11 @@ where
         vec.into()
     }
 
-    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(self, mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>) -> Self
+    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+        self,
+        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        in_input_order: bool,
+    ) -> Self
     where
         R: ParallelRunner,
         I: orx_concurrent_iter::ConcurrentIter,
@@ -30,7 +34,7 @@ where
         M2: Fn(T) -> Vo + Send + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.collect_into::<R, _, _, _, _, _, _, _>(mfm))
+        FixedVec::from(vec.collect_into::<R, _, _, _, _, _, _, _>(mfm, in_input_order))
     }
 
     fn map_into<I, M, R>(self, params: Params, iter: I, map: M) -> Self
