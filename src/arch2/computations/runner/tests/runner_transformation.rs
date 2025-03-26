@@ -1,3 +1,4 @@
+use super::batch_of_four_runner::BatchOfFourParallelRunner;
 use crate::{
     collect_into::ParCollectIntoCore,
     computations::{computation_kind::ComputationKind, runner::FixedChunkRunner, ParallelRunner},
@@ -9,8 +10,6 @@ use orx_fixed_vec::FixedVec;
 use orx_iterable::Collection;
 use orx_split_vec::{Doubling, Linear, PseudoDefault, SplitVec};
 use test_case::test_matrix;
-
-use super::batch_of_four_runner::BatchOfFourParallelRunner;
 
 #[cfg(miri)]
 const N: [usize; 2] = [37, 125];

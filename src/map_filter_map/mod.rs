@@ -7,4 +7,5 @@ mod mfm;
 mod transformations;
 mod values;
 
-pub use values::Values;
+pub use mfm::Mfm;
+pub use values::{Atom, Values, Vector};

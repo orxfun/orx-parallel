@@ -5,4 +5,5 @@ mod map_filter_collect;
 mod map_filter_map;
 mod map_filter_map_collect_x;
 
+pub(crate) use default_fns::*;
 pub use map_collect::MapCollect;

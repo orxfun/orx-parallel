@@ -1,4 +1,6 @@
 use crate::{
+    computations::{filter_true, map_self_atom},
+    map_filter_map::{Atom, Mfm},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -36,6 +38,23 @@ where
 
     fn destruct(self) -> (Params, I, M) {
         (self.params, self.iter, self.map)
+    }
+
+    fn mfm(
+        self,
+    ) -> Mfm<
+        I,
+        O,
+        Atom<O>,
+        O,
+        Atom<O>,
+        impl Fn(I::Item) -> Atom<O>,
+        impl Fn(&O) -> bool,
+        impl Fn(O) -> Atom<O>,
+    > {
+        let (params, iter, map) = self.destruct();
+        let map1 = move |x| map_self_atom(map(x));
+        Mfm::new(params, iter, map1, filter_true, map_self_atom)
     }
 }
 

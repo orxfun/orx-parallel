@@ -1,8 +1,13 @@
-use crate::Maybe;
+use crate::{map_filter_map::Atom, Maybe};
 
 #[inline(always)]
 pub fn map_self<T>(input: T) -> T {
     input
+}
+
+#[inline(always)]
+pub fn map_self_atom<T>(input: T) -> Atom<T> {
+    Atom(input)
 }
 
 #[inline(always)]

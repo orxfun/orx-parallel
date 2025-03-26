@@ -9,10 +9,20 @@ use crate::{
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
+use test_case::test_matrix;
 
-#[test]
-fn xyz_m() {
-    let n = 159;
+#[cfg(miri)]
+const N: [usize; 2] = [37, 125];
+#[cfg(not(miri))]
+const N: [usize; 2] = [1025, 4735];
+
+#[test_matrix(
+    [0, 1, N[0], N[1]],
+    [1, 2, 4],
+    [1, 64, 1024],
+    [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary])
+]
+fn xyz_m(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -28,7 +38,7 @@ fn xyz_m() {
     }
     expected.extend(input.clone().into_iter().flat_map(|x| map(x).values()));
 
-    let params = Params::new(2, 2, CollectOrdering::Arbitrary);
+    let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
     let mfm = Mfm::new(params, iter, map, |_| true, |x| Atom(x));
 
