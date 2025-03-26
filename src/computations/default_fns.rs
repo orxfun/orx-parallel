@@ -1,4 +1,4 @@
-use super::map_filter_map::Atom;
+use super::generalized_values::Atom;
 use crate::Maybe;
 
 #[inline(always)]

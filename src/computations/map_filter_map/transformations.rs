@@ -1,4 +1,5 @@
-use super::{mfm::Mfm, values::Values};
+use super::mfm::Mfm;
+use crate::computations::Values;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<I, T, Vt, O, Vo, M1, F, M2> Mfm<I, T, Vt, O, Vo, M1, F, M2>

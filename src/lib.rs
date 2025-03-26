@@ -222,7 +222,6 @@
     clippy::missing_panics_doc,
     clippy::todo
 )]
-// #![allow(refining_impl_trait)]
 
 mod collect_into;
 pub mod computational_variants;

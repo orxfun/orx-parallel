@@ -1,7 +1,6 @@
-use super::values::Values;
+use crate::computations::Values;
 use crate::Params;
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
 
 pub struct Mfm<I, T, Vt, O, Vo, M1, F, M2>
 where
@@ -18,7 +17,6 @@ where
     map1: M1,
     filter: F,
     map2: M2,
-    phantom: PhantomData<(T, O, Vo)>,
 }
 
 impl<I, T, Vt, O, Vo, M1, F, M2> Mfm<I, T, Vt, O, Vo, M1, F, M2>
@@ -38,7 +36,6 @@ where
             map1,
             filter,
             map2,
-            phantom: PhantomData,
         }
     }
 

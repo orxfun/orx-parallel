@@ -1,4 +1,5 @@
-use super::{mfm::Mfm, values::Values};
+use super::mfm::Mfm;
+use crate::computations::Values;
 use crate::{
     runner::{ComputationKind, ParallelRunner},
     CollectOrdering,
@@ -97,7 +98,7 @@ where
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, mut vectors) = runner.mfm_collect(&iter, &map1, &filter, &map2);
+        let (num_spawned, mut vectors) = runner.mfm_collect_to_vecs(&iter, &map1, &filter, &map2);
 
         let mut queue = BinaryHeap::with_capacity(vectors.len());
         let mut indices = vec![0; vectors.len()];
