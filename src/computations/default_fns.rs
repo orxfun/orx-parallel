@@ -1,4 +1,5 @@
-use crate::{map_filter_map::Atom, Maybe};
+use super::map_filter_map::Atom;
+use crate::Maybe;
 
 #[inline(always)]
 pub fn map_self<T>(input: T) -> T {

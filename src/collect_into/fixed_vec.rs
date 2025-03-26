@@ -1,10 +1,8 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    map_filter_map::{Mfm, Values},
-    parameters::Params,
+    computations::{Mfm, Values},
     runner::ParallelRunner,
 };
-use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
 impl<O> ParCollectIntoCore<O> for FixedVec<O>
@@ -35,16 +33,6 @@ where
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.collect_into::<R, _, _, _, _, _, _, _>(mfm, in_input_order))
-    }
-
-    fn map_into<I, M, R>(self, params: Params, iter: I, map: M) -> Self
-    where
-        I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync + Clone,
-        R: ParallelRunner,
-    {
-        let vec = self.into_inner();
-        vec.map_into::<_, _, R>(params, iter, map).into()
     }
 
     // test

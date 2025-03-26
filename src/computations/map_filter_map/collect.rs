@@ -1,4 +1,4 @@
-use super::mfm::Mfm;
+use super::{mfm::Mfm, values::Values};
 use crate::{
     runner::{ComputationKind, ParallelRunner},
     CollectOrdering,
@@ -7,150 +7,97 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_iterable::Collection;
-use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
-use orx_split_vec::SplitVec;
 
-pub struct MfmCollect<I, T, O, Map1, Filter, Map2, P>
+pub struct MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Map1: Fn(I::Item) -> T + Send + Sync,
-    Filter: Fn(&T) -> bool + Send + Sync,
-    Map2: Fn(T) -> O + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
+    Vt: Values<Item = T>,
+    Vo: Values<Item = O>,
     O: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
 {
-    mfm: Mfm<I, T, O, Map1, Filter, Map2>,
+    mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
     pinned_vec: P,
 }
 
-impl<I, T, O, Map1, Filter, Map2, P> MfmCollect<I, T, O, Map1, Filter, Map2, P>
+impl<I, T, Vt, O, Vo, M1, F, M2, P> MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Map1: Fn(I::Item) -> T + Send + Sync,
-    Filter: Fn(&T) -> bool + Send + Sync,
-    Map2: Fn(T) -> O + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
+    Vt: Values<Item = T>,
+    Vo: Values<Item = O>,
     O: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
 {
     pub fn compute<R: ParallelRunner>(
-        mfm: Mfm<I, T, O, Map1, Filter, Map2>,
+        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        in_input_order: bool,
         pinned_vec: P,
     ) -> (usize, P) {
         let mfm_collect = Self { mfm, pinned_vec };
-        let params = &mfm_collect.mfm.params;
-        match (params.is_sequential(), params.collect_ordering) {
-            (true, _) => (0, mfm_collect.sequential_fill_bag()),
-            (false, CollectOrdering::Arbitrary) => todo!(),
-            // (false, CollectOrdering::SortInPlace) => mfm_collect.parallel_compute_in_place::<R>(),
-            (false, CollectOrdering::SortWithHeap) => mfm_collect.parallel_compute_heap_sort::<R>(),
+        let params = mfm_collect.mfm.params();
+        match (
+            params.is_sequential(),
+            in_input_order,
+            params.collect_ordering,
+        ) {
+            (true, _, _) => (0, mfm_collect.sequential()),
+            (false, true, _) => mfm_collect.parallel_in_input_order::<R>(),
+            (false, false, CollectOrdering::Arbitrary) => mfm_collect.parallel_in_arbitrary::<R>(),
+            (false, false, CollectOrdering::SortWithHeap) => {
+                mfm_collect.parallel_with_heap_sort::<R>()
+            }
         }
     }
 
-    fn sequential_fill_bag(self) -> P {
+    fn sequential(self) -> P {
         let (mfm, mut pinned_vec) = (self.mfm, self.pinned_vec);
+        let (_, iter, map1, filter, map2) = mfm.destruct();
 
-        for x in mfm
-            .iter
-            .into_seq_iter()
-            .map(mfm.map1)
-            .filter(mfm.filter)
-            .map(mfm.map2)
-        {
-            pinned_vec.push(x);
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = map1(i);
+            vt.filter_map_collect_sequential(&filter, &map2, &mut pinned_vec);
         }
+
         pinned_vec
     }
 
-    fn parallel_compute_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
+    fn parallel_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
         let (mfm, pinned_vec) = (self.mfm, self.pinned_vec);
-
-        let initial_len = mfm.iter.try_get_len();
+        let (params, iter, map1, filter, map2) = mfm.destruct();
+        let initial_len = iter.try_get_len();
 
         // values has length of offset+m where m is the number of added elements
-        let values: ConcurrentBag<O, P> = pinned_vec.into();
+        let bag: ConcurrentBag<O, P> = pinned_vec.into();
 
-        let transform = |value| {
-            let value = (mfm.map1)(value);
-            if (mfm.filter)(&value) {
-                values.push((mfm.map2)(value));
-            }
+        let transform = |i| {
+            let vt = map1(i);
+            vt.filter_map_collect_arbitrary(&filter, &map2, &bag);
         };
 
-        let runner = R::new(ComputationKind::Collect, mfm.params, initial_len);
-        let num_spawned = runner.run(&mfm.iter, &transform);
+        let runner = R::new(ComputationKind::Collect, params, initial_len);
+        let num_spawned = runner.run(&iter, &transform);
 
-        let values = values.into_inner();
+        let values = bag.into_inner();
         (num_spawned, values)
     }
 
-    fn parallel_compute_in_place<R: ParallelRunner>(self) -> (usize, P) {
-        let (mfm, pinned_vec) = (self.mfm, self.pinned_vec);
-
-        let initial_len = mfm.iter.try_get_len();
-        let offset = pinned_vec.len();
-
-        // idx & values has length of offset+m where m is the number of added elements
-        let idx = ConcurrentOrderedBag::new();
-        let values: ConcurrentBag<O, P> = pinned_vec.into();
-        // pos has length of offset+n where n is the length of the input, filtered out values are usize::MAX
-        let pos = ConcurrentOrderedBag::new();
-
-        let transform = |(input_idx, value)| {
-            let value = (mfm.map1)(value);
-            match (mfm.filter)(&value) {
-                true => {
-                    let output_idx = values.push((mfm.map2)(value)) - offset;
-                    unsafe { pos.set_value(input_idx, output_idx) }; // input_idx in 0..n
-                    unsafe { idx.set_value(output_idx, input_idx) }; // output_idx in 0..m
-                }
-                false => unsafe { pos.set_value(input_idx, usize::MAX) },
-            }
-        };
-
-        let runner = R::new(ComputationKind::Collect, mfm.params, initial_len);
-        let num_spawned = runner.run_with_idx(&mfm.iter, &transform);
-
-        let mut values = values.into_inner();
-        let mut idx = unsafe { idx.into_inner().unwrap_only_if_counts_match() };
-        let mut pos = unsafe { pos.into_inner().unwrap_only_if_counts_match() };
-
-        // SAFETY: to avoid reading position values pos_i by index operator such as pos[i]
-        // note that we read positions by value and this code block is single threaded
-        let pos_write = unsafe { &mut *((&mut pos) as *mut SplitVec<usize>) };
-
-        let mut m = 0;
-        for (i, pos_i) in pos.iter().cloned().enumerate() {
-            match pos_i {
-                usize::MAX => {}       // filtered out
-                x if x == m => m += 1, // in place
-                _ => {
-                    let idx_m = idx[m];
-                    debug_assert!(idx_m >= i);
-                    debug_assert!(pos_i >= m);
-
-                    values.swap(offset + m, offset + pos_i);
-                    idx.swap(m, pos_i);
-                    pos_write[idx_m] = pos_i; // shorthand for: swap(idx_m, i)
-
-                    m += 1;
-                }
-            }
-        }
-
-        debug_assert_eq!(offset + m, values.len());
-
-        (num_spawned, values)
-    }
-
-    fn parallel_compute_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
+    fn parallel_with_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
         let (mfm, mut pinned_vec) = (self.mfm, self.pinned_vec);
+        let (params, iter, map1, filter, map2) = mfm.destruct();
+        let initial_len = iter.try_get_len();
 
-        let initial_len = mfm.iter.try_get_len();
-        let runner = R::new(ComputationKind::Collect, mfm.params, initial_len);
+        let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, mut vectors) =
-            runner.mfm_collect_with_idx(&mfm.iter, &mfm.map1, &mfm.filter, &mfm.map2);
+        let (num_spawned, mut vectors) = runner.mfm_collect(&iter, &map1, &filter, &map2);
 
         let mut queue = BinaryHeap::with_capacity(vectors.len());
         let mut indices = vec![0; vectors.len()];
@@ -182,5 +129,25 @@ where
         }
 
         (num_spawned, pinned_vec)
+    }
+
+    fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
+        let (mfm, pinned_vec) = (self.mfm, self.pinned_vec);
+        let offset = pinned_vec.len();
+        let (params, iter, map1, filter, map2) = mfm.destruct();
+        let initial_len = iter.try_get_len();
+
+        let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
+
+        let transform = |(i_idx, i): (usize, I::Item)| {
+            let vt = map1(i);
+            vt.filter_map_collect_in_input_order(offset + i_idx, &filter, &map2, &o_bag);
+        };
+
+        let runner = R::new(ComputationKind::Collect, params, initial_len);
+        let num_spawned = runner.run_with_idx(&iter, &transform);
+
+        let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
+        (num_spawned, values)
     }
 }

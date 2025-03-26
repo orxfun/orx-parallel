@@ -1,7 +1,7 @@
 use super::map::ParMap;
 use crate::{
     computations::{filter_true, map_self_atom},
-    map_filter_map::{Atom, Mfm},
+    computations::{Atom, Mfm},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };

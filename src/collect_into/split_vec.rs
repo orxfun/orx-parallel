@@ -1,12 +1,8 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::MapCollect,
-    map_filter_map::{Mfm, Values},
-    parameters::Params,
+    computations::{Mfm, Values},
     runner::ParallelRunner,
 };
-use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
@@ -41,18 +37,6 @@ where
     {
         reserve(&mut self, mfm.par_len());
         let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(in_input_order, self);
-        pinned_vec
-    }
-
-    fn map_into<I, M, R>(mut self, params: Params, iter: I, map: M) -> Self
-    where
-        I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync + Clone,
-        R: ParallelRunner,
-    {
-        reserve(&mut self, iter.try_get_len());
-        let bag: ConcurrentOrderedBag<_, _> = self.into();
-        let (_num_spawned, pinned_vec) = MapCollect::new(params, iter, map, bag).compute::<R>();
         pinned_vec
     }
 

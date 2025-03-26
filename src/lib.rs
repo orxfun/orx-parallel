@@ -229,7 +229,6 @@ pub mod computational_variants;
 mod computations;
 mod into_par_iter;
 mod iter_into_par_iter;
-mod map_filter_map;
 mod maybe;
 mod par_iter;
 mod parallelizable;

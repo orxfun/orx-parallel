@@ -1,9 +1,7 @@
 use crate::{
-    map_filter_map::{Mfm, Values},
-    parameters::Params,
+    computations::{Mfm, Values},
     runner::ParallelRunner,
 };
-use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
@@ -26,12 +24,6 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync;
-
-    fn map_into<I, M, R>(self, params: Params, iter: I, map: M) -> Self
-    where
-        I: ConcurrentIter,
-        M: Fn(I::Item) -> O + Send + Sync + Clone,
-        R: ParallelRunner;
 
     // test
 

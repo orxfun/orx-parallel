@@ -1,4 +1,4 @@
-use crate::map_filter_map::Values;
+use crate::computations::Values;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub trait ThreadRunner: Sized {

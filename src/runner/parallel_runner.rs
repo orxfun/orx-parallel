@@ -1,5 +1,5 @@
 use super::{computation_kind::ComputationKind, thread_runner::ThreadRunner};
-use crate::{map_filter_map::Values, parameters::Params};
+use crate::{computations::Values, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParallelRunner: Sized + Sync {

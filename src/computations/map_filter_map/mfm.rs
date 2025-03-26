@@ -1,46 +1,59 @@
-use super::collect::MfmCollect;
-use crate::{runner::ParallelRunner, Params};
+use super::values::Values;
+use crate::Params;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::IntoConcurrentPinnedVec;
+use std::marker::PhantomData;
 
-pub struct Mfm<I, T, O, Map1, Filter, Map2>
+pub struct Mfm<I, T, Vt, O, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Map1: Fn(I::Item) -> T + Send + Sync,
-    Filter: Fn(&T) -> bool + Send + Sync,
-    Map2: Fn(T) -> O + Send + Sync,
+    Vt: Values<Item = T>,
     O: Send + Sync,
+    Vo: Values<Item = O>,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
 {
-    pub(super) params: Params,
-    pub(super) iter: I,
-    pub(super) map1: Map1,
-    pub(super) filter: Filter,
-    pub(super) map2: Map2,
+    params: Params,
+    iter: I,
+    map1: M1,
+    filter: F,
+    map2: M2,
+    phantom: PhantomData<(T, O, Vo)>,
 }
 
-impl<I, T, O, Map1, Filter, Map2> Mfm<I, T, O, Map1, Filter, Map2>
+impl<I, T, Vt, O, Vo, M1, F, M2> Mfm<I, T, Vt, O, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Map1: Fn(I::Item) -> T + Send + Sync,
-    Filter: Fn(&T) -> bool + Send + Sync,
-    Map2: Fn(T) -> O + Send + Sync,
+    Vt: Values<Item = T>,
     O: Send + Sync,
+    Vo: Values<Item = O>,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
 {
-    pub fn new(params: Params, iter: I, map1: Map1, filter: Filter, map2: Map2) -> Self {
+    pub fn new(params: Params, iter: I, map1: M1, filter: F, map2: M2) -> Self {
         Self {
             params,
             iter,
             map1,
             filter,
             map2,
+            phantom: PhantomData,
         }
     }
 
-    pub fn collect<R, P>(self, pinned_vec: P) -> (usize, P)
-    where
-        R: ParallelRunner,
-        P: IntoConcurrentPinnedVec<O>,
-    {
-        MfmCollect::compute::<R>(self, pinned_vec)
+    pub fn destruct(self) -> (Params, I, M1, F, M2) {
+        (self.params, self.iter, self.map1, self.filter, self.map2)
+    }
+
+    pub fn params(&self) -> &Params {
+        &self.params
+    }
+
+    pub fn par_len(&self) -> Option<usize> {
+        match (self.params.is_sequential(), self.iter.try_get_len()) {
+            (true, _) => None, // not required to concurrent reserve when seq
+            (false, x) => x,
+        }
     }
 }
