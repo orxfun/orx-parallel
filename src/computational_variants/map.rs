@@ -110,7 +110,6 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        let (params, iter, map) = self.destruct();
-        C::map_into::<_, _, R>(output, params, iter, map)
+        output.collect_into::<R, _, _, _, _, _, _, _>(self.mfm())
     }
 }

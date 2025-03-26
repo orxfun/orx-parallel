@@ -1,17 +1,32 @@
-use crate::{parameters::Params, runner::ParallelRunner};
+use crate::{
+    map_filter_map::{Mfm, Values},
+    parameters::Params,
+    runner::ParallelRunner,
+};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
-    type BridgePinnedVec: IntoConcurrentPinnedVec<T>;
+pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
+    type BridgePinnedVec: IntoConcurrentPinnedVec<O>;
 
     fn empty(iter_len: Option<usize>) -> Self;
+
+    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(self, mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>) -> Self
+    where
+        R: ParallelRunner,
+        I: orx_concurrent_iter::ConcurrentIter,
+        Vt: Values<Item = T>,
+        O: Send + Sync,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&T) -> bool + Send + Sync,
+        M2: Fn(T) -> Vo + Send + Sync;
 
     fn map_into<I, M, R>(self, params: Params, iter: I, map: M) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> T + Send + Sync + Clone,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
         R: ParallelRunner;
 
     // test
@@ -25,9 +40,9 @@ pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
     }
 
     #[cfg(test)]
-    fn is_equal_to<'a>(&self, b: impl orx_iterable::Iterable<Item = &'a T>) -> bool
+    fn is_equal_to<'a>(&self, b: impl orx_iterable::Iterable<Item = &'a O>) -> bool
     where
-        T: PartialEq + 'a,
+        O: PartialEq + 'a,
     {
         let mut b = b.iter();
         for x in self.iter() {
@@ -42,9 +57,9 @@ pub trait ParCollectIntoCore<T: Send + Sync>: Collection<Item = T> {
     }
 
     #[cfg(test)]
-    fn is_equal_to_ref(&self, b: impl orx_iterable::Iterable<Item = T>) -> bool
+    fn is_equal_to_ref(&self, b: impl orx_iterable::Iterable<Item = O>) -> bool
     where
-        T: PartialEq,
+        O: PartialEq,
     {
         let mut b = b.iter();
         for x in self.iter() {

@@ -1,13 +1,18 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::{computations::MapCollect, parameters::Params, runner::ParallelRunner};
+use crate::{
+    computations::MapCollect,
+    map_filter_map::{Mfm, Values},
+    parameters::Params,
+    runner::ParallelRunner,
+};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
-impl<T, G> ParCollectIntoCore<T> for SplitVec<T, G>
+impl<O, G> ParCollectIntoCore<O> for SplitVec<O, G>
 where
-    T: Send + Sync,
+    O: Send + Sync,
     G: GrowthWithConstantTimeAccess,
     Self: PseudoDefault,
 {
@@ -19,10 +24,29 @@ where
         vec
     }
 
+    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+        mut self,
+        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+    ) -> Self
+    where
+        R: ParallelRunner,
+        I: orx_concurrent_iter::ConcurrentIter,
+        Vt: Values<Item = T>,
+        O: Send + Sync,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&T) -> bool + Send + Sync,
+        M2: Fn(T) -> Vo + Send + Sync,
+    {
+        reserve(&mut self, mfm.par_len());
+        let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(self);
+        pinned_vec
+    }
+
     fn map_into<I, M, R>(mut self, params: Params, iter: I, map: M) -> Self
     where
         I: ConcurrentIter,
-        M: Fn(I::Item) -> T + Send + Sync + Clone,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
         R: ParallelRunner,
     {
         reserve(&mut self, iter.try_get_len());

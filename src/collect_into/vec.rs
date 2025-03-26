@@ -1,15 +1,20 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::{computations::MapCollect, parameters::Params, runner::ParallelRunner};
+use crate::{
+    computations::MapCollect,
+    map_filter_map::{Mfm, Values},
+    parameters::Params,
+    runner::ParallelRunner,
+};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{GrowthWithConstantTimeAccess, SplitVec};
 
-impl<T> ParCollectIntoCore<T> for Vec<T>
+impl<O> ParCollectIntoCore<O> for Vec<O>
 where
-    T: Send + Sync,
+    O: Send + Sync,
 {
-    type BridgePinnedVec = FixedVec<T>;
+    type BridgePinnedVec = FixedVec<O>;
 
     fn empty(iter_len: Option<usize>) -> Self {
         match iter_len {
@@ -18,10 +23,39 @@ where
         }
     }
 
+    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+        mut self,
+        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+    ) -> Self
+    where
+        R: ParallelRunner,
+        I: orx_concurrent_iter::ConcurrentIter,
+        Vt: Values<Item = T>,
+        O: Send + Sync,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&T) -> bool + Send + Sync,
+        M2: Fn(T) -> Vo + Send + Sync,
+    {
+        match mfm.par_len() {
+            None => {
+                let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+                let split_vec = split_vec.collect_into::<R, _, _, _, _, _, _, _>(mfm);
+                extend_from_split(self, split_vec)
+            }
+            Some(len) => {
+                self.reserve(len);
+                let split_vec = FixedVec::from(self);
+                let fixed_vec = split_vec.collect_into::<R, _, _, _, _, _, _, _>(mfm);
+                Vec::from(fixed_vec)
+            }
+        }
+    }
+
     fn map_into<I, M, R>(mut self, params: Params, iter: I, map: M) -> Self
     where
         I: orx_concurrent_iter::ConcurrentIter,
-        M: Fn(I::Item) -> T + Send + Sync + Clone,
+        M: Fn(I::Item) -> O + Send + Sync + Clone,
         R: ParallelRunner,
     {
         match iter.try_get_len() {
