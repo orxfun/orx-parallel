@@ -1,5 +1,7 @@
 use super::map::ParMap;
 use crate::{
+    computations::{filter_true, map_self_atom},
+    map_filter_map::{Atom, Mfm},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -31,6 +33,22 @@ where
 
     fn destruct(self) -> (Params, I) {
         (self.params, self.iter)
+    }
+
+    fn mfm(
+        self,
+    ) -> Mfm<
+        I,
+        I::Item,
+        Atom<I::Item>,
+        I::Item,
+        Atom<I::Item>,
+        impl Fn(I::Item) -> Atom<I::Item>,
+        impl Fn(&I::Item) -> bool,
+        impl Fn(I::Item) -> Atom<I::Item>,
+    > {
+        let (params, iter) = self.destruct();
+        Mfm::new(params, iter, map_self_atom, filter_true, map_self_atom)
     }
 }
 
@@ -83,8 +101,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        let (params, iter) = self.destruct();
-        C::map_into::<_, _, R>(output, params, iter, no_ops_map)
+        output.collect_into::<R, _, _, _, _, _, _, _>(self.mfm())
     }
 }
 
