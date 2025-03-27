@@ -1,10 +1,7 @@
 use super::m::M;
+use crate::runner::{ComputationKind, ParallelRunner, ParallelTaskWithIdx};
 #[cfg(test)]
-use crate::runner::ParallelTask;
-use crate::{
-    runner::{ComputationKind, ParallelRunner, ParallelTaskWithIdx},
-    CollectOrdering,
-};
+use crate::{runner::ParallelTask, CollectOrdering};
 #[cfg(test)]
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -84,7 +81,7 @@ where
     }
 }
 
-// collect in order
+// ordered
 
 struct MCollectInInputOrder<'a, I, O, M1, P>
 where
@@ -132,7 +129,7 @@ where
     }
 }
 
-// collect in arbitrary order
+// in arbitrary order
 
 #[cfg(test)]
 struct MCollectInArbitraryOrder<'a, I, O, M1, P>
