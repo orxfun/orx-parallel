@@ -1,6 +1,9 @@
-use super::{computation_kind::ComputationKind, thread_runner::ThreadRunner};
+use super::{
+    computation_kind::ComputationKind, parallel_task::ParallelTaskWithIdx,
+    thread_runner::ThreadRunner,
+};
 use crate::{computations::Values, parameters::Params};
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub trait ParallelRunner: Sized + Sync {
     type SharedState: Send + Sync;
@@ -21,6 +24,51 @@ pub trait ParallelRunner: Sized + Sync {
         I: ConcurrentIter;
 
     fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner;
+
+    fn new_run<I, F1, Fc>(&self, iter: &I, f1: F1, fc: Fc) -> usize
+    where
+        I: ConcurrentIter,
+        F1: Fn(I::Item) + Send + Sync,
+        for<'p, 'c> Fc: Fn(<I::ChunkPuller<'p> as ChunkPuller>::Chunk<'c>) + Send + Sync,
+    {
+        let state = self.new_shared_state();
+        let shared_state = &state;
+
+        let mut num_spawned = 0;
+        std::thread::scope(|s| {
+            while self.do_spawn_new(num_spawned, shared_state, iter) {
+                num_spawned += 1;
+                s.spawn(|| {
+                    let thread_runner = self.new_thread_runner(shared_state);
+                    thread_runner.new_run(iter, shared_state, &f1, &fc);
+                });
+            }
+        });
+        num_spawned
+    }
+
+    fn new_run_idx<I, T>(&self, iter: &I, task: T) -> usize
+    where
+        I: ConcurrentIter,
+        T: ParallelTaskWithIdx<Item = I::Item> + Sync,
+    {
+        let state = self.new_shared_state();
+        let shared_state = &state;
+
+        let mut num_spawned = 0;
+        std::thread::scope(|s| {
+            while self.do_spawn_new(num_spawned, shared_state, iter) {
+                num_spawned += 1;
+                s.spawn(|| {
+                    let thread_runner = self.new_thread_runner(shared_state);
+                    thread_runner.new_run_with_idx(iter, shared_state, &task);
+                });
+            }
+        });
+        num_spawned
+    }
+
+    // zzzzzzzzzzzz
 
     fn run<I, T>(&self, iter: &I, transform: &T) -> usize
     where
@@ -63,6 +111,8 @@ pub trait ParallelRunner: Sized + Sync {
         });
         num_spawned
     }
+
+    // ZZZZZZZZZZZZZZZ
 
     fn mfm_collect_with_idx<I, T, O, M1, F, M2>(
         &self,

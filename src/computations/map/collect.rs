@@ -1,8 +1,9 @@
 use super::m::M;
-use crate::runner::{ComputationKind, ParallelRunner};
+use crate::runner::{ComputationKind, ParallelRunner, ParallelTaskWithIdx};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
+use orx_pinned_vec::IntoConcurrentPinnedVec;
+use std::marker::PhantomData;
 
 pub struct MCollect<I, O, M1, P>
 where
@@ -22,6 +23,14 @@ where
     M1: Fn(I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
+    pub fn compute<R: ParallelRunner>(m: M<I, O, M1>, pinned_vec: P) -> (usize, P) {
+        let x = Self { m, pinned_vec };
+        match x.m.params().is_sequential() {
+            true => (0, x.sequential()),
+            false => x.parallel_in_input_order::<R>(),
+        }
+    }
+
     fn sequential(self) -> P {
         let (m, mut pinned_vec) = (self.m, self.pinned_vec);
         let (_, iter, map1) = m.destruct();
@@ -34,22 +43,66 @@ where
         pinned_vec
     }
 
-    // fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
-    //     let (m, pinned_vec) = (self.m, self.pinned_vec);
-    //     let offset = pinned_vec.len();
-    //     let (params, iter, map1) = m.destruct();
-    //     let initial_len = iter.try_get_len();
+    fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
+        let (m, pinned_vec) = (self.m, self.pinned_vec);
+        let offset = pinned_vec.len();
+        let (params, iter, map1) = m.destruct();
 
-    //     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
+        let bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
+        let task = MCollectInInputOrder::new(offset, &bag, map1);
 
-    //     // let transform_i = |(i_idx, i)| unsafe { o_bag.set_value(offset + i_idx, map1(i)) };
-    //     // let transform_n =
-    //     //     |(i_idx, is, n)| unsafe { o_bag.set_n_values(offset + i_idx, n, is.map()) };
+        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
+        let num_spawned = runner.new_run_idx(&iter, task);
 
-    //     let runner = R::new(ComputationKind::Collect, params, initial_len);
-    //     let num_spawned = runner.run_with_idx(&iter, &transform_i);
+        let values = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
+        (num_spawned, values)
+    }
+}
 
-    //     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
-    //     (num_spawned, values)
-    // }
+// collect in order
+
+struct MCollectInInputOrder<'a, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    offset: usize,
+    o_bag: &'a ConcurrentOrderedBag<O, P>,
+    map1: M1,
+    phantom: PhantomData<I>,
+}
+
+impl<'a, I, O, M1, P> MCollectInInputOrder<'a, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    fn new(offset: usize, o_bag: &'a ConcurrentOrderedBag<O, P>, map1: M1) -> Self {
+        Self {
+            offset,
+            o_bag,
+            map1,
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, I, O, M1, P> ParallelTaskWithIdx for MCollectInInputOrder<'a, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    type Item = I;
+
+    fn f1(&self, idx: usize, value: Self::Item) {
+        unsafe { self.o_bag.set_value(self.offset + idx, (self.map1)(value)) };
+    }
+
+    fn fc(&self, begin_idx: usize, values: impl ExactSizeIterator<Item = Self::Item>) {
+        let values = values.map(&self.map1);
+        unsafe { self.o_bag.set_values(self.offset + begin_idx, values) };
+    }
 }
