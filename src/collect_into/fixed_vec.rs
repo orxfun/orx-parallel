@@ -1,8 +1,9 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::{Mfm, Values},
+    computations::{Mfm, Values, M},
     runner::ParallelRunner,
 };
+use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
 impl<O> ParCollectIntoCore<O> for FixedVec<O>
@@ -14,6 +15,16 @@ where
     fn empty(iter_len: Option<usize>) -> Self {
         let vec = <Vec<_> as ParCollectIntoCore<_>>::empty(iter_len);
         vec.into()
+    }
+
+    fn m_collect_into<R, I, M1>(self, m: M<I, O, M1>) -> Self
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        M1: Fn(I::Item) -> O + Send + Sync,
+    {
+        let vec = Vec::from(self);
+        FixedVec::from(vec.m_collect_into::<R, _, _>(m))
     }
 
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(

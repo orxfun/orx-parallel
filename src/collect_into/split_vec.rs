@@ -1,8 +1,9 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::{Mfm, Values},
+    computations::{Mfm, Values, M},
     runner::ParallelRunner,
 };
+use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
@@ -20,6 +21,17 @@ where
         vec
     }
 
+    fn m_collect_into<R, I, M1>(mut self, m: M<I, O, M1>) -> Self
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        M1: Fn(I::Item) -> O + Send + Sync,
+    {
+        reserve(&mut self, m.par_len());
+        let (_num_spawned, pinned_vec) = m.collect_into::<R, _>(self);
+        pinned_vec
+    }
+
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         mut self,
         mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
@@ -27,7 +39,7 @@ where
     ) -> Self
     where
         R: ParallelRunner,
-        I: orx_concurrent_iter::ConcurrentIter,
+        I: ConcurrentIter,
         Vt: Values<Item = T>,
         O: Send + Sync,
         Vo: Values<Item = O>,

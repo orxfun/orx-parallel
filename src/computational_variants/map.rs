@@ -1,33 +1,32 @@
 use crate::{
-    computations::{filter_true, map_self_atom},
-    computations::{Atom, Mfm},
+    computations::{filter_true, map_self_atom, Atom, Mfm, M},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParMap<I, O, M, R = DefaultRunner>
+pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     O: Send + Sync,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     iter: I,
     params: Params,
-    map: M,
+    map: M1,
     phantom: PhantomData<R>,
 }
 
-impl<I, O, M, R> ParMap<I, O, M, R>
+impl<I, O, M1, R> ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     O: Send + Sync,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Send + Sync + Clone,
 {
-    pub(crate) fn new(params: Params, iter: I, map: M) -> Self {
+    pub(crate) fn new(params: Params, iter: I, map: M1) -> Self {
         Self {
             iter,
             params,
@@ -36,7 +35,7 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I, M) {
+    fn destruct(self) -> (Params, I, M1) {
         (self.params, self.iter, self.map)
     }
 
@@ -56,14 +55,19 @@ where
         let map1 = move |x| map_self_atom(map(x));
         Mfm::new(params, iter, map1, filter_true, map_self_atom)
     }
+
+    fn m(self) -> M<I, O, M1> {
+        let (params, iter, map1) = self.destruct();
+        M::new(params, iter, map1)
+    }
 }
 
-impl<I, O, M, R> ParIter<R> for ParMap<I, O, M, R>
+impl<I, O, M1, R> ParIter<R> for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     O: Send + Sync,
-    M: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Send + Sync + Clone,
 {
     type Item = O;
 
