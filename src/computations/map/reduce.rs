@@ -30,6 +30,9 @@ where
     }
 
     fn parallel(self) -> Option<O> {
+        let (m, reduce) = (self.m, self.reduce);
+        let (params, iter, map1) = m.destruct();
+
         todo!()
     }
 }
