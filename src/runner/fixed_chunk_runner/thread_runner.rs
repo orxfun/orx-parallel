@@ -8,14 +8,12 @@ pub struct FixedChunkThreadRunner {
 impl ThreadRunner for FixedChunkThreadRunner {
     type SharedState = ();
 
-    fn next_chunk_size<I>(&self, _: &Self::SharedState, iter: &I) -> Option<usize>
+    #[inline(always)]
+    fn next_chunk_size<I>(&self, _: &Self::SharedState, _: &I) -> usize
     where
         I: ConcurrentIter,
     {
-        match iter.try_get_len() {
-            Some(0) => None,
-            _ => Some(self.chunk_size),
-        }
+        self.chunk_size
     }
 
     fn begin_chunk(&mut self, _: usize) {}

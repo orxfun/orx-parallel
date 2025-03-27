@@ -31,7 +31,7 @@ fn expected(input: &impl Collection<Item = String>, map: impl Fn(String) -> Stri
     [1, 2, 4],
     [1, 64, 1024])
 ]
-fn map_collect_abc<R: ParallelRunner>(_: R, n: usize, nt: usize, chunk: usize) {
+fn map_collect<R: ParallelRunner>(_: R, n: usize, nt: usize, chunk: usize) {
     let map = |x: &String| format!("{}!", x);
     let map2 = |x: String| format!("{}!", x);
 

@@ -6,7 +6,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 pub trait ThreadRunner: Sized {
     type SharedState;
 
-    fn next_chunk_size<I>(&self, shared_state: &Self::SharedState, iter: &I) -> Option<usize>
+    fn next_chunk_size<I>(&self, shared_state: &Self::SharedState, iter: &I) -> usize
     where
         I: ConcurrentIter;
 
@@ -26,7 +26,9 @@ pub trait ThreadRunner: Sized {
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller();
 
-        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
+        loop {
+            let chunk_size = self.next_chunk_size(shared_state, iter);
+
             self.begin_chunk(chunk_size);
 
             match chunk_size {
@@ -39,10 +41,13 @@ pub trait ThreadRunner: Sized {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    if let Some(chunk) = chunk_puller.pull() {
-                        for value in chunk {
-                            transform(value);
+                    match chunk_puller.pull() {
+                        Some(chunk) => {
+                            for value in chunk {
+                                transform(value);
+                            }
                         }
+                        None => break,
                     }
                 }
             }
@@ -61,7 +66,9 @@ pub trait ThreadRunner: Sized {
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller_with_idx();
 
-        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
+        loop {
+            let chunk_size = self.next_chunk_size(shared_state, iter);
+
             self.begin_chunk(chunk_size);
 
             match chunk_size {
@@ -74,10 +81,13 @@ pub trait ThreadRunner: Sized {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
-                        for (i, value) in chunk.enumerate() {
-                            transform((begin_idx + i, value));
+                    match chunk_puller.pull_with_idx() {
+                        Some((begin_idx, chunk)) => {
+                            for (i, value) in chunk.enumerate() {
+                                transform((begin_idx + i, value));
+                            }
                         }
+                        None => break,
                     }
                 }
             }
@@ -110,7 +120,9 @@ pub trait ThreadRunner: Sized {
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller_with_idx();
 
-        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
+        loop {
+            let chunk_size = self.next_chunk_size(shared_state, iter);
+
             self.begin_chunk(chunk_size);
 
             match chunk_size {
@@ -128,13 +140,16 @@ pub trait ThreadRunner: Sized {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    if let Some((begin_idx, chunk)) = chunk_puller.pull_with_idx() {
-                        for (i, input) in chunk.enumerate() {
-                            let intermediate = map1(input);
-                            if filter(&intermediate) {
-                                out_vec.push((begin_idx + i, map2(intermediate)));
+                    match chunk_puller.pull_with_idx() {
+                        Some((begin_idx, chunk)) => {
+                            for (i, input) in chunk.enumerate() {
+                                let intermediate = map1(input);
+                                if filter(&intermediate) {
+                                    out_vec.push((begin_idx + i, map2(intermediate)));
+                                }
                             }
                         }
+                        None => break,
                     }
                 }
             }
@@ -169,7 +184,9 @@ pub trait ThreadRunner: Sized {
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller_with_idx();
 
-        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
+        loop {
+            let chunk_size = self.next_chunk_size(shared_state, iter);
+
             self.begin_chunk(chunk_size);
 
             match chunk_size {
@@ -185,12 +202,15 @@ pub trait ThreadRunner: Sized {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    if let Some((chunk_begin_idx, chunk)) = chunk_puller.pull_with_idx() {
-                        for (i_idx, i) in chunk.enumerate() {
-                            let i_idx = chunk_begin_idx + i_idx;
-                            let vt = map1(i);
-                            vt.mfm_collect_heap(i_idx, filter, map2, out_vec);
+                    match chunk_puller.pull_with_idx() {
+                        Some((chunk_begin_idx, chunk)) => {
+                            for (i_idx, i) in chunk.enumerate() {
+                                let i_idx = chunk_begin_idx + i_idx;
+                                let vt = map1(i);
+                                vt.mfm_collect_heap(i_idx, filter, map2, out_vec);
+                            }
                         }
+                        None => break,
                     }
                 }
             }
@@ -252,45 +272,45 @@ pub trait ThreadRunner: Sized {
         // self.complete_task(shared_state);
     }
 
-    fn work<I>(mut self, iter: &I, shared_state: &Self::SharedState)
-    where
-        I: ConcurrentIter,
-    {
-        let mut collected = Vec::new();
-        let out_vec = &mut collected;
+    // fn work<I>(mut self, iter: &I, shared_state: &Self::SharedState)
+    // where
+    //     I: ConcurrentIter,
+    // {
+    //     let mut collected = Vec::new();
+    //     let out_vec = &mut collected;
 
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller_with_idx();
+    //     let mut chunk_puller = iter.chunk_puller(0);
+    //     let mut item_puller = iter.item_puller_with_idx();
 
-        while let Some(chunk_size) = self.next_chunk_size(shared_state, iter) {
-            self.begin_chunk(chunk_size);
+    //     while let Some(chunk_size) = self.next_chunk_size_2(shared_state, iter) {
+    //         self.begin_chunk(chunk_size);
 
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some((i_idx, i)) => {
-                        let vt = map1(i);
-                        vt.mfm_collect_heap(i_idx, filter, map2, out_vec);
-                    }
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
+    //         match chunk_size {
+    //             0 | 1 => match item_puller.next() {
+    //                 Some((i_idx, i)) => {
+    //                     let vt = map1(i);
+    //                     vt.mfm_collect_heap(i_idx, filter, map2, out_vec);
+    //                 }
+    //                 None => break,
+    //             },
+    //             c => {
+    //                 if c > chunk_puller.chunk_size() {
+    //                     chunk_puller = iter.chunk_puller(c);
+    //                 }
 
-                    if let Some((chunk_begin_idx, chunk)) = chunk_puller.pull_with_idx() {
-                        for (i_idx, i) in chunk.enumerate() {
-                            let i_idx = chunk_begin_idx + i_idx;
-                            let vt = map1(i);
-                            vt.mfm_collect_heap(i_idx, filter, map2, out_vec);
-                        }
-                    }
-                }
-            }
+    //                 if let Some((chunk_begin_idx, chunk)) = chunk_puller.pull_with_idx() {
+    //                     for (i_idx, i) in chunk.enumerate() {
+    //                         let i_idx = chunk_begin_idx + i_idx;
+    //                         let vt = map1(i);
+    //                         vt.mfm_collect_heap(i_idx, filter, map2, out_vec);
+    //                     }
+    //                 }
+    //             }
+    //         }
 
-            self.complete_chunk(shared_state, chunk_size);
-        }
+    //         self.complete_chunk(shared_state, chunk_size);
+    //     }
 
-        self.complete_task(shared_state);
-    }
+    //     self.complete_task(shared_state);
+    // }
 }
