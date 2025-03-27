@@ -3,7 +3,7 @@ use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-use super::parallel_task::ParallelTaskWithIdx;
+use super::parallel_task::{ParallelTask, ParallelTaskWithIdx};
 
 pub trait ThreadRunner: Sized {
     type SharedState;
@@ -20,11 +20,10 @@ pub trait ThreadRunner: Sized {
 
     // run
 
-    fn new_run<I, F1, Fc>(mut self, iter: &I, shared_state: &Self::SharedState, f1: &F1, fc: &Fc)
+    fn new_run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
     where
         I: ConcurrentIter,
-        F1: Fn(I::Item),
-        for<'p, 'c> Fc: Fn(<I::ChunkPuller<'p> as ChunkPuller>::Chunk<'c>),
+        T: ParallelTask<Item = I::Item>,
     {
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller();
@@ -36,7 +35,7 @@ pub trait ThreadRunner: Sized {
 
             match chunk_size {
                 0 | 1 => match item_puller.next() {
-                    Some(value) => f1(value),
+                    Some(value) => task.f1(value),
                     None => break,
                 },
                 c => {
@@ -45,7 +44,7 @@ pub trait ThreadRunner: Sized {
                     }
 
                     match chunk_puller.pull() {
-                        Some(chunk) => fc(chunk),
+                        Some(chunk) => task.fc(chunk),
                         None => break,
                     }
                 }
@@ -56,48 +55,6 @@ pub trait ThreadRunner: Sized {
 
         self.complete_task(shared_state);
     }
-
-    // fn new_run_with_idx<I, F1, Fc>(
-    //     mut self,
-    //     iter: &I,
-    //     shared_state: &Self::SharedState,
-    //     f1: &F1,
-    //     fc: &Fc,
-    // ) where
-    //     I: ConcurrentIter,
-    //     F1: Fn((usize, I::Item)),
-    //     for<'c> Fc: Fn((usize, <I::ChunkPuller<'_> as ChunkPuller>::Chunk<'c>)),
-    // {
-    //     let mut chunk_puller = iter.chunk_puller(0);
-    //     let mut item_puller = iter.item_puller_with_idx();
-
-    //     loop {
-    //         let chunk_size = self.next_chunk_size(shared_state, iter);
-
-    //         self.begin_chunk(chunk_size);
-
-    //         match chunk_size {
-    //             0 | 1 => match item_puller.next() {
-    //                 Some(value) => f1(value),
-    //                 None => break,
-    //             },
-    //             c => {
-    //                 if c > chunk_puller.chunk_size() {
-    //                     chunk_puller = iter.chunk_puller(c);
-    //                 }
-
-    //                 match chunk_puller.pull_with_idx() {
-    //                     Some(chunk) => fc(chunk),
-    //                     None => break,
-    //                 }
-    //             }
-    //         }
-
-    //         self.complete_chunk(shared_state, chunk_size);
-    //     }
-
-    //     self.complete_task(shared_state);
-    // }
 
     fn new_run_with_idx<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
     where

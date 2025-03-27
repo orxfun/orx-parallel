@@ -1,3 +1,11 @@
+pub trait ParallelTask {
+    type Item;
+
+    fn f1(&self, value: Self::Item);
+
+    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>);
+}
+
 pub trait ParallelTaskWithIdx {
     type Item;
 

@@ -1,5 +1,12 @@
 use super::m::M;
-use crate::runner::{ComputationKind, ParallelRunner, ParallelTaskWithIdx};
+#[cfg(test)]
+use crate::runner::ParallelTask;
+use crate::{
+    runner::{ComputationKind, ParallelRunner, ParallelTaskWithIdx},
+    CollectOrdering,
+};
+#[cfg(test)]
+use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
@@ -25,9 +32,12 @@ where
 {
     pub fn compute<R: ParallelRunner>(m: M<I, O, M1>, pinned_vec: P) -> (usize, P) {
         let x = Self { m, pinned_vec };
-        match x.m.params().is_sequential() {
-            true => (0, x.sequential()),
-            false => x.parallel_in_input_order::<R>(),
+        let p = x.m.params();
+        match (p.is_sequential(), p.collect_ordering) {
+            (true, _) => (0, x.sequential()),
+            #[cfg(test)]
+            (false, CollectOrdering::Arbitrary) => x.parallel_in_arbitrary_order::<R>(),
+            (false, _) => x.parallel_in_input_order::<R>(),
         }
     }
 
@@ -55,6 +65,21 @@ where
         let num_spawned = runner.new_run_idx(&iter, task);
 
         let values = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
+        (num_spawned, values)
+    }
+
+    #[cfg(test)]
+    fn parallel_in_arbitrary_order<R: ParallelRunner>(self) -> (usize, P) {
+        let (m, pinned_vec) = (self.m, self.pinned_vec);
+        let (params, iter, map1) = m.destruct();
+
+        let bag: ConcurrentBag<O, P> = pinned_vec.into();
+        let task = MCollectInArbitraryOrder::new(&bag, map1);
+
+        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
+        let num_spawned = runner.new_run(&iter, task);
+
+        let values = bag.into_inner();
         (num_spawned, values)
     }
 }
@@ -104,5 +129,54 @@ where
     fn fc(&self, begin_idx: usize, values: impl ExactSizeIterator<Item = Self::Item>) {
         let values = values.map(&self.map1);
         unsafe { self.o_bag.set_values(self.offset + begin_idx, values) };
+    }
+}
+
+// collect in arbitrary order
+
+#[cfg(test)]
+struct MCollectInArbitraryOrder<'a, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    bag: &'a ConcurrentBag<O, P>,
+    map1: M1,
+    phantom: PhantomData<I>,
+}
+
+#[cfg(test)]
+impl<'a, I, O, M1, P> MCollectInArbitraryOrder<'a, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    fn new(bag: &'a ConcurrentBag<O, P>, map1: M1) -> Self {
+        Self {
+            bag,
+            map1,
+            phantom: PhantomData,
+        }
+    }
+}
+
+#[cfg(test)]
+impl<'a, I, O, M1, P> ParallelTask for MCollectInArbitraryOrder<'a, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    type Item = I;
+
+    fn f1(&self, value: Self::Item) {
+        self.bag.push((self.map1)(value));
+    }
+
+    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>) {
+        let values = values.map(&self.map1);
+        self.bag.extend(values);
     }
 }

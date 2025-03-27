@@ -1,5 +1,6 @@
 use super::{
-    computation_kind::ComputationKind, parallel_task::ParallelTaskWithIdx,
+    computation_kind::ComputationKind,
+    parallel_task::{ParallelTask, ParallelTaskWithIdx},
     thread_runner::ThreadRunner,
 };
 use crate::{computations::Values, parameters::Params};
@@ -25,11 +26,10 @@ pub trait ParallelRunner: Sized + Sync {
 
     fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner;
 
-    fn new_run<I, F1, Fc>(&self, iter: &I, f1: F1, fc: Fc) -> usize
+    fn new_run<I, T>(&self, iter: &I, task: T) -> usize
     where
         I: ConcurrentIter,
-        F1: Fn(I::Item) + Send + Sync,
-        for<'p, 'c> Fc: Fn(<I::ChunkPuller<'p> as ChunkPuller>::Chunk<'c>) + Send + Sync,
+        T: ParallelTask<Item = I::Item> + Sync,
     {
         let state = self.new_shared_state();
         let shared_state = &state;
@@ -40,7 +40,7 @@ pub trait ParallelRunner: Sized + Sync {
                 num_spawned += 1;
                 s.spawn(|| {
                     let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.new_run(iter, shared_state, &f1, &fc);
+                    thread_runner.new_run(iter, shared_state, &task);
                 });
             }
         });
