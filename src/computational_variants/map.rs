@@ -1,10 +1,12 @@
 use crate::{
-    computations::M,
+    computations::{map_self_atom, Atom, M},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
+
+use super::map_filter_map::ParMapFilterMap;
 
 pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
@@ -87,7 +89,9 @@ where
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        self
+        let (params, iter, map1) = self.destruct();
+        let map1 = move |i: I::Item| Atom(map1(i));
+        ParMapFilterMap::new(params, iter, map1, filter, map_self_atom)
     }
 
     // collect
