@@ -86,7 +86,7 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map3: Map) -> impl ParIter<Item = Out>
+    fn map<Out, Map>(self, map3: Map) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,

@@ -86,7 +86,7 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIter<Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
@@ -94,6 +94,13 @@ where
         let (params, iter) = self.destruct();
         ParMap::new(params, iter, map)
     }
+
+    // fn filter<Filter>(self, filter: Filter) -> impl ParIter<Item = Self::Item>
+    // where
+    //     Filter: Fn(&Self::Item) -> bool + Send + Sync,
+    // {
+    //     self
+    // }
 
     // collect
 
