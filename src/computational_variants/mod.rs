@@ -2,8 +2,8 @@
 mod tests;
 
 mod empty;
-mod filter;
 mod map;
+mod map_filter_map;
 
 pub use empty::Par;
 pub use map::ParMap;

@@ -1,58 +1,47 @@
 use super::map::ParMap;
 use crate::{
-    computations::map_self_atom,
-    computations::{Atom, Mfm},
+    computations::{map_self_atom, Atom, Mfm, Values},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParFilter<I, F, R = DefaultRunner>
+pub struct ParMapFilterMap<I, T, Vt, O, Vo, M1, F, M2, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    F: Fn(&I::Item) -> bool + Send + Sync,
+    Vt: Values<Item = T>,
+    O: Send + Sync,
+    Vo: Values<Item = O>,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
 {
-    iter: I,
-    params: Params,
-    filter: F,
+    mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
 }
 
-impl<I, F, R> ParFilter<I, F, R>
+impl<I, T, Vt, O, Vo, M1, F, M2, R> ParMapFilterMap<I, T, Vt, O, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    F: Fn(&I::Item) -> bool + Send + Sync,
+    Vt: Values<Item = T>,
+    O: Send + Sync,
+    Vo: Values<Item = O>,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
 {
-    pub(crate) fn new(params: Params, iter: I, filter: F) -> Self {
+    pub(crate) fn new(iter: I, params: Params, map1: M1, filter: F, map2: M2) -> Self {
         Self {
-            iter,
-            params,
-            filter,
+            mfm: Mfm::new(params, iter, map1, filter, map2),
             phantom: PhantomData,
         }
     }
 
-    fn destruct(self) -> (Params, I, F) {
-        (self.params, self.iter, self.filter)
-    }
-
-    fn mfm(
-        self,
-    ) -> Mfm<
-        I,
-        I::Item,
-        Atom<I::Item>,
-        I::Item,
-        Atom<I::Item>,
-        impl Fn(I::Item) -> Atom<I::Item>,
-        impl Fn(&I::Item) -> bool,
-        impl Fn(I::Item) -> Atom<I::Item>,
-    > {
-        let (params, iter, filter) = self.destruct();
-        Mfm::new(params, iter, map_self_atom, filter, map_self_atom)
+    fn destruct(self) -> (Params, I, M1, F, M2) {
+        self.mfm.destruct()
     }
 }
 
