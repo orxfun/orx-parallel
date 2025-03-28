@@ -7,9 +7,10 @@ use orx_pinned_vec::IntoConcurrentPinnedVec;
 impl<I, T, Vt, O, Vo, M1, F, M2> Mfm<I, T, Vt, O, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
+    T: Send + Sync,
+    Vt: Values<Item = T> + Send + Sync,
     O: Send + Sync,
-    Vo: Values<Item = O>,
+    Vo: Values<Item = O> + Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,

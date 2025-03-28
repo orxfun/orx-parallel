@@ -50,9 +50,10 @@ where
     where
         R: ParallelRunner,
         I: orx_concurrent_iter::ConcurrentIter,
-        Vt: Values<Item = T>,
+        T: Send + Sync,
+        Vt: Values<Item = T> + Send + Sync,
         O: Send + Sync,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync,

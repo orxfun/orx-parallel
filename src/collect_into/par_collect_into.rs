@@ -25,8 +25,10 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vt: Values<Item = T>,
-        Vo: Values<Item = O>,
+        T: Send + Sync,
+        Vt: Values<Item = T> + Send + Sync,
+        O: Send + Sync,
+        Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync;

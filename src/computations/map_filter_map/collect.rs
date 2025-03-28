@@ -1,9 +1,9 @@
+use std::marker::PhantomData;
+
 use super::mfm::Mfm;
 use crate::computations::Values;
-use crate::{
-    runner::{ComputationKind, ParallelRunner},
-    CollectOrdering,
-};
+use crate::runner::{ComputationKind, ParallelRunner, ParallelTask};
+use crate::CollectOrdering;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -14,8 +14,9 @@ use orx_priority_queue::{BinaryHeap, PriorityQueue};
 pub struct MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
-    Vo: Values<Item = O>,
+    Vt: Values<Item = T> + Send + Sync,
+    Vo: Values<Item = O> + Send + Sync,
+    T: Send + Sync,
     O: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
@@ -29,8 +30,9 @@ where
 impl<I, T, Vt, O, Vo, M1, F, M2, P> MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
-    Vo: Values<Item = O>,
+    Vt: Values<Item = T> + Send + Sync,
+    Vo: Values<Item = O> + Send + Sync,
+    T: Send + Sync,
     O: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
@@ -74,18 +76,16 @@ where
     fn parallel_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
         let (mfm, pinned_vec) = (self.mfm, self.pinned_vec);
         let (params, iter, map1, filter, map2) = mfm.destruct();
-        let initial_len = iter.try_get_len();
 
         // values has length of offset+m where m is the number of added elements
         let bag: ConcurrentBag<O, P> = pinned_vec.into();
 
-        let transform = |i| {
-            let vt = map1(i);
-            vt.filter_map_collect_arbitrary(&filter, &map2, &bag);
-        };
+        let task = MfmCollectInArbitraryOrder::<'_, I, T, Vt, O, Vo, M1, F, M2, P>::new(
+            map1, filter, map2, &bag,
+        );
 
-        let runner = R::new(ComputationKind::Collect, params, initial_len);
-        let num_spawned = runner.run(&iter, &transform);
+        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
+        let num_spawned = runner.new_run(&iter, task);
 
         let values = bag.into_inner();
         (num_spawned, values)
@@ -150,5 +150,79 @@ where
 
         let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
         (num_spawned, values)
+    }
+}
+
+// arbitrary
+
+struct MfmCollectInArbitraryOrder<'a, I, T, Vt, O, Vo, M1, F, M2, P>
+where
+    I: ConcurrentIter,
+    Vt: Values<Item = T> + Send + Sync,
+    Vo: Values<Item = O> + Send + Sync,
+    T: Send + Sync,
+    O: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    map1: M1,
+    filter: F,
+    map2: M2,
+    bag: &'a ConcurrentBag<O, P>,
+    phantom: PhantomData<(I, T, Vt, Vo)>,
+}
+
+impl<'a, I, T, Vt, O, Vo, M1, F, M2, P>
+    MfmCollectInArbitraryOrder<'a, I, T, Vt, O, Vo, M1, F, M2, P>
+where
+    I: ConcurrentIter,
+    Vt: Values<Item = T> + Send + Sync,
+    Vo: Values<Item = O> + Send + Sync,
+    T: Send + Sync,
+    O: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    fn new(map1: M1, filter: F, map2: M2, bag: &'a ConcurrentBag<O, P>) -> Self {
+        Self {
+            map1,
+            filter,
+            map2,
+            bag,
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, I, T, Vt, O, Vo, M1, F, M2, P> ParallelTask
+    for MfmCollectInArbitraryOrder<'a, I, T, Vt, O, Vo, M1, F, M2, P>
+where
+    I: ConcurrentIter,
+    Vt: Values<Item = T> + Send + Sync,
+    Vo: Values<Item = O> + Send + Sync,
+    T: Send + Sync,
+    O: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&T) -> bool + Send + Sync,
+    M2: Fn(T) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    type Item = I::Item;
+
+    #[inline]
+    fn f1(&self, value: Self::Item) {
+        let values_vt = (self.map1)(value);
+        values_vt.filter_map_collect_arbitrary(&self.filter, &self.map2, &self.bag);
+    }
+
+    #[inline(always)]
+    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>) {
+        for x in values {
+            self.f1(x);
+        }
     }
 }
