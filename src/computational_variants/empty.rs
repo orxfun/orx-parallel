@@ -1,4 +1,4 @@
-use super::map::ParMap;
+use super::{map::ParMap, map_filter_map::ParMapFilterMap};
 use crate::{
     computations::{filter_true, map_self, map_self_atom, Atom, Mfm, M},
     runner::{DefaultRunner, ParallelRunner},
@@ -103,7 +103,8 @@ where
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        self
+        let (params, iter) = self.destruct();
+        ParMapFilterMap::new(params, iter, map_self_atom, filter, map_self_atom)
     }
 
     // collect
