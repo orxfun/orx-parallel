@@ -1,7 +1,6 @@
 use super::map::ParMap;
 use crate::{
-    computations::{filter_true, map_self_atom},
-    computations::{Atom, Mfm},
+    computations::{filter_true, map_self, map_self_atom, Atom, Mfm, M},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -50,6 +49,11 @@ where
         let (params, iter) = self.destruct();
         Mfm::new(params, iter, map_self_atom, filter_true, map_self_atom)
     }
+
+    fn m(self) -> M<I, I::Item, impl Fn(I::Item) -> I::Item> {
+        let (params, iter) = self.destruct();
+        M::new(params, iter, map_self)
+    }
 }
 
 impl<I, R> ParIter<R> for Par<I, R>
@@ -95,12 +99,12 @@ where
         ParMap::new(params, iter, map)
     }
 
-    // fn filter<Filter>(self, filter: Filter) -> impl ParIter<Item = Self::Item>
-    // where
-    //     Filter: Fn(&Self::Item) -> bool + Send + Sync,
-    // {
-    //     self
-    // }
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    where
+        Filter: Fn(&Self::Item) -> bool + Send + Sync,
+    {
+        self
+    }
 
     // collect
 
@@ -108,7 +112,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.collect_into::<R, _, _, _, _, _, _, _>(self.mfm(), true)
+        output.m_collect_into::<R, _, _>(self.m())
     }
 }
 

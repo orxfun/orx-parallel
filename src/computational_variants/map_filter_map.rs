@@ -100,6 +100,13 @@ where
         ParMapFilterMap::new(params, iter, map1, filter, map23)
     }
 
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    where
+        Filter: Fn(&Self::Item) -> bool + Send + Sync,
+    {
+        self
+    }
+
     fn collect_into<C>(self, output: C) -> C
     where
         C: ParCollectInto<Self::Item>,
