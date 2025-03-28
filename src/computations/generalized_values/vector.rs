@@ -9,20 +9,25 @@ where
 
 impl<I> Values for Vector<I>
 where
-    I: IntoIterator,
+    I: IntoIterator + Send + Sync,
+    I::Item: Send + Sync,
+    I::IntoIter: Send + Sync,
 {
     type Item = I::Item;
 
     type Mapped<M, O>
         = Vector<core::iter::Map<I::IntoIter, M>>
     where
-        M: Fn(Self::Item) -> O;
+        O: Send + Sync,
+        M: Fn(Self::Item) -> O + Send + Sync;
 
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<I::IntoIter, Vo, Fm>>
     where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
+        Vo: IntoIterator + Send + Sync,
+        Vo::Item: Send + Sync,
+        Vo::IntoIter: Send + Sync,
+        Fm: Fn(Self::Item) -> Vo + Send + Sync;
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
@@ -70,7 +75,8 @@ where
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
-        M: Fn(Self::Item) -> O,
+        O: Send + Sync,
+        M: Fn(Self::Item) -> O + Send + Sync,
     {
         Vector(self.0.into_iter().map(map))
     }
@@ -78,8 +84,10 @@ where
     #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo,
+        Vo: IntoIterator + Send + Sync,
+        Vo::Item: Send + Sync,
+        Vo::IntoIter: Send + Sync,
+        Fm: Fn(Self::Item) -> Vo + Send + Sync,
     {
         Vector(self.0.into_iter().flat_map(flat_map))
     }

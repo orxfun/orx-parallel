@@ -1,6 +1,5 @@
-use super::map::ParMap;
 use crate::{
-    computations::{map_self_atom, Atom, Mfm, Values},
+    computations::{Mfm, Values},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -11,9 +10,10 @@ pub struct ParMapFilterMap<I, T, Vt, O, Vo, M1, F, M2, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
+    T: Send + Sync,
+    Vt: Values<Item = T> + Send + Sync,
     O: Send + Sync,
-    Vo: Values<Item = O>,
+    Vo: Values<Item = O> + Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
@@ -26,9 +26,10 @@ impl<I, T, Vt, O, Vo, M1, F, M2, R> ParMapFilterMap<I, T, Vt, O, Vo, M1, F, M2, 
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
+    T: Send + Sync,
+    Vt: Values<Item = T> + Send + Sync,
     O: Send + Sync,
-    Vo: Values<Item = O>,
+    Vo: Values<Item = O> + Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
@@ -49,9 +50,10 @@ impl<I, T, Vt, O, Vo, M1, F, M2, R> ParIter<R> for ParMapFilterMap<I, T, Vt, O, 
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
+    T: Send + Sync,
+    Vt: Values<Item = T> + Send + Sync,
     O: Send + Sync,
-    Vo: Values<Item = O>,
+    Vo: Values<Item = O> + Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
@@ -104,6 +106,7 @@ where
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync,
     {
+        todo!();
         self
     }
 
@@ -111,7 +114,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        todo!()
+        output.mfm_collect_into::<R, _, _, _, _, _, _, _>(self.mfm)
     }
 }
 

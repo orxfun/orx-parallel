@@ -34,7 +34,8 @@ where
     ) -> Mfm<I, T, Vt, Vq::Item, Vo::FlatMapped<Fm, Vq>, M1, F, impl Fn(T) -> Vo::FlatMapped<Fm, Vq>>
     where
         Fm: Fn(O) -> Vq + Send + Sync + Clone,
-        Vq: IntoIterator,
+        Vq: IntoIterator + Send + Sync,
+        Vq::IntoIter: Send + Sync,
         Vq::Item: Send + Sync,
     {
         let (params, iter, map1, filter, map2) = self.destruct();

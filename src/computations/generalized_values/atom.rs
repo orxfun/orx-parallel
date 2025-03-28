@@ -5,19 +5,25 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
 pub struct Atom<T>(pub T);
 
-impl<T> Values for Atom<T> {
+impl<T> Values for Atom<T>
+where
+    T: Send + Sync,
+{
     type Item = T;
 
     type Mapped<M, O>
         = Atom<O>
     where
-        M: Fn(Self::Item) -> O;
+        O: Send + Sync,
+        M: Fn(Self::Item) -> O + Send + Sync;
 
     type FlatMapped<Fm, Vo>
         = Vector<Vo>
     where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
+        Vo: IntoIterator + Send + Sync,
+        Vo::Item: Send + Sync,
+        Vo::IntoIter: Send + Sync,
+        Fm: Fn(Self::Item) -> Vo + Send + Sync;
 
     fn values(self) -> impl IntoIterator<Item = T> {
         core::iter::once(self.0)
@@ -59,7 +65,8 @@ impl<T> Values for Atom<T> {
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
-        M: Fn(Self::Item) -> O,
+        O: Send + Sync,
+        M: Fn(Self::Item) -> O + Send + Sync,
     {
         Atom(map(self.0))
     }
@@ -67,8 +74,10 @@ impl<T> Values for Atom<T> {
     #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo,
+        Vo: IntoIterator + Send + Sync,
+        Vo::Item: Send + Sync,
+        Vo::IntoIter: Send + Sync,
+        Fm: Fn(Self::Item) -> Vo + Send + Sync,
     {
         Vector(flat_map(self.0))
     }
