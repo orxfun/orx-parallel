@@ -51,7 +51,7 @@ fn xyz_mf(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering, actual_f
     let iter = input.into_con_iter();
     let mfm = Mfm::new(params, iter, map1, filter, |x| Atom(x));
 
-    let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(false, output);
+    let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
     if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
         expected.sort();
@@ -96,7 +96,7 @@ fn abc() {
     let iter = input.into_con_iter();
     let mfm = Mfm::new(params, iter, map1, filter, |x| Atom(x));
 
-    let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(false, output);
+    let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
     if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
         expected.sort();

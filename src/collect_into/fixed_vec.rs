@@ -27,6 +27,24 @@ where
         FixedVec::from(vec.m_collect_into::<R, _, _>(m))
     }
 
+    fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+        self,
+        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+    ) -> Self
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        T: Send + Sync,
+        Vt: Values<Item = T> + Send + Sync,
+        Vo: Values<Item = O> + Send + Sync,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&T) -> bool + Send + Sync,
+        M2: Fn(T) -> Vo + Send + Sync,
+    {
+        let vec = Vec::from(self);
+        FixedVec::from(vec.mfm_collect_into::<R, _, _, _, _, _, _, _>(mfm))
+    }
+
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         self,
         mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,

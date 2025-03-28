@@ -42,6 +42,35 @@ where
         }
     }
 
+    fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+        mut self,
+        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+    ) -> Self
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        T: Send + Sync,
+        Vt: Values<Item = T> + Send + Sync,
+        Vo: Values<Item = O> + Send + Sync,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&T) -> bool + Send + Sync,
+        M2: Fn(T) -> Vo + Send + Sync,
+    {
+        match mfm.par_len() {
+            None => {
+                let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+                let split_vec = split_vec.mfm_collect_into::<R, _, _, _, _, _, _, _>(mfm);
+                extend_from_split(self, split_vec)
+            }
+            Some(len) => {
+                self.reserve(len);
+                let fixed_vec = FixedVec::from(self);
+                let (_num_spawned, fixed_vec) = mfm.collect_into::<R, _>(fixed_vec);
+                Vec::from(fixed_vec)
+            }
+        }
+    }
+
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         mut self,
         mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
@@ -68,7 +97,7 @@ where
             Some(len) => {
                 self.reserve(len);
                 let fixed_vec = FixedVec::from(self);
-                let (_num_spawned, fixed_vec) = mfm.collect_into::<R, _>(in_input_order, fixed_vec);
+                let (_num_spawned, fixed_vec) = mfm.collect_into::<R, _>(fixed_vec);
                 Vec::from(fixed_vec)
             }
         }

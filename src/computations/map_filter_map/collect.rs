@@ -41,22 +41,15 @@ where
 {
     pub fn compute<R: ParallelRunner>(
         mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
-        in_input_order: bool,
         pinned_vec: P,
     ) -> (usize, P) {
         let mfm_collect = Self { mfm, pinned_vec };
         let params = mfm_collect.mfm.params();
-        match (
-            params.is_sequential(),
-            in_input_order,
-            params.collect_ordering,
-        ) {
-            (true, _, _) => (0, mfm_collect.sequential()),
-            (false, true, _) => mfm_collect.parallel_in_input_order::<R>(),
-            (false, false, CollectOrdering::Arbitrary) => mfm_collect.parallel_in_arbitrary::<R>(),
-            (false, false, CollectOrdering::SortWithHeap) => {
-                mfm_collect.parallel_with_heap_sort::<R>()
-            }
+        match (params.is_sequential(), params.collect_ordering) {
+            (true, _) => (0, mfm_collect.sequential()),
+            // (false, true, _) => mfm_collect.parallel_in_input_order::<R>(),
+            (false, CollectOrdering::Arbitrary) => mfm_collect.parallel_in_arbitrary::<R>(),
+            (false, CollectOrdering::SortWithHeap) => mfm_collect.parallel_with_heap_sort::<R>(),
         }
     }
 

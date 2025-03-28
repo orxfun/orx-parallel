@@ -41,6 +41,12 @@ fn to_output(idx: &usize) -> Output {
     Output { name, numbers }
 }
 
+fn filter(output: &Output) -> bool {
+    let last_char = output.name.chars().last().unwrap();
+    let last_digit: u32 = last_char.to_string().parse().unwrap();
+    last_digit < 4
+}
+
 fn fibonacci(n: &u32) -> u32 {
     let mut a = 0;
     let mut b = 1;
@@ -60,12 +66,16 @@ fn inputs(len: usize) -> Vec<usize> {
 }
 
 fn seq(inputs: &[usize]) -> Vec<Output> {
-    inputs.iter().map(to_output).collect()
+    inputs.iter().map(to_output).filter(filter).collect()
 }
 
 fn rayon(inputs: &[usize]) -> Vec<Output> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().map(to_output).collect()
+    inputs
+        .into_par_iter()
+        .map(to_output)
+        .filter(filter)
+        .collect()
 }
 
 fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {
