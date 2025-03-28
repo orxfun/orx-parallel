@@ -1,5 +1,5 @@
 use crate::{
-    computations::{filter_true, map_self_atom, Atom, Mfm, M},
+    computations::M,
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -13,9 +13,7 @@ where
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync + Clone,
 {
-    iter: I,
-    params: Params,
-    map: M1,
+    m: M<I, O, M1>,
     phantom: PhantomData<R>,
 }
 
@@ -26,39 +24,15 @@ where
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync + Clone,
 {
-    pub(crate) fn new(params: Params, iter: I, map: M1) -> Self {
+    pub(crate) fn new(params: Params, iter: I, map1: M1) -> Self {
         Self {
-            iter,
-            params,
-            map,
+            m: M::new(params, iter, map1),
             phantom: PhantomData,
         }
     }
 
     fn destruct(self) -> (Params, I, M1) {
-        (self.params, self.iter, self.map)
-    }
-
-    fn mfm(
-        self,
-    ) -> Mfm<
-        I,
-        O,
-        Atom<O>,
-        O,
-        Atom<O>,
-        impl Fn(I::Item) -> Atom<O>,
-        impl Fn(&O) -> bool,
-        impl Fn(O) -> Atom<O>,
-    > {
-        let (params, iter, map) = self.destruct();
-        let map1 = move |x| map_self_atom(map(x));
-        Mfm::new(params, iter, map1, filter_true, map_self_atom)
-    }
-
-    fn m(self) -> M<I, O, M1> {
-        let (params, iter, map1) = self.destruct();
-        M::new(params, iter, map1)
+        self.m.destruct()
     }
 }
 
@@ -72,28 +46,29 @@ where
     type Item = O;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
-        &self.iter
+        self.m.iter()
     }
 
     // params transformations
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
-        self.params = self.params.with_num_threads(num_threads);
+        self.m.num_threads(num_threads);
         self
     }
 
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
-        self.params = self.params.with_chunk_size(chunk_size);
+        self.m.chunk_size(chunk_size);
         self
     }
 
     fn collect_ordering(mut self, collect: CollectOrdering) -> Self {
-        self.params = self.params.with_collect_ordering(collect);
+        self.m.collect_ordering(collect);
         self
     }
 
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
-        ParMap::new(self.params, self.iter, self.map)
+        let (params, iter, map) = self.destruct();
+        ParMap::new(params, iter, map)
     }
 
     // computation transformations
@@ -114,6 +89,6 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into::<R, _, _>(self.m())
+        output.m_collect_into::<R, _, _>(self.m)
     }
 }

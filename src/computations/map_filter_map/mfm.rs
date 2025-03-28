@@ -1,5 +1,5 @@
 use crate::computations::Values;
-use crate::Params;
+use crate::{ChunkSize, CollectOrdering, NumThreads, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct Mfm<I, T, Vt, O, Vo, M1, F, M2>
@@ -45,6 +45,22 @@ where
 
     pub fn params(&self) -> &Params {
         &self.params
+    }
+
+    pub fn num_threads(&mut self, num_threads: impl Into<NumThreads>) {
+        self.params = self.params().with_num_threads(num_threads);
+    }
+
+    pub fn chunk_size(&mut self, chunk_size: impl Into<ChunkSize>) {
+        self.params = self.params.with_chunk_size(chunk_size);
+    }
+
+    pub fn collect_ordering(&mut self, collect: CollectOrdering) {
+        self.params = self.params.with_collect_ordering(collect);
+    }
+
+    pub fn iter(&self) -> &I {
+        &self.iter
     }
 
     pub fn par_len(&self) -> Option<usize> {
