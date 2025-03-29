@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests;
 
+mod api;
 mod collect;
-mod computations;
 mod mfm;
 mod transformations;
 
