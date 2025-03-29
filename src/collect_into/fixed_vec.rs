@@ -27,10 +27,7 @@ where
         FixedVec::from(vec.m_collect_into::<R, _, _>(m))
     }
 
-    fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(
-        self,
-        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
-    ) -> Self
+    fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(self, mfm: Mfm<I, T, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -47,7 +44,7 @@ where
 
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         self,
-        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
         in_input_order: bool,
     ) -> Self
     where

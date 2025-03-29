@@ -44,7 +44,7 @@ where
 
     fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         mut self,
-        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
     ) -> Self
     where
         R: ParallelRunner,
@@ -73,7 +73,7 @@ where
 
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         mut self,
-        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
         in_input_order: bool,
     ) -> Self
     where

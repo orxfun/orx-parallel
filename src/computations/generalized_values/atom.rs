@@ -52,9 +52,7 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send + Sync,
     {
-        unsafe {
-            o_bag.set_value(idx, self.0);
-        }
+        unsafe { o_bag.set_value(idx, self.0) };
     }
 
     #[inline(always)]

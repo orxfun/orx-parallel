@@ -19,7 +19,7 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
 
     fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         self,
-        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
     ) -> Self
     where
         R: ParallelRunner,
@@ -33,7 +33,7 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
 
     fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
         self,
-        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
         in_input_order: bool,
     ) -> Self
     where

@@ -6,30 +6,30 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParMapFilterMap<I, T, Vt, O, Vo, M1, F, M2, R = DefaultRunner>
+pub struct ParMapFilterMap<I, T, Vt, Vo, M1, F, M2, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     T: Send + Sync,
     Vt: Values<Item = T> + Send + Sync,
-    O: Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
 {
-    mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+    mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
 }
 
-impl<I, T, Vt, O, Vo, M1, F, M2, R> ParMapFilterMap<I, T, Vt, O, Vo, M1, F, M2, R>
+impl<I, T, Vt, Vo, M1, F, M2, R> ParMapFilterMap<I, T, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     T: Send + Sync,
     Vt: Values<Item = T> + Send + Sync,
-    O: Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
@@ -46,19 +46,19 @@ where
     }
 }
 
-impl<I, T, Vt, O, Vo, M1, F, M2, R> ParIter<R> for ParMapFilterMap<I, T, Vt, O, Vo, M1, F, M2, R>
+impl<I, T, Vt, Vo, M1, F, M2, R> ParIter<R> for ParMapFilterMap<I, T, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     T: Send + Sync,
     Vt: Values<Item = T> + Send + Sync,
-    O: Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
 {
-    type Item = O;
+    type Item = Vo::Item;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
         self.mfm.iter()

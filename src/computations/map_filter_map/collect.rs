@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use super::mfm::Mfm;
 use crate::computations::Values;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelTask};
@@ -10,37 +8,38 @@ use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
+use std::marker::PhantomData;
 
-pub struct MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
+pub struct MfmCollect<I, T, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values<Item = T> + Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
     T: Send + Sync,
-    O: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+    mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
     pinned_vec: P,
 }
 
-impl<I, T, Vt, O, Vo, M1, F, M2, P> MfmCollect<I, T, Vt, O, Vo, M1, F, M2, P>
+impl<I, T, Vt, Vo, M1, F, M2, P> MfmCollect<I, T, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values<Item = T> + Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
     T: Send + Sync,
-    O: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     pub fn compute<R: ParallelRunner>(
-        mfm: Mfm<I, T, Vt, O, Vo, M1, F, M2>,
+        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
         pinned_vec: P,
     ) -> (usize, P) {
         let mfm_collect = Self { mfm, pinned_vec };
@@ -70,9 +69,9 @@ where
         let (params, iter, map1, filter, map2) = mfm.destruct();
 
         // values has length of offset+m where m is the number of added elements
-        let bag: ConcurrentBag<O, P> = pinned_vec.into();
+        let bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
 
-        let task = MfmCollectInArbitraryOrder::<'_, I, T, Vt, O, Vo, M1, F, M2, P>::new(
+        let task = MfmCollectInArbitraryOrder::<'_, I, T, Vt, Vo, M1, F, M2, P>::new(
             map1, filter, map2, &bag,
         );
 
@@ -130,7 +129,7 @@ where
         let (params, iter, map1, filter, map2) = mfm.destruct();
         let initial_len = iter.try_get_len();
 
-        let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
+        let o_bag: ConcurrentOrderedBag<Vo::Item, P> = pinned_vec.into();
 
         let transform = |(i_idx, i): (usize, I::Item)| {
             let vt = map1(i);
@@ -147,39 +146,38 @@ where
 
 // arbitrary
 
-struct MfmCollectInArbitraryOrder<'a, I, T, Vt, O, Vo, M1, F, M2, P>
+struct MfmCollectInArbitraryOrder<'a, I, T, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values<Item = T> + Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
     T: Send + Sync,
-    O: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     map1: M1,
     filter: F,
     map2: M2,
-    bag: &'a ConcurrentBag<O, P>,
+    bag: &'a ConcurrentBag<Vo::Item, P>,
     phantom: PhantomData<(I, T, Vt, Vo)>,
 }
 
-impl<'a, I, T, Vt, O, Vo, M1, F, M2, P>
-    MfmCollectInArbitraryOrder<'a, I, T, Vt, O, Vo, M1, F, M2, P>
+impl<'a, I, T, Vt, Vo, M1, F, M2, P> MfmCollectInArbitraryOrder<'a, I, T, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values<Item = T> + Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
     T: Send + Sync,
-    O: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    fn new(map1: M1, filter: F, map2: M2, bag: &'a ConcurrentBag<O, P>) -> Self {
+    fn new(map1: M1, filter: F, map2: M2, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
         Self {
             map1,
             filter,
@@ -190,18 +188,18 @@ where
     }
 }
 
-impl<'a, I, T, Vt, O, Vo, M1, F, M2, P> ParallelTask
-    for MfmCollectInArbitraryOrder<'a, I, T, Vt, O, Vo, M1, F, M2, P>
+impl<'a, I, T, Vt, Vo, M1, F, M2, P> ParallelTask
+    for MfmCollectInArbitraryOrder<'a, I, T, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values<Item = T> + Send + Sync,
-    Vo: Values<Item = O> + Send + Sync,
     T: Send + Sync,
-    O: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&T) -> bool + Send + Sync,
     M2: Fn(T) -> Vo + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     type Item = I::Item;
 

@@ -1,3 +1,4 @@
+use super::map_filter_map::ParMapFilterMap;
 use crate::{
     computations::{map_self_atom, Atom, M},
     runner::{DefaultRunner, ParallelRunner},
@@ -5,8 +6,6 @@ use crate::{
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
-
-use super::map_filter_map::ParMapFilterMap;
 
 pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
