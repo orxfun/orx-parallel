@@ -1,6 +1,6 @@
 use crate::{
     computational_variants::xap_filter_xap::ParXapFilterXap,
-    computations::{map_self_atom, Values, X},
+    computations::{map_self_atom, Values, Vector, X},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -97,6 +97,21 @@ where
     {
         let (params, iter, x1) = self.destruct();
         ParXapFilterXap::new(params, iter, x1, filter, map_self_atom)
+    }
+
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone,
+    {
+        let (params, iter, x1) = self.destruct();
+        let x1 = move |i: I::Item| {
+            let vo = x1(i);
+            vo.flat_map(flat_map.clone())
+        };
+        ParXap::new(params, iter, x1)
     }
 
     // collect

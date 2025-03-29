@@ -115,6 +115,22 @@ where
         ParXapFilterXap::new(params, iter, x1, f, x2)
     }
 
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone,
+    {
+        let (params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |t: Vt::Item| {
+            let vo = x2(t);
+            vo.flat_map(flat_map.clone())
+        };
+
+        ParXapFilterXap::new(params, iter, x1, f, x2)
+    }
+
     // collect
 
     fn collect_into<C>(self, output: C) -> C

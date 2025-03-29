@@ -1,6 +1,6 @@
-use super::xap_filter_xap::ParXapFilterXap;
+use super::{xap::ParXap, xap_filter_xap::ParXapFilterXap};
 use crate::{
-    computations::{map_self_atom, Atom, M},
+    computations::{map_self_atom, Atom, Vector, M},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -25,9 +25,9 @@ where
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync + Clone,
 {
-    pub(crate) fn new(params: Params, iter: I, m: M1) -> Self {
+    pub(crate) fn new(params: Params, iter: I, m1: M1) -> Self {
         Self {
-            m: M::new(params, iter, m),
+            m: M::new(params, iter, m1),
             phantom: PhantomData,
         }
     }
@@ -79,18 +79,30 @@ where
         Out: Send + Sync,
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
     {
-        let (params, iter, map1) = self.destruct();
-        let map = move |x| map(map1(x));
-        ParMap::new(params, iter, map)
+        let (params, iter, m1) = self.destruct();
+        let m1 = move |x| map(m1(x));
+        ParMap::new(params, iter, m1)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        let (params, iter, map1) = self.destruct();
-        let map1 = move |i: I::Item| Atom(map1(i));
-        ParXapFilterXap::new(params, iter, map1, filter, map_self_atom)
+        let (params, iter, m1) = self.destruct();
+        let m1 = move |i: I::Item| Atom(m1(i));
+        ParXapFilterXap::new(params, iter, m1, filter, map_self_atom)
+    }
+
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(Self::Item) -> IOut + Send + Sync,
+    {
+        let (params, iter, m1) = self.destruct();
+        let x1 = move |i: I::Item| Vector(flat_map(m1(i)));
+        ParXap::new(params, iter, x1)
     }
 
     // collect

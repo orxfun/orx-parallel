@@ -20,6 +20,14 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
+fn to_outputs_rayon(idx: &usize) -> Vec<Output> {
+    (0..4).map(|i| to_output(&(idx + i))).collect::<Vec<_>>()
+}
+
+fn to_outputs(idx: &usize) -> impl IntoIterator<Item = Output> {
+    (0..4).map(|i| to_output(&(idx + i))).collect::<Vec<_>>()
+}
+
 fn to_output(idx: &usize) -> Output {
     let idx = *idx;
     let prefix = match idx % 7 {
@@ -60,12 +68,12 @@ fn inputs(len: usize) -> Vec<usize> {
 }
 
 fn seq(inputs: &[usize]) -> Vec<Output> {
-    inputs.iter().map(to_output).collect()
+    inputs.iter().flat_map(to_outputs).collect()
 }
 
 fn rayon(inputs: &[usize]) -> Vec<Output> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().map(to_output).collect()
+    inputs.into_par_iter().flat_map(to_outputs_rayon).collect()
 }
 
 fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {

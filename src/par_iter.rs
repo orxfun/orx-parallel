@@ -34,6 +34,13 @@ where
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone;
+
     // collect
 
     fn collect_into<C>(self, output: C) -> C
