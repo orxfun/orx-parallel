@@ -122,7 +122,7 @@ where
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let vo = x1(i);
-            vo.flat_map(flat_map.clone())
+            vo.flat_map(filter_map.clone())
         };
         ParXap::new(params, iter, x1)
     }
