@@ -34,9 +34,9 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
-    pub(crate) fn new(params: Params, iter: I, map1: M1, filter: F, map2: M2) -> Self {
+    pub(crate) fn new(params: Params, iter: I, x1: M1, f: F, x2: M2) -> Self {
         Self {
-            xfx: Xfx::new(params, iter, map1, filter, map2),
+            xfx: Xfx::new(params, iter, x1, f, x2),
             phantom: PhantomData,
         }
     }
@@ -114,6 +114,8 @@ where
 
         ParXapFilterXap::new(params, iter, x1, f, x2)
     }
+
+    // collect
 
     fn collect_into<C>(self, output: C) -> C
     where

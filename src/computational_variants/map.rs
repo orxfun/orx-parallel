@@ -25,9 +25,9 @@ where
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync + Clone,
 {
-    pub(crate) fn new(params: Params, iter: I, map1: M1) -> Self {
+    pub(crate) fn new(params: Params, iter: I, m: M1) -> Self {
         Self {
-            m: M::new(params, iter, map1),
+            m: M::new(params, iter, m),
             phantom: PhantomData,
         }
     }

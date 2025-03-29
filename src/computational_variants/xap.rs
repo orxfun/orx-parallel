@@ -1,5 +1,6 @@
 use crate::{
-    computations::{Values, X},
+    computational_variants::xap_filter_xap::ParXapFilterXap,
+    computations::{map_self_atom, Values, X},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -26,9 +27,9 @@ where
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {
-    pub(crate) fn new(params: Params, iter: I, map1: M1) -> Self {
+    pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
         Self {
-            x: X::new(params, iter, map1),
+            x: X::new(params, iter, x1),
             phantom: PhantomData,
         }
     }
@@ -76,27 +77,29 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map2: Map) -> impl ParIter<R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
     {
-        let (params, iter, map1) = self.destruct();
-        let map12 = move |i: I::Item| {
-            let vo = map1(i);
-            vo.map(map2.clone())
+        let (params, iter, x1) = self.destruct();
+        let x1 = move |i: I::Item| {
+            let vo = x1(i);
+            vo.map(map.clone())
         };
 
-        ParXap::new(params, iter, map12)
+        ParXap::new(params, iter, x1)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        todo!();
-        self
+        let (params, iter, x1) = self.destruct();
+        ParXapFilterXap::new(params, iter, x1, filter, map_self_atom)
     }
+
+    // collect
 
     fn collect_into<C>(self, output: C) -> C
     where
