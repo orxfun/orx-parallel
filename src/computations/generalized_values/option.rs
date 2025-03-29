@@ -28,6 +28,13 @@ where
         Vo::Item: Send + Sync,
         Vo::IntoIter: Send + Sync,
         Fm: Fn(Self::Item) -> Vo + Send + Sync;
+
+    type FilterMapped<Fm, O>
+        = Option<O>
+    where
+        O: Send + Sync,
+        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self
@@ -93,6 +100,18 @@ where
         Fm: Fn(Self::Item) -> Vo + Send + Sync,
     {
         Vector(self.into_iter().flat_map(flat_map))
+    }
+
+    #[inline(always)]
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
+    where
+        O: Send + Sync,
+        Fm: Fn(Self::Item) -> Option<O> + Send + Sync,
+    {
+        match self {
+            Some(x) => filter_map(x),
+            _ => None,
+        }
     }
 
     #[inline(always)]

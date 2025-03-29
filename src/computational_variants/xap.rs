@@ -114,6 +114,19 @@ where
         ParXap::new(params, iter, x1)
     }
 
+    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    where
+        Out: Send + Sync,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone,
+    {
+        let (params, iter, x1) = self.destruct();
+        let x1 = move |i: I::Item| {
+            let vo = x1(i);
+            vo.flat_map(flat_map.clone())
+        };
+        ParXap::new(params, iter, x1)
+    }
+
     // collect
 
     fn collect_into<C>(self, output: C) -> C

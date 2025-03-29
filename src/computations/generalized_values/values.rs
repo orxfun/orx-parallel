@@ -21,6 +21,11 @@ pub trait Values: Send + Sync {
         Vo::IntoIter: Send + Sync,
         Fm: Fn(Self::Item) -> Vo + Send + Sync;
 
+    type FilterMapped<Fm, O>: Values<Item = O>
+    where
+        O: Send + Sync,
+        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
     fn push_to_pinned_vec<P>(self, vector: &mut P)
@@ -50,6 +55,11 @@ pub trait Values: Send + Sync {
         Vo::Item: Send + Sync,
         Vo::IntoIter: Send + Sync,
         Fm: Fn(Self::Item) -> Vo + Send + Sync;
+
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
+    where
+        O: Send + Sync,
+        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
 
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
