@@ -1,7 +1,6 @@
+use super::parallel_task::{ParallelTask, ParallelTaskWithIdx};
 use crate::computations::Values;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
-
-use super::parallel_task::{ParallelTask, ParallelTaskWithIdx};
 
 pub trait ThreadRunner: Sized {
     type SharedState;
@@ -90,7 +89,7 @@ pub trait ThreadRunner: Sized {
         self.complete_task(shared_state);
     }
 
-    fn mfm_collect_with_idx<I, Vt, Vo, M1, F, M2>(
+    fn xfx_collect_with_idx<I, Vt, Vo, M1, F, M2>(
         mut self,
         iter: &I,
         shared_state: &Self::SharedState,

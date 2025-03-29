@@ -83,7 +83,7 @@ where
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, mut vectors) = runner.mfm_collect_with_idx(&iter, &map1, &filter, &map2);
+        let (num_spawned, mut vectors) = runner.xfx_collect_with_idx(&iter, &map1, &filter, &map2);
 
         let mut queue = BinaryHeap::with_capacity(vectors.len());
         let mut indices = vec![0; vectors.len()];

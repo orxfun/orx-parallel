@@ -68,7 +68,7 @@ pub trait ParallelRunner: Sized + Sync {
         num_spawned
     }
 
-    fn mfm_collect_with_idx<I, Vt, Vo, M1, F, M2>(
+    fn xfx_collect_with_idx<I, Vt, Vo, M1, F, M2>(
         &self,
         iter: &I,
         map1: &M1,
@@ -95,7 +95,7 @@ pub trait ParallelRunner: Sized + Sync {
                 num_spawned += 1;
                 handles.push(s.spawn(move || {
                     let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.mfm_collect_with_idx(iter, shared_state, map1, filter, map2)
+                    thread_runner.xfx_collect_with_idx(iter, shared_state, map1, filter, map2)
                 }));
             }
 
