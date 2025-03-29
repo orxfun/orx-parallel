@@ -102,7 +102,6 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        // output.mfm_collect_into::<R, _, _, _, _, _, _>(self.x)
-        todo!()
+        output.x_collect_into::<R, _, _, _>(self.x)
     }
 }
