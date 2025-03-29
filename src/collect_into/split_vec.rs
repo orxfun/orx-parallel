@@ -61,27 +61,6 @@ where
         pinned_vec
     }
 
-    fn collect_into<R, I, Vt, Vo, M1, F, M2>(
-        mut self,
-        mfm: Xfx<I, Vt, Vo, M1, F, M2>,
-        in_input_order: bool,
-    ) -> Self
-    where
-        R: ParallelRunner,
-        I: ConcurrentIter,
-        Vt: Values + Send + Sync,
-        Vt::Item: Send + Sync,
-        O: Send + Sync,
-        Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
-    {
-        reserve(&mut self, mfm.par_len());
-        let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(self);
-        pinned_vec
-    }
-
     // test
 
     #[cfg(test)]

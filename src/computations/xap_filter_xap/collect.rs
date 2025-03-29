@@ -62,7 +62,8 @@ where
         let (params, iter, map1, filter, map2) = mfm.destruct();
 
         // values has length of offset+m where m is the number of added elements
-        let bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+        let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+        bag.reserve_maximum_capacity(2 << 32);
 
         let task = XfxCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
             map1, filter, map2, &bag,

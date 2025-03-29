@@ -56,11 +56,10 @@ where
         let (x, pinned_vec) = (self.x, self.pinned_vec);
         let (params, iter, map1) = x.destruct();
 
-        // values has length of offset+m where m is the number of added elements
-        let bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+        let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+        bag.reserve_maximum_capacity(2 << 32);
 
         let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P>::new(map1, &bag);
-
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
         let num_spawned = runner.run(&iter, task);
 

@@ -1,8 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::{
-    computations::{Values, Xfx, M, X},
-    runner::ParallelRunner,
-};
+use crate::computations::{Values, Xfx, M, X};
+use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
@@ -42,7 +40,7 @@ where
         }
     }
 
-    fn x_collect_into<R, I, Vo, M1>(mut self, x: X<I, Vo, M1>) -> Self
+    fn x_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -50,22 +48,12 @@ where
         Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Send + Sync,
     {
-        match x.par_len() {
-            None => {
-                let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-                let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
-                extend_from_split(self, split_vec)
-            }
-            Some(len) => {
-                self.reserve(len);
-                let fixed_vec = FixedVec::from(self);
-                let (_num_spawned, fixed_vec) = x.collect_into::<R, _>(fixed_vec);
-                Vec::from(fixed_vec)
-            }
-        }
+        let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+        let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
+        extend_from_split(self, split_vec)
     }
 
-    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
+    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -76,50 +64,9 @@ where
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        match mfm.par_len() {
-            None => {
-                let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-                let split_vec = split_vec.xfx_collect_into::<R, _, _, _, _, _, _>(mfm);
-                extend_from_split(self, split_vec)
-            }
-            Some(len) => {
-                self.reserve(len);
-                let fixed_vec = FixedVec::from(self);
-                let (_num_spawned, fixed_vec) = mfm.collect_into::<R, _>(fixed_vec);
-                Vec::from(fixed_vec)
-            }
-        }
-    }
-
-    fn collect_into<R, I, Vt, Vo, M1, F, M2>(
-        mut self,
-        mfm: Xfx<I, Vt, Vo, M1, F, M2>,
-        in_input_order: bool,
-    ) -> Self
-    where
-        R: ParallelRunner,
-        I: ConcurrentIter,
-        Vt: Values + Send + Sync,
-        Vt::Item: Send + Sync,
-        O: Send + Sync,
-        Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
-    {
-        match mfm.par_len() {
-            None => {
-                let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-                let split_vec = split_vec.collect_into::<R, _, _, _, _, _, _>(mfm, in_input_order);
-                extend_from_split(self, split_vec)
-            }
-            Some(len) => {
-                self.reserve(len);
-                let fixed_vec = FixedVec::from(self);
-                let (_num_spawned, fixed_vec) = mfm.collect_into::<R, _>(fixed_vec);
-                Vec::from(fixed_vec)
-            }
-        }
+        let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+        let split_vec = split_vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx);
+        extend_from_split(self, split_vec)
     }
 
     // test

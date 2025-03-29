@@ -5,7 +5,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const TEST_LARGE_OUTPUT: bool = false;
+const TEST_LARGE_OUTPUT: bool = true;
 
 const LARGE_OUTPUT_LEN: usize = match TEST_LARGE_OUTPUT {
     true => 64,
@@ -20,11 +20,7 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
-fn to_outputs_rayon(idx: &usize) -> Vec<Output> {
-    (0..4).map(|i| to_output(&(idx + i))).collect::<Vec<_>>()
-}
-
-fn to_outputs(idx: &usize) -> impl IntoIterator<Item = Output> {
+fn to_outputs(idx: &usize) -> Vec<Output> {
     (0..4).map(|i| to_output(&(idx + i))).collect::<Vec<_>>()
 }
 
@@ -73,13 +69,13 @@ fn seq(inputs: &[usize]) -> Vec<Output> {
 
 fn rayon(inputs: &[usize]) -> Vec<Output> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().flat_map(to_outputs_rayon).collect()
+    inputs.into_par_iter().flat_map(to_outputs).collect()
 }
 
 fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {
     inputs
         .into_par()
-        .map(to_output)
+        .flat_map(to_outputs)
         .collect_ordering(CollectOrdering::SortWithHeap)
         .collect()
 }
@@ -87,7 +83,7 @@ fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {
 fn orx_arbitrary_vec(inputs: &[usize]) -> Vec<Output> {
     inputs
         .into_par()
-        .map(to_output)
+        .flat_map(to_outputs)
         .collect_ordering(CollectOrdering::Arbitrary)
         .collect()
 }
@@ -95,7 +91,7 @@ fn orx_arbitrary_vec(inputs: &[usize]) -> Vec<Output> {
 fn orx_sorted_split_vec(inputs: &[usize]) -> SplitVec<Output> {
     inputs
         .into_par()
-        .map(to_output)
+        .flat_map(to_outputs)
         .collect_ordering(CollectOrdering::SortWithHeap)
         .collect()
 }
@@ -103,7 +99,7 @@ fn orx_sorted_split_vec(inputs: &[usize]) -> SplitVec<Output> {
 fn orx_arbitrary_split_vec(inputs: &[usize]) -> SplitVec<Output> {
     inputs
         .into_par()
-        .map(to_output)
+        .flat_map(to_outputs)
         .collect_ordering(CollectOrdering::Arbitrary)
         .collect()
 }
