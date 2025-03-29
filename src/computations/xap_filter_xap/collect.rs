@@ -1,4 +1,4 @@
-use super::mfm::Mfm;
+use super::xfx::Xfx;
 use crate::computations::heap_sort::heap_sort_into;
 use crate::computations::Values;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelTask};
@@ -8,7 +8,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 use std::marker::PhantomData;
 
-pub struct MfmCollect<I, Vt, Vo, M1, F, M2, P>
+pub struct XfxCollect<I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -19,11 +19,11 @@ where
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    mfm: Mfm<I, Vt, Vo, M1, F, M2>,
+    mfm: Xfx<I, Vt, Vo, M1, F, M2>,
     pinned_vec: P,
 }
 
-impl<I, Vt, Vo, M1, F, M2, P> MfmCollect<I, Vt, Vo, M1, F, M2, P>
+impl<I, Vt, Vo, M1, F, M2, P> XfxCollect<I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -34,7 +34,7 @@ where
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    pub fn compute<R: ParallelRunner>(mfm: Mfm<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
+    pub fn compute<R: ParallelRunner>(mfm: Xfx<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
         let mfm_collect = Self { mfm, pinned_vec };
         let params = mfm_collect.mfm.params();
         match (params.is_sequential(), params.collect_ordering) {
@@ -64,7 +64,7 @@ where
         // values has length of offset+m where m is the number of added elements
         let bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
 
-        let task = MfmCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
+        let task = XfxCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
             map1, filter, map2, &bag,
         );
 
@@ -90,7 +90,7 @@ where
 
 // arbitrary
 
-struct MfmCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
+struct XfxCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -108,7 +108,7 @@ where
     phantom: PhantomData<(I, Vt, Vo)>,
 }
 
-impl<'a, I, Vt, Vo, M1, F, M2, P> MfmCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
+impl<'a, I, Vt, Vo, M1, F, M2, P> XfxCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -131,7 +131,7 @@ where
 }
 
 impl<'a, I, Vt, Vo, M1, F, M2, P> ParallelTask
-    for MfmCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
+    for XfxCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,

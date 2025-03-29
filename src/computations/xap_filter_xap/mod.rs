@@ -3,7 +3,7 @@ mod tests;
 
 mod api;
 mod collect;
-mod mfm;
 mod transformations;
+mod xfx;
 
-pub use mfm::Mfm;
+pub use xfx::Xfx;

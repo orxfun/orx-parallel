@@ -1,5 +1,5 @@
 use crate::{
-    computations::{Mfm, Values},
+    computations::{Xfx, Values},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -18,7 +18,7 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
-    mfm: Mfm<I, Vt, Vo, M1, F, M2>,
+    mfm: Xfx<I, Vt, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
 }
 
@@ -36,7 +36,7 @@ where
 {
     pub(crate) fn new(params: Params, iter: I, map1: M1, filter: F, map2: M2) -> Self {
         Self {
-            mfm: Mfm::new(params, iter, map1, filter, map2),
+            mfm: Xfx::new(params, iter, map1, filter, map2),
             phantom: PhantomData,
         }
     }

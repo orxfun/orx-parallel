@@ -2,7 +2,7 @@ use crate::computations::Values;
 use crate::{ChunkSize, CollectOrdering, NumThreads, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct Mfm<I, Vt, Vo, M1, F, M2>
+pub struct Xfx<I, Vt, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
     Vt: Values,
@@ -19,7 +19,7 @@ where
     map2: M2,
 }
 
-impl<I, Vt, Vo, M1, F, M2> Mfm<I, Vt, Vo, M1, F, M2>
+impl<I, Vt, Vo, M1, F, M2> Xfx<I, Vt, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
     Vt: Values,

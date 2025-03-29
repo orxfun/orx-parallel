@@ -1,6 +1,6 @@
 use crate::computations::{map_self_atom, Atom, Values};
 use crate::{
-    computations::map_filter_map::mfm::Mfm, runner::DefaultRunner, CollectOrdering, Params,
+    computations::xap_filter_xap::xfx::Xfx, runner::DefaultRunner, CollectOrdering, Params,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
@@ -49,7 +49,7 @@ fn mf(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering, actual_filte
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let mfm = Mfm::new(params, iter, map1, filter, map_self_atom);
+    let mfm = Xfx::new(params, iter, map1, filter, map_self_atom);
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
@@ -91,7 +91,7 @@ fn f(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering, actual_filter
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let mfm = Mfm::new(params, iter, map_self_atom, filter, map_self_atom);
+    let mfm = Xfx::new(params, iter, map_self_atom, filter, map_self_atom);
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
@@ -143,7 +143,7 @@ fn mfm(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering, actual_filt
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let mfm = Mfm::new(params, iter, map1, filter, map2);
+    let mfm = Xfx::new(params, iter, map1, filter, map2);
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 

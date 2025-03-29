@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::{Mfm, Values, M},
+    computations::{Values, Xfx, M},
     runner::ParallelRunner,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -42,7 +42,7 @@ where
         }
     }
 
-    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Mfm<I, Vt, Vo, M1, F, M2>) -> Self
+    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -70,7 +70,7 @@ where
 
     fn collect_into<R, I, Vt, Vo, M1, F, M2>(
         mut self,
-        mfm: Mfm<I, Vt, Vo, M1, F, M2>,
+        mfm: Xfx<I, Vt, Vo, M1, F, M2>,
         in_input_order: bool,
     ) -> Self
     where
