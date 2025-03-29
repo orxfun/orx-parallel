@@ -10,6 +10,10 @@ pub trait Values: Send + Sync {
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync;
 
+    type Filtered<F>: Values<Item = Self::Item>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync;
+
     type FlatMapped<Fm, Vo>: Values<Item = Vo::Item>
     where
         Vo: IntoIterator + Send + Sync,
@@ -46,6 +50,10 @@ pub trait Values: Send + Sync {
         Vo::Item: Send + Sync,
         Vo::IntoIter: Send + Sync,
         Fm: Fn(Self::Item) -> Vo + Send + Sync;
+
+    fn filter<F>(self, filter: F) -> Self::Filtered<F>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync;
 
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where

@@ -15,7 +15,7 @@ const N: [usize; 2] = [1025, 4735];
     [1, 64, 1024],
     [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary])
 ]
-fn m(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
+fn m_map(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();

@@ -88,26 +88,34 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map3: Map) -> impl ParIter<R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
     {
-        let (params, iter, map1, filter, map2) = self.destruct();
-        let map23 = move |t: Vt::Item| {
-            let vo = map2(t);
-            vo.map(map3.clone())
+        let (params, iter, xap1, filter, xap2) = self.destruct();
+        let xap2 = move |t: Vt::Item| {
+            let vo = xap2(t);
+            vo.map(map.clone())
         };
 
-        ParXapFilterXap::new(params, iter, map1, filter, map23)
+        ParXapFilterXap::new(params, iter, xap1, filter, xap2)
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    fn filter<Filter>(self, filter2: Filter) -> impl ParIter<R, Item = Self::Item>
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        todo!();
         self
+
+        // let (params, iter, xap1, filter, xap2) = self.destruct();
+        // let xap2 = move |t: Vt::Item| {
+        //     let vo = xap2(t);
+
+        //     todo!()
+        // };
+
+        // ParXapFilterXap::new(params, iter, xap1, filter, xap2)
     }
 
     fn collect_into<C>(self, output: C) -> C

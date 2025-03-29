@@ -17,6 +17,11 @@ where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync;
 
+    type Filtered<F>
+        = Vector<Option<Self::Item>>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync;
+
     type FlatMapped<Fm, Vo>
         = Vector<Vo>
     where
@@ -67,6 +72,17 @@ where
         M: Fn(Self::Item) -> O + Send + Sync,
     {
         Atom(map(self.0))
+    }
+
+    #[inline(always)]
+    fn filter<F>(self, filter: F) -> Self::Filtered<F>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+    {
+        Vector(match filter(&self.0) {
+            true => Some(self.0),
+            false => None,
+        })
     }
 
     #[inline(always)]

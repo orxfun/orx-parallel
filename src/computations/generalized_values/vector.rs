@@ -21,6 +21,11 @@ where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync;
 
+    type Filtered<F>
+        = Vector<core::iter::Filter<I::IntoIter, F>>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync;
+
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<I::IntoIter, Vo, Fm>>
     where
@@ -79,6 +84,14 @@ where
         M: Fn(Self::Item) -> O + Send + Sync,
     {
         Vector(self.0.into_iter().map(map))
+    }
+
+    #[inline(always)]
+    fn filter<F>(self, filter: F) -> Self::Filtered<F>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+    {
+        Vector(self.0.into_iter().filter(filter))
     }
 
     #[inline(always)]
