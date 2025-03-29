@@ -132,7 +132,7 @@ where
     }
 
     #[inline]
-    fn mfm_collect_heap<F, M2, Vo, O>(
+    fn xfx_collect_heap<F, M2, Vo, O>(
         self,
         input_idx: usize,
         filter: F,
