@@ -131,6 +131,20 @@ where
         ParXapFilterXap::new(params, iter, x1, f, x2)
     }
 
+    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    where
+        Out: Send + Sync,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone,
+    {
+        let (params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |t: Vt::Item| {
+            let vo = x2(t);
+            vo.filter_map(filter_map.clone())
+        };
+
+        ParXapFilterXap::new(params, iter, x1, f, x2)
+    }
+
     // collect
 
     fn collect_into<C>(self, output: C) -> C
