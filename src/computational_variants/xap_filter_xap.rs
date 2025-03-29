@@ -1,5 +1,5 @@
 use crate::{
-    computations::{Values, Xfx},
+    computations::{Values, Vector, Xfx},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -93,29 +93,26 @@ where
         Out: Send + Sync,
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
     {
-        let (params, iter, xap1, filter, xap2) = self.destruct();
-        let xap2 = move |t: Vt::Item| {
-            let vo = xap2(t);
+        let (params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |t: Vt::Item| {
+            let vo = x2(t);
             vo.map(map.clone())
         };
 
-        ParXapFilterXap::new(params, iter, xap1, filter, xap2)
+        ParXapFilterXap::new(params, iter, x1, f, x2)
     }
 
-    fn filter<Filter>(self, filter2: Filter) -> impl ParIter<R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync,
+        Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
-        self
+        let (params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |t: Vt::Item| {
+            let vo = x2(t);
+            vo.filter(filter.clone())
+        };
 
-        // let (params, iter, xap1, filter, xap2) = self.destruct();
-        // let xap2 = move |t: Vt::Item| {
-        //     let vo = xap2(t);
-
-        //     todo!()
-        // };
-
-        // ParXapFilterXap::new(params, iter, xap1, filter, xap2)
+        ParXapFilterXap::new(params, iter, x1, f, x2)
     }
 
     fn collect_into<C>(self, output: C) -> C

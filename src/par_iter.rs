@@ -32,7 +32,7 @@ where
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync;
+        Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
     // collect
 
