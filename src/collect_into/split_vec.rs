@@ -32,7 +32,7 @@ where
         pinned_vec
     }
 
-    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
+    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,

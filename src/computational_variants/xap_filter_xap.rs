@@ -114,6 +114,6 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.mfm_collect_into::<R, _, _, _, _, _, _>(self.xfx)
+        output.xfx_collect_into::<R, _, _, _, _, _, _>(self.xfx)
     }
 }

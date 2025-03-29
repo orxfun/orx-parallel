@@ -42,7 +42,7 @@ where
         }
     }
 
-    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
+    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -56,7 +56,7 @@ where
         match mfm.par_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-                let split_vec = split_vec.mfm_collect_into::<R, _, _, _, _, _, _>(mfm);
+                let split_vec = split_vec.xfx_collect_into::<R, _, _, _, _, _, _>(mfm);
                 extend_from_split(self, split_vec)
             }
             Some(len) => {

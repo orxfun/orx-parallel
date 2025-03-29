@@ -27,7 +27,7 @@ where
         FixedVec::from(vec.m_collect_into::<R, _, _>(m))
     }
 
-    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
+    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -39,7 +39,7 @@ where
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.mfm_collect_into::<R, _, _, _, _, _, _>(mfm))
+        FixedVec::from(vec.xfx_collect_into::<R, _, _, _, _, _, _>(mfm))
     }
 
     fn collect_into<R, I, Vt, Vo, M1, F, M2>(
