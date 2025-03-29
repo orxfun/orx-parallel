@@ -1,5 +1,8 @@
 use super::x::X;
-use crate::{computations::Values, runner::ParallelTask};
+use crate::{
+    computations::{heap_sort::heap_sort_into, Values},
+    runner::{ComputationKind, ParallelRunner, ParallelTask},
+};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -15,6 +18,56 @@ where
 {
     x: X<I, Vo, M1>,
     pinned_vec: P,
+}
+
+impl<I, Vo, M1, P> XCollect<I, Vo, M1, P>
+where
+    I: ConcurrentIter,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    fn sequential(self) -> P {
+        let (x, mut pinned_vec) = (self.x, self.pinned_vec);
+        let (_, iter, map1) = x.destruct();
+
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = map1(i);
+            vt.push_to_pinned_vec(&mut pinned_vec);
+        }
+
+        pinned_vec
+    }
+
+    fn parallel_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
+        let (x, pinned_vec) = (self.x, self.pinned_vec);
+        let (params, iter, map1) = x.destruct();
+
+        // values has length of offset+m where m is the number of added elements
+        let bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+
+        let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P>::new(map1, &bag);
+
+        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
+        let num_spawned = runner.run(&iter, task);
+
+        let values = bag.into_inner();
+        (num_spawned, values)
+    }
+
+    fn parallel_with_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
+        let (x, mut pinned_vec) = (self.x, self.pinned_vec);
+        let (params, iter, map1) = x.destruct();
+        let initial_len = iter.try_get_len();
+
+        let runner = R::new(ComputationKind::Collect, params, initial_len);
+
+        let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, &map1);
+        heap_sort_into(vectors, &mut pinned_vec);
+        (num_spawned, pinned_vec)
+    }
 }
 
 // arbitrary
