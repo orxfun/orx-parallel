@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::{Values, Xfx, M},
+    computations::{Values, Xfx, M, X},
     runner::ParallelRunner,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -37,6 +37,29 @@ where
                 self.reserve(len);
                 let fixed_vec = FixedVec::from(self);
                 let (_num_spawned, fixed_vec) = m.collect_into::<R, _>(fixed_vec);
+                Vec::from(fixed_vec)
+            }
+        }
+    }
+
+    fn x_collect_into<R, I, Vo, M1>(mut self, x: X<I, Vo, M1>) -> Self
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        Vo: Values<Item = O> + Send + Sync,
+        Vo::Item: Send + Sync,
+        M1: Fn(I::Item) -> Vo + Send + Sync,
+    {
+        match x.par_len() {
+            None => {
+                let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+                let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
+                extend_from_split(self, split_vec)
+            }
+            Some(len) => {
+                self.reserve(len);
+                let fixed_vec = FixedVec::from(self);
+                let (_num_spawned, fixed_vec) = x.collect_into::<R, _>(fixed_vec);
                 Vec::from(fixed_vec)
             }
         }
