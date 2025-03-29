@@ -59,7 +59,7 @@ where
         let task = MCollectInInputOrder::new(offset, &bag, map1);
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
-        let num_spawned = runner.new_run_idx(&iter, task);
+        let num_spawned = runner.run_with_idx(&iter, task);
 
         let values = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
         (num_spawned, values)
@@ -74,7 +74,7 @@ where
         let task = MCollectInArbitraryOrder::new(&bag, map1);
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
-        let num_spawned = runner.new_run(&iter, task);
+        let num_spawned = runner.run(&iter, task);
 
         let values = bag.into_inner();
         (num_spawned, values)

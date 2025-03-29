@@ -1,7 +1,5 @@
 use crate::computations::Values;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 use super::parallel_task::{ParallelTask, ParallelTaskWithIdx};
 
@@ -20,7 +18,7 @@ pub trait ThreadRunner: Sized {
 
     // run
 
-    fn new_run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
+    fn run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
     where
         I: ConcurrentIter,
         T: ParallelTask<Item = I::Item>,
@@ -56,7 +54,7 @@ pub trait ThreadRunner: Sized {
         self.complete_task(shared_state);
     }
 
-    fn new_run_with_idx<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
+    fn run_with_idx<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
     where
         I: ConcurrentIter,
         T: ParallelTaskWithIdx<Item = I::Item>,
@@ -92,7 +90,7 @@ pub trait ThreadRunner: Sized {
         self.complete_task(shared_state);
     }
 
-    fn new_collect_with_idx<I, T, Vt, O, Vo, M1, F, M2>(
+    fn mfm_collect_with_idx<I, T, Vt, O, Vo, M1, F, M2>(
         mut self,
         iter: &I,
         shared_state: &Self::SharedState,

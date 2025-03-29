@@ -70,7 +70,7 @@ where
         );
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
-        let num_spawned = runner.new_run(&iter, task);
+        let num_spawned = runner.run(&iter, task);
 
         let values = bag.into_inner();
         (num_spawned, values)
@@ -83,7 +83,7 @@ where
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, mut vectors) = runner.new_collect_with_idx(&iter, &map1, &filter, &map2);
+        let (num_spawned, mut vectors) = runner.mfm_collect_with_idx(&iter, &map1, &filter, &map2);
 
         let mut queue = BinaryHeap::with_capacity(vectors.len());
         let mut indices = vec![0; vectors.len()];

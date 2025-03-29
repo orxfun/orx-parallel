@@ -26,7 +26,7 @@ pub trait ParallelRunner: Sized + Sync {
 
     fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner;
 
-    fn new_run<I, T>(&self, iter: &I, task: T) -> usize
+    fn run<I, T>(&self, iter: &I, task: T) -> usize
     where
         I: ConcurrentIter,
         T: ParallelTask<Item = I::Item> + Sync,
@@ -40,14 +40,14 @@ pub trait ParallelRunner: Sized + Sync {
                 num_spawned += 1;
                 s.spawn(|| {
                     let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.new_run(iter, shared_state, &task);
+                    thread_runner.run(iter, shared_state, &task);
                 });
             }
         });
         num_spawned
     }
 
-    fn new_run_idx<I, T>(&self, iter: &I, task: T) -> usize
+    fn run_with_idx<I, T>(&self, iter: &I, task: T) -> usize
     where
         I: ConcurrentIter,
         T: ParallelTaskWithIdx<Item = I::Item> + Sync,
@@ -61,14 +61,14 @@ pub trait ParallelRunner: Sized + Sync {
                 num_spawned += 1;
                 s.spawn(|| {
                     let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.new_run_with_idx(iter, shared_state, &task);
+                    thread_runner.run_with_idx(iter, shared_state, &task);
                 });
             }
         });
         num_spawned
     }
 
-    fn new_collect_with_idx<I, T, Vt, O, Vo, M1, F, M2>(
+    fn mfm_collect_with_idx<I, T, Vt, O, Vo, M1, F, M2>(
         &self,
         iter: &I,
         map1: &M1,
@@ -96,7 +96,7 @@ pub trait ParallelRunner: Sized + Sync {
                 num_spawned += 1;
                 handles.push(s.spawn(move || {
                     let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.new_collect_with_idx(iter, shared_state, map1, filter, map2)
+                    thread_runner.mfm_collect_with_idx(iter, shared_state, map1, filter, map2)
                 }));
             }
 
