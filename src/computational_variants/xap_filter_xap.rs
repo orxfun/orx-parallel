@@ -1,12 +1,12 @@
 use crate::{
-    computations::{Xfx, Values},
+    computations::{Values, Xfx},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParMapFilterMap<I, Vt, Vo, M1, F, M2, R = DefaultRunner>
+pub struct ParXapFilterXap<I, Vt, Vo, M1, F, M2, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -18,11 +18,11 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
-    mfm: Xfx<I, Vt, Vo, M1, F, M2>,
+    xfx: Xfx<I, Vt, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
 }
 
-impl<I, Vt, Vo, M1, F, M2, R> ParMapFilterMap<I, Vt, Vo, M1, F, M2, R>
+impl<I, Vt, Vo, M1, F, M2, R> ParXapFilterXap<I, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -36,17 +36,17 @@ where
 {
     pub(crate) fn new(params: Params, iter: I, map1: M1, filter: F, map2: M2) -> Self {
         Self {
-            mfm: Xfx::new(params, iter, map1, filter, map2),
+            xfx: Xfx::new(params, iter, map1, filter, map2),
             phantom: PhantomData,
         }
     }
 
     fn destruct(self) -> (Params, I, M1, F, M2) {
-        self.mfm.destruct()
+        self.xfx.destruct()
     }
 }
 
-impl<I, Vt, Vo, M1, F, M2, R> ParIter<R> for ParMapFilterMap<I, Vt, Vo, M1, F, M2, R>
+impl<I, Vt, Vo, M1, F, M2, R> ParIter<R> for ParXapFilterXap<I, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -61,29 +61,29 @@ where
     type Item = Vo::Item;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
-        self.mfm.iter()
+        self.xfx.iter()
     }
 
     // params transformations
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
-        self.mfm.num_threads(num_threads);
+        self.xfx.num_threads(num_threads);
         self
     }
 
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
-        self.mfm.chunk_size(chunk_size);
+        self.xfx.chunk_size(chunk_size);
         self
     }
 
     fn collect_ordering(mut self, collect: CollectOrdering) -> Self {
-        self.mfm.collect_ordering(collect);
+        self.xfx.collect_ordering(collect);
         self
     }
 
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
         let (params, iter, map1, filter, map2) = self.destruct();
-        ParMapFilterMap::new(params, iter, map1, filter, map2)
+        ParXapFilterXap::new(params, iter, map1, filter, map2)
     }
 
     // computation transformations
@@ -99,7 +99,7 @@ where
             vo.map(map3.clone())
         };
 
-        ParMapFilterMap::new(params, iter, map1, filter, map23)
+        ParXapFilterXap::new(params, iter, map1, filter, map23)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
@@ -114,6 +114,6 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.mfm_collect_into::<R, _, _, _, _, _, _>(self.mfm)
+        output.mfm_collect_into::<R, _, _, _, _, _, _>(self.xfx)
     }
 }

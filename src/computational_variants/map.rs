@@ -1,4 +1,4 @@
-use super::map_filter_map::ParMapFilterMap;
+use super::xap_filter_xap::ParXapFilterXap;
 use crate::{
     computations::{map_self_atom, Atom, M},
     runner::{DefaultRunner, ParallelRunner},
@@ -90,7 +90,7 @@ where
     {
         let (params, iter, map1) = self.destruct();
         let map1 = move |i: I::Item| Atom(map1(i));
-        ParMapFilterMap::new(params, iter, map1, filter, map_self_atom)
+        ParXapFilterXap::new(params, iter, map1, filter, map_self_atom)
     }
 
     // collect
