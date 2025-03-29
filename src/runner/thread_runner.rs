@@ -90,19 +90,19 @@ pub trait ThreadRunner: Sized {
         self.complete_task(shared_state);
     }
 
-    fn mfm_collect_with_idx<I, T, Vt, O, Vo, M1, F, M2>(
+    fn mfm_collect_with_idx<I, T, Vt, Vo, M1, F, M2>(
         mut self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
         filter: &F,
         map2: &M2,
-    ) -> Vec<(usize, O)>
+    ) -> Vec<(usize, Vo::Item)>
     where
         I: ConcurrentIter,
         Vt: Values<Item = T>,
-        O: Send + Sync,
-        Vo: Values<Item = O>,
+        Vo: Values,
+        Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync,

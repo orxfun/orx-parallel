@@ -68,22 +68,21 @@ pub trait ParallelRunner: Sized + Sync {
         num_spawned
     }
 
-    fn mfm_collect_with_idx<I, T, Vt, O, Vo, M1, F, M2>(
+    fn mfm_collect_with_idx<I, T, Vt, Vo, M1, F, M2>(
         &self,
         iter: &I,
         map1: &M1,
         filter: &F,
         map2: &M2,
-    ) -> (usize, Vec<Vec<(usize, O)>>)
+    ) -> (usize, Vec<Vec<(usize, Vo::Item)>>)
     where
         I: ConcurrentIter,
         Vt: Values<Item = T>,
-        O: Send + Sync,
-        Vo: Values<Item = O>,
+        Vo: Values,
+        Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&T) -> bool + Send + Sync,
         M2: Fn(T) -> Vo + Send + Sync,
-        O: Send,
     {
         let state = self.new_shared_state();
         let shared_state = &state;
