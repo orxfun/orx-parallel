@@ -107,10 +107,10 @@ fn orx_arbitrary_split_vec(inputs: &[Output]) -> SplitVec<&Output> {
         .collect()
 }
 
-fn map_collect(c: &mut Criterion) {
+fn run(c: &mut Criterion) {
     let treatments = [65_536, 65_536 * 4];
 
-    let mut group = c.benchmark_group("map_collect");
+    let mut group = c.benchmark_group("collect_filter");
 
     for n in &treatments {
         let input = inputs(*n);
@@ -156,5 +156,5 @@ fn map_collect(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, map_collect);
+criterion_group!(benches, run);
 criterion_main!(benches);

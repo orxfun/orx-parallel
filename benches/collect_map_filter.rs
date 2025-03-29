@@ -11,7 +11,7 @@ const LARGE_OUTPUT_LEN: usize = match TEST_LARGE_OUTPUT {
     true => 64,
     false => 0,
 };
-const SEED: u64 = 9562;
+const SEED: u64 = 5426;
 const FIB_UPPER_BOUND: u32 = 201;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -41,6 +41,12 @@ fn to_output(idx: &usize) -> Output {
     Output { name, numbers }
 }
 
+fn filter(output: &Output) -> bool {
+    let last_char = output.name.chars().last().unwrap();
+    let last_digit: u32 = last_char.to_string().parse().unwrap();
+    last_digit < 4
+}
+
 fn fibonacci(n: &u32) -> u32 {
     let mut a = 0;
     let mut b = 1;
@@ -60,18 +66,23 @@ fn inputs(len: usize) -> Vec<usize> {
 }
 
 fn seq(inputs: &[usize]) -> Vec<Output> {
-    inputs.iter().map(to_output).collect()
+    inputs.iter().map(to_output).filter(filter).collect()
 }
 
 fn rayon(inputs: &[usize]) -> Vec<Output> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().map(to_output).collect()
+    inputs
+        .into_par_iter()
+        .map(to_output)
+        .filter(filter)
+        .collect()
 }
 
 fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {
     inputs
         .into_par()
         .map(to_output)
+        .filter(filter)
         .collect_ordering(CollectOrdering::SortWithHeap)
         .collect()
 }
@@ -80,6 +91,7 @@ fn orx_arbitrary_vec(inputs: &[usize]) -> Vec<Output> {
     inputs
         .into_par()
         .map(to_output)
+        .filter(filter)
         .collect_ordering(CollectOrdering::Arbitrary)
         .collect()
 }
@@ -88,6 +100,7 @@ fn orx_sorted_split_vec(inputs: &[usize]) -> SplitVec<Output> {
     inputs
         .into_par()
         .map(to_output)
+        .filter(filter)
         .collect_ordering(CollectOrdering::SortWithHeap)
         .collect()
 }
@@ -96,14 +109,15 @@ fn orx_arbitrary_split_vec(inputs: &[usize]) -> SplitVec<Output> {
     inputs
         .into_par()
         .map(to_output)
+        .filter(filter)
         .collect_ordering(CollectOrdering::Arbitrary)
         .collect()
 }
 
-fn map_collect(c: &mut Criterion) {
+fn run(c: &mut Criterion) {
     let treatments = [65_536, 65_536 * 4];
 
-    let mut group = c.benchmark_group("map_collect");
+    let mut group = c.benchmark_group("collect_map_filter");
 
     for n in &treatments {
         let input = inputs(*n);
@@ -149,5 +163,5 @@ fn map_collect(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, map_collect);
+criterion_group!(benches, run);
 criterion_main!(benches);
