@@ -2,15 +2,15 @@ use crate::computations::Values;
 use crate::{ChunkSize, CollectOrdering, NumThreads, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct Mfm<I, T, Vt, Vo, M1, F, M2>
+pub struct Mfm<I, Vt, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
+    Vt: Values,
     Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
     params: Params,
     iter: I,
@@ -19,15 +19,15 @@ where
     map2: M2,
 }
 
-impl<I, T, Vt, Vo, M1, F, M2> Mfm<I, T, Vt, Vo, M1, F, M2>
+impl<I, Vt, Vo, M1, F, M2> Mfm<I, Vt, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
+    Vt: Values,
     Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
     pub fn new(params: Params, iter: I, map1: M1, filter: F, map2: M2) -> Self {
         Self {

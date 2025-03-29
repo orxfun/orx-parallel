@@ -42,24 +42,21 @@ where
         }
     }
 
-    fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(
-        mut self,
-        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
-    ) -> Self
+    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Mfm<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        T: Send + Sync,
-        Vt: Values<Item = T> + Send + Sync,
+        Vt: Values + Send + Sync,
+        Vt::Item: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
+        F: Fn(&Vt::Item) -> bool + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         match mfm.par_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-                let split_vec = split_vec.mfm_collect_into::<R, _, _, _, _, _, _, _>(mfm);
+                let split_vec = split_vec.mfm_collect_into::<R, _, _, _, _, _, _>(mfm);
                 extend_from_split(self, split_vec)
             }
             Some(len) => {
@@ -71,27 +68,26 @@ where
         }
     }
 
-    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+    fn collect_into<R, I, Vt, Vo, M1, F, M2>(
         mut self,
-        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
+        mfm: Mfm<I, Vt, Vo, M1, F, M2>,
         in_input_order: bool,
     ) -> Self
     where
         R: ParallelRunner,
-        I: orx_concurrent_iter::ConcurrentIter,
-        T: Send + Sync,
-        Vt: Values<Item = T> + Send + Sync,
+        I: ConcurrentIter,
+        Vt: Values + Send + Sync,
+        Vt::Item: Send + Sync,
         O: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
+        F: Fn(&Vt::Item) -> bool + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         match mfm.par_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
-                let split_vec =
-                    split_vec.collect_into::<R, _, _, _, _, _, _, _>(mfm, in_input_order);
+                let split_vec = split_vec.collect_into::<R, _, _, _, _, _, _>(mfm, in_input_order);
                 extend_from_split(self, split_vec)
             }
             Some(len) => {

@@ -27,39 +27,39 @@ where
         FixedVec::from(vec.m_collect_into::<R, _, _>(m))
     }
 
-    fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(self, mfm: Mfm<I, T, Vt, Vo, M1, F, M2>) -> Self
+    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(self, mfm: Mfm<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        T: Send + Sync,
-        Vt: Values<Item = T> + Send + Sync,
+        Vt: Values + Send + Sync,
+        Vt::Item: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
+        F: Fn(&Vt::Item) -> bool + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.mfm_collect_into::<R, _, _, _, _, _, _, _>(mfm))
+        FixedVec::from(vec.mfm_collect_into::<R, _, _, _, _, _, _>(mfm))
     }
 
-    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+    fn collect_into<R, I, Vt, Vo, M1, F, M2>(
         self,
-        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
+        mfm: Mfm<I, Vt, Vo, M1, F, M2>,
         in_input_order: bool,
     ) -> Self
     where
         R: ParallelRunner,
-        I: orx_concurrent_iter::ConcurrentIter,
-        T: Send + Sync,
-        Vt: Values<Item = T> + Send + Sync,
+        I: ConcurrentIter,
+        Vt: Values + Send + Sync,
+        Vt::Item: Send + Sync,
         O: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
+        F: Fn(&Vt::Item) -> bool + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.collect_into::<R, _, _, _, _, _, _, _>(mfm, in_input_order))
+        FixedVec::from(vec.collect_into::<R, _, _, _, _, _, _>(mfm, in_input_order))
     }
 
     // test

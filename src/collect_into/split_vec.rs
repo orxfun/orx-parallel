@@ -32,40 +32,37 @@ where
         pinned_vec
     }
 
-    fn mfm_collect_into<R, I, T, Vt, Vo, M1, F, M2>(
-        mut self,
-        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
-    ) -> Self
+    fn mfm_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, mfm: Mfm<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        T: Send + Sync,
-        Vt: Values<Item = T> + Send + Sync,
+        Vt: Values + Send + Sync,
+        Vt::Item: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
+        F: Fn(&Vt::Item) -> bool + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         reserve(&mut self, mfm.par_len());
         let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(self);
         pinned_vec
     }
 
-    fn collect_into<R, I, T, Vt, Vo, M1, F, M2>(
+    fn collect_into<R, I, Vt, Vo, M1, F, M2>(
         mut self,
-        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
+        mfm: Mfm<I, Vt, Vo, M1, F, M2>,
         in_input_order: bool,
     ) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        T: Send + Sync,
-        Vt: Values<Item = T> + Send + Sync,
+        Vt: Values + Send + Sync,
+        Vt::Item: Send + Sync,
         O: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
         M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
+        F: Fn(&Vt::Item) -> bool + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         reserve(&mut self, mfm.par_len());
         let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(self);

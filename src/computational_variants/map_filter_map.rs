@@ -6,33 +6,33 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParMapFilterMap<I, T, Vt, Vo, M1, F, M2, R = DefaultRunner>
+pub struct ParMapFilterMap<I, Vt, Vo, M1, F, M2, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    T: Send + Sync,
-    Vt: Values<Item = T> + Send + Sync,
+    Vt: Values + Send + Sync,
+    Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
-    mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
+    mfm: Mfm<I, Vt, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
 }
 
-impl<I, T, Vt, Vo, M1, F, M2, R> ParMapFilterMap<I, T, Vt, Vo, M1, F, M2, R>
+impl<I, Vt, Vo, M1, F, M2, R> ParMapFilterMap<I, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    T: Send + Sync,
-    Vt: Values<Item = T> + Send + Sync,
+    Vt: Values + Send + Sync,
+    Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, map1: M1, filter: F, map2: M2) -> Self {
         Self {
@@ -46,17 +46,17 @@ where
     }
 }
 
-impl<I, T, Vt, Vo, M1, F, M2, R> ParIter<R> for ParMapFilterMap<I, T, Vt, Vo, M1, F, M2, R>
+impl<I, Vt, Vo, M1, F, M2, R> ParIter<R> for ParMapFilterMap<I, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    T: Send + Sync,
-    Vt: Values<Item = T> + Send + Sync,
+    Vt: Values + Send + Sync,
+    Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
     type Item = Vo::Item;
 
@@ -94,7 +94,7 @@ where
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
     {
         let (params, iter, map1, filter, map2) = self.destruct();
-        let map23 = move |t: T| {
+        let map23 = move |t: Vt::Item| {
             let vo = map2(t);
             vo.map(map3.clone())
         };
@@ -114,6 +114,6 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.mfm_collect_into::<R, _, _, _, _, _, _, _>(self.mfm)
+        output.mfm_collect_into::<R, _, _, _, _, _, _>(self.mfm)
     }
 }

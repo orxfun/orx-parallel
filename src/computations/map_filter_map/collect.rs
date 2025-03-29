@@ -10,38 +10,33 @@ use orx_pinned_vec::IntoConcurrentPinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 use std::marker::PhantomData;
 
-pub struct MfmCollect<I, T, Vt, Vo, M1, F, M2, P>
+pub struct MfmCollect<I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T> + Send + Sync,
-    T: Send + Sync,
+    Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
+    mfm: Mfm<I, Vt, Vo, M1, F, M2>,
     pinned_vec: P,
 }
 
-impl<I, T, Vt, Vo, M1, F, M2, P> MfmCollect<I, T, Vt, Vo, M1, F, M2, P>
+impl<I, Vt, Vo, M1, F, M2, P> MfmCollect<I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T> + Send + Sync,
-    T: Send + Sync,
+    Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    pub fn compute<R: ParallelRunner>(
-        mfm: Mfm<I, T, Vt, Vo, M1, F, M2>,
-        pinned_vec: P,
-    ) -> (usize, P) {
+    pub fn compute<R: ParallelRunner>(mfm: Mfm<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
         let mfm_collect = Self { mfm, pinned_vec };
         let params = mfm_collect.mfm.params();
         match (params.is_sequential(), params.collect_ordering) {
@@ -71,7 +66,7 @@ where
         // values has length of offset+m where m is the number of added elements
         let bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
 
-        let task = MfmCollectInArbitraryOrder::<'_, I, T, Vt, Vo, M1, F, M2, P>::new(
+        let task = MfmCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
             map1, filter, map2, &bag,
         );
 
@@ -146,35 +141,33 @@ where
 
 // arbitrary
 
-struct MfmCollectInArbitraryOrder<'a, I, T, Vt, Vo, M1, F, M2, P>
+struct MfmCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T> + Send + Sync,
-    T: Send + Sync,
+    Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     map1: M1,
     filter: F,
     map2: M2,
     bag: &'a ConcurrentBag<Vo::Item, P>,
-    phantom: PhantomData<(I, T, Vt, Vo)>,
+    phantom: PhantomData<(I, Vt, Vo)>,
 }
 
-impl<'a, I, T, Vt, Vo, M1, F, M2, P> MfmCollectInArbitraryOrder<'a, I, T, Vt, Vo, M1, F, M2, P>
+impl<'a, I, Vt, Vo, M1, F, M2, P> MfmCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T> + Send + Sync,
-    T: Send + Sync,
+    Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     fn new(map1: M1, filter: F, map2: M2, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
@@ -188,17 +181,16 @@ where
     }
 }
 
-impl<'a, I, T, Vt, Vo, M1, F, M2, P> ParallelTask
-    for MfmCollectInArbitraryOrder<'a, I, T, Vt, Vo, M1, F, M2, P>
+impl<'a, I, Vt, Vo, M1, F, M2, P> ParallelTask
+    for MfmCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T> + Send + Sync,
-    T: Send + Sync,
+    Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     type Item = I::Item;

@@ -2,20 +2,20 @@ use super::mfm::Mfm;
 use crate::computations::Values;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<I, T, Vt, Vo, M1, F, M2> Mfm<I, T, Vt, Vo, M1, F, M2>
+impl<I, Vt, Vo, M1, F, M2> Mfm<I, Vt, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Vt: Values<Item = T>,
+    Vt: Values,
     Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&T) -> bool + Send + Sync,
-    M2: Fn(T) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
     pub fn map<M, Q>(
         self,
         map: M,
-    ) -> Mfm<I, T, Vt, Vo::Mapped<M, Q>, M1, F, impl Fn(T) -> Vo::Mapped<M, Q>>
+    ) -> Mfm<I, Vt, Vo::Mapped<M, Q>, M1, F, impl Fn(Vt::Item) -> Vo::Mapped<M, Q>>
     where
         M: Fn(Vo::Item) -> Q + Send + Sync + Clone,
         Q: Send + Sync,
@@ -31,7 +31,7 @@ where
     pub fn flat_map<Fm, Vq>(
         self,
         flat_map: Fm,
-    ) -> Mfm<I, T, Vt, Vo::FlatMapped<Fm, Vq>, M1, F, impl Fn(T) -> Vo::FlatMapped<Fm, Vq>>
+    ) -> Mfm<I, Vt, Vo::FlatMapped<Fm, Vq>, M1, F, impl Fn(Vt::Item) -> Vo::FlatMapped<Fm, Vq>>
     where
         Fm: Fn(Vo::Item) -> Vq + Send + Sync + Clone,
         Vq: IntoIterator + Send + Sync,
