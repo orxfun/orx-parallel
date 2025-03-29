@@ -94,4 +94,12 @@ pub trait Values: Send + Sync {
         Vo: Values<Item = O>,
         P: IntoConcurrentPinnedVec<O>,
         O: Send + Sync;
+
+    #[cfg(test)]
+    fn first(self) -> Self::Item
+    where
+        Self: Sized,
+    {
+        self.values().into_iter().next().unwrap()
+    }
 }
