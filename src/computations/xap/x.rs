@@ -1,7 +1,7 @@
 use crate::{computations::Values, ChunkSize, CollectOrdering, NumThreads, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct M<I, Vo, M1>
+pub struct X<I, Vo, M1>
 where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
@@ -13,7 +13,7 @@ where
     map1: M1,
 }
 
-impl<I, Vo, M1> M<I, Vo, M1>
+impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,

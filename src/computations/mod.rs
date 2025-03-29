@@ -2,6 +2,7 @@ mod default_fns;
 mod generalized_values;
 mod map;
 mod map_filter_map;
+mod xap;
 
 pub(crate) use default_fns::*;
 pub(crate) use generalized_values::{Atom, Values, Vector};

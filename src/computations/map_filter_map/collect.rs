@@ -4,7 +4,6 @@ use crate::runner::{ComputationKind, ParallelRunner, ParallelTask};
 use crate::CollectOrdering;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
@@ -116,26 +115,6 @@ where
         }
 
         (num_spawned, pinned_vec)
-    }
-
-    fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
-        let (mfm, pinned_vec) = (self.mfm, self.pinned_vec);
-        let offset = pinned_vec.len();
-        let (params, iter, map1, filter, map2) = mfm.destruct();
-        let initial_len = iter.try_get_len();
-
-        let o_bag: ConcurrentOrderedBag<Vo::Item, P> = pinned_vec.into();
-
-        let transform = |(i_idx, i): (usize, I::Item)| {
-            let vt = map1(i);
-            vt.filter_map_collect_in_input_order(offset + i_idx, &filter, &map2, &o_bag);
-        };
-
-        let runner = R::new(ComputationKind::Collect, params, initial_len);
-        let num_spawned = runner.run_with_idx(&iter, &transform);
-
-        let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
-        (num_spawned, values)
     }
 }
 
