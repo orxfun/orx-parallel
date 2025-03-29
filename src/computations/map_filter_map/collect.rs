@@ -47,7 +47,6 @@ where
         let params = mfm_collect.mfm.params();
         match (params.is_sequential(), params.collect_ordering) {
             (true, _) => (0, mfm_collect.sequential()),
-            // (false, true, _) => mfm_collect.parallel_in_input_order::<R>(),
             (false, CollectOrdering::Arbitrary) => mfm_collect.parallel_in_arbitrary::<R>(),
             (false, CollectOrdering::SortWithHeap) => mfm_collect.parallel_with_heap_sort::<R>(),
         }
@@ -91,7 +90,7 @@ where
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, mut vectors) = runner.mfm_collect_to_vecs(&iter, &map1, &filter, &map2);
+        let (num_spawned, mut vectors) = runner.new_collect_with_idx(&iter, &map1, &filter, &map2);
 
         let mut queue = BinaryHeap::with_capacity(vectors.len());
         let mut indices = vec![0; vectors.len()];

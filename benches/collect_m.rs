@@ -11,8 +11,8 @@ const LARGE_OUTPUT_LEN: usize = match TEST_LARGE_OUTPUT {
     true => 64,
     false => 0,
 };
-const SEED: u64 = 5426;
-const FIB_UPPER_BOUND: u32 = 999;
+const SEED: u64 = 9562;
+const FIB_UPPER_BOUND: u32 = 201;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Output {

@@ -41,7 +41,7 @@ fn to_output(idx: &usize) -> Output {
     Output { name, numbers }
 }
 
-fn filter(output: &Output) -> bool {
+fn filter(output: &&Output) -> bool {
     let last_char = output.name.chars().last().unwrap();
     let last_digit: u32 = last_char.to_string().parse().unwrap();
     last_digit < 4
@@ -58,57 +58,50 @@ fn fibonacci(n: &u32) -> u32 {
     a
 }
 
-fn inputs(len: usize) -> Vec<usize> {
+fn inputs(len: usize) -> Vec<Output> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
         .map(|_| rng.gen_range(0..FIB_UPPER_BOUND) as usize)
+        .map(|x| to_output(&x))
         .collect()
 }
 
-fn seq(inputs: &[usize]) -> Vec<Output> {
-    inputs.iter().map(to_output).filter(filter).collect()
+fn seq(inputs: &[Output]) -> Vec<&Output> {
+    inputs.iter().filter(filter).collect()
 }
 
-fn rayon(inputs: &[usize]) -> Vec<Output> {
+fn rayon(inputs: &[Output]) -> Vec<&Output> {
     use rayon::iter::ParallelIterator;
-    inputs
-        .into_par_iter()
-        .map(to_output)
-        .filter(filter)
-        .collect()
+    inputs.into_par_iter().filter(filter).collect()
 }
 
-fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {
+fn orx_sorted_vec(inputs: &[Output]) -> Vec<&Output> {
     inputs
         .into_par()
-        .map(to_output)
         .filter(filter)
         .collect_ordering(CollectOrdering::SortWithHeap)
         .collect()
 }
 
-fn orx_arbitrary_vec(inputs: &[usize]) -> Vec<Output> {
+fn orx_arbitrary_vec(inputs: &[Output]) -> Vec<&Output> {
     inputs
         .into_par()
-        .map(to_output)
         .filter(filter)
         .collect_ordering(CollectOrdering::Arbitrary)
         .collect()
 }
 
-fn orx_sorted_split_vec(inputs: &[usize]) -> SplitVec<Output> {
+fn orx_sorted_split_vec(inputs: &[Output]) -> SplitVec<&Output> {
     inputs
         .into_par()
-        .map(to_output)
         .filter(filter)
         .collect_ordering(CollectOrdering::SortWithHeap)
         .collect()
 }
 
-fn orx_arbitrary_split_vec(inputs: &[usize]) -> SplitVec<Output> {
+fn orx_arbitrary_split_vec(inputs: &[Output]) -> SplitVec<&Output> {
     inputs
         .into_par()
-        .map(to_output)
         .filter(filter)
         .collect_ordering(CollectOrdering::Arbitrary)
         .collect()

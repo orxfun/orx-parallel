@@ -112,6 +112,48 @@ pub trait ParallelRunner: Sized + Sync {
         num_spawned
     }
 
+    fn new_collect_with_idx<I, T, Vt, O, Vo, M1, F, M2>(
+        &self,
+        iter: &I,
+        map1: &M1,
+        filter: &F,
+        map2: &M2,
+    ) -> (usize, Vec<Vec<(usize, O)>>)
+    where
+        I: ConcurrentIter,
+        Vt: Values<Item = T>,
+        O: Send + Sync,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&T) -> bool + Send + Sync,
+        M2: Fn(T) -> Vo + Send + Sync,
+        O: Send,
+    {
+        let state = self.new_shared_state();
+        let shared_state = &state;
+
+        let mut num_spawned = 0;
+        let vectors = std::thread::scope(|s| {
+            let mut handles = vec![];
+
+            while self.do_spawn_new(num_spawned, shared_state, iter) {
+                num_spawned += 1;
+                handles.push(s.spawn(move || {
+                    let thread_runner = self.new_thread_runner(shared_state);
+                    thread_runner.new_collect_with_idx(iter, shared_state, map1, filter, map2)
+                }));
+            }
+
+            let mut vectors = Vec::with_capacity(handles.len());
+            for x in handles {
+                vectors.push(x.join().expect("failed to join the thread"));
+            }
+            vectors
+        });
+
+        (num_spawned, vectors)
+    }
+
     // ZZZZZZZZZZZZZZZ
 
     fn mfm_collect_with_idx<I, T, O, M1, F, M2>(
