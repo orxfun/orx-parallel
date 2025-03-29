@@ -1,4 +1,5 @@
 mod atom;
+mod option;
 mod values;
 mod vector;
 

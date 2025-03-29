@@ -1,54 +1,57 @@
-use super::{values::Values, vector::Vector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-pub struct Atom<T>(pub T);
+use super::{Values, Vector};
 
-impl<T> Values for Atom<T>
+impl<T> Values for Option<T>
 where
     T: Send + Sync,
 {
     type Item = T;
 
     type Mapped<M, O>
-        = Atom<O>
+        = Option<O>
     where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync;
 
     type Filtered<F>
-        = Option<Self::Item>
+        = Option<T>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync;
 
     type FlatMapped<Fm, Vo>
-        = Vector<Vo>
+        = Vector<core::iter::FlatMap<<Option<T> as IntoIterator>::IntoIter, Vo, Fm>>
     where
         Vo: IntoIterator + Send + Sync,
         Vo::Item: Send + Sync,
         Vo::IntoIter: Send + Sync,
         Fm: Fn(Self::Item) -> Vo + Send + Sync;
-
-    fn values(self) -> impl IntoIterator<Item = T> {
-        core::iter::once(self.0)
+    #[inline(always)]
+    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+        self
     }
 
     #[inline(always)]
     fn push_to_pinned_vec<P>(self, vector: &mut P)
     where
-        P: PinnedVec<T>,
+        P: orx_fixed_vec::PinnedVec<Self::Item>,
     {
-        vector.push(self.0);
+        if let Some(x) = self {
+            vector.push(x)
+        }
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<T, P>)
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
     where
-        P: IntoConcurrentPinnedVec<T>,
-        T: Send + Sync,
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send + Sync,
     {
-        bag.push(self.0);
+        if let Some(x) = self {
+            bag.push(x);
+        }
     }
 
     #[inline(always)]
@@ -57,12 +60,16 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send + Sync,
     {
-        unsafe { o_bag.set_value(idx, self.0) };
+        if let Some(x) = self {
+            unsafe { o_bag.set_value(idx, x) };
+        }
     }
 
     #[inline(always)]
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, T)>) {
-        vec.push((idx, self.0))
+    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) {
+        if let Some(x) = self {
+            vec.push((idx, x))
+        }
     }
 
     #[inline(always)]
@@ -71,17 +78,9 @@ where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync,
     {
-        Atom(map(self.0))
-    }
-
-    #[inline(always)]
-    fn filter<F>(self, filter: F) -> Self::Filtered<F>
-    where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-    {
-        match filter(&self.0) {
-            true => Some(self.0),
-            false => None,
+        match self {
+            Some(x) => Some(map(x)),
+            None => None,
         }
     }
 
@@ -93,70 +92,42 @@ where
         Vo::IntoIter: Send + Sync,
         Fm: Fn(Self::Item) -> Vo + Send + Sync,
     {
-        Vector(flat_map(self.0))
+        Vector(self.into_iter().flat_map(flat_map))
     }
 
     #[inline(always)]
-    fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
+    fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
-        Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        P: IntoConcurrentPinnedVec<O>,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
     {
-        if filter(&self.0) {
-            let vo = map2(self.0);
-            vo.push_to_pinned_vec(vector);
+        match self {
+            Some(x) if filter(&x) => Some(x),
+            _ => None,
         }
     }
 
-    #[inline(always)]
+    fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
+    where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        match self {
+            Some(x) if filter(&x) => {
+                let vo = map2(x);
+                vo.push_to_pinned_vec(vector);
+            }
+            _ => {}
+        }
+    }
+
     fn filter_map_collect_arbitrary<F, M2, P, Vo, O>(
         self,
         filter: F,
         map2: M2,
-        bag: &ConcurrentBag<O, P>,
-    ) where
-        Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        P: IntoConcurrentPinnedVec<O>,
-        O: Send + Sync,
-    {
-        if filter(&self.0) {
-            let vo = map2(self.0);
-            vo.push_to_bag(bag);
-        }
-    }
-
-    #[inline(always)]
-    fn xfx_collect_heap<F, M2, Vo, O>(
-        self,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        vec: &mut Vec<(usize, O)>,
-    ) where
-        Self: Sized,
-        F: Fn(&T) -> bool + Send + Sync,
-        M2: Fn(T) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        O: Send + Sync,
-    {
-        if filter(&self.0) {
-            let vo = map2(self.0);
-            vo.push_to_vec_with_idx(input_idx, vec);
-        }
-    }
-
-    fn filter_map_collect_in_input_order<F, M2, P, Vo, O>(
-        self,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        o_bag: &ConcurrentOrderedBag<O, P>,
+        bag: &orx_concurrent_bag::ConcurrentBag<O, P>,
     ) where
         Self: Sized,
         F: Fn(&Self::Item) -> bool + Send + Sync,
@@ -165,9 +136,57 @@ where
         P: IntoConcurrentPinnedVec<O>,
         O: Send + Sync,
     {
-        if filter(&self.0) {
-            let vo = map2(self.0);
-            vo.push_to_ordered_bag(input_idx, o_bag);
+        match self {
+            Some(x) if filter(&x) => {
+                let vo = map2(x);
+                vo.push_to_bag(bag);
+            }
+            _ => {}
+        }
+    }
+
+    fn xfx_collect_heap<F, M2, Vo, O>(
+        self,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        vec: &mut Vec<(usize, O)>,
+    ) where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        O: Send + Sync,
+    {
+        match self {
+            Some(x) if filter(&x) => {
+                let vo = map2(x);
+                vo.push_to_vec_with_idx(input_idx, vec);
+            }
+            _ => {}
+        }
+    }
+
+    fn filter_map_collect_in_input_order<F, M2, P, Vo, O>(
+        self,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        o_bag: &orx_concurrent_ordered_bag::ConcurrentOrderedBag<O, P>,
+    ) where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        P: orx_fixed_vec::IntoConcurrentPinnedVec<O>,
+        O: Send + Sync,
+    {
+        match self {
+            Some(x) if filter(&x) => {
+                let vo = map2(x);
+                vo.push_to_ordered_bag(input_idx, o_bag);
+            }
+            _ => {}
         }
     }
 }

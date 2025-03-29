@@ -41,6 +41,11 @@ where
         IOut::Item: Send + Sync,
         FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone;
 
+    // fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    // where
+    //     Out: Send + Sync,
+    //     FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
+
     // collect
 
     fn collect_into<C>(self, output: C) -> C
