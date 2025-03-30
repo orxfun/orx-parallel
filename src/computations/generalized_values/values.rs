@@ -82,13 +82,12 @@ pub trait Values: Send + Sync {
     //     Vo: Values<Item = O>,
     //     O: Send + Sync;
 
-    fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
+    fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where
-        Self: Sized,
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        P: IntoConcurrentPinnedVec<O>;
+        Vo: Values,
+        P: IntoConcurrentPinnedVec<Vo::Item>;
 
     fn filter_map_collect_arbitrary<F, M2, P, Vo>(
         self,
@@ -96,7 +95,6 @@ pub trait Values: Send + Sync {
         map2: M2,
         bag: &ConcurrentBag<Vo::Item, P>,
     ) where
-        Self: Sized,
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
