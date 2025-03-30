@@ -57,11 +57,11 @@ where
 
     fn sequential(self) -> P {
         let (x, mut pinned_vec) = (self.x, self.pinned_vec);
-        let (_, iter, map1) = x.destruct();
+        let (_, iter, xap1) = x.destruct();
 
         let iter = iter.into_seq_iter();
         for i in iter {
-            let vt = map1(i);
+            let vt = xap1(i);
             vt.push_to_pinned_vec(&mut pinned_vec);
         }
 
@@ -70,12 +70,12 @@ where
 
     fn parallel_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
         let (x, pinned_vec) = (self.x, self.pinned_vec);
-        let (params, iter, map1) = x.destruct();
+        let (params, iter, xap1) = x.destruct();
 
         let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
         bag.reserve_maximum_capacity(2 << 32);
 
-        let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P>::new(map1, &bag);
+        let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P>::new(xap1, &bag);
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
         let num_spawned = runner.run(&iter, task);
 
@@ -85,12 +85,12 @@ where
 
     fn parallel_with_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
         let (x, mut pinned_vec) = (self.x, self.pinned_vec);
-        let (params, iter, map1) = x.destruct();
+        let (params, iter, xap1) = x.destruct();
         let initial_len = iter.try_get_len();
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, &map1);
+        let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, &xap1);
         heap_sort_into(vectors, &mut pinned_vec);
         (num_spawned, pinned_vec)
     }
@@ -105,7 +105,7 @@ where
     M1: Fn(I) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    map1: M1,
+    xap1: M1,
     bag: &'a ConcurrentBag<Vo::Item, P>,
     phantom: PhantomData<I>,
 }
@@ -117,9 +117,9 @@ where
     M1: Fn(I) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    fn new(map1: M1, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
+    fn new(xap1: M1, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
         Self {
-            map1,
+            xap1,
             bag,
             phantom: PhantomData,
         }
@@ -137,7 +137,7 @@ where
 
     #[inline]
     fn f1(&self, value: Self::Item) {
-        let values_vt = (self.map1)(value);
+        let values_vt = (self.xap1)(value);
         for x in values_vt.values() {
             self.bag.push(x);
         }
