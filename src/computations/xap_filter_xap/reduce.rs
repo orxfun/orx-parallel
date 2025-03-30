@@ -1,14 +1,9 @@
 use super::xfx::Xfx;
-use crate::computations::heap_sort::heap_sort_into;
 use crate::computations::Values;
-use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask};
-use crate::CollectOrdering;
-use orx_concurrent_bag::ConcurrentBag;
+use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::IntoConcurrentPinnedVec;
-use std::marker::PhantomData;
 
-pub struct XfxCollect<I, Vt, Vo, M1, F, M2, X>
+pub struct XfxReduce<I, Vt, Vo, M1, F, M2, X>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -23,7 +18,7 @@ where
     reduce: X,
 }
 
-impl<I, Vt, Vo, M1, F, M2, X> XfxCollect<I, Vt, Vo, M1, F, M2, X>
+impl<I, Vt, Vo, M1, F, M2, X> XfxReduce<I, Vt, Vo, M1, F, M2, X>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -34,6 +29,18 @@ where
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
+    pub fn compute<R: ParallelRunner>(
+        xfx: Xfx<I, Vt, Vo, M1, F, M2>,
+        reduce: X,
+    ) -> (usize, Option<Vo::Item>) {
+        let xfx = Self { xfx, reduce };
+        let p = xfx.xfx.params();
+        match p.is_sequential() {
+            true => (0, xfx.sequential()),
+            false => xfx.parallel::<R>(),
+        }
+    }
+
     fn sequential(self) -> Option<Vo::Item> {
         let (xfx, reduce) = (self.xfx, self.reduce);
         let (_, iter, xap1, filter, xap2) = xfx.destruct();

@@ -1,5 +1,5 @@
 use super::x::X;
-use crate::computations::{Atom, Values};
+use crate::computations::Values;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 

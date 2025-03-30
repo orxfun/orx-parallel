@@ -1,3 +1,4 @@
+use super::reduce::XfxReduce;
 use super::{collect::XfxCollect, xfx::Xfx};
 use crate::computations::Values;
 use crate::runner::ParallelRunner;
@@ -20,5 +21,13 @@ where
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
         XfxCollect::compute::<R>(self, pinned_vec)
+    }
+
+    pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
+    where
+        R: ParallelRunner,
+        Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    {
+        XfxReduce::compute::<R>(self, reduce)
     }
 }
