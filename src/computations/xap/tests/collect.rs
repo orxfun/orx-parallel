@@ -19,7 +19,7 @@ const N: [usize; 2] = [1025, 4735];
     [1, 64, 1024],
     [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary])
 ]
-fn x_flat_map(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
+fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -58,7 +58,7 @@ fn x_flat_map(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     [1, 64, 1024],
     [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary])
 ]
-fn x_filter_map(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
+fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
