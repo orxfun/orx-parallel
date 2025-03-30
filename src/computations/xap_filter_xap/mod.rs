@@ -2,6 +2,7 @@
 mod tests;
 
 mod collect;
+mod first;
 mod reduce;
 mod transformations;
 mod xfx;
