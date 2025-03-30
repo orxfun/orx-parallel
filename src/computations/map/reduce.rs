@@ -1,12 +1,7 @@
 use super::m::M;
-use crate::{
-    computations::{map_self_atom, Atom},
-    runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTaskWithIdx},
-};
+use crate::computations::Atom;
+use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_pinned_vec::IntoConcurrentPinnedVec;
-use std::marker::PhantomData;
 
 pub struct MReduce<I, O, M1, X>
 where

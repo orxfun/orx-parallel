@@ -1,4 +1,4 @@
-use super::{collect::MCollect, m::M};
+use super::{collect::MCollect, m::M, reduce::MReduce};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -15,5 +15,13 @@ where
         P: IntoConcurrentPinnedVec<O>,
     {
         MCollect::compute::<R>(self, pinned_vec)
+    }
+
+    pub fn reduce<R, X>(self, reduce: X) -> (usize, Option<O>)
+    where
+        R: ParallelRunner,
+        X: Fn(O, O) -> O + Send + Sync,
+    {
+        MReduce::compute::<R>(self, reduce)
     }
 }
