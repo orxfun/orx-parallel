@@ -155,18 +155,17 @@ where
         }
     }
 
-    fn filter_map_collect_arbitrary<F, M2, P, Vo, O>(
+    fn filter_map_collect_arbitrary<F, M2, P, Vo>(
         self,
         filter: F,
         map2: M2,
-        bag: &orx_concurrent_bag::ConcurrentBag<O, P>,
+        bag: &ConcurrentBag<Vo::Item, P>,
     ) where
-        Self: Sized,
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        P: IntoConcurrentPinnedVec<O>,
-        O: Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
     {
         match self {
             Some(x) if filter(&x) => {
