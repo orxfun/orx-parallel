@@ -224,9 +224,6 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(I::Item) -> Vo + Send + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
-        let mut collected = Vec::new();
-        let out_vec = &mut collected;
-
         let mut chunk_puller = iter.chunk_puller(0);
         let mut item_puller = iter.item_puller();
 
@@ -240,15 +237,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                 0 | 1 => match item_puller.next() {
                     Some(i) => {
                         let vo = map1(i);
-                        match vo.values().into_iter().reduce(reduce) {
-                            Some(x) => {
-                                acc = Some(match acc {
-                                    Some(y) => reduce(x, y),
-                                    None => x,
-                                })
-                            }
-                            None => break,
-                        }
+                        acc = vo.reduce(acc, reduce);
                     }
                     None => break,
                 },
@@ -257,11 +246,11 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    match chunk_puller.pull_with_idx() {
-                        Some((chunk_begin_idx, chunk)) => {
+                    match chunk_puller.pull() {
+                        Some(chunk) => {
                             for i in chunk {
                                 let vo = map1(i);
-                                vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
+                                acc = vo.reduce(acc, reduce);
                             }
                         }
                         None => break,
