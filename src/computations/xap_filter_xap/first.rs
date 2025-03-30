@@ -1,12 +1,7 @@
 use super::xfx::Xfx;
-use crate::computations::heap_sort::heap_sort_into;
 use crate::computations::Values;
-use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask};
-use crate::CollectOrdering;
-use orx_concurrent_bag::ConcurrentBag;
+use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::IntoConcurrentPinnedVec;
-use std::marker::PhantomData;
 
 pub struct XfxFirst<I, Vt, Vo, M1, F, M2>(Xfx<I, Vt, Vo, M1, F, M2>)
 where
@@ -33,7 +28,10 @@ where
         R: ParallelRunner,
     {
         let xfx_first = XfxFirst(xfx);
-        (0, None)
+        match xfx_first.0.params().is_sequential() {
+            true => (0, xfx_first.sequential()),
+            false => xfx_first.parallel::<R>(),
+        }
     }
 
     fn sequential(self) -> Option<Vo::Item> {
@@ -44,5 +42,11 @@ where
             .filter(|t| filter(t))
             .flat_map(|t| xap2(t).values().into_iter())
             .next()
+    }
+
+    fn parallel<R: ParallelRunner>(self) -> (usize, Option<Vo::Item>) {
+        let (params, iter, xap1, filter, xap2) = self.0.destruct();
+        let runner = R::new(ComputationKind::EarlyReturn, params, iter.try_get_len());
+        runner.xfx_first(&iter, &xap1, &filter, &xap2)
     }
 }
