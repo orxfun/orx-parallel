@@ -36,11 +36,18 @@ where
 {
     fn sequential(self) -> Option<Vo::Item> {
         let (xfx, reduce) = (self.xfx, self.reduce);
+        let (_, iter, xap1, filter, xap2) = xfx.destruct();
+
+        iter.into_seq_iter()
+            .filter_map(|x| xap1(x).fx_reduce(None, &filter, &xap2, &reduce))
+            .reduce(&reduce)
+    }
+
+    fn parallel<R: ParallelRunner>(self) -> (usize, Option<Vo::Item>) {
+        let (xfx, reduce) = (self.xfx, self.reduce);
         let (params, iter, xap1, filter, xap2) = xfx.destruct();
-        // let (_, iter, map1) = xfx.destruct();
-        // iter.into_seq_iter()
-        //     .filter_map(|x| map1(x).acc_reduce(None, &reduce))
-        //     .reduce(&reduce)
-        None
+
+        let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
+        runner.xfx_reduce(&iter, &xap1, &filter, &xap2, &reduce)
     }
 }

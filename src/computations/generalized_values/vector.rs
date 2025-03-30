@@ -135,7 +135,7 @@ where
     }
 
     #[inline(always)]
-    fn xfx_reduce<F, M2, Vo, X>(
+    fn fx_reduce<F, M2, Vo, X>(
         self,
         mut acc: Option<Vo::Item>,
         filter: F,

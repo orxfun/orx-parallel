@@ -123,7 +123,7 @@ where
     }
 
     #[inline(always)]
-    fn xfx_reduce<F, M2, Vo, X>(
+    fn fx_reduce<F, M2, Vo, X>(
         self,
         acc: Option<Vo::Item>,
         filter: F,

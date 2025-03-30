@@ -298,7 +298,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                 0 | 1 => match item_puller.next() {
                     Some(i) => {
                         let vt = map1(i);
-                        acc = vt.xfx_reduce(acc, filter, map2, reduce);
+                        acc = vt.fx_reduce(acc, filter, map2, reduce);
                     }
                     None => break,
                 },
@@ -311,7 +311,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                         Some(chunk) => {
                             for i in chunk {
                                 let vt = map1(i);
-                                acc = vt.xfx_reduce(acc, filter, map2, reduce);
+                                acc = vt.fx_reduce(acc, filter, map2, reduce);
                             }
                         }
                         None => break,

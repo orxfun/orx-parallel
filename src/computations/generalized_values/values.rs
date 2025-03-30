@@ -69,7 +69,7 @@ pub trait Values: Send + Sync {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
-    fn xfx_reduce<F, M2, Vo, X>(
+    fn fx_reduce<F, M2, Vo, X>(
         self,
         acc: Option<Vo::Item>,
         filter: F,
