@@ -121,7 +121,7 @@ where
     }
 
     #[inline(always)]
-    fn reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
@@ -153,7 +153,7 @@ where
         for t in self.0 {
             if filter(&t) {
                 let vo = map2(t);
-                acc = vo.reduce(acc, &reduce);
+                acc = vo.acc_reduce(acc, &reduce);
             }
         }
 

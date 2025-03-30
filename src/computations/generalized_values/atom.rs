@@ -112,7 +112,7 @@ where
     }
 
     #[inline(always)]
-    fn reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
@@ -139,7 +139,7 @@ where
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         match filter(&self.0) {
-            true => map2(self.0).reduce(acc, reduce),
+            true => map2(self.0).acc_reduce(acc, reduce),
             false => acc,
         }
     }
