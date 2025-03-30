@@ -19,7 +19,7 @@ where
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    mfm: Xfx<I, Vt, Vo, M1, F, M2>,
+    xfx: Xfx<I, Vt, Vo, M1, F, M2>,
     pinned_vec: P,
 }
 
@@ -34,39 +34,39 @@ where
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    pub fn compute<R: ParallelRunner>(mfm: Xfx<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
-        let mfm_collect = Self { mfm, pinned_vec };
-        let params = mfm_collect.mfm.params();
+    pub fn compute<R: ParallelRunner>(xfx: Xfx<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
+        let xfx_collect = Self { xfx, pinned_vec };
+        let params = xfx_collect.xfx.params();
         match (params.is_sequential(), params.collect_ordering) {
-            (true, _) => (0, mfm_collect.sequential()),
-            (false, CollectOrdering::Arbitrary) => mfm_collect.parallel_in_arbitrary::<R>(),
-            (false, CollectOrdering::SortWithHeap) => mfm_collect.parallel_with_heap_sort::<R>(),
+            (true, _) => (0, xfx_collect.sequential()),
+            (false, CollectOrdering::Arbitrary) => xfx_collect.parallel_in_arbitrary::<R>(),
+            (false, CollectOrdering::SortWithHeap) => xfx_collect.parallel_with_heap_sort::<R>(),
         }
     }
 
     fn sequential(self) -> P {
-        let (mfm, mut pinned_vec) = (self.mfm, self.pinned_vec);
-        let (_, iter, map1, filter, map2) = mfm.destruct();
+        let (xfx, mut pinned_vec) = (self.xfx, self.pinned_vec);
+        let (_, iter, xap1, filter, xap2) = xfx.destruct();
 
         let iter = iter.into_seq_iter();
         for i in iter {
-            let vt = map1(i);
-            vt.filter_map_collect_sequential(&filter, &map2, &mut pinned_vec);
+            let vt = xap1(i);
+            vt.filter_map_collect_sequential(&filter, &xap2, &mut pinned_vec);
         }
 
         pinned_vec
     }
 
     fn parallel_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
-        let (mfm, pinned_vec) = (self.mfm, self.pinned_vec);
-        let (params, iter, map1, filter, map2) = mfm.destruct();
+        let (xfx, pinned_vec) = (self.xfx, self.pinned_vec);
+        let (params, iter, xap1, filter, xap2) = xfx.destruct();
 
         // values has length of offset+m where m is the number of added elements
         let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
         bag.reserve_maximum_capacity(2 << 32);
 
         let task = XfxCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
-            map1, filter, map2, &bag,
+            xap1, filter, xap2, &bag,
         );
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
@@ -77,8 +77,8 @@ where
     }
 
     fn parallel_with_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
-        let (mfm, mut pinned_vec) = (self.mfm, self.pinned_vec);
-        let (params, iter, map1, filter, map2) = mfm.destruct();
+        let (xfx, mut pinned_vec) = (self.xfx, self.pinned_vec);
+        let (params, iter, map1, filter, map2) = xfx.destruct();
         let initial_len = iter.try_get_len();
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);

@@ -14,9 +14,9 @@ where
 {
     params: Params,
     iter: I,
-    map1: M1,
+    xap1: M1,
     filter: F,
-    map2: M2,
+    xap2: M2,
 }
 
 impl<I, Vt, Vo, M1, F, M2> Xfx<I, Vt, Vo, M1, F, M2>
@@ -29,18 +29,18 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
-    pub fn new(params: Params, iter: I, map1: M1, filter: F, map2: M2) -> Self {
+    pub fn new(params: Params, iter: I, xap1: M1, filter: F, xap2: M2) -> Self {
         Self {
             params,
             iter,
-            map1,
+            xap1,
             filter,
-            map2,
+            xap2,
         }
     }
 
     pub fn destruct(self) -> (Params, I, M1, F, M2) {
-        (self.params, self.iter, self.map1, self.filter, self.map2)
+        (self.params, self.iter, self.xap1, self.filter, self.xap2)
     }
 
     pub fn params(&self) -> &Params {

@@ -33,10 +33,10 @@ where
     }
 
     fn sequential(self) -> Option<Vo::Item> {
-        let (m, reduce) = (self.x, self.reduce);
-        let (_, iter, map1) = m.destruct();
+        let (x, reduce) = (self.x, self.reduce);
+        let (_, iter, xap1) = x.destruct();
         iter.into_seq_iter()
-            .filter_map(|x| map1(x).acc_reduce(None, &reduce))
+            .filter_map(|x| xap1(x).acc_reduce(None, &reduce))
             .reduce(&reduce)
     }
 
