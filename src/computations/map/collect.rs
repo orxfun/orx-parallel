@@ -9,6 +9,21 @@ use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 use std::marker::PhantomData;
 
+impl<I, O, M1> M<I, O, M1>
+where
+    I: ConcurrentIter,
+    O: Send + Sync,
+    M1: Fn(I::Item) -> O + Send + Sync,
+{
+    pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
+    where
+        R: ParallelRunner,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        MCollect::compute::<R>(self, pinned_vec)
+    }
+}
+
 pub struct MCollect<I, O, M1, P>
 where
     I: ConcurrentIter,

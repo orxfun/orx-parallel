@@ -3,6 +3,21 @@ use crate::computations::Atom;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
+impl<I, O, M1> M<I, O, M1>
+where
+    I: ConcurrentIter,
+    O: Send + Sync,
+    M1: Fn(I::Item) -> O + Send + Sync,
+{
+    pub fn reduce<R, X>(self, reduce: X) -> (usize, Option<O>)
+    where
+        R: ParallelRunner,
+        X: Fn(O, O) -> O + Send + Sync,
+    {
+        MReduce::compute::<R>(self, reduce)
+    }
+}
+
 pub struct MReduce<I, O, M1, X>
 where
     I: ConcurrentIter,
