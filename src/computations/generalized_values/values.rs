@@ -69,18 +69,20 @@ pub trait Values: Send + Sync {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
-    // fn xfx_reduce<F, M2, Vo, O>(
-    //     self,
-    //     input_idx: usize,
-    //     filter: F,
-    //     map2: M2,
-    //     vec: &mut Vec<(usize, O)>,
-    // ) where
-    //     Self: Sized,
-    //     F: Fn(&Self::Item) -> bool + Send + Sync,
-    //     M2: Fn(Self::Item) -> Vo + Send + Sync,
-    //     Vo: Values<Item = O>,
-    //     O: Send + Sync;
+    fn xfx_reduce<F, M2, Vo, X>(
+        self,
+        acc: Option<Vo::Item>,
+        filter: F,
+        map2: M2,
+        reduce: X,
+    ) -> Option<Vo::Item>
+    where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
 
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where

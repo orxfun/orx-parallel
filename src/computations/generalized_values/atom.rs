@@ -123,6 +123,28 @@ where
     }
 
     #[inline(always)]
+    fn xfx_reduce<F, M2, Vo, X>(
+        self,
+        acc: Option<Vo::Item>,
+        filter: F,
+        map2: M2,
+        reduce: X,
+    ) -> Option<Vo::Item>
+    where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    {
+        match filter(&self.0) {
+            true => map2(self.0).reduce(acc, reduce),
+            false => acc,
+        }
+    }
+
+    #[inline(always)]
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
