@@ -160,6 +160,26 @@ where
         acc
     }
 
+    #[inline(always)]
+    fn first(self) -> Option<Self::Item> {
+        self.0.into_iter().next()
+    }
+
+    #[inline(always)]
+    fn fx_first<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+    {
+        self.0
+            .into_iter()
+            .filter(filter)
+            .filter_map(|t| map2(t).first())
+            .next()
+    }
+
     #[inline]
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where

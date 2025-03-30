@@ -145,6 +145,25 @@ where
     }
 
     #[inline(always)]
+    fn first(self) -> Option<Self::Item> {
+        Some(self.0)
+    }
+
+    #[inline(always)]
+    fn fx_first<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+    {
+        match filter(&self.0) {
+            true => map2(self.0).first(),
+            false => None,
+        }
+    }
+
+    #[inline(always)]
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,

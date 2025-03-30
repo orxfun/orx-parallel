@@ -84,6 +84,15 @@ pub trait Values: Send + Sync {
         Vo::Item: Send + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
 
+    fn first(self) -> Option<Self::Item>;
+
+    fn fx_first<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync;
+
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
@@ -127,12 +136,4 @@ pub trait Values: Send + Sync {
         Vo: Values,
         Vo::Item: Send + Sync,
         P: IntoConcurrentPinnedVec<Vo::Item>;
-
-    #[cfg(test)]
-    fn first(self) -> Self::Item
-    where
-        Self: Sized,
-    {
-        self.values().into_iter().next().unwrap()
-    }
 }

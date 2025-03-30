@@ -39,7 +39,7 @@ fn xfx_map_filter(
     let mut expected = Vec::new();
 
     for i in 0..offset {
-        let value = || map1(i.to_string()).first();
+        let value = || map1(i.to_string()).first().unwrap();
         if filter(&value()) {
             output.push(value());
             expected.push(value());
@@ -137,9 +137,9 @@ fn xfx_map_filter_map(
     let mut expected = Vec::new();
 
     for i in 0..offset {
-        let value = map1(i.to_string()).first();
+        let value = map1(i.to_string()).first().unwrap();
         if filter(&value) {
-            let value = map2(value).first();
+            let value = map2(value).first().unwrap();
             output.push(value.clone());
             expected.push(value);
         }

@@ -1,8 +1,7 @@
+use super::{Values, Vector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
-
-use super::{Values, Vector};
 
 impl<T> Values for Option<T>
 where
@@ -160,6 +159,25 @@ where
                 vo.acc_reduce(acc, reduce)
             }
             _ => acc,
+        }
+    }
+
+    #[inline(always)]
+    fn first(self) -> Option<Self::Item> {
+        self
+    }
+
+    #[inline(always)]
+    fn fx_first<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
+    where
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+    {
+        match self {
+            Some(x) if filter(&x) => map2(x).first(),
+            _ => None,
         }
     }
 
