@@ -19,7 +19,7 @@ const N: [usize; 2] = [1025, 4735];
     [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary],
     [true, false])
 ]
-fn xfx_map_filter(
+fn xfx_map_filter_collect(
     n: usize,
     nt: usize,
     chunk: usize,
@@ -74,7 +74,13 @@ fn xfx_map_filter(
     [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary],
     [true, false])
 ]
-fn xfx_filter(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering, actual_filter: bool) {
+fn xfx_filter_collect(
+    n: usize,
+    nt: usize,
+    chunk: usize,
+    ordering: CollectOrdering,
+    actual_filter: bool,
+) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -116,7 +122,7 @@ fn xfx_filter(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering, actu
     [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary],
     [true, false])
 ]
-fn xfx_map_filter_map(
+fn xfx_map_filter_map_collect(
     n: usize,
     nt: usize,
     chunk: usize,
