@@ -335,7 +335,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         map1: &M1,
         filter: &F,
         map2: &M2,
-    ) -> Option<Vo::Item>
+    ) -> Option<(usize, Vo::Item)>
     where
         I: ConcurrentIter,
         Vt: Values,
@@ -346,7 +346,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller();
+        let mut item_puller = iter.item_puller_with_idx();
 
         loop {
             let chunk_size = self.next_chunk_size(shared_state, iter);
@@ -355,14 +355,13 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
 
             match chunk_size {
                 0 | 1 => match item_puller.next() {
-                    Some(i) => {
+                    Some((idx, i)) => {
                         let vt = map1(i);
-                        let maybe = vt.fx_first(filter, map2);
-                        if maybe.is_some() {
+                        if let Some(first) = vt.fx_first(filter, map2) {
                             iter.skip_to_end();
                             self.complete_chunk(shared_state, chunk_size);
                             self.complete_task(shared_state);
-                            return maybe;
+                            return Some((idx, first));
                         }
                     }
                     None => break,
@@ -372,16 +371,15 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    match chunk_puller.pull() {
-                        Some(chunk) => {
+                    match chunk_puller.pull_with_idx() {
+                        Some((idx, chunk)) => {
                             for i in chunk {
                                 let vt = map1(i);
-                                let maybe = vt.fx_first(filter, map2);
-                                if maybe.is_some() {
+                                if let Some(first) = vt.fx_first(filter, map2) {
                                     iter.skip_to_end();
                                     self.complete_chunk(shared_state, chunk_size);
                                     self.complete_task(shared_state);
-                                    return maybe;
+                                    return Some((idx, first));
                                 }
                             }
                         }

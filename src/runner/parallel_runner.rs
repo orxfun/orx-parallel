@@ -236,6 +236,53 @@ pub trait ParallelRunnerCompute: ParallelRunner {
 
         (num_spawned, acc)
     }
+
+    // first
+
+    // fn xfx_first<I, Vt, Vo, M1, F, M2>(
+    //     &self,
+    //     iter: &I,
+    //     map1: &M1,
+    //     filter: &F,
+    //     map2: &M2,
+    // ) -> (usize, Option<Vo::Item>)
+    // where
+    //     I: ConcurrentIter,
+    //     Vt: Values,
+    //     Vo: Values,
+    //     Vo::Item: Send + Sync,
+    //     M1: Fn(I::Item) -> Vt + Send + Sync,
+    //     F: Fn(&Vt::Item) -> bool + Send + Sync,
+    //     M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    // {
+    //     let state = self.new_shared_state();
+    //     let shared_state = &state;
+
+    //     let mut num_spawned = 0;
+    //     let results = std::thread::scope(|s| {
+    //         let mut handles = vec![];
+
+    //         while self.do_spawn_new(num_spawned, shared_state, iter) {
+    //             num_spawned += 1;
+    //             handles.push(s.spawn(move || {
+    //                 let thread_runner = self.new_thread_runner(shared_state);
+    //                 thread_runner.xfx_first(iter, shared_state, map1, filter, map2)
+    //             }));
+    //         }
+
+    //         let mut results = Vec::with_capacity(handles.len());
+    //         for x in handles {
+    //             if let Some(x) = x.join().expect("failed to join the thread") {
+    //                 results.push(x);
+    //             }
+    //         }
+    //         results
+    //     });
+
+    //     let acc = results.into_iter().reduce(reduce);
+
+    //     (num_spawned, acc)
+    // }
 }
 
 impl<X: ParallelRunner> ParallelRunnerCompute for X {}
