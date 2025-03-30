@@ -112,6 +112,17 @@ where
     }
 
     #[inline(always)]
+    fn reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        match acc {
+            Some(x) => Some(reduce(x, self.0)),
+            None => Some(self.0),
+        }
+    }
+
+    #[inline(always)]
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
         Self: Sized,

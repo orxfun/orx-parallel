@@ -115,6 +115,19 @@ where
     }
 
     #[inline(always)]
+    fn reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        match (acc, self) {
+            (Some(x), Some(y)) => Some(reduce(x, y)),
+            (Some(x), None) => Some(x),
+            (None, Some(y)) => Some(y),
+            (None, None) => None,
+        }
+    }
+
+    #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,

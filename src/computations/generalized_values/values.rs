@@ -65,6 +65,10 @@ pub trait Values: Send + Sync {
     where
         F: Fn(&Self::Item) -> bool + Send + Sync;
 
+    fn reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
+
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
         Self: Sized,

@@ -120,6 +120,20 @@ where
         Vector(self.0.into_iter().filter_map(filter_map))
     }
 
+    #[inline(always)]
+    fn reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        let reduced = self.0.into_iter().reduce(&reduce);
+        match (acc, reduced) {
+            (Some(x), Some(y)) => Some(reduce(x, y)),
+            (Some(x), None) => Some(x),
+            (None, Some(y)) => Some(y),
+            (None, None) => None,
+        }
+    }
+
     #[inline]
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
