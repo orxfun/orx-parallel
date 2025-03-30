@@ -135,4 +135,13 @@ where
     {
         output.x_collect_into::<R, _, _, _>(self.x)
     }
+
+    // reduce
+
+    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
+    where
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        None
+    }
 }

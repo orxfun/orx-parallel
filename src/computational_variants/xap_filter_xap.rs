@@ -153,4 +153,13 @@ where
     {
         output.xfx_collect_into::<R, _, _, _, _, _, _>(self.xfx)
     }
+
+    // reduce
+
+    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
+    where
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        None
+    }
 }

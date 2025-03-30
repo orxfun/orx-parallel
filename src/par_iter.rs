@@ -59,4 +59,10 @@ where
         let output = C::empty(self.con_iter().try_get_len());
         self.collect_into(output)
     }
+
+    // reduce
+
+    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
+    where
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 }
