@@ -265,7 +265,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         acc
     }
 
-    fn xfx_reduce_with_idx<I, Vt, Vo, M1, F, M2, X>(
+    fn xfx_reduce<I, Vt, Vo, M1, F, M2, X>(
         mut self,
         iter: &I,
         shared_state: &Self::SharedState,
@@ -273,7 +273,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         filter: &F,
         map2: &M2,
         reduce: &X,
-    ) -> Vec<(usize, Vo::Item)>
+    ) -> Option<Vo::Item>
     where
         I: ConcurrentIter,
         Vt: Values,
@@ -284,11 +284,10 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
-        let mut collected = Vec::new();
-        let out_vec = &mut collected;
-
         let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller_with_idx();
+        let mut item_puller = iter.item_puller();
+
+        let mut acc = None;
 
         loop {
             let chunk_size = self.next_chunk_size(shared_state, iter);
@@ -297,9 +296,9 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
 
             match chunk_size {
                 0 | 1 => match item_puller.next() {
-                    Some((i_idx, i)) => {
+                    Some(i) => {
                         let vt = map1(i);
-                        vt.xfx_collect_heap(i_idx, filter, map2, out_vec);
+                        acc = vt.xfx_reduce(acc, filter, map2, reduce);
                     }
                     None => break,
                 },
@@ -308,11 +307,11 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                         chunk_puller = iter.chunk_puller(c);
                     }
 
-                    match chunk_puller.pull_with_idx() {
-                        Some((chunk_begin_idx, chunk)) => {
+                    match chunk_puller.pull() {
+                        Some(chunk) => {
                             for i in chunk {
                                 let vt = map1(i);
-                                vt.xfx_collect_heap(chunk_begin_idx, filter, map2, out_vec);
+                                acc = vt.xfx_reduce(acc, filter, map2, reduce);
                             }
                         }
                         None => break,
@@ -324,7 +323,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         }
 
         self.complete_task(shared_state);
-        collected
+        acc
     }
 }
 
