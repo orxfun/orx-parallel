@@ -177,18 +177,17 @@ where
         }
     }
 
-    fn xfx_collect_heap<F, M2, Vo, O>(
+    fn xfx_collect_heap<F, M2, Vo>(
         self,
         input_idx: usize,
         filter: F,
         map2: M2,
-        vec: &mut Vec<(usize, O)>,
+        vec: &mut Vec<(usize, Vo::Item)>,
     ) where
-        Self: Sized,
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        O: Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
     {
         match self {
             Some(x) if filter(&x) => {
