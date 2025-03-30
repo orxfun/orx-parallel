@@ -5,7 +5,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const TEST_LARGE_OUTPUT: bool = false;
+const TEST_LARGE_OUTPUT: bool = true;
 
 const LARGE_OUTPUT_LEN: usize = match TEST_LARGE_OUTPUT {
     true => 64,

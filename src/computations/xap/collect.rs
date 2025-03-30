@@ -1,7 +1,7 @@
 use super::x::X;
 use crate::{
     computations::{heap_sort::heap_sort_into, Values},
-    runner::{ComputationKind, ParallelRunner, ParallelTask},
+    runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask},
     CollectOrdering,
 };
 use orx_concurrent_bag::ConcurrentBag;

@@ -1,7 +1,7 @@
 use super::xfx::Xfx;
 use crate::computations::heap_sort::heap_sort_into;
 use crate::computations::Values;
-use crate::runner::{ComputationKind, ParallelRunner, ParallelTask};
+use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask};
 use crate::CollectOrdering;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;

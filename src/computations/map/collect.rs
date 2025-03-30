@@ -1,5 +1,5 @@
 use super::m::M;
-use crate::runner::{ComputationKind, ParallelRunner, ParallelTaskWithIdx};
+use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTaskWithIdx};
 #[cfg(test)]
 use crate::{runner::ParallelTask, CollectOrdering};
 #[cfg(test)]

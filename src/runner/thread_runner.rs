@@ -14,7 +14,9 @@ pub trait ThreadRunner: Sized {
     fn complete_chunk(&mut self, shared_state: &Self::SharedState, chunk_size: usize);
 
     fn complete_task(&mut self, shared_state: &Self::SharedState);
+}
 
+pub(crate) trait ThreadRunnerCompute: ThreadRunner {
     // run
 
     fn run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
@@ -204,3 +206,5 @@ pub trait ThreadRunner: Sized {
         collected
     }
 }
+
+impl<X: ThreadRunner> ThreadRunnerCompute for X {}

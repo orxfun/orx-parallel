@@ -1,7 +1,7 @@
 use super::{
     computation_kind::ComputationKind,
     parallel_task::{ParallelTask, ParallelTaskWithIdx},
-    thread_runner::ThreadRunner,
+    thread_runner::{ThreadRunner, ThreadRunnerCompute},
 };
 use crate::{computations::Values, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
@@ -25,6 +25,10 @@ pub trait ParallelRunner: Sized + Sync {
         I: ConcurrentIter;
 
     fn new_thread_runner(&self, shared_state: &Self::SharedState) -> Self::ThreadRunner;
+}
+
+pub trait ParallelRunnerCompute: ParallelRunner {
+    // run
 
     fn run<I, T>(&self, iter: &I, task: T) -> usize
     where
@@ -145,3 +149,5 @@ pub trait ParallelRunner: Sized + Sync {
         (num_spawned, vectors)
     }
 }
+
+impl<X: ParallelRunner> ParallelRunnerCompute for X {}
