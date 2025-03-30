@@ -127,6 +127,6 @@ where
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
-        None
+        self.m().reduce::<R, _>(reduce).1
     }
 }

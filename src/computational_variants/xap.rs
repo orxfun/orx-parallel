@@ -1,6 +1,6 @@
 use crate::{
     computational_variants::xap_filter_xap::ParXapFilterXap,
-    computations::{map_self_atom, Values, Vector, X},
+    computations::{map_self_atom, Values, X},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -142,6 +142,6 @@ where
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
-        None
+        self.x.reduce::<R, _>(reduce).1
     }
 }

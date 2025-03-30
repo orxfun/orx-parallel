@@ -1,5 +1,5 @@
 use crate::{
-    computations::{Values, Vector, Xfx},
+    computations::{Values, Xfx},
     runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
@@ -160,6 +160,6 @@ where
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
-        None
+        self.xfx.reduce::<R, _>(reduce).1
     }
 }
