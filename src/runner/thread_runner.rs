@@ -265,13 +265,14 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         acc
     }
 
-    fn xfx_reduce_with_idx<I, Vt, Vo, M1, F, M2>(
+    fn xfx_reduce_with_idx<I, Vt, Vo, M1, F, M2, X>(
         mut self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
         filter: &F,
         map2: &M2,
+        reduce: &X,
     ) -> Vec<(usize, Vo::Item)>
     where
         I: ConcurrentIter,
@@ -281,6 +282,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         let mut collected = Vec::new();
         let out_vec = &mut collected;

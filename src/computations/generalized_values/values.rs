@@ -69,6 +69,19 @@ pub trait Values: Send + Sync {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
+    // fn xfx_reduce<F, M2, Vo, O>(
+    //     self,
+    //     input_idx: usize,
+    //     filter: F,
+    //     map2: M2,
+    //     vec: &mut Vec<(usize, O)>,
+    // ) where
+    //     Self: Sized,
+    //     F: Fn(&Self::Item) -> bool + Send + Sync,
+    //     M2: Fn(Self::Item) -> Vo + Send + Sync,
+    //     Vo: Values<Item = O>,
+    //     O: Send + Sync;
+
     fn filter_map_collect_sequential<F, M2, P, Vo, O>(self, filter: F, map2: M2, vector: &mut P)
     where
         Self: Sized,
@@ -103,19 +116,18 @@ pub trait Values: Send + Sync {
         Vo: Values<Item = O>,
         O: Send + Sync;
 
-    fn filter_map_collect_in_input_order<F, M2, P, Vo, O>(
+    fn filter_map_collect_in_input_order<F, M2, P, Vo>(
         self,
         input_idx: usize,
         filter: F,
         map2: M2,
-        o_bag: &ConcurrentOrderedBag<O, P>,
+        o_bag: &ConcurrentOrderedBag<Vo::Item, P>,
     ) where
-        Self: Sized,
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        P: IntoConcurrentPinnedVec<O>,
-        O: Send + Sync;
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>;
 
     #[cfg(test)]
     fn first(self) -> Self::Item

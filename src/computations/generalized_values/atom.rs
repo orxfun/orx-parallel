@@ -177,19 +177,18 @@ where
         }
     }
 
-    fn filter_map_collect_in_input_order<F, M2, P, Vo, O>(
+    fn filter_map_collect_in_input_order<F, M2, P, Vo>(
         self,
         input_idx: usize,
         filter: F,
         map2: M2,
-        o_bag: &ConcurrentOrderedBag<O, P>,
+        o_bag: &ConcurrentOrderedBag<Vo::Item, P>,
     ) where
-        Self: Sized,
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values<Item = O>,
-        P: IntoConcurrentPinnedVec<O>,
-        O: Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
     {
         if filter(&self.0) {
             let vo = map2(self.0);
