@@ -41,13 +41,10 @@ where
     }
 
     fn parallel<R: ParallelRunner>(self) -> (usize, Option<Vo::Item>) {
-        let (m, reduce) = (self.x, self.reduce);
-        let (params, iter, map1) = m.destruct();
+        let (x, reduce) = (self.x, self.reduce);
+        let (params, iter, xap1) = x.destruct();
 
-        // let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
-        // let xap1 = |i: I::Item| Atom(map1(i));
-        // runner.x_reduce(&iter, &xap1, &reduce)
-
-        (0, None)
+        let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
+        runner.x_reduce(&iter, &xap1, &reduce)
     }
 }

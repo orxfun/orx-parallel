@@ -10,7 +10,7 @@ where
 {
     params: Params,
     iter: I,
-    map1: M1,
+    xap1: M1,
 }
 
 impl<I, Vo, M1> X<I, Vo, M1>
@@ -20,12 +20,12 @@ where
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {
-    pub fn new(params: Params, iter: I, map1: M1) -> Self {
-        Self { params, iter, map1 }
+    pub fn new(params: Params, iter: I, xap1: M1) -> Self {
+        Self { params, iter, xap1 }
     }
 
     pub fn destruct(self) -> (Params, I, M1) {
-        (self.params, self.iter, self.map1)
+        (self.params, self.iter, self.xap1)
     }
 
     pub fn params(&self) -> &Params {
