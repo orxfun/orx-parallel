@@ -1,5 +1,5 @@
 use crate::{
-    computations::{map::m::M, map_self},
+    computations::{Vector, X},
     runner::DefaultRunner,
     Params,
 };
@@ -16,19 +16,18 @@ const N: [usize; 2] = [1025, 4735];
     [1, 2, 4],
     [1, 64, 1024])
 ]
-fn m_reduce(n: usize, nt: usize, chunk: usize) {
+fn x_flat_map_first(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
-    let reduce = |x: String, y: String| match x < y {
-        true => y,
-        false => x,
-    };
+    let fmap = |x: String| x.chars().map(|x| x.to_string()).collect::<Vec<_>>();
+    let xmap = |x: String| Vector(fmap(x));
 
-    let expected = input.clone().into_iter().reduce(reduce);
+    let expected = input.clone().into_iter().flat_map(fmap).next();
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let m = M::new(params, iter, map_self);
-    let (_, output) = m.reduce::<DefaultRunner, _>(reduce);
+    let x = X::new(params, iter, xmap);
+
+    let output = x.first::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }
@@ -38,20 +37,18 @@ fn m_reduce(n: usize, nt: usize, chunk: usize) {
     [1, 2, 4],
     [1, 64, 1024])
 ]
-fn m_map_reduce(n: usize, nt: usize, chunk: usize) {
+fn x_filter_map_first(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
-    let map = |x: String| format!("{}!", x);
-    let reduce = |x: String, y: String| match x < y {
-        true => y,
-        false => x,
-    };
+    let fmap = |x: String| (!x.starts_with('3')).then_some(format!("{}!", x));
+    let xmap = |x: String| Vector(fmap(x));
 
-    let expected = input.clone().into_iter().map(map).reduce(reduce);
+    let expected = input.clone().into_iter().filter_map(fmap).next();
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let m = M::new(params, iter, map);
-    let (_, output) = m.reduce::<DefaultRunner, _>(reduce);
+    let x = X::new(params, iter, xmap);
+
+    let output = x.first::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }

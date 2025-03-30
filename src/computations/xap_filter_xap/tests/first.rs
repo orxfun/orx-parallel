@@ -14,16 +14,12 @@ const N: [usize; 2] = [1025, 4735];
     [1, 64, 1024],
     [true, false])
 ]
-fn xfx_map_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
+fn xfx_map_filter_first(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let map1 = |x: String| Atom(format!("{}!", x));
     let filter = move |x: &String| match actual_filter {
         true => !x.starts_with('1'),
         false => true,
-    };
-    let reduce = |x: String, y: String| match x > y {
-        true => x,
-        false => y,
     };
 
     let expected = input
@@ -31,13 +27,13 @@ fn xfx_map_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool)
         .into_iter()
         .map(|x| map1(x).first().unwrap())
         .filter(filter)
-        .reduce(reduce);
+        .next();
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let mfm = Xfx::new(params, iter, map1, filter, map_self_atom);
+    let xfx = Xfx::new(params, iter, map1, filter, map_self_atom);
 
-    let (_, output) = mfm.reduce::<DefaultRunner, _>(reduce);
+    let (_, output) = xfx.first::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }
@@ -48,24 +44,20 @@ fn xfx_map_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool)
     [1, 64, 1024],
     [true, false])
 ]
-fn xfx_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
+fn xfx_filter_first(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let filter = move |x: &String| match actual_filter {
         true => !x.starts_with('1'),
         false => true,
     };
-    let reduce = |x: String, y: String| match x > y {
-        true => x,
-        false => y,
-    };
 
-    let expected = input.clone().into_iter().filter(filter).reduce(reduce);
+    let expected = input.clone().into_iter().filter(filter).next();
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let mfm = Xfx::new(params, iter, map_self_atom, filter, map_self_atom);
+    let xfx = Xfx::new(params, iter, map_self_atom, filter, map_self_atom);
 
-    let (_, output) = mfm.reduce::<DefaultRunner, _>(reduce);
+    let (_, output) = xfx.first::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }
@@ -76,7 +68,7 @@ fn xfx_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
     [1, 64, 1024],
     [true, false])
 ]
-fn xfx_map_filter_map_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
+fn xfx_map_filter_map_first(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let map1 = |x: String| Atom(format!("{}!", x));
     let filter = move |x: &String| match actual_filter {
@@ -84,7 +76,6 @@ fn xfx_map_filter_map_reduce(n: usize, nt: usize, chunk: usize, actual_filter: b
         false => true,
     };
     let map2 = |x: String| Atom(x.len());
-    let reduce = |x: usize, y: usize| x + y;
 
     let expected = input
         .clone()
@@ -92,13 +83,13 @@ fn xfx_map_filter_map_reduce(n: usize, nt: usize, chunk: usize, actual_filter: b
         .map(|x| map1(x).first().unwrap())
         .filter(filter)
         .map(|x| map2(x).first().unwrap())
-        .reduce(reduce);
+        .next();
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let mfm = Xfx::new(params, iter, map1, filter, map2);
+    let xfx = Xfx::new(params, iter, map1, filter, map2);
 
-    let (_, output) = mfm.reduce::<DefaultRunner, _>(reduce);
+    let (_, output) = xfx.first::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }
