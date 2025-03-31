@@ -67,5 +67,13 @@ where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
     // early exit
+
     fn next(self) -> Option<Self::Item>;
+
+    fn find<P>(self, predicate: P) -> Option<Self::Item>
+    where
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        self.filter(predicate).next()
+    }
 }
