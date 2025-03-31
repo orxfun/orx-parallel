@@ -162,4 +162,10 @@ where
     {
         self.xfx.reduce::<R, _>(reduce).1
     }
+
+    // early exit
+
+    fn next(self) -> Option<Self::Item> {
+        self.xfx.first::<R>().1
+    }
 }

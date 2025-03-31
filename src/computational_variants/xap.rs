@@ -144,4 +144,10 @@ where
     {
         self.x.reduce::<R, _>(reduce).1
     }
+
+    // early exit
+
+    fn next(self) -> Option<Self::Item> {
+        self.x.first()
+    }
 }

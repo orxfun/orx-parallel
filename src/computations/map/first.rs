@@ -1,5 +1,4 @@
 use super::m::M;
-use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<I, O, M1> M<I, O, M1>
@@ -8,10 +7,7 @@ where
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync,
 {
-    pub fn first<R>(self) -> Option<O>
-    where
-        R: ParallelRunner,
-    {
+    pub fn first(self) -> Option<O> {
         let (_, iter, map1) = self.destruct();
         iter.next().map(map1)
     }

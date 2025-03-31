@@ -1,6 +1,5 @@
 use crate::{
     computations::{Vector, X},
-    runner::DefaultRunner,
     Params,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
@@ -27,7 +26,7 @@ fn x_flat_map_first(n: usize, nt: usize, chunk: usize) {
     let iter = input.into_con_iter();
     let x = X::new(params, iter, xmap);
 
-    let output = x.first::<DefaultRunner>();
+    let output = x.first();
 
     assert_eq!(expected, output);
 }
@@ -48,7 +47,7 @@ fn x_filter_map_first(n: usize, nt: usize, chunk: usize) {
     let iter = input.into_con_iter();
     let x = X::new(params, iter, xmap);
 
-    let output = x.first::<DefaultRunner>();
+    let output = x.first();
 
     assert_eq!(expected, output);
 }

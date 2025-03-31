@@ -129,4 +129,10 @@ where
     {
         self.m().reduce::<R, _>(reduce).1
     }
+
+    // early exit
+
+    fn next(self) -> Option<Self::Item> {
+        self.m().first()
+    }
 }

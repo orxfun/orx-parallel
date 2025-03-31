@@ -1,6 +1,5 @@
 use crate::{
     computations::{map::m::M, map_self},
-    runner::DefaultRunner,
     Params,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
@@ -24,7 +23,7 @@ fn m_first(n: usize, nt: usize, chunk: usize) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let m = M::new(params, iter, map_self);
-    let output = m.first::<DefaultRunner>();
+    let output = m.first();
 
     assert_eq!(expected, output);
 }
@@ -43,7 +42,7 @@ fn m_map_first(n: usize, nt: usize, chunk: usize) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let m = M::new(params, iter, map);
-    let output = m.first::<DefaultRunner>();
+    let output = m.first();
 
     assert_eq!(expected, output);
 }

@@ -65,4 +65,7 @@ where
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
+
+    // early exit
+    fn next(self) -> Option<Self::Item>;
 }
