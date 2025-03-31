@@ -53,6 +53,10 @@ fn get_find(n: usize) -> impl Fn(&Output) -> bool {
     move |a: &Output| a.id.parse::<usize>().unwrap() == n
 }
 
+fn filter(a: &Output) -> bool {
+    !a.name.ends_with('1')
+}
+
 fn fibonacci(n: &u32) -> u32 {
     let mut a = 0;
     let mut b = 1;
@@ -64,38 +68,50 @@ fn fibonacci(n: &u32) -> u32 {
     a
 }
 
-fn inputs(len: usize) -> Vec<Output> {
+fn inputs(len: usize) -> Vec<usize> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
         .map(|_| rng.gen_range(0..FIB_UPPER_BOUND) as usize)
-        .map(|x| to_output(&x))
         .collect()
 }
 
-fn seq(inputs: &[Output], find: impl Fn(&Output) -> bool) -> Option<&Output> {
-    inputs.into_iter().find(|x| find(x))
+fn seq(inputs: &[usize], find: impl Fn(&Output) -> bool) -> Option<Output> {
+    inputs.iter().map(to_output).filter(filter).find(find)
 }
 
-fn rayon(inputs: &[Output], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<&Output> {
+fn rayon(inputs: &[usize], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<Output> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().find_first(|x| find(x))
+    inputs
+        .into_par_iter()
+        .map(to_output)
+        .filter(filter)
+        .find_first(|x| find(x))
 }
 
 fn orx_sequential(
-    inputs: &[Output],
+    inputs: &[usize],
     find: impl Fn(&Output) -> bool + Send + Sync,
-) -> Option<&Output> {
-    inputs.into_par().num_threads(1).find(|x| find(x))
+) -> Option<Output> {
+    inputs
+        .into_par()
+        .map(to_output)
+        .filter(filter)
+        .num_threads(1)
+        .find(|x| find(x))
 }
 
-fn orx(inputs: &[Output], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<&Output> {
-    inputs.into_par().find(|x| find(x))
+fn orx(inputs: &[usize], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<Output> {
+    inputs
+        .into_par()
+        .map(to_output)
+        .filter(filter)
+        .find(|x| find(x))
 }
 
 fn run(c: &mut Criterion) {
     let treatments = [N_EARLY, N_MIDDLE, N_LATE, N_NEVER];
 
-    let mut group = c.benchmark_group("find");
+    let mut group = c.benchmark_group("find_map_filter");
 
     for n_when in &treatments {
         let find = get_find(*n_when);
