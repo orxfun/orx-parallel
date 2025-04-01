@@ -66,19 +66,28 @@ where
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
-    fn all<P>(self, predicate: P) -> bool
+    fn all<Predicate>(self, predicate: Predicate) -> bool
     where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let violates = |x: &Self::Item| !predicate(x);
         self.find(violates).is_none()
     }
 
-    fn any<P>(self, predicate: P) -> bool
+    fn any<Predicate>(self, predicate: Predicate) -> bool
     where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find(predicate).is_some()
+    }
+
+    fn fold<Map, Reduce, Out>(self, map: Map, reduce: Reduce) -> Option<Out>
+    where
+        Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
+        Reduce: Fn(Out, Out) -> Out + Send + Sync,
+        Out: Send + Sync,
+    {
+        self.map(map).reduce(reduce)
     }
 
     // early exit
@@ -87,16 +96,16 @@ where
 
     fn any_element(self) -> Option<Self::Item>;
 
-    fn find<P>(self, predicate: P) -> Option<Self::Item>
+    fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.filter(predicate).next()
     }
 
-    fn find_any<P>(self, predicate: P) -> Option<Self::Item>
+    fn find_any<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.filter(predicate).any_element()
     }
