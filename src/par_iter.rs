@@ -6,7 +6,7 @@ use crate::{
     special_type_sets::Sum,
 };
 use orx_concurrent_iter::ConcurrentIter;
-use std::ops::Add;
+use std::{cmp::Ordering, ops::Add};
 
 pub trait ParIter<R = DefaultRunner>: Sized
 where
@@ -95,6 +95,66 @@ where
         Out: Send + Sync,
     {
         self.map(map).reduce(reduce)
+    }
+
+    fn max(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord,
+    {
+        self.reduce(Ord::max)
+    }
+
+    fn max_by<Compare>(self, compare: Compare) -> Option<Self::Item>
+    where
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+    {
+        let reduce = |x, y| match compare(&x, &y) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
+    where
+        Key: Ord,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
+    {
+        let reduce = |x, y| match key(&x).cmp(&key(&y)) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn min_by<Compare>(self, compare: Compare) -> Option<Self::Item>
+    where
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+    {
+        let reduce = |x, y| match compare(&x, &y) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn min(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord,
+    {
+        self.reduce(Ord::min)
+    }
+
+    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
+    where
+        Key: Ord,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
+    {
+        let reduce = |x, y| match get_key(&x).cmp(&get_key(&y)) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
     }
 
     fn sum<Out>(self) -> Out
