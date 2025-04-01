@@ -70,6 +70,8 @@ where
 
     fn next(self) -> Option<Self::Item>;
 
+    // fn next_any(self) -> Option<Self::Item>;
+
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
         P: Fn(&Self::Item) -> bool + Send + Sync + Clone,

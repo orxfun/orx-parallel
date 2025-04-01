@@ -7,7 +7,7 @@ where
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync,
 {
-    pub fn first(self) -> Option<O> {
+    pub fn next(self) -> Option<O> {
         let (_, iter, map1) = self.destruct();
         iter.next().map(map1)
     }

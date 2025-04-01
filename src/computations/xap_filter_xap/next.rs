@@ -13,15 +13,15 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
-    pub fn first<R>(self) -> (usize, Option<Vo::Item>)
+    pub fn next<R>(self) -> (usize, Option<Vo::Item>)
     where
         R: ParallelRunner,
     {
-        XfxFirst(self).compute::<R>()
+        XfxNext(self).compute::<R>()
     }
 }
 
-pub struct XfxFirst<I, Vt, Vo, M1, F, M2>(Xfx<I, Vt, Vo, M1, F, M2>)
+struct XfxNext<I, Vt, Vo, M1, F, M2>(Xfx<I, Vt, Vo, M1, F, M2>)
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -31,7 +31,7 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync;
 
-impl<I, Vt, Vo, M1, F, M2> XfxFirst<I, Vt, Vo, M1, F, M2>
+impl<I, Vt, Vo, M1, F, M2> XfxNext<I, Vt, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,

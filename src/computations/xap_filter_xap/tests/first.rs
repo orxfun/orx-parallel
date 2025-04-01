@@ -33,7 +33,7 @@ fn xfx_map_filter_first(n: usize, nt: usize, chunk: usize, actual_filter: bool) 
     let iter = input.into_con_iter();
     let xfx = Xfx::new(params, iter, map1, filter, map_self_atom);
 
-    let (_, output) = xfx.first::<DefaultRunner>();
+    let (_, output) = xfx.next::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }
@@ -57,7 +57,7 @@ fn xfx_filter_first(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
     let iter = input.into_con_iter();
     let xfx = Xfx::new(params, iter, map_self_atom, filter, map_self_atom);
 
-    let (_, output) = xfx.first::<DefaultRunner>();
+    let (_, output) = xfx.next::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }
@@ -89,7 +89,7 @@ fn xfx_map_filter_map_first(n: usize, nt: usize, chunk: usize, actual_filter: bo
     let iter = input.into_con_iter();
     let xfx = Xfx::new(params, iter, map1, filter, map2);
 
-    let (_, output) = xfx.first::<DefaultRunner>();
+    let (_, output) = xfx.next::<DefaultRunner>();
 
     assert_eq!(expected, output);
 }

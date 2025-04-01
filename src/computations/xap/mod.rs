@@ -2,7 +2,7 @@
 mod tests;
 
 mod collect;
-mod first;
+mod next;
 mod reduce;
 mod x;
 

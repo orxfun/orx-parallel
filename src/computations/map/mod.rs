@@ -2,8 +2,8 @@
 mod tests;
 
 mod collect;
-mod first;
 mod m;
+mod next;
 mod reduce;
 mod transformations;
 

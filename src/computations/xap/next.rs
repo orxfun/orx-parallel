@@ -9,7 +9,7 @@ where
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {
-    pub fn first(self) -> Option<Vo::Item> {
+    pub fn next(self) -> Option<Vo::Item> {
         let (_, iter, xap1) = self.destruct();
         iter.next()
             .and_then(|i| xap1(i).values().into_iter().next())

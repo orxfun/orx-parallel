@@ -26,7 +26,7 @@ fn x_flat_map_first(n: usize, nt: usize, chunk: usize) {
     let iter = input.into_con_iter();
     let x = X::new(params, iter, xmap);
 
-    let output = x.first();
+    let output = x.next();
 
     assert_eq!(expected, output);
 }
@@ -47,7 +47,7 @@ fn x_filter_map_first(n: usize, nt: usize, chunk: usize) {
     let iter = input.into_con_iter();
     let x = X::new(params, iter, xmap);
 
-    let output = x.first();
+    let output = x.next();
 
     assert_eq!(expected, output);
 }

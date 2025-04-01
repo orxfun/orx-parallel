@@ -166,6 +166,6 @@ where
     // early exit
 
     fn next(self) -> Option<Self::Item> {
-        self.xfx.first::<R>().1
+        self.xfx.next::<R>().1
     }
 }
