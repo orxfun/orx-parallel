@@ -122,7 +122,7 @@ where
         Vector(self.0.into_iter().filter_map(filter_map))
     }
 
-    fn fold<X, O>(self, result: FoldResult, value: O, fold: X) -> (FoldResult, O)
+    fn fold<X, O>(self, fold: X, result: FoldResult<O>) -> FoldResult<O>
     where
         X: Fn(O, Self::Item) -> O + Send + Sync,
     {
@@ -130,11 +130,11 @@ where
 
         match iter.next() {
             Some(x) => {
-                let init = fold(value, x);
+                let init = fold(result.value(), x);
                 let result = iter.fold(init, fold);
-                (FoldResult::Aggregate, result)
+                FoldResult::Aggregate(result)
             }
-            None => (result, value),
+            None => result,
         }
     }
 

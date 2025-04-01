@@ -67,11 +67,18 @@ pub trait Values: Send + Sync {
     where
         F: Fn(&Self::Item) -> bool + Send + Sync;
 
-    fn fold<X, O>(self, result: FoldResult, value: O, fold: X) -> (FoldResult, O)
+    fn fold<X, O>(self, fold: X, result: FoldResult<O>) -> FoldResult<O>
     where
         X: Fn(O, Self::Item) -> O + Send + Sync;
 
-    // fn fx_fold<F, M2, Vo, X, O>(self, acc: O, filter: F, map2: M2, fold: X) -> O
+    // fn fx_fold<F, M2, Vo, X, O>(
+    //     self,
+    //     filter: F,
+    //     map2: M2,
+    //     fold: X,
+    //     result: FoldResult,
+    //     value: O,
+    // ) -> O
     // where
     //     Self: Sized,
     //     F: Fn(&Self::Item) -> bool + Send + Sync,

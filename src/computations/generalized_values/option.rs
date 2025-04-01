@@ -116,13 +116,13 @@ where
     }
 
     #[inline(always)]
-    fn fold<X, O>(self, result: FoldResult, value: O, fold: X) -> (FoldResult, O)
+    fn fold<X, O>(self, fold: X, result: FoldResult<O>) -> FoldResult<O>
     where
         X: Fn(O, Self::Item) -> O + Send + Sync,
     {
         match self {
-            Some(x) => (FoldResult::Aggregate, fold(value, x)),
-            None => (result, value),
+            Some(x) => FoldResult::Aggregate(fold(result.value(), x)),
+            None => result,
         }
     }
 
