@@ -71,11 +71,16 @@ where
         self.map(map_clone)
     }
 
-    fn flatten(self)
+    fn flatten(self) -> impl ParIter<R, Item = <Self::Item as IntoIterator>::Item>
     where
-        Self::Item: IntoConcurrentIter,
+        Self::Item: IntoIterator,
+        <Self::Item as IntoIterator>::IntoIter: Send + Sync,
+        <Self::Item as IntoIterator>::Item: Send + Sync,
+        R: Send + Sync,
+        Self: Send + Sync,
     {
-        // let map = |e: Self::Item| Par::new(self.params().clone(), e.into_con_iter());
+        let map = |e: Self::Item| e.into_iter();
+        self.flat_map(map)
     }
 
     // collect
