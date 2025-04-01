@@ -169,7 +169,7 @@ where
         self.xfx.next::<R>().1
     }
 
-    fn get_any(self) -> Option<Self::Item> {
+    fn any_element(self) -> Option<Self::Item> {
         self.xfx.next_any::<R>().1
     }
 }

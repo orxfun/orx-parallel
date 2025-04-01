@@ -70,7 +70,7 @@ where
 
     fn next(self) -> Option<Self::Item>;
 
-    fn get_any(self) -> Option<Self::Item>;
+    fn any_element(self) -> Option<Self::Item>;
 
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
@@ -83,6 +83,6 @@ where
     where
         P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
-        self.filter(predicate).get_any()
+        self.filter(predicate).any_element()
     }
 }

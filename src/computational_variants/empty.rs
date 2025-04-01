@@ -136,7 +136,7 @@ where
         self.m().next()
     }
 
-    fn get_any(self) -> Option<Self::Item> {
+    fn any_element(self) -> Option<Self::Item> {
         self.m().next()
     }
 }
