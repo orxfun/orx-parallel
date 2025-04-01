@@ -1,3 +1,4 @@
+mod copied;
 mod count;
 mod for_each;
 mod iter_consuming;
