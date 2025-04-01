@@ -237,9 +237,9 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         (num_spawned, acc)
     }
 
-    // first
+    // next
 
-    fn xfx_first<I, Vt, Vo, M1, F, M2>(
+    fn xfx_next<I, Vt, Vo, M1, F, M2>(
         &self,
         iter: &I,
         map1: &M1,
@@ -266,7 +266,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
                 num_spawned += 1;
                 handles.push(s.spawn(move || {
                     let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.xfx_first(iter, shared_state, map1, filter, map2)
+                    thread_runner.xfx_next(iter, shared_state, map1, filter, map2)
                 }));
             }
 
