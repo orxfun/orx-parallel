@@ -1,6 +1,6 @@
 use crate::{
     collect_into::ParCollectInto,
-    computations::{map_count, reduce_sum, reduce_unit},
+    computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
@@ -48,6 +48,24 @@ where
     where
         Out: Send + Sync,
         FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
+
+    // reference transformations
+
+    fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
+    where
+        T: 'a + Copy + Send + Sync,
+        Self: ParIter<R, Item = &'a T>,
+    {
+        self.map(map_copy)
+    }
+
+    fn cloned<'a, T>(self) -> impl ParIter<R, Item = T>
+    where
+        T: 'a + Clone + Send + Sync,
+        Self: ParIter<R, Item = &'a T>,
+    {
+        self.map(map_clone)
+    }
 
     // collect
 
