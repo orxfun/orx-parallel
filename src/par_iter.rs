@@ -70,6 +70,8 @@ where
 
     fn next(self) -> Option<Self::Item>;
 
+    fn get_any(self) -> Option<Self::Item>;
+
     // fn next_any(self) -> Option<Self::Item>;
 
     fn find<P>(self, predicate: P) -> Option<Self::Item>

@@ -138,4 +138,8 @@ where
     fn next(self) -> Option<Self::Item> {
         self.m.next()
     }
+
+    fn get_any(self) -> Option<Self::Item> {
+        self.m.next()
+    }
 }

@@ -150,4 +150,8 @@ where
     fn next(self) -> Option<Self::Item> {
         self.x.next()
     }
+
+    fn get_any(self) -> Option<Self::Item> {
+        self.x.next()
+    }
 }

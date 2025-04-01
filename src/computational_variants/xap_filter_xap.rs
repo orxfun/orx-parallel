@@ -168,4 +168,8 @@ where
     fn next(self) -> Option<Self::Item> {
         self.xfx.next::<R>().1
     }
+
+    fn get_any(self) -> Option<Self::Item> {
+        self.xfx.next_any::<R>().1
+    }
 }
