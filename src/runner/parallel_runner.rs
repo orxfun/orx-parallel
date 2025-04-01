@@ -283,6 +283,51 @@ pub trait ParallelRunnerCompute: ParallelRunner {
 
         (num_spawned, acc)
     }
+
+    fn xfx_next_any<I, Vt, Vo, M1, F, M2>(
+        &self,
+        iter: &I,
+        map1: &M1,
+        filter: &F,
+        map2: &M2,
+    ) -> (usize, Option<Vo::Item>)
+    where
+        I: ConcurrentIter,
+        Vt: Values,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        M1: Fn(I::Item) -> Vt + Send + Sync,
+        F: Fn(&Vt::Item) -> bool + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    {
+        let state = self.new_shared_state();
+        let shared_state = &state;
+
+        let mut num_spawned = 0;
+        let result = std::thread::scope(|s| {
+            let mut handles = vec![];
+
+            while self.do_spawn_new(num_spawned, shared_state, iter) {
+                num_spawned += 1;
+                handles.push(s.spawn(move || {
+                    let thread_runner = self.new_thread_runner(shared_state);
+                    thread_runner.xfx_next_any(iter, shared_state, map1, filter, map2)
+                }));
+            }
+
+            let mut result = None;
+            for x in handles {
+                let thread_result = x.join().expect("failed to join the thread");
+                if result.is_none() && thread_result.is_some() {
+                    result = thread_result;
+                }
+            }
+
+            result
+        });
+
+        (num_spawned, result)
+    }
 }
 
 impl<X: ParallelRunner> ParallelRunnerCompute for X {}

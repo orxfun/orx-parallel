@@ -86,7 +86,7 @@ pub trait Values: Send + Sync {
 
     fn first(self) -> Option<Self::Item>;
 
-    fn fx_first<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
+    fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,

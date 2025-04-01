@@ -357,7 +357,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                 0 | 1 => match item_puller.next() {
                     Some((idx, i)) => {
                         let vt = map1(i);
-                        if let Some(first) = vt.fx_first(filter, map2) {
+                        if let Some(first) = vt.fx_next(filter, map2) {
                             iter.skip_to_end();
                             self.complete_chunk(shared_state, chunk_size);
                             self.complete_task(shared_state);
@@ -375,7 +375,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                         Some((idx, chunk)) => {
                             for i in chunk {
                                 let vt = map1(i);
-                                if let Some(first) = vt.fx_first(filter, map2) {
+                                if let Some(first) = vt.fx_next(filter, map2) {
                                     iter.skip_to_end();
                                     self.complete_chunk(shared_state, chunk_size);
                                     self.complete_task(shared_state);
@@ -424,7 +424,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                 0 | 1 => match item_puller.next() {
                     Some(i) => {
                         let vt = map1(i);
-                        let maybe_next = vt.fx_first(filter, map2);
+                        let maybe_next = vt.fx_next(filter, map2);
                         if maybe_next.is_some() {
                             iter.skip_to_end();
                             self.complete_chunk(shared_state, chunk_size);
@@ -443,7 +443,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
                         Some(chunk) => {
                             for i in chunk {
                                 let vt = map1(i);
-                                let maybe_next = vt.fx_first(filter, map2);
+                                let maybe_next = vt.fx_next(filter, map2);
                                 if maybe_next.is_some() {
                                     iter.skip_to_end();
                                     self.complete_chunk(shared_state, chunk_size);
