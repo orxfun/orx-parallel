@@ -1,3 +1,5 @@
+use crate::computations::fold_result::FoldResult;
+
 use super::{values::Values, vector::Vector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -112,28 +114,36 @@ where
     }
 
     #[inline(always)]
-    fn acc_fold<X, O>(self, acc: O, fold: X) -> O
+    fn fold<X, O>(self, _: FoldResult, value: O, fold: X) -> (FoldResult, O)
     where
         X: Fn(O, Self::Item) -> O + Send + Sync,
     {
-        fold(acc, self.0)
+        (FoldResult::Aggregate, fold(value, self.0))
     }
 
-    #[inline(always)]
-    fn fx_fold<F, M2, Vo, X, O>(self, acc: O, filter: F, map2: M2, fold: X) -> O
-    where
-        Self: Sized,
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(O, Vo::Item) -> O + Send + Sync,
-    {
-        match filter(&self.0) {
-            true => map2(self.0).acc_fold(acc, fold),
-            false => acc,
-        }
-    }
+    // #[inline(always)]
+    // fn fold<X, O>(self, acc: O, fold: X) -> O
+    // where
+    //     X: Fn(O, Self::Item) -> O + Send + Sync,
+    // {
+    //     fold(acc, self.0)
+    // }
+
+    // #[inline(always)]
+    // fn fx_fold<F, M2, Vo, X, O>(self, acc: O, filter: F, map2: M2, fold: X) -> O
+    // where
+    //     Self: Sized,
+    //     F: Fn(&Self::Item) -> bool + Send + Sync,
+    //     M2: Fn(Self::Item) -> Vo + Send + Sync,
+    //     Vo: Values,
+    //     Vo::Item: Send + Sync,
+    //     X: Fn(O, Vo::Item) -> O + Send + Sync,
+    // {
+    //     match filter(&self.0) {
+    //         true => map2(self.0).fold(acc, fold),
+    //         false => acc,
+    //     }
+    // }
 
     #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>

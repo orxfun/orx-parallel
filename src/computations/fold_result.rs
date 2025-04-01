@@ -6,7 +6,7 @@
 /// crucial in a parallel program not to double-count, double-fold the identity.
 /// In other words, it makes sure that the result of a parallel-fold is independent
 /// of the number of threads used to compute the result.
-pub enum FoldResult<T> {
-    Identity(T),
-    Aggregate(T),
+pub enum FoldResult {
+    Identity,
+    Aggregate,
 }
