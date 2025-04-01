@@ -52,6 +52,17 @@ where
         Out: Send + Sync,
         FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
 
+    fn inspect<Operation>(self, operation: Operation) -> impl ParIter<R, Item = Self::Item>
+    where
+        Operation: Fn(&Self::Item) + Sync + Send + Clone,
+    {
+        let map = move |x| {
+            operation(&x);
+            x
+        };
+        self.map(map)
+    }
+
     // special item transformations
 
     fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
