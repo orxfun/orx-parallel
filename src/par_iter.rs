@@ -90,6 +90,12 @@ where
         self.map(map).reduce(reduce)
     }
 
+    fn count(self) -> usize {
+        let map = |_: Self::Item| 1;
+        let reduce = |a: usize, b: usize| a + b;
+        self.fold(map, reduce).unwrap_or(0)
+    }
+
     // early exit
 
     fn next(self) -> Option<Self::Item>;

@@ -1,3 +1,4 @@
+mod count;
 mod iter_consuming;
 mod iter_ref;
 mod range;
