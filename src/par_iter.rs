@@ -72,12 +72,17 @@ where
 
     fn get_any(self) -> Option<Self::Item>;
 
-    // fn next_any(self) -> Option<Self::Item>;
-
     fn find<P>(self, predicate: P) -> Option<Self::Item>
     where
         P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.filter(predicate).next()
+    }
+
+    fn find_any<P>(self, predicate: P) -> Option<Self::Item>
+    where
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        self.filter(predicate).get_any()
     }
 }
