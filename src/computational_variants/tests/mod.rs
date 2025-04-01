@@ -1,4 +1,5 @@
 mod count;
+mod for_each;
 mod iter_consuming;
 mod iter_ref;
 mod min_max;
