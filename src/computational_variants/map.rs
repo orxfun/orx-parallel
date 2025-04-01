@@ -37,6 +37,24 @@ where
     }
 }
 
+unsafe impl<I, O, M1, R> Send for ParMap<I, O, M1, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    O: Send + Sync,
+    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+{
+}
+
+unsafe impl<I, O, M1, R> Sync for ParMap<I, O, M1, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    O: Send + Sync,
+    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+{
+}
+
 impl<I, O, M1, R> ParIter<R> for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,

@@ -46,6 +46,34 @@ where
     }
 }
 
+unsafe impl<I, Vt, Vo, M1, F, M2, R> Send for ParXapFilterXap<I, Vt, Vo, M1, F, M2, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vt::Item: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+{
+}
+
+unsafe impl<I, Vt, Vo, M1, F, M2, R> Sync for ParXapFilterXap<I, Vt, Vo, M1, F, M2, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vt::Item: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+{
+}
+
 impl<I, Vt, Vo, M1, F, M2, R> ParIter<R> for ParXapFilterXap<I, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,

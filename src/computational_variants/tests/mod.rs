@@ -1,5 +1,6 @@
 mod copied;
 mod count;
+mod flatten;
 mod for_each;
 mod iter_consuming;
 mod iter_ref;

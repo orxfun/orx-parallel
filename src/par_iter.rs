@@ -1,16 +1,15 @@
 use crate::{
     collect_into::ParCollectInto,
-    computational_variants::Par,
     computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
     Params,
 };
-use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::ConcurrentIter;
 use std::cmp::Ordering;
 
-pub trait ParIter<R = DefaultRunner>: Sized
+pub trait ParIter<R = DefaultRunner>: Sized + Send + Sync
 where
     R: ParallelRunner,
 {
@@ -53,7 +52,7 @@ where
         Out: Send + Sync,
         FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
 
-    // reference transformations
+    // special item transformations
 
     fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
     where

@@ -40,6 +40,20 @@ where
     }
 }
 
+unsafe impl<I, R> Send for Par<I, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+{
+}
+
+unsafe impl<I, R> Sync for Par<I, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+{
+}
+
 impl<I, R> ParIter<R> for Par<I, R>
 where
     R: ParallelRunner,
