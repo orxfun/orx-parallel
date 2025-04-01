@@ -28,3 +28,8 @@ where
 {
     a + b
 }
+
+#[inline(always)]
+pub fn reduce_unit(_: (), _: ()) -> () {
+    ()
+}

@@ -1,12 +1,12 @@
 use crate::{
     collect_into::ParCollectInto,
-    computations::{map_count, reduce_sum},
+    computations::{map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
 };
 use orx_concurrent_iter::ConcurrentIter;
-use std::{cmp::Ordering, ops::Add};
+use std::cmp::Ordering;
 
 pub trait ParIter<R = DefaultRunner>: Sized
 where
@@ -95,6 +95,14 @@ where
         Out: Send + Sync,
     {
         self.map(map).reduce(reduce)
+    }
+
+    fn for_each<Operation>(self, operation: Operation)
+    where
+        Operation: Fn(Self::Item) + Sync + Send,
+    {
+        let map = |x| operation(x);
+        let _ = self.fold(map, reduce_unit);
     }
 
     fn max(self) -> Option<Self::Item>
