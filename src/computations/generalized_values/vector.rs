@@ -1,5 +1,3 @@
-use crate::computations::fold_result::FoldResult;
-
 use super::values::Values;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -120,47 +118,6 @@ where
         Fm: Fn(Self::Item) -> Option<O> + Send + Sync,
     {
         Vector(self.0.into_iter().filter_map(filter_map))
-    }
-
-    fn fold<X, O>(self, fold: X, result: FoldResult<O>) -> FoldResult<O>
-    where
-        X: Fn(O, Self::Item) -> O + Send + Sync,
-    {
-        let mut iter = self.0.into_iter();
-
-        match iter.next() {
-            Some(x) => {
-                let init = fold(result.value(), x);
-                let result = iter.fold(init, fold);
-                FoldResult::Aggregate(result)
-            }
-            None => result,
-        }
-    }
-
-    fn fx_fold<F, M2, Vo, X, O>(
-        self,
-        filter: F,
-        map2: M2,
-        fold: X,
-        mut result: FoldResult<O>,
-    ) -> FoldResult<O>
-    where
-        Self: Sized,
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(O, Vo::Item) -> O + Send + Sync,
-    {
-        for t in self.0 {
-            if filter(&t) {
-                let vo = map2(t);
-                result = vo.fold(&fold, result);
-            }
-        }
-
-        result
     }
 
     #[inline(always)]

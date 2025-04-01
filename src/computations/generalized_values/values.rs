@@ -2,8 +2,6 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-use crate::computations::fold_result::FoldResult;
-
 pub trait Values: Send + Sync {
     type Item;
 
@@ -66,25 +64,6 @@ pub trait Values: Send + Sync {
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync;
-
-    fn fold<X, O>(self, fold: X, result: FoldResult<O>) -> FoldResult<O>
-    where
-        X: Fn(O, Self::Item) -> O + Send + Sync;
-
-    fn fx_fold<F, M2, Vo, X, O>(
-        self,
-        filter: F,
-        map2: M2,
-        fold: X,
-        result: FoldResult<O>,
-    ) -> FoldResult<O>
-    where
-        Self: Sized,
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(O, Vo::Item) -> O + Send + Sync;
 
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
