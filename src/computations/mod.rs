@@ -1,4 +1,5 @@
 mod default_fns;
+mod fold_result;
 mod generalized_values;
 mod heap_sort;
 mod map;
