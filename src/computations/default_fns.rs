@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use super::generalized_values::Atom;
 
 #[inline(always)]
@@ -21,6 +23,9 @@ pub fn map_count<T>(_: T) -> usize {
 }
 
 #[inline(always)]
-pub fn reduce_sum(a: usize, b: usize) -> usize {
+pub fn reduce_sum<T>(a: T, b: T) -> T
+where
+    T: Add<T, Output = T>,
+{
     a + b
 }

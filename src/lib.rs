@@ -232,6 +232,7 @@ mod par_iter;
 mod parallelizable;
 mod parallelizable_collection;
 mod parameters;
+mod special_type_sets;
 
 pub mod runner;
 

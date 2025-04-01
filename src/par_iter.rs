@@ -3,8 +3,10 @@ use crate::{
     computations::{map_count, reduce_sum},
     parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
+    special_type_sets::Sum,
 };
 use orx_concurrent_iter::ConcurrentIter;
+use std::ops::Add;
 
 pub trait ParIter<R = DefaultRunner>: Sized
 where
@@ -82,6 +84,10 @@ where
         self.find(predicate).is_some()
     }
 
+    fn count(self) -> usize {
+        self.fold(map_count, reduce_sum).unwrap_or(0)
+    }
+
     fn fold<Map, Reduce, Out>(self, map: Map, reduce: Reduce) -> Option<Out>
     where
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
@@ -91,8 +97,13 @@ where
         self.map(map).reduce(reduce)
     }
 
-    fn count(self) -> usize {
-        self.fold(map_count, reduce_sum).unwrap_or(0)
+    fn sum<Out>(self) -> Out
+    where
+        Self::Item: Sum<Out>,
+        Out: Send + Sync,
+    {
+        self.fold(Self::Item::map, Self::Item::reduce)
+            .unwrap_or(Self::Item::zero())
     }
 
     // early exit
