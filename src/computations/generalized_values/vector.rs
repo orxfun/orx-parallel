@@ -138,33 +138,30 @@ where
         }
     }
 
-    // #[inline(always)]
-    // fn fold<X, O>(self, init: O, fold: X) -> O
-    // where
-    //     X: Fn(O, Self::Item) -> O + Send + Sync,
-    // {
-    //     self.0.into_iter().fold(init, fold)
-    // }
+    fn fx_fold<F, M2, Vo, X, O>(
+        self,
+        filter: F,
+        map2: M2,
+        fold: X,
+        mut result: FoldResult<O>,
+    ) -> FoldResult<O>
+    where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(O, Vo::Item) -> O + Send + Sync,
+    {
+        for t in self.0 {
+            if filter(&t) {
+                let vo = map2(t);
+                result = vo.fold(&fold, result);
+            }
+        }
 
-    // fn fx_fold<F, M2, Vo, X, O>(self, init: O, filter: F, map2: M2, fold: X) -> O
-    // where
-    //     Self: Sized,
-    //     F: Fn(&Self::Item) -> bool + Send + Sync,
-    //     M2: Fn(Self::Item) -> Vo + Send + Sync,
-    //     Vo: Values,
-    //     Vo::Item: Send + Sync,
-    //     X: Fn(O, Vo::Item) -> O + Send + Sync,
-    // {
-    //     let mut acc = init;
-    //     for t in self.0 {
-    //         if filter(&t) {
-    //             let vo = map2(t);
-    //             acc = vo.fold(acc, &fold);
-    //         }
-    //     }
-
-    //     acc
-    // }
+        result
+    }
 
     #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>

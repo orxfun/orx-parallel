@@ -121,29 +121,27 @@ where
         FoldResult::Aggregate(fold(result.value(), self.0))
     }
 
-    // #[inline(always)]
-    // fn fold<X, O>(self, acc: O, fold: X) -> O
-    // where
-    //     X: Fn(O, Self::Item) -> O + Send + Sync,
-    // {
-    //     fold(acc, self.0)
-    // }
-
-    // #[inline(always)]
-    // fn fx_fold<F, M2, Vo, X, O>(self, acc: O, filter: F, map2: M2, fold: X) -> O
-    // where
-    //     Self: Sized,
-    //     F: Fn(&Self::Item) -> bool + Send + Sync,
-    //     M2: Fn(Self::Item) -> Vo + Send + Sync,
-    //     Vo: Values,
-    //     Vo::Item: Send + Sync,
-    //     X: Fn(O, Vo::Item) -> O + Send + Sync,
-    // {
-    //     match filter(&self.0) {
-    //         true => map2(self.0).fold(acc, fold),
-    //         false => acc,
-    //     }
-    // }
+    #[inline(always)]
+    fn fx_fold<F, M2, Vo, X, O>(
+        self,
+        filter: F,
+        map2: M2,
+        fold: X,
+        result: FoldResult<O>,
+    ) -> FoldResult<O>
+    where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(O, Vo::Item) -> O + Send + Sync,
+    {
+        match filter(&self.0) {
+            true => map2(self.0).fold(fold, result),
+            false => result,
+        }
+    }
 
     #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
