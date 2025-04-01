@@ -66,6 +66,21 @@ where
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
+    fn all<P>(self, predicate: P) -> bool
+    where
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        let violates = |x: &Self::Item| !predicate(x);
+        self.find(violates).is_none()
+    }
+
+    fn any<P>(self, predicate: P) -> bool
+    where
+        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        self.find(predicate).is_some()
+    }
+
     // early exit
 
     fn next(self) -> Option<Self::Item>;

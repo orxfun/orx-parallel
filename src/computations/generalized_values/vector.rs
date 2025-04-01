@@ -121,6 +121,34 @@ where
     }
 
     #[inline(always)]
+    fn acc_fold<X, O>(self, init: O, fold: X) -> O
+    where
+        X: Fn(O, Self::Item) -> O + Send + Sync,
+    {
+        self.0.into_iter().fold(init, fold)
+    }
+
+    fn fx_fold<F, M2, Vo, X, O>(self, init: O, filter: F, map2: M2, fold: X) -> O
+    where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(O, Vo::Item) -> O + Send + Sync,
+    {
+        let mut acc = init;
+        for t in self.0 {
+            if filter(&t) {
+                let vo = map2(t);
+                acc = vo.acc_fold(acc, &fold);
+            }
+        }
+
+        acc
+    }
+
+    #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,

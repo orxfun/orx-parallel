@@ -114,6 +114,35 @@ where
     }
 
     #[inline(always)]
+    fn acc_fold<X, O>(self, acc: O, fold: X) -> O
+    where
+        X: Fn(O, Self::Item) -> O + Send + Sync,
+    {
+        match self {
+            None => acc,
+            Some(x) => fold(acc, x),
+        }
+    }
+
+    fn fx_fold<F, M2, Vo, X, O>(self, acc: O, filter: F, map2: M2, fold: X) -> O
+    where
+        Self: Sized,
+        F: Fn(&Self::Item) -> bool + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(O, Vo::Item) -> O + Send + Sync,
+    {
+        match self {
+            Some(x) if filter(&x) => {
+                let vo = map2(x);
+                vo.acc_fold(acc, fold)
+            }
+            _ => acc,
+        }
+    }
+
+    #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
