@@ -315,15 +315,10 @@ pub trait ParallelRunnerCompute: ParallelRunner {
                 }));
             }
 
-            let mut result = None;
-            for x in handles {
-                let thread_result = x.join().expect("failed to join the thread");
-                if result.is_none() && thread_result.is_some() {
-                    result = thread_result;
-                }
-            }
-
-            result
+            // do not wait to join other threads
+            handles
+                .into_iter()
+                .find_map(|x| x.join().expect("failed to join the thread"))
         });
 
         (num_spawned, result)

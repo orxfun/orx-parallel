@@ -15,7 +15,7 @@ const N: [usize; 2] = [1025, 4735];
     [1, 2, 4],
     [1, 64, 1024])
 ]
-fn x_flat_map_first(n: usize, nt: usize, chunk: usize) {
+fn x_flat_map_find(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let fmap = |x: String| x.chars().map(|x| x.to_string()).collect::<Vec<_>>();
     let xmap = |x: String| Vector(fmap(x));
@@ -36,7 +36,7 @@ fn x_flat_map_first(n: usize, nt: usize, chunk: usize) {
     [1, 2, 4],
     [1, 64, 1024])
 ]
-fn x_filter_map_first(n: usize, nt: usize, chunk: usize) {
+fn x_filter_map_find(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let fmap = |x: String| (!x.starts_with('3')).then_some(format!("{}!", x));
     let xmap = |x: String| Vector(fmap(x));

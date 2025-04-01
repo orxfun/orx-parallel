@@ -15,7 +15,7 @@ const N: [usize; 2] = [1025, 4735];
     [1, 2, 4],
     [1, 64, 1024])
 ]
-fn m_first(n: usize, nt: usize, chunk: usize) {
+fn m_find(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
 
     let expected = input.clone().into_iter().next();
@@ -23,8 +23,8 @@ fn m_first(n: usize, nt: usize, chunk: usize) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let m = M::new(params, iter, map_self);
-    let output = m.next();
 
+    let output = m.next();
     assert_eq!(expected, output);
 }
 
@@ -33,7 +33,7 @@ fn m_first(n: usize, nt: usize, chunk: usize) {
     [1, 2, 4],
     [1, 64, 1024])
 ]
-fn m_map_first(n: usize, nt: usize, chunk: usize) {
+fn m_map_find(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let map = |x: String| format!("{}!", x);
 
