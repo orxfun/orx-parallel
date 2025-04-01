@@ -14,3 +14,13 @@ pub fn map_self_atom<T>(input: T) -> Atom<T> {
 pub fn filter_true<T>(_: &T) -> bool {
     true
 }
+
+#[inline(always)]
+pub fn map_count<T>(_: T) -> usize {
+    1
+}
+
+#[inline(always)]
+pub fn reduce_sum(a: usize, b: usize) -> usize {
+    a + b
+}

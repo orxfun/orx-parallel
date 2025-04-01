@@ -1,5 +1,6 @@
 use crate::{
     collect_into::ParCollectInto,
+    computations::{map_count, reduce_sum},
     parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
 };
@@ -91,9 +92,7 @@ where
     }
 
     fn count(self) -> usize {
-        let map = |_: Self::Item| 1;
-        let reduce = |a: usize, b: usize| a + b;
-        self.fold(map, reduce).unwrap_or(0)
+        self.fold(map_count, reduce_sum).unwrap_or(0)
     }
 
     // early exit
