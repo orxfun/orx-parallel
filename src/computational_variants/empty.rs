@@ -51,6 +51,10 @@ where
         &self.iter
     }
 
+    fn params(&self) -> &Params {
+        &self.params
+    }
+
     // params transformations
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {

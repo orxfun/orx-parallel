@@ -64,6 +64,10 @@ where
         self.xfx.iter()
     }
 
+    fn params(&self) -> &Params {
+        &self.xfx.params()
+    }
+
     // params transformations
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {

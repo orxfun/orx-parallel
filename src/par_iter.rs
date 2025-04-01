@@ -1,11 +1,13 @@
 use crate::{
     collect_into::ParCollectInto,
+    computational_variants::Par,
     computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
+    Params,
 };
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 use std::cmp::Ordering;
 
 pub trait ParIter<R = DefaultRunner>: Sized
@@ -15,6 +17,8 @@ where
     type Item: Send + Sync;
 
     fn con_iter(&self) -> &impl ConcurrentIter;
+
+    fn params(&self) -> &Params;
 
     // params transformations
 
@@ -65,6 +69,13 @@ where
         Self: ParIter<R, Item = &'a T>,
     {
         self.map(map_clone)
+    }
+
+    fn flatten(self)
+    where
+        Self::Item: IntoConcurrentIter,
+    {
+        // let map = |e: Self::Item| Par::new(self.params().clone(), e.into_con_iter());
     }
 
     // collect
