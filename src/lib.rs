@@ -235,8 +235,8 @@ mod parameters;
 pub mod runner;
 mod special_type_sets;
 
-#[cfg(test)]
-pub mod test_utils;
+#[cfg(feature = "generic_iterator")]
+pub mod generic_iterator;
 
 pub use collect_into::ParCollectInto;
 pub use into_par_iter::IntoParIter;
