@@ -74,7 +74,7 @@ where
         }
     }
 
-    fn flat_map<IOut, FlatMap>(
+    pub fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
     ) -> GenericIterator<
@@ -102,7 +102,7 @@ where
         }
     }
 
-    fn filter_map<Out, FilterMap>(
+    pub fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
     ) -> GenericIterator<
@@ -125,7 +125,7 @@ where
         }
     }
 
-    fn inspect<Operation>(
+    pub fn inspect<Operation>(
         self,
         operation: Operation,
     ) -> GenericIterator<
@@ -140,6 +140,86 @@ where
         let sequential = self.sequential.inspect(operation.clone());
         let rayon = self.rayon.inspect(operation.clone());
         let orx = self.orx.inspect(operation);
+        GenericIterator {
+            sequential,
+            rayon,
+            orx,
+        }
+    }
+
+    // fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
+    // where
+    //     T: 'a + Copy + Send + Sync,
+    //     Self: ParIter<R, Item = &'a T>,
+    // {
+    //     self.map(map_copy)
+    // }
+
+    // fn cloned<'a, T>(self) -> impl ParIter<R, Item = T>
+    // where
+    //     T: 'a + Clone + Send + Sync,
+    //     Self: ParIter<R, Item = &'a T>,
+    // {
+    //     self.map(map_clone)
+    // }
+
+    // fn flatten(self) -> impl ParIter<R, Item = <Self::Item as IntoIterator>::Item>
+    // where
+    //     Self::Item: IntoIterator,
+    //     <Self::Item as IntoIterator>::IntoIter: Send + Sync,
+    //     <Self::Item as IntoIterator>::Item: Send + Sync,
+    //     R: Send + Sync,
+    //     Self: Send + Sync,
+    // {
+    //     let map = |e: Self::Item| e.into_iter();
+    //     self.flat_map(map)
+    // }
+}
+
+// special item transformations
+
+impl<'a, T, S, R, O> GenericIterator<&'a T, S, R, O>
+where
+    &'a T: Send + Sync,
+    S: Iterator<Item = &'a T>,
+    R: rayon::iter::ParallelIterator<Item = &'a T>,
+    O: ParIter<Item = &'a T>,
+{
+    pub fn copied(
+        self,
+    ) -> GenericIterator<
+        T,
+        impl Iterator<Item = T> + use<'a, T, S, R, O>,
+        impl rayon::iter::ParallelIterator<Item = T> + use<'a, T, S, R, O>,
+        impl ParIter<Item = T> + use<'a, T, S, R, O>,
+    >
+    where
+        T: Copy + Send + Sync + 'a,
+    {
+        let sequential = self.sequential.copied();
+        let rayon = self.rayon.copied();
+        let orx = self.orx.copied();
+        GenericIterator {
+            sequential,
+            rayon,
+            orx,
+        }
+    }
+
+    pub fn cloned(
+        self,
+    ) -> GenericIterator<
+        T,
+        impl Iterator<Item = T> + use<'a, T, S, R, O>,
+        impl rayon::iter::ParallelIterator<Item = T> + use<'a, T, S, R, O>,
+        impl ParIter<Item = T> + use<'a, T, S, R, O>,
+    >
+    where
+        T: Clone + Send + Sync + 'a,
+    {
+        let sequential = self.sequential.cloned();
+        let rayon = self.rayon.cloned();
+        let orx = self.orx.cloned();
         GenericIterator {
             sequential,
             rayon,
