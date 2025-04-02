@@ -173,6 +173,20 @@ where
             orx,
         }
     }
+
+    // consume
+
+    pub fn sequential(self) -> S {
+        self.sequential
+    }
+
+    pub fn rayon(self) -> R {
+        self.rayon
+    }
+
+    pub fn orx(self) -> O {
+        self.orx
+    }
 }
 
 // special item transformations
