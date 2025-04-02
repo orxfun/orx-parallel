@@ -49,4 +49,26 @@ where
             orx,
         }
     }
+
+    fn filter<Filter>(
+        self,
+        filter: Filter,
+    ) -> GenericIterator<
+        T,
+        impl Iterator<Item = T>,
+        impl rayon::iter::ParallelIterator<Item = T>,
+        impl ParIter<Item = T>,
+    >
+    where
+        Filter: Fn(&T) -> bool + Send + Sync + Clone,
+    {
+        let sequential = self.sequential.filter(filter.clone());
+        let rayon = self.rayon.filter(filter.clone());
+        let orx = self.orx.filter(filter);
+        GenericIterator {
+            sequential,
+            rayon,
+            orx,
+        }
+    }
 }
