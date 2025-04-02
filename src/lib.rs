@@ -232,9 +232,11 @@ mod par_iter;
 mod parallelizable;
 mod parallelizable_collection;
 mod parameters;
+pub mod runner;
 mod special_type_sets;
 
-pub mod runner;
+#[cfg(test)]
+pub mod test_utils;
 
 pub use collect_into::ParCollectInto;
 pub use into_par_iter::IntoParIter;
