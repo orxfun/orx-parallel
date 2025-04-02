@@ -101,4 +101,27 @@ where
             orx,
         }
     }
+
+    fn filter_map<Out, FilterMap>(
+        self,
+        filter_map: FilterMap,
+    ) -> GenericIterator<
+        Out,
+        impl Iterator<Item = Out>,
+        impl rayon::iter::ParallelIterator<Item = Out>,
+        impl ParIter<Item = Out>,
+    >
+    where
+        Out: Send + Sync,
+        FilterMap: Fn(T) -> Option<Out> + Send + Sync + Clone,
+    {
+        let sequential = self.sequential.filter_map(filter_map.clone());
+        let rayon = self.rayon.filter_map(filter_map.clone());
+        let orx = self.orx.filter_map(filter_map);
+        GenericIterator {
+            sequential,
+            rayon,
+            orx,
+        }
+    }
 }
