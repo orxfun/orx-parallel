@@ -124,4 +124,26 @@ where
             orx,
         }
     }
+
+    fn inspect<Operation>(
+        self,
+        operation: Operation,
+    ) -> GenericIterator<
+        T,
+        impl Iterator<Item = T>,
+        impl rayon::iter::ParallelIterator<Item = T>,
+        impl ParIter<Item = T>,
+    >
+    where
+        Operation: Fn(&T) + Sync + Send + Clone,
+    {
+        let sequential = self.sequential.inspect(operation.clone());
+        let rayon = self.rayon.inspect(operation.clone());
+        let orx = self.orx.inspect(operation);
+        GenericIterator {
+            sequential,
+            rayon,
+            orx,
+        }
+    }
 }
