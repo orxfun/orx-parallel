@@ -147,33 +147,32 @@ where
         }
     }
 
-    // fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
-    // where
-    //     T: 'a + Copy + Send + Sync,
-    //     Self: ParIter<R, Item = &'a T>,
-    // {
-    //     self.map(map_copy)
-    // }
+    // special item transformations
 
-    // fn cloned<'a, T>(self) -> impl ParIter<R, Item = T>
-    // where
-    //     T: 'a + Clone + Send + Sync,
-    //     Self: ParIter<R, Item = &'a T>,
-    // {
-    //     self.map(map_clone)
-    // }
-
-    // fn flatten(self) -> impl ParIter<R, Item = <Self::Item as IntoIterator>::Item>
-    // where
-    //     Self::Item: IntoIterator,
-    //     <Self::Item as IntoIterator>::IntoIter: Send + Sync,
-    //     <Self::Item as IntoIterator>::Item: Send + Sync,
-    //     R: Send + Sync,
-    //     Self: Send + Sync,
-    // {
-    //     let map = |e: Self::Item| e.into_iter();
-    //     self.flat_map(map)
-    // }
+    pub fn flatten(
+        self,
+    ) -> GenericIterator<
+        <T as IntoIterator>::Item,
+        impl Iterator<Item = <T as IntoIterator>::Item>,
+        impl rayon::iter::ParallelIterator<Item = <T as IntoIterator>::Item>,
+        impl ParIter<Item = <T as IntoIterator>::Item>,
+    >
+    where
+        T: IntoIterator + rayon::iter::IntoParallelIterator<Item = <T as IntoIterator>::Item>,
+        <T as IntoIterator>::IntoIter: Send + Sync,
+        <T as IntoIterator>::Item: Send + Sync,
+        R: Send + Sync,
+        Self: Send + Sync,
+    {
+        let sequential = self.sequential.flatten();
+        let rayon = self.rayon.flatten();
+        let orx = self.orx.flatten();
+        GenericIterator {
+            sequential,
+            rayon,
+            orx,
+        }
+    }
 }
 
 // special item transformations
