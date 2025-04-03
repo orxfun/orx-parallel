@@ -33,3 +33,11 @@ where
         Self::Orx(iter)
     }
 }
+
+pub fn default_sequential<T: Send + Sync>() -> core::iter::Empty<T> {
+    core::iter::empty()
+}
+
+pub fn default_rayon<T: Send + Sync>() -> rayon::iter::Empty<T> {
+    rayon::iter::empty()
+}

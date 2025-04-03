@@ -81,7 +81,9 @@ fn main() {
     let num_repetitions = 1000;
 
     let iter = || {
-        initial_iterator(n)
+        (0..n as u64)
+            .collect::<Vec<_>>()
+            .into_iter()
             .map(|x| x.to_string())
             .filter_map(|x| (!x.starts_with('1')).then_some(x))
             .flat_map(|x| [format!("{}!", &x), x])
@@ -90,12 +92,16 @@ fn main() {
             .map(|x| x.to_string().len())
     };
 
-    let elapsed = time(num_repetitions, sequential(iter()), || sequential(iter()));
-    println!("sequential : {:?}", elapsed);
+    let generic_iterators = vec![GenericIterator::sequential(iter())];
 
-    let elapsed = time(num_repetitions, sequential(iter()), || rayon(iter()));
-    println!("rayon      : {:?}", elapsed);
+    // let variants = [Varian]
 
-    let elapsed = time(num_repetitions, sequential(iter()), || orx(iter()));
-    println!("orx        : {:?}", elapsed);
+    // let elapsed = time(num_repetitions, sequential(iter()), || sequential(iter()));
+    // println!("sequential : {:?}", elapsed);
+
+    // let elapsed = time(num_repetitions, sequential(iter()), || rayon(iter()));
+    // println!("rayon      : {:?}", elapsed);
+
+    // let elapsed = time(num_repetitions, sequential(iter()), || orx(iter()));
+    // println!("orx        : {:?}", elapsed);
 }
