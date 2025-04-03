@@ -8,6 +8,10 @@ cargo run --release --features generic_iterator --example benchmark_reduce
 
 To run with desired arguments:
 cargo run --release --features generic_iterator --example benchmark_reduce -- --len 123456 --num-repetitions 10
+
+Play with the transformations inside the "compute" method or with the reduction defined in "reduce" method.
+Only make sure that:
+* elements of the input iterator are of "usize".
 */
 
 mod utils;
@@ -51,9 +55,8 @@ fn compute(
 
 fn main() {
     let args = Args::parse();
-    let (len, num_repetitions) = (args.len, args.num_repetitions);
 
-    let input = move || (0..len as usize).collect::<Vec<_>>();
+    let input = move || (0..args.len as usize).collect::<Vec<_>>();
     let expected_output = compute(GenericIterator::sequential(input().into_iter()));
 
     let computations: Vec<(&str, Box<dyn Fn() -> usize>)> = vec![
@@ -71,5 +74,10 @@ fn main() {
         ),
     ];
 
-    timed_reduce_all(num_repetitions, expected_output, &computations);
+    timed_reduce_all(
+        "benchmark_reduce",
+        args.num_repetitions,
+        expected_output,
+        &computations,
+    );
 }

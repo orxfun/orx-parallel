@@ -32,16 +32,19 @@ where
 }
 
 pub fn timed_reduce_all<O>(
+    benchmark_name: &str,
     num_repetitions: usize,
     expected_output: O,
     computations: &[(&str, Box<dyn Fn() -> O>)],
 ) where
     O: PartialEq + Debug + Copy,
 {
+    println!("\n{} {} {}", "#".repeat(10), benchmark_name, "#".repeat(10));
     for (name, fun) in computations {
         let duration = timed_reduce(num_repetitions, expected_output, fun);
         println!("{:>10} : {:?}", name, duration);
     }
+    println!("{}\n", "#".repeat(10 + 10 + 2 + benchmark_name.len()));
 }
 
 // collect
@@ -70,6 +73,7 @@ where
 }
 
 pub fn timed_collect_all<Out, O>(
+    benchmark_name: &str,
     num_repetitions: usize,
     expected_output: &[O],
     computations: &[(&str, Box<dyn Fn() -> Out>)],
@@ -77,8 +81,10 @@ pub fn timed_collect_all<Out, O>(
     Out: IntoIterator<Item = O>,
     O: PartialEq + Debug,
 {
+    println!("\n{} {} {}", "#".repeat(10), benchmark_name, "#".repeat(10));
     for (name, fun) in computations {
         let duration = timed_collect(num_repetitions, expected_output, fun);
         println!("{:>10} : {:?}", name, duration);
     }
+    println!("{}\n", "#".repeat(10 + 10 + 2 + benchmark_name.len()));
 }
