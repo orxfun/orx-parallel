@@ -10,6 +10,13 @@ where
     sequential: S,
     rayon: R,
     orx: O,
+    compute_with: IteratorVariant,
+}
+
+pub enum IteratorVariant {
+    Sequential,
+    Rayon,
+    Orx,
 }
 
 impl<T, S, R, O> GenericIterator<T, S, R, O>
@@ -24,6 +31,16 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: IteratorVariant::Sequential,
+        }
+    }
+
+    pub fn compute_with(self, variant: IteratorVariant) -> Self {
+        Self {
+            sequential: self.sequential,
+            rayon: self.rayon,
+            orx: self.orx,
+            compute_with: variant,
         }
     }
 
@@ -49,6 +66,7 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 
@@ -71,6 +89,7 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 
@@ -99,6 +118,7 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 
@@ -122,6 +142,7 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 
@@ -144,6 +165,7 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 
@@ -171,10 +193,11 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 
-    // consume
+    // into inner
 
     pub fn sequential(self) -> S {
         self.sequential
@@ -187,6 +210,8 @@ where
     pub fn orx(self) -> O {
         self.orx
     }
+
+    // collect
 }
 
 // special item transformations
@@ -216,6 +241,7 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 
@@ -237,6 +263,7 @@ where
             sequential,
             rayon,
             orx,
+            compute_with: self.compute_with,
         }
     }
 }
