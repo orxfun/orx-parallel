@@ -8,13 +8,13 @@ fn main() {
 REQUIRES FEATURE: generic_iterator
 
 To view the arguments:
-cargo run --release --features generic_iterator --example benchmark_find -- --help
+cargo run --release --features generic_iterator --example benchmark_find_any -- --help
 
 To run with default arguments:
-cargo run --release --features generic_iterator --example benchmark_find
+cargo run --release --features generic_iterator --example benchmark_find_any
 
 To run with desired arguments:
-cargo run --release --features generic_iterator --example benchmark_find -- --len 123456 --num-repetitions 10
+cargo run --release --features generic_iterator --example benchmark_find_any -- --len 123456 --num-repetitions 10
 
 Play with the transformations inside the compute method to test out different computations.
 
@@ -62,14 +62,14 @@ fn main() {
     fn get_find(n: usize, find_when: FindWhen) -> impl Fn(&String) -> bool + Send + Sync + Clone {
         move |x| match find_when {
             FindWhen::Early => x.starts_with("3"),
-            FindWhen::Middle => {
-                let position = n / 2;
-                x == &position.to_string()
-            }
-            FindWhen::Late => {
-                let position = n.saturating_sub(1);
-                x == &position.to_string()
-            }
+            FindWhen::Middle => match x.parse::<usize>() {
+                Ok(number) => number > n / 2,
+                _ => false,
+            },
+            FindWhen::Late => match x.parse::<usize>() {
+                Ok(number) => number > n * 10 / 9,
+                _ => false,
+            },
             FindWhen::Never => x.starts_with("x"),
         }
     }
@@ -88,7 +88,7 @@ fn main() {
             .flat_map(|x| [format!("{}!", &x), x])
             .filter(|x| !x.starts_with('2'))
             .filter_map(|x| (!x.ends_with("!")).then_some(x))
-            .find(find)
+            .find_any(find)
             .unwrap_or_default()
     }
 
@@ -104,7 +104,6 @@ fn main() {
 
     for when in find_when {
         let find = move || get_find(args.len, when);
-        let expected_output = compute(find(), GenericIterator::sequential(input().into_iter()));
 
         let computations: Vec<(&str, Box<dyn Fn() -> String>)> = vec![
             (
@@ -122,9 +121,9 @@ fn main() {
         ];
 
         timed_reduce_all(
-            &format!("find item that is {}", when),
+            &format!("find any of the items that is {}", when),
             args.num_repetitions,
-            Some(expected_output),
+            None,
             &computations,
         );
     }

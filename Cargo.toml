@@ -40,5 +40,5 @@ harness = false
 doctest = false
 
 [features]
-default = []
+default = ["generic_iterator"]
 generic_iterator = ["rayon"]

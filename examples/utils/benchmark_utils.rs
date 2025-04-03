@@ -8,13 +8,15 @@ use std::{
 
 // reduce
 
-fn timed_reduce<F, O>(num_repetitions: usize, expected_output: O, fun: F) -> Duration
+fn timed_reduce<F, O>(num_repetitions: usize, expected_output: &Option<O>, fun: F) -> Duration
 where
     F: Fn() -> O,
     O: PartialEq + Debug,
 {
-    let result = fun();
-    assert_eq!(result, expected_output);
+    if let Some(expected_output) = expected_output.as_ref() {
+        let result = fun();
+        assert_eq!(&result, expected_output);
+    }
 
     // warm up
     for _ in 0..10 {
@@ -26,7 +28,9 @@ where
     let now = SystemTime::now();
     for _ in 0..num_repetitions {
         let result = black_box(fun());
-        assert_eq!(result, expected_output);
+        if let Some(expected_output) = expected_output.as_ref() {
+            assert_eq!(&result, expected_output);
+        }
     }
     now.elapsed().unwrap()
 }
@@ -34,14 +38,14 @@ where
 pub fn timed_reduce_all<O>(
     benchmark_name: &str,
     num_repetitions: usize,
-    expected_output: O,
+    expected_output: Option<O>,
     computations: &[(&str, Box<dyn Fn() -> O>)],
 ) where
     O: PartialEq + Debug + Clone,
 {
     println!("\n{} {} {}", "#".repeat(10), benchmark_name, "#".repeat(10));
     for (name, fun) in computations {
-        let duration = timed_reduce(num_repetitions, expected_output.clone(), fun);
+        let duration = timed_reduce(num_repetitions, &expected_output, fun);
         println!("{:>10} : {:?}", name, duration);
     }
     println!("{}\n", "#".repeat(10 + 10 + 2 + benchmark_name.len()));

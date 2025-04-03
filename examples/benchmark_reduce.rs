@@ -84,7 +84,7 @@ fn main() {
     timed_reduce_all(
         "benchmark_reduce",
         args.num_repetitions,
-        expected_output,
+        Some(expected_output),
         &computations,
     );
 }
