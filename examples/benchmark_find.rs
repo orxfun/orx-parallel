@@ -1,8 +1,25 @@
+/* REQUIRES FEATURE: generic_iterator
+
+To view the arguments:
+cargo run --release --features generic_iterator --example benchmark_find -- --help
+
+To run with default arguments:
+cargo run --release --features generic_iterator --example benchmark_find
+
+To run with desired arguments:
+cargo run --release --features generic_iterator --example benchmark_find -- --len 123456 --num-repetitions 10
+
+Play with the transformations inside the "compute" method or with the reduction defined in "reduce" method.
+Only make sure that:
+* elements of the input iterator are of "usize".
+*/
+
 mod utils;
 
 use clap::Parser;
 use orx_parallel::{generic_iterator::GenericIterator, IntoParIter, ParIter};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::fmt::Display;
 use utils::timed_reduce_all;
 
 #[derive(Parser, Debug)]
@@ -15,6 +32,7 @@ struct Args {
     num_repetitions: usize,
 }
 
+#[derive(Parser, Debug, Clone, Copy)]
 enum FindWhen {
     Early,
     Middle,
@@ -22,7 +40,18 @@ enum FindWhen {
     Never,
 }
 
-fn get_find(n: usize, find_when: FindWhen) -> impl Fn(&String) -> bool {
+impl Display for FindWhen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FindWhen::Early => write!(f, "at the BEGINNING of the iterator"),
+            FindWhen::Middle => write!(f, "in the MIDDLE of the iterator"),
+            FindWhen::Late => write!(f, "at the END of the iterator"),
+            FindWhen::Never => write!(f, "is NOT in the iterator"),
+        }
+    }
+}
+
+fn get_find(n: usize, find_when: FindWhen) -> impl Fn(&String) -> bool + Send + Sync + Clone {
     move |x| match find_when {
         FindWhen::Early => x.starts_with("3"),
         FindWhen::Middle => {
@@ -37,25 +66,59 @@ fn get_find(n: usize, find_when: FindWhen) -> impl Fn(&String) -> bool {
     }
 }
 
-fn reduce(a: usize, b: usize) -> usize {
-    (a + b).saturating_sub(1)
+fn compute(
+    find: impl Fn(&String) -> bool + Send + Sync + Clone,
+    iter: GenericIterator<
+        usize,
+        impl Iterator<Item = usize>,
+        impl ParallelIterator<Item = usize>,
+        impl ParIter<Item = usize>,
+    >,
+) -> String {
+    iter.map(|x| x.to_string())
+        .filter_map(|x| (!x.starts_with('1')).then_some(x))
+        .flat_map(|x| [format!("{}!", &x), x])
+        .filter(|x| !x.starts_with('2'))
+        .filter_map(|x| (!x.ends_with("!")).then_some(x))
+        .find(find)
+        .unwrap_or_default()
 }
 
-// fn compute(
-//     iter: GenericIterator<
-//         usize,
-//         impl Iterator<Item = usize>,
-//         impl ParallelIterator<Item = usize>,
-//         impl ParIter<Item = usize>,
-//     >,
-//     find: impl Fn(&String) -> bool,
-// ) -> usize {
-//     iter.map(|x| x.to_string())
-//         .filter_map(|x| (!x.starts_with('1')).then_some(x))
-//         .flat_map(|x| [format!("{}!", &x), x])
-//         .filter(|x| !x.starts_with('2'))
-//         .filter_map(|x| x.parse::<u64>().ok())
-//         .find(find)
-// }
+fn main() {
+    let args = Args::parse();
+    let find_when = [
+        FindWhen::Early,
+        FindWhen::Middle,
+        FindWhen::Late,
+        FindWhen::Never,
+    ];
 
-fn main() {}
+    let input = move || (0..args.len as usize).collect::<Vec<_>>();
+
+    for when in find_when {
+        let find = move || get_find(args.len, when);
+        let expected_output = compute(find(), GenericIterator::sequential(input().into_iter()));
+
+        let computations: Vec<(&str, Box<dyn Fn() -> String>)> = vec![
+            (
+                "sequential",
+                Box::new(move || compute(find(), GenericIterator::sequential(input().into_iter()))),
+            ),
+            (
+                "rayon",
+                Box::new(move || compute(find(), GenericIterator::rayon(input().into_par_iter()))),
+            ),
+            (
+                "orx",
+                Box::new(move || compute(find(), GenericIterator::orx(input().into_par()))),
+            ),
+        ];
+
+        timed_reduce_all(
+            &format!("find item at the {} of the input", when),
+            args.num_repetitions,
+            expected_output,
+            &computations,
+        );
+    }
+}

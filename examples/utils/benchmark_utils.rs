@@ -37,11 +37,11 @@ pub fn timed_reduce_all<O>(
     expected_output: O,
     computations: &[(&str, Box<dyn Fn() -> O>)],
 ) where
-    O: PartialEq + Debug + Copy,
+    O: PartialEq + Debug + Clone,
 {
     println!("\n{} {} {}", "#".repeat(10), benchmark_name, "#".repeat(10));
     for (name, fun) in computations {
-        let duration = timed_reduce(num_repetitions, expected_output, fun);
+        let duration = timed_reduce(num_repetitions, expected_output.clone(), fun);
         println!("{:>10} : {:?}", name, duration);
     }
     println!("{}\n", "#".repeat(10 + 10 + 2 + benchmark_name.len()));
