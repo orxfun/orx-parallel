@@ -77,6 +77,8 @@
 //     now.elapsed().unwrap()
 // }
 
+mod utils;
+
 fn main() {
     // let n = 100000;
     // let num_repetitions = 1000;

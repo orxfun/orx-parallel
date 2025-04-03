@@ -21,7 +21,7 @@ where
 
     let now = SystemTime::now();
     for _ in 0..num_repetitions {
-        let result = fun();
+        let result = black_box(fun());
         assert_eq!(result, expected_output);
     }
     now.elapsed().unwrap()
@@ -36,6 +36,6 @@ pub fn timed_reduce_all<O>(
 {
     for (name, fun) in computations {
         let duration = timed_reduce(num_repetitions, expected_output, fun);
-        println!("{} : {:?}", name, duration);
+        println!("{:>10} : {:?}", name, duration);
     }
 }
