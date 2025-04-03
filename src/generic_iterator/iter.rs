@@ -1,4 +1,4 @@
-use crate::{iter::ParEmpty, ParIter};
+use crate::ParIter;
 
 pub enum GenericIterator<T, S, R, O>
 where
@@ -40,16 +40,4 @@ where
     pub fn orx(iter: O) -> Self {
         Self::Orx(iter)
     }
-}
-
-fn default_sequential<T: Send + Sync>() -> core::iter::Empty<T> {
-    core::iter::empty()
-}
-
-fn default_rayon<T: Send + Sync>() -> rayon::iter::Empty<T> {
-    rayon::iter::empty()
-}
-
-fn default_orx<T: Send + Sync>() -> ParEmpty<T> {
-    crate::iter::empty()
 }
