@@ -212,6 +212,14 @@ where
     }
 
     // collect
+
+    pub fn collect_vec(self) -> Vec<T> {
+        match self.compute_with {
+            IteratorVariant::Sequential => self.sequential.collect(),
+            IteratorVariant::Rayon => self.rayon.collect(),
+            IteratorVariant::Orx => self.orx.collect(),
+        }
+    }
 }
 
 // special item transformations
