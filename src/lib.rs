@@ -227,6 +227,8 @@ mod collect_into;
 pub mod computational_variants;
 mod computations;
 mod into_par_iter;
+/// Module for creating special iterators.
+pub mod iter;
 mod iter_into_par_iter;
 mod par_iter;
 mod parallelizable;
