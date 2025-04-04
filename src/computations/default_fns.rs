@@ -12,11 +12,6 @@ pub fn map_self_atom<T>(input: T) -> Atom<T> {
 }
 
 #[inline(always)]
-pub fn filter_true<T>(_: &T) -> bool {
-    true
-}
-
-#[inline(always)]
 pub fn map_count<T>(_: T) -> usize {
     1
 }
@@ -40,6 +35,4 @@ where
 }
 
 #[inline(always)]
-pub fn reduce_unit(_: (), _: ()) -> () {
-    ()
-}
+pub fn reduce_unit(_: (), _: ()) {}

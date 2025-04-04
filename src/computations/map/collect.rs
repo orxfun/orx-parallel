@@ -1,7 +1,7 @@
 use super::m::M;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTaskWithIdx};
 #[cfg(test)]
-use crate::{runner::ParallelTask, CollectOrdering};
+use crate::{CollectOrdering, runner::ParallelTask};
 #[cfg(test)]
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -131,7 +131,7 @@ where
     }
 }
 
-impl<'a, I, O, M1, P> ParallelTaskWithIdx for MCollectInInputOrder<'a, I, O, M1, P>
+impl<I, O, M1, P> ParallelTaskWithIdx for MCollectInInputOrder<'_, I, O, M1, P>
 where
     O: Send + Sync,
     M1: Fn(I) -> O + Send + Sync,
@@ -180,7 +180,7 @@ where
 }
 
 #[cfg(test)]
-impl<'a, I, O, M1, P> ParallelTask for MCollectInArbitraryOrder<'a, I, O, M1, P>
+impl<I, O, M1, P> ParallelTask for MCollectInArbitraryOrder<'_, I, O, M1, P>
 where
     O: Send + Sync,
     M1: Fn(I) -> O + Send + Sync,

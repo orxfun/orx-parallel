@@ -1,8 +1,8 @@
 use super::xfx::Xfx;
-use crate::computations::heap_sort::heap_sort_into;
-use crate::computations::Values;
-use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask};
 use crate::CollectOrdering;
+use crate::computations::Values;
+use crate::computations::heap_sort::heap_sort_into;
+use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
@@ -150,8 +150,8 @@ where
     }
 }
 
-impl<'a, I, Vt, Vo, M1, F, M2, P> ParallelTask
-    for XfxCollectInArbitraryOrder<'a, I, Vt, Vo, M1, F, M2, P>
+impl<I, Vt, Vo, M1, F, M2, P> ParallelTask
+    for XfxCollectInArbitraryOrder<'_, I, Vt, Vo, M1, F, M2, P>
 where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
@@ -167,7 +167,7 @@ where
     #[inline]
     fn f1(&self, value: Self::Item) {
         let values_vt = (self.map1)(value);
-        values_vt.filter_map_collect_arbitrary(&self.filter, &self.map2, &self.bag);
+        values_vt.filter_map_collect_arbitrary(&self.filter, &self.map2, self.bag);
     }
 
     #[inline(always)]

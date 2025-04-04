@@ -1,8 +1,8 @@
 use super::x::X;
 use crate::{
-    computations::{heap_sort::heap_sort_into, Values},
-    runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask},
     CollectOrdering,
+    computations::{Values, heap_sort::heap_sort_into},
+    runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -126,7 +126,7 @@ where
     }
 }
 
-impl<'a, I, Vo, M1, P> ParallelTask for XCollectInArbitraryOrder<'a, I, Vo, M1, P>
+impl<I, Vo, M1, P> ParallelTask for XCollectInArbitraryOrder<'_, I, Vo, M1, P>
 where
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,

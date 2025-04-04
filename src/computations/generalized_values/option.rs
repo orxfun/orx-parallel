@@ -84,10 +84,7 @@ where
         O: Send + Sync,
         M: Fn(Self::Item) -> O + Send + Sync,
     {
-        match self {
-            Some(x) => Some(map(x)),
-            None => None,
-        }
+        self.map(map)
     }
 
     #[inline(always)]

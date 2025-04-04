@@ -74,6 +74,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
 
     // collect
 
+    #[allow(clippy::type_complexity)]
     fn x_collect_with_idx<I, Vo, M1>(
         &self,
         iter: &I,
@@ -110,6 +111,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         (num_spawned, vectors)
     }
 
+    #[allow(clippy::type_complexity)]
     fn xfx_collect_with_idx<I, Vt, Vo, M1, F, M2>(
         &self,
         iter: &I,

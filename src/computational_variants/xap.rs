@@ -1,8 +1,8 @@
 use crate::{
-    computational_variants::xap_filter_xap::ParXapFilterXap,
-    computations::{map_self_atom, Values, X},
-    runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
+    computational_variants::xap_filter_xap::ParXapFilterXap,
+    computations::{Values, X, map_self_atom},
+    runner::{DefaultRunner, ParallelRunner},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -74,7 +74,7 @@ where
     }
 
     fn params(&self) -> &Params {
-        &self.x.params()
+        self.x.params()
     }
 
     // params transformations

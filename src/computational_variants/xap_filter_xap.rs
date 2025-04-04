@@ -1,7 +1,7 @@
 use crate::{
+    ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
     computations::{Values, Xfx},
     runner::{DefaultRunner, ParallelRunner},
-    ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -93,7 +93,7 @@ where
     }
 
     fn params(&self) -> &Params {
-        &self.xfx.params()
+        self.xfx.params()
     }
 
     // params transformations

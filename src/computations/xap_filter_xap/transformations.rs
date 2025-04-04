@@ -12,6 +12,7 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
+    #[allow(clippy::type_complexity)]
     pub fn map<M, Q>(
         self,
         map: M,
@@ -28,6 +29,7 @@ where
         Xfx::new(params, iter, map1, filter, map2)
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn flat_map<Fm, Vq>(
         self,
         flat_map: Fm,
