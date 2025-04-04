@@ -6,11 +6,6 @@ const N: [usize; 2] = [37, 125];
 #[cfg(not(miri))]
 const N: [usize; 2] = [8025, 42735];
 
-fn input<O: FromIterator<String>>(n: usize) -> O {
-    let elem = |x: usize| (x + 10).to_string();
-    (0..n).map(elem).collect()
-}
-
 #[test_matrix(
     [0, 1, N[0], N[1]],
     [1, 2, 4],
