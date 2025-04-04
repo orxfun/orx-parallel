@@ -82,7 +82,7 @@ where
 
         // values has length of offset+m where m is the number of added elements
         let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
-        bag.reserve_maximum_capacity(2 << 32);
+        bag.reserve_maximum_capacity(usize::MAX);
 
         let task = XfxCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
             xap1, filter, xap2, &bag,

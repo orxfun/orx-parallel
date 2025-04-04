@@ -1,7 +1,7 @@
 use crate::{
+    CollectOrdering, Params,
     computations::{Vector, X},
     runner::DefaultRunner,
-    CollectOrdering, Params,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
@@ -26,7 +26,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrderi
     let fmap = |x: String| x.chars().map(|x| x.to_string()).collect::<Vec<_>>();
     let xmap = |x: String| Vector(fmap(x));
 
-    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut output = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
     let mut expected = Vec::new();
 
     for i in 0..offset {
@@ -65,7 +65,7 @@ fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrde
     let fmap = |x: String| (!x.starts_with('3')).then_some(format!("{}!", x));
     let xmap = |x: String| Vector(fmap(x));
 
-    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut output = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
     let mut expected = Vec::new();
 
     for i in 0..offset {

@@ -1,5 +1,5 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computations::{Values, Xfx, M, X};
+use crate::computations::{M, Values, X, Xfx};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -27,7 +27,7 @@ where
     {
         match m.par_len() {
             None => {
-                let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+                let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
                 let split_vec = split_vec.m_collect_into::<R, _, _>(m);
                 extend_from_split(self, split_vec)
             }
@@ -48,7 +48,7 @@ where
         Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Send + Sync,
     {
-        let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
         extend_from_split(self, split_vec)
     }
@@ -64,7 +64,7 @@ where
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        let split_vec = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx);
         extend_from_split(self, split_vec)
     }

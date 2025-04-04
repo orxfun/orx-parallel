@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
-    computations::{Values, Xfx, M, X},
+    computations::{M, Values, X, Xfx},
     runner::ParallelRunner,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -74,7 +74,7 @@ fn reserve<T, G: GrowthWithConstantTimeAccess>(
     len_to_extend: Option<usize>,
 ) {
     match len_to_extend {
-        None => split_vec.reserve_maximum_concurrent_capacity(1 << 32),
+        None => split_vec.reserve_maximum_concurrent_capacity(usize::MAX),
         Some(len) => split_vec.reserve_maximum_concurrent_capacity(split_vec.len() + len),
     };
 }

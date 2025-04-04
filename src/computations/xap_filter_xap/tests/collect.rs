@@ -1,6 +1,6 @@
-use crate::computations::{map_self_atom, Atom, Values};
+use crate::computations::{Atom, Values, map_self_atom};
 use crate::{
-    computations::xap_filter_xap::xfx::Xfx, runner::DefaultRunner, CollectOrdering, Params,
+    CollectOrdering, Params, computations::xap_filter_xap::xfx::Xfx, runner::DefaultRunner,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
@@ -35,7 +35,7 @@ fn xfx_map_filter_collect(
         false => true,
     };
 
-    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut output = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
     let mut expected = Vec::new();
 
     for i in 0..offset {
@@ -89,7 +89,7 @@ fn xfx_filter_collect(
         false => true,
     };
 
-    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut output = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
     let mut expected = Vec::new();
 
     for i in 0..offset {
@@ -139,7 +139,7 @@ fn xfx_map_filter_map_collect(
     };
     let map2 = |x: String| Atom(x.len());
 
-    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut output = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
     let mut expected = Vec::new();
 
     for i in 0..offset {

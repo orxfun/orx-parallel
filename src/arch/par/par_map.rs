@@ -3,12 +3,12 @@ use super::{
     par_flatmap::ParFlatMap, par_map_fil::ParMapFilter,
 };
 use crate::{
+    Fallible, ParCollectInto, Params,
     core::{
         default_fns::no_filter, map_fil_cnt::map_fil_cnt, map_fil_find::map_fil_find,
         map_fil_red::map_fil_red,
     },
     par_iter::Par,
-    Fallible, ParCollectInto, Params,
 };
 use orx_concurrent_iter::{ConcurrentIter, ConcurrentIterX};
 use orx_split_vec::{Recursive, SplitVec};

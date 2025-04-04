@@ -1,4 +1,4 @@
-use crate::{computations::map::m::M, runner::DefaultRunner, CollectOrdering, Params};
+use crate::{CollectOrdering, Params, computations::map::m::M, runner::DefaultRunner};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
@@ -21,7 +21,7 @@ fn m_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let map = |x: String| format!("{}!", x);
 
-    let mut output = SplitVec::with_doubling_growth_and_fragments_capacity(32);
+    let mut output = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
     let mut expected = Vec::new();
 
     for i in 0..offset {
