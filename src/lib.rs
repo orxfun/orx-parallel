@@ -247,3 +247,4 @@ pub use par_iter::ParIter;
 pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;
 pub use parameters::{ChunkSize, CollectOrdering, NumThreads, Params};
+pub use special_type_sets::Sum;
