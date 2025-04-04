@@ -89,7 +89,7 @@ where
         let mut bag: ConcurrentBag<O, P> = pinned_vec.into();
         match iter.try_get_len() {
             Some(iter_len) => bag.reserve_maximum_capacity(offset + iter_len),
-            None => bag.reserve_maximum_capacity(2 << 32),
+            None => bag.reserve_maximum_capacity(usize::MAX),
         };
         let task = MCollectInArbitraryOrder::new(&bag, map1);
 
