@@ -74,7 +74,10 @@ fn reserve<T, G: GrowthWithConstantTimeAccess>(
     len_to_extend: Option<usize>,
 ) {
     match len_to_extend {
-        None => split_vec.reserve_maximum_concurrent_capacity(usize::MAX),
+        None => {
+            let capacity_bound = split_vec.capacity_bound();
+            split_vec.reserve_maximum_concurrent_capacity(capacity_bound)
+        }
         Some(len) => split_vec.reserve_maximum_concurrent_capacity(split_vec.len() + len),
     };
 }

@@ -2,11 +2,7 @@ use orx_parallel::*;
 use std::cmp::Ordering;
 
 fn some_if(condition: bool, value: String) -> Option<String> {
-    if condition {
-        Some(value)
-    } else {
-        None
-    }
+    if condition { Some(value) } else { None }
 }
 
 pub fn reduce<R: Par<Item = String>>(par: R, len: usize) {

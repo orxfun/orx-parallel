@@ -80,9 +80,9 @@ where
         let (xfx, pinned_vec) = (self.xfx, self.pinned_vec);
         let (params, iter, xap1, filter, xap2) = xfx.destruct();
 
-        // values has length of offset+m where m is the number of added elements
+        let capacity_bound = pinned_vec.capacity_bound();
         let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
-        bag.reserve_maximum_capacity(usize::MAX);
+        bag.reserve_maximum_capacity(capacity_bound);
 
         let task = XfxCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
             xap1, filter, xap2, &bag,

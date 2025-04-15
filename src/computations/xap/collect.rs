@@ -72,8 +72,9 @@ where
         let (x, pinned_vec) = (self.x, self.pinned_vec);
         let (params, iter, xap1) = x.destruct();
 
+        let capacity_bound = pinned_vec.capacity_bound();
         let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
-        bag.reserve_maximum_capacity(usize::MAX);
+        bag.reserve_maximum_capacity(capacity_bound);
 
         let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P>::new(xap1, &bag);
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
