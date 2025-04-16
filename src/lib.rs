@@ -240,6 +240,9 @@ mod special_type_sets;
 #[cfg(feature = "generic_iterator")]
 pub mod generic_iterator;
 
+#[cfg(test)]
+mod test_utils;
+
 pub use collect_into::ParCollectInto;
 pub use into_par_iter::IntoParIter;
 pub use iter_into_par_iter::IterIntoParIter;

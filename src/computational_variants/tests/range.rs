@@ -1,13 +1,22 @@
-use crate::*;
+use crate::{test_utils::test_n_nt_chunk, *};
 use orx_fixed_vec::FixedVec;
 use orx_iterable::Iterable;
 use orx_split_vec::SplitVec;
 use test_case::test_matrix;
 
-#[cfg(miri)]
-const N: [usize; 2] = [37, 125];
 #[cfg(not(miri))]
-const N: [usize; 2] = [1025, 4735];
+const N: &[usize] = &[8025, 42735];
+#[cfg(not(miri))]
+const NT: &[usize] = &[1, 2, 4];
+#[cfg(not(miri))]
+const CHUNK: &[usize] = &[1, 64, 1024];
+
+#[cfg(miri)]
+const N: &[usize] = &[37, 125];
+#[cfg(miri)]
+const NT: &[usize] = &[3];
+#[cfg(miri)]
+const CHUNK: &[usize] = &[1, 64];
 
 const N_OFFSET: usize = 13;
 
@@ -34,72 +43,76 @@ fn expected<T>(
 
 #[test_matrix(
     [Vec::<usize>::new(), SplitVec::<usize>::new(), FixedVec::<usize>::new(0), Vec::<usize>::from_iter(offset()), SplitVec::<usize>::from_iter(offset()), FixedVec::<usize>::from_iter(offset()) ],
-    [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024])
+    N, NT, CHUNK)
 ]
-fn empty_collect_into<C>(output: C, n: usize, nt: usize, chunk: usize)
+fn empty_collect_into<C>(output: C, n: &[usize], nt: &[usize], chunk: &[usize])
 where
-    C: ParCollectInto<usize>,
+    C: ParCollectInto<usize> + Clone,
 {
-    let input = 0..n;
-    let expected = expected(!output.is_empty(), input.clone(), |x| x);
-    let par = input.into_par().num_threads(nt).chunk_size(chunk);
-    let output = par.collect_into(output);
-    assert!(output.is_equal_to(&expected));
+    let test = |n, nt, chunk| {
+        let input = 0..n;
+        let expected = expected(!output.is_empty(), input.clone(), |x| x);
+        let par = input.into_par().num_threads(nt).chunk_size(chunk);
+        let output = par.collect_into(output.clone());
+        assert!(output.is_equal_to(&expected));
+    };
+    test_n_nt_chunk(n, nt, chunk, test);
 }
 
 #[test_matrix(
     [Vec::<usize>::new(), SplitVec::<usize>::new(), FixedVec::<usize>::new(0)],
-    [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024])
+    N, NT, CHUNK)
 ]
-fn empty_collect<C>(_: C, n: usize, nt: usize, chunk: usize)
+fn empty_collect<C>(_: C, n: &[usize], nt: &[usize], chunk: &[usize])
 where
     C: ParCollectInto<usize>,
 {
-    let input = 0..n;
-    let expected = expected(false, input.clone(), |x| x);
-    let par = input.into_par().num_threads(nt).chunk_size(chunk);
-    let output: C = par.collect();
-    assert!(output.is_equal_to(&expected));
+    let test = |n, nt, chunk| {
+        let input = 0..n;
+        let expected = expected(false, input.clone(), |x| x);
+        let par = input.into_par().num_threads(nt).chunk_size(chunk);
+        let output: C = par.collect();
+        assert!(output.is_equal_to(&expected));
+    };
+    test_n_nt_chunk(n, nt, chunk, test);
 }
 
 // collect - map
 
 #[test_matrix(
     [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0)],
-    [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024])
+    N, NT, CHUNK)
 ]
-fn map_collect_into<C>(output: C, n: usize, nt: usize, chunk: usize)
+fn map_collect_into<C>(output: C, n: &[usize], nt: &[usize], chunk: &[usize])
 where
-    C: ParCollectInto<String>,
+    C: ParCollectInto<String> + Clone,
 {
-    let map = |x: usize| x.to_string();
-    let input = 0..n;
-    let expected = expected(!output.is_empty(), input.clone(), map);
-    let par = input.into_par().num_threads(nt).chunk_size(chunk);
-    let output = par.map(map).collect_into(output);
-    assert!(output.is_equal_to(&expected));
+    let test = |n, nt, chunk| {
+        let map = |x: usize| x.to_string();
+        let input = 0..n;
+        let expected = expected(!output.is_empty(), input.clone(), map);
+        let par = input.into_par().num_threads(nt).chunk_size(chunk);
+        let output = par.map(map).collect_into(output.clone());
+        assert!(output.is_equal_to(&expected));
+    };
+    test_n_nt_chunk(n, nt, chunk, test);
 }
 
 #[test_matrix(
     [Vec::<String>::new(), SplitVec::<String>::new(), FixedVec::<String>::new(0)],
-    [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024])
+    N, NT, CHUNK)
 ]
-fn map_collect<C>(_: C, n: usize, nt: usize, chunk: usize)
+fn map_collect<C>(_: C, n: &[usize], nt: &[usize], chunk: &[usize])
 where
     C: ParCollectInto<String>,
 {
-    let map = |x: usize| x.to_string();
-    let input = 0..n;
-    let expected = expected(false, input.clone(), map);
-    let par = input.into_par().num_threads(nt).chunk_size(chunk);
-    let output: C = par.map(map).collect();
-    assert!(output.is_equal_to(&expected));
+    let test = |n, nt, chunk| {
+        let map = |x: usize| x.to_string();
+        let input = 0..n;
+        let expected = expected(false, input.clone(), map);
+        let par = input.into_par().num_threads(nt).chunk_size(chunk);
+        let output: C = par.map(map).collect();
+        assert!(output.is_equal_to(&expected));
+    };
+    test_n_nt_chunk(n, nt, chunk, test);
 }
