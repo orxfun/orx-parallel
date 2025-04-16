@@ -10,7 +10,7 @@ pub const N: &[usize] = &[125];
 #[cfg(miri)]
 pub const NT: &[usize] = &[3];
 #[cfg(miri)]
-pub const CHUNK: &[usize] = &[1, 64];
+pub const CHUNK: &[usize] = &[8];
 
 pub fn test_n_nt_chunk<T>(n: &[usize], nt: &[usize], chunk: &[usize], test: T)
 where
