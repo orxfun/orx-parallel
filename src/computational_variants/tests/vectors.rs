@@ -1,22 +1,8 @@
-use crate::{test_utils::test_n_nt_chunk, *};
+use crate::{test_utils::*, *};
 use orx_fixed_vec::FixedVec;
 use orx_iterable::Collection;
 use orx_split_vec::SplitVec;
 use test_case::test_matrix;
-
-#[cfg(not(miri))]
-const N: &[usize] = &[8025, 42735];
-#[cfg(not(miri))]
-const NT: &[usize] = &[1, 2, 4];
-#[cfg(not(miri))]
-const CHUNK: &[usize] = &[1, 64, 1024];
-
-#[cfg(miri)]
-const N: &[usize] = &[37, 125];
-#[cfg(miri)]
-const NT: &[usize] = &[3];
-#[cfg(miri)]
-const CHUNK: &[usize] = &[1, 64];
 
 const N_OFFSET: usize = 13;
 
