@@ -83,7 +83,7 @@ fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {
         .into_par()
         .map(to_output)
         .filter(filter)
-        .collect_ordering(CollectOrdering::SortWithHeap)
+        .collect_ordering(CollectOrdering::Ordered)
         .collect()
 }
 
@@ -101,7 +101,7 @@ fn orx_sorted_split_vec(inputs: &[usize]) -> SplitVec<Output> {
         .into_par()
         .map(to_output)
         .filter(filter)
-        .collect_ordering(CollectOrdering::SortWithHeap)
+        .collect_ordering(CollectOrdering::Ordered)
         .collect()
 }
 

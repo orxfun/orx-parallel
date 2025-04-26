@@ -51,7 +51,7 @@ where
         match (params.is_sequential(), params.collect_ordering) {
             (true, _) => (0, x_collect.sequential()),
             (false, CollectOrdering::Arbitrary) => x_collect.parallel_in_arbitrary::<R>(),
-            (false, CollectOrdering::SortWithHeap) => x_collect.parallel_with_heap_sort::<R>(),
+            (false, CollectOrdering::Ordered) => x_collect.parallel_with_heap_sort::<R>(),
         }
     }
 

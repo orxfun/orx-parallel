@@ -59,7 +59,7 @@ where
         match (params.is_sequential(), params.collect_ordering) {
             (true, _) => (0, xfx_collect.sequential()),
             (false, CollectOrdering::Arbitrary) => xfx_collect.parallel_in_arbitrary::<R>(),
-            (false, CollectOrdering::SortWithHeap) => xfx_collect.parallel_with_heap_sort::<R>(),
+            (false, CollectOrdering::Ordered) => xfx_collect.parallel_with_heap_sort::<R>(),
         }
     }
 

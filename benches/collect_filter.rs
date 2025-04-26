@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::*;
 use orx_split_vec::{PinnedVec, SplitVec};
 use rand::prelude::*;
@@ -79,7 +79,7 @@ fn orx_sorted_vec(inputs: &[Output]) -> Vec<&Output> {
     inputs
         .into_par()
         .filter(filter)
-        .collect_ordering(CollectOrdering::SortWithHeap)
+        .collect_ordering(CollectOrdering::Ordered)
         .collect()
 }
 
@@ -95,7 +95,7 @@ fn orx_sorted_split_vec(inputs: &[Output]) -> SplitVec<&Output> {
     inputs
         .into_par()
         .filter(filter)
-        .collect_ordering(CollectOrdering::SortWithHeap)
+        .collect_ordering(CollectOrdering::Ordered)
         .collect()
 }
 

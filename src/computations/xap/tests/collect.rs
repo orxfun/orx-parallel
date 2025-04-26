@@ -17,7 +17,7 @@ const N: [usize; 2] = [1025, 4735];
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary])
+    [CollectOrdering::Ordered, CollectOrdering::Arbitrary])
 ]
 fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let offset = 33;
@@ -56,7 +56,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrderi
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary])
+    [CollectOrdering::Ordered, CollectOrdering::Arbitrary])
 ]
 fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
     let offset = 33;

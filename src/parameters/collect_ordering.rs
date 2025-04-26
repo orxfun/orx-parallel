@@ -2,5 +2,5 @@
 pub enum CollectOrdering {
     Arbitrary,
     #[default]
-    SortWithHeap,
+    Ordered,
 }

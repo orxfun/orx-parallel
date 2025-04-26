@@ -16,7 +16,7 @@ const N: [usize; 2] = [1025, 4735];
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary],
+    [CollectOrdering::Ordered, CollectOrdering::Arbitrary],
     [true, false])
 ]
 fn xfx_map_filter_collect(
@@ -71,7 +71,7 @@ fn xfx_map_filter_collect(
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary],
+    [CollectOrdering::Ordered, CollectOrdering::Arbitrary],
     [true, false])
 ]
 fn xfx_filter_collect(
@@ -119,7 +119,7 @@ fn xfx_filter_collect(
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::SortWithHeap, CollectOrdering::Arbitrary],
+    [CollectOrdering::Ordered, CollectOrdering::Arbitrary],
     [true, false])
 ]
 fn xfx_map_filter_map_collect(
