@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -61,7 +61,7 @@ fn fibonacci(n: &u32) -> u32 {
 fn inputs(len: usize) -> Vec<Output> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..FIB_UPPER_BOUND) as usize)
+        .map(|_| rng.random_range(0..FIB_UPPER_BOUND) as usize)
         .map(|x| to_output(&x))
         .collect()
 }
@@ -73,10 +73,6 @@ fn seq(inputs: &[Output]) -> Option<&Output> {
 fn rayon(inputs: &[Output]) -> Option<&Output> {
     use rayon::iter::ParallelIterator;
     inputs.into_par_iter().reduce_with(reduce)
-}
-
-fn orx_sequential(inputs: &[Output]) -> Option<&Output> {
-    inputs.into_par().num_threads(1).reduce(reduce)
 }
 
 fn orx(inputs: &[Output]) -> Option<&Output> {
@@ -100,11 +96,6 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
             assert_eq!(&expected, &rayon(&input));
             b.iter(|| rayon(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx-sequential", n), n, |b, _| {
-            assert_eq!(&expected, &orx_sequential(&input));
-            b.iter(|| orx_sequential(black_box(&input)))
         });
 
         group.bench_with_input(BenchmarkId::new("orx", n), n, |b, _| {

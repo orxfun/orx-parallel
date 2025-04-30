@@ -1,10 +1,10 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const TEST_LARGE_OUTPUT: bool = true;
+const TEST_LARGE_OUTPUT: bool = false;
 
 const LARGE_OUTPUT_LEN: usize = match TEST_LARGE_OUTPUT {
     true => 64,
@@ -19,7 +19,7 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
-fn to_output(idx: &usize) -> Output {
+fn map(idx: &usize) -> Output {
     let idx = *idx;
     let prefix = match idx % 7 {
         0 => "zero-",
@@ -65,38 +65,25 @@ fn fibonacci(n: &u32) -> u32 {
 fn inputs(len: usize) -> Vec<usize> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..FIB_UPPER_BOUND) as usize)
+        .map(|_| rng.random_range(0..FIB_UPPER_BOUND) as usize)
         .collect()
 }
 
 fn seq(inputs: &[usize]) -> Option<Output> {
-    inputs.iter().map(to_output).filter(filter).reduce(reduce)
+    inputs.iter().map(map).filter(filter).reduce(reduce)
 }
 
 fn rayon(inputs: &[usize]) -> Option<Output> {
     use rayon::iter::ParallelIterator;
     inputs
         .into_par_iter()
-        .map(to_output)
+        .map(map)
         .filter(filter)
         .reduce_with(reduce)
 }
 
-fn orx_sequential(inputs: &[usize]) -> Option<Output> {
-    inputs
-        .into_par()
-        .map(to_output)
-        .filter(filter)
-        .num_threads(1)
-        .reduce(reduce)
-}
-
 fn orx(inputs: &[usize]) -> Option<Output> {
-    inputs
-        .into_par()
-        .map(to_output)
-        .filter(filter)
-        .reduce(reduce)
+    inputs.into_par().map(map).filter(filter).reduce(reduce)
 }
 
 fn run(c: &mut Criterion) {
@@ -116,11 +103,6 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
             assert_eq!(&expected, &rayon(&input));
             b.iter(|| rayon(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx-sequential", n), n, |b, _| {
-            assert_eq!(&expected, &orx_sequential(&input));
-            b.iter(|| orx_sequential(black_box(&input)))
         });
 
         group.bench_with_input(BenchmarkId::new("orx", n), n, |b, _| {

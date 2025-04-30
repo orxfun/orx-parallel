@@ -14,7 +14,7 @@ type WeightsSplitRec = SplitVec<Distances, Recursive>;
 fn weights(len: usize) -> Weights {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| (0..len).map(|_| rng.gen_range(0..134)).collect())
+        .map(|_| (0..len).map(|_| rng.random_range(0..134)).collect())
         .collect()
 }
 

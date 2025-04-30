@@ -9,7 +9,7 @@ const SEED: u64 = 898466;
 fn inputs(len: usize) -> Vec<String> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..15791).to_string())
+        .map(|_| rng.random_range(0..15791).to_string())
         .collect()
 }
 

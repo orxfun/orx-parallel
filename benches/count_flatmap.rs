@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -19,7 +19,7 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
-fn to_outputs(idx: &usize) -> Vec<Output> {
+fn flat_map(idx: &usize) -> Vec<Output> {
     (0..4).map(|i| to_output(&(idx + i))).collect::<Vec<_>>()
 }
 
@@ -58,21 +58,21 @@ fn fibonacci(n: &u32) -> u32 {
 fn inputs(len: usize) -> Vec<usize> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..FIB_UPPER_BOUND) as usize)
+        .map(|_| rng.random_range(0..FIB_UPPER_BOUND) as usize)
         .collect()
 }
 
 fn seq(inputs: &[usize]) -> usize {
-    inputs.iter().flat_map(to_outputs).count()
+    inputs.iter().flat_map(flat_map).count()
 }
 
 fn rayon(inputs: &[usize]) -> usize {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().flat_map(to_outputs).count()
+    inputs.into_par_iter().flat_map(flat_map).count()
 }
 
 fn orx(inputs: &[usize]) -> usize {
-    inputs.into_par().flat_map(to_outputs).count()
+    inputs.into_par().flat_map(flat_map).count()
 }
 
 fn run(c: &mut Criterion) {

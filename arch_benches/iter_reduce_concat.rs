@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -9,7 +9,7 @@ const SEED: u64 = 54487;
 fn inputs(len: usize) -> Vec<String> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..1000))
+        .map(|_| rng.random_range(0..1000))
         .map(|x| x.to_string())
         .collect()
 }

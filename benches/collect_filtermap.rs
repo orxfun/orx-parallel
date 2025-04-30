@@ -1,11 +1,11 @@
 use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::*;
-use orx_split_vec::{PinnedVec, SplitVec};
+use orx_split_vec::SplitVec;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const TEST_LARGE_OUTPUT: bool = true;
+const TEST_LARGE_OUTPUT: bool = false;
 
 const LARGE_OUTPUT_LEN: usize = match TEST_LARGE_OUTPUT {
     true => 64,
@@ -20,7 +20,7 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
-fn to_outputs(idx: &usize) -> Option<Output> {
+fn filter_map(idx: &usize) -> Option<Output> {
     (idx % 3 == 0).then(|| to_output(idx))
 }
 
@@ -59,49 +59,25 @@ fn fibonacci(n: &u32) -> u32 {
 fn inputs(len: usize) -> Vec<usize> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..FIB_UPPER_BOUND) as usize)
+        .map(|_| rng.random_range(0..FIB_UPPER_BOUND) as usize)
         .collect()
 }
 
 fn seq(inputs: &[usize]) -> Vec<Output> {
-    inputs.iter().filter_map(to_outputs).collect()
+    inputs.iter().filter_map(filter_map).collect()
 }
 
 fn rayon(inputs: &[usize]) -> Vec<Output> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().filter_map(to_outputs).collect()
+    inputs.into_par_iter().filter_map(filter_map).collect()
 }
 
-fn orx_sorted_vec(inputs: &[usize]) -> Vec<Output> {
-    inputs
-        .into_par()
-        .filter_map(to_outputs)
-        .collect_ordering(CollectOrdering::Ordered)
-        .collect()
+fn orx_into_vec(inputs: &[usize]) -> Vec<Output> {
+    inputs.into_par().filter_map(filter_map).collect()
 }
 
-fn orx_arbitrary_vec(inputs: &[usize]) -> Vec<Output> {
-    inputs
-        .into_par()
-        .filter_map(to_outputs)
-        .collect_ordering(CollectOrdering::Arbitrary)
-        .collect()
-}
-
-fn orx_sorted_split_vec(inputs: &[usize]) -> SplitVec<Output> {
-    inputs
-        .into_par()
-        .filter_map(to_outputs)
-        .collect_ordering(CollectOrdering::Ordered)
-        .collect()
-}
-
-fn orx_arbitrary_split_vec(inputs: &[usize]) -> SplitVec<Output> {
-    inputs
-        .into_par()
-        .filter_map(to_outputs)
-        .collect_ordering(CollectOrdering::Arbitrary)
-        .collect()
+fn orx_into_split_vec(inputs: &[usize]) -> SplitVec<Output> {
+    inputs.into_par().filter_map(filter_map).collect()
 }
 
 fn run(c: &mut Criterion) {
@@ -125,28 +101,14 @@ fn run(c: &mut Criterion) {
             b.iter(|| rayon(black_box(&input)))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx-sorted-vec", n), n, |b, _| {
-            assert_eq!(&expected, &orx_sorted_vec(&input));
-            b.iter(|| orx_sorted_vec(black_box(&input)))
+        group.bench_with_input(BenchmarkId::new("orx-vec", n), n, |b, _| {
+            assert_eq!(&expected, &orx_into_vec(&input));
+            b.iter(|| orx_into_vec(black_box(&input)))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx-sorted-split-vec", n), n, |b, _| {
-            assert_eq!(&expected, &orx_sorted_split_vec(&input));
-            b.iter(|| orx_sorted_split_vec(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx-arbitrary-vec", n), n, |b, _| {
-            let mut arbitrary = orx_arbitrary_vec(&input);
-            arbitrary.sort();
-            assert_eq!(&sorted, &arbitrary);
-            b.iter(|| orx_arbitrary_vec(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx-arbitrary-split-vec", n), n, |b, _| {
-            let mut arbitrary = orx_arbitrary_split_vec(&input);
-            arbitrary.sort();
-            assert_eq!(&sorted, &arbitrary);
-            b.iter(|| orx_arbitrary_split_vec(black_box(&input)))
+        group.bench_with_input(BenchmarkId::new("orx-split-vec", n), n, |b, _| {
+            assert_eq!(&expected, &orx_into_split_vec(&input));
+            b.iter(|| orx_into_split_vec(black_box(&input)))
         });
     }
 

@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -19,7 +19,7 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
-fn to_output(idx: &usize) -> Output {
+fn map(idx: &usize) -> Output {
     let idx = *idx;
     let prefix = match idx % 7 {
         0 => "zero-",
@@ -60,21 +60,21 @@ fn fibonacci(n: &u32) -> u32 {
 fn inputs(len: usize) -> Vec<usize> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..FIB_UPPER_BOUND) as usize)
+        .map(|_| rng.random_range(0..FIB_UPPER_BOUND) as usize)
         .collect()
 }
 
 fn seq(inputs: &[usize]) -> usize {
-    inputs.iter().map(to_output).filter(filter).count()
+    inputs.iter().map(map).filter(filter).count()
 }
 
 fn rayon(inputs: &[usize]) -> usize {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().map(to_output).filter(filter).count()
+    inputs.into_par_iter().map(map).filter(filter).count()
 }
 
-fn orx_sorted_vec(inputs: &[usize]) -> usize {
-    inputs.into_par().map(to_output).filter(filter).count()
+fn orx(inputs: &[usize]) -> usize {
+    inputs.into_par().map(map).filter(filter).count()
 }
 
 fn run(c: &mut Criterion) {
@@ -97,8 +97,8 @@ fn run(c: &mut Criterion) {
         });
 
         group.bench_with_input(BenchmarkId::new("orx", n), n, |b, _| {
-            assert_eq!(&expected, &orx_sorted_vec(&input));
-            b.iter(|| orx_sorted_vec(black_box(&input)))
+            assert_eq!(&expected, &orx(&input));
+            b.iter(|| orx(black_box(&input)))
         });
     }
 

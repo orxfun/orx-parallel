@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use orx_parallel::prelude::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -25,7 +25,7 @@ fn filter(a: &u32) -> bool {
 fn inputs(len: usize) -> Vec<u32> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..FIB_UPPER_BOUND))
+        .map(|_| rng.random_range(0..FIB_UPPER_BOUND))
         .collect()
 }
 

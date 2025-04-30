@@ -1,7 +1,7 @@
 use super::batch_of_four_runner::BatchOfFourParallelRunner;
 use crate::{
     collect_into::ParCollectIntoCore,
-    computations::{computation_kind::ComputationKind, runner::FixedChunkRunner, ParallelRunner},
+    computations::{ParallelRunner, computation_kind::ComputationKind, runner::FixedChunkRunner},
     into_par::IntoPar,
     par_iterators::ParIter,
     parameters::Params,
@@ -54,26 +54,4 @@ fn fixed_chunk_runner() -> FixedChunkRunner {
 
 fn batch_of_four_runner() -> BatchOfFourParallelRunner {
     BatchOfFourParallelRunner::new(ComputationKind::Collect, Params::default(), Some(0))
-}
-
-#[test]
-fn xyz() {
-    let n = 100;
-    let nt = 2;
-    let chunk = 8;
-
-    let map = |x: &String| format!("{}!", x);
-    let map2 = |x: String| format!("{}!", x);
-
-    let vec = input::<Vec<String>>(n);
-    let input = vec.as_slice();
-    let expected = expected(&vec, map2);
-
-    let par = input.into_par().num_threads(nt).chunk_size(chunk);
-    let par = par.with_runner::<BatchOfFourParallelRunner>();
-    let output: Vec<String> = par.map(map).collect();
-
-    // dbg!(&output);
-
-    assert!(!output.is_equal_to(expected.as_slice()));
 }

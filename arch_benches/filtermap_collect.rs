@@ -29,7 +29,7 @@ fn filter_map(n: &u32) -> Option<u32> {
 fn inputs(len: usize) -> Vec<u32> {
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len)
-        .map(|_| rng.gen_range(0..FIB_UPPER_BOUND))
+        .map(|_| rng.random_range(0..FIB_UPPER_BOUND))
         .collect()
 }
 
