@@ -19,7 +19,7 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
-fn to_outputs(idx: &usize) -> Vec<u64> {
+fn flat_map(idx: &usize) -> Vec<u64> {
     (0..4)
         .map(|i| to_output(&(idx + i)))
         .map(|x| x.name.len() as u64)
@@ -66,16 +66,16 @@ fn inputs(len: usize) -> Vec<usize> {
 }
 
 fn seq(inputs: &[usize]) -> u64 {
-    inputs.iter().flat_map(to_outputs).sum()
+    inputs.iter().flat_map(flat_map).sum()
 }
 
 fn rayon(inputs: &[usize]) -> u64 {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().flat_map(to_outputs).sum()
+    inputs.into_par_iter().flat_map(flat_map).sum()
 }
 
 fn orx(inputs: &[usize]) -> u64 {
-    inputs.into_par().flat_map(to_outputs).sum()
+    inputs.into_par().flat_map(flat_map).sum()
 }
 
 fn run(c: &mut Criterion) {

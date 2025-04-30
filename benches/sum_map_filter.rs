@@ -7,7 +7,7 @@ use rayon::iter::IntoParallelIterator;
 const SEED: u64 = 5426;
 const FIB_UPPER_BOUND: u32 = 201;
 
-fn to_output(idx: &usize) -> u32 {
+fn map(idx: &usize) -> u32 {
     let idx = *idx;
     fibonacci(&(idx as u32))
 }
@@ -35,16 +35,16 @@ fn inputs(len: usize) -> Vec<usize> {
 }
 
 fn seq(inputs: &[usize]) -> u32 {
-    inputs.iter().map(to_output).filter(filter).sum()
+    inputs.iter().map(map).filter(filter).sum()
 }
 
 fn rayon(inputs: &[usize]) -> u32 {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().map(to_output).filter(filter).sum()
+    inputs.into_par_iter().map(map).filter(filter).sum()
 }
 
-fn orx_sorted_vec(inputs: &[usize]) -> u32 {
-    inputs.into_par().map(to_output).filter(filter).sum()
+fn orx(inputs: &[usize]) -> u32 {
+    inputs.into_par().map(map).filter(filter).sum()
 }
 
 fn run(c: &mut Criterion) {
@@ -67,8 +67,8 @@ fn run(c: &mut Criterion) {
         });
 
         group.bench_with_input(BenchmarkId::new("orx", n), n, |b, _| {
-            assert_eq!(&expected, &orx_sorted_vec(&input));
-            b.iter(|| orx_sorted_vec(black_box(&input)))
+            assert_eq!(&expected, &orx(&input));
+            b.iter(|| orx(black_box(&input)))
         });
     }
 

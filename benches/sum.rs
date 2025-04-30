@@ -40,10 +40,6 @@ fn rayon(inputs: &[u32]) -> u32 {
     inputs.into_par_iter().sum()
 }
 
-fn orx_sequential(inputs: &[u32]) -> u32 {
-    inputs.into_par().num_threads(1).sum()
-}
-
 fn orx(inputs: &[u32]) -> u32 {
     inputs.into_par().sum()
 }
@@ -65,11 +61,6 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("rayon", n), n, |b, _| {
             assert_eq!(&expected, &rayon(&input));
             b.iter(|| rayon(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx-sequential", n), n, |b, _| {
-            assert_eq!(&expected, &orx_sequential(&input));
-            b.iter(|| orx_sequential(black_box(&input)))
         });
 
         group.bench_with_input(BenchmarkId::new("orx", n), n, |b, _| {

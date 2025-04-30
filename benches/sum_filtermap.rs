@@ -4,7 +4,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::IntoParallelIterator;
 
-const TEST_LARGE_OUTPUT: bool = true;
+const TEST_LARGE_OUTPUT: bool = false;
 
 const LARGE_OUTPUT_LEN: usize = match TEST_LARGE_OUTPUT {
     true => 64,
@@ -19,7 +19,7 @@ struct Output {
     numbers: [i64; LARGE_OUTPUT_LEN],
 }
 
-fn to_outputs(idx: &usize) -> Option<u64> {
+fn filter_map(idx: &usize) -> Option<u64> {
     (idx % 3 == 0)
         .then(|| to_output(idx))
         .map(|x| x.name.len() as u64)
@@ -65,16 +65,16 @@ fn inputs(len: usize) -> Vec<usize> {
 }
 
 fn seq(inputs: &[usize]) -> u64 {
-    inputs.iter().filter_map(to_outputs).sum()
+    inputs.iter().filter_map(filter_map).sum()
 }
 
 fn rayon(inputs: &[usize]) -> u64 {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().filter_map(to_outputs).sum()
+    inputs.into_par_iter().filter_map(filter_map).sum()
 }
 
 fn orx(inputs: &[usize]) -> u64 {
-    inputs.into_par().filter_map(to_outputs).sum()
+    inputs.into_par().filter_map(filter_map).sum()
 }
 
 fn run(c: &mut Criterion) {
