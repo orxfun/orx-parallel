@@ -61,6 +61,9 @@ impl NumThreads {
         NumThreads::Max(SEQUENTIAL_NUM_THREADS)
     }
 
+    /// Returns true if number of threads is set to 1.
+    ///
+    /// Note that in this case the computation will be executed sequentially using regular iterators.
     pub fn is_sequential(self) -> bool {
         matches!(self, Self::Max(n) if n == SEQUENTIAL_NUM_THREADS)
     }
