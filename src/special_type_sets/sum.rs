@@ -1,10 +1,14 @@
 use std::ops::Add;
 
+/// Number that can be summed over.
 pub trait Sum<Output> {
+    /// Zero.
     fn zero() -> Output;
 
+    /// Maps the number to owned value.
     fn map(a: Self) -> Output;
 
+    /// Returns sum of `a` and `b`.
     fn reduce(a: Output, b: Output) -> Output;
 }
 
