@@ -8,34 +8,55 @@ High performance, configurable and expressive parallel computing library for com
 
 ## Parallel Computation by Iterators
 
-Parallel computation is defined using the parallel iterator trait [`ParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html). This allows for changing sequential code that is defined as a composition of functions through iterators into its parallel counterpart by adding one word: `par` or `into_par`.
+Parallel computation is defined using the parallel iterator trait [`ParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html).
+
+The goal is replacing `iter` with `par`, or `into_iter` with `into_par`, to parallelize the computation defined as a composition of functions through iterators.
+
+The following is an extremely naive [traveling salesperson](https://en.wikipedia.org/wiki/Travelling_salesman_problem) algorithm which randomly generates sequences and picks the one with the minimum duration as the best tour. The example demonstrates chaining of very common and useful `map`, `filter` and `reduce` (`min_by_key` in this example) operations. Notice that the only difference between the sequential and parallel programs is the `par()` call.
 
 ```rust
 use orx_parallel::*;
 
-struct Input(String);
-struct Output(usize);
+struct Tour(Vec<usize>);
 
-let compute = |input: Input| Output(input.0.len());
-let select = |output: &Output| output.0.is_power_of_two();
+impl Tour {
+    fn new_random(n: usize) -> Self {
+        let mut cities: Vec<_> = (0..n).collect();
+        cities.shuffle(&mut rand::rng());
+        Self(cities)
+    }
 
-let inputs = || (0..1024).map(|x| Input(x.to_string())).collect::<Vec<_>>();
+    fn not_in_standard_order(&self) -> bool {
+        self.0.iter().enumerate().any(|(i, c)| i != *c)
+    }
 
-let seq_result: usize = inputs()
-    .into_iter()
-    .map(compute)
-    .filter(select)
-    .map(|x| x.0)
-    .sum();
-assert_eq!(seq_result, 286);
+    fn duration(&self) -> usize {
+        let mut total = 0;
+        let links = self.0.iter().zip(self.0.iter().skip(1));
+        for (a, b) in links {
+            total += (*a as i64 - *b as i64).abs() as usize;
+        }
+        total
+    }
+}
 
-let par_result = inputs()
-    .into_par() // parallelize !!
-    .map(compute)
-    .filter(select)
-    .map(|x| x.0)
-    .sum();
-assert_eq!(par_result, 286);
+let num_tours = 1_000_000;
+let num_cities = 10;
+
+// sequential
+let best_tour = (0..num_tours)
+    .map(|_| Tour::new_random(num_cities))
+    .filter(|t| t.not_in_standard_order())
+    .min_by_key(|t| t.duration())
+    .unwrap();
+
+// parallel
+let best_tour = (0..num_tours)
+    .par() // parallelized !!
+    .map(|_| Tour::new_random(num_cities))
+    .filter(|t| t.not_in_standard_order())
+    .min_by_key(|t| t.duration())
+    .unwrap();
 ```
 
 ## Configurable
