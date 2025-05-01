@@ -16,6 +16,7 @@ The following is an extremely naive [traveling salesperson](https://en.wikipedia
 
 ```rust
 use orx_parallel::*;
+use rand::prelude::*;
 
 struct Tour(Vec<usize>);
 

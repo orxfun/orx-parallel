@@ -36,9 +36,6 @@ test-case = "3.3.1"
 name = "find"
 harness = false
 
-[lib]
-doctest = false
-
 [features]
 default = []
 generic_iterator = ["rayon"]
