@@ -7,6 +7,7 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
+/// A parallel iterator that maps inputs.
 pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,

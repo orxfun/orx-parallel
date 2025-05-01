@@ -1,12 +1,13 @@
 use super::{map::ParMap, xap::ParXap, xap_filter_xap::ParXapFilterXap};
 use crate::{
-    computations::{map_self, map_self_atom, Vector, M},
-    runner::{DefaultRunner, ParallelRunner},
     ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
+    computations::{M, Vector, map_self, map_self_atom},
+    runner::{DefaultRunner, ParallelRunner},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
+/// A parallel iterator.
 pub struct Par<I, R = DefaultRunner>
 where
     R: ParallelRunner,

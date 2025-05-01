@@ -7,6 +7,9 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
+/// A parallel iterator that xaps inputs.
+///
+/// *xap* is a generalization of  one-to-one map, filter-map and flat-map operations.
 pub struct ParXap<I, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
