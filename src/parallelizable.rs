@@ -67,23 +67,3 @@ pub trait Parallelizable: ConcurrentIterable {
 }
 
 impl<I> Parallelizable for I where I: ConcurrentIterable {}
-
-#[test]
-fn abc() {
-    use crate::*;
-
-    // Vec<T>: Parallelizable<Item = &T>
-    let vec = vec![1, 2, 3, 4];
-    assert_eq!(vec.par().sum(), 10);
-    assert_eq!(vec.par().max(), Some(&4));
-
-    // &[T]: Parallelizable<Item = &T>
-    let slice = vec.as_slice();
-    assert_eq!(slice.par().sum(), 10);
-    assert_eq!(slice.par().max(), Some(&4));
-
-    // Range<T>: Parallelizable<Item = T>
-    let range = 1..5;
-    assert_eq!(range.par().sum(), 10);
-    assert_eq!(range.par().max(), Some(4));
-}

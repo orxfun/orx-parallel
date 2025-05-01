@@ -1,7 +1,71 @@
-use crate::{computational_variants::Par, runner::DefaultRunner, Params};
+use crate::{Params, computational_variants::Par, runner::DefaultRunner};
 use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 
+/// A type implementing [`ParallelizableCollection`] is a collection owning the elements such that
+///
+/// * if the elements are of type `T`,
+/// * non-consuming [`par`] method can be called **multiple times** to create parallel
+///   iterators; i.e., [`ParIter`], yielding references to the elements `&T`; and
+/// * consuming [`into_par`] method can be called once to create a parallel iterator yielding
+///   owned elements `T`.
+///
+/// This trait can be considered as the *concurrent counterpart* of the [`Collection`] trait.
+///
+/// Note that every [`ConcurrentCollection`] type automatically implements [`ParallelizableCollection`].
+///
+/// [`con_iter`]: crate::ConcurrentCollection::con_iter
+/// [`Collection`]: orx_iterable::Collection
+/// [`ConcurrentIter`]: crate::ConcurrentIter
+///
+/// # Examples
+///
+/// ```
+/// use orx_concurrent_iter::*;
+///
+/// // Vec<T>: ParallelizableCollection<Item = T>
+/// let vec = vec![1, 2, 3, 4];
+///
+/// // non-consuming iteration over references
+/// assert_eq!(vec.par().sum(), 10);
+/// assert_eq!(vec.par().min(), Some(&1));
+/// assert_eq!(vec.par().max(), Some(&4));
+///
+/// // consuming iteration over owned values
+/// assert_eq!(vec.into_par().max(), Some(4));
+/// ```
 pub trait ParallelizableCollection: ConcurrentCollection {
+    /// A type implementing [`ParallelizableCollection`] is a collection owning the elements such that
+    ///
+    /// * if the elements are of type `T`,
+    /// * non-consuming [`par`] method can be called **multiple times** to create parallel
+    ///   iterators; i.e., [`ParIter`], yielding references to the elements `&T`; and
+    /// * consuming [`into_par`] method can be called once to create a parallel iterator yielding
+    ///   owned elements `T`.
+    ///
+    /// This trait can be considered as the *concurrent counterpart* of the [`Collection`] trait.
+    ///
+    /// Note that every [`ConcurrentCollection`] type automatically implements [`ParallelizableCollection`].
+    ///
+    /// [`con_iter`]: crate::ConcurrentCollection::con_iter
+    /// [`Collection`]: orx_iterable::Collection
+    /// [`ConcurrentIter`]: crate::ConcurrentIter
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_concurrent_iter::*;
+    ///
+    /// // Vec<T>: ParallelizableCollection<Item = T>
+    /// let vec = vec![1, 2, 3, 4];
+    ///
+    /// // non-consuming iteration over references
+    /// assert_eq!(vec.par().sum(), 10);
+    /// assert_eq!(vec.par().min(), Some(&1));
+    /// assert_eq!(vec.par().max(), Some(&4));
+    ///
+    /// // consuming iteration over owned values
+    /// assert_eq!(vec.into_par().max(), Some(4));
+    /// ```
     fn par(
         &self,
     ) -> Par<
@@ -13,3 +77,19 @@ pub trait ParallelizableCollection: ConcurrentCollection {
 }
 
 impl<X> ParallelizableCollection for X where X: ConcurrentCollection {}
+
+#[test]
+fn abc() {
+    use crate::*;
+
+    // Vec<T>: ParallelizableCollection<Item = T>
+    let vec = vec![1, 2, 3, 4];
+
+    // non-consuming iteration over references
+    assert_eq!(vec.par().sum(), 10);
+    assert_eq!(vec.par().min(), Some(&1));
+    assert_eq!(vec.par().max(), Some(&4));
+
+    // consuming iteration over owned values
+    assert_eq!(vec.into_par().max(), Some(4));
+}
