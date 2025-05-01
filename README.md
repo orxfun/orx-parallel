@@ -154,11 +154,16 @@ In the last category of computations which allow for *early exit*, `find` method
 
 ## Contributing
 
-Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR.
+Contributions are welcome! 
 
-The goal of v1 is to allow `Par` to cover practical use cases, please open an issue if you have a computation that you cannot express and compute with it.
+Please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR,
 
-The goal of v2 is to provide a more dynamic and smart parallel executor, please see and join the related discussion [here](https://github.com/orxfun/orx-parallel/discussions/26).
+* if you notice an error,
+* have a question or think something could be improved,
+* have an input collection or generator that needs to be parallelized, or
+* having trouble representing a particular parallel computation with parallel iterators.
+
+Finally, feel free to contact [me](mailto:orx.ugur.arikan@gmail.com) if you are interested in optimization of the parallel runner, by maybe dynamic adaptation of chunks size decisions, to further improve performance.
 
 ## License
 
