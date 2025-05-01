@@ -1,10 +1,12 @@
+#![allow(missing_docs)]
+
 use crate::{
+    Params,
     collect_into::ParCollectInto,
     computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, CollectOrdering, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
-    Params,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::cmp::Ordering;
