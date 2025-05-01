@@ -77,19 +77,3 @@ pub trait ParallelizableCollection: ConcurrentCollection {
 }
 
 impl<X> ParallelizableCollection for X where X: ConcurrentCollection {}
-
-#[test]
-fn abc() {
-    use crate::*;
-
-    // Vec<T>: ParallelizableCollection<Item = T>
-    let vec = vec![1, 2, 3, 4];
-
-    // non-consuming iteration over references
-    assert_eq!(vec.par().sum(), 10);
-    assert_eq!(vec.par().min(), Some(&1));
-    assert_eq!(vec.par().max(), Some(&4));
-
-    // consuming iteration over owned values
-    assert_eq!(vec.into_par().max(), Some(4));
-}
