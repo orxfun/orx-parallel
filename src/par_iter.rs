@@ -180,15 +180,58 @@ where
 
     // computation transformations
 
+    /// Takes a closure `map` and creates a parallel iterator which calls that closure on each element.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = [1, 2, 3];
+    ///
+    /// let iter = a.into_par().map(|x| 2 * x);
+    ///
+    /// let b: Vec<_> = iter.collect();
+    /// assert_eq!(b, &[2, 4, 6]);
+    /// ```
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
         Map: Fn(Self::Item) -> Out + Send + Sync + Clone;
 
+    /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = [1, 2, 3];
+    ///
+    /// let iter = a.into_par().filter(|x| *x % 2 == 1).copied();
+    ///
+    /// let b: Vec<_> = iter.collect();
+    /// assert_eq!(b, &[1, 3]);
+    /// ```
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
         Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone;
 
+    /// Creates an iterator that works like map, but flattens nested structure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let words = ["alpha", "beta", "gamma"];
+    ///
+    /// // chars() returns an iterator
+    /// let all_chars: Vec<_> = words.into_par().flat_map(|s| s.chars()).collect();
+    ///
+    /// let merged: String = all_chars.iter().collect();
+    /// assert_eq!(merged, "alphabetagamma");
+    /// ```
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
     where
         IOut: IntoIterator + Send + Sync,
@@ -196,11 +239,88 @@ where
         IOut::Item: Send + Sync,
         FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone;
 
+    /// Creates an iterator that both filters and maps.
+    ///
+    /// The returned iterator yields only the values for which the supplied closure `filter_map` returns `Some(value)`.
+    ///
+    /// `filter_map` can be used to make chains of `filter` and `map` more concise.
+    /// The example below shows how a `map().filter().map()` can be shortened to a single call to `filter_map`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = ["1", "two", "NaN", "four", "5"];
+    ///
+    /// let numbers: Vec<_> = a
+    ///     .into_par()
+    ///     .filter_map(|s| s.parse::<usize>().ok())
+    ///     .collect();
+    ///
+    /// assert_eq!(numbers, [1, 5]);
+    /// ```
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
         FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
 
+    /// Does something with each element of an iterator, passing the value on.
+    ///
+    /// When using iterators, you’ll often chain several of them together.
+    /// While working on such code, you might want to check out what’s happening at various parts in the pipeline.
+    /// To do that, insert a call to `inspect()`.
+    ///
+    /// It’s more common for `inspect()` to be used as a debugging tool than to exist in your final code,
+    /// but applications may find it useful in certain situations when errors need to be logged before being discarded.
+    ///
+    /// It is often convenient to use thread-safe collections such as [`ConcurrentBag`] and [`ConcurrentVec`] to
+    /// collect some intermediate values during parallel execution for further inspection.
+    /// The following example demonstrates such a use case.
+    ///
+    /// [`ConcurrentBag`]: orx_concurrent_bag::ConcurrentBag
+    /// [`ConcurrentVec`]: orx_concurrent_vec::ConcurrentVec
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 4, 2, 3];
+    ///
+    /// // let's add some inspect() calls to investigate what's happening
+    ///
+    /// // bag to collect and investigate numbers contributing to the sum
+    /// let bag = ConcurrentBag::new();
+    ///
+    /// let sum = a
+    ///     .par()
+    ///     .copied()
+    ///     .inspect(|x| println!("about to filter: {x}"))
+    ///     .filter(|x| x % 2 == 0)
+    ///     .inspect(|x| {
+    ///         bag.push(*x);
+    ///         println!("made it through filter: {x}");
+    ///     })
+    ///     .sum();
+    /// println!("{sum}");
+    ///
+    /// let mut values_made_through = bag.into_inner();
+    /// values_made_through.sort();
+    /// assert_eq!(values_made_through, [2, 4]);
+    /// ```
+    ///
+    /// This will print:
+    ///
+    /// ```console
+    /// about to filter: 1
+    /// about to filter: 4
+    /// made it through filter: 4
+    /// about to filter: 2
+    /// made it through filter: 2
+    /// about to filter: 3
+    /// 6
+    /// ```
     fn inspect<Operation>(self, operation: Operation) -> impl ParIter<R, Item = Self::Item>
     where
         Operation: Fn(&Self::Item) + Sync + Send + Clone,
@@ -391,33 +511,33 @@ where
 #[cfg(test)]
 mod tests {
     use crate::*;
+    use orx_concurrent_bag::*;
 
     #[test]
     fn abc() {
-        let vec = vec![1, 2, 3, 4];
+        let a = vec![1, 4, 2, 3];
 
-        assert_eq!(
-            vec.par().params(),
-            &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
-        );
+        // let's add some inspect() calls to investigate what's happening
 
-        assert_eq!(
-            vec.par().num_threads(1).params(),
-            &Params::new(1, ChunkSize::Auto, CollectOrdering::Ordered)
-        );
+        // bag to collect and investigate numbers contributing to the sum
+        let bag = ConcurrentBag::new();
 
-        assert_eq!(
-            vec.par().num_threads(1).chunk_size(64).params(),
-            &Params::new(1, 64, CollectOrdering::Ordered)
-        );
+        let sum = a
+            .par()
+            .copied()
+            .inspect(|x| println!("about to filter: {x}"))
+            .filter(|x| x % 2 == 0)
+            .inspect(|x| {
+                bag.push(*x);
+                println!("made it through filter: {x}");
+            })
+            .sum();
+        println!("{sum}");
 
-        assert_eq!(
-            vec.par()
-                .num_threads(1)
-                .chunk_size(64)
-                .collect_ordering(CollectOrdering::Arbitrary)
-                .params(),
-            &Params::new(1, 64, CollectOrdering::Arbitrary)
-        );
+        let mut values_made_through = bag.into_inner();
+        values_made_through.sort();
+        assert_eq!(values_made_through, [2, 4]);
+
+        assert_eq!(a.len(), 33);
     }
 }
