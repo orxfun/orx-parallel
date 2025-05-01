@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![warn(
-    // missing_docs,
+    missing_docs,
     clippy::unwrap_in_result,
     clippy::unwrap_used,
     clippy::panic,
@@ -12,6 +12,7 @@
 )]
 
 mod collect_into;
+/// Module containing variants of parallel iterators.
 pub mod computational_variants;
 mod computations;
 mod into_par_iter;
@@ -22,6 +23,7 @@ mod par_iter;
 mod parallelizable;
 mod parallelizable_collection;
 mod parameters;
+/// Module defining the parallel runner trait and the default parallel runner.
 pub mod runner;
 mod special_type_sets;
 
