@@ -6,12 +6,15 @@ use orx_concurrent_iter::IntoConcurrentIter;
 ///
 /// It can be considered as the *concurrent counterpart* of the [`IntoIterator`] trait.
 ///
+/// Note that every [`IntoConcurrentIter`] type automatically implements [`IntoParIter`].
+///
 /// [`into_par`]: crate::IntoParIter::into_par
+/// [`IntoConcurrentIter`]: orx_concurrent_iter::IntoConcurrentIter
 ///
 /// # Examples
 ///
 /// ```
-/// use orx_concurrent_iter::*;
+/// use orx_parallel::*;
 ///
 /// // Vec<T>: IntoParIter<Item = T>
 /// let vec = vec![1, 2, 3, 4];
@@ -32,7 +35,7 @@ pub trait IntoParIter: IntoConcurrentIter {
     /// # Examples
     ///
     /// ```
-    /// use orx_concurrent_iter::*;
+    /// use orx_parallel::*;
     ///
     /// // Vec<T>: IntoParIter<Item = T>
     /// let vec = vec![1, 2, 3, 4];
@@ -52,17 +55,4 @@ where
     fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
         Par::new(Params::default(), self.into_con_iter())
     }
-}
-
-#[test]
-fn abc() {
-    use crate::*;
-
-    // Vec<T>: IntoParIter<Item = T>
-    let vec = vec![1, 2, 3, 4];
-    assert_eq!(vec.into_par().max(), Some(4));
-
-    // Range<T>: IntoParIter<Item = T>
-    let range = 1..5;
-    assert_eq!(range.into_par().max(), Some(4));
 }

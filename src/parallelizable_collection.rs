@@ -15,12 +15,12 @@ use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 ///
 /// [`con_iter`]: crate::ConcurrentCollection::con_iter
 /// [`Collection`]: orx_iterable::Collection
-/// [`ConcurrentIter`]: crate::ConcurrentIter
+/// [`ConcurrentCollection`]: orx_concurrent_iter::ConcurrentCollection
 ///
 /// # Examples
 ///
 /// ```
-/// use orx_concurrent_iter::*;
+/// use orx_parallel::*;
 ///
 /// // Vec<T>: ParallelizableCollection<Item = T>
 /// let vec = vec![1, 2, 3, 4];
@@ -53,7 +53,7 @@ pub trait ParallelizableCollection: ConcurrentCollection {
     /// # Examples
     ///
     /// ```
-    /// use orx_concurrent_iter::*;
+    /// use orx_parallel::*;
     ///
     /// // Vec<T>: ParallelizableCollection<Item = T>
     /// let vec = vec![1, 2, 3, 4];
