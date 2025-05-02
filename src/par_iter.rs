@@ -601,45 +601,6 @@ where
         self.map(map_count).reduce(reduce_sum).unwrap_or(0)
     }
 
-    /// Folds the elements to a single one, by repeatedly applying the `fold` operation starting from the `identity`.
-    ///
-    /// If the iterator is empty, returns back the `identity`; otherwise, returns the result of the fold.
-    ///
-    /// The fold function is a closure with two arguments: an ‘accumulator’, and an element.
-    ///
-    /// Note that, unlike its sequential counterpart, parallel fold requires the `identity` and `fold` to satisfy the following:
-    ///
-    /// * `fold(a, b)` is equal to `fold(b, a)`,
-    /// * `fold(a, fold(b, c))` is equal to `fold(fold(a, b), c)`,
-    /// * `fold(identity, a)` is equal to `a`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let n = 10_000;
-    /// let sum = (1..n).par().fold(|| 0, |acc, e| acc + e);
-    /// assert_eq!(sum, n * (n - 1) / 2);
-    ///
-    /// let sum_empty = (1..n).par().filter(|x| *x < 1).fold(|| 0, |acc, e| acc + e);
-    /// assert_eq!(sum_empty, 0); // identity = 0
-    ///
-    /// let n = 10;
-    /// let product = (1..n).par().fold(|| 1, |acc, e| acc * e);
-    /// assert_eq!(product, 362880);
-    ///
-    /// let product_empty = (1..n).par().filter(|x| *x < 1).fold(|| 1, |acc, e| acc * e);
-    /// assert_eq!(product_empty, 1); // identity = 1
-    /// ```
-    fn fold<Id, F>(self, identity: Id, fold: F) -> Self::Item
-    where
-        Id: Fn() -> Self::Item,
-        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
-    {
-        self.reduce(fold).unwrap_or_else(identity)
-    }
-
     /// Calls a closure on each element of an iterator.
     ///
     /// # Examples
