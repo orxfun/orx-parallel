@@ -598,17 +598,17 @@ where
     /// assert_eq!(a.par().filter(|x| **x >= 2).count(), 2);
     /// ```
     fn count(self) -> usize {
-        self.fold(map_count, reduce_sum).unwrap_or(0)
+        self.map(map_count).reduce(reduce_sum).unwrap_or(0)
     }
 
-    fn fold<Map, Reduce, Out>(self, map: Map, reduce: Reduce) -> Option<Out>
-    where
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
-        Reduce: Fn(Out, Out) -> Out + Send + Sync,
-        Out: Send + Sync,
-    {
-        self.map(map).reduce(reduce)
-    }
+    // fn fold<Map, Reduce, Out>(self, map: Map, reduce: Reduce) -> Option<Out>
+    // where
+    //     Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
+    //     Reduce: Fn(Out, Out) -> Out + Send + Sync,
+    //     Out: Send + Sync,
+    // {
+    //     self.map(map).reduce(reduce)
+    // }
 
     /// Calls a closure on each element of an iterator.
     ///
@@ -649,7 +649,7 @@ where
         Operation: Fn(Self::Item) + Sync + Send,
     {
         let map = |x| operation(x);
-        let _ = self.fold(map, reduce_unit);
+        let _ = self.map(map).reduce(reduce_unit);
     }
 
     /// Returns the maximum element of an iterator.
@@ -815,7 +815,8 @@ where
         Self::Item: Sum<Out>,
         Out: Send + Sync,
     {
-        self.fold(Self::Item::map, Self::Item::reduce)
+        self.map(Self::Item::map)
+            .reduce(Self::Item::reduce)
             .unwrap_or(Self::Item::zero())
     }
 
