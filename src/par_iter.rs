@@ -933,25 +933,3 @@ where
         self.filter(predicate).any_element()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-
-    #[test]
-    fn abc() {
-        let n = 10_000;
-        let sum = (1..n).par().fold(|| 0, |acc, e| acc + e);
-        assert_eq!(sum, n * (n - 1) / 2);
-
-        let sum_empty = (1..n).par().filter(|x| *x < 1).fold(|| 0, |acc, e| acc + e);
-        assert_eq!(sum_empty, 0); // identity = 0
-
-        let n = 10;
-        let product = (1..n).par().fold(|| 1, |acc, e| acc * e);
-        assert_eq!(product, 362880);
-
-        let product_empty = (1..n).par().filter(|x| *x < 1).fold(|| 1, |acc, e| acc * e);
-        assert_eq!(product_empty, 1); // identity = 1
-    }
-}

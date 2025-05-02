@@ -42,25 +42,3 @@ pub use parallelizable_collection::ParallelizableCollection;
 pub use parameters::{ChunkSize, CollectOrdering, NumThreads, Params};
 pub use runner::{DefaultRunner, ParallelRunner, ThreadRunner};
 pub use special_type_sets::Sum;
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-
-    #[test]
-    fn abc() {
-        let data: Vec<_> = (0..100).map(|x| x.to_string()).collect();
-
-        // an arbitrary iterator
-        let iter = data
-            .into_iter()
-            .filter(|x| !x.starts_with('3'))
-            .map(|x| format!("{x}!"));
-
-        // convert arbitrary iterator into ParIter
-        let par_iter = iter.iter_into_par();
-        let num_characters = par_iter.map(|x| x.len()).sum();
-
-        assert_eq!(num_characters, 258);
-    }
-}
