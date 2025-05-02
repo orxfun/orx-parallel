@@ -448,10 +448,53 @@ where
 
     // collect
 
+    /// Collects all the items from an iterator into a collection.
+    ///
+    /// This is useful when you already have a collection and want to add the iterator items to it.
+    ///
+    /// The collection is passed in as owned value, and returned back with the additional elements.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    ///
+    /// let vec: Vec<i32> = vec![0, 1];
+    /// let vec = a.par().map(|&x| x * 2).collect_into(vec);
+    /// let vec = a.par().map(|&x| x * 10).collect_into(vec);
+    ///
+    /// assert_eq!(vec, vec![0, 1, 2, 4, 6, 10, 20, 30]);
+    /// ```
     fn collect_into<C>(self, output: C) -> C
     where
         C: ParCollectInto<Self::Item>;
 
+    /// Transforms an iterator into a collection.
+    ///
+    /// Similar to [`Iterator::collect`], the type annotation on the left-hand-side determines
+    /// the type of the result collection; or turbofish annotation can be used.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    ///
+    /// let doubled: Vec<i32> = a.par().map(|&x| x * 2).collect();
+    ///
+    /// assert_eq!(vec![2, 4, 6], doubled);
+    /// ```
     fn collect<C>(self) -> C
     where
         C: ParCollectInto<Self::Item>,
@@ -462,10 +505,49 @@ where
 
     // reduce
 
+    /// Reduces the elements to a single one, by repeatedly applying a reducing operation.
+    ///
+    /// If the iterator is empty, returns `None`; otherwise, returns the result of the reduction.
+    ///
+    /// The `reduce` function is a closure with two arguments: an ‘accumulator’, and an element.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let inputs = 1..10;
+    /// let reduced: usize = inputs.par().reduce(|acc, e| acc + e).unwrap_or(0);
+    /// assert_eq!(reduced, 45);
+    /// ```
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
+    /// Tests if every element of the iterator matches a predicate.
+    ///
+    /// `all` takes a `predicate` that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and if they all return true, then so does `all`.
+    /// If any of them returns false, it returns false.
+    ///
+    /// `all` is short-circuiting; in other words, it will stop processing as soon as it finds a false,
+    /// given that no matter what else happens, the result will also be false.
+    ///
+    /// An empty iterator returns true.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mut a = vec![1, 2, 3];
+    /// assert!(a.par().all(|x| **x > 0));
+    /// assert!(!a.par().all(|x| **x > 2));
+    ///
+    /// a.clear();
+    /// assert!(a.par().all(|x| **x > 2)); // empty iterator
+    /// ```
     fn all<Predicate>(self, predicate: Predicate) -> bool
     where
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
@@ -474,6 +556,30 @@ where
         self.find(violates).is_none()
     }
 
+    /// Tests if any element of the iterator matches a predicate.
+    ///
+    /// `any` takes a `predicate` that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and if any of the elements returns true, then so does `any`.
+    /// If all of them return false, it returns false.
+    ///
+    /// `any` is short-circuiting; in other words, it will stop processing as soon as it finds a true,
+    /// given that no matter what else happens, the result will also be true.
+    ///
+    /// An empty iterator returns false.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mut a = vec![1, 2, 3];
+    /// assert!(a.par().any(|x| **x > 0));
+    /// assert!(!a.par().any(|x| **x > 5));
+    ///
+    /// a.clear();
+    /// assert!(!a.par().any(|x| **x > 0)); // empty iterator
+    /// ```
     fn any<Predicate>(self, predicate: Predicate) -> bool
     where
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
@@ -481,6 +587,16 @@ where
         self.find(predicate).is_some()
     }
 
+    /// Consumes the iterator, counting the number of iterations and returning it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    /// assert_eq!(a.par().filter(|x| **x >= 2).count(), 2);
+    /// ```
     fn count(self) -> usize {
         self.fold(map_count, reduce_sum).unwrap_or(0)
     }
@@ -494,6 +610,39 @@ where
         self.map(map).reduce(reduce)
     }
 
+    /// Calls a closure on each element of an iterator.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use std::sync::mpsc::channel;
+    ///
+    /// let (tx, rx) = channel();
+    /// (0..5)
+    ///     .par()
+    ///     .map(|x| x * 2 + 1)
+    ///     .for_each(move |x| tx.send(x).unwrap());
+    ///
+    /// let v: Vec<_> = rx.iter().collect();
+    /// assert_eq!(v, vec![1, 3, 5, 7, 9]);
+    /// ```
+    ///
+    /// Note that since parallel iterators cannot be used within the `for` loop as regular iterators,
+    /// `for_each` provides a way to perform arbitrary for loops on parallel iterators.
+    /// In the following example, we log every element that satisfies a predicate in parallel.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// (0..5)
+    ///     .par()
+    ///     .flat_map(|x| x * 100..x * 110)
+    ///     .filter(|&x| x % 3 == 0)
+    ///     .for_each(|x| println!("{x}"));
+    /// ```
     fn for_each<Operation>(self, operation: Operation)
     where
         Operation: Fn(Self::Item) + Sync + Send,
@@ -502,6 +651,21 @@ where
         let _ = self.fold(map, reduce_unit);
     }
 
+    /// Returns the maximum element of an iterator.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    /// let b: Vec<u32> = Vec::new();
+    ///
+    /// assert_eq!(a.par().max(), Some(&3));
+    /// assert_eq!(b.par().max(), None);
+    /// ```
     fn max(self) -> Option<Self::Item>
     where
         Self::Item: Ord,
@@ -509,6 +673,18 @@ where
         self.reduce(Ord::max)
     }
 
+    /// Returns the element that gives the maximum value with respect to the specified `compare` function.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().max_by(|x, y| x.cmp(y)).unwrap(), 5);
+    /// ```
     fn max_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
@@ -520,6 +696,18 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the element that gives the maximum value from the specified function.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = [-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.iter().max_by_key(|x| x.abs()).unwrap(), -10);
+    /// ```
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
     where
         Key: Ord,
@@ -532,6 +720,40 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the minimum element of an iterator.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    /// let b: Vec<u32> = Vec::new();
+    ///
+    /// assert_eq!(a.par().min(), Some(&1));
+    /// assert_eq!(b.par().min(), None);
+    /// ```
+    fn min(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord,
+    {
+        self.reduce(Ord::min)
+    }
+
+    /// Returns the element that gives the minimum value with respect to the specified `compare` function.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().min_by(|x, y| x.cmp(y)).unwrap(), -10);
+    /// ```
     fn min_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
@@ -543,13 +765,18 @@ where
         self.reduce(reduce)
     }
 
-    fn min(self) -> Option<Self::Item>
-    where
-        Self::Item: Ord,
-    {
-        self.reduce(Ord::min)
-    }
-
+    /// Returns the element that gives the minimum value from the specified function.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = [-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.iter().min_by_key(|x| x.abs()).unwrap(), 0);
+    /// ```
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
     where
         Key: Ord,
@@ -599,11 +826,7 @@ mod tests {
 
     #[test]
     fn abc() {
-        let words = vec!["alpha", "beta", "gamma"];
-
-        // chars() returns an iterator
-        let all_characters: Vec<_> = words.par().flat_map(|s| s.chars()).collect();
-        let merged: String = all_characters.into_iter().collect();
-        assert_eq!(merged, "alphabetagamma");
+        let a = [-3_i32, 0, 1, 5, -10];
+        assert_eq!(*a.iter().max_by_key(|x| x.abs()).unwrap(), -10);
     }
 }
