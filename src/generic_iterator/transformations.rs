@@ -10,6 +10,11 @@ where
 {
     // computation transformations
 
+    /// Map transformation for the generic iterator.
+    ///
+    /// See [`map`] for details.
+    ///
+    /// [`map`]: crate::ParIter::map
     pub fn map<Out, Map>(
         self,
         map: Map,
@@ -30,6 +35,11 @@ where
         }
     }
 
+    /// Filter transformation for the generic iterator.
+    ///
+    /// See [`filter`] for details.
+    ///
+    /// [`filter`]: crate::ParIter::filter
     pub fn filter<Filter>(
         self,
         filter: Filter,
@@ -49,6 +59,11 @@ where
         }
     }
 
+    /// Flat-map transformation for the generic iterator.
+    ///
+    /// See [`flat_map`] for details.
+    ///
+    /// [`flat_map`]: crate::ParIter::flat_map
     pub fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
@@ -74,6 +89,11 @@ where
         }
     }
 
+    /// Filter-map transformation for the generic iterator.
+    ///
+    /// See [`filter_map`] for details.
+    ///
+    /// [`filter_map`]: crate::ParIter::filter_map
     pub fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
@@ -94,6 +114,11 @@ where
         }
     }
 
+    /// Inspect transformation for the generic iterator.
+    ///
+    /// See [`inspect`] for details.
+    ///
+    /// [`inspect`]: crate::ParIter::inspect
     pub fn inspect<Operation>(
         self,
         operation: Operation,
@@ -115,6 +140,11 @@ where
 
     // special item transformations
 
+    /// Flatten transformation for the generic iterator.
+    ///
+    /// See [`flatten`] for details.
+    ///
+    /// [`flatten`]: crate::ParIter::flatten
     pub fn flatten(
         self,
     ) -> GenericIterator<
@@ -147,6 +177,11 @@ where
     R: rayon::iter::ParallelIterator<Item = &'a T>,
     O: ParIter<Item = &'a T>,
 {
+    /// Copied transformation for the generic iterator.
+    ///
+    /// See [`copied`] for details.
+    ///
+    /// [`copied`]: crate::ParIter::copied
     pub fn copied(
         self,
     ) -> GenericIterator<
@@ -165,6 +200,11 @@ where
         }
     }
 
+    /// Cloned transformation for the generic iterator.
+    ///
+    /// See [`cloned`] for details.
+    ///
+    /// [`cloned`]: crate::ParIter::cloned
     pub fn cloned(
         self,
     ) -> GenericIterator<

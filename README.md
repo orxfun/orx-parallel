@@ -106,7 +106,11 @@ This is guaranteed by the fact that both consuming computation calls and configu
 
 ## Performance and Benchmarks
 
-All benchmark files are located in [benches](https://github.com/orxfun/orx-parallel/blob/main/benches) directory. The following tables report average execution times of parallel computations in microseconds. The numbers in parentheses represent the ratio of execution time to sequential computation which is used as the baseline (1.00). Parallelized executions of all benchmarks are carried out with default settings. 
+You may find some sample parallel programs in [examples](https://github.com/orxfun/orx-parallel/blob/main/examples) directory. These examples use the `GenericIterator` which is a generalization of sequential iterator, rayon's parallel iterator and orx-parallel's parallel iterator in order to allow for convenient experiments on performance. You may run these examples by adding the **generic_iterator** feature, such as:
+
+`cargo run --release --features generic_iterator --example benchmark_collect -- --len 123456 --num-repetitions 10`
+
+In addition, all benchmark files are located in [benches](https://github.com/orxfun/orx-parallel/blob/main/benches) directory. The following tables report average execution times of parallel computations in microseconds. The numbers in parentheses represent the ratio of execution time to sequential computation which is used as the baseline (1.00). Parallelized executions of all benchmarks are carried out with default settings. 
 
 Computations are separated into three categories: collect, reduce and early-exit. `ParIter` of **orx-parallel** with default configuration and default parallel runner consistently provides significant improvements in all categories.
 

@@ -8,6 +8,11 @@ where
     R: rayon::iter::ParallelIterator<Item = T>,
     O: ParIter<Item = T>,
 {
+    /// Find computation for the generic iterator.
+    ///
+    /// See [`find`] for details.
+    ///
+    /// [`find`]: crate::ParIter::find
     pub fn find<Predicate>(self, predicate: Predicate) -> Option<T>
     where
         Predicate: Fn(&T) -> bool + Send + Sync + Clone,
@@ -19,6 +24,11 @@ where
         }
     }
 
+    /// Find-any computation for the generic iterator.
+    ///
+    /// See [`find_any`] for details.
+    ///
+    /// [`find_any`]: crate::ParIter::find_any
     pub fn find_any<Predicate>(self, predicate: Predicate) -> Option<T>
     where
         Predicate: Fn(&T) -> bool + Send + Sync + Clone,

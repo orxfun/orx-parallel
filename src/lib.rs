@@ -27,6 +27,11 @@ mod parameters;
 pub mod runner;
 mod special_type_sets;
 
+/// Module defining the GenericIterator which is a generalization over
+/// sequential iterator, rayon's parallel iterator and orx-parallel's
+/// parallel iterator.
+/// This is particularly useful for running experiments and comparing
+/// results of computations with different methods.
 #[cfg(feature = "generic_iterator")]
 pub mod generic_iterator;
 

@@ -8,6 +8,11 @@ where
     R: rayon::iter::ParallelIterator<Item = T>,
     O: ParIter<Item = T>,
 {
+    /// Collects the elements of the iterator into a vector.
+    ///
+    /// See [`collect`] for details of the general collect method.
+    ///
+    /// [`collect`]: crate::ParIter::collect
     pub fn collect_vec(self) -> Vec<T> {
         match self {
             GenericIterator::Sequential(x) => x.collect(),

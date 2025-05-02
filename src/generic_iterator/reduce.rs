@@ -9,6 +9,11 @@ where
     R: rayon::iter::ParallelIterator<Item = T>,
     O: ParIter<Item = T>,
 {
+    /// Reduction for the generic iterator.
+    ///
+    /// See [`reduce`] for details.
+    ///
+    /// [`reduce`]: crate::ParIter::reduce
     pub fn reduce<Reduce>(self, reduce: Reduce) -> Option<T>
     where
         Reduce: Fn(T, T) -> T + Send + Sync,
@@ -20,6 +25,11 @@ where
         }
     }
 
+    /// Count reduction for the generic iterator.
+    ///
+    /// See [`count`] for details.
+    ///
+    /// [`count`]: crate::ParIter::count
     pub fn count(self) -> usize {
         match self {
             GenericIterator::Sequential(x) => x.count(),
@@ -28,6 +38,11 @@ where
         }
     }
 
+    /// For-each iteration for the generic iterator.
+    ///
+    /// See [`for_each`] for details.
+    ///
+    /// [`for_each`]: crate::ParIter::for_each
     pub fn for_each<Operation>(self, operation: Operation)
     where
         Operation: Fn(T) + Sync + Send,
@@ -39,6 +54,11 @@ where
         }
     }
 
+    /// Max reduction for the generic iterator.
+    ///
+    /// See [`max`] for details.
+    ///
+    /// [`max`]: crate::ParIter::max
     pub fn max(self) -> Option<T>
     where
         T: Ord,
@@ -50,6 +70,11 @@ where
         }
     }
 
+    /// Max-by reduction for the generic iterator.
+    ///
+    /// See [`max_by`] for details.
+    ///
+    /// [`max_by`]: crate::ParIter::max_by
     pub fn max_by<Compare>(self, compare: Compare) -> Option<T>
     where
         Compare: Fn(&T, &T) -> Ordering + Sync + Send,
@@ -61,6 +86,11 @@ where
         }
     }
 
+    /// Max-by-key reduction for the generic iterator.
+    ///
+    /// See [`max_by_key`] for details.
+    ///
+    /// [`max_by_key`]: crate::ParIter::max_by_key
     pub fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<T>
     where
         Key: Ord + Send,
@@ -73,6 +103,11 @@ where
         }
     }
 
+    /// Min reduction for the generic iterator.
+    ///
+    /// See [`min`] for details.
+    ///
+    /// [`min`]: crate::ParIter::min
     pub fn min(self) -> Option<T>
     where
         T: Ord,
@@ -84,6 +119,11 @@ where
         }
     }
 
+    /// Min-by reduction for the generic iterator.
+    ///
+    /// See [`min_by`] for details.
+    ///
+    /// [`min_by`]: crate::ParIter::min_by
     pub fn min_by<Compare>(self, compare: Compare) -> Option<T>
     where
         Compare: Fn(&T, &T) -> Ordering + Sync + Send,
@@ -95,6 +135,11 @@ where
         }
     }
 
+    /// Min-by-key reduction for the generic iterator.
+    ///
+    /// See [`min_by_key`] for details.
+    ///
+    /// [`min_by_key`]: crate::ParIter::min_by_key
     pub fn min_by_key<Key, GetKey>(self, key: GetKey) -> Option<T>
     where
         Key: Ord + Send,
@@ -107,6 +152,11 @@ where
         }
     }
 
+    /// Sum reduction for the generic iterator.
+    ///
+    /// See [`sum`] for details.
+    ///
+    /// [`sum`]: crate::ParIter::sum
     pub fn sum(self) -> T
     where
         T: crate::special_type_sets::Sum<T> + std::iter::Sum<T>,
