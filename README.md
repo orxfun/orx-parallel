@@ -87,9 +87,9 @@ _ = (0..n).par().num_threads(4).sum(); // <= 4 threads
 _ = (0..n).par().num_threads(1).sum(); // sequential
 _ = (0..n).par().num_threads(0).sum(); // shorthand for NumThreads::Auto
 
-_ = (0..n).par().chunk_size(16).sum(); // chunks of at least 16 elements
-let c = ChunkSize::Exact(NonZeroUsize::new(64).unwrap());
-_ = (0..n).par().chunk_size(c).sum(); // chunks of exactly 64 elements
+_ = (0..n).par().chunk_size(64).sum(); // chunks of exactly 64 elements
+let c = ChunkSize::Min(NonZeroUsize::new(16).unwrap());
+_ = (0..n).par().chunk_size(c).sum(); // chunks of at least 16 elements
 
 _ = (0..n).par().num_threads(4).chunk_size(16).sum(); // set both params
 ```
@@ -179,7 +179,7 @@ Inputs of the parallel computations and parallel runners are extensible:
 * Any input collection or generator that implements [`IntoConcurrentIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IntoConcurrentIter.html) automatically implements [`IntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_parallel/trait.IntoParIter.html), and hence, can be parallelized. Therefore, new collection types can be used by defining their concurrent iterators.
   * *Further, any arbitrary sequential `Iterator` implements [`IterIntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IterIntoConcurrentIter.html) and can be parallelized. Importantly note that this is useful only when computation on pulled elements is not insignificant.*
 
-Furthermore, the parallel runner is extensible:
+Furthermore, the parallel runner is customizable:
 
 * `ParallelRunner` is a trait and a default implementation is provided in this crate. It is possible to implement and use your *own runner* simply calling [`with_runner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.with_runner) transformation method on the parallel iterator. Default parallel runner targets to be efficient in general. When we have a use case with special characteristics, we can implement a `ParallelRunner` optimized for this scenario and use with the parallel iterators.
 

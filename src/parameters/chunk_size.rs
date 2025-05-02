@@ -64,11 +64,11 @@ impl From<usize> for ChunkSize {
     /// Converts the nonnegative integer to chunk size as follows:
     ///
     /// * 0 is converted to `ChunkSize::Auto`,
-    /// * `n` is converted to `ChunkSize::Min(n)` where `n > 0`.
+    /// * `n` is converted to `ChunkSize::Exact(n)` where `n > 0`.
     fn from(value: usize) -> Self {
         match value {
             0 => Self::Auto,
-            n => Self::Min(NonZeroUsize::new(n).expect("is positive")),
+            n => Self::Exact(NonZeroUsize::new(n).expect("is positive")),
         }
     }
 }

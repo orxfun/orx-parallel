@@ -26,6 +26,7 @@ where
     ///
     /// ```
     /// use orx_parallel::*;
+    /// use std::num::NonZero;
     ///
     /// let vec = vec![1, 2, 3, 4];
     ///
@@ -35,22 +36,39 @@ where
     /// );
     ///
     /// assert_eq!(
-    ///     vec.par().num_threads(1).params(),
-    ///     &Params::new(1, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     vec.par().num_threads(0).chunk_size(0).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
     /// );
     ///
     /// assert_eq!(
-    ///     vec.par().num_threads(1).chunk_size(64).params(),
-    ///     &Params::new(1, 64, CollectOrdering::Ordered)
+    ///     vec.par().num_threads(1).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(1).unwrap()),
+    ///         ChunkSize::Auto,
+    ///         CollectOrdering::Ordered
+    ///     )
+    /// );
+    ///
+    /// assert_eq!(
+    ///     vec.par().num_threads(4).chunk_size(64).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(4).unwrap()),
+    ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
+    ///         CollectOrdering::Ordered
+    ///     )
     /// );
     ///
     /// assert_eq!(
     ///     vec.par()
-    ///         .num_threads(1)
-    ///         .chunk_size(64)
+    ///         .num_threads(8)
+    ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
     ///         .collect_ordering(CollectOrdering::Arbitrary)
     ///         .params(),
-    ///     &Params::new(1, 64, CollectOrdering::Arbitrary)
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(8).unwrap()),
+    ///         ChunkSize::Min(NonZero::new(16).unwrap()),
+    ///         CollectOrdering::Arbitrary
+    ///     )
     /// );
     /// ```
     fn params(&self) -> &Params;
@@ -70,24 +88,55 @@ where
     ///
     /// ```
     /// use orx_parallel::*;
+    /// use std::num::NonZero;
     ///
     /// let vec = vec![1, 2, 3, 4];
     ///
     /// // all available threads can be used
+    ///
     /// assert_eq!(
     ///     vec.par().params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
     /// );
     ///
     /// assert_eq!(
-    ///     vec.par().num_threads(0).params(),
+    ///     vec.par().num_threads(0).chunk_size(0).params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    /// );
+    ///
+    /// // computation will be executed sequentially on the main thread, no parallelization
+    ///
+    /// assert_eq!(
+    ///     vec.par().num_threads(1).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(1).unwrap()),
+    ///         ChunkSize::Auto,
+    ///         CollectOrdering::Ordered
+    ///     )
     /// );
     ///
     /// // maximum 4 threads can be used
     /// assert_eq!(
     ///     vec.par().num_threads(4).chunk_size(64).params(),
-    ///     &Params::new(4, 64, CollectOrdering::Ordered)
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(4).unwrap()),
+    ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
+    ///         CollectOrdering::Ordered
+    ///     )
+    /// );
+    ///
+    /// // maximum 8 threads can be used
+    /// assert_eq!(
+    ///     vec.par()
+    ///         .num_threads(8)
+    ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
+    ///         .collect_ordering(CollectOrdering::Arbitrary)
+    ///         .params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(8).unwrap()),
+    ///         ChunkSize::Min(NonZero::new(16).unwrap()),
+    ///         CollectOrdering::Arbitrary
+    ///     )
     /// );
     /// ```
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
@@ -96,7 +145,9 @@ where
     /// parallel execution. When integers are used as argument, the following mapping applies:
     ///
     /// * `0` -> `ChunkSize::Auto`
-    /// * `n > 0` -> `NumThreads::Min(n)`
+    /// * `n > 0` -> `ChunkSize::Exact(n)`
+    ///
+    /// Please use the default enum constructor for creating `ChunkSize::Min` variant.
     ///
     /// See [`ChunkSize`] for details.
     ///
@@ -109,26 +160,50 @@ where
     /// let vec = vec![1, 2, 3, 4];
     ///
     /// // chunk sizes will be dynamically decided by the parallel runner
+    ///
     /// assert_eq!(
     ///     vec.par().params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
     /// );
     ///
     /// assert_eq!(
-    ///     vec.par().chunk_size(0).params(),
+    ///     vec.par().num_threads(0).chunk_size(0).params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
     /// );
     ///
-    /// // minimum chunk size will be 64, but can be dynamically increased by the parallel runner
     /// assert_eq!(
-    ///     vec.par().chunk_size(64).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Min(NonZero::new(64).unwrap()), CollectOrdering::Ordered)
+    ///     vec.par().num_threads(1).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(1).unwrap()),
+    ///         ChunkSize::Auto,
+    ///         CollectOrdering::Ordered
+    ///     )
     /// );
     ///
     /// // chunk size will always be 64, parallel runner cannot change
+    ///
     /// assert_eq!(
-    ///     vec.par().chunk_size(ChunkSize::Exact(NonZero::new(64).unwrap())).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Exact(NonZero::new(64).unwrap()), CollectOrdering::Ordered)
+    ///     vec.par().num_threads(4).chunk_size(64).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(4).unwrap()),
+    ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
+    ///         CollectOrdering::Ordered
+    ///     )
+    /// );
+    ///
+    /// // minimum chunk size will be 16, but can be dynamically increased by the parallel runner
+    ///
+    /// assert_eq!(
+    ///     vec.par()
+    ///         .num_threads(8)
+    ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
+    ///         .collect_ordering(CollectOrdering::Arbitrary)
+    ///         .params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(8).unwrap()),
+    ///         ChunkSize::Min(NonZero::new(16).unwrap()),
+    ///         CollectOrdering::Arbitrary
+    ///     )
     /// );
     /// ```
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
@@ -143,6 +218,7 @@ where
     /// let vec = vec![1, 2, 3, 4];
     ///
     /// /// results are collected in order consistent to the input order
+    ///
     /// assert_eq!(
     ///     vec.par().params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
@@ -154,6 +230,7 @@ where
     /// );
     ///
     /// /// results might be collected in arbitrary order
+    ///
     /// assert_eq!(
     ///     vec.par().collect_ordering(CollectOrdering::Arbitrary).params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Arbitrary)
