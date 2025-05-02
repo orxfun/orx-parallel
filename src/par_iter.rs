@@ -626,7 +626,8 @@ where
     ///     .map(|x| x * 2 + 1)
     ///     .for_each(move |x| tx.send(x).unwrap());
     ///
-    /// let v: Vec<_> = rx.iter().collect();
+    /// let mut v: Vec<_> = rx.iter().collect();
+    /// v.sort(); // order can be mixed, since messages will be sent in parallel
     /// assert_eq!(v, vec![1, 3, 5, 7, 9]);
     /// ```
     ///
@@ -705,8 +706,8 @@ where
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let a = [-3_i32, 0, 1, 5, -10];
-    /// assert_eq!(*a.iter().max_by_key(|x| x.abs()).unwrap(), -10);
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().max_by_key(|x| x.abs()).unwrap(), -10);
     /// ```
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
     where
@@ -774,8 +775,8 @@ where
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let a = [-3_i32, 0, 1, 5, -10];
-    /// assert_eq!(*a.iter().min_by_key(|x| x.abs()).unwrap(), 0);
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().min_by_key(|x| x.abs()).unwrap(), 0);
     /// ```
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
     where
@@ -789,6 +790,26 @@ where
         self.reduce(reduce)
     }
 
+    /// Sums the elements of an iterator.
+    ///
+    /// Takes each element, adds them together, and returns the result.
+    ///
+    /// An empty iterator returns the additive identity (“zero”) of the type, which is 0 for integers and -0.0 for floats.
+    ///
+    /// `sum` can be used to sum any type implementing [`Sum<Out>`].
+    ///
+    /// [`Sum<Out>`]: crate::Sum
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    /// let sum: i32 = a.par().sum();
+    ///
+    /// assert_eq!(sum, 6);
+    /// ```
     fn sum<Out>(self) -> Out
     where
         Self::Item: Sum<Out>,
@@ -800,33 +821,123 @@ where
 
     // early exit
 
-    fn next(self) -> Option<Self::Item>;
+    /// Returns the first element of the iterator; returns None if it is empty.
+    ///
+    /// See also [`any_element`] to fetch any of the elements rather than strictly the first.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<usize> = vec![];
+    /// assert_eq!(a.par().copied().first(), None);
+    ///
+    /// let a = vec![1, 2, 3];
+    /// assert_eq!(a.par().copied().first(), Some(1));
+    ///
+    /// let a = 1..10_000;
+    /// assert_eq!(a.par().filter(|x| x % 3421 == 0).first(), Some(3421));
+    /// assert_eq!(a.par().filter(|x| x % 12345 == 0).first(), None);
+    ///
+    /// // or equivalently,
+    /// assert_eq!(a.par().find(|x| x % 3421 == 0), Some(3421));
+    /// ```
+    fn first(self) -> Option<Self::Item>;
 
+    /// Returns any element of the iterator; returns None if it is empty.
+    ///
+    /// This is the counterpart of [`first`] where it is okay to fetch any of the elements
+    /// of the iterator, rather than the first.
+    ///
+    /// This is useful specifically when we are searching for any element that satisfies a
+    /// desired condition, such as:
+    ///
+    /// * a feasible solution among all possible solutions,
+    /// * an item which is cheaper than a given price,
+    /// * a movie with at least 4.8 rating,
+    /// * etc.
+    ///
+    /// [`first`]: crate::ParIter::first
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<usize> = vec![];
+    /// assert_eq!(a.par().copied().any_element(), None);
+    ///
+    /// // might return any of 1, 2 or 3
+    /// let a = vec![1, 2, 3];
+    /// let any = a.par().copied().any_element().unwrap();
+    /// assert!(a.contains(&any));
+    ///
+    /// let a = 1..10_000;
+    /// assert_eq!(a.par().filter(|x| x % 12345 == 0).any_element(), None);
+    ///
+    /// // might return either of 3421 or 2*3421
+    /// let any = a.par().filter(|x| x % 3421 == 0).any_element().unwrap();
+    /// assert!([3421, 2 * 3421].contains(&any));
+    ///
+    /// // or equivalently,
+    /// let any = a.par().find_any(|x| x % 3421 == 0).unwrap();
+    /// assert!([3421, 2 * 3421].contains(&any));
+    /// ```
     fn any_element(self) -> Option<Self::Item>;
 
+    /// Searches for an element of an iterator that satisfies a `predicate`.
+    ///
+    /// `find` takes a closure that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and returns `Some(x)` where `x` is the first element that returns true.
+    /// If they all return false, it returns None.
+    ///
+    /// `find` is short-circuiting; in other words, it will stop processing as soon as the closure returns true.
+    ///
+    /// `par_iter.find(predicate)` can also be considered as a shorthand for `par_iter.filter(predicate).first()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = 1..10_000;
+    /// assert_eq!(a.par().find(|x| x % 12345 == 0), None);
+    /// assert_eq!(a.par().find(|x| x % 3421 == 0), Some(3421));
+    /// ```
     fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
-        self.filter(predicate).next()
+        self.filter(predicate).first()
     }
 
+    /// Searches for an element of an iterator that satisfies a `predicate`.
+    ///
+    /// `find_any` takes a closure that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and returns `Some(x)` where `x` is any of the elements that returns true.
+    /// If they all return false, it returns None.
+    ///
+    /// `find_any` is short-circuiting; in other words, it will stop processing as soon as the closure returns true.
+    ///
+    /// `par_iter.find_any(predicate)` can also be considered as a shorthand for `par_iter.filter(predicate).any_element()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = 1..10_000;
+    /// assert_eq!(a.par().find_any(|x| x % 12345 == 0), None);
+    ///
+    /// // might return either of 3421 or 2*3421
+    /// let any = a.par().find_any(|x| x % 3421 == 0).unwrap();
+    /// assert!([3421, 2 * 3421].contains(&any));
+    /// ```
     fn find_any<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.filter(predicate).any_element()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-    use orx_concurrent_bag::*;
-
-    #[test]
-    fn abc() {
-        let a = [-3_i32, 0, 1, 5, -10];
-        assert_eq!(*a.iter().max_by_key(|x| x.abs()).unwrap(), -10);
     }
 }

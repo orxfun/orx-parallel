@@ -151,7 +151,7 @@ where
 
     // early exit
 
-    fn next(self) -> Option<Self::Item> {
+    fn first(self) -> Option<Self::Item> {
         self.m().next()
     }
 
