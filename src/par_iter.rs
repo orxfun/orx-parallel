@@ -274,12 +274,12 @@ where
     /// It’s more common for `inspect()` to be used as a debugging tool than to exist in your final code,
     /// but applications may find it useful in certain situations when errors need to be logged before being discarded.
     ///
-    /// It is often convenient to use thread-safe collections such as [`ConcurrentBag`] and [`ConcurrentVec`] to
+    /// It is often convenient to use thread-safe collections such as [`ConcurrentBag`] and
+    /// [`ConcurrentVec`](https://crates.io/crates/orx-concurrent-vec) to
     /// collect some intermediate values during parallel execution for further inspection.
     /// The following example demonstrates such a use case.
     ///
     /// [`ConcurrentBag`]: orx_concurrent_bag::ConcurrentBag
-    /// [`ConcurrentVec`]: orx_concurrent_vec::ConcurrentVec
     ///
     /// # Examples
     ///
@@ -816,6 +816,8 @@ where
     /// Returns the first element of the iterator; returns None if it is empty.
     ///
     /// See also [`any_element`] to fetch any of the elements rather than strictly the first.
+    ///
+    /// [`any_element`]: crate::ParIter::any_element
     ///
     /// # Examples
     ///
