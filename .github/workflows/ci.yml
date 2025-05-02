@@ -17,6 +17,7 @@ jobs:
       matrix:
         toolchain: ["stable"]
         features: ["", "--features generic_iterator"]
+        examples: ["benchmark_collect", "benchmark_find_any", "benchmark_find", "benchmark_heterogeneous", "benchmark_reduce"]
 
     steps:
     - uses: actions/checkout@v4
@@ -53,4 +54,8 @@ jobs:
       run: cargo clippy ${{ matrix.features }} -- -D warnings --verbose
 
     - name: Miri
-      run: cargo +nightly miri test --verbose ${{ matrix.features }}
+      run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features }}
+
+    - name: Examples
+      run: cargo run --release --features generic_iterator --example ${{ matrix.examples }}
+
