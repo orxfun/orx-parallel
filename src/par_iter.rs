@@ -285,12 +285,13 @@ where
     ///
     /// ```
     /// use orx_parallel::*;
+    /// use orx_concurrent_bag::*;
     ///
     /// let a = vec![1, 4, 2, 3];
     ///
     /// // let's add some inspect() calls to investigate what's happening
-    ///
-    /// // bag to collect and investigate numbers contributing to the sum
+    /// // - log some events
+    /// // - use a concurrent bag to collect and investigate numbers contributing to the sum
     /// let bag = ConcurrentBag::new();
     ///
     /// let sum = a
@@ -334,6 +335,23 @@ where
 
     // special item transformations
 
+    /// Creates an iterator which copies all of its elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    ///
+    /// let v_copied: Vec<_> = a.par().copied().collect();
+    ///
+    /// // copied is the same as .map(|&x| x)
+    /// let v_map: Vec<_> = a.par().map(|&x| x).collect();
+    ///
+    /// assert_eq!(v_copied, vec![1, 2, 3]);
+    /// assert_eq!(v_map, vec![1, 2, 3]);
+    /// ```
     fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
     where
         T: 'a + Copy + Send + Sync,
@@ -342,6 +360,29 @@ where
         self.map(map_copy)
     }
 
+    /// Creates an iterator which clones all of its elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<_> = [1, 2, 3].map(|x| x.to_string()).into_iter().collect();
+    ///
+    /// let v_cloned: Vec<_> = a.par().cloned().collect();
+    ///
+    /// // cloned is the same as .map(|x| x.clone())
+    /// let v_map: Vec<_> = a.par().map(|x| x.clone()).collect();
+    ///
+    /// assert_eq!(
+    ///     v_cloned,
+    ///     vec![String::from("1"), String::from("2"), String::from("3")]
+    /// );
+    /// assert_eq!(
+    ///     v_map,
+    ///     vec![String::from("1"), String::from("2"), String::from("3")]
+    /// );
+    /// ```
     fn cloned<'a, T>(self) -> impl ParIter<R, Item = T>
     where
         T: 'a + Clone + Send + Sync,
@@ -350,6 +391,49 @@ where
         self.map(map_clone)
     }
 
+    /// Creates an iterator that flattens nested structure.
+    ///
+    /// This is useful when you have an iterator of iterators or an iterator of things that can be
+    /// turned into iterators and you want to remove one level of indirection.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let data = vec![vec![1, 2, 3, 4], vec![5, 6]];
+    /// let flattened = data.into_par().flatten().collect::<Vec<u8>>();
+    /// assert_eq!(flattened, &[1, 2, 3, 4, 5, 6]);
+    /// ```
+    ///
+    /// Mapping and then flattening:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let words = vec!["alpha", "beta", "gamma"];
+    ///
+    /// // chars() returns an iterator
+    /// let all_characters: Vec<_> = words.par().map(|s| s.chars()).flatten().collect();
+    /// let merged: String = all_characters.into_iter().collect();
+    /// assert_eq!(merged, "alphabetagamma");
+    /// ```
+    ///
+    /// But actually, you can write this in terms of `flat_map`,
+    /// which is preferable in this case since it conveys intent more clearly:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let words = vec!["alpha", "beta", "gamma"];
+    ///
+    /// // chars() returns an iterator
+    /// let all_characters: Vec<_> = words.par().flat_map(|s| s.chars()).collect();
+    /// let merged: String = all_characters.into_iter().collect();
+    /// assert_eq!(merged, "alphabetagamma");
+    /// ```
     fn flatten(self) -> impl ParIter<R, Item = <Self::Item as IntoIterator>::Item>
     where
         Self::Item: IntoIterator,
@@ -515,29 +599,11 @@ mod tests {
 
     #[test]
     fn abc() {
-        let a = vec![1, 4, 2, 3];
+        let words = vec!["alpha", "beta", "gamma"];
 
-        // let's add some inspect() calls to investigate what's happening
-
-        // bag to collect and investigate numbers contributing to the sum
-        let bag = ConcurrentBag::new();
-
-        let sum = a
-            .par()
-            .copied()
-            .inspect(|x| println!("about to filter: {x}"))
-            .filter(|x| x % 2 == 0)
-            .inspect(|x| {
-                bag.push(*x);
-                println!("made it through filter: {x}");
-            })
-            .sum();
-        println!("{sum}");
-
-        let mut values_made_through = bag.into_inner();
-        values_made_through.sort();
-        assert_eq!(values_made_through, [2, 4]);
-
-        assert_eq!(a.len(), 33);
+        // chars() returns an iterator
+        let all_characters: Vec<_> = words.par().flat_map(|s| s.chars()).collect();
+        let merged: String = all_characters.into_iter().collect();
+        assert_eq!(merged, "alphabetagamma");
     }
 }
