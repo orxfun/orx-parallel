@@ -4,15 +4,15 @@
 [![orx-parallel crate](https://img.shields.io/crates/d/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 
-Highly performant, configurable and expressive parallel computing library for computations defined as compositions of iterator methods.
+[High performance](#performance-and-benchmarks), [configurable](#configurable) and [expressive](#parallel-computation-by-iterators) parallel computing library for computations defined as compositions of iterator methods.
 
 ## Parallel Computation by Iterators
 
 Parallel computation is defined using the parallel iterator trait [`ParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html).
 
-The goal is replacing `iter` with `par`, or `into_iter` with `into_par`, to parallelize the computation defined as a composition of functions through iterators.
+The goal is to convert a sequential program into an efficient parallel program by replacing `iter` with `par`; and `into_iter` with `into_par`.
 
-The following is an extremely naive [traveling salesperson](https://en.wikipedia.org/wiki/Travelling_salesman_problem) algorithm which randomly generates sequences and picks the one with the minimum duration as the best tour. The example demonstrates chaining of very common and useful `map`, `filter` and `reduce` (`min_by_key` in this example) operations. Notice that the only difference between the sequential and parallel programs is the `par()` call.
+The following is a naive [traveling salesperson](https://en.wikipedia.org/wiki/Travelling_salesman_problem) algorithm which randomly generates sequences and picks the one with the minimum duration as the best tour. The example demonstrates chaining of very common and useful `map`, `filter` and `reduce` (`min_by_key`) operations. Notice that the only difference between the sequential and parallel programs is the `par()` call.
 
 ```rust
 use orx_parallel::*;
@@ -21,7 +21,7 @@ use rand::prelude::*;
 struct Tour(Vec<usize>);
 
 impl Tour {
-    fn new_random(n: usize) -> Self {
+    fn random(n: usize) -> Self {
         let mut cities: Vec<_> = (0..n).collect();
         cities.shuffle(&mut rand::rng());
         Self(cities)
@@ -46,7 +46,7 @@ let num_cities = 10;
 
 // sequential
 let best_tour = (0..num_tours)
-    .map(|_| Tour::new_random(num_cities))
+    .map(|_| Tour::random(num_cities))
     .filter(|t| t.not_in_standard_order())
     .min_by_key(|t| t.duration())
     .unwrap();
@@ -54,11 +54,134 @@ let best_tour = (0..num_tours)
 // parallel
 let best_tour = (0..num_tours)
     .par() // parallelized !!
-    .map(|_| Tour::new_random(num_cities))
+    .map(|_| Tour::random(num_cities))
     .filter(|t| t.not_in_standard_order())
     .min_by_key(|t| t.duration())
     .unwrap();
 ```
+
+## Parallelizable Collections
+
+Inputs that can be used in parallel computations can be categorized in three groups:
+
+* i. directly parallelizable collections
+* ii. parallelization of arbitrary regular iterators
+* iii. parallelization of any collection
+
+### i. Directly Parallelizable Collections
+
+These are collections which are parallelized by utilizing their specific structure to achieve high performance.
+
+**orx-parallel** crate provides direct implementations of std collections. Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. The following is the most recent table of direct implementations.
+
+
+| Type | Over References<br>`-> ParIter<Item = &T>` | Over Owned Values<br>`-> ParIter<Item = T>` |
+|---|---|---|
+| `v: Vec<T>` | `v.par()` | `v.into_par()` |
+| `s: &[T]` | `s.par()`<br>`s.into_par()` | |
+| `r: Range<usize>`| | `r.par()`<br>`r.into_par()` |
+
+Since these implementations are particularly optimized for the collection type, it is preferable to start defining parallel computation from the collection whenever available. In other words, for a vector `v`,
+
+* `v.par().map(...).filter(...).reduce(...)` is a better approach than
+* `v.iter().iter_into_par().map(...).filter(...).reduce(...)`, which will be explained in the next subsection.
+
+> **extensibility**: Note that any input collection or generator that implements [`IntoConcurrentIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IntoConcurrentIter.html) automatically implements [`IntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_parallel/trait.IntoParIter.html). Therefore, a new collection can be directly parallelized provided that its concurrent iterator is implemented.
+
+### ii. Parallelization of Arbitrary Regular Iterators
+
+Any arbitrary regular [Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html) can be converted into a parallel iterator using the `iter_into_par` method of [`IterIntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IterIntoConcurrentIter.html) trait.
+
+This is very powerful since it allows to parallelize all iterables, which includes pretty much every collection and more.
+
+On the other hand, due to being a generic implementation without collection specific optimizations, parallelized computation might underperform its sequential counterpart if the work to be done on each input element is insignificant. For instance, `i` being an arbitrary iterator of numbers, `i.sum()` will most likely be faster than `i.iter_into_par().sum()`.
+
+This being said, `ParIter` takes advantage of certain optimizations, such as buffering and chunk size optimization, in order to improve performance. Therefore, whenever the computation on the iterator elements is more involved than just returning them or adding numbers, we can benefit from parallelization. The respective section of [benchmarks](#parallelization-of-arbitrary-iterators) present significant improvements achieved consistently.
+
+### iii. Parallelization of Any Collection
+
+Lastly, consider a collection which does not provide a direct concurrent iterator implementation. This might be our custom collection, say `MyCollection`; or an external collection without a concurrent iterator implementation, such as the `HashSet<T>`.
+
+There are two methods to parallelize computations over such collections:
+* (ii) parallelize using the collection's iterator, or
+* (i) collect the elements in a vector and then parallelize the vector.
+
+The following table demonstrates these methods for the `HashSet`; however, they are applicable to any collection with `iter` and `into_iter` methods.
+
+| Type | Method | Over References<br>`-> ParIter<Item = &T>` | Over Owned Values<br>`-> ParIter<Item = T>` |
+|---|---|---|---|
+| `h: HashSet<T>` | ii | `h.iter()`<br>&nbsp;&nbsp;`.iter_into_par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.iter_into_par()` |
+|                 | i  | `h.iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.into_par()` |
+
+Note that each approach can be more efficient in different scenarios. As a rule of thumb, when the work to be done is not insignificant, parallelization over iterator (ii) is preferable since it avoids the allocation of the vector.
+
+## Performance and Benchmarks
+
+You may find some sample parallel programs in [examples](https://github.com/orxfun/orx-parallel/blob/main/examples) directory. These examples allow to express parallel computations as iterator method compositions and run quick experiments with different approaches. Examples use [`GenericIterator`](https://docs.rs/orx-parallel/latest/orx_parallel/generic_iterator/enum.GenericIterator.html). As the name suggests, it is a generalization of sequential iterator, rayon's parallel iterator and orx-parallel's parallel iterator, and hence, allows for convenient experiments. You may play with the code, update the tested computations and run these examples by including **generic_iterator** feature, such as:
+
+`cargo run --release --features generic_iterator --example benchmark_collect -- --len 123456 --num-repetitions 10`
+
+Actual benchmark files are located in [benches](https://github.com/orxfun/orx-parallel/blob/main/benches) directory. Tables below report average execution times in microseconds. The numbers in parentheses represent the ratio of execution time to that of sequential computation which is used as the baseline (1.00). Parallelized executions of all benchmarks are carried out with default settings. 
+
+Computations are separated into three categories with respect to how the iterator is consumed: collect, reduce and early-exit. Further, two additional categories are created to test parallelization of arbitrary iterators ([ii](#ii-parallelization-of-arbitrary-regular-iterators)) and flexibility in composition of computations.
+
+### Collect
+
+In this group of benchmarks, outputs of parallel computations are collected into vectors. The arguments of transformations such as `filter`, `filter_map` or `map` are example functions applied to the input. Details of the methods can be found in the respective benchmark files (you may use the link in the **file** column).
+
+> **(s)** In addition to standard vector, outputs can be collected into a [`SplitVec`](https://crates.io/crates/orx-split-vec). Collecting into a split vector can provide additional improvements, especially for large outputs due to avoided memory copies. Note that a split vector provides constant time random access; and despite the fact that it is split to fragments, it asymptotically inherits advantages of contiguous vectors.
+
+| file | computation | sequential | rayon | orx-parallel | orx-parallel (s) |
+|---|---|---:|---:|---:|---:|
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_filter.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.filter(filter)`<br>&nbsp;&nbsp;`.collect()`                                                                                              |   5.92 (1.00) |  12.58 (2.12) |  2.50 (0.42) |  **2.47 (0.42)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_filtermap.rs)  | `inputs.into_par()`<br>&nbsp;&nbsp;`.filter_map(filter_map)`<br>&nbsp;&nbsp;`.collect()`                                                                                      |  15.95 (1.00) |  12.62 (0.79) |  6.75 (0.42) |  **6.37 (0.40)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_flatmap.rs)    | `inputs.into_par()`<br>&nbsp;&nbsp;`.flat_map(flat_map)`<br>&nbsp;&nbsp;`.collect()`                                                                                          | 187.37 (1.00) | 492.18 (2.63) | 57.00 (0.30) | **50.34 (0.27)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map_filter.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map).filter(filter)`<br>&nbsp;&nbsp;`.collect()`                                                                                     |  47.97 (1.00) |  14.69 (0.31) | 11.98 (0.25) | **10.29 (0.21)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map.rs)        | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map)`<br>&nbsp;&nbsp;`.collect()`                                                                                                    |  36.21 (1.00) |  14.36 (0.40) | **11.76 (0.32)** | 14.47 (0.40) |
+
+### Reduce
+
+In this group, instead of collecting outputs, the results are reduced to a single value. Some common reductions are `sum`, `count`, `min`, etc.
+
+| file | computation | sequential | rayon | orx-parallel |
+|---|---|---:|---:|---:|
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_map_filter.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map).filter(filter)`<br>&nbsp;&nbsp;`.reduce(reduce)`                                                                                   |    31.92 (1.00) |    16.16 (0.51) |  **7.07 (0.22)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_map.rs)        | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map)`<br>&nbsp;&nbsp;`.reduce(reduce)`                                                                                                    |    32.26 (1.00) |     7.85 (0.24) |  **6.96 (0.22)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce.rs)            | `inputs.into_par()`<br>&nbsp;&nbsp;`.reduce(reduce)`                                                                                                                    |     2.00 (1.00) |    12.18 (6.09) |  **1.09 (0.55)** |
+
+
+### Find
+
+In the last category of computations, computations that allow for *early exit* or *short-circuit* are investigated. As an example, experiments on `find` method are presented; methods such as `find_any`, `any` or `all` lead to similar results.
+
+| file | computation | sequential | rayon | orx-parallel |
+|---|---|---:|---:|---:|
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/find_flatmap.rs)    | `inputs.into_par()`<br>&nbsp;&nbsp;`.flat_map(flat_map)`<br>&nbsp;&nbsp;`.find(find)`      | 170.80 (1.00) | 120.63 (0.71) | **27.53 (0.16)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/find_map_filter.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map).filter(filter)`<br>&nbsp;&nbsp;`.find(find)` |  46.28 (1.00) |  11.96 (0.26) |  **9.67 (0.21)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/find.rs)            | `inputs.into_par()`<br>&nbsp;&nbsp;`.find(find)`                                         |   2.51 (1.00) |  12.15 (4.85) |  **1.24 (0.49)** |
+
+
+### Parallelization of Arbitrary Iterators
+
+As discussed in [ii](#ii-parallelization-of-arbitrary-regular-iterators), parallelization of regular iterators is a very useful feature. The benchmarks in this category demonstrate that significant improvements can be achieved provided that the computation on elements is not insignificant (here, the computations `map` and `filter` are parallelized).
+
+| file | computation | sequential | rayon | orx-parallel |
+|---|---|---:|---:|---:|
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_iter_into_par.rs) | `inputs.iter().iter_into_par()`<br>&nbsp;&nbsp;`.map(map).filter(filter)`<br>&nbsp;&nbsp;`.collect()` |  48.09 (1.00) |  59.54 (1.24) |  **16.84 (0.35)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_iter_into_par.rs)               | `inputs.iter_into_par()`<br>&nbsp;&nbsp;`.map(map).filter(filter)`<br>&nbsp;&nbsp;`.reduce(reduce)`                                                                                                                              | 33.07 (1.00) |  213.36 (6.45) |    **7.53 (0.23)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/find_iter_into_par.rs)            | `inputs.into_iter().iter_into_par()`<br>&nbsp;&nbsp;`.map(map).filter(filter)`<br>&nbsp;&nbsp;`.find(&find)`             |   44.53 (1.00) | 55.31 (1.24) | **11.78 (0.26)** |
+
+
+### Composition
+
+In the final category of benchmarks, impact of creating long chains of transformations is tested. The experiments suggest that the functions are efficiently composed, and hence, the caller can focus on expressiveness of the defined computation.
+
+| file | computation | sequential | rayon | orx-parallel |
+|---|---|---:|---:|---:|
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map1).filter(filter1).map(map2)`<br>&nbsp;&nbsp;`.filter(filter2).map(map3).map(map4)`<br>&nbsp;&nbsp;`.filter(filter4).collect()` |  35.89 (1.00) |  10.11 (0.28) |  **7.40 (0.21)** |
+| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_long_chain.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map1).filter(filter1).map(map2)`<br>&nbsp;&nbsp;`.filter(filter2).map(map3).map(map4)`<br>&nbsp;&nbsp;`.filter(filter4).reduce(reduce)` |    32.28 (1.00) |     8.99 (0.28) |  **6.63 (0.21)** |
+
+
 
 ## Configurable
 
@@ -104,68 +227,7 @@ This gives the consumer, who actually executes the defined computation, complete
 
 This is guaranteed by the fact that both consuming computation calls and configuration methods require ownership (`self`) of the iterator.
 
-## Performance and Benchmarks
-
-You may find some sample parallel programs in [examples](https://github.com/orxfun/orx-parallel/blob/main/examples) directory. These examples allow to express parallel computations as iterator method compositions and run quick experiments with different approaches. They use the [`GenericIterator`](https://docs.rs/orx-parallel/latest/orx_parallel/generic_iterator/enum.GenericIterator.html) which is a generalization of sequential iterator, rayon's parallel iterator and orx-parallel's parallel iterator in order to allow for convenient experiments on performance. You may play with the code, update the tested computations and run these examples by including **generic_iterator** feature, such as:
-
-`cargo run --release --features generic_iterator --example benchmark_collect -- --len 123456 --num-repetitions 10`
-
-Actual benchmark files are located in [benches](https://github.com/orxfun/orx-parallel/blob/main/benches) directory. The following tables report average execution times of parallel computations in microseconds. The numbers in parentheses represent the ratio of execution time to sequential computation which is used as the baseline (1.00). Parallelized executions of all benchmarks are carried out with default settings. 
-
-Computations are separated into three categories: collect, reduce and early-exit. `ParIter` of **orx-parallel** with default configuration and default parallel runner consistently provides significant improvements in all categories.
-
-### Collect
-
-In this group of benchmarks, outputs of the parallel computations are collected into standard vectors.
-
-The arguments of chained transformations such as `filter`, `filter_map` or `map` are test functions applied to the input. Details of the methods can be found in the respective benchmark files (you may use the link in the **file** column).
-
-> **(s)** In addition to standard vector, outputs can be collected into a [`SplitVec`](https://crates.io/crates/orx-split-vec) with `ParIter` trait defined in this crate. Collecting into a split vector can provide additional improvements, especially for large outputs, due to avoided memory copies. Note that a split vector provides constant time random access; and despite the fact that it is split to fragments, it asymptotically inherits advantages of contiguous vectors due to doubling capacities of the fragments.
-
-| file                                                                                | computation                                                                                                                                       |    sequential |         rayon | orx-parallel | orx-parallel (s) |
-|-------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|--------------:|--------------:|-------------:|-----------------:|
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_filter.rs)     | `inputs.into_par()`<br>`.filter(filter).collect()`                                                                                              |   5.92 (1.00) |  12.58 (2.12) |  2.50 (0.42) |  **2.47 (0.42)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_filtermap.rs)  | `inputs.into_par()`<br>`.filter_map(filter_map).collect()`                                                                                      |  15.95 (1.00) |  12.62 (0.79) |  6.75 (0.42) |  **6.37 (0.40)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_flatmap.rs)    | `inputs.into_par()`<br>`.flat_map(flat_map).collect()`                                                                                          | 187.37 (1.00) | 492.18 (2.63) | 57.00 (0.30) | **50.34 (0.27)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map_filter.rs) | `inputs.into_par()`<br>`.map(map).filter(filter).collect()`                                                                                     |  47.97 (1.00) |  14.69 (0.31) | 11.98 (0.25) | **10.29 (0.21)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map.rs)        | `inputs.into_par()`<br>`.map(map).collect()`                                                                                                    |  36.21 (1.00) |  14.36 (0.40) | **11.76 (0.32)** | 14.47 (0.40) |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs) | `inputs.into_par()`<br>`.map(map1).filter(filter1).map(map2)`<br>`.filter(filter2).map(map3).map(map4)`<br>`.filter(filter4).collect()` |  35.89 (1.00) |  10.11 (0.28) |  7.40 (0.21) |  **6.99 (0.19)** |
-
-### Reduce
-
-In this group, instead of collecting outputs, the results are reduced to a single value. As common examples, `count` and `sum` reductions are used in benchmarks. Additionally, a custom `reduce` function is tested.
-
-> Interestingly, neither *orx-parallel* nor *rayon* can do better than the sequential for the `inputs.into_iter().sum()` computation, they don't even get close. For this computation, sequential iterator seems to be amazingly optimized; for others however, we achieve significant improvements with parallelization.
-
-| file                                                                               | computation                                                                                                                                            |      sequential |           rayon |     orx-parallel |
-|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|----------------:|----------------:|-----------------:|
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/count_filtermap.rs)   | `inputs.into_par()`<br>`.filter_map(filter_map).count()`                                                                                             |    12.67 (1.00) |     9.00 (0.71) |  **3.60 (0.28)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/count_flatmap.rs)     | `inputs.into_par()`<br>`.flat_map(flat_map).count()`                                                                                                 |   217.07 (1.00) |   146.77 (0.68) | **39.87 (0.18)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/count_map_filter.rs)  | `inputs.into_par()`<br>`.map(map).filter(filter).count()`                                                                                            |    51.54 (1.00) |     9.74 (0.19) |  **9.09 (0.18)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/count_map.rs)         | `inputs.into_par()`<br>`.map(map).count()`                                                                                                           |    30.96 (1.00) | **5.46 (0.18)** |      6.43 (0.21) |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_map_filter.rs) | `inputs.into_par()`<br>`  .map(map).filter(filter).reduce(reduce)`                                                                                   |    31.92 (1.00) |    16.16 (0.51) |  **7.07 (0.22)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_map.rs)        | `inputs.into_par()`<br>`.map(map).reduce(reduce)`                                                                                                    |    32.26 (1.00) |     7.85 (0.24) |  **6.96 (0.22)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce.rs)            | `inputs.into_iter().reduce(reduce)`                                                                                                                    |     2.00 (1.00) |    12.18 (6.09) |  **1.09 (0.55)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/sum_filtermap.rs)     | `inputs.into_par()`<br>`.filter_map(filter_map).sum()`                                                                                               |    12.40 (1.00) |     4.66 (0.38) |  **2.88 (0.23)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/sum_flatmap.rs)       | `inputs.into_par_iter()`<br>`.flat_map(flat_map).sum()`                                                                                              |   123.50 (1.00) |    56.49 (0.46) | **21.16 (0.17)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/sum_map_filter.rs)    | `inputs.into_par()`<br>`.map(map).filter(filter).sum()`                                                                                              |     6.22 (1.00) |     4.57 (0.73) |  **1.84 (0.30)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/sum.rs)               | `inputs.into_par().sum()`                                                                                                                              | **0.00 (1.00)** |  9.83 (6449.41) |    0.21 (136.25) |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_long_chain.rs) | `inputs.into_par()`<br>`.map(map1).filter(filter1).map(map2)`<br>`.filter(filter2).map(map3).map(map4)`<br>`.filter(filter4).reduce(reduce)` |    32.28 (1.00) |     8.99 (0.28) |  **6.63 (0.21)** |
-
-
-### Find
-
-In the last category of computations which allow for *early exit*, `find` method is tested. The element to be found is placed in different positions of the input: in the beginning, in the middle, at the end, and lastly intentionally left out.
-
-Although not reported here, `find_any` benchmarks lead to similar results.
-
-| file                                                                             | computation                                                            |    sequential |         rayon |     orx-parallel |
-|----------------------------------------------------------------------------------|------------------------------------------------------------------------|--------------:|--------------:|-----------------:|
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/find_flatmap.rs)    | `inputs.into_par()`<br>`.flat_map(flat_map)`<br>`.find(find)`      | 170.80 (1.00) | 120.63 (0.71) | **27.53 (0.16)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/find_map_filter.rs) | `inputs.into_par()`<br>`.map(map).filter(filter)`<br>`.find(find)` |  46.28 (1.00) |  11.96 (0.26) |  **9.67 (0.21)** |
-| [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/find.rs)            | `inputs.into_par().find(find)`                                         |   2.51 (1.00) |  12.15 (4.85) |  **1.24 (0.49)** |
-
-## Underlying Approach, Extensibility and Parallel Runners
+## Underlying Approach and Parallel Runners
 
 This crate defines parallel computation by combining two basic aspects.
 
@@ -174,14 +236,7 @@ This crate defines parallel computation by combining two basic aspects.
 
 Finally, [`ParallelRunner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParallelRunner.html) trait manages parallelization of the given computation with desired configuration. The objective of the parallel runner is to optimize the chunk sizes to solve the tradeoff between impact of heterogeneity of individual computations and overhead of parallelization.
 
-Inputs of the parallel computations and parallel runners are extensible:
-
-* Any input collection or generator that implements [`IntoConcurrentIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IntoConcurrentIter.html) automatically implements [`IntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_parallel/trait.IntoParIter.html), and hence, can be parallelized. Therefore, new collection types can be used by defining their concurrent iterators.
-  * *Further, any arbitrary sequential `Iterator` implements [`IterIntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IterIntoConcurrentIter.html) and can be parallelized. Importantly note that this is useful only when computation on pulled elements is not insignificant.*
-
-Furthermore, the parallel runner is customizable:
-
-* `ParallelRunner` is a trait and a default implementation is provided in this crate. It is possible to implement and use your *own runner* simply calling [`with_runner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.with_runner) transformation method on the parallel iterator. Default parallel runner targets to be efficient in general. When we have a use case with special characteristics, we can implement a `ParallelRunner` optimized for this scenario and use with the parallel iterators.
+Since it is a trait, parallel runner is customizable. It is possible to implement and use your *own runner* simply by calling [`with_runner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.with_runner) transformation method on the parallel iterator. Default parallel runner targets to be efficient in general. When we have a use case with special characteristics, we can implement a `ParallelRunner` optimized for this scenario and use with the parallel iterators.
 
 ## Contributing
 
