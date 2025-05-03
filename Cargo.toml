@@ -3,6 +3,7 @@ name = "orx-parallel"
 version = "2.0.0"
 edition = "2024"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
+readme = "README.md"
 description = "High performance, configurable and expressive parallel computing library for computations defined as compositions of iterator methods."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/orxfun/orx-parallel/"
