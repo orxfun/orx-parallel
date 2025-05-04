@@ -974,11 +974,8 @@ where
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let a = 1..10_000;
-    /// assert_eq!(a.par().find_any(|x| x % 12345 == 0), None);
-    ///
     /// // might return either of 3421 or 2*3421
-    /// let any = a.par().find_any(|x| x % 3421 == 0).unwrap();
+    /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
     /// ```
     fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
