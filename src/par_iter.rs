@@ -208,7 +208,7 @@ where
     /// ```
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
-    /// Sets the collect ordering of the parallel computation.
+    /// Sets the iteration order of the parallel computation.
     ///
     /// # Examples
     ///
@@ -217,26 +217,28 @@ where
     ///
     /// let vec = vec![1, 2, 3, 4];
     ///
-    /// /// results are collected in order consistent to the input order
+    /// // results are collected in order consistent to the input order,
+    /// // or find returns the first element satisfying the predicate
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
-    ///     vec.par().collect_ordering(CollectOrdering::Ordered).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     vec.par().collect_ordering(IterationOrder::Ordered).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
-    /// /// results might be collected in arbitrary order
+    /// // results might be collected in arbitrary order
+    /// // or find returns the any of the elements satisfying the predicate
     ///
     /// assert_eq!(
-    ///     vec.par().collect_ordering(CollectOrdering::Arbitrary).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Arbitrary)
+    ///     vec.par().collect_ordering(IterationOrder::Arbitrary).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
     /// );
     /// ```
-    fn collect_ordering(self, collect: IterationOrder) -> Self;
+    fn iteration_order(self, collect: IterationOrder) -> Self;
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///

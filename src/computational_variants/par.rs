@@ -82,7 +82,7 @@ where
         self
     }
 
-    fn collect_ordering(mut self, collect: IterationOrder) -> Self {
+    fn iteration_order(mut self, collect: IterationOrder) -> Self {
         self.params = self.params.with_collect_ordering(collect);
         self
     }
