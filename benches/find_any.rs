@@ -82,7 +82,10 @@ fn rayon(inputs: &[Output], find: impl Fn(&Output) -> bool + Send + Sync) -> Opt
 }
 
 fn orx(inputs: &[Output], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<&Output> {
-    inputs.into_par().find_any(|x| find(x))
+    inputs
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .find(|x| find(x))
 }
 
 fn run(c: &mut Criterion) {

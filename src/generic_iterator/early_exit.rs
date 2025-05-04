@@ -1,5 +1,5 @@
 use super::iter::GenericIterator;
-use crate::ParIter;
+use crate::{IterationOrder, ParIter};
 
 impl<T, S, R, O> GenericIterator<T, S, R, O>
 where
@@ -36,7 +36,7 @@ where
         match self {
             GenericIterator::Sequential(mut x) => x.find(predicate),
             GenericIterator::Rayon(x) => x.find_any(predicate),
-            GenericIterator::Orx(x) => x.find_any(predicate),
+            GenericIterator::Orx(x) => x.iteration_order(IterationOrder::Arbitrary).find(predicate),
         }
     }
 }

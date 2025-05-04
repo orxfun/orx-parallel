@@ -38,5 +38,5 @@ name = "reduce_iter_into_par"
 harness = false
 
 [features]
-default = []
+default = ["generic_iterator"]
 generic_iterator = ["rayon"]
