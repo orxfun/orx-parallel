@@ -78,17 +78,20 @@ fn seq(inputs: &[Output], find: impl Fn(&Output) -> bool) -> Option<&Output> {
 
 fn rayon(inputs: &[Output], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<&Output> {
     use rayon::iter::ParallelIterator;
-    inputs.into_par_iter().find_first(|x| find(x))
+    inputs.into_par_iter().find_any(|x| find(x))
 }
 
 fn orx(inputs: &[Output], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<&Output> {
-    inputs.into_par().find(|x| find(x))
+    inputs
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .find(|x| find(x))
 }
 
 fn run(c: &mut Criterion) {
     let treatments = [N_EARLY, N_MIDDLE, N_LATE, N_NEVER];
 
-    let mut group = c.benchmark_group("find");
+    let mut group = c.benchmark_group("find_any");
 
     for n_when in &treatments {
         let find = get_find(*n_when);

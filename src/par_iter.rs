@@ -1,214 +1,686 @@
-use crate::{ChunkSize, Fallible, NumThreads, ParCollectInto, Params};
-use orx_split_vec::{Growth, SplitVec};
-use std::{cmp::Ordering, ops::Add};
+use crate::{
+    Params,
+    collect_into::ParCollectInto,
+    computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
+    parameters::{ChunkSize, IterationOrder, NumThreads},
+    runner::{DefaultRunner, ParallelRunner},
+    special_type_sets::Sum,
+};
+use orx_concurrent_iter::ConcurrentIter;
+use std::cmp::Ordering;
 
-/// An iterator used to define a computation that can be executed in parallel.
-pub trait Par
+/// Parallel iterator.
+pub trait ParIter<R = DefaultRunner>: Sized + Send + Sync
 where
-    Self: Sized,
+    R: ParallelRunner,
 {
-    /// Type of the items that the iterator yields.
+    /// Element type of the parallel iterator.
     type Item: Send + Sync;
 
-    /// Parameters of the parallel computation which can be set by `num_threads` and `chunk_size` methods.
-    fn params(&self) -> Params;
+    /// Returns a reference to the input concurrent iterator.
+    fn con_iter(&self) -> &impl ConcurrentIter;
 
-    /// Transforms the parallel computation with a new one with the given `num_threads`.
-    ///
-    /// See [`crate::NumThreads`] for details.
-    ///
-    /// `num_threads` represents the degree of parallelization. It is possible to define an upper bound on the number of threads to be used for the parallel computation.
-    /// When set to **1**, the computation will be executed sequentially without any overhead.
-    /// In this sense, parallel iterators defined in this crate are a union of sequential and parallel execution.
+    /// Parameters of the parallel iterator.
     ///
     /// # Examples
     ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use std::num::NonZeroUsize;
-    ///
-    /// let expected = (0..(1 << 10)).sum();
-    ///
-    /// // unset/default -> NumThreads::Auto
-    /// let sum = (0..(1 << 10)).par().sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// // A: NumThreads::Auto
-    /// let sum = (0..(1 << 10)).par().num_threads(0).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// let sum = (0..(1 << 10)).par().num_threads(NumThreads::Auto).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// // B: with a limit on the number of threads
-    /// let sum = (0..(1 << 10)).par().num_threads(4).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// let sum = (0..(1 << 10)).par().num_threads(NumThreads::Max(NonZeroUsize::new(4).unwrap())).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// // C: sequential execution
-    /// let sum = (0..(1 << 10)).par().num_threads(1).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// let sum = (0..(1 << 10)).par().num_threads(NumThreads::sequential()).sum();
-    /// assert_eq!(sum, expected);
     /// ```
+    /// use orx_parallel::*;
+    /// use std::num::NonZero;
     ///
-    /// # Rules of Thumb / Guidelines
+    /// let vec = vec![1, 2, 3, 4];
     ///
-    /// It is recommended to set this parameter to its default value, `NumThreads::Auto`.
-    /// This setting assumes that it can use all available threads; however, the computation will spawn new threads only when required.
-    /// In other words, when we can dynamically decide that the task is not large enough to justify spawning a new thread, the parallel execution will avoid it.
+    /// assert_eq!(
+    ///     vec.par().params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
     ///
-    /// A special case is `NumThreads::Max(NonZeroUsize::new(1).unwrap())`, or equivalently `NumThreads::sequential()`.
-    /// This will lead to a sequential execution of the defined computation on the main thread.
-    /// Both in terms of used resources and computation time, this mode is not similar but **identical** to a sequential execution using the regular sequential `Iterator`s.
+    /// assert_eq!(
+    ///     vec.par().num_threads(0).chunk_size(0).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
     ///
-    /// Lastly, `NumThreads::Max(t)` where `t >= 2` can be used in the following scenarios:
-    /// * We have a strict limit on the resources that we can use for this computation, even if the hardware has more resources.
-    ///   Parallel execution will ensure that `t` will never be exceeded.
-    /// * We have a computation which is extremely time-critical and our benchmarks show that `t` outperforms the `NumThreads::Auto` on the corresponding system.
+    /// assert_eq!(
+    ///     vec.par().num_threads(1).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(1).unwrap()),
+    ///         ChunkSize::Auto,
+    ///         IterationOrder::Ordered
+    ///     )
+    /// );
+    ///
+    /// assert_eq!(
+    ///     vec.par().num_threads(4).chunk_size(64).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(4).unwrap()),
+    ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
+    ///         IterationOrder::Ordered
+    ///     )
+    /// );
+    ///
+    /// assert_eq!(
+    ///     vec.par()
+    ///         .num_threads(8)
+    ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
+    ///         .iteration_order(IterationOrder::Arbitrary)
+    ///         .params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(8).unwrap()),
+    ///         ChunkSize::Min(NonZero::new(16).unwrap()),
+    ///         IterationOrder::Arbitrary
+    ///     )
+    /// );
+    /// ```
+    fn params(&self) -> &Params;
+
+    // params transformations
+
+    /// Sets the number of threads to be used in the parallel execution.
+    /// Integers can be used as the argument with the following mapping:
+    ///
+    /// * `0` -> `NumThreads::Auto`
+    /// * `1` -> `NumThreads::sequential()`
+    /// * `n > 0` -> `NumThreads::Max(n)`
+    ///
+    /// See [`NumThreads`] for details.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use std::num::NonZero;
+    ///
+    /// let vec = vec![1, 2, 3, 4];
+    ///
+    /// // all available threads can be used
+    ///
+    /// assert_eq!(
+    ///     vec.par().params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
+    ///
+    /// assert_eq!(
+    ///     vec.par().num_threads(0).chunk_size(0).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
+    ///
+    /// // computation will be executed sequentially on the main thread, no parallelization
+    ///
+    /// assert_eq!(
+    ///     vec.par().num_threads(1).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(1).unwrap()),
+    ///         ChunkSize::Auto,
+    ///         IterationOrder::Ordered
+    ///     )
+    /// );
+    ///
+    /// // maximum 4 threads can be used
+    /// assert_eq!(
+    ///     vec.par().num_threads(4).chunk_size(64).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(4).unwrap()),
+    ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
+    ///         IterationOrder::Ordered
+    ///     )
+    /// );
+    ///
+    /// // maximum 8 threads can be used
+    /// assert_eq!(
+    ///     vec.par()
+    ///         .num_threads(8)
+    ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
+    ///         .iteration_order(IterationOrder::Arbitrary)
+    ///         .params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(8).unwrap()),
+    ///         ChunkSize::Min(NonZero::new(16).unwrap()),
+    ///         IterationOrder::Arbitrary
+    ///     )
+    /// );
+    /// ```
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
-    /// Transforms the parallel computation with a new one with the given `chunk_size`.
+    /// Sets the number of elements to be pulled from the concurrent iterator during the
+    /// parallel execution. When integers are used as argument, the following mapping applies:
     ///
-    /// See [`crate::ChunkSize`] for details.
+    /// * `0` -> `ChunkSize::Auto`
+    /// * `n > 0` -> `ChunkSize::Exact(n)`
     ///
-    /// `chunk_size` represents the batch size of elements each thread will pull from the main iterator once it becomes idle again.
-    /// It is possible to define a minimum or exact chunk size.
+    /// Please use the default enum constructor for creating `ChunkSize::Min` variant.
+    ///
+    /// See [`ChunkSize`] for details.
     ///
     /// # Examples
     ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use std::num::NonZeroUsize;
-    ///
-    /// let expected = (0..(1 << 10)).sum();
-    ///
-    /// // unset/default -> ChunkSize::Auto
-    /// let sum = (0..(1 << 10)).par().sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// // A: ChunkSize::Auto
-    /// let sum = (0..(1 << 10)).par().chunk_size(0).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// let sum = (0..(1 << 10)).par().chunk_size(ChunkSize::Auto).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// // B: with an exact chunk size
-    /// let sum = (0..(1 << 10)).par().chunk_size(1024).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// let sum = (0..(1 << 10)).par().chunk_size(ChunkSize::Exact(NonZeroUsize::new(1024).unwrap())).sum();
-    /// assert_eq!(sum, expected);
-    ///
-    /// // C: with lower bound on the chunk size, execution may increase chunk size whenever it improves performance
-    /// let sum = (0..(1 << 10)).par().chunk_size(ChunkSize::Min(NonZeroUsize::new(1024).unwrap())).sum();
-    /// assert_eq!(sum, expected);
     /// ```
+    /// use orx_parallel::*;
+    /// use std::num::NonZero;
     ///
-    /// # Rules of Thumb / Guidelines
+    /// let vec = vec![1, 2, 3, 4];
     ///
-    /// The objective of this parameter is to balance the overhead of parallelization and cost of heterogeneity of tasks.
+    /// // chunk sizes will be dynamically decided by the parallel runner
     ///
-    /// In order to illustrate, assume that there exist 8 elements to process, or 8 jobs to execute, and we will use 2 threads for this computation.
-    /// Two extreme strategies can be defined as follows.
+    /// assert_eq!(
+    ///     vec.par().params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
     ///
-    /// * **Perfect Sharing of Tasks**
-    ///   * Setting chunk size to 4 provides a perfect division of tasks in terms of quantity.
-    ///     Each thread will retrieve 4 elements at once in one pull and process them.
-    ///     This *one pull* per thread can be considered as the parallelization overhead and this is the best/minimum we can achieve.
-    ///   * Drawback of this approach, on the other hand, is observed when the execution time of each job is significantly different; i.e., when we have heterogeneous tasks.
-    ///   * Assume, for instance, that the first element requires 7 units of time while all remaining elements require 1 unit of time.
-    ///   * Roughly, the parallel execution with a chunk size of 4 would complete in 10 units of time, which is the execution time of the first thread (7 + 3*1).
-    ///   * The second thread will complete its 4 tasks in 4 units of time and will remain idle for 6 units of time.
-    /// * **Perfect Handling of Heterogeneity**
-    ///   * Setting chunk size to 1 provides a perfect way to deal with heterogeneous tasks, minimizing the idle time of threads.
-    ///     Each thread will retrieve elements one by one whenever they become idle.
-    ///   * Considering the heterogeneous example above, the parallel execution with a chunk size of 1 would complete around 7 units of time.
-    ///     * This is again the execution time of the first thread, which will only execute the first element.
-    ///     * The second thread will execute the remaining 7 elements, again in 7 units in time.
-    ///   * None of the threads will be idle, which is the best we can achieve.
-    ///   * Drawback of this approach is the parallelization overhead due to *pull*s.
-    ///   * Chunk size being 1, this setting will lead to a total of 8 pull operations (1 pull by the first thread, 7 pulls by the second thread).
-    ///   * This leads to the maximum/worst parallelization overhead in this scenario.
+    /// assert_eq!(
+    ///     vec.par().num_threads(0).chunk_size(0).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
     ///
-    /// The objective then is to find a chunk size which is:
-    /// * large enough that total time spent for the pulls is insignificant, while
-    /// * small enough not to suffer from the impact of heterogeneity.
+    /// assert_eq!(
+    ///     vec.par().num_threads(1).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(1).unwrap()),
+    ///         ChunkSize::Auto,
+    ///         IterationOrder::Ordered
+    ///     )
+    /// );
     ///
-    /// Note that this decision is data dependent, and hence, can be tuned for the input when the operation is extremely time-critical.
+    /// // chunk size will always be 64, parallel runner cannot change
     ///
-    /// In these cases, the following rule of thumb helps to find a good chunk size.
-    /// We can set the chunk size to the smallest value which would make the overhead of pulls insignificant:
-    /// * The larger each individual task, the less significant the parallelization overhead. A small chunk size would do.
-    /// * The smaller each individual task, the more significant the parallelization overhead. We require a larger chunk size while being careful not to suffer from idle times of threads due to heterogeneity.
+    /// assert_eq!(
+    ///     vec.par().num_threads(4).chunk_size(64).params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(4).unwrap()),
+    ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
+    ///         IterationOrder::Ordered
+    ///     )
+    /// );
     ///
-    /// In general, it is recommended to set this parameter to its default value, `ChunkSize::Auto`.
-    /// This library will try to solve the tradeoff explained above depending on the input data to minimize execution time and idle thread time.
+    /// // minimum chunk size will be 16, but can be dynamically increased by the parallel runner
     ///
-    /// For more critical operations, this `ChunkSize::Exact` and `ChunkSize::Min` options can be used to tune the execution for the class of the relevant input data.
+    /// assert_eq!(
+    ///     vec.par()
+    ///         .num_threads(8)
+    ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
+    ///         .iteration_order(IterationOrder::Arbitrary)
+    ///         .params(),
+    ///     &Params::new(
+    ///         NumThreads::Max(NonZero::new(8).unwrap()),
+    ///         ChunkSize::Min(NonZero::new(16).unwrap()),
+    ///         IterationOrder::Arbitrary
+    ///     )
+    /// );
+    /// ```
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
-    // transform
-
-    /// Takes the closure `map` and creates an iterator which calls that closure on each element.
+    /// Sets the iteration order of the parallel computation.
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```
     /// use orx_parallel::*;
     ///
-    /// let doubles = (0..5).par().map(|x| x * 2).collect_vec();
-    /// assert_eq!(&doubles[..], &[0, 2, 4, 6, 8]);
+    /// let vec = vec![1, 2, 3, 4];
+    ///
+    /// // results are collected in order consistent to the input order,
+    /// // or find returns the first element satisfying the predicate
+    ///
+    /// assert_eq!(
+    ///     vec.par().params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
+    ///
+    /// assert_eq!(
+    ///     vec.par().iteration_order(IterationOrder::Ordered).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    /// );
+    ///
+    /// // results might be collected in arbitrary order
+    /// // or find returns the any of the elements satisfying the predicate
+    ///
+    /// assert_eq!(
+    ///     vec.par().iteration_order(IterationOrder::Arbitrary).params(),
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
+    /// );
     /// ```
-    fn map<O, M>(self, map: M) -> impl Par<Item = O>
-    where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync + Clone;
+    fn iteration_order(self, collect: IterationOrder) -> Self;
 
-    /// Takes the closure `fmap` and creates an iterator which calls that closure on each element and flattens the result.
+    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```ignore
     /// use orx_parallel::*;
     ///
-    /// let numbers = (0..5).par().flat_map(|x| vec![x; x]).collect_vec();
-    /// assert_eq!(&numbers[..], &[1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
+    /// let inputs = vec![1, 2, 3, 4];
+    ///
+    /// // uses the default runner
+    /// let sum = inputs.par().sum();
+    ///
+    /// // uses the custom parallel runner MyParallelRunner: ParallelRunner
+    /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
     /// ```
-    fn flat_map<O, OI, FM>(self, flat_map: FM) -> impl Par<Item = O>
-    where
-        O: Send + Sync,
-        OI: IntoIterator<Item = O>,
-        FM: Fn(Self::Item) -> OI + Send + Sync + Clone;
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item>;
 
-    /// Creates an iterator which uses the closure `filter` to determine if an element should be yielded.
+    // computation transformations
+
+    /// Takes a closure `map` and creates a parallel iterator which calls that closure on each element.
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```
     /// use orx_parallel::*;
     ///
-    /// let evens = (0..10).par().filter(|x| x % 2 == 0).collect_vec();
-    /// assert_eq!(&evens[..], &[0, 2, 4, 6, 8]);
+    /// let a = [1, 2, 3];
+    ///
+    /// let iter = a.into_par().map(|x| 2 * x);
+    ///
+    /// let b: Vec<_> = iter.collect();
+    /// assert_eq!(b, &[2, 4, 6]);
     /// ```
-    fn filter<F>(self, filter: F) -> impl Par<Item = Self::Item>
+    fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync + Clone;
+        Out: Send + Sync,
+        Map: Fn(Self::Item) -> Out + Send + Sync + Clone;
+
+    /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = [1, 2, 3];
+    ///
+    /// let iter = a.into_par().filter(|x| *x % 2 == 1).copied();
+    ///
+    /// let b: Vec<_> = iter.collect();
+    /// assert_eq!(b, &[1, 3]);
+    /// ```
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    where
+        Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone;
+
+    /// Creates an iterator that works like map, but flattens nested structure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let words = ["alpha", "beta", "gamma"];
+    ///
+    /// // chars() returns an iterator
+    /// let all_chars: Vec<_> = words.into_par().flat_map(|s| s.chars()).collect();
+    ///
+    /// let merged: String = all_chars.iter().collect();
+    /// assert_eq!(merged, "alphabetagamma");
+    /// ```
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone;
 
     /// Creates an iterator that both filters and maps.
     ///
-    /// The returned iterator yields only the values for which the supplied closure returns a successful value of the fallible type such as:
-    /// * `Some` variant for `Option`,
-    /// * `Ok` variant for `Result`, etc.
+    /// The returned iterator yields only the values for which the supplied closure `filter_map` returns `Some(value)`.
     ///
-    /// See [`crate::Fallible`] trait for details of the fallible types and extending.
+    /// `filter_map` can be used to make chains of `filter` and `map` more concise.
+    /// The example below shows how a `map().filter().map()` can be shortened to a single call to `filter_map`.
     ///
-    /// Filter_map can be used to make chains of filter and map more concise.
-    /// The example below shows how a map().filter().map() can be shortened to a single call to filter_map.
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = ["1", "two", "NaN", "four", "5"];
+    ///
+    /// let numbers: Vec<_> = a
+    ///     .into_par()
+    ///     .filter_map(|s| s.parse::<usize>().ok())
+    ///     .collect();
+    ///
+    /// assert_eq!(numbers, [1, 5]);
+    /// ```
+    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    where
+        Out: Send + Sync,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
+
+    /// Does something with each element of an iterator, passing the value on.
+    ///
+    /// When using iterators, you’ll often chain several of them together.
+    /// While working on such code, you might want to check out what’s happening at various parts in the pipeline.
+    /// To do that, insert a call to `inspect()`.
+    ///
+    /// It’s more common for `inspect()` to be used as a debugging tool than to exist in your final code,
+    /// but applications may find it useful in certain situations when errors need to be logged before being discarded.
+    ///
+    /// It is often convenient to use thread-safe collections such as [`ConcurrentBag`] and
+    /// [`ConcurrentVec`](https://crates.io/crates/orx-concurrent-vec) to
+    /// collect some intermediate values during parallel execution for further inspection.
+    /// The following example demonstrates such a use case.
+    ///
+    /// [`ConcurrentBag`]: orx_concurrent_bag::ConcurrentBag
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use orx_concurrent_bag::*;
+    ///
+    /// let a = vec![1, 4, 2, 3];
+    ///
+    /// // let's add some inspect() calls to investigate what's happening
+    /// // - log some events
+    /// // - use a concurrent bag to collect and investigate numbers contributing to the sum
+    /// let bag = ConcurrentBag::new();
+    ///
+    /// let sum = a
+    ///     .par()
+    ///     .copied()
+    ///     .inspect(|x| println!("about to filter: {x}"))
+    ///     .filter(|x| x % 2 == 0)
+    ///     .inspect(|x| {
+    ///         bag.push(*x);
+    ///         println!("made it through filter: {x}");
+    ///     })
+    ///     .sum();
+    /// println!("{sum}");
+    ///
+    /// let mut values_made_through = bag.into_inner();
+    /// values_made_through.sort();
+    /// assert_eq!(values_made_through, [2, 4]);
+    /// ```
+    ///
+    /// This will print:
+    ///
+    /// ```console
+    /// about to filter: 1
+    /// about to filter: 4
+    /// made it through filter: 4
+    /// about to filter: 2
+    /// made it through filter: 2
+    /// about to filter: 3
+    /// 6
+    /// ```
+    fn inspect<Operation>(self, operation: Operation) -> impl ParIter<R, Item = Self::Item>
+    where
+        Operation: Fn(&Self::Item) + Sync + Send + Clone,
+    {
+        let map = move |x| {
+            operation(&x);
+            x
+        };
+        self.map(map)
+    }
+
+    // special item transformations
+
+    /// Creates an iterator which copies all of its elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    ///
+    /// let v_copied: Vec<_> = a.par().copied().collect();
+    ///
+    /// // copied is the same as .map(|&x| x)
+    /// let v_map: Vec<_> = a.par().map(|&x| x).collect();
+    ///
+    /// assert_eq!(v_copied, vec![1, 2, 3]);
+    /// assert_eq!(v_map, vec![1, 2, 3]);
+    /// ```
+    fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
+    where
+        T: 'a + Copy + Send + Sync,
+        Self: ParIter<R, Item = &'a T>,
+    {
+        self.map(map_copy)
+    }
+
+    /// Creates an iterator which clones all of its elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<_> = [1, 2, 3].map(|x| x.to_string()).into_iter().collect();
+    ///
+    /// let v_cloned: Vec<_> = a.par().cloned().collect();
+    ///
+    /// // cloned is the same as .map(|x| x.clone())
+    /// let v_map: Vec<_> = a.par().map(|x| x.clone()).collect();
+    ///
+    /// assert_eq!(
+    ///     v_cloned,
+    ///     vec![String::from("1"), String::from("2"), String::from("3")]
+    /// );
+    /// assert_eq!(
+    ///     v_map,
+    ///     vec![String::from("1"), String::from("2"), String::from("3")]
+    /// );
+    /// ```
+    fn cloned<'a, T>(self) -> impl ParIter<R, Item = T>
+    where
+        T: 'a + Clone + Send + Sync,
+        Self: ParIter<R, Item = &'a T>,
+    {
+        self.map(map_clone)
+    }
+
+    /// Creates an iterator that flattens nested structure.
+    ///
+    /// This is useful when you have an iterator of iterators or an iterator of things that can be
+    /// turned into iterators and you want to remove one level of indirection.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let data = vec![vec![1, 2, 3, 4], vec![5, 6]];
+    /// let flattened = data.into_par().flatten().collect::<Vec<u8>>();
+    /// assert_eq!(flattened, &[1, 2, 3, 4, 5, 6]);
+    /// ```
+    ///
+    /// Mapping and then flattening:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let words = vec!["alpha", "beta", "gamma"];
+    ///
+    /// // chars() returns an iterator
+    /// let all_characters: Vec<_> = words.par().map(|s| s.chars()).flatten().collect();
+    /// let merged: String = all_characters.into_iter().collect();
+    /// assert_eq!(merged, "alphabetagamma");
+    /// ```
+    ///
+    /// But actually, you can write this in terms of `flat_map`,
+    /// which is preferable in this case since it conveys intent more clearly:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let words = vec!["alpha", "beta", "gamma"];
+    ///
+    /// // chars() returns an iterator
+    /// let all_characters: Vec<_> = words.par().flat_map(|s| s.chars()).collect();
+    /// let merged: String = all_characters.into_iter().collect();
+    /// assert_eq!(merged, "alphabetagamma");
+    /// ```
+    fn flatten(self) -> impl ParIter<R, Item = <Self::Item as IntoIterator>::Item>
+    where
+        Self::Item: IntoIterator,
+        <Self::Item as IntoIterator>::IntoIter: Send + Sync,
+        <Self::Item as IntoIterator>::Item: Send + Sync,
+        R: Send + Sync,
+        Self: Send + Sync,
+    {
+        let map = |e: Self::Item| e.into_iter();
+        self.flat_map(map)
+    }
+
+    // collect
+
+    /// Collects all the items from an iterator into a collection.
+    ///
+    /// This is useful when you already have a collection and want to add the iterator items to it.
+    ///
+    /// The collection is passed in as owned value, and returned back with the additional elements.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    ///
+    /// let vec: Vec<i32> = vec![0, 1];
+    /// let vec = a.par().map(|&x| x * 2).collect_into(vec);
+    /// let vec = a.par().map(|&x| x * 10).collect_into(vec);
+    ///
+    /// assert_eq!(vec, vec![0, 1, 2, 4, 6, 10, 20, 30]);
+    /// ```
+    fn collect_into<C>(self, output: C) -> C
+    where
+        C: ParCollectInto<Self::Item>;
+
+    /// Transforms an iterator into a collection.
+    ///
+    /// Similar to [`Iterator::collect`], the type annotation on the left-hand-side determines
+    /// the type of the result collection; or turbofish annotation can be used.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    ///
+    /// let doubled: Vec<i32> = a.par().map(|&x| x * 2).collect();
+    ///
+    /// assert_eq!(vec![2, 4, 6], doubled);
+    /// ```
+    fn collect<C>(self) -> C
+    where
+        C: ParCollectInto<Self::Item>,
+    {
+        let output = C::empty(self.con_iter().try_get_len());
+        self.collect_into(output)
+    }
+
+    // reduce
+
+    /// Reduces the elements to a single one, by repeatedly applying a reducing operation.
+    ///
+    /// If the iterator is empty, returns `None`; otherwise, returns the result of the reduction.
+    ///
+    /// The `reduce` function is a closure with two arguments: an ‘accumulator’, and an element.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let inputs = 1..10;
+    /// let reduced: usize = inputs.par().reduce(|acc, e| acc + e).unwrap_or(0);
+    /// assert_eq!(reduced, 45);
+    /// ```
+    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
+    where
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
+
+    /// Tests if every element of the iterator matches a predicate.
+    ///
+    /// `all` takes a `predicate` that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and if they all return true, then so does `all`.
+    /// If any of them returns false, it returns false.
+    ///
+    /// `all` is short-circuiting; in other words, it will stop processing as soon as it finds a false,
+    /// given that no matter what else happens, the result will also be false.
+    ///
+    /// An empty iterator returns true.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mut a = vec![1, 2, 3];
+    /// assert!(a.par().all(|x| **x > 0));
+    /// assert!(!a.par().all(|x| **x > 2));
+    ///
+    /// a.clear();
+    /// assert!(a.par().all(|x| **x > 2)); // empty iterator
+    /// ```
+    fn all<Predicate>(self, predicate: Predicate) -> bool
+    where
+        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        let violates = |x: &Self::Item| !predicate(x);
+        self.find(violates).is_none()
+    }
+
+    /// Tests if any element of the iterator matches a predicate.
+    ///
+    /// `any` takes a `predicate` that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and if any of the elements returns true, then so does `any`.
+    /// If all of them return false, it returns false.
+    ///
+    /// `any` is short-circuiting; in other words, it will stop processing as soon as it finds a true,
+    /// given that no matter what else happens, the result will also be true.
+    ///
+    /// An empty iterator returns false.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mut a = vec![1, 2, 3];
+    /// assert!(a.par().any(|x| **x > 0));
+    /// assert!(!a.par().any(|x| **x > 5));
+    ///
+    /// a.clear();
+    /// assert!(!a.par().any(|x| **x > 0)); // empty iterator
+    /// ```
+    fn any<Predicate>(self, predicate: Predicate) -> bool
+    where
+        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        self.find(predicate).is_some()
+    }
+
+    /// Consumes the iterator, counting the number of iterations and returning it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    /// assert_eq!(a.par().filter(|x| **x >= 2).count(), 2);
+    /// ```
+    fn count(self) -> usize {
+        self.map(map_count).reduce(reduce_sum).unwrap_or(0)
+    }
+
+    /// Calls a closure on each element of an iterator.
     ///
     /// # Examples
     ///
@@ -216,423 +688,54 @@ where
     ///
     /// ```
     /// use orx_parallel::*;
+    /// use std::sync::mpsc::channel;
     ///
-    /// let a = ["1", "two", "NaN", "four", "5"];
+    /// let (tx, rx) = channel();
+    /// (0..5)
+    ///     .par()
+    ///     .map(|x| x * 2 + 1)
+    ///     .for_each(move |x| tx.send(x).unwrap());
     ///
-    /// let numbers = a.par().filter_map(|s| s.parse::<u64>()).collect_vec();
-    /// assert_eq!(numbers, [1, 5]);
+    /// let mut v: Vec<_> = rx.iter().collect();
+    /// v.sort(); // order can be mixed, since messages will be sent in parallel
+    /// assert_eq!(v, vec![1, 3, 5, 7, 9]);
     /// ```
     ///
-    /// Here's the same example, but with [`crate::Par::filter`] and [`crate::Par::map`]:
+    /// Note that since parallel iterators cannot be used within the `for` loop as regular iterators,
+    /// `for_each` provides a way to perform arbitrary for loops on parallel iterators.
+    /// In the following example, we log every element that satisfies a predicate in parallel.
     ///
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let a = ["1", "two", "NaN", "four", "5"];
-    ///
-    /// let numbers = a
-    ///    .par()
-    ///    .map(|s| s.parse::<u64>())
-    ///    .filter(|x| x.is_ok())
-    ///    .map(|x| x.unwrap())
-    ///    .collect_vec();
-    /// assert_eq!(numbers, [1, 5]);
+    /// (0..5)
+    ///     .par()
+    ///     .flat_map(|x| x * 100..x * 110)
+    ///     .filter(|&x| x % 3 == 0)
+    ///     .for_each(|x| println!("{x}"));
     /// ```
-    fn filter_map<O, FO, FM>(self, filter_map: FM) -> impl Par<Item = O>
+    fn for_each<Operation>(self, operation: Operation)
     where
-        O: Send + Sync,
-        FO: Fallible<O> + Send + Sync,
-        FM: Fn(Self::Item) -> FO + Send + Sync + Clone;
-
-    //reduce
-
-    /// Reduces the elements to a single one, by repeatedly applying the `reduce` operation.
-    ///
-    /// If the iterator is empty, returns None; otherwise, returns the result of the reduction.
-    ///
-    /// The reducing function is a closure with two arguments: an ‘accumulator’, and an element.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let reduced = (1..10).par().reduce(|acc, e| acc + e);
-    /// assert_eq!(reduced, Some(45));
-    ///
-    /// let reduced = (1..10).par().filter(|x| *x > 10).reduce(|acc, e| acc + e);
-    /// assert_eq!(reduced, None);
-    /// ```
-    fn reduce<R>(self, reduce: R) -> Option<Self::Item>
-    where
-        R: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone;
-
-    /// Calls a closure on each element of an iterator.
-    ///
-    /// Unlike the for_each operation on a sequential iterator; parallel for_each method might apply the closure on the elements in different orders in every execution.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// (0..100).par().for_each(|x| println!("{:?}", x));
-    /// ```
-    ///
-    /// For a more detailed use case, see below which involves a complex computation and writing the results to the database.
-    /// In addition, a concurrent bag is used to collect some information while applying the closure.
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_concurrent_bag::*;
-    /// use orx_iterable::*;
-    ///
-    /// struct Input(usize);
-    ///
-    /// struct Output(String);
-    ///
-    /// fn computation(input: Input) -> Output {
-    ///     Output(input.0.to_string())
-    /// }
-    ///
-    /// fn write_output_to_db(_output: Output) -> Result<(), &'static str> {
-    ///     Ok(())
-    /// }
-    ///
-    /// let results_bag = ConcurrentBag::new();
-    /// let inputs = (0..1024).map(|x| Input(x));
-    ///
-    /// inputs.par().for_each(|input| {
-    ///     let output = computation(input);
-    ///     let result = write_output_to_db(output);
-    ///     results_bag.push(result);
-    /// });
-    ///
-    /// let results = results_bag.into_inner();
-    /// assert_eq!(1024, results.len());
-    /// assert!(results.iter().all(|x| x.is_ok()));
-    /// ```
-    fn for_each<F>(self, f: F)
-    where
-        F: Fn(Self::Item) + Send + Sync + Clone,
+        Operation: Fn(Self::Item) + Sync + Send,
     {
-        let map = |item: Self::Item| f(item);
-        _ = self.map(map).count();
+        let map = |x| operation(x);
+        let _ = self.map(map).reduce(reduce_unit);
     }
 
-    /// Consumes the iterator, counting the number of iterations and returning it.
+    /// Returns the maximum element of an iterator.
+    ///
+    /// If the iterator is empty, None is returned.
     ///
     /// # Examples
     ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let evens = (0..10).par().filter(|x| x % 2 == 0);
-    /// assert_eq!(evens.count(), 5);
     /// ```
-    fn count(self) -> usize;
-
-    /// Returns true if any of the elements of the iterator satisfies the given `predicate`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
     /// use orx_parallel::*;
     ///
-    /// let mut a: Vec<_> = (0..4242).map(|x| 2 * x).collect();
+    /// let a = vec![1, 2, 3];
+    /// let b: Vec<u32> = Vec::new();
     ///
-    /// let any_odd = a.par().any(|x| *x % 2 == 1);
-    /// assert!(!any_odd);
-    ///
-    /// a.push(7);
-    /// let any_odd = a.par().any(|x| *x % 2 == 1);
-    /// assert!(any_odd);
-    /// ```
-    fn any<P>(self, predicate: P) -> bool
-    where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
-    {
-        self.find(predicate).is_some()
-    }
-
-    /// Returns true if all of the elements of the iterator satisfies the given `predicate`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let mut a: Vec<_> = (0..4242).map(|x| 2 * x).collect();
-    ///
-    /// let all_even = a.par().all(|x| *x % 2 == 0);
-    /// assert!(all_even);
-    ///
-    /// a.push(7);
-    /// let all_even = a.par().all(|x| *x % 2 == 0);
-    /// assert!(!all_even);
-    /// ```
-    fn all<P>(self, predicate: P) -> bool
-    where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone,
-    {
-        let negated_predicate = |x: &Self::Item| !predicate(x);
-        self.find(negated_predicate).is_none()
-    }
-
-    // find
-
-    /// Returns the first element of the iterator satisfying the given `predicate`; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).par().find(is_prime);
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).par().find(is_prime);
-    /// assert_eq!(first_prime, None);
-    /// ```
-    fn find<P>(self, predicate: P) -> Option<Self::Item>
-    where
-        P: Fn(&Self::Item) -> bool + Send + Sync + Clone;
-
-    /// Returns the first element of the iterator; returns None if the iterator is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// fn firstfac(x: usize) -> usize {
-    ///     if x % 2 == 0 {
-    ///         return 2;
-    ///     };
-    ///     for n in (1..).map(|m| 2 * m + 1).take_while(|m| m * m <= x) {
-    ///         if x % n == 0 {
-    ///             return n;
-    ///         };
-    ///     }
-    ///     x
-    /// }
-    ///
-    /// fn is_prime(n: &usize) -> bool {
-    ///     match n {
-    ///         0 | 1 => false,
-    ///         _ => firstfac(*n) == *n,
-    ///     }
-    /// }
-    ///
-    /// let first_prime = (21..100).par().filter(is_prime).first();
-    /// assert_eq!(first_prime, Some(23));
-    ///
-    /// let first_prime = (24..28).par().filter(is_prime).first();
-    /// assert_eq!(first_prime, None);
-    /// ```
-    fn first(self) -> Option<Self::Item>;
-
-    // collect
-
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into a standard vector; i.e., `std::vec::Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let evens = (0..10).par().filter(|x| x % 2 == 0).collect_vec();
-    /// assert_eq!(evens, vec![0, 2, 4, 6, 8]);
-    /// ```
-    fn collect_vec(self) -> Vec<Self::Item>;
-
-    /// Transforms the iterator into a collection.
-    ///
-    /// In this case, the result is transformed into the split vector which is the underlying [`PinnedVec`](https://crates.io/crates/orx-pinned-vec) used to collect the results concurrently;
-    /// i.e., [`SplitVec`](https://crates.io/crates/orx-split-vec).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let evens = (0..10).par().filter(|x| x % 2 == 0).collect();
-    /// assert_eq!(evens, SplitVec::from_iter([0, 2, 4, 6, 8]));
-    /// ```
-    fn collect(self) -> SplitVec<Self::Item>;
-
-    /// Collects elements yielded by the iterator into the given `output` collection.
-    ///
-    /// Note that `output` does not need to be empty; hence, this method allows extending collections from the parallel iterator.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let output_vec = vec![42];
-    ///
-    /// let evens = (0..10).par().filter(|x| x % 2 == 0);
-    /// let output_vec = evens.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
-    ///
-    /// let odds = (0..10).par().filter(|x| x % 2 == 1);
-    /// let output_vec = odds.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8, 1, 3, 5, 7, 9]);
-    ///
-    /// // alternatively, any `PinnedVec` can be used
-    /// let output_vec: SplitVec<_> = [42].into_iter().collect();
-    ///
-    /// let evens = (0..10).par().filter(|x| x % 2 == 0);
-    /// let output_vec = evens.collect_into(output_vec);
-    /// assert_eq!(output_vec, vec![42, 0, 2, 4, 6, 8]);
-    /// ```
-    fn collect_into<C: ParCollectInto<Self::Item>>(self, output: C) -> C;
-
-    /// Transforms the iterator into a collection, where the results are collected in arbitrary order.
-    /// This method can be used when preserving the order is not critical.
-    /// In certain scenarios, this might improve the performance.
-    ///
-    /// In this case, the result is transformed into the split vector with recursive growth [`SplitVec<Self::Item, Recursive>`](https://docs.rs/orx-split-vec/latest/orx_split_vec/struct.Recursive.html):
-    /// * Note that the `SplitVec` returned by the `collect` method uses the `Doubling` growth which allows for efficient constant time random access.
-    ///   On the other hand, `Recursive` growth does not allow for constant time random access.
-    /// * On the other hand, `Recursive` growth allows for zero cost `append` method to append another vector to the end.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    /// use orx_split_vec::*;
-    ///
-    /// let output = (0..5).par().flat_map(|x| vec![x; x]).collect_x();
-    /// let mut sorted_output = output.to_vec();
-    /// sorted_output.sort(); // WIP: PinnedVec::sort(&mut self)
-    /// assert_eq!(sorted_output, vec![1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
-    /// ```
-    fn collect_x(self) -> SplitVec<Self::Item, impl Growth>;
-
-    // reduced - provided
-
-    /// Folds the elements to a single one, by repeatedly applying the `fold` operation starting from the `identity`.
-    ///
-    /// If the iterator is empty, returns back the `identity`; otherwise, returns the result of the fold.
-    ///
-    /// The fold function is a closure with two arguments: an ‘accumulator’, and an element.
-    ///
-    /// Note that, unlike its sequential counterpart, parallel fold requires the `identity` and `fold` to satisfy the following:
-    /// * `fold(a, b)` is equal to `fold(b, a)`,
-    /// * `fold(a, fold(b, c))` is equal to `fold(fold(a, b), c)`,
-    /// * `fold(identity, a)` is equal to `a`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let fold = (1..10).par().fold(|| 0, |acc, e| acc + e);
-    /// assert_eq!(fold, 45);
-    ///
-    /// let fold = (1..10).par().filter(|x| *x > 10).fold(|| 1, |acc, e| acc * e);
-    /// assert_eq!(fold, 1);
-    /// ```
-    fn fold<Id, F>(self, identity: Id, fold: F) -> Self::Item
-    where
-        Id: Fn() -> Self::Item,
-        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync + Clone,
-    {
-        self.reduce(fold).unwrap_or_else(identity)
-    }
-
-    /// Sums up the items in the iterator.
-    ///
-    /// Note that the order in items will be reduced is not specified, so if the + operator is not truly associative (as is the case for floating point numbers), then the results are not fully deterministic.
-    ///
-    /// Basically equivalent to `self.fold(|| 0, |a, b| a + b)`, except that the type of 0 and the + operation may vary depending on the type of value being produced.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let sum = (1..10).par().sum();
-    /// assert_eq!(sum, 45);
-    ///
-    /// let sum = (1..10).par().map(|x| x as f32).sum();
-    /// assert!((sum - 45.0).abs() < f32::EPSILON);
-    ///
-    /// let sum = (1..10).par().filter(|x| *x > 10).sum();
-    /// assert_eq!(sum, 0);
-    /// ```
-    fn sum(self) -> Self::Item
-    where
-        Self::Item: Default + Add<Output = Self::Item>,
-    {
-        self.reduce(|x, y| x + y).unwrap_or(Self::Item::default())
-    }
-
-    /// Computes the minimum of all the items in the iterator. If the iterator is empty, None is returned; otherwise, Some(min) is returned.
-    ///
-    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
-    ///     
-    /// Basically equivalent to `self.reduce(|a, b| Ord::min(a, b))`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let min = (1..10).par().filter(|x| *x > 6).min();
-    /// assert_eq!(min, Some(7));
-    ///
-    /// let min = (1..10).par().filter(|x| *x > 10).min();
-    /// assert_eq!(min, None);
-    /// ```
-    fn min(self) -> Option<Self::Item>
-    where
-        Self::Item: Ord,
-    {
-        self.reduce(Ord::min)
-    }
-
-    /// Computes the maximum of all the items in the iterator. If the iterator is empty, None is returned; otherwise, Some(max) is returned.
-    ///
-    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
-    ///     
-    /// Basically equivalent to `self.reduce(|a, b| Ord::max(a, b))`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let max = (1..10).par().filter(|x| *x < 6).max();
-    /// assert_eq!(max, Some(5));
-    ///
-    /// let max = (1..10).par().filter(|x| *x > 10).max();
-    /// assert_eq!(max, None);
+    /// assert_eq!(a.par().max(), Some(&3));
+    /// assert_eq!(b.par().max(), None);
     /// ```
     fn max(self) -> Option<Self::Item>
     where
@@ -641,139 +744,245 @@ where
         self.reduce(Ord::max)
     }
 
-    /// Computes the minimum of all the items in the iterator with respect to the given comparison function.
-    /// If the iterator is empty, None is returned; otherwise, Some(min) is returned.
+    /// Returns the element that gives the maximum value with respect to the specified `compare` function.
     ///
-    /// Note that the order in which the items will be reduced is not specified, so if the comparison function is not associative, then the results are not deterministic.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
-    ///     .map(String::from)
-    ///     .into_iter()
-    ///     .collect();
-    ///
-    /// let min = names.par().min_by(|a, b| a.len().cmp(&b.len()));
-    /// assert_eq!(min.map(|x| x.as_ref()), Some("doe"));
-    ///
-    /// let min = names
-    ///     .par()
-    ///     .filter(|x| x.starts_with('x'))
-    ///     .min_by(|a, b| a.len().cmp(&b.len()));
-    /// assert_eq!(min, None);
-    /// ```
-    fn min_by<F>(self, compare: F) -> Option<Self::Item>
-    where
-        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
-    {
-        self.reduce(|x, y| match compare(&x, &y) {
-            Ordering::Less | Ordering::Equal => x,
-            Ordering::Greater => y,
-        })
-    }
-
-    /// Computes the maximum of all the items in the iterator with respect to the given comparison function.
-    /// If the iterator is empty, None is returned; otherwise, Some(max) is returned.
-    ///
-    /// Note that the order in which the items will be reduced is not specified, so if the comparison function is not associative, then the results are not deterministic.
+    /// If the iterator is empty, None is returned.
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```
     /// use orx_parallel::*;
     ///
-    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
-    ///     .map(String::from)
-    ///     .into_iter()
-    ///     .collect();
-    ///
-    /// let max = names.par().max_by(|a, b| a.len().cmp(&b.len()));
-    /// assert_eq!(max.map(|x| x.as_ref()), Some("grumpy"));
-    ///
-    /// let max = names
-    ///     .par()
-    ///     .filter(|x| x.starts_with('x'))
-    ///     .max_by(|a, b| a.len().cmp(&b.len()));
-    /// assert_eq!(max, None);
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().max_by(|x, y| x.cmp(y)).unwrap(), 5);
     /// ```
-    fn max_by<F>(self, compare: F) -> Option<Self::Item>
+    fn max_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
-        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
-        self.reduce(|x, y| match compare(&x, &y) {
+        let reduce = |x, y| match compare(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
-        })
+        };
+        self.reduce(reduce)
     }
 
-    /// Computes the item that yields the minimum value for the given function. If the iterator is empty, None is returned; otherwise, Some(min) is returned.
+    /// Returns the element that gives the maximum value from the specified function.
     ///
-    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
+    /// If the iterator is empty, None is returned.
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```
     /// use orx_parallel::*;
     ///
-    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
-    ///     .map(String::from)
-    ///     .into_iter()
-    ///     .collect();
-    ///
-    /// let min = names.par().min_by_key(|x| x.len());
-    /// assert_eq!(min.map(|x| x.as_ref()), Some("doe"));
-    ///
-    /// let min = names
-    ///     .par()
-    ///     .filter(|x| x.starts_with('x'))
-    ///     .min_by_key(|x| x.len());
-    /// assert_eq!(min, None);
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().max_by_key(|x| x.abs()).unwrap(), -10);
     /// ```
-    fn min_by_key<B, F>(self, get_key: F) -> Option<Self::Item>
+    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
     where
-        B: Ord,
-        F: Fn(&Self::Item) -> B + Sync,
+        Key: Ord,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
     {
-        self.reduce(|x, y| match get_key(&x).cmp(&get_key(&y)) {
-            Ordering::Less | Ordering::Equal => x,
-            Ordering::Greater => y,
-        })
-    }
-
-    /// Computes the item that yields the maximum value for the given function. If the iterator is empty, None is returned; otherwise, Some(max) is returned.
-    ///
-    /// Note that the order in which the items will be reduced is not specified, so if the Ord impl is not truly associative, then the results are not deterministic.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let names: Vec<_> = ["john", "doe", "adams", "jones", "grumpy"]
-    ///     .map(String::from)
-    ///     .into_iter()
-    ///     .collect();
-    ///
-    /// let max = names.par().max_by_key(|x| x.len());
-    /// assert_eq!(max.map(|x| x.as_ref()), Some("grumpy"));
-    ///
-    /// let max = names
-    ///     .par()
-    ///     .filter(|x| x.starts_with('x'))
-    ///     .max_by_key(|x| x.len());
-    /// assert_eq!(max, None);
-    /// ```
-    fn max_by_key<B, F>(self, get_key: F) -> Option<Self::Item>
-    where
-        B: Ord,
-        F: Fn(&Self::Item) -> B + Sync,
-    {
-        self.reduce(|x, y| match get_key(&x).cmp(&get_key(&y)) {
+        let reduce = |x, y| match key(&x).cmp(&key(&y)) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
-        })
+        };
+        self.reduce(reduce)
+    }
+
+    /// Returns the minimum element of an iterator.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    /// let b: Vec<u32> = Vec::new();
+    ///
+    /// assert_eq!(a.par().min(), Some(&1));
+    /// assert_eq!(b.par().min(), None);
+    /// ```
+    fn min(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord,
+    {
+        self.reduce(Ord::min)
+    }
+
+    /// Returns the element that gives the minimum value with respect to the specified `compare` function.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().min_by(|x, y| x.cmp(y)).unwrap(), -10);
+    /// ```
+    fn min_by<Compare>(self, compare: Compare) -> Option<Self::Item>
+    where
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+    {
+        let reduce = |x, y| match compare(&x, &y) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
+    }
+
+    /// Returns the element that gives the minimum value from the specified function.
+    ///
+    /// If the iterator is empty, None is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![-3_i32, 0, 1, 5, -10];
+    /// assert_eq!(*a.par().min_by_key(|x| x.abs()).unwrap(), 0);
+    /// ```
+    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
+    where
+        Key: Ord,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
+    {
+        let reduce = |x, y| match get_key(&x).cmp(&get_key(&y)) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
+    }
+
+    /// Sums the elements of an iterator.
+    ///
+    /// Takes each element, adds them together, and returns the result.
+    ///
+    /// An empty iterator returns the additive identity (“zero”) of the type, which is 0 for integers and -0.0 for floats.
+    ///
+    /// `sum` can be used to sum any type implementing [`Sum<Out>`].
+    ///
+    /// [`Sum<Out>`]: crate::Sum
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![1, 2, 3];
+    /// let sum: i32 = a.par().sum();
+    ///
+    /// assert_eq!(sum, 6);
+    /// ```
+    fn sum<Out>(self) -> Out
+    where
+        Self::Item: Sum<Out>,
+        Out: Send + Sync,
+    {
+        self.map(Self::Item::map)
+            .reduce(Self::Item::reduce)
+            .unwrap_or(Self::Item::zero())
+    }
+
+    // early exit
+
+    /// Returns the first (or any) element of the iterator; returns None if it is empty.
+    ///
+    /// * first element is returned if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element is returned if `IterationOrder::Arbitrary` is set.
+    ///
+    /// # Examples
+    ///
+    /// The following example demonstrates the usage of first with default `Ordered` iteration.
+    /// This guarantees that the first element with respect to position in the input sequence
+    /// is returned.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<usize> = vec![];
+    /// assert_eq!(a.par().copied().first(), None);
+    ///
+    /// let a = vec![1, 2, 3];
+    /// assert_eq!(a.par().copied().first(), Some(1));
+    ///
+    /// let a = 1..10_000;
+    /// assert_eq!(a.par().filter(|x| x % 3421 == 0).first(), Some(3421));
+    /// assert_eq!(a.par().filter(|x| x % 12345 == 0).first(), None);
+    ///
+    /// // or equivalently,
+    /// assert_eq!(a.par().find(|x| x % 3421 == 0), Some(3421));
+    /// ```
+    ///
+    /// When the order is set to `Arbitrary`, `first` might return any of the elements,
+    /// whichever is visited first depending on the parallel execution.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = 1..10_000;
+    ///
+    /// // might return either of 3421 or 2*3421
+    /// let any = a.par().iteration_order(IterationOrder::Arbitrary).filter(|x| x % 3421 == 0).first().unwrap();
+    /// assert!([3421, 2 * 3421].contains(&any));
+    ///
+    /// // or equivalently,
+    /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
+    /// assert!([3421, 2 * 3421].contains(&any));
+    fn first(self) -> Option<Self::Item>;
+
+    /// Searches for an element of an iterator that satisfies a `predicate`.
+    ///
+    /// Depending on the set iteration order of the parallel iterator, returns
+    ///
+    /// * first element satisfying the `predicate` if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element satisfying the `predicate` if `IterationOrder::Arbitrary` is set.
+    ///
+    /// `find` takes a closure that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and returns `Some(x)` where `x` is the first element that returns true.
+    /// If they all return false, it returns None.
+    ///
+    /// `find` is short-circuiting; in other words, it will stop processing as soon as the closure returns true.
+    ///
+    /// `par_iter.find(predicate)` can also be considered as a shorthand for `par_iter.filter(predicate).first()`.
+    ///
+    /// # Examples
+    ///
+    /// The following example demonstrates the usage of first with default `Ordered` iteration.
+    /// This guarantees that the first element with respect to position in the input sequence
+    /// is returned.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = 1..10_000;
+    /// assert_eq!(a.par().find(|x| x % 12345 == 0), None);
+    /// assert_eq!(a.par().find(|x| x % 3421 == 0), Some(3421));
+    /// ```
+    ///
+    /// When the order is set to `Arbitrary`, `find` might return any of the elements satisfying the predicate,
+    /// whichever is found first depending on the parallel execution.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = 1..10_000;
+    ///
+    /// // might return either of 3421 or 2*3421
+    /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
+    /// assert!([3421, 2 * 3421].contains(&any));
+    /// ```
+    fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
+    where
+        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+    {
+        self.filter(predicate).first()
     }
 }
