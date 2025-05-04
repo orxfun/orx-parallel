@@ -1,5 +1,5 @@
 use crate::{
-    ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
     computational_variants::xap_filter_xap::ParXapFilterXap,
     computations::{Values, X, map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
@@ -92,7 +92,7 @@ where
         self
     }
 
-    fn collect_ordering(mut self, collect: CollectOrdering) -> Self {
+    fn collect_ordering(mut self, collect: IterationOrder) -> Self {
         self.x.collect_ordering(collect);
         self
     }

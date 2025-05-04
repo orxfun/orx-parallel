@@ -1,5 +1,5 @@
 use super::xfx::Xfx;
-use crate::CollectOrdering;
+use crate::IterationOrder;
 use crate::computations::Values;
 use crate::computations::heap_sort::heap_sort_into;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask};
@@ -58,8 +58,8 @@ where
         let params = xfx_collect.xfx.params();
         match (params.is_sequential(), params.collect_ordering) {
             (true, _) => (0, xfx_collect.sequential()),
-            (false, CollectOrdering::Arbitrary) => xfx_collect.parallel_in_arbitrary::<R>(),
-            (false, CollectOrdering::Ordered) => xfx_collect.parallel_with_heap_sort::<R>(),
+            (false, IterationOrder::Arbitrary) => xfx_collect.parallel_in_arbitrary::<R>(),
+            (false, IterationOrder::Ordered) => xfx_collect.parallel_with_heap_sort::<R>(),
         }
     }
 

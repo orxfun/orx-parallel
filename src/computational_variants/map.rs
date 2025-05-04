@@ -1,6 +1,6 @@
 use super::{xap::ParXap, xap_filter_xap::ParXapFilterXap};
 use crate::{
-    ChunkSize, CollectOrdering, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
     computations::{Atom, M, Vector, map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
 };
@@ -85,7 +85,7 @@ where
         self
     }
 
-    fn collect_ordering(mut self, collect: CollectOrdering) -> Self {
+    fn collect_ordering(mut self, collect: IterationOrder) -> Self {
         self.m.collect_ordering(collect);
         self
     }

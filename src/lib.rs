@@ -44,6 +44,6 @@ pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
 pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;
-pub use parameters::{ChunkSize, CollectOrdering, NumThreads, Params};
+pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use runner::{DefaultRunner, ParallelRunner, ThreadRunner};
 pub use special_type_sets::Sum;

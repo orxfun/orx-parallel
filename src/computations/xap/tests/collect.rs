@@ -1,5 +1,5 @@
 use crate::{
-    CollectOrdering, Params,
+    IterationOrder, Params,
     computations::{Vector, X},
     runner::DefaultRunner,
 };
@@ -17,9 +17,9 @@ const N: [usize; 2] = [1025, 4735];
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::Ordered, CollectOrdering::Arbitrary])
+    [IterationOrder::Ordered, IterationOrder::Arbitrary])
 ]
-fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
+fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -44,7 +44,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrderi
 
     let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
+    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }
@@ -56,9 +56,9 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrderi
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::Ordered, CollectOrdering::Arbitrary])
+    [IterationOrder::Ordered, IterationOrder::Arbitrary])
 ]
-fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrdering) {
+fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -83,7 +83,7 @@ fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: CollectOrde
 
     let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
+    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }

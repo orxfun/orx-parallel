@@ -2,7 +2,7 @@ use crate::{
     Params,
     collect_into::ParCollectInto,
     computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
-    parameters::{ChunkSize, CollectOrdering, NumThreads},
+    parameters::{ChunkSize, IterationOrder, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
 };
@@ -236,7 +236,7 @@ where
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Arbitrary)
     /// );
     /// ```
-    fn collect_ordering(self, collect: CollectOrdering) -> Self;
+    fn collect_ordering(self, collect: IterationOrder) -> Self;
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///

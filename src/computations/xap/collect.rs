@@ -1,6 +1,6 @@
 use super::x::X;
 use crate::{
-    CollectOrdering,
+    IterationOrder,
     computations::{Values, heap_sort::heap_sort_into},
     runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask},
 };
@@ -50,8 +50,8 @@ where
         let params = x_collect.x.params();
         match (params.is_sequential(), params.collect_ordering) {
             (true, _) => (0, x_collect.sequential()),
-            (false, CollectOrdering::Arbitrary) => x_collect.parallel_in_arbitrary::<R>(),
-            (false, CollectOrdering::Ordered) => x_collect.parallel_with_heap_sort::<R>(),
+            (false, IterationOrder::Arbitrary) => x_collect.parallel_in_arbitrary::<R>(),
+            (false, IterationOrder::Ordered) => x_collect.parallel_with_heap_sort::<R>(),
         }
     }
 

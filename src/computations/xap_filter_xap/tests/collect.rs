@@ -1,6 +1,6 @@
 use crate::computations::{Atom, Values, map_self_atom};
 use crate::{
-    CollectOrdering, Params, computations::xap_filter_xap::xfx::Xfx, runner::DefaultRunner,
+    IterationOrder, Params, computations::xap_filter_xap::xfx::Xfx, runner::DefaultRunner,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
@@ -16,14 +16,14 @@ const N: [usize; 2] = [1025, 4735];
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::Ordered, CollectOrdering::Arbitrary],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary],
     [true, false])
 ]
 fn xfx_map_filter_collect(
     n: usize,
     nt: usize,
     chunk: usize,
-    ordering: CollectOrdering,
+    ordering: IterationOrder,
     actual_filter: bool,
 ) {
     let offset = 33;
@@ -59,7 +59,7 @@ fn xfx_map_filter_collect(
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
+    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }
@@ -71,14 +71,14 @@ fn xfx_map_filter_collect(
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::Ordered, CollectOrdering::Arbitrary],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary],
     [true, false])
 ]
 fn xfx_filter_collect(
     n: usize,
     nt: usize,
     chunk: usize,
-    ordering: CollectOrdering,
+    ordering: IterationOrder,
     actual_filter: bool,
 ) {
     let offset = 33;
@@ -107,7 +107,7 @@ fn xfx_filter_collect(
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
+    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }
@@ -119,14 +119,14 @@ fn xfx_filter_collect(
     [0, 1, N[0], N[1]],
     [1, 2, 4],
     [1, 64, 1024],
-    [CollectOrdering::Ordered, CollectOrdering::Arbitrary],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary],
     [true, false])
 ]
 fn xfx_map_filter_map_collect(
     n: usize,
     nt: usize,
     chunk: usize,
-    ordering: CollectOrdering,
+    ordering: IterationOrder,
     actual_filter: bool,
 ) {
     let offset = 33;
@@ -165,7 +165,7 @@ fn xfx_map_filter_map_collect(
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, CollectOrdering::Arbitrary) {
+    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }

@@ -1,4 +1,4 @@
-use crate::{computations::Values, ChunkSize, CollectOrdering, NumThreads, Params};
+use crate::{ChunkSize, IterationOrder, NumThreads, Params, computations::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct X<I, Vo, M1>
@@ -40,7 +40,7 @@ where
         self.params = self.params.with_chunk_size(chunk_size);
     }
 
-    pub fn collect_ordering(&mut self, collect: CollectOrdering) {
+    pub fn collect_ordering(&mut self, collect: IterationOrder) {
         self.params = self.params.with_collect_ordering(collect);
     }
 

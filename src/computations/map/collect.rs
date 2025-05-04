@@ -1,7 +1,7 @@
 use super::m::M;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTaskWithIdx};
 #[cfg(test)]
-use crate::{CollectOrdering, runner::ParallelTask};
+use crate::{IterationOrder, runner::ParallelTask};
 #[cfg(test)]
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -48,7 +48,7 @@ where
         match (p.is_sequential(), p.collect_ordering) {
             (true, _) => (0, x.sequential()),
             #[cfg(test)]
-            (false, CollectOrdering::Arbitrary) => x.parallel_in_arbitrary_order::<R>(),
+            (false, IterationOrder::Arbitrary) => x.parallel_in_arbitrary_order::<R>(),
             (false, _) => x.parallel_in_input_order::<R>(),
         }
     }

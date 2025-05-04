@@ -1,4 +1,4 @@
-use super::{chunk_size::ChunkSize, collect_ordering::CollectOrdering, num_threads::NumThreads};
+use super::{chunk_size::ChunkSize, iteration_order::IterationOrder, num_threads::NumThreads};
 
 /// Parameters of a parallel computation.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -15,7 +15,7 @@ pub struct Params {
     /// are collected into a collection.
     ///
     /// See [`CollectOrdering`] for details.
-    pub collect_ordering: CollectOrdering,
+    pub collect_ordering: IterationOrder,
 }
 
 impl Params {
@@ -23,7 +23,7 @@ impl Params {
     pub fn new(
         num_threads: impl Into<NumThreads>,
         chunk_size: impl Into<ChunkSize>,
-        collect_ordering: CollectOrdering,
+        collect_ordering: IterationOrder,
     ) -> Self {
         Self {
             num_threads: num_threads.into(),
@@ -57,7 +57,7 @@ impl Params {
         }
     }
 
-    pub(crate) fn with_collect_ordering(self, collect_ordering: CollectOrdering) -> Self {
+    pub(crate) fn with_collect_ordering(self, collect_ordering: IterationOrder) -> Self {
         Self {
             num_threads: self.num_threads,
             chunk_size: self.chunk_size,
