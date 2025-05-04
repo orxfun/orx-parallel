@@ -927,7 +927,6 @@ where
     /// use orx_parallel::*;
     ///
     /// let a = 1..10_000;
-    /// assert_eq!(a.par().filter(|x| x % 12345 == 0).any_element(), None);
     ///
     /// // might return either of 3421 or 2*3421
     /// let any = a.par().iteration_order(IterationOrder::Arbitrary).filter(|x| x % 3421 == 0).first().unwrap();
@@ -973,6 +972,8 @@ where
     ///
     /// ```
     /// use orx_parallel::*;
+    ///
+    /// let a = 1..10_000;
     ///
     /// // might return either of 3421 or 2*3421
     /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
