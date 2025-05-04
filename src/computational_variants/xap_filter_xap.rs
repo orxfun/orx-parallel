@@ -112,7 +112,7 @@ where
     }
 
     fn iteration_order(mut self, collect: IterationOrder) -> Self {
-        self.xfx.collect_ordering(collect);
+        self.xfx.iteration_order(collect);
         self
     }
 

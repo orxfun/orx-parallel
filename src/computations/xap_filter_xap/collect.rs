@@ -56,7 +56,7 @@ where
     pub fn compute<R: ParallelRunner>(xfx: Xfx<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
         let xfx_collect = Self { xfx, pinned_vec };
         let params = xfx_collect.xfx.params();
-        match (params.is_sequential(), params.collect_ordering) {
+        match (params.is_sequential(), params.iteration_order) {
             (true, _) => (0, xfx_collect.sequential()),
             (false, IterationOrder::Arbitrary) => xfx_collect.parallel_in_arbitrary::<R>(),
             (false, IterationOrder::Ordered) => xfx_collect.parallel_with_heap_sort::<R>(),

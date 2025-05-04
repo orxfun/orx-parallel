@@ -40,7 +40,7 @@ where
         self.params = self.params.with_chunk_size(chunk_size);
     }
 
-    pub fn collect_ordering(&mut self, collect: IterationOrder) {
+    pub fn iteration_order(&mut self, collect: IterationOrder) {
         self.params = self.params.with_collect_ordering(collect);
     }
 

@@ -93,7 +93,7 @@ where
     }
 
     fn iteration_order(mut self, collect: IterationOrder) -> Self {
-        self.x.collect_ordering(collect);
+        self.x.iteration_order(collect);
         self
     }
 

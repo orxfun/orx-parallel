@@ -37,7 +37,7 @@ fn m_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
 
     let (_, mut output) = m.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
+    if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }

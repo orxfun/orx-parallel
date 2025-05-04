@@ -44,7 +44,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrde
 
     let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
+    if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }
@@ -83,7 +83,7 @@ fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOr
 
     let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
+    if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }

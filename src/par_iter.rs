@@ -32,12 +32,12 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(0).chunk_size(0).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
@@ -45,7 +45,7 @@ where
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(1).unwrap()),
     ///         ChunkSize::Auto,
-    ///         CollectOrdering::Ordered
+    ///         IterationOrder::Ordered
     ///     )
     /// );
     ///
@@ -54,7 +54,7 @@ where
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(4).unwrap()),
     ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
-    ///         CollectOrdering::Ordered
+    ///         IterationOrder::Ordered
     ///     )
     /// );
     ///
@@ -62,12 +62,12 @@ where
     ///     vec.par()
     ///         .num_threads(8)
     ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
-    ///         .collect_ordering(CollectOrdering::Arbitrary)
+    ///         .iteration_order(IterationOrder::Arbitrary)
     ///         .params(),
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(8).unwrap()),
     ///         ChunkSize::Min(NonZero::new(16).unwrap()),
-    ///         CollectOrdering::Arbitrary
+    ///         IterationOrder::Arbitrary
     ///     )
     /// );
     /// ```
@@ -96,12 +96,12 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(0).chunk_size(0).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// // computation will be executed sequentially on the main thread, no parallelization
@@ -111,7 +111,7 @@ where
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(1).unwrap()),
     ///         ChunkSize::Auto,
-    ///         CollectOrdering::Ordered
+    ///         IterationOrder::Ordered
     ///     )
     /// );
     ///
@@ -121,7 +121,7 @@ where
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(4).unwrap()),
     ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
-    ///         CollectOrdering::Ordered
+    ///         IterationOrder::Ordered
     ///     )
     /// );
     ///
@@ -130,12 +130,12 @@ where
     ///     vec.par()
     ///         .num_threads(8)
     ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
-    ///         .collect_ordering(CollectOrdering::Arbitrary)
+    ///         .iteration_order(IterationOrder::Arbitrary)
     ///         .params(),
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(8).unwrap()),
     ///         ChunkSize::Min(NonZero::new(16).unwrap()),
-    ///         CollectOrdering::Arbitrary
+    ///         IterationOrder::Arbitrary
     ///     )
     /// );
     /// ```
@@ -163,12 +163,12 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(0).chunk_size(0).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, CollectOrdering::Ordered)
+    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
@@ -176,7 +176,7 @@ where
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(1).unwrap()),
     ///         ChunkSize::Auto,
-    ///         CollectOrdering::Ordered
+    ///         IterationOrder::Ordered
     ///     )
     /// );
     ///
@@ -187,7 +187,7 @@ where
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(4).unwrap()),
     ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
-    ///         CollectOrdering::Ordered
+    ///         IterationOrder::Ordered
     ///     )
     /// );
     ///
@@ -197,12 +197,12 @@ where
     ///     vec.par()
     ///         .num_threads(8)
     ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
-    ///         .collect_ordering(CollectOrdering::Arbitrary)
+    ///         .iteration_order(IterationOrder::Arbitrary)
     ///         .params(),
     ///     &Params::new(
     ///         NumThreads::Max(NonZero::new(8).unwrap()),
     ///         ChunkSize::Min(NonZero::new(16).unwrap()),
-    ///         CollectOrdering::Arbitrary
+    ///         IterationOrder::Arbitrary
     ///     )
     /// );
     /// ```
@@ -226,7 +226,7 @@ where
     /// );
     ///
     /// assert_eq!(
-    ///     vec.par().collect_ordering(IterationOrder::Ordered).params(),
+    ///     vec.par().iteration_order(IterationOrder::Ordered).params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
@@ -234,7 +234,7 @@ where
     /// // or find returns the any of the elements satisfying the predicate
     ///
     /// assert_eq!(
-    ///     vec.par().collect_ordering(IterationOrder::Arbitrary).params(),
+    ///     vec.par().iteration_order(IterationOrder::Arbitrary).params(),
     ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
     /// );
     /// ```

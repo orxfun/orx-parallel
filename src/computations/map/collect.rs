@@ -45,7 +45,7 @@ where
     pub fn compute<R: ParallelRunner>(m: M<I, O, M1>, pinned_vec: P) -> (usize, P) {
         let x = Self { m, pinned_vec };
         let p = x.m.params();
-        match (p.is_sequential(), p.collect_ordering) {
+        match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, x.sequential()),
             #[cfg(test)]
             (false, IterationOrder::Arbitrary) => x.parallel_in_arbitrary_order::<R>(),

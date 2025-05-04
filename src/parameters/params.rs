@@ -14,8 +14,8 @@ pub struct Params {
     /// Ordering of outputs of the parallel computation that is important when the outputs
     /// are collected into a collection.
     ///
-    /// See [`CollectOrdering`] for details.
-    pub collect_ordering: IterationOrder,
+    /// See [`IterationOrder`] for details.
+    pub iteration_order: IterationOrder,
 }
 
 impl Params {
@@ -23,12 +23,12 @@ impl Params {
     pub fn new(
         num_threads: impl Into<NumThreads>,
         chunk_size: impl Into<ChunkSize>,
-        collect_ordering: IterationOrder,
+        iteration_order: IterationOrder,
     ) -> Self {
         Self {
             num_threads: num_threads.into(),
             chunk_size: chunk_size.into(),
-            collect_ordering,
+            iteration_order,
         }
     }
 
@@ -45,7 +45,7 @@ impl Params {
         Self {
             num_threads: num_threads.into(),
             chunk_size: self.chunk_size,
-            collect_ordering: self.collect_ordering,
+            iteration_order: self.iteration_order,
         }
     }
 
@@ -53,15 +53,15 @@ impl Params {
         Self {
             num_threads: self.num_threads,
             chunk_size: chunk_size.into(),
-            collect_ordering: self.collect_ordering,
+            iteration_order: self.iteration_order,
         }
     }
 
-    pub(crate) fn with_collect_ordering(self, collect_ordering: IterationOrder) -> Self {
+    pub(crate) fn with_collect_ordering(self, iteration_order: IterationOrder) -> Self {
         Self {
             num_threads: self.num_threads,
             chunk_size: self.chunk_size,
-            collect_ordering,
+            iteration_order,
         }
     }
 }

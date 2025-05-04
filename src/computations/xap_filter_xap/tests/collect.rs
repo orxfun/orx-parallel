@@ -59,7 +59,7 @@ fn xfx_map_filter_collect(
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
+    if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }
@@ -107,7 +107,7 @@ fn xfx_filter_collect(
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
+    if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }
@@ -165,7 +165,7 @@ fn xfx_map_filter_map_collect(
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
-    if !params.is_sequential() && matches!(params.collect_ordering, IterationOrder::Arbitrary) {
+    if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
         output.sort();
     }
