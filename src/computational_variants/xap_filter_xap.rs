@@ -201,10 +201,9 @@ where
     // early exit
 
     fn first(self) -> Option<Self::Item> {
-        self.xfx.next::<R>().1
-    }
-
-    fn any_element(self) -> Option<Self::Item> {
-        self.xfx.next_any::<R>().1
+        match self.params().iteration_order {
+            IterationOrder::Ordered => self.xfx.next::<R>().1,
+            IterationOrder::Arbitrary => self.xfx.next_any::<R>().1,
+        }
     }
 }

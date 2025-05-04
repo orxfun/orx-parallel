@@ -154,8 +154,4 @@ where
     fn first(self) -> Option<Self::Item> {
         self.m().next()
     }
-
-    fn any_element(self) -> Option<Self::Item> {
-        self.m().next()
-    }
 }

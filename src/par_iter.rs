@@ -892,13 +892,16 @@ where
 
     // early exit
 
-    /// Returns the first element of the iterator; returns None if it is empty.
+    /// Returns the first (or any) element of the iterator; returns None if it is empty.
     ///
-    /// See also [`any_element`] to fetch any of the elements rather than strictly the first.
-    ///
-    /// [`any_element`]: crate::ParIter::any_element
+    /// * first element is returned if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element is returned if `IterationOrder::Arbitrary` is set.
     ///
     /// # Examples
+    ///
+    /// The following example demonstrates the usage of first with default `Ordered` iteration.
+    /// This guarantees that the first element with respect to position in the input sequence
+    /// is returned.
     ///
     /// ```
     /// use orx_parallel::*;
@@ -916,48 +919,31 @@ where
     /// // or equivalently,
     /// assert_eq!(a.par().find(|x| x % 3421 == 0), Some(3421));
     /// ```
-    fn first(self) -> Option<Self::Item>;
-
-    /// Returns any element of the iterator; returns None if it is empty.
     ///
-    /// This is the counterpart of [`first`] where it is okay to fetch any of the elements
-    /// of the iterator, rather than the first.
-    ///
-    /// This is useful specifically when we are searching for any element that satisfies a
-    /// desired condition, such as:
-    ///
-    /// * a feasible solution among all possible solutions,
-    /// * an item which is cheaper than a given price,
-    /// * a movie with at least 4.8 rating,
-    /// * etc.
-    ///
-    /// [`first`]: crate::ParIter::first
+    /// When the order is set to `Arbitrary`, `first` might return any of the elements,
+    /// whichever is visited first depending on the parallel execution.
     ///
     /// ```
     /// use orx_parallel::*;
-    ///
-    /// let a: Vec<usize> = vec![];
-    /// assert_eq!(a.par().copied().any_element(), None);
-    ///
-    /// // might return any of 1, 2 or 3
-    /// let a = vec![1, 2, 3];
-    /// let any = a.par().copied().any_element().unwrap();
-    /// assert!(a.contains(&any));
     ///
     /// let a = 1..10_000;
     /// assert_eq!(a.par().filter(|x| x % 12345 == 0).any_element(), None);
     ///
     /// // might return either of 3421 or 2*3421
-    /// let any = a.par().filter(|x| x % 3421 == 0).any_element().unwrap();
+    /// let any = a.par().iteration_order(IterationOrder::Arbitrary).filter(|x| x % 3421 == 0).first().unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
     ///
     /// // or equivalently,
-    /// let any = a.par().find_any(|x| x % 3421 == 0).unwrap();
+    /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
-    /// ```
-    fn any_element(self) -> Option<Self::Item>;
+    fn first(self) -> Option<Self::Item>;
 
     /// Searches for an element of an iterator that satisfies a `predicate`.
+    ///
+    /// Depending on the set iteration order of the parallel iterator, returns
+    ///
+    /// * first element satisfying the `predicate` if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element satisfying the `predicate` if `IterationOrder::Arbitrary` is set.
     ///
     /// `find` takes a closure that returns true or false.
     /// It applies this closure to each element of the iterator,
@@ -970,6 +956,10 @@ where
     ///
     /// # Examples
     ///
+    /// The following example demonstrates the usage of first with default `Ordered` iteration.
+    /// This guarantees that the first element with respect to position in the input sequence
+    /// is returned.
+    ///
     /// ```
     /// use orx_parallel::*;
     ///
@@ -977,25 +967,9 @@ where
     /// assert_eq!(a.par().find(|x| x % 12345 == 0), None);
     /// assert_eq!(a.par().find(|x| x % 3421 == 0), Some(3421));
     /// ```
-    fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
-    where
-        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
-    {
-        self.filter(predicate).first()
-    }
-
-    /// Searches for an element of an iterator that satisfies a `predicate`.
     ///
-    /// `find_any` takes a closure that returns true or false.
-    /// It applies this closure to each element of the iterator,
-    /// and returns `Some(x)` where `x` is any of the elements that returns true.
-    /// If they all return false, it returns None.
-    ///
-    /// `find_any` is short-circuiting; in other words, it will stop processing as soon as the closure returns true.
-    ///
-    /// `par_iter.find_any(predicate)` can also be considered as a shorthand for `par_iter.filter(predicate).any_element()`.
-    ///
-    /// # Examples
+    /// When the order is set to `Arbitrary`, `find` might return any of the elements satisfying the predicate,
+    /// whichever is found first depending on the parallel execution.
     ///
     /// ```
     /// use orx_parallel::*;
@@ -1007,10 +981,10 @@ where
     /// let any = a.par().find_any(|x| x % 3421 == 0).unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
     /// ```
-    fn find_any<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
+    fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
-        self.filter(predicate).any_element()
+        self.filter(predicate).first()
     }
 }

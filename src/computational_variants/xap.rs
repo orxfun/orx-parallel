@@ -177,8 +177,4 @@ where
     fn first(self) -> Option<Self::Item> {
         self.x.next()
     }
-
-    fn any_element(self) -> Option<Self::Item> {
-        self.x.next()
-    }
 }
