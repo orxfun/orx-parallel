@@ -4,7 +4,7 @@ version = "2.0.0"
 edition = "2024"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 readme = "README.md"
-description = "High performance, configurable and expressive parallel computing library for computations defined as compositions of iterator methods."
+description = "High performance, configurable and expressive parallel computation library."
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/orxfun/orx-parallel/"
 keywords = ["parallel", "concurrency", "performance", "thread", "iterator"]
@@ -38,5 +38,5 @@ name = "reduce_iter_into_par"
 harness = false
 
 [features]
-default = ["generic_iterator"]
+default = []
 generic_iterator = ["rayon"]

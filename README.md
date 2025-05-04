@@ -4,13 +4,13 @@
 [![orx-parallel crate](https://img.shields.io/crates/d/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 
-[High performance](#performance-and-benchmarks), [configurable](#configurable) and [expressive](#parallel-computation-by-iterators) parallel computing library for computations defined as compositions of iterator methods.
+[High performance](#performance-and-benchmarks), [configurable](#configurable) and [expressive](#parallel-computation-by-iterators) parallel computation library.
 
 ## Parallel Computation by Iterators
 
 Parallel computation is defined using the parallel iterator trait [`ParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html).
 
-The goal is to convert a sequential program into an efficient parallel program by replacing `iter` with `par`; and `into_iter` with `into_par`.
+The goal is to convert an expressive sequential program into an efficient parallel program only by replacing `iter` with `par`; and `into_iter` with `into_par`.
 
 The following is a naive [traveling salesperson](https://en.wikipedia.org/wiki/Travelling_salesman_problem) algorithm which randomly generates sequences and picks the one with the minimum duration as the best tour. The example demonstrates chaining of very common and useful `map`, `filter` and `reduce` (`min_by_key`) operations. Notice that the only difference between the sequential and parallel programs is the `par()` call.
 
@@ -88,9 +88,9 @@ Since these implementations are particularly optimized for the collection type, 
 
 > **extensibility**: Note that any input collection or generator that implements [`IntoConcurrentIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IntoConcurrentIter.html) automatically implements [`IntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_parallel/trait.IntoParIter.html). Therefore, a new collection can be directly parallelized provided that its concurrent iterator is implemented.
 
-### ii. Parallelization of Arbitrary Regular Iterators
+### ii. Parallelization of Any Iterator
 
-Any arbitrary regular [Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html) can be converted into a parallel iterator using the `iter_into_par` method of [`IterIntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IterIntoConcurrentIter.html) trait.
+Any arbitrary sequential [Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html) implements [`IterIntoParIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IterIntoConcurrentIter.html) trait and can be converted into a parallel iterator using the `iter_into_par` method.
 
 This is very powerful since it allows to parallelize all iterables, which includes pretty much every collection and more.
 
@@ -113,7 +113,7 @@ The following table demonstrates these methods for the `HashSet`; however, they 
 | `h: HashSet<T>` | ii | `h.iter()`<br>&nbsp;&nbsp;`.iter_into_par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.iter_into_par()` |
 |                 | i  | `h.iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.into_par()` |
 
-Note that each approach can be more efficient in different scenarios. As a rule of thumb, when the work to be done is not insignificant, parallelization over iterator (ii) is preferable since it avoids the allocation of the vector.
+Note that each approach can be more efficient in different scenarios. As a rule of thumb, the less insignificant the work to be done on elements is, the less critical is the choice, in which case parallelization over iterator (ii) is preferable since it avoids the allocation of the vector.
 
 ## Performance and Benchmarks
 
@@ -127,9 +127,9 @@ Computations are separated into three categories with respect to how the iterato
 
 ### Collect
 
-In this group of benchmarks, outputs of parallel computations are collected into vectors. The arguments of transformations such as `filter`, `filter_map` or `map` are example functions applied to the input. Details of the methods can be found in the respective benchmark files (you may use the link in the **file** column).
+In this group of benchmarks, outputs of parallel computations are collected into vectors. The arguments of transformations such as `filter`, `filter_map` or `map` are example functions applied to the input. Details of the functions can be found in the respective benchmark files (you may use the link in the **file** column).
 
-> **(s)** In addition to standard vector, outputs can be collected into a [`SplitVec`](https://crates.io/crates/orx-split-vec). Collecting into a split vector can provide additional improvements, especially for large outputs due to avoided memory copies. Note that a split vector provides constant time random access; and despite the fact that it is split to fragments, it asymptotically inherits advantages of contiguous vectors.
+> **(s)** Outputs can also be collected into a [`SplitVec`](https://crates.io/crates/orx-split-vec), which can provide further improvements by avoiding memory copies. Note that a split vector provides constant time random access; and despite the fact that it is split to fragments, it asymptotically inherits advantages of contiguous vectors.
 
 | file | computation | sequential | rayon | orx-parallel | orx-parallel (s) |
 |---|---|---:|---:|---:|---:|
@@ -163,7 +163,7 @@ In the last category of computations, computations that allow for *early exit* o
 
 ### Parallelization of Arbitrary Iterators
 
-As discussed in [ii](#ii-parallelization-of-arbitrary-regular-iterators), parallelization of regular iterators is a very useful feature. The benchmarks in this category demonstrate that significant improvements can be achieved provided that the computation on elements is not insignificant (here, the computations `map` and `filter` are parallelized).
+As discussed in [ii](#ii-parallelization-of-arbitrary-regular-iterators), parallelization of regular iterators is a very powerful feature. The benchmarks in this category demonstrate that significant improvements can be achieved provided that the computation on elements is not insignificant. Note that every computation defined after `iter_into_par()` are parallelized; and hence, the work on elements here are the `map` and `filter` computations.
 
 | file | computation | sequential | rayon | orx-parallel |
 |---|---|---:|---:|---:|
@@ -174,29 +174,31 @@ As discussed in [ii](#ii-parallelization-of-arbitrary-regular-iterators), parall
 
 ### Composition
 
-In the final category of benchmarks, impact of creating long chains of transformations is tested. The experiments suggest that the functions are efficiently composed, and hence, the caller can focus on expressiveness of the defined computation.
+In the final category of benchmarks, impact of long chains of transformations on computation time is tested. You may see such example long chains in the benchmark computations below. Notice that the caller can actually shorten the chains by composing some of them. An obvious one is the `.map(map3).map(map4)` call which could have been one call like `map(map3-then-map4)`.
+
+However, the results suggest that this is not required and the functions are efficiently composed by the parallel iterator. Therefore, the focus on the caller side can be on the expressiveness of the computation.
 
 | file | computation | sequential | rayon | orx-parallel |
 |---|---|---:|---:|---:|
 | [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map1).filter(filter1).map(map2)`<br>&nbsp;&nbsp;`.filter(filter2).map(map3).map(map4)`<br>&nbsp;&nbsp;`.filter(filter4).collect()` |  35.89 (1.00) |  10.11 (0.28) |  **7.40 (0.21)** |
 | [⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_long_chain.rs) | `inputs.into_par()`<br>&nbsp;&nbsp;`.map(map1).filter(filter1).map(map2)`<br>&nbsp;&nbsp;`.filter(filter2).map(map3).map(map4)`<br>&nbsp;&nbsp;`.filter(filter4).reduce(reduce)` |    32.28 (1.00) |     8.99 (0.28) |  **6.63 (0.21)** |
 
-
-
 ## Configurable
 
-Parallel execution is governed by two straightforward parameters.
+Parallel execution is governed by two main straightforward parameters.
 
 * [`NumThreads`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.NumThreads.html) is the degree of parallelization. This is a *capacity parameter* used to limit the resources that can be used by the computation.
   * `Auto`: All available threads can be used, but not necessarily.
   * `Max(n)`: The computation can spawn at most n threads.
-  * `Max(1)`: Falls back to sequential execution.
+  * `Max(1)`: Falls back to sequential execution on the main thread.
 * [`ChunkSize`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.ChunkSize.html) represents the number of elements a parallel worker will pull and process every time it becomes idle. This is an *optimization parameter* that can be tuned to balance the overhead of parallelization and cost of heterogeneity of tasks.
   * `Auto`: Let the parallel executor dynamically decide, achieves high performance in general and can be used unless we have useful computation specific knowledge.
   * `Exact(c)`: Chunks will have c elements; gives complete control to the caller. Useful when we have a very good knowledge or want to tune the computation for certain data.
   * `Min(c)`: Chunk will have at least c elements. Parallel executor; however, might decide to pull more if each computation is handled very fast.
 
-When omitted, as in the example above, `NumThreads::Auto` and `ChunkSize::Auto` will be used. Configuring parallel computation is **straightforward** and **specific to computation** rather than through a global setting.
+See also the last parameter [`IterationOrder`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.IterationOrder.html) with variants `Ordered` (default) and `Arbitrary` which is another useful optimization parameter for specific use cases.
+
+When omitted, `NumThreads::Auto` and `ChunkSize::Auto` will be used. Configuring parallel computation is **straightforward** and **specific to computation** rather than through a global setting.
 
 ```rust
 use orx_parallel::*;
