@@ -13,7 +13,7 @@ use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 ///
 /// Note that every [`ConcurrentCollection`] type automatically implements [`ParallelizableCollection`].
 ///
-/// [`con_iter`]: crate::ConcurrentCollection::con_iter
+/// [`con_iter`]: orx_concurrent_iter::ConcurrentCollection::con_iter
 /// [`Collection`]: orx_iterable::Collection
 /// [`ConcurrentCollection`]: orx_concurrent_iter::ConcurrentCollection
 /// [`par`]: crate::ParallelizableCollection::par
@@ -49,9 +49,9 @@ pub trait ParallelizableCollection: ConcurrentCollection {
     ///
     /// Note that every [`ConcurrentCollection`] type automatically implements [`ParallelizableCollection`].
     ///
-    /// [`con_iter`]: crate::ConcurrentCollection::con_iter
+    /// [`con_iter`]: orx_concurrent_iter::ConcurrentCollection::con_iter
     /// [`Collection`]: orx_iterable::Collection
-    /// [`ConcurrentIter`]: crate::ConcurrentIter
+    /// [`ConcurrentIter`]: orx_concurrent_iter::ConcurrentIter
     /// [`par`]: crate::ParallelizableCollection::par
     /// [`into_par`]: crate::IntoParIter::into_par
     /// [`ParIter`]: crate::ParIter

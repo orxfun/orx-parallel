@@ -72,14 +72,22 @@ Inputs that can be used in parallel computations can be categorized in three gro
 
 These are collections which are parallelized by utilizing their specific structure to achieve high performance.
 
-**orx-parallel** crate provides direct implementations of std collections. Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. The following is the most recent table of direct implementations.
+This crate provides direct implementations of std collections; the table below lists the most recent table of direct implementations.
 
 
 | Type | Over References<br>`-> ParIter<Item = &T>` | Over Owned Values<br>`-> ParIter<Item = T>` |
 |---|---|---|
 | `v: Vec<T>` | `v.par()` | `v.into_par()` |
+| `v: VecDeque<T>` | `v.par()` | `v.into_par()` |
 | `s: &[T]` | `s.par()`<br>`s.into_par()` | |
 | `r: Range<usize>`| | `r.par()`<br>`r.into_par()` |
+
+Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. Currently, the following collections are known to implement [`ParallelizableCollection`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParallelizableCollection.html):
+
+| Type | Over References<br>`-> ParIter<Item = &T>` | Over Owned Values<br>`-> ParIter<Item = T>` |
+|---|---|---|
+| [`s: SplitVec<T, G>`](https://crates.io/crates/orx-split-vec) | `s.par()` | `s.into_par()` |
+| [`f: FixedVec<T>`](https://crates.io/crates/orx-fixed-vec) | `f.par()` | `f.into_par()` |
 
 Since these implementations are particularly optimized for the collection type, it is preferable to start defining parallel computation from the collection whenever available. In other words, for a vector `v`,
 
