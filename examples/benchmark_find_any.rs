@@ -25,7 +25,7 @@ Play with the transformations inside the compute method to test out different co
 #[cfg(feature = "generic_iterator")]
 fn main() {
     use clap::Parser;
-    use orx_parallel::{generic_iterator::GenericIterator, IntoParIter, ParIter};
+    use orx_parallel::{IntoParIter, ParIter, generic_iterator::GenericIterator};
     use rayon::iter::{IntoParallelIterator, ParallelIterator};
     use std::fmt::Display;
     use utils::timed_reduce_all;

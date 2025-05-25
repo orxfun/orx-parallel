@@ -1,5 +1,5 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computations::{Values, Xfx, M, X};
+use crate::computations::{M, Values, X, Xfx};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;

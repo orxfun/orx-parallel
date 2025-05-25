@@ -1,6 +1,6 @@
 use crate::{
-    computations::{Vector, X},
     Params,
+    computations::{Vector, X},
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
