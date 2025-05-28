@@ -82,12 +82,9 @@ This crate provides direct implementations of std collections; the table below l
 | `s: &[T]` | `s.par()`<br>`s.into_par()` | |
 | `r: Range<usize>`| | `r.par()`<br>`r.into_par()` |
 
-Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. Currently, the following collections are known to implement [`ParallelizableCollection`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParallelizableCollection.html):
+Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. Currently, the following collections are known to allow parallel computation using this crate:
 
-| Type | Over References<br>`-> ParIter<Item = &T>` | Over Owned Values<br>`-> ParIter<Item = T>` |
-|---|---|---|
-| [`s: SplitVec<T, G>`](https://crates.io/crates/orx-split-vec) | `s.par()` | `s.into_par()` |
-| [`f: FixedVec<T>`](https://crates.io/crates/orx-fixed-vec) | `f.par()` | `f.into_par()` |
+│ [SplitVec](https://crates.io/crates/orx-split-vec) │ [FixedVec](https://crates.io/crates/orx-fixed-vec) │ [LinkedList](https://crates.io/crates/orx-linked-list) │ [Tree](https://crates.io/crates/orx-tree) │
 
 Since these implementations are particularly optimized for the collection type, it is preferable to start defining parallel computation from the collection whenever available. In other words, for a vector `v`,
 

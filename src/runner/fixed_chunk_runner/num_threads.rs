@@ -13,7 +13,11 @@ pub fn maximum_num_threads(input_len: Option<usize>, num_threads: NumThreads) ->
 fn from_auto_num_threads(input_len: Option<usize>) -> usize {
     match std::thread::available_parallelism() {
         Err(e) => {
-            debug_assert!(false, "Failed to get maximum available parallelism (std::thread::available_parallelism()): {}", e);
+            debug_assert!(
+                false,
+                "Failed to get maximum available parallelism (std::thread::available_parallelism()): {}",
+                e
+            );
             input_len
                 .unwrap_or(MAX_UNSET_NUM_THREADS)
                 .min(MAX_UNSET_NUM_THREADS)
@@ -28,7 +32,11 @@ fn from_max_num_threads(input_len: Option<usize>, max_num_threads: usize) -> usi
     // TODO: need to get the number of free threads?
     match std::thread::available_parallelism() {
         Err(e) => {
-            debug_assert!(false, "Failed to get maximum available parallelism (std::thread::available_parallelism()); falling back to sequential execution.: {}", e);
+            debug_assert!(
+                false,
+                "Failed to get maximum available parallelism (std::thread::available_parallelism()); falling back to sequential execution.: {}",
+                e
+            );
             input_len.unwrap_or(max_num_threads).min(max_num_threads)
         }
         Ok(available_threads) => input_len

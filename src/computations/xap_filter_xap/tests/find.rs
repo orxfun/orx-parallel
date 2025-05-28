@@ -1,5 +1,5 @@
-use crate::computations::{map_self_atom, Atom, Values};
-use crate::{computations::xap_filter_xap::xfx::Xfx, runner::DefaultRunner, Params};
+use crate::computations::{Atom, Values, map_self_atom};
+use crate::{Params, computations::xap_filter_xap::xfx::Xfx, runner::DefaultRunner};
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
 

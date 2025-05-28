@@ -1,6 +1,6 @@
 use crate::{
-    computations::{map::m::M, map_self},
     Params,
+    computations::{map::m::M, map_self},
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
