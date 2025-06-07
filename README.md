@@ -84,7 +84,7 @@ This crate provides direct implementations of std collections; the table below l
 
 Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. Currently, the following collections are known to allow parallel computation using this crate:
 
-│ [SplitVec](https://crates.io/crates/orx-split-vec) │ [FixedVec](https://crates.io/crates/orx-fixed-vec) │ [LinkedList](https://crates.io/crates/orx-linked-list) │ [Tree](https://crates.io/crates/orx-tree) │
+│ [SplitVec](https://crates.io/crates/orx-split-vec) │ [FixedVec](https://crates.io/crates/orx-fixed-vec) │ [LinkedList](https://crates.io/crates/orx-linked-list) │ [Tree](https://crates.io/crates/orx-tree) │ [ImpVec](https://crates.io/crates/orx-imp-vec) │
 
 Since these implementations are particularly optimized for the collection type, it is preferable to start defining parallel computation from the collection whenever available. In other words, for a vector `v`,
 
