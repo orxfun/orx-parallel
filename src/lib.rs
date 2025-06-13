@@ -36,6 +36,7 @@ mod special_type_sets;
 #[cfg(feature = "generic_iterator")]
 pub mod generic_iterator;
 
+/// Module with utility methods for testing.
 #[cfg(test)]
 mod test_utils;
 
