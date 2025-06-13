@@ -20,6 +20,7 @@ mod into_par_iter;
 pub mod iter;
 mod iter_into_par_iter;
 mod par_iter;
+mod parallel_drainable;
 mod parallelizable;
 mod parallelizable_collection;
 mod parameters;
@@ -35,6 +36,7 @@ mod special_type_sets;
 #[cfg(feature = "generic_iterator")]
 pub mod generic_iterator;
 
+/// Module with utility methods for testing.
 #[cfg(test)]
 mod test_utils;
 
@@ -42,6 +44,7 @@ pub use collect_into::ParCollectInto;
 pub use into_par_iter::IntoParIter;
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
+pub use parallel_drainable::ParallelDrainableOverSlice;
 pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
