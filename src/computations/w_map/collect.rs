@@ -49,4 +49,76 @@ where
 
         pinned_vec
     }
+
+    // fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
+    //     let (m, pinned_vec) = (self.m, self.pinned_vec);
+    //     let offset = pinned_vec.len();
+    //     let (params, iter, cmv, map1) = m.destruct();
+
+    //     let bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
+    //     let task = MCollectInInputOrder::new(offset, &bag, cmv, map1);
+
+    //     let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
+    //     let num_spawned = runner.run_with_idx(&iter, task);
+
+    //     let values = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
+    //     (num_spawned, values)
+    // }
+}
+
+// ordered
+
+struct MCollectInInputOrder<'a, I, T, O, M1, P>
+where
+    T: Send + Clone,
+    O: Send + Sync,
+    M1: Fn(&mut T, I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    offset: usize,
+    o_bag: &'a ConcurrentOrderedBag<O, P>,
+    cmv: T,
+    map1: M1,
+    phantom: PhantomData<I>,
+}
+
+impl<'a, I, T, O, M1, P> MCollectInInputOrder<'a, I, T, O, M1, P>
+where
+    T: Send + Clone,
+    O: Send + Sync,
+    M1: Fn(&mut T, I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    fn new(offset: usize, o_bag: &'a ConcurrentOrderedBag<O, P>, cmv: T, map1: M1) -> Self {
+        Self {
+            offset,
+            o_bag,
+            cmv,
+            map1,
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, I, T, O, M1, P> ParallelTaskWithIdx for MCollectInInputOrder<'a, I, T, O, M1, P>
+where
+    T: Send + Clone,
+    O: Send + Sync,
+    M1: Fn(&mut T, I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    type Item = I;
+
+    fn f1(&self, idx: usize, value: Self::Item) {
+        // unsafe {
+        //     self.o_bag
+        //         .set_value(self.offset + idx, (self.map1)(&mut self.cmv, value))
+        // };
+    }
+
+    fn fc(&self, begin_idx: usize, values: impl ExactSizeIterator<Item = Self::Item>) {
+        todo!()
+        // let values = values.map(&self.map1);
+        // unsafe { self.o_bag.set_values(self.offset + begin_idx, values) };
+    }
 }
