@@ -15,8 +15,7 @@ fn from_auto_num_threads(input_len: Option<usize>) -> usize {
         Err(e) => {
             debug_assert!(
                 false,
-                "Failed to get maximum available parallelism (std::thread::available_parallelism()): {}",
-                e
+                "Failed to get maximum available parallelism (std::thread::available_parallelism()): {e}",
             );
             input_len
                 .unwrap_or(MAX_UNSET_NUM_THREADS)
@@ -34,8 +33,7 @@ fn from_max_num_threads(input_len: Option<usize>, max_num_threads: usize) -> usi
         Err(e) => {
             debug_assert!(
                 false,
-                "Failed to get maximum available parallelism (std::thread::available_parallelism()); falling back to sequential execution.: {}",
-                e
+                "Failed to get maximum available parallelism (std::thread::available_parallelism()); falling back to sequential execution.: {e}",
             );
             input_len.unwrap_or(max_num_threads).min(max_num_threads)
         }
