@@ -10,7 +10,7 @@ where
 {
     params: Params,
     iter: I,
-    init: T,
+    cmv: T,
     map1: M1,
 }
 
@@ -21,17 +21,17 @@ where
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
 {
-    pub fn new(params: Params, iter: I, init: T, map1: M1) -> Self {
+    pub fn new(params: Params, iter: I, cmv: T, map1: M1) -> Self {
         Self {
             params,
             iter,
-            init,
+            cmv,
             map1,
         }
     }
 
-    pub fn destruct(self) -> (Params, I, M1) {
-        (self.params, self.iter, self.map1)
+    pub fn destruct(self) -> (Params, I, T, M1) {
+        (self.params, self.iter, self.cmv, self.map1)
     }
 
     pub fn params(&self) -> &Params {
