@@ -98,7 +98,6 @@ impl ParallelRunner for FixedChunkRunner {
         I: ConcurrentIter,
     {
         if num_spawned % LAG_PERIODICITY == 0 {
-            lag();
             match self.next_chunk(num_spawned, iter.try_get_len()) {
                 Some(c) => self.current_chunk_size.store(c, Ordering::Relaxed),
                 None => return false,
@@ -113,18 +112,4 @@ impl ParallelRunner for FixedChunkRunner {
             chunk_size: self.current_chunk_size.load(Ordering::Relaxed),
         }
     }
-}
-
-fn lag() {
-    fn fibonacci(n: i32) -> i32 {
-        let mut a = 0;
-        let mut b = 1;
-        for _ in 0..n {
-            let c = i32::saturating_add(a, b);
-            a = b;
-            b = c;
-        }
-        a
-    }
-    assert!(std::hint::black_box(fibonacci(1 << 16)) > 0);
 }
