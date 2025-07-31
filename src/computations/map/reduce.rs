@@ -29,7 +29,7 @@ where
         iter.into_seq_iter().map(map1).reduce(reduce)
     }
 
-    fn reduce_parallel<R: ParallelRunner, X>(self, reduce: X) -> (usize, Option<O>)
+    fn reduce_parallel<R, X>(self, reduce: X) -> (usize, Option<O>)
     where
         R: ParallelRunner,
         X: Fn(O, O) -> O + Send + Sync,

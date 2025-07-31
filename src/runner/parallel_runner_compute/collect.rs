@@ -4,6 +4,7 @@ use crate::{
 };
 use orx_concurrent_iter::ConcurrentIter;
 
+#[allow(clippy::type_complexity)]
 pub fn x_collect_with_idx<C, I, Vo, M1>(
     c: &C,
     iter: &I,
@@ -41,6 +42,7 @@ where
     (num_spawned, vectors)
 }
 
+#[allow(clippy::type_complexity)]
 pub fn xfx_collect_with_idx<C, I, Vt, Vo, M1, F, M2>(
     c: &C,
     iter: &I,
