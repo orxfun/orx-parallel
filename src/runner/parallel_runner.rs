@@ -149,33 +149,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        let state = self.new_shared_state();
-        let shared_state = &state;
-
-        let mut num_spawned = 0;
-        let results = std::thread::scope(|s| {
-            let mut handles = vec![];
-
-            while self.do_spawn_new(num_spawned, shared_state, iter) {
-                num_spawned += 1;
-                handles.push(s.spawn(move || {
-                    let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.xfx_next(iter, shared_state, map1, filter, map2)
-                }));
-            }
-
-            let mut results: Vec<(usize, Vo::Item)> = Vec::with_capacity(handles.len());
-            for x in handles {
-                if let Some(x) = x.join().expect("failed to join the thread") {
-                    results.push(x);
-                }
-            }
-            results
-        });
-
-        let acc = results.into_iter().min_by_key(|x| x.0).map(|x| x.1);
-
-        (num_spawned, acc)
+        parallel_runner_compute::xfx_next(self, iter, map1, filter, map2)
     }
 
     fn xfx_next_any<I, Vt, Vo, M1, F, M2>(
@@ -194,28 +168,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        let state = self.new_shared_state();
-        let shared_state = &state;
-
-        let mut num_spawned = 0;
-        let result = std::thread::scope(|s| {
-            let mut handles = vec![];
-
-            while self.do_spawn_new(num_spawned, shared_state, iter) {
-                num_spawned += 1;
-                handles.push(s.spawn(move || {
-                    let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.xfx_next_any(iter, shared_state, map1, filter, map2)
-                }));
-            }
-
-            // do not wait to join other threads
-            handles
-                .into_iter()
-                .find_map(|x| x.join().expect("failed to join the thread"))
-        });
-
-        (num_spawned, result)
+        parallel_runner_compute::xfx_next_any(self, iter, map1, filter, map2)
     }
 }
 
