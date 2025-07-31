@@ -71,7 +71,12 @@ where
         let (params, iter, map1) = m.destruct();
 
         let bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-        let task = MCollectInInputOrder::new(offset, &bag, &map1);
+        let task = MCollectInInputOrder {
+            offset,
+            o_bag: &bag,
+            map1: &map1,
+            phantom: PhantomData,
+        };
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
         let num_spawned = runner.run_with_idx(&iter, task);
@@ -92,7 +97,11 @@ where
             Some(iter_len) => bag.reserve_maximum_capacity(offset + iter_len),
             None => bag.reserve_maximum_capacity(capacity_bound),
         };
-        let task = MCollectInArbitraryOrder::new(&bag, &map1);
+        let task = MCollectInArbitraryOrder {
+            bag: &bag,
+            map1: &map1,
+            phantom: PhantomData,
+        };
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
         let num_spawned = runner.run(&iter, task);
@@ -114,22 +123,6 @@ where
     o_bag: &'a ConcurrentOrderedBag<O, P>,
     map1: &'a M1,
     phantom: PhantomData<I>,
-}
-
-impl<'a, I, O, M1, P> MCollectInInputOrder<'a, I, O, M1, P>
-where
-    O: Send + Sync,
-    M1: Fn(I) -> O + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
-{
-    fn new(offset: usize, o_bag: &'a ConcurrentOrderedBag<O, P>, map1: &'a M1) -> Self {
-        Self {
-            offset,
-            o_bag,
-            map1,
-            phantom: PhantomData,
-        }
-    }
 }
 
 impl<I, O, M1, P> Clone for MCollectInInputOrder<'_, I, O, M1, P>
@@ -178,22 +171,6 @@ where
     bag: &'a ConcurrentBag<O, P>,
     map1: &'a M1,
     phantom: PhantomData<I>,
-}
-
-#[cfg(test)]
-impl<'a, I, O, M1, P> MCollectInArbitraryOrder<'a, I, O, M1, P>
-where
-    O: Send + Sync,
-    M1: Fn(I) -> O + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
-{
-    fn new(bag: &'a ConcurrentBag<O, P>, map1: &'a M1) -> Self {
-        Self {
-            bag,
-            map1,
-            phantom: PhantomData,
-        }
-    }
 }
 
 #[cfg(test)]

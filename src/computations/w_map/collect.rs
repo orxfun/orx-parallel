@@ -139,3 +139,19 @@ where
         unsafe { self.o_bag.set_values(self.offset + begin_idx, values) };
     }
 }
+
+// in arbitrary order
+
+#[cfg(test)]
+struct MCollectInArbitraryOrder<'a, I, T, O, M1, P>
+where
+    T: Send + Clone,
+    O: Send + Sync,
+    M1: Fn(&mut T, I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    bag: &'a ConcurrentBag<O, P>,
+    with: T,
+    map1: &'a M1,
+    phantom: PhantomData<I>,
+}
