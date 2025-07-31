@@ -79,7 +79,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
                 num_spawned += 1;
                 s.spawn(|| {
                     let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.run_with_idx(iter, shared_state, &task);
+                    thread_runner.run_with_idx(iter, shared_state, task.clone());
                 });
             }
         });
