@@ -1,3 +1,17 @@
+/*
+1. to run the computation without any limits on max number of threads:
+
+cargo run --release --example max_num_threads_config
+
+OR
+
+ORX_PARALLEL_MAX_NUM_THREADS=0 cargo run --release --example max_num_threads_config
+
+2. to allow parallel computation at most 4 threads:
+
+ORX_PARALLEL_MAX_NUM_THREADS=4 cargo run --release --example max_num_threads_config
+*/
+
 use orx_parallel::*;
 
 fn fib(n: &u64) -> u64 {
@@ -56,5 +70,5 @@ fn main() {
 
     // default -> might use all threads
     let sum = input.par().map(|i| fib(&(i % 500_000)) % 42).sum();
-    println!("1. {sum}");
+    println!("sum = {sum}");
 }
