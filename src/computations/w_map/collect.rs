@@ -12,16 +12,23 @@ use std::marker::PhantomData;
 impl<I, T, O, M1> WithM<I, T, O, M1>
 where
     I: ConcurrentIter,
-    T: Send + Clone,
+    T: Send + Sync + Clone,
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
 {
+    pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
+    where
+        R: ParallelRunner,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        WithMCollect::compute::<R>(self, pinned_vec)
+    }
 }
 
 pub struct WithMCollect<I, T, O, M1, P>
 where
     I: ConcurrentIter,
-    T: Send + Clone,
+    T: Send + Sync + Clone,
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
