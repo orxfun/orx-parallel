@@ -50,7 +50,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
     // collect
 
     fn x_collect_with_idx<I, Vo, M1>(
-        mut self,
+        self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
@@ -61,51 +61,11 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Send + Sync,
     {
-        let mut collected = Vec::new();
-        let out_vec = &mut collected;
-
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller_with_idx();
-
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some((idx, i)) => {
-                        let vo = map1(i);
-                        vo.push_to_vec_with_idx(idx, out_vec);
-                    }
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull_with_idx() {
-                        Some((chunk_begin_idx, chunk)) => {
-                            for i in chunk {
-                                let vo = map1(i);
-                                vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
-                            }
-                        }
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
-        collected
+        thread_runner_compute::x_collect_with_idx(self, iter, shared_state, map1)
     }
 
     fn xfx_collect_with_idx<I, Vt, Vo, M1, F, M2>(
-        mut self,
+        self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
@@ -121,47 +81,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        let mut collected = Vec::new();
-        let out_vec = &mut collected;
-
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller_with_idx();
-
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some((i_idx, i)) => {
-                        let vt = map1(i);
-                        vt.xfx_collect_heap(i_idx, filter, map2, out_vec);
-                    }
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull_with_idx() {
-                        Some((chunk_begin_idx, chunk)) => {
-                            for i in chunk {
-                                let vt = map1(i);
-                                vt.xfx_collect_heap(chunk_begin_idx, filter, map2, out_vec);
-                            }
-                        }
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
-        collected
+        thread_runner_compute::xfx_collect_with_idx(self, iter, shared_state, map1, filter, map2)
     }
 
     // reduce
