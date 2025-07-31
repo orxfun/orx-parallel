@@ -1,5 +1,5 @@
 /// A parallel task shared with threads.
-pub trait ParallelTask {
+pub trait ParallelTask: Clone {
     /// Item.
     type Item;
 
