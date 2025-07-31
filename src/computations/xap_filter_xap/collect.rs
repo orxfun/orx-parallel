@@ -85,7 +85,7 @@ where
         bag.reserve_maximum_capacity(capacity_bound);
 
         let task = XfxCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
-            xap1, filter, xap2, &bag,
+            &xap1, &filter, &xap2, &bag,
         );
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
@@ -121,9 +121,9 @@ where
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    map1: M1,
-    filter: F,
-    map2: M2,
+    map1: &'a M1,
+    filter: &'a F,
+    map2: &'a M2,
     bag: &'a ConcurrentBag<Vo::Item, P>,
     phantom: PhantomData<(I, Vt, Vo)>,
 }
@@ -139,13 +139,35 @@ where
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    fn new(map1: M1, filter: F, map2: M2, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
+    fn new(map1: &'a M1, filter: &'a F, map2: &'a M2, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
         Self {
             map1,
             filter,
             map2,
             bag,
             phantom: PhantomData,
+        }
+    }
+}
+
+impl<I, Vt, Vo, M1, F, M2, P> Clone for XfxCollectInArbitraryOrder<'_, I, Vt, Vo, M1, F, M2, P>
+where
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            map1: self.map1,
+            filter: self.filter,
+            map2: self.map2,
+            bag: self.bag,
+            phantom: self.phantom,
         }
     }
 }
