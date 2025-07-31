@@ -10,6 +10,18 @@ where
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Clone + Send + Sync,
 {
+    pub fn reduce<R, X>(self, reduce: X) -> (usize, Option<O>)
+    where
+        R: ParallelRunner,
+        X: Fn(O, O) -> O + Send + Sync,
+    {
+        let p = self.params();
+        match p.is_sequential() {
+            true => (0, self.reduce_sequential(reduce)),
+            false => self.reduce_parallel::<R, _>(reduce),
+        }
+    }
+
     fn reduce_sequential<X>(self, reduce: X) -> Option<O>
     where
         X: Fn(O, O) -> O + Send + Sync,
