@@ -1,7 +1,7 @@
 use crate::{ChunkSize, IterationOrder, NumThreads, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct M<I, T, O, M1>
+pub struct WithM<I, T, O, M1>
 where
     I: ConcurrentIter,
     T: Send + Clone,
@@ -14,7 +14,7 @@ where
     map1: M1,
 }
 
-impl<I, T, O, M1> M<I, T, O, M1>
+impl<I, T, O, M1> WithM<I, T, O, M1>
 where
     I: ConcurrentIter,
     T: Send + Clone,
