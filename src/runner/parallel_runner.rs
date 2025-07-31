@@ -99,15 +99,21 @@ pub trait ParallelRunnerCompute: ParallelRunner {
 
     // reduce
 
-    fn x_reduce<I, Vo, M1, X>(&self, iter: &I, map1: &M1, reduce: &X) -> (usize, Option<Vo::Item>)
+    fn x_reduce<I, Vo, M1, CreateM1, X>(
+        &self,
+        iter: &I,
+        create_map1: CreateM1,
+        reduce: &X,
+    ) -> (usize, Option<Vo::Item>)
     where
         I: ConcurrentIter,
         Vo: Values,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        M1: FnMut(I::Item) -> Vo + Send + Sync,
+        CreateM1: Fn() -> M1 + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
-        parallel_runner_compute::x_reduce(self, iter, map1, reduce)
+        parallel_runner_compute::x_reduce(self, iter, create_map1, reduce)
     }
 
     fn xfx_reduce<I, Vt, Vo, M1, F, M2, X>(

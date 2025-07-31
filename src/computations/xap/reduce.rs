@@ -8,7 +8,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Send + Sync + Clone,
 {
     pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
     where
@@ -24,7 +24,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Send + Sync + Clone,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     x: X<I, Vo, M1>,
@@ -36,7 +36,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Send + Sync + Clone,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     pub fn compute<R: ParallelRunner>(x: X<I, Vo, M1>, reduce: Red) -> (usize, Option<Vo::Item>) {
@@ -61,6 +61,7 @@ where
         let (params, iter, xap1) = x.destruct();
 
         let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
-        runner.x_reduce(&iter, &xap1, &reduce)
+        let create_map = || xap1.clone();
+        runner.x_reduce(&iter, create_map, &reduce)
     }
 }

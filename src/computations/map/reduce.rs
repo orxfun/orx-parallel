@@ -38,6 +38,7 @@ where
 
         let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
         let xap1 = |i: I::Item| Atom(map1(i));
-        runner.x_reduce(&iter, &xap1, &reduce)
+        let create_map = || xap1.clone();
+        runner.x_reduce(&iter, create_map, &reduce)
     }
 }

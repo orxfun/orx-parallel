@@ -90,14 +90,14 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         self,
         iter: &I,
         shared_state: &Self::SharedState,
-        map1: &M1,
+        map1: M1,
         reduce: &X,
     ) -> Option<Vo::Item>
     where
         I: ConcurrentIter,
         Vo: Values,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        M1: FnMut(I::Item) -> Vo + Send + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         thread_runner_compute::x_reduce(self, iter, shared_state, map1, reduce)

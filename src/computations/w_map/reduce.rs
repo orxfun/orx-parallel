@@ -6,9 +6,9 @@ use orx_concurrent_iter::ConcurrentIter;
 impl<I, T, O, M1> WithM<I, T, O, M1>
 where
     I: ConcurrentIter,
-    T: Send + Clone,
+    T: Send + Sync + Clone,
     O: Send + Sync,
-    M1: Fn(&mut T, I::Item) -> O + Send + Sync,
+    M1: Fn(&mut T, I::Item) -> O + Clone + Send + Sync,
 {
     fn reduce_sequential<X>(self, reduce: X) -> Option<O>
     where
@@ -20,15 +20,19 @@ where
             .reduce(reduce)
     }
 
-    // fn reduce_parallel<R: ParallelRunner, X>(self, reduce: X) -> (usize, Option<O>)
-    // where
-    //     R: ParallelRunner,
-    //     X: Fn(O, O) -> O + Send + Sync,
-    // {
-    //     let (params, iter, mut with, map1) = self.destruct();
+    fn reduce_parallel<R: ParallelRunner, X>(self, reduce: X) -> (usize, Option<O>)
+    where
+        R: ParallelRunner,
+        X: Fn(O, O) -> O + Send + Sync,
+    {
+        let (params, iter, mut with, map1) = self.destruct();
 
-    //     let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
-    //     let xap1 = |i: I::Item| Atom(map1(&mut with, i));
-    //     runner.x_reduce(&iter, &xap1, &reduce)
-    // }
+        let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
+        let create_map = || {
+            let map1 = map1.clone();
+            let mut with = with.clone();
+            move |i: I::Item| Atom(map1(&mut with, i))
+        };
+        runner.x_reduce(&iter, create_map, &reduce)
+    }
 }

@@ -4,10 +4,10 @@ use crate::{
 };
 use orx_concurrent_iter::ConcurrentIter;
 
-pub fn x_reduce<C, I, Vo, M1, X>(
+pub fn x_reduce<C, I, Vo, M1, CreateM1, X>(
     c: &C,
     iter: &I,
-    map1: &M1,
+    create_map1: CreateM1,
     reduce: &X,
 ) -> (usize, Option<Vo::Item>)
 where
@@ -15,7 +15,8 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: FnMut(I::Item) -> Vo + Send + Sync,
+    CreateM1: Fn() -> M1 + Sync,
     X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let state = c.new_shared_state();
@@ -27,8 +28,9 @@ where
 
         while c.do_spawn_new(num_spawned, shared_state, iter) {
             num_spawned += 1;
-            handles.push(s.spawn(move || {
+            handles.push(s.spawn(|| {
                 let thread_runner = c.new_thread_runner(shared_state);
+                let map1 = create_map1();
                 thread_runner.x_reduce(iter, shared_state, map1, reduce)
             }));
         }

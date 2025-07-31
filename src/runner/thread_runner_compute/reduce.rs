@@ -5,7 +5,7 @@ pub fn x_reduce<C, I, Vo, M1, X>(
     mut c: C,
     iter: &I,
     shared_state: &C::SharedState,
-    map1: &M1,
+    mut map1: M1,
     reduce: &X,
 ) -> Option<Vo::Item>
 where
@@ -13,7 +13,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: FnMut(I::Item) -> Vo + Send + Sync,
     X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let mut chunk_puller = iter.chunk_puller(0);

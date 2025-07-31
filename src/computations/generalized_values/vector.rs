@@ -121,11 +121,11 @@ where
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, mut reduce: X) -> Option<Self::Item>
     where
-        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        X: FnMut(Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
-        let reduced = self.0.into_iter().reduce(&reduce);
+        let reduced = self.0.into_iter().reduce(&mut reduce);
         match (acc, reduced) {
             (Some(x), Some(y)) => Some(reduce(x, y)),
             (Some(x), None) => Some(x),
