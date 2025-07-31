@@ -33,7 +33,7 @@ where
 impl<I, T, O, M1, P> WithMCollect<I, T, O, M1, P>
 where
     I: ConcurrentIter,
-    T: Send + Clone,
+    T: Send + Sync + Clone,
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
@@ -50,20 +50,26 @@ where
         pinned_vec
     }
 
-    // fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
-    //     let (m, pinned_vec) = (self.m, self.pinned_vec);
-    //     let offset = pinned_vec.len();
-    //     let (params, iter, with, map1) = m.destruct();
+    fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
+        let (m, pinned_vec) = (self.m, self.pinned_vec);
+        let offset = pinned_vec.len();
+        let (params, iter, with, map1) = m.destruct();
 
-    //     let bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-    //     let task = MCollectInInputOrder::new(offset, &bag, with, map1);
+        let bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
+        let task = MCollectInInputOrder {
+            offset,
+            o_bag: &bag,
+            with,
+            map1: &map1,
+            phantom: PhantomData,
+        };
 
-    //     let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
-    //     let num_spawned = runner.run_with_idx(&iter, task);
+        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
+        let num_spawned = runner.run_with_idx(&iter, task);
 
-    //     let values = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
-    //     (num_spawned, values)
-    // }
+        let values = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
+        (num_spawned, values)
+    }
 }
 
 // ordered

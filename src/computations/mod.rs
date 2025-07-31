@@ -3,6 +3,7 @@ mod generalized_values;
 mod heap_sort;
 mod map;
 mod w_map;
+mod w_xap;
 mod xap;
 mod xap_filter_xap;
 
