@@ -92,7 +92,7 @@ where
             Some(iter_len) => bag.reserve_maximum_capacity(offset + iter_len),
             None => bag.reserve_maximum_capacity(capacity_bound),
         };
-        let task = MCollectInArbitraryOrder::new(&bag, map1);
+        let task = MCollectInArbitraryOrder::new(&bag, &map1);
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
         let num_spawned = runner.run(&iter, task);
@@ -176,7 +176,7 @@ where
     P: IntoConcurrentPinnedVec<O>,
 {
     bag: &'a ConcurrentBag<O, P>,
-    map1: M1,
+    map1: &'a M1,
     phantom: PhantomData<I>,
 }
 
@@ -187,11 +187,27 @@ where
     M1: Fn(I) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
-    fn new(bag: &'a ConcurrentBag<O, P>, map1: M1) -> Self {
+    fn new(bag: &'a ConcurrentBag<O, P>, map1: &'a M1) -> Self {
         Self {
             bag,
             map1,
             phantom: PhantomData,
+        }
+    }
+}
+
+#[cfg(test)]
+impl<I, O, M1, P> Clone for MCollectInArbitraryOrder<'_, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            bag: self.bag,
+            map1: self.map1,
+            phantom: self.phantom,
         }
     }
 }
