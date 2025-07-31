@@ -82,24 +82,6 @@ where
     phantom: PhantomData<I>,
 }
 
-impl<'a, I, T, O, M1, P> MCollectInInputOrder<'a, I, T, O, M1, P>
-where
-    T: Send + Clone,
-    O: Send + Sync,
-    M1: Fn(&mut T, I) -> O + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
-{
-    fn new(offset: usize, o_bag: &'a ConcurrentOrderedBag<O, P>, with: T, map1: &'a M1) -> Self {
-        Self {
-            offset,
-            o_bag,
-            with,
-            map1,
-            phantom: PhantomData,
-        }
-    }
-}
-
 impl<'a, I, T, O, M1, P> Clone for MCollectInInputOrder<'a, I, T, O, M1, P>
 where
     T: Send + Clone,
@@ -154,4 +136,42 @@ where
     with: T,
     map1: &'a M1,
     phantom: PhantomData<I>,
+}
+
+#[cfg(test)]
+impl<'a, I, T, O, M1, P> Clone for MCollectInArbitraryOrder<'a, I, T, O, M1, P>
+where
+    T: Send + Clone,
+    O: Send + Sync,
+    M1: Fn(&mut T, I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            bag: self.bag,
+            with: self.with.clone(),
+            map1: self.map1,
+            phantom: self.phantom,
+        }
+    }
+}
+
+#[cfg(test)]
+impl<'a, I, T, O, M1, P> ParallelTask for MCollectInArbitraryOrder<'a, I, T, O, M1, P>
+where
+    T: Send + Clone,
+    O: Send + Sync,
+    M1: Fn(&mut T, I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    type Item = I;
+
+    fn f1(&mut self, value: Self::Item) {
+        self.bag.push((self.map1)(&mut self.with, value));
+    }
+
+    fn fc(&mut self, values: impl ExactSizeIterator<Item = Self::Item>) {
+        let values = values.map(|value| (self.map1)(&mut self.with, value));
+        self.bag.extend(values);
+    }
 }
