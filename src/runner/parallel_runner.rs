@@ -3,7 +3,7 @@ use super::{
     parallel_task::{ParallelTask, ParallelTaskWithIdx},
     thread_runner::{ThreadRunner, ThreadRunnerCompute},
 };
-use crate::{computations::Values, parameters::Params};
+use crate::{computations::Values, parameters::Params, runner::parallel_runner_compute};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel runner which is responsible for taking a computation defined as a composition
@@ -49,20 +49,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         I: ConcurrentIter,
         T: ParallelTask<Item = I::Item> + Sync,
     {
-        let state = self.new_shared_state();
-        let shared_state = &state;
-
-        let mut num_spawned = 0;
-        std::thread::scope(|s| {
-            while self.do_spawn_new(num_spawned, shared_state, iter) {
-                num_spawned += 1;
-                s.spawn(|| {
-                    let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.run(iter, shared_state, task.clone());
-                });
-            }
-        });
-        num_spawned
+        parallel_runner_compute::run(self, iter, task)
     }
 
     fn run_with_idx<I, T>(&self, iter: &I, task: T) -> usize
@@ -70,20 +57,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         I: ConcurrentIter,
         T: ParallelTaskWithIdx<Item = I::Item> + Sync,
     {
-        let state = self.new_shared_state();
-        let shared_state = &state;
-
-        let mut num_spawned = 0;
-        std::thread::scope(|s| {
-            while self.do_spawn_new(num_spawned, shared_state, iter) {
-                num_spawned += 1;
-                s.spawn(|| {
-                    let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.run_with_idx(iter, shared_state, task.clone());
-                });
-            }
-        });
-        num_spawned
+        parallel_runner_compute::run_with_idx(self, iter, task)
     }
 
     // collect

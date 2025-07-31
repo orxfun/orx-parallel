@@ -1,6 +1,7 @@
 mod computation_kind;
 mod fixed_chunk_runner;
 mod parallel_runner;
+mod parallel_runner_compute;
 mod parallel_task;
 mod thread_runner;
 
