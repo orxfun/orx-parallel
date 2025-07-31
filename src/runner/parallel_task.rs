@@ -11,7 +11,7 @@ pub trait ParallelTask {
 }
 
 /// A parallel task shared with threads, where indices are also used.
-pub trait ParallelTaskWithIdx {
+pub trait ParallelTaskWithIdx: Clone {
     /// Item.
     type Item;
 
