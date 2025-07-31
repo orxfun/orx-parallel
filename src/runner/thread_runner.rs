@@ -87,7 +87,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
     // reduce
 
     fn x_reduce<I, Vo, M1, X>(
-        mut self,
+        self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
@@ -100,49 +100,11 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(I::Item) -> Vo + Send + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller();
-
-        let mut acc = None;
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some(i) => {
-                        let vo = map1(i);
-                        acc = vo.acc_reduce(acc, reduce);
-                    }
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull() {
-                        Some(chunk) => {
-                            for i in chunk {
-                                let vo = map1(i);
-                                acc = vo.acc_reduce(acc, reduce);
-                            }
-                        }
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
-        acc
+        thread_runner_compute::x_reduce(self, iter, shared_state, map1, reduce)
     }
 
     fn xfx_reduce<I, Vt, Vo, M1, F, M2, X>(
-        mut self,
+        self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
@@ -160,46 +122,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller();
-
-        let mut acc = None;
-
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some(i) => {
-                        let vt = map1(i);
-                        acc = vt.fx_reduce(acc, filter, map2, reduce);
-                    }
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull() {
-                        Some(chunk) => {
-                            for i in chunk {
-                                let vt = map1(i);
-                                acc = vt.fx_reduce(acc, filter, map2, reduce);
-                            }
-                        }
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
-        acc
+        thread_runner_compute::xfx_reduce(self, iter, shared_state, map1, filter, map2, reduce)
     }
 
     // next
