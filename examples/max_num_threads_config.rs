@@ -33,7 +33,7 @@ fn max_num_threads_by_env_variable() -> Option<usize> {
     match std::env::var(MAX_NUM_THREADS_ENV_VARIABLE) {
         Ok(s) => {
             match s.parse::<usize>() {
-                Ok(x) if x == 0 => {
+                Ok(0) => {
                     // B: To be consistent with `.par().num_threads(0)` means Auto that can use all threads
                     None
                 }
