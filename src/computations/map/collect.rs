@@ -71,7 +71,7 @@ where
         let (params, iter, map1) = m.destruct();
 
         let bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-        let task = MCollectInInputOrder::new(offset, &bag, map1);
+        let task = MCollectInInputOrder::new(offset, &bag, &map1);
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
         let num_spawned = runner.run_with_idx(&iter, task);
@@ -112,7 +112,7 @@ where
 {
     offset: usize,
     o_bag: &'a ConcurrentOrderedBag<O, P>,
-    map1: M1,
+    map1: &'a M1,
     phantom: PhantomData<I>,
 }
 
@@ -122,12 +122,28 @@ where
     M1: Fn(I) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
-    fn new(offset: usize, o_bag: &'a ConcurrentOrderedBag<O, P>, map1: M1) -> Self {
+    fn new(offset: usize, o_bag: &'a ConcurrentOrderedBag<O, P>, map1: &'a M1) -> Self {
         Self {
             offset,
             o_bag,
             map1,
             phantom: PhantomData,
+        }
+    }
+}
+
+impl<I, O, M1, P> Clone for MCollectInInputOrder<'_, I, O, M1, P>
+where
+    O: Send + Sync,
+    M1: Fn(I) -> O + Send + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            offset: self.offset,
+            o_bag: self.o_bag,
+            map1: self.map1,
+            phantom: self.phantom,
         }
     }
 }
