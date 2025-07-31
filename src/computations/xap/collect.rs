@@ -153,7 +153,7 @@ where
     type Item = I;
 
     #[inline]
-    fn f1(&self, value: Self::Item) {
+    fn f1(&mut self, value: Self::Item) {
         let values_vt = (self.xap1)(value);
         for x in values_vt.values() {
             self.bag.push(x);
@@ -161,7 +161,7 @@ where
     }
 
     #[inline(always)]
-    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>) {
+    fn fc(&mut self, values: impl ExactSizeIterator<Item = Self::Item>) {
         for x in values {
             self.f1(x);
         }

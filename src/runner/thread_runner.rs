@@ -31,7 +31,7 @@ pub trait ThreadRunner: Sized {
 pub(crate) trait ThreadRunnerCompute: ThreadRunner {
     // run
 
-    fn run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: &T)
+    fn run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, mut task: T)
     where
         I: ConcurrentIter,
         T: ParallelTask<Item = I::Item>,

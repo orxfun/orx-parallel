@@ -187,13 +187,13 @@ where
     type Item = I::Item;
 
     #[inline]
-    fn f1(&self, value: Self::Item) {
+    fn f1(&mut self, value: Self::Item) {
         let values_vt = (self.map1)(value);
         values_vt.filter_map_collect_arbitrary(&self.filter, &self.map2, self.bag);
     }
 
     #[inline(always)]
-    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>) {
+    fn fc(&mut self, values: impl ExactSizeIterator<Item = Self::Item>) {
         for x in values {
             self.f1(x);
         }

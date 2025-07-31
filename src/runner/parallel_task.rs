@@ -4,10 +4,10 @@ pub trait ParallelTask: Clone {
     type Item;
 
     /// Task to perform on a single `value`.
-    fn f1(&self, value: Self::Item);
+    fn f1(&mut self, value: Self::Item);
 
     /// Task to perform on a chunk of `values` with known length.
-    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>);
+    fn fc(&mut self, values: impl ExactSizeIterator<Item = Self::Item>);
 }
 
 /// A parallel task shared with threads, where indices are also used.

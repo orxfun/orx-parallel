@@ -221,11 +221,11 @@ where
 {
     type Item = I;
 
-    fn f1(&self, value: Self::Item) {
+    fn f1(&mut self, value: Self::Item) {
         self.bag.push((self.map1)(value));
     }
 
-    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>) {
+    fn fc(&mut self, values: impl ExactSizeIterator<Item = Self::Item>) {
         let values = values.map(&self.map1);
         self.bag.extend(values);
     }
