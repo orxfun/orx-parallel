@@ -29,7 +29,7 @@ fn with_m_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrde
 
     let mut counter = 0;
     for i in 0..offset {
-        let value = || map(&mut counter, i.to_string());
+        let mut value = || map(&mut counter, i.to_string());
         output.push(value());
         expected.push(value());
     }
