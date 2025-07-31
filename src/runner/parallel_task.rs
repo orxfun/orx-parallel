@@ -16,8 +16,8 @@ pub trait ParallelTaskWithIdx: Clone {
     type Item;
 
     /// Task to perform on a single `value` with the given input `idx`.
-    fn f1(&self, idx: usize, value: Self::Item);
+    fn f1(&mut self, idx: usize, value: Self::Item);
 
     /// Task to perform on a chunk of `values` with known length starting at the given `begin_idx`.
-    fn fc(&self, begin_idx: usize, values: impl ExactSizeIterator<Item = Self::Item>);
+    fn fc(&mut self, begin_idx: usize, values: impl ExactSizeIterator<Item = Self::Item>);
 }

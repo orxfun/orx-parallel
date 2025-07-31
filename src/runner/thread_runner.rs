@@ -67,7 +67,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         self.complete_task(shared_state);
     }
 
-    fn run_with_idx<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, task: T)
+    fn run_with_idx<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, mut task: T)
     where
         I: ConcurrentIter,
         T: ParallelTaskWithIdx<Item = I::Item>,

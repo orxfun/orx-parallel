@@ -156,11 +156,11 @@ where
 {
     type Item = I;
 
-    fn f1(&self, idx: usize, value: Self::Item) {
+    fn f1(&mut self, idx: usize, value: Self::Item) {
         unsafe { self.o_bag.set_value(self.offset + idx, (self.map1)(value)) };
     }
 
-    fn fc(&self, begin_idx: usize, values: impl ExactSizeIterator<Item = Self::Item>) {
+    fn fc(&mut self, begin_idx: usize, values: impl ExactSizeIterator<Item = Self::Item>) {
         let values = values.map(&self.map1);
         unsafe { self.o_bag.set_values(self.offset + begin_idx, values) };
     }
