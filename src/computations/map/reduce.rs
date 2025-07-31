@@ -14,46 +14,27 @@ where
         R: ParallelRunner,
         X: Fn(O, O) -> O + Send + Sync,
     {
-        MReduce::compute::<R>(self, reduce)
-    }
-}
-
-pub struct MReduce<I, O, M1, X>
-where
-    I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
-    X: Fn(O, O) -> O + Send + Sync,
-{
-    m: M<I, O, M1>,
-    reduce: X,
-}
-
-impl<I, O, M1, X> MReduce<I, O, M1, X>
-where
-    I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
-    X: Fn(O, O) -> O + Send + Sync,
-{
-    pub fn compute<R: ParallelRunner>(m: M<I, O, M1>, reduce: X) -> (usize, Option<O>) {
-        let x = Self { m, reduce };
-        let p = x.m.params();
+        let p = self.params();
         match p.is_sequential() {
-            true => (0, x.sequential()),
-            false => x.parallel::<R>(),
+            true => (0, self.reduce_sequential(reduce)),
+            false => self.reduce_parallel::<R, _>(reduce),
         }
     }
 
-    fn sequential(self) -> Option<O> {
-        let (m, reduce) = (self.m, self.reduce);
-        let (_, iter, map1) = m.destruct();
+    fn reduce_sequential<X>(self, reduce: X) -> Option<O>
+    where
+        X: Fn(O, O) -> O + Send + Sync,
+    {
+        let (_, iter, map1) = self.destruct();
         iter.into_seq_iter().map(map1).reduce(reduce)
     }
 
-    fn parallel<R: ParallelRunner>(self) -> (usize, Option<O>) {
-        let (m, reduce) = (self.m, self.reduce);
-        let (params, iter, map1) = m.destruct();
+    fn reduce_parallel<R: ParallelRunner, X>(self, reduce: X) -> (usize, Option<O>)
+    where
+        R: ParallelRunner,
+        X: Fn(O, O) -> O + Send + Sync,
+    {
+        let (params, iter, map1) = self.destruct();
 
         let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
         let xap1 = |i: I::Item| Atom(map1(i));
