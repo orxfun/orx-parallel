@@ -128,7 +128,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
     // next
 
     fn xfx_next<I, Vt, Vo, M1, F, M2>(
-        mut self,
+        self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
@@ -144,58 +144,11 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller_with_idx();
-
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some((idx, i)) => {
-                        let vt = map1(i);
-                        if let Some(first) = vt.fx_next(filter, map2) {
-                            iter.skip_to_end();
-                            self.complete_chunk(shared_state, chunk_size);
-                            self.complete_task(shared_state);
-                            return Some((idx, first));
-                        }
-                    }
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull_with_idx() {
-                        Some((idx, chunk)) => {
-                            for i in chunk {
-                                let vt = map1(i);
-                                if let Some(first) = vt.fx_next(filter, map2) {
-                                    iter.skip_to_end();
-                                    self.complete_chunk(shared_state, chunk_size);
-                                    self.complete_task(shared_state);
-                                    return Some((idx, first));
-                                }
-                            }
-                        }
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
-        None
+        thread_runner_compute::xfx_next(self, iter, shared_state, map1, filter, map2)
     }
 
     fn xfx_next_any<I, Vt, Vo, M1, F, M2>(
-        mut self,
+        self,
         iter: &I,
         shared_state: &Self::SharedState,
         map1: &M1,
@@ -211,56 +164,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller();
-
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some(i) => {
-                        let vt = map1(i);
-                        let maybe_next = vt.fx_next(filter, map2);
-                        if maybe_next.is_some() {
-                            iter.skip_to_end();
-                            self.complete_chunk(shared_state, chunk_size);
-                            self.complete_task(shared_state);
-                            return maybe_next;
-                        }
-                    }
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull() {
-                        Some(chunk) => {
-                            for i in chunk {
-                                let vt = map1(i);
-                                let maybe_next = vt.fx_next(filter, map2);
-                                if maybe_next.is_some() {
-                                    iter.skip_to_end();
-                                    self.complete_chunk(shared_state, chunk_size);
-                                    self.complete_task(shared_state);
-                                    return maybe_next;
-                                }
-                            }
-                        }
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
-        None
+        thread_runner_compute::xfx_next_any(self, iter, shared_state, map1, filter, map2)
     }
 }
 
