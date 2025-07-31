@@ -1,7 +1,7 @@
 use super::{
     computation_kind::ComputationKind,
     parallel_task::{ParallelTask, ParallelTaskWithIdx},
-    thread_runner::{ThreadRunner, ThreadRunnerCompute},
+    thread_runner::ThreadRunner,
 };
 use crate::{computations::Values, parameters::Params, runner::parallel_runner_compute};
 use orx_concurrent_iter::ConcurrentIter;

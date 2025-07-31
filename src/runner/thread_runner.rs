@@ -1,5 +1,5 @@
 use super::parallel_task::{ParallelTask, ParallelTaskWithIdx};
-use crate::computations::Values;
+use crate::{computations::Values, runner::thread_runner_compute};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 /// Thread runner responsible for executing the tasks assigned to the thread by the
@@ -31,76 +31,20 @@ pub trait ThreadRunner: Sized {
 pub(crate) trait ThreadRunnerCompute: ThreadRunner {
     // run
 
-    fn run<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, mut task: T)
+    fn run<I, T>(self, iter: &I, shared_state: &Self::SharedState, task: T)
     where
         I: ConcurrentIter,
         T: ParallelTask<Item = I::Item>,
     {
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller();
-
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some(value) => task.f1(value),
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull() {
-                        Some(chunk) => task.fc(chunk),
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
+        thread_runner_compute::run(self, iter, shared_state, task);
     }
 
-    fn run_with_idx<I, T>(mut self, iter: &I, shared_state: &Self::SharedState, mut task: T)
+    fn run_with_idx<I, T>(self, iter: &I, shared_state: &Self::SharedState, task: T)
     where
         I: ConcurrentIter,
         T: ParallelTaskWithIdx<Item = I::Item>,
     {
-        let mut chunk_puller = iter.chunk_puller(0);
-        let mut item_puller = iter.item_puller_with_idx();
-
-        loop {
-            let chunk_size = self.next_chunk_size(shared_state, iter);
-
-            self.begin_chunk(chunk_size);
-
-            match chunk_size {
-                0 | 1 => match item_puller.next() {
-                    Some((idx, value)) => task.f1(idx, value),
-                    None => break,
-                },
-                c => {
-                    if c > chunk_puller.chunk_size() {
-                        chunk_puller = iter.chunk_puller(c);
-                    }
-
-                    match chunk_puller.pull_with_idx() {
-                        Some((begin_idx, chunk)) => task.fc(begin_idx, chunk),
-                        None => break,
-                    }
-                }
-            }
-
-            self.complete_chunk(shared_state, chunk_size);
-        }
-
-        self.complete_task(shared_state);
+        thread_runner_compute::run_with_idx(self, iter, shared_state, task);
     }
 
     // collect
