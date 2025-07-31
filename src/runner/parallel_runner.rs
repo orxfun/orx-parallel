@@ -74,29 +74,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Send + Sync,
     {
-        let state = self.new_shared_state();
-        let shared_state = &state;
-
-        let mut num_spawned = 0;
-        let vectors = std::thread::scope(|s| {
-            let mut handles = vec![];
-
-            while self.do_spawn_new(num_spawned, shared_state, iter) {
-                num_spawned += 1;
-                handles.push(s.spawn(move || {
-                    let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.x_collect_with_idx(iter, shared_state, map1)
-                }));
-            }
-
-            let mut vectors = Vec::with_capacity(handles.len());
-            for x in handles {
-                vectors.push(x.join().expect("failed to join the thread"));
-            }
-            vectors
-        });
-
-        (num_spawned, vectors)
+        parallel_runner_compute::x_collect_with_idx(self, iter, map1)
     }
 
     #[allow(clippy::type_complexity)]
@@ -116,29 +94,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
-        let state = self.new_shared_state();
-        let shared_state = &state;
-
-        let mut num_spawned = 0;
-        let vectors = std::thread::scope(|s| {
-            let mut handles = vec![];
-
-            while self.do_spawn_new(num_spawned, shared_state, iter) {
-                num_spawned += 1;
-                handles.push(s.spawn(move || {
-                    let thread_runner = self.new_thread_runner(shared_state);
-                    thread_runner.xfx_collect_with_idx(iter, shared_state, map1, filter, map2)
-                }));
-            }
-
-            let mut vectors = Vec::with_capacity(handles.len());
-            for x in handles {
-                vectors.push(x.join().expect("failed to join the thread"));
-            }
-            vectors
-        });
-
-        (num_spawned, vectors)
+        parallel_runner_compute::xfx_collect_with_idx(self, iter, map1, filter, map2)
     }
 
     // reduce
