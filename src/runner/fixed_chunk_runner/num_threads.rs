@@ -1,13 +1,18 @@
 use crate::parameters::NumThreads;
 
 const MAX_UNSET_NUM_THREADS: usize = 8;
+// A: what should name of the variable be?
+const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_PARALLEL_MAX_NUM_THREADS";
 
 pub fn maximum_num_threads(input_len: Option<usize>, num_threads: NumThreads) -> usize {
+    let max_num_threads = max_num_threads_by_env_variable().unwrap_or(usize::MAX);
+
     match num_threads {
         NumThreads::Auto => from_auto_num_threads(input_len),
         NumThreads::Max(x) => from_max_num_threads(input_len, x.into()),
     }
     .max(1)
+    .min(max_num_threads)
 }
 
 fn from_auto_num_threads(input_len: Option<usize>) -> usize {
@@ -41,5 +46,27 @@ fn from_max_num_threads(input_len: Option<usize>, max_num_threads: usize) -> usi
             .unwrap_or(usize::MAX)
             .min(max_num_threads)
             .min(available_threads.into()),
+    }
+}
+
+fn max_num_threads_by_env_variable() -> Option<usize> {
+    match std::env::var(MAX_NUM_THREADS_ENV_VARIABLE) {
+        Ok(s) => {
+            match s.parse::<usize>() {
+                Ok(x) if x == 0 => {
+                    // B: To be consistent with `.par().num_threads(0)` means Auto that can use all threads
+                    None
+                }
+                Ok(x) => Some(x),
+                Err(_e) => {
+                    // C: How should we handle this error?
+                    None
+                }
+            }
+        }
+        Err(_e) => {
+            // D: Environment variable is not set; we assume there is no limit
+            None
+        }
     }
 }

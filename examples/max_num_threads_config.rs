@@ -1,0 +1,60 @@
+use orx_parallel::*;
+
+fn fib(n: &u64) -> u64 {
+    // just some work
+    let mut a = 0;
+    let mut b = 1;
+    for _ in 0..*n {
+        let c = a + b;
+        a = b;
+        b = c;
+    }
+    a
+}
+
+// A: what should name of the variable be?
+const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_PARALLEL_MAX_NUM_THREADS";
+
+fn max_num_threads_by_env_variable() -> Option<usize> {
+    match std::env::var(MAX_NUM_THREADS_ENV_VARIABLE) {
+        Ok(s) => {
+            match s.parse::<usize>() {
+                Ok(x) if x == 0 => {
+                    // B: To be consistent with `.par().num_threads(0)` means Auto that can use all threads
+                    None
+                }
+                Ok(x) => Some(x),
+                Err(_e) => {
+                    // C: How should we handle this error?
+                    None
+                }
+            }
+        }
+        Err(_e) => {
+            // D: Environment variable is not set; we assume there is no limit
+            None
+        }
+    }
+}
+
+fn main() {
+    match max_num_threads_by_env_variable() {
+        Some(x) => {
+            println!(
+                "Environment variable {MAX_NUM_THREADS_ENV_VARIABLE} is set to {x}\n -> this will be the hard limit on the maximum number of threads that can be used by parallelization"
+            )
+        }
+        None => {
+            println!(
+                "Environment variable {MAX_NUM_THREADS_ENV_VARIABLE} is not set\n -> all available threads might be used"
+            )
+        }
+    }
+
+    let n = 1_000_000;
+    let input: Vec<_> = (0..n).collect();
+
+    // default -> might use all threads
+    let sum = input.par().map(|i| fib(&(i % 500_000)) % 42).sum();
+    println!("1. {sum}");
+}
