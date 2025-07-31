@@ -38,6 +38,17 @@ where
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
+    pub fn compute<R: ParallelRunner>(m: WithM<I, T, O, M1>, pinned_vec: P) -> (usize, P) {
+        let x = Self { m, pinned_vec };
+        let p = x.m.params();
+        match (p.is_sequential(), p.iteration_order) {
+            (true, _) => (0, x.sequential()),
+            #[cfg(test)]
+            (false, IterationOrder::Arbitrary) => x.parallel_in_arbitrary_order::<R>(),
+            (false, _) => x.parallel_in_input_order::<R>(),
+        }
+    }
+
     fn sequential(self) -> P {
         let (m, mut pinned_vec) = (self.m, self.pinned_vec);
         let (_, iter, mut with, map1) = m.destruct();
