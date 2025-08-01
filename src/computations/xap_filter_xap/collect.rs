@@ -14,9 +14,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
     where
@@ -33,9 +33,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     xfx: Xfx<I, Vt, Vo, M1, F, M2>,
@@ -48,9 +48,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     pub fn compute<R: ParallelRunner>(xfx: Xfx<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
@@ -102,7 +102,10 @@ where
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, vectors) = runner.xfx_collect_with_idx(&iter, &map1, &filter, &map2);
+        let create_map1 = || map1.clone();
+        let create_map2 = || map2.clone();
+        let (num_spawned, vectors) =
+            runner.xfx_collect_with_idx(&iter, create_map1, &filter, create_map2);
         heap_sort_into(vectors, &mut pinned_vec);
         (num_spawned, pinned_vec)
     }
@@ -116,9 +119,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     map1: &'a M1,
@@ -134,9 +137,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     fn new(map1: &'a M1, filter: &'a F, map2: &'a M2, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
@@ -156,9 +159,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     fn clone(&self) -> Self {
@@ -179,9 +182,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     type Item = I::Item;

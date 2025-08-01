@@ -116,11 +116,11 @@ pub trait Values: Send + Sync {
         self,
         input_idx: usize,
         filter: F,
-        map2: M2,
+        map2: &mut M2,
         vec: &mut Vec<(usize, Vo::Item)>,
     ) where
         F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        M2: FnMut(Self::Item) -> Vo + Send,
         Vo: Values,
         Vo::Item: Send + Sync;
 

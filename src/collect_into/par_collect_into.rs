@@ -30,9 +30,9 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
         Vt: Values + Send + Sync,
         Vt::Item: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
+        M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
         F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync;
+        M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync;
 
     // test
 

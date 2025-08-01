@@ -17,9 +17,9 @@ where
     Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
 {
     xfx: Xfx<I, Vt, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
@@ -33,9 +33,9 @@ where
     Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1, f: F, x2: M2) -> Self {
         Self {
@@ -57,9 +57,9 @@ where
     Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
 {
 }
 
@@ -71,9 +71,9 @@ where
     Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
 {
 }
 
@@ -85,9 +85,9 @@ where
     Vt::Item: Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
 {
     type Item = Vo::Item;
 

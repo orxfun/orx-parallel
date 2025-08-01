@@ -52,9 +52,9 @@ where
         Vt: Values + Send + Sync,
         Vt::Item: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
+        M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
         F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     {
         reserve(&mut self, mfm.par_len());
         let (_num_spawned, pinned_vec) = mfm.collect_into::<R, _>(self);

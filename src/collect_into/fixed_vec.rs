@@ -44,9 +44,9 @@ where
         Vt: Values + Send + Sync,
         Vt::Item: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
+        M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
         F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.xfx_collect_into::<R, _, _, _, _, _, _>(mfm))

@@ -45,12 +45,12 @@ where
 }
 
 #[allow(clippy::type_complexity)]
-pub fn xfx_collect_with_idx<C, I, Vt, Vo, M1, F, M2>(
+pub fn xfx_collect_with_idx<C, I, Vt, Vo, M1, F, M2, CreateM1, CreateM2>(
     c: &C,
     iter: &I,
-    map1: &M1,
+    create_map1: CreateM1,
     filter: &F,
-    map2: &M2,
+    create_map2: CreateM2,
 ) -> (usize, Vec<Vec<(usize, Vo::Item)>>)
 where
     C: ParallelRunnerCompute,
@@ -61,6 +61,8 @@ where
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    CreateM1: Fn() -> M1,
+    CreateM2: Fn() -> M2,
 {
     let state = c.new_shared_state();
     let shared_state = &state;
@@ -71,6 +73,8 @@ where
 
         while c.do_spawn_new(num_spawned, shared_state, iter) {
             num_spawned += 1;
+            let map1 = create_map1();
+            let map2 = create_map2();
             handles.push(s.spawn(move || {
                 let thread_runner = c.new_thread_runner(shared_state);
                 thread_runner.xfx_collect_with_idx(iter, shared_state, map1, filter, map2)

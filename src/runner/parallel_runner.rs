@@ -79,12 +79,12 @@ pub trait ParallelRunnerCompute: ParallelRunner {
     }
 
     #[allow(clippy::type_complexity)]
-    fn xfx_collect_with_idx<I, Vt, Vo, M1, F, M2>(
+    fn xfx_collect_with_idx<I, Vt, Vo, M1, F, M2, CreateM1, CreateM2>(
         &self,
         iter: &I,
-        map1: &M1,
+        create_map1: CreateM1,
         filter: &F,
-        map2: &M2,
+        create_map2: CreateM2,
     ) -> (usize, Vec<Vec<(usize, Vo::Item)>>)
     where
         I: ConcurrentIter,
@@ -94,8 +94,10 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         M1: Fn(I::Item) -> Vt + Send + Sync,
         F: Fn(&Vt::Item) -> bool + Send + Sync,
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        CreateM1: Fn() -> M1,
+        CreateM2: Fn() -> M2,
     {
-        parallel_runner_compute::xfx_collect_with_idx(self, iter, map1, filter, map2)
+        parallel_runner_compute::xfx_collect_with_idx(self, iter, create_map1, filter, create_map2)
     }
 
     // reduce

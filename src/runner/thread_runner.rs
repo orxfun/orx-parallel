@@ -1,6 +1,6 @@
 use super::parallel_task::{ParallelTask, ParallelTaskWithIdx};
 use crate::{computations::Values, runner::thread_runner_compute};
-use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
+use orx_concurrent_iter::ConcurrentIter;
 
 /// Thread runner responsible for executing the tasks assigned to the thread by the
 /// parallel runner.
@@ -68,18 +68,18 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         self,
         iter: &I,
         shared_state: &Self::SharedState,
-        map1: &M1,
+        map1: M1,
         filter: &F,
-        map2: &M2,
+        map2: M2,
     ) -> Vec<(usize, Vo::Item)>
     where
         I: ConcurrentIter,
         Vt: Values,
         Vo: Values,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
+        M1: FnMut(I::Item) -> Vt + Send,
         F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        M2: FnMut(Vt::Item) -> Vo + Send + Sync,
     {
         thread_runner_compute::xfx_collect_with_idx(self, iter, shared_state, map1, filter, map2)
     }

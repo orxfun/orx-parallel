@@ -61,9 +61,9 @@ pub fn xfx_collect_with_idx<C, I, Vt, Vo, M1, F, M2>(
     mut c: C,
     iter: &I,
     shared_state: &C::SharedState,
-    map1: &M1,
+    mut map1: M1,
     filter: &F,
-    map2: &M2,
+    mut map2: M2,
 ) -> Vec<(usize, Vo::Item)>
 where
     C: ThreadRunnerCompute,
@@ -71,9 +71,9 @@ where
     Vt: Values,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: FnMut(I::Item) -> Vt + Send,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: FnMut(Vt::Item) -> Vo + Send,
 {
     let mut collected = Vec::new();
     let out_vec = &mut collected;
@@ -90,7 +90,7 @@ where
             0 | 1 => match item_puller.next() {
                 Some((i_idx, i)) => {
                     let vt = map1(i);
-                    vt.xfx_collect_heap(i_idx, filter, map2, out_vec);
+                    vt.xfx_collect_heap(i_idx, filter, &mut map2, out_vec);
                 }
                 None => break,
             },
@@ -103,7 +103,7 @@ where
                     Some((chunk_begin_idx, chunk)) => {
                         for i in chunk {
                             let vt = map1(i);
-                            vt.xfx_collect_heap(chunk_begin_idx, filter, map2, out_vec);
+                            vt.xfx_collect_heap(chunk_begin_idx, filter, &mut map2, out_vec);
                         }
                     }
                     None => break,
