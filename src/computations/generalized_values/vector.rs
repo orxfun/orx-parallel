@@ -246,7 +246,7 @@ where
         o_bag: &ConcurrentOrderedBag<Vo::Item, P>,
     ) where
         F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        M2: Fn(Self::Item) -> Vo + Send,
         Vo: Values,
         Vo::Item: Send + Sync,
         P: IntoConcurrentPinnedVec<Vo::Item>,
