@@ -6,4 +6,4 @@ mod next;
 mod reduce;
 mod x;
 
-// pub use x::X;
+pub use x::WithX;
