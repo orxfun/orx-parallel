@@ -9,10 +9,36 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use std::marker::PhantomData;
 
+impl<I, T, Vo, M1> WithX<I, T, Vo, M1>
+where
+    I: ConcurrentIter,
+    T: Send + Sync + Clone,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
+{
+    pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
+    where
+        R: ParallelRunner,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        let x_collect = XCollect {
+            x: self,
+            pinned_vec,
+        };
+        let params = x_collect.x.params();
+        match (params.is_sequential(), params.iteration_order) {
+            (true, _) => (0, x_collect.sequential()),
+            (false, IterationOrder::Arbitrary) => x_collect.parallel_in_arbitrary::<R>(),
+            (false, IterationOrder::Ordered) => x_collect.parallel_with_heap_sort::<R>(),
+        }
+    }
+}
+
 pub struct XCollect<I, T, Vo, M1, P>
 where
     I: ConcurrentIter,
-    T: Send + Clone,
+    T: Send + Sync + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
