@@ -13,7 +13,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: FnMut(I::Item) -> Vo + Send + Sync,
+    M1: FnMut(I::Item) -> Vo + Send,
     X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let mut chunk_puller = iter.chunk_puller(0);

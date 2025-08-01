@@ -16,7 +16,7 @@ where
     Vo: Values,
     Vo::Item: Send + Sync,
     M1: FnMut(I::Item) -> Vo + Send + Sync,
-    CreateM1: Fn() -> M1 + Sync,
+    CreateM1: Fn() -> M1,
     X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let state = c.new_shared_state();
@@ -28,9 +28,9 @@ where
 
         while c.do_spawn_new(num_spawned, shared_state, iter) {
             num_spawned += 1;
+            let map1 = create_map1();
             handles.push(s.spawn(|| {
                 let thread_runner = c.new_thread_runner(shared_state);
-                let map1 = create_map1();
                 thread_runner.x_reduce(iter, shared_state, map1, reduce)
             }));
         }

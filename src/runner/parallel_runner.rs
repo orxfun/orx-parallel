@@ -47,7 +47,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
     fn run<I, T>(&self, iter: &I, task: T) -> usize
     where
         I: ConcurrentIter,
-        T: ParallelTask<Item = I::Item> + Sync,
+        T: ParallelTask<Item = I::Item> + Send,
     {
         parallel_runner_compute::run(self, iter, task)
     }
@@ -55,7 +55,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
     fn run_with_idx<I, T>(&self, iter: &I, task: T) -> usize
     where
         I: ConcurrentIter,
-        T: ParallelTaskWithIdx<Item = I::Item> + Sync,
+        T: ParallelTaskWithIdx<Item = I::Item> + Send,
     {
         parallel_runner_compute::run_with_idx(self, iter, task)
     }
@@ -110,7 +110,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         Vo: Values,
         Vo::Item: Send + Sync,
         M1: FnMut(I::Item) -> Vo + Send + Sync,
-        CreateM1: Fn() -> M1 + Sync,
+        CreateM1: Fn() -> M1,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         parallel_runner_compute::x_reduce(self, iter, create_map1, reduce)

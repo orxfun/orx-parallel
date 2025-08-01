@@ -43,6 +43,27 @@ where
 
         pinned_vec
     }
+
+    fn parallel_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
+        let (x, pinned_vec) = (self.x, self.pinned_vec);
+        let (params, iter, with, xap1) = x.destruct();
+
+        let capacity_bound = pinned_vec.capacity_bound();
+        let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+        bag.reserve_maximum_capacity(capacity_bound);
+
+        let task = XCollectInArbitraryOrder::<'_, I::Item, T, Vo, M1, P> {
+            xap1: &xap1,
+            with,
+            bag: &bag,
+            phantom: PhantomData,
+        };
+        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
+        let num_spawned = runner.run(&iter, task);
+
+        let values = bag.into_inner();
+        (num_spawned, values)
+    }
 }
 
 // arbitrary

@@ -12,7 +12,7 @@ use std::marker::PhantomData;
 impl<I, T, O, M1> WithM<I, T, O, M1>
 where
     I: ConcurrentIter,
-    T: Send + Sync + Clone,
+    T: Send + Clone,
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
 {
@@ -28,7 +28,7 @@ where
 pub struct WithMCollect<I, T, O, M1, P>
 where
     I: ConcurrentIter,
-    T: Send + Sync + Clone,
+    T: Send + Clone,
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
@@ -40,7 +40,7 @@ where
 impl<I, T, O, M1, P> WithMCollect<I, T, O, M1, P>
 where
     I: ConcurrentIter,
-    T: Send + Sync + Clone,
+    T: Send + Clone,
     O: Send + Sync,
     M1: Fn(&mut T, I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
