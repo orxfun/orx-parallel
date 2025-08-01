@@ -37,7 +37,7 @@ where
         R: ParallelRunner,
         X: Fn(O, O) -> O + Send + Sync,
     {
-        let (params, iter, mut with, map1) = self.destruct();
+        let (params, iter, with, map1) = self.destruct();
 
         let runner = R::new(ComputationKind::Reduce, params, iter.try_get_len());
         let create_map = || {
