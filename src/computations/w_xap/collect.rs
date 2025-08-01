@@ -15,7 +15,7 @@ where
     T: Send + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(&mut T, I::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     x: WithX<I, T, Vo, M1>,
@@ -28,7 +28,7 @@ where
     T: Send + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(&mut T, I::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     fn sequential(self) -> P {
@@ -72,7 +72,12 @@ where
 
     //     let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-    //     let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, &xap1);
+    //     let create_map = || {
+    //         let xap1 = xap1.clone();
+    //         let mut with = with.clone();
+    //         |value| (xap1)(&mut with, value)
+    //     };
+    //     let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, create_map);
     //     heap_sort_into(vectors, &mut pinned_vec);
     //     (num_spawned, pinned_vec)
     // }

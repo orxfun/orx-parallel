@@ -59,7 +59,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         I: ConcurrentIter,
         Vo: Values,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send,
+        M1: FnMut(I::Item) -> Vo + Send,
     {
         thread_runner_compute::x_collect_with_idx(self, iter, shared_state, map1)
     }

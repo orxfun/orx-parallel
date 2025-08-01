@@ -5,14 +5,14 @@ pub fn x_collect_with_idx<C, I, Vo, M1>(
     mut c: C,
     iter: &I,
     shared_state: &C::SharedState,
-    map1: M1,
+    mut map1: M1,
 ) -> Vec<(usize, Vo::Item)>
 where
     C: ThreadRunnerCompute,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send,
+    M1: FnMut(I::Item) -> Vo + Send,
 {
     let mut collected = Vec::new();
     let out_vec = &mut collected;

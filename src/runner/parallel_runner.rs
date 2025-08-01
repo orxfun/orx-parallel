@@ -72,7 +72,7 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         I: ConcurrentIter,
         Vo: Values,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        M1: FnMut(I::Item) -> Vo + Send + Sync,
         CreateM1: Fn() -> M1,
     {
         parallel_runner_compute::x_collect_with_idx(self, iter, create_map1)

@@ -15,7 +15,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send,
+    M1: FnMut(I::Item) -> Vo + Send,
     CreateM1: Fn() -> M1,
 {
     let state = c.new_shared_state();
