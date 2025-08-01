@@ -25,7 +25,7 @@ where
 impl<I, T, Vo, M1, P> XCollect<I, T, Vo, M1, P>
 where
     I: ConcurrentIter,
-    T: Send + Clone,
+    T: Send + Sync + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
     M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
@@ -65,22 +65,22 @@ where
         (num_spawned, values)
     }
 
-    // fn parallel_with_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
-    //     let (x, mut pinned_vec) = (self.x, self.pinned_vec);
-    //     let (params, iter, with, xap1) = x.destruct();
-    //     let initial_len = iter.try_get_len();
+    fn parallel_with_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
+        let (x, mut pinned_vec) = (self.x, self.pinned_vec);
+        let (params, iter, with, xap1) = x.destruct();
+        let initial_len = iter.try_get_len();
 
-    //     let runner = R::new(ComputationKind::Collect, params, initial_len);
+        let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-    //     let create_map = || {
-    //         let xap1 = xap1.clone();
-    //         let mut with = with.clone();
-    //         |value| (xap1)(&mut with, value)
-    //     };
-    //     let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, create_map);
-    //     heap_sort_into(vectors, &mut pinned_vec);
-    //     (num_spawned, pinned_vec)
-    // }
+        let create_map = || {
+            let xap1 = xap1.clone();
+            let mut with = with.clone();
+            move |value| (xap1)(&mut with, value)
+        };
+        let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, create_map);
+        heap_sort_into(vectors, &mut pinned_vec);
+        (num_spawned, pinned_vec)
+    }
 }
 
 // arbitrary
