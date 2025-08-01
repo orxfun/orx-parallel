@@ -1,8 +1,9 @@
 use crate::{
     ThreadRunner,
     computations::Values,
-    runner::{ParallelTask, ParallelTaskWithIdx, thread_runner_compute::*},
+    runner::{ParallelTask, thread_runner_compute::*},
 };
+#[cfg(test)]
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -17,14 +18,6 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         T: ParallelTask<Item = I::Item>,
     {
         tasks::run(self, iter, shared_state, task);
-    }
-
-    fn run_with_idx<I, T>(self, iter: &I, shared_state: &Self::SharedState, task: &T)
-    where
-        I: ConcurrentIter,
-        T: ParallelTaskWithIdx<Item = I::Item>,
-    {
-        tasks::run_with_idx(self, iter, shared_state, task);
     }
 
     fn m_collect_ordered<I, O, M1, P>(
