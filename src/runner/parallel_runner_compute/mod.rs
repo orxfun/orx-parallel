@@ -1,6 +1,6 @@
 #[cfg(test)]
-mod collect_arbitrary;
-mod collect_ordered;
-mod compute;
+pub(crate) mod collect_arbitrary;
+pub(crate) mod collect_ordered;
+pub mod compute;
 
 pub use compute::ParallelRunnerCompute;

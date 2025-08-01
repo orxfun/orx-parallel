@@ -1,16 +1,14 @@
 use crate::{
-    computations::{M, UsingM},
-    runner::{ParallelRunnerCompute, thread_runner_compute::ThreadRunnerCompute},
+    computations::{M, UsingM, UsingX, Values, X},
+    runner::{ParallelRunnerCompute, thread_runner_compute},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-pub fn m_collect_in_arbitrary_order<C, I, O, M1, P>(
-    runner: C,
-    m: M<I, O, M1>,
-    pinned_vec: P,
-) -> (usize, P)
+// m
+
+pub fn m_collect<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
@@ -38,8 +36,13 @@ where
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
-                let thread_runner = runner.new_thread_runner(shared_state);
-                thread_runner.m_collect_in_arbitrary_order(&iter, shared_state, &map1, &bag);
+                thread_runner_compute::collect_arbitrary::m(
+                    runner.new_thread_runner(shared_state),
+                    &iter,
+                    shared_state,
+                    &map1,
+                    &bag,
+                );
             });
         }
     });
@@ -47,11 +50,7 @@ where
     (num_spawned, values)
 }
 
-pub fn using_m_collect_in_arbitrary_order<C, U, I, O, M1, P>(
-    runner: C,
-    m: UsingM<U, I, O, M1>,
-    pinned_vec: P,
-) -> (usize, P)
+pub fn using_m<C, U, I, O, M1, P>(runner: C, m: UsingM<U, I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     U: Send + Clone,
@@ -81,12 +80,111 @@ where
             num_spawned += 1;
             let using = using.clone();
             s.spawn(|| {
-                let thread_runner = runner.new_thread_runner(shared_state);
-                thread_runner.using_m_collect_in_arbitrary_order(
+                thread_runner_compute::collect_arbitrary::using_m(
+                    runner.new_thread_runner(shared_state),
+                    using,
+                    &iter,
+                    &shared_state,
+                    &map1,
+                    &bag,
+                );
+            });
+        }
+    });
+    let values = bag.into_inner();
+    (num_spawned, values)
+}
+
+// x
+
+pub fn x_collect_in_arbitrary_order<C, I, Vo, M1, P>(
+    runner: C,
+    m: X<I, Vo, M1>,
+    pinned_vec: P,
+) -> (usize, P)
+where
+    C: ParallelRunnerCompute,
+    I: ConcurrentIter,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    let capacity_bound = pinned_vec.capacity_bound();
+    let offset = pinned_vec.len();
+    let (_, iter, xap1) = m.destruct();
+
+    let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+    match iter.try_get_len() {
+        Some(iter_len) => bag.reserve_maximum_capacity(offset + iter_len),
+        None => bag.reserve_maximum_capacity(capacity_bound),
+    };
+
+    // compute
+
+    let state = runner.new_shared_state();
+    let shared_state = &state;
+
+    let mut num_spawned = 0;
+    std::thread::scope(|s| {
+        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+            num_spawned += 1;
+            s.spawn(|| {
+                thread_runner_compute::collect_arbitrary::x(
+                    runner.new_thread_runner(shared_state),
+                    &iter,
+                    shared_state,
+                    &xap1,
+                    &bag,
+                );
+            });
+        }
+    });
+    let values = bag.into_inner();
+    (num_spawned, values)
+}
+
+pub fn using_x_collect_in_arbitrary_order<C, U, I, Vo, M1, P>(
+    runner: C,
+    m: UsingX<U, I, Vo, M1>,
+    pinned_vec: P,
+) -> (usize, P)
+where
+    C: ParallelRunnerCompute,
+    U: Send + Clone,
+    I: ConcurrentIter,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut U, I::Item) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    let capacity_bound = pinned_vec.capacity_bound();
+    let offset = pinned_vec.len();
+    let (_, using, iter, xap1) = m.destruct();
+
+    let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
+    match iter.try_get_len() {
+        Some(iter_len) => bag.reserve_maximum_capacity(offset + iter_len),
+        None => bag.reserve_maximum_capacity(capacity_bound),
+    };
+
+    // compute
+
+    let state = runner.new_shared_state();
+    let shared_state = &state;
+
+    let mut num_spawned = 0;
+    std::thread::scope(|s| {
+        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+            num_spawned += 1;
+            let using = using.clone();
+            s.spawn(|| {
+                thread_runner_compute::collect_arbitrary::using_x_collect_in_arbitrary_order(
+                    runner.new_thread_runner(shared_state),
                     using,
                     &iter,
                     shared_state,
-                    &map1,
+                    &xap1,
                     &bag,
                 );
             });

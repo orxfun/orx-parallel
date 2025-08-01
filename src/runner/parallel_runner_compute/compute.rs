@@ -1,12 +1,9 @@
 use crate::{
     ParallelRunner,
-    computations::{M, UsingM, Values},
-    runner::{
-        ParallelTask, parallel_runner_compute::*, thread_runner_compute::ThreadRunnerCompute,
-    },
+    computations::Values,
+    runner::{ParallelTask, thread_runner_compute::ThreadRunnerCompute},
 };
 use orx_concurrent_iter::ConcurrentIter;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 pub trait ParallelRunnerCompute: ParallelRunner {
     // run
@@ -30,62 +27,6 @@ pub trait ParallelRunnerCompute: ParallelRunner {
             }
         });
         num_spawned
-    }
-
-    // m
-
-    fn m_collect_ordered<I, O, M1, P>(self, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
-    where
-        I: ConcurrentIter,
-        O: Send + Sync,
-        M1: Fn(I::Item) -> O + Send + Sync,
-        P: IntoConcurrentPinnedVec<O>,
-    {
-        collect_ordered::m_collect_ordered(self, m, pinned_vec)
-    }
-
-    #[cfg(test)]
-    fn m_collect_in_arbitrary_order<I, O, M1, P>(self, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
-    where
-        I: ConcurrentIter,
-        O: Send + Sync,
-        M1: Fn(I::Item) -> O + Send + Sync,
-        P: IntoConcurrentPinnedVec<O>,
-    {
-        collect_arbitrary::m_collect_in_arbitrary_order(self, m, pinned_vec)
-    }
-
-    // m - using
-
-    #[cfg(test)]
-    fn using_m_collect_in_arbitrary_order<U, I, O, M1, P>(
-        self,
-        m: UsingM<U, I, O, M1>,
-        pinned_vec: P,
-    ) -> (usize, P)
-    where
-        U: Clone + Send,
-        I: ConcurrentIter,
-        O: Send + Sync,
-        M1: Fn(&mut U, I::Item) -> O + Send + Sync,
-        P: IntoConcurrentPinnedVec<O>,
-    {
-        collect_arbitrary::using_m_collect_in_arbitrary_order(self, m, pinned_vec)
-    }
-
-    fn using_m_collect_ordered<U, I, O, M1, P>(
-        self,
-        m: UsingM<U, I, O, M1>,
-        pinned_vec: P,
-    ) -> (usize, P)
-    where
-        U: Send + Clone,
-        I: ConcurrentIter,
-        O: Send + Sync,
-        M1: Fn(&mut U, I::Item) -> O + Send + Sync,
-        P: IntoConcurrentPinnedVec<O>,
-    {
-        collect_ordered::using_m_collect_ordered(self, m, pinned_vec)
     }
 
     // collect

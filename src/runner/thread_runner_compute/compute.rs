@@ -51,7 +51,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(I::Item) -> O + Send + Sync,
         P: IntoConcurrentPinnedVec<O>,
     {
-        collect_arbitrary::m_collect_in_arbitrary_order(self, iter, shared_state, map1, bag);
+        collect_arbitrary::m(self, iter, shared_state, map1, bag);
     }
 
     // m - using
@@ -95,12 +95,80 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(&mut U, I::Item) -> O + Send + Sync,
         P: IntoConcurrentPinnedVec<O>,
     {
-        collect_arbitrary::using_m_collect_in_arbitrary_order(
+        collect_arbitrary::using_m(self, using, iter, shared_state, map1, bag);
+    }
+
+    // x
+
+    fn x_collect_ordered<I, Vo, X1>(
+        self,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        xap1: &X1,
+    ) -> Vec<(usize, Vo::Item)>
+    where
+        I: ConcurrentIter,
+        Vo: Values + Send + Sync,
+        Vo::Item: Send + Sync,
+        X1: Fn(I::Item) -> Vo + Send + Sync,
+    {
+        collect_ordered::x_collect_ordered(self, iter, shared_state, xap1)
+    }
+
+    #[cfg(test)]
+    fn x_collect_in_arbitrary_order<I, Vo, M1, P>(
+        self,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        map1: &M1,
+        bag: &ConcurrentBag<Vo::Item, P>,
+    ) where
+        I: ConcurrentIter,
+        Vo: Values + Send + Sync,
+        Vo::Item: Send + Sync,
+        M1: Fn(I::Item) -> Vo + Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        collect_arbitrary::x(self, iter, shared_state, map1, bag);
+    }
+
+    fn using_x_collect_ordered<U, I, Vo, X1>(
+        self,
+        using: U,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        xap1: &X1,
+    ) -> Vec<(usize, Vo::Item)>
+    where
+        I: ConcurrentIter,
+        Vo: Values + Send + Sync,
+        Vo::Item: Send + Sync,
+        X1: Fn(&mut U, I::Item) -> Vo + Send + Sync,
+    {
+        collect_ordered::using_x_collect_ordered(self, using, iter, shared_state, xap1)
+    }
+
+    #[cfg(test)]
+    fn using_x_collect_in_arbitrary_order<U, I, Vo, M1, P>(
+        self,
+        using: U,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        xap1: &M1,
+        bag: &ConcurrentBag<Vo::Item, P>,
+    ) where
+        I: ConcurrentIter,
+        Vo: Values + Send + Sync,
+        Vo::Item: Send + Sync,
+        M1: Fn(&mut U, I::Item) -> Vo + Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        collect_arbitrary::using_x_collect_in_arbitrary_order(
             self,
             using,
             iter,
             shared_state,
-            map1,
+            xap1,
             bag,
         );
     }

@@ -1,7 +1,8 @@
 use super::m::M;
 #[cfg(test)]
 use crate::IterationOrder;
-use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute};
+use crate::runner::parallel_runner_compute::*;
+use crate::runner::{ComputationKind, ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
@@ -21,13 +22,9 @@ where
             (true, _) => (0, self.sequential(pinned_vec)),
             #[cfg(test)]
             (false, IterationOrder::Arbitrary) => {
-                let runner = self.runner::<R>();
-                runner.m_collect_in_arbitrary_order(self, pinned_vec)
+                collect_arbitrary::m_collect(self.runner::<R>(), self, pinned_vec)
             }
-            (false, _) => {
-                let runner = self.runner::<R>();
-                runner.m_collect_ordered(self, pinned_vec)
-            }
+            (false, _) => collect_ordered::m(self.runner::<R>(), self, pinned_vec),
         }
     }
 
