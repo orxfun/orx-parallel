@@ -21,7 +21,16 @@ where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
-        XCollect::compute::<R>(self, pinned_vec)
+        let x_collect = XCollect {
+            x: self,
+            pinned_vec,
+        };
+        let params = x_collect.x.params();
+        match (params.is_sequential(), params.iteration_order) {
+            (true, _) => (0, x_collect.sequential()),
+            (false, IterationOrder::Arbitrary) => x_collect.parallel_in_arbitrary::<R>(),
+            (false, IterationOrder::Ordered) => x_collect.parallel_with_heap_sort::<R>(),
+        }
     }
 }
 
@@ -45,16 +54,6 @@ where
     M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    pub fn compute<R: ParallelRunner>(x: X<I, Vo, M1>, pinned_vec: P) -> (usize, P) {
-        let x_collect = Self { x, pinned_vec };
-        let params = x_collect.x.params();
-        match (params.is_sequential(), params.iteration_order) {
-            (true, _) => (0, x_collect.sequential()),
-            (false, IterationOrder::Arbitrary) => x_collect.parallel_in_arbitrary::<R>(),
-            (false, IterationOrder::Ordered) => x_collect.parallel_with_heap_sort::<R>(),
-        }
-    }
-
     fn sequential(self) -> P {
         let (x, mut pinned_vec) = (self.x, self.pinned_vec);
         let (_, iter, xap1) = x.destruct();
