@@ -38,7 +38,7 @@ where
         I: ConcurrentIter,
         Vo: Values<Item = O> + Send + Sync,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
     {
         reserve(&mut self, x.par_len());
         let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);

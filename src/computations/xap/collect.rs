@@ -14,7 +14,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
     where
@@ -30,7 +30,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     x: X<I, Vo, M1>,
@@ -42,7 +42,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     pub fn compute<R: ParallelRunner>(x: X<I, Vo, M1>, pinned_vec: P) -> (usize, P) {
@@ -95,7 +95,8 @@ where
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, &xap1);
+        let create_map = || xap1.clone();
+        let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, create_map);
         heap_sort_into(vectors, &mut pinned_vec);
         (num_spawned, pinned_vec)
     }
@@ -107,7 +108,7 @@ struct XCollectInArbitraryOrder<'a, I, Vo, M1, P>
 where
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I) -> Vo + Send + Sync,
+    M1: Fn(I) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     xap1: &'a M1,
@@ -119,7 +120,7 @@ impl<I, Vo, M1, P> Clone for XCollectInArbitraryOrder<'_, I, Vo, M1, P>
 where
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I) -> Vo + Send + Sync,
+    M1: Fn(I) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     fn clone(&self) -> Self {
@@ -135,7 +136,7 @@ impl<I, Vo, M1, P> ParallelTask for XCollectInArbitraryOrder<'_, I, Vo, M1, P>
 where
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I) -> Vo + Send + Sync,
+    M1: Fn(I) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     type Item = I;

@@ -31,7 +31,7 @@ where
         I: ConcurrentIter,
         Vo: Values<Item = O> + Send + Sync,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.x_collect_into::<R, _, _, _>(x))

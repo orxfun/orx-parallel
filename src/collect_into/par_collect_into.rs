@@ -21,7 +21,7 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
         I: ConcurrentIter,
         Vo: Values<Item = O> + Send + Sync,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync;
+        M1: Fn(I::Item) -> Vo + Clone + Send + Sync;
 
     fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where

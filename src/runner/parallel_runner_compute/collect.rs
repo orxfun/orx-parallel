@@ -5,17 +5,18 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 
 #[allow(clippy::type_complexity)]
-pub fn x_collect_with_idx<C, I, Vo, M1>(
+pub fn x_collect_with_idx<C, I, Vo, M1, CreateM1>(
     c: &C,
     iter: &I,
-    map1: &M1,
+    create_map1: CreateM1,
 ) -> (usize, Vec<Vec<(usize, Vo::Item)>>)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Send,
+    CreateM1: Fn() -> M1,
 {
     let state = c.new_shared_state();
     let shared_state = &state;
@@ -26,6 +27,7 @@ where
 
         while c.do_spawn_new(num_spawned, shared_state, iter) {
             num_spawned += 1;
+            let map1 = create_map1();
             handles.push(s.spawn(move || {
                 let thread_runner = c.new_thread_runner(shared_state);
                 thread_runner.x_collect_with_idx(iter, shared_state, map1)

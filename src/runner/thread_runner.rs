@@ -53,13 +53,13 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         self,
         iter: &I,
         shared_state: &Self::SharedState,
-        map1: &M1,
+        map1: M1,
     ) -> Vec<(usize, Vo::Item)>
     where
         I: ConcurrentIter,
         Vo: Values,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        M1: Fn(I::Item) -> Vo + Send,
     {
         thread_runner_compute::x_collect_with_idx(self, iter, shared_state, map1)
     }

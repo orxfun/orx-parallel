@@ -63,18 +63,19 @@ pub trait ParallelRunnerCompute: ParallelRunner {
     // collect
 
     #[allow(clippy::type_complexity)]
-    fn x_collect_with_idx<I, Vo, M1>(
+    fn x_collect_with_idx<I, Vo, M1, CreateM1>(
         &self,
         iter: &I,
-        map1: &M1,
+        create_map1: CreateM1,
     ) -> (usize, Vec<Vec<(usize, Vo::Item)>>)
     where
         I: ConcurrentIter,
         Vo: Values,
         Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Send + Sync,
+        CreateM1: Fn() -> M1,
     {
-        parallel_runner_compute::x_collect_with_idx(self, iter, map1)
+        parallel_runner_compute::x_collect_with_idx(self, iter, create_map1)
     }
 
     #[allow(clippy::type_complexity)]
