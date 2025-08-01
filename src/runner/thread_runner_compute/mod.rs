@@ -1,3 +1,4 @@
+#[cfg(test)]
 mod collect_arbitrary;
 mod compute;
 mod tasks;

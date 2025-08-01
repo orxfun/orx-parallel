@@ -1,9 +1,13 @@
 use crate::{
     ParallelRunner,
-    computations::Values,
-    runner::{ParallelTask, ParallelTaskWithIdx, thread_runner_compute::ThreadRunnerCompute},
+    computations::{M, Values},
+    runner::{
+        ParallelTask, ParallelTaskWithIdx, parallel_runner_compute::*,
+        thread_runner_compute::ThreadRunnerCompute,
+    },
 };
 use orx_concurrent_iter::ConcurrentIter;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 pub trait ParallelRunnerCompute: ParallelRunner {
     // run
@@ -48,6 +52,17 @@ pub trait ParallelRunnerCompute: ParallelRunner {
             }
         });
         num_spawned
+    }
+
+    #[cfg(test)]
+    fn m_collect_in_arbitrary_order<I, O, M1, P>(self, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
+    where
+        I: ConcurrentIter,
+        O: Send + Sync,
+        M1: Fn(I::Item) -> O + Send + Sync,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        collect_arbitrary::m_collect_in_arbitrary_order(self, m, pinned_vec)
     }
 
     // collect

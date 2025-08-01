@@ -7,7 +7,7 @@ where
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync,
 {
-    params: Params,
+    pub params: Params,
     iter: I,
     map1: M1,
 }
@@ -26,8 +26,8 @@ where
         (self.params, self.iter, self.map1)
     }
 
-    pub fn params(&self) -> &Params {
-        &self.params
+    pub fn params(&self) -> Params {
+        self.params
     }
 
     pub fn num_threads(&mut self, num_threads: impl Into<NumThreads>) {

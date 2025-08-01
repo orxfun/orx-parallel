@@ -1,9 +1,11 @@
 use crate::{
     ThreadRunner,
     computations::Values,
-    runner::{ParallelTask, ParallelTaskWithIdx, thread_runner_compute::tasks},
+    runner::{ParallelTask, ParallelTaskWithIdx, thread_runner_compute::*},
 };
+use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 pub(crate) trait ThreadRunnerCompute: ThreadRunner {
     // run
@@ -22,6 +24,22 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         T: ParallelTaskWithIdx<Item = I::Item>,
     {
         tasks::run_with_idx(self, iter, shared_state, task);
+    }
+
+    #[cfg(test)]
+    fn m_collect_in_arbitrary_order<I, O, M1, P>(
+        self,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        map1: &M1,
+        bag: &ConcurrentBag<O, P>,
+    ) where
+        I: ConcurrentIter,
+        O: Send + Sync,
+        M1: Fn(I::Item) -> O + Send + Sync,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        collect_arbitrary::m_collect_in_arbitrary_order(self, iter, shared_state, map1, bag);
     }
 
     // collect

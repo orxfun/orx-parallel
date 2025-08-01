@@ -66,8 +66,8 @@ where
         &self.iter
     }
 
-    fn params(&self) -> &Params {
-        &self.params
+    fn params(&self) -> Params {
+        self.params
     }
 
     // params transformations

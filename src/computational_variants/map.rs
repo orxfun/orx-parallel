@@ -69,7 +69,7 @@ where
         self.m.iter()
     }
 
-    fn params(&self) -> &Params {
+    fn params(&self) -> Params {
         self.m.params()
     }
 

@@ -95,7 +95,7 @@ where
         self.xfx.iter()
     }
 
-    fn params(&self) -> &Params {
+    fn params(&self) -> Params {
         self.xfx.params()
     }
 

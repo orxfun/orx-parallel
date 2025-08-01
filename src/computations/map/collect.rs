@@ -83,22 +83,8 @@ where
     #[cfg(test)]
     fn parallel_in_arbitrary_order<R: ParallelRunner>(self) -> (usize, P) {
         let (m, pinned_vec) = (self.m, self.pinned_vec);
-        let capacity_bound = pinned_vec.capacity_bound();
-        let offset = pinned_vec.len();
-        let (params, iter, map1) = m.destruct();
-
-        let mut bag: ConcurrentBag<O, P> = pinned_vec.into();
-        match iter.try_get_len() {
-            Some(iter_len) => bag.reserve_maximum_capacity(offset + iter_len),
-            None => bag.reserve_maximum_capacity(capacity_bound),
-        };
-        let task = MCollectInArbitraryOrder::new(&bag, map1);
-
-        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
-        let num_spawned = runner.run(&iter, task);
-
-        let values = bag.into_inner();
-        (num_spawned, values)
+        let runner = R::new(ComputationKind::Collect, m.params(), m.iter().try_get_len());
+        runner.m_collect_in_arbitrary_order(m, pinned_vec)
     }
 }
 
