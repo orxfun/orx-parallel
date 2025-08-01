@@ -121,7 +121,7 @@ where
         IOut: IntoIterator + Send + Sync,
         IOut::IntoIter: Send + Sync,
         IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync,
+        FlatMap: Fn(Self::Item) -> IOut + Clone + Send + Sync,
     {
         let (params, iter, m1) = self.destruct();
         let x1 = move |i: I::Item| Vector(flat_map(m1(i)));

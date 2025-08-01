@@ -21,7 +21,7 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
         I: ConcurrentIter,
         Vo: Values<Item = O> + Send + Sync,
         Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync;
+        M1: Fn(I::Item) -> Vo + Clone + Send + Sync;
 
     fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
@@ -30,9 +30,9 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
         Vt: Values + Send + Sync,
         Vt::Item: Send + Sync,
         Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
+        M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
         F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync;
+        M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync;
 
     // test
 

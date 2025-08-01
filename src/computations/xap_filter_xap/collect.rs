@@ -14,9 +14,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
     where
@@ -33,9 +33,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     xfx: Xfx<I, Vt, Vo, M1, F, M2>,
@@ -48,9 +48,9 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     pub fn compute<R: ParallelRunner>(xfx: Xfx<I, Vt, Vo, M1, F, M2>, pinned_vec: P) -> (usize, P) {
@@ -85,7 +85,7 @@ where
         bag.reserve_maximum_capacity(capacity_bound);
 
         let task = XfxCollectInArbitraryOrder::<'_, I, Vt, Vo, M1, F, M2, P>::new(
-            xap1, filter, xap2, &bag,
+            &xap1, &filter, &xap2, &bag,
         );
 
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
@@ -102,7 +102,10 @@ where
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let (num_spawned, vectors) = runner.xfx_collect_with_idx(&iter, &map1, &filter, &map2);
+        let create_map1 = || map1.clone();
+        let create_map2 = || map2.clone();
+        let (num_spawned, vectors) =
+            runner.xfx_collect_with_idx(&iter, create_map1, &filter, create_map2);
         heap_sort_into(vectors, &mut pinned_vec);
         (num_spawned, pinned_vec)
     }
@@ -116,14 +119,14 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    map1: M1,
-    filter: F,
-    map2: M2,
+    map1: &'a M1,
+    filter: &'a F,
+    map2: &'a M2,
     bag: &'a ConcurrentBag<Vo::Item, P>,
     phantom: PhantomData<(I, Vt, Vo)>,
 }
@@ -134,18 +137,40 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    fn new(map1: M1, filter: F, map2: M2, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
+    fn new(map1: &'a M1, filter: &'a F, map2: &'a M2, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
         Self {
             map1,
             filter,
             map2,
             bag,
             phantom: PhantomData,
+        }
+    }
+}
+
+impl<I, Vt, Vo, M1, F, M2, P> Clone for XfxCollectInArbitraryOrder<'_, I, Vt, Vo, M1, F, M2, P>
+where
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            map1: self.map1,
+            filter: self.filter,
+            map2: self.map2,
+            bag: self.bag,
+            phantom: self.phantom,
         }
     }
 }
@@ -157,21 +182,21 @@ where
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Clone + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     type Item = I::Item;
 
     #[inline]
-    fn f1(&self, value: Self::Item) {
+    fn f1(&mut self, value: Self::Item) {
         let values_vt = (self.map1)(value);
-        values_vt.filter_map_collect_arbitrary(&self.filter, &self.map2, self.bag);
+        values_vt.filter_map_collect_arbitrary(self.filter, self.map2, self.bag);
     }
 
     #[inline(always)]
-    fn fc(&self, values: impl ExactSizeIterator<Item = Self::Item>) {
+    fn fc(&mut self, values: impl ExactSizeIterator<Item = Self::Item>) {
         for x in values {
             self.f1(x);
         }

@@ -1,4 +1,4 @@
-use super::x::X;
+use super::x::WithX;
 use crate::{
     IterationOrder,
     computations::{Values, heap_sort::heap_sort_into},
@@ -9,12 +9,13 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use std::marker::PhantomData;
 
-impl<I, Vo, M1> X<I, Vo, M1>
+impl<I, T, Vo, M1> WithX<I, T, Vo, M1>
 where
     I: ConcurrentIter,
+    T: Send + Sync + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
     where
@@ -34,33 +35,35 @@ where
     }
 }
 
-pub struct XCollect<I, Vo, M1, P>
+pub struct XCollect<I, T, Vo, M1, P>
 where
     I: ConcurrentIter,
+    T: Send + Sync + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    x: X<I, Vo, M1>,
+    x: WithX<I, T, Vo, M1>,
     pinned_vec: P,
 }
 
-impl<I, Vo, M1, P> XCollect<I, Vo, M1, P>
+impl<I, T, Vo, M1, P> XCollect<I, T, Vo, M1, P>
 where
     I: ConcurrentIter,
+    T: Send + Sync + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Clone + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     fn sequential(self) -> P {
         let (x, mut pinned_vec) = (self.x, self.pinned_vec);
-        let (_, iter, xap1) = x.destruct();
+        let (_, iter, mut with, xap1) = x.destruct();
 
         let iter = iter.into_seq_iter();
         for i in iter {
-            let vt = xap1(i);
+            let vt = xap1(&mut with, i);
             vt.push_to_pinned_vec(&mut pinned_vec);
         }
 
@@ -69,14 +72,15 @@ where
 
     fn parallel_in_arbitrary<R: ParallelRunner>(self) -> (usize, P) {
         let (x, pinned_vec) = (self.x, self.pinned_vec);
-        let (params, iter, xap1) = x.destruct();
+        let (params, iter, with, xap1) = x.destruct();
 
         let capacity_bound = pinned_vec.capacity_bound();
         let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
         bag.reserve_maximum_capacity(capacity_bound);
 
-        let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P> {
+        let task = XCollectInArbitraryOrder::<'_, I::Item, T, Vo, M1, P> {
             xap1: &xap1,
+            with,
             bag: &bag,
             phantom: PhantomData,
         };
@@ -89,12 +93,16 @@ where
 
     fn parallel_with_heap_sort<R: ParallelRunner>(self) -> (usize, P) {
         let (x, mut pinned_vec) = (self.x, self.pinned_vec);
-        let (params, iter, xap1) = x.destruct();
+        let (params, iter, with, xap1) = x.destruct();
         let initial_len = iter.try_get_len();
 
         let runner = R::new(ComputationKind::Collect, params, initial_len);
 
-        let create_map = || xap1.clone();
+        let create_map = || {
+            let xap1 = xap1.clone();
+            let mut with = with.clone();
+            move |value| (xap1)(&mut with, value)
+        };
         let (num_spawned, vectors) = runner.x_collect_with_idx(&iter, create_map);
         heap_sort_into(vectors, &mut pinned_vec);
         (num_spawned, pinned_vec)
@@ -103,52 +111,55 @@ where
 
 // arbitrary
 
-struct XCollectInArbitraryOrder<'a, I, Vo, M1, P>
+struct XCollectInArbitraryOrder<'a, I, T, Vo, M1, P>
 where
+    T: Send + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I) -> Vo + Clone + Send + Sync,
+    M1: Fn(&mut T, I) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     xap1: &'a M1,
+    with: T,
     bag: &'a ConcurrentBag<Vo::Item, P>,
     phantom: PhantomData<I>,
 }
 
-impl<I, Vo, M1, P> Clone for XCollectInArbitraryOrder<'_, I, Vo, M1, P>
+impl<'a, I, T, Vo, M1, P> Clone for XCollectInArbitraryOrder<'a, I, T, Vo, M1, P>
 where
+    T: Send + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I) -> Vo + Clone + Send + Sync,
+    M1: Fn(&mut T, I) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     fn clone(&self) -> Self {
         Self {
             xap1: self.xap1,
+            with: self.with.clone(),
             bag: self.bag,
             phantom: self.phantom,
         }
     }
 }
 
-impl<I, Vo, M1, P> ParallelTask for XCollectInArbitraryOrder<'_, I, Vo, M1, P>
+impl<'a, I, T, Vo, M1, P> ParallelTask for XCollectInArbitraryOrder<'a, I, T, Vo, M1, P>
 where
+    T: Send + Clone,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I) -> Vo + Clone + Send + Sync,
+    M1: Fn(&mut T, I) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     type Item = I;
 
-    #[inline]
     fn f1(&mut self, value: Self::Item) {
-        let values_vt = (self.xap1)(value);
+        let values_vt = (self.xap1)(&mut self.with, value);
         for x in values_vt.values() {
             self.bag.push(x);
         }
     }
 
-    #[inline(always)]
     fn fc(&mut self, values: impl ExactSizeIterator<Item = Self::Item>) {
         for x in values {
             self.f1(x);

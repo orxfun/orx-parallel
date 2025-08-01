@@ -121,11 +121,11 @@ where
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, mut reduce: X) -> Option<Self::Item>
     where
-        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        X: FnMut(Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
-        let reduced = self.0.into_iter().reduce(&reduce);
+        let reduced = self.0.into_iter().reduce(&mut reduce);
         match (acc, reduced) {
             (Some(x), Some(y)) => Some(reduce(x, y)),
             (Some(x), None) => Some(x),
@@ -222,11 +222,11 @@ where
         self,
         input_idx: usize,
         filter: F,
-        map2: M2,
+        map2: &mut M2,
         vec: &mut Vec<(usize, Vo::Item)>,
     ) where
         F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        M2: FnMut(Self::Item) -> Vo + Send,
         Vo: Values,
         Vo::Item: Send + Sync,
     {
@@ -246,7 +246,7 @@ where
         o_bag: &ConcurrentOrderedBag<Vo::Item, P>,
     ) where
         F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
         Vo::Item: Send + Sync,
         P: IntoConcurrentPinnedVec<Vo::Item>,

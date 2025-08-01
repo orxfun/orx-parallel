@@ -16,7 +16,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
 {
     x: X<I, Vo, M1>,
     phantom: PhantomData<R>,
@@ -28,7 +28,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
         Self {
@@ -48,7 +48,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
 {
 }
 
@@ -58,7 +58,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
 {
 }
 
@@ -68,7 +68,7 @@ where
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vo + Clone + Send + Sync,
 {
     type Item = Vo::Item;
 
