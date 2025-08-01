@@ -15,7 +15,12 @@ where
         R: ParallelRunner,
         Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
-        XReduce::compute::<R>(self, reduce)
+        let x = XReduce { x: self, reduce };
+        let p = x.x.params();
+        match p.is_sequential() {
+            true => (0, x.sequential()),
+            false => x.parallel::<R>(),
+        }
     }
 }
 
@@ -39,15 +44,6 @@ where
     M1: Fn(I::Item) -> Vo + Send + Sync + Clone,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
-    pub fn compute<R: ParallelRunner>(x: X<I, Vo, M1>, reduce: Red) -> (usize, Option<Vo::Item>) {
-        let x = Self { x, reduce };
-        let p = x.x.params();
-        match p.is_sequential() {
-            true => (0, x.sequential()),
-            false => x.parallel::<R>(),
-        }
-    }
-
     fn sequential(self) -> Option<Vo::Item> {
         let (x, reduce) = (self.x, self.reduce);
         let (_, iter, xap1) = x.destruct();
