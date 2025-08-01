@@ -55,23 +55,23 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         collect_arbitrary::m_collect_in_arbitrary_order(self, m, pinned_vec)
     }
 
+    // m - using
+
     #[cfg(test)]
     fn using_m_collect_in_arbitrary_order<U, I, O, M1, P>(
         self,
-        using: U,
-        m: M<I, O, M1>,
+        m: UsingM<U, I, O, M1>,
         pinned_vec: P,
     ) -> (usize, P)
     where
+        U: Clone + Send,
         I: ConcurrentIter,
         O: Send + Sync,
-        M1: Fn(I::Item) -> O + Send + Sync,
+        M1: Fn(&mut U, I::Item) -> O + Send + Sync,
         P: IntoConcurrentPinnedVec<O>,
     {
-        todo!()
+        collect_arbitrary::using_m_collect_in_arbitrary_order(self, m, pinned_vec)
     }
-
-    // m - using
 
     fn using_m_collect_ordered<U, I, O, M1, P>(
         self,
