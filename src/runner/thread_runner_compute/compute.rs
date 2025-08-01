@@ -20,6 +20,8 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         tasks::run(self, iter, shared_state, task);
     }
 
+    // m
+
     fn m_collect_ordered<I, O, M1, P>(
         self,
         iter: &I,
@@ -50,6 +52,33 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         P: IntoConcurrentPinnedVec<O>,
     {
         collect_arbitrary::m_collect_in_arbitrary_order(self, iter, shared_state, map1, bag);
+    }
+
+    // m - using
+
+    fn using_m_collect_ordered<U, I, O, M1, P>(
+        self,
+        using: U,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        map1: &M1,
+        o_bag: &ConcurrentOrderedBag<O, P>,
+        offset: usize,
+    ) where
+        I: ConcurrentIter,
+        O: Send + Sync,
+        M1: Fn(&mut U, I::Item) -> O + Send + Sync,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        collect_ordered::using_m_collect_ordered(
+            self,
+            using,
+            iter,
+            shared_state,
+            map1,
+            o_bag,
+            offset,
+        );
     }
 
     // collect

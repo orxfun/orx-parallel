@@ -9,5 +9,6 @@ mod xap_filter_xap;
 pub(crate) use default_fns::*;
 pub(crate) use generalized_values::{Atom, Values, Vector};
 pub(crate) use map::M;
+pub(crate) use using_map::UsingM;
 pub(crate) use xap::X;
 pub(crate) use xap_filter_xap::Xfx;

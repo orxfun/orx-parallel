@@ -1,6 +1,6 @@
 use crate::{
     ParallelRunner,
-    computations::{M, Values},
+    computations::{M, UsingM, Values},
     runner::{
         ParallelTask, parallel_runner_compute::*, thread_runner_compute::ThreadRunnerCompute,
     },
@@ -32,6 +32,8 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         num_spawned
     }
 
+    // m
+
     fn m_collect_ordered<I, O, M1, P>(self, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
     where
         I: ConcurrentIter,
@@ -51,6 +53,39 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         P: IntoConcurrentPinnedVec<O>,
     {
         collect_arbitrary::m_collect_in_arbitrary_order(self, m, pinned_vec)
+    }
+
+    #[cfg(test)]
+    fn using_m_collect_in_arbitrary_order<U, I, O, M1, P>(
+        self,
+        using: U,
+        m: M<I, O, M1>,
+        pinned_vec: P,
+    ) -> (usize, P)
+    where
+        I: ConcurrentIter,
+        O: Send + Sync,
+        M1: Fn(I::Item) -> O + Send + Sync,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        todo!()
+    }
+
+    // m - using
+
+    fn using_m_collect_ordered<U, I, O, M1, P>(
+        self,
+        m: UsingM<U, I, O, M1>,
+        pinned_vec: P,
+    ) -> (usize, P)
+    where
+        U: Send + Clone,
+        I: ConcurrentIter,
+        O: Send + Sync,
+        M1: Fn(&mut U, I::Item) -> O + Send + Sync,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        collect_ordered::using_m_collect_ordered(self, m, pinned_vec)
     }
 
     // collect
