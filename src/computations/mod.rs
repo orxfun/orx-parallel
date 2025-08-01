@@ -3,6 +3,7 @@ mod generalized_values;
 mod heap_sort;
 mod map;
 mod using_map;
+mod using_xap;
 mod xap;
 mod xap_filter_xap;
 
@@ -10,5 +11,6 @@ pub(crate) use default_fns::*;
 pub(crate) use generalized_values::{Atom, Values, Vector};
 pub(crate) use map::M;
 pub(crate) use using_map::UsingM;
+pub(crate) use using_xap::UsingX;
 pub(crate) use xap::X;
 pub(crate) use xap_filter_xap::Xfx;
