@@ -1,13 +1,14 @@
 mod computation_kind;
 mod fixed_chunk_runner;
 mod parallel_runner;
+mod parallel_runner_compute;
 mod parallel_task;
 mod thread_runner;
 mod thread_runner_compute;
 
 pub use computation_kind::ComputationKind;
 pub use parallel_runner::ParallelRunner;
-pub(crate) use parallel_runner::ParallelRunnerCompute;
+pub(crate) use parallel_runner_compute::ParallelRunnerCompute;
 pub use parallel_task::{ParallelTask, ParallelTaskWithIdx};
 pub use thread_runner::ThreadRunner;
 
