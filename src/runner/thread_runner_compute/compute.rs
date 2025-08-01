@@ -5,6 +5,7 @@ use crate::{
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
+use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 pub(crate) trait ThreadRunnerCompute: ThreadRunner {
@@ -24,6 +25,22 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         T: ParallelTaskWithIdx<Item = I::Item>,
     {
         tasks::run_with_idx(self, iter, shared_state, task);
+    }
+
+    fn m_collect_ordered<I, O, M1, P>(
+        self,
+        iter: &I,
+        shared_state: &Self::SharedState,
+        map1: &M1,
+        o_bag: &ConcurrentOrderedBag<O, P>,
+        offset: usize,
+    ) where
+        I: ConcurrentIter,
+        O: Send + Sync,
+        M1: Fn(I::Item) -> O + Send + Sync,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        collect_ordered::m_collect_ordered(self, iter, shared_state, map1, o_bag, offset);
     }
 
     #[cfg(test)]

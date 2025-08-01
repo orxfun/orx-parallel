@@ -54,6 +54,16 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         num_spawned
     }
 
+    fn m_collect_ordered<I, O, M1, P>(self, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
+    where
+        I: ConcurrentIter,
+        O: Send + Sync,
+        M1: Fn(I::Item) -> O + Send + Sync,
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        collect_ordered::m_collect_ordered(self, m, pinned_vec)
+    }
+
     #[cfg(test)]
     fn m_collect_in_arbitrary_order<I, O, M1, P>(self, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
     where

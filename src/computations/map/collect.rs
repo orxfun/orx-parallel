@@ -67,17 +67,8 @@ where
 
     fn parallel_in_input_order<R: ParallelRunner>(self) -> (usize, P) {
         let (m, pinned_vec) = (self.m, self.pinned_vec);
-        let offset = pinned_vec.len();
-        let (params, iter, map1) = m.destruct();
-
-        let bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-        let task = MCollectInInputOrder::new(offset, &bag, map1);
-
-        let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
-        let num_spawned = runner.run_with_idx(&iter, task);
-
-        let values = unsafe { bag.into_inner().unwrap_only_if_counts_match() };
-        (num_spawned, values)
+        let runner = R::new(ComputationKind::Collect, m.params(), m.iter().try_get_len());
+        runner.m_collect_ordered(m, pinned_vec)
     }
 
     #[cfg(test)]
