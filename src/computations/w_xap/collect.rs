@@ -9,6 +9,42 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use std::marker::PhantomData;
 
+pub struct XCollect<I, T, Vo, M1, P>
+where
+    I: ConcurrentIter,
+    T: Send + Clone,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    x: WithX<I, T, Vo, M1>,
+    pinned_vec: P,
+}
+
+impl<I, T, Vo, M1, P> XCollect<I, T, Vo, M1, P>
+where
+    I: ConcurrentIter,
+    T: Send + Clone,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut T, I::Item) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    fn sequential(self) -> P {
+        let (x, mut pinned_vec) = (self.x, self.pinned_vec);
+        let (_, iter, mut with, xap1) = x.destruct();
+
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = xap1(&mut with, i);
+            vt.push_to_pinned_vec(&mut pinned_vec);
+        }
+
+        pinned_vec
+    }
+}
+
 // arbitrary
 
 struct XCollectInArbitraryOrder<'a, I, T, Vo, M1, P>

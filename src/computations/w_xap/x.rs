@@ -32,8 +32,8 @@ where
         }
     }
 
-    pub fn destruct(self) -> (Params, I, M1) {
-        (self.params, self.iter, self.xap1)
+    pub fn destruct(self) -> (Params, I, T, M1) {
+        (self.params, self.iter, self.with, self.xap1)
     }
 
     pub fn params(&self) -> &Params {

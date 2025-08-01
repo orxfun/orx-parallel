@@ -76,7 +76,11 @@ where
         let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
         bag.reserve_maximum_capacity(capacity_bound);
 
-        let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P>::new(&xap1, &bag);
+        let task = XCollectInArbitraryOrder::<'_, I::Item, Vo, M1, P> {
+            xap1: &xap1,
+            bag: &bag,
+            phantom: PhantomData,
+        };
         let runner = R::new(ComputationKind::Collect, params, iter.try_get_len());
         let num_spawned = runner.run(&iter, task);
 
@@ -109,22 +113,6 @@ where
     xap1: &'a M1,
     bag: &'a ConcurrentBag<Vo::Item, P>,
     phantom: PhantomData<I>,
-}
-
-impl<'a, I, Vo, M1, P> XCollectInArbitraryOrder<'a, I, Vo, M1, P>
-where
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I) -> Vo + Send + Sync,
-    P: IntoConcurrentPinnedVec<Vo::Item>,
-{
-    fn new(xap1: &'a M1, bag: &'a ConcurrentBag<Vo::Item, P>) -> Self {
-        Self {
-            xap1,
-            bag,
-            phantom: PhantomData,
-        }
-    }
 }
 
 impl<I, Vo, M1, P> Clone for XCollectInArbitraryOrder<'_, I, Vo, M1, P>
