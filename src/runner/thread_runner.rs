@@ -97,7 +97,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         I: ConcurrentIter,
         Vo: Values,
         Vo::Item: Send + Sync,
-        M1: FnMut(I::Item) -> Vo + Send + Sync,
+        M1: FnMut(I::Item) -> Vo + Send,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         thread_runner_compute::x_reduce(self, iter, shared_state, map1, reduce)
