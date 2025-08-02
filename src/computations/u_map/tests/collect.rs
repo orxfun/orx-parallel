@@ -1,9 +1,6 @@
 use crate::{
     IterationOrder, Params,
-    computations::{
-        UM,
-        using::{UsingClone, using_clone},
-    },
+    computations::{UM, using::using_clone},
     runner::DefaultRunner,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
