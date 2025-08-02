@@ -1,6 +1,6 @@
 use crate::{
     DefaultRunner, ParIter, ParallelRunner,
-    computations::{Using, reduce_unit},
+    computations::{Using, UsingClone, reduce_unit},
 };
 
 /// Parallel iterator.
@@ -61,4 +61,15 @@ where
         let map = |u: &mut U::Item, x: Self::Item| operation(u, x);
         let _ = self.map_u(map).reduce(reduce_unit);
     }
+}
+
+// into using
+
+pub trait IntoParIterUsing<R>: ParIter<R>
+where
+    R: ParallelRunner,
+{
+    fn using<U>(self, using: U) -> impl ParIterUsing<UsingClone<U>, R>
+    where
+        U: Clone + Send;
 }

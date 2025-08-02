@@ -1,8 +1,9 @@
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computational_variants::u_xap_filter_xap::UParXapFilterXap,
     computations::{UsingClone, Values, Xfx, using_clone},
     runner::{DefaultRunner, ParallelRunner},
+    u_par_iter::IntoParIterUsing,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -47,30 +48,6 @@ where
 
     fn destruct(self) -> (Params, I, M1, F, M2) {
         self.xfx.destruct()
-    }
-
-    pub fn using<U>(
-        self,
-        using: U,
-    ) -> UParXapFilterXap<
-        UsingClone<U>,
-        I,
-        Vt,
-        Vo,
-        impl Fn(&mut U, I::Item) -> Vt + Send + Sync,
-        impl Fn(&mut U, &Vt::Item) -> bool + Send + Sync,
-        impl Fn(&mut U, Vt::Item) -> Vo + Send + Sync,
-        R,
-    >
-    where
-        U: Clone + Send,
-    {
-        let using = using_clone(using);
-        let (params, iter, x1, f, x2) = self.destruct();
-        let x1 = move |_: &mut U, t: I::Item| x1(t);
-        let f = move |_: &mut U, t: &Vt::Item| f(t);
-        let x2 = move |_: &mut U, t: Vt::Item| x2(t);
-        UParXapFilterXap::new(using, params, iter, x1, f, x2)
     }
 }
 
@@ -230,5 +207,30 @@ where
             IterationOrder::Ordered => self.xfx.next::<R>().1,
             IterationOrder::Arbitrary => self.xfx.next_any::<R>().1,
         }
+    }
+}
+
+impl<I, Vt, Vo, M1, F, M2, R> IntoParIterUsing<R> for ParXapFilterXap<I, Vt, Vo, M1, F, M2, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vt::Item: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+{
+    fn using<U>(self, using: U) -> impl ParIterUsing<UsingClone<U>, R>
+    where
+        U: Clone + Send,
+    {
+        let using = using_clone(using);
+        let (params, iter, x1, f, x2) = self.destruct();
+        let x1 = move |_: &mut U, t: I::Item| x1(t);
+        let f = move |_: &mut U, t: &Vt::Item| f(t);
+        let x2 = move |_: &mut U, t: Vt::Item| x2(t);
+        UParXapFilterXap::new(using, params, iter, x1, f, x2)
     }
 }
