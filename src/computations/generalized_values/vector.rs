@@ -161,6 +161,33 @@ where
     }
 
     #[inline(always)]
+    fn u_fx_reduce<U, F, M2, Vo, X>(
+        self,
+        u: &mut U,
+        mut acc: Option<Vo::Item>,
+        filter: F,
+        map2: M2,
+        reduce: X,
+    ) -> Option<Vo::Item>
+    where
+        Self: Sized,
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    {
+        for t in self.0 {
+            if filter(u, &t) {
+                let vo = map2(u, t);
+                acc = vo.acc_reduce(acc, &reduce);
+            }
+        }
+
+        acc
+    }
+
+    #[inline(always)]
     fn first(self) -> Option<Self::Item> {
         self.0.into_iter().next()
     }
@@ -178,6 +205,22 @@ where
             .filter(filter)
             .filter_map(|t| map2(t).first())
             .next()
+    }
+
+    fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
+    where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+    {
+        // TODO: avoid intermediate collection
+        let x = self
+            .0
+            .into_iter()
+            .filter(|x| filter(u, x))
+            .collect::<Vec<_>>();
+        x.into_iter().filter_map(|t| map2(u, t).first()).next()
     }
 
     #[inline]
@@ -218,6 +261,28 @@ where
     }
 
     #[inline]
+    fn u_filter_map_collect_arbitrary<U, F, M2, P, Vo>(
+        self,
+        u: &mut U,
+        filter: F,
+        map2: M2,
+        bag: &ConcurrentBag<Vo::Item, P>,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        for t in self.0 {
+            if filter(u, &t) {
+                let vo = map2(u, t);
+                vo.push_to_bag(bag);
+            }
+        }
+    }
+
+    #[inline]
     fn xfx_collect_heap<F, M2, Vo>(
         self,
         input_idx: usize,
@@ -233,6 +298,28 @@ where
         for t in self.0 {
             if filter(&t) {
                 let vo = map2(t);
+                vo.push_to_vec_with_idx(input_idx, vec);
+            }
+        }
+    }
+
+    #[inline]
+    fn u_xfx_collect_heap<U, F, M2, Vo>(
+        self,
+        u: &mut U,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        vec: &mut Vec<(usize, Vo::Item)>,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+    {
+        for t in self.0 {
+            if filter(u, &t) {
+                let vo = map2(u, t);
                 vo.push_to_vec_with_idx(input_idx, vec);
             }
         }
