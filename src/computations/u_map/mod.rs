@@ -5,6 +5,6 @@ mod collect;
 mod m;
 mod next;
 mod reduce;
-// mod transformations;
+mod transformations;
 
 pub use m::UM;
