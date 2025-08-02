@@ -5,5 +5,3 @@ pub(crate) mod next;
 pub(crate) mod next_any;
 pub(crate) mod reduce;
 mod tasks;
-
-pub(crate) use compute::ThreadRunnerCompute;

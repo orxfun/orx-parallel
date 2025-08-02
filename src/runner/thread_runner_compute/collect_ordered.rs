@@ -1,4 +1,4 @@
-use crate::{computations::Values, runner::thread_runner_compute::ThreadRunnerCompute};
+use crate::{ThreadRunner, computations::Values};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -13,7 +13,7 @@ pub fn m<C, I, O, M1, P>(
     o_bag: &ConcurrentOrderedBag<O, P>,
     offset: usize,
 ) where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync,
@@ -62,7 +62,7 @@ pub fn using_m<C, U, I, O, M1, P>(
     o_bag: &ConcurrentOrderedBag<O, P>,
     offset: usize,
 ) where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     O: Send + Sync,
     M1: Fn(&mut U, I::Item) -> O + Send + Sync,
@@ -112,7 +112,7 @@ pub fn x<C, I, Vo, X1>(
     xap1: &X1,
 ) -> Vec<(usize, Vo::Item)>
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
@@ -170,7 +170,7 @@ pub fn using_x<C, U, I, Vo, X1>(
     xap1: &X1,
 ) -> Vec<(usize, Vo::Item)>
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
@@ -231,7 +231,7 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2>(
     xap2: &M2,
 ) -> Vec<(usize, Vo::Item)>
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,

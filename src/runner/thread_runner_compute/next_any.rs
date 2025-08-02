@@ -1,4 +1,4 @@
-use crate::{computations::Values, runner::thread_runner_compute::ThreadRunnerCompute};
+use crate::{ThreadRunner, computations::Values};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn xfx<C, I, Vt, Vo, M1, F, M2>(
@@ -10,7 +10,7 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2>(
     map2: &M2,
 ) -> Option<Vo::Item>
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,

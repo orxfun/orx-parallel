@@ -1,4 +1,4 @@
-use crate::{computations::Values, runner::thread_runner_compute::ThreadRunnerCompute};
+use crate::{ThreadRunner, computations::Values};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 // m
@@ -11,7 +11,7 @@ pub fn m<C, I, O, M1, Red>(
     reduce: &Red,
 ) -> Option<O>
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync,
@@ -75,7 +75,7 @@ pub fn x<C, I, Vo, M1, Red>(
     reduce: &Red,
 ) -> Option<Vo::Item>
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send + Sync,
@@ -135,7 +135,7 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2, X>(
     reduce: &X,
 ) -> Option<Vo::Item>
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,

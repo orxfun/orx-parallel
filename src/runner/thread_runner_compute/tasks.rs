@@ -1,9 +1,9 @@
-use crate::runner::{ParallelTask, thread_runner_compute::ThreadRunnerCompute};
+use crate::{ThreadRunner, runner::ParallelTask};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn run<C, I, T>(mut runner: C, iter: &I, shared_state: &C::SharedState, task: &T)
 where
-    C: ThreadRunnerCompute,
+    C: ThreadRunner,
     I: ConcurrentIter,
     T: ParallelTask<Item = I::Item>,
 {
