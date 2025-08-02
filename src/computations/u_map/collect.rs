@@ -36,8 +36,8 @@ where
     where
         P: IntoConcurrentPinnedVec<O>,
     {
-        let (mut using, _, iter, map1) = self.destruct();
-        let mut u = using.create(0);
+        let (using, _, iter, map1) = self.destruct();
+        let mut u = using.into_inner();
 
         let iter = iter.into_seq_iter();
         for i in iter {

@@ -2,6 +2,8 @@ pub trait Using {
     type Item: Send;
 
     fn create(&mut self, thread_idx: usize) -> Self::Item;
+
+    fn into_inner(self) -> Self::Item;
 }
 
 pub struct UsingClone<T: Clone + Send>(T);
@@ -15,6 +17,10 @@ impl<T: Clone + Send> Using for UsingClone<T> {
 
     fn create(&mut self, _: usize) -> T {
         self.0.clone()
+    }
+
+    fn into_inner(self) -> Self::Item {
+        self.0
     }
 }
 
@@ -54,5 +60,9 @@ where
 
     fn create(&mut self, thread_idx: usize) -> Self::Item {
         (self.fun)(thread_idx)
+    }
+
+    fn into_inner(mut self) -> Self::Item {
+        (self.fun)(0)
     }
 }
