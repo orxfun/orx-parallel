@@ -3,7 +3,7 @@ use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-const N: u64 = 500_000;
+const N: u64 = 100_000;
 
 fn fibonacci(n: u64) -> u64 {
     let mut a = 0;
