@@ -1,6 +1,6 @@
 use crate::runner::thread_runner_compute as thread;
 use crate::{
-    computations::{M, UsingM, UsingX, Values, X, Xfx, heap_sort_into},
+    computations::{M, Values, X, Xfx, heap_sort_into},
     runner::ParallelRunnerCompute,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -47,47 +47,6 @@ where
     (num_spawned, values)
 }
 
-pub fn using_m<C, U, I, O, M1, P>(runner: C, m: UsingM<U, I, O, M1>, pinned_vec: P) -> (usize, P)
-where
-    C: ParallelRunnerCompute,
-    U: Clone + Send,
-    I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U, I::Item) -> O + Send + Sync,
-    P: IntoConcurrentPinnedVec<O>,
-{
-    let offset = pinned_vec.len();
-    let (_, using, iter, map1) = m.destruct();
-
-    let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-
-    // compute
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = 0;
-    std::thread::scope(|s| {
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
-            let using = using.clone();
-            s.spawn(|| {
-                thread::collect_ordered::using_m(
-                    runner.new_thread_runner(shared_state),
-                    using,
-                    &iter,
-                    shared_state,
-                    &map1,
-                    &o_bag,
-                    offset,
-                );
-            });
-        }
-    });
-
-    let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
-    (num_spawned, values)
-}
-
 // x
 
 pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, mut pinned_vec: P) -> (usize, P)
@@ -114,55 +73,6 @@ where
             handles.push(s.spawn(|| {
                 thread::collect_ordered::x(
                     runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                )
-            }));
-        }
-
-        let mut vectors = Vec::with_capacity(handles.len());
-        for x in handles {
-            vectors.push(x.join().expect("failed to join the thread"));
-        }
-        vectors
-    });
-
-    heap_sort_into(vectors, &mut pinned_vec);
-    (num_spawned, pinned_vec)
-}
-
-pub fn using_x<C, U, I, Vo, M1, P>(
-    runner: C,
-    x: UsingX<U, I, Vo, M1>,
-    mut pinned_vec: P,
-) -> (usize, P)
-where
-    C: ParallelRunnerCompute,
-    U: Send + Clone,
-    I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U, I::Item) -> Vo + Send + Sync,
-    P: IntoConcurrentPinnedVec<Vo::Item>,
-{
-    let (_, using, iter, xap1) = x.destruct();
-
-    // compute
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = 0;
-    let vectors = std::thread::scope(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
-            let using = using.clone();
-            handles.push(s.spawn(|| {
-                thread::collect_ordered::using_x(
-                    runner.new_thread_runner(shared_state),
-                    using,
                     &iter,
                     shared_state,
                     &xap1,
