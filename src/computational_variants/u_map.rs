@@ -190,4 +190,29 @@ where
         };
         UParMap::new(using, params, iter, m1)
     }
+
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    where
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+    {
+        let (using, params, iter, m1) = self.destruct();
+        let m1 = move |u: &mut U::Item, i: I::Item| Atom(m1(u, i));
+        let filter = move |u: &mut U::Item, i: &Self::Item| filter(u, i);
+        UParXapFilterXap::new(using, params, iter, m1, filter, u_map_self_atom)
+    }
+
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone,
+    {
+        let (using, params, iter, m1) = self.destruct();
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let a = m1(u, i);
+            Vector(flat_map(u, a))
+        };
+        UParXap::new(using, params, iter, x1)
+    }
 }

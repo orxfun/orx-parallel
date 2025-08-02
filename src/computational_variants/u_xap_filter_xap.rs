@@ -232,13 +232,48 @@ where
     fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
         Out: Send + Sync,
-        Map: Fn(&mut <U as Using>::Item, Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone,
     {
         let (using, params, iter, x1, f, x2) = self.destruct();
         let x2 = move |u: &mut U::Item, t: Vt::Item| {
             // TODO: avoid allocation
-            let vo = x2(u, t);
-            let vo: Vec<_> = vo.values().into_iter().map(|x| map(u, x)).collect();
+            let vo: Vec<_> = x2(u, t).values().into_iter().map(|x| map(u, x)).collect();
+            Vector(vo)
+        };
+
+        UParXapFilterXap::new(using, params, iter, x1, f, x2)
+    }
+
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    where
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |u: &mut U::Item, t: Vt::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x2(u, t)
+                .values()
+                .into_iter()
+                .filter(|x| filter(u, x))
+                .collect();
+            Vector(vo)
+        };
+
+        UParXapFilterXap::new(using, params, iter, x1, f, x2)
+    }
+
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |u: &mut U::Item, t: Vt::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x2(u, t).values().into_iter().collect();
+            let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
             Vector(vo)
         };
 

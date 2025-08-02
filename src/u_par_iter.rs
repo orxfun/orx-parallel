@@ -12,4 +12,15 @@ where
     where
         Out: Send + Sync,
         Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone;
+
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    where
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone;
+
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone;
 }

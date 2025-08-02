@@ -209,4 +209,30 @@ where
 
         UParXap::new(using, params, iter, x1)
     }
+
+    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    where
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1) = self.destruct();
+        let filter = move |u: &mut U::Item, x: &Self::Item| filter(u, x);
+        UParXapFilterXap::new(using, params, iter, x1, filter, u_map_self_atom)
+    }
+
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    where
+        IOut: IntoIterator + Send + Sync,
+        IOut::IntoIter: Send + Sync,
+        IOut::Item: Send + Sync,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1) = self.destruct();
+        let x1 = move |u: &mut U::Item, t: I::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
+            Vector(vo)
+        };
+        UParXap::new(using, params, iter, x1)
+    }
 }
