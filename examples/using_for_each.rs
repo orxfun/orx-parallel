@@ -7,7 +7,7 @@ fn main() {
     (0..5)
         .into_par()
         .using(sender)
-        .for_each_u(|s, x| s.send(x).unwrap());
+        .for_each(|s, x| s.send(x).unwrap());
 
     let mut res: Vec<_> = receiver.iter().collect();
 

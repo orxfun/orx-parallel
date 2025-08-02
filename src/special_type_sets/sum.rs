@@ -8,6 +8,8 @@ pub trait Sum<Output> {
     /// Maps the number to owned value.
     fn map(a: Self) -> Output;
 
+    fn u_map<U>(_: &mut U, a: Self) -> Output;
+
     /// Returns sum of `a` and `b`.
     fn reduce(a: Output, b: Output) -> Output;
 }
@@ -22,6 +24,11 @@ where
 
     #[inline(always)]
     fn map(a: Self) -> X {
+        a
+    }
+
+    #[inline(always)]
+    fn u_map<U>(_: &mut U, a: Self) -> X {
         a
     }
 
@@ -42,6 +49,11 @@ where
 
     #[inline(always)]
     fn map(a: Self) -> X {
+        *a
+    }
+
+    #[inline(always)]
+    fn u_map<U>(_: &mut U, a: Self) -> X {
         *a
     }
 

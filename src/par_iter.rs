@@ -1,7 +1,7 @@
 use crate::{
-    Params,
+    ParIterUsing, Params,
     collect_into::ParCollectInto,
-    computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
+    computations::{UsingClone, map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, IterationOrder, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
@@ -256,6 +256,15 @@ where
     /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
     /// ```
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item>;
+
+    // using transformations
+
+    fn using<U>(
+        self,
+        using: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Clone + Send;
 
     // computation transformations
 

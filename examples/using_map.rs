@@ -36,8 +36,8 @@ fn par_using() -> u64 {
     input
         .into_par()
         .using(rng)
-        .map_u(|_, i| fibonacci(i) % 1000 + 1)
-        .map_u(|rng: &mut ChaCha20Rng, i: u64| rng.random_range(0..i))
+        .map(|_, i| fibonacci(i) % 1000 + 1)
+        .map(|rng: &mut ChaCha20Rng, i: u64| rng.random_range(0..i))
         .sum()
 }
 
@@ -60,8 +60,8 @@ fn par_using_counting_clones() -> u64 {
         .into_par()
         .num_threads(8)
         .using(Rng(rng))
-        .map_u(|_, i| fibonacci(i) % 1000 + 1)
-        .map_u(|rng: &mut Rng, i: u64| rng.0.random_range(0..i))
+        .map(|_, i| fibonacci(i) % 1000 + 1)
+        .map(|rng: &mut Rng, i: u64| rng.0.random_range(0..i))
         .sum();
 
     let num_clones = COUNTER.load(Ordering::Relaxed);

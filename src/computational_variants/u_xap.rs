@@ -1,7 +1,7 @@
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     computational_variants::u_xap_filter_xap::UParXapFilterXap,
-    computations::{UX, Using, Values, Vector, X, u_map_self_atom},
+    computations::{UX, Using, Values, Vector, u_map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
     u_par_iter::ParIterUsing,
 };
@@ -67,7 +67,7 @@ where
 {
 }
 
-impl<U, I, Vo, M1, R> ParIter<R> for UParXap<U, I, Vo, M1, R>
+impl<U, I, Vo, M1, R> ParIterUsing<U, R> for UParXap<U, I, Vo, M1, R>
 where
     R: ParallelRunner,
     U: Using,
@@ -103,60 +103,71 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
         let (using, params, iter, map1) = self.destruct();
         UParXap::new(using, params, iter, map1)
     }
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
         Out: Send + Sync,
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
-            let vo = x1(u, i);
-            vo.map(map.clone())
+            // TODO: avoid allocation
+            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
+            Vector(vo)
         };
 
         UParXap::new(using, params, iter, x1)
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync,
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let filter = move |_: &mut U::Item, x: &Self::Item| filter(x);
+        let filter = move |u: &mut U::Item, x: &Self::Item| filter(u, x);
         UParXapFilterXap::new(using, params, iter, x1, filter, u_map_self_atom)
     }
 
-    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    fn flat_map<IOut, FlatMap>(
+        self,
+        flat_map: FlatMap,
+    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
     where
         IOut: IntoIterator + Send + Sync,
         IOut::IntoIter: Send + Sync,
         IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: I::Item| {
-            let vo = x1(u, i);
-            vo.flat_map(flat_map.clone())
+        let x1 = move |u: &mut U::Item, t: I::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
+            Vector(vo)
         };
         UParXap::new(using, params, iter, x1)
     }
 
-    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    fn filter_map<Out, FilterMap>(
+        self,
+        filter_map: FilterMap,
+    ) -> impl ParIterUsing<U, R, Item = Out>
     where
         Out: Send + Sync,
-        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone,
+        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: I::Item| {
-            let vo = x1(u, i);
-            vo.flat_map(filter_map.clone())
+        let x1 = move |u: &mut U::Item, t: I::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
+            Vector(vo)
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -183,77 +194,5 @@ where
 
     fn first(self) -> Option<Self::Item> {
         self.ux.next()
-    }
-}
-
-impl<U, I, Vo, M1, R> ParIterUsing<U, R> for UParXap<U, I, Vo, M1, R>
-where
-    R: ParallelRunner,
-    U: Using,
-    I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
-{
-    fn map_u<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
-    where
-        Out: Send + Sync,
-        Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone,
-    {
-        let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: I::Item| {
-            // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
-            Vector(vo)
-        };
-
-        UParXap::new(using, params, iter, x1)
-    }
-
-    fn filter_u<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
-    where
-        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
-    {
-        let (using, params, iter, x1) = self.destruct();
-        let filter = move |u: &mut U::Item, x: &Self::Item| filter(u, x);
-        UParXapFilterXap::new(using, params, iter, x1, filter, u_map_self_atom)
-    }
-
-    fn flat_map_u<IOut, FlatMap>(
-        self,
-        flat_map: FlatMap,
-    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
-    where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone,
-    {
-        let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, t: I::Item| {
-            // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
-            let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
-            Vector(vo)
-        };
-        UParXap::new(using, params, iter, x1)
-    }
-
-    fn filter_map_u<Out, FilterMap>(
-        self,
-        filter_map: FilterMap,
-    ) -> impl ParIterUsing<U, R, Item = Out>
-    where
-        Out: Send + Sync,
-        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
-    {
-        let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, t: I::Item| {
-            // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
-            let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
-            Vector(vo)
-        };
-        UParXap::new(using, params, iter, x1)
     }
 }

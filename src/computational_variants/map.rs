@@ -4,7 +4,6 @@ use crate::{
     computational_variants::u_map::UParMap,
     computations::{Atom, M, UsingClone, Vector, map_self_atom, using_clone},
     runner::{DefaultRunner, ParallelRunner},
-    u_par_iter::IntoParIterUsing,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -97,6 +96,21 @@ where
         ParMap::new(params, iter, map)
     }
 
+    // using transformations
+
+    fn using<U>(
+        self,
+        using: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Clone + Send,
+    {
+        let using = using_clone(using);
+        let (params, iter, m1) = self.destruct();
+        let m1 = move |_: &mut U, t: I::Item| m1(t);
+        UParMap::new(using, params, iter, m1)
+    }
+
     // computation transformations
 
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
@@ -162,26 +176,5 @@ where
 
     fn first(self) -> Option<Self::Item> {
         self.m.next()
-    }
-}
-
-impl<I, O, M1, R> IntoParIterUsing<R> for ParMap<I, O, M1, R>
-where
-    R: ParallelRunner,
-    I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
-{
-    fn using<U>(
-        self,
-        using: U,
-    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
-    where
-        U: Clone + Send,
-    {
-        let using = using_clone(using);
-        let (params, iter, m1) = self.destruct();
-        let m1 = move |_: &mut U, t: I::Item| m1(t);
-        UParMap::new(using, params, iter, m1)
     }
 }
