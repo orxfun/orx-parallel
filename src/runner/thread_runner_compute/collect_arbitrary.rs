@@ -5,6 +5,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 // m
 
+#[cfg(test)]
 pub fn m<C, I, O, M1, P>(
     mut runner: C,
     iter: &I,
@@ -49,6 +50,7 @@ pub fn m<C, I, O, M1, P>(
     runner.complete_task(shared_state);
 }
 
+#[cfg(test)]
 pub fn using_m<C, U, I, O, M1, P>(
     mut runner: C,
     mut using: U,

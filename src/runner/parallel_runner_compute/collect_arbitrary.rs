@@ -8,7 +8,8 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 // m
 
-pub fn m_collect<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
+#[cfg(test)]
+pub fn m<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
@@ -50,6 +51,7 @@ where
     (num_spawned, values)
 }
 
+#[cfg(test)]
 pub fn using_m<C, U, I, O, M1, P>(runner: C, m: UsingM<U, I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
@@ -97,11 +99,7 @@ where
 
 // x
 
-pub fn x_collect_in_arbitrary_order<C, I, Vo, M1, P>(
-    runner: C,
-    m: X<I, Vo, M1>,
-    pinned_vec: P,
-) -> (usize, P)
+pub fn x<C, I, Vo, M1, P>(runner: C, m: X<I, Vo, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
@@ -144,7 +142,7 @@ where
     (num_spawned, values)
 }
 
-pub fn using_x_collect_in_arbitrary_order<C, U, I, Vo, M1, P>(
+pub fn using_x_collect<C, U, I, Vo, M1, P>(
     runner: C,
     m: UsingX<U, I, Vo, M1>,
     pinned_vec: P,

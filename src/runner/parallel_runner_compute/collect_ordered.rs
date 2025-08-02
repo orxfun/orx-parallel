@@ -83,11 +83,7 @@ where
 
 // x
 
-pub fn x_collect_ordered<C, I, Vo, M1, P>(
-    runner: C,
-    x: X<I, Vo, M1>,
-    mut pinned_vec: P,
-) -> (usize, P)
+pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, mut pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
