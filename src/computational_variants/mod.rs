@@ -3,6 +3,8 @@ mod tests;
 
 mod map;
 mod par;
+mod u_par;
+mod u_xap_filter_xap;
 mod xap;
 mod xap_filter_xap;
 

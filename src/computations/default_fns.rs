@@ -36,3 +36,10 @@ where
 
 #[inline(always)]
 pub fn reduce_unit(_: (), _: ()) {}
+
+// using
+
+#[inline(always)]
+pub fn u_map_self<U, T>(_: &mut U, input: T) -> T {
+    input
+}
