@@ -6,8 +6,12 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParallelRunnerCompute: ParallelRunner {
-    fn new_collect(params: Params, len: Option<usize>) -> Self {
+    fn collection(params: Params, len: Option<usize>) -> Self {
         Self::new(ComputationKind::Collect, params, len)
+    }
+
+    fn early_return(params: Params, len: Option<usize>) -> Self {
+        Self::new(ComputationKind::EarlyReturn, params, len)
     }
 
     // run

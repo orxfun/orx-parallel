@@ -23,9 +23,9 @@ where
             (true, _) => (0, self.sequential(pinned_vec)),
             #[cfg(test)]
             (false, IterationOrder::Arbitrary) => {
-                collect_arbitrary::m(R::new_collect(p, len), self, pinned_vec)
+                collect_arbitrary::m(R::collection(p, len), self, pinned_vec)
             }
-            (false, _) => collect_ordered::m(R::new_collect(p, len), self, pinned_vec),
+            (false, _) => collect_ordered::m(R::collection(p, len), self, pinned_vec),
         }
     }
 

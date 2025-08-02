@@ -1,7 +1,7 @@
 use crate::runner::thread_runner_compute as thread;
 use crate::{
     computations::{M, UsingM, UsingX, Values, X, Xfx, heap_sort_into},
-    runner::{ParallelRunnerCompute, thread_runner_compute::ThreadRunnerCompute},
+    runner::ParallelRunnerCompute,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;

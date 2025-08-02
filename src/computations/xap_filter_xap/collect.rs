@@ -26,10 +26,10 @@ where
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, self.sequential(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
-                collect_arbitrary::xfx(R::new_collect(p, len), self, pinned_vec)
+                collect_arbitrary::xfx(R::collection(p, len), self, pinned_vec)
             }
             (false, IterationOrder::Ordered) => {
-                collect_ordered::xfx(R::new_collect(p, len), self, pinned_vec)
+                collect_ordered::xfx(R::collection(p, len), self, pinned_vec)
             }
         }
     }
