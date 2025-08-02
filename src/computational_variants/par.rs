@@ -41,7 +41,7 @@ where
         M::new(params, iter, map_self)
     }
 
-    pub fn using_clone<U>(self, using: U) -> UPar<UsingClone<U>, I, R>
+    pub fn using<U>(self, using: U) -> UPar<UsingClone<U>, I, R>
     where
         U: Clone + Send,
     {
