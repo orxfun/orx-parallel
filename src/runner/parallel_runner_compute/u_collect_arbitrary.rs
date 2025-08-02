@@ -1,10 +1,8 @@
 #[cfg(test)]
-use crate::computations::M;
+use crate::computations::UM;
+use crate::computations::{UX, UXfx, Using, Values};
+use crate::runner::ParallelRunnerCompute;
 use crate::runner::thread_runner_compute as thread;
-use crate::{
-    computations::{Values, X, Xfx},
-    runner::ParallelRunnerCompute,
-};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -12,17 +10,18 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 // m
 
 #[cfg(test)]
-pub fn m<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
+pub fn u_m<C, U, I, O, M1, P>(runner: C, m: UM<U, I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
+    U: Using,
     I: ConcurrentIter,
     O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let (_, iter, map1) = m.destruct();
+    let (mut using, _, iter, map1) = m.destruct();
 
     let mut bag: ConcurrentBag<O, P> = pinned_vec.into();
     match iter.try_get_len() {
@@ -38,10 +37,12 @@ where
     let mut num_spawned = 0;
     std::thread::scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+            let u = using.create(num_spawned);
             num_spawned += 1;
             s.spawn(|| {
-                thread::collect_arbitrary::m(
+                thread::u_collect_arbitrary::u_m(
                     runner.new_thread_runner(shared_state),
+                    u,
                     &iter,
                     shared_state,
                     &map1,
@@ -56,18 +57,19 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, pinned_vec: P) -> (usize, P)
+pub fn u_x<C, U, I, Vo, M1, P>(runner: C, x: UX<U, I, Vo, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
+    U: Using,
     I: ConcurrentIter,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let (_, iter, xap1) = x.destruct();
+    let (mut using, _, iter, xap1) = x.destruct();
 
     let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
     match iter.try_get_len() {
@@ -83,10 +85,12 @@ where
     let mut num_spawned = 0;
     std::thread::scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+            let u = using.create(num_spawned);
             num_spawned += 1;
             s.spawn(|| {
-                thread::collect_arbitrary::x(
+                thread::u_collect_arbitrary::u_x(
                     runner.new_thread_runner(shared_state),
+                    u,
                     &iter,
                     shared_state,
                     &xap1,
@@ -101,25 +105,26 @@ where
 
 // xfx
 
-pub fn xfx<C, I, Vt, Vo, M1, F, M2, P>(
+pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2, P>(
     runner: C,
-    xfx: Xfx<I, Vt, Vo, M1, F, M2>,
+    xfx: UXfx<U, I, Vt, Vo, M1, F, M2>,
     pinned_vec: P,
 ) -> (usize, P)
 where
     C: ParallelRunnerCompute,
+    U: Using,
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let (_, iter, xap1, filter, xap2) = xfx.destruct();
+    let (mut using, _, iter, xap1, filter, xap2) = xfx.destruct();
 
     let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
     match iter.try_get_len() {
@@ -135,10 +140,12 @@ where
     let mut num_spawned = 0;
     std::thread::scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+            let u = using.create(num_spawned);
             num_spawned += 1;
             s.spawn(|| {
-                thread::collect_arbitrary::xfx(
+                thread::u_collect_arbitrary::u_xfx(
                     runner.new_thread_runner(shared_state),
+                    u,
                     &iter,
                     shared_state,
                     &xap1,

@@ -1,7 +1,4 @@
-use crate::{
-    ThreadRunner,
-    computations::{Using, Values},
-};
+use crate::{ThreadRunner, computations::Values};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -10,7 +7,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 pub fn u_m<C, U, I, O, M1, P>(
     mut runner: C,
-    mut u: U::Item,
+    mut u: U,
     iter: &I,
     shared_state: &C::SharedState,
     map1: &M1,
@@ -18,9 +15,8 @@ pub fn u_m<C, U, I, O, M1, P>(
     offset: usize,
 ) where
     C: ThreadRunner,
-    U: Using,
     I: ConcurrentIter,
-    M1: Fn(&mut U::Item, I::Item) -> O,
+    M1: Fn(&mut U, I::Item) -> O,
     P: IntoConcurrentPinnedVec<O>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
@@ -61,17 +57,16 @@ pub fn u_m<C, U, I, O, M1, P>(
 
 pub fn u_x<C, U, I, Vo, X1>(
     mut runner: C,
-    mut u: U::Item,
+    mut u: U,
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
 ) -> Vec<(usize, Vo::Item)>
 where
     C: ThreadRunner,
-    U: Using,
     I: ConcurrentIter,
     Vo: Values,
-    X1: Fn(&mut U::Item, I::Item) -> Vo,
+    X1: Fn(&mut U, I::Item) -> Vo,
 {
     let mut collected = Vec::new();
     let out_vec = &mut collected;
@@ -121,7 +116,7 @@ where
 
 pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2>(
     mut runner: C,
-    mut u: U::Item,
+    mut u: U,
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &M1,
@@ -130,14 +125,13 @@ pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2>(
 ) -> Vec<(usize, Vo::Item)>
 where
     C: ThreadRunner,
-    U: Using,
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vt,
-    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U, I::Item) -> Vt,
+    F: Fn(&mut U, &Vt::Item) -> bool + Send + Sync,
+    M2: Fn(&mut U, Vt::Item) -> Vo + Send + Sync,
 {
     let u = &mut u;
     let mut collected = Vec::new();

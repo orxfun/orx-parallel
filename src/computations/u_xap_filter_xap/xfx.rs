@@ -3,7 +3,7 @@ use crate::computations::using::Using;
 use crate::{ChunkSize, IterationOrder, NumThreads, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct Xfx<U, I, Vt, Vo, M1, F, M2>
+pub struct UXfx<U, I, Vt, Vo, M1, F, M2>
 where
     U: Using,
     I: ConcurrentIter,
@@ -22,7 +22,7 @@ where
     xap2: M2,
 }
 
-impl<U, I, Vt, Vo, M1, F, M2> Xfx<U, I, Vt, Vo, M1, F, M2>
+impl<U, I, Vt, Vo, M1, F, M2> UXfx<U, I, Vt, Vo, M1, F, M2>
 where
     U: Using,
     I: ConcurrentIter,
