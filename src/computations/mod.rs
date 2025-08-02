@@ -3,6 +3,8 @@ mod generalized_values;
 mod heap_sort;
 mod map;
 mod u_map;
+mod u_xap;
+mod u_xap_filter_xap;
 mod using;
 mod xap;
 mod xap_filter_xap;

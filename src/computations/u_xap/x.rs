@@ -1,37 +1,42 @@
-use crate::{ChunkSize, IterationOrder, NumThreads, Params, computations::using::Using};
+use crate::{
+    ChunkSize, IterationOrder, NumThreads, Params,
+    computations::{Values, using::Using},
+};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct UM<U, I, O, M1>
+pub struct UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {
     using: U,
     params: Params,
     iter: I,
-    map1: M1,
+    xap1: M1,
 }
 
-impl<U, I, O, M1> UM<U, I, O, M1>
+impl<U, I, Vo, M1> UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {
-    pub fn new(using: U, params: Params, iter: I, map1: M1) -> Self {
+    pub fn new(using: U, params: Params, iter: I, xap1: M1) -> Self {
         Self {
             using,
             params,
             iter,
-            map1,
+            xap1,
         }
     }
 
     pub fn destruct(self) -> (U, Params, I, M1) {
-        (self.using, self.params, self.iter, self.map1)
+        (self.using, self.params, self.iter, self.xap1)
     }
 
     pub fn params(&self) -> Params {
