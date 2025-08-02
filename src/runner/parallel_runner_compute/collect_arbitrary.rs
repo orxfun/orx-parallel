@@ -101,7 +101,7 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, P>(runner: C, m: X<I, Vo, M1>, pinned_vec: P) -> (usize, P)
+pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
@@ -112,7 +112,7 @@ where
 {
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let (_, iter, xap1) = m.destruct();
+    let (_, iter, xap1) = x.destruct();
 
     let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
     match iter.try_get_len() {

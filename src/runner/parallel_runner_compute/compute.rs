@@ -14,6 +14,10 @@ pub trait ParallelRunnerCompute: ParallelRunner {
         Self::new(ComputationKind::EarlyReturn, params, len)
     }
 
+    fn reduce(params: Params, len: Option<usize>) -> Self {
+        Self::new(ComputationKind::Reduce, params, len)
+    }
+
     // run
 
     fn run<I, T>(&self, iter: &I, task: T) -> usize

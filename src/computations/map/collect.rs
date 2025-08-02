@@ -1,8 +1,10 @@
 use super::m::M;
 #[cfg(test)]
 use crate::IterationOrder;
-use crate::runner::ParallelRunner;
-use crate::runner::parallel_runner_compute::*;
+#[cfg(test)]
+use crate::runner::parallel_runner_compute::collect_arbitrary;
+use crate::runner::parallel_runner_compute::collect_ordered;
+use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
