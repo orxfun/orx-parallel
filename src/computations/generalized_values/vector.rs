@@ -240,6 +240,27 @@ where
     }
 
     #[inline]
+    fn u_filter_map_collect_sequential<U, F, M2, P, Vo>(
+        self,
+        u: &mut U,
+        filter: F,
+        map2: M2,
+        vector: &mut P,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        for t in self.0 {
+            if filter(u, &t) {
+                let vo = map2(u, t);
+                vo.push_to_pinned_vec(vector);
+            }
+        }
+    }
+
+    #[inline]
     fn filter_map_collect_arbitrary<F, M2, P, Vo>(
         self,
         filter: F,
