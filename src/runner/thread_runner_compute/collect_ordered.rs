@@ -15,8 +15,7 @@ pub fn m<C, I, O, M1, P>(
 ) where
     C: ThreadRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
+    M1: Fn(I::Item) -> O,
     P: IntoConcurrentPinnedVec<O>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
@@ -64,8 +63,7 @@ pub fn using_m<C, U, I, O, M1, P>(
 ) where
     C: ThreadRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U, I::Item) -> O + Send + Sync,
+    M1: Fn(&mut U, I::Item) -> O,
     P: IntoConcurrentPinnedVec<O>,
 {
     let u = &mut using;
@@ -114,9 +112,8 @@ pub fn x<C, I, Vo, X1>(
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    X1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    X1: Fn(I::Item) -> Vo,
 {
     let mut collected = Vec::new();
     let out_vec = &mut collected;
@@ -172,9 +169,8 @@ pub fn using_x<C, U, I, Vo, X1>(
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    X1: Fn(&mut U, I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    X1: Fn(&mut U, I::Item) -> Vo,
 {
     let mut collected = Vec::new();
     let out_vec = &mut collected;
@@ -233,10 +229,10 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2>(
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vo: Values + Send + Sync,
+    Vt: Values,
+    Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {

@@ -13,9 +13,8 @@ pub fn m<C, I, O, M1, Red>(
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
-    Red: Fn(O, O) -> O + Send + Sync,
+    M1: Fn(I::Item) -> O,
+    Red: Fn(O, O) -> O,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
@@ -67,19 +66,18 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, Red>(
+pub fn x<C, I, Vo, X1, Red>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
-    map1: &M1,
+    map1: &X1,
     reduce: &Red,
 ) -> Option<Vo::Item>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    X1: Fn(I::Item) -> Vo,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let mut chunk_puller = iter.chunk_puller(0);
@@ -140,7 +138,7 @@ where
     Vt: Values,
     Vo: Values,
     Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
+    M1: Fn(I::Item) -> Vt,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
     X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
