@@ -2,6 +2,8 @@ mod default_fns;
 mod generalized_values;
 mod heap_sort;
 mod map;
+mod u_map;
+mod using;
 mod xap;
 mod xap_filter_xap;
 
