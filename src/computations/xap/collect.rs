@@ -1,5 +1,5 @@
 use super::x::X;
-use crate::runner::parallel_runner_compute::*;
+use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
 use crate::{
     IterationOrder,
     computations::Values,
