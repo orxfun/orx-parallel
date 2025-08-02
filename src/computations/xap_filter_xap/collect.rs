@@ -1,7 +1,7 @@
 use super::xfx::Xfx;
 use crate::IterationOrder;
 use crate::computations::Values;
-use crate::runner::parallel_runner_compute::*;
+use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
