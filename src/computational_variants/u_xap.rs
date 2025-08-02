@@ -195,7 +195,7 @@ where
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {
-    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    fn u_map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
         Out: Send + Sync,
         Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone,
@@ -210,7 +210,7 @@ where
         UParXap::new(using, params, iter, x1)
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
     {
@@ -219,7 +219,10 @@ where
         UParXapFilterXap::new(using, params, iter, x1, filter, u_map_self_atom)
     }
 
-    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
+    fn flat_map<IOut, FlatMap>(
+        self,
+        flat_map: FlatMap,
+    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
     where
         IOut: IntoIterator + Send + Sync,
         IOut::IntoIter: Send + Sync,
@@ -236,7 +239,10 @@ where
         UParXap::new(using, params, iter, x1)
     }
 
-    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    fn filter_map<Out, FilterMap>(
+        self,
+        filter_map: FilterMap,
+    ) -> impl ParIterUsing<U, R, Item = Out>
     where
         Out: Send + Sync,
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
