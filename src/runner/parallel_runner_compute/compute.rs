@@ -1,11 +1,15 @@
 use crate::{
-    ParallelRunner,
+    ParallelRunner, Params,
     computations::Values,
-    runner::{ParallelTask, thread_runner_compute::ThreadRunnerCompute},
+    runner::{ComputationKind, ParallelTask, thread_runner_compute::ThreadRunnerCompute},
 };
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParallelRunnerCompute: ParallelRunner {
+    fn new_collect(params: Params, len: Option<usize>) -> Self {
+        Self::new(ComputationKind::Collect, params, len)
+    }
+
     // run
 
     fn run<I, T>(&self, iter: &I, task: T) -> usize

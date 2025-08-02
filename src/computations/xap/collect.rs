@@ -23,6 +23,29 @@ where
     {
         XCollect::compute::<R>(self, pinned_vec)
     }
+
+    fn sequential<P>(self, mut pinned_vec: P) -> P
+    where
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        let (_, iter, xap1) = self.destruct();
+
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = xap1(i);
+            vt.push_to_pinned_vec(&mut pinned_vec);
+        }
+
+        pinned_vec
+    }
+
+    fn runner<R: ParallelRunner>(&self) -> R {
+        R::new(
+            ComputationKind::Collect,
+            self.params(),
+            self.iter().try_get_len(),
+        )
+    }
 }
 
 pub struct XCollect<I, Vo, M1, P>

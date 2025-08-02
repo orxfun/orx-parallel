@@ -17,14 +17,15 @@ where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<O>,
     {
+        let len = self.iter().try_get_len();
         let p = self.params();
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, self.sequential(pinned_vec)),
             #[cfg(test)]
             (false, IterationOrder::Arbitrary) => {
-                collect_arbitrary::m_collect(self.runner::<R>(), self, pinned_vec)
+                collect_arbitrary::m_collect(R::new_collect(p, len), self, pinned_vec)
             }
-            (false, _) => collect_ordered::m(self.runner::<R>(), self, pinned_vec),
+            (false, _) => collect_ordered::m(R::new_collect(p, len), self, pinned_vec),
         }
     }
 
