@@ -1,8 +1,9 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
     computational_variants::u_xap_filter_xap::UParXapFilterXap,
-    computations::{UX, Using, Values, X, u_map_self_atom},
+    computations::{UX, Using, Values, Vector, X, u_map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
+    u_par_iter::ParIterUsing,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -182,5 +183,30 @@ where
 
     fn first(self) -> Option<Self::Item> {
         self.ux.next()
+    }
+}
+
+impl<U, I, Vo, M1, R> ParIterUsing<U, R> for UParXap<U, I, Vo, M1, R>
+where
+    R: ParallelRunner,
+    U: Using,
+    I: ConcurrentIter,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+{
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    where
+        Out: Send + Sync,
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1) = self.destruct();
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
+            Vector(vo)
+        };
+
+        UParXap::new(using, params, iter, x1)
     }
 }

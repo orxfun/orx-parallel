@@ -3,6 +3,7 @@ use crate::{
     computational_variants::{u_xap::UParXap, u_xap_filter_xap::UParXapFilterXap},
     computations::{Atom, UM, Using, Vector, u_map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
+    u_par_iter::ParIterUsing,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -166,5 +167,27 @@ where
 
     fn first(self) -> Option<Self::Item> {
         self.um.next()
+    }
+}
+
+impl<U, I, O, M1, R> ParIterUsing<U, R> for UParMap<U, I, O, M1, R>
+where
+    R: ParallelRunner,
+    U: Using,
+    I: ConcurrentIter,
+    O: Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync + Clone,
+{
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    where
+        Out: Send + Sync,
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone,
+    {
+        let (using, params, iter, m1) = self.destruct();
+        let m1 = move |u: &mut U::Item, x: I::Item| {
+            let v1 = m1(u, x);
+            map(u, v1)
+        };
+        UParMap::new(using, params, iter, m1)
     }
 }

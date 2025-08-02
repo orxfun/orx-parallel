@@ -1,7 +1,8 @@
 use super::{map::ParMap, xap::ParXap, xap_filter_xap::ParXapFilterXap};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
-    computations::{M, Vector, map_self, map_self_atom},
+    computational_variants::u_par::UPar,
+    computations::{M, UsingClone, Vector, map_self, map_self_atom, using_clone},
     runner::{DefaultRunner, ParallelRunner},
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -38,6 +39,14 @@ where
     fn m(self) -> M<I, I::Item, impl Fn(I::Item) -> I::Item> {
         let (params, iter) = self.destruct();
         M::new(params, iter, map_self)
+    }
+
+    pub fn using_clone<U>(self, using: U) -> UPar<UsingClone<U>, I, R>
+    where
+        U: Clone + Send,
+    {
+        let using = using_clone(using);
+        UPar::new(using, self.params, self.iter)
     }
 }
 

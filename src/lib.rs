@@ -27,6 +27,7 @@ mod parameters;
 /// Module defining the parallel runner trait and the default parallel runner.
 pub mod runner;
 mod special_type_sets;
+mod u_par_iter;
 
 /// Module defining the GenericIterator which is a generalization over
 /// sequential iterator, rayon's parallel iterator and orx-parallel's

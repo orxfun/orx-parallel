@@ -1,7 +1,8 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
-    computations::{UXfx, Using, Values},
+    computations::{UXfx, Using, Values, Vector},
     runner::{DefaultRunner, ParallelRunner},
+    u_par_iter::ParIterUsing,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -210,5 +211,37 @@ where
             IterationOrder::Ordered => self.u_xfx.next::<R>().1,
             IterationOrder::Arbitrary => self.u_xfx.next_any::<R>().1,
         }
+    }
+}
+
+// using
+
+impl<U, I, Vt, Vo, M1, F, M2, R> ParIterUsing<U, R> for UParXapFilterXap<U, I, Vt, Vo, M1, F, M2, R>
+where
+    R: ParallelRunner,
+    U: Using,
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vt::Item: Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+{
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    where
+        Out: Send + Sync,
+        Map: Fn(&mut <U as Using>::Item, Self::Item) -> Out + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |u: &mut U::Item, t: Vt::Item| {
+            // TODO: avoid allocation
+            let vo = x2(u, t);
+            let vo: Vec<_> = vo.values().into_iter().map(|x| map(u, x)).collect();
+            Vector(vo)
+        };
+
+        UParXapFilterXap::new(using, params, iter, x1, f, x2)
     }
 }
