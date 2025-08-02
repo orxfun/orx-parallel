@@ -163,14 +163,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(&mut U, I::Item) -> Vo + Send + Sync,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
-        collect_arbitrary::using_x_collect_in_arbitrary_order(
-            self,
-            using,
-            iter,
-            shared_state,
-            xap1,
-            bag,
-        );
+        collect_arbitrary::using_x(self, using, iter, shared_state, xap1, bag);
     }
 
     // collect

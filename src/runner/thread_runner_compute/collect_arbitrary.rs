@@ -157,7 +157,7 @@ pub fn x<C, I, Vo, X1, P>(
     runner.complete_task(shared_state);
 }
 
-pub fn using_x_collect_in_arbitrary_order<C, U, I, Vo, X1, P>(
+pub fn using_x<C, U, I, Vo, X1, P>(
     mut runner: C,
     mut using: U,
     iter: &I,
@@ -203,6 +203,67 @@ pub fn using_x_collect_in_arbitrary_order<C, U, I, Vo, X1, P>(
                             for x in values_vt.values() {
                                 bag.push(x);
                             }
+                        }
+                    }
+                    None => break,
+                }
+            }
+        }
+
+        runner.complete_chunk(shared_state, chunk_size);
+    }
+
+    runner.complete_task(shared_state);
+}
+
+// xfx
+
+pub fn xfx<C, I, Vt, Vo, M1, F, M2, P>(
+    mut runner: C,
+    iter: &I,
+    shared_state: &C::SharedState,
+    xap1: &M1,
+    filter: &F,
+    xap2: &M2,
+    bag: &ConcurrentBag<Vo::Item, P>,
+) where
+    C: ThreadRunnerCompute,
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(I::Item) -> Vt + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    let mut chunk_puller = iter.chunk_puller(0);
+    let mut item_puller = iter.item_puller();
+
+    loop {
+        let chunk_size = runner.next_chunk_size(shared_state, iter);
+
+        runner.begin_chunk(chunk_size);
+
+        match chunk_size {
+            0 | 1 => match item_puller.next() {
+                Some(value) => {
+                    // TODO: possible to try to get len and bag.extend(values_vt.values()) when available, same holds for chunk below
+                    let values_vt = xap1(value);
+                    values_vt.filter_map_collect_arbitrary(filter, xap2, bag);
+                }
+                None => break,
+            },
+            c => {
+                if c > chunk_puller.chunk_size() {
+                    chunk_puller = iter.chunk_puller(c);
+                }
+
+                match chunk_puller.pull() {
+                    Some(chunk) => {
+                        for value in chunk {
+                            let values_vt = xap1(value);
+                            values_vt.filter_map_collect_arbitrary(filter, xap2, bag);
                         }
                     }
                     None => break,

@@ -2,6 +2,7 @@ use super::xfx::Xfx;
 use crate::IterationOrder;
 use crate::computations::Values;
 use crate::computations::heap_sort::heap_sort_into;
+use crate::runner::parallel_runner_compute::*;
 use crate::runner::{ComputationKind, ParallelRunner, ParallelRunnerCompute, ParallelTask};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -23,7 +24,33 @@ where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
-        XfxCollect::compute::<R>(self, pinned_vec)
+        let len = self.iter().try_get_len();
+        let p = self.params();
+        match (p.is_sequential(), p.iteration_order) {
+            (true, _) => (0, self.sequential(pinned_vec)),
+            (false, IterationOrder::Arbitrary) => {
+                collect_arbitrary::xfx(R::new_collect(p, len), self, pinned_vec)
+            }
+            (false, IterationOrder::Ordered) => {
+                // collect_ordered::x(R::new_collect(p, len), self, pinned_vec)
+                XfxCollect::compute::<R>(self, pinned_vec)
+            }
+        }
+    }
+
+    fn sequential<P>(self, mut pinned_vec: P) -> P
+    where
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        let (_, iter, xap1, filter, xap2) = self.destruct();
+
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = xap1(i);
+            vt.filter_map_collect_sequential(&filter, &xap2, &mut pinned_vec);
+        }
+
+        pinned_vec
     }
 }
 
