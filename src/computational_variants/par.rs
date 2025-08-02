@@ -163,7 +163,10 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
 {
-    fn using<U>(self, using: U) -> impl ParIterUsing<UsingClone<U>, R>
+    fn using<U>(
+        self,
+        using: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + Send,
     {

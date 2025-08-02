@@ -1,4 +1,6 @@
-use crate::{ParIter, Params, computational_variants::Par, runner::DefaultRunner};
+use crate::{
+    Params, computational_variants::Par, runner::DefaultRunner, u_par_iter::IntoParIterUsing,
+};
 use orx_concurrent_iter::IntoConcurrentIter;
 
 /// Trait to convert a source (collection or generator) into a parallel iterator; i.e., [`ParIter`],
@@ -45,14 +47,14 @@ pub trait IntoParIter: IntoConcurrentIter {
     /// let range = 1..5;
     /// assert_eq!(range.into_par().max(), Some(4));
     /// ```
-    fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item>;
+    fn into_par(self) -> impl IntoParIterUsing<DefaultRunner, Item = Self::Item>;
 }
 
 impl<I> IntoParIter for I
 where
     I: IntoConcurrentIter,
 {
-    fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
+    fn into_par(self) -> impl IntoParIterUsing<DefaultRunner, Item = Self::Item> {
         Par::new(Params::default(), self.into_con_iter())
     }
 }

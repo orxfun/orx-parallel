@@ -69,7 +69,10 @@ pub trait IntoParIterUsing<R>: ParIter<R>
 where
     R: ParallelRunner,
 {
-    fn using<U>(self, using: U) -> impl ParIterUsing<UsingClone<U>, R>
+    fn using<U>(
+        self,
+        using: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + Send;
 }

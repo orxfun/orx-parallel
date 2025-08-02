@@ -1,4 +1,6 @@
-use crate::{ParIter, Params, computational_variants::Par, runner::DefaultRunner};
+use crate::{
+    Params, computational_variants::Par, runner::DefaultRunner, u_par_iter::IntoParIterUsing,
+};
 use orx_concurrent_iter::IterIntoConcurrentIter;
 
 /// Any regular iterator implements [`IterIntoParIter`] trait allowing them to be used
@@ -116,7 +118,7 @@ pub trait IterIntoParIter: Iterator {
     ///
     /// assert_eq!(sum_evens, 3782);
     /// ```
-    fn iter_into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item>;
+    fn iter_into_par(self) -> impl IntoParIterUsing<DefaultRunner, Item = Self::Item>;
 }
 
 impl<I> IterIntoParIter for I
@@ -124,7 +126,7 @@ where
     I: Iterator,
     I::Item: Send + Sync,
 {
-    fn iter_into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
+    fn iter_into_par(self) -> impl IntoParIterUsing<DefaultRunner, Item = Self::Item> {
         Par::new(Params::default(), self.iter_into_con_iter())
     }
 }

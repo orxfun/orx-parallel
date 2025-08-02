@@ -222,7 +222,10 @@ where
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
-    fn using<U>(self, using: U) -> impl ParIterUsing<UsingClone<U>, R>
+    fn using<U>(
+        self,
+        using: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + Send,
     {
