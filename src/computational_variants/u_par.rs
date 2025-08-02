@@ -40,6 +40,7 @@ where
         (self.using, self.params, self.iter)
     }
 
+    #[allow(clippy::type_complexity)]
     fn u_m(self) -> UM<U, I, I::Item, impl Fn(&mut U::Item, I::Item) -> I::Item> {
         let (using, params, iter) = self.destruct();
         UM::new(using, params, iter, u_map_self)

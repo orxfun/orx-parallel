@@ -8,6 +8,7 @@ where
     O: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
 {
+    #[allow(clippy::type_complexity)]
     pub fn map<M2, Q>(self, map: M2) -> UM<U, I, Q, impl Fn(&mut U::Item, I::Item) -> Q>
     where
         M2: Fn(&mut U::Item, O) -> Q + Send + Sync,

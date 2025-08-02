@@ -32,16 +32,19 @@ where
     fun: F,
 }
 
+// TODO: new using transformations
+#[allow(dead_code)]
 pub fn using_fun_ignoring_thread_idx<T>(
     mut fun: impl FnMut() -> T,
 ) -> UsingFun<impl FnMut(usize) -> T, T>
 where
     T: Send,
 {
-    let fun = move |_thread_idx: usize| return fun();
+    let fun = move |_thread_idx: usize| fun();
     UsingFun { fun }
 }
 
+#[allow(dead_code)]
 pub fn using_fun_using_thread_idx<T>(
     fun: impl FnMut(usize) -> T,
 ) -> UsingFun<impl FnMut(usize) -> T, T>

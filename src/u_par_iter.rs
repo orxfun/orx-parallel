@@ -1,9 +1,7 @@
 use crate::{
-    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParIter, ParallelRunner,
-    Params, Sum,
-    computations::{
-        Using, UsingClone, reduce_sum, reduce_unit, u_map_clone, u_map_copy, u_map_count,
-    },
+    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParallelRunner, Params,
+    Sum,
+    computations::{Using, reduce_sum, reduce_unit, u_map_clone, u_map_copy, u_map_count},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::cmp::Ordering;

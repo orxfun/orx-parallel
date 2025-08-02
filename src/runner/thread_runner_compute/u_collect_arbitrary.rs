@@ -113,6 +113,7 @@ pub fn u_x<C, U, I, Vo, X1, P>(
 
 // xfx
 
+#[allow(clippy::too_many_arguments)]
 pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2, P>(
     mut runner: C,
     mut u: U,

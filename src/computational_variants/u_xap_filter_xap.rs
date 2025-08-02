@@ -1,5 +1,5 @@
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     computations::{UXfx, Using, Values, Vector},
     runner::{DefaultRunner, ParallelRunner},
     u_par_iter::ParIterUsing,

@@ -16,9 +16,6 @@ pub(crate) use map::M;
 pub(crate) use u_map::UM;
 pub(crate) use u_xap::UX;
 pub(crate) use u_xap_filter_xap::UXfx;
-pub(crate) use using::{
-    Using, UsingClone, UsingFun, using_clone, using_fun_ignoring_thread_idx,
-    using_fun_using_thread_idx,
-};
+pub(crate) use using::{Using, UsingClone, using_clone};
 pub(crate) use xap::X;
 pub(crate) use xap_filter_xap::Xfx;

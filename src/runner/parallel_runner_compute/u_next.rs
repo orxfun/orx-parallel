@@ -1,9 +1,6 @@
 use crate::computations::{UXfx, Using};
 use crate::runner::thread_runner_compute as thread;
-use crate::{
-    computations::{Values, Xfx},
-    runner::ParallelRunnerCompute,
-};
+use crate::{computations::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 // xfx
