@@ -16,18 +16,6 @@ fn fibonacci(n: u64) -> u64 {
     a
 }
 
-fn sequential() -> u64 {
-    let mut rng = ChaCha20Rng::seed_from_u64(42);
-
-    let input: Vec<u64> = (1..N).collect();
-
-    input
-        .into_iter()
-        .map(|i| fibonacci(i) % 1000 + 1)
-        .map(|i| rng.random_range(0..i))
-        .sum()
-}
-
 fn par_using() -> u64 {
     let rng = ChaCha20Rng::seed_from_u64(42);
 
@@ -37,6 +25,7 @@ fn par_using() -> u64 {
         .into_par()
         .using(rng)
         .map(|_, i| fibonacci(i) % 1000 + 1)
+        .filter(|rng: &mut ChaCha20Rng, _: &u64| rng.random_bool(0.4))
         .map(|rng: &mut ChaCha20Rng, i: u64| rng.random_range(0..i))
         .sum()
 }
@@ -61,6 +50,7 @@ fn par_using_counting_clones() -> u64 {
         .num_threads(8)
         .using(Rng(rng))
         .map(|_, i| fibonacci(i) % 1000 + 1)
+        .filter(|rng: &mut Rng, _: &u64| rng.0.random_bool(0.4))
         .map(|rng: &mut Rng, i: u64| rng.0.random_range(0..i))
         .sum();
 
@@ -71,10 +61,6 @@ fn par_using_counting_clones() -> u64 {
 }
 
 fn main() {
-    println!("\n\nsequential result:");
-    let sequential_result = sequential();
-    println!("{sequential_result}");
-
     println!("\n\nparallel result:");
     let parallel_result = par_using();
     println!("{parallel_result}");
