@@ -1,9 +1,7 @@
+use crate::runner::thread_runner_compute as thread;
 use crate::{
     computations::{M, UsingM, UsingX, Values, X, Xfx, heap_sort_into},
-    runner::{
-        ParallelRunnerCompute,
-        thread_runner_compute::{self, ThreadRunnerCompute},
-    },
+    runner::{ParallelRunnerCompute, thread_runner_compute::ThreadRunnerCompute},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -33,8 +31,14 @@ where
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
-                let thread_runner = runner.new_thread_runner(shared_state);
-                thread_runner.m_collect_ordered(&iter, shared_state, &map1, &o_bag, offset);
+                thread::collect_ordered::m(
+                    runner.new_thread_runner(shared_state),
+                    &iter,
+                    shared_state,
+                    &map1,
+                    &o_bag,
+                    offset,
+                );
             });
         }
     });
@@ -67,8 +71,8 @@ where
             num_spawned += 1;
             let using = using.clone();
             s.spawn(|| {
-                let thread_runner = runner.new_thread_runner(shared_state);
-                thread_runner.using_m_collect_ordered(
+                thread::collect_ordered::using_m(
+                    runner.new_thread_runner(shared_state),
                     using,
                     &iter,
                     shared_state,
@@ -108,8 +112,12 @@ where
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             handles.push(s.spawn(|| {
-                let thread_runner = runner.new_thread_runner(shared_state);
-                thread_runner.x_collect_ordered(&iter, shared_state, &xap1)
+                thread::collect_ordered::x(
+                    runner.new_thread_runner(shared_state),
+                    &iter,
+                    shared_state,
+                    &xap1,
+                )
             }));
         }
 
@@ -152,8 +160,13 @@ where
             num_spawned += 1;
             let using = using.clone();
             handles.push(s.spawn(|| {
-                let thread_runner = runner.new_thread_runner(shared_state);
-                thread_runner.using_x_collect_ordered(using, &iter, shared_state, &xap1)
+                thread::collect_ordered::using_x(
+                    runner.new_thread_runner(shared_state),
+                    using,
+                    &iter,
+                    shared_state,
+                    &xap1,
+                )
             }));
         }
 
@@ -199,7 +212,7 @@ where
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             handles.push(s.spawn(|| {
-                thread_runner_compute::collect_ordered::xfx(
+                thread::collect_ordered::xfx(
                     runner.new_thread_runner(shared_state),
                     &iter,
                     shared_state,

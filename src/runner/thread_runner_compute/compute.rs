@@ -35,7 +35,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(I::Item) -> O + Send + Sync,
         P: IntoConcurrentPinnedVec<O>,
     {
-        collect_ordered::m_collect_ordered(self, iter, shared_state, map1, o_bag, offset);
+        collect_ordered::m(self, iter, shared_state, map1, o_bag, offset);
     }
 
     #[cfg(test)]
@@ -70,15 +70,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         M1: Fn(&mut U, I::Item) -> O + Send + Sync,
         P: IntoConcurrentPinnedVec<O>,
     {
-        collect_ordered::using_m_collect_ordered(
-            self,
-            using,
-            iter,
-            shared_state,
-            map1,
-            o_bag,
-            offset,
-        );
+        collect_ordered::using_m(self, using, iter, shared_state, map1, o_bag, offset);
     }
 
     #[cfg(test)]
@@ -112,7 +104,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         Vo::Item: Send + Sync,
         X1: Fn(I::Item) -> Vo + Send + Sync,
     {
-        collect_ordered::x_collect_ordered(self, iter, shared_state, xap1)
+        collect_ordered::x(self, iter, shared_state, xap1)
     }
 
     #[cfg(test)]
@@ -145,7 +137,7 @@ pub(crate) trait ThreadRunnerCompute: ThreadRunner {
         Vo::Item: Send + Sync,
         X1: Fn(&mut U, I::Item) -> Vo + Send + Sync,
     {
-        collect_ordered::using_x_collect_ordered(self, using, iter, shared_state, xap1)
+        collect_ordered::using_x(self, using, iter, shared_state, xap1)
     }
 
     #[cfg(test)]

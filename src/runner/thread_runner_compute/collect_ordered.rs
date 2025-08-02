@@ -5,7 +5,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 // m
 
-pub fn m_collect_ordered<C, I, O, M1, P>(
+pub fn m<C, I, O, M1, P>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
@@ -53,7 +53,7 @@ pub fn m_collect_ordered<C, I, O, M1, P>(
     runner.complete_task(shared_state);
 }
 
-pub fn using_m_collect_ordered<C, U, I, O, M1, P>(
+pub fn using_m<C, U, I, O, M1, P>(
     mut runner: C,
     mut using: U,
     iter: &I,
@@ -105,7 +105,7 @@ pub fn using_m_collect_ordered<C, U, I, O, M1, P>(
 
 // x
 
-pub fn x_collect_ordered<C, I, Vo, X1>(
+pub fn x<C, I, Vo, X1>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
@@ -162,7 +162,7 @@ where
     collected
 }
 
-pub fn using_x_collect_ordered<C, U, I, Vo, X1>(
+pub fn using_x<C, U, I, Vo, X1>(
     mut runner: C,
     mut using: U,
     iter: &I,
