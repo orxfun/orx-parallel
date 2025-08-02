@@ -217,4 +217,14 @@ where
         let x1 = move |u: &mut U::Item, i: Self::Item| Vector(flat_map(u, i));
         UParXap::new(using, params, iter, x1)
     }
+
+    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    where
+        Out: Send + Sync,
+        FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
+    {
+        let (using, params, iter) = self.destruct();
+        let x1 = move |u: &mut U::Item, x: Self::Item| filter_map(u, x);
+        UParXap::new(using, params, iter, x1)
+    }
 }

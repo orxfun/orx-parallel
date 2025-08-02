@@ -235,4 +235,19 @@ where
         };
         UParXap::new(using, params, iter, x1)
     }
+
+    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    where
+        Out: Send + Sync,
+        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1) = self.destruct();
+        let x1 = move |u: &mut U::Item, t: I::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
+            Vector(vo)
+        };
+        UParXap::new(using, params, iter, x1)
+    }
 }

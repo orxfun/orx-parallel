@@ -279,4 +279,20 @@ where
 
         UParXapFilterXap::new(using, params, iter, x1, f, x2)
     }
+
+    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
+    where
+        Out: Send + Sync,
+        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
+    {
+        let (using, params, iter, x1, f, x2) = self.destruct();
+        let x2 = move |u: &mut U::Item, t: Vt::Item| {
+            // TODO: avoid allocation
+            let vo: Vec<_> = x2(u, t).values().into_iter().collect();
+            let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
+            Vector(vo)
+        };
+
+        UParXapFilterXap::new(using, params, iter, x1, f, x2)
+    }
 }
