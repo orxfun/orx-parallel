@@ -1,4 +1,5 @@
 mod collect_into;
+/// Module containing variants of parallel iterators using a mutable variable.
 pub mod computational_variants;
 mod computations;
 mod runner;

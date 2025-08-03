@@ -8,6 +8,7 @@ pub trait Sum<Output> {
     /// Maps the number to owned value.
     fn map(a: Self) -> Output;
 
+    /// Maps the number to owned value.
     fn u_map<U>(_: &mut U, a: Self) -> Output;
 
     /// Returns sum of `a` and `b`.
