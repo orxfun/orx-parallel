@@ -2,7 +2,7 @@ use crate::{
     Params,
     computations::{
         UM,
-        using::{UsingClone, using_fun_using_thread_idx},
+        using::{UsingClone, UsingFun},
     },
 };
 use orx_concurrent_iter::IntoConcurrentIter;
@@ -52,7 +52,7 @@ fn u_m_map_find(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let m = UM::new(using_fun_using_thread_idx(|idx| idx), params, iter, map);
+    let m = UM::new(UsingFun::new(|idx| idx), params, iter, map);
     let output = m.next();
 
     assert_eq!(expected, output);

@@ -2,7 +2,7 @@ use crate::{
     Params,
     computations::{
         UM,
-        using::{UsingClone, using_fun_ignoring_thread_idx},
+        using::{UsingClone, UsingFun},
     },
     runner::DefaultRunner,
 };
@@ -65,7 +65,7 @@ fn m_map_reduce(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let m = UM::new(using_fun_ignoring_thread_idx(|| 42), params, iter, map);
+    let m = UM::new(UsingFun::new(|_| 42), params, iter, map);
     let (_, output) = m.reduce::<DefaultRunner, _>(reduce);
 
     assert_eq!(expected, output);
