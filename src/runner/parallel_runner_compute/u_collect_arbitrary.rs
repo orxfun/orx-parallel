@@ -1,8 +1,9 @@
 #[cfg(test)]
 use crate::computations::UM;
-use crate::computations::{UX, UXfx, Using, Values};
+use crate::computations::{UX, UXfx, Values};
 use crate::runner::ParallelRunnerCompute;
 use crate::runner::thread_runner_compute as thread;
+use crate::using::Using;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

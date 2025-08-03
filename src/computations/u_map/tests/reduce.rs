@@ -1,10 +1,8 @@
 use crate::{
     Params,
-    computations::{
-        UM,
-        using::{UsingClone, UsingFun},
-    },
+    computations::UM,
     runner::DefaultRunner,
+    using::{UsingClone, UsingFun},
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;

@@ -1,5 +1,5 @@
-use crate::computations::using::UsingClone;
 use crate::computations::{Atom, UXfx, Values};
+use crate::using::UsingClone;
 use crate::{Params, runner::DefaultRunner};
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;

@@ -1,10 +1,11 @@
 #[cfg(test)]
 use crate::IterationOrder;
-use crate::computations::{UM, Using};
+use crate::computations::UM;
 #[cfg(test)]
 use crate::runner::parallel_runner_compute::u_collect_arbitrary;
 use crate::runner::parallel_runner_compute::u_collect_ordered;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
+use crate::using::Using;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 

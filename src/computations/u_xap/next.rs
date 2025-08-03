@@ -1,4 +1,5 @@
-use crate::computations::{UX, Using, Values};
+use crate::computations::{UX, Values};
+use crate::using::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<U, I, Vo, M1> UX<U, I, Vo, M1>

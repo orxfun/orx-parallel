@@ -1,5 +1,6 @@
-use crate::computations::{UXfx, Using};
+use crate::computations::UXfx;
 use crate::runner::thread_runner_compute as thread;
+use crate::using::Using;
 use crate::{computations::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 

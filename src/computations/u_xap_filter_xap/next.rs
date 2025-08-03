@@ -1,6 +1,7 @@
-use crate::computations::{UXfx, Using, Values};
+use crate::computations::{UXfx, Values};
 use crate::runner::parallel_runner_compute::{u_next, u_next_any};
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
+use crate::using::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<U, I, Vt, Vo, M1, F, M2> UXfx<U, I, Vt, Vo, M1, F, M2>

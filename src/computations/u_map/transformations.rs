@@ -1,4 +1,5 @@
-use crate::computations::{UM, Using};
+use crate::computations::UM;
+use crate::using::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<U, I, O, M1> UM<U, I, O, M1>

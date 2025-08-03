@@ -1,5 +1,6 @@
-use crate::computations::{UX, Using};
+use crate::computations::UX;
 use crate::runner::parallel_runner_compute::{u_collect_arbitrary, u_collect_ordered};
+use crate::using::Using;
 use crate::{
     IterationOrder,
     computations::Values,

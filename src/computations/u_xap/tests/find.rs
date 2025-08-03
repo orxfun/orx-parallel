@@ -1,6 +1,7 @@
 use crate::{
     Params,
-    computations::{UX, Vector, using::UsingClone},
+    computations::{UX, Vector},
+    using::UsingClone,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
@@ -30,7 +31,6 @@ fn u_x_flat_map_find(n: usize, nt: usize, chunk: usize) {
     let x = UX::new(UsingClone::new(0), params, iter, xmap);
 
     let output = x.next();
-
     assert_eq!(expected, output);
 }
 

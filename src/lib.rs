@@ -28,6 +28,7 @@ mod parameters;
 pub mod runner;
 mod special_type_sets;
 mod u_par_iter;
+mod using;
 
 /// Module defining the GenericIterator which is a generalization over
 /// sequential iterator, rayon's parallel iterator and orx-parallel's

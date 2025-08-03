@@ -1,6 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computations::{M, UM, UX, UXfx, Using, Values, X, Xfx};
+use crate::computations::{M, UM, UX, UXfx, Values, X, Xfx};
 use crate::runner::ParallelRunner;
+use crate::using::Using;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;

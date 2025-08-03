@@ -1,7 +1,8 @@
+use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
     collect_into::ParCollectInto,
-    computations::{UsingClone, UsingFun, map_clone, map_copy, map_count, reduce_sum, reduce_unit},
+    computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, IterationOrder, NumThreads},
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,

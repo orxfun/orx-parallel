@@ -2,8 +2,9 @@ use super::{xap::ParXap, xap_filter_xap::ParXapFilterXap};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computational_variants::u_map::UParMap,
-    computations::{Atom, M, UsingClone, UsingFun, Vector, map_self_atom},
+    computations::{Atom, M, Vector, map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
+    using::{UsingClone, UsingFun},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;

@@ -1,4 +1,5 @@
-use crate::computations::{Atom, UXfx, UsingClone, Values};
+use crate::computations::{Atom, UXfx, Values};
+use crate::using::UsingClone;
 use crate::{IterationOrder, Params, runner::DefaultRunner};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;

@@ -1,6 +1,7 @@
-use crate::computations::{UM, Using};
+use crate::computations::UM;
 use crate::runner::parallel_runner_compute::u_reduce;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
+use crate::using::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<U, I, O, M1> UM<U, I, O, M1>

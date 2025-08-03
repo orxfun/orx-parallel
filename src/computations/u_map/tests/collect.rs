@@ -1,8 +1,4 @@
-use crate::{
-    IterationOrder, Params,
-    computations::{UM, using::UsingClone},
-    runner::DefaultRunner,
-};
+use crate::{IterationOrder, Params, computations::UM, runner::DefaultRunner, using::UsingClone};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;

@@ -1,5 +1,5 @@
 use crate::computations::Values;
-use crate::computations::using::Using;
+use crate::using::Using;
 use crate::{ChunkSize, IterationOrder, NumThreads, Params};
 use orx_concurrent_iter::ConcurrentIter;
 

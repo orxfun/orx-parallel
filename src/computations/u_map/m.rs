@@ -1,4 +1,4 @@
-use crate::{ChunkSize, IterationOrder, NumThreads, Params, computations::using::Using};
+use crate::{ChunkSize, IterationOrder, NumThreads, Params, using::Using};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct UM<U, I, O, M1>

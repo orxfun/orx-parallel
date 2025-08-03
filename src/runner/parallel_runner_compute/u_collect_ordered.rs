@@ -1,6 +1,7 @@
-use crate::computations::{UM, UX, UXfx, Using, Values, heap_sort_into};
+use crate::computations::{UM, UX, UXfx, Values, heap_sort_into};
 use crate::runner::ParallelRunnerCompute;
 use crate::runner::thread_runner_compute as thread;
+use crate::using::Using;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
