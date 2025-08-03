@@ -16,33 +16,84 @@ where
     R: ParallelRunner,
     U: Using,
 {
+    /// Element type of the parallel iterator.
     type Item: Send + Sync;
 
+    /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
 
+    /// Parameters of the parallel iterator.
+    ///
+    /// See [crate::ParIter::params] for details.
     fn params(&self) -> Params;
 
     // params transformations
 
+    /// Sets the number of threads to be used in the parallel execution.
+    /// Integers can be used as the argument with the following mapping:
+    ///
+    /// * `0` -> `NumThreads::Auto`
+    /// * `1` -> `NumThreads::sequential()`
+    /// * `n > 0` -> `NumThreads::Max(n)`
+    ///
+    ///     /// Parameters of the parallel iterator.
+    ///
+    /// See [crate::ParIter::num_threads] for details.
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
+    /// Sets the number of elements to be pulled from the concurrent iterator during the
+    /// parallel execution. When integers are used as argument, the following mapping applies:
+    ///
+    /// * `0` -> `ChunkSize::Auto`
+    /// * `n > 0` -> `ChunkSize::Exact(n)`
+    ///
+    /// Please use the default enum constructor for creating `ChunkSize::Min` variant.
+    ///
+    /// See [crate::ParIter::chunk_size] for details.
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
+    /// Sets the iteration order of the parallel computation.
+    ///
+    /// See [crate::ParIter::iteration_order] for details.
     fn iteration_order(self, collect: IterationOrder) -> Self;
 
+    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
+    ///
+    /// See [crate::ParIter::with_runner] for details.
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIterUsing<U, Q, Item = Self::Item>;
 
     // computation transformations
 
+    /// Takes a closure `map` and creates a parallel iterator which calls that closure on each element.
+    ///
+    /// Unlike [crate::ParIter::map], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
         Out: Send + Sync,
         Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone;
 
+    /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
+    ///
+    /// Unlike [crate::ParIter::filter], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone;
 
+    /// Creates an iterator that works like map, but flattens nested structure.
+    ///
+    /// Unlike [crate::ParIter::flat_map], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
@@ -53,6 +104,18 @@ where
         IOut::Item: Send + Sync,
         FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone;
 
+    /// Creates an iterator that both filters and maps.
+    ///
+    /// The returned iterator yields only the values for which the supplied closure `filter_map` returns `Some(value)`.
+    ///
+    /// `filter_map` can be used to make chains of `filter` and `map` more concise.
+    /// The example below shows how a `map().filter().map()` can be shortened to a single call to `filter_map`.
+    ///
+    /// Unlike [crate::ParIter::filter_map], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
@@ -61,6 +124,13 @@ where
         Out: Send + Sync,
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone;
 
+    /// Does something with each element of an iterator, passing the value on.
+    ///
+    /// Unlike [crate::ParIter::inspect], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn inspect<Operation>(self, operation: Operation) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
         Operation: Fn(&mut U::Item, &Self::Item) + Sync + Send + Clone,
@@ -74,6 +144,13 @@ where
 
     // special item transformations
 
+    /// Creates an iterator which copies all of its elements.
+    ///
+    /// Unlike [crate::ParIter::copied], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn copied<'a, T>(self) -> impl ParIterUsing<U, R, Item = T>
     where
         T: 'a + Copy + Send + Sync,
@@ -82,6 +159,13 @@ where
         self.map(u_map_copy)
     }
 
+    /// Creates an iterator which clones all of its elements.
+    ///
+    /// Unlike [crate::ParIter::cloned], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn cloned<'a, T>(self) -> impl ParIterUsing<U, R, Item = T>
     where
         T: 'a + Clone + Send + Sync,
@@ -90,6 +174,13 @@ where
         self.map(u_map_clone)
     }
 
+    /// Creates an iterator that flattens nested structure.
+    ///
+    /// Unlike [crate::ParIter::flatten], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn flatten(self) -> impl ParIterUsing<U, R, Item = <Self::Item as IntoIterator>::Item>
     where
         Self::Item: IntoIterator,
@@ -104,10 +195,24 @@ where
 
     // collect
 
+    /// Collects all the items from an iterator into a collection.
+    ///
+    /// Unlike [crate::ParIter::collect_into], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn collect_into<C>(self, output: C) -> C
     where
         C: ParCollectInto<Self::Item>;
 
+    /// Transforms an iterator into a collection.
+    ///
+    /// Unlike [crate::ParIter::collect], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn collect<C>(self) -> C
     where
         C: ParCollectInto<Self::Item>,
@@ -118,10 +223,20 @@ where
 
     // reduce
 
+    /// Reduces the elements to a single one, by repeatedly applying a reducing operation.
+    ///
+    /// See the details here: [crate::ParIter::reduce].
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
+    /// Tests if every element of the iterator matches a predicate.
+    ///
+    /// Unlike [crate::ParIter::all], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn all<Predicate>(self, predicate: Predicate) -> bool
     where
         Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
@@ -130,6 +245,13 @@ where
         self.find(violates).is_none()
     }
 
+    /// Tests if any element of the iterator matches a predicate.
+    ///
+    /// Unlike [crate::ParIter::any], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn any<Predicate>(self, predicate: Predicate) -> bool
     where
         Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
@@ -137,10 +259,20 @@ where
         self.find(predicate).is_some()
     }
 
+    /// Consumes the iterator, counting the number of iterations and returning it.
+    ///
+    /// See the details here: [crate::ParIter::count].
     fn count(self) -> usize {
         self.map(u_map_count).reduce(reduce_sum).unwrap_or(0)
     }
 
+    /// Calls a closure on each element of an iterator.
+    ///
+    /// Unlike [crate::ParIter::for_each], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn for_each<Operation>(self, operation: Operation)
     where
         Operation: Fn(&mut U::Item, Self::Item) + Sync + Send,
@@ -149,6 +281,9 @@ where
         let _ = self.map(map).reduce(reduce_unit);
     }
 
+    /// Returns the maximum element of an iterator.
+    ///
+    /// See the details here: [crate::ParIter::max].
     fn max(self) -> Option<Self::Item>
     where
         Self::Item: Ord,
@@ -156,6 +291,9 @@ where
         self.reduce(Ord::max)
     }
 
+    /// Returns the element that gives the maximum value with respect to the specified `compare` function.
+    ///
+    /// See the details here: [crate::ParIter::max_by].
     fn max_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
@@ -167,6 +305,9 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the element that gives the maximum value from the specified function.
+    ///
+    /// See the details here: [crate::ParIter::max_by_key].
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
     where
         Key: Ord,
@@ -179,6 +320,9 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the minimum element of an iterator.
+    ///
+    /// See the details here: [crate::ParIter::min].
     fn min(self) -> Option<Self::Item>
     where
         Self::Item: Ord,
@@ -186,6 +330,9 @@ where
         self.reduce(Ord::min)
     }
 
+    /// Returns the element that gives the minimum value with respect to the specified `compare` function.
+    ///
+    /// See the details here: [crate::ParIter::min_by].
     fn min_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
@@ -197,6 +344,9 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the element that gives the minimum value from the specified function.
+    ///
+    /// See the details here: [crate::ParIter::min_by_key].
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
     where
         Key: Ord,
@@ -209,6 +359,9 @@ where
         self.reduce(reduce)
     }
 
+    /// Sums the elements of an iterator.
+    ///
+    /// See the details here: [crate::ParIter::sum].
     fn sum<Out>(self) -> Out
     where
         Self::Item: Sum<Out>,
@@ -221,8 +374,21 @@ where
 
     // early exit
 
+    /// Returns the first (or any) element of the iterator; returns None if it is empty.
+    ///
+    /// * first element is returned if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element is returned if `IterationOrder::Arbitrary` is set.
+    ///
+    /// See the details here: [crate::ParIter::first].
     fn first(self) -> Option<Self::Item>;
 
+    /// Searches for an element of an iterator that satisfies a `predicate`.
+    ///
+    /// Unlike [crate::ParIter::find], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
         Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
