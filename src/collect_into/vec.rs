@@ -4,8 +4,7 @@ use crate::computations::{M, Values, X, Xfx};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
-use orx_pinned_vec::PinnedVec;
-use orx_split_vec::{GrowthWithConstantTimeAccess, SplitVec};
+use orx_split_vec::SplitVec;
 
 impl<O> ParCollectIntoCore<O> for Vec<O>
 where
