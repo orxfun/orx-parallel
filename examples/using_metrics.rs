@@ -18,21 +18,29 @@ fn fibonacci(n: u64) -> u64 {
 
 #[derive(Default, Debug)]
 struct ThreadMetrics {
+    thread_idx: usize,
     num_items_handled: usize,
+    handled_42: bool,
+    num_filtered_out: usize,
 }
 
 struct ThreadMetricsWriter<'a> {
     metrics_ref: &'a mut ThreadMetrics,
 }
-impl<'a> ThreadMetricsWriter<'a> {
-    fn increment_num_items_handled(&mut self) {
-        self.metrics_ref.num_items_handled += 1;
-    }
-}
 
-#[derive(Default)]
 struct ComputationMetrics {
     thread_metrics: UnsafeCell<[ThreadMetrics; MAX_NUM_THREADS]>,
+}
+impl ComputationMetrics {
+    fn new() -> Self {
+        let mut thread_metrics: [ThreadMetrics; MAX_NUM_THREADS] = Default::default();
+        for i in 0..MAX_NUM_THREADS {
+            thread_metrics[i].thread_idx = i;
+        }
+        Self {
+            thread_metrics: UnsafeCell::new(thread_metrics),
+        }
+    }
 }
 
 impl ComputationMetrics {
@@ -58,7 +66,7 @@ impl ComputationMetrics {
 }
 
 fn main() {
-    let mut metrics = ComputationMetrics::default();
+    let mut metrics = ComputationMetrics::new();
 
     let input: Vec<u64> = (0..N).collect();
 
@@ -69,10 +77,20 @@ fn main() {
         .using(|t| unsafe { metrics.create(t) })
         .map(|m: &mut ThreadMetricsWriter<'_>, i| {
             // collect some useful metrics
-            m.increment_num_items_handled();
+            m.metrics_ref.num_items_handled += 1;
+            m.metrics_ref.handled_42 |= *i == 42;
 
             // actual work
             fibonacci((*i % 50) + 1) % 100
+        })
+        .filter(|m, i| {
+            let is_even = i % 2 == 0;
+
+            if !is_even {
+                m.metrics_ref.num_filtered_out += 1;
+            }
+
+            is_even
         })
         .num_threads(MAX_NUM_THREADS)
         .sum();
@@ -83,8 +101,8 @@ fn main() {
     println!("\n\n");
 
     println!("COLLECTED METRICS PER THREAD");
-    for (thread_idx, metrics) in metrics.thread_metrics.get_mut().iter().enumerate() {
-        println!("* thread {thread_idx}: {metrics:?}");
+    for metrics in metrics.thread_metrics.get_mut().iter() {
+        println!("* {metrics:?}");
     }
     let total_by_metrics: usize = metrics
         .thread_metrics
