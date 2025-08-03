@@ -44,24 +44,22 @@ impl ComputationMetrics {
 }
 
 impl ComputationMetrics {
-    unsafe fn create<'a>(&mut self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
+    unsafe fn create_for_thread<'a>(&mut self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
         // SAFETY: here we create a mutable variable to the thread_idx-th metrics
         // * If we call this method multiple times with the same index,
         //   we create multiple mutable references to the same ThreadMetrics,
         //   which would lead to a race condition.
-        // * We must make sure that `create` is called only once per thread.
-        // * If we use `create` within the `using` call to create mutable values
+        // * We must make sure that `create_for_thread` is called only once per thread.
+        // * If we use `create_for_thread` within the `using` call to create mutable values
         //   used by the threads, we are certain that the parallel computation
         //   will only call this method once per thread; hence, it will not
         //   cause the race condition.
         // * On the other hand, we must ensure that we do not call this method
         //   externally.
         let array = unsafe { &mut *self.thread_metrics.get() };
-        let writer = ThreadMetricsWriter {
+        ThreadMetricsWriter {
             metrics_ref: &mut array[thread_idx],
-        };
-
-        writer
+        }
     }
 }
 
@@ -72,9 +70,9 @@ fn main() {
 
     let sum = input
         .par()
-        // SAFETY: we do not call `create` externally; it is safe if it is called
-        // only by the parallel computation.
-        .using(|t| unsafe { metrics.create(t) })
+        // SAFETY: we do not call `create_for_thread` externally;
+        // it is safe if it is called only by the parallel computation.
+        .using(|t| unsafe { metrics.create_for_thread(t) })
         .map(|m: &mut ThreadMetricsWriter<'_>, i| {
             // collect some useful metrics
             m.metrics_ref.num_items_handled += 1;
