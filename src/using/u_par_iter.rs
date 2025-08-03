@@ -8,7 +8,9 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 use std::cmp::Ordering;
 
-/// Parallel iterator.
+/// Parallel iterator which allows mutable access to a variable of type `U` within its iterator methods.
+///
+/// Note that one variable will be created per thread used by the parallel computation.
 pub trait ParIterUsing<U, R = DefaultRunner>: Sized + Send + Sync
 where
     R: ParallelRunner,

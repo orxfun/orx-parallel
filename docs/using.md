@@ -30,7 +30,7 @@ It might be obvious but to clarify why parallel map can only accept `Fn`, assume
 * This is perfectly fine in a sequential iterator. The counter will be incremented one at a time.
 * However, in parallel computation, multiple threads will be trying to increment this mutable counter at the same time leading to a race condition. Limiting `f` to be `Fn`, we guarantee that our computation is free of race condition.
 
-## A simple example
+## A common use case, random number generators
 
 Consider that we have a computation that requires random numbers. For brevity, random number generators can be considered as iterators returning a series of random numbers as we request. Therefore, it keeps its current position and generates random numbers via a mutable reference.
 
