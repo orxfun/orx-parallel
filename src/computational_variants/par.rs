@@ -94,7 +94,7 @@ where
 
     // using transformations
 
-    fn using<U>(
+    fn using_clone<U>(
         self,
         using: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>

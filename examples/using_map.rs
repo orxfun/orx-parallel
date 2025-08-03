@@ -23,7 +23,7 @@ fn par_using() -> u64 {
 
     input
         .into_par()
-        .using(rng)
+        .using_clone(rng)
         .map(|_, i| fibonacci(i) % 1000 + 1)
         .filter(|rng: &mut ChaCha20Rng, _: &u64| rng.random_bool(0.4))
         .map(|rng: &mut ChaCha20Rng, i: u64| rng.random_range(0..i))
@@ -48,7 +48,7 @@ fn par_using_counting_clones() -> u64 {
     let result = input
         .into_par()
         .num_threads(8)
-        .using(Rng(rng))
+        .using_clone(Rng(rng))
         .map(|_, i| fibonacci(i) % 1000 + 1)
         .filter(|rng: &mut Rng, _: &u64| rng.0.random_bool(0.4))
         .map(|rng: &mut Rng, i: u64| rng.0.random_range(0..i))
