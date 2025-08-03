@@ -1,8 +1,8 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computational_variants::u_xap_filter_xap::UParXapFilterXap,
     computations::{Values, Xfx},
     runner::{DefaultRunner, ParallelRunner},
+    using::computational_variants::UParXapFilterXap,
     using::{UsingClone, UsingFun},
 };
 use orx_concurrent_iter::ConcurrentIter;

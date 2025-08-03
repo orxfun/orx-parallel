@@ -67,7 +67,7 @@ fn sum_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let filter_map = |x: String| x.starts_with('3').then_some(x);
         let filter = |x: &String| x.ends_with('3');
         let flat_map = |x: String| x.chars().map(|x| x.to_string().len()).collect::<Vec<_>>();
-        let expected = input
+        let expected: usize = input
             .clone()
             .into_iter()
             .filter_map(&filter_map)

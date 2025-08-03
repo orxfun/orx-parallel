@@ -1,9 +1,9 @@
 use super::{map::ParMap, xap::ParXap, xap_filter_xap::ParXapFilterXap};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computational_variants::u_par::UPar,
     computations::{M, Vector, map_self, map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
+    using::computational_variants::UPar,
     using::{UsingClone, UsingFun},
 };
 use orx_concurrent_iter::ConcurrentIter;

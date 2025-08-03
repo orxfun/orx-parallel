@@ -1,0 +1,61 @@
+use super::super::thread_runner_compute as thread;
+use crate::using::Using;
+use crate::using::computations::UXfx;
+use crate::{computations::Values, runner::ParallelRunnerCompute};
+use orx_concurrent_iter::ConcurrentIter;
+
+// xfx
+
+pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2>(
+    runner: C,
+    xfx: UXfx<U, I, Vt, Vo, M1, F, M2>,
+) -> (usize, Option<Vo::Item>)
+where
+    C: ParallelRunnerCompute,
+    U: Using,
+    I: ConcurrentIter,
+    Vt: Values + Send + Sync,
+    Vo: Values + Send + Sync,
+    Vo::Item: Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+{
+    let (mut using, _, iter, xap1, filter, xap2) = xfx.destruct();
+
+    let state = runner.new_shared_state();
+    let shared_state = &state;
+
+    let mut num_spawned = 0;
+    let results = std::thread::scope(|s| {
+        let mut handles = vec![];
+
+        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+            let u = using.create(num_spawned);
+            num_spawned += 1;
+            handles.push(s.spawn(|| {
+                thread::u_next::u_xfx(
+                    runner.new_thread_runner(shared_state),
+                    u,
+                    &iter,
+                    shared_state,
+                    &xap1,
+                    &filter,
+                    &xap2,
+                )
+            }))
+        }
+
+        let mut results: Vec<(usize, Vo::Item)> = Vec::with_capacity(handles.len());
+        for x in handles {
+            if let Some(x) = x.join().expect("failed to join the thread") {
+                results.push(x);
+            }
+        }
+        results
+    });
+
+    let acc = results.into_iter().min_by_key(|x| x.0).map(|x| x.1);
+
+    (num_spawned, acc)
+}

@@ -1,9 +1,9 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computational_variants::{u_xap::UParXap, xap_filter_xap::ParXapFilterXap},
+    computational_variants::xap_filter_xap::ParXapFilterXap,
     computations::{Values, X, map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
-    using::{UsingClone, UsingFun},
+    using::{UsingClone, UsingFun, computational_variants::UParXap},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
