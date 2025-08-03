@@ -1,5 +1,4 @@
-use crate::computations::using::using_clone;
-use crate::computations::{Atom, UXfx, Values};
+use crate::computations::{Atom, UXfx, UsingClone, Values};
 use crate::{IterationOrder, Params, runner::DefaultRunner};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
@@ -66,7 +65,7 @@ fn u_xfx_map_filter_collect(
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let mfm = UXfx::new(using_clone(0), params, iter, map1, filter, map2);
+    let mfm = UXfx::new(UsingClone::new(0), params, iter, map1, filter, map2);
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
@@ -122,7 +121,7 @@ fn u_xfx_filter_collect(
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let mfm = UXfx::new(using_clone(0), params, iter, map, filter, map);
+    let mfm = UXfx::new(UsingClone::new(0), params, iter, map, filter, map);
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 
@@ -193,7 +192,7 @@ fn u_xfx_map_filter_map_collect(
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let mfm = UXfx::new(using_clone(0), params, iter, map1, filter, map2);
+    let mfm = UXfx::new(UsingClone::new(0), params, iter, map1, filter, map2);
 
     let (_, mut output) = mfm.collect_into::<DefaultRunner, _>(output);
 

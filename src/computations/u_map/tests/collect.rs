@@ -1,6 +1,6 @@
 use crate::{
     IterationOrder, Params,
-    computations::{UM, using::using_clone},
+    computations::{UM, using::UsingClone},
     runner::DefaultRunner,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
@@ -41,7 +41,7 @@ fn u_m_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) 
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let m = UM::new(using_clone(0), params, iter, map);
+    let m = UM::new(UsingClone::new(0), params, iter, map);
 
     let (_, mut output) = m.collect_into::<DefaultRunner, _>(output);
 

@@ -1,4 +1,4 @@
-use crate::computations::using::using_clone;
+use crate::computations::using::UsingClone;
 use crate::computations::{Atom, UXfx, Values};
 use crate::{Params, runner::DefaultRunner};
 use orx_concurrent_iter::IntoConcurrentIter;
@@ -56,7 +56,14 @@ fn u_xfx_map_filter_find(n: usize, nt: usize, chunk: usize, actual_filter: bool)
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let xfx = UXfx::new(using_clone(0), params, iter, map1, filter, map_self_atom);
+    let xfx = UXfx::new(
+        UsingClone::new(0),
+        params,
+        iter,
+        map1,
+        filter,
+        map_self_atom,
+    );
 
     let (_, output) = xfx.next::<DefaultRunner>();
 
@@ -84,7 +91,7 @@ fn u_xfx_filter_find(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let xfx = UXfx::new(
-        using_clone(0),
+        UsingClone::new(0),
         params,
         iter,
         map_self_atom,
@@ -120,7 +127,7 @@ fn u_xfx_map_filter_map_find(n: usize, nt: usize, chunk: usize, actual_filter: b
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let xfx = UXfx::new(using_clone(0), params, iter, map1, filter, map2);
+    let xfx = UXfx::new(UsingClone::new(0), params, iter, map1, filter, map2);
 
     let (_, output) = xfx.next::<DefaultRunner>();
 
@@ -147,7 +154,14 @@ fn u_xfx_map_filter_find_any(n: usize, nt: usize, chunk: usize, actual_filter: b
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let xfx = UXfx::new(using_clone(0), params, iter, map1, filter, map_self_atom);
+    let xfx = UXfx::new(
+        UsingClone::new(0),
+        params,
+        iter,
+        map1,
+        filter,
+        map_self_atom,
+    );
 
     let (_, output) = xfx.next_any::<DefaultRunner>();
 
@@ -174,7 +188,7 @@ fn u_xfx_filter_find_any(n: usize, nt: usize, chunk: usize, actual_filter: bool)
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let xfx = UXfx::new(
-        using_clone(0),
+        UsingClone::new(0),
         params,
         iter,
         map_self_atom,
@@ -206,7 +220,14 @@ fn u_xfx_map_filter_map_find_any(n: usize, nt: usize, chunk: usize, actual_filte
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let xfx = UXfx::new(using_clone(0), params, iter, map1, filter, map_self_atom);
+    let xfx = UXfx::new(
+        UsingClone::new(0),
+        params,
+        iter,
+        map1,
+        filter,
+        map_self_atom,
+    );
 
     let (_, output) = xfx.next::<DefaultRunner>();
 

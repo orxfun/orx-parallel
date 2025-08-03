@@ -1,7 +1,7 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computational_variants::u_xap_filter_xap::UParXapFilterXap,
-    computations::{UsingClone, Values, Xfx, using_clone},
+    computations::{UsingClone, Values, Xfx},
     runner::{DefaultRunner, ParallelRunner},
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -131,7 +131,7 @@ where
     where
         U: Clone + Send,
     {
-        let using = using_clone(using);
+        let using = UsingClone::new(using);
         let (params, iter, x1, f, x2) = self.destruct();
         let x1 = move |_: &mut U, t: I::Item| x1(t);
         let f = move |_: &mut U, t: &Vt::Item| f(t);

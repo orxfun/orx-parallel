@@ -8,8 +8,10 @@ pub trait Using {
 
 pub struct UsingClone<T: Clone + Send>(T);
 
-pub fn using_clone<T: Clone + Send>(value: T) -> UsingClone<T> {
-    UsingClone(value)
+impl<T: Clone + Send> UsingClone<T> {
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
 }
 
 impl<T: Clone + Send> Using for UsingClone<T> {

@@ -1,6 +1,6 @@
 use crate::{
     IterationOrder, Params,
-    computations::{UX, Vector, using::using_clone},
+    computations::{UX, Vector, using::UsingClone},
     runner::DefaultRunner,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
@@ -43,7 +43,7 @@ fn u_x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOr
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let x = UX::new(using_clone(0), params, iter, xmap);
+    let x = UX::new(UsingClone::new(0), params, iter, xmap);
 
     let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
 
@@ -85,7 +85,7 @@ fn u_x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: Iteration
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let x = UX::new(using_clone(0), params, iter, xmap);
+    let x = UX::new(UsingClone::new(0), params, iter, xmap);
 
     let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
 
