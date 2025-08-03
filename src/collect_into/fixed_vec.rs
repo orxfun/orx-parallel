@@ -3,6 +3,8 @@ use crate::computations::{M, Values, X, Xfx};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
+#[cfg(test)]
+use orx_pinned_vec::PinnedVec;
 
 impl<O> ParCollectIntoCore<O> for FixedVec<O>
 where
