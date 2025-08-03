@@ -5,6 +5,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 const N: u64 = 100_000;
 
+// just some work
 fn fibonacci(n: u64) -> u64 {
     let mut a = 0;
     let mut b = 1;
@@ -22,7 +23,7 @@ fn using() -> u64 {
     input
         .into_par()
         .using(|thread_idx| ChaCha20Rng::seed_from_u64(thread_idx as u64 * 10))
-        .map(|_, i| fibonacci(i) % 1000 + 1)
+        .map(|_, i| fibonacci((i % 50) + 1) % 100)
         .filter(|rng: &mut ChaCha20Rng, _: &u64| rng.random_bool(0.4))
         .map(|rng: &mut ChaCha20Rng, i: u64| rng.random_range(0..i))
         .sum()
@@ -36,7 +37,7 @@ fn using_clone() -> u64 {
     input
         .into_par()
         .using_clone(rng)
-        .map(|_, i| fibonacci(i) % 1000 + 1)
+        .map(|_, i| fibonacci((i % 50) + 1) % 100)
         .filter(|rng: &mut ChaCha20Rng, _: &u64| rng.random_bool(0.4))
         .map(|rng: &mut ChaCha20Rng, i: u64| rng.random_range(0..i))
         .sum()
@@ -61,7 +62,7 @@ fn using_clone_while_counting_clones() -> u64 {
         .into_par()
         .num_threads(8)
         .using_clone(Rng(rng))
-        .map(|_, i| fibonacci(i) % 1000 + 1)
+        .map(|_, i| fibonacci((i % 50) + 1) % 100)
         .filter(|rng: &mut Rng, _: &u64| rng.0.random_bool(0.4))
         .map(|rng: &mut Rng, i: u64| rng.0.random_range(0..i))
         .sum();
