@@ -69,6 +69,15 @@ pub trait Values: Send + Sync {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
+    fn u_acc_reduce<U, X>(
+        self,
+        u: &mut U,
+        acc: Option<Self::Item>,
+        reduce: X,
+    ) -> Option<Self::Item>
+    where
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync;
+
     fn fx_reduce<F, M2, Vo, X>(
         self,
         acc: Option<Vo::Item>,
@@ -84,6 +93,22 @@ pub trait Values: Send + Sync {
         Vo::Item: Send + Sync,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
 
+    fn u_fx_reduce<U, F, M2, Vo, X>(
+        self,
+        u: &mut U,
+        acc: Option<Vo::Item>,
+        filter: F,
+        map2: M2,
+        reduce: X,
+    ) -> Option<Vo::Item>
+    where
+        Self: Sized,
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
+
     fn first(self) -> Option<Self::Item>;
 
     fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
@@ -93,10 +118,29 @@ pub trait Values: Send + Sync {
         Vo: Values,
         Vo::Item: Send + Sync;
 
+    fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
+    where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync;
+
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        P: IntoConcurrentPinnedVec<Vo::Item>;
+
+    fn u_filter_map_collect_sequential<U, F, M2, P, Vo>(
+        self,
+        u: &mut U,
+        filter: F,
+        map2: M2,
+        vector: &mut P,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
         Vo: Values,
         P: IntoConcurrentPinnedVec<Vo::Item>;
 
@@ -112,6 +156,19 @@ pub trait Values: Send + Sync {
         Vo::Item: Send + Sync,
         P: IntoConcurrentPinnedVec<Vo::Item>;
 
+    fn u_filter_map_collect_arbitrary<U, F, M2, P, Vo>(
+        self,
+        u: &mut U,
+        filter: F,
+        map2: M2,
+        bag: &ConcurrentBag<Vo::Item, P>,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>;
+
     fn xfx_collect_heap<F, M2, Vo>(
         self,
         input_idx: usize,
@@ -121,6 +178,19 @@ pub trait Values: Send + Sync {
     ) where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync;
+
+    fn u_xfx_collect_heap<U, F, M2, Vo>(
+        self,
+        u: &mut U,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        vec: &mut Vec<(usize, Vo::Item)>,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
         Vo: Values,
         Vo::Item: Send + Sync;
 

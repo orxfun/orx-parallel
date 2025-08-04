@@ -124,6 +124,19 @@ where
     }
 
     #[inline(always)]
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        match (acc, self) {
+            (Some(x), Some(y)) => Some(reduce(u, x, y)),
+            (Some(x), None) => Some(x),
+            (None, Some(y)) => Some(y),
+            (None, None) => None,
+        }
+    }
+
+    #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
@@ -160,6 +173,32 @@ where
     }
 
     #[inline(always)]
+    fn u_fx_reduce<U, F, M2, Vo, X>(
+        self,
+        u: &mut U,
+        acc: Option<Vo::Item>,
+        filter: F,
+        map2: M2,
+        reduce: X,
+    ) -> Option<Vo::Item>
+    where
+        Self: Sized,
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    {
+        match self {
+            Some(x) if filter(u, &x) => {
+                let vo = map2(u, x);
+                vo.u_acc_reduce(u, acc, reduce)
+            }
+            _ => acc,
+        }
+    }
+
+    #[inline(always)]
     fn first(self) -> Option<Self::Item> {
         self
     }
@@ -178,6 +217,20 @@ where
         }
     }
 
+    #[inline(always)]
+    fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
+    where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+    {
+        match self {
+            Some(x) if filter(u, &x) => map2(u, x).first(),
+            _ => None,
+        }
+    }
+
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
@@ -188,6 +241,27 @@ where
         match self {
             Some(x) if filter(&x) => {
                 let vo = map2(x);
+                vo.push_to_pinned_vec(vector);
+            }
+            _ => {}
+        }
+    }
+
+    fn u_filter_map_collect_sequential<U, F, M2, P, Vo>(
+        self,
+        u: &mut U,
+        filter: F,
+        map2: M2,
+        vector: &mut P,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        match self {
+            Some(x) if filter(u, &x) => {
+                let vo = map2(u, x);
                 vo.push_to_pinned_vec(vector);
             }
             _ => {}
@@ -215,6 +289,28 @@ where
         }
     }
 
+    fn u_filter_map_collect_arbitrary<U, F, M2, P, Vo>(
+        self,
+        u: &mut U,
+        filter: F,
+        map2: M2,
+        bag: &ConcurrentBag<Vo::Item, P>,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        match self {
+            Some(x) if filter(u, &x) => {
+                let vo = map2(u, x);
+                vo.push_to_bag(bag);
+            }
+            _ => {}
+        }
+    }
+
     fn xfx_collect_heap<F, M2, Vo>(
         self,
         input_idx: usize,
@@ -230,6 +326,28 @@ where
         match self {
             Some(x) if filter(&x) => {
                 let vo = map2(x);
+                vo.push_to_vec_with_idx(input_idx, vec);
+            }
+            _ => {}
+        }
+    }
+
+    fn u_xfx_collect_heap<U, F, M2, Vo>(
+        self,
+        u: &mut U,
+        input_idx: usize,
+        filter: F,
+        map2: M2,
+        vec: &mut Vec<(usize, Vo::Item)>,
+    ) where
+        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
+        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        Vo: Values,
+        Vo::Item: Send + Sync,
+    {
+        match self {
+            Some(x) if filter(u, &x) => {
+                let vo = map2(u, x);
                 vo.push_to_vec_with_idx(input_idx, vec);
             }
             _ => {}

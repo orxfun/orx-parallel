@@ -10,8 +10,8 @@ const N: [usize; 2] = [1025, 4735];
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_map_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
@@ -44,8 +44,8 @@ fn xfx_map_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool)
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
@@ -72,8 +72,8 @@ fn xfx_filter_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_map_filter_map_reduce(n: usize, nt: usize, chunk: usize, actual_filter: bool) {

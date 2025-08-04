@@ -28,8 +28,8 @@ where
         (self.params, self.iter, self.xap1)
     }
 
-    pub fn params(&self) -> &Params {
-        &self.params
+    pub fn params(&self) -> Params {
+        self.params
     }
 
     pub fn num_threads(&mut self, num_threads: impl Into<NumThreads>) {

@@ -1,8 +1,10 @@
 use super::{xap::ParXap, xap_filter_xap::ParXapFilterXap};
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::{Atom, M, Vector, map_self_atom},
     runner::{DefaultRunner, ParallelRunner},
+    using::computational_variants::UParMap,
+    using::{UsingClone, UsingFun},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -69,7 +71,7 @@ where
         self.m.iter()
     }
 
-    fn params(&self) -> &Params {
+    fn params(&self) -> Params {
         self.m.params()
     }
 
@@ -93,6 +95,35 @@ where
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
         let (params, iter, map) = self.destruct();
         ParMap::new(params, iter, map)
+    }
+
+    // using transformations
+
+    fn using<U, F>(
+        self,
+        using: F,
+    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Send,
+        F: FnMut(usize) -> U,
+    {
+        let using = UsingFun::new(using);
+        let (params, iter, m1) = self.destruct();
+        let m1 = move |_: &mut U, t: I::Item| m1(t);
+        UParMap::new(using, params, iter, m1)
+    }
+
+    fn using_clone<U>(
+        self,
+        using: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Clone + Send,
+    {
+        let using = UsingClone::new(using);
+        let (params, iter, m1) = self.destruct();
+        let m1 = move |_: &mut U, t: I::Item| m1(t);
+        UParMap::new(using, params, iter, m1)
     }
 
     // computation transformations

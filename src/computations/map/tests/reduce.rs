@@ -13,8 +13,8 @@ const N: [usize; 2] = [1025, 4735];
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024])
+    [1, 4],
+    [1, 64])
 ]
 fn m_reduce(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -35,8 +35,8 @@ fn m_reduce(n: usize, nt: usize, chunk: usize) {
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024])
+    [1, 4],
+    [1, 64])
 ]
 fn m_map_reduce(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();

@@ -26,9 +26,9 @@ where
 
     /// Find-any computation for the generic iterator.
     ///
-    /// See [`find_any`] for details.
+    /// See [`first`] for details.
     ///
-    /// [`find_any`]: crate::ParIter::find_any
+    /// [`first`]: crate::ParIter::first
     pub fn find_any<Predicate>(self, predicate: Predicate) -> Option<T>
     where
         Predicate: Fn(&T) -> bool + Send + Sync + Clone,

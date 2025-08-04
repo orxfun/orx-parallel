@@ -3,6 +3,8 @@ use crate::computations::{M, Values, X, Xfx};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
+#[cfg(test)]
+use orx_pinned_vec::PinnedVec;
 
 impl<O> ParCollectIntoCore<O> for FixedVec<O>
 where
@@ -37,7 +39,7 @@ where
         FixedVec::from(vec.x_collect_into::<R, _, _, _>(x))
     }
 
-    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, mfm: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
+    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -49,7 +51,7 @@ where
         M2: Fn(Vt::Item) -> Vo + Send + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.xfx_collect_into::<R, _, _, _, _, _, _>(mfm))
+        FixedVec::from(vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx))
     }
 
     // test
