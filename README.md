@@ -197,7 +197,9 @@ Nevertheless, the results suggest that the functions are efficiently composed by
 
 ## Configurable
 
-Parallel execution is governed by two main straightforward parameters.
+### Configuration per Computation
+
+Each parallel computation is governed by two main straightforward parameters.
 
 * [`NumThreads`](https://docs.rs/orx-parallel/latest/orx_parallel/enum.NumThreads.html) is the degree of parallelization. This is a *capacity parameter* used to limit the resources that can be used by the computation.
   * `Auto`: All available threads can be used, but not necessarily.
@@ -240,6 +242,10 @@ This gives the consumer, who actually executes the defined computation, complete
 * execute in parallel with any number of threads that it decides.
 
 This is guaranteed by the fact that both consuming computation calls and configuration methods require ownership (`self`) of the iterator.
+
+### Global Configuration
+
+Additionally, maximum number of threads that can be used by parallel computations can be globally bounded by the environment variable `ORX_PARALLEL_MAX_NUM_THREADS`. Please see the corresponding [example](https://github.com/orxfun/orx-parallel/blob/main/examples/max_num_threads_config.rs) for details.
 
 ## Using Transformation for Mutable Variables
 
