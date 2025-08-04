@@ -13,6 +13,9 @@ pub trait Sum<Output> {
 
     /// Returns sum of `a` and `b`.
     fn reduce(a: Output, b: Output) -> Output;
+
+    /// Returns sum of `a` and `b`.
+    fn u_reduce<U>(_: &mut U, a: Output, b: Output) -> Output;
 }
 
 impl<X> Sum<X> for X
@@ -35,6 +38,11 @@ where
 
     #[inline(always)]
     fn reduce(a: X, b: X) -> X {
+        a + b
+    }
+
+    #[inline(always)]
+    fn u_reduce<U>(_: &mut U, a: X, b: X) -> X {
         a + b
     }
 }
@@ -60,6 +68,11 @@ where
 
     #[inline(always)]
     fn reduce(a: X, b: X) -> X {
+        a + b
+    }
+
+    #[inline(always)]
+    fn u_reduce<U>(_: &mut U, a: X, b: X) -> X {
         a + b
     }
 }

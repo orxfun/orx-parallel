@@ -189,7 +189,7 @@ where
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Send + Sync,
     {
         self.ux.reduce::<R, _>(reduce).1
     }

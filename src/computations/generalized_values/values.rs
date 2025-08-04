@@ -69,6 +69,15 @@ pub trait Values: Send + Sync {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
+    fn u_acc_reduce<U, X>(
+        self,
+        u: &mut U,
+        acc: Option<Self::Item>,
+        reduce: X,
+    ) -> Option<Self::Item>
+    where
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync;
+
     fn fx_reduce<F, M2, Vo, X>(
         self,
         acc: Option<Vo::Item>,
@@ -98,7 +107,7 @@ pub trait Values: Send + Sync {
         M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
         Vo: Values,
         Vo::Item: Send + Sync,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
 
     fn first(self) -> Option<Self::Item>;
 

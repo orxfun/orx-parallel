@@ -19,12 +19,19 @@ const N: [usize; 2] = [1025, 4735];
 ]
 fn m_reduce(n: usize, nt: usize, chunk: usize) {
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
-    let reduce = |x: String, y: String| match x < y {
-        true => y,
-        false => x,
+    let reduce = |u: &mut usize, x: String, y: String| {
+        *u += 1;
+        match x < y {
+            true => y,
+            false => x,
+        }
     };
 
-    let expected = input.clone().into_iter().reduce(reduce);
+    let mut u = 0;
+    let expected = input
+        .clone()
+        .into_iter()
+        .reduce(|a, b| reduce(&mut u, a, b));
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
@@ -49,17 +56,21 @@ fn m_map_reduce(n: usize, nt: usize, chunk: usize) {
         *u += 1;
         format!("{}!", x)
     };
-    let reduce = |x: String, y: String| match x < y {
-        true => y,
-        false => x,
+    let reduce = |u: &mut usize, x: String, y: String| {
+        *u += 1;
+        match x < y {
+            true => y,
+            false => x,
+        }
     };
 
     let mut u = 0;
+    let mut u2 = 0;
     let expected = input
         .clone()
         .into_iter()
         .map(|x| map(&mut u, x))
-        .reduce(reduce);
+        .reduce(|a, b| reduce(&mut u2, a, b));
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();

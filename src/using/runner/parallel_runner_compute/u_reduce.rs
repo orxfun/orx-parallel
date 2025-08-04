@@ -13,7 +13,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
-    Red: Fn(O, O) -> O + Send + Sync,
+    Red: Fn(&mut U::Item, O, O) -> O + Send + Sync,
 {
     let (mut using, _, iter, map1) = m.destruct();
 
@@ -48,7 +48,8 @@ where
         results
     });
 
-    let acc = results.into_iter().reduce(reduce);
+    let mut u = using.into_inner();
+    let acc = results.into_iter().reduce(|a, b| reduce(&mut u, a, b));
 
     (num_spawned, acc)
 }
@@ -67,7 +68,7 @@ where
     Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
-    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let (mut using, _, iter, xap1) = x.destruct();
 
@@ -102,7 +103,8 @@ where
         results
     });
 
-    let acc = results.into_iter().reduce(reduce);
+    let mut u = using.into_inner();
+    let acc = results.into_iter().reduce(|a, b| reduce(&mut u, a, b));
 
     (num_spawned, acc)
 }
@@ -124,7 +126,7 @@ where
     M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
     F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
     M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
-    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let (mut using, _, iter, xap1, filter, xap2) = xfx.destruct();
 
@@ -161,7 +163,8 @@ where
         results
     });
 
-    let acc = results.into_iter().reduce(reduce);
+    let mut u = using.into_inner();
+    let acc = results.into_iter().reduce(|a, b| reduce(&mut u, a, b));
 
     (num_spawned, acc)
 }

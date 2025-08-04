@@ -1,9 +1,10 @@
 use crate::{
     ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParallelRunner, Params,
     Sum,
-    computations::{reduce_sum, reduce_unit},
-    using::Using,
-    using::computations::{u_map_clone, u_map_copy, u_map_count},
+    using::{
+        Using,
+        computations::{u_map_clone, u_map_copy, u_map_count, u_reduce_sum, u_reduce_unit},
+    },
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::cmp::Ordering;
@@ -228,7 +229,7 @@ where
     /// See the details here: [crate::ParIter::reduce].
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
+        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Send + Sync;
 
     /// Tests if every element of the iterator matches a predicate.
     ///
@@ -263,7 +264,7 @@ where
     ///
     /// See the details here: [crate::ParIter::count].
     fn count(self) -> usize {
-        self.map(u_map_count).reduce(reduce_sum).unwrap_or(0)
+        self.map(u_map_count).reduce(u_reduce_sum).unwrap_or(0)
     }
 
     /// Calls a closure on each element of an iterator.
@@ -278,7 +279,7 @@ where
         Operation: Fn(&mut U::Item, Self::Item) + Sync + Send,
     {
         let map = |u: &mut U::Item, x| operation(u, x);
-        let _ = self.map(map).reduce(reduce_unit);
+        let _ = self.map(map).reduce(u_reduce_unit);
     }
 
     /// Returns the maximum element of an iterator.
@@ -288,7 +289,7 @@ where
     where
         Self::Item: Ord,
     {
-        self.reduce(Ord::max)
+        self.reduce(|_, a, b| Ord::max(a, b))
     }
 
     /// Returns the element that gives the maximum value with respect to the specified `compare` function.
@@ -298,7 +299,7 @@ where
     where
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
-        let reduce = |x, y| match compare(&x, &y) {
+        let reduce = |_: &mut U::Item, x, y| match compare(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -313,7 +314,7 @@ where
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
-        let reduce = |x, y| match key(&x).cmp(&key(&y)) {
+        let reduce = |_: &mut U::Item, x, y| match key(&x).cmp(&key(&y)) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -327,7 +328,7 @@ where
     where
         Self::Item: Ord,
     {
-        self.reduce(Ord::min)
+        self.reduce(|_, a, b| Ord::min(a, b))
     }
 
     /// Returns the element that gives the minimum value with respect to the specified `compare` function.
@@ -337,7 +338,7 @@ where
     where
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
-        let reduce = |x, y| match compare(&x, &y) {
+        let reduce = |_: &mut U::Item, x, y| match compare(&x, &y) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };
@@ -352,7 +353,7 @@ where
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
-        let reduce = |x, y| match get_key(&x).cmp(&get_key(&y)) {
+        let reduce = |_: &mut U::Item, x, y| match get_key(&x).cmp(&get_key(&y)) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };
@@ -368,7 +369,7 @@ where
         Out: Send + Sync,
     {
         self.map(Self::Item::u_map)
-            .reduce(Self::Item::reduce)
+            .reduce(Self::Item::u_reduce)
             .unwrap_or(Self::Item::zero())
     }
 

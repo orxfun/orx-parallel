@@ -124,6 +124,19 @@ where
     }
 
     #[inline(always)]
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        match (acc, self) {
+            (Some(x), Some(y)) => Some(reduce(u, x, y)),
+            (Some(x), None) => Some(x),
+            (None, Some(y)) => Some(y),
+            (None, None) => None,
+        }
+    }
+
+    #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
         F: Fn(&Self::Item) -> bool + Send + Sync,
@@ -174,12 +187,12 @@ where
         M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
         Vo: Values,
         Vo::Item: Send + Sync,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         match self {
             Some(x) if filter(u, &x) => {
                 let vo = map2(u, x);
-                vo.acc_reduce(acc, reduce)
+                vo.u_acc_reduce(u, acc, reduce)
             }
             _ => acc,
         }

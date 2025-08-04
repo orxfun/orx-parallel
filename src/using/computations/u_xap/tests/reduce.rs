@@ -24,12 +24,21 @@ fn u_x_flat_map_reduce(n: usize, nt: usize, chunk: usize) {
         *u += 1;
         Vector(fmap(x))
     };
-    let reduce = |x: String, y: String| match x > y {
-        true => x,
-        false => y,
+
+    let reduce = |u: &mut usize, x: String, y: String| {
+        *u += 1;
+        match x < y {
+            true => y,
+            false => x,
+        }
     };
 
-    let expected = input.clone().into_iter().flat_map(fmap).reduce(reduce);
+    let mut u = 0;
+    let expected = input
+        .clone()
+        .into_iter()
+        .flat_map(fmap)
+        .reduce(|a, b| reduce(&mut u, a, b));
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
@@ -52,12 +61,20 @@ fn u_x_filter_map_reduce(n: usize, nt: usize, chunk: usize) {
         *u += 1;
         Vector(fmap(x))
     };
-    let reduce = |x: String, y: String| match x > y {
-        true => x,
-        false => y,
+    let reduce = |u: &mut usize, x: String, y: String| {
+        *u += 1;
+        match x < y {
+            true => y,
+            false => x,
+        }
     };
 
-    let expected = input.clone().into_iter().filter_map(fmap).reduce(reduce);
+    let mut u = 0;
+    let expected = input
+        .clone()
+        .into_iter()
+        .filter_map(fmap)
+        .reduce(|a, b| reduce(&mut u, a, b));
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();

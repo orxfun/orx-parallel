@@ -123,6 +123,17 @@ where
     }
 
     #[inline(always)]
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        match acc {
+            Some(x) => Some(reduce(u, x, self.0)),
+            None => Some(self.0),
+        }
+    }
+
+    #[inline(always)]
     fn fx_reduce<F, M2, Vo, X>(
         self,
         acc: Option<Vo::Item>,
@@ -159,10 +170,10 @@ where
         M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
         Vo: Values,
         Vo::Item: Send + Sync,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         match filter(u, &self.0) {
-            true => map2(u, self.0).acc_reduce(acc, reduce),
+            true => map2(u, self.0).u_acc_reduce(u, acc, reduce),
             false => acc,
         }
     }

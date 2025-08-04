@@ -15,8 +15,9 @@ where
     C: ThreadRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U, I::Item) -> O,
-    Red: Fn(O, O) -> O,
+    Red: Fn(&mut U, O, O) -> O,
 {
+    let u = &mut u;
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
 
@@ -29,9 +30,9 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    let y = map1(&mut u, i);
+                    let y = map1(u, i);
                     acc = match acc {
-                        Some(x) => Some(reduce(x, y)),
+                        Some(x) => Some(reduce(u, x, y)),
                         None => Some(y),
                     };
                 }
@@ -43,14 +44,26 @@ where
                 }
 
                 match chunk_puller.pull() {
-                    Some(chunk) => {
-                        let res = chunk.map(|i| map1(&mut u, i)).reduce(reduce);
+                    Some(mut chunk) => {
                         acc = match acc {
-                            Some(x) => match res {
-                                Some(y) => Some(reduce(x, y)),
-                                None => Some(x),
+                            Some(mut acc) => {
+                                for a in chunk {
+                                    let a = map1(u, a);
+                                    acc = reduce(u, acc, a);
+                                }
+                                Some(acc)
+                            }
+                            None => match chunk.next() {
+                                Some(a) => {
+                                    let mut acc = map1(u, a);
+                                    for a in chunk {
+                                        let a = map1(u, a);
+                                        acc = reduce(u, acc, a);
+                                    }
+                                    Some(acc)
+                                }
+                                None => None,
                             },
-                            None => res,
                         };
                     }
                     None => break,
@@ -80,8 +93,10 @@ where
     I: ConcurrentIter,
     Vo: Values,
     X1: Fn(&mut U, I::Item) -> Vo,
-    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Red: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
+    let u = &mut u;
+
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
 
@@ -94,8 +109,8 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    let vo = map1(&mut u, i);
-                    acc = vo.acc_reduce(acc, reduce);
+                    let vo = map1(u, i);
+                    acc = vo.u_acc_reduce(u, acc, reduce);
                 }
                 None => break,
             },
@@ -107,8 +122,8 @@ where
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         for i in chunk {
-                            let vo = map1(&mut u, i);
-                            acc = vo.acc_reduce(acc, reduce);
+                            let vo = map1(u, i);
+                            acc = vo.u_acc_reduce(u, acc, reduce);
                         }
                     }
                     None => break,
@@ -145,7 +160,7 @@ where
     M1: Fn(&mut U, I::Item) -> Vt,
     F: Fn(&mut U, &Vt::Item) -> bool + Send + Sync,
     M2: Fn(&mut U, Vt::Item) -> Vo + Send + Sync,
-    X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
 {
     let u = &mut u;
     let mut chunk_puller = iter.chunk_puller(0);

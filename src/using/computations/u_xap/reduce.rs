@@ -16,7 +16,7 @@ where
     pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
     where
         R: ParallelRunner,
-        Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         let len = self.iter().try_get_len();
         let p = self.params();

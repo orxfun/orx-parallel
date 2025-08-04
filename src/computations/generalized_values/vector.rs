@@ -134,6 +134,19 @@ where
         }
     }
 
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    where
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+    {
+        let reduced = self.0.into_iter().reduce(|a, b| reduce(u, a, b));
+        match (acc, reduced) {
+            (Some(x), Some(y)) => Some(reduce(u, x, y)),
+            (Some(x), None) => Some(x),
+            (None, Some(y)) => Some(y),
+            (None, None) => None,
+        }
+    }
+
     #[inline(always)]
     fn fx_reduce<F, M2, Vo, X>(
         self,
@@ -175,12 +188,12 @@ where
         M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
         Vo: Values,
         Vo::Item: Send + Sync,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         for t in self.0 {
             if filter(u, &t) {
                 let vo = map2(u, t);
-                acc = vo.acc_reduce(acc, &reduce);
+                acc = vo.u_acc_reduce(u, acc, &reduce);
             }
         }
 
