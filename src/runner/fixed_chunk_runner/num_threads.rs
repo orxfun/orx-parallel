@@ -1,7 +1,6 @@
-use crate::parameters::NumThreads;
+use crate::{env::MAX_NUM_THREADS_ENV_VARIABLE, parameters::NumThreads};
 
 const MAX_UNSET_NUM_THREADS: usize = 8;
-const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_PARALLEL_MAX_NUM_THREADS";
 
 pub fn maximum_num_threads(input_len: Option<usize>, num_threads: NumThreads) -> usize {
     let max_num_threads = max_num_threads_by_env_variable().unwrap_or(usize::MAX);

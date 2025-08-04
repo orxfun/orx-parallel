@@ -15,6 +15,7 @@ mod collect_into;
 /// Module containing variants of parallel iterators.
 pub mod computational_variants;
 mod computations;
+mod env;
 mod into_par_iter;
 /// Module for creating special iterators.
 pub mod iter;
