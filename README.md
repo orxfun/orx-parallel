@@ -241,6 +241,42 @@ This gives the consumer, who actually executes the defined computation, complete
 
 This is guaranteed by the fact that both consuming computation calls and configuration methods require ownership (`self`) of the iterator.
 
+## Using Transformation for Mutable Variables
+
+Iterator methods allow us to define expressive computations using closures. These closures are often `FnMut` for sequential iterators allowing to mutably capture variables from the scope. It is clear that this is not possible for parallel iterators due to the fact that it would lead to race condition since multiple threads will have access to the captured solution. Therefore, parallel counterpart of the iterator methods often accept closures implementing `Fn`.
+
+However, it is necessary to have mutable variables for certain programs. A very common example is computations requiring random number generators which are stateful and can create random numbers only with a mutable reference.
+
+[`using`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.using) transformation aims to provide a general and safe solution to this problem as follows:
+* One mutable variable per thread; hence, no race conditions.
+* The mutable variable is explicitly and mutably accessible by all iterator methods of the parallel iterator obtained by transforming a regular parallel iterator providing the variable to be used.
+
+The following two examples demonstrate the idea and usage; further details can be found in [using.md](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+
+```rust ignore
+input
+    .into_par()
+    .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64)) // <-- explicit using
+    .map(|_, i| fibonacci((i % 50) + 1) % 100)   // rng: &mut ChaCha20Rng
+    .filter(|rng, _: &u64| rng.random_bool(0.4)) // is accessible for
+    .map(|rng, i: u64| rng.random_range(0..i))   // all iter methods
+    .sum()
+
+let (sender, receiver) = channel();
+```
+
+```rust ignore
+let (sender, receiver) = channel();
+(0..5)
+    .into_par()
+    .using_clone(sender)
+    .for_each(|s, x| s.send(x).unwrap());
+
+let mut res: Vec<_> = receiver.iter().collect();
+```
+
+
+
 ## Underlying Approach and Parallel Runners
 
 This crate defines parallel computation by combining two basic aspects.
