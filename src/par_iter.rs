@@ -1,5 +1,6 @@
+use crate::using::{UsingClone, UsingFun};
 use crate::{
-    Params,
+    ParIterUsing, Params,
     collect_into::ParCollectInto,
     computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, IterationOrder, NumThreads},
@@ -32,17 +33,17 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(0).chunk_size(0).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(1).params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(1).unwrap()),
     ///         ChunkSize::Auto,
     ///         IterationOrder::Ordered
@@ -51,7 +52,7 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(4).chunk_size(64).params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(4).unwrap()),
     ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
     ///         IterationOrder::Ordered
@@ -64,14 +65,14 @@ where
     ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
     ///         .iteration_order(IterationOrder::Arbitrary)
     ///         .params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(8).unwrap()),
     ///         ChunkSize::Min(NonZero::new(16).unwrap()),
     ///         IterationOrder::Arbitrary
     ///     )
     /// );
     /// ```
-    fn params(&self) -> &Params;
+    fn params(&self) -> Params;
 
     // params transformations
 
@@ -96,19 +97,19 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(0).chunk_size(0).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// // computation will be executed sequentially on the main thread, no parallelization
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(1).params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(1).unwrap()),
     ///         ChunkSize::Auto,
     ///         IterationOrder::Ordered
@@ -118,7 +119,7 @@ where
     /// // maximum 4 threads can be used
     /// assert_eq!(
     ///     vec.par().num_threads(4).chunk_size(64).params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(4).unwrap()),
     ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
     ///         IterationOrder::Ordered
@@ -132,7 +133,7 @@ where
     ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
     ///         .iteration_order(IterationOrder::Arbitrary)
     ///         .params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(8).unwrap()),
     ///         ChunkSize::Min(NonZero::new(16).unwrap()),
     ///         IterationOrder::Arbitrary
@@ -163,17 +164,17 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(0).chunk_size(0).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(1).params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(1).unwrap()),
     ///         ChunkSize::Auto,
     ///         IterationOrder::Ordered
@@ -184,7 +185,7 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().num_threads(4).chunk_size(64).params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(4).unwrap()),
     ///         ChunkSize::Exact(NonZero::new(64).unwrap()),
     ///         IterationOrder::Ordered
@@ -199,7 +200,7 @@ where
     ///         .chunk_size(ChunkSize::Min(NonZero::new(16).unwrap()))
     ///         .iteration_order(IterationOrder::Arbitrary)
     ///         .params(),
-    ///     &Params::new(
+    ///     Params::new(
     ///         NumThreads::Max(NonZero::new(8).unwrap()),
     ///         ChunkSize::Min(NonZero::new(16).unwrap()),
     ///         IterationOrder::Arbitrary
@@ -222,12 +223,12 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// assert_eq!(
     ///     vec.par().iteration_order(IterationOrder::Ordered).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Ordered)
     /// );
     ///
     /// // results might be collected in arbitrary order
@@ -235,7 +236,7 @@ where
     ///
     /// assert_eq!(
     ///     vec.par().iteration_order(IterationOrder::Arbitrary).params(),
-    ///     &Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
+    ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
     /// );
     /// ```
     fn iteration_order(self, collect: IterationOrder) -> Self;
@@ -256,6 +257,242 @@ where
     /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
     /// ```
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item>;
+
+    // using transformations
+
+    /// Converts the [`ParIter`] into [`ParIterUsing`] which will have access to a mutable reference of the
+    /// used variable throughout the computation.
+    ///
+    /// Note that each used thread will obtain exactly one instance of the variable.
+    ///
+    /// The signature of the `using` closure is `(thread_idx: usize) -> U` which will create an instance of
+    /// `U` with respect to the `thread_idx`. The `thread_idx` is the order of the spawned thread; i.e.,
+    /// if the parallel computation uses 8 threads, the thread indices will be 0, 1, ..., 7.
+    ///
+    /// Details of the **using transformation** can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+    ///
+    /// # Examples
+    ///
+    /// ## Example 1: Channels
+    ///
+    /// The following example is taken from rayon's `for_each_with` documentation and converted to using transformation:
+    ///
+    /// ```ignore
+    /// use orx_parallel::*;
+    /// use std::sync::mpsc::channel;
+    ///
+    /// let (sender, receiver) = channel();
+    ///
+    /// (0..5)
+    ///     .into_par()
+    ///     .using(|_thread_idx| sender.clone())
+    ///     .for_each(|s, x| s.send(x).unwrap());
+    ///
+    /// let mut res: Vec<_> = receiver.iter().collect();
+    ///
+    /// res.sort();
+    ///
+    /// assert_eq!(&res[..], &[0, 1, 2, 3, 4])
+    /// ```
+    ///
+    /// ## Example 2: Random Number Generator
+    ///
+    /// Random number generator is one of the common use cases that is important for a certain class of algorithms.
+    ///
+    /// The following example demonstrates how to safely generate random numbers through mutable references within
+    /// a parallel computation.
+    ///
+    /// Notice the differences between sequential and parallel computation.
+    /// * In sequential computation, a mutable reference to `rng` is captured, while in parallel computation, we
+    ///   explicitly define that we will be `using` a random number generator.
+    /// * Parallel iterator does not mutable capture any variable from the scope; however, using transformation
+    ///   converts the `ParIter` into `ParIterUsing` which allows mutable access within all iterator methods.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use rand::{Rng, SeedableRng};
+    /// use rand_chacha::ChaCha20Rng;
+    ///
+    /// fn random_walk(rng: &mut impl Rng, position: i64, num_steps: usize) -> i64 {
+    ///     (0..num_steps).fold(position, |p, _| random_step(rng, p))
+    /// }
+    ///
+    /// fn random_step(rng: &mut impl Rng, position: i64) -> i64 {
+    ///     match rng.random_bool(0.5) {
+    ///         true => position + 1,  // to right
+    ///         false => position - 1, // to left
+    ///     }
+    /// }
+    ///
+    /// fn input_positions() -> Vec<i64> {
+    ///     (-100..=100).collect()
+    /// }
+    ///
+    /// fn sequential() {
+    ///     let positions = input_positions();
+    ///
+    ///     let mut rng = ChaCha20Rng::seed_from_u64(42);
+    ///     let final_positions: Vec<_> = positions
+    ///         .iter()
+    ///         .copied()
+    ///         .map(|position| random_walk(&mut rng, position, 10))
+    ///         .collect();
+    ///     let sum_final_positions = final_positions.iter().sum::<i64>();
+    /// }
+    ///
+    /// fn parallel() {
+    ///     let positions = input_positions();
+    ///
+    ///     let final_positions: Vec<_> = positions
+    ///         .par()
+    ///         .copied()
+    ///         .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64))
+    ///         .map(|rng, position| random_walk(rng, position, 10))
+    ///         .collect();
+    ///     let sum_final_positions = final_positions.iter().sum::<i64>();
+    /// }
+    ///
+    /// sequential();
+    /// parallel();
+    /// ```
+    ///
+    /// ## Example 3: Metrics Collection
+    ///
+    /// The following example demonstrates how to collect metrics about a parallel computation with `using` transformation and
+    /// some `unsafe` help with interior mutability.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use std::cell::UnsafeCell;
+    ///
+    /// const N: u64 = 1_000;
+    /// const MAX_NUM_THREADS: usize = 4;
+    ///
+    /// // just some work
+    /// fn fibonacci(n: u64) -> u64 {
+    ///     let mut a = 0;
+    ///     let mut b = 1;
+    ///     for _ in 0..n {
+    ///         let c = a + b;
+    ///         a = b;
+    ///         b = c;
+    ///     }
+    ///     a
+    /// }
+    ///
+    /// #[derive(Default, Debug)]
+    /// struct ThreadMetrics {
+    ///     thread_idx: usize,
+    ///     num_items_handled: usize,
+    ///     handled_42: bool,
+    ///     num_filtered_out: usize,
+    /// }
+    ///
+    /// struct ThreadMetricsWriter<'a> {
+    ///     metrics_ref: &'a mut ThreadMetrics,
+    /// }
+    ///
+    /// struct ComputationMetrics {
+    ///     thread_metrics: UnsafeCell<[ThreadMetrics; MAX_NUM_THREADS]>,
+    /// }
+    /// impl ComputationMetrics {
+    ///     fn new() -> Self {
+    ///         let mut thread_metrics: [ThreadMetrics; MAX_NUM_THREADS] = Default::default();
+    ///         for i in 0..MAX_NUM_THREADS {
+    ///             thread_metrics[i].thread_idx = i;
+    ///         }
+    ///         Self {
+    ///             thread_metrics: UnsafeCell::new(thread_metrics),
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// impl ComputationMetrics {
+    ///     unsafe fn create_for_thread<'a>(&mut self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
+    ///         // SAFETY: here we create a mutable variable to the thread_idx-th metrics
+    ///         // * If we call this method multiple times with the same index,
+    ///         //   we create multiple mutable references to the same ThreadMetrics,
+    ///         //   which would lead to a race condition.
+    ///         // * We must make sure that `create_for_thread` is called only once per thread.
+    ///         // * If we use `create_for_thread` within the `using` call to create mutable values
+    ///         //   used by the threads, we are certain that the parallel computation
+    ///         //   will only call this method once per thread; hence, it will not
+    ///         //   cause the race condition.
+    ///         // * On the other hand, we must ensure that we do not call this method
+    ///         //   externally.
+    ///         let array = unsafe { &mut *self.thread_metrics.get() };
+    ///         ThreadMetricsWriter {
+    ///             metrics_ref: &mut array[thread_idx],
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// let mut metrics = ComputationMetrics::new();
+    ///
+    /// let input: Vec<u64> = (0..N).collect();
+    ///
+    /// let sum = input
+    ///     .par()
+    ///     // SAFETY: we do not call `create_for_thread` externally;
+    ///     // it is safe if it is called only by the parallel computation.
+    ///     .using(|t| unsafe { metrics.create_for_thread(t) })
+    ///     .map(|m: &mut ThreadMetricsWriter<'_>, i| {
+    ///         // collect some useful metrics
+    ///         m.metrics_ref.num_items_handled += 1;
+    ///         m.metrics_ref.handled_42 |= *i == 42;
+    ///
+    ///         // actual work
+    ///         fibonacci((*i % 20) + 1) % 100
+    ///     })
+    ///     .filter(|m, i| {
+    ///         let is_even = i % 2 == 0;
+    ///
+    ///         if !is_even {
+    ///             m.metrics_ref.num_filtered_out += 1;
+    ///         }
+    ///
+    ///         is_even
+    ///     })
+    ///     .num_threads(MAX_NUM_THREADS)
+    ///     .sum();
+    ///
+    /// let total_by_metrics: usize = metrics
+    ///     .thread_metrics
+    ///     .get_mut()
+    ///     .iter()
+    ///     .map(|x| x.num_items_handled)
+    ///     .sum();
+    ///
+    /// assert_eq!(N as usize, total_by_metrics);
+    /// ```
+    ///
+    fn using<U, F>(
+        self,
+        using: F,
+    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Send,
+        F: FnMut(usize) -> U;
+
+    /// Converts the [`ParIter`] into [`ParIterUsing`] which will have access to a mutable reference of the
+    /// used variable throughout the computation.
+    ///
+    /// Note that each used thread will obtain exactly one instance of the variable.
+    ///
+    /// Each used thread receives a clone of the provided `value`.
+    /// Note that, `using_clone(value)` can be considered as a shorthand for `using(|_thread_idx| value.clone())`.
+    ///
+    /// Please see [`using`] for examples.
+    ///
+    /// Details of the **using transformation** can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+    ///
+    /// [`using`]: crate::ParIter::using
+    fn using_clone<U>(
+        self,
+        value: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Clone + Send;
 
     // computation transformations
 

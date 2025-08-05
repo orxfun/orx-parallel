@@ -1,5 +1,6 @@
 use crate::computations::{M, Values, X, Xfx};
 use crate::runner::ParallelRunner;
+use crate::using::UParCollectIntoCore;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
@@ -80,6 +81,9 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
 }
 
 /// Collection types into which outputs of a parallel computations can be collected into.
-pub trait ParCollectInto<O: Send + Sync>: ParCollectIntoCore<O> {}
+pub trait ParCollectInto<O: Send + Sync>: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}
 
-impl<O: Send + Sync, C: ParCollectIntoCore<O>> ParCollectInto<O> for C {}
+impl<O: Send + Sync, C> ParCollectInto<O> for C where
+    C: ParCollectIntoCore<O> + UParCollectIntoCore<O>
+{
+}

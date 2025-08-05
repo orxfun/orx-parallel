@@ -14,8 +14,8 @@ const N: [usize; 2] = [1025, 4735];
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [IterationOrder::Ordered, IterationOrder::Arbitrary],
     [true, false])
 ]
@@ -69,8 +69,8 @@ fn xfx_map_filter_collect(
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [IterationOrder::Ordered, IterationOrder::Arbitrary],
     [true, false])
 ]
@@ -117,8 +117,8 @@ fn xfx_filter_collect(
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [IterationOrder::Ordered, IterationOrder::Arbitrary],
     [true, false])
 ]

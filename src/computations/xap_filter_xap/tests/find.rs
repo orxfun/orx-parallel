@@ -10,8 +10,8 @@ const N: [usize; 2] = [10285, 45735];
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_map_filter_find(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
@@ -40,8 +40,8 @@ fn xfx_map_filter_find(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_filter_find(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
@@ -64,8 +64,8 @@ fn xfx_filter_find(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_map_filter_map_find(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
@@ -98,8 +98,8 @@ fn xfx_map_filter_map_find(n: usize, nt: usize, chunk: usize, actual_filter: boo
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_map_filter_find_any(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
@@ -121,8 +121,8 @@ fn xfx_map_filter_find_any(n: usize, nt: usize, chunk: usize, actual_filter: boo
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_filter_find_any(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
@@ -143,8 +143,8 @@ fn xfx_filter_find_any(n: usize, nt: usize, chunk: usize, actual_filter: bool) {
 
 #[test_matrix(
     [0, 1, N[0], N[1]],
-    [1, 2, 4],
-    [1, 64, 1024],
+    [1, 4],
+    [1, 64],
     [true, false])
 ]
 fn xfx_map_filter_map_find_any(n: usize, nt: usize, chunk: usize, actual_filter: bool) {

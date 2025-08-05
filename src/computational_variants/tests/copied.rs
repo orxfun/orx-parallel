@@ -79,7 +79,7 @@ fn copied_cloned_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let filter_map = |x: usize| (x % 3 != 0).then(|| x + 1);
         let filter = |x: &usize| (x % 3 != 1);
         let flat_map = |x: usize| [x, x + 1, x + 2];
-        let expected = input
+        let expected: usize = input
             .iter()
             .copied()
             .filter_map(&filter_map)

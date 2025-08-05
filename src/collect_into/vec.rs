@@ -1,10 +1,10 @@
 use super::par_collect_into::ParCollectIntoCore;
+use crate::collect_into::utils::extend_vec_from_split;
 use crate::computations::{M, Values, X, Xfx};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
-use orx_pinned_vec::PinnedVec;
-use orx_split_vec::{GrowthWithConstantTimeAccess, SplitVec};
+use orx_split_vec::SplitVec;
 
 impl<O> ParCollectIntoCore<O> for Vec<O>
 where
@@ -29,7 +29,7 @@ where
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
                 let split_vec = split_vec.m_collect_into::<R, _, _>(m);
-                extend_from_split(self, split_vec)
+                extend_vec_from_split(self, split_vec)
             }
             Some(len) => {
                 self.reserve(len);
@@ -50,7 +50,7 @@ where
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
-        extend_from_split(self, split_vec)
+        extend_vec_from_split(self, split_vec)
     }
 
     fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
@@ -66,7 +66,7 @@ where
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx);
-        extend_from_split(self, split_vec)
+        extend_vec_from_split(self, split_vec)
     }
 
     // test
@@ -74,19 +74,5 @@ where
     #[cfg(test)]
     fn length(&self) -> usize {
         self.len()
-    }
-}
-
-fn extend_from_split<T, G>(mut initial_vec: Vec<T>, collected_split_vec: SplitVec<T, G>) -> Vec<T>
-where
-    G: GrowthWithConstantTimeAccess,
-{
-    match initial_vec.len() {
-        0 => collected_split_vec.to_vec(),
-        _ => {
-            initial_vec.reserve(collected_split_vec.len());
-            initial_vec.extend(collected_split_vec);
-            initial_vec
-        }
     }
 }
