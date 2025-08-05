@@ -17,6 +17,7 @@ pub fn m<C, I, O, M1, P>(
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O,
     P: IntoConcurrentPinnedVec<O>,
+    O: Send,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller_with_idx();
