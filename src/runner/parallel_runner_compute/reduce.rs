@@ -9,9 +9,9 @@ pub fn m<C, I, O, M1, Red>(runner: C, m: M<I, O, M1>, reduce: Red) -> (usize, Op
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
+    M1: Fn(I::Item) -> O + Sync,
     Red: Fn(O, O) -> O + Sync,
+    O: Send,
 {
     let (_, iter, map1) = m.destruct();
 

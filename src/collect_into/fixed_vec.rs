@@ -21,7 +21,8 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Send + Sync,
+        M1: Fn(I::Item) -> O + Sync,
+        O: Send,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.m_collect_into::<R, _, _>(m))

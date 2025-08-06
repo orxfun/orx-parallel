@@ -23,7 +23,8 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Send + Sync,
+        M1: Fn(I::Item) -> O + Sync,
+        O: Send,
     {
         match m.par_len() {
             None => {

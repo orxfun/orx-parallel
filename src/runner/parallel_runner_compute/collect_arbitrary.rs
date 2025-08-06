@@ -16,8 +16,8 @@ pub fn m<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
+    O: Send,
+    M1: Fn(I::Item) -> O + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
     let capacity_bound = pinned_vec.capacity_bound();

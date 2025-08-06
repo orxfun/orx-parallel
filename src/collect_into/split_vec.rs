@@ -27,7 +27,8 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Send + Sync,
+        M1: Fn(I::Item) -> O + Sync,
+        O: Send,
     {
         split_vec_reserve(&mut self, m.par_len());
         let (_num_spawned, pinned_vec) = m.collect_into::<R, _>(self);
