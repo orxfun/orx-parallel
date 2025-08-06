@@ -7,7 +7,7 @@ use orx_concurrent_iter::ConcurrentIter;
 impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
-    Vo: Values + Send,
+    Vo: Values,
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {

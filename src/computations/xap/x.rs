@@ -4,8 +4,7 @@ use orx_concurrent_iter::ConcurrentIter;
 pub struct X<I, Vo, M1>
 where
     I: ConcurrentIter,
-    Vo: Values + Send,
-    Vo::Item: Send,
+    Vo: Values,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     params: Params,
@@ -16,8 +15,7 @@ where
 impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
-    Vo: Values + Send,
-    Vo::Item: Send,
+    Vo: Values,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     pub fn new(params: Params, iter: I, xap1: M1) -> Self {

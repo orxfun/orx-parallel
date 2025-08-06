@@ -4,7 +4,6 @@ use orx_concurrent_iter::ConcurrentIter;
 impl<I, O, M1> M<I, O, M1>
 where
     I: ConcurrentIter,
-    O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
     pub fn map<M2, Q>(self, map: M2) -> M<I, Q, impl Fn(I::Item) -> Q>
