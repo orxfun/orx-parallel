@@ -36,30 +36,26 @@ pub trait Values {
     fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync;
+        Self::Item: Send;
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>);
 
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync;
+        M: Fn(Self::Item) -> O;
 
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync;
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
 
     fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+        Fm: Fn(Self::Item) -> Option<O>;
 
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync;
+        F: Fn(&Self::Item) -> bool;
 
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where

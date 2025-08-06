@@ -54,7 +54,7 @@ impl<T> Values for Atom<T> {
     fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync,
+        Self::Item: Send,
     {
         unsafe { o_bag.set_value(idx, self.0) };
     }
@@ -67,8 +67,7 @@ impl<T> Values for Atom<T> {
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync,
+        M: Fn(Self::Item) -> O,
     {
         Atom(map(self.0))
     }
@@ -76,7 +75,7 @@ impl<T> Values for Atom<T> {
     #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
     {
         match filter(&self.0) {
             true => Some(self.0),
@@ -87,10 +86,8 @@ impl<T> Values for Atom<T> {
     #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo,
     {
         Vector(flat_map(self.0))
     }
@@ -98,8 +95,7 @@ impl<T> Values for Atom<T> {
     #[inline(always)]
     fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync,
+        Fm: Fn(Self::Item) -> Option<O>,
     {
         filter_map(self.0)
     }

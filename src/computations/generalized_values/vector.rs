@@ -63,7 +63,7 @@ where
     fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync,
+        Self::Item: Send,
     {
         for x in self.0 {
             unsafe { o_bag.set_value(idx, x) }
@@ -80,8 +80,7 @@ where
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync,
+        M: Fn(Self::Item) -> O,
     {
         Vector(self.0.into_iter().map(map))
     }
@@ -89,7 +88,7 @@ where
     #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
     {
         Vector(self.0.into_iter().filter(filter))
     }
@@ -97,10 +96,8 @@ where
     #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo,
     {
         Vector(self.0.into_iter().flat_map(flat_map))
     }
@@ -108,8 +105,7 @@ where
     #[inline(always)]
     fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync,
+        Fm: Fn(Self::Item) -> Option<O>,
     {
         Vector(self.0.into_iter().filter_map(filter_map))
     }
