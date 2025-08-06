@@ -90,7 +90,6 @@ pub trait Values: Send + Sync {
         F: Fn(&Self::Item) -> bool,
         M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item;
 
     fn u_fx_reduce<U, F, M2, Vo, X>(

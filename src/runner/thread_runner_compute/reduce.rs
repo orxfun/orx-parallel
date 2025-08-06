@@ -137,10 +137,9 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send,
     M1: Fn(I::Item) -> Vt,
-    F: Fn(&Vt::Item) -> bool + Sync,
-    M2: Fn(Vt::Item) -> Vo + Sync,
+    F: Fn(&Vt::Item) -> bool,
+    M2: Fn(Vt::Item) -> Vo,
     X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
 {
     let mut chunk_puller = iter.chunk_puller(0);

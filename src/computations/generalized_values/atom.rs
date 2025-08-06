@@ -146,7 +146,6 @@ where
         F: Fn(&Self::Item) -> bool,
         M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
     {
         match filter(&self.0) {
