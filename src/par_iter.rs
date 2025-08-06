@@ -839,7 +839,8 @@ where
     /// ```
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync;
 
     /// Tests if every element of the iterator matches a predicate.
     ///
@@ -867,6 +868,7 @@ where
     /// ```
     fn all<Predicate>(self, predicate: Predicate) -> bool
     where
+        Self::Item: Send,
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         let violates = |x: &Self::Item| !predicate(x);
@@ -899,6 +901,7 @@ where
     /// ```
     fn any<Predicate>(self, predicate: Predicate) -> bool
     where
+        Self::Item: Send,
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.find(predicate).is_some()
@@ -977,6 +980,7 @@ where
     /// ```
     fn max(self) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Self::Item: Ord,
     {
         self.reduce(Ord::max)
@@ -996,6 +1000,7 @@ where
     /// ```
     fn max_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
@@ -1019,6 +1024,7 @@ where
     /// ```
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -1046,6 +1052,7 @@ where
     /// ```
     fn min(self) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Self::Item: Ord,
     {
         self.reduce(Ord::min)
@@ -1065,6 +1072,7 @@ where
     /// ```
     fn min_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
@@ -1088,6 +1096,7 @@ where
     /// ```
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -1173,7 +1182,9 @@ where
     /// // or equivalently,
     /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
-    fn first(self) -> Option<Self::Item>;
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send;
 
     /// Searches for an element of an iterator that satisfies a `predicate`.
     ///
@@ -1219,6 +1230,7 @@ where
     /// ```
     fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
     {
         self.filter(predicate).first()

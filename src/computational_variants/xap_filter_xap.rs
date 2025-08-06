@@ -16,12 +16,10 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vt: Values,
-    Vt::Item: Send + Sync,
     Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     xfx: Xfx<I, Vt, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
@@ -32,12 +30,10 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vt: Values,
-    Vt::Item: Send + Sync,
     Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1, f: F, x2: M2) -> Self {
         Self {
@@ -56,12 +52,10 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vt: Values,
-    Vt::Item: Send + Sync,
     Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
 }
 
@@ -70,12 +64,10 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vt: Values,
-    Vt::Item: Send + Sync,
     Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
 }
 
@@ -84,12 +76,10 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vt: Values,
-    Vt::Item: Send + Sync,
     Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
 
@@ -228,14 +218,18 @@ where
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         self.xfx.reduce::<R, _>(reduce).1
     }
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
         match self.params().iteration_order {
             IterationOrder::Ordered => self.xfx.next::<R>().1,
             IterationOrder::Arbitrary => self.xfx.next_any::<R>().1,

@@ -33,8 +33,7 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        M1: Fn(I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.x_collect_into::<R, _, _, _>(x))
@@ -45,11 +44,10 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vt: Values,
-        Vt::Item: Send + Sync,
         Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        M1: Fn(I::Item) -> Vt + Sync,
+        F: Fn(&Vt::Item) -> bool + Sync,
+        M2: Fn(Vt::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx))
