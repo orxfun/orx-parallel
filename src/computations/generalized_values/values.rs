@@ -147,8 +147,8 @@ pub trait Values: Send + Sync {
         map2: M2,
         bag: &ConcurrentBag<Vo::Item, P>,
     ) where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
         Vo::Item: Send,
         P: IntoConcurrentPinnedVec<Vo::Item>;
