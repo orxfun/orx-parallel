@@ -35,7 +35,7 @@ pub trait Values: Send + Sync {
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync;
+        Self::Item: Send;
 
     fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
@@ -150,7 +150,7 @@ pub trait Values: Send + Sync {
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
         P: IntoConcurrentPinnedVec<Vo::Item>;
 
     fn u_filter_map_collect_arbitrary<U, F, M2, P, Vo>(
@@ -175,8 +175,7 @@ pub trait Values: Send + Sync {
     ) where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values,
-        Vo::Item: Send + Sync;
+        Vo: Values;
 
     fn u_xfx_collect_heap<U, F, M2, Vo>(
         self,

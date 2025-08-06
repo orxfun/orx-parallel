@@ -274,7 +274,7 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
         match self {
@@ -318,7 +318,6 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
     {
         match self {
             Some(x) if filter(&x) => {

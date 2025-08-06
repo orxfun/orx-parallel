@@ -251,7 +251,7 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
         if filter(&self.0) {
@@ -291,7 +291,6 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
     {
         if filter(&self.0) {
             let vo = map2(self.0);
