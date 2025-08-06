@@ -11,7 +11,7 @@ where
     I: ConcurrentIter,
     O: Send + Sync,
     M1: Fn(I::Item) -> O + Send + Sync,
-    Red: Fn(O, O) -> O + Send + Sync,
+    Red: Fn(O, O) -> O + Sync,
 {
     let (_, iter, map1) = m.destruct();
 
@@ -58,7 +58,7 @@ where
     Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
-    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let (_, iter, xap1) = x.destruct();
 
@@ -112,7 +112,7 @@ where
     M1: Fn(I::Item) -> Vt + Sync,
     F: Fn(&Vt::Item) -> bool + Sync,
     M2: Fn(Vt::Item) -> Vo + Sync,
-    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let (_, iter, xap1, filter, xap2) = xfx.destruct();
 
