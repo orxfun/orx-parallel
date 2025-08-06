@@ -74,8 +74,7 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone;
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone;
 
     /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
     ///
@@ -86,7 +85,7 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
-        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone;
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone;
 
     /// Creates an iterator that works like map, but flattens nested structure.
     ///
@@ -100,10 +99,8 @@ where
         flat_map: FlatMap,
     ) -> impl ParIterUsing<U, R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone;
+        IOut: IntoIterator,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone;
 
     /// Creates an iterator that both filters and maps.
     ///
@@ -122,8 +119,7 @@ where
         filter_map: FilterMap,
     ) -> impl ParIterUsing<U, R, Item = Out>
     where
-        Out: Send + Sync,
-        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone;
+        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone;
 
     /// Does something with each element of an iterator, passing the value on.
     ///
@@ -134,8 +130,7 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn inspect<Operation>(self, operation: Operation) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
-        Operation: Fn(&mut U::Item, &Self::Item) + Sync + Send + Clone,
-        Self::Item: Send + Sync,
+        Operation: Fn(&mut U::Item, &Self::Item) + Sync + Clone,
     {
         let map = move |u: &mut U::Item, x: Self::Item| {
             operation(u, &x);
@@ -155,7 +150,7 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn copied<'a, T>(self) -> impl ParIterUsing<U, R, Item = T>
     where
-        T: 'a + Copy + Send + Sync,
+        T: 'a + Copy,
         Self: ParIterUsing<U, R, Item = &'a T>,
     {
         self.map(u_map_copy)
@@ -170,7 +165,7 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn cloned<'a, T>(self) -> impl ParIterUsing<U, R, Item = T>
     where
-        T: 'a + Clone + Send + Sync,
+        T: 'a + Clone,
         Self: ParIterUsing<U, R, Item = &'a T>,
     {
         self.map(u_map_clone)
@@ -186,10 +181,6 @@ where
     fn flatten(self) -> impl ParIterUsing<U, R, Item = <Self::Item as IntoIterator>::Item>
     where
         Self::Item: IntoIterator,
-        <Self::Item as IntoIterator>::IntoIter: Send + Sync,
-        <Self::Item as IntoIterator>::Item: Send + Sync,
-        R: Send + Sync,
-        Self: Send + Sync,
     {
         let map = |_: &mut U::Item, e: Self::Item| e.into_iter();
         self.flat_map(map)
@@ -230,7 +221,8 @@ where
     /// See the details here: [crate::ParIter::reduce].
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Send + Sync;
+        Self::Item: Send,
+        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync;
 
     /// Tests if every element of the iterator matches a predicate.
     ///
@@ -241,7 +233,8 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn all<Predicate>(self, predicate: Predicate) -> bool
     where
-        Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+        Self::Item: Send,
+        Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let violates = |u: &mut U::Item, x: &Self::Item| !predicate(u, x);
         self.find(violates).is_none()
@@ -256,7 +249,8 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn any<Predicate>(self, predicate: Predicate) -> bool
     where
-        Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+        Self::Item: Send,
+        Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         self.find(predicate).is_some()
     }
@@ -277,7 +271,7 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn for_each<Operation>(self, operation: Operation)
     where
-        Operation: Fn(&mut U::Item, Self::Item) + Sync + Send,
+        Operation: Fn(&mut U::Item, Self::Item) + Sync,
     {
         let map = |u: &mut U::Item, x| operation(u, x);
         let _ = self.map(map).reduce(u_reduce_unit);
@@ -288,7 +282,7 @@ where
     /// See the details here: [crate::ParIter::max].
     fn max(self) -> Option<Self::Item>
     where
-        Self::Item: Ord,
+        Self::Item: Ord + Send,
     {
         self.reduce(|_, a, b| Ord::max(a, b))
     }
@@ -298,6 +292,7 @@ where
     /// See the details here: [crate::ParIter::max_by].
     fn max_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |_: &mut U::Item, x, y| match compare(&x, &y) {
@@ -312,6 +307,7 @@ where
     /// See the details here: [crate::ParIter::max_by_key].
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -327,7 +323,7 @@ where
     /// See the details here: [crate::ParIter::min].
     fn min(self) -> Option<Self::Item>
     where
-        Self::Item: Ord,
+        Self::Item: Ord + Send,
     {
         self.reduce(|_, a, b| Ord::min(a, b))
     }
@@ -337,6 +333,7 @@ where
     /// See the details here: [crate::ParIter::min_by].
     fn min_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |_: &mut U::Item, x, y| match compare(&x, &y) {
@@ -351,6 +348,7 @@ where
     /// See the details here: [crate::ParIter::min_by_key].
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -367,7 +365,7 @@ where
     fn sum<Out>(self) -> Out
     where
         Self::Item: Sum<Out>,
-        Out: Send + Sync,
+        Out: Send,
     {
         self.map(Self::Item::u_map)
             .reduce(Self::Item::u_reduce)
@@ -382,7 +380,9 @@ where
     /// * any element is returned if `IterationOrder::Arbitrary` is set.
     ///
     /// See the details here: [crate::ParIter::first].
-    fn first(self) -> Option<Self::Item>;
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send;
 
     /// Searches for an element of an iterator that satisfies a `predicate`.
     ///
@@ -393,8 +393,9 @@ where
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
-        Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+        Self::Item: Send,
+        Predicate: Fn(&mut U::Item, &Self::Item) -> bool + Sync,
     {
-        self.filter(predicate).first()
+        self.filter(&predicate).first()
     }
 }

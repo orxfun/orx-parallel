@@ -11,7 +11,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync;
+        M1: Fn(&mut U::Item, I::Item) -> O + Sync;
 
     fn u_x_collect_into<R, U, I, Vo, M1>(self, x: UX<U, I, Vo, M1>) -> Self
     where
@@ -19,8 +19,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         U: Using,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Item: Send + Sync,
-        M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync;
+        M1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
 
     fn u_xfx_collect_into<R, U, I, Vt, Vo, M1, F, M2>(
         self,
@@ -31,9 +30,8 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         U: Using,
         I: ConcurrentIter,
         Vt: Values,
-        Vt::Item: Send + Sync,
         Vo: Values<Item = O>,
-        M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
-        F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync;
+        M1: Fn(&mut U::Item, I::Item) -> Vt + Sync,
+        F: Fn(&mut U::Item, &Vt::Item) -> bool + Sync,
+        M2: Fn(&mut U::Item, Vt::Item) -> Vo + Sync;
 }

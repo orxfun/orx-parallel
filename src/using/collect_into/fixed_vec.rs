@@ -15,7 +15,7 @@ where
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
+        M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.u_m_collect_into::<R, _, _, _>(m))
@@ -28,7 +28,7 @@ where
         I: ConcurrentIter,
         Vo: Values<Item = O>,
         Vo::Item: Send + Sync,
-        M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+        M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.u_x_collect_into::<R, _, _, _, _>(x))
@@ -43,11 +43,10 @@ where
         U: Using,
         I: ConcurrentIter,
         Vt: Values,
-        Vt::Item: Send + Sync,
         Vo: Values<Item = O>,
-        M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
-        F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+        M1: Fn(&mut U::Item, I::Item) -> Vt + Sync,
+        F: Fn(&mut U::Item, &Vt::Item) -> bool + Sync,
+        M2: Fn(&mut U::Item, Vt::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.u_xfx_collect_into::<R, _, _, _, _, _, _, _>(xfx))

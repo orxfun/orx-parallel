@@ -14,7 +14,7 @@ where
     pub fn reduce<R, X>(self, reduce: X) -> (usize, Option<O>)
     where
         R: ParallelRunner,
-        X: Fn(&mut U::Item, O, O) -> O + Send + Sync,
+        X: Fn(&mut U::Item, O, O) -> O + Sync,
     {
         let len = self.iter().try_get_len();
         let p = self.params();
