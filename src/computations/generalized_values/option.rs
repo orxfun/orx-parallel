@@ -3,17 +3,13 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-impl<T> Values for Option<T>
-where
-    T: Send + Sync,
-{
+impl<T> Values for Option<T> {
     type Item = T;
 
     type Mapped<M, O>
         = Option<O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync;
+        M: Fn(Self::Item) -> O;
 
     type Filtered<F>
         = Option<T>
@@ -53,7 +49,7 @@ where
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync,
+        Self::Item: Send,
     {
         if let Some(x) = self {
             bag.push(x);

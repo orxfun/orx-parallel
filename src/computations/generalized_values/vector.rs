@@ -9,17 +9,14 @@ where
 
 impl<I> Values for Vector<I>
 where
-    I: IntoIterator + Send + Sync,
-    I::Item: Send + Sync,
-    I::IntoIter: Send + Sync,
+    I: IntoIterator,
 {
     type Item = I::Item;
 
     type Mapped<M, O>
         = Vector<core::iter::Map<I::IntoIter, M>>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync;
+        M: Fn(Self::Item) -> O;
 
     type Filtered<F>
         = Vector<core::iter::Filter<I::IntoIter, F>>
@@ -58,7 +55,7 @@ where
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync,
+        Self::Item: Send,
     {
         for x in self.0 {
             bag.push(x);

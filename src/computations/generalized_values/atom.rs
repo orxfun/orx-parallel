@@ -5,17 +5,13 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
 pub struct Atom<T>(pub T);
 
-impl<T> Values for Atom<T>
-where
-    T: Send + Sync,
-{
+impl<T> Values for Atom<T> {
     type Item = T;
 
     type Mapped<M, O>
         = Atom<O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync;
+        M: Fn(Self::Item) -> O;
 
     type Filtered<F>
         = Option<Self::Item>
@@ -52,7 +48,7 @@ where
     fn push_to_bag<P>(self, bag: &ConcurrentBag<T, P>)
     where
         P: IntoConcurrentPinnedVec<T>,
-        T: Send + Sync,
+        T: Send,
     {
         bag.push(self.0);
     }

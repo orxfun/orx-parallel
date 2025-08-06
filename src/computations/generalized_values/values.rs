@@ -7,8 +7,7 @@ pub trait Values {
 
     type Mapped<M, O>: Values<Item = O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync;
+        M: Fn(Self::Item) -> O;
 
     type Filtered<F>: Values<Item = Self::Item>
     where
