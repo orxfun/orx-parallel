@@ -165,7 +165,6 @@ where
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (params, iter, x1) = self.destruct();

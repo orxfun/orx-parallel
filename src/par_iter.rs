@@ -575,7 +575,6 @@ where
     /// ```
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone;
 
     /// Does something with each element of an iterator, passing the value on.
@@ -638,7 +637,6 @@ where
     fn inspect<Operation>(self, operation: Operation) -> impl ParIter<R, Item = Self::Item>
     where
         Operation: Fn(&Self::Item) + Sync + Clone,
-        Self::Item: Send + Sync,
     {
         let map = move |x| {
             operation(&x);
@@ -699,7 +697,7 @@ where
     /// ```
     fn cloned<'a, T>(self) -> impl ParIter<R, Item = T>
     where
-        T: 'a + Clone + Send + Sync,
+        T: 'a + Clone,
         Self: ParIter<R, Item = &'a T>,
     {
         self.map(map_clone)
@@ -751,10 +749,6 @@ where
     fn flatten(self) -> impl ParIter<R, Item = <Self::Item as IntoIterator>::Item>
     where
         Self::Item: IntoIterator,
-        <Self::Item as IntoIterator>::IntoIter: Send + Sync,
-        <Self::Item as IntoIterator>::Item: Send + Sync,
-        R: Send + Sync,
-        Self: Send + Sync,
     {
         let map = |e: Self::Item| e.into_iter();
         self.flat_map(map)
