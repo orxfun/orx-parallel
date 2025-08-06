@@ -160,7 +160,7 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         match self {
@@ -209,7 +209,7 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
     {
         match self {
             Some(x) if filter(&x) => map2(x).first(),

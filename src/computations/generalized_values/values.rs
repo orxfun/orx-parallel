@@ -90,7 +90,7 @@ pub trait Values: Send + Sync {
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
 
     fn u_fx_reduce<U, F, M2, Vo, X>(
@@ -116,7 +116,7 @@ pub trait Values: Send + Sync {
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync;
+        Vo::Item: Send;
 
     fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
     where

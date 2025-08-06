@@ -108,7 +108,7 @@ where
     I: ConcurrentIter,
     Vt: Values + Send + Sync,
     Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
+    Vo::Item: Send,
     M1: Fn(I::Item) -> Vt + Send + Sync,
     F: Fn(&Vt::Item) -> bool + Send + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,

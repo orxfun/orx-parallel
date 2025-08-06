@@ -160,7 +160,7 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
     {
         for t in self.0 {
@@ -211,7 +211,7 @@ where
         F: Fn(&Self::Item) -> bool + Send + Sync,
         M2: Fn(Self::Item) -> Vo + Send + Sync,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
     {
         self.0
             .into_iter()
