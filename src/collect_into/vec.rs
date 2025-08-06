@@ -46,7 +46,6 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();

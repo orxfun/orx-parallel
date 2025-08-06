@@ -14,8 +14,7 @@ pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
     m: M<I, O, M1>,
     phantom: PhantomData<R>,
@@ -25,8 +24,7 @@ impl<I, O, M1, R> ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, m1: M1) -> Self {
         Self {
@@ -44,8 +42,7 @@ unsafe impl<I, O, M1, R> Send for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
 }
 
@@ -53,8 +50,7 @@ unsafe impl<I, O, M1, R> Sync for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
 }
 
@@ -62,8 +58,7 @@ impl<I, O, M1, R> ParIter<R> for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
     type Item = O;
 

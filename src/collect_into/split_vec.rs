@@ -40,7 +40,6 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());

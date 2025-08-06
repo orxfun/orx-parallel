@@ -14,15 +14,13 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Sync,
-        O: Send;
+        M1: Fn(I::Item) -> O + Sync;
 
     fn x_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Item: Send + Sync,
         M1: Fn(I::Item) -> Vo + Sync;
 
     fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
