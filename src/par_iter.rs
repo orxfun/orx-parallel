@@ -16,7 +16,7 @@ where
     R: ParallelRunner,
 {
     /// Element type of the parallel iterator.
-    type Item: Send;
+    type Item;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
@@ -641,7 +641,7 @@ where
     fn inspect<Operation>(self, operation: Operation) -> impl ParIter<R, Item = Self::Item>
     where
         Operation: Fn(&Self::Item) + Sync + Send + Clone,
-        Self::Item: Sync,
+        Self::Item: Send + Sync,
     {
         let map = move |x| {
             operation(&x);
