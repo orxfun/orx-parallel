@@ -18,7 +18,7 @@ where
     U: Using,
 {
     /// Element type of the parallel iterator.
-    type Item: Send + Sync;
+    type Item;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
@@ -135,6 +135,7 @@ where
     fn inspect<Operation>(self, operation: Operation) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
         Operation: Fn(&mut U::Item, &Self::Item) + Sync + Send + Clone,
+        Self::Item: Send + Sync,
     {
         let map = move |u: &mut U::Item, x: Self::Item| {
             operation(u, &x);
