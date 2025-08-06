@@ -13,7 +13,7 @@ impl<U, I, Vo, M1> UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {

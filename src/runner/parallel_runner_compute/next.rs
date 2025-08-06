@@ -14,8 +14,8 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2>(
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vo: Values + Send + Sync,
+    Vt: Values,
+    Vo: Values,
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vt + Sync,
     F: Fn(&Vt::Item) -> bool + Sync,

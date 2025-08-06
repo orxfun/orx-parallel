@@ -18,7 +18,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vo: Values<Item = O> + Send + Sync,
+        Vo: Values<Item = O>,
         Vo::Item: Send + Sync,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync;
 
@@ -30,9 +30,9 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vt: Values + Send + Sync,
+        Vt: Values,
         Vt::Item: Send + Sync,
-        Vo: Values<Item = O> + Send + Sync,
+        Vo: Values<Item = O>,
         M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
         F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
         M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync;

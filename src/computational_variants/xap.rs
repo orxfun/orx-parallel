@@ -15,7 +15,7 @@ pub struct ParXap<I, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {
@@ -27,7 +27,7 @@ impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {
@@ -47,7 +47,7 @@ unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {
@@ -57,7 +57,7 @@ unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {
@@ -67,7 +67,7 @@ impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vo + Send + Sync,
 {

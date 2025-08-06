@@ -20,7 +20,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {
@@ -33,7 +33,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {
@@ -54,7 +54,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {
@@ -65,7 +65,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {
@@ -76,7 +76,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
 {

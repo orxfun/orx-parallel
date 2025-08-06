@@ -9,8 +9,8 @@ impl<U, I, Vt, Vo, M1, F, M2> UXfx<U, I, Vt, Vo, M1, F, M2>
 where
     U: Using,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vo: Values + Send + Sync,
+    Vt: Values,
+    Vo: Values,
     Vo::Item: Send + Sync,
     M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
     F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
