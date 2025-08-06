@@ -2,7 +2,7 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub trait Values: Send {
+pub trait Values {
     type Item;
 
     type Mapped<M, O>: Values<Item = O>

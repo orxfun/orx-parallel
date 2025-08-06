@@ -53,7 +53,7 @@ pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, mut pinned_vec: P) -> (usi
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    Vo: Values + Send,
+    Vo: Values,
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
