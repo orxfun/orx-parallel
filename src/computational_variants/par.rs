@@ -95,28 +95,28 @@ where
 
     // using transformations
 
-    fn using<U, F>(
-        self,
-        using: F,
-    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
-    where
-        U: Send,
-        F: FnMut(usize) -> U,
-    {
-        let using = UsingFun::new(using);
-        UPar::new(using, self.params, self.iter)
-    }
+    // fn using<U, F>(
+    //     self,
+    //     using: F,
+    // ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    // where
+    //     U: Send,
+    //     F: FnMut(usize) -> U,
+    // {
+    //     let using = UsingFun::new(using);
+    //     UPar::new(using, self.params, self.iter)
+    // }
 
-    fn using_clone<U>(
-        self,
-        using: U,
-    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
-    where
-        U: Clone + Send,
-    {
-        let using = UsingClone::new(using);
-        UPar::new(using, self.params, self.iter)
-    }
+    // fn using_clone<U>(
+    //     self,
+    //     using: U,
+    // ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    // where
+    //     U: Clone + Send,
+    // {
+    //     let using = UsingClone::new(using);
+    //     UPar::new(using, self.params, self.iter)
+    // }
 
     // computation transformations
 
