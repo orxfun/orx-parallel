@@ -29,7 +29,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    M1: Fn(&mut U::Item, I::Item) -> O + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
     pub(crate) fn new(using: U, params: Params, iter: I, m1: M1) -> Self {
         Self {
@@ -48,7 +48,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    M1: Fn(&mut U::Item, I::Item) -> O + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
 }
 
@@ -57,7 +57,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    M1: Fn(&mut U::Item, I::Item) -> O + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
 }
 
@@ -66,7 +66,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    M1: Fn(&mut U::Item, I::Item) -> O + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
     type Item = O;
 

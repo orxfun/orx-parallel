@@ -115,36 +115,36 @@ where
 
     // using transformations
 
-    // fn using<U, G>(
-    //     self,
-    //     using: G,
-    // ) -> impl ParIterUsing<UsingFun<G, U>, R, Item = <Self as ParIter<R>>::Item>
-    // where
-    //     U: Send,
-    //     G: FnMut(usize) -> U,
-    // {
-    //     let using = UsingFun::new(using);
-    //     let (params, iter, x1, f, x2) = self.destruct();
-    //     let x1 = move |_: &mut U, t: I::Item| x1(t);
-    //     let f = move |_: &mut U, t: &Vt::Item| f(t);
-    //     let x2 = move |_: &mut U, t: Vt::Item| x2(t);
-    //     UParXapFilterXap::new(using, params, iter, x1, f, x2)
-    // }
+    fn using<U, G>(
+        self,
+        using: G,
+    ) -> impl ParIterUsing<UsingFun<G, U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Send,
+        G: FnMut(usize) -> U,
+    {
+        let using = UsingFun::new(using);
+        let (params, iter, x1, f, x2) = self.destruct();
+        let x1 = move |_: &mut U, t: I::Item| x1(t);
+        let f = move |_: &mut U, t: &Vt::Item| f(t);
+        let x2 = move |_: &mut U, t: Vt::Item| x2(t);
+        UParXapFilterXap::new(using, params, iter, x1, f, x2)
+    }
 
-    // fn using_clone<U>(
-    //     self,
-    //     using: U,
-    // ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
-    // where
-    //     U: Clone + Send,
-    // {
-    //     let using = UsingClone::new(using);
-    //     let (params, iter, x1, f, x2) = self.destruct();
-    //     let x1 = move |_: &mut U, t: I::Item| x1(t);
-    //     let f = move |_: &mut U, t: &Vt::Item| f(t);
-    //     let x2 = move |_: &mut U, t: Vt::Item| x2(t);
-    //     UParXapFilterXap::new(using, params, iter, x1, f, x2)
-    // }
+    fn using_clone<U>(
+        self,
+        using: U,
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    where
+        U: Clone + Send,
+    {
+        let using = UsingClone::new(using);
+        let (params, iter, x1, f, x2) = self.destruct();
+        let x1 = move |_: &mut U, t: I::Item| x1(t);
+        let f = move |_: &mut U, t: &Vt::Item| f(t);
+        let x2 = move |_: &mut U, t: Vt::Item| x2(t);
+        UParXapFilterXap::new(using, params, iter, x1, f, x2)
+    }
 
     // computation transformations
 
