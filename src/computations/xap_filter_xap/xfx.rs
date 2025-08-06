@@ -5,8 +5,8 @@ use orx_concurrent_iter::ConcurrentIter;
 pub struct Xfx<I, Vt, Vo, M1, F, M2>
 where
     I: ConcurrentIter,
-    Vt: Values + Send,
-    Vo: Values + Send,
+    Vt: Values,
+    Vo: Values,
     M1: Fn(I::Item) -> Vt + Sync,
     F: Fn(&Vt::Item) -> bool + Sync,
     M2: Fn(Vt::Item) -> Vo + Sync,
