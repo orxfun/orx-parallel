@@ -11,9 +11,9 @@ where
     C: ParallelRunnerCompute,
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
-    Red: Fn(&mut U::Item, O, O) -> O + Send + Sync,
+    O: Send,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
+    Red: Fn(&mut U::Item, O, O) -> O + Sync,
 {
     let (mut using, _, iter, map1) = m.destruct();
 
@@ -66,9 +66,9 @@ where
     U: Using,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
-    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let (mut using, _, iter, xap1) = x.destruct();
 
@@ -122,11 +122,11 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
-    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
-    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(&mut U::Item, I::Item) -> Vt + Sync,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool + Sync,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Sync,
+    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let (mut using, _, iter, xap1, filter, xap2) = xfx.destruct();
 

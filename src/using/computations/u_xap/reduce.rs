@@ -10,13 +10,13 @@ where
     U: Using,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
     where
         R: ParallelRunner,
-        Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
     {
         let len = self.iter().try_get_len();
         let p = self.params();

@@ -8,8 +8,7 @@ where
     U: Using,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vo,
 {
     pub fn next(self) -> Option<Vo::Item> {
         let (using, _, iter, xap1) = self.destruct();

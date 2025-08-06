@@ -7,8 +7,7 @@ where
     U: Using,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vo,
 {
     using: U,
     params: Params,
@@ -21,8 +20,7 @@ where
     U: Using,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vo,
 {
     pub fn new(using: U, params: Params, iter: I, xap1: M1) -> Self {
         Self {

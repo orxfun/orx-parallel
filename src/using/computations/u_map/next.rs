@@ -6,8 +6,7 @@ impl<U, I, O, M1> UM<U, I, O, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> O,
 {
     pub fn next(self) -> Option<O> {
         let (mut using, _, iter, map1) = self.destruct();

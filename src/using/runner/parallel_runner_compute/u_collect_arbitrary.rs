@@ -17,9 +17,9 @@ where
     C: ParallelRunnerCompute,
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     P: IntoConcurrentPinnedVec<O>,
+    O: Send,
 {
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
@@ -65,8 +65,8 @@ where
     U: Using,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
@@ -118,10 +118,10 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
-    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(&mut U::Item, I::Item) -> Vt + Sync,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool + Sync,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();

@@ -13,10 +13,10 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
-    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(&mut U::Item, I::Item) -> Vt + Sync,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool + Sync,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
     where

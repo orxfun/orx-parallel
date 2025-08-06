@@ -9,9 +9,9 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
-    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vt,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo,
 {
     using: U,
     params: Params,
@@ -27,9 +27,9 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    M1: Fn(&mut U::Item, I::Item) -> Vt + Send + Sync,
-    F: Fn(&mut U::Item, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(&mut U::Item, I::Item) -> Vt,
+    F: Fn(&mut U::Item, &Vt::Item) -> bool,
+    M2: Fn(&mut U::Item, Vt::Item) -> Vo,
 {
     pub fn new(using: U, params: Params, iter: I, xap1: M1, filter: F, xap2: M2) -> Self {
         Self {
