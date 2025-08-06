@@ -6,7 +6,7 @@ impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
     Vo: Values,
-    M1: Fn(I::Item) -> Vo + Sync,
+    M1: Fn(I::Item) -> Vo,
 {
     pub fn next(self) -> Option<Vo::Item> {
         let (_, iter, xap1) = self.destruct();

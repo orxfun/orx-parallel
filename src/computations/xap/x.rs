@@ -5,7 +5,7 @@ pub struct X<I, Vo, M1>
 where
     I: ConcurrentIter,
     Vo: Values,
-    M1: Fn(I::Item) -> Vo + Sync,
+    M1: Fn(I::Item) -> Vo,
 {
     params: Params,
     iter: I,
@@ -16,7 +16,7 @@ impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
     Vo: Values,
-    M1: Fn(I::Item) -> Vo + Sync,
+    M1: Fn(I::Item) -> Vo,
 {
     pub fn new(params: Params, iter: I, xap1: M1) -> Self {
         Self { params, iter, xap1 }

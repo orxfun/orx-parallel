@@ -7,9 +7,9 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    M1: Fn(I::Item) -> Vt + Sync,
-    F: Fn(&Vt::Item) -> bool + Sync,
-    M2: Fn(Vt::Item) -> Vo + Sync,
+    M1: Fn(I::Item) -> Vt,
+    F: Fn(&Vt::Item) -> bool,
+    M2: Fn(Vt::Item) -> Vo,
 {
     params: Params,
     iter: I,
@@ -23,9 +23,9 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    M1: Fn(I::Item) -> Vt + Sync,
-    F: Fn(&Vt::Item) -> bool + Sync,
-    M2: Fn(Vt::Item) -> Vo + Sync,
+    M1: Fn(I::Item) -> Vt,
+    F: Fn(&Vt::Item) -> bool,
+    M2: Fn(Vt::Item) -> Vo,
 {
     pub fn new(params: Params, iter: I, xap1: M1, filter: F, xap2: M2) -> Self {
         Self {
