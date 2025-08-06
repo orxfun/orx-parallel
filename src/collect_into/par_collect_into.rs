@@ -81,7 +81,4 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
 /// Collection types into which outputs of a parallel computations can be collected into.
 pub trait ParCollectInto<O>: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}
 
-impl<O: Send + Sync, C> ParCollectInto<O> for C where
-    C: ParCollectIntoCore<O> + UParCollectIntoCore<O>
-{
-}
+impl<O, C> ParCollectInto<O> for C where C: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}

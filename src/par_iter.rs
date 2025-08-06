@@ -860,7 +860,7 @@ where
     fn all<Predicate>(self, predicate: Predicate) -> bool
     where
         Self::Item: Send,
-        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         let violates = |x: &Self::Item| !predicate(x);
         self.find(violates).is_none()
@@ -893,7 +893,7 @@ where
     fn any<Predicate>(self, predicate: Predicate) -> bool
     where
         Self::Item: Send,
-        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.find(predicate).is_some()
     }
@@ -1222,8 +1222,8 @@ where
     fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
         Self::Item: Send,
-        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
-        self.filter(predicate).first()
+        self.filter(&predicate).first()
     }
 }
