@@ -136,7 +136,7 @@ where
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
-        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         let reduced = self.0.into_iter().reduce(|a, b| reduce(u, a, b));
         match (acc, reduced) {
