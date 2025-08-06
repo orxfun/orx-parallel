@@ -19,7 +19,7 @@ where
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vt + Sync,
     F: Fn(&Vt::Item) -> bool + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     let (_, iter, xap1, filter, xap2) = xfx.destruct();
 

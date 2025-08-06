@@ -10,7 +10,7 @@ where
     Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt + Sync,
     F: Fn(&Vt::Item) -> bool + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     #[allow(clippy::type_complexity)]
     pub fn map<M, Q>(
