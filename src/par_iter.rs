@@ -948,7 +948,7 @@ where
     /// ```
     fn for_each<Operation>(self, operation: Operation)
     where
-        Operation: Fn(Self::Item) + Sync + Send,
+        Operation: Fn(Self::Item) + Sync,
     {
         let map = |x| operation(x);
         let _ = self.map(map).reduce(reduce_unit);
@@ -971,8 +971,7 @@ where
     /// ```
     fn max(self) -> Option<Self::Item>
     where
-        Self::Item: Send,
-        Self::Item: Ord,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::max)
     }
@@ -1043,8 +1042,7 @@ where
     /// ```
     fn min(self) -> Option<Self::Item>
     where
-        Self::Item: Send,
-        Self::Item: Ord,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::min)
     }
@@ -1121,7 +1119,7 @@ where
     fn sum<Out>(self) -> Out
     where
         Self::Item: Sum<Out>,
-        Out: Send + Sync,
+        Out: Send,
     {
         self.map(Self::Item::map)
             .reduce(Self::Item::reduce)
