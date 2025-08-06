@@ -67,7 +67,7 @@ pub trait Values: Send + Sync {
 
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
-        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
+        X: Fn(Self::Item, Self::Item) -> Self::Item;
 
     fn u_acc_reduce<U, X>(
         self,

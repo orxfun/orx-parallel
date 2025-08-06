@@ -113,7 +113,7 @@ where
     #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
-        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match (acc, self) {
             (Some(x), Some(y)) => Some(reduce(x, y)),
