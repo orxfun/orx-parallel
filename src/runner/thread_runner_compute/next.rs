@@ -16,7 +16,7 @@ where
     Vo: Values,
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vt,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
     let mut chunk_puller = iter.chunk_puller(0);

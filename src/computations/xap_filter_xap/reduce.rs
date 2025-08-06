@@ -11,7 +11,7 @@ where
     Vo: Values + Send + Sync,
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vt + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
     M2: Fn(Vt::Item) -> Vo + Send + Sync,
 {
     pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
