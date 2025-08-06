@@ -130,11 +130,11 @@ pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2, P>(
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send + Sync,
     M1: Fn(&mut U, I::Item) -> Vt,
-    F: Fn(&mut U, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U, Vt::Item) -> Vo + Send + Sync,
+    F: Fn(&mut U, &Vt::Item) -> bool,
+    M2: Fn(&mut U, Vt::Item) -> Vo,
     P: IntoConcurrentPinnedVec<Vo::Item>,
+    Vo::Item: Send,
 {
     let u = &mut u;
     let mut chunk_puller = iter.chunk_puller(0);

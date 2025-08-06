@@ -129,10 +129,9 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send + Sync,
     M1: Fn(&mut U, I::Item) -> Vt,
-    F: Fn(&mut U, &Vt::Item) -> bool + Send + Sync,
-    M2: Fn(&mut U, Vt::Item) -> Vo + Send + Sync,
+    F: Fn(&mut U, &Vt::Item) -> bool,
+    M2: Fn(&mut U, Vt::Item) -> Vo,
 {
     let u = &mut u;
     let mut collected = Vec::new();
