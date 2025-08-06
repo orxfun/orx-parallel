@@ -150,8 +150,7 @@ where
 
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(Self::Item) -> Out + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {
@@ -164,7 +163,7 @@ where
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Filter: Fn(&Self::Item) -> bool + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {
@@ -177,10 +176,8 @@ where
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone,
+        IOut: IntoIterator,
+        FlatMap: Fn(Self::Item) -> IOut + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {
@@ -194,7 +191,7 @@ where
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
-        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {

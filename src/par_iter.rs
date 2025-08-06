@@ -512,8 +512,7 @@ where
     /// ```
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone;
+        Map: Fn(Self::Item) -> Out + Sync + Clone;
 
     /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
     ///
@@ -531,7 +530,7 @@ where
     /// ```
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone;
+        Filter: Fn(&Self::Item) -> bool + Sync + Clone;
 
     /// Creates an iterator that works like map, but flattens nested structure.
     ///
@@ -550,10 +549,8 @@ where
     /// ```
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone;
+        IOut: IntoIterator,
+        FlatMap: Fn(Self::Item) -> IOut + Sync + Clone;
 
     /// Creates an iterator that both filters and maps.
     ///
@@ -579,7 +576,7 @@ where
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
         Out: Send + Sync,
-        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone;
 
     /// Does something with each element of an iterator, passing the value on.
     ///
@@ -640,7 +637,7 @@ where
     /// ```
     fn inspect<Operation>(self, operation: Operation) -> impl ParIter<R, Item = Self::Item>
     where
-        Operation: Fn(&Self::Item) + Sync + Send + Clone,
+        Operation: Fn(&Self::Item) + Sync + Clone,
         Self::Item: Send + Sync,
     {
         let map = move |x| {
@@ -671,7 +668,7 @@ where
     /// ```
     fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
     where
-        T: 'a + Copy + Send + Sync,
+        T: 'a + Copy,
         Self: ParIter<R, Item = &'a T>,
     {
         self.map(map_copy)
