@@ -5,7 +5,7 @@ use crate::using::Using;
 use crate::using::computations::{UM, UX, UXfx};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait UParCollectIntoCore<O: Send + Sync>: ParCollectIntoCore<O> {
+pub trait UParCollectIntoCore<O: Send>: ParCollectIntoCore<O> {
     fn u_m_collect_into<R, U, I, M1>(self, m: UM<U, I, O, M1>) -> Self
     where
         R: ParallelRunner,

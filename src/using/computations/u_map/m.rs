@@ -5,7 +5,7 @@ pub struct UM<U, I, O, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
+    O: Send,
     M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
 {
     using: U,
@@ -18,7 +18,7 @@ impl<U, I, O, M1> UM<U, I, O, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
+    O: Send,
     M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
 {
     pub fn new(using: U, params: Params, iter: I, map1: M1) -> Self {

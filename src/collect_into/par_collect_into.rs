@@ -5,7 +5,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
+pub trait ParCollectIntoCore<O: Send>: Collection<Item = O> {
     type BridgePinnedVec: IntoConcurrentPinnedVec<O>;
 
     fn empty(iter_len: Option<usize>) -> Self;
@@ -81,7 +81,7 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
 }
 
 /// Collection types into which outputs of a parallel computations can be collected into.
-pub trait ParCollectInto<O: Send + Sync>: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}
+pub trait ParCollectInto<O: Send>: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}
 
 impl<O: Send + Sync, C> ParCollectInto<O> for C where
     C: ParCollectIntoCore<O> + UParCollectIntoCore<O>
