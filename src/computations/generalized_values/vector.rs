@@ -183,11 +183,10 @@ where
     ) -> Option<Vo::Item>
     where
         Self: Sized,
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
     {
         for t in self.0 {
             if filter(u, &t) {
@@ -207,10 +206,9 @@ where
     #[inline(always)]
     fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send,
     {
         self.0
             .into_iter()

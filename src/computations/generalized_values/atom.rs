@@ -165,11 +165,10 @@ where
     ) -> Option<Vo::Item>
     where
         Self: Sized,
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
     {
         match filter(u, &self.0) {
             true => map2(u, self.0).u_acc_reduce(u, acc, reduce),
@@ -185,10 +184,9 @@ where
     #[inline(always)]
     fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send,
     {
         match filter(&self.0) {
             true => map2(self.0).first(),

@@ -102,20 +102,18 @@ pub trait Values: Send + Sync {
     ) -> Option<Vo::Item>
     where
         Self: Sized,
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item;
 
     fn first(self) -> Option<Self::Item>;
 
     fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
-        Vo: Values,
-        Vo::Item: Send;
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
+        Vo: Values;
 
     fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
     where
