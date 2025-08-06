@@ -11,9 +11,9 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values + Send,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
     where

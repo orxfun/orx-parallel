@@ -7,14 +7,14 @@ use orx_concurrent_iter::ConcurrentIter;
 impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values + Send,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
     pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
     where
         R: ParallelRunner,
-        Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
     {
         let len = self.iter().try_get_len();
         let p = self.params();

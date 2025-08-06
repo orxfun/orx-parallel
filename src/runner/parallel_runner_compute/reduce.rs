@@ -56,8 +56,8 @@ where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vo + Sync,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let (_, iter, xap1) = x.destruct();

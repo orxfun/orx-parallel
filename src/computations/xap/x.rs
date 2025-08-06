@@ -4,9 +4,9 @@ use orx_concurrent_iter::ConcurrentIter;
 pub struct X<I, Vo, M1>
 where
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values + Send,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
     params: Params,
     iter: I,
@@ -16,9 +16,9 @@ where
 impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values + Send,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
     pub fn new(params: Params, iter: I, xap1: M1) -> Self {
         Self { params, iter, xap1 }
