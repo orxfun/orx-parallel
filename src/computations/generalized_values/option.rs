@@ -25,8 +25,7 @@ impl<T> Values for Option<T> {
     type FilterMapped<Fm, O>
         = Option<O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+        Fm: Fn(Self::Item) -> Option<O>;
 
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {

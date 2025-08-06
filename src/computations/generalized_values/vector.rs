@@ -32,8 +32,7 @@ where
     type FilterMapped<Fm, O>
         = Vector<core::iter::FilterMap<I::IntoIter, Fm>>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+        Fm: Fn(Self::Item) -> Option<O>;
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0

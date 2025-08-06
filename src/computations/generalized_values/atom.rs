@@ -27,8 +27,7 @@ impl<T> Values for Atom<T> {
     type FilterMapped<Fm, O>
         = Option<O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+        Fm: Fn(Self::Item) -> Option<O>;
 
     fn values(self) -> impl IntoIterator<Item = T> {
         core::iter::once(self.0)

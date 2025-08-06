@@ -20,8 +20,7 @@ pub trait Values {
 
     type FilterMapped<Fm, O>: Values<Item = O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+        Fm: Fn(Self::Item) -> Option<O>;
 
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
