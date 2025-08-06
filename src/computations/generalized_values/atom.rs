@@ -288,8 +288,8 @@ where
         map2: M2,
         vec: &mut Vec<(usize, Vo::Item)>,
     ) where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
     {
         if filter(&self.0) {
