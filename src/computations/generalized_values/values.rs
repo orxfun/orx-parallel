@@ -11,14 +11,12 @@ pub trait Values {
 
     type Filtered<F>: Values<Item = Self::Item>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync;
+        F: Fn(&Self::Item) -> bool;
 
     type FlatMapped<Fm, Vo>: Values<Item = Vo::Item>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync;
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
 
     type FilterMapped<Fm, O>: Values<Item = O>
     where

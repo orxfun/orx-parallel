@@ -21,15 +21,13 @@ where
     type Filtered<F>
         = Vector<core::iter::Filter<I::IntoIter, F>>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync;
+        F: Fn(&Self::Item) -> bool;
 
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<I::IntoIter, Vo, Fm>>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync;
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
 
     type FilterMapped<Fm, O>
         = Vector<core::iter::FilterMap<I::IntoIter, Fm>>

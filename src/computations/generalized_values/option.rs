@@ -14,15 +14,13 @@ impl<T> Values for Option<T> {
     type Filtered<F>
         = Option<T>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync;
+        F: Fn(&Self::Item) -> bool;
 
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<<Option<T> as IntoIterator>::IntoIter, Vo, Fm>>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync;
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
 
     type FilterMapped<Fm, O>
         = Option<O>
