@@ -157,11 +157,11 @@ where
     ) -> Option<Vo::Item>
     where
         Self: Sized,
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
         Vo::Item: Send,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
     {
         for t in self.0 {
             if filter(&t) {

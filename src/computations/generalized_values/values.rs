@@ -87,11 +87,11 @@ pub trait Values: Send + Sync {
     ) -> Option<Vo::Item>
     where
         Self: Sized,
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
         Vo::Item: Send,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync;
+        X: Fn(Vo::Item, Vo::Item) -> Vo::Item;
 
     fn u_fx_reduce<U, F, M2, Vo, X>(
         self,
