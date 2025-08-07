@@ -64,7 +64,7 @@ let best_tour = (0..num_tours)
 
 Inputs that can be used in parallel computations can be categorized in three groups:
 
-* i. directly parallelizable collections
+* i. directly parallelizable co<center>llections
 * ii. parallelization of any iterator
 * iii. parallelization of any collection
 
@@ -103,6 +103,18 @@ In addition, there exist the following special parallel iterators that can be di
 ### ii. Parallelization of Any Iterator
 
 Any arbitrary sequential [Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html) implements [`IterIntoParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.IterIntoParIter.html) trait and can be converted into a parallel iterator using the `iter_into_par` method.
+
+As demonstrated below, item type of the Iterator can as well be a mutable reference.
+
+```rust
+use orx_parallel::*;
+use std::collections::HashMap;
+
+let mut map: HashMap<_, _> = (0..N).map(|x| (10 * x, x)).collect();
+let par = map.values_mut().iter_into_par(); // mutable parallel iterator from Iterator
+par.filter(|x| **x != 42).for_each(|x| *x *= 0);
+assert_eq!(map.values().iter_into_par().sum(), 42); // parallel iterator from Iterator
+```
 
 This is very powerful since it allows to parallelize all iterables, which includes pretty much every collection and more.
 
