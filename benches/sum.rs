@@ -45,7 +45,7 @@ fn orx(inputs: &[u32]) -> u32 {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [65_536, 65_536 * 4];
+    let treatments = [65_536 * 2];
 
     let mut group = c.benchmark_group("sum");
 

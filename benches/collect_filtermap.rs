@@ -81,7 +81,7 @@ fn orx_into_split_vec(inputs: &[usize]) -> SplitVec<Output> {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [65_536, 65_536 * 4];
+    let treatments = [65_536 * 2];
 
     let mut group = c.benchmark_group("collect_filtermap");
 
