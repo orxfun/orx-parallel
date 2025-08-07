@@ -75,12 +75,13 @@ These are collections which are parallelized by utilizing their specific structu
 This crate provides direct implementations of std collections; the table below lists the most recent table of direct implementations.
 
 
-| Type | Over References<br>`-> ParIter<Item = &T>` | Over Owned Values<br>`-> ParIter<Item = T>` |
-|---|---|---|
-| `v: Vec<T>` | `v.par()` | `v.into_par()` |
-| `v: VecDeque<T>` | `v.par()` | `v.into_par()` |
-| `s: &[T]` | `s.par()`<br>`s.into_par()` | |
-| `r: Range<usize>`| | `r.par()`<br>`r.into_par()` |
+| Type | Over References<br>`&T` | Over Mut References <br>`&mut T>` | Over Owned Values<br>` T` |
+|:--|:-:|:-:|:-:|
+| `v: Vec<T>` | `v.par()` | `v.par_mut()` | `v.into_par()` |
+| `v: VecDeque<T>` | `v.par()` | | `v.into_par()` |
+| `s: &[T]` | `s.par()`<br>`s.into_par()` | | |
+| `s: &mut [T]` | | `s.into_par()` | |
+| `r: Range<usize>`| | | `r.par()`<br>`r.into_par()` |
 
 Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. Currently, the following collections are known to allow parallel computation using this crate:
 
