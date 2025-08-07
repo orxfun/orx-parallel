@@ -24,6 +24,7 @@ mod par_iter;
 mod parallel_drainable;
 mod parallelizable;
 mod parallelizable_collection;
+mod parallelizable_collection_mut;
 mod parameters;
 /// Module defining the parallel runner trait and the default parallel runner.
 pub mod runner;
@@ -50,6 +51,7 @@ pub use par_iter::ParIter;
 pub use parallel_drainable::ParallelDrainableOverSlice;
 pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;
+pub use parallelizable_collection_mut::ParallelizableCollectionMut;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use runner::{DefaultRunner, ParallelRunner, ThreadRunner};
 pub use special_type_sets::Sum;
