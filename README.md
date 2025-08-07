@@ -110,7 +110,7 @@ As demonstrated below, item type of the Iterator can as well be a mutable refere
 use orx_parallel::*;
 use std::collections::HashMap;
 
-let mut map: HashMap<_, _> = (0..N).map(|x| (10 * x, x)).collect();
+let mut map: HashMap<_, _> = (0..1024).map(|x| (x.to_string(), x)).collect();
 let par = map.values_mut().iter_into_par(); // mutable parallel iterator from Iterator
 par.filter(|x| **x != 42).for_each(|x| *x *= 0);
 assert_eq!(map.values().iter_into_par().sum(), 42); // parallel iterator from Iterator
@@ -132,8 +132,8 @@ There are two methods to parallelize computations over such collections:
 
 The following table demonstrates these methods for the `HashSet`; however, they are applicable to any collection with `iter` and `into_iter` methods.
 
-| Type | Method | Over References<br>`-> ParIter<Item = &T>` | Over Owned Values<br>`-> ParIter<Item = T>` |
-|---|---|---|---|
+| Type | Method | Over References<br>`&T` | Over Owned Values<br>`T` |
+|:--|:-:|---|---|
 | `h: HashSet<T>` | ii | `h.iter()`<br>&nbsp;&nbsp;`.iter_into_par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.iter_into_par()` |
 |                 | i  | `h.iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.into_par()` |
 
@@ -157,12 +157,13 @@ In this group of benchmarks, outputs of parallel computations are collected into
 
 |file|computation|sequential|rayon|orx-parallel|orx-parallel (s)|
 |---|---|---:|---:|---:|---:|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_filter.rs)|`.filter(_).collect()`|2.74 (1.00)|12.14 (4.43)|**1.8 (0.66)**|1.87 (0.68)|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_filter.rs)|`.filter(_).collect()`|2.74 (1.00)|12.14 (4.43)|**1.80 (0.66)**|1.87 (0.68)|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_filtermap.rs)|`.filter_map(_).collect()`|6.96 (1.00)|13.28 (1.91)|3.51 (0.50)|**3.35 (0.48)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_flatmap.rs)|`.flat_map(_).collect()`|77.93 (1.00)|239.83 (3.08)|31.73 (0.41)|**23.79 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map_filter.rs)|`.map(_).filter(_).collect()`|19.24 (1.00)|9.99 (0.52)|6.21 (0.32)|**5.98 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map.rs)|`.map(_).collect()`|18.08 (1.00)|7.98 (0.44)|**5.28 (0.29)**|6.09 (0.34)|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/drain_vec_collect_map_filter.rs)|`.map(_).filter(_).collect()`|19.41 (1.00)|7.54 (0.39)|5.9 (0.30)|**5.77 (0.30)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/drain_vec_collect_map_filter.rs)|`.map(_).filter(_).collect()`|19.41 (1.00)|7.54 (0.39)|5.90 (0.30)|**5.77 (0.30)**|
+
 
 ### Reduce
 
@@ -172,7 +173,7 @@ In this group, instead of collecting outputs, the results are reduced to a singl
 |---|---|---:|---:|---:|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_map_filter.rs)|`.map(_).filter(_).reduce(_)`|14.15 (1.00)|7.55 (0.53)|**3.86 (0.27)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_map.rs)|`.map(_).reduce(_)`|13.81 (1.00)|6.25 (0.45)|**4.15 (0.30)**|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce.rs)|`.reduce(_)`|0.97 (1.00)|10.58 (10.91)|**0.9 (0.93)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce.rs)|`.reduce(_)`|0.97 (1.00)|10.58 (10.91)|**0.90 (0.93)**|
 
 
 ### Find
@@ -192,9 +193,9 @@ As discussed in [ii](#ii-parallelization-of-arbitrary-regular-iterators), parall
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_iter_into_par.rs)|`.map(_).filter(_).collect()`|19.72 (1.00)|32.54 (1.65)|**6.12 (0.31)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs)|`…long_chain.collect()`|19.72 (1.00)|32.54 (1.65)|**6.12 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_iter_into_par.rs)|`.map(_).filter(_).reduce(_)`|15.17 (1.00)|118.28 (7.80)|**4.98 (0.33)**|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/)|`.map(_).filter(_).find(_)`|42.58 (1.00)|63.6 (1.49)|**7.98 (0.19)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/)|`.map(_).filter(_).find(_)`|42.58 (1.00)|63.60 (1.49)|**7.98 (0.19)**|
 
 ### Composition
 
@@ -204,8 +205,8 @@ Nevertheless, the results suggest that the functions are efficiently composed by
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs)|`…long_chain.collect()`|14.27 (1.00)|6.33 (0.44)|**3.8 (0.27)**|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_long_chain.rs)|`…long_chain.reduce(_)`|15.08 (1.00)|6.1 (0.40)|**4.03 (0.27)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs)|`…long_chain.collect()`|14.27 (1.00)|6.33 (0.44)|**3.80 (0.27)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_long_chain.rs)|`…long_chain.reduce(_)`|15.08 (1.00)|6.10 (0.40)|**4.03 (0.27)**|
 
 
 ## Configurable
