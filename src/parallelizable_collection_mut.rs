@@ -17,13 +17,33 @@ use orx_concurrent_iter::ConcurrentCollectionMut;
 ///
 /// Note that every [`ConcurrentCollectionMut`] type automatically implements [`ParallelizableCollectionMut`].
 ///
-/// [`con_iter`]: orx_concurrent_iter::ConcurrentCollection::con_iter
 /// [`CollectionMut`]: orx_iterable::CollectionMut
 /// [`ConcurrentCollectionMut`]: orx_concurrent_iter::ConcurrentCollectionMut
 /// [`par`]: crate::ParallelizableCollection::par
 /// [`par_mut`]: crate::ParallelizableCollectionMut::par_mut
 /// [`into_par`]: crate::IntoParIter::into_par
 /// [`ParIter`]: crate::ParIter
+///
+/// # Examples
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// // Vec<T>: ParallelizableCollectionMut<Item = T>
+/// let mut vec = vec![1, 2, 3, 4];
+///
+/// // non-consuming iteration over references
+/// assert_eq!(vec.par().sum(), 10);
+/// assert_eq!(vec.par().min(), Some(&1));
+/// assert_eq!(vec.par().max(), Some(&4));
+///
+/// // non-consuming mutable iteration
+/// vec.par_mut().filter(|x| **x >= 3).for_each(|x| *x += 10);
+/// assert_eq!(&vec, &[1, 2, 13, 14]);
+///
+/// // consuming iteration over owned values
+/// assert_eq!(vec.into_par().max(), Some(14));
+/// ```
 pub trait ParallelizableCollectionMut: ConcurrentCollectionMut + ParallelizableCollection {
     fn par_mut(&mut self) -> impl ParIter<DefaultRunner, Item = &mut Self::Item> {
         Par::new(Params::default(), self.con_iter_mut())
