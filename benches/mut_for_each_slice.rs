@@ -55,7 +55,7 @@ fn orx(inputs: &mut Vec<Data>) {
 fn run(c: &mut Criterion) {
     let treatments = [65_536 * 2];
 
-    let mut group = c.benchmark_group("mut_for_each");
+    let mut group = c.benchmark_group("mut_for_each_slice");
 
     for n in &treatments {
         let input = inputs(*n);
