@@ -3,24 +3,17 @@ use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-// m
-
-pub fn m<C, I, O, M1, S, SW, P>(
+pub fn m<C, I, O, E, M1, P>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
     map1: &M1,
-    stop: S,
-    o_bag: &ConcurrentOrderedBag<O, P>,
-    offset: usize,
-) -> Option<(usize, SW)>
+    action: impl Fn(usize, O),
+) -> Option<(usize, E)>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    M1: Fn(I::Item) -> O,
-    S: Fn(&O) -> Option<SW>,
-    P: IntoConcurrentPinnedVec<O>,
-    O: Send,
+    M1: Fn(I::Item) -> Result<O, E>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller_with_idx();
@@ -32,18 +25,15 @@ where
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some((idx, value)) => {
-                    let value = map1(value);
-                    match stop(&value) {
-                        Some(stop_with) => {
-                            iter.skip_to_end();
-                            runner.complete_chunk(shared_state, chunk_size);
-                            runner.complete_task(shared_state);
-                            return Some((idx, stop_with));
-                        }
-                        None => unsafe { o_bag.set_value(offset + idx, value) },
+                Some((idx, input)) => match map1(input) {
+                    Ok(value) => action(idx, value),
+                    Err(err) => {
+                        iter.skip_to_end();
+                        runner.complete_chunk(shared_state, chunk_size);
+                        runner.complete_task(shared_state);
+                        return Some((idx, err));
                     }
-                }
+                },
                 None => break,
             },
             c => {
@@ -53,17 +43,16 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((begin_idx, chunk)) => {
-                        for (i, value) in chunk.enumerate() {
+                        for (i, result) in chunk.map(map1).enumerate() {
                             let idx = begin_idx + i;
-                            let value = map1(value);
-                            match stop(&value) {
-                                Some(stop_with) => {
+                            match result {
+                                Ok(value) => action(idx, value),
+                                Err(err) => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
-                                    return Some((idx, stop_with));
+                                    return Some((idx, err));
                                 }
-                                None => unsafe { o_bag.set_value(offset + idx, value) },
                             }
                         }
                     }
