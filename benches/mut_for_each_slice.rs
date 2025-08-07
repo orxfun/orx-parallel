@@ -32,7 +32,7 @@ fn filter(data: &&mut Data) -> bool {
 }
 
 fn update(data: &mut Data) {
-    for _ in 0..10 {
+    for _ in 0..50 {
         let increment = fibonacci(data.number % 100) % 10;
         data.number += increment
     }
