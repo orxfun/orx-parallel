@@ -178,7 +178,7 @@ In this group, instead of collecting outputs, the results are reduced to a singl
 
 ### Find
 
-In the last category of computations, computations that allow for *early exit* or *short-circuit* are investigated. As an example, experiments on `find` method are presented; methods such as `find_any`, `any` or `all` lead to similar results.
+In this category of computations, computations that allow for *early exit* or *short-circuit* are investigated. As an example, experiments on `find` method are presented; methods such as `find_any`, `any` or `all` lead to similar results.
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
@@ -189,13 +189,23 @@ In the last category of computations, computations that allow for *early exit* o
 
 ### Parallelization of Arbitrary Iterators
 
-As discussed in [ii](#ii-parallelization-of-arbitrary-regular-iterators), parallelization of regular iterators is a very powerful feature. The benchmarks in this category demonstrate that significant improvements can be achieved provided that the computation on elements is not insignificant. Note that every computation defined after `iter_into_par()` are parallelized; and hence, the work on elements here are the `map` and `filter` computations.
+As discussed in [ii](#ii-parallelization-of-any-iterator), parallelization of regular iterators is a very powerful feature. The benchmarks in this category demonstrate that significant improvements can be achieved provided that the computation on elements is not insignificant. Note that every computation defined after `iter_into_par()` are parallelized; and hence, the work on elements here are the `map` and `filter` computations.
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs)|`…long_chain.collect()`|19.72 (1.00)|32.54 (1.65)|**6.12 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_iter_into_par.rs)|`.map(_).filter(_).reduce(_)`|15.17 (1.00)|118.28 (7.80)|**4.98 (0.33)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/)|`.map(_).filter(_).find(_)`|42.58 (1.00)|63.60 (1.49)|**7.98 (0.19)**|
+
+### Parallel Mutable Iterators
+
+Finally, we investigate the performance of parallel computation which mutates the input elements. In the benchmarks, we filter elements and update the ones which satisfy the given criterion within the `for_each` call.
+
+|file|computation|sequential|rayon|orx-parallel|
+|---|---|---:|---:|---:|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/mut_for_each_slice.rs)|`slice.par_mut().filter(_).for_each(_)`|62.61 (1.00)|14.08 (0.22)|**8.45 (0.13)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/mut_for_each_iter.rs)|`iter.iter_into_par().filter(_).for_each(_)`|77.63 (1.00)|78.69 (1.01)|**10.03 (0.13)**|
+
 
 ### Composition
 
