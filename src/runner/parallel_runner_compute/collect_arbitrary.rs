@@ -16,8 +16,8 @@ pub fn m<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
+    O: Send,
+    M1: Fn(I::Item) -> O + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
@@ -60,9 +60,9 @@ pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, pinned_vec: P) -> (usize, 
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
@@ -109,12 +109,12 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2, P>(
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();

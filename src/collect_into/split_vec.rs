@@ -27,7 +27,8 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Send + Sync,
+        M1: Fn(I::Item) -> O + Sync,
+        O: Send,
     {
         split_vec_reserve(&mut self, m.par_len());
         let (_num_spawned, pinned_vec) = m.collect_into::<R, _>(self);
@@ -38,9 +39,8 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O> + Send + Sync,
-        Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());
         let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
@@ -51,12 +51,11 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vt: Values + Send + Sync,
-        Vt::Item: Send + Sync,
-        Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        Vt: Values,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vt + Sync,
+        F: Fn(&Vt::Item) -> bool + Sync,
+        M2: Fn(Vt::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, xfx.par_len());
         let (_num_spawned, pinned_vec) = xfx.collect_into::<R, _>(self);

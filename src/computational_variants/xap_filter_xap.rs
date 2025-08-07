@@ -15,13 +15,11 @@ pub struct ParXapFilterXap<I, Vt, Vo, M1, F, M2, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vt::Item: Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     xfx: Xfx<I, Vt, Vo, M1, F, M2>,
     phantom: PhantomData<R>,
@@ -31,13 +29,11 @@ impl<I, Vt, Vo, M1, F, M2, R> ParXapFilterXap<I, Vt, Vo, M1, F, M2, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vt::Item: Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1, f: F, x2: M2) -> Self {
         Self {
@@ -55,13 +51,11 @@ unsafe impl<I, Vt, Vo, M1, F, M2, R> Send for ParXapFilterXap<I, Vt, Vo, M1, F, 
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vt::Item: Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
 }
 
@@ -69,13 +63,11 @@ unsafe impl<I, Vt, Vo, M1, F, M2, R> Sync for ParXapFilterXap<I, Vt, Vo, M1, F, 
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vt::Item: Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
 }
 
@@ -83,13 +75,11 @@ impl<I, Vt, Vo, M1, F, M2, R> ParIter<R> for ParXapFilterXap<I, Vt, Vo, M1, F, M
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vt::Item: Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
 
@@ -160,8 +150,7 @@ where
 
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(Self::Item) -> Out + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {
@@ -174,7 +163,7 @@ where
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Filter: Fn(&Self::Item) -> bool + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {
@@ -187,10 +176,8 @@ where
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone,
+        IOut: IntoIterator,
+        FlatMap: Fn(Self::Item) -> IOut + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {
@@ -203,8 +190,7 @@ where
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (params, iter, x1, f, x2) = self.destruct();
         let x2 = move |t: Vt::Item| {
@@ -228,14 +214,18 @@ where
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         self.xfx.reduce::<R, _>(reduce).1
     }
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
         match self.params().iteration_order {
             IterationOrder::Ordered => self.xfx.next::<R>().1,
             IterationOrder::Arbitrary => self.xfx.next_any::<R>().1,

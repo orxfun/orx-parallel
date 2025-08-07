@@ -23,7 +23,8 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Send + Sync,
+        M1: Fn(I::Item) -> O + Sync,
+        O: Send,
     {
         match m.par_len() {
             None => {
@@ -44,9 +45,8 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O> + Send + Sync,
-        Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
@@ -57,12 +57,11 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vt: Values + Send + Sync,
-        Vt::Item: Send + Sync,
-        Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync,
+        Vt: Values,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vt + Sync,
+        F: Fn(&Vt::Item) -> bool + Sync,
+        M2: Fn(Vt::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx);

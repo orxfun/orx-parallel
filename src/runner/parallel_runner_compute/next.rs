@@ -14,12 +14,12 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2>(
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
 {
     let (_, iter, xap1, filter, xap2) = xfx.destruct();
 

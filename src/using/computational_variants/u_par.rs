@@ -110,8 +110,7 @@ where
 
     fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(&mut <U as Using>::Item, Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(&mut <U as Using>::Item, Self::Item) -> Out + Sync + Clone,
     {
         let (using, params, iter) = self.destruct();
         let map = move |u: &mut U::Item, x: Self::Item| map(u, x);
@@ -120,7 +119,7 @@ where
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
-        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, params, iter) = self.destruct();
         let filter = move |u: &mut U::Item, x: &Self::Item| filter(u, x);
@@ -139,10 +138,8 @@ where
         flat_map: FlatMap,
     ) -> impl ParIterUsing<U, R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone,
+        IOut: IntoIterator,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, params, iter) = self.destruct();
         let x1 = move |u: &mut U::Item, i: Self::Item| Vector(flat_map(u, i));
@@ -154,8 +151,7 @@ where
         filter_map: FilterMap,
     ) -> impl ParIterUsing<U, R, Item = Out>
     where
-        Out: Send + Sync,
-        FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
+        FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, params, iter) = self.destruct();
         let x1 = move |u: &mut U::Item, x: Self::Item| filter_map(u, x);
@@ -175,7 +171,8 @@ where
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        Self::Item: Send,
+        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
         self.u_m().reduce::<R, _>(reduce).1
     }
