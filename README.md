@@ -64,7 +64,7 @@ let best_tour = (0..num_tours)
 
 Inputs that can be used in parallel computations can be categorized in three groups:
 
-* i. directly parallelizable co<center>llections
+* i. directly parallelizable collections
 * ii. parallelization of any iterator
 * iii. parallelization of any collection
 
