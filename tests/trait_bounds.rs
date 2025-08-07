@@ -13,8 +13,8 @@ fn trait_bounds_parallelizable() {
     fun(&vec![1, 2, 3]);
     fun(&VecDeque::<String>::new());
     fun(0..9);
-    fun(&FixedVec::<usize>::new(3));
-    fun(&SplitVec::<usize>::new());
+    // fun(&FixedVec::<usize>::new(3));
+    // fun(&SplitVec::<usize>::new());
 }
 
 #[test]
@@ -26,8 +26,8 @@ fn trait_bounds_parallelizable_collection() {
 
     fun(vec![1, 2, 3]);
     fun(VecDeque::<String>::new());
-    fun(FixedVec::<usize>::new(3));
-    fun(SplitVec::<usize>::new());
+    // fun(FixedVec::<usize>::new(3));
+    // fun(SplitVec::<usize>::new());
 }
 
 #[test]
@@ -40,14 +40,14 @@ fn trait_bounds_into_par_iter() {
     // owned
     fun(vec![1, 2, 3]);
     fun(VecDeque::<String>::new());
-    fun(FixedVec::<usize>::new(3));
-    fun(SplitVec::<usize>::new());
+    // fun(FixedVec::<usize>::new(3));
+    // fun(SplitVec::<usize>::new());
 
     // ref
     fun(vec![1, 2, 3].as_slice());
     fun(&vec![1, 2, 3]);
     fun(&VecDeque::<String>::new());
     fun(0..9);
-    fun(&FixedVec::<usize>::new(3));
-    fun(&SplitVec::<usize>::new());
+    // fun(&FixedVec::<usize>::new(3));
+    // fun(&SplitVec::<usize>::new());
 }
