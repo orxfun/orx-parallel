@@ -3,7 +3,7 @@ use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-pub fn m<C, I, O, E, M1, P>(
+pub fn m<C, I, O, E, M1>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
