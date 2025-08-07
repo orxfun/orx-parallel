@@ -45,6 +45,20 @@ use orx_concurrent_iter::ConcurrentCollectionMut;
 /// assert_eq!(vec.into_par().max(), Some(14));
 /// ```
 pub trait ParallelizableCollectionMut: ConcurrentCollectionMut + ParallelizableCollection {
+    /// Creates a parallel iterator over mutable references of the collection's elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // Vec<T>: ParallelizableCollectionMut<Item = T>
+    /// let mut vec = vec![1, 2, 3, 4];
+    ///
+    /// vec.par_mut().filter(|x| **x >= 3).for_each(|x| *x += 10);
+    ///
+    /// assert_eq!(&vec, &[1, 2, 13, 14]);
+    /// ```
     fn par_mut(&mut self) -> impl ParIter<DefaultRunner, Item = &mut Self::Item> {
         Par::new(Params::default(), self.con_iter_mut())
     }
