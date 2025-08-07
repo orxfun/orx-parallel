@@ -76,3 +76,33 @@ where
         a + b
     }
 }
+
+impl<'a, X> Sum<X> for &'a mut X
+where
+    X: Default + Add<X, Output = X> + Copy,
+    &'a X: Add<&'a X, Output = X>,
+{
+    fn zero() -> X {
+        X::default()
+    }
+
+    #[inline(always)]
+    fn map(a: Self) -> X {
+        *a
+    }
+
+    #[inline(always)]
+    fn u_map<U>(_: &mut U, a: Self) -> X {
+        *a
+    }
+
+    #[inline(always)]
+    fn reduce(a: X, b: X) -> X {
+        a + b
+    }
+
+    #[inline(always)]
+    fn u_reduce<U>(_: &mut U, a: X, b: X) -> X {
+        a + b
+    }
+}
