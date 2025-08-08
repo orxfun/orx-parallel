@@ -78,7 +78,7 @@ fn orx(inputs: &[usize]) -> usize {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [65_536, 65_536 * 4];
+    let treatments = [65_536 * 2];
 
     let mut group = c.benchmark_group("count_map_filter");
 

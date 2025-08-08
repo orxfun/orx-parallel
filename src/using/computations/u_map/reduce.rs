@@ -8,13 +8,13 @@ impl<U, I, O, M1> UM<U, I, O, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync,
+    O: Send,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
     pub fn reduce<R, X>(self, reduce: X) -> (usize, Option<O>)
     where
         R: ParallelRunner,
-        X: Fn(&mut U::Item, O, O) -> O + Send + Sync,
+        X: Fn(&mut U::Item, O, O) -> O + Sync,
     {
         let len = self.iter().try_get_len();
         let p = self.params();

@@ -3,36 +3,29 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-impl<T> Values for Option<T>
-where
-    T: Send + Sync,
-{
+impl<T> Values for Option<T> {
     type Item = T;
 
     type Mapped<M, O>
         = Option<O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync;
+        M: Fn(Self::Item) -> O;
 
     type Filtered<F>
         = Option<T>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync;
+        F: Fn(&Self::Item) -> bool;
 
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<<Option<T> as IntoIterator>::IntoIter, Vo, Fm>>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync;
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
 
     type FilterMapped<Fm, O>
         = Option<O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync;
+        Fm: Fn(Self::Item) -> Option<O>;
 
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
@@ -53,7 +46,7 @@ where
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync,
+        Self::Item: Send,
     {
         if let Some(x) = self {
             bag.push(x);
@@ -64,7 +57,7 @@ where
     fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send + Sync,
+        Self::Item: Send,
     {
         if let Some(x) = self {
             unsafe { o_bag.set_value(idx, x) };
@@ -81,8 +74,7 @@ where
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
-        O: Send + Sync,
-        M: Fn(Self::Item) -> O + Send + Sync,
+        M: Fn(Self::Item) -> O,
     {
         self.map(map)
     }
@@ -90,10 +82,8 @@ where
     #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
-        Vo: IntoIterator + Send + Sync,
-        Vo::Item: Send + Sync,
-        Vo::IntoIter: Send + Sync,
-        Fm: Fn(Self::Item) -> Vo + Send + Sync,
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo,
     {
         Vector(self.into_iter().flat_map(flat_map))
     }
@@ -101,8 +91,7 @@ where
     #[inline(always)]
     fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
     where
-        O: Send + Sync,
-        Fm: Fn(Self::Item) -> Option<O> + Send + Sync,
+        Fm: Fn(Self::Item) -> Option<O>,
     {
         match self {
             Some(x) => filter_map(x),
@@ -113,7 +102,7 @@ where
     #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
-        X: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match (acc, self) {
             (Some(x), Some(y)) => Some(reduce(x, y)),
@@ -126,7 +115,7 @@ where
     #[inline(always)]
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
-        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match (acc, self) {
             (Some(x), Some(y)) => Some(reduce(u, x, y)),
@@ -139,7 +128,7 @@ where
     #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
     {
         match self {
             Some(x) if filter(&x) => Some(x),
@@ -157,11 +146,10 @@ where
     ) -> Option<Vo::Item>
     where
         Self: Sized,
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
     {
         match self {
             Some(x) if filter(&x) => {
@@ -183,11 +171,10 @@ where
     ) -> Option<Vo::Item>
     where
         Self: Sized,
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
     {
         match self {
             Some(x) if filter(u, &x) => {
@@ -206,10 +193,9 @@ where
     #[inline(always)]
     fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
     {
         match self {
             Some(x) if filter(&x) => map2(x).first(),
@@ -220,10 +206,9 @@ where
     #[inline(always)]
     fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
     where
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
     {
         match self {
             Some(x) if filter(u, &x) => map2(u, x).first(),
@@ -233,8 +218,8 @@ where
 
     fn filter_map_collect_sequential<F, M2, P, Vo>(self, filter: F, map2: M2, vector: &mut P)
     where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
@@ -254,8 +239,8 @@ where
         map2: M2,
         vector: &mut P,
     ) where
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
@@ -274,10 +259,10 @@ where
         map2: M2,
         bag: &ConcurrentBag<Vo::Item, P>,
     ) where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
+        Vo::Item: Send,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
         match self {
@@ -296,11 +281,11 @@ where
         map2: M2,
         bag: &ConcurrentBag<Vo::Item, P>,
     ) where
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
         P: IntoConcurrentPinnedVec<Vo::Item>,
+        Vo::Item: Send,
     {
         match self {
             Some(x) if filter(u, &x) => {
@@ -318,10 +303,9 @@ where
         map2: M2,
         vec: &mut Vec<(usize, Vo::Item)>,
     ) where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
     {
         match self {
             Some(x) if filter(&x) => {
@@ -340,10 +324,9 @@ where
         map2: M2,
         vec: &mut Vec<(usize, Vo::Item)>,
     ) where
-        F: Fn(&mut U, &Self::Item) -> bool + Send + Sync,
-        M2: Fn(&mut U, Self::Item) -> Vo + Send + Sync,
+        F: Fn(&mut U, &Self::Item) -> bool,
+        M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
     {
         match self {
             Some(x) if filter(u, &x) => {
@@ -361,11 +344,11 @@ where
         map2: M2,
         o_bag: &orx_concurrent_ordered_bag::ConcurrentOrderedBag<Vo::Item, P>,
     ) where
-        F: Fn(&Self::Item) -> bool + Send + Sync,
-        M2: Fn(Self::Item) -> Vo + Send + Sync,
+        F: Fn(&Self::Item) -> bool,
+        M2: Fn(Self::Item) -> Vo,
         Vo: Values,
-        Vo::Item: Send + Sync,
         P: IntoConcurrentPinnedVec<Vo::Item>,
+        Vo::Item: Send,
     {
         match self {
             Some(x) if filter(&x) => {

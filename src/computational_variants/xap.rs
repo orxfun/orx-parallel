@@ -15,9 +15,8 @@ pub struct ParXap<I, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
     x: X<I, Vo, M1>,
     phantom: PhantomData<R>,
@@ -27,9 +26,8 @@ impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
         Self {
@@ -47,9 +45,8 @@ unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
 }
 
@@ -57,9 +54,8 @@ unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
 }
 
@@ -67,9 +63,8 @@ impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    M1: Fn(I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
 
@@ -136,8 +131,7 @@ where
 
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(Self::Item) -> Out + Sync + Clone,
     {
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
@@ -150,7 +144,7 @@ where
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync,
+        Filter: Fn(&Self::Item) -> bool + Sync,
     {
         let (params, iter, x1) = self.destruct();
         ParXapFilterXap::new(params, iter, x1, filter, map_self_atom)
@@ -158,10 +152,8 @@ where
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone,
+        IOut: IntoIterator,
+        FlatMap: Fn(Self::Item) -> IOut + Sync + Clone,
     {
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
@@ -173,8 +165,7 @@ where
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
@@ -197,7 +188,8 @@ where
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         self.x.reduce::<R, _>(reduce).1
     }

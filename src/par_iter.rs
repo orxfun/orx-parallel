@@ -16,7 +16,7 @@ where
     R: ParallelRunner,
 {
     /// Element type of the parallel iterator.
-    type Item: Send + Sync;
+    type Item;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
@@ -512,8 +512,7 @@ where
     /// ```
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone;
+        Map: Fn(Self::Item) -> Out + Sync + Clone;
 
     /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
     ///
@@ -531,7 +530,7 @@ where
     /// ```
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync + Clone;
+        Filter: Fn(&Self::Item) -> bool + Sync + Clone;
 
     /// Creates an iterator that works like map, but flattens nested structure.
     ///
@@ -550,10 +549,8 @@ where
     /// ```
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync + Clone;
+        IOut: IntoIterator,
+        FlatMap: Fn(Self::Item) -> IOut + Sync + Clone;
 
     /// Creates an iterator that both filters and maps.
     ///
@@ -578,8 +575,7 @@ where
     /// ```
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone;
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone;
 
     /// Does something with each element of an iterator, passing the value on.
     ///
@@ -640,7 +636,7 @@ where
     /// ```
     fn inspect<Operation>(self, operation: Operation) -> impl ParIter<R, Item = Self::Item>
     where
-        Operation: Fn(&Self::Item) + Sync + Send + Clone,
+        Operation: Fn(&Self::Item) + Sync + Clone,
     {
         let map = move |x| {
             operation(&x);
@@ -670,7 +666,7 @@ where
     /// ```
     fn copied<'a, T>(self) -> impl ParIter<R, Item = T>
     where
-        T: 'a + Copy + Send + Sync,
+        T: 'a + Copy,
         Self: ParIter<R, Item = &'a T>,
     {
         self.map(map_copy)
@@ -701,7 +697,7 @@ where
     /// ```
     fn cloned<'a, T>(self) -> impl ParIter<R, Item = T>
     where
-        T: 'a + Clone + Send + Sync,
+        T: 'a + Clone,
         Self: ParIter<R, Item = &'a T>,
     {
         self.map(map_clone)
@@ -753,10 +749,6 @@ where
     fn flatten(self) -> impl ParIter<R, Item = <Self::Item as IntoIterator>::Item>
     where
         Self::Item: IntoIterator,
-        <Self::Item as IntoIterator>::IntoIter: Send + Sync,
-        <Self::Item as IntoIterator>::Item: Send + Sync,
-        R: Send + Sync,
-        Self: Send + Sync,
     {
         let map = |e: Self::Item| e.into_iter();
         self.flat_map(map)
@@ -838,7 +830,8 @@ where
     /// ```
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync;
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync;
 
     /// Tests if every element of the iterator matches a predicate.
     ///
@@ -866,7 +859,8 @@ where
     /// ```
     fn all<Predicate>(self, predicate: Predicate) -> bool
     where
-        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         let violates = |x: &Self::Item| !predicate(x);
         self.find(violates).is_none()
@@ -898,7 +892,8 @@ where
     /// ```
     fn any<Predicate>(self, predicate: Predicate) -> bool
     where
-        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.find(predicate).is_some()
     }
@@ -953,7 +948,7 @@ where
     /// ```
     fn for_each<Operation>(self, operation: Operation)
     where
-        Operation: Fn(Self::Item) + Sync + Send,
+        Operation: Fn(Self::Item) + Sync,
     {
         let map = |x| operation(x);
         let _ = self.map(map).reduce(reduce_unit);
@@ -976,7 +971,7 @@ where
     /// ```
     fn max(self) -> Option<Self::Item>
     where
-        Self::Item: Ord,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::max)
     }
@@ -995,6 +990,7 @@ where
     /// ```
     fn max_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
@@ -1018,6 +1014,7 @@ where
     /// ```
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -1045,7 +1042,7 @@ where
     /// ```
     fn min(self) -> Option<Self::Item>
     where
-        Self::Item: Ord,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::min)
     }
@@ -1064,6 +1061,7 @@ where
     /// ```
     fn min_by<Compare>(self, compare: Compare) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
@@ -1087,6 +1085,7 @@ where
     /// ```
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Self::Item>
     where
+        Self::Item: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -1120,7 +1119,7 @@ where
     fn sum<Out>(self) -> Out
     where
         Self::Item: Sum<Out>,
-        Out: Send + Sync,
+        Out: Send,
     {
         self.map(Self::Item::map)
             .reduce(Self::Item::reduce)
@@ -1172,7 +1171,9 @@ where
     /// // or equivalently,
     /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
-    fn first(self) -> Option<Self::Item>;
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send;
 
     /// Searches for an element of an iterator that satisfies a `predicate`.
     ///
@@ -1218,8 +1219,9 @@ where
     /// ```
     fn find<Predicate>(self, predicate: Predicate) -> Option<Self::Item>
     where
-        Predicate: Fn(&Self::Item) -> bool + Send + Sync + Clone,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
-        self.filter(predicate).first()
+        self.filter(&predicate).first()
     }
 }

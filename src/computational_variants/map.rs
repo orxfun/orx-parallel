@@ -14,8 +14,7 @@ pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
     m: M<I, O, M1>,
     phantom: PhantomData<R>,
@@ -25,8 +24,7 @@ impl<I, O, M1, R> ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, m1: M1) -> Self {
         Self {
@@ -44,8 +42,7 @@ unsafe impl<I, O, M1, R> Send for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
 }
 
@@ -53,8 +50,7 @@ unsafe impl<I, O, M1, R> Sync for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
 }
 
@@ -62,8 +58,7 @@ impl<I, O, M1, R> ParIter<R> for ParMap<I, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(I::Item) -> O + Sync,
 {
     type Item = O;
 
@@ -130,8 +125,7 @@ where
 
     fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(Self::Item) -> Out + Sync,
     {
         let (params, iter, m1) = self.destruct();
         let m1 = move |x| map(m1(x));
@@ -140,7 +134,7 @@ where
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
-        Filter: Fn(&Self::Item) -> bool + Send + Sync,
+        Filter: Fn(&Self::Item) -> bool + Sync,
     {
         let (params, iter, m1) = self.destruct();
         let m1 = move |i: I::Item| Atom(m1(i));
@@ -149,10 +143,8 @@ where
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(Self::Item) -> IOut + Send + Sync,
+        IOut: IntoIterator,
+        FlatMap: Fn(Self::Item) -> IOut + Sync,
     {
         let (params, iter, m1) = self.destruct();
         let x1 = move |i: I::Item| Vector(flat_map(m1(i)));
@@ -161,8 +153,7 @@ where
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
-        Out: Send + Sync,
-        FilterMap: Fn(Self::Item) -> Option<Out> + Send + Sync + Clone,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync,
     {
         let (params, iter, m1) = self.destruct();
         let x1 = move |i: I::Item| filter_map(m1(i));
@@ -182,7 +173,8 @@ where
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         self.m.reduce::<R, _>(reduce).1
     }

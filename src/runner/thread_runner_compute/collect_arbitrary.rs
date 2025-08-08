@@ -18,6 +18,7 @@ pub fn m<C, I, O, M1, P>(
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O,
     P: IntoConcurrentPinnedVec<O>,
+    O: Send,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
@@ -64,6 +65,7 @@ pub fn x<C, I, Vo, X1, P>(
     Vo: Values,
     X1: Fn(I::Item) -> Vo,
     P: IntoConcurrentPinnedVec<Vo::Item>,
+    Vo::Item: Send,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
@@ -124,11 +126,11 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2, P>(
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send + Sync,
     M1: Fn(I::Item) -> Vt,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    F: Fn(&Vt::Item) -> bool,
+    M2: Fn(Vt::Item) -> Vo,
     P: IntoConcurrentPinnedVec<Vo::Item>,
+    Vo::Item: Send,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();

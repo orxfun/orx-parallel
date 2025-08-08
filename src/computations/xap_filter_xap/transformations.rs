@@ -7,10 +7,9 @@ where
     I: ConcurrentIter,
     Vt: Values,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
+    M1: Fn(I::Item) -> Vt,
+    F: Fn(&Vt::Item) -> bool,
+    M2: Fn(Vt::Item) -> Vo,
 {
     #[allow(clippy::type_complexity)]
     pub fn map<M, Q>(
@@ -18,8 +17,7 @@ where
         map: M,
     ) -> Xfx<I, Vt, Vo::Mapped<M, Q>, M1, F, impl Fn(Vt::Item) -> Vo::Mapped<M, Q>>
     where
-        M: Fn(Vo::Item) -> Q + Send + Sync + Clone,
-        Q: Send + Sync,
+        M: Fn(Vo::Item) -> Q + Clone,
     {
         let (params, iter, map1, filter, map2) = self.destruct();
         let map2 = move |t| {
@@ -35,10 +33,8 @@ where
         flat_map: Fm,
     ) -> Xfx<I, Vt, Vo::FlatMapped<Fm, Vq>, M1, F, impl Fn(Vt::Item) -> Vo::FlatMapped<Fm, Vq>>
     where
-        Fm: Fn(Vo::Item) -> Vq + Send + Sync + Clone,
-        Vq: IntoIterator + Send + Sync,
-        Vq::IntoIter: Send + Sync,
-        Vq::Item: Send + Sync,
+        Fm: Fn(Vo::Item) -> Vq + Clone,
+        Vq: IntoIterator,
     {
         let (params, iter, map1, filter, map2) = self.destruct();
         let map2 = move |t| {

@@ -5,7 +5,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
+pub trait ParCollectIntoCore<O>: Collection<Item = O> {
     type BridgePinnedVec: IntoConcurrentPinnedVec<O>;
 
     fn empty(iter_len: Option<usize>) -> Self;
@@ -14,26 +14,24 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Send + Sync;
+        M1: Fn(I::Item) -> O + Sync;
 
     fn x_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O> + Send + Sync,
-        Vo::Item: Send + Sync,
-        M1: Fn(I::Item) -> Vo + Send + Sync;
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vo + Sync;
 
     fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vt: Values + Send + Sync,
-        Vt::Item: Send + Sync,
-        Vo: Values<Item = O> + Send + Sync,
-        M1: Fn(I::Item) -> Vt + Send + Sync,
-        F: Fn(&Vt::Item) -> bool + Send + Sync,
-        M2: Fn(Vt::Item) -> Vo + Send + Sync;
+        Vt: Values,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vt + Sync,
+        F: Fn(&Vt::Item) -> bool + Sync,
+        M2: Fn(Vt::Item) -> Vo + Sync;
 
     // test
 
@@ -81,9 +79,6 @@ pub trait ParCollectIntoCore<O: Send + Sync>: Collection<Item = O> {
 }
 
 /// Collection types into which outputs of a parallel computations can be collected into.
-pub trait ParCollectInto<O: Send + Sync>: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}
+pub trait ParCollectInto<O>: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}
 
-impl<O: Send + Sync, C> ParCollectInto<O> for C where
-    C: ParCollectIntoCore<O> + UParCollectIntoCore<O>
-{
-}
+impl<O, C> ParCollectInto<O> for C where C: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}

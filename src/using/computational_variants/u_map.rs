@@ -18,8 +18,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
     um: UM<U, I, O, M1>,
     phantom: PhantomData<R>,
@@ -30,8 +29,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
     pub(crate) fn new(using: U, params: Params, iter: I, m1: M1) -> Self {
         Self {
@@ -50,8 +48,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
 }
 
@@ -60,8 +57,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
 }
 
@@ -70,8 +66,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> O + Send + Sync + Clone,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
     type Item = O;
 
@@ -109,8 +104,7 @@ where
 
     fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
-        Out: Send + Sync,
-        Map: Fn(&mut U::Item, Self::Item) -> Out + Send + Sync + Clone,
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
         let (using, params, iter, m1) = self.destruct();
         let m1 = move |u: &mut U::Item, x: I::Item| {
@@ -122,7 +116,7 @@ where
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
-        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Send + Sync + Clone,
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, params, iter, m1) = self.destruct();
         let m1 = move |u: &mut U::Item, i: I::Item| Atom(m1(u, i));
@@ -135,10 +129,8 @@ where
         flat_map: FlatMap,
     ) -> impl ParIterUsing<U, R, Item = IOut::Item>
     where
-        IOut: IntoIterator + Send + Sync,
-        IOut::IntoIter: Send + Sync,
-        IOut::Item: Send + Sync,
-        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Send + Sync + Clone,
+        IOut: IntoIterator,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, params, iter, m1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
@@ -153,8 +145,7 @@ where
         filter_map: FilterMap,
     ) -> impl ParIterUsing<U, R, Item = Out>
     where
-        Out: Send + Sync,
-        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Send + Sync + Clone,
+        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, params, iter, m1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
@@ -177,7 +168,8 @@ where
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
-        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Send + Sync,
+        Self::Item: Send,
+        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
         self.um.reduce::<R, _>(reduce).1
     }

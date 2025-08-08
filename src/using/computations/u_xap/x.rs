@@ -6,9 +6,8 @@ pub struct UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    M1: Fn(&mut U::Item, I::Item) -> Vo,
 {
     using: U,
     params: Params,
@@ -20,9 +19,8 @@ impl<U, I, Vo, M1> UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(&mut U::Item, I::Item) -> Vo + Send + Sync,
+    Vo: Values,
+    M1: Fn(&mut U::Item, I::Item) -> Vo,
 {
     pub fn new(using: U, params: Params, iter: I, xap1: M1) -> Self {
         Self {

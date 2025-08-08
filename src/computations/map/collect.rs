@@ -11,8 +11,8 @@ use orx_pinned_vec::IntoConcurrentPinnedVec;
 impl<I, O, M1> M<I, O, M1>
 where
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
+    O: Send,
+    M1: Fn(I::Item) -> O + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
     where

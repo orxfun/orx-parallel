@@ -50,10 +50,10 @@ fn main() {
         }
     }
 
-    let n = 1_000_000;
-    let input: Vec<_> = (0..n).collect();
+    let n = 1 << 30;
+    let input = 0..n;
 
     // default -> might use all threads
-    let sum = input.par().map(|i| fib(&(i % 500_000)) % 42).sum();
+    let sum = input.par().map(|i| fib(&(i as u64 % 42)) % 42).sum();
     println!("sum = {sum}");
 }

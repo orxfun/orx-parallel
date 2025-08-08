@@ -9,9 +9,9 @@ pub fn m<C, I, O, M1, Red>(runner: C, m: M<I, O, M1>, reduce: Red) -> (usize, Op
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    O: Send + Sync,
-    M1: Fn(I::Item) -> O + Send + Sync,
-    Red: Fn(O, O) -> O + Send + Sync,
+    M1: Fn(I::Item) -> O + Sync,
+    Red: Fn(O, O) -> O + Sync,
+    O: Send,
 {
     let (_, iter, map1) = m.destruct();
 
@@ -56,9 +56,9 @@ where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
     Vo: Values,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vo + Send + Sync,
-    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vo + Sync,
+    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let (_, iter, xap1) = x.destruct();
 
@@ -106,13 +106,13 @@ pub fn xfx<C, I, Vt, Vo, M1, F, M2, Red>(
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
-    Vt: Values + Send + Sync,
-    Vo: Values + Send + Sync,
-    Vo::Item: Send + Sync,
-    M1: Fn(I::Item) -> Vt + Send + Sync,
-    F: Fn(&Vt::Item) -> bool + Send + Sync,
-    M2: Fn(Vt::Item) -> Vo + Send + Sync,
-    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Send + Sync,
+    Vt: Values,
+    Vo: Values,
+    Vo::Item: Send,
+    M1: Fn(I::Item) -> Vt + Sync,
+    F: Fn(&Vt::Item) -> bool + Sync,
+    M2: Fn(Vt::Item) -> Vo + Sync,
+    Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let (_, iter, xap1, filter, xap2) = xfx.destruct();
 
