@@ -1,4 +1,3 @@
-use super::generalized_values::Atom;
 use std::ops::Add;
 
 #[inline(always)]
@@ -6,9 +5,10 @@ pub fn map_self<T>(input: T) -> T {
     input
 }
 
+#[cfg(test)]
 #[inline(always)]
-pub fn map_self_atom<T>(input: T) -> Atom<T> {
-    Atom(input)
+pub fn map_self_atom<T>(input: T) -> super::generalized_values::Atom<T> {
+    super::generalized_values::Atom(input)
 }
 
 #[inline(always)]
