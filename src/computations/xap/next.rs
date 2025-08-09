@@ -9,8 +9,14 @@ where
     M1: Fn(I::Item) -> Vo,
 {
     pub fn next(self) -> Option<Vo::Item> {
+        // TODO: to be parallelized!
         let (_, iter, xap1) = self.destruct();
-        iter.next()
-            .and_then(|i| xap1(i).values().into_iter().next())
+        while let Some(i) = iter.next() {
+            let next = xap1(i).values().into_iter().next();
+            if next.is_some() {
+                return next;
+            }
+        }
+        None
     }
 }
