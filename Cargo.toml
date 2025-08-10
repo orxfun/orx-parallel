@@ -34,7 +34,7 @@ rayon = "1.10.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "mut_for_each_slice"
+name = "find_map_filter"
 harness = false
 
 [features]
