@@ -37,7 +37,7 @@ where
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> Option<usize>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -45,7 +45,7 @@ where
         for x in self.0 {
             bag.push(x);
         }
-        None
+        false
     }
 
     #[inline(always)]

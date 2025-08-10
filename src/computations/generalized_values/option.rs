@@ -31,7 +31,7 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> Option<usize>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -39,7 +39,7 @@ impl<T> Values for Option<T> {
         if let Some(x) = self {
             bag.push(x);
         }
-        None
+        false
     }
 
     #[inline(always)]

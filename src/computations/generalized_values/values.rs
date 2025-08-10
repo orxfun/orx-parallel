@@ -13,7 +13,8 @@ pub trait Values {
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize>;
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> Option<usize>
+    /// Returns true if the computation must early exit.
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send;

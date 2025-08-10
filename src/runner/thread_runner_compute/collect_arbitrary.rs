@@ -80,9 +80,9 @@ pub fn x<C, I, Vo, X1, P>(
                 Some(value) => {
                     // TODO: possible to try to get len and bag.extend(values_vt.values()) when available, same holds for chunk below
                     let vo = xap1(value);
-                    let max_idx_exc = vo.push_to_bag(bag);
+                    let stop = vo.push_to_bag(bag);
 
-                    if let Some(_) = max_idx_exc {
+                    if stop {
                         iter.skip_to_end();
                         runner.complete_chunk(shared_state, chunk_size);
                         runner.complete_task(shared_state);
@@ -100,9 +100,9 @@ pub fn x<C, I, Vo, X1, P>(
                     Some(chunk) => {
                         for value in chunk {
                             let vo = xap1(value);
-                            let max_idx_exc = vo.push_to_bag(bag);
+                            let stop = vo.push_to_bag(bag);
 
-                            if let Some(_) = max_idx_exc {
+                            if stop {
                                 iter.skip_to_end();
                                 runner.complete_chunk(shared_state, chunk_size);
                                 runner.complete_task(shared_state);
