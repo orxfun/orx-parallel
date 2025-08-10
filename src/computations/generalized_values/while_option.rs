@@ -94,19 +94,15 @@ impl<T> Values for WhileOption<T> {
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(
-        self,
-        acc: Option<Self::Item>,
-        reduce: X,
-    ) -> (Option<usize>, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match (acc, self.0) {
-            (Some(x), Some(y)) => (None, Some(reduce(x, y))),
-            (None, Some(y)) => (None, Some(y)),
-            (Some(x), None) => (Some(0), Some(x)),
-            (None, None) => (Some(0), None),
+            (Some(x), Some(y)) => (false, Some(reduce(x, y))),
+            (None, Some(y)) => (false, Some(y)),
+            (Some(x), None) => (true, Some(x)),
+            (None, None) => (true, None),
         }
     }
 

@@ -31,11 +31,8 @@ pub trait Values {
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
-    fn acc_reduce<X>(
-        self,
-        acc: Option<Self::Item>,
-        reduce: X,
-    ) -> (Option<usize>, Option<Self::Item>)
+    /// Returns (true, _) if the computation must early exit.
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item;
 

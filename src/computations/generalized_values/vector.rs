@@ -74,17 +74,13 @@ where
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(
-        self,
-        acc: Option<Self::Item>,
-        reduce: X,
-    ) -> (Option<usize>, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         let reduced = self.0.into_iter().reduce(&reduce);
         (
-            None,
+            false,
             match (acc, reduced) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),

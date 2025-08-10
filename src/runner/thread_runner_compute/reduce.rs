@@ -93,10 +93,10 @@ where
             0 | 1 => match item_puller.next() {
                 Some(i) => {
                     let vo = xap1(i);
-                    let result = vo.acc_reduce(acc, reduce);
-                    acc = result.1;
+                    let (stop, vo_acc) = vo.acc_reduce(acc, reduce);
+                    acc = vo_acc;
 
-                    if let Some(_) = result.0 {
+                    if stop {
                         iter.skip_to_end();
                         runner.complete_chunk(shared_state, chunk_size);
                         runner.complete_task(shared_state);
@@ -114,10 +114,10 @@ where
                     Some(chunk) => {
                         for i in chunk {
                             let vo = xap1(i);
-                            let result = vo.acc_reduce(acc, reduce);
-                            acc = result.1;
+                            let (stop, vo_acc) = vo.acc_reduce(acc, reduce);
+                            acc = vo_acc;
 
-                            if let Some(_) = result.0 {
+                            if stop {
                                 iter.skip_to_end();
                                 runner.complete_chunk(shared_state, chunk_size);
                                 runner.complete_task(shared_state);
