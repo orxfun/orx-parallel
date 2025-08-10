@@ -70,7 +70,7 @@ pub fn x<C, I, Vo, X1, Red>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
-    map1: &X1,
+    xap1: &X1,
     reduce: &Red,
 ) -> Option<Vo::Item>
 where
@@ -92,7 +92,7 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    let vo = map1(i);
+                    let vo = xap1(i);
                     acc = vo.acc_reduce(acc, reduce);
                 }
                 None => break,
@@ -105,7 +105,7 @@ where
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         for i in chunk {
-                            let vo = map1(i);
+                            let vo = xap1(i);
                             acc = vo.acc_reduce(acc, reduce);
                         }
                     }
