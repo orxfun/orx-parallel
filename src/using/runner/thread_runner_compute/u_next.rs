@@ -39,8 +39,8 @@ where
                 }
 
                 match chunk_puller.pull_with_idx() {
-                    Some((idx, chunk)) => {
-                        for i in chunk {
+                    Some((idx, mut chunk)) => {
+                        if let Some(i) = chunk.next() {
                             let first = map1(u, i);
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
