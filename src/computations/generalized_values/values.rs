@@ -5,10 +5,6 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 pub trait Values {
     type Item;
 
-    type Mapped<M, O>: Values<Item = O>
-    where
-        M: Fn(Self::Item) -> O;
-
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
     fn push_to_pinned_vec<P>(self, vector: &mut P)
@@ -27,7 +23,7 @@ pub trait Values {
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>);
 
-    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where
         M: Fn(Self::Item) -> O;
 

@@ -8,11 +8,6 @@ pub struct Atom<T>(pub T);
 impl<T> Values for Atom<T> {
     type Item = T;
 
-    type Mapped<M, O>
-        = Atom<O>
-    where
-        M: Fn(Self::Item) -> O;
-
     fn values(self) -> impl IntoIterator<Item = T> {
         core::iter::once(self.0)
     }
@@ -49,7 +44,7 @@ impl<T> Values for Atom<T> {
     }
 
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where
         M: Fn(Self::Item) -> O,
     {

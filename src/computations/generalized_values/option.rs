@@ -6,11 +6,6 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 impl<T> Values for Option<T> {
     type Item = T;
 
-    type Mapped<M, O>
-        = Option<O>
-    where
-        M: Fn(Self::Item) -> O;
-
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self
@@ -56,7 +51,7 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where
         M: Fn(Self::Item) -> O,
     {

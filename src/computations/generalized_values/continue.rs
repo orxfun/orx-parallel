@@ -19,11 +19,6 @@ impl<T> IntoIterator for Continue<T> {
 impl<T> Values for Continue<T> {
     type Item = T;
 
-    type Mapped<M, O>
-        = Continue<O>
-    where
-        M: Fn(Self::Item) -> O;
-
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self
@@ -66,7 +61,7 @@ impl<T> Values for Continue<T> {
         }
     }
 
-    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where
         M: Fn(Self::Item) -> O,
     {

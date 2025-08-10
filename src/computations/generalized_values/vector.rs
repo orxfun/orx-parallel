@@ -13,11 +13,6 @@ where
 {
     type Item = I::Item;
 
-    type Mapped<M, O>
-        = Vector<core::iter::Map<I::IntoIter, M>>
-    where
-        M: Fn(Self::Item) -> O;
-
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
     }
@@ -62,7 +57,7 @@ where
     }
 
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
+    fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where
         M: Fn(Self::Item) -> O,
     {
