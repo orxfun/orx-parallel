@@ -24,11 +24,6 @@ impl<T> Values for Atom<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
-    type FilterMapped<Fm, O>
-        = Option<O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>;
-
     fn values(self) -> impl IntoIterator<Item = T> {
         core::iter::once(self.0)
     }
@@ -79,14 +74,6 @@ impl<T> Values for Atom<T> {
         Fm: Fn(Self::Item) -> Vo,
     {
         Vector(flat_map(self.0))
-    }
-
-    #[inline(always)]
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>,
-    {
-        filter_map(self.0)
     }
 
     #[inline(always)]

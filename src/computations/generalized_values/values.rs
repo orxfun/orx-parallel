@@ -18,10 +18,6 @@ pub trait Values {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
-    type FilterMapped<Fm, O>: Values<Item = O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>;
-
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
     fn push_to_pinned_vec<P>(self, vector: &mut P)
@@ -48,10 +44,6 @@ pub trait Values {
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
-
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>;
 
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
