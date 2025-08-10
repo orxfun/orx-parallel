@@ -188,7 +188,10 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.ux.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        self.ux.next::<R>().1
     }
 }

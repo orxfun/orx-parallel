@@ -1,7 +1,6 @@
 use super::m::M;
-use crate::ParallelRunner;
-use crate::runner::ParallelRunnerCompute;
 use crate::runner::parallel_runner_compute::{next, next_any};
+use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<I, O, M1> M<I, O, M1>

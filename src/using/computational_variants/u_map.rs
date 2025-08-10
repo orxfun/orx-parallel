@@ -176,7 +176,10 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.um.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        self.um.next::<R>().1
     }
 }

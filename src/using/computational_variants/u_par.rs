@@ -179,7 +179,10 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.u_m().next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        self.u_m().next::<R>().1
     }
 }
