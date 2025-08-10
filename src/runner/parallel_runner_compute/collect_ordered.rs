@@ -1,3 +1,4 @@
+use crate::computations::min_opt_idx;
 use crate::runner::thread_runner_compute as thread;
 use crate::{
     computations::{M, Values, X, heap_sort_into},
@@ -65,7 +66,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let vectors = std::thread::scope(|s| {
+    let (vectors, max_idx_exc) = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -81,12 +82,15 @@ where
         }
 
         let mut vectors = Vec::with_capacity(handles.len());
+        let mut max_idx_exc = None;
         for x in handles {
-            vectors.push(x.join().expect("failed to join the thread"));
+            let (vector, max_idx) = x.join().expect("failed to join the thread");
+            vectors.push(vector);
+            max_idx_exc = min_opt_idx(max_idx_exc, max_idx);
         }
-        vectors
+        (vectors, max_idx_exc)
     });
 
-    heap_sort_into(vectors, None, &mut pinned_vec);
+    heap_sort_into(vectors, max_idx_exc, &mut pinned_vec);
     (num_spawned, pinned_vec)
 }

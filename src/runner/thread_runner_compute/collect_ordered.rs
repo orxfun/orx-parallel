@@ -60,7 +60,7 @@ pub fn x<C, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> Vec<(usize, Vo::Item)>
+) -> (Vec<(usize, Vo::Item)>, Option<usize>)
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -108,5 +108,5 @@ where
 
     runner.complete_task(shared_state);
 
-    collected
+    (collected, None)
 }
