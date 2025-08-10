@@ -70,32 +70,5 @@ pub trait Values {
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item;
 
-    fn fx_reduce<F, M2, Vo, X>(
-        self,
-        acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item;
-
-    fn u_fx_reduce<U, F, M2, Vo, X>(
-        self,
-        u: &mut U,
-        acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item;
-
     fn first(self) -> Option<Self::Item>;
 }

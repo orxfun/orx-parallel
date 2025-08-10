@@ -123,49 +123,6 @@ impl<T> Values for Atom<T> {
     }
 
     #[inline(always)]
-    fn fx_reduce<F, M2, Vo, X>(
-        self,
-        acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        Self: Sized,
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
-    {
-        match filter(&self.0) {
-            true => map2(self.0).acc_reduce(acc, reduce),
-            false => acc,
-        }
-    }
-
-    #[inline(always)]
-    fn u_fx_reduce<U, F, M2, Vo, X>(
-        self,
-        u: &mut U,
-        acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        Self: Sized,
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
-    {
-        match filter(u, &self.0) {
-            true => map2(u, self.0).u_acc_reduce(u, acc, reduce),
-            false => acc,
-        }
-    }
-
-    #[inline(always)]
     fn first(self) -> Option<Self::Item> {
         Some(self.0)
     }

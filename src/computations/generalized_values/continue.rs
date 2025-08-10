@@ -142,51 +142,6 @@ impl<T> Values for Continue<T> {
         }
     }
 
-    fn fx_reduce<F, M2, Vo, X>(
-        self,
-        acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
-    {
-        match self.0 {
-            Some(x) if filter(&x) => {
-                let vo = map2(x);
-                vo.acc_reduce(acc, reduce)
-            }
-            _ => acc,
-        }
-    }
-
-    fn u_fx_reduce<U, F, M2, Vo, X>(
-        self,
-        u: &mut U,
-        acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
-    {
-        match self.0 {
-            Some(x) if filter(u, &x) => {
-                let vo = map2(u, x);
-                vo.u_acc_reduce(u, acc, reduce)
-            }
-            _ => acc,
-        }
-    }
-
     fn first(self) -> Option<Self::Item> {
         self.0
     }

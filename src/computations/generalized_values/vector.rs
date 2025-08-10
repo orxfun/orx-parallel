@@ -138,57 +138,6 @@ where
     }
 
     #[inline(always)]
-    fn fx_reduce<F, M2, Vo, X>(
-        self,
-        mut acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        Self: Sized,
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
-    {
-        for t in self.0 {
-            if filter(&t) {
-                let vo = map2(t);
-                acc = vo.acc_reduce(acc, &reduce);
-            }
-        }
-
-        acc
-    }
-
-    #[inline(always)]
-    fn u_fx_reduce<U, F, M2, Vo, X>(
-        self,
-        u: &mut U,
-        mut acc: Option<Vo::Item>,
-        filter: F,
-        map2: M2,
-        reduce: X,
-    ) -> Option<Vo::Item>
-    where
-        Self: Sized,
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-        X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
-    {
-        for t in self.0 {
-            if filter(u, &t) {
-                let vo = map2(u, t);
-                acc = vo.u_acc_reduce(u, acc, &reduce);
-            }
-        }
-
-        acc
-    }
-
-    #[inline(always)]
     fn first(self) -> Option<Self::Item> {
         self.0.into_iter().next()
     }
