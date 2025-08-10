@@ -200,7 +200,13 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.x.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        match self.params().iteration_order {
+            IterationOrder::Ordered => self.x.next::<R>().1,
+            IterationOrder::Arbitrary => self.x.next_any::<R>().1,
+        }
     }
 }

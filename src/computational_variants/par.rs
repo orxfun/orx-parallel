@@ -177,6 +177,6 @@ where
     // early exit
 
     fn first(self) -> Option<Self::Item> {
-        self.m().next()
+        self.m().next::<R>().1
     }
 }
