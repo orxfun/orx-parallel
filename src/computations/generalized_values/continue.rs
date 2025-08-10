@@ -1,8 +1,7 @@
+use crate::computations::{Values, Vector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
-
-use crate::computations::{Values, Vector};
 
 pub struct Continue<T>(Option<T>);
 
@@ -35,6 +34,11 @@ impl<T> Values for Continue<T> {
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
+
+    type FilterMapped<Fm, O>
+        = Continue<O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
 
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
@@ -91,6 +95,16 @@ impl<T> Values for Continue<T> {
         Fm: Fn(Self::Item) -> Vo,
     {
         Vector(self.into_iter().flat_map(flat_map))
+    }
+
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>,
+    {
+        Continue(match self.0 {
+            Some(x) => filter_map(x),
+            _ => None,
+        })
     }
 
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>

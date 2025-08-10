@@ -22,6 +22,11 @@ impl<T> Values for Option<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
+    type FilterMapped<Fm, O>
+        = Option<O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
+
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self
@@ -81,6 +86,17 @@ impl<T> Values for Option<T> {
         Fm: Fn(Self::Item) -> Vo,
     {
         Vector(self.into_iter().flat_map(flat_map))
+    }
+
+    #[inline(always)]
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>,
+    {
+        match self {
+            Some(x) => filter_map(x),
+            _ => None,
+        }
     }
 
     #[inline(always)]
