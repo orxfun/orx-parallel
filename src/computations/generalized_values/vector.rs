@@ -342,25 +342,4 @@ where
             }
         }
     }
-
-    fn filter_map_collect_in_input_order<F, M2, P, Vo>(
-        self,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        o_bag: &ConcurrentOrderedBag<Vo::Item, P>,
-    ) where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-        Vo::Item: Send,
-    {
-        for t in self.0 {
-            if filter(&t) {
-                let vo = map2(t);
-                vo.push_to_ordered_bag(input_idx, o_bag);
-            }
-        }
-    }
 }

@@ -335,26 +335,4 @@ impl<T> Values for Continue<T> {
             _ => {}
         }
     }
-
-    fn filter_map_collect_in_input_order<F, M2, P, Vo>(
-        self,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        o_bag: &ConcurrentOrderedBag<Vo::Item, P>,
-    ) where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-        Vo::Item: Send,
-    {
-        match self.0 {
-            Some(x) if filter(&x) => {
-                let vo = map2(x);
-                vo.push_to_ordered_bag(input_idx, o_bag);
-            }
-            _ => {}
-        }
-    }
 }
