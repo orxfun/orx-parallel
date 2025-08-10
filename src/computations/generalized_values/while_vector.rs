@@ -44,7 +44,13 @@ where
     }
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
-        todo!()
+        for x in self.0 {
+            match x {
+                Some(x) => vec.push((idx, x)),
+                None => return Some(idx),
+            }
+        }
+        None
     }
 
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> Option<usize>
