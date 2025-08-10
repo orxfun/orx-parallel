@@ -79,9 +79,14 @@ pub fn x<C, I, Vo, X1, P>(
             0 | 1 => match item_puller.next() {
                 Some(value) => {
                     // TODO: possible to try to get len and bag.extend(values_vt.values()) when available, same holds for chunk below
-                    let values_vt = xap1(value);
-                    for x in values_vt.values() {
-                        bag.push(x);
+                    let vo = xap1(value);
+                    let max_idx_exc = vo.push_to_bag(bag);
+
+                    if let Some(_) = max_idx_exc {
+                        iter.skip_to_end();
+                        runner.complete_chunk(shared_state, chunk_size);
+                        runner.complete_task(shared_state);
+                        return;
                     }
                 }
                 None => break,
@@ -94,9 +99,14 @@ pub fn x<C, I, Vo, X1, P>(
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         for value in chunk {
-                            let values_vt = xap1(value);
-                            for x in values_vt.values() {
-                                bag.push(x);
+                            let vo = xap1(value);
+                            let max_idx_exc = vo.push_to_bag(bag);
+
+                            if let Some(_) = max_idx_exc {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                return;
                             }
                         }
                     }

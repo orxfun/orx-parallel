@@ -1,4 +1,6 @@
 use super::values::Values;
+use orx_concurrent_bag::ConcurrentBag;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
 pub struct Vector<I>(pub I)
@@ -29,6 +31,18 @@ where
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
         for x in self.0 {
             vec.push((idx, x));
+        }
+        None
+    }
+
+    #[inline(always)]
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> Option<usize>
+    where
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send,
+    {
+        for x in self.0 {
+            bag.push(x);
         }
         None
     }

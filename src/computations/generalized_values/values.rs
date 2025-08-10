@@ -1,3 +1,5 @@
+use orx_concurrent_bag::ConcurrentBag;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
 pub trait Values {
@@ -10,6 +12,11 @@ pub trait Values {
         P: PinnedVec<Self::Item>;
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize>;
+
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> Option<usize>
+    where
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send;
 
     fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where
