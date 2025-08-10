@@ -1,29 +1,43 @@
-use super::{Values, Vector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-impl<T> Values for Option<T> {
+use crate::computations::{Values, Vector};
+
+pub struct Continue<T>(Option<T>);
+
+impl<T> IntoIterator for Continue<T> {
+    type Item = T;
+
+    type IntoIter = <Option<T> as IntoIterator>::IntoIter;
+
+    #[inline(always)]
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<T> Values for Continue<T> {
     type Item = T;
 
     type Mapped<M, O>
-        = Option<O>
+        = Continue<O>
     where
         M: Fn(Self::Item) -> O;
 
     type Filtered<F>
-        = Option<T>
+        = Continue<T>
     where
         F: Fn(&Self::Item) -> bool;
 
     type FlatMapped<Fm, Vo>
-        = Vector<core::iter::FlatMap<<Option<T> as IntoIterator>::IntoIter, Vo, Fm>>
+        = Vector<core::iter::FlatMap<<Continue<T> as IntoIterator>::IntoIter, Vo, Fm>>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
     type FilterMapped<Fm, O>
-        = Option<O>
+        = Continue<O>
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
@@ -37,7 +51,7 @@ impl<T> Values for Option<T> {
     where
         P: orx_fixed_vec::PinnedVec<Self::Item>,
     {
-        if let Some(x) = self {
+        if let Some(x) = self.0 {
             vector.push(x)
         }
     }
@@ -48,38 +62,34 @@ impl<T> Values for Option<T> {
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        if let Some(x) = self {
+        if let Some(x) = self.0 {
             bag.push(x);
         }
     }
 
-    #[inline(always)]
     fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        if let Some(x) = self {
+        if let Some(x) = self.0 {
             unsafe { o_bag.set_value(idx, x) };
         }
     }
 
-    #[inline(always)]
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) {
-        if let Some(x) = self {
+        if let Some(x) = self.0 {
             vec.push((idx, x))
         }
     }
 
-    #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Mapped<M, O>
     where
         M: Fn(Self::Item) -> O,
     {
-        self.map(map)
+        Continue(self.0.map(map))
     }
 
-    #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
         Vo: IntoIterator,
@@ -88,34 +98,31 @@ impl<T> Values for Option<T> {
         Vector(self.into_iter().flat_map(flat_map))
     }
 
-    #[inline(always)]
     fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
-        match self {
+        Continue(match self.0 {
             Some(x) => filter_map(x),
             _ => None,
-        }
+        })
     }
 
-    #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filtered<F>
     where
         F: Fn(&Self::Item) -> bool,
     {
-        match self {
+        Continue(match self.0 {
             Some(x) if filter(&x) => Some(x),
             _ => None,
-        }
+        })
     }
 
-    #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        match (acc, self) {
+        match (acc, self.0) {
             (Some(x), Some(y)) => Some(reduce(x, y)),
             (Some(x), None) => Some(x),
             (None, Some(y)) => Some(y),
@@ -123,12 +130,11 @@ impl<T> Values for Option<T> {
         }
     }
 
-    #[inline(always)]
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        match (acc, self) {
+        match (acc, self.0) {
             (Some(x), Some(y)) => Some(reduce(u, x, y)),
             (Some(x), None) => Some(x),
             (None, Some(y)) => Some(y),
@@ -136,7 +142,6 @@ impl<T> Values for Option<T> {
         }
     }
 
-    #[inline(always)]
     fn fx_reduce<F, M2, Vo, X>(
         self,
         acc: Option<Vo::Item>,
@@ -145,13 +150,12 @@ impl<T> Values for Option<T> {
         reduce: X,
     ) -> Option<Vo::Item>
     where
-        Self: Sized,
         F: Fn(&Self::Item) -> bool,
         M2: Fn(Self::Item) -> Vo,
         Vo: Values,
         X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(&x) => {
                 let vo = map2(x);
                 vo.acc_reduce(acc, reduce)
@@ -160,7 +164,6 @@ impl<T> Values for Option<T> {
         }
     }
 
-    #[inline(always)]
     fn u_fx_reduce<U, F, M2, Vo, X>(
         self,
         u: &mut U,
@@ -170,13 +173,12 @@ impl<T> Values for Option<T> {
         reduce: X,
     ) -> Option<Vo::Item>
     where
-        Self: Sized,
         F: Fn(&mut U, &Self::Item) -> bool,
         M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
         X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(u, &x) => {
                 let vo = map2(u, x);
                 vo.u_acc_reduce(u, acc, reduce)
@@ -185,32 +187,29 @@ impl<T> Values for Option<T> {
         }
     }
 
-    #[inline(always)]
     fn first(self) -> Option<Self::Item> {
-        self
+        self.0
     }
 
-    #[inline(always)]
     fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
     where
         F: Fn(&Self::Item) -> bool,
         M2: Fn(Self::Item) -> Vo,
         Vo: Values,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(&x) => map2(x).first(),
             _ => None,
         }
     }
 
-    #[inline(always)]
     fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
     where
         F: Fn(&mut U, &Self::Item) -> bool,
         M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(u, &x) => map2(u, x).first(),
             _ => None,
         }
@@ -223,7 +222,7 @@ impl<T> Values for Option<T> {
         Vo: Values,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(&x) => {
                 let vo = map2(x);
                 vo.push_to_pinned_vec(vector);
@@ -244,7 +243,7 @@ impl<T> Values for Option<T> {
         Vo: Values,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(u, &x) => {
                 let vo = map2(u, x);
                 vo.push_to_pinned_vec(vector);
@@ -257,7 +256,7 @@ impl<T> Values for Option<T> {
         self,
         filter: F,
         map2: M2,
-        bag: &ConcurrentBag<Vo::Item, P>,
+        bag: &orx_concurrent_bag::ConcurrentBag<Vo::Item, P>,
     ) where
         F: Fn(&Self::Item) -> bool,
         M2: Fn(Self::Item) -> Vo,
@@ -265,7 +264,7 @@ impl<T> Values for Option<T> {
         Vo::Item: Send,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(&x) => {
                 let vo = map2(x);
                 vo.push_to_bag(bag);
@@ -279,7 +278,7 @@ impl<T> Values for Option<T> {
         u: &mut U,
         filter: F,
         map2: M2,
-        bag: &ConcurrentBag<Vo::Item, P>,
+        bag: &orx_concurrent_bag::ConcurrentBag<Vo::Item, P>,
     ) where
         F: Fn(&mut U, &Self::Item) -> bool,
         M2: Fn(&mut U, Self::Item) -> Vo,
@@ -287,7 +286,7 @@ impl<T> Values for Option<T> {
         P: IntoConcurrentPinnedVec<Vo::Item>,
         Vo::Item: Send,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(u, &x) => {
                 let vo = map2(u, x);
                 vo.push_to_bag(bag);
@@ -307,7 +306,7 @@ impl<T> Values for Option<T> {
         M2: Fn(Self::Item) -> Vo,
         Vo: Values,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(&x) => {
                 let vo = map2(x);
                 vo.push_to_vec_with_idx(input_idx, vec);
@@ -328,7 +327,7 @@ impl<T> Values for Option<T> {
         M2: Fn(&mut U, Self::Item) -> Vo,
         Vo: Values,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(u, &x) => {
                 let vo = map2(u, x);
                 vo.push_to_vec_with_idx(input_idx, vec);
@@ -342,7 +341,7 @@ impl<T> Values for Option<T> {
         input_idx: usize,
         filter: F,
         map2: M2,
-        o_bag: &orx_concurrent_ordered_bag::ConcurrentOrderedBag<Vo::Item, P>,
+        o_bag: &ConcurrentOrderedBag<Vo::Item, P>,
     ) where
         F: Fn(&Self::Item) -> bool,
         M2: Fn(Self::Item) -> Vo,
@@ -350,7 +349,7 @@ impl<T> Values for Option<T> {
         P: IntoConcurrentPinnedVec<Vo::Item>,
         Vo::Item: Send,
     {
-        match self {
+        match self.0 {
             Some(x) if filter(&x) => {
                 let vo = map2(x);
                 vo.push_to_ordered_bag(input_idx, o_bag);
