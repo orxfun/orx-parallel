@@ -18,14 +18,14 @@ where
     }
 
     #[inline(always)]
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> Option<usize>
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
     where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
             vector.push(x);
         }
-        None
+        false
     }
 
     #[inline(always)]

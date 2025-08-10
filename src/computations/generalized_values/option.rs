@@ -12,14 +12,14 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> Option<usize>
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
     where
         P: orx_fixed_vec::PinnedVec<Self::Item>,
     {
         if let Some(x) = self {
             vector.push(x)
         }
-        None
+        false
     }
 
     #[inline(always)]

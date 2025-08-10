@@ -25,16 +25,16 @@ impl<T> Values for WhileOption<T> {
     }
 
     #[inline(always)]
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> Option<usize>
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
     where
         P: PinnedVec<Self::Item>,
     {
         match self.0 {
             Some(x) => {
                 vector.push(x);
-                None
+                false
             }
-            None => todo!(),
+            None => true,
         }
     }
 

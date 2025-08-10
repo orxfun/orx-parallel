@@ -41,8 +41,8 @@ where
         let iter = iter.into_seq_iter();
         for i in iter {
             let vt = xap1(i);
-            let max_idx = vt.push_to_pinned_vec(&mut pinned_vec);
-            if max_idx.is_some() {
+            let stop = vt.push_to_pinned_vec(&mut pinned_vec);
+            if stop {
                 break;
             }
         }
