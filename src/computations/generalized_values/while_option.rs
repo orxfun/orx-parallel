@@ -45,7 +45,7 @@ impl<T> Values for WhileOption<T> {
                 vec.push((idx, x));
                 None
             }
-            None => todo!(),
+            None => Some(idx),
         }
     }
 
