@@ -169,30 +169,4 @@ impl<T> Values for Atom<T> {
     fn first(self) -> Option<Self::Item> {
         Some(self.0)
     }
-
-    #[inline(always)]
-    fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
-    where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-    {
-        match filter(&self.0) {
-            true => map2(self.0).first(),
-            false => None,
-        }
-    }
-
-    #[inline(always)]
-    fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
-    where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-    {
-        match filter(u, &self.0) {
-            true => map2(u, self.0).first(),
-            false => None,
-        }
-    }
 }

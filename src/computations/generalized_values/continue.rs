@@ -190,28 +190,4 @@ impl<T> Values for Continue<T> {
     fn first(self) -> Option<Self::Item> {
         self.0
     }
-
-    fn fx_next<F, M2, Vo>(self, filter: F, map2: M2) -> Option<Vo::Item>
-    where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-    {
-        match self.0 {
-            Some(x) if filter(&x) => map2(x).first(),
-            _ => None,
-        }
-    }
-
-    fn u_fx_next<U, F, M2, Vo>(self, u: &mut U, filter: F, map2: M2) -> Option<Vo::Item>
-    where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-    {
-        match self.0 {
-            Some(x) if filter(u, &x) => map2(u, x).first(),
-            _ => None,
-        }
-    }
 }
