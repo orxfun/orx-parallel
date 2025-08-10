@@ -22,16 +22,16 @@ pub trait Values {
 
     fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where
-        M: Fn(Self::Item) -> O;
+        M: Fn(Self::Item) -> O + Clone;
 
     fn filter<F>(self, filter: F) -> impl Values<Item = Self::Item>
     where
-        F: Fn(&Self::Item) -> bool;
+        F: Fn(&Self::Item) -> bool + Clone;
 
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
     where
         Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
+        Fm: Fn(Self::Item) -> Vo + Clone;
 
     fn filter_map<Fm, O>(self, filter_map: Fm) -> impl Values<Item = O>
     where

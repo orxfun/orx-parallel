@@ -1,6 +1,7 @@
 mod option;
 mod values;
 mod vector;
+mod while_iterators;
 mod while_option;
 mod while_vector;
 
