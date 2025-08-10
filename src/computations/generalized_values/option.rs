@@ -1,6 +1,5 @@
 use super::{Values, Vector};
 use orx_concurrent_bag::ConcurrentBag;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 impl<T> Values for Option<T> {
@@ -29,17 +28,6 @@ impl<T> Values for Option<T> {
     {
         if let Some(x) = self {
             bag.push(x);
-        }
-    }
-
-    #[inline(always)]
-    fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
-    where
-        P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send,
-    {
-        if let Some(x) = self {
-            unsafe { o_bag.set_value(idx, x) };
         }
     }
 

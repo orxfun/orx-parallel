@@ -1,5 +1,4 @@
 use orx_concurrent_bag::ConcurrentBag;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
 pub trait Values {
@@ -12,11 +11,6 @@ pub trait Values {
         P: PinnedVec<Self::Item>;
 
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
-    where
-        P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send;
-
-    fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send;

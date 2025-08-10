@@ -1,6 +1,5 @@
 use super::{values::Values, vector::Vector};
 use orx_concurrent_bag::ConcurrentBag;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
 pub struct Atom<T>(pub T);
@@ -27,15 +26,6 @@ impl<T> Values for Atom<T> {
         T: Send,
     {
         bag.push(self.0);
-    }
-
-    #[inline(always)]
-    fn push_to_ordered_bag<P>(self, idx: usize, o_bag: &ConcurrentOrderedBag<Self::Item, P>)
-    where
-        P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send,
-    {
-        unsafe { o_bag.set_value(idx, self.0) };
     }
 
     #[inline(always)]
