@@ -1,7 +1,7 @@
-use super::{xap::ParXap, xap_filter_xap::ParXapFilterXap};
+use super::xap::ParXap;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{Atom, M, Vector, map_self_atom},
+    computations::{M, Vector},
     runner::{DefaultRunner, ParallelRunner},
     using::computational_variants::UParMap,
     using::{UsingClone, UsingFun},
@@ -137,8 +137,12 @@ where
         Filter: Fn(&Self::Item) -> bool + Sync,
     {
         let (params, iter, m1) = self.destruct();
-        let m1 = move |i: I::Item| Atom(m1(i));
-        ParXapFilterXap::new(params, iter, m1, filter, map_self_atom)
+
+        let x1 = move |i: I::Item| {
+            let value = m1(i);
+            filter(&value).then_some(value)
+        };
+        ParXap::new(params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
@@ -181,7 +185,13 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.m.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        match self.params().iteration_order {
+            IterationOrder::Ordered => self.m.next::<R>().1,
+            IterationOrder::Arbitrary => self.m.next_any::<R>().1,
+        }
     }
 }

@@ -1,16 +1,29 @@
 use super::x::X;
 use crate::computations::Values;
+use crate::runner::parallel_runner_compute::{next, next_any};
+use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<I, Vo, M1> X<I, Vo, M1>
 where
     I: ConcurrentIter,
     Vo: Values,
-    M1: Fn(I::Item) -> Vo,
+    M1: Fn(I::Item) -> Vo + Sync,
+    Vo::Item: Send,
 {
-    pub fn next(self) -> Option<Vo::Item> {
-        let (_, iter, xap1) = self.destruct();
-        iter.next()
-            .and_then(|i| xap1(i).values().into_iter().next())
+    pub fn next<R>(self) -> (usize, Option<Vo::Item>)
+    where
+        R: ParallelRunner,
+    {
+        let (len, p) = self.len_and_params();
+        next::x(R::early_return(p, len), self)
+    }
+
+    pub fn next_any<R>(self) -> (usize, Option<Vo::Item>)
+    where
+        R: ParallelRunner,
+    {
+        let (len, p) = self.len_and_params();
+        next_any::x(R::early_return(p, len), self)
     }
 }

@@ -1,7 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::{
     collect_into::utils::split_vec_reserve,
-    computations::{M, Values, X, Xfx},
+    computations::{M, Values, X},
     runner::ParallelRunner,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -44,21 +44,6 @@ where
     {
         split_vec_reserve(&mut self, x.par_len());
         let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
-        pinned_vec
-    }
-
-    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(mut self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
-    where
-        R: ParallelRunner,
-        I: ConcurrentIter,
-        Vt: Values,
-        Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vt + Sync,
-        F: Fn(&Vt::Item) -> bool + Sync,
-        M2: Fn(Vt::Item) -> Vo + Sync,
-    {
-        split_vec_reserve(&mut self, xfx.par_len());
-        let (_num_spawned, pinned_vec) = xfx.collect_into::<R, _>(self);
         pinned_vec
     }
 

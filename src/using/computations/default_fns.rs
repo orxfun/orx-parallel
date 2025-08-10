@@ -1,14 +1,8 @@
-use crate::computations::Atom;
 use std::ops::Add;
 
 #[inline(always)]
 pub fn u_map_self<U, T>(_: &mut U, input: T) -> T {
     input
-}
-
-#[inline(always)]
-pub fn u_map_self_atom<U, T>(_: &mut U, input: T) -> Atom<T> {
-    Atom(input)
 }
 
 #[inline(always)]

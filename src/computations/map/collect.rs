@@ -19,8 +19,7 @@ where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<O>,
     {
-        let len = self.iter().try_get_len();
-        let p = self.params();
+        let (len, p) = self.len_and_params();
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, self.sequential(pinned_vec)),
             #[cfg(test)]
