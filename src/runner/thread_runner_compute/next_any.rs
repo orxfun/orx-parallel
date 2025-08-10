@@ -1,6 +1,64 @@
 use crate::{ThreadRunner, computations::Values};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
+pub fn m<C, I, O, M1>(
+    mut runner: C,
+    iter: &I,
+    shared_state: &C::SharedState,
+    map1: &M1,
+) -> Option<O>
+where
+    C: ThreadRunner,
+    I: ConcurrentIter,
+    O: Send,
+    M1: Fn(I::Item) -> O,
+{
+    let mut chunk_puller = iter.chunk_puller(0);
+    let mut item_puller = iter.item_puller();
+
+    loop {
+        let chunk_size = runner.next_chunk_size(shared_state, iter);
+
+        runner.begin_chunk(chunk_size);
+
+        match chunk_size {
+            0 | 1 => match item_puller.next() {
+                Some(i) => {
+                    let first = map1(i);
+                    iter.skip_to_end();
+                    runner.complete_chunk(shared_state, chunk_size);
+                    runner.complete_task(shared_state);
+                    return Some(first);
+                }
+                None => break,
+            },
+            c => {
+                if c > chunk_puller.chunk_size() {
+                    chunk_puller = iter.chunk_puller(c);
+                }
+
+                match chunk_puller.pull() {
+                    Some(chunk) => {
+                        for i in chunk {
+                            let first = map1(i);
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return Some(first);
+                        }
+                    }
+                    None => break,
+                }
+            }
+        }
+
+        runner.complete_chunk(shared_state, chunk_size);
+    }
+
+    runner.complete_task(shared_state);
+    None
+}
+
 pub fn x<C, I, Vo, X1>(
     mut runner: C,
     iter: &I,
