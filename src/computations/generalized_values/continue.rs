@@ -24,11 +24,6 @@ impl<T> Values for Continue<T> {
     where
         M: Fn(Self::Item) -> O;
 
-    type FilterMapped<Fm, O>
-        = Continue<O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>;
-
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self
@@ -86,7 +81,7 @@ impl<T> Values for Continue<T> {
         Vector(self.into_iter().flat_map(flat_map))
     }
 
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl Values<Item = O>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {

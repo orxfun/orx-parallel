@@ -11,11 +11,6 @@ impl<T> Values for Option<T> {
     where
         M: Fn(Self::Item) -> O;
 
-    type FilterMapped<Fm, O>
-        = Option<O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>;
-
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self
@@ -78,7 +73,7 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMapped<Fm, O>
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl Values<Item = O>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
