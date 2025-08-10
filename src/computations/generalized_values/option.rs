@@ -51,6 +51,14 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
+    fn filter<F>(self, filter: F) -> impl Values<Item = Self::Item>
+    where
+        F: Fn(&Self::Item) -> bool,
+    {
+        self.filter(filter)
+    }
+
+    #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
     where
         Vo: IntoIterator,
