@@ -1,6 +1,5 @@
 use super::values::Values;
-use orx_concurrent_bag::ConcurrentBag;
-use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
+use orx_pinned_vec::PinnedVec;
 
 pub struct Vector<I>(pub I)
 where
@@ -23,17 +22,6 @@ where
     {
         for x in self.0 {
             vector.push(x);
-        }
-    }
-
-    #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
-    where
-        P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send,
-    {
-        for x in self.0 {
-            bag.push(x);
         }
     }
 

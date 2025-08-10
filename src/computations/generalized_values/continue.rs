@@ -1,6 +1,4 @@
 use crate::computations::{Values, Vector};
-use orx_concurrent_bag::ConcurrentBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 pub struct Continue<T>(Option<T>);
 
@@ -30,17 +28,6 @@ impl<T> Values for Continue<T> {
     {
         if let Some(x) = self.0 {
             vector.push(x)
-        }
-    }
-
-    #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>)
-    where
-        P: IntoConcurrentPinnedVec<Self::Item>,
-        Self::Item: Send,
-    {
-        if let Some(x) = self.0 {
-            bag.push(x);
         }
     }
 

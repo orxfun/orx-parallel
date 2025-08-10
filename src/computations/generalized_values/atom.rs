@@ -1,6 +1,5 @@
 use super::{values::Values, vector::Vector};
-use orx_concurrent_bag::ConcurrentBag;
-use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
+use orx_pinned_vec::PinnedVec;
 
 pub struct Atom<T>(pub T);
 
@@ -17,15 +16,6 @@ impl<T> Values for Atom<T> {
         P: PinnedVec<T>,
     {
         vector.push(self.0);
-    }
-
-    #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<T, P>)
-    where
-        P: IntoConcurrentPinnedVec<T>,
-        T: Send,
-    {
-        bag.push(self.0);
     }
 
     #[inline(always)]
