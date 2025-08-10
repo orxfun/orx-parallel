@@ -7,7 +7,7 @@ pub trait Values {
 
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P)
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> Option<usize>
     where
         P: PinnedVec<Self::Item>;
 

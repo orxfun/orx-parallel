@@ -1,19 +1,26 @@
-use super::values::Values;
+use crate::computations::{Values, Vector};
 use orx_concurrent_bag::ConcurrentBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
-use orx_pinned_vec::PinnedVec;
+use orx_fixed_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub struct Vector<I>(pub I)
-where
-    I: IntoIterator;
+pub struct WhileOption<T>(Option<T>);
 
-impl<I> Values for Vector<I>
-where
-    I: IntoIterator,
-{
-    type Item = I::Item;
+impl<T> IntoIterator for WhileOption<T> {
+    type Item = T;
 
+    type IntoIter = <Option<T> as IntoIterator>::IntoIter;
+
+    #[inline(always)]
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<T> Values for WhileOption<T> {
+    type Item = T;
+
+    #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
+        todo!();
         self.0
     }
 
@@ -22,15 +29,18 @@ where
     where
         P: PinnedVec<Self::Item>,
     {
-        for x in self.0 {
-            vector.push(x);
+        match self.0 {
+            Some(x) => {
+                vector.push(x);
+                None
+            }
+            None => todo!(),
         }
-        None
     }
 
     #[inline(always)]
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
-        for x in self.0 {
+        if let Some(x) = self.0 {
             vec.push((idx, x));
         }
         None
@@ -42,7 +52,7 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        for x in self.0 {
+        if let Some(x) = self.0 {
             bag.push(x);
         }
         None
@@ -53,7 +63,7 @@ where
     where
         M: Fn(Self::Item) -> O,
     {
-        Vector(self.0.into_iter().map(map))
+        self.0.map(map)
     }
 
     #[inline(always)]
@@ -70,7 +80,10 @@ where
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
-        Vector(self.0.into_iter().filter_map(filter_map))
+        match self.0 {
+            Some(x) => filter_map(x),
+            _ => None,
+        }
     }
 
     #[inline(always)]
@@ -82,10 +95,9 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        let reduced = self.0.into_iter().reduce(&reduce);
         (
             None,
-            match (acc, reduced) {
+            match (acc, self.0) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
@@ -94,12 +106,12 @@ where
         )
     }
 
+    #[inline(always)]
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        let reduced = self.0.into_iter().reduce(|a, b| reduce(u, a, b));
-        match (acc, reduced) {
+        match (acc, self.0) {
             (Some(x), Some(y)) => Some(reduce(u, x, y)),
             (Some(x), None) => Some(x),
             (None, Some(y)) => Some(y),
@@ -109,6 +121,6 @@ where
 
     #[inline(always)]
     fn first(self) -> Option<Self::Item> {
-        self.0.into_iter().next()
+        self.0
     }
 }
