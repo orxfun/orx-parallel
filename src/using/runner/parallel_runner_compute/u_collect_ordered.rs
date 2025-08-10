@@ -93,6 +93,6 @@ where
         vectors
     });
 
-    heap_sort_into(vectors, &mut pinned_vec);
+    heap_sort_into(vectors, None, &mut pinned_vec);
     (num_spawned, pinned_vec)
 }
