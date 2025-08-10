@@ -40,10 +40,13 @@ impl<T> Values for WhileOption<T> {
 
     #[inline(always)]
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
-        if let Some(x) = self.0 {
-            vec.push((idx, x));
+        match self.0 {
+            Some(x) => {
+                vec.push((idx, x));
+                None
+            }
+            None => todo!(),
         }
-        None
     }
 
     #[inline(always)]
@@ -52,10 +55,13 @@ impl<T> Values for WhileOption<T> {
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        if let Some(x) = self.0 {
-            bag.push(x);
+        match self.0 {
+            Some(x) => {
+                bag.push(x);
+                None
+            }
+            None => todo!(),
         }
-        None
     }
 
     #[inline(always)]
@@ -63,7 +69,7 @@ impl<T> Values for WhileOption<T> {
     where
         M: Fn(Self::Item) -> O,
     {
-        self.0.map(map)
+        WhileOption(self.0.map(map))
     }
 
     #[inline(always)]
@@ -72,6 +78,7 @@ impl<T> Values for WhileOption<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
+        todo!();
         Vector(self.0.into_iter().flat_map(flat_map))
     }
 
@@ -81,8 +88,8 @@ impl<T> Values for WhileOption<T> {
         Fm: Fn(Self::Item) -> Option<O>,
     {
         match self.0 {
-            Some(x) => filter_map(x),
-            _ => None,
+            Some(x) => WhileOption(filter_map(x)),
+            _ => WhileOption(None),
         }
     }
 
@@ -95,15 +102,12 @@ impl<T> Values for WhileOption<T> {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        (
-            None,
-            match (acc, self.0) {
-                (Some(x), Some(y)) => Some(reduce(x, y)),
-                (Some(x), None) => Some(x),
-                (None, Some(y)) => Some(y),
-                (None, None) => None,
-            },
-        )
+        match (acc, self.0) {
+            (Some(x), Some(y)) => (None, Some(reduce(x, y))),
+            (None, Some(y)) => (None, Some(y)),
+            (Some(x), None) => (Some(0), Some(x)),
+            (None, None) => (Some(0), None),
+        }
     }
 
     #[inline(always)]
