@@ -252,47 +252,4 @@ impl<T> Values for Option<T> {
             _ => {}
         }
     }
-
-    fn filter_map_collect_arbitrary<F, M2, P, Vo>(
-        self,
-        filter: F,
-        map2: M2,
-        bag: &ConcurrentBag<Vo::Item, P>,
-    ) where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        Vo::Item: Send,
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-    {
-        match self {
-            Some(x) if filter(&x) => {
-                let vo = map2(x);
-                vo.push_to_bag(bag);
-            }
-            _ => {}
-        }
-    }
-
-    fn u_filter_map_collect_arbitrary<U, F, M2, P, Vo>(
-        self,
-        u: &mut U,
-        filter: F,
-        map2: M2,
-        bag: &ConcurrentBag<Vo::Item, P>,
-    ) where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-        Vo::Item: Send,
-    {
-        match self {
-            Some(x) if filter(u, &x) => {
-                let vo = map2(u, x);
-                vo.push_to_bag(bag);
-            }
-            _ => {}
-        }
-    }
 }

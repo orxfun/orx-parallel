@@ -228,43 +228,4 @@ impl<T> Values for Atom<T> {
             vo.push_to_pinned_vec(vector);
         }
     }
-
-    #[inline(always)]
-    fn filter_map_collect_arbitrary<F, M2, P, Vo>(
-        self,
-        filter: F,
-        map2: M2,
-        bag: &ConcurrentBag<Vo::Item, P>,
-    ) where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-        Vo::Item: Send,
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-    {
-        if filter(&self.0) {
-            let vo = map2(self.0);
-            vo.push_to_bag(bag);
-        }
-    }
-
-    #[inline(always)]
-    fn u_filter_map_collect_arbitrary<U, F, M2, P, Vo>(
-        self,
-        u: &mut U,
-        filter: F,
-        map2: M2,
-        bag: &ConcurrentBag<Vo::Item, P>,
-    ) where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-        Vo::Item: Send,
-    {
-        if filter(u, &self.0) {
-            let vo = map2(u, self.0);
-            vo.push_to_bag(bag);
-        }
-    }
 }
