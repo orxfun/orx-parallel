@@ -9,11 +9,6 @@ pub trait Values {
     where
         M: Fn(Self::Item) -> O;
 
-    type FlatMapped<Fm, Vo>: Values<Item = Vo::Item>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
-
     type FilterMapped<Fm, O>: Values<Item = O>
     where
         Fm: Fn(Self::Item) -> Option<O>;
@@ -40,7 +35,7 @@ pub trait Values {
     where
         M: Fn(Self::Item) -> O;
 
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;

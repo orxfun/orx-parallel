@@ -13,12 +13,6 @@ impl<T> Values for Atom<T> {
     where
         M: Fn(Self::Item) -> O;
 
-    type FlatMapped<Fm, Vo>
-        = Vector<Vo>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
-
     type FilterMapped<Fm, O>
         = Option<O>
     where
@@ -68,7 +62,7 @@ impl<T> Values for Atom<T> {
     }
 
     #[inline(always)]
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,

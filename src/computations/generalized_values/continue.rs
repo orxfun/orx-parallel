@@ -24,12 +24,6 @@ impl<T> Values for Continue<T> {
     where
         M: Fn(Self::Item) -> O;
 
-    type FlatMapped<Fm, Vo>
-        = Vector<core::iter::FlatMap<<Continue<T> as IntoIterator>::IntoIter, Vo, Fm>>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
-
     type FilterMapped<Fm, O>
         = Continue<O>
     where
@@ -84,7 +78,7 @@ impl<T> Values for Continue<T> {
         Continue(self.0.map(map))
     }
 
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
