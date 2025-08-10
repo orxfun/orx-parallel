@@ -148,8 +148,7 @@ where
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let values = x1(i);
-            let filtered = values.values().into_iter().filter(filter.clone());
-            Vector(filtered)
+            values.filter(filter.clone())
         };
         ParXap::new(params, iter, x1)
     }
