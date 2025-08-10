@@ -11,11 +11,6 @@ impl<T> Values for Option<T> {
     where
         M: Fn(Self::Item) -> O;
 
-    type Filtered<F>
-        = Option<T>
-    where
-        F: Fn(&Self::Item) -> bool;
-
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<<Option<T> as IntoIterator>::IntoIter, Vo, Fm>>
     where

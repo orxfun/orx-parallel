@@ -18,11 +18,6 @@ where
     where
         M: Fn(Self::Item) -> O;
 
-    type Filtered<F>
-        = Vector<core::iter::Filter<I::IntoIter, F>>
-    where
-        F: Fn(&Self::Item) -> bool;
-
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<I::IntoIter, Vo, Fm>>
     where

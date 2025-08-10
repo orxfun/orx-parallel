@@ -9,10 +9,6 @@ pub trait Values {
     where
         M: Fn(Self::Item) -> O;
 
-    type Filtered<F>: Values<Item = Self::Item>
-    where
-        F: Fn(&Self::Item) -> bool;
-
     type FlatMapped<Fm, Vo>: Values<Item = Vo::Item>
     where
         Vo: IntoIterator,

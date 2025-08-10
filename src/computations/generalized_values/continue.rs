@@ -24,11 +24,6 @@ impl<T> Values for Continue<T> {
     where
         M: Fn(Self::Item) -> O;
 
-    type Filtered<F>
-        = Continue<T>
-    where
-        F: Fn(&Self::Item) -> bool;
-
     type FlatMapped<Fm, Vo>
         = Vector<core::iter::FlatMap<<Continue<T> as IntoIterator>::IntoIter, Vo, Fm>>
     where

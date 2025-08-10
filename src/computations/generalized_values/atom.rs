@@ -13,11 +13,6 @@ impl<T> Values for Atom<T> {
     where
         M: Fn(Self::Item) -> O;
 
-    type Filtered<F>
-        = Option<Self::Item>
-    where
-        F: Fn(&Self::Item) -> bool;
-
     type FlatMapped<Fm, Vo>
         = Vector<Vo>
     where
