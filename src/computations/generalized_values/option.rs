@@ -70,16 +70,23 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn acc_reduce<X>(
+        self,
+        acc: Option<Self::Item>,
+        reduce: X,
+    ) -> (Option<usize>, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        match (acc, self) {
-            (Some(x), Some(y)) => Some(reduce(x, y)),
-            (Some(x), None) => Some(x),
-            (None, Some(y)) => Some(y),
-            (None, None) => None,
-        }
+        (
+            None,
+            match (acc, self) {
+                (Some(x), Some(y)) => Some(reduce(x, y)),
+                (Some(x), None) => Some(x),
+                (None, Some(y)) => Some(y),
+                (None, None) => None,
+            },
+        )
     }
 
     #[inline(always)]

@@ -93,7 +93,15 @@ where
             0 | 1 => match item_puller.next() {
                 Some(i) => {
                     let vo = xap1(i);
-                    acc = vo.acc_reduce(acc, reduce);
+                    let result = vo.acc_reduce(acc, reduce);
+                    acc = result.1;
+
+                    if let Some(_) = result.0 {
+                        iter.skip_to_end();
+                        runner.complete_chunk(shared_state, chunk_size);
+                        runner.complete_task(shared_state);
+                        return acc;
+                    }
                 }
                 None => break,
             },
@@ -106,7 +114,15 @@ where
                     Some(chunk) => {
                         for i in chunk {
                             let vo = xap1(i);
-                            acc = vo.acc_reduce(acc, reduce);
+                            let result = vo.acc_reduce(acc, reduce);
+                            acc = result.1;
+
+                            if let Some(_) = result.0 {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                return acc;
+                            }
                         }
                     }
                     None => break,
