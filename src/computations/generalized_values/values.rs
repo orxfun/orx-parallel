@@ -154,27 +154,4 @@ pub trait Values {
         Vo: Values,
         P: IntoConcurrentPinnedVec<Vo::Item>,
         Vo::Item: Send;
-
-    fn xfx_collect_heap<F, M2, Vo>(
-        self,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        vec: &mut Vec<(usize, Vo::Item)>,
-    ) where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values;
-
-    fn u_xfx_collect_heap<U, F, M2, Vo>(
-        self,
-        u: &mut U,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        vec: &mut Vec<(usize, Vo::Item)>,
-    ) where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values;
 }

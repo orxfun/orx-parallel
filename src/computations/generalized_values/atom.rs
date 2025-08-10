@@ -267,41 +267,4 @@ impl<T> Values for Atom<T> {
             vo.push_to_bag(bag);
         }
     }
-
-    #[inline(always)]
-    fn xfx_collect_heap<F, M2, Vo>(
-        self,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        vec: &mut Vec<(usize, Vo::Item)>,
-    ) where
-        F: Fn(&Self::Item) -> bool,
-        M2: Fn(Self::Item) -> Vo,
-        Vo: Values,
-    {
-        if filter(&self.0) {
-            let vo = map2(self.0);
-            vo.push_to_vec_with_idx(input_idx, vec);
-        }
-    }
-
-    #[inline(always)]
-    fn u_xfx_collect_heap<U, F, M2, Vo>(
-        self,
-        u: &mut U,
-        input_idx: usize,
-        filter: F,
-        map2: M2,
-        vec: &mut Vec<(usize, Vo::Item)>,
-    ) where
-        F: Fn(&mut U, &Self::Item) -> bool,
-        M2: Fn(&mut U, Self::Item) -> Vo,
-        Vo: Values,
-    {
-        if filter(u, &self.0) {
-            let vo = map2(u, self.0);
-            vo.push_to_vec_with_idx(input_idx, vec);
-        }
-    }
 }
