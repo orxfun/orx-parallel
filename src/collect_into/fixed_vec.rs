@@ -1,5 +1,5 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computations::{M, Values, X, Xfx};
+use crate::computations::{M, Values, X};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -37,20 +37,6 @@ where
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.x_collect_into::<R, _, _, _>(x))
-    }
-
-    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
-    where
-        R: ParallelRunner,
-        I: ConcurrentIter,
-        Vt: Values,
-        Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vt + Sync,
-        F: Fn(&Vt::Item) -> bool + Sync,
-        M2: Fn(Vt::Item) -> Vo + Sync,
-    {
-        let vec = Vec::from(self);
-        FixedVec::from(vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx))
     }
 
     // test
