@@ -9,7 +9,7 @@ pub trait Values {
     where
         P: PinnedVec<Self::Item>;
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>);
+    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize>;
 
     fn map<M, O>(self, map: M) -> impl Values<Item = O>
     where

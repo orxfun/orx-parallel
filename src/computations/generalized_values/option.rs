@@ -19,10 +19,11 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) {
+    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
         if let Some(x) = self {
-            vec.push((idx, x))
+            vec.push((idx, x));
         }
+        None
     }
 
     #[inline(always)]

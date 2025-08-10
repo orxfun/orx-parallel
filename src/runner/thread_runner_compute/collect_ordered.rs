@@ -82,7 +82,14 @@ where
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     let vo = xap1(i);
-                    vo.push_to_vec_with_idx(idx, out_vec);
+                    let max_idx_exc = vo.push_to_vec_with_idx(idx, out_vec);
+
+                    if let Some(max_idx_exc) = max_idx_exc {
+                        iter.skip_to_end();
+                        runner.complete_chunk(shared_state, chunk_size);
+                        runner.complete_task(shared_state);
+                        return (collected, Some(max_idx_exc));
+                    }
                 }
                 None => break,
             },
@@ -95,7 +102,14 @@ where
                     Some((chunk_begin_idx, chunk)) => {
                         for i in chunk {
                             let vo = xap1(i);
-                            vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
+                            let max_idx_exc = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
+
+                            if let Some(max_idx_exc) = max_idx_exc {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                return (collected, Some(max_idx_exc));
+                            }
                         }
                     }
                     None => break,
