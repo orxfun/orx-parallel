@@ -5,10 +5,8 @@ use crate::{
     using::u_par_iter::ParIterUsing,
     using::{
         Using,
-        computational_variants::{
-            u_map::UParMap, u_xap::UParXap, u_xap_filter_xap::UParXapFilterXap,
-        },
-        computations::{UM, u_map_self, u_map_self_atom},
+        computational_variants::{u_map::UParMap, u_xap::UParXap},
+        computations::{UM, u_map_self},
     },
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -122,15 +120,8 @@ where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, params, iter) = self.destruct();
-        let filter = move |u: &mut U::Item, x: &Self::Item| filter(u, x);
-        UParXapFilterXap::new(
-            using,
-            params,
-            iter,
-            u_map_self_atom,
-            filter,
-            u_map_self_atom,
-        )
+        let x1 = move |u: &mut U::Item, i: Self::Item| filter(u, &i).then_some(i);
+        UParXap::new(using, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(
@@ -179,7 +170,10 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.u_m().next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        self.u_m().next::<R>().1
     }
 }

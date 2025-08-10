@@ -1,13 +1,9 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
-    computations::{Atom, Vector},
+    computations::Vector,
     runner::{DefaultRunner, ParallelRunner},
     using::u_par_iter::ParIterUsing,
-    using::{
-        Using,
-        computational_variants::{u_xap::UParXap, u_xap_filter_xap::UParXapFilterXap},
-        computations::{UM, u_map_self_atom},
-    },
+    using::{Using, computational_variants::u_xap::UParXap, computations::UM},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -119,9 +115,13 @@ where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, params, iter, m1) = self.destruct();
-        let m1 = move |u: &mut U::Item, i: I::Item| Atom(m1(u, i));
-        let filter = move |u: &mut U::Item, i: &Self::Item| filter(u, i);
-        UParXapFilterXap::new(using, params, iter, m1, filter, u_map_self_atom)
+
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let value = m1(u, i);
+            filter(u, &value).then_some(value)
+        };
+
+        UParXap::new(using, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(
@@ -176,7 +176,10 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.um.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        self.um.next::<R>().1
     }
 }

@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::collect_into::utils::extend_vec_from_split;
-use crate::computations::{M, Values, X, Xfx};
+use crate::computations::{M, Values, X};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -50,21 +50,6 @@ where
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
-        extend_vec_from_split(self, split_vec)
-    }
-
-    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
-    where
-        R: ParallelRunner,
-        I: ConcurrentIter,
-        Vt: Values,
-        Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vt + Sync,
-        F: Fn(&Vt::Item) -> bool + Sync,
-        M2: Fn(Vt::Item) -> Vo + Sync,
-    {
-        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-        let split_vec = split_vec.xfx_collect_into::<R, _, _, _, _, _, _>(xfx);
         extend_vec_from_split(self, split_vec)
     }
 

@@ -1,4 +1,4 @@
-use crate::computations::{M, Values, X, Xfx};
+use crate::computations::{M, Values, X};
 use crate::runner::ParallelRunner;
 use crate::using::UParCollectIntoCore;
 use orx_concurrent_iter::ConcurrentIter;
@@ -22,16 +22,6 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         I: ConcurrentIter,
         Vo: Values<Item = O>,
         M1: Fn(I::Item) -> Vo + Sync;
-
-    fn xfx_collect_into<R, I, Vt, Vo, M1, F, M2>(self, xfx: Xfx<I, Vt, Vo, M1, F, M2>) -> Self
-    where
-        R: ParallelRunner,
-        I: ConcurrentIter,
-        Vt: Values,
-        Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vt + Sync,
-        F: Fn(&Vt::Item) -> bool + Sync,
-        M2: Fn(Vt::Item) -> Vo + Sync;
 
     // test
 
