@@ -86,14 +86,6 @@ where
     }
 
     #[inline(always)]
-    fn filter<F>(self, filter: F) -> Self::Filtered<F>
-    where
-        F: Fn(&Self::Item) -> bool,
-    {
-        Vector(self.0.into_iter().filter(filter))
-    }
-
-    #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
         Vo: IntoIterator,

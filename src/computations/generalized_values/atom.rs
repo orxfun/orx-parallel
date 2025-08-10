@@ -73,17 +73,6 @@ impl<T> Values for Atom<T> {
     }
 
     #[inline(always)]
-    fn filter<F>(self, filter: F) -> Self::Filtered<F>
-    where
-        F: Fn(&Self::Item) -> bool,
-    {
-        match filter(&self.0) {
-            true => Some(self.0),
-            false => None,
-        }
-    }
-
-    #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMapped<Fm, Vo>
     where
         Vo: IntoIterator,

@@ -108,16 +108,6 @@ impl<T> Values for Continue<T> {
         })
     }
 
-    fn filter<F>(self, filter: F) -> Self::Filtered<F>
-    where
-        F: Fn(&Self::Item) -> bool,
-    {
-        Continue(match self.0 {
-            Some(x) if filter(&x) => Some(x),
-            _ => None,
-        })
-    }
-
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
