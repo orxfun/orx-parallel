@@ -5,12 +5,6 @@ pub fn map_self<T>(input: T) -> T {
     input
 }
 
-#[cfg(test)]
-#[inline(always)]
-pub fn map_self_atom<T>(input: T) -> super::generalized_values::Atom<T> {
-    super::generalized_values::Atom(input)
-}
-
 #[inline(always)]
 pub fn map_count<T>(_: T) -> usize {
     1
