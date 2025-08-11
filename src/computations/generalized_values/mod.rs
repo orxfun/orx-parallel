@@ -4,6 +4,7 @@ mod vector;
 mod while_iterators;
 mod while_option;
 mod while_vector;
+mod whilst_option;
 
 pub use values::Values;
 pub use vector::Vector;
