@@ -40,9 +40,9 @@ where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
-            match x {
-                WhileNext::Continue(x) => vector.push(x),
-                WhileNext::Stop => return true,
+            match x.into_continue() {
+                Some(x) => vector.push(x),
+                None => return true,
             }
         }
         false
@@ -50,9 +50,9 @@ where
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
         for x in self.0 {
-            match x {
-                WhileNext::Continue(x) => vec.push((idx, x)),
-                WhileNext::Stop => return Some(idx),
+            match x.into_continue() {
+                Some(x) => vec.push((idx, x)),
+                None => return Some(idx),
             }
         }
         None
@@ -64,9 +64,9 @@ where
         Self::Item: Send,
     {
         for x in self.0 {
-            match x {
-                WhileNext::Continue(x) => _ = bag.push(x),
-                WhileNext::Stop => return true,
+            match x.into_continue() {
+                Some(x) => _ = bag.push(x),
+                None => return true,
             }
         }
         false
