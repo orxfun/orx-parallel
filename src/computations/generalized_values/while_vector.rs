@@ -110,15 +110,60 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        let x = self.0.into_iter().map_while(|x| Some(2));
-        todo!()
+        let mut iter = self.0.into_iter();
+
+        let mut acc = match acc {
+            Some(x) => x,
+            None => {
+                let first = iter.next();
+                match first {
+                    None => return (false, None), // empty iterator -> not stopped
+                    Some(x) => match x.into_continue() {
+                        Some(x) => x,
+                        None => return (true, None), // first element is stop
+                    },
+                }
+            }
+        };
+
+        for x in iter {
+            match x.into_continue() {
+                Some(x) => acc = reduce(acc, x),
+                None => return (true, Some(acc)),
+            }
+        }
+
+        (false, Some(acc))
     }
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        todo!()
+        let mut iter = self.0.into_iter();
+
+        let mut acc = match acc {
+            Some(x) => x,
+            None => {
+                let first = iter.next();
+                match first {
+                    None => return None, // empty iterator -> not stopped
+                    Some(x) => match x.into_continue() {
+                        Some(x) => x,
+                        None => return None, // first element is stop
+                    },
+                }
+            }
+        };
+
+        for x in iter {
+            match x.into_continue() {
+                Some(x) => acc = reduce(u, acc, x),
+                None => return Some(acc),
+            }
+        }
+
+        Some(acc)
     }
 
     fn first(self) -> Option<Self::Item> {
