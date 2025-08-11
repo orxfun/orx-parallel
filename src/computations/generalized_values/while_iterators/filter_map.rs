@@ -29,12 +29,12 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.iter.next() {
-                Some(x) => match x {
-                    WhileNext::Continue(x) => match (self.filter_map)(x) {
-                        Some(x) => return Some(WhileNext::Continue(x)),
+                Some(x) => match x.into_continue() {
+                    Some(x) => match (self.filter_map)(x) {
+                        Some(x) => return Some(WhileNext::continue_with(x)),
                         None => continue,
                     },
-                    WhileNext::Stop => return Some(WhileNext::Stop),
+                    None => return Some(WhileNext::stop()),
                 },
                 None => return None,
             }

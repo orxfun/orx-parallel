@@ -27,9 +27,6 @@ where
     type Item = WhileNext<O>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|x| match x {
-            WhileNext::Continue(x) => WhileNext::Continue((self.map)(x)),
-            WhileNext::Stop => WhileNext::Stop,
-        })
+        self.iter.next().map(|x| x.map(&self.map))
     }
 }

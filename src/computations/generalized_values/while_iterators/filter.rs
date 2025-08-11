@@ -29,13 +29,13 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.iter.next() {
-                Some(x) => match x {
-                    WhileNext::Continue(x) => match (self.filter)(&x) {
-                        true => return Some(WhileNext::Continue(x)),
+                Some(x) => {
+                    let filtered = x.filter(&self.filter);
+                    match filtered.is_some() {
+                        true => return filtered,
                         false => continue,
-                    },
-                    WhileNext::Stop => return Some(WhileNext::Stop),
-                },
+                    }
+                }
                 None => return None,
             }
         }

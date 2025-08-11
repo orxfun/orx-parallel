@@ -31,7 +31,8 @@ where
         //     .into_iter()
         //     .take_while(|x| x.is_some())
         //     .map(|x| x.unwrap()) // SAFETY: taken while x is Some
-        todo!()
+        // todo!()
+        core::iter::empty()
     }
 
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
@@ -109,6 +110,7 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
+        let x = self.0.into_iter().map_while(|x| Some(2));
         todo!()
     }
 

@@ -27,13 +27,13 @@ where
 
     fn next_inner(&mut self) -> Option<WhileNext<Io::Item>> {
         match self.iter.next() {
-            Some(x) => match x {
-                WhileNext::Continue(x) => {
+            Some(x) => match x.into_continue() {
+                Some(x) => {
                     let inner_iter = (self.filter_map)(x);
                     self.inner_iter = Some(inner_iter.into_iter());
                     self.next()
                 }
-                WhileNext::Stop => Some(WhileNext::Stop),
+                None => Some(WhileNext::stop()),
             },
             None => None,
         }
@@ -51,7 +51,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.inner_iter {
             Some(x) => match x.next() {
-                Some(x) => Some(WhileNext::Continue(x)),
+                Some(x) => Some(WhileNext::continue_with(x)),
                 None => self.next_inner(),
             },
             None => self.next_inner(),
