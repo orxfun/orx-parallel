@@ -1,19 +1,27 @@
-use crate::computations::generalized_values::while_iterators::{
-    while_iter::WhileIter, while_next::WhileNext,
-};
+use crate::computations::generalized_values::while_iterators::while_next::WhileNext;
 
 pub struct WhileIterFilter<I, T, F>
 where
-    I: Iterator<Item = Option<T>>,
+    I: Iterator<Item = WhileNext<T>>,
     F: Fn(&T) -> bool,
 {
-    iter: WhileIter<I, T>,
+    iter: I,
     filter: F,
+}
+
+impl<I, T, F> WhileIterFilter<I, T, F>
+where
+    I: Iterator<Item = WhileNext<T>>,
+    F: Fn(&T) -> bool,
+{
+    pub fn new(iter: I, filter: F) -> Self {
+        Self { iter, filter }
+    }
 }
 
 impl<I, T, F> Iterator for WhileIterFilter<I, T, F>
 where
-    I: Iterator<Item = Option<T>>,
+    I: Iterator<Item = WhileNext<T>>,
     F: Fn(&T) -> bool,
 {
     type Item = WhileNext<T>;

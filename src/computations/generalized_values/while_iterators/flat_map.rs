@@ -1,24 +1,30 @@
-use crate::computations::generalized_values::while_iterators::{
-    while_iter::WhileIter, while_next::WhileNext,
-};
+use crate::computations::generalized_values::while_iterators::while_next::WhileNext;
 
 pub struct WhileIterFlatMap<I, T, Fm, Io>
 where
-    I: Iterator<Item = Option<T>>,
+    I: Iterator<Item = WhileNext<T>>,
     Fm: Fn(T) -> Io,
     Io: IntoIterator,
 {
-    iter: WhileIter<I, T>,
+    iter: I,
     filter_map: Fm,
     inner_iter: Option<Io::IntoIter>,
 }
 
 impl<I, T, Fm, Io> WhileIterFlatMap<I, T, Fm, Io>
 where
-    I: Iterator<Item = Option<T>>,
+    I: Iterator<Item = WhileNext<T>>,
     Fm: Fn(T) -> Io,
     Io: IntoIterator,
 {
+    pub fn new(iter: I, filter_map: Fm) -> Self {
+        Self {
+            iter,
+            filter_map,
+            inner_iter: None,
+        }
+    }
+
     fn next_inner(&mut self) -> Option<WhileNext<Io::Item>> {
         match self.iter.next() {
             Some(x) => match x {
@@ -36,7 +42,7 @@ where
 
 impl<I, T, Fm, Io> Iterator for WhileIterFlatMap<I, T, Fm, Io>
 where
-    I: Iterator<Item = Option<T>>,
+    I: Iterator<Item = WhileNext<T>>,
     Fm: Fn(T) -> Io,
     Io: IntoIterator,
 {
