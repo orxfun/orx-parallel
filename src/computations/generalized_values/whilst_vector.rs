@@ -117,14 +117,60 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        todo!()
+        let mut iter = self.0.into_iter();
+
+        let mut acc = match acc {
+            Some(x) => x,
+            None => {
+                let first = iter.next();
+                match first {
+                    None => return (false, None), // empty iterator but not stopped, acc is None
+                    Some(x) => match x {
+                        WhilstAtom::Continue(x) => x,
+                        WhilstAtom::Stop => return (true, None), // first element is stop, acc is None
+                    },
+                }
+            }
+        };
+
+        for x in iter {
+            match x {
+                WhilstAtom::Continue(x) => acc = reduce(acc, x),
+                WhilstAtom::Stop => return (true, Some(acc)),
+            }
+        }
+
+        (false, Some(acc))
     }
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        todo!()
+        let mut iter = self.0.into_iter();
+
+        let mut acc = match acc {
+            Some(x) => x,
+            None => {
+                let first = iter.next();
+                match first {
+                    None => return None, // empty iterator but not stopped, acc is None
+                    Some(x) => match x {
+                        WhilstAtom::Continue(x) => x,
+                        WhilstAtom::Stop => return None, // first element is stop, acc is None
+                    },
+                }
+            }
+        };
+
+        for x in iter {
+            match x {
+                WhilstAtom::Continue(x) => acc = reduce(u, acc, x),
+                WhilstAtom::Stop => return Some(acc),
+            }
+        }
+
+        Some(acc)
     }
 
     fn first(self) -> Option<Self::Item> {
