@@ -167,6 +167,6 @@ where
     }
 
     fn first(self) -> Option<Self::Item> {
-        todo!()
+        self.0.into_iter().next().and_then(|x| x.into_continue())
     }
 }
