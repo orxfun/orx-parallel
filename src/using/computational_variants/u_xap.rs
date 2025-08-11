@@ -112,7 +112,11 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
+            let vo: Vec<_> = x1(u, i)
+                .values()
+                .into_iter()
+                .map(|x| map(u, x))
+                .collect();
             Vector(vo)
         };
 

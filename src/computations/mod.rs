@@ -6,7 +6,7 @@ mod map;
 mod xap;
 
 pub(crate) use default_fns::*;
-pub(crate) use generalized_values::{Values, Vector};
+pub(crate) use generalized_values::{Values, Vector, WhileOption, WhileVector};
 pub(crate) use heap_sort::heap_sort_into;
 pub(crate) use idx::min_opt_idx;
 pub(crate) use map::M;

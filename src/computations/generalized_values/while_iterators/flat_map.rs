@@ -1,8 +1,8 @@
-use crate::computations::generalized_values::while_iterators::while_next::WhileNext;
+use crate::computations::generalized_values::while_option::WhileOption;
 
 pub struct WhileIterFlatMap<I, T, Fm, Io>
 where
-    I: Iterator<Item = WhileNext<T>>,
+    I: Iterator<Item = WhileOption<T>>,
     Fm: Fn(T) -> Io,
     Io: IntoIterator,
 {
@@ -13,7 +13,7 @@ where
 
 impl<I, T, Fm, Io> WhileIterFlatMap<I, T, Fm, Io>
 where
-    I: Iterator<Item = WhileNext<T>>,
+    I: Iterator<Item = WhileOption<T>>,
     Fm: Fn(T) -> Io,
     Io: IntoIterator,
 {
@@ -25,7 +25,7 @@ where
         }
     }
 
-    fn next_inner(&mut self) -> Option<WhileNext<Io::Item>> {
+    fn next_inner(&mut self) -> Option<WhileOption<Io::Item>> {
         match self.iter.next() {
             Some(x) => match x.into_continue() {
                 Some(x) => {
@@ -33,7 +33,7 @@ where
                     self.inner_iter = Some(inner_iter.into_iter());
                     self.next()
                 }
-                None => Some(WhileNext::stop()),
+                None => Some(WhileOption::stop()),
             },
             None => None,
         }
@@ -42,16 +42,16 @@ where
 
 impl<I, T, Fm, Io> Iterator for WhileIterFlatMap<I, T, Fm, Io>
 where
-    I: Iterator<Item = WhileNext<T>>,
+    I: Iterator<Item = WhileOption<T>>,
     Fm: Fn(T) -> Io,
     Io: IntoIterator,
 {
-    type Item = WhileNext<Io::Item>;
+    type Item = WhileOption<Io::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.inner_iter {
             Some(x) => match x.next() {
-                Some(x) => Some(WhileNext::continue_with(x)),
+                Some(x) => Some(WhileOption::continue_with(x)),
                 None => self.next_inner(),
             },
             None => self.next_inner(),

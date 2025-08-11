@@ -1,6 +1,7 @@
 use super::values::Values;
-use crate::computations::generalized_values::while_iterators::{
-    WhileIterFilter, WhileIterFilterMap, WhileIterFlatMap, WhileIterMap, WhileNext,
+use crate::computations::generalized_values::{
+    while_iterators::{WhileIterFilter, WhileIterFilterMap, WhileIterFlatMap, WhileIterMap},
+    while_option::WhileOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -9,11 +10,11 @@ use std::marker::PhantomData;
 
 pub struct WhileVector<I, T>(I, PhantomData<T>)
 where
-    I: IntoIterator<Item = WhileNext<T>>;
+    I: IntoIterator<Item = WhileOption<T>>;
 
 impl<I, T> WhileVector<I, T>
 where
-    I: IntoIterator<Item = WhileNext<T>>,
+    I: IntoIterator<Item = WhileOption<T>>,
 {
     pub fn new(iter: I) -> Self {
         Self(iter, PhantomData)
@@ -22,7 +23,7 @@ where
 
 impl<I, T> Values for WhileVector<I, T>
 where
-    I: IntoIterator<Item = WhileNext<T>>,
+    I: IntoIterator<Item = WhileOption<T>>,
 {
     type Item = T;
 

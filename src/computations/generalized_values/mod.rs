@@ -7,3 +7,5 @@ mod while_vector;
 
 pub use values::Values;
 pub use vector::Vector;
+pub use while_option::WhileOption;
+pub use while_vector::WhileVector;

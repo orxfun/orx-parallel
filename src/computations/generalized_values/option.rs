@@ -1,6 +1,8 @@
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
+use crate::computations::WhileOption;
+
 use super::{Values, Vector};
 
 impl<T> Values for Option<T> {

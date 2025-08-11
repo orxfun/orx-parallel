@@ -577,6 +577,13 @@ where
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone;
 
+    fn whilst<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
+    where
+        Whilst: Fn(&Self::Item) -> bool + Sync + Clone,
+    {
+        self
+    }
+
     /// Does something with each element of an iterator, passing the value on.
     ///
     /// When using iterators, you’ll often chain several of them together.
