@@ -185,6 +185,9 @@ where
     // early exit
 
     fn first(self) -> Option<Self::Item> {
-        self.m().next::<R>().1
+        match self.params().iteration_order {
+            IterationOrder::Ordered => self.m().next::<R>().1,
+            IterationOrder::Arbitrary => self.m().next_any::<R>().1,
+        }
     }
 }
