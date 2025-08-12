@@ -10,12 +10,13 @@ pub trait ParIterOption<T>: ParIter<Item = Option<T>> {
         let has_none = AtomicBool::new(false);
 
         let result = self
-            .inspect(|x| {
-                if x.is_none() {
+            .whilst(|x| match x.is_some() {
+                true => true,
+                false => {
                     _ = has_none.fetch_or(true, Ordering::Relaxed);
+                    false
                 }
             })
-            .whilst(|x| x.is_some())
             .map(|x| x.unwrap())
             .collect_into(output);
 
