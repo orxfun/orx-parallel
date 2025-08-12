@@ -1,6 +1,6 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{Values, Vector, WhileOption, WhileVector, X},
+    computations::{Values, X},
     runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UParXap},
 };
