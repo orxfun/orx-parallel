@@ -24,7 +24,6 @@ pub fn m<C, I, O, M1, P>(
 
     loop {
         let chunk_size = runner.next_chunk_size(shared_state, iter);
-
         runner.begin_chunk(chunk_size);
 
         match chunk_size {
@@ -100,15 +99,15 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((chunk_begin_idx, chunk)) => {
-                        for i in chunk {
-                            let vo = xap1(i);
+                        for (within_chunk_idx, value) in chunk.enumerate() {
+                            let vo = xap1(value);
                             let max_idx_exc = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
 
                             if let Some(max_idx_exc) = max_idx_exc {
                                 iter.skip_to_end();
                                 runner.complete_chunk(shared_state, chunk_size);
                                 runner.complete_task(shared_state);
-                                return (collected, Some(max_idx_exc));
+                                return (collected, Some(max_idx_exc + within_chunk_idx));
                             }
                         }
                     }
