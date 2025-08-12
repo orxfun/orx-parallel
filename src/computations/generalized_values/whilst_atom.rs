@@ -7,6 +7,16 @@ pub enum WhilstAtom<T> {
     Stop,
 }
 
+impl<T> WhilstAtom<T> {
+    #[inline(always)]
+    pub fn new(value: T, whilst: impl Fn(&T) -> bool) -> Self {
+        match whilst(&value) {
+            true => Self::Continue(value),
+            false => Self::Stop,
+        }
+    }
+}
+
 impl<T> Values for WhilstAtom<T> {
     type Item = T;
 
