@@ -1,4 +1,7 @@
-use crate::computations::{Values, generalized_values::whilst_option::WhilstOption};
+use crate::computations::{
+    Values, WhilstVector,
+    generalized_values::{whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption},
+};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -92,8 +95,8 @@ impl<T> Values for WhilstAtom<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo + Clone,
     {
-        todo!();
-        WhilstOption::Stop
+        let iter = WhilstAtomFlatMapIter::from_atom(self, &flat_map);
+        WhilstVector(iter)
     }
 
     fn filter_map<Fm, O>(self, filter_map: Fm) -> impl Values<Item = O>
