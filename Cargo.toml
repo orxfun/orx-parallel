@@ -35,7 +35,7 @@ rayon = "1.10.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "mut_for_each_iter"
+name = "collect_option"
 harness = false
 
 [features]
