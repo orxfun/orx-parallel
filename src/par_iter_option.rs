@@ -17,7 +17,10 @@ pub trait ParIterOption<T>: ParIter<Item = Option<T>> {
                     false
                 }
             })
-            .map(|x| x.unwrap())
+            .map(|x| {
+                // SAFETY: since x passed the whilst(is-some) check, unwrap_unchecked
+                unsafe { x.unwrap_unchecked() }
+            })
             .collect_into(output);
 
         match has_none.load(Ordering::Relaxed) {
