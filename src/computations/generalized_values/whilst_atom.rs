@@ -151,10 +151,10 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn first(self) -> Option<Self::Item> {
+    fn first(self) -> WhilstOption<Self::Item> {
         match self {
-            Self::Continue(x) => Some(x),
-            Self::Stop => None,
+            Self::Continue(x) => WhilstOption::ContinueSome(x),
+            Self::Stop => WhilstOption::Stop,
         }
     }
 }

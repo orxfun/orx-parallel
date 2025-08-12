@@ -150,11 +150,7 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn first(self) -> Option<Self::Item> {
-        match self {
-            Self::ContinueSome(x) => Some(x),
-            Self::ContinueNone => None,
-            Self::Stop => None,
-        }
+    fn first(self) -> WhilstOption<Self::Item> {
+        self
     }
 }

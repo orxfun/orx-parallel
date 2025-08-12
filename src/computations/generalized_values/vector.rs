@@ -1,5 +1,5 @@
 use crate::computations::generalized_values::{
-    whilst_atom::WhilstAtom, whilst_vector::WhilstVector,
+    whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
 };
 
 use super::values::Values;
@@ -127,7 +127,10 @@ where
     }
 
     #[inline(always)]
-    fn first(self) -> Option<Self::Item> {
-        self.0.into_iter().next()
+    fn first(self) -> WhilstOption<Self::Item> {
+        match self.0.into_iter().next() {
+            Some(x) => WhilstOption::ContinueSome(x),
+            None => WhilstOption::ContinueNone,
+        }
     }
 }

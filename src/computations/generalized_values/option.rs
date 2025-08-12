@@ -121,7 +121,10 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn first(self) -> Option<Self::Item> {
-        self
+    fn first(self) -> WhilstOption<Self::Item> {
+        match self {
+            Some(x) => WhilstOption::ContinueSome(x),
+            None => WhilstOption::ContinueNone,
+        }
     }
 }

@@ -1,6 +1,6 @@
 use super::values::Values;
 use crate::computations::generalized_values::{
-    whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter,
+    whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -183,10 +183,13 @@ where
         Some(acc)
     }
 
-    fn first(self) -> Option<Self::Item> {
-        self.0.into_iter().next().and_then(|x| match x {
-            WhilstAtom::Continue(x) => Some(x),
-            WhilstAtom::Stop => None,
-        })
+    fn first(self) -> WhilstOption<Self::Item> {
+        match self.0.into_iter().next() {
+            Some(x) => match x {
+                WhilstAtom::Continue(x) => WhilstOption::ContinueSome(x),
+                WhilstAtom::Stop => WhilstOption::Stop,
+            },
+            None => WhilstOption::ContinueNone,
+        }
     }
 }

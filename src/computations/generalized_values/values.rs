@@ -2,6 +2,8 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
+use crate::computations::generalized_values::whilst_option::WhilstOption;
+
 pub trait Values {
     type Item;
 
@@ -53,5 +55,5 @@ pub trait Values {
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item;
 
-    fn first(self) -> Option<Self::Item>;
+    fn first(self) -> WhilstOption<Self::Item>;
 }
