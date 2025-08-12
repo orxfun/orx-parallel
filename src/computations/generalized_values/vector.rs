@@ -1,3 +1,7 @@
+use crate::computations::generalized_values::{
+    whilst_atom::WhilstAtom, whilst_vector::WhilstVector,
+};
+
 use super::values::Values;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -79,6 +83,17 @@ where
         Fm: Fn(Self::Item) -> Option<O>,
     {
         Vector(self.0.into_iter().filter_map(filter_map))
+    }
+
+    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        let iter = self.0.into_iter().map(move |x| match whilst(&x) {
+            true => WhilstAtom::Continue(x),
+            false => WhilstAtom::Stop,
+        });
+        WhilstVector(iter)
     }
 
     #[inline(always)]

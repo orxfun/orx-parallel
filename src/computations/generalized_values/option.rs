@@ -1,7 +1,7 @@
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-use crate::computations::WhileOption;
+use crate::computations::{WhileOption, generalized_values::whilst_option::WhilstOption};
 
 use super::{Values, Vector};
 
@@ -77,6 +77,19 @@ impl<T> Values for Option<T> {
         match self {
             Some(x) => filter_map(x),
             _ => None,
+        }
+    }
+
+    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        match self {
+            Some(x) => match whilst(&x) {
+                true => WhilstOption::ContinueSome(x),
+                false => WhilstOption::Stop,
+            },
+            _ => WhilstOption::ContinueNone,
         }
     }
 

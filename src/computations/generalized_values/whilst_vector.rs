@@ -10,7 +10,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 use std::marker::PhantomData;
 
-pub struct WhilstVector<I, T>(I)
+pub struct WhilstVector<I, T>(pub(super) I)
 where
     I: IntoIterator<Item = WhilstAtom<T>>;
 

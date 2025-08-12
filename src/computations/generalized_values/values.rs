@@ -37,7 +37,7 @@ pub trait Values {
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
-    fn until(self, until: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
+    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
     where
         Self: Sized,
     {
