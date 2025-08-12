@@ -11,7 +11,7 @@ impl<Vo> WhilstAtomFlatMapIter<Vo>
 where
     Vo: IntoIterator,
 {
-    pub fn new<T, Fm>(atom: WhilstAtom<T>, flat_map: Fm) -> Self
+    pub fn from_atom<T, Fm>(atom: WhilstAtom<T>, flat_map: Fm) -> Self
     where
         Fm: Fn(T) -> Vo,
     {

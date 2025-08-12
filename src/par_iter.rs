@@ -579,10 +579,7 @@ where
 
     fn whilst<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
     where
-        Whilst: Fn(&Self::Item) -> bool + Sync + Clone,
-    {
-        self
-    }
+        Whilst: Fn(&Self::Item) -> bool + Sync + Clone;
 
     /// Does something with each element of an iterator, passing the value on.
     ///

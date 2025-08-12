@@ -6,7 +6,7 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
-pub struct WhilstVector<I, T>(pub(super) I)
+pub struct WhilstVector<I, T>(pub(crate) I)
 where
     I: IntoIterator<Item = WhilstAtom<T>>;
 
@@ -91,7 +91,7 @@ where
         let iter = self
             .0
             .into_iter()
-            .flat_map(move |atom| WhilstAtomFlatMapIter::new(atom, &flat_map));
+            .flat_map(move |atom| WhilstAtomFlatMapIter::from_atom(atom, &flat_map));
         WhilstVector(iter)
     }
 
