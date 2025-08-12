@@ -1,6 +1,6 @@
 use crate::computations::{M, X};
+use crate::runner::thread_next::ThreadNext;
 use crate::runner::thread_runner_compute as thread;
-use crate::runner::thread_runner_compute::next::ThreadNext;
 use crate::{computations::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 

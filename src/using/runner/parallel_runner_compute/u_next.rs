@@ -1,4 +1,5 @@
 use super::super::thread_runner_compute as thread;
+use crate::runner::ThreadNext;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
 use crate::{computations::Values, runner::ParallelRunnerCompute};
@@ -81,16 +82,16 @@ where
             }))
         }
 
-        let mut results: Vec<(usize, Vo::Item)> = Vec::with_capacity(handles.len());
+        let mut results: Vec<ThreadNext<Vo::Item>> = Vec::with_capacity(handles.len());
         for x in handles {
-            if let Some(x) = x.join().expect("failed to join the thread") {
-                results.push(x);
-            }
+            let thread_next = x.join().expect("failed to join the thread");
+            results.push(thread_next);
         }
         results
     });
 
-    let acc = results.into_iter().min_by_key(|x| x.0).map(|x| x.1);
+    let result = ThreadNext::reduce(results);
+    let acc = result.map(|x| x.1);
 
     (num_spawned, acc)
 }
