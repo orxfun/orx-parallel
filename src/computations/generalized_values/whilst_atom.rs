@@ -112,6 +112,19 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
+    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Continue(x) => match whilst(&x) {
+                true => Self::Continue(x),
+                false => Self::Stop,
+            },
+            Self::Stop => Self::Stop,
+        }
+    }
+
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
