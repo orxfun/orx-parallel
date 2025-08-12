@@ -28,6 +28,7 @@ fn collection_of_results_good_case() {
         }
 
         assert!(error.is_none());
+        // since no error, whilst will always be true and all results will be collected regardless of order
         assert_eq!(output, (0..N).collect::<Vec<_>>());
     }
 }
@@ -43,7 +44,7 @@ fn collection_of_results_bad_case() {
             .collect();
         let mut output: Vec<_> = bad_input
             .par()
-            .iteration_order(IterationOrder::Arbitrary)
+            .iteration_order(iteration_order)
             .map(|x| match x.parse::<usize>() {
                 Ok(x) => Some(x),
                 Err(e) => {
@@ -63,13 +64,24 @@ fn collection_of_results_bad_case() {
             error.map(|x| x.to_string()),
             Some("invalid digit found in string".to_string())
         );
-        for i in 0..IDX_BAD_INPUT[0] {
-            assert!(output.contains(&i));
+
+        match iteration_order {
+            IterationOrder::Ordered => {
+                // guaranteed to stop at the first error
+                assert_eq!(output, (0..IDX_BAD_INPUT[0]).collect::<Vec<_>>())
+            }
+            IterationOrder::Arbitrary => {
+                // guaranteed to stop at any of the errors and we can take more
+                // but everything before the first error are guaranteed to be in
+                for i in 0..IDX_BAD_INPUT[0] {
+                    assert!(output.contains(&i));
+                }
+            }
         }
     }
 }
 
 fn main() {
-    // collection_of_results_good_case();
+    collection_of_results_good_case();
     collection_of_results_bad_case();
 }
