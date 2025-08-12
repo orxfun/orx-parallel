@@ -178,18 +178,17 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    // fn until<Until>(self, until: Until) -> impl ParIter<R, Item = Self::Item>
-    // where
-    //     Until: Fn(&Self::Item) -> bool + Sync + Clone,
-    // {
-    //     let (params, iter, x1) = self.destruct();
-    //     let x1 = move |i: I::Item| {
-    //         let vo = x1(i);
-    //         let a = vo.map(|x| WhileOption::new(x, until.clone()));
-    //         a
-    //     };
-    //     ParXap::new(params, iter, x1)
-    // }
+    fn whilst<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
+    where
+        Whilst: Fn(&Self::Item) -> bool + Sync + Clone,
+    {
+        let (params, iter, x1) = self.destruct();
+        let x1 = move |i: I::Item| {
+            let vo = x1(i);
+            vo.whilst(whilst.clone())
+        };
+        ParXap::new(params, iter, x1)
+    }
 
     // collect
 
