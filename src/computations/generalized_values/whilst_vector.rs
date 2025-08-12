@@ -113,6 +113,20 @@ where
         WhilstVector(iter)
     }
 
+    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        let iter = self.0.into_iter().map(move |x| match x {
+            WhilstAtom::Continue(x) => match whilst(&x) {
+                true => WhilstAtom::Continue(x),
+                false => WhilstAtom::Stop,
+            },
+            WhilstAtom::Stop => WhilstAtom::Stop,
+        });
+        WhilstVector(iter)
+    }
+
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
