@@ -11,7 +11,7 @@ impl<Vo> WhilstOptionFlatMapIter<Vo>
 where
     Vo: IntoIterator,
 {
-    pub fn from_atom<T, Fm>(atom: WhilstOption<T>, flat_map: Fm) -> Self
+    pub fn from_option<T, Fm>(atom: WhilstOption<T>, flat_map: Fm) -> Self
     where
         Fm: Fn(T) -> Vo,
     {
