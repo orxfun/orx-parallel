@@ -649,6 +649,18 @@ where
         self.map(map)
     }
 
+    // computation transformations - derived from whilst
+
+    fn map_while<Out, MapWhile>(self, map_while: MapWhile) -> impl ParIter<R, Item = Out>
+    where
+        MapWhile: Fn(Self::Item) -> Option<Out> + Sync + Clone,
+    {
+        self.map(map_while).whilst(|x| x.is_some()).map(|x| {
+            // SAFETY: since x passed the whilst(is-some) check, unwrap_unchecked
+            unsafe { x.unwrap_unchecked() }
+        })
+    }
+
     // special item transformations
 
     /// Creates an iterator which copies all of its elements.
