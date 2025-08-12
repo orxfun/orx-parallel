@@ -37,12 +37,7 @@ pub trait Values {
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
-    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
-    where
-        Self: Sized,
-    {
-        self
-    }
+    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>;
 
     /// Returns (true, _) if the computation must early exit.
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)

@@ -1,14 +1,10 @@
 use super::values::Values;
 use crate::computations::generalized_values::{
-    while_iterators::{WhileIterFilter, WhileIterFilterMap, WhileIterFlatMap, WhileIterMap},
-    while_option::WhileOption,
-    whilst_atom::WhilstAtom,
-    whilst_iterators::WhilstAtomFlatMapIter,
+    whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
-use std::marker::PhantomData;
 
 pub struct WhilstVector<I, T>(pub(super) I)
 where
