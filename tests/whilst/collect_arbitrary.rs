@@ -16,7 +16,7 @@ fn par(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .num_threads(nt)
         .chunk_size(c)
         .iteration_order(IterationOrder::Arbitrary)
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             whilst(&x)
         })
@@ -41,7 +41,7 @@ fn map(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .chunk_size(c)
         .iteration_order(IterationOrder::Arbitrary)
         .map(|x| x.to_string())
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             whilst(&x)
         })
@@ -73,7 +73,7 @@ fn xap_filter(
         .chunk_size(c)
         .iteration_order(IterationOrder::Arbitrary)
         .filter(|x| !filter_out.contains(&x.as_str()))
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             whilst(&x)
         })
@@ -105,7 +105,7 @@ fn xap_filter_map(
         .chunk_size(c)
         .iteration_order(IterationOrder::Arbitrary)
         .filter_map(|x| (!filter_out.contains(&x.as_str())).then_some(x))
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             whilst(&x)
         })
@@ -147,7 +147,7 @@ fn xap_flat_map(
         .chunk_size(c)
         .iteration_order(IterationOrder::Arbitrary)
         .flat_map(|i| [i.to_string(), format!("{i}!"), format!("{i}?")])
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             whilst(&x)
         })

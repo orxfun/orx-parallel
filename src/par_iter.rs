@@ -577,9 +577,9 @@ where
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone;
 
-    fn whilst<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
     where
-        Whilst: Fn(&Self::Item) -> bool + Sync + Clone;
+        While: Fn(&Self::Item) -> bool + Sync + Clone;
 
     /// Does something with each element of an iterator, passing the value on.
     ///
@@ -655,7 +655,7 @@ where
     where
         MapWhile: Fn(Self::Item) -> Option<Out> + Sync + Clone,
     {
-        self.map(map_while).whilst(|x| x.is_some()).map(|x| {
+        self.map(map_while).take_while(|x| x.is_some()).map(|x| {
             // SAFETY: since x passed the whilst(is-some) check, unwrap_unchecked
             unsafe { x.unwrap_unchecked() }
         })

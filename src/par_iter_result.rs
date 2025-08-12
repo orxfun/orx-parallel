@@ -17,7 +17,7 @@ pub trait ParIterResult<T, E>: ParIter<Item = Result<T, E>> {
                     None
                 }
             })
-            .whilst(|x| x.is_some())
+            .take_while(|x| x.is_some())
             .map(|x| {
                 // SAFETY: since x passed the whilst(is-some) check, unwrap_unchecked
                 unsafe { x.unwrap_unchecked() }

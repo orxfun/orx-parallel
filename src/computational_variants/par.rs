@@ -154,7 +154,7 @@ where
         ParXap::new(params, iter, filter_map)
     }
 
-    fn whilst<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
+    fn take_while<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
     where
         Whilst: Fn(&Self::Item) -> bool + Sync,
     {

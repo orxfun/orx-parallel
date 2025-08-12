@@ -31,7 +31,7 @@ fn collection_of_results_good_case() {
                     None
                 }
             })
-            .whilst(|x| x.is_some())
+            .take_while(|x| x.is_some())
             .map(|x| x.unwrap())
             .collect();
 
@@ -58,7 +58,7 @@ fn collection_of_results_bad_case() {
                     None
                 }
             })
-            .whilst(|x| x.is_some())
+            .take_while(|x| x.is_some())
             .map(|x| x.unwrap())
             .collect();
 

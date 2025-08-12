@@ -14,7 +14,7 @@ fn par(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .into_par()
         .num_threads(nt)
         .chunk_size(c)
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             x.len() != until_num_digits || !x.starts_with(&until_digits)
         })
@@ -39,7 +39,7 @@ fn map(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .num_threads(nt)
         .chunk_size(c)
         .map(|x| x.to_string())
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             x.len() != until_num_digits || !x.starts_with(&until_digits)
         })
@@ -63,7 +63,7 @@ fn xap_filter(n: usize, nt: usize, c: usize, stop_at: &[&str], filter_out: &[&st
         .num_threads(nt)
         .chunk_size(c)
         .filter(|x| !filter_out.contains(&x.as_str()))
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             !stop_at.contains(&x.as_str())
         })
@@ -88,7 +88,7 @@ fn xap_filter_map(n: usize, nt: usize, c: usize, stop_at: &[&str], filter_out: &
         .num_threads(nt)
         .chunk_size(c)
         .filter_map(|x| (!filter_out.contains(&x.as_str())).then_some(x))
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             !stop_at.contains(&x.as_str())
         })
@@ -113,7 +113,7 @@ fn xap_flat_map(n: usize, nt: usize, c: usize, stop_at: &[usize], stop_at_char: 
         .num_threads(nt)
         .chunk_size(c)
         .flat_map(|i| [i.to_string(), format!("{i}!"), format!("{i}?")])
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             let s = match x.ends_with("!") || x.ends_with("?") {
                 true => &x[0..(x.len() - 1)],

@@ -1,5 +1,4 @@
 use orx_parallel::*;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 const N: usize = 10_000;
 const IDX_BAD_INPUT: [usize; 4] = [1900, 4156, 6777, 5663];

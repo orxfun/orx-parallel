@@ -15,7 +15,7 @@ fn par(n: usize, nt: usize, c: usize, stop_at: &[usize], find: &[usize], expecte
         .into_par()
         .num_threads(nt)
         .chunk_size(c)
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             let num: usize = x.parse().unwrap();
             !stop_at.contains(&num)
@@ -46,7 +46,7 @@ fn filter(
         .num_threads(nt)
         .chunk_size(c)
         .filter(|x| x.parse::<usize>().unwrap() % 2 == 0) // only evens remain
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             let num: usize = x.parse().unwrap();
             !stop_at.contains(&num)
@@ -84,7 +84,7 @@ fn flat_map(
         .num_threads(nt)
         .chunk_size(c)
         .flat_map(|i| [i.to_string(), format!("{i}!"), format!("{i}?")])
-        .whilst(|x| {
+        .take_while(|x| {
             let _fib = black_box(fibonacci(42));
             !stop_at.contains(&x.as_str())
         })
