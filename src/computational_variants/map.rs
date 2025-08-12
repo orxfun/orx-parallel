@@ -1,7 +1,7 @@
 use super::xap::ParXap;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{M, Vector},
+    computations::{M, Vector, WhilstAtom},
     runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UParMap},
 };
@@ -163,14 +163,14 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    // fn whilst<Until>(self, until: Until) -> impl ParIter<R, Item = Self::Item>
-    // where
-    //     Until: Fn(&Self::Item) -> bool + Sync,
-    // {
-    //     let (params, iter, m1) = self.destruct();
-    //     let x1 = move |i: I::Item| WhileOption::new(m1(i), &until);
-    //     ParXap::new(params, iter, x1)
-    // }
+    fn whilst<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
+    where
+        Whilst: Fn(&Self::Item) -> bool + Sync,
+    {
+        let (params, iter, m1) = self.destruct();
+        let x1 = move |value: I::Item| WhilstAtom::new(m1(value), &whilst);
+        ParXap::new(params, iter, x1)
+    }
 
     // collect
 
