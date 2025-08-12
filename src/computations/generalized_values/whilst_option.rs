@@ -130,6 +130,20 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
+    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::ContinueSome(x) => match whilst(&x) {
+                true => Self::ContinueSome(x),
+                false => Self::Stop,
+            },
+            Self::ContinueNone => Self::ContinueNone,
+            Self::Stop => Self::Stop,
+        }
+    }
+
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
