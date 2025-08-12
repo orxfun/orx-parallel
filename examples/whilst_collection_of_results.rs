@@ -5,11 +5,23 @@ const N: usize = 10_000;
 const IDX_BAD_INPUT: [usize; 4] = [1900, 4156, 6777, 5663];
 const ITERATION_ORDERS: [IterationOrder; 2] = [IterationOrder::Ordered, IterationOrder::Arbitrary];
 
+fn good_input() -> Vec<String> {
+    (0..N).map(|x| x.to_string()).collect()
+}
+
+fn bad_input() -> Vec<String> {
+    (0..N)
+        .map(|x| match IDX_BAD_INPUT.contains(&x) {
+            true => format!("{x}!"),
+            false => x.to_string(),
+        })
+        .collect()
+}
+
 fn collection_of_results_good_case() {
     for iteration_order in ITERATION_ORDERS {
         let error = ConcurrentOption::none();
-        let good_input: Vec<_> = (0..N).map(|x| x.to_string()).collect();
-        let mut output: Vec<_> = good_input
+        let mut output: Vec<_> = good_input()
             .par()
             .iteration_order(iteration_order)
             .map(|x| match x.parse::<usize>() {
@@ -36,13 +48,7 @@ fn collection_of_results_good_case() {
 fn collection_of_results_bad_case() {
     for iteration_order in ITERATION_ORDERS {
         let error = ConcurrentOption::none();
-        let bad_input: Vec<_> = (0..N)
-            .map(|x| match IDX_BAD_INPUT.contains(&x) {
-                true => format!("{x}!"),
-                false => x.to_string(),
-            })
-            .collect();
-        let mut output: Vec<_> = bad_input
+        let mut output: Vec<_> = bad_input()
             .par()
             .iteration_order(iteration_order)
             .map(|x| match x.parse::<usize>() {
@@ -81,7 +87,28 @@ fn collection_of_results_bad_case() {
     }
 }
 
+fn collect_result() {
+    let output: Result<Vec<_>, _> = good_input()
+        .par()
+        .map(|x| x.parse::<usize>())
+        .collect_result();
+    assert_eq!(
+        output.map_err(|x| x.to_string()),
+        Ok((0..N).collect::<Vec<_>>())
+    );
+
+    let output: Result<Vec<_>, _> = bad_input()
+        .par()
+        .map(|x| x.parse::<usize>())
+        .collect_result();
+    assert_eq!(
+        output.map_err(|x| x.to_string()),
+        Err("invalid digit found in string".to_string())
+    );
+}
+
 fn main() {
     collection_of_results_good_case();
     collection_of_results_bad_case();
+    collect_result();
 }
