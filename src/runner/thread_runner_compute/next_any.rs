@@ -1,4 +1,7 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{
+    ThreadRunner,
+    computations::{Values, WhilstOption},
+};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn m<C, I, O, M1>(
@@ -84,12 +87,20 @@ where
             0 | 1 => match item_puller.next() {
                 Some(i) => {
                     let vt = xap1(i);
-                    let maybe_next = vt.first();
-                    if maybe_next.is_some() {
-                        iter.skip_to_end();
-                        runner.complete_chunk(shared_state, chunk_size);
-                        runner.complete_task(shared_state);
-                        return maybe_next;
+                    match vt.first() {
+                        WhilstOption::ContinueSome(first) => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return Some(first);
+                        }
+                        WhilstOption::ContinueNone => continue,
+                        WhilstOption::Stop => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return None;
+                        }
                     }
                 }
                 None => break,
@@ -103,12 +114,20 @@ where
                     Some(chunk) => {
                         for i in chunk {
                             let vt = xap1(i);
-                            let maybe_next = vt.first();
-                            if maybe_next.is_some() {
-                                iter.skip_to_end();
-                                runner.complete_chunk(shared_state, chunk_size);
-                                runner.complete_task(shared_state);
-                                return maybe_next;
+                            match vt.first() {
+                                WhilstOption::ContinueSome(first) => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return Some(first);
+                                }
+                                WhilstOption::ContinueNone => continue,
+                                WhilstOption::Stop => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return None;
+                                }
                             }
                         }
                     }
