@@ -178,14 +178,14 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    fn take_while<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
     where
-        Whilst: Fn(&Self::Item) -> bool + Sync + Clone,
+        While: Fn(&Self::Item) -> bool + Sync + Clone,
     {
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let vo = x1(i);
-            vo.whilst(whilst.clone())
+            vo.whilst(take_while.clone())
         };
         ParXap::new(params, iter, x1)
     }

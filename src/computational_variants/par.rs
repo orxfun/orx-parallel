@@ -154,12 +154,12 @@ where
         ParXap::new(params, iter, filter_map)
     }
 
-    fn take_while<Whilst>(self, whilst: Whilst) -> impl ParIter<R, Item = Self::Item>
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
     where
-        Whilst: Fn(&Self::Item) -> bool + Sync,
+        While: Fn(&Self::Item) -> bool + Sync,
     {
         let (params, iter) = self.destruct();
-        let x1 = move |value: Self::Item| WhilstAtom::new(value, &whilst);
+        let x1 = move |value: Self::Item| WhilstAtom::new(value, &take_while);
         ParXap::new(params, iter, x1)
     }
 
