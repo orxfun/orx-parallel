@@ -1,6 +1,6 @@
 mod option;
 mod result;
-mod runner_results;
+pub(crate) mod runner_results;
 mod values;
 mod vector;
 mod whilst_atom;

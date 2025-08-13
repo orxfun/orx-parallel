@@ -1,4 +1,5 @@
-use crate::{ThreadRunner, values::Values};
+use crate::ThreadRunner;
+use crate::values::{Values, runner_results::ThreadDo};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -81,13 +82,19 @@ where
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     let vo = xap1(i);
-                    let max_idx_exc = vo.push_to_vec_with_idx(idx, out_vec);
+                    let done = vo.push_to_vec_with_idx(idx, out_vec);
 
-                    if let Some(max_idx_exc) = max_idx_exc {
-                        iter.skip_to_end();
-                        runner.complete_chunk(shared_state, chunk_size);
-                        runner.complete_task(shared_state);
-                        return (collected, Some(max_idx_exc));
+                    match done {
+                        ThreadDo::Done => {}
+                        ThreadDo::StoppedByWhileCondition { idx } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return (collected, Some(idx));
+                        }
+                        ThreadDo::StoppedByError { idx, error } => {
+                            todo!();
+                        }
                     }
                 }
                 None => break,
@@ -101,13 +108,18 @@ where
                     Some((chunk_begin_idx, chunk)) => {
                         for (within_chunk_idx, value) in chunk.enumerate() {
                             let vo = xap1(value);
-                            let max_idx_exc = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
-
-                            if let Some(max_idx_exc) = max_idx_exc {
-                                iter.skip_to_end();
-                                runner.complete_chunk(shared_state, chunk_size);
-                                runner.complete_task(shared_state);
-                                return (collected, Some(max_idx_exc + within_chunk_idx));
+                            let done = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
+                            match done {
+                                ThreadDo::Done => {}
+                                ThreadDo::StoppedByWhileCondition { idx } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return (collected, Some(idx + within_chunk_idx));
+                                }
+                                ThreadDo::StoppedByError { idx, error } => {
+                                    todo!();
+                                }
                             }
                         }
                     }
