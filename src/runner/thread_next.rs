@@ -5,8 +5,10 @@ pub enum ThreadNext<T> {
 }
 
 impl<T> ThreadNext<T> {
-    /// Returns the value which has the smallest idx
+    /// Returns the value with the smallest found idx whose idx is less than
+    /// the smallest of the stopped indices, if any.
     ///
+    /// Returns None if there is no found items before the process stopped.
     pub fn reduce(results: Vec<Self>) -> Option<(usize, T)> {
         let mut idx_bound = usize::MAX;
         let mut result = None;
