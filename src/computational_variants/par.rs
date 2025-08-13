@@ -200,9 +200,9 @@ impl<I, R, T, E> ParIterResultNew<T, E> for Par<I, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter<Item = Result<T, E>>,
-    Par<I, R>: ParIter<Item = Result<T, E>>,
     T: Send,
     E: Send + Sync,
+    Par<I, R>: ParIter<Item = Result<T, E>>,
 {
     fn collect_result_into_new<C>(self, output: C) -> Result<C, E>
     where
@@ -210,7 +210,7 @@ where
         E: Send + Sync,
     {
         let (params, iter) = self.destruct();
-        let x1 = |i: Result<T, E>| WhilstOk::new(i);
+        let x1 = |i: <Self as ParIter>::Item| WhilstOk::<T, E>::new(i);
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
     }
