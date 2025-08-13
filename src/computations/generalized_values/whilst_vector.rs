@@ -1,6 +1,7 @@
 use super::values::Values;
 use crate::computations::generalized_values::{
-    whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption,
+    Never, whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter,
+    whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -15,6 +16,8 @@ where
     I: IntoIterator<Item = WhilstAtom<T>>,
 {
     type Item = T;
+
+    type Error = Never;
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();

@@ -1,21 +1,25 @@
-use crate::computations::{
-    Values, WhilstOption, WhilstVector,
-    generalized_values::whilst_iterators::WhilstOptionFlatMapIter,
-};
+use crate::computations::{Values, WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub enum WhilstResult<T, E> {
-    ContinueOk(T),
-    StopError(E),
-}
+/* Values implementation for Result<T,E>
 
-impl<T, E> Values for WhilstResult<T, E> {
+Result<T,E> represents early stopping with error cases:
+
+* Whenever computation creates an error at any point, all computed values are irrelevant,
+  the only relevant value is the created error.
+* Computed values are relevant iff entire inputs result in an Ok variant.
+* Therefore, observation of an error case allows to immediately stop computation.
+
+*/
+impl<T, E> Values for Result<T, E> {
     type Item = T;
+
+    type Error = E;
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         match self {
-            Self::ContinueOk(x) => Some(x).into_iter(),
+            Self::Ok(x) => Some(x).into_iter(),
             _ => None.into_iter(),
         }
     }
@@ -25,21 +29,21 @@ impl<T, E> Values for WhilstResult<T, E> {
         P: PinnedVec<Self::Item>,
     {
         match self {
-            Self::ContinueOk(x) => {
+            Self::Ok(x) => {
                 vector.push(x);
                 false
             }
-            Self::StopError(e) => true,
+            Self::Err(e) => true,
         }
     }
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
         match self {
-            Self::ContinueOk(x) => {
+            Self::Ok(x) => {
                 vec.push((idx, x));
                 None
             }
-            Self::StopError(e) => Some(idx),
+            Self::Err(e) => Some(idx),
         }
     }
 
@@ -49,11 +53,11 @@ impl<T, E> Values for WhilstResult<T, E> {
         Self::Item: Send,
     {
         match self {
-            Self::ContinueOk(x) => {
+            Self::Ok(x) => {
                 bag.push(x);
                 false
             }
-            Self::StopError(e) => true,
+            Self::Err(e) => true,
         }
     }
 
@@ -62,8 +66,8 @@ impl<T, E> Values for WhilstResult<T, E> {
         M: Fn(Self::Item) -> O + Clone,
     {
         match self {
-            Self::ContinueOk(x) => WhilstResult::ContinueOk(map(x)),
-            Self::StopError(e) => WhilstResult::StopError(e),
+            Self::Ok(x) => Ok(map(x)),
+            Self::Err(e) => Err(e),
         }
     }
 
@@ -73,13 +77,13 @@ impl<T, E> Values for WhilstResult<T, E> {
     {
         todo!("avoid computational variant transformations all at once");
         match self {
-            Self::ContinueOk(x) => match filter(&x) {
-                true => Self::ContinueOk(x),
+            Self::Ok(x) => match filter(&x) {
+                true => Self::Ok(x),
                 false => todo!(
                     "we need a recursive Values definition, do we really need this? can we avoid filter?"
                 ),
             },
-            Self::StopError(e) => WhilstResult::StopError(e),
+            Self::Err(e) => Err(e),
         }
     }
 
@@ -110,11 +114,11 @@ impl<T, E> Values for WhilstResult<T, E> {
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueOk(x) => match acc {
+            Self::Ok(x) => match acc {
                 Some(acc) => (false, Some(reduce(acc, x))),
                 None => (false, Some(x)),
             },
-            Self::StopError(e) => (true, None), // resets entire reduction so far!
+            Self::Err(e) => (true, None), // resets entire reduction so far!
         }
     }
 
@@ -123,11 +127,11 @@ impl<T, E> Values for WhilstResult<T, E> {
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueOk(x) => match acc {
+            Self::Ok(x) => match acc {
                 Some(acc) => Some(reduce(u, acc, x)),
                 None => Some(x),
             },
-            Self::StopError(e) => None, // resets entire reduction so far!
+            Self::Err(e) => None, // resets entire reduction so far!
         }
     }
 

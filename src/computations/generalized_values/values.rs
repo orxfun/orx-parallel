@@ -7,6 +7,8 @@ use crate::computations::generalized_values::whilst_option::WhilstOption;
 pub trait Values {
     type Item;
 
+    type Error;
+
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 
     /// Returns true if the computation must early exit.
