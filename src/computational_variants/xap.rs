@@ -1,5 +1,5 @@
-use crate::par_iter_result::ParIterResultStruct;
-use crate::values::{Values, WhilstOk};
+use crate::par_iter_result::ParIterResult;
+use crate::values::{Values, WhilstOk, WhilstOkVector};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::X,
@@ -202,7 +202,7 @@ where
     fn map_while_ok<Out, Err, MapWhileOk>(
         self,
         map_while_ok: MapWhileOk,
-    ) -> ParIterResultStruct<
+    ) -> ParIterResult<
         Self::ConIter,
         Out,
         Err,
@@ -217,10 +217,12 @@ where
         let con_iter_len = self.con_iter().try_get_len();
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
+            // let v = WhilstOkVector(x1(i).map(|x| WhilstOk::new(map_while_ok(x))).values());
+            // v
             WhilstOk::<Out, Err>::new(map_while_ok(x1(i).values().into_iter().next().unwrap()))
         };
         let x = X::new(params, iter, x1);
-        ParIterResultStruct::<I, Out, Err, _, R>::new(x, con_iter_len)
+        ParIterResult::<I, Out, Err, _, R>::new(x, con_iter_len)
     }
 
     // collect

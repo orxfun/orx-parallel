@@ -1,4 +1,4 @@
-use crate::par_iter_result::ParIterResultStruct;
+use crate::par_iter_result::ParIterResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::values::WhilstOk;
 use crate::{
@@ -670,7 +670,7 @@ where
     fn map_while_ok<Out, Err, MapWhileOk>(
         self,
         map_while_ok: MapWhileOk,
-    ) -> ParIterResultStruct<
+    ) -> ParIterResult<
         Self::ConIter,
         Out,
         Err,
