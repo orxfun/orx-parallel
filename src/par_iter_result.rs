@@ -79,8 +79,8 @@ where
     M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
     E: Send,
 {
-    con_iter_len: Option<usize>,
     x: X<I, WhilstOk<T, E>, M1>,
+    con_iter_len: Option<usize>,
     phantom: PhantomData<R>,
 }
 
@@ -91,6 +91,14 @@ where
     M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
     E: Send,
 {
+    pub(crate) fn new(x: X<I, WhilstOk<T, E>, M1>, con_iter_len: Option<usize>) -> Self {
+        Self {
+            x,
+            con_iter_len,
+            phantom: PhantomData,
+        }
+    }
+
     pub fn collect_result_into<C>(self, output: C) -> Result<C, E>
     where
         C: ParCollectInto<T>,

@@ -1,4 +1,6 @@
+use crate::par_iter_result::ParIterResultStruct;
 use crate::using::{UsingClone, UsingFun};
+use crate::values::WhilstOk;
 use crate::{
     ParIterUsing, Params,
     collect_into::ParCollectInto,
@@ -17,6 +19,8 @@ where
 {
     /// Element type of the parallel iterator.
     type Item;
+
+    type ConIter: ConcurrentIter;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
@@ -663,11 +667,29 @@ where
 
     // transformations into early stop
 
-    fn map_while_ok<Out, Err, MapWhileOk>(self, map_while_ok: MapWhileOk)
+    fn map_while_ok<Out, Err, MapWhileOk>(
+        self,
+        map_while_ok: MapWhileOk,
+    ) -> ParIterResultStruct<
+        Self::ConIter,
+        Out,
+        Err,
+        impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
+        R,
+    >
     where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-    {
-    }
+        Err: Send + Sync;
+
+    // fn to_other(self) -> ParIterResultStruct<I, T, E, M1, R>
+    // where
+    //     R: ParallelRunner,
+    //     I: ConcurrentIter,
+    //     M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
+    //     E: Send,
+    // {
+    //     todo!()
+    // }
 
     // special item transformations
 

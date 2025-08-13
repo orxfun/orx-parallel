@@ -1,6 +1,7 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::ParIterResultNew;
 use crate::computations::X;
+use crate::par_iter_result::ParIterResultStruct;
 use crate::values::{Vector, WhilstAtom, WhilstOk};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -66,6 +67,8 @@ where
     I: ConcurrentIter,
 {
     type Item = I::Item;
+
+    type ConIter = I;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
         &self.iter
@@ -165,6 +168,27 @@ where
         let (params, iter) = self.destruct();
         let x1 = move |value: Self::Item| WhilstAtom::new(value, &take_while);
         ParXap::new(params, iter, x1)
+    }
+
+    fn map_while_ok<Out, Err, MapWhileOk>(
+        self,
+        map_while_ok: MapWhileOk,
+    ) -> ParIterResultStruct<
+        Self::ConIter,
+        Out,
+        Err,
+        impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
+        R,
+    >
+    where
+        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+        Err: Send + Sync,
+    {
+        let con_iter_len = self.con_iter().try_get_len();
+        let (params, iter) = self.destruct();
+        let x1 = move |i: I::Item| WhilstOk::<Out, Err>::new(map_while_ok(i));
+        let x = X::new(params, iter, x1);
+        ParIterResultStruct::<I, Out, Err, _, R>::new(x, con_iter_len)
     }
 
     // collect
