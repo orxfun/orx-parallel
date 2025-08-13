@@ -1,12 +1,12 @@
 use super::{Values, Vector};
-use crate::computations::generalized_values::{Never, whilst_option::WhilstOption};
+use crate::computations::generalized_values::whilst_option::WhilstOption;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
 impl<T> Values for Option<T> {
     type Item = T;
 
-    type Error = Never;
+    type Error = ();
 
     #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {

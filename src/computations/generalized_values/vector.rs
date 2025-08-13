@@ -1,5 +1,5 @@
 use crate::computations::generalized_values::{
-    Never, whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
+    whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
 };
 
 use super::values::Values;
@@ -17,7 +17,7 @@ where
 {
     type Item = I::Item;
 
-    type Error = Never;
+    type Error = ();
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0

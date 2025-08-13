@@ -1,8 +1,6 @@
 use crate::computations::{
     Values, WhilstVector,
-    generalized_values::{
-        Never, whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption,
-    },
+    generalized_values::{whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -25,7 +23,7 @@ impl<T> WhilstAtom<T> {
 impl<T> Values for WhilstAtom<T> {
     type Item = T;
 
-    type Error = Never;
+    type Error = ();
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         match self {

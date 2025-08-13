@@ -1,6 +1,5 @@
 use crate::computations::{
-    Values, WhilstVector,
-    generalized_values::{Never, whilst_iterators::WhilstOptionFlatMapIter},
+    Values, WhilstVector, generalized_values::whilst_iterators::WhilstOptionFlatMapIter,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -14,7 +13,7 @@ pub enum WhilstOption<T> {
 impl<T> Values for WhilstOption<T> {
     type Item = T;
 
-    type Error = Never;
+    type Error = ();
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         match self {
