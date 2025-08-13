@@ -1,25 +1,31 @@
-pub enum ThreadNext<T> {
+pub enum ThreadNext<T, E> {
     Found { idx: usize, value: T },
     NotFound,
-    Stopped { idx: usize },
+    Stopped { idx: usize, error: E },
 }
 
-impl<T> ThreadNext<T> {
+impl<T, E> ThreadNext<T, E> {
+    fn found_or_stopped_idx(&self) -> Option<usize> {
+        match self {
+            Self::Found { idx, value: _ } => Some(*idx),
+            Self::Stopped { idx, error: _ } => Some(*idx),
+            _ => None,
+        }
+    }
+
     /// Returns the value with the smallest found idx whose idx is less than
     /// the smallest of the stopped indices, if any.
     ///
     /// Returns None if there is no found items before the process stopped.
-    pub fn reduce(results: Vec<Self>) -> Option<(usize, T)> {
+    pub fn reduce(results: Vec<Self>) -> Self {
+        let mut result = Self::NotFound;
         let mut idx_bound = usize::MAX;
-        let mut result = None;
         for x in results {
-            match x {
-                Self::Found { idx, value } if idx < idx_bound => {
-                    idx_bound = idx;
-                    result = Some((idx, value));
-                }
-                Self::Stopped { idx } if idx < idx_bound => idx_bound = idx,
-                _ => {}
+            if let Some(idx) = x.found_or_stopped_idx()
+                && idx < idx_bound
+            {
+                idx_bound = idx;
+                result = x;
             }
         }
 
