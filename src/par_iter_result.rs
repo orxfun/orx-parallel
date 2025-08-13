@@ -1,4 +1,8 @@
-use crate::{ParCollectInto, ParIter};
+use std::marker::PhantomData;
+
+use crate::{
+    DefaultRunner, ParCollectInto, ParIter, ParallelRunner, computations::X, values::WhilstOk,
+};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_option::{ConcurrentOption, IntoOption};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -43,10 +47,13 @@ pub trait ParIterResult<T, E>: ParIter<Item = Result<T, E>> {
 
 impl<P, T, E> ParIterResult<T, E> for P where P: ParIter<Item = Result<T, E>> {}
 
-pub trait ParIterResultNew<T, E>: ParIter<Item = Result<T, E>>
+// TODO NEW ONE
+
+pub trait ParIterResultNew<T, E, R = DefaultRunner>: ParIter<R, Item = Result<T, E>>
 where
     T: Send,
     E: Send + Sync,
+    R: ParallelRunner,
 {
     fn collect_result_into_new<C>(self, output: C) -> Result<C, E>
     where
@@ -60,5 +67,43 @@ where
     {
         let output = C::empty(self.con_iter().try_get_len());
         self.collect_result_into_new(output)
+    }
+}
+
+// AS STRUCT
+
+pub struct ParIterResultStruct<I, T, E, M1, R = DefaultRunner>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
+    E: Send,
+{
+    con_iter_len: Option<usize>,
+    x: X<I, WhilstOk<T, E>, M1>,
+    phantom: PhantomData<R>,
+}
+
+impl<I, T, E, M1, R> ParIterResultStruct<I, T, E, M1, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
+    E: Send,
+{
+    pub fn collect_result_into<C>(self, output: C) -> Result<C, E>
+    where
+        C: ParCollectInto<T>,
+    {
+        output.x_try_collect_into::<R, _, _, _>(self.x)
+    }
+
+    pub fn collect_result<C>(self) -> Result<C, E>
+    where
+        C: ParCollectInto<T>,
+        E: Send + Sync,
+    {
+        let output = C::empty(self.con_iter_len);
+        self.collect_result_into(output)
     }
 }

@@ -207,14 +207,14 @@ where
     }
 }
 
-impl<I, T, M1, R, E> ParIterResultNew<T, E> for ParMap<I, Result<T, E>, M1, R>
+impl<I, T, M1, R, E> ParIterResultNew<T, E, R> for ParMap<I, Result<T, E>, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> Result<T, E> + Sync,
     T: Send,
     E: Send + Sync,
-    ParMap<I, Result<T, E>, M1, R>: ParIter<Item = Result<T, E>>,
+    ParMap<I, Result<T, E>, M1, R>: ParIter<R, Item = Result<T, E>>,
 {
     fn collect_result_into_new<C>(self, output: C) -> Result<C, E>
     where

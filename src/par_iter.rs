@@ -661,6 +661,14 @@ where
         })
     }
 
+    // transformations into early stop
+
+    fn map_while_ok<Out, Err, MapWhileOk>(self, map_while_ok: MapWhileOk)
+    where
+        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+    {
+    }
+
     // special item transformations
 
     /// Creates an iterator which copies all of its elements.

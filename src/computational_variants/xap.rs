@@ -1,3 +1,4 @@
+use crate::ParIterResultNew;
 use crate::values::Values;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -227,3 +228,13 @@ where
         }
     }
 }
+
+// impl<I, Vo, M1, R> ParIterResultNew for ParXap<I, Vo, M1, R>
+// where
+//     R: ParallelRunner,
+//     I: ConcurrentIter,
+//     Vo: Values,
+//     Vo::Error: Send,
+//     M1: Fn(I::Item) -> Vo + Sync,
+// {
+// }
