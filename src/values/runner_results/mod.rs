@@ -1,3 +1,3 @@
-mod push;
+mod collect_ordered;
 
-pub use push::ValuesPush;
+pub use collect_ordered::{ThreadCollect, ValuesPush};
