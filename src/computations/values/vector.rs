@@ -1,4 +1,4 @@
-use crate::computations::generalized_values::{
+use crate::computations::values::{
     whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
 };
 

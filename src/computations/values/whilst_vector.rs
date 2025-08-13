@@ -1,5 +1,5 @@
 use super::values::Values;
-use crate::computations::generalized_values::{
+use crate::computations::values::{
     whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;

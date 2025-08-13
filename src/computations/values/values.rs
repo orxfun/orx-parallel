@@ -2,7 +2,7 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
-use crate::computations::generalized_values::whilst_option::WhilstOption;
+use crate::computations::values::whilst_option::WhilstOption;
 
 pub trait Values {
     type Item;

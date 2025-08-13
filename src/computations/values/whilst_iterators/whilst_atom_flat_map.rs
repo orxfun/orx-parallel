@@ -1,4 +1,4 @@
-use crate::computations::generalized_values::whilst_atom::WhilstAtom;
+use crate::computations::values::whilst_atom::WhilstAtom;
 
 pub struct WhilstAtomFlatMapIter<Vo>
 where

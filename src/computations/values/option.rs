@@ -1,5 +1,5 @@
 use super::{Values, Vector};
-use crate::computations::generalized_values::whilst_option::WhilstOption;
+use crate::computations::values::whilst_option::WhilstOption;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
