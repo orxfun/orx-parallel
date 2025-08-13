@@ -72,7 +72,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let results: Vec<ThreadCollect<Vo>> = std::thread::scope(|s| {
+    let result: Result<Vec<ThreadCollect<Vo>>, Vo::Error> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -88,14 +88,48 @@ where
         }
 
         let mut results = Vec::with_capacity(handles.len());
-        for x in handles {
-            let result = x.join().expect("failed to join the thread");
-            results.push(result);
+
+        let mut error = None;
+        while !handles.is_empty() {
+            let mut finished_idx = None;
+            for (h, handle) in handles.iter().enumerate() {
+                if handle.is_finished() {
+                    finished_idx = Some(h);
+                    break;
+                }
+            }
+
+            if let Some(h) = finished_idx {
+                let handle = handles.remove(h);
+                let result = handle.join().expect("failed to join the thread");
+                match result.into_result() {
+                    Ok(result) => results.push(result),
+                    Err(e) => {
+                        error = Some(e);
+                        break;
+                    }
+                }
+            }
         }
-        results
+
+        // for x in handles {
+        //     let result = x.join().expect("failed to join the thread");
+        //     results.push(result);
+        // }
+        match error {
+            Some(error) => Err(error),
+            None => Ok(results),
+        }
     });
 
-    let result = ParallelCollect::reduce(results, pinned_vec);
+    let result = match result {
+        Err(error) => ParallelCollect::StoppedByError { error },
+        Ok(results) => ParallelCollect::reduce(results, pinned_vec),
+    };
+
+    // result.map(|results| ParallelCollect::reduce(results, pinned_vec));
+
+    // let result = ParallelCollect::reduce(results, pinned_vec);
 
     (num_spawned, result)
 }

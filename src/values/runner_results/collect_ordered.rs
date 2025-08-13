@@ -24,6 +24,15 @@ where
     },
 }
 
+impl<V: Values> ThreadCollect<V> {
+    pub fn into_result(self) -> Result<Self, V::Error> {
+        match self {
+            Self::StoppedByError { error } => Err(error),
+            _ => Ok(self),
+        }
+    }
+}
+
 pub enum ParallelCollect<V, P>
 where
     V: Values,

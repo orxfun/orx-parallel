@@ -52,7 +52,7 @@ impl<I> IntoParIter for I
 where
     I: IntoConcurrentIter,
 {
-    fn into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
+    fn into_par(self) -> Par<I::IntoIter, DefaultRunner> {
         Par::new(Params::default(), self.into_con_iter())
     }
 }
