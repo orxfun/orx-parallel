@@ -1,7 +1,7 @@
 use super::{Values, Vector};
 use crate::computations::generalized_values::whilst_option::WhilstOption;
 use orx_concurrent_bag::ConcurrentBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
 impl<T> Values for Option<T> {
     type Item = T;
@@ -14,7 +14,7 @@ impl<T> Values for Option<T> {
     #[inline(always)]
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
     where
-        P: orx_fixed_vec::PinnedVec<Self::Item>,
+        P: PinnedVec<Self::Item>,
     {
         if let Some(x) = self {
             vector.push(x)
