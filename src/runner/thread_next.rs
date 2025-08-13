@@ -13,6 +13,13 @@ impl<T, E> ThreadNext<T, E> {
         }
     }
 
+    pub fn into_found_value(self) -> Option<T> {
+        match self {
+            Self::Found { idx: _, value } => Some(value),
+            _ => None,
+        }
+    }
+
     /// Returns the value with the smallest found idx whose idx is less than
     /// the smallest of the stopped indices, if any.
     ///

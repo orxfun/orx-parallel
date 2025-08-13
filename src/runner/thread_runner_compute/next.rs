@@ -67,7 +67,7 @@ pub fn x<C, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> ThreadNext<Vo::Item>
+) -> ThreadNext<Vo::Item, ()>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -98,7 +98,7 @@ where
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
-                            return ThreadNext::Stopped { idx };
+                            return ThreadNext::Stopped { idx, error: () };
                         }
                     }
                 }
@@ -125,7 +125,7 @@ where
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
-                                    return ThreadNext::Stopped { idx };
+                                    return ThreadNext::Stopped { idx, error: () };
                                 }
                             }
                         }
