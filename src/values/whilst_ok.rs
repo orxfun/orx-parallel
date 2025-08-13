@@ -15,6 +15,12 @@ Result<T,E> represents early stopping with error cases:
 
 pub struct WhilstOk<T, E>(Result<T, E>);
 
+impl<T, E> WhilstOk<T, E> {
+    pub fn new(result: Result<T, E>) -> Self {
+        Self(result)
+    }
+}
+
 impl<T, E> Values for WhilstOk<T, E>
 where
     E: Send,

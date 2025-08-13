@@ -37,6 +37,26 @@ where
         }
     }
 
+    pub fn try_collect_into<R, P>(self, pinned_vec: P) -> (usize, Result<P, Vo::Error>)
+    where
+        R: ParallelRunner,
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        let (len, p) = self.len_and_params();
+        match (p.is_sequential(), p.iteration_order) {
+            (true, _) => (0, Ok(self.sequential(pinned_vec))),
+            (false, IterationOrder::Arbitrary) => {
+                let (nt, pinned_vec) =
+                    collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
+                (nt, Ok(pinned_vec))
+            }
+            (false, IterationOrder::Ordered) => {
+                let (nt, result) = collect_ordered::x(R::collection(p, len), self, pinned_vec);
+                (nt, result.to_result())
+            }
+        }
+    }
+
     fn sequential<P>(self, mut pinned_vec: P) -> P
     where
         P: IntoConcurrentPinnedVec<Vo::Item>,

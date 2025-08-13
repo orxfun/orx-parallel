@@ -49,6 +49,20 @@ where
         pinned_vec
     }
 
+    fn x_try_collect_into<R, I, Vo, M1>(mut self, x: X<I, Vo, M1>) -> Result<Self, Vo::Error>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        Vo: Values<Item = O>,
+        Vo::Error: Send,
+        M1: Fn(I::Item) -> Vo + Sync,
+        Self: Sized,
+    {
+        split_vec_reserve(&mut self, x.par_len());
+        let (_num_spawned, result) = x.try_collect_into::<R, _>(self);
+        result
+    }
+
     // test
 
     #[cfg(test)]

@@ -55,6 +55,20 @@ where
         extend_vec_from_split(self, split_vec)
     }
 
+    fn x_try_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Result<Self, Vo::Error>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        Vo: Values<Item = O>,
+        Vo::Error: Send,
+        M1: Fn(I::Item) -> Vo + Sync,
+        Self: Sized,
+    {
+        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
+        let result = split_vec.x_try_collect_into::<R, _, _, _>(x);
+        result.map(|split_vec| extend_vec_from_split(self, split_vec))
+    }
+
     // test
 
     #[cfg(test)]

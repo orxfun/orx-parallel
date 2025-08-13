@@ -25,6 +25,15 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         Vo::Error: Send,
         M1: Fn(I::Item) -> Vo + Sync;
 
+    fn x_try_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Result<Self, Vo::Error>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        Vo: Values<Item = O>,
+        Vo::Error: Send,
+        M1: Fn(I::Item) -> Vo + Sync,
+        Self: Sized;
+
     // test
 
     #[cfg(test)]

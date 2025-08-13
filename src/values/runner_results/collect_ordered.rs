@@ -67,13 +67,7 @@ where
             None => Self::AllCollected { pinned_vec },
         }
     }
-}
 
-impl<V, P> ParallelCollect<V, P>
-where
-    V: Values,
-    P: IntoConcurrentPinnedVec<V::Item>,
-{
     pub fn to_collected(self) -> P {
         match self {
             Self::AllCollected { pinned_vec } => pinned_vec,
@@ -82,6 +76,17 @@ where
                 stopped_idx: _,
             } => pinned_vec,
             Self::StoppedByError { error: _ } => PseudoDefault::pseudo_default(),
+        }
+    }
+
+    pub fn to_result(self) -> Result<P, V::Error> {
+        match self {
+            Self::AllCollected { pinned_vec } => Ok(pinned_vec),
+            Self::StoppedByWhileCondition {
+                pinned_vec,
+                stopped_idx: _,
+            } => Ok(pinned_vec),
+            Self::StoppedByError { error } => Err(error),
         }
     }
 }

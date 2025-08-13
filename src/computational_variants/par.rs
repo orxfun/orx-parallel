@@ -1,6 +1,7 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::ParIterResultNew;
-use crate::values::{Vector, WhilstAtom};
+use crate::computations::X;
+use crate::values::{Vector, WhilstAtom, WhilstOk};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::{M, map_self},
@@ -8,6 +9,7 @@ use crate::{
     using::{UsingClone, UsingFun, computational_variants::UPar},
 };
 use orx_concurrent_iter::ConcurrentIter;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 use std::marker::PhantomData;
 
 /// A parallel iterator.
@@ -199,18 +201,17 @@ where
     R: ParallelRunner,
     I: ConcurrentIter<Item = Result<T, E>>,
     Par<I, R>: ParIter<Item = Result<T, E>>,
+    T: Send,
+    E: Send + Sync,
 {
     fn collect_result_into_new<C>(self, output: C) -> Result<C, E>
     where
         C: ParCollectInto<T>,
         E: Send + Sync,
     {
-        //    let (params, iter) = self.destruct();
-        // let x1 = move |i: Self::Item| filter(&i).then_some(i);
-        // ParXap::new(params, iter, x1)
-
         let (params, iter) = self.destruct();
-
-        todo!()
+        let x1 = |i: Result<T, E>| WhilstOk::new(i);
+        let x = X::new(params, iter, x1);
+        output.x_try_collect_into::<R, _, _, _>(x)
     }
 }
