@@ -13,6 +13,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
+    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
@@ -27,7 +28,11 @@ where
                 collect_arbitrary::x(R::collection(p, len), self, pinned_vec)
             }
             (false, IterationOrder::Ordered) => {
-                collect_ordered::x(R::collection(p, len), self, pinned_vec)
+                // TODO: Values abstraction might be revisited to represent that this infallible
+                let (num_threads, result) =
+                    collect_ordered::x(R::collection(p, len), self, pinned_vec);
+                let pinned_vec = result.to_collected();
+                (num_threads, pinned_vec)
             }
         }
     }

@@ -6,7 +6,7 @@ use orx_pinned_vec::PinnedVec;
 pub trait Values {
     type Item;
 
-    type Error;
+    type Error: Send;
 
     fn values(self) -> impl IntoIterator<Item = Self::Item>;
 

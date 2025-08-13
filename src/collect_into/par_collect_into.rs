@@ -22,6 +22,7 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
+        Vo::Error: Send,
         M1: Fn(I::Item) -> Vo + Sync;
 
     // test

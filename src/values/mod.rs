@@ -1,3 +1,4 @@
+mod never;
 mod option;
 mod result;
 pub(crate) mod runner_results;
@@ -8,6 +9,7 @@ mod whilst_iterators;
 mod whilst_option;
 mod whilst_vector;
 
+pub use never::Never;
 pub use values::Values;
 pub use vector::Vector;
 pub use whilst_atom::WhilstAtom;

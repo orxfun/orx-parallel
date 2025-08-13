@@ -1,6 +1,10 @@
 use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_split_vec::PseudoDefault;
 
-use crate::{computations::heap_sort_into, values::Values};
+use crate::{
+    computations::heap_sort_into,
+    values::{Never, Values},
+};
 
 pub enum ValuesPush<E> {
     Done,
@@ -65,6 +69,23 @@ where
                 stopped_idx,
             },
             None => Self::AllCollected { pinned_vec },
+        }
+    }
+}
+
+impl<V, P> ParallelCollect<V, P>
+where
+    V: Values,
+    P: IntoConcurrentPinnedVec<V::Item>,
+{
+    pub fn to_collected(self) -> P {
+        match self {
+            Self::AllCollected { pinned_vec } => pinned_vec,
+            Self::StoppedByWhileCondition {
+                pinned_vec,
+                stopped_idx: _,
+            } => pinned_vec,
+            Self::StoppedByError { error: _ } => PseudoDefault::pseudo_default(),
         }
     }
 }

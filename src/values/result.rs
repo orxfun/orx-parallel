@@ -12,7 +12,10 @@ Result<T,E> represents early stopping with error cases:
 * Therefore, observation of an error case allows to immediately stop computation.
 
 */
-impl<T, E> Values for Result<T, E> {
+impl<T, E> Values for Result<T, E>
+where
+    E: Send,
+{
     type Item = T;
 
     type Error = E;

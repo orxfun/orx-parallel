@@ -16,6 +16,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
+    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     x: X<I, Vo, M1>,
@@ -27,6 +28,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
+    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
@@ -46,6 +48,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
+    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -55,6 +58,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
+    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -64,6 +68,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
+    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;

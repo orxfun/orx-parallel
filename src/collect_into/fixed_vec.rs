@@ -1,7 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::computations::{M, X};
 use crate::runner::ParallelRunner;
-use crate::values::Values;
+use crate::values::{Never, Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 #[cfg(test)]
@@ -34,6 +34,7 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
+        Vo::Error: Send,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
