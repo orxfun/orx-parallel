@@ -2,18 +2,13 @@ use crate::values::{Values, WhilstOption, runner_results::ValuesPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-/* Values implementation for Result<T,E>
-
-Result<T,E> represents early stopping with error cases:
-
-* Whenever computation creates an error at any point, all computed values are irrelevant,
-  the only relevant value is the created error.
-* Computed values are relevant iff entire inputs result in an Ok variant.
-* Therefore, observation of an error case allows to immediately stop computation.
-
-*/
-
-pub struct WhilstOk<T, E>(Result<T, E>);
+/// Represents scalar value for early stopping error cases:
+///
+/// * Whenever computation creates an error at any point, all computed values are irrelevant,
+///   the only relevant value is the created error.
+/// * Computed values are relevant iff entire inputs result in an Ok variant.
+/// * Therefore, observation of an error case allows to immediately stop computation.
+pub struct WhilstOk<T, E>(pub(super) Result<T, E>);
 
 impl<T, E> WhilstOk<T, E> {
     pub fn new(result: Result<T, E>) -> Self {
