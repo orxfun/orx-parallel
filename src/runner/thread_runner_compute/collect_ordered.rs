@@ -1,5 +1,5 @@
 use crate::ThreadRunner;
-use crate::values::{Values, runner_results::ThreadDo};
+use crate::values::{Values, runner_results::ValuesPush};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -85,14 +85,14 @@ where
                     let done = vo.push_to_vec_with_idx(idx, out_vec);
 
                     match done {
-                        ThreadDo::Done => {}
-                        ThreadDo::StoppedByWhileCondition { idx } => {
+                        ValuesPush::Done => {}
+                        ValuesPush::StoppedByWhileCondition { idx } => {
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
                             return (collected, Some(idx));
                         }
-                        ThreadDo::StoppedByError { idx, error } => {
+                        ValuesPush::StoppedByError { idx, error } => {
                             todo!();
                         }
                     }
@@ -110,14 +110,14 @@ where
                             let vo = xap1(value);
                             let done = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
                             match done {
-                                ThreadDo::Done => {}
-                                ThreadDo::StoppedByWhileCondition { idx } => {
+                                ValuesPush::Done => {}
+                                ValuesPush::StoppedByWhileCondition { idx } => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
                                     return (collected, Some(idx + within_chunk_idx));
                                 }
-                                ThreadDo::StoppedByError { idx, error } => {
+                                ValuesPush::StoppedByError { idx, error } => {
                                     todo!();
                                 }
                             }

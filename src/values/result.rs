@@ -1,4 +1,4 @@
-use crate::values::{Values, WhilstOption, runner_results::ThreadDo};
+use crate::values::{Values, WhilstOption, runner_results::ValuesPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -41,13 +41,13 @@ impl<T, E> Values for Result<T, E> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ThreadDo<Self::Error> {
+    ) -> ValuesPush<Self::Error> {
         match self {
             Self::Ok(x) => {
                 vec.push((idx, x));
-                ThreadDo::Done
+                ValuesPush::Done
             }
-            Self::Err(error) => ThreadDo::StoppedByError { idx, error },
+            Self::Err(error) => ValuesPush::StoppedByError { idx, error },
         }
     }
 

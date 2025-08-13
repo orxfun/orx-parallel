@@ -1,5 +1,5 @@
 use super::values::Values;
-use crate::values::{WhilstAtom, WhilstOption, WhilstVector, runner_results::ThreadDo};
+use crate::values::{WhilstAtom, WhilstOption, WhilstVector, runner_results::ValuesPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
@@ -36,11 +36,11 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ThreadDo<Self::Error> {
+    ) -> ValuesPush<Self::Error> {
         for x in self.0 {
             vec.push((idx, x));
         }
-        ThreadDo::Done
+        ValuesPush::Done
     }
 
     #[inline(always)]
