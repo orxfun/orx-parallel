@@ -136,20 +136,20 @@ fn run(c: &mut Criterion) {
             _ => panic!("unhandled n-when"),
         };
 
-        // group.bench_with_input(BenchmarkId::new("seq", n_when), n_when, |b, _| {
-        //     assert_eq!(&expected, &seq(&input, map_input_to_result));
-        //     b.iter(|| seq(black_box(&input), map_input_to_result))
-        // });
+        group.bench_with_input(BenchmarkId::new("seq", n_when), n_when, |b, _| {
+            assert_eq!(&expected, &seq(&input, map_input_to_result));
+            b.iter(|| seq(black_box(&input), map_input_to_result))
+        });
 
         group.bench_with_input(BenchmarkId::new("rayon", n_when), n_when, |b, _| {
             assert_eq!(&expected, &rayon(&input, map_input_to_result));
             b.iter(|| rayon(black_box(&input), map_input_to_result))
         });
 
-        // group.bench_with_input(BenchmarkId::new("orx", n_when), n_when, |b, _| {
-        //     assert_eq!(&expected, &orx(&input, map_input_to_result));
-        //     b.iter(|| orx(black_box(&input), map_input_to_result))
-        // });
+        group.bench_with_input(BenchmarkId::new("orx", n_when), n_when, |b, _| {
+            assert_eq!(&expected, &orx(&input, map_input_to_result));
+            b.iter(|| orx(black_box(&input), map_input_to_result))
+        });
 
         group.bench_with_input(BenchmarkId::new("orx_new", n_when), n_when, |b, _| {
             assert_eq!(&expected, &orx_new(&input, map_input_to_result));
