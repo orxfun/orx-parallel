@@ -1,4 +1,6 @@
-use crate::values::Values;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
+
+use crate::{computations::heap_sort_into, values::Values};
 
 pub enum ValuesPush<E> {
     Done,
@@ -20,4 +22,49 @@ where
     StoppedByError {
         error: V::Error,
     },
+}
+
+pub enum ParallelCollect<V, P>
+where
+    V: Values,
+    P: IntoConcurrentPinnedVec<V::Item>,
+{
+    AllCollected { pinned_vec: P },
+    StoppedByWhileCondition { pinned_vec: P, stopped_idx: usize },
+    StoppedByError { error: V::Error },
+}
+
+impl<V, P> ParallelCollect<V, P>
+where
+    V: Values,
+    P: IntoConcurrentPinnedVec<V::Item>,
+{
+    pub fn reduce(results: Vec<ThreadCollect<V>>, mut pinned_vec: P) -> Self {
+        let mut vectors = Vec::with_capacity(results.len());
+        let mut min_stopped_idx = None;
+
+        for x in results {
+            match x {
+                ThreadCollect::AllCollected { vec } => vectors.push(vec),
+                ThreadCollect::StoppedByWhileCondition { vec, stopped_idx } => {
+                    min_stopped_idx = match min_stopped_idx {
+                        Some(x) => Some(core::cmp::min(x, stopped_idx)),
+                        None => Some(stopped_idx),
+                    };
+                    vectors.push(vec);
+                }
+                ThreadCollect::StoppedByError { error } => return Self::StoppedByError { error },
+            }
+        }
+
+        heap_sort_into(vectors, min_stopped_idx, &mut pinned_vec);
+
+        match min_stopped_idx {
+            Some(stopped_idx) => Self::StoppedByWhileCondition {
+                pinned_vec,
+                stopped_idx,
+            },
+            None => Self::AllCollected { pinned_vec },
+        }
+    }
 }

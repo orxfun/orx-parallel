@@ -5,8 +5,6 @@ use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-// m
-
 pub fn m<C, I, O, M1, P>(
     mut runner: C,
     iter: &I,
@@ -53,8 +51,6 @@ pub fn m<C, I, O, M1, P>(
 
     runner.complete_task(shared_state);
 }
-
-// x
 
 pub fn x<C, I, Vo, X1>(
     mut runner: C,
