@@ -5,6 +5,7 @@ pub(crate) mod parallel_runner_compute;
 mod thread_next;
 mod thread_runner;
 mod thread_runner_compute;
+mod thread_stop;
 
 pub use computation_kind::ComputationKind;
 pub use parallel_runner::ParallelRunner;

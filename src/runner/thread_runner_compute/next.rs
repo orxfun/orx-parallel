@@ -98,7 +98,7 @@ where
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
-                            return ThreadNext::Stopped { idx, error: () };
+                            return ThreadNext::Stopped { idx, stop_with: () };
                         }
                     }
                 }
@@ -125,7 +125,7 @@ where
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
-                                    return ThreadNext::Stopped { idx, error: () };
+                                    return ThreadNext::Stopped { idx, stop_with: () };
                                 }
                             }
                         }
