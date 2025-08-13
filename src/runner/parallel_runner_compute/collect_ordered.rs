@@ -1,8 +1,8 @@
-use crate::computations::min_opt_idx;
 use crate::runner::thread_runner_compute as thread;
 use crate::values::Values;
+use crate::values::runner_results::{ParallelCollect, ThreadCollect};
 use crate::{
-    computations::{M, X, heap_sort_into},
+    computations::{M, X},
     runner::ParallelRunnerCompute,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -51,12 +51,17 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, mut pinned_vec: P) -> (usize, P)
+pub fn x<C, I, Vo, M1, P>(
+    runner: C,
+    x: X<I, Vo, M1>,
+    pinned_vec: P,
+) -> (usize, ParallelCollect<Vo, P>)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
+    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
@@ -67,7 +72,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let (vectors, max_idx_exc) = std::thread::scope(|s| {
+    let results: Vec<ThreadCollect<Vo>> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -82,16 +87,15 @@ where
             }));
         }
 
-        let mut vectors = Vec::with_capacity(handles.len());
-        let mut max_idx_exc = None;
+        let mut results = Vec::with_capacity(handles.len());
         for x in handles {
-            let (vector, max_idx) = x.join().expect("failed to join the thread");
-            vectors.push(vector);
-            max_idx_exc = min_opt_idx(max_idx_exc, max_idx);
+            let result = x.join().expect("failed to join the thread");
+            results.push(result);
         }
-        (vectors, max_idx_exc)
+        results
     });
 
-    heap_sort_into(vectors, max_idx_exc, &mut pinned_vec);
-    (num_spawned, pinned_vec)
+    let result = ParallelCollect::reduce(results, pinned_vec);
+
+    (num_spawned, result)
 }
