@@ -1,8 +1,5 @@
-use crate::values::{
-    whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
-};
-
 use super::values::Values;
+use crate::values::{WhilstAtom, WhilstOption, WhilstVector, runner_results::ThreadDo};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
@@ -35,11 +32,15 @@ where
     }
 
     #[inline(always)]
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ThreadDo<Self::Error> {
         for x in self.0 {
             vec.push((idx, x));
         }
-        None
+        ThreadDo::Done
     }
 
     #[inline(always)]

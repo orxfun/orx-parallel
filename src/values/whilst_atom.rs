@@ -1,3 +1,4 @@
+use crate::values::runner_results::ThreadDo;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::values::{Values, WhilstOption, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
@@ -43,13 +44,17 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ThreadDo<Self::Error> {
         match self {
             Self::Continue(x) => {
                 vec.push((idx, x));
-                None
+                ThreadDo::Done
             }
-            Self::Stop => Some(idx),
+            Self::Stop => ThreadDo::StoppedByWhileCondition { idx },
         }
     }
 

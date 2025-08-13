@@ -1,5 +1,5 @@
 use super::{Values, Vector};
-use crate::values::whilst_option::WhilstOption;
+use crate::values::{runner_results::ThreadDo, whilst_option::WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -25,11 +25,15 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ThreadDo<Self::Error> {
         if let Some(x) = self {
             vec.push((idx, x));
         }
-        None
+        ThreadDo::Done
     }
 
     #[inline(always)]

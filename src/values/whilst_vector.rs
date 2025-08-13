@@ -1,6 +1,6 @@
 use super::values::Values;
 use crate::values::{
-    whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption,
+    WhilstAtom, WhilstOption, runner_results::ThreadDo, whilst_iterators::WhilstAtomFlatMapIter,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -36,14 +36,18 @@ where
         false
     }
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ThreadDo<Self::Error> {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(x) => vec.push((idx, x)),
-                WhilstAtom::Stop => return Some(idx),
+                WhilstAtom::Stop => return ThreadDo::StoppedByWhileCondition { idx },
             }
         }
-        None
+        ThreadDo::Done
     }
 
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool

@@ -1,8 +1,7 @@
+use crate::values::{WhilstOption, runner_results::ThreadDo};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
-
-use crate::values::whilst_option::WhilstOption;
 
 pub trait Values {
     type Item;
@@ -16,7 +15,11 @@ pub trait Values {
     where
         P: PinnedVec<Self::Item>;
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize>;
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ThreadDo<Self::Error>;
 
     /// Returns true if the computation must early exit.
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
