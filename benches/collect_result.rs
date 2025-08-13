@@ -105,18 +105,7 @@ fn orx(
     map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
 ) -> Result<Vec<String>, ERR> {
     use orx_parallel::*;
-
-    inputs.into_par().map(map).collect_result()
-}
-
-fn orx_new(
-    inputs: &[Input],
-    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
-) -> Result<Vec<String>, ERR> {
-    use orx_parallel::*;
-    inputs.into_par().map_while_ok(map).collect_result()
-    // let par = inputs.into_par().map(map);
-    // par.collect_result_new()
+    inputs.into_par().map_while_ok(map).collect()
 }
 
 fn run(c: &mut Criterion) {
@@ -149,11 +138,6 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("orx", n_when), n_when, |b, _| {
             assert_eq!(&expected, &orx(&input, map_input_to_result));
             b.iter(|| orx(black_box(&input), map_input_to_result))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx_new", n_when), n_when, |b, _| {
-            assert_eq!(&expected, &orx_new(&input, map_input_to_result));
-            b.iter(|| orx_new(black_box(&input), map_input_to_result))
         });
     }
 

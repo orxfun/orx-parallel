@@ -90,8 +90,8 @@ fn collection_of_results_bad_case() {
 fn collect_result() {
     let output: Result<Vec<_>, _> = good_input()
         .par()
-        .map(|x| x.parse::<usize>())
-        .collect_result();
+        .map_while_ok(|x| x.parse::<usize>())
+        .collect();
     assert_eq!(
         output.map_err(|x| x.to_string()),
         Ok((0..N).collect::<Vec<_>>())
@@ -99,8 +99,8 @@ fn collect_result() {
 
     let output: Result<Vec<_>, _> = bad_input()
         .par()
-        .map(|x| x.parse::<usize>())
-        .collect_result();
+        .map_while_ok(|x| x.parse::<usize>())
+        .collect();
     assert_eq!(
         output.map_err(|x| x.to_string()),
         Err("invalid digit found in string".to_string())

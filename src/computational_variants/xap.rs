@@ -1,4 +1,3 @@
-use crate::ParIterResultNew;
 use crate::par_iter_result::ParIterResultStruct;
 use crate::values::{Values, WhilstOk};
 use crate::{
@@ -255,13 +254,3 @@ where
         }
     }
 }
-
-// impl<I, Vo, M1, R> ParIterResultNew for ParXap<I, Vo, M1, R>
-// where
-//     R: ParallelRunner,
-//     I: ConcurrentIter,
-//     Vo: Values,
-//     Vo::Error: Send,
-//     M1: Fn(I::Item) -> Vo + Sync,
-// {
-// }

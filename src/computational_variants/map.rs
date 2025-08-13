@@ -1,5 +1,4 @@
 use super::xap::ParXap;
-use crate::ParIterResultNew;
 use crate::computations::X;
 use crate::par_iter_result::ParIterResultStruct;
 use crate::values::{Vector, WhilstAtom, WhilstOk};
@@ -228,26 +227,5 @@ where
             IterationOrder::Ordered => self.m.next::<R>().1,
             IterationOrder::Arbitrary => self.m.next_any::<R>().1,
         }
-    }
-}
-
-impl<I, T, M1, R, E> ParIterResultNew<T, E, R> for ParMap<I, Result<T, E>, M1, R>
-where
-    R: ParallelRunner,
-    I: ConcurrentIter,
-    M1: Fn(I::Item) -> Result<T, E> + Sync,
-    T: Send,
-    E: Send + Sync,
-    ParMap<I, Result<T, E>, M1, R>: ParIter<R, Item = Result<T, E>>,
-{
-    fn collect_result_into_new<C>(self, output: C) -> Result<C, E>
-    where
-        C: ParCollectInto<T>,
-        E: Send + Sync,
-    {
-        let (params, iter, m1) = self.destruct();
-        let x1 = |i: I::Item| WhilstOk::<T, E>::new(m1(i));
-        let x = X::new(params, iter, x1);
-        output.x_try_collect_into::<R, _, _, _>(x)
     }
 }
