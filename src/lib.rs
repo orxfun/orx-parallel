@@ -52,7 +52,7 @@ pub use into_par_iter::IntoParIter;
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
 pub use par_iter_option::ParIterOption;
-pub use par_iter_result::ParIterResult;
+pub use par_iter_result::{ParIterResult, ParIterResultNew};
 pub use parallel_drainable::ParallelDrainableOverSlice;
 pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;

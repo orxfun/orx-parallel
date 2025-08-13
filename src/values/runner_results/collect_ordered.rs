@@ -1,10 +1,6 @@
+use crate::{computations::heap_sort_into, values::Values};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_split_vec::PseudoDefault;
-
-use crate::{
-    computations::heap_sort_into,
-    values::{Never, Values},
-};
 
 pub enum ValuesPush<E> {
     Done,

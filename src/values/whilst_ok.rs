@@ -12,7 +12,10 @@ Result<T,E> represents early stopping with error cases:
 * Therefore, observation of an error case allows to immediately stop computation.
 
 */
-impl<T, E> Values for Result<T, E>
+
+pub struct WhilstOk<T, E>(Result<T, E>);
+
+impl<T, E> Values for WhilstOk<T, E>
 where
     E: Send,
 {
@@ -21,8 +24,8 @@ where
     type Error = E;
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
-        match self {
-            Self::Ok(x) => Some(x).into_iter(),
+        match self.0 {
+            Ok(x) => Some(x).into_iter(),
             _ => None.into_iter(),
         }
     }
@@ -31,26 +34,22 @@ where
     where
         P: PinnedVec<Self::Item>,
     {
-        match self {
-            Self::Ok(x) => {
+        match self.0 {
+            Ok(x) => {
                 vector.push(x);
                 false
             }
-            Self::Err(e) => true,
+            Err(e) => true,
         }
     }
 
-    fn push_to_vec_with_idx(
-        self,
-        idx: usize,
-        vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
-        match self {
-            Self::Ok(x) => {
+    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> ValuesPush<E> {
+        match self.0 {
+            Ok(x) => {
                 vec.push((idx, x));
                 ValuesPush::Done
             }
-            Self::Err(error) => ValuesPush::StoppedByError { idx, error },
+            Err(error) => ValuesPush::StoppedByError { idx, error },
         }
     }
 
@@ -59,12 +58,12 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        match self {
-            Self::Ok(x) => {
+        match self.0 {
+            Ok(x) => {
                 bag.push(x);
                 false
             }
-            Self::Err(e) => true,
+            Err(e) => true,
         }
     }
 
@@ -72,10 +71,10 @@ where
     where
         M: Fn(Self::Item) -> O + Clone,
     {
-        match self {
-            Self::Ok(x) => Ok(map(x)),
-            Self::Err(e) => Err(e),
-        }
+        WhilstOk(match self.0 {
+            Ok(x) => Ok(map(x)),
+            Err(e) => Err(e),
+        })
     }
 
     fn filter<F>(self, filter: F) -> impl Values<Item = Self::Item>
@@ -83,15 +82,15 @@ where
         F: Fn(&Self::Item) -> bool + Clone,
     {
         todo!("avoid computational variant transformations all at once");
-        match self {
-            Self::Ok(x) => match filter(&x) {
-                true => Self::Ok(x),
+        WhilstOk(match self.0 {
+            Ok(x) => match filter(&x) {
+                true => Ok(x),
                 false => todo!(
                     "we need a recursive Values definition, do we really need this? can we avoid filter?"
                 ),
             },
-            Self::Err(e) => Err(e),
-        }
+            Err(e) => Err(e),
+        })
     }
 
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
@@ -120,12 +119,12 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        match self {
-            Self::Ok(x) => match acc {
+        match self.0 {
+            Ok(x) => match acc {
                 Some(acc) => (false, Some(reduce(acc, x))),
                 None => (false, Some(x)),
             },
-            Self::Err(e) => (true, None), // resets entire reduction so far!
+            Err(e) => (true, None), // resets entire reduction so far!
         }
     }
 
@@ -133,12 +132,12 @@ where
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        match self {
-            Self::Ok(x) => match acc {
+        match self.0 {
+            Ok(x) => match acc {
                 Some(acc) => Some(reduce(u, acc, x)),
                 None => Some(x),
             },
-            Self::Err(e) => None, // resets entire reduction so far!
+            Err(e) => None, // resets entire reduction so far!
         }
     }
 
