@@ -52,33 +52,30 @@ where
 
 // try again
 
-pub struct ParIterResult2<I, Vo, M1, R = DefaultRunner>
+pub struct ParIterResult2<I, T, E, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
-    M1: Fn(I::Item) -> WhilstOk<Vo::Item, Vo::Error> + Sync,
-    Vo::Item: Send + Sync,
-    Vo::Error: Send + Sync,
+    Vo: Values<Item = WhilstOk<T, E>, Error = E>,
+    M1: Fn(I::Item) -> Vo + Sync,
+    T: Send + Sync,
+    E: Send + Sync,
 {
-    x: X<I, WhilstOk<Vo::Item, Vo::Error>, M1>,
+    x: X<I, Vo, M1>,
     con_iter_len: Option<usize>,
     phantom: PhantomData<(Vo, R)>,
 }
 
-impl<I, Vo, M1, R> ParIterResult2<I, Vo, M1, R>
+impl<I, T, E, Vo, M1, R> ParIterResult2<I, T, E, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
-    M1: Fn(I::Item) -> WhilstOk<Vo::Item, Vo::Error> + Sync,
-    Vo::Item: Send + Sync,
-    Vo::Error: Send + Sync,
+    Vo: Values<Item = WhilstOk<T, E>, Error = E>,
+    M1: Fn(I::Item) -> Vo + Sync,
+    T: Send + Sync,
+    E: Send + Sync,
 {
-    pub(crate) fn new(
-        x: X<I, WhilstOk<Vo::Item, Vo::Error>, M1>,
-        con_iter_len: Option<usize>,
-    ) -> Self {
+    pub(crate) fn new(x: X<I, Vo, M1>, con_iter_len: Option<usize>) -> Self {
         Self {
             x,
             con_iter_len,
