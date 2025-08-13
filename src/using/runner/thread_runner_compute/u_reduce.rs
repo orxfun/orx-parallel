@@ -1,4 +1,4 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{ThreadRunner, values::Values};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 // m

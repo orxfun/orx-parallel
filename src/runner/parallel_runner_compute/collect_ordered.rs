@@ -1,7 +1,8 @@
 use crate::computations::min_opt_idx;
 use crate::runner::thread_runner_compute as thread;
+use crate::values::Values;
 use crate::{
-    computations::{M, Values, X, heap_sort_into},
+    computations::{M, X, heap_sort_into},
     runner::ParallelRunnerCompute,
 };
 use orx_concurrent_iter::ConcurrentIter;

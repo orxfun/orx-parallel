@@ -1,7 +1,7 @@
 use super::x::X;
-use crate::computations::Values;
 use crate::runner::parallel_runner_compute::reduce;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
+use crate::values::Values;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<I, Vo, M1> X<I, Vo, M1>

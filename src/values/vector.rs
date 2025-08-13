@@ -1,16 +1,26 @@
-use super::{Values, Vector};
-use crate::computations::values::whilst_option::WhilstOption;
-use orx_concurrent_bag::ConcurrentBag;
-use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
+use crate::values::{
+    whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
+};
 
-impl<T> Values for Option<T> {
-    type Item = T;
+use super::values::Values;
+use orx_concurrent_bag::ConcurrentBag;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_pinned_vec::PinnedVec;
+
+pub struct Vector<I>(pub I)
+where
+    I: IntoIterator;
+
+impl<I> Values for Vector<I>
+where
+    I: IntoIterator,
+{
+    type Item = I::Item;
 
     type Error = ();
 
-    #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
-        self
+        self.0
     }
 
     #[inline(always)]
@@ -18,15 +28,15 @@ impl<T> Values for Option<T> {
     where
         P: PinnedVec<Self::Item>,
     {
-        if let Some(x) = self {
-            vector.push(x)
+        for x in self.0 {
+            vector.push(x);
         }
         false
     }
 
     #[inline(always)]
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
-        if let Some(x) = self {
+        for x in self.0 {
             vec.push((idx, x));
         }
         None
@@ -38,7 +48,7 @@ impl<T> Values for Option<T> {
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        if let Some(x) = self {
+        for x in self.0 {
             bag.push(x);
         }
         false
@@ -49,7 +59,7 @@ impl<T> Values for Option<T> {
     where
         M: Fn(Self::Item) -> O,
     {
-        self.map(map)
+        Vector(self.0.into_iter().map(map))
     }
 
     #[inline(always)]
@@ -57,7 +67,7 @@ impl<T> Values for Option<T> {
     where
         F: Fn(&Self::Item) -> bool,
     {
-        self.filter(filter)
+        Vector(self.0.into_iter().filter(filter))
     }
 
     #[inline(always)]
@@ -66,7 +76,7 @@ impl<T> Values for Option<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
-        Vector(self.into_iter().flat_map(flat_map))
+        Vector(self.0.into_iter().flat_map(flat_map))
     }
 
     #[inline(always)]
@@ -74,23 +84,18 @@ impl<T> Values for Option<T> {
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
-        match self {
-            Some(x) => filter_map(x),
-            _ => None,
-        }
+        Vector(self.0.into_iter().filter_map(filter_map))
     }
 
     fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
     where
         Self: Sized,
     {
-        match self {
-            Some(x) => match whilst(&x) {
-                true => WhilstOption::ContinueSome(x),
-                false => WhilstOption::Stop,
-            },
-            _ => WhilstOption::ContinueNone,
-        }
+        let iter = self.0.into_iter().map(move |x| match whilst(&x) {
+            true => WhilstAtom::Continue(x),
+            false => WhilstAtom::Stop,
+        });
+        WhilstVector(iter)
     }
 
     #[inline(always)]
@@ -98,9 +103,10 @@ impl<T> Values for Option<T> {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
+        let reduced = self.0.into_iter().reduce(&reduce);
         (
             false,
-            match (acc, self) {
+            match (acc, reduced) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
@@ -109,12 +115,12 @@ impl<T> Values for Option<T> {
         )
     }
 
-    #[inline(always)]
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        match (acc, self) {
+        let reduced = self.0.into_iter().reduce(|a, b| reduce(u, a, b));
+        match (acc, reduced) {
             (Some(x), Some(y)) => Some(reduce(u, x, y)),
             (Some(x), None) => Some(x),
             (None, Some(y)) => Some(y),
@@ -124,7 +130,7 @@ impl<T> Values for Option<T> {
 
     #[inline(always)]
     fn first(self) -> WhilstOption<Self::Item> {
-        match self {
+        match self.0.into_iter().next() {
             Some(x) => WhilstOption::ContinueSome(x),
             None => WhilstOption::ContinueNone,
         }

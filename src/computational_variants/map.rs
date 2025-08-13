@@ -1,7 +1,8 @@
 use super::xap::ParXap;
+use crate::values::{Vector, WhilstAtom};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{M, Vector, WhilstAtom},
+    computations::M,
     runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UParMap},
 };

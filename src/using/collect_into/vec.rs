@@ -1,9 +1,9 @@
 use crate::collect_into::utils::extend_vec_from_split;
-use crate::computations::Values;
 use crate::runner::ParallelRunner;
 use crate::using::Using;
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
 use crate::using::computations::{UM, UX};
+use crate::values::Values;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;

@@ -1,5 +1,5 @@
 use crate::ThreadRunner;
-use crate::computations::Values;
+use crate::values::Values;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_fixed_vec::IntoConcurrentPinnedVec;

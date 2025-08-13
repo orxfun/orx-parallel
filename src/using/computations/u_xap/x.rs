@@ -1,5 +1,5 @@
 use crate::using::Using;
-use crate::{ChunkSize, IterationOrder, NumThreads, Params, computations::Values};
+use crate::{ChunkSize, IterationOrder, NumThreads, Params, values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct UX<U, I, Vo, M1>

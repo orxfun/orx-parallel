@@ -1,7 +1,7 @@
 use crate::computations::{M, X};
 use crate::runner::thread_next::ThreadNext;
 use crate::runner::thread_runner_compute as thread;
-use crate::{computations::Values, runner::ParallelRunnerCompute};
+use crate::{runner::ParallelRunnerCompute, values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1>(runner: C, m: M<I, O, M1>) -> (usize, Option<O>)

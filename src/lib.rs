@@ -33,6 +33,7 @@ pub mod runner;
 mod special_type_sets;
 /// Module defining parallel iterators with mutable access to values distributed to each thread.
 pub mod using;
+mod values;
 
 /// Module defining the GenericIterator which is a generalization over
 /// sequential iterator, rayon's parallel iterator and orx-parallel's

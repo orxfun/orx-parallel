@@ -1,7 +1,8 @@
 use super::par_collect_into::ParCollectIntoCore;
+use crate::values::Values;
 use crate::{
     collect_into::utils::split_vec_reserve,
-    computations::{M, Values, X},
+    computations::{M, X},
     runner::ParallelRunner,
 };
 use orx_concurrent_iter::ConcurrentIter;

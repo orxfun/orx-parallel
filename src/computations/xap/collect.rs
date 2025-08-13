@@ -2,8 +2,8 @@ use super::x::X;
 use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
 use crate::{
     IterationOrder,
-    computations::Values,
     runner::{ParallelRunner, ParallelRunnerCompute},
+    values::Values,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

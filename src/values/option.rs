@@ -1,26 +1,16 @@
-use crate::computations::values::{
-    whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
-};
-
-use super::values::Values;
+use super::{Values, Vector};
+use crate::values::whilst_option::WhilstOption;
 use orx_concurrent_bag::ConcurrentBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
-use orx_pinned_vec::PinnedVec;
+use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub struct Vector<I>(pub I)
-where
-    I: IntoIterator;
-
-impl<I> Values for Vector<I>
-where
-    I: IntoIterator,
-{
-    type Item = I::Item;
+impl<T> Values for Option<T> {
+    type Item = T;
 
     type Error = ();
 
+    #[inline(always)]
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
-        self.0
+        self
     }
 
     #[inline(always)]
@@ -28,15 +18,15 @@ where
     where
         P: PinnedVec<Self::Item>,
     {
-        for x in self.0 {
-            vector.push(x);
+        if let Some(x) = self {
+            vector.push(x)
         }
         false
     }
 
     #[inline(always)]
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
-        for x in self.0 {
+        if let Some(x) = self {
             vec.push((idx, x));
         }
         None
@@ -48,7 +38,7 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        for x in self.0 {
+        if let Some(x) = self {
             bag.push(x);
         }
         false
@@ -59,7 +49,7 @@ where
     where
         M: Fn(Self::Item) -> O,
     {
-        Vector(self.0.into_iter().map(map))
+        self.map(map)
     }
 
     #[inline(always)]
@@ -67,7 +57,7 @@ where
     where
         F: Fn(&Self::Item) -> bool,
     {
-        Vector(self.0.into_iter().filter(filter))
+        self.filter(filter)
     }
 
     #[inline(always)]
@@ -76,7 +66,7 @@ where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
-        Vector(self.0.into_iter().flat_map(flat_map))
+        Vector(self.into_iter().flat_map(flat_map))
     }
 
     #[inline(always)]
@@ -84,18 +74,23 @@ where
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
-        Vector(self.0.into_iter().filter_map(filter_map))
+        match self {
+            Some(x) => filter_map(x),
+            _ => None,
+        }
     }
 
     fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
     where
         Self: Sized,
     {
-        let iter = self.0.into_iter().map(move |x| match whilst(&x) {
-            true => WhilstAtom::Continue(x),
-            false => WhilstAtom::Stop,
-        });
-        WhilstVector(iter)
+        match self {
+            Some(x) => match whilst(&x) {
+                true => WhilstOption::ContinueSome(x),
+                false => WhilstOption::Stop,
+            },
+            _ => WhilstOption::ContinueNone,
+        }
     }
 
     #[inline(always)]
@@ -103,10 +98,9 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        let reduced = self.0.into_iter().reduce(&reduce);
         (
             false,
-            match (acc, reduced) {
+            match (acc, self) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
@@ -115,12 +109,12 @@ where
         )
     }
 
+    #[inline(always)]
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        let reduced = self.0.into_iter().reduce(|a, b| reduce(u, a, b));
-        match (acc, reduced) {
+        match (acc, self) {
             (Some(x), Some(y)) => Some(reduce(u, x, y)),
             (Some(x), None) => Some(x),
             (None, Some(y)) => Some(y),
@@ -130,7 +124,7 @@ where
 
     #[inline(always)]
     fn first(self) -> WhilstOption<Self::Item> {
-        match self.0.into_iter().next() {
+        match self {
             Some(x) => WhilstOption::ContinueSome(x),
             None => WhilstOption::ContinueNone,
         }

@@ -1,6 +1,5 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
-    computations::Vector,
     runner::{DefaultRunner, ParallelRunner},
     using::u_par_iter::ParIterUsing,
     using::{
@@ -8,6 +7,7 @@ use crate::{
         computational_variants::{u_map::UParMap, u_xap::UParXap},
         computations::{UM, u_map_self},
     },
+    values::Vector,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
