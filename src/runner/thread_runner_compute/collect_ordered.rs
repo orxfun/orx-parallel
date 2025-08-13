@@ -1,4 +1,5 @@
 use crate::ThreadRunner;
+use crate::values::runner_results::ThreadCollect;
 use crate::values::{Values, runner_results::ValuesPush};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -60,7 +61,7 @@ pub fn x<C, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> (Vec<(usize, Vo::Item)>, Option<usize>)
+) -> ThreadCollect<Vo>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -90,10 +91,16 @@ where
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
-                            return (collected, Some(idx));
+                            return ThreadCollect::StoppedByWhileCondition {
+                                vec: collected,
+                                stopped_idx: idx,
+                            };
                         }
-                        ValuesPush::StoppedByError { idx, error } => {
-                            todo!();
+                        ValuesPush::StoppedByError { idx: _, error } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return ThreadCollect::StoppedByError { error };
                         }
                     }
                 }
@@ -115,10 +122,16 @@ where
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
-                                    return (collected, Some(idx + within_chunk_idx));
+                                    return ThreadCollect::StoppedByWhileCondition {
+                                        vec: collected,
+                                        stopped_idx: idx + within_chunk_idx,
+                                    };
                                 }
-                                ValuesPush::StoppedByError { idx, error } => {
-                                    todo!();
+                                ValuesPush::StoppedByError { idx: _, error } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return ThreadCollect::StoppedByError { error };
                                 }
                             }
                         }
@@ -133,5 +146,5 @@ where
 
     runner.complete_task(shared_state);
 
-    (collected, None)
+    ThreadCollect::AllCollected { vec: collected }
 }
