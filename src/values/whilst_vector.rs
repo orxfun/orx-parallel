@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, WhilstAtom, WhilstOption, runner_results::ValuesPush,
-    whilst_iterators::WhilstAtomFlatMapIter,
+    whilst_iterators::WhilstAtomFlatMapIter, whilst_vector_result::WhilstVectorResult,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -213,9 +213,10 @@ where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
     {
-        match self.0.into_iter().next().unwrap() {
-            WhilstAtom::Continue(x) => map_res(x),
-            _ => todo!(),
-        }
+        let iter = self.0.into_iter().map(move |x| match x {
+            WhilstAtom::Continue(x) => WhilstAtom::Continue(map_res(x)),
+            WhilstAtom::Stop => WhilstAtom::Stop,
+        });
+        WhilstVectorResult(iter)
     }
 }

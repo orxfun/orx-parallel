@@ -12,6 +12,7 @@ mod whilst_iterators;
 mod whilst_option;
 mod whilst_option_result;
 mod whilst_vector;
+mod whilst_vector_result;
 
 pub use transformable_values::TransformableValues;
 pub use values::Values;
