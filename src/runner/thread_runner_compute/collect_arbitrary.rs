@@ -1,5 +1,5 @@
 use crate::values::Values;
-use crate::values::runner_results::ThreadCollectArbitrary;
+use crate::values::runner_results::{Stop, ThreadCollectArbitrary};
 use crate::{ThreadRunner, values::runner_results::ArbitraryPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
@@ -84,19 +84,17 @@ where
                     let vo = xap1(value);
                     let done = vo.push_to_bag(bag);
 
-                    match done {
-                        ArbitraryPush::Done => {}
-                        ArbitraryPush::StoppedByWhileCondition => {
-                            iter.skip_to_end();
-                            runner.complete_chunk(shared_state, chunk_size);
-                            runner.complete_task(shared_state);
-                            return ThreadCollectArbitrary::StoppedByWhileCondition;
-                        }
-                        ArbitraryPush::StoppedByError { error } => {
-                            iter.skip_to_end();
-                            runner.complete_chunk(shared_state, chunk_size);
-                            runner.complete_task(shared_state);
-                            return ThreadCollectArbitrary::StoppedByError { error };
+                    if let Some(stop) = Vo::arbitrary_push_to_stop(done) {
+                        iter.skip_to_end();
+                        runner.complete_chunk(shared_state, chunk_size);
+                        runner.complete_task(shared_state);
+                        match stop {
+                            Stop::DueToWhile => {
+                                return ThreadCollectArbitrary::StoppedByWhileCondition;
+                            }
+                            Stop::DueToError { error } => {
+                                return ThreadCollectArbitrary::StoppedByError { error };
+                            }
                         }
                     }
                 }
@@ -113,19 +111,17 @@ where
                             let vo = xap1(value);
                             let done = vo.push_to_bag(bag);
 
-                            match done {
-                                ArbitraryPush::Done => {}
-                                ArbitraryPush::StoppedByWhileCondition => {
-                                    iter.skip_to_end();
-                                    runner.complete_chunk(shared_state, chunk_size);
-                                    runner.complete_task(shared_state);
-                                    return ThreadCollectArbitrary::StoppedByWhileCondition;
-                                }
-                                ArbitraryPush::StoppedByError { error } => {
-                                    iter.skip_to_end();
-                                    runner.complete_chunk(shared_state, chunk_size);
-                                    runner.complete_task(shared_state);
-                                    return ThreadCollectArbitrary::StoppedByError { error };
+                            if let Some(stop) = Vo::arbitrary_push_to_stop(done) {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                match stop {
+                                    Stop::DueToWhile => {
+                                        return ThreadCollectArbitrary::StoppedByWhileCondition;
+                                    }
+                                    Stop::DueToError { error } => {
+                                        return ThreadCollectArbitrary::StoppedByError { error };
+                                    }
                                 }
                             }
                         }
