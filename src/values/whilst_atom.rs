@@ -110,7 +110,10 @@ impl<T> Values for WhilstAtom<T> {
 }
 
 impl<T> TransformableValues for WhilstAtom<T> {
-    fn map<M, O>(self, map: M) -> impl TransformableValues<Item = O>
+    fn map<M, O>(
+        self,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         M: Fn(Self::Item) -> O + Clone,
     {
@@ -120,7 +123,10 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn filter<F>(self, filter: F) -> impl TransformableValues<Item = Self::Item>
+    fn filter<F>(
+        self,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         F: Fn(&Self::Item) -> bool + Clone,
     {
@@ -133,7 +139,10 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl TransformableValues<Item = Vo::Item>
+    fn flat_map<Fm, Vo>(
+        self,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo + Clone,
@@ -142,7 +151,10 @@ impl<T> TransformableValues for WhilstAtom<T> {
         WhilstVector(iter)
     }
 
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl TransformableValues<Item = O>
+    fn filter_map<Fm, O>(
+        self,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
@@ -158,7 +170,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
     fn whilst(
         self,
         whilst: impl Fn(&Self::Item) -> bool,
-    ) -> impl TransformableValues<Item = Self::Item>
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         Self: Sized,
     {

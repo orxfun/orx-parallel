@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::values::Values;
-use crate::values::runner_results::Fallibility;
+use crate::values::runner_results::{Fallibility, Infallible};
 use crate::{
     collect_into::utils::split_vec_reserve,
     computations::{M, X},
@@ -41,7 +41,7 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());

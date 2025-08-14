@@ -61,4 +61,11 @@ pub trait Values {
     ) -> Option<Stop<<Self::Fallibility as Fallibility>::Error>> {
         <Self::Fallibility as Fallibility>::arbitrary_push_to_stop(arbitrary_push)
     }
+
+    #[inline(always)]
+    fn sequential_push_to_stop(
+        sequential_push: SequentialPush<Self::Fallibility>,
+    ) -> Option<Stop<<Self::Fallibility as Fallibility>::Error>> {
+        <Self::Fallibility as Fallibility>::sequential_push_to_stop(sequential_push)
+    }
 }

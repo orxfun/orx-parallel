@@ -1,6 +1,6 @@
 use super::x::X;
 use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
-use crate::values::runner_results::Fallibility;
+use crate::values::runner_results::{Fallibility, Infallible};
 use crate::{
     IterationOrder,
     runner::{ParallelRunner, ParallelRunnerCompute},
@@ -20,6 +20,7 @@ where
     where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<Vo::Item>,
+        Vo: Values<Fallibility = Infallible>,
     {
         let (len, p) = self.len_and_params();
         match (p.is_sequential(), p.iteration_order) {
@@ -72,8 +73,26 @@ where
         let iter = iter.into_seq_iter();
         for i in iter {
             let vt = xap1(i);
-            let stop = vt.push_to_pinned_vec(&mut pinned_vec);
-            if stop {
+            let done = vt.push_to_pinned_vec(&mut pinned_vec);
+            if let Some(_) = Vo::sequential_push_to_stop(done) {
+                break;
+            }
+        }
+
+        pinned_vec
+    }
+
+    fn try_sequential<P>(self, mut pinned_vec: P) -> P
+    where
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        let (_, iter, xap1) = self.destruct();
+
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = xap1(i);
+            let done = vt.push_to_pinned_vec(&mut pinned_vec);
+            if let Some(_) = Vo::sequential_push_to_stop(done) {
                 break;
             }
         }

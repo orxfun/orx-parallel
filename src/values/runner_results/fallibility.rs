@@ -1,4 +1,6 @@
-use crate::values::runner_results::{ArbitraryPush, OrderedPush, Stop, StopWithIdx};
+use crate::values::runner_results::{
+    ArbitraryPush, OrderedPush, SequentialPush, Stop, StopWithIdx,
+};
 use std::marker::PhantomData;
 
 pub trait Fallibility: Sized {
@@ -7,6 +9,8 @@ pub trait Fallibility: Sized {
     fn ordered_push_to_stop(ordered_push: OrderedPush<Self>) -> Option<StopWithIdx<Self::Error>>;
 
     fn arbitrary_push_to_stop(arbitrary_push: ArbitraryPush<Self>) -> Option<Stop<Self::Error>>;
+
+    fn sequential_push_to_stop(sequential_push: SequentialPush<Self>) -> Option<Stop<Self::Error>>;
 }
 
 pub struct Infallible;
@@ -26,6 +30,14 @@ impl Fallibility for Infallible {
     fn arbitrary_push_to_stop(arbitrary_push: ArbitraryPush<Self>) -> Option<Stop<Self::Error>> {
         match arbitrary_push {
             ArbitraryPush::StoppedByWhileCondition => Some(Stop::DueToWhile),
+            _ => None,
+        }
+    }
+
+    #[inline(always)]
+    fn sequential_push_to_stop(sequential_push: SequentialPush<Self>) -> Option<Stop<Self::Error>> {
+        match sequential_push {
+            SequentialPush::StoppedByWhileCondition => Some(Stop::DueToWhile),
             _ => None,
         }
     }
@@ -53,6 +65,15 @@ impl<E: Send> Fallibility for Fallible<E> {
             ArbitraryPush::Done => None,
             ArbitraryPush::StoppedByWhileCondition => Some(Stop::DueToWhile),
             ArbitraryPush::StoppedByError { error } => Some(Stop::DueToError { error }),
+        }
+    }
+
+    #[inline(always)]
+    fn sequential_push_to_stop(sequential_push: SequentialPush<Self>) -> Option<Stop<Self::Error>> {
+        match sequential_push {
+            SequentialPush::Done => None,
+            SequentialPush::StoppedByWhileCondition => Some(Stop::DueToWhile),
+            SequentialPush::StoppedByError { error } => Some(Stop::DueToError { error }),
         }
     }
 }

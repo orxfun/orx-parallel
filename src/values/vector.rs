@@ -102,7 +102,10 @@ where
     I: IntoIterator,
 {
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> impl TransformableValues<Item = O>
+    fn map<M, O>(
+        self,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         M: Fn(Self::Item) -> O,
     {
@@ -110,7 +113,10 @@ where
     }
 
     #[inline(always)]
-    fn filter<F>(self, filter: F) -> impl TransformableValues<Item = Self::Item>
+    fn filter<F>(
+        self,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         F: Fn(&Self::Item) -> bool,
     {
@@ -118,7 +124,10 @@ where
     }
 
     #[inline(always)]
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl TransformableValues<Item = Vo::Item>
+    fn flat_map<Fm, Vo>(
+        self,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
@@ -127,7 +136,10 @@ where
     }
 
     #[inline(always)]
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl TransformableValues<Item = O>
+    fn filter_map<Fm, O>(
+        self,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
@@ -137,7 +149,7 @@ where
     fn whilst(
         self,
         whilst: impl Fn(&Self::Item) -> bool,
-    ) -> impl TransformableValues<Item = Self::Item>
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         Self: Sized,
     {

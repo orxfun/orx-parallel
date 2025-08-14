@@ -1,6 +1,7 @@
 use crate::ParIterResult;
 use crate::computational_variants::result::ParXapResult;
 use crate::values::TransformableValues;
+use crate::values::runner_results::Infallible;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::X,
@@ -17,7 +18,7 @@ pub struct ParXap<I, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     x: X<I, Vo, M1>,
@@ -28,7 +29,7 @@ impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
@@ -47,7 +48,7 @@ unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -56,7 +57,7 @@ unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -65,7 +66,7 @@ impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
