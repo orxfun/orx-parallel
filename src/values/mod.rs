@@ -10,6 +10,7 @@ mod whilst_atom;
 mod whilst_atom_result;
 mod whilst_iterators;
 mod whilst_option;
+mod whilst_option_result;
 mod whilst_vector;
 
 pub use transformable_values::TransformableValues;
