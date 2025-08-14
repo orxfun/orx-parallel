@@ -2,11 +2,11 @@ use crate::values::{Values, runner_results::ValuesPush, whilst_option::WhilstOpt
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub struct OptionOk<T, E>(pub(super) Option<Result<T, E>>)
+pub struct OptionResult<T, E>(pub(super) Option<Result<T, E>>)
 where
     E: Send;
 
-impl<T, E> Values for OptionOk<T, E>
+impl<T, E> Values for OptionResult<T, E>
 where
     E: Send,
 {

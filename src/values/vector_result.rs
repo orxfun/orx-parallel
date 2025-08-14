@@ -3,12 +3,12 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
-pub struct VectorOk<I, T, E>(pub(crate) I)
+pub struct VectorResult<I, T, E>(pub(crate) I)
 where
     I: IntoIterator<Item = Result<T, E>>,
     E: Send;
 
-impl<I, T, E> Values for VectorOk<I, T, E>
+impl<I, T, E> Values for VectorResult<I, T, E>
 where
     I: IntoIterator<Item = Result<T, E>>,
     E: Send,

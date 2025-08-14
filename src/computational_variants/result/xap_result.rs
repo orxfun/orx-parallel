@@ -1,7 +1,7 @@
 use crate::computations::X;
 use crate::par_iter_result::ParIterResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::values::{Values, VectorOk};
+use crate::values::{Values, VectorResult};
 use crate::{ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -72,7 +72,7 @@ where
             let iter = v1.values_to_depracate().into_iter();
             let map_res = map_res.clone();
             let iter_result = iter.map(move |x| map_res(x));
-            VectorOk(iter_result)
+            VectorResult(iter_result)
         };
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
