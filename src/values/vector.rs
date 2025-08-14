@@ -152,7 +152,7 @@ where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
     {
-        let iter = self.0.into_iter().map(move |x| map_res(x));
-        VectorResult(iter)
+        let iter_res = self.0.into_iter().map(move |x| map_res(x));
+        VectorResult(iter_res)
     }
 }

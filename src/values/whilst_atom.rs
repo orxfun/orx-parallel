@@ -1,4 +1,5 @@
 use crate::values::runner_results::ValuesPush;
+use crate::values::whilst_atom_result::WhilstAtomResult;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
@@ -174,8 +175,11 @@ impl<T> TransformableValues for WhilstAtom<T> {
         E: Send,
     {
         match self {
-            Self::Continue(x) => map_res(x),
-            Self::Stop => todo!(),
+            Self::Continue(x) => match map_res(x) {
+                Ok(x) => WhilstAtomResult::ContinueOk(x),
+                Err(e) => WhilstAtomResult::StopErr(e),
+            },
+            Self::Stop => WhilstAtomResult::StopWhile,
         }
     }
 }

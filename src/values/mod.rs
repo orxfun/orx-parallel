@@ -7,6 +7,7 @@ mod values;
 mod vector;
 mod vector_result;
 mod whilst_atom;
+mod whilst_atom_result;
 mod whilst_iterators;
 mod whilst_option;
 mod whilst_vector;

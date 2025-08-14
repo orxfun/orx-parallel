@@ -146,7 +146,7 @@ impl<T> TransformableValues for Option<T> {
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
     {
-        let value = self.map(map_res);
-        OptionResult(value)
+        let opt_res = self.map(map_res);
+        OptionResult(opt_res)
     }
 }
