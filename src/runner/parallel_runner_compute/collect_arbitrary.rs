@@ -121,7 +121,6 @@ where
                     }
                     ThreadCollectArbitrary::StoppedByWhileCondition => {
                         early_exit_result = Some(result);
-                        break;
                     }
                 }
             }

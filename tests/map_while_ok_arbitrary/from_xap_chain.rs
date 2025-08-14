@@ -1,5 +1,7 @@
 use orx_parallel::*;
 
+use crate::map_while_ok_arbitrary::utils::sort_if_ok;
+
 #[test]
 fn map_while_ok_from_xap_chain_when_ok() {
     let input = 0..1024;
@@ -15,6 +17,7 @@ fn map_while_ok_from_xap_chain_when_ok() {
 
     let result: Result<Vec<_>, _> = input
         .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
         .filter(filter)
         .map(map)
@@ -29,6 +32,9 @@ fn map_while_ok_from_xap_chain_when_ok() {
         .filter_map(filter_map)
         .map(map2)
         .collect::<Vec<_>>());
+
+    let result = sort_if_ok(result);
+    let expected = sort_if_ok(expected);
 
     assert_eq!(result, expected);
 }
@@ -51,6 +57,7 @@ fn map_while_ok_from_xap_chain_when_error() {
     let result: Result<Vec<_>, _> = input
         .clone()
         .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
         .filter(filter)
         .map(map)
@@ -82,6 +89,7 @@ fn map_while_ok_from_xap_chain_whilst_when_ok() {
     let result: Result<Vec<_>, _> = input
         .clone()
         .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
         .filter(filter)
         .map(map)
@@ -100,6 +108,9 @@ fn map_while_ok_from_xap_chain_whilst_when_ok() {
         .take_while(|i| i < &777)
         .map(map_res)
         .collect();
+
+    let result = sort_if_ok(result);
+    let expected = sort_if_ok(expected);
 
     assert_eq!(result, expected);
 }
@@ -122,6 +133,7 @@ fn map_while_ok_from_xap_chain_whilst_when_err() {
     let result: Result<Vec<_>, _> = input
         .clone()
         .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
         .filter(filter)
         .map(map)
@@ -155,6 +167,7 @@ fn map_while_ok_from_xap_chain_whilst_when_err_out_of_reach() {
     let result: Result<Vec<_>, _> = input
         .clone()
         .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
         .filter(filter)
         .map(map)
@@ -174,6 +187,9 @@ fn map_while_ok_from_xap_chain_whilst_when_err_out_of_reach() {
         .take_while(|i| i < &777)
         .map(map_res)
         .collect();
+
+    let result = sort_if_ok(result);
+    let expected = sort_if_ok(expected);
 
     assert_eq!(result, expected);
 }
