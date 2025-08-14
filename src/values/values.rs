@@ -13,7 +13,6 @@ pub trait Values {
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item>;
 
-    /// Returns true if the computation must early exit.
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>;
@@ -24,7 +23,6 @@ pub trait Values {
         vec: &mut Vec<(usize, Self::Item)>,
     ) -> OrderedPush<Self::Fallibility>;
 
-    /// Returns true if the computation must early exit.
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
