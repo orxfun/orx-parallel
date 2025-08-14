@@ -1,6 +1,6 @@
-mod ok;
 mod option;
 mod option_ok;
+mod result;
 pub(crate) mod runner_results;
 mod transformable_values;
 mod values;
@@ -11,7 +11,6 @@ mod whilst_iterators;
 mod whilst_option;
 mod whilst_vector;
 
-pub use ok::Okay;
 pub use transformable_values::TransformableValues;
 pub use values::Values;
 pub use vector::Vector;
