@@ -1,23 +1,23 @@
-use crate::values::{Values, WhilstOk, WhilstOption, runner_results::ValuesPush};
+use crate::values::{Values, WhilstOption, runner_results::ValuesPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
-pub struct WhilstOkVector<I, T, E>(pub(crate) I)
+pub struct VectorResult<I, T, E>(pub(crate) I)
 where
-    I: IntoIterator<Item = WhilstOk<T, E>>,
+    I: IntoIterator<Item = Result<T, E>>,
     E: Send;
 
-impl<I, T, E> Values for WhilstOkVector<I, T, E>
+impl<I, T, E> Values for VectorResult<I, T, E>
 where
-    I: IntoIterator<Item = WhilstOk<T, E>>,
+    I: IntoIterator<Item = Result<T, E>>,
     E: Send,
 {
     type Item = T;
 
     type Error = E;
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
         core::iter::empty()
     }
@@ -27,7 +27,7 @@ where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
-            match x.0 {
+            match x {
                 Ok(x) => vector.push(x),
                 Err(e) => return true,
             }
@@ -41,7 +41,7 @@ where
         vec: &mut Vec<(usize, Self::Item)>,
     ) -> ValuesPush<Self::Error> {
         for x in self.0 {
-            match x.0 {
+            match x {
                 Ok(x) => vec.push((idx, x)),
                 Err(error) => return ValuesPush::StoppedByError { idx, error },
             }
@@ -55,7 +55,7 @@ where
         Self::Item: Send,
     {
         for x in self.0 {
-            match x.0 {
+            match x {
                 Ok(x) => _ = bag.push(x),
                 Err(e) => return true,
             }
@@ -75,7 +75,7 @@ where
                 let first = iter.next();
                 match first {
                     None => return (false, None), // empty iterator but not stopped, acc is None
-                    Some(x) => match x.0 {
+                    Some(x) => match x {
                         Ok(x) => x,
                         Err(e) => return (true, None), // first element is stop, acc is None
                     },
@@ -84,7 +84,7 @@ where
         };
 
         for x in iter {
-            match x.0 {
+            match x {
                 Ok(x) => acc = reduce(acc, x),
                 Err(e) => return (true, Some(acc)),
             }
@@ -105,7 +105,7 @@ where
                 let first = iter.next();
                 match first {
                     None => return None, // empty iterator but not stopped, acc is None
-                    Some(x) => match x.0 {
+                    Some(x) => match x {
                         Ok(x) => x,
                         Err(e) => return None, // first element is stop, acc is None
                     },
@@ -114,7 +114,7 @@ where
         };
 
         for x in iter {
-            match x.0 {
+            match x {
                 Ok(x) => acc = reduce(u, acc, x),
                 Err(e) => return Some(acc),
             }
@@ -125,7 +125,7 @@ where
 
     fn first(self) -> WhilstOption<Self::Item> {
         match self.0.into_iter().next() {
-            Some(x) => match x.0 {
+            Some(x) => match x {
                 Ok(x) => WhilstOption::ContinueSome(x),
                 Err(e) => todo!(),
             },

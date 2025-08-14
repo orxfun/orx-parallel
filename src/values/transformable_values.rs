@@ -25,4 +25,9 @@ pub trait TransformableValues: Values {
         self,
         whilst: impl Fn(&Self::Item) -> bool,
     ) -> impl TransformableValues<Item = Self::Item>;
+
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send;
 }

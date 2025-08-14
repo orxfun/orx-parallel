@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, WhilstAtom, WhilstOption, runner_results::ValuesPush,
-    whilst_iterators::WhilstAtomFlatMapIter,
+    whilst_iterators::WhilstAtomFlatMapIter, whilst_vector_result::WhilstVectorResult,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -19,7 +19,7 @@ where
 
     type Error = ();
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
         core::iter::empty()
     }
@@ -206,5 +206,17 @@ where
             WhilstAtom::Stop => WhilstAtom::Stop,
         });
         WhilstVector(iter)
+    }
+
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send,
+    {
+        let iter = self.0.into_iter().map(move |x| match x {
+            WhilstAtom::Continue(x) => WhilstAtom::Continue(map_res(x)),
+            WhilstAtom::Stop => WhilstAtom::Stop,
+        });
+        WhilstVectorResult(iter)
     }
 }

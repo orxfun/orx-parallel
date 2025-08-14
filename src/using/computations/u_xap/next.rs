@@ -17,7 +17,7 @@ where
         let (using, _, iter, xap1) = self.destruct();
         let mut u = using.into_inner();
         iter.next()
-            .and_then(|i| xap1(&mut u, i).values().into_iter().next())
+            .and_then(|i| xap1(&mut u, i).values_to_depracate().into_iter().next())
     }
 
     pub fn next<R>(self) -> (usize, Option<Vo::Item>)

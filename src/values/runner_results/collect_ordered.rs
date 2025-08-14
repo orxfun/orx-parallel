@@ -1,4 +1,5 @@
 use crate::{computations::heap_sort_into, values::Values};
+use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_split_vec::PseudoDefault;
 
@@ -24,11 +25,38 @@ where
     },
 }
 
+impl<V: Values> Debug for ThreadCollect<V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AllCollected { vec } => f
+                .debug_struct("AllCollected")
+                .field("vec-len", &vec.len())
+                .finish(),
+            Self::StoppedByWhileCondition { vec, stopped_idx } => f
+                .debug_struct("StoppedByWhileCondition")
+                .field("vec-len", &vec.len())
+                .field("stopped_idx", stopped_idx)
+                .finish(),
+            Self::StoppedByError { error } => f.debug_struct("StoppedByError").finish(),
+        }
+    }
+}
+
 impl<V: Values> ThreadCollect<V> {
     pub fn into_result(self) -> Result<Self, V::Error> {
         match self {
             Self::StoppedByError { error } => Err(error),
             _ => Ok(self),
+        }
+    }
+
+    pub fn get_while_stop_idx(&self) -> Option<usize> {
+        match &self {
+            Self::StoppedByWhileCondition {
+                vec: _,
+                stopped_idx,
+            } => Some(*stopped_idx),
+            _ => None,
         }
     }
 }
@@ -41,6 +69,30 @@ where
     AllCollected { pinned_vec: P },
     StoppedByWhileCondition { pinned_vec: P, stopped_idx: usize },
     StoppedByError { error: V::Error },
+}
+
+impl<V, P> core::fmt::Debug for ParallelCollect<V, P>
+where
+    V: Values,
+    P: IntoConcurrentPinnedVec<V::Item>,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AllCollected { pinned_vec } => f
+                .debug_struct("AllCollected")
+                .field("pinned_vec_len", &pinned_vec.len())
+                .finish(),
+            Self::StoppedByWhileCondition {
+                pinned_vec,
+                stopped_idx,
+            } => f
+                .debug_struct("StoppedByWhileCondition")
+                .field("pinned_vec_len", &pinned_vec.len())
+                .field("stopped_idx", stopped_idx)
+                .finish(),
+            Self::StoppedByError { error } => f.debug_struct("StoppedByError").finish(),
+        }
+    }
 }
 
 impl<V, P> ParallelCollect<V, P>
@@ -66,6 +118,10 @@ where
             }
         }
 
+        let idx_vectors: Vec<Vec<_>> = vectors
+            .iter()
+            .map(|x| x.iter().map(|x| x.0).collect())
+            .collect();
         heap_sort_into(vectors, min_stopped_idx, &mut pinned_vec);
 
         match min_stopped_idx {

@@ -1,7 +1,7 @@
 use crate::computations::X;
 use crate::par_iter_result::ParIterResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::values::{TransformableValues, WhilstOk, WhilstOkVector};
+use crate::values::{TransformableValues, VectorResult};
 use crate::{ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -66,13 +66,11 @@ where
         C: ParCollectInto<Self::Item>,
         Self::Error: Send,
     {
-        let (params, iter, xap, mr) = self.destruct();
+        let (params, iter, xap, map_res) = self.destruct();
         let x1 = move |i: I::Item| {
             let v1: Vo = xap(i);
-            let iter = v1.values().into_iter();
-            let mr = mr.clone();
-            let iter_result = iter.map(move |x| WhilstOk(mr(x)));
-            WhilstOkVector(iter_result)
+            let map_res = map_res.clone();
+            v1.map_while_ok(map_res)
         };
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)

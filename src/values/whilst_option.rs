@@ -1,5 +1,6 @@
 use crate::values::runner_results::ValuesPush;
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
+use crate::values::whilst_option_result::WhilstOptionResult;
 use crate::values::{TransformableValues, Values, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -15,7 +16,7 @@ impl<T> Values for WhilstOption<T> {
 
     type Error = ();
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         match self {
             Self::ContinueSome(x) => Some(x).into_iter(),
             _ => None.into_iter(),
@@ -162,6 +163,21 @@ impl<T> TransformableValues for WhilstOption<T> {
             },
             Self::ContinueNone => Self::ContinueNone,
             Self::Stop => Self::Stop,
+        }
+    }
+
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send,
+    {
+        match self {
+            Self::ContinueSome(x) => match map_res(x) {
+                Ok(x) => WhilstOptionResult::ContinueSomeOk(x),
+                Err(e) => WhilstOptionResult::StopErr(e),
+            },
+            Self::ContinueNone => WhilstOptionResult::ContinueNone,
+            Self::Stop => WhilstOptionResult::StopWhile,
         }
     }
 }

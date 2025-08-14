@@ -1,5 +1,7 @@
 use super::{TransformableValues, Vector};
-use crate::values::{Values, runner_results::ValuesPush, whilst_option::WhilstOption};
+use crate::values::{
+    Values, option_result::OptionResult, runner_results::ValuesPush, whilst_option::WhilstOption,
+};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -9,7 +11,7 @@ impl<T> Values for Option<T> {
     type Error = ();
 
     #[inline(always)]
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         self
     }
 
@@ -137,5 +139,14 @@ impl<T> TransformableValues for Option<T> {
             },
             _ => WhilstOption::ContinueNone,
         }
+    }
+
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send,
+    {
+        let opt_res = self.map(map_res);
+        OptionResult(opt_res)
     }
 }

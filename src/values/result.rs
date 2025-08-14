@@ -8,15 +8,8 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 ///   the only relevant value is the created error.
 /// * Computed values are relevant iff entire inputs result in an Ok variant.
 /// * Therefore, observation of an error case allows to immediately stop computation.
-pub struct WhilstOk<T, E>(pub(crate) Result<T, E>);
 
-impl<T, E> WhilstOk<T, E> {
-    pub fn new(result: Result<T, E>) -> Self {
-        Self(result)
-    }
-}
-
-impl<T, E> Values for WhilstOk<T, E>
+impl<T, E> Values for Result<T, E>
 where
     E: Send,
 {
@@ -24,8 +17,8 @@ where
 
     type Error = E;
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
-        match self.0 {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
+        match self {
             Ok(x) => Some(x).into_iter(),
             _ => None.into_iter(),
         }
@@ -35,7 +28,7 @@ where
     where
         P: PinnedVec<Self::Item>,
     {
-        match self.0 {
+        match self {
             Ok(x) => {
                 vector.push(x);
                 false
@@ -45,7 +38,7 @@ where
     }
 
     fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> ValuesPush<E> {
-        match self.0 {
+        match self {
             Ok(x) => {
                 vec.push((idx, x));
                 ValuesPush::Done
@@ -59,7 +52,7 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        match self.0 {
+        match self {
             Ok(x) => {
                 bag.push(x);
                 false
@@ -72,7 +65,7 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        match self.0 {
+        match self {
             Ok(x) => match acc {
                 Some(acc) => (false, Some(reduce(acc, x))),
                 None => (false, Some(x)),
@@ -85,7 +78,7 @@ where
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        match self.0 {
+        match self {
             Ok(x) => match acc {
                 Some(acc) => Some(reduce(u, acc, x)),
                 None => Some(x),

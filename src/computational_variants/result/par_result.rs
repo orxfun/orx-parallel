@@ -1,7 +1,6 @@
 use crate::computations::X;
 use crate::par_iter_result::ParIterResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::values::WhilstOk;
 use crate::{ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -46,7 +45,7 @@ where
         E: Send,
     {
         let (params, iter) = self.destruct();
-        let x1 = move |i: I::Item| WhilstOk::<T, E>::new(i);
+        let x1 = |i: I::Item| i;
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
     }
