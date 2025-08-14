@@ -7,30 +7,34 @@ use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
 /// A parallel iterator.
-pub struct ParResult<I, T, E, R = DefaultRunner>
+pub struct ParMapResult<I, T, E, M, R = DefaultRunner>
 where
     R: ParallelRunner,
-    I: ConcurrentIter<Item = Result<T, E>>,
+    I: ConcurrentIter,
+    M: Fn(I::Item) -> Result<T, E> + Sync,
 {
     iter: I,
     params: Params,
+    map: M,
     phantom: PhantomData<R>,
 }
 
-impl<I, T, E, R> ParResult<I, T, E, R>
+impl<I, T, E, M, R> ParMapResult<I, T, E, M, R>
 where
     R: ParallelRunner,
-    I: ConcurrentIter<Item = Result<T, E>>,
+    I: ConcurrentIter,
+    M: Fn(I::Item) -> Result<T, E> + Sync,
 {
-    fn destruct(self) -> (Params, I) {
-        (self.params, self.iter)
+    fn destruct(self) -> (Params, I, M) {
+        (self.params, self.iter, self.map)
     }
 }
 
-impl<I, T, E, R> ParIterResult<R> for ParResult<I, T, E, R>
+impl<I, T, E, M, R> ParIterResult<R> for ParMapResult<I, T, E, M, R>
 where
     R: ParallelRunner,
-    I: ConcurrentIter<Item = Result<T, E>>,
+    I: ConcurrentIter,
+    M: Fn(I::Item) -> Result<T, E> + Sync,
 {
     type Item = T;
 
@@ -43,10 +47,10 @@ where
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
     where
         C: ParCollectInto<Self::Item>,
-        E: Send,
+        Self::Error: Send,
     {
-        let (params, iter) = self.destruct();
-        let x1 = move |i: I::Item| WhilstOk::<T, E>::new(i);
+        let (params, iter, map) = self.destruct();
+        let x1 = move |i: I::Item| WhilstOk::<T, E>::new(map(i));
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
     }
