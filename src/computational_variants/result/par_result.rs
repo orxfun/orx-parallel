@@ -1,12 +1,8 @@
 use crate::computations::X;
-use crate::par_iter_result::{ParIterResult, ParIterResult3};
-use crate::values::{Vector, WhilstAtom, WhilstOk};
-use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{M, map_self},
-    runner::{DefaultRunner, ParallelRunner},
-    using::{UsingClone, UsingFun, computational_variants::UPar},
-};
+use crate::par_iter_result::ParIterResult;
+use crate::runner::{DefaultRunner, ParallelRunner};
+use crate::values::WhilstOk;
+use crate::{ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
