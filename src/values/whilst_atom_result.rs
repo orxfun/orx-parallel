@@ -1,4 +1,4 @@
-use crate::values::runner_results::{ArbitraryPush, OrderedPush};
+use crate::values::runner_results::{ArbitraryPush, Fallible, OrderedPush};
 use crate::values::{Values, WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -19,6 +19,8 @@ where
     type Item = T;
 
     type Error = E;
+
+    type Fallibility = Fallible<E>;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();

@@ -1,4 +1,4 @@
-use crate::values::runner_results::{ArbitraryPush, OrderedPush};
+use crate::values::runner_results::{ArbitraryPush, Infallible, OrderedPush};
 use crate::values::whilst_atom_result::WhilstAtomResult;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
@@ -24,6 +24,8 @@ impl<T> Values for WhilstAtom<T> {
     type Item = T;
 
     type Error = ();
+
+    type Fallibility = Infallible;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         match self {

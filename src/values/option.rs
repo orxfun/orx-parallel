@@ -2,7 +2,7 @@ use super::{TransformableValues, Vector};
 use crate::values::{
     Values,
     option_result::OptionResult,
-    runner_results::{ArbitraryPush, OrderedPush},
+    runner_results::{ArbitraryPush, Infallible, OrderedPush},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -12,6 +12,8 @@ impl<T> Values for Option<T> {
     type Item = T;
 
     type Error = ();
+
+    type Fallibility = Infallible;
 
     #[inline(always)]
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {

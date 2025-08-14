@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, WhilstAtom, WhilstOption,
-    runner_results::{ArbitraryPush, OrderedPush},
+    runner_results::{ArbitraryPush, Infallible, OrderedPush},
     whilst_iterators::WhilstAtomFlatMapIter,
     whilst_vector_result::WhilstVectorResult,
 };
@@ -20,6 +20,8 @@ where
     type Item = T;
 
     type Error = ();
+
+    type Fallibility = Infallible;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();

@@ -1,6 +1,6 @@
 use crate::values::{
     WhilstOption,
-    runner_results::{ArbitraryPush, OrderedPush},
+    runner_results::{ArbitraryPush, Fallibility, OrderedPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -8,6 +8,8 @@ use orx_pinned_vec::PinnedVec;
 
 pub trait Values {
     type Item;
+
+    type Fallibility: Fallibility;
 
     type Error: Send;
 

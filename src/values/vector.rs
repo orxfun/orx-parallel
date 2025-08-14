@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
-    runner_results::{ArbitraryPush, OrderedPush},
+    runner_results::{ArbitraryPush, Infallible, OrderedPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -18,6 +18,8 @@ where
     type Item = I::Item;
 
     type Error = ();
+
+    type Fallibility = Infallible;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
