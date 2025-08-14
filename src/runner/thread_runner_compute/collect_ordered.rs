@@ -1,9 +1,9 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::ThreadRunner;
+use crate::values::runner_results::ThreadCollect;
+use crate::values::{Values, runner_results::ValuesPush};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
-
-// m
 
 pub fn m<C, I, O, M1, P>(
     mut runner: C,
@@ -52,14 +52,12 @@ pub fn m<C, I, O, M1, P>(
     runner.complete_task(shared_state);
 }
 
-// x
-
 pub fn x<C, I, Vo, X1>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> (Vec<(usize, Vo::Item)>, Option<usize>)
+) -> ThreadCollect<Vo>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -81,13 +79,25 @@ where
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     let vo = xap1(i);
-                    let max_idx_exc = vo.push_to_vec_with_idx(idx, out_vec);
+                    let done = vo.push_to_vec_with_idx(idx, out_vec);
 
-                    if let Some(max_idx_exc) = max_idx_exc {
-                        iter.skip_to_end();
-                        runner.complete_chunk(shared_state, chunk_size);
-                        runner.complete_task(shared_state);
-                        return (collected, Some(max_idx_exc));
+                    match done {
+                        ValuesPush::Done => {}
+                        ValuesPush::StoppedByWhileCondition { idx } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return ThreadCollect::StoppedByWhileCondition {
+                                vec: collected,
+                                stopped_idx: idx,
+                            };
+                        }
+                        ValuesPush::StoppedByError { idx: _, error } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return ThreadCollect::StoppedByError { error };
+                        }
                     }
                 }
                 None => break,
@@ -101,13 +111,24 @@ where
                     Some((chunk_begin_idx, chunk)) => {
                         for (within_chunk_idx, value) in chunk.enumerate() {
                             let vo = xap1(value);
-                            let max_idx_exc = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
-
-                            if let Some(max_idx_exc) = max_idx_exc {
-                                iter.skip_to_end();
-                                runner.complete_chunk(shared_state, chunk_size);
-                                runner.complete_task(shared_state);
-                                return (collected, Some(max_idx_exc + within_chunk_idx));
+                            let done = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
+                            match done {
+                                ValuesPush::Done => {}
+                                ValuesPush::StoppedByWhileCondition { idx } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return ThreadCollect::StoppedByWhileCondition {
+                                        vec: collected,
+                                        stopped_idx: idx + within_chunk_idx,
+                                    };
+                                }
+                                ValuesPush::StoppedByError { idx: _, error } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return ThreadCollect::StoppedByError { error };
+                                }
                             }
                         }
                     }
@@ -121,5 +142,5 @@ where
 
     runner.complete_task(shared_state);
 
-    (collected, None)
+    ThreadCollect::AllCollected { vec: collected }
 }

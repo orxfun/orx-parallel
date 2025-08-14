@@ -1,4 +1,7 @@
+use crate::ParIterResult;
+use crate::par_iter_result::{ParIterResult2, ParIterResult3};
 use crate::using::{UsingClone, UsingFun};
+use crate::values::{Values, WhilstOk};
 use crate::{
     ParIterUsing, Params,
     collect_into::ParCollectInto,
@@ -17,6 +20,8 @@ where
 {
     /// Element type of the parallel iterator.
     type Item;
+
+    type ConIter: ConcurrentIter;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
@@ -660,6 +665,66 @@ where
             unsafe { x.unwrap_unchecked() }
         })
     }
+    /*
+       WhilstOkVector
+       <
+        Map<<impl IntoIterator<Item = <Vo as Values>::Item> as IntoIterator>::IntoIter, impl FnMut(<Vo as Values>::Item) -> WhilstOk<Out, Err>>,
+        Out,
+        Err
+    >
+    */
+
+    // transformations into early stop
+
+    fn map_while_ok<Out, Err, MapWhileOk>(
+        self,
+        map_while_ok: MapWhileOk,
+    ) -> impl ParIterResult<R, Item = Out, Error = Err>
+    where
+        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone;
+
+    // fn map_while_ok<Out, Err, MapWhileOk>(
+    //     self,
+    //     map_while_ok: MapWhileOk,
+    // ) -> ParIterResult3<
+    //     Self::ConIter,
+    //     Out,
+    //     Err,
+    //     impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
+    //     R,
+    // >
+    // where
+    //     MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+    //     Err: Send + Sync;
+
+    // fn map_while_ok2<T, E, MapWhileOk>(
+    //     self,
+    //     map_while_ok: MapWhileOk,
+    // ) -> ParIterResult2<
+    //     Self::ConIter,
+    //     T,
+    //     E,
+    //     impl Values<Item = T, Error = E>,
+    //     impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> Vo + Sync,
+    //     R,
+    // >
+    // where
+    //     MapWhileOk: Fn(Self::Item) -> Result<T, E> + Sync + Clone,
+    //     T: Send + Sync,
+    //     E: Send + Sync,
+    // {
+    //     todo!()
+    // }
+
+    // fn to_other(self) -> ParIterResultStruct<I, T, E, M1, R>
+    // where
+    //     R: ParallelRunner,
+    //     I: ConcurrentIter,
+    //     M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
+    //     E: Send,
+    // {
+    //     todo!()
+    // }
 
     // special item transformations
 

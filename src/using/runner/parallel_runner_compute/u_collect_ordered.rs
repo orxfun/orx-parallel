@@ -1,8 +1,9 @@
 use super::super::thread_runner_compute as thread;
-use crate::computations::{Values, heap_sort_into};
+use crate::computations::heap_sort_into;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
+use crate::values::Values;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

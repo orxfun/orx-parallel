@@ -1,12 +1,10 @@
 mod default_fns;
-mod generalized_values;
 mod heap_sort;
 mod idx;
 mod map;
 mod xap;
 
 pub(crate) use default_fns::*;
-pub(crate) use generalized_values::{Values, Vector, WhilstAtom, WhilstOption, WhilstVector};
 pub(crate) use heap_sort::heap_sort_into;
 pub(crate) use idx::min_opt_idx;
 pub(crate) use map::M;

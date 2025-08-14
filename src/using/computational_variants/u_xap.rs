@@ -1,9 +1,9 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
-    computations::{Values, Vector},
     runner::{DefaultRunner, ParallelRunner},
     using::u_par_iter::ParIterUsing,
     using::{Using, computations::UX},
+    values::{Values, Vector},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -112,11 +112,7 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, i)
-                .values()
-                .into_iter()
-                .map(|x| map(u, x))
-                .collect();
+            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
             Vector(vo)
         };
 

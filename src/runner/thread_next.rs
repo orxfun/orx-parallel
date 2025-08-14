@@ -1,29 +1,38 @@
-pub enum ThreadNext<T> {
+pub enum ThreadNext<T, E> {
     Found { idx: usize, value: T },
     NotFound,
-    Stopped { idx: usize },
+    Stopped { idx: usize, stop_with: E },
 }
 
-impl<T> ThreadNext<T> {
-    pub fn reduce(results: Vec<Self>) -> Option<(usize, T)> {
-        let mut stopped_idx = usize::MAX;
-
-        for result in &results {
-            match result {
-                Self::Stopped { idx } => stopped_idx = core::cmp::min(stopped_idx, *idx),
-                _ => {}
-            }
+impl<T, E> ThreadNext<T, E> {
+    fn found_or_stopped_idx(&self) -> Option<usize> {
+        match self {
+            Self::Found { idx, value: _ } => Some(*idx),
+            Self::Stopped { idx, stop_with: _ } => Some(*idx),
+            _ => None,
         }
+    }
 
-        let mut found_idx = usize::MAX;
-        let mut result = None;
+    pub fn into_found_value(self) -> Option<T> {
+        match self {
+            Self::Found { idx: _, value } => Some(value),
+            _ => None,
+        }
+    }
+
+    /// Returns the value with the smallest found idx whose idx is less than
+    /// the smallest of the stopped indices, if any.
+    ///
+    /// Returns None if there is no found items before the process stopped.
+    pub fn reduce(results: Vec<Self>) -> Self {
+        let mut result = Self::NotFound;
+        let mut idx_bound = usize::MAX;
         for x in results {
-            match x {
-                Self::Found { idx, value } if idx < stopped_idx && idx < found_idx => {
-                    found_idx = idx;
-                    result = Some((idx, value));
-                }
-                _ => {}
+            if let Some(idx) = x.found_or_stopped_idx()
+                && idx < idx_bound
+            {
+                idx_bound = idx;
+                result = x;
             }
         }
 

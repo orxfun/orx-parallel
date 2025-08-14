@@ -1,8 +1,5 @@
-use crate::computations::generalized_values::{
-    whilst_atom::WhilstAtom, whilst_option::WhilstOption, whilst_vector::WhilstVector,
-};
-
 use super::values::Values;
+use crate::values::{WhilstAtom, WhilstOption, WhilstVector, runner_results::ValuesPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
@@ -16,6 +13,8 @@ where
     I: IntoIterator,
 {
     type Item = I::Item;
+
+    type Error = ();
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
@@ -33,11 +32,15 @@ where
     }
 
     #[inline(always)]
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ValuesPush<Self::Error> {
         for x in self.0 {
             vec.push((idx, x));
         }
-        None
+        ValuesPush::Done
     }
 
     #[inline(always)]

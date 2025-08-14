@@ -3,8 +3,8 @@ use crate::using::computations::UX;
 use crate::using::runner::parallel_runner_compute::{u_collect_arbitrary, u_collect_ordered};
 use crate::{
     IterationOrder,
-    computations::Values,
     runner::{ParallelRunner, ParallelRunnerCompute},
+    values::Values,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

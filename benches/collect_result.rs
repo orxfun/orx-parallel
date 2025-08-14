@@ -105,7 +105,7 @@ fn orx(
     map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
 ) -> Result<Vec<String>, ERR> {
     use orx_parallel::*;
-    inputs.into_par().map(map).collect_result()
+    inputs.into_par().map_while_ok(map).collect()
 }
 
 fn run(c: &mut Criterion) {

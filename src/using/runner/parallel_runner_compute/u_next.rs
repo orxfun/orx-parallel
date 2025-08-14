@@ -2,7 +2,7 @@ use super::super::thread_runner_compute as thread;
 use crate::runner::ThreadNext;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::{computations::Values, runner::ParallelRunnerCompute};
+use crate::{runner::ParallelRunnerCompute, values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn u_m<C, U, I, O, M1>(runner: C, m: UM<U, I, O, M1>) -> (usize, Option<O>)
@@ -82,7 +82,7 @@ where
             }))
         }
 
-        let mut results: Vec<ThreadNext<Vo::Item>> = Vec::with_capacity(handles.len());
+        let mut results: Vec<ThreadNext<Vo::Item, ()>> = Vec::with_capacity(handles.len());
         for x in handles {
             let thread_next = x.join().expect("failed to join the thread");
             results.push(thread_next);
@@ -91,7 +91,7 @@ where
     });
 
     let result = ThreadNext::reduce(results);
-    let acc = result.map(|x| x.1);
+    let acc = result.into_found_value();
 
     (num_spawned, acc)
 }

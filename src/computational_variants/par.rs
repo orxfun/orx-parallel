@@ -1,7 +1,12 @@
 use super::{map::ParMap, xap::ParXap};
+use crate::ParIterResult;
+use crate::computational_variants::result::ParMapResult;
+use crate::computations::X;
+use crate::par_iter_result::ParIterResult3;
+use crate::values::{Vector, WhilstAtom, WhilstOk};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{M, Vector, WhilstAtom, map_self},
+    computations::{M, map_self},
     runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UPar},
 };
@@ -62,6 +67,8 @@ where
     I: ConcurrentIter,
 {
     type Item = I::Item;
+
+    type ConIter = I;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
         &self.iter
@@ -162,6 +169,38 @@ where
         let x1 = move |value: Self::Item| WhilstAtom::new(value, &take_while);
         ParXap::new(params, iter, x1)
     }
+
+    fn map_while_ok<Out, Err, MapWhileOk>(
+        self,
+        map_while_ok: MapWhileOk,
+    ) -> impl ParIterResult<R, Item = Out, Error = Err>
+    where
+        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+    {
+        let (params, iter) = self.destruct();
+        ParMapResult::new(iter, params, map_while_ok)
+    }
+
+    // fn map_while_ok<Out, Err, MapWhileOk>(
+    //     self,
+    //     map_while_ok: MapWhileOk,
+    // ) -> ParIterResult3<
+    //     Self::ConIter,
+    //     Out,
+    //     Err,
+    //     impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
+    //     R,
+    // >
+    // where
+    //     MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+    //     Err: Send + Sync,
+    // {
+    //     let con_iter_len = self.con_iter().try_get_len();
+    //     let (params, iter) = self.destruct();
+    //     let x1 = move |i: I::Item| WhilstOk::<Out, Err>::new(map_while_ok(i));
+    //     let x = X::new(params, iter, x1);
+    //     ParIterResult3::<I, Out, Err, _, R>::new(x, con_iter_len)
+    // }
 
     // collect
 

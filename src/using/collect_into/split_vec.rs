@@ -2,7 +2,7 @@ use crate::collect_into::utils::split_vec_reserve;
 use crate::using::Using;
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
 use crate::using::computations::{UM, UX};
-use crate::{computations::Values, runner::ParallelRunner};
+use crate::{runner::ParallelRunner, values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 

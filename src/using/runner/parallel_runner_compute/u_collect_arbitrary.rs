@@ -1,10 +1,10 @@
 use super::super::thread_runner_compute as thread;
-use crate::computations::Values;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 #[cfg(test)]
 use crate::using::computations::UM;
 use crate::using::computations::UX;
+use crate::values::Values;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

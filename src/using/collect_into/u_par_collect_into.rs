@@ -1,8 +1,8 @@
 use crate::collect_into::ParCollectIntoCore;
-use crate::computations::Values;
 use crate::runner::ParallelRunner;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
+use crate::values::Values;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {

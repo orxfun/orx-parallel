@@ -1,6 +1,6 @@
-use crate::computations::{
-    Values, WhilstVector, generalized_values::whilst_iterators::WhilstOptionFlatMapIter,
-};
+use crate::values::runner_results::ValuesPush;
+use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
+use crate::values::{Values, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -12,6 +12,8 @@ pub enum WhilstOption<T> {
 
 impl<T> Values for WhilstOption<T> {
     type Item = T;
+
+    type Error = ();
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         match self {
@@ -34,14 +36,18 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ValuesPush<Self::Error> {
         match self {
             Self::ContinueSome(x) => {
                 vec.push((idx, x));
-                None
+                ValuesPush::Done
             }
-            Self::ContinueNone => None,
-            Self::Stop => Some(idx),
+            Self::ContinueNone => ValuesPush::Done,
+            Self::Stop => ValuesPush::StoppedByWhileCondition { idx },
         }
     }
 
@@ -108,20 +114,6 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
-    where
-        X: Fn(Self::Item, Self::Item) -> Self::Item,
-    {
-        match self {
-            Self::ContinueSome(x) => match acc {
-                Some(acc) => (false, Some(reduce(acc, x))),
-                None => (false, Some(x)),
-            },
-            Self::ContinueNone => (false, acc),
-            Self::Stop => (true, acc),
-        }
-    }
-
     fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
     where
         Self: Sized,
@@ -133,6 +125,20 @@ impl<T> Values for WhilstOption<T> {
             },
             Self::ContinueNone => Self::ContinueNone,
             Self::Stop => Self::Stop,
+        }
+    }
+
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    where
+        X: Fn(Self::Item, Self::Item) -> Self::Item,
+    {
+        match self {
+            Self::ContinueSome(x) => match acc {
+                Some(acc) => (false, Some(reduce(acc, x))),
+                None => (false, Some(x)),
+            },
+            Self::ContinueNone => (false, acc),
+            Self::Stop => (true, acc),
         }
     }
 

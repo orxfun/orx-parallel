@@ -1,6 +1,6 @@
 use super::values::Values;
-use crate::computations::generalized_values::{
-    whilst_atom::WhilstAtom, whilst_iterators::WhilstAtomFlatMapIter, whilst_option::WhilstOption,
+use crate::values::{
+    WhilstAtom, WhilstOption, runner_results::ValuesPush, whilst_iterators::WhilstAtomFlatMapIter,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -15,6 +15,8 @@ where
     I: IntoIterator<Item = WhilstAtom<T>>,
 {
     type Item = T;
+
+    type Error = ();
 
     fn values(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
@@ -34,14 +36,18 @@ where
         false
     }
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> Option<usize> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> ValuesPush<Self::Error> {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(x) => vec.push((idx, x)),
-                WhilstAtom::Stop => return Some(idx),
+                WhilstAtom::Stop => return ValuesPush::StoppedByWhileCondition { idx },
             }
         }
-        None
+        ValuesPush::Done
     }
 
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
