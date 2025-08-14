@@ -53,8 +53,8 @@ fn map_while_ok_from_xap_flat_map_when_error() {
 #[test]
 fn map_while_ok_from_xap_flat_map_whilst_when_ok() {
     let input = 0..1024;
-    let flat_map = |i: usize| [i, 1000 + i, 2000 + i];
-    let map_res = |i: usize| match (1300..1350).contains(&i) {
+    let flat_map = |i: usize| [i, 1024 + i, 2048 + i];
+    let map_res = |i: usize| match (11300..11350).contains(&i) {
         true => Err(i.to_string()),
         false => Ok(i),
     };
