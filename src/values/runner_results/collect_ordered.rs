@@ -122,7 +122,6 @@ where
             .iter()
             .map(|x| x.iter().map(|x| x.0).collect())
             .collect();
-        dbg!(min_stopped_idx, idx_vectors);
         heap_sort_into(vectors, min_stopped_idx, &mut pinned_vec);
 
         match min_stopped_idx {

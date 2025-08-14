@@ -124,13 +124,8 @@ where
 
     let result = match result {
         Err(error) => ParallelCollect::StoppedByError { error },
-        Ok(results) => {
-            dbg!(&results);
-            ParallelCollect::reduce(results, pinned_vec)
-        }
+        Ok(results) => ParallelCollect::reduce(results, pinned_vec),
     };
-
-    dbg!(&result);
 
     // result.map(|results| ParallelCollect::reduce(results, pinned_vec));
 
