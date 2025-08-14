@@ -1,3 +1,4 @@
+use crate::ParIterResult;
 use crate::par_iter_result::{ParIterResult2, ParIterResult3};
 use crate::using::{UsingClone, UsingFun};
 use crate::values::{Values, WhilstOk};
@@ -678,16 +679,23 @@ where
     fn map_while_ok<Out, Err, MapWhileOk>(
         self,
         map_while_ok: MapWhileOk,
-    ) -> ParIterResult3<
-        Self::ConIter,
-        Out,
-        Err,
-        impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
-        R,
-    >
+    ) -> impl ParIterResult<R, Item = Out, Error = Err>
     where
-        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-        Err: Send + Sync;
+        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone;
+
+    // fn map_while_ok<Out, Err, MapWhileOk>(
+    //     self,
+    //     map_while_ok: MapWhileOk,
+    // ) -> ParIterResult3<
+    //     Self::ConIter,
+    //     Out,
+    //     Err,
+    //     impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
+    //     R,
+    // >
+    // where
+    //     MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+    //     Err: Send + Sync;
 
     // fn map_while_ok2<T, E, MapWhileOk>(
     //     self,

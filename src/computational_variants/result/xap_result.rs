@@ -30,6 +30,16 @@ where
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone,
 {
+    pub(crate) fn new(iter: I, params: Params, xap1: M1, map_res: Mr) -> Self {
+        Self {
+            iter,
+            params,
+            xap1,
+            map_res,
+            phantom: PhantomData,
+        }
+    }
+
     fn destruct(self) -> (Params, I, M1, Mr) {
         (self.params, self.iter, self.xap1, self.map_res)
     }

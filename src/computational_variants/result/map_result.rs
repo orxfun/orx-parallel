@@ -25,6 +25,15 @@ where
     I: ConcurrentIter,
     Mr: Fn(I::Item) -> Result<T, E> + Sync,
 {
+    pub(crate) fn new(iter: I, params: Params, map_res: Mr) -> Self {
+        Self {
+            iter,
+            params,
+            map_res,
+            phantom: PhantomData,
+        }
+    }
+
     fn destruct(self) -> (Params, I, Mr) {
         (self.params, self.iter, self.map_res)
     }
