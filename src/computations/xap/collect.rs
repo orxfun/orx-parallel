@@ -63,7 +63,7 @@ where
     {
         let (len, p) = self.len_and_params();
         match (p.is_sequential(), p.iteration_order) {
-            (true, _) => (0, Ok(self.sequential(pinned_vec))),
+            (true, _) => (0, self.try_sequential(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
                 let (nt, result) = collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
                 (nt, result.to_result())
