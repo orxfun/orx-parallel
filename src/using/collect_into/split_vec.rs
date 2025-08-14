@@ -2,7 +2,7 @@ use crate::collect_into::utils::split_vec_reserve;
 use crate::using::Using;
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
 use crate::using::computations::{UM, UX};
-use crate::{runner::ParallelRunner, values::Values};
+use crate::{runner::ParallelRunner, values::TransformableValues};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
@@ -29,7 +29,7 @@ where
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: TransformableValues<Item = O>,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());

@@ -1,7 +1,7 @@
 use super::super::thread_runner_compute as thread;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::{runner::ParallelRunnerCompute, values::Values};
+use crate::{runner::ParallelRunnerCompute, values::TransformableValues};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn u_m<C, U, I, O, M1>(runner: C, m: UM<U, I, O, M1>) -> (usize, Option<O>)
@@ -49,7 +49,7 @@ where
     C: ParallelRunnerCompute,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Item: Send,
     X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {

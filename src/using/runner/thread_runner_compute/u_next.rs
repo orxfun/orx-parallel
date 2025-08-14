@@ -1,7 +1,7 @@
 use crate::{
     ThreadRunner,
     runner::ThreadNext,
-    values::{Values, WhilstOption},
+    values::{TransformableValues, WhilstOption},
 };
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -74,7 +74,7 @@ pub fn u_x<C, U, I, Vo, X1>(
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     X1: Fn(&mut U, I::Item) -> Vo,
 {
     let u = &mut u;

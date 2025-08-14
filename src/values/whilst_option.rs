@@ -1,6 +1,6 @@
 use crate::values::runner_results::ValuesPush;
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
-use crate::values::{Values, WhilstVector};
+use crate::values::{TransformableValues, Values, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -66,68 +66,6 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn map<M, O>(self, map: M) -> impl Values<Item = O>
-    where
-        M: Fn(Self::Item) -> O + Clone,
-    {
-        match self {
-            Self::ContinueSome(x) => WhilstOption::ContinueSome(map(x)),
-            Self::ContinueNone => WhilstOption::ContinueNone,
-            Self::Stop => WhilstOption::Stop,
-        }
-    }
-
-    fn filter<F>(self, filter: F) -> impl Values<Item = Self::Item>
-    where
-        F: Fn(&Self::Item) -> bool + Clone,
-    {
-        match self {
-            Self::ContinueSome(x) => match filter(&x) {
-                true => Self::ContinueSome(x),
-                false => Self::ContinueNone,
-            },
-            Self::ContinueNone => Self::ContinueNone,
-            Self::Stop => Self::Stop,
-        }
-    }
-
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo + Clone,
-    {
-        let iter = WhilstOptionFlatMapIter::from_option(self, &flat_map);
-        WhilstVector(iter)
-    }
-
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl Values<Item = O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>,
-    {
-        match self {
-            Self::ContinueSome(x) => match filter_map(x) {
-                Some(x) => WhilstOption::ContinueSome(x),
-                None => WhilstOption::ContinueNone,
-            },
-            Self::ContinueNone => WhilstOption::ContinueNone,
-            Self::Stop => WhilstOption::Stop,
-        }
-    }
-
-    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
-    where
-        Self: Sized,
-    {
-        match self {
-            Self::ContinueSome(x) => match whilst(&x) {
-                true => Self::ContinueSome(x),
-                false => Self::Stop,
-            },
-            Self::ContinueNone => Self::ContinueNone,
-            Self::Stop => Self::Stop,
-        }
-    }
-
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
@@ -158,5 +96,72 @@ impl<T> Values for WhilstOption<T> {
 
     fn first(self) -> WhilstOption<Self::Item> {
         self
+    }
+}
+
+impl<T> TransformableValues for WhilstOption<T> {
+    fn map<M, O>(self, map: M) -> impl TransformableValues<Item = O>
+    where
+        M: Fn(Self::Item) -> O + Clone,
+    {
+        match self {
+            Self::ContinueSome(x) => WhilstOption::ContinueSome(map(x)),
+            Self::ContinueNone => WhilstOption::ContinueNone,
+            Self::Stop => WhilstOption::Stop,
+        }
+    }
+
+    fn filter<F>(self, filter: F) -> impl TransformableValues<Item = Self::Item>
+    where
+        F: Fn(&Self::Item) -> bool + Clone,
+    {
+        match self {
+            Self::ContinueSome(x) => match filter(&x) {
+                true => Self::ContinueSome(x),
+                false => Self::ContinueNone,
+            },
+            Self::ContinueNone => Self::ContinueNone,
+            Self::Stop => Self::Stop,
+        }
+    }
+
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl TransformableValues<Item = Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo + Clone,
+    {
+        let iter = WhilstOptionFlatMapIter::from_option(self, &flat_map);
+        WhilstVector(iter)
+    }
+
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl TransformableValues<Item = O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>,
+    {
+        match self {
+            Self::ContinueSome(x) => match filter_map(x) {
+                Some(x) => WhilstOption::ContinueSome(x),
+                None => WhilstOption::ContinueNone,
+            },
+            Self::ContinueNone => WhilstOption::ContinueNone,
+            Self::Stop => WhilstOption::Stop,
+        }
+    }
+
+    fn whilst(
+        self,
+        whilst: impl Fn(&Self::Item) -> bool,
+    ) -> impl TransformableValues<Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::ContinueSome(x) => match whilst(&x) {
+                true => Self::ContinueSome(x),
+                false => Self::Stop,
+            },
+            Self::ContinueNone => Self::ContinueNone,
+            Self::Stop => Self::Stop,
+        }
     }
 }

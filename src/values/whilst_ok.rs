@@ -68,54 +68,6 @@ where
         }
     }
 
-    fn map<M, O>(self, map: M) -> impl Values<Item = O>
-    where
-        M: Fn(Self::Item) -> O + Clone,
-    {
-        WhilstOk(match self.0 {
-            Ok(x) => Ok(map(x)),
-            Err(e) => Err(e),
-        })
-    }
-
-    fn filter<F>(self, filter: F) -> impl Values<Item = Self::Item>
-    where
-        F: Fn(&Self::Item) -> bool + Clone,
-    {
-        todo!("avoid computational variant transformations all at once");
-        WhilstOk(match self.0 {
-            Ok(x) => match filter(&x) {
-                true => Ok(x),
-                false => todo!(
-                    "we need a recursive Values definition, do we really need this? can we avoid filter?"
-                ),
-            },
-            Err(e) => Err(e),
-        })
-    }
-
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo + Clone,
-    {
-        todo!("avoid computational variant transformations all at once");
-        None
-    }
-
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl Values<Item = O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>,
-    {
-        todo!("avoid computational variant transformations all at once");
-        None
-    }
-
-    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item> {
-        todo!("avoid computational variant transformations all at once");
-        self
-    }
-
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,

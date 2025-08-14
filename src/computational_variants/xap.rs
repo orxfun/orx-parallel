@@ -1,7 +1,7 @@
 use crate::ParIterResult;
 use crate::computational_variants::result::ParXapResult;
 use crate::par_iter_result::ParIterResult3;
-use crate::values::{Values, WhilstOk, WhilstOkVector};
+use crate::values::{TransformableValues, WhilstOk, WhilstOkVector};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::X,
@@ -18,7 +18,7 @@ pub struct ParXap<I, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
@@ -30,7 +30,7 @@ impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
@@ -50,7 +50,7 @@ unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
@@ -60,7 +60,7 @@ unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
@@ -70,7 +70,7 @@ impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {

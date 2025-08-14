@@ -1,12 +1,12 @@
 use crate::using::Using;
-use crate::{ChunkSize, IterationOrder, NumThreads, Params, values::Values};
+use crate::{ChunkSize, IterationOrder, NumThreads, Params, values::TransformableValues};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(&mut U::Item, I::Item) -> Vo,
 {
     using: U,
@@ -19,7 +19,7 @@ impl<U, I, Vo, M1> UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(&mut U::Item, I::Item) -> Vo,
 {
     pub fn new(using: U, params: Params, iter: I, xap1: M1) -> Self {

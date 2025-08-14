@@ -3,7 +3,7 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     using::u_par_iter::ParIterUsing,
     using::{Using, computations::UX},
-    values::{Values, Vector},
+    values::{TransformableValues, Vector},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -16,7 +16,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     ux: UX<U, I, Vo, M1>,
@@ -28,7 +28,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(using: U, params: Params, iter: I, x1: M1) -> Self {
@@ -48,7 +48,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -58,7 +58,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -68,7 +68,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;

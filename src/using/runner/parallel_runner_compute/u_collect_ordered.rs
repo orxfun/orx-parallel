@@ -3,7 +3,7 @@ use crate::computations::heap_sort_into;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::values::Values;
+use crate::values::TransformableValues;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -58,7 +58,7 @@ where
     C: ParallelRunnerCompute,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Item: Send,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
