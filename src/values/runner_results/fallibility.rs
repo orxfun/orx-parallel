@@ -1,17 +1,17 @@
 use std::marker::PhantomData;
 
-pub trait Fallibility {
-    type Error;
+pub trait Fallability {
+    type Error: Send;
 }
 
 pub struct Infallible;
 
-impl Fallibility for Infallible {
+impl Fallability for Infallible {
     type Error = ();
 }
 
 pub struct Fallible<E>(PhantomData<E>);
 
-impl<E> Fallibility for Fallible<E> {
+impl<E: Send> Fallability for Fallible<E> {
     type Error = E;
 }

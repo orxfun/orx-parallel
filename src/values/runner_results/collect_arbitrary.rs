@@ -1,23 +1,23 @@
-use crate::values::Values;
+use crate::values::{Values, runner_results::Fallability};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_split_vec::PseudoDefault;
 
-pub enum ArbitraryPush<E> {
+pub enum ArbitraryPush<F: Fallability> {
     Done,
     StoppedByWhileCondition,
-    StoppedByError { error: E },
+    StoppedByError { error: F::Error },
 }
 
-pub enum ThreadCollectArbitrary<V>
+pub enum ThreadCollectArbitrary<F>
 where
-    V: Values,
+    F: Fallability,
 {
     AllCollected,
     StoppedByWhileCondition,
-    StoppedByError { error: V::Error },
+    StoppedByError { error: F::Error },
 }
 
-impl<V: Values> core::fmt::Debug for ThreadCollectArbitrary<V> {
+impl<F: Fallability> core::fmt::Debug for ThreadCollectArbitrary<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::AllCollected => write!(f, "AllCollected"),
@@ -27,8 +27,8 @@ impl<V: Values> core::fmt::Debug for ThreadCollectArbitrary<V> {
     }
 }
 
-impl<V: Values> ThreadCollectArbitrary<V> {
-    pub fn into_result(self) -> Result<Self, V::Error> {
+impl<F: Fallability> ThreadCollectArbitrary<F> {
+    pub fn into_result(self) -> Result<Self, F::Error> {
         match self {
             Self::StoppedByError { error } => Err(error),
             _ => Ok(self),
@@ -41,9 +41,15 @@ where
     V: Values,
     P: IntoConcurrentPinnedVec<V::Item>,
 {
-    AllCollected { pinned_vec: P },
-    StoppedByWhileCondition { pinned_vec: P },
-    StoppedByError { error: V::Error },
+    AllCollected {
+        pinned_vec: P,
+    },
+    StoppedByWhileCondition {
+        pinned_vec: P,
+    },
+    StoppedByError {
+        error: <V::Fallability as Fallability>::Error,
+    },
 }
 
 impl<V, P> core::fmt::Debug for ParallelCollectArbitrary<V, P>
@@ -80,7 +86,7 @@ where
         }
     }
 
-    pub fn to_result(self) -> Result<P, V::Error> {
+    pub fn to_result(self) -> Result<P, <V::Fallability as Fallability>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),
             Self::StoppedByWhileCondition { pinned_vec } => Ok(pinned_vec),

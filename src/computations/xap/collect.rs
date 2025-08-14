@@ -1,5 +1,6 @@
 use super::x::X;
 use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
+use crate::values::runner_results::Fallability;
 use crate::{
     IterationOrder,
     runner::{ParallelRunner, ParallelRunnerCompute},
@@ -13,7 +14,6 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    Vo::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
@@ -41,7 +41,10 @@ where
         }
     }
 
-    pub fn try_collect_into<R, P>(self, pinned_vec: P) -> (usize, Result<P, Vo::Error>)
+    pub fn try_collect_into<R, P>(
+        self,
+        pinned_vec: P,
+    ) -> (usize, Result<P, <Vo::Fallability as Fallability>::Error>)
     where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<Vo::Item>,

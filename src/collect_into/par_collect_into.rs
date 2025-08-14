@@ -2,6 +2,7 @@ use crate::computations::{M, X};
 use crate::runner::ParallelRunner;
 use crate::using::UParCollectIntoCore;
 use crate::values::Values;
+use crate::values::runner_results::Fallability;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
@@ -22,15 +23,16 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Error: Send,
         M1: Fn(I::Item) -> Vo + Sync;
 
-    fn x_try_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Result<Self, Vo::Error>
+    fn x_try_collect_into<R, I, Vo, M1>(
+        self,
+        x: X<I, Vo, M1>,
+    ) -> Result<Self, <Vo::Fallability as Fallability>::Error>
     where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Error: Send,
         M1: Fn(I::Item) -> Vo + Sync,
         Self: Sized;
 

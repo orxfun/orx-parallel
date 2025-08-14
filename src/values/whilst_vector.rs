@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, WhilstAtom, WhilstOption,
-    runner_results::{ArbitraryPush, Infallible, OrderedPush},
+    runner_results::{ArbitraryPush, Fallability, Fallible, Infallible, OrderedPush},
     whilst_iterators::WhilstAtomFlatMapIter,
     whilst_vector_result::WhilstVectorResult,
 };
@@ -19,9 +19,7 @@ where
 {
     type Item = T;
 
-    type Error = ();
-
-    type Fallibility = Infallible;
+    type Fallability = Infallible;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
@@ -45,7 +43,7 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallability> {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(x) => vec.push((idx, x)),
@@ -55,7 +53,7 @@ where
         OrderedPush::Done
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallability>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -212,7 +210,7 @@ where
         WhilstVector(iter)
     }
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallability = Fallible<E>>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,

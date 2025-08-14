@@ -5,4 +5,4 @@ mod fallibility;
 
 pub use collect_arbitrary::{ArbitraryPush, ParallelCollectArbitrary, ThreadCollectArbitrary};
 pub use collect_ordered::{OrderedPush, ParallelCollect, ThreadCollect};
-pub use fallibility::{Fallibility, Fallible, Infallible};
+pub use fallibility::{Fallability, Fallible, Infallible};

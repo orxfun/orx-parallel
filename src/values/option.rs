@@ -2,7 +2,7 @@ use super::{TransformableValues, Vector};
 use crate::values::{
     Values,
     option_result::OptionResult,
-    runner_results::{ArbitraryPush, Infallible, OrderedPush},
+    runner_results::{ArbitraryPush, Fallability, Fallible, Infallible, OrderedPush},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -11,9 +11,7 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 impl<T> Values for Option<T> {
     type Item = T;
 
-    type Error = ();
-
-    type Fallibility = Infallible;
+    type Fallability = Infallible;
 
     #[inline(always)]
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
@@ -36,7 +34,7 @@ impl<T> Values for Option<T> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallability> {
         if let Some(x) = self {
             vec.push((idx, x));
         }
@@ -44,7 +42,7 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallability>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -146,7 +144,7 @@ impl<T> TransformableValues for Option<T> {
         }
     }
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallability = Fallible<E>>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,

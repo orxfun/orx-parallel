@@ -1,4 +1,4 @@
-use crate::values::values::Values;
+use crate::values::{runner_results::Fallible, values::Values};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
@@ -26,7 +26,10 @@ pub trait TransformableValues: Values {
         whilst: impl Fn(&Self::Item) -> bool,
     ) -> impl TransformableValues<Item = Self::Item>;
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    fn map_while_ok<Mr, O, E>(
+        self,
+        map_res: Mr,
+    ) -> impl Values<Item = O, Fallability = Fallible<E>>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send;

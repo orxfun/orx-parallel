@@ -84,7 +84,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result: ThreadCollectArbitrary<Vo> = std::thread::scope(|s| {
+    let result: ThreadCollectArbitrary<Vo::Fallability> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
