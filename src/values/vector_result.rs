@@ -1,6 +1,6 @@
 use crate::values::{
     Values, WhilstOption,
-    runner_results::{ArbitraryPush, Fallibility, Fallible, OrderedPush},
+    runner_results::{ArbitraryPush, Fallibility, Fallible, OrderedPush, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -25,17 +25,17 @@ where
         core::iter::empty()
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
             match x {
                 Ok(x) => vector.push(x),
-                Err(e) => return true,
+                Err(error) => return SequentialPush::StoppedByError { error },
             }
         }
-        false
+        SequentialPush::Done
     }
 
     fn push_to_vec_with_idx(

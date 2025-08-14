@@ -1,4 +1,6 @@
-use crate::values::runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush};
+use crate::values::runner_results::{
+    ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush,
+};
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
 use crate::values::whilst_option_result::WhilstOptionResult;
 use crate::values::{TransformableValues, Values, WhilstVector};
@@ -23,17 +25,17 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         match self {
             Self::ContinueSome(x) => {
                 vector.push(x);
-                false
+                SequentialPush::Done
             }
-            Self::ContinueNone => false,
-            Self::Stop => true,
+            Self::ContinueNone => SequentialPush::Done,
+            Self::Stop => SequentialPush::StoppedByWhileCondition,
         }
     }
 

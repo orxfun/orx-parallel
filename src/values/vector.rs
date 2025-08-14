@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush},
+    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -24,14 +24,14 @@ where
     }
 
     #[inline(always)]
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
             vector.push(x);
         }
-        false
+        SequentialPush::Done
     }
 
     #[inline(always)]

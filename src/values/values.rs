@@ -1,6 +1,6 @@
 use crate::values::{
     WhilstOption,
-    runner_results::{ArbitraryPush, Fallibility, OrderedPush, Stop, StopWithIdx},
+    runner_results::{ArbitraryPush, Fallibility, OrderedPush, SequentialPush, Stop, StopWithIdx},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -14,7 +14,7 @@ pub trait Values {
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item>;
 
     /// Returns true if the computation must early exit.
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>;
 

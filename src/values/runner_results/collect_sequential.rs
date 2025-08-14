@@ -1,10 +1,7 @@
-use crate::{computations::heap_sort_into, values::Values};
-use core::fmt::Debug;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
-use orx_split_vec::PseudoDefault;
+use crate::values::runner_results::Fallibility;
 
-pub enum SequentialPush<E> {
+pub enum SequentialPush<F: Fallibility> {
     Done,
     StoppedByWhileCondition,
-    StoppedByError { error: E },
+    StoppedByError { error: F::Error },
 }

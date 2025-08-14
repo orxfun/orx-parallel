@@ -2,7 +2,7 @@ use super::{TransformableValues, Vector};
 use crate::values::{
     Values,
     option_result::OptionResult,
-    runner_results::{ArbitraryPush, Fallibility, Fallible, Infallible, OrderedPush},
+    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -19,14 +19,14 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         if let Some(x) = self {
             vector.push(x)
         }
-        false
+        SequentialPush::Done
     }
 
     #[inline(always)]

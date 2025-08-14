@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, WhilstAtom, WhilstOption,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush},
+    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush},
     whilst_iterators::WhilstAtomFlatMapIter,
     whilst_vector_result::WhilstVectorResult,
 };
@@ -26,17 +26,17 @@ where
         core::iter::empty()
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(x) => vector.push(x),
-                WhilstAtom::Stop => return true,
+                WhilstAtom::Stop => return SequentialPush::StoppedByWhileCondition,
             }
         }
-        false
+        SequentialPush::Done
     }
 
     fn push_to_vec_with_idx(
