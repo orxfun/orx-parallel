@@ -1,7 +1,7 @@
 use crate::ParIterResult;
 use crate::computational_variants::result::ParXapResult;
 use crate::par_iter_result::ParIterResult3;
-use crate::values::{TransformableValues, WhilstOk, WhilstOkVector};
+use crate::values::{TransformableValues, WhilstOk, VectorOk};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::X,
