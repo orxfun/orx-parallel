@@ -1,6 +1,6 @@
 use crate::values::{
     WhilstOption,
-    runner_results::{ArbitraryPush, Fallibility, OrderedPush},
+    runner_results::{ArbitraryPush, Fallibility, OrderedPush, StopWithIdx},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -45,4 +45,13 @@ pub trait Values {
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item;
 
     fn first(self) -> WhilstOption<Self::Item>;
+
+    // provided
+
+    #[inline(always)]
+    fn ordered_push_to_stop(
+        ordered_push: OrderedPush<Self::Fallibility>,
+    ) -> Option<StopWithIdx<<Self::Fallibility as Fallibility>::Error>> {
+        <Self::Fallibility as Fallibility>::ordered_push_to_stop(ordered_push)
+    }
 }
