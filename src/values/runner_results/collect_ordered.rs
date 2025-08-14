@@ -127,6 +127,7 @@ where
                 stopped_idx: _,
             } => pinned_vec,
             Self::StoppedByError { error: _ } => PseudoDefault::pseudo_default(),
+            // TODO: we should not be needing PseudoDefault
         }
     }
 

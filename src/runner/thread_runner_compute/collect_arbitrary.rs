@@ -1,5 +1,6 @@
-use crate::ThreadRunner;
 use crate::values::Values;
+use crate::values::runner_results::ThreadCollectArbitrary;
+use crate::{ThreadRunner, values::runner_results::ArbitraryPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -59,7 +60,8 @@ pub fn x<C, I, Vo, X1, P>(
     shared_state: &C::SharedState,
     xap1: &X1,
     bag: &ConcurrentBag<Vo::Item, P>,
-) where
+) -> ThreadCollectArbitrary<Vo>
+where
     C: ThreadRunner,
     I: ConcurrentIter,
     Vo: Values,
@@ -80,13 +82,22 @@ pub fn x<C, I, Vo, X1, P>(
                 Some(value) => {
                     // TODO: possible to try to get len and bag.extend(values_vt.values()) when available, same holds for chunk below
                     let vo = xap1(value);
-                    let stop = vo.push_to_bag(bag);
+                    let done = vo.push_to_bag(bag);
 
-                    if stop {
-                        iter.skip_to_end();
-                        runner.complete_chunk(shared_state, chunk_size);
-                        runner.complete_task(shared_state);
-                        return;
+                    match done {
+                        ArbitraryPush::Done => {}
+                        ArbitraryPush::StoppedByWhileCondition => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return ThreadCollectArbitrary::StoppedByWhileCondition;
+                        }
+                        ArbitraryPush::StoppedByError { error } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return ThreadCollectArbitrary::StoppedByError { error };
+                        }
                     }
                 }
                 None => break,
@@ -100,13 +111,22 @@ pub fn x<C, I, Vo, X1, P>(
                     Some(chunk) => {
                         for value in chunk {
                             let vo = xap1(value);
-                            let stop = vo.push_to_bag(bag);
+                            let done = vo.push_to_bag(bag);
 
-                            if stop {
-                                iter.skip_to_end();
-                                runner.complete_chunk(shared_state, chunk_size);
-                                runner.complete_task(shared_state);
-                                return;
+                            match done {
+                                ArbitraryPush::Done => {}
+                                ArbitraryPush::StoppedByWhileCondition => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return ThreadCollectArbitrary::StoppedByWhileCondition;
+                                }
+                                ArbitraryPush::StoppedByError { error } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return ThreadCollectArbitrary::StoppedByError { error };
+                                }
                             }
                         }
                     }
@@ -119,4 +139,6 @@ pub fn x<C, I, Vo, X1, P>(
     }
 
     runner.complete_task(shared_state);
+
+    ThreadCollectArbitrary::AllCollected
 }
