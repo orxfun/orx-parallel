@@ -1,7 +1,7 @@
 use crate::computations::X;
 use crate::par_iter_result::ParIterResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::values::{Values, WhilstOk, VectorOk};
+use crate::values::{Values, Okay, VectorOk};
 use crate::{ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -71,7 +71,7 @@ where
             let v1: Vo = xap(i);
             let iter = v1.values_to_depracate().into_iter();
             let mr = mr.clone();
-            let iter_result = iter.map(move |x| WhilstOk(mr(x)));
+            let iter_result = iter.map(move |x| Okay(mr(x)));
             VectorOk(iter_result)
         };
         let x = X::new(params, iter, x1);

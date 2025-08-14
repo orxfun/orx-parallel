@@ -1,7 +1,7 @@
 use crate::{
     DefaultRunner, ParCollectInto, ParallelRunner,
     computations::X,
-    values::{TransformableValues, WhilstOk},
+    values::{TransformableValues, Okay},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -10,10 +10,10 @@ pub struct ParIterResult3<I, T, E, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
+    M1: Fn(I::Item) -> Okay<T, E> + Sync,
     E: Send,
 {
-    x: X<I, WhilstOk<T, E>, M1>,
+    x: X<I, Okay<T, E>, M1>,
     con_iter_len: Option<usize>,
     phantom: PhantomData<R>,
 }
@@ -22,10 +22,10 @@ impl<I, T, E, M1, R> ParIterResult3<I, T, E, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    M1: Fn(I::Item) -> WhilstOk<T, E> + Sync,
+    M1: Fn(I::Item) -> Okay<T, E> + Sync,
     E: Send,
 {
-    pub(crate) fn new(x: X<I, WhilstOk<T, E>, M1>, con_iter_len: Option<usize>) -> Self {
+    pub(crate) fn new(x: X<I, Okay<T, E>, M1>, con_iter_len: Option<usize>) -> Self {
         Self {
             x,
             con_iter_len,

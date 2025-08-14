@@ -1,6 +1,6 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, VectorOk, WhilstAtom, WhilstOk, WhilstOption, WhilstVector, runner_results::ValuesPush,
+    Okay, Values, VectorOk, WhilstAtom, WhilstOption, WhilstVector, runner_results::ValuesPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -152,7 +152,7 @@ where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
     {
-        let iter = self.0.into_iter().map(move |x| WhilstOk(map_res(x)));
+        let iter = self.0.into_iter().map(move |x| Okay(map_res(x)));
         VectorOk(iter)
     }
 }

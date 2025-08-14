@@ -1,6 +1,6 @@
 use crate::values::runner_results::ValuesPush;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
-use crate::values::{TransformableValues, Values, WhilstOk, WhilstOption, WhilstVector};
+use crate::values::{Okay, TransformableValues, Values, WhilstOption, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -174,7 +174,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         E: Send,
     {
         match self {
-            Self::Continue(x) => WhilstOk::new(map_res(x)),
+            Self::Continue(x) => Okay::new(map_res(x)),
             Self::Stop => todo!(),
         }
     }

@@ -3,7 +3,7 @@ use crate::ParIterResult;
 use crate::computational_variants::result::ParMapResult;
 use crate::computations::X;
 use crate::par_iter_result::ParIterResult3;
-use crate::values::{Vector, WhilstAtom, WhilstOk};
+use crate::values::{Vector, WhilstAtom, Okay};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::M,

@@ -8,15 +8,15 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 ///   the only relevant value is the created error.
 /// * Computed values are relevant iff entire inputs result in an Ok variant.
 /// * Therefore, observation of an error case allows to immediately stop computation.
-pub struct WhilstOk<T, E>(pub(crate) Result<T, E>);
+pub struct Okay<T, E>(pub(crate) Result<T, E>);
 
-impl<T, E> WhilstOk<T, E> {
+impl<T, E> Okay<T, E> {
     pub fn new(result: Result<T, E>) -> Self {
         Self(result)
     }
 }
 
-impl<T, E> Values for WhilstOk<T, E>
+impl<T, E> Values for Okay<T, E>
 where
     E: Send,
 {

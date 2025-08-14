@@ -1,16 +1,16 @@
-use crate::values::{Values, WhilstOk, WhilstOption, runner_results::ValuesPush};
+use crate::values::{Okay, Values, WhilstOption, runner_results::ValuesPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
 pub struct VectorOk<I, T, E>(pub(crate) I)
 where
-    I: IntoIterator<Item = WhilstOk<T, E>>,
+    I: IntoIterator<Item = Okay<T, E>>,
     E: Send;
 
 impl<I, T, E> Values for VectorOk<I, T, E>
 where
-    I: IntoIterator<Item = WhilstOk<T, E>>,
+    I: IntoIterator<Item = Okay<T, E>>,
     E: Send,
 {
     type Item = T;

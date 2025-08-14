@@ -1,6 +1,6 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, WhilstAtom, WhilstOk, WhilstOption, runner_results::ValuesPush,
+    Values, WhilstAtom, Okay, WhilstOption, runner_results::ValuesPush,
     whilst_iterators::WhilstAtomFlatMapIter,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -214,7 +214,7 @@ where
         E: Send,
     {
         match self.0.into_iter().next().unwrap() {
-            WhilstAtom::Continue(x) => WhilstOk::new(map_res(x)),
+            WhilstAtom::Continue(x) => Okay::new(map_res(x)),
             _ => todo!(),
         }
     }
