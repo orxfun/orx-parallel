@@ -1,4 +1,4 @@
-use crate::values::runner_results::ValuesPush;
+use crate::values::runner_results::OrderedPush;
 use crate::values::whilst_atom_result::WhilstAtomResult;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
@@ -49,13 +49,13 @@ impl<T> Values for WhilstAtom<T> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         match self {
             Self::Continue(x) => {
                 vec.push((idx, x));
-                ValuesPush::Done
+                OrderedPush::Done
             }
-            Self::Stop => ValuesPush::StoppedByWhileCondition { idx },
+            Self::Stop => OrderedPush::StoppedByWhileCondition { idx },
         }
     }
 

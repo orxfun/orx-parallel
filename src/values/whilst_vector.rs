@@ -1,6 +1,6 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, WhilstAtom, WhilstOption, runner_results::ValuesPush,
+    Values, WhilstAtom, WhilstOption, runner_results::OrderedPush,
     whilst_iterators::WhilstAtomFlatMapIter, whilst_vector_result::WhilstVectorResult,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -41,14 +41,14 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(x) => vec.push((idx, x)),
-                WhilstAtom::Stop => return ValuesPush::StoppedByWhileCondition { idx },
+                WhilstAtom::Stop => return OrderedPush::StoppedByWhileCondition { idx },
             }
         }
-        ValuesPush::Done
+        OrderedPush::Done
     }
 
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool

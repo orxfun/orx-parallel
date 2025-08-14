@@ -1,6 +1,6 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector, runner_results::ValuesPush,
+    Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector, runner_results::OrderedPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -38,11 +38,11 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         for x in self.0 {
             vec.push((idx, x));
         }
-        ValuesPush::Done
+        OrderedPush::Done
     }
 
     #[inline(always)]

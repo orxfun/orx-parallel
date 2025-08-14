@@ -1,6 +1,6 @@
 use crate::ThreadRunner;
 use crate::values::runner_results::ThreadCollect;
-use crate::values::{Values, runner_results::ValuesPush};
+use crate::values::{Values, runner_results::OrderedPush};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -82,8 +82,8 @@ where
                     let done = vo.push_to_vec_with_idx(idx, out_vec);
 
                     match done {
-                        ValuesPush::Done => {}
-                        ValuesPush::StoppedByWhileCondition { idx } => {
+                        OrderedPush::Done => {}
+                        OrderedPush::StoppedByWhileCondition { idx } => {
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
@@ -92,7 +92,7 @@ where
                                 stopped_idx: idx,
                             };
                         }
-                        ValuesPush::StoppedByError { idx: _, error } => {
+                        OrderedPush::StoppedByError { idx: _, error } => {
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
@@ -113,8 +113,8 @@ where
                             let vo = xap1(value);
                             let done = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
                             match done {
-                                ValuesPush::Done => {}
-                                ValuesPush::StoppedByWhileCondition { idx } => {
+                                OrderedPush::Done => {}
+                                OrderedPush::StoppedByWhileCondition { idx } => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
@@ -123,7 +123,7 @@ where
                                         stopped_idx: idx + within_chunk_idx,
                                     };
                                 }
-                                ValuesPush::StoppedByError { idx: _, error } => {
+                                OrderedPush::StoppedByError { idx: _, error } => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);

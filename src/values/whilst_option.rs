@@ -1,4 +1,4 @@
-use crate::values::runner_results::ValuesPush;
+use crate::values::runner_results::OrderedPush;
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
 use crate::values::whilst_option_result::WhilstOptionResult;
 use crate::values::{TransformableValues, Values, WhilstVector};
@@ -41,14 +41,14 @@ impl<T> Values for WhilstOption<T> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         match self {
             Self::ContinueSome(x) => {
                 vec.push((idx, x));
-                ValuesPush::Done
+                OrderedPush::Done
             }
-            Self::ContinueNone => ValuesPush::Done,
-            Self::Stop => ValuesPush::StoppedByWhileCondition { idx },
+            Self::ContinueNone => OrderedPush::Done,
+            Self::Stop => OrderedPush::StoppedByWhileCondition { idx },
         }
     }
 

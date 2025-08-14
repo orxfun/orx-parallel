@@ -1,4 +1,4 @@
-use crate::values::{Values, runner_results::ValuesPush, whilst_option::WhilstOption};
+use crate::values::{Values, runner_results::OrderedPush, whilst_option::WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -37,14 +37,14 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         match self.0 {
             Some(Ok(x)) => {
                 vec.push((idx, x));
-                ValuesPush::Done
+                OrderedPush::Done
             }
-            Some(Err(error)) => ValuesPush::StoppedByError { idx, error },
-            None => ValuesPush::Done,
+            Some(Err(error)) => OrderedPush::StoppedByError { idx, error },
+            None => OrderedPush::Done,
         }
     }
 

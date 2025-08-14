@@ -1,6 +1,6 @@
 use super::{TransformableValues, Vector};
 use crate::values::{
-    Values, option_result::OptionResult, runner_results::ValuesPush, whilst_option::WhilstOption,
+    Values, option_result::OptionResult, runner_results::OrderedPush, whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -31,11 +31,11 @@ impl<T> Values for Option<T> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         if let Some(x) = self {
             vec.push((idx, x));
         }
-        ValuesPush::Done
+        OrderedPush::Done
     }
 
     #[inline(always)]

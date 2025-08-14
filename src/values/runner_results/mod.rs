@@ -1,3 +1,3 @@
 mod collect_ordered;
 
-pub use collect_ordered::{ParallelCollect, ThreadCollect, ValuesPush};
+pub use collect_ordered::{OrderedPush, ParallelCollect, ThreadCollect};

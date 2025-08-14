@@ -3,7 +3,7 @@ use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_split_vec::PseudoDefault;
 
-pub enum ValuesPush<E> {
+pub enum OrderedPush<E> {
     Done,
     StoppedByWhileCondition { idx: usize },
     StoppedByError { idx: usize, error: E },
@@ -37,7 +37,7 @@ impl<V: Values> Debug for ThreadCollect<V> {
                 .field("vec-len", &vec.len())
                 .field("stopped_idx", stopped_idx)
                 .finish(),
-            Self::StoppedByError { error } => f.debug_struct("StoppedByError").finish(),
+            Self::StoppedByError { error: _ } => f.debug_struct("StoppedByError").finish(),
         }
     }
 }
@@ -47,16 +47,6 @@ impl<V: Values> ThreadCollect<V> {
         match self {
             Self::StoppedByError { error } => Err(error),
             _ => Ok(self),
-        }
-    }
-
-    pub fn get_while_stop_idx(&self) -> Option<usize> {
-        match &self {
-            Self::StoppedByWhileCondition {
-                vec: _,
-                stopped_idx,
-            } => Some(*stopped_idx),
-            _ => None,
         }
     }
 }
@@ -90,7 +80,7 @@ where
                 .field("pinned_vec_len", &pinned_vec.len())
                 .field("stopped_idx", stopped_idx)
                 .finish(),
-            Self::StoppedByError { error } => f.debug_struct("StoppedByError").finish(),
+            Self::StoppedByError { error: _ } => f.debug_struct("StoppedByError").finish(),
         }
     }
 }
@@ -118,10 +108,6 @@ where
             }
         }
 
-        let idx_vectors: Vec<Vec<_>> = vectors
-            .iter()
-            .map(|x| x.iter().map(|x| x.0).collect())
-            .collect();
         heap_sort_into(vectors, min_stopped_idx, &mut pinned_vec);
 
         match min_stopped_idx {

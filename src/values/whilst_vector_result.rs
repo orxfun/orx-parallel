@@ -1,4 +1,4 @@
-use crate::values::{Values, WhilstAtom, WhilstOption, runner_results::ValuesPush};
+use crate::values::{Values, WhilstAtom, WhilstOption, runner_results::OrderedPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
@@ -40,17 +40,17 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(Ok(x)) => vec.push((idx, x)),
                 WhilstAtom::Continue(Err(error)) => {
-                    return ValuesPush::StoppedByError { idx, error };
+                    return OrderedPush::StoppedByError { idx, error };
                 }
-                WhilstAtom::Stop => return ValuesPush::StoppedByWhileCondition { idx },
+                WhilstAtom::Stop => return OrderedPush::StoppedByWhileCondition { idx },
             }
         }
-        ValuesPush::Done
+        OrderedPush::Done
     }
 
     fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool

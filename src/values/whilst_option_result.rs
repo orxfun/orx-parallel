@@ -1,4 +1,4 @@
-use crate::values::runner_results::ValuesPush;
+use crate::values::runner_results::OrderedPush;
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
@@ -46,15 +46,15 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         match self {
             Self::ContinueSomeOk(x) => {
                 vec.push((idx, x));
-                ValuesPush::Done
+                OrderedPush::Done
             }
-            Self::ContinueNone => ValuesPush::Done,
-            Self::StopErr(error) => ValuesPush::StoppedByError { idx, error },
-            Self::StopWhile => ValuesPush::StoppedByWhileCondition { idx },
+            Self::ContinueNone => OrderedPush::Done,
+            Self::StopErr(error) => OrderedPush::StoppedByError { idx, error },
+            Self::StopWhile => OrderedPush::StoppedByWhileCondition { idx },
         }
     }
 

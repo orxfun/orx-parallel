@@ -1,4 +1,4 @@
-use crate::values::{Values, WhilstOption, runner_results::ValuesPush};
+use crate::values::{Values, WhilstOption, runner_results::OrderedPush};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -37,13 +37,17 @@ where
         }
     }
 
-    fn push_to_vec_with_idx(self, idx: usize, vec: &mut Vec<(usize, Self::Item)>) -> ValuesPush<E> {
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> OrderedPush<E> {
         match self {
             Ok(x) => {
                 vec.push((idx, x));
-                ValuesPush::Done
+                OrderedPush::Done
             }
-            Err(error) => ValuesPush::StoppedByError { idx, error },
+            Err(error) => OrderedPush::StoppedByError { idx, error },
         }
     }
 
