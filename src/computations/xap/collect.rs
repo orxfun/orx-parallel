@@ -1,7 +1,7 @@
 use super::x::X;
 use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
 use crate::values::runner_results::{
-    Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary,
+    Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
 use crate::{
     IterationOrder,
@@ -93,24 +93,27 @@ where
         pinned_vec
     }
 
-    // fn try_sequential<P>(
-    //     self,
-    //     mut pinned_vec: P,
-    // ) -> Result<P, <Vo::Fallibility as Fallibility>::Error>
-    // where
-    //     P: IntoConcurrentPinnedVec<Vo::Item>,
-    // {
-    //     let (_, iter, xap1) = self.destruct();
+    fn try_sequential<P>(
+        self,
+        mut pinned_vec: P,
+    ) -> Result<P, <Vo::Fallibility as Fallibility>::Error>
+    where
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        let (_, iter, xap1) = self.destruct();
 
-    //     let iter = iter.into_seq_iter();
-    //     for i in iter {
-    //         let vt = xap1(i);
-    //         let done = vt.push_to_pinned_vec(&mut pinned_vec);
-    //         if let Some(_) = Vo::sequential_push_to_stop(done) {
-    //             break;
-    //         }
-    //     }
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = xap1(i);
+            let done = vt.push_to_pinned_vec(&mut pinned_vec);
+            if let Some(stop) = Vo::sequential_push_to_stop(done) {
+                match stop {
+                    Stop::DueToWhile => return Ok(pinned_vec),
+                    Stop::DueToError { error } => return Err(error),
+                }
+            }
+        }
 
-    //     pinned_vec
-    // }
+        Ok(pinned_vec)
+    }
 }
