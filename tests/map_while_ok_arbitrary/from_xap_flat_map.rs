@@ -64,12 +64,12 @@ fn map_while_ok_from_xap_flat_map_whilst_when_ok() {
         .into_par()
         .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
-        .take_while(|i| i < &777)
+        .take_while(|i| i < &2777)
         .map_while_ok(map_res)
         .collect();
     let expected = input
         .flat_map(flat_map)
-        .take_while(|i| i < &777)
+        .take_while(|i| i < &2777)
         .map(map_res)
         .collect();
 
