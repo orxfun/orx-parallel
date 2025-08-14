@@ -1,7 +1,9 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, WhilstAtom, WhilstOption, runner_results::OrderedPush,
-    whilst_iterators::WhilstAtomFlatMapIter, whilst_vector_result::WhilstVectorResult,
+    Values, WhilstAtom, WhilstOption,
+    runner_results::{ArbitraryPush, OrderedPush},
+    whilst_iterators::WhilstAtomFlatMapIter,
+    whilst_vector_result::WhilstVectorResult,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -51,7 +53,7 @@ where
         OrderedPush::Done
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -59,10 +61,10 @@ where
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(x) => _ = bag.push(x),
-                WhilstAtom::Stop => return true,
+                WhilstAtom::Stop => return ArbitraryPush::StoppedByWhileCondition,
             }
         }
-        false
+        ArbitraryPush::Done
     }
 
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)

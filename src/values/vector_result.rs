@@ -1,4 +1,7 @@
-use crate::values::{Values, WhilstOption, runner_results::OrderedPush};
+use crate::values::{
+    Values, WhilstOption,
+    runner_results::{ArbitraryPush, OrderedPush},
+};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
@@ -49,7 +52,7 @@ where
         OrderedPush::Done
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -57,10 +60,10 @@ where
         for x in self.0 {
             match x {
                 Ok(x) => _ = bag.push(x),
-                Err(e) => return true,
+                Err(error) => return ArbitraryPush::StoppedByError { error },
             }
         }
-        false
+        ArbitraryPush::Done
     }
 
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)

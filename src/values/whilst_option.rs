@@ -1,4 +1,4 @@
-use crate::values::runner_results::OrderedPush;
+use crate::values::runner_results::{ArbitraryPush, OrderedPush};
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
 use crate::values::whilst_option_result::WhilstOptionResult;
 use crate::values::{TransformableValues, Values, WhilstVector};
@@ -52,7 +52,7 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -60,10 +60,10 @@ impl<T> Values for WhilstOption<T> {
         match self {
             Self::ContinueSome(x) => {
                 bag.push(x);
-                false
+                ArbitraryPush::Done
             }
-            Self::ContinueNone => false,
-            Self::Stop => true,
+            Self::ContinueNone => ArbitraryPush::Done,
+            Self::Stop => ArbitraryPush::StoppedByWhileCondition,
         }
     }
 

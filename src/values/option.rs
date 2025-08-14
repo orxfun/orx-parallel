@@ -1,6 +1,9 @@
 use super::{TransformableValues, Vector};
 use crate::values::{
-    Values, option_result::OptionResult, runner_results::OrderedPush, whilst_option::WhilstOption,
+    Values,
+    option_result::OptionResult,
+    runner_results::{ArbitraryPush, OrderedPush},
+    whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -39,7 +42,7 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -47,7 +50,7 @@ impl<T> Values for Option<T> {
         if let Some(x) = self {
             bag.push(x);
         }
-        false
+        ArbitraryPush::Done
     }
 
     #[inline(always)]
