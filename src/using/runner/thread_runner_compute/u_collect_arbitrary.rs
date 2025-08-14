@@ -82,7 +82,7 @@ pub fn u_x<C, U, I, Vo, X1, P>(
                 Some(value) => {
                     // TODO: possible to try to get len and bag.extend(values_vt.values()) when available, same holds for chunk below
                     let values_vt = xap1(&mut u, value);
-                    for x in values_vt.values() {
+                    for x in values_vt.values_to_depracate() {
                         bag.push(x);
                     }
                 }
@@ -97,7 +97,7 @@ pub fn u_x<C, U, I, Vo, X1, P>(
                     Some(chunk) => {
                         for value in chunk {
                             let values_vt = xap1(&mut u, value);
-                            for x in values_vt.values() {
+                            for x in values_vt.values_to_depracate() {
                                 bag.push(x);
                             }
                         }

@@ -8,7 +8,7 @@ pub trait Values {
 
     type Error: Send;
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item>;
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item>;
 
     /// Returns true if the computation must early exit.
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool

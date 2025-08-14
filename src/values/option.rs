@@ -9,7 +9,7 @@ impl<T> Values for Option<T> {
     type Error = ();
 
     #[inline(always)]
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         self
     }
 

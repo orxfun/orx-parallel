@@ -19,7 +19,7 @@ where
 
     type Error = ();
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
         core::iter::empty()
     }

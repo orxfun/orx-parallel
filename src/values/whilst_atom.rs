@@ -24,7 +24,7 @@ impl<T> Values for WhilstAtom<T> {
 
     type Error = ();
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         match self {
             Self::Continue(x) => Some(x).into_iter(),
             _ => None.into_iter(),

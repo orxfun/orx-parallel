@@ -112,7 +112,11 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
+            let vo: Vec<_> = x1(u, i)
+                .values_to_depracate()
+                .into_iter()
+                .map(|x| map(u, x))
+                .collect();
             Vector(vo)
         };
 
@@ -129,7 +133,7 @@ where
             let values = x1(u, i);
             // TODO: avoid vec collection
             let filtered: Vec<_> = values
-                .values()
+                .values_to_depracate()
                 .into_iter()
                 .filter(move |x| filter(u, x))
                 .collect();
@@ -149,7 +153,7 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, t: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = x1(u, t).values_to_depracate().into_iter().collect();
             let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
             Vector(vo)
         };
@@ -166,7 +170,7 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, t: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = x1(u, t).values_to_depracate().into_iter().collect();
             let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
             Vector(vo)
         };

@@ -24,7 +24,7 @@ where
 
     type Error = E;
 
-    fn values(self) -> impl IntoIterator<Item = Self::Item> {
+    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         match self.0 {
             Ok(x) => Some(x).into_iter(),
             _ => None.into_iter(),

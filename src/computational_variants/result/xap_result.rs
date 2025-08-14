@@ -69,7 +69,7 @@ where
         let (params, iter, xap, mr) = self.destruct();
         let x1 = move |i: I::Item| {
             let v1: Vo = xap(i);
-            let iter = v1.values().into_iter();
+            let iter = v1.values_to_depracate().into_iter();
             let mr = mr.clone();
             let iter_result = iter.map(move |x| WhilstOk(mr(x)));
             WhilstOkVector(iter_result)
