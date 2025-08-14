@@ -1,5 +1,7 @@
 use super::{TransformableValues, Vector};
-use crate::values::{Values, WhilstOk, runner_results::ValuesPush, whilst_option::WhilstOption};
+use crate::values::{
+    Values, WhilstOk, option_ok::OptionOk, runner_results::ValuesPush, whilst_option::WhilstOption,
+};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -144,6 +146,7 @@ impl<T> TransformableValues for Option<T> {
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
     {
-        WhilstOk::new(map_res(self.unwrap()))
+        let value = self.map(map_res);
+        OptionOk(value)
     }
 }
