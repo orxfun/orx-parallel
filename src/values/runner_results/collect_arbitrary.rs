@@ -1,5 +1,6 @@
 use crate::values::Values;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_split_vec::PseudoDefault;
 
 pub enum ArbitraryPush<E> {
     Done,
@@ -70,4 +71,20 @@ where
     V: Values,
     P: IntoConcurrentPinnedVec<V::Item>,
 {
+    pub fn to_collected(self) -> P {
+        match self {
+            Self::AllCollected { pinned_vec } => pinned_vec,
+            Self::StoppedByWhileCondition { pinned_vec } => pinned_vec,
+            Self::StoppedByError { error: _ } => PseudoDefault::pseudo_default(),
+            // TODO: we should not be needing PseudoDefault; this will be called only when infallible
+        }
+    }
+
+    pub fn to_result(self) -> Result<P, V::Error> {
+        match self {
+            Self::AllCollected { pinned_vec } => Ok(pinned_vec),
+            Self::StoppedByWhileCondition { pinned_vec } => Ok(pinned_vec),
+            Self::StoppedByError { error } => Err(error),
+        }
+    }
 }

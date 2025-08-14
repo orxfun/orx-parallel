@@ -25,12 +25,16 @@ where
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, self.sequential(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
-                collect_arbitrary::x(R::collection(p, len), self, pinned_vec)
+                let (num_threads, result) =
+                    collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
+                // TODO: Values abstraction might be revisited to represent that this infallible
+                let pinned_vec = result.to_collected();
+                (num_threads, pinned_vec)
             }
             (false, IterationOrder::Ordered) => {
-                // TODO: Values abstraction might be revisited to represent that this infallible
                 let (num_threads, result) =
                     collect_ordered::x(R::collection(p, len), self, pinned_vec);
+                // TODO: Values abstraction might be revisited to represent that this infallible
                 let pinned_vec = result.to_collected();
                 (num_threads, pinned_vec)
             }
@@ -46,9 +50,8 @@ where
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, Ok(self.sequential(pinned_vec))),
             (false, IterationOrder::Arbitrary) => {
-                let (nt, pinned_vec) =
-                    collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
-                (nt, Ok(pinned_vec))
+                let (nt, result) = collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
+                (nt, result.to_result())
             }
             (false, IterationOrder::Ordered) => {
                 let (nt, result) = collect_ordered::x(R::collection(p, len), self, pinned_vec);
