@@ -1,6 +1,6 @@
 use crate::values::{
     Values,
-    runner_results::{ArbitraryPush, Fallability, Fallible, OrderedPush},
+    runner_results::{ArbitraryPush, Fallibility, Fallible, OrderedPush},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -16,7 +16,7 @@ where
 {
     type Item = T;
 
-    type Fallability = Fallible<E>;
+    type Fallibility = Fallible<E>;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
@@ -41,7 +41,7 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Fallability> {
+    ) -> OrderedPush<Self::Fallibility> {
         match self.0 {
             Some(Ok(x)) => {
                 vec.push((idx, x));
@@ -52,7 +52,7 @@ where
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallability>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,

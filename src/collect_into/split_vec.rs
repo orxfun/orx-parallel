@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::values::Values;
-use crate::values::runner_results::Fallability;
+use crate::values::runner_results::Fallibility;
 use crate::{
     collect_into::utils::split_vec_reserve,
     computations::{M, X},
@@ -52,7 +52,7 @@ where
     fn x_try_collect_into<R, I, Vo, M1>(
         mut self,
         x: X<I, Vo, M1>,
-    ) -> Result<Self, <Vo::Fallability as Fallability>::Error>
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
         R: ParallelRunner,
         I: ConcurrentIter,

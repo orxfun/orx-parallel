@@ -1,8 +1,8 @@
-use crate::values::{Values, runner_results::Fallability};
+use crate::values::{Values, runner_results::Fallibility};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_split_vec::PseudoDefault;
 
-pub enum ArbitraryPush<F: Fallability> {
+pub enum ArbitraryPush<F: Fallibility> {
     Done,
     StoppedByWhileCondition,
     StoppedByError { error: F::Error },
@@ -10,14 +10,14 @@ pub enum ArbitraryPush<F: Fallability> {
 
 pub enum ThreadCollectArbitrary<F>
 where
-    F: Fallability,
+    F: Fallibility,
 {
     AllCollected,
     StoppedByWhileCondition,
     StoppedByError { error: F::Error },
 }
 
-impl<F: Fallability> core::fmt::Debug for ThreadCollectArbitrary<F> {
+impl<F: Fallibility> core::fmt::Debug for ThreadCollectArbitrary<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::AllCollected => write!(f, "AllCollected"),
@@ -27,7 +27,7 @@ impl<F: Fallability> core::fmt::Debug for ThreadCollectArbitrary<F> {
     }
 }
 
-impl<F: Fallability> ThreadCollectArbitrary<F> {
+impl<F: Fallibility> ThreadCollectArbitrary<F> {
     pub fn into_result(self) -> Result<Self, F::Error> {
         match self {
             Self::StoppedByError { error } => Err(error),
@@ -48,7 +48,7 @@ where
         pinned_vec: P,
     },
     StoppedByError {
-        error: <V::Fallability as Fallability>::Error,
+        error: <V::Fallibility as Fallibility>::Error,
     },
 }
 
@@ -86,7 +86,7 @@ where
         }
     }
 
-    pub fn to_result(self) -> Result<P, <V::Fallability as Fallability>::Error> {
+    pub fn to_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),
             Self::StoppedByWhileCondition { pinned_vec } => Ok(pinned_vec),

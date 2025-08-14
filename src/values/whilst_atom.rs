@@ -1,6 +1,4 @@
-use crate::values::runner_results::{
-    ArbitraryPush, Fallability, Fallible, Infallible, OrderedPush,
-};
+use crate::values::runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush};
 use crate::values::whilst_atom_result::WhilstAtomResult;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
@@ -25,7 +23,7 @@ impl<T> WhilstAtom<T> {
 impl<T> Values for WhilstAtom<T> {
     type Item = T;
 
-    type Fallability = Infallible;
+    type Fallibility = Infallible;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         match self {
@@ -51,7 +49,7 @@ impl<T> Values for WhilstAtom<T> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Fallability> {
+    ) -> OrderedPush<Self::Fallibility> {
         match self {
             Self::Continue(x) => {
                 vec.push((idx, x));
@@ -61,7 +59,7 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallability>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -171,7 +169,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallability = Fallible<E>>
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallibility = Fallible<E>>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,

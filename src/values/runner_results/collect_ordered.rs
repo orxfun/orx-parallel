@@ -1,12 +1,12 @@
 use crate::{
     computations::heap_sort_into,
-    values::{Values, runner_results::Fallability},
+    values::{Values, runner_results::Fallibility},
 };
 use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_split_vec::PseudoDefault;
 
-pub enum OrderedPush<F: Fallability> {
+pub enum OrderedPush<F: Fallibility> {
     Done,
     StoppedByWhileCondition { idx: usize },
     StoppedByError { idx: usize, error: F::Error },
@@ -24,7 +24,7 @@ where
         stopped_idx: usize,
     },
     StoppedByError {
-        error: <V::Fallability as Fallability>::Error,
+        error: <V::Fallibility as Fallibility>::Error,
     },
 }
 
@@ -46,7 +46,7 @@ impl<V: Values> Debug for ThreadCollect<V> {
 }
 
 impl<V: Values> ThreadCollect<V> {
-    pub fn into_result(self) -> Result<Self, <V::Fallability as Fallability>::Error> {
+    pub fn into_result(self) -> Result<Self, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::StoppedByError { error } => Err(error),
             _ => Ok(self),
@@ -67,7 +67,7 @@ where
         stopped_idx: usize,
     },
     StoppedByError {
-        error: <V::Fallability as Fallability>::Error,
+        error: <V::Fallibility as Fallibility>::Error,
     },
 }
 
@@ -141,7 +141,7 @@ where
         }
     }
 
-    pub fn to_result(self) -> Result<P, <V::Fallability as Fallability>::Error> {
+    pub fn to_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),
             Self::StoppedByWhileCondition {

@@ -2,7 +2,7 @@ use super::par_collect_into::ParCollectIntoCore;
 use crate::computations::{M, X};
 use crate::runner::ParallelRunner;
 use crate::values::Values;
-use crate::values::runner_results::Fallability;
+use crate::values::runner_results::Fallibility;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 #[cfg(test)]
@@ -44,7 +44,7 @@ where
     fn x_try_collect_into<R, I, Vo, M1>(
         self,
         x: X<I, Vo, M1>,
-    ) -> Result<Self, <Vo::Fallability as Fallability>::Error>
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
         R: ParallelRunner,
         I: ConcurrentIter,

@@ -60,7 +60,7 @@ pub fn x<C, I, Vo, X1, P>(
     shared_state: &C::SharedState,
     xap1: &X1,
     bag: &ConcurrentBag<Vo::Item, P>,
-) -> ThreadCollectArbitrary<Vo::Fallability>
+) -> ThreadCollectArbitrary<Vo::Fallibility>
 where
     C: ThreadRunner,
     I: ConcurrentIter,

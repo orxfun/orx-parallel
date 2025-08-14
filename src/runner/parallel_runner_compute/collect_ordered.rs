@@ -1,6 +1,6 @@
 use crate::runner::thread_runner_compute as thread;
 use crate::values::Values;
-use crate::values::runner_results::{Fallability, ParallelCollect, ThreadCollect};
+use crate::values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
 use crate::{
     computations::{M, X},
     runner::ParallelRunnerCompute,
@@ -61,7 +61,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    <Vo::Fallability as Fallability>::Error: Send,
+    <Vo::Fallibility as Fallibility>::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
@@ -72,7 +72,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallability as Fallability>::Error> =
+    let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
         std::thread::scope(|s| {
             let mut handles = vec![];
 
