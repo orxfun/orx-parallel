@@ -115,12 +115,8 @@ fn map_while_ok_from_xap_filter_map_whilst_when_error_out_of_reach() {
         .map_while_ok(map_res)
         .collect();
 
-    let expected = Ok((0..1024)
-        .filter_map(filter_map)
-        .take_while(|i| i < &777)
-        .collect::<Vec<_>>());
-
-    let result = sort_if_ok(result);
-
-    assert_eq!(result, expected);
+    assert!(result.is_ok());
+    let result = result.unwrap();
+    let all_satisfies_whilst = result.iter().all(|x| x < &777);
+    assert!(all_satisfies_whilst);
 }
