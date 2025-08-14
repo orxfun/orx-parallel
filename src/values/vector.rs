@@ -1,6 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector, runner_results::ValuesPush,
+    Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
+    runner_results::{ArbitraryPush, OrderedPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -38,15 +39,15 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         for x in self.0 {
             vec.push((idx, x));
         }
-        ValuesPush::Done
+        OrderedPush::Done
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -54,7 +55,7 @@ where
         for x in self.0 {
             bag.push(x);
         }
-        false
+        ArbitraryPush::Done
     }
 
     #[inline(always)]

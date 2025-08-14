@@ -1,4 +1,5 @@
 mod map_while_ok;
+mod map_while_ok_arbitrary;
 mod whilst;
 
 pub fn fibonacci(n: u64) -> u64 {

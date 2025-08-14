@@ -1,4 +1,7 @@
-use crate::values::{WhilstOption, runner_results::ValuesPush};
+use crate::values::{
+    WhilstOption,
+    runner_results::{ArbitraryPush, OrderedPush},
+};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
@@ -19,10 +22,10 @@ pub trait Values {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error>;
+    ) -> OrderedPush<Self::Error>;
 
     /// Returns true if the computation must early exit.
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send;

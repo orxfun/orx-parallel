@@ -1,4 +1,4 @@
-use crate::values::runner_results::ValuesPush;
+use crate::values::runner_results::{ArbitraryPush, OrderedPush};
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
@@ -46,19 +46,19 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         match self {
             Self::ContinueSomeOk(x) => {
                 vec.push((idx, x));
-                ValuesPush::Done
+                OrderedPush::Done
             }
-            Self::ContinueNone => ValuesPush::Done,
-            Self::StopErr(error) => ValuesPush::StoppedByError { idx, error },
-            Self::StopWhile => ValuesPush::StoppedByWhileCondition { idx },
+            Self::ContinueNone => OrderedPush::Done,
+            Self::StopErr(error) => OrderedPush::StoppedByError { idx, error },
+            Self::StopWhile => OrderedPush::StoppedByWhileCondition { idx },
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -66,11 +66,11 @@ where
         match self {
             Self::ContinueSomeOk(x) => {
                 bag.push(x);
-                false
+                ArbitraryPush::Done
             }
-            Self::ContinueNone => false,
-            Self::StopErr(error) => true,
-            Self::StopWhile => true,
+            Self::ContinueNone => ArbitraryPush::Done,
+            Self::StopErr(error) => ArbitraryPush::StoppedByError { error },
+            Self::StopWhile => ArbitraryPush::StoppedByWhileCondition,
         }
     }
 

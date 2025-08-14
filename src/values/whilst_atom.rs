@@ -1,4 +1,4 @@
-use crate::values::runner_results::ValuesPush;
+use crate::values::runner_results::{ArbitraryPush, OrderedPush};
 use crate::values::whilst_atom_result::WhilstAtomResult;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
@@ -49,17 +49,17 @@ impl<T> Values for WhilstAtom<T> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> ValuesPush<Self::Error> {
+    ) -> OrderedPush<Self::Error> {
         match self {
             Self::Continue(x) => {
                 vec.push((idx, x));
-                ValuesPush::Done
+                OrderedPush::Done
             }
-            Self::Stop => ValuesPush::StoppedByWhileCondition { idx },
+            Self::Stop => OrderedPush::StoppedByWhileCondition { idx },
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> bool
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -67,9 +67,9 @@ impl<T> Values for WhilstAtom<T> {
         match self {
             Self::Continue(x) => {
                 bag.push(x);
-                false
+                ArbitraryPush::Done
             }
-            Self::Stop => true,
+            Self::Stop => ArbitraryPush::StoppedByWhileCondition,
         }
     }
 

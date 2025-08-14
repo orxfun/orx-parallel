@@ -112,10 +112,6 @@ where
             }
         }
 
-        // for x in handles {
-        //     let result = x.join().expect("failed to join the thread");
-        //     results.push(result);
-        // }
         match error {
             Some(error) => Err(error),
             None => Ok(results),
@@ -126,10 +122,6 @@ where
         Err(error) => ParallelCollect::StoppedByError { error },
         Ok(results) => ParallelCollect::reduce(results, pinned_vec),
     };
-
-    // result.map(|results| ParallelCollect::reduce(results, pinned_vec));
-
-    // let result = ParallelCollect::reduce(results, pinned_vec);
 
     (num_spawned, result)
 }

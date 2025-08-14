@@ -108,6 +108,18 @@ fn orx(
     inputs.into_par().map_while_ok(map).collect()
 }
 
+fn orx_arbitrary(
+    inputs: &[Input],
+    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
+) -> Result<Vec<String>, ERR> {
+    use orx_parallel::*;
+    inputs
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map_while_ok(map)
+        .collect()
+}
+
 fn run(c: &mut Criterion) {
     let treatments = [N_EARLY, N_MIDDLE, N_LATE, N_NEVER];
 
@@ -138,6 +150,16 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("orx", n_when), n_when, |b, _| {
             assert_eq!(&expected, &orx(&input, map_input_to_result));
             b.iter(|| orx(black_box(&input), map_input_to_result))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx_arbitrary", n_when), n_when, |b, _| {
+            assert_eq!(
+                expected.as_ref().map(|x| x.len()),
+                orx_arbitrary(&input, map_input_to_result)
+                    .as_ref()
+                    .map(|x| x.len())
+            );
+            b.iter(|| orx_arbitrary(black_box(&input), map_input_to_result))
         });
     }
 
