@@ -2,7 +2,7 @@ use crate::collect_into::ParCollectIntoCore;
 use crate::runner::ParallelRunner;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::values::Values;
+use crate::values::TransformableValues;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
@@ -18,6 +18,6 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: TransformableValues<Item = O>,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
 }

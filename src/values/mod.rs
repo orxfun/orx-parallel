@@ -1,5 +1,6 @@
 mod option;
 pub(crate) mod runner_results;
+mod transformable_values;
 mod values;
 mod vector;
 mod whilst_atom;
@@ -9,6 +10,7 @@ mod whilst_ok_vector;
 mod whilst_option;
 mod whilst_vector;
 
+pub use transformable_values::TransformableValues;
 pub use values::Values;
 pub use vector::Vector;
 pub use whilst_atom::WhilstAtom;

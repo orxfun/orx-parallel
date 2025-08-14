@@ -1,7 +1,7 @@
 use crate::ParIterResult;
 use crate::par_iter_result::{ParIterResult2, ParIterResult3};
 use crate::using::{UsingClone, UsingFun};
-use crate::values::{Values, WhilstOk};
+use crate::values::{TransformableValues, WhilstOk};
 use crate::{
     ParIterUsing, Params,
     collect_into::ParCollectInto,

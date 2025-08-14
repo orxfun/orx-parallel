@@ -1,7 +1,7 @@
 use crate::{
     DefaultRunner, ParCollectInto, ParallelRunner,
     computations::X,
-    values::{Values, WhilstOk},
+    values::{TransformableValues, WhilstOk},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -56,7 +56,7 @@ pub struct ParIterResult2<I, T, E, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values<Item = T, Error = E>,
+    Vo: TransformableValues<Item = T, Error = E>,
     M1: Fn(I::Item) -> Vo + Sync,
     T: Send + Sync,
     E: Send + Sync,
@@ -70,7 +70,7 @@ impl<I, T, E, Vo, M1, R> ParIterResult2<I, T, E, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values<Item = T, Error = E>,
+    Vo: TransformableValues<Item = T, Error = E>,
     M1: Fn(I::Item) -> Vo + Sync,
     T: Send + Sync,
     E: Send + Sync,

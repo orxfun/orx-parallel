@@ -1,5 +1,5 @@
 use crate::ThreadRunner;
-use crate::values::Values;
+use crate::values::TransformableValues;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -64,7 +64,7 @@ pub fn u_x<C, U, I, Vo, X1, P>(
 ) where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     X1: Fn(&mut U, I::Item) -> Vo,
     P: IntoConcurrentPinnedVec<Vo::Item>,
     Vo::Item: Send,

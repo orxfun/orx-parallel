@@ -1,5 +1,5 @@
-use super::{Values, Vector};
-use crate::values::{runner_results::ValuesPush, whilst_option::WhilstOption};
+use super::{TransformableValues, Vector};
+use crate::values::{Values, runner_results::ValuesPush, whilst_option::WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -49,55 +49,6 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> impl Values<Item = O>
-    where
-        M: Fn(Self::Item) -> O,
-    {
-        self.map(map)
-    }
-
-    #[inline(always)]
-    fn filter<F>(self, filter: F) -> impl Values<Item = Self::Item>
-    where
-        F: Fn(&Self::Item) -> bool,
-    {
-        self.filter(filter)
-    }
-
-    #[inline(always)]
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl Values<Item = Vo::Item>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo,
-    {
-        Vector(self.into_iter().flat_map(flat_map))
-    }
-
-    #[inline(always)]
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl Values<Item = O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>,
-    {
-        match self {
-            Some(x) => filter_map(x),
-            _ => None,
-        }
-    }
-
-    fn whilst(self, whilst: impl Fn(&Self::Item) -> bool) -> impl Values<Item = Self::Item>
-    where
-        Self: Sized,
-    {
-        match self {
-            Some(x) => match whilst(&x) {
-                true => WhilstOption::ContinueSome(x),
-                false => WhilstOption::Stop,
-            },
-            _ => WhilstOption::ContinueNone,
-        }
-    }
-
-    #[inline(always)]
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
@@ -131,6 +82,60 @@ impl<T> Values for Option<T> {
         match self {
             Some(x) => WhilstOption::ContinueSome(x),
             None => WhilstOption::ContinueNone,
+        }
+    }
+}
+
+impl<T> TransformableValues for Option<T> {
+    #[inline(always)]
+    fn map<M, O>(self, map: M) -> impl TransformableValues<Item = O>
+    where
+        M: Fn(Self::Item) -> O,
+    {
+        self.map(map)
+    }
+
+    #[inline(always)]
+    fn filter<F>(self, filter: F) -> impl TransformableValues<Item = Self::Item>
+    where
+        F: Fn(&Self::Item) -> bool,
+    {
+        self.filter(filter)
+    }
+
+    #[inline(always)]
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl TransformableValues<Item = Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo,
+    {
+        Vector(self.into_iter().flat_map(flat_map))
+    }
+
+    #[inline(always)]
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl TransformableValues<Item = O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>,
+    {
+        match self {
+            Some(x) => filter_map(x),
+            _ => None,
+        }
+    }
+
+    fn whilst(
+        self,
+        whilst: impl Fn(&Self::Item) -> bool,
+    ) -> impl TransformableValues<Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        match self {
+            Some(x) => match whilst(&x) {
+                true => WhilstOption::ContinueSome(x),
+                false => WhilstOption::Stop,
+            },
+            _ => WhilstOption::ContinueNone,
         }
     }
 }
