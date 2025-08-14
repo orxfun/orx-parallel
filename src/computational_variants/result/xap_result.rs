@@ -1,7 +1,7 @@
 use crate::computations::X;
 use crate::par_iter_result::ParIterResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::values::{TransformableValues, WhilstOk, WhilstOkVector};
+use crate::values::{Values, WhilstOk, WhilstOkVector};
 use crate::{ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -11,7 +11,7 @@ pub struct ParXapResult<I, Vo, M1, T, E, Mr, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone, // TODO: check this clone
 {
@@ -26,7 +26,7 @@ impl<I, Vo, M1, T, E, Mr, R> ParXapResult<I, Vo, M1, T, E, Mr, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone,
 {
@@ -49,7 +49,7 @@ impl<I, Vo, M1, T, E, Mr, R> ParIterResult<R> for ParXapResult<I, Vo, M1, T, E, 
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone,
 {

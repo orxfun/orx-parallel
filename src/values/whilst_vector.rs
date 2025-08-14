@@ -1,6 +1,6 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, WhilstAtom, WhilstOption, runner_results::ValuesPush,
+    Values, WhilstAtom, WhilstOk, WhilstOption, runner_results::ValuesPush,
     whilst_iterators::WhilstAtomFlatMapIter,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -206,5 +206,16 @@ where
             WhilstAtom::Stop => WhilstAtom::Stop,
         });
         WhilstVector(iter)
+    }
+
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send,
+    {
+        match self.0.into_iter().next().unwrap() {
+            WhilstAtom::Continue(x) => WhilstOk::new(map_res(x)),
+            _ => todo!(),
+        }
     }
 }
