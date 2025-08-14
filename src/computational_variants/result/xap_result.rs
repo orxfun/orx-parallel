@@ -1,7 +1,7 @@
 use crate::computations::X;
 use crate::par_iter_result::ParIterResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::values::{Values, VectorResult};
+use crate::values::{TransformableValues, VectorResult};
 use crate::{ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -11,7 +11,7 @@ pub struct ParXapResult<I, Vo, M1, T, E, Mr, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone, // TODO: check this clone
 {
@@ -26,7 +26,7 @@ impl<I, Vo, M1, T, E, Mr, R> ParXapResult<I, Vo, M1, T, E, Mr, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone,
 {
@@ -49,7 +49,7 @@ impl<I, Vo, M1, T, E, Mr, R> ParIterResult<R> for ParXapResult<I, Vo, M1, T, E, 
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone,
 {
@@ -69,10 +69,8 @@ where
         let (params, iter, xap, map_res) = self.destruct();
         let x1 = move |i: I::Item| {
             let v1: Vo = xap(i);
-            let iter = v1.values_to_depracate().into_iter();
             let map_res = map_res.clone();
-            let iter_result = iter.map(move |x| map_res(x));
-            VectorResult(iter_result)
+            v1.map_while_ok(map_res)
         };
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
