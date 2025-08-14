@@ -1,6 +1,5 @@
 use crate::values::{Values, runner_results::Fallibility};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
-use orx_split_vec::PseudoDefault;
 
 pub enum ArbitraryPush<F: Fallibility> {
     Done,
@@ -23,15 +22,6 @@ impl<F: Fallibility> core::fmt::Debug for ThreadCollectArbitrary<F> {
             Self::AllCollected => write!(f, "AllCollected"),
             Self::StoppedByWhileCondition => write!(f, "StoppedByWhileCondition"),
             Self::StoppedByError { error: _ } => f.debug_struct("StoppedByError").finish(),
-        }
-    }
-}
-
-impl<F: Fallibility> ThreadCollectArbitrary<F> {
-    pub fn into_result(self) -> Result<Self, F::Error> {
-        match self {
-            Self::StoppedByError { error } => Err(error),
-            _ => Ok(self),
         }
     }
 }
@@ -77,15 +67,6 @@ where
     V: Values,
     P: IntoConcurrentPinnedVec<V::Item>,
 {
-    pub fn to_collected(self) -> P {
-        match self {
-            Self::AllCollected { pinned_vec } => pinned_vec,
-            Self::StoppedByWhileCondition { pinned_vec } => pinned_vec,
-            Self::StoppedByError { error: _ } => PseudoDefault::pseudo_default(),
-            // TODO: we should not be needing PseudoDefault; this will be called only when infallible
-        }
-    }
-
     pub fn to_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),

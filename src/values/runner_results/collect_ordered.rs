@@ -4,7 +4,6 @@ use crate::{
 };
 use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
-use orx_split_vec::PseudoDefault;
 
 pub enum OrderedPush<F: Fallibility> {
     Done,
@@ -126,18 +125,6 @@ where
                 stopped_idx,
             },
             None => Self::AllCollected { pinned_vec },
-        }
-    }
-
-    pub fn to_collected(self) -> P {
-        match self {
-            Self::AllCollected { pinned_vec } => pinned_vec,
-            Self::StoppedByWhileCondition {
-                pinned_vec,
-                stopped_idx: _,
-            } => pinned_vec,
-            Self::StoppedByError { error: _ } => PseudoDefault::pseudo_default(),
-            // TODO: we should not be needing PseudoDefault; this will be called only when infallible
         }
     }
 
