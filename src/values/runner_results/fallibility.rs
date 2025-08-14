@@ -7,7 +7,7 @@ pub trait Fallibility {
 pub struct Infallible;
 
 impl Fallibility for Infallible {
-    type Error = ();
+    type Error = Never;
 }
 
 pub struct Fallible<E>(PhantomData<E>);
@@ -15,3 +15,5 @@ pub struct Fallible<E>(PhantomData<E>);
 impl<E: Send> Fallibility for Fallible<E> {
     type Error = E;
 }
+
+pub enum Never {}
