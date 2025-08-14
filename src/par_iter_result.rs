@@ -6,7 +6,7 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParIterResult<I, T, E, M1, R = DefaultRunner>
+pub struct ParIterResult3<I, T, E, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -18,7 +18,7 @@ where
     phantom: PhantomData<R>,
 }
 
-impl<I, T, E, M1, R> ParIterResult<I, T, E, M1, R>
+impl<I, T, E, M1, R> ParIterResult3<I, T, E, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -56,7 +56,7 @@ pub struct ParIterResult2<I, T, E, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values<Item = WhilstOk<T, E>, Error = E>,
+    Vo: Values<Item = T, Error = E>,
     M1: Fn(I::Item) -> Vo + Sync,
     T: Send + Sync,
     E: Send + Sync,
@@ -70,7 +70,7 @@ impl<I, T, E, Vo, M1, R> ParIterResult2<I, T, E, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values<Item = WhilstOk<T, E>, Error = E>,
+    Vo: Values<Item = T, Error = E>,
     M1: Fn(I::Item) -> Vo + Sync,
     T: Send + Sync,
     E: Send + Sync,
@@ -96,5 +96,33 @@ where
     {
         let output = C::empty(self.con_iter_len);
         self.collect_result_into(output)
+    }
+}
+
+// as a trait
+
+pub trait ParIterResult<R = DefaultRunner>
+where
+    R: ParallelRunner,
+{
+    type Item;
+
+    type Error;
+
+    fn con_iter_len(&self) -> Option<usize>;
+
+    fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
+    where
+        C: ParCollectInto<Self::Item>,
+        Self::Error: Send;
+
+    fn collect<C>(self) -> Result<C, Self::Error>
+    where
+        C: ParCollectInto<Self::Item>,
+        Self::Error: Send,
+        Self: Sized,
+    {
+        let output = C::empty(self.con_iter_len());
+        self.collect_into(output)
     }
 }

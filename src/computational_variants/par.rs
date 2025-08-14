@@ -1,6 +1,6 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::computations::X;
-use crate::par_iter_result::ParIterResult;
+use crate::par_iter_result::ParIterResult3;
 use crate::values::{Vector, WhilstAtom, WhilstOk};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -171,7 +171,7 @@ where
     fn map_while_ok<Out, Err, MapWhileOk>(
         self,
         map_while_ok: MapWhileOk,
-    ) -> ParIterResult<
+    ) -> ParIterResult3<
         Self::ConIter,
         Out,
         Err,
@@ -186,7 +186,7 @@ where
         let (params, iter) = self.destruct();
         let x1 = move |i: I::Item| WhilstOk::<Out, Err>::new(map_while_ok(i));
         let x = X::new(params, iter, x1);
-        ParIterResult::<I, Out, Err, _, R>::new(x, con_iter_len)
+        ParIterResult3::<I, Out, Err, _, R>::new(x, con_iter_len)
     }
 
     // collect

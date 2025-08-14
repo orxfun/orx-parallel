@@ -8,7 +8,7 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 ///   the only relevant value is the created error.
 /// * Computed values are relevant iff entire inputs result in an Ok variant.
 /// * Therefore, observation of an error case allows to immediately stop computation.
-pub struct WhilstOk<T, E>(pub(super) Result<T, E>);
+pub struct WhilstOk<T, E>(pub(crate) Result<T, E>);
 
 impl<T, E> WhilstOk<T, E> {
     pub fn new(result: Result<T, E>) -> Self {

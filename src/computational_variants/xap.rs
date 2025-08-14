@@ -1,4 +1,4 @@
-use crate::par_iter_result::ParIterResult;
+use crate::par_iter_result::ParIterResult3;
 use crate::values::{Values, WhilstOk, WhilstOkVector};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -202,7 +202,7 @@ where
     fn map_while_ok<Out, Err, MapWhileOk>(
         self,
         map_while_ok: MapWhileOk,
-    ) -> ParIterResult<
+    ) -> ParIterResult3<
         Self::ConIter,
         Out,
         Err,
@@ -216,13 +216,24 @@ where
         // TODO: this is wrong! we need vector of results
         let con_iter_len = self.con_iter().try_get_len();
         let (params, iter, x1) = self.destruct();
+
+        // let xx = move |i: I::Item| {
+        //     let v1: Vo = x1(i);
+        //     let iter = v1.values().into_iter();
+        //     let iter_result = iter.map(move |x| WhilstOk(map_while_ok(x)));
+        //     // let y = iter_result.next().unwrap();
+        //     let ok_vector = WhilstOkVector(iter_result);
+        //     // todo
+        //     todo!()
+        // };
+
         let x1 = move |i: I::Item| {
             // let v = WhilstOkVector(x1(i).map(|x| WhilstOk::new(map_while_ok(x))).values());
             // v
             WhilstOk::<Out, Err>::new(map_while_ok(x1(i).values().into_iter().next().unwrap()))
         };
         let x = X::new(params, iter, x1);
-        ParIterResult::<I, Out, Err, _, R>::new(x, con_iter_len)
+        ParIterResult3::<I, Out, Err, _, R>::new(x, con_iter_len)
     }
 
     // collect
