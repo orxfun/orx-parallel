@@ -70,14 +70,14 @@ where
         match self {
             Self::AllCollected { pinned_vec } => f
                 .debug_struct("AllCollected")
-                .field("pinned_vec_len", &pinned_vec.len())
+                .field("pinned_vec.len()", &pinned_vec.len())
                 .finish(),
             Self::StoppedByWhileCondition {
                 pinned_vec,
                 stopped_idx,
             } => f
                 .debug_struct("StoppedByWhileCondition")
-                .field("pinned_vec_len", &pinned_vec.len())
+                .field("pinned_vec.len()", &pinned_vec.len())
                 .field("stopped_idx", stopped_idx)
                 .finish(),
             Self::StoppedByError { error: _ } => f.debug_struct("StoppedByError").finish(),
