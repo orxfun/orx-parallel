@@ -1,5 +1,5 @@
 use super::super::thread_runner_compute as thread;
-use crate::runner::ThreadNext;
+use crate::runner::NextWithIdx;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
 use crate::{runner::ParallelRunnerCompute, values::TransformableValues};
@@ -82,7 +82,7 @@ where
             }))
         }
 
-        let mut results: Vec<ThreadNext<Vo::Item, ()>> = Vec::with_capacity(handles.len());
+        let mut results: Vec<NextWithIdx<Vo::Item, ()>> = Vec::with_capacity(handles.len());
         for x in handles {
             let thread_next = x.join().expect("failed to join the thread");
             results.push(thread_next);
@@ -90,7 +90,7 @@ where
         results
     });
 
-    let result = ThreadNext::reduce(results);
+    let result = NextWithIdx::reduce(results);
     let acc = result.into_found_value();
 
     (num_spawned, acc)

@@ -1,6 +1,6 @@
 use crate::{
     ThreadRunner,
-    runner::ThreadNext,
+    runner::NextWithIdx,
     values::{TransformableValues, WhilstOption},
 };
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
@@ -70,7 +70,7 @@ pub fn u_x<C, U, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> ThreadNext<Vo::Item, ()>
+) -> NextWithIdx<Vo::Item, ()>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -95,14 +95,14 @@ where
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
-                            return ThreadNext::Found { idx, value: first };
+                            return NextWithIdx::Found { idx, value: first };
                         }
                         WhilstOption::ContinueNone => continue,
                         WhilstOption::Stop => {
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
-                            return ThreadNext::Stopped { idx, stop_with: () };
+                            return NextWithIdx::StoppedByWhileCondition { idx };
                         }
                     }
                 }
@@ -122,14 +122,14 @@ where
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
-                                    return ThreadNext::Found { idx, value: first };
+                                    return NextWithIdx::Found { idx, value: first };
                                 }
                                 WhilstOption::ContinueNone => continue,
                                 WhilstOption::Stop => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
-                                    return ThreadNext::Stopped { idx, stop_with: () };
+                                    return NextWithIdx::StoppedByWhileCondition { idx };
                                 }
                             }
                         }
@@ -143,5 +143,5 @@ where
     }
 
     runner.complete_task(shared_state);
-    ThreadNext::NotFound
+    NextWithIdx::NotFound
 }

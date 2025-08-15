@@ -1,14 +1,15 @@
-pub enum ThreadNext<T, E> {
+pub enum NextWithIdx<T, E> {
     Found { idx: usize, value: T },
     NotFound,
-    Stopped { idx: usize, stop_with: E },
+    StoppedByWhileCondition { idx: usize },
+    StoppedByError { error: E },
 }
 
-impl<T, E> ThreadNext<T, E> {
+impl<T, E> NextWithIdx<T, E> {
     fn found_or_stopped_idx(&self) -> Option<usize> {
         match self {
             Self::Found { idx, value: _ } => Some(*idx),
-            Self::Stopped { idx, stop_with: _ } => Some(*idx),
+            Self::StoppedByWhileCondition { idx } => Some(*idx),
             _ => None,
         }
     }

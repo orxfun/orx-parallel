@@ -10,13 +10,16 @@ pub enum Next<V: Values> {
     },
 }
 
-pub struct NextWithIdx<V: Values> {
-    next: Next<V>,
-    idx: usize,
-}
-
-impl<V: Values> Next<V> {
-    pub fn with_idx(self, idx: usize) -> NextWithIdx<V> {
-        NextWithIdx { next: self, idx }
-    }
+pub enum NextWithIdx<V: Values> {
+    Found {
+        value: V::Item,
+        idx: usize,
+    },
+    NotFound,
+    StoppedByWhileCondition {
+        idx: usize,
+    },
+    StoppedByError {
+        error: <V::Fallibility as Fallibility>::Error,
+    },
 }
