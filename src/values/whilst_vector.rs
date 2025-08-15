@@ -1,7 +1,9 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, WhilstAtom, WhilstOption,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush},
+    runner_results::{
+        ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
+    },
     whilst_iterators::WhilstAtomFlatMapIter,
     whilst_vector_result::WhilstVectorResult,
 };
@@ -127,13 +129,23 @@ where
         Some(acc)
     }
 
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self.0.into_iter().next() {
             Some(x) => match x {
                 WhilstAtom::Continue(x) => WhilstOption::ContinueSome(x),
                 WhilstAtom::Stop => WhilstOption::Stop,
             },
             None => WhilstOption::ContinueNone,
+        }
+    }
+
+    fn next(self) -> Next<Self> {
+        match self.0.into_iter().next() {
+            Some(x) => match x {
+                WhilstAtom::Continue(x) => Next::Done { value: Some(x) },
+                WhilstAtom::Stop => Next::StoppedByWhileCondition,
+            },
+            None => Next::Done { value: None },
         }
     }
 }

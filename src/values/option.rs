@@ -2,7 +2,9 @@ use super::{TransformableValues, Vector};
 use crate::values::{
     Values,
     option_result::OptionResult,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush},
+    runner_results::{
+        ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
+    },
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -82,11 +84,15 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self {
             Some(x) => WhilstOption::ContinueSome(x),
             None => WhilstOption::ContinueNone,
         }
+    }
+
+    fn next(self) -> Next<Self> {
+        Next::Done { value: self }
     }
 }
 

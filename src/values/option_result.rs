@@ -1,6 +1,6 @@
 use crate::values::{
     Values,
-    runner_results::{ArbitraryPush, Fallible, OrderedPush, Reduce, SequentialPush, Stop},
+    runner_results::{ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush, Stop},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -100,11 +100,19 @@ where
         }
     }
 
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self.0 {
             Some(Ok(x)) => WhilstOption::ContinueSome(x),
             Some(Err(error)) => WhilstOption::Stop,
             None => WhilstOption::ContinueNone,
+        }
+    }
+
+    fn next(self) -> Next<Self> {
+        match self.0 {
+            Some(Ok(value)) => Next::Done { value: Some(value) },
+            None => Next::Done { value: None },
+            Some(Err(error)) => Next::StoppedByError { error },
         }
     }
 }

@@ -4,7 +4,7 @@ use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
-use crate::{ParCollectInto, ParIter};
+use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
@@ -78,5 +78,20 @@ where
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
         let x = X::new(params, iter, x1);
         x.try_reduce::<R, _>(reduce).1
+    }
+
+    // early exit
+
+    fn first(self) -> Result<Option<Self::Success>, Self::Error>
+    where
+        Self::Success: Send,
+    {
+        let (params, iter, x1) = self.par.destruct();
+        let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
+        let x = X::new(params, iter, x1);
+        match params.iteration_order {
+            IterationOrder::Ordered => x.try_next::<R>().1,
+            IterationOrder::Arbitrary => x.try_next_any::<R>().1,
+        }
     }
 }

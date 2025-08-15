@@ -1,6 +1,8 @@
 use crate::values::{
     Values, WhilstOption,
-    runner_results::{ArbitraryPush, Fallibility, Fallible, OrderedPush, Reduce, SequentialPush},
+    runner_results::{
+        ArbitraryPush, Fallibility, Fallible, Next, OrderedPush, Reduce, SequentialPush,
+    },
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -126,13 +128,23 @@ where
         Some(acc)
     }
 
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self.0.into_iter().next() {
             Some(x) => match x {
                 Ok(x) => WhilstOption::ContinueSome(x),
                 Err(e) => todo!(),
             },
             None => WhilstOption::ContinueNone,
+        }
+    }
+
+    fn next(self) -> Next<Self> {
+        match self.0.into_iter().next() {
+            Some(x) => match x {
+                Ok(x) => Next::Done { value: Some(x) },
+                Err(error) => Next::StoppedByError { error },
+            },
+            None => Next::Done { value: None },
         }
     }
 }
