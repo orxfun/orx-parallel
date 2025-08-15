@@ -127,7 +127,7 @@ where
         Some(acc)
     }
 
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self.0.into_iter().next() {
             Some(x) => match x {
                 WhilstAtom::Continue(x) => WhilstOption::ContinueSome(x),

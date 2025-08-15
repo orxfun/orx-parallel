@@ -96,7 +96,7 @@ where
         }
     }
 
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         todo!()
     }
 }

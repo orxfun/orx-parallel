@@ -82,7 +82,7 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self {
             Some(x) => WhilstOption::ContinueSome(x),
             None => WhilstOption::ContinueNone,

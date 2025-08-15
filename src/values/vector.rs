@@ -89,7 +89,7 @@ where
     }
 
     #[inline(always)]
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self.0.into_iter().next() {
             Some(x) => WhilstOption::ContinueSome(x),
             None => WhilstOption::ContinueNone,

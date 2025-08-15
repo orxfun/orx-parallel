@@ -99,7 +99,7 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         self
     }
 }

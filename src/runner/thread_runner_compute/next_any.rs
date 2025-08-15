@@ -87,7 +87,7 @@ where
             0 | 1 => match item_puller.next() {
                 Some(i) => {
                     let vt = xap1(i);
-                    match vt.first() {
+                    match vt.first_to_depracate() {
                         WhilstOption::ContinueSome(first) => {
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
@@ -114,7 +114,7 @@ where
                     Some(chunk) => {
                         for i in chunk {
                             let vt = xap1(i);
-                            match vt.first() {
+                            match vt.first_to_depracate() {
                                 WhilstOption::ContinueSome(first) => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);

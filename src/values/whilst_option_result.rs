@@ -108,7 +108,7 @@ where
         }
     }
 
-    fn first(self) -> WhilstOption<Self::Item> {
+    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
         match self {
             Self::ContinueSomeOk(x) => WhilstOption::ContinueSome(x),
             Self::ContinueNone => WhilstOption::ContinueNone,
