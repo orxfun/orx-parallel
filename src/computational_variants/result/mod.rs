@@ -1,8 +1,6 @@
 mod map_fallible;
-mod map_result;
 mod par_fallible;
 mod xap_fallible;
-mod xap_result;
 
 pub use map_fallible::ParMapFallible;
 pub use par_fallible::ParFallible;
