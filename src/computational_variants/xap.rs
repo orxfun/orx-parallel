@@ -1,5 +1,5 @@
 use crate::ParIterResult;
-use crate::computational_variants::result::{ParXapFallible, ParXapResult};
+use crate::computational_variants::result::ParXapFallible;
 use crate::par_iter_result::IntoResult;
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
@@ -195,18 +195,6 @@ where
             vo.whilst(take_while.clone())
         };
         ParXap::new(params, iter, x1)
-    }
-
-    fn map_while_ok<Out, Err, MapWhileOk>(
-        self,
-        map_while_ok: MapWhileOk,
-    ) -> impl ParIterResult<R, Success = Out, Error = Err>
-    where
-        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-        Err: Send,
-    {
-        let (params, iter, x1) = self.destruct();
-        ParXapResult::new(iter, params, x1, map_while_ok)
     }
 
     fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>

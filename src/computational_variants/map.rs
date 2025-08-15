@@ -1,6 +1,6 @@
 use super::xap::ParXap;
 use crate::ParIterResult;
-use crate::computational_variants::result::{ParMapFallible, ParMapResult};
+use crate::computational_variants::result::ParMapFallible;
 use crate::par_iter_result::IntoResult;
 use crate::values::{Vector, WhilstAtom};
 use crate::{
@@ -176,19 +176,6 @@ where
         let (params, iter, m1) = self.destruct();
         let x1 = move |value: I::Item| WhilstAtom::new(m1(value), &take_while);
         ParXap::new(params, iter, x1)
-    }
-
-    fn map_while_ok<Out, Err, MapWhileOk>(
-        self,
-        map_while_ok: MapWhileOk,
-    ) -> impl ParIterResult<R, Success = Out, Error = Err>
-    where
-        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-        Err: Send,
-    {
-        let (params, iter, m1) = self.destruct();
-        let map_res = move |value: I::Item| map_while_ok(m1(value));
-        ParMapResult::new(iter, params, map_res)
     }
 
     fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>

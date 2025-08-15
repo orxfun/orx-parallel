@@ -667,14 +667,6 @@ where
 
     // transformations into fallible computations
 
-    fn map_while_ok<Out, Err, MapWhileOk>(
-        self,
-        map_while_ok: MapWhileOk,
-    ) -> impl ParIterResult<R, Success = Out, Error = Err>
-    where
-        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-        Err: Send;
-
     fn into_fallible<Success, Error>(
         self,
     ) -> impl ParIterResult<R, Success = Success, Error = Error>

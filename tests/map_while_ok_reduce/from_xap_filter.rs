@@ -12,7 +12,8 @@ fn map_while_ok_from_xap_filter_when_ok() {
     let result = input
         .into_par()
         .filter(filter)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .reduce(|a, b| a + b);
     let expected = Ok(Some((0..1024).filter(filter).sum::<usize>()));
 
@@ -31,7 +32,8 @@ fn map_while_ok_from_xap_filter_when_ok_but_none() {
     let result = input
         .into_par()
         .filter(filter)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .reduce(|a, b| a + b);
     let expected = Ok(None);
 
@@ -52,7 +54,8 @@ fn map_while_ok_from_xap_filter_when_error() {
     let result = input
         .into_par()
         .filter(filter)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .reduce(|a, b| a + b);
 
     let result = result.map_err(|e| {
