@@ -1,13 +1,8 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
-    computations::{Values, Vector},
     runner::{DefaultRunner, ParallelRunner},
-    using::u_par_iter::ParIterUsing,
-    using::{
-        Using,
-        computational_variants::u_xap_filter_xap::UParXapFilterXap,
-        computations::{UX, u_map_self_atom},
-    },
+    using::{Using, computations::UX, u_par_iter::ParIterUsing},
+    values::{TransformableValues, Vector, runner_results::Infallible},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -20,7 +15,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     ux: UX<U, I, Vo, M1>,
@@ -32,7 +27,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(using: U, params: Params, iter: I, x1: M1) -> Self {
@@ -52,7 +47,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -62,7 +57,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -72,7 +67,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
@@ -116,7 +111,11 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
+            let vo: Vec<_> = x1(u, i)
+                .values_to_depracate()
+                .into_iter()
+                .map(|x| map(u, x))
+                .collect();
             Vector(vo)
         };
 
@@ -128,8 +127,18 @@ where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let filter = move |u: &mut U::Item, x: &Self::Item| filter(u, x);
-        UParXapFilterXap::new(using, params, iter, x1, filter, u_map_self_atom)
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let filter = filter.clone();
+            let values = x1(u, i);
+            // TODO: avoid vec collection
+            let filtered: Vec<_> = values
+                .values_to_depracate()
+                .into_iter()
+                .filter(move |x| filter(u, x))
+                .collect();
+            Vector(filtered)
+        };
+        UParXap::new(using, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(
@@ -143,7 +152,7 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, t: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = x1(u, t).values_to_depracate().into_iter().collect();
             let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
             Vector(vo)
         };
@@ -160,7 +169,7 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, t: I::Item| {
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
+            let vo: Vec<_> = x1(u, t).values_to_depracate().into_iter().collect();
             let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
             Vector(vo)
         };
@@ -188,7 +197,10 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.ux.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        self.ux.next::<R>().1
     }
 }

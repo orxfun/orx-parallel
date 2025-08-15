@@ -21,6 +21,8 @@ mod into_par_iter;
 pub mod iter;
 mod iter_into_par_iter;
 mod par_iter;
+mod par_iter_option;
+mod par_iter_result;
 mod parallel_drainable;
 mod parallelizable;
 mod parallelizable_collection;
@@ -31,6 +33,7 @@ pub mod runner;
 mod special_type_sets;
 /// Module defining parallel iterators with mutable access to values distributed to each thread.
 pub mod using;
+mod values;
 
 /// Module defining the GenericIterator which is a generalization over
 /// sequential iterator, rayon's parallel iterator and orx-parallel's
@@ -48,6 +51,8 @@ pub use collect_into::ParCollectInto;
 pub use into_par_iter::IntoParIter;
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
+pub use par_iter_option::ParIterOption;
+pub use par_iter_result::ParIterResult;
 pub use parallel_drainable::ParallelDrainableOverSlice;
 pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;

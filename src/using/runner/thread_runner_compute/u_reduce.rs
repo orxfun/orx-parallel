@@ -1,4 +1,4 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{ThreadRunner, values::TransformableValues};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 // m
@@ -91,7 +91,7 @@ pub fn u_x<C, U, I, Vo, X1, Red>(
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     X1: Fn(&mut U, I::Item) -> Vo,
     Red: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
 {
@@ -124,72 +124,6 @@ where
                         for i in chunk {
                             let vo = map1(u, i);
                             acc = vo.u_acc_reduce(u, acc, reduce);
-                        }
-                    }
-                    None => break,
-                }
-            }
-        }
-
-        runner.complete_chunk(shared_state, chunk_size);
-    }
-
-    runner.complete_task(shared_state);
-    acc
-}
-
-// xfx
-
-#[allow(clippy::too_many_arguments)]
-pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2, X>(
-    mut runner: C,
-    mut u: U,
-    iter: &I,
-    shared_state: &C::SharedState,
-    xap1: &M1,
-    filter: &F,
-    xap2: &M2,
-    reduce: &X,
-) -> Option<Vo::Item>
-where
-    C: ThreadRunner,
-    I: ConcurrentIter,
-    Vt: Values,
-    Vo: Values,
-    M1: Fn(&mut U, I::Item) -> Vt,
-    F: Fn(&mut U, &Vt::Item) -> bool,
-    M2: Fn(&mut U, Vt::Item) -> Vo,
-    X: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
-{
-    let u = &mut u;
-    let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller();
-
-    let mut acc = None;
-
-    loop {
-        let chunk_size = runner.next_chunk_size(shared_state, iter);
-
-        runner.begin_chunk(chunk_size);
-
-        match chunk_size {
-            0 | 1 => match item_puller.next() {
-                Some(i) => {
-                    let vt = xap1(u, i);
-                    acc = vt.u_fx_reduce(u, acc, filter, xap2, reduce);
-                }
-                None => break,
-            },
-            c => {
-                if c > chunk_puller.chunk_size() {
-                    chunk_puller = iter.chunk_puller(c);
-                }
-
-                match chunk_puller.pull() {
-                    Some(chunk) => {
-                        for i in chunk {
-                            let vt = xap1(u, i);
-                            acc = vt.u_fx_reduce(u, acc, filter, xap2, reduce);
                         }
                     }
                     None => break,

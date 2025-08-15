@@ -3,8 +3,8 @@ use crate::using::computations::UX;
 use crate::using::runner::parallel_runner_compute::{u_collect_arbitrary, u_collect_ordered};
 use crate::{
     IterationOrder,
-    computations::Values,
     runner::{ParallelRunner, ParallelRunnerCompute},
+    values::TransformableValues,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -13,7 +13,7 @@ impl<U, I, Vo, M1> UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues,
     Vo::Item: Send,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
@@ -45,7 +45,10 @@ where
         let iter = iter.into_seq_iter();
         for i in iter {
             let vt = xap1(&mut u, i);
-            vt.push_to_pinned_vec(&mut pinned_vec);
+            let done = vt.push_to_pinned_vec(&mut pinned_vec);
+            if let Some(_) = Vo::sequential_push_to_stop(done) {
+                break;
+            }
         }
 
         pinned_vec

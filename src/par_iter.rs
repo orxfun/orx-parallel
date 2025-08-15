@@ -1,3 +1,5 @@
+use crate::ParIterResult;
+use crate::par_iter_result::IntoResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -17,6 +19,8 @@ where
 {
     /// Element type of the parallel iterator.
     type Item;
+
+    type ConIter: ConcurrentIter;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
@@ -577,6 +581,10 @@ where
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone;
 
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
+    where
+        While: Fn(&Self::Item) -> bool + Sync + Clone;
+
     /// Does something with each element of an iterator, passing the value on.
     ///
     /// When using iterators, you’ll often chain several of them together.
@@ -644,6 +652,27 @@ where
         };
         self.map(map)
     }
+
+    // computation transformations - derived from whilst
+
+    fn map_while<Out, MapWhile>(self, map_while: MapWhile) -> impl ParIter<R, Item = Out>
+    where
+        MapWhile: Fn(Self::Item) -> Option<Out> + Sync + Clone,
+    {
+        self.map(map_while).take_while(|x| x.is_some()).map(|x| {
+            // SAFETY: since x passed the whilst(is-some) check, unwrap_unchecked
+            unsafe { x.unwrap_unchecked() }
+        })
+    }
+
+    // transformations into fallible computations
+
+    fn into_fallible<Success, Error>(
+        self,
+    ) -> impl ParIterResult<R, Success = Success, Error = Error>
+    where
+        Self::Item: IntoResult<Success, Error>,
+        Error: Send;
 
     // special item transformations
 

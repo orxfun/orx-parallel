@@ -14,8 +14,7 @@ where
         R: ParallelRunner,
         X: Fn(O, O) -> O + Sync,
     {
-        let len = self.iter().try_get_len();
-        let p = self.params();
+        let (len, p) = self.len_and_params();
         reduce::m(R::reduce(p, len), self, reduce)
     }
 }
