@@ -33,7 +33,6 @@ where
                 let pinned_vec = match result {
                     ParallelCollectArbitrary::AllCollected { pinned_vec } => pinned_vec,
                     ParallelCollectArbitrary::StoppedByWhileCondition { pinned_vec } => pinned_vec,
-                    ParallelCollectArbitrary::StoppedByError { error: _ } => unreachable!("Never"),
                 };
                 (num_threads, pinned_vec)
             }
@@ -46,7 +45,6 @@ where
                         pinned_vec,
                         stopped_idx: _,
                     } => pinned_vec,
-                    ParallelCollect::StoppedByError { error: _ } => unreachable!("Never"),
                 };
                 (num_threads, pinned_vec)
             }

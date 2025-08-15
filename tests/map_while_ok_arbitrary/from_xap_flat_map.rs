@@ -104,7 +104,7 @@ fn map_while_ok_from_xap_flat_map_whilst_when_error() {
 fn map_while_ok_from_xap_flat_map_whilst_when_error_out_of_reach() {
     let input = 0..1024;
     let flat_map = |i: usize| [i, 1000 + i, 2000 + i];
-    let is_error = |i: &usize| (800..850).contains(i);
+    let is_error = |i: &usize| (2800..2850).contains(i);
     let map_res = |i: usize| match is_error(&i) {
         true => Err(i.to_string()),
         false => Ok(i),

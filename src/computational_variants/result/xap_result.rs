@@ -12,6 +12,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues,
+    E: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone, // TODO: check this clone
 {
@@ -27,6 +28,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues,
+    E: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone,
 {
@@ -50,6 +52,7 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues,
+    E: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     Mr: Fn(Vo::Item) -> Result<T, E> + Sync + Clone,
 {
@@ -60,6 +63,8 @@ where
     fn con_iter_len(&self) -> Option<usize> {
         self.iter.try_get_len()
     }
+
+    // collect
 
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
     where
@@ -74,5 +79,22 @@ where
         };
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
+    }
+
+    // reduce
+
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
+    {
+        let (params, iter, xap, map_res) = self.destruct();
+        let x1 = move |i: I::Item| {
+            let v1: Vo = xap(i);
+            let map_res = map_res.clone();
+            v1.map_while_ok(map_res)
+        };
+        let x = X::new(params, iter, x1);
+        x.try_reduce::<R, _>(reduce).1
     }
 }

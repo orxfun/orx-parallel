@@ -671,7 +671,8 @@ where
         map_while_ok: MapWhileOk,
     ) -> impl ParIterResult<R, Item = Out, Error = Err>
     where
-        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone;
+        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+        Err: Send;
 
     // special item transformations
 
