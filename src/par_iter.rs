@@ -1,4 +1,5 @@
 use crate::ParIterResult;
+use crate::par_iter_result::IntoResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -666,13 +667,12 @@ where
 
     // transformations into fallible computations
 
-    fn map_while_ok<Out, Err, MapWhileOk>(
+    fn into_fallible<Success, Error>(
         self,
-        map_while_ok: MapWhileOk,
-    ) -> impl ParIterResult<R, Item = Out, Error = Err>
+    ) -> impl ParIterResult<R, Success = Success, Error = Error>
     where
-        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-        Err: Send;
+        Self::Item: IntoResult<Success, Error>,
+        Error: Send;
 
     // special item transformations
 

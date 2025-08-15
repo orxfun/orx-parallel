@@ -8,7 +8,7 @@ fn map_while_ok_from_par_when_ok() {
         false => Ok(i),
     };
 
-    let result: Result<Vec<_>, _> = input.into_par().map_while_ok(map_res).collect();
+    let result: Result<Vec<_>, _> = input.into_par().map(map_res).into_fallible().collect();
     let expected = Ok((0..1024).collect::<Vec<_>>());
 
     assert_eq!(result, expected);
@@ -24,7 +24,7 @@ fn map_while_ok_from_par_when_error() {
         false => Ok(i),
     };
 
-    let result: Result<Vec<_>, _> = input.into_par().map_while_ok(map_res).collect();
+    let result: Result<Vec<_>, _> = input.into_par().map(map_res).into_fallible().collect();
 
     let result = result.map_err(|e| {
         let number = e.parse::<usize>().unwrap();

@@ -1,5 +1,6 @@
 use crate::ParIterResult;
-use crate::computational_variants::result::ParXapResult;
+use crate::computational_variants::result::ParXapFallible;
+use crate::par_iter_result::IntoResult;
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
 use crate::{
@@ -39,7 +40,7 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I, M1) {
+    pub(crate) fn destruct(self) -> (Params, I, M1) {
         self.x.destruct()
     }
 }
@@ -196,16 +197,12 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    fn map_while_ok<Out, Err, MapWhileOk>(
-        self,
-        map_while_ok: MapWhileOk,
-    ) -> impl ParIterResult<R, Item = Out, Error = Err>
+    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
     where
-        MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+        Self::Item: IntoResult<Out, Err>,
         Err: Send,
     {
-        let (params, iter, x1) = self.destruct();
-        ParXapResult::new(iter, params, x1, map_while_ok)
+        ParXapFallible::new(self)
     }
 
     // collect

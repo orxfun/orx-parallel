@@ -20,7 +20,8 @@ fn map_while_ok_from_xap_chain_when_ok() {
         .map(map)
         .filter_map(filter_map)
         .map(map2)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .reduce(|a, b| a + b);
     let expected = Ok((0..1024)
         .flat_map(flat_map)
@@ -56,7 +57,8 @@ fn map_while_ok_from_xap_chain_when_error() {
         .map(map)
         .filter_map(filter_map)
         .map(map2)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .reduce(|a, b| a + b);
 
     let result = result.map_err(|e| {

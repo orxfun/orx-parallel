@@ -22,7 +22,8 @@ fn map_while_ok_from_xap_chain_when_ok() {
         .map(map)
         .filter_map(filter_map)
         .map(map2)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .collect();
     let expected = Ok((0..1024)
         .flat_map(flat_map)
@@ -62,7 +63,8 @@ fn map_while_ok_from_xap_chain_when_error() {
         .map(map)
         .filter_map(filter_map)
         .map(map2)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .collect();
 
     let result = result.map_err(|e| {
@@ -95,7 +97,8 @@ fn map_while_ok_from_xap_chain_whilst_when_ok() {
         .filter_map(filter_map)
         .map(map2)
         .take_while(|i| i < &777)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .collect();
 
     assert!(result.is_ok());
@@ -129,7 +132,8 @@ fn map_while_ok_from_xap_chain_whilst_when_err() {
         .filter_map(filter_map)
         .map(map2)
         .take_while(|i| i < &777)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .collect();
 
     let result = result.map_err(|e| {
@@ -163,7 +167,8 @@ fn map_while_ok_from_xap_chain_whilst_when_err_out_of_reach() {
         .filter_map(filter_map)
         .map(map2)
         .take_while(|i| i < &777)
-        .map_while_ok(map_res)
+        .map(map_res)
+        .into_fallible()
         .collect();
 
     assert!(result.is_ok());
