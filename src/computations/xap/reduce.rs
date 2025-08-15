@@ -17,6 +17,12 @@ where
         Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
     {
         let (len, p) = self.len_and_params();
-        reduce::x(R::reduce(p, len), self, reduce)
+        let (num_threads, result) = reduce::x(R::reduce(p, len), self, reduce);
+        let acc = match result {
+            Ok(acc) => acc,
+            Err(_) => None,
+        };
+        // let acc = unsafe { result.unwrap_unchecked() };
+        (num_threads, acc)
     }
 }

@@ -1,5 +1,5 @@
 use crate::values::runner_results::{
-    ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush,
+    ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush,
 };
 use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
 use crate::values::whilst_option_result::WhilstOptionResult;
@@ -69,17 +69,19 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueSome(x) => match acc {
-                Some(acc) => (false, Some(reduce(acc, x))),
-                None => (false, Some(x)),
+            Self::ContinueSome(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(acc, x),
+                    None => x,
+                }),
             },
-            Self::ContinueNone => (false, acc),
-            Self::Stop => (true, acc),
+            Self::ContinueNone => Reduce::Done { acc },
+            Self::Stop => Reduce::StoppedByWhileCondition { acc },
         }
     }
 

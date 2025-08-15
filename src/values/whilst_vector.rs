@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, WhilstAtom, WhilstOption,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush},
+    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush},
     whilst_iterators::WhilstAtomFlatMapIter,
     whilst_vector_result::WhilstVectorResult,
 };
@@ -67,7 +67,7 @@ where
         ArbitraryPush::Done
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
@@ -78,10 +78,10 @@ where
             None => {
                 let first = iter.next();
                 match first {
-                    None => return (false, None), // empty iterator but not stopped, acc is None
+                    None => return Reduce::StoppedByWhileCondition { acc: None }, // empty iterator but not stopped, acc is None
                     Some(x) => match x {
                         WhilstAtom::Continue(x) => x,
-                        WhilstAtom::Stop => return (true, None), // first element is stop, acc is None
+                        WhilstAtom::Stop => return Reduce::StoppedByWhileCondition { acc: None }, // first element is stop, acc is None
                     },
                 }
             }
@@ -90,11 +90,11 @@ where
         for x in iter {
             match x {
                 WhilstAtom::Continue(x) => acc = reduce(acc, x),
-                WhilstAtom::Stop => return (true, Some(acc)),
+                WhilstAtom::Stop => return Reduce::StoppedByWhileCondition { acc: Some(acc) },
             }
         }
 
-        (false, Some(acc))
+        Reduce::Done { acc: Some(acc) }
     }
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>

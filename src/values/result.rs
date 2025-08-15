@@ -1,6 +1,6 @@
 use crate::values::{
     Values, WhilstOption,
-    runner_results::{ArbitraryPush, Fallible, OrderedPush, SequentialPush},
+    runner_results::{ArbitraryPush, Fallible, OrderedPush, Reduce, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -68,16 +68,18 @@ where
         }
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Ok(x) => match acc {
-                Some(acc) => (false, Some(reduce(acc, x))),
-                None => (false, Some(x)),
+            Ok(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(acc, x),
+                    None => x,
+                }),
             },
-            Err(e) => (true, None), // resets entire reduction so far!
+            Err(error) => Reduce::StoppedByError { error },
         }
     }
 

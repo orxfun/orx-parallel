@@ -2,7 +2,7 @@ use super::{TransformableValues, Vector};
 use crate::values::{
     Values,
     option_result::OptionResult,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush},
+    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -54,19 +54,18 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        (
-            false,
-            match (acc, self) {
+        Reduce::Done {
+            acc: match (acc, self) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
                 (None, None) => None,
             },
-        )
+        }
     }
 
     #[inline(always)]

@@ -1,12 +1,15 @@
 use crate::values::{
     WhilstOption,
-    runner_results::{ArbitraryPush, Fallibility, OrderedPush, SequentialPush, Stop, StopWithIdx},
+    runner_results::{
+        ArbitraryPush, Fallibility, OrderedPush, Reduce, SequentialPush, Stop, StopReduce,
+        StopWithIdx,
+    },
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;
 
-pub trait Values {
+pub trait Values: Sized {
     type Item;
 
     type Fallibility: Fallibility;
@@ -29,7 +32,7 @@ pub trait Values {
         Self::Item: Send;
 
     /// Returns (true, _) if the computation must early exit.
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item;
 
@@ -65,5 +68,10 @@ pub trait Values {
         sequential_push: SequentialPush<Self::Fallibility>,
     ) -> Option<Stop<<Self::Fallibility as Fallibility>::Error>> {
         <Self::Fallibility as Fallibility>::sequential_push_to_stop(sequential_push)
+    }
+
+    #[inline(always)]
+    fn reduce_to_stop(reduce: Reduce<Self>) -> Result<Option<Self::Item>, StopReduce<Self>> {
+        <Self::Fallibility as Fallibility>::reduce_to_stop(reduce)
     }
 }

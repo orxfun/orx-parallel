@@ -2,9 +2,11 @@ use crate::values::{Values, runner_results::Fallibility};
 
 pub enum Reduce<V: Values> {
     Done {
-        acc: V::Item,
+        acc: Option<V::Item>,
     },
-    StoppedByWhileCondition,
+    StoppedByWhileCondition {
+        acc: Option<V::Item>,
+    },
     StoppedByError {
         error: <V::Fallibility as Fallibility>::Error,
     },

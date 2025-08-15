@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, SequentialPush},
+    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -59,20 +59,20 @@ where
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         let reduced = self.0.into_iter().reduce(&reduce);
-        (
-            false,
-            match (acc, reduced) {
+
+        Reduce::Done {
+            acc: match (acc, reduced) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
                 (None, None) => None,
             },
-        )
+        }
     }
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>

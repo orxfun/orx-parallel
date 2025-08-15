@@ -1,6 +1,6 @@
 use crate::values::{
     Values, WhilstOption,
-    runner_results::{ArbitraryPush, Fallibility, Fallible, OrderedPush, SequentialPush},
+    runner_results::{ArbitraryPush, Fallibility, Fallible, OrderedPush, Reduce, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -66,7 +66,7 @@ where
         ArbitraryPush::Done
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
@@ -77,10 +77,10 @@ where
             None => {
                 let first = iter.next();
                 match first {
-                    None => return (false, None), // empty iterator but not stopped, acc is None
+                    None => return Reduce::Done { acc: None }, // empty iterator but not stopped, acc is None
                     Some(x) => match x {
                         Ok(x) => x,
-                        Err(e) => return (true, None), // first element is stop, acc is None
+                        Err(error) => return Reduce::StoppedByError { error }, // first element is stop, acc is None
                     },
                 }
             }
@@ -89,11 +89,11 @@ where
         for x in iter {
             match x {
                 Ok(x) => acc = reduce(acc, x),
-                Err(e) => return (true, Some(acc)),
+                Err(error) => return Reduce::StoppedByError { error },
             }
         }
 
-        (false, Some(acc))
+        Reduce::Done { acc: Some(acc) }
     }
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
