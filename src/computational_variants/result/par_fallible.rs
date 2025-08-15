@@ -1,4 +1,4 @@
-use crate::computational_variants::Par;
+use crate::computational_variants::{Par, ParMap};
 use crate::computations::X;
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
@@ -45,6 +45,19 @@ where
 
     fn con_iter_len(&self) -> Option<usize> {
         self.par.con_iter().try_get_len()
+    }
+
+    // computation transformations
+
+    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
+    where
+        Map: Fn(Self::Success) -> Out + Sync,
+        Out: Send,
+    {
+        let (params, iter) = self.par.destruct();
+        let m1 = move |r: I::Item| r.into_result().map(&map);
+        let map = ParMap::new(params, iter, m1);
+        map.into_fallible()
     }
 
     // collect

@@ -201,6 +201,8 @@ where
     where
         Self::Item: IntoResult<Out, Err>,
         Err: Send,
+        Self::Item: Send,
+        Out: Send,
     {
         ParXapFallible::new(self)
     }

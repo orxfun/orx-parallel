@@ -672,7 +672,9 @@ where
     ) -> impl ParIterResult<R, Success = Success, Error = Error>
     where
         Self::Item: IntoResult<Success, Error>,
-        Error: Send;
+        Error: Send,
+        Self::Item: Send,
+        Success: Send;
 
     // special item transformations
 

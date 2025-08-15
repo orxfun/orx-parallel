@@ -10,6 +10,13 @@ where
 
     fn con_iter_len(&self) -> Option<usize>;
 
+    // computation transformations
+
+    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
+    where
+        Map: Fn(Self::Success) -> Out + Sync + Clone,
+        Out: Send;
+
     // collect
 
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>

@@ -46,6 +46,8 @@ where
     Vo::Item: IntoResult<T, E>,
     M1: Fn(I::Item) -> Vo + Sync,
     E: Send,
+    T: Send,
+    Vo::Item: Send,
 {
     type Success = T;
 
@@ -53,6 +55,22 @@ where
 
     fn con_iter_len(&self) -> Option<usize> {
         self.par.con_iter().try_get_len()
+    }
+
+    // computation transformations
+
+    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
+    where
+        Map: Fn(Self::Success) -> Out + Sync + Clone,
+        Out: Send,
+    {
+        let (params, iter, x1) = self.par.destruct();
+        let x1 = move |i: I::Item| {
+            let map = map.clone();
+            x1(i).map(move |x| x.into_result().map(&map))
+        };
+        let xap = ParXap::new(params, iter, x1);
+        xap.into_fallible()
     }
 
     // collect
