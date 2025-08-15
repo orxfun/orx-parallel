@@ -1,6 +1,6 @@
 use crate::computational_variants::ParXap;
 use crate::computations::X;
-use crate::par_iter_result::{IntoResult, ParIterResult};
+use crate::par_iter_fallible::{IntoResult, ParIterFallible};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
@@ -38,7 +38,7 @@ where
     }
 }
 
-impl<I, T, E, Vo, M1, R> ParIterResult<R> for ParXapFallible<I, T, E, Vo, M1, R>
+impl<I, T, E, Vo, M1, R> ParIterFallible<R> for ParXapFallible<I, T, E, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -59,7 +59,7 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
     where
         Map: Fn(Self::Success) -> Out + Sync + Clone,
         Out: Send,

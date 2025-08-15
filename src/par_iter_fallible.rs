@@ -1,6 +1,6 @@
 use crate::{DefaultRunner, ParCollectInto, ParallelRunner};
 
-pub trait ParIterResult<R = DefaultRunner>
+pub trait ParIterFallible<R = DefaultRunner>
 where
     R: ParallelRunner,
 {
@@ -12,7 +12,7 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
     where
         Map: Fn(Self::Success) -> Out + Sync + Clone,
         Out: Send;

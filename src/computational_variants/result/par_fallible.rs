@@ -1,6 +1,6 @@
 use crate::computational_variants::{Par, ParMap};
 use crate::computations::X;
-use crate::par_iter_result::{IntoResult, ParIterResult};
+use crate::par_iter_fallible::{IntoResult, ParIterFallible};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<I, T, E, R> ParIterResult<R> for ParFallible<I, T, E, R>
+impl<I, T, E, R> ParIterFallible<R> for ParFallible<I, T, E, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -49,7 +49,7 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
     where
         Map: Fn(Self::Success) -> Out + Sync,
         Out: Send,

@@ -1,5 +1,5 @@
-use crate::ParIterResult;
-use crate::par_iter_result::IntoResult;
+use crate::ParIterFallible;
+use crate::par_iter_fallible::IntoResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -669,7 +669,7 @@ where
 
     fn into_fallible<Success, Error>(
         self,
-    ) -> impl ParIterResult<R, Success = Success, Error = Error>
+    ) -> impl ParIterFallible<R, Success = Success, Error = Error>
     where
         Self::Item: IntoResult<Success, Error>,
         Error: Send,
