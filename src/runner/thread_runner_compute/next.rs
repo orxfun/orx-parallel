@@ -1,9 +1,7 @@
 use crate::{
     ThreadRunner,
-    values::{
-        Values, WhilstOption,
-        runner_results::{Next, NextWithIdx},
-    },
+    values::Values,
+    values::runner_results::{Next, NextWithIdx},
 };
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -69,7 +67,7 @@ pub fn x<C, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> NextWithIdx<Vo::Item, ()>
+) -> NextWithIdx<Vo>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -88,32 +86,22 @@ where
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     let vt = xap1(i);
-                    // match vt.next() {
-                    //     Next::Done { value } => {
-                    //         if let Some(found) = value {
-                    //             todo!()
-                    //         }
-                    //         //
-                    //         todo!()
-                    //     }
-                    //     Next::StoppedByError { error } => {
-                    //         //
-                    //         todo!()
-                    //     }
-                    //     Next::StoppedByWhileCondition => {
-                    //         //
-                    //         todo!()
-                    //     }
-                    // }
-                    match vt.first_to_depracate() {
-                        WhilstOption::ContinueSome(first) => {
+                    match vt.next() {
+                        Next::Done { value } => {
+                            if let Some(value) = value {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                return NextWithIdx::Found { idx, value };
+                            }
+                        }
+                        Next::StoppedByError { error } => {
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
-                            return NextWithIdx::Found { idx, value: first };
+                            return NextWithIdx::StoppedByError { error };
                         }
-                        WhilstOption::ContinueNone => continue,
-                        WhilstOption::Stop => {
+                        Next::StoppedByWhileCondition => {
                             iter.skip_to_end();
                             runner.complete_chunk(shared_state, chunk_size);
                             runner.complete_task(shared_state);
@@ -132,15 +120,22 @@ where
                     Some((idx, chunk)) => {
                         for i in chunk {
                             let vt = xap1(i);
-                            match vt.first_to_depracate() {
-                                WhilstOption::ContinueSome(first) => {
+                            match vt.next() {
+                                Next::Done { value } => {
+                                    if let Some(value) = value {
+                                        iter.skip_to_end();
+                                        runner.complete_chunk(shared_state, chunk_size);
+                                        runner.complete_task(shared_state);
+                                        return NextWithIdx::Found { idx, value };
+                                    }
+                                }
+                                Next::StoppedByError { error } => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);
-                                    return NextWithIdx::Found { idx, value: first };
+                                    return NextWithIdx::StoppedByError { error };
                                 }
-                                WhilstOption::ContinueNone => continue,
-                                WhilstOption::Stop => {
+                                Next::StoppedByWhileCondition => {
                                     iter.skip_to_end();
                                     runner.complete_chunk(shared_state, chunk_size);
                                     runner.complete_task(shared_state);

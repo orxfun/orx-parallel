@@ -10,14 +10,21 @@ pub enum Next<V: Values> {
     },
 }
 
-pub enum NextWithIdx<T, E> {
-    Found { idx: usize, value: T },
+pub enum NextWithIdx<V: Values> {
+    Found {
+        idx: usize,
+        value: V::Item,
+    },
     NotFound,
-    StoppedByWhileCondition { idx: usize },
-    StoppedByError { error: E },
+    StoppedByWhileCondition {
+        idx: usize,
+    },
+    StoppedByError {
+        error: <V::Fallibility as Fallibility>::Error,
+    },
 }
 
-impl<T, E> NextWithIdx<T, E> {
+impl<V: Values> NextWithIdx<V> {
     fn found_or_stopped_idx(&self) -> Option<usize> {
         match self {
             Self::Found { idx, value: _ } => Some(*idx),
@@ -26,7 +33,7 @@ impl<T, E> NextWithIdx<T, E> {
         }
     }
 
-    pub fn into_found_value(self) -> Option<T> {
+    pub fn into_found_value(self) -> Option<V::Item> {
         match self {
             Self::Found { idx: _, value } => Some(value),
             _ => None,
@@ -50,5 +57,34 @@ impl<T, E> NextWithIdx<T, E> {
         }
 
         result
+    }
+}
+
+pub enum NextSuccess<T> {
+    Found { idx: usize, value: T },
+    StoppedByWhileCondition { idx: usize },
+}
+
+impl<T> NextSuccess<T> {
+    pub fn reduce(results: Vec<Self>) -> Option<(usize, T)> {
+        let mut result = None;
+        let mut idx_bound = usize::MAX;
+        for x in results {
+            match x {
+                NextSuccess::Found { idx, value } if idx < idx_bound => {
+                    idx_bound = idx;
+                    result = Some((idx, value));
+                }
+                NextSuccess::StoppedByWhileCondition { idx } if idx < idx_bound => {
+                    idx_bound = idx;
+                }
+                _ => {}
+            }
+        }
+
+        result.and_then(|(idx, value)| match idx <= idx_bound {
+            true => Some((idx, value)),
+            false => None, // found value was found after stopped
+        })
     }
 }

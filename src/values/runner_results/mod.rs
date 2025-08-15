@@ -10,6 +10,6 @@ pub use collect_arbitrary::{ArbitraryPush, ParallelCollectArbitrary, ThreadColle
 pub use collect_ordered::{OrderedPush, ParallelCollect, ThreadCollect};
 pub use collect_sequential::SequentialPush;
 pub use fallibility::{Fallibility, Fallible, Infallible};
-pub use next::{Next, NextWithIdx};
+pub use next::{Next, NextSuccess, NextWithIdx};
 pub use reduce::Reduce;
 pub use stop::{Stop, StopReduce, StopWithIdx};

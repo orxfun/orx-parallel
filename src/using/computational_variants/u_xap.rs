@@ -1,9 +1,8 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     runner::{DefaultRunner, ParallelRunner},
-    using::u_par_iter::ParIterUsing,
-    using::{Using, computations::UX},
-    values::{TransformableValues, Vector},
+    using::{Using, computations::UX, u_par_iter::ParIterUsing},
+    values::{TransformableValues, Vector, runner_results::Infallible},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -16,7 +15,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     ux: UX<U, I, Vo, M1>,
@@ -28,7 +27,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(using: U, params: Params, iter: I, x1: M1) -> Self {
@@ -48,7 +47,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -58,7 +57,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -68,7 +67,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;

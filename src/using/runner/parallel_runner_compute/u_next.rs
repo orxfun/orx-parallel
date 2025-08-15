@@ -1,7 +1,7 @@
 use super::super::thread_runner_compute as thread;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::values::runner_results::NextWithIdx;
+use crate::values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
 use crate::{runner::ParallelRunnerCompute, values::TransformableValues};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -50,7 +50,13 @@ where
     (num_spawned, acc)
 }
 
-pub fn u_x<C, U, I, Vo, X1>(runner: C, x: UX<U, I, Vo, X1>) -> (usize, Option<Vo::Item>)
+pub fn u_x<C, U, I, Vo, X1>(
+    runner: C,
+    x: UX<U, I, Vo, X1>,
+) -> (
+    usize,
+    Result<Option<(usize, Vo::Item)>, <Vo::Fallibility as Fallibility>::Error>,
+)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -65,7 +71,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let results = std::thread::scope(|s| {
+    let result: Result<Vec<NextSuccess<Vo::Item>>, _> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -82,16 +88,44 @@ where
             }))
         }
 
-        let mut results: Vec<NextWithIdx<Vo::Item, ()>> = Vec::with_capacity(handles.len());
-        for x in handles {
-            let thread_next = x.join().expect("failed to join the thread");
-            results.push(thread_next);
+        let mut results = Vec::with_capacity(handles.len());
+
+        let mut error = None;
+        while !handles.is_empty() {
+            let mut finished_idx = None;
+            for (h, handle) in handles.iter().enumerate() {
+                if handle.is_finished() {
+                    finished_idx = Some(h);
+                    break;
+                }
+            }
+
+            if let Some(h) = finished_idx {
+                let handle = handles.remove(h);
+                let result = handle.join().expect("failed to join the thread");
+                match result {
+                    NextWithIdx::Found { idx, value } => {
+                        results.push(NextSuccess::Found { idx, value })
+                    }
+                    NextWithIdx::NotFound => {}
+                    NextWithIdx::StoppedByWhileCondition { idx } => {
+                        results.push(NextSuccess::StoppedByWhileCondition { idx });
+                    }
+                    NextWithIdx::StoppedByError { error: e } => {
+                        error = Some(e);
+                        break;
+                    }
+                }
+            }
         }
-        results
+
+        match error {
+            Some(error) => Err(error),
+            None => Ok(results),
+        }
     });
 
-    let result = NextWithIdx::reduce(results);
-    let acc = result.into_found_value();
+    let next = result.map(|results| NextSuccess::reduce(results));
 
-    (num_spawned, acc)
+    (num_spawned, next)
 }
