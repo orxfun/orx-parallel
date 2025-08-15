@@ -1,7 +1,7 @@
 use crate::values::{
     WhilstOption,
     runner_results::{
-        ArbitraryPush, Fallibility, OrderedPush, Reduce, SequentialPush, Stop, StopReduce,
+        ArbitraryPush, Fallibility, Next, OrderedPush, Reduce, SequentialPush, Stop, StopReduce,
         StopWithIdx,
     },
 };
@@ -46,6 +46,8 @@ pub trait Values: Sized {
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item;
 
     fn first_to_depracate(self) -> WhilstOption<Self::Item>;
+
+    fn next(self) -> Next<Self>;
 
     // provided
 

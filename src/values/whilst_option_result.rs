@@ -1,4 +1,6 @@
-use crate::values::runner_results::{ArbitraryPush, Fallible, OrderedPush, Reduce, SequentialPush};
+use crate::values::runner_results::{
+    ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
+};
 use crate::values::{Values, WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -114,6 +116,15 @@ where
             Self::ContinueNone => WhilstOption::ContinueNone,
             Self::StopErr(error) => WhilstOption::Stop,
             Self::StopWhile => WhilstOption::Stop,
+        }
+    }
+
+    fn next(self) -> Next<Self> {
+        match self {
+            Self::ContinueSomeOk(x) => Next::Done { value: Some(x) },
+            Self::ContinueNone => Next::Done { value: None },
+            Self::StopErr(error) => Next::StoppedByError { error },
+            Self::StopWhile => Next::StoppedByWhileCondition,
         }
     }
 }

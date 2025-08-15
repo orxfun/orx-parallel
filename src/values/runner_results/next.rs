@@ -1,7 +1,7 @@
 use crate::values::{Values, runner_results::Fallibility};
 
 pub enum Next<V: Values> {
-    Found {
+    Done {
         value: Option<V::Item>,
     },
     StoppedByWhileCondition,

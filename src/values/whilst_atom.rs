@@ -1,5 +1,5 @@
 use crate::values::runner_results::{
-    ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush,
+    ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use crate::values::whilst_atom_result::WhilstAtomResult;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
@@ -107,6 +107,13 @@ impl<T> Values for WhilstAtom<T> {
         match self {
             Self::Continue(x) => WhilstOption::ContinueSome(x),
             Self::Stop => WhilstOption::Stop,
+        }
+    }
+
+    fn next(self) -> Next<Self> {
+        match self {
+            Self::Continue(x) => Next::Done { value: Some(x) },
+            Self::Stop => Next::StoppedByWhileCondition,
         }
     }
 }

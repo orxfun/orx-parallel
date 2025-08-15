@@ -1,7 +1,9 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
-    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush},
+    runner_results::{
+        ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
+    },
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -93,6 +95,12 @@ where
         match self.0.into_iter().next() {
             Some(x) => WhilstOption::ContinueSome(x),
             None => WhilstOption::ContinueNone,
+        }
+    }
+
+    fn next(self) -> Next<Self> {
+        Next::Done {
+            value: self.0.into_iter().next(),
         }
     }
 }
