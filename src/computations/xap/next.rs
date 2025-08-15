@@ -28,8 +28,13 @@ where
     pub fn next_any<R>(self) -> (usize, Option<Vo::Item>)
     where
         R: ParallelRunner,
+        Vo: Values<Fallibility = Infallible>,
     {
         let (len, p) = self.len_and_params();
-        next_any::x(R::early_return(p, len), self)
+        let (num_threads, result) = next_any::x(R::early_return(p, len), self);
+        let next = match result {
+            Ok(x) => x,
+        };
+        (num_threads, next)
     }
 }
