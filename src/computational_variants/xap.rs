@@ -1,6 +1,7 @@
 use crate::ParIterResult;
 use crate::computational_variants::result::ParXapResult;
 use crate::values::TransformableValues;
+use crate::values::runner_results::Infallible;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::X,
@@ -17,8 +18,7 @@ pub struct ParXap<I, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
-    Vo::Error: Send,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     x: X<I, Vo, M1>,
@@ -29,8 +29,7 @@ impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
-    Vo::Error: Send,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
@@ -49,8 +48,7 @@ unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
-    Vo::Error: Send,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -59,8 +57,7 @@ unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
-    Vo::Error: Send,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -69,8 +66,7 @@ impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
-    Vo::Error: Send,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
@@ -206,47 +202,11 @@ where
     ) -> impl ParIterResult<R, Item = Out, Error = Err>
     where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+        Err: Send,
     {
         let (params, iter, x1) = self.destruct();
         ParXapResult::new(iter, params, x1, map_while_ok)
     }
-
-    // fn map_while_ok<Out, Err, MapWhileOk>(
-    //     self,
-    //     map_while_ok: MapWhileOk,
-    // ) -> ParIterResult3<
-    //     Self::ConIter,
-    //     Out,
-    //     Err,
-    //     impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
-    //     R,
-    // >
-    // where
-    //     MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-    //     Err: Send + Sync,
-    // {
-    //     // TODO: this is wrong! we need vector of results
-    //     let con_iter_len = self.con_iter().try_get_len();
-    //     let (params, iter, x1) = self.destruct();
-
-    //     // let xx = move |i: I::Item| {
-    //     //     let v1: Vo = x1(i);
-    //     //     let iter = v1.values().into_iter();
-    //     //     let iter_result = iter.map(move |x| WhilstOk(map_while_ok(x)));
-    //     //     // let y = iter_result.next().unwrap();
-    //     //     let ok_vector = WhilstOkVector(iter_result);
-    //     //     // todo
-    //     //     todo!()
-    //     // };
-
-    //     let x1 = move |i: I::Item| {
-    //         // let v = WhilstOkVector(x1(i).map(|x| WhilstOk::new(map_while_ok(x))).values());
-    //         // v
-    //         WhilstOk::<Out, Err>::new(map_while_ok(x1(i).values().into_iter().next().unwrap()))
-    //     };
-    //     let x = X::new(params, iter, x1);
-    //     ParIterResult3::<I, Out, Err, _, R>::new(x, con_iter_len)
-    // }
 
     // collect
 

@@ -174,6 +174,7 @@ where
     ) -> impl ParIterResult<R, Item = Out, Error = Err>
     where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+        Err: Send,
     {
         let (params, iter) = self.destruct();
         ParMapResult::new(iter, params, map_while_ok)

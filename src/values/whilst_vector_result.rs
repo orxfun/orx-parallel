@@ -1,6 +1,6 @@
 use crate::values::{
     Values, WhilstAtom, WhilstOption,
-    runner_results::{ArbitraryPush, OrderedPush},
+    runner_results::{ArbitraryPush, Fallible, OrderedPush, Reduce, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -18,32 +18,34 @@ where
 {
     type Item = T;
 
-    type Error = E;
+    type Fallibility = Fallible<E>;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
         core::iter::empty()
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(Ok(x)) => vector.push(x),
-                WhilstAtom::Continue(Err(error)) => return true,
-                WhilstAtom::Stop => return true,
+                WhilstAtom::Continue(Err(error)) => {
+                    return SequentialPush::StoppedByError { error };
+                }
+                WhilstAtom::Stop => return SequentialPush::StoppedByWhileCondition,
             }
         }
-        false
+        SequentialPush::Done
     }
 
     fn push_to_vec_with_idx(
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallibility> {
         for x in self.0 {
             match x {
                 WhilstAtom::Continue(Ok(x)) => vec.push((idx, x)),
@@ -56,7 +58,7 @@ where
         OrderedPush::Done
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -71,7 +73,7 @@ where
         ArbitraryPush::Done
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
@@ -82,11 +84,13 @@ where
             None => {
                 let first = iter.next();
                 match first {
-                    None => return (false, None), // empty iterator but not stopped, acc is None
+                    None => return Reduce::Done { acc: None }, // empty iterator but not stopped, acc is None
                     Some(first) => match first {
                         WhilstAtom::Continue(Ok(x)) => x,
-                        WhilstAtom::Continue(Err(error)) => return (true, None),
-                        WhilstAtom::Stop => return (true, None), // first element is stop, acc is None
+                        WhilstAtom::Continue(Err(error)) => {
+                            return Reduce::StoppedByError { error };
+                        }
+                        WhilstAtom::Stop => return Reduce::StoppedByWhileCondition { acc: None }, // first element is stop, acc is None
                     },
                 }
             }
@@ -95,12 +99,12 @@ where
         for x in iter {
             match x {
                 WhilstAtom::Continue(Ok(x)) => acc = reduce(acc, x),
-                WhilstAtom::Continue(Err(error)) => return (true, None),
-                WhilstAtom::Stop => return (true, Some(acc)),
+                WhilstAtom::Continue(Err(error)) => return Reduce::StoppedByError { error },
+                WhilstAtom::Stop => return Reduce::StoppedByWhileCondition { acc: Some(acc) },
             }
         }
 
-        (false, Some(acc))
+        Reduce::Done { acc: Some(acc) }
     }
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>

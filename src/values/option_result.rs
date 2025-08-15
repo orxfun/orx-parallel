@@ -1,6 +1,6 @@
 use crate::values::{
     Values,
-    runner_results::{ArbitraryPush, OrderedPush},
+    runner_results::{ArbitraryPush, Fallible, OrderedPush, Reduce, SequentialPush, Stop},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -16,24 +16,24 @@ where
 {
     type Item = T;
 
-    type Error = E;
+    type Fallibility = Fallible<E>;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
         core::iter::empty()
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         match self.0 {
             Some(Ok(x)) => {
                 vector.push(x);
-                false
+                SequentialPush::Done
             }
-            Some(Err(error)) => true,
-            None => false,
+            Some(Err(error)) => SequentialPush::StoppedByError { error },
+            None => SequentialPush::Done,
         }
     }
 
@@ -41,7 +41,7 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallibility> {
         match self.0 {
             Some(Ok(x)) => {
                 vec.push((idx, x));
@@ -52,7 +52,7 @@ where
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -67,20 +67,19 @@ where
         }
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self.0 {
-            Some(Ok(x)) => {
-                let acc = Some(match acc {
+            Some(Ok(x)) => Reduce::Done {
+                acc: Some(match acc {
                     Some(y) => reduce(y, x),
                     None => x,
-                });
-                (false, acc)
-            }
-            Some(Err(error)) => (true, None),
-            None => (false, acc),
+                }),
+            },
+            None => Reduce::Done { acc },
+            Some(Err(error)) => Reduce::StoppedByError { error },
         }
     }
 

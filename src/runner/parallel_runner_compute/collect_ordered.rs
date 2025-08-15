@@ -1,6 +1,6 @@
 use crate::runner::thread_runner_compute as thread;
 use crate::values::Values;
-use crate::values::runner_results::{ParallelCollect, ThreadCollect};
+use crate::values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
 use crate::{
     computations::{M, X},
     runner::ParallelRunnerCompute,
@@ -61,7 +61,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    Vo::Error: Send,
+    <Vo::Fallibility as Fallibility>::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
@@ -72,51 +72,52 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result: Result<Vec<ThreadCollect<Vo>>, Vo::Error> = std::thread::scope(|s| {
-        let mut handles = vec![];
+    let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
+        std::thread::scope(|s| {
+            let mut handles = vec![];
 
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
-            handles.push(s.spawn(|| {
-                thread::collect_ordered::x(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                )
-            }));
-        }
-
-        let mut results = Vec::with_capacity(handles.len());
-
-        let mut error = None;
-        while !handles.is_empty() {
-            let mut finished_idx = None;
-            for (h, handle) in handles.iter().enumerate() {
-                if handle.is_finished() {
-                    finished_idx = Some(h);
-                    break;
-                }
+            while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+                num_spawned += 1;
+                handles.push(s.spawn(|| {
+                    thread::collect_ordered::x(
+                        runner.new_thread_runner(shared_state),
+                        &iter,
+                        shared_state,
+                        &xap1,
+                    )
+                }));
             }
 
-            if let Some(h) = finished_idx {
-                let handle = handles.remove(h);
-                let result = handle.join().expect("failed to join the thread");
-                match result.into_result() {
-                    Ok(result) => results.push(result),
-                    Err(e) => {
-                        error = Some(e);
+            let mut results = Vec::with_capacity(handles.len());
+
+            let mut error = None;
+            while !handles.is_empty() {
+                let mut finished_idx = None;
+                for (h, handle) in handles.iter().enumerate() {
+                    if handle.is_finished() {
+                        finished_idx = Some(h);
                         break;
                     }
                 }
-            }
-        }
 
-        match error {
-            Some(error) => Err(error),
-            None => Ok(results),
-        }
-    });
+                if let Some(h) = finished_idx {
+                    let handle = handles.remove(h);
+                    let result = handle.join().expect("failed to join the thread");
+                    match result.into_result() {
+                        Ok(result) => results.push(result),
+                        Err(e) => {
+                            error = Some(e);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            match error {
+                Some(error) => Err(error),
+                None => Ok(results),
+            }
+        });
 
     let result = match result {
         Err(error) => ParallelCollect::StoppedByError { error },

@@ -1,7 +1,5 @@
 use orx_parallel::*;
 
-use crate::map_while_ok_arbitrary::utils::sort_if_ok;
-
 #[test]
 fn map_while_ok_from_par_when_ok() {
     let input = 0..1024;
@@ -10,13 +8,8 @@ fn map_while_ok_from_par_when_ok() {
         false => Ok(i),
     };
 
-    let result: Result<Vec<_>, _> = input
-        .into_par()
-        .iteration_order(IterationOrder::Arbitrary)
-        .map_while_ok(map_res)
-        .collect();
-    let result = sort_if_ok(result);
-    let expected = Ok((0..1024).collect::<Vec<_>>());
+    let result = input.into_par().map_while_ok(map_res).reduce(|a, b| a + b);
+    let expected = Ok(Some((0..1024).sum::<usize>()));
 
     assert_eq!(result, expected);
 }
@@ -31,11 +24,7 @@ fn map_while_ok_from_par_when_error() {
         false => Ok(i),
     };
 
-    let result: Result<Vec<_>, _> = input
-        .into_par()
-        .iteration_order(IterationOrder::Arbitrary)
-        .map_while_ok(map_res)
-        .collect();
+    let result = input.into_par().map_while_ok(map_res).reduce(|a, b| a + b);
 
     let result = result.map_err(|e| {
         let number = e.parse::<usize>().unwrap();

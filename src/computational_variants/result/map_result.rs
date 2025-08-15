@@ -10,6 +10,7 @@ pub struct ParMapResult<I, T, E, Mr, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
+    E: Send,
     Mr: Fn(I::Item) -> Result<T, E> + Sync,
 {
     iter: I,
@@ -22,6 +23,7 @@ impl<I, T, E, Mr, R> ParMapResult<I, T, E, Mr, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
+    E: Send,
     Mr: Fn(I::Item) -> Result<T, E> + Sync,
 {
     pub(crate) fn new(iter: I, params: Params, map_res: Mr) -> Self {
@@ -42,6 +44,7 @@ impl<I, T, E, Mr, R> ParIterResult<R> for ParMapResult<I, T, E, Mr, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
+    E: Send,
     Mr: Fn(I::Item) -> Result<T, E> + Sync,
 {
     type Item = T;
@@ -52,14 +55,28 @@ where
         self.iter.try_get_len()
     }
 
+    // collect
+
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
     where
         C: ParCollectInto<Self::Item>,
-        Self::Error: Send,
     {
         let (params, iter, map_res) = self.destruct();
         let x1 = move |i: I::Item| map_res(i);
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
+    }
+
+    // reduce
+
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
+    {
+        let (params, iter, map_res) = self.destruct();
+        let x1 = move |i: I::Item| map_res(i);
+        let x = X::new(params, iter, x1);
+        x.try_reduce::<R, _>(reduce).1
     }
 }

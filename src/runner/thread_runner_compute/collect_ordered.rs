@@ -1,6 +1,6 @@
 use crate::ThreadRunner;
-use crate::values::runner_results::ThreadCollect;
-use crate::values::{Values, runner_results::OrderedPush};
+use crate::values::Values;
+use crate::values::runner_results::{StopWithIdx, ThreadCollect};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -80,23 +80,20 @@ where
                 Some((idx, i)) => {
                     let vo = xap1(i);
                     let done = vo.push_to_vec_with_idx(idx, out_vec);
-
-                    match done {
-                        OrderedPush::Done => {}
-                        OrderedPush::StoppedByWhileCondition { idx } => {
-                            iter.skip_to_end();
-                            runner.complete_chunk(shared_state, chunk_size);
-                            runner.complete_task(shared_state);
-                            return ThreadCollect::StoppedByWhileCondition {
-                                vec: collected,
-                                stopped_idx: idx,
-                            };
-                        }
-                        OrderedPush::StoppedByError { idx: _, error } => {
-                            iter.skip_to_end();
-                            runner.complete_chunk(shared_state, chunk_size);
-                            runner.complete_task(shared_state);
-                            return ThreadCollect::StoppedByError { error };
+                    if let Some(stop) = Vo::ordered_push_to_stop(done) {
+                        iter.skip_to_end();
+                        runner.complete_chunk(shared_state, chunk_size);
+                        runner.complete_task(shared_state);
+                        match stop {
+                            StopWithIdx::DueToWhile { idx } => {
+                                return ThreadCollect::StoppedByWhileCondition {
+                                    vec: collected,
+                                    stopped_idx: idx,
+                                };
+                            }
+                            StopWithIdx::DueToError { idx: _, error } => {
+                                return ThreadCollect::StoppedByError { error };
+                            }
                         }
                     }
                 }
@@ -112,22 +109,20 @@ where
                         for (within_chunk_idx, value) in chunk.enumerate() {
                             let vo = xap1(value);
                             let done = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
-                            match done {
-                                OrderedPush::Done => {}
-                                OrderedPush::StoppedByWhileCondition { idx } => {
-                                    iter.skip_to_end();
-                                    runner.complete_chunk(shared_state, chunk_size);
-                                    runner.complete_task(shared_state);
-                                    return ThreadCollect::StoppedByWhileCondition {
-                                        vec: collected,
-                                        stopped_idx: idx + within_chunk_idx,
-                                    };
-                                }
-                                OrderedPush::StoppedByError { idx: _, error } => {
-                                    iter.skip_to_end();
-                                    runner.complete_chunk(shared_state, chunk_size);
-                                    runner.complete_task(shared_state);
-                                    return ThreadCollect::StoppedByError { error };
+                            if let Some(stop) = Vo::ordered_push_to_stop(done) {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                match stop {
+                                    StopWithIdx::DueToWhile { idx } => {
+                                        return ThreadCollect::StoppedByWhileCondition {
+                                            vec: collected,
+                                            stopped_idx: idx + within_chunk_idx,
+                                        };
+                                    }
+                                    StopWithIdx::DueToError { idx: _, error } => {
+                                        return ThreadCollect::StoppedByError { error };
+                                    }
                                 }
                             }
                         }

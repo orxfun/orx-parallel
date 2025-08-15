@@ -1,12 +1,14 @@
-use crate::{computations::heap_sort_into, values::Values};
+use crate::{
+    computations::heap_sort_into,
+    values::{Values, runner_results::Fallibility},
+};
 use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
-use orx_split_vec::PseudoDefault;
 
-pub enum OrderedPush<E> {
+pub enum OrderedPush<F: Fallibility> {
     Done,
     StoppedByWhileCondition { idx: usize },
-    StoppedByError { idx: usize, error: E },
+    StoppedByError { idx: usize, error: F::Error },
 }
 
 pub enum ThreadCollect<V>
@@ -21,7 +23,7 @@ where
         stopped_idx: usize,
     },
     StoppedByError {
-        error: V::Error,
+        error: <V::Fallibility as Fallibility>::Error,
     },
 }
 
@@ -43,7 +45,7 @@ impl<V: Values> Debug for ThreadCollect<V> {
 }
 
 impl<V: Values> ThreadCollect<V> {
-    pub fn into_result(self) -> Result<Self, V::Error> {
+    pub fn into_result(self) -> Result<Self, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::StoppedByError { error } => Err(error),
             _ => Ok(self),
@@ -56,9 +58,16 @@ where
     V: Values,
     P: IntoConcurrentPinnedVec<V::Item>,
 {
-    AllCollected { pinned_vec: P },
-    StoppedByWhileCondition { pinned_vec: P, stopped_idx: usize },
-    StoppedByError { error: V::Error },
+    AllCollected {
+        pinned_vec: P,
+    },
+    StoppedByWhileCondition {
+        pinned_vec: P,
+        stopped_idx: usize,
+    },
+    StoppedByError {
+        error: <V::Fallibility as Fallibility>::Error,
+    },
 }
 
 impl<V, P> core::fmt::Debug for ParallelCollect<V, P>
@@ -119,19 +128,7 @@ where
         }
     }
 
-    pub fn to_collected(self) -> P {
-        match self {
-            Self::AllCollected { pinned_vec } => pinned_vec,
-            Self::StoppedByWhileCondition {
-                pinned_vec,
-                stopped_idx: _,
-            } => pinned_vec,
-            Self::StoppedByError { error: _ } => PseudoDefault::pseudo_default(),
-            // TODO: we should not be needing PseudoDefault; this will be called only when infallible
-        }
-    }
-
-    pub fn to_result(self) -> Result<P, V::Error> {
+    pub fn to_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),
             Self::StoppedByWhileCondition {

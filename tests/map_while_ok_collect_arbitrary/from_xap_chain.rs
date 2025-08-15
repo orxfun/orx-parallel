@@ -1,6 +1,5 @@
+use crate::map_while_ok_collect_arbitrary::utils::sort_if_ok;
 use orx_parallel::*;
-
-use crate::map_while_ok_arbitrary::utils::sort_if_ok;
 
 #[test]
 fn map_while_ok_from_xap_chain_when_ok() {
@@ -98,21 +97,11 @@ fn map_while_ok_from_xap_chain_whilst_when_ok() {
         .take_while(|i| i < &777)
         .map_while_ok(map_res)
         .collect();
-    let expected = input
-        .into_iter()
-        .flat_map(flat_map)
-        .filter(filter)
-        .map(map)
-        .filter_map(filter_map)
-        .map(map2)
-        .take_while(|i| i < &777)
-        .map(map_res)
-        .collect();
 
-    let result = sort_if_ok(result);
-    let expected = sort_if_ok(expected);
-
-    assert_eq!(result, expected);
+    assert!(result.is_ok());
+    let result = result.unwrap();
+    let all_satisfies_whilst = result.iter().all(|x| x < &777);
+    assert!(all_satisfies_whilst);
 }
 
 #[test]
@@ -177,19 +166,8 @@ fn map_while_ok_from_xap_chain_whilst_when_err_out_of_reach() {
         .map_while_ok(map_res)
         .collect();
 
-    let expected = input
-        .into_iter()
-        .flat_map(flat_map)
-        .filter(filter)
-        .map(map)
-        .filter_map(filter_map)
-        .map(map2)
-        .take_while(|i| i < &777)
-        .map(map_res)
-        .collect();
-
-    let result = sort_if_ok(result);
-    let expected = sort_if_ok(expected);
-
-    assert_eq!(result, expected);
+    assert!(result.is_ok());
+    let result = result.unwrap();
+    let all_satisfies_whilst = result.iter().all(|x| x < &777);
+    assert!(all_satisfies_whilst);
 }

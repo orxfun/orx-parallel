@@ -1,5 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::values::Values;
+use crate::values::runner_results::{Fallibility, Infallible};
 use crate::{
     collect_into::utils::split_vec_reserve,
     computations::{M, X},
@@ -40,8 +41,7 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
-        Vo::Error: Send,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());
@@ -49,12 +49,14 @@ where
         pinned_vec
     }
 
-    fn x_try_collect_into<R, I, Vo, M1>(mut self, x: X<I, Vo, M1>) -> Result<Self, Vo::Error>
+    fn x_try_collect_into<R, I, Vo, M1>(
+        mut self,
+        x: X<I, Vo, M1>,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Error: Send,
         M1: Fn(I::Item) -> Vo + Sync,
         Self: Sized,
     {

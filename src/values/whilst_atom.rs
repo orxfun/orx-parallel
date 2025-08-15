@@ -1,4 +1,6 @@
-use crate::values::runner_results::{ArbitraryPush, OrderedPush};
+use crate::values::runner_results::{
+    ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush,
+};
 use crate::values::whilst_atom_result::WhilstAtomResult;
 use crate::values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
@@ -23,7 +25,7 @@ impl<T> WhilstAtom<T> {
 impl<T> Values for WhilstAtom<T> {
     type Item = T;
 
-    type Error = ();
+    type Fallibility = Infallible;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         match self {
@@ -32,16 +34,16 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         match self {
             Self::Continue(x) => {
                 vector.push(x);
-                false
+                SequentialPush::Done
             }
-            Self::Stop => true,
+            Self::Stop => SequentialPush::StoppedByWhileCondition,
         }
     }
 
@@ -49,7 +51,7 @@ impl<T> Values for WhilstAtom<T> {
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallibility> {
         match self {
             Self::Continue(x) => {
                 vec.push((idx, x));
@@ -59,7 +61,7 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -73,16 +75,18 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::Continue(x) => match acc {
-                Some(acc) => (false, Some(reduce(acc, x))),
-                None => (false, Some(x)),
+            Self::Continue(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(acc, x),
+                    None => x,
+                }),
             },
-            Self::Stop => (true, acc),
+            Self::Stop => Reduce::StoppedByWhileCondition { acc },
         }
     }
 
@@ -108,7 +112,10 @@ impl<T> Values for WhilstAtom<T> {
 }
 
 impl<T> TransformableValues for WhilstAtom<T> {
-    fn map<M, O>(self, map: M) -> impl TransformableValues<Item = O>
+    fn map<M, O>(
+        self,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         M: Fn(Self::Item) -> O + Clone,
     {
@@ -118,7 +125,10 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn filter<F>(self, filter: F) -> impl TransformableValues<Item = Self::Item>
+    fn filter<F>(
+        self,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         F: Fn(&Self::Item) -> bool + Clone,
     {
@@ -131,7 +141,10 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl TransformableValues<Item = Vo::Item>
+    fn flat_map<Fm, Vo>(
+        self,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo + Clone,
@@ -140,7 +153,10 @@ impl<T> TransformableValues for WhilstAtom<T> {
         WhilstVector(iter)
     }
 
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl TransformableValues<Item = O>
+    fn filter_map<Fm, O>(
+        self,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
@@ -156,7 +172,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
     fn whilst(
         self,
         whilst: impl Fn(&Self::Item) -> bool,
-    ) -> impl TransformableValues<Item = Self::Item>
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         Self: Sized,
     {
@@ -169,7 +185,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallibility = Fallible<E>>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,

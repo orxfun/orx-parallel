@@ -1,6 +1,5 @@
-use crate::values::runner_results::{ArbitraryPush, OrderedPush};
-use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
-use crate::values::{TransformableValues, Values, WhilstOption, WhilstVector};
+use crate::values::runner_results::{ArbitraryPush, Fallible, OrderedPush, Reduce, SequentialPush};
+use crate::values::{Values, WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
@@ -20,25 +19,25 @@ where
 {
     type Item = T;
 
-    type Error = E;
+    type Fallibility = Fallible<E>;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
         core::iter::empty()
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         match self {
             Self::ContinueSomeOk(x) => {
                 vector.push(x);
-                false
+                SequentialPush::Done
             }
-            Self::ContinueNone => false,
-            Self::StopErr(error) => true,
-            Self::StopWhile => true,
+            Self::ContinueNone => SequentialPush::Done,
+            Self::StopErr(error) => SequentialPush::StoppedByError { error },
+            Self::StopWhile => SequentialPush::StoppedByWhileCondition,
         }
     }
 
@@ -46,7 +45,7 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallibility> {
         match self {
             Self::ContinueSomeOk(x) => {
                 vec.push((idx, x));
@@ -58,7 +57,7 @@ where
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -74,21 +73,20 @@ where
         }
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueSomeOk(x) => {
-                let acc = Some(match acc {
-                    Some(y) => reduce(y, x),
+            Self::ContinueSomeOk(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(acc, x),
                     None => x,
-                });
-                (false, acc)
-            }
-            Self::ContinueNone => (false, acc),
-            Self::StopErr(error) => (true, None),
-            Self::StopWhile => (true, acc),
+                }),
+            },
+            Self::ContinueNone => Reduce::Done { acc },
+            Self::StopErr(error) => Reduce::StoppedByError { error },
+            Self::StopWhile => Reduce::StoppedByWhileCondition { acc },
         }
     }
 

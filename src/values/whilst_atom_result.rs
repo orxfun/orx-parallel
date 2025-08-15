@@ -1,4 +1,4 @@
-use crate::values::runner_results::{ArbitraryPush, OrderedPush};
+use crate::values::runner_results::{ArbitraryPush, Fallible, OrderedPush, Reduce, SequentialPush};
 use crate::values::{Values, WhilstOption};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -18,24 +18,24 @@ where
 {
     type Item = T;
 
-    type Error = E;
+    type Fallibility = Fallible<E>;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         todo!();
         core::iter::empty()
     }
 
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         match self {
             Self::ContinueOk(x) => {
                 vector.push(x);
-                false
+                SequentialPush::Done
             }
-            Self::StopErr(error) => true,
-            Self::StopWhile => true,
+            Self::StopErr(error) => SequentialPush::StoppedByError { error },
+            Self::StopWhile => SequentialPush::StoppedByWhileCondition,
         }
     }
 
@@ -43,7 +43,7 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallibility> {
         match self {
             Self::ContinueOk(x) => {
                 vec.push((idx, x));
@@ -54,7 +54,7 @@ where
         }
     }
 
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -69,17 +69,19 @@ where
         }
     }
 
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueOk(x) => match acc {
-                Some(acc) => (false, Some(reduce(acc, x))),
-                None => (false, Some(x)),
+            Self::ContinueOk(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(acc, x),
+                    None => x,
+                }),
             },
-            Self::StopErr(error) => (true, None),
-            Self::StopWhile => (true, acc),
+            Self::StopErr(error) => Reduce::StoppedByError { error },
+            Self::StopWhile => Reduce::StoppedByWhileCondition { acc },
         }
     }
 

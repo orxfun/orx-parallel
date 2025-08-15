@@ -183,6 +183,7 @@ where
     ) -> impl ParIterResult<R, Item = Out, Error = Err>
     where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
+        Err: Send,
     {
         let (params, iter, m1) = self.destruct();
         let map_res = move |value: I::Item| map_while_ok(m1(value));

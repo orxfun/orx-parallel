@@ -2,6 +2,7 @@ use super::par_collect_into::ParCollectIntoCore;
 use crate::computations::{M, X};
 use crate::runner::ParallelRunner;
 use crate::values::Values;
+use crate::values::runner_results::{Fallibility, Infallible};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 #[cfg(test)]
@@ -33,20 +34,21 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
-        Vo::Error: Send,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.x_collect_into::<R, _, _, _>(x))
     }
 
-    fn x_try_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Result<Self, Vo::Error>
+    fn x_try_collect_into<R, I, Vo, M1>(
+        self,
+        x: X<I, Vo, M1>,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
-        Vo::Error: Send,
         M1: Fn(I::Item) -> Vo + Sync,
         Self: Sized,
     {

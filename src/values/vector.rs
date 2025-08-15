@@ -1,7 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
     Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
-    runner_results::{ArbitraryPush, OrderedPush},
+    runner_results::{ArbitraryPush, Fallible, Infallible, OrderedPush, Reduce, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -17,21 +17,21 @@ where
 {
     type Item = I::Item;
 
-    type Error = ();
+    type Fallibility = Infallible;
 
     fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
         self.0
     }
 
     #[inline(always)]
-    fn push_to_pinned_vec<P>(self, vector: &mut P) -> bool
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
         for x in self.0 {
             vector.push(x);
         }
-        false
+        SequentialPush::Done
     }
 
     #[inline(always)]
@@ -39,7 +39,7 @@ where
         self,
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
-    ) -> OrderedPush<Self::Error> {
+    ) -> OrderedPush<Self::Fallibility> {
         for x in self.0 {
             vec.push((idx, x));
         }
@@ -47,7 +47,7 @@ where
     }
 
     #[inline(always)]
-    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Error>
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
     where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
@@ -59,20 +59,20 @@ where
     }
 
     #[inline(always)]
-    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> (bool, Option<Self::Item>)
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         let reduced = self.0.into_iter().reduce(&reduce);
-        (
-            false,
-            match (acc, reduced) {
+
+        Reduce::Done {
+            acc: match (acc, reduced) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
                 (None, None) => None,
             },
-        )
+        }
     }
 
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
@@ -102,7 +102,10 @@ where
     I: IntoIterator,
 {
     #[inline(always)]
-    fn map<M, O>(self, map: M) -> impl TransformableValues<Item = O>
+    fn map<M, O>(
+        self,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         M: Fn(Self::Item) -> O,
     {
@@ -110,7 +113,10 @@ where
     }
 
     #[inline(always)]
-    fn filter<F>(self, filter: F) -> impl TransformableValues<Item = Self::Item>
+    fn filter<F>(
+        self,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         F: Fn(&Self::Item) -> bool,
     {
@@ -118,7 +124,10 @@ where
     }
 
     #[inline(always)]
-    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> impl TransformableValues<Item = Vo::Item>
+    fn flat_map<Fm, Vo>(
+        self,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
@@ -127,7 +136,10 @@ where
     }
 
     #[inline(always)]
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> impl TransformableValues<Item = O>
+    fn filter_map<Fm, O>(
+        self,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
@@ -137,7 +149,7 @@ where
     fn whilst(
         self,
         whilst: impl Fn(&Self::Item) -> bool,
-    ) -> impl TransformableValues<Item = Self::Item>
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         Self: Sized,
     {
@@ -148,7 +160,7 @@ where
         WhilstVector(iter)
     }
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Error = E>
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallibility = Fallible<E>>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
