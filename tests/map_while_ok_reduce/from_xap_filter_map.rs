@@ -20,6 +20,25 @@ fn map_while_ok_from_xap_filter_map_when_ok() {
 }
 
 #[test]
+fn map_while_ok_from_xap_filter_map_when_ok_but_none() {
+    let input = 0..1024;
+    let filter_map = |i: usize| (i > 1024).then_some(i);
+    let map_res = |i: usize| match (1300..1350).contains(&i) {
+        true => Err(i.to_string()),
+        false => Ok(i),
+    };
+
+    let result = input
+        .into_par()
+        .filter_map(filter_map)
+        .map_while_ok(map_res)
+        .reduce(|a, b| a + b);
+    let expected = Ok(None);
+
+    assert_eq!(result, expected);
+}
+
+#[test]
 fn map_while_ok_from_xap_filter_map_when_error() {
     let input = 0..1024;
     let filter_map = |i: usize| (i % 2 == 1).then_some(i);
