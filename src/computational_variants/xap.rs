@@ -39,7 +39,7 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I, M1) {
+    pub(crate) fn destruct(self) -> (Params, I, M1) {
         self.x.destruct()
     }
 }
