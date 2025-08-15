@@ -1,7 +1,7 @@
 use super::super::thread_runner_compute as thread;
-use crate::runner::NextWithIdx;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
+use crate::values::runner_results::NextWithIdx;
 use crate::{runner::ParallelRunnerCompute, values::TransformableValues};
 use orx_concurrent_iter::ConcurrentIter;
 

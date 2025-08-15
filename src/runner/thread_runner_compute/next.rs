@@ -1,7 +1,9 @@
 use crate::{
     ThreadRunner,
-    runner::thread_next::NextWithIdx,
-    values::{Values, WhilstOption, runner_results::Next},
+    values::{
+        Values, WhilstOption,
+        runner_results::{Next, NextWithIdx},
+    },
 };
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
