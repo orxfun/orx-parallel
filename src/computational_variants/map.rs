@@ -1,6 +1,7 @@
 use super::xap::ParXap;
 use crate::ParIterResult;
-use crate::computational_variants::result::ParMapResult;
+use crate::computational_variants::result::{ParMapFallible, ParMapResult};
+use crate::par_iter_result::IntoResult;
 use crate::values::{Vector, WhilstAtom};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -190,26 +191,13 @@ where
         ParMapResult::new(iter, params, map_res)
     }
 
-    // fn map_while_ok<Out, Err, MapWhileOk>(
-    //     self,
-    //     map_while_ok: MapWhileOk,
-    // ) -> ParIterResult3<
-    //     Self::ConIter,
-    //     Out,
-    //     Err,
-    //     impl Fn(<Self::ConIter as ConcurrentIter>::Item) -> WhilstOk<Out, Err> + Sync,
-    //     R,
-    // >
-    // where
-    //     MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
-    //     Err: Send + Sync,
-    // {
-    //     let con_iter_len = self.con_iter().try_get_len();
-    //     let (params, iter, m1) = self.destruct();
-    //     let x1 = move |i: I::Item| WhilstOk::<Out, Err>::new(map_while_ok(m1(i)));
-    //     let x = X::new(params, iter, x1);
-    //     ParIterResult3::<I, Out, Err, _, R>::new(x, con_iter_len)
-    // }
+    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+        Err: Send,
+    {
+        ParMapFallible::new(self)
+    }
 
     // collect
 

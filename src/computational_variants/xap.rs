@@ -1,5 +1,6 @@
 use crate::ParIterResult;
-use crate::computational_variants::result::ParXapResult;
+use crate::computational_variants::result::{ParXapFallible, ParXapResult};
+use crate::par_iter_result::IntoResult;
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
 use crate::{
@@ -206,6 +207,14 @@ where
     {
         let (params, iter, x1) = self.destruct();
         ParXapResult::new(iter, params, x1, map_while_ok)
+    }
+
+    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+        Err: Send,
+    {
+        ParXapFallible::new(self)
     }
 
     // collect

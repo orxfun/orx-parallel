@@ -675,13 +675,12 @@ where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
         Err: Send;
 
-    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
+    fn into_fallible<Success, Error>(
+        self,
+    ) -> impl ParIterResult<R, Success = Success, Error = Error>
     where
-        Self::Item: IntoResult<Out, Err>,
-        Err: Send,
-    {
-        unreachable!()
-    }
+        Self::Item: IntoResult<Success, Error>,
+        Error: Send;
 
     // special item transformations
 
