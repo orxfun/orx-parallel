@@ -47,7 +47,7 @@ where
     E: Send,
     Mr: Fn(I::Item) -> Result<T, E> + Sync,
 {
-    type Item = T;
+    type Success = T;
 
     type Error = E;
 
@@ -59,7 +59,7 @@ where
 
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
     where
-        C: ParCollectInto<Self::Item>,
+        C: ParCollectInto<Self::Success>,
     {
         let (params, iter, map_res) = self.destruct();
         let x1 = move |i: I::Item| map_res(i);
@@ -69,10 +69,10 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Error>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Success>, Self::Error>
     where
-        Self::Item: Send,
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
+        Self::Success: Send,
+        Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync,
     {
         let (params, iter, map_res) = self.destruct();
         let x1 = move |i: I::Item| map_res(i);

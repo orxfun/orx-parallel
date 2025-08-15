@@ -199,7 +199,7 @@ where
     fn map_while_ok<Out, Err, MapWhileOk>(
         self,
         map_while_ok: MapWhileOk,
-    ) -> impl ParIterResult<R, Item = Out, Error = Err>
+    ) -> impl ParIterResult<R, Success = Out, Error = Err>
     where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
         Err: Send,

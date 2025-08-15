@@ -1,6 +1,6 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::ParIterResult;
-use crate::computational_variants::result::ParMapResult;
+use crate::computational_variants::result::{ParMapResult, ParResult};
 use crate::values::{Vector, WhilstAtom};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -35,7 +35,7 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I) {
+    pub(crate) fn destruct(self) -> (Params, I) {
         (self.params, self.iter)
     }
 
@@ -171,7 +171,7 @@ where
     fn map_while_ok<Out, Err, MapWhileOk>(
         self,
         map_while_ok: MapWhileOk,
-    ) -> impl ParIterResult<R, Item = Out, Error = Err>
+    ) -> impl ParIterResult<R, Success = Out, Error = Err>
     where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
         Err: Send,

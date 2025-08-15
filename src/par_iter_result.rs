@@ -1,10 +1,10 @@
-use crate::{DefaultRunner, ParCollectInto, ParallelRunner};
+use crate::{DefaultRunner, ParCollectInto, ParIter, ParallelRunner};
 
 pub trait ParIterResult<R = DefaultRunner>
 where
     R: ParallelRunner,
 {
-    type Item;
+    type Success;
 
     type Error: Send;
 
@@ -14,11 +14,11 @@ where
 
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
     where
-        C: ParCollectInto<Self::Item>;
+        C: ParCollectInto<Self::Success>;
 
     fn collect<C>(self) -> Result<C, Self::Error>
     where
-        C: ParCollectInto<Self::Item>,
+        C: ParCollectInto<Self::Success>,
         Self: Sized,
     {
         let output = C::empty(self.con_iter_len());
@@ -27,8 +27,14 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Error>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Success>, Self::Error>
     where
-        Self::Item: Send,
-        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync;
+        Self::Success: Send,
+        Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync;
+}
+
+pub trait IntoFallibleParIter: ParIter<Item = Result<Self::Success, Self::Error>> {
+    type Success;
+
+    type Error: Send;
 }
