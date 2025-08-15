@@ -1,28 +1,27 @@
 use crate::computational_variants::Par;
 use crate::computations::X;
-use crate::par_iter_result::ParIterResult;
+use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::{ParCollectInto, ParIter, Params};
+use crate::{ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-/// A parallel iterator.
-pub struct ParResult<I, T, E, R = DefaultRunner>
+pub struct ParFallible<I, T, E, R = DefaultRunner>
 where
     R: ParallelRunner,
-    I: ConcurrentIter<Item = Result<T, E>>,
-    Par<I, R>: ParIter<R, Item = Result<T, E>>,
+    I: ConcurrentIter,
+    I::Item: IntoResult<T, E>,
     E: Send,
 {
     par: Par<I, R>,
-    phantom: PhantomData<R>,
+    phantom: PhantomData<(T, E)>,
 }
 
-impl<I, T, E, R> ParResult<I, T, E, R>
+impl<I, T, E, R> ParFallible<I, T, E, R>
 where
     R: ParallelRunner,
-    I: ConcurrentIter<Item = Result<T, E>>,
-    Par<I, R>: ParIter<R, Item = Result<T, E>>,
+    I: ConcurrentIter,
+    I::Item: IntoResult<T, E>,
     E: Send,
 {
     pub(crate) fn new(par: Par<I, R>) -> Self {
@@ -33,11 +32,11 @@ where
     }
 }
 
-impl<I, T, E, R> ParIterResult<R> for ParResult<I, T, E, R>
+impl<I, T, E, R> ParIterResult<R> for ParFallible<I, T, E, R>
 where
     R: ParallelRunner,
-    I: ConcurrentIter<Item = Result<T, E>>,
-    Par<I, R>: ParIter<R, Item = Result<T, E>>,
+    I: ConcurrentIter,
+    I::Item: IntoResult<T, E>,
     E: Send,
 {
     type Success = T;
@@ -55,7 +54,7 @@ where
         C: ParCollectInto<Self::Success>,
     {
         let (params, iter) = self.par.destruct();
-        let x1 = |i: I::Item| i;
+        let x1 = |i: I::Item| i.into_result();
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
     }
@@ -68,7 +67,7 @@ where
         Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync,
     {
         let (params, iter) = self.par.destruct();
-        let x1 = |i: I::Item| i;
+        let x1 = |i: I::Item| i.into_result();
         let x = X::new(params, iter, x1);
         x.try_reduce::<R, _>(reduce).1
     }

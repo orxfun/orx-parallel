@@ -1,4 +1,5 @@
 use crate::ParIterResult;
+use crate::par_iter_result::IntoResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -673,6 +674,14 @@ where
     where
         MapWhileOk: Fn(Self::Item) -> Result<Out, Err> + Sync + Clone,
         Err: Send;
+
+    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+        Err: Send,
+    {
+        unreachable!()
+    }
 
     // special item transformations
 

@@ -1,4 +1,4 @@
-use crate::{DefaultRunner, ParCollectInto, ParIter, ParallelRunner};
+use crate::{DefaultRunner, ParCollectInto, ParallelRunner};
 
 pub trait ParIterResult<R = DefaultRunner>
 where
@@ -33,8 +33,13 @@ where
         Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync;
 }
 
-pub trait IntoFallibleParIter: ParIter<Item = Result<Self::Success, Self::Error>> {
-    type Success;
+pub trait IntoResult<T, E> {
+    fn into_result(self) -> Result<T, E>;
+}
 
-    type Error: Send;
+impl<T, E> IntoResult<T, E> for Result<T, E> {
+    #[inline(always)]
+    fn into_result(self) -> Result<T, E> {
+        self
+    }
 }
