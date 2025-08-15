@@ -78,7 +78,7 @@ where
                     None => x,
                 }),
             },
-            None => Reduce::StoppedByWhileCondition { acc },
+            None => Reduce::Done { acc },
             Some(Err(error)) => Reduce::StoppedByError { error },
         }
     }

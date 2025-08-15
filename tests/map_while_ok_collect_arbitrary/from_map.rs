@@ -1,6 +1,6 @@
 use orx_parallel::*;
 
-use crate::map_while_ok_arbitrary::utils::sort_if_ok;
+use crate::map_while_ok_collect_arbitrary::utils::sort_if_ok;
 
 #[test]
 fn map_while_ok_from_map_when_ok() {

@@ -11,3 +11,15 @@ pub enum Reduce<V: Values> {
         error: <V::Fallibility as Fallibility>::Error,
     },
 }
+
+impl<V: Values> core::fmt::Debug for Reduce<V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Done { acc: _ } => f.debug_struct("Done").finish(),
+            Self::StoppedByWhileCondition { acc: _ } => {
+                f.debug_struct("StoppedByWhileCondition").finish()
+            }
+            Self::StoppedByError { error: _ } => f.debug_struct("StoppedByError").finish(),
+        }
+    }
+}

@@ -1,4 +1,4 @@
-use crate::map_while_ok_arbitrary::utils::sort_if_ok;
+use crate::map_while_ok_collect_arbitrary::utils::sort_if_ok;
 use orx_parallel::*;
 
 #[test]

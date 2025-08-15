@@ -84,7 +84,7 @@ where
             None => {
                 let first = iter.next();
                 match first {
-                    None => return Reduce::StoppedByWhileCondition { acc: None }, // empty iterator but not stopped, acc is None
+                    None => return Reduce::Done { acc: None }, // empty iterator but not stopped, acc is None
                     Some(first) => match first {
                         WhilstAtom::Continue(Ok(x)) => x,
                         WhilstAtom::Continue(Err(error)) => {
