@@ -31,6 +31,20 @@ where
     where
         Self::Success: Send,
         Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync;
+
+    // early exit
+
+    fn first(self) -> Result<Option<Self::Success>, Self::Error>
+    where
+        Self::Success: Send;
+
+    // fn find<Predicate>(self, predicate: Predicate) -> Result<Option<Self::Success>, Self::Error>
+    // where
+    //     Self::Success: Send,
+    //     Predicate: Fn(&Self::Success) -> bool + Sync,
+    // {
+    //     self.filter(&predicate).first()
+    // }
 }
 
 pub trait IntoResult<T, E> {
