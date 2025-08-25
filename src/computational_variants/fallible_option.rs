@@ -1,23 +1,23 @@
 use crate::{
-    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParIterFallible,
+    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
     ParallelRunner,
-    par_iter_optional::{ParIterOptional, ResultIntoOption},
+    par_iter_option::{ParIterOption, ResultIntoOption},
 };
 use std::marker::PhantomData;
 
-pub struct ParOptional<F, T, R = DefaultRunner>
+pub struct ParOption<F, T, R = DefaultRunner>
 where
     R: ParallelRunner,
-    F: ParIterFallible<R, Success = T, Error = ()>,
+    F: ParIterResult<R, Success = T, Error = ()>,
 {
     par: F,
     phantom: PhantomData<(T, R)>,
 }
 
-impl<F, T, R> ParOptional<F, T, R>
+impl<F, T, R> ParOption<F, T, R>
 where
     R: ParallelRunner,
-    F: ParIterFallible<R, Success = T, Error = ()>,
+    F: ParIterResult<R, Success = T, Error = ()>,
 {
     pub(crate) fn new(par: F) -> Self {
         Self {
@@ -27,10 +27,10 @@ where
     }
 }
 
-impl<F, T, R> ParIterOptional<R> for ParOptional<F, T, R>
+impl<F, T, R> ParIterOption<R> for ParOption<F, T, R>
 where
     R: ParallelRunner,
-    F: ParIterFallible<R, Success = T, Error = ()>,
+    F: ParIterResult<R, Success = T, Error = ()>,
 {
     type Success = T;
 
@@ -48,64 +48,64 @@ where
         Self::new(self.par.iteration_order(order))
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOptional<Q, Success = Self::Success> {
-        ParOptional::new(self.par.with_runner())
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Success = Self::Success> {
+        ParOption::new(self.par.with_runner())
     }
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterOptional<R, Success = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterOption<R, Success = Out>
     where
         Map: Fn(Self::Success) -> Out + Sync + Clone,
         Out: Send,
     {
-        ParOptional::new(self.par.map(map))
+        ParOption::new(self.par.map(map))
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterOptional<R, Success = Self::Success>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterOption<R, Success = Self::Success>
     where
         Self: Sized,
         Filter: Fn(&Self::Success) -> bool + Sync + Clone,
         Self::Success: Send,
     {
-        ParOptional::new(self.par.filter(filter))
+        ParOption::new(self.par.filter(filter))
     }
 
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterOptional<R, Success = IOut::Item>
+    ) -> impl ParIterOption<R, Success = IOut::Item>
     where
         Self: Sized,
         IOut: IntoIterator,
         IOut::Item: Send,
         FlatMap: Fn(Self::Success) -> IOut + Sync + Clone,
     {
-        ParOptional::new(self.par.flat_map(flat_map))
+        ParOption::new(self.par.flat_map(flat_map))
     }
 
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterOptional<R, Success = Out>
+    ) -> impl ParIterOption<R, Success = Out>
     where
         Self: Sized,
         FilterMap: Fn(Self::Success) -> Option<Out> + Sync + Clone,
         Out: Send,
     {
-        ParOptional::new(self.par.filter_map(filter_map))
+        ParOption::new(self.par.filter_map(filter_map))
     }
 
     fn inspect<Operation>(
         self,
         operation: Operation,
-    ) -> impl ParIterOptional<R, Success = Self::Success>
+    ) -> impl ParIterOption<R, Success = Self::Success>
     where
         Self: Sized,
         Operation: Fn(&Self::Success) + Sync + Clone,
         Self::Success: Send,
     {
-        ParOptional::new(self.par.inspect(operation))
+        ParOption::new(self.par.inspect(operation))
     }
 
     // collect
