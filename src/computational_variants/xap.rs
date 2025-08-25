@@ -1,8 +1,6 @@
 use crate::ParIterFallible;
 use crate::computational_variants::fallible::ParXapFallible;
-use crate::computational_variants::optional_depr::ParXapOptional;
 use crate::par_iter_fallible::IntoResult;
-use crate::par_iter_optional_depr::{IntoOption, ParIterOptionalDeprecated};
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
 use crate::{
@@ -205,15 +203,6 @@ where
         Out: Send,
     {
         ParXapFallible::new(self)
-    }
-
-    fn into_optional<Success>(self) -> impl ParIterOptionalDeprecated<R, Success = Success>
-    where
-        Self::Item: IntoOption<Success>,
-        Self::Item: Send,
-        Success: Send,
-    {
-        ParXapOptional::new(self)
     }
 
     // collect

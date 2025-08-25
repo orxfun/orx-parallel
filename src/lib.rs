@@ -23,7 +23,6 @@ mod iter_into_par_iter;
 mod par_iter;
 mod par_iter_fallible;
 mod par_iter_optional;
-mod par_iter_optional_depr;
 mod parallel_drainable;
 mod parallelizable;
 mod parallelizable_collection;

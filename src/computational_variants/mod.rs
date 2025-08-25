@@ -4,7 +4,6 @@ mod tests;
 pub mod fallible;
 mod map;
 pub mod optional;
-pub mod optional_depr;
 mod par;
 mod xap;
 
