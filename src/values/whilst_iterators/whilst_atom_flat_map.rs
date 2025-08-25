@@ -21,6 +21,17 @@ where
         };
         Self { current_iter }
     }
+
+    pub fn u_from_atom<U, T, Fm>(u: &mut U, atom: WhilstAtom<T>, flat_map: Fm) -> Self
+    where
+        Fm: Fn(&mut U, T) -> Vo,
+    {
+        let current_iter = match atom {
+            WhilstAtom::Continue(x) => WhilstAtom::Continue(flat_map(u, x).into_iter()),
+            WhilstAtom::Stop => WhilstAtom::Stop,
+        };
+        Self { current_iter }
+    }
 }
 
 impl<Vo> Iterator for WhilstAtomFlatMapIter<Vo>

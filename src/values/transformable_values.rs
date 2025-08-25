@@ -50,4 +50,29 @@ pub trait TransformableValues: Values {
     ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         M: Fn(&mut U, Self::Item) -> O;
+
+    fn u_filter<U, F>(
+        self,
+        u: &mut U,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        F: Fn(&mut U, &Self::Item) -> bool;
+
+    fn u_flat_map<U, Fm, Vo>(
+        self,
+        u: &mut U,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(&mut U, Self::Item) -> Vo;
+
+    fn u_filter_map<U, Fm, O>(
+        self,
+        u: &mut U,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        Fm: Fn(&mut U, Self::Item) -> Option<O>;
 }
