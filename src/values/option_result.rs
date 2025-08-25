@@ -6,7 +6,7 @@ use crate::values::{
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub struct OptionResult<T, E>(pub(super) Option<Result<T, E>>)
+pub struct OptionResult<T, E>(pub(crate) Option<Result<T, E>>)
 where
     E: Send;
 

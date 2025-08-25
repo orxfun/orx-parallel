@@ -1,7 +1,7 @@
 use super::{map::ParMap, xap::ParXap};
-use crate::ParIterResult;
-use crate::computational_variants::result::ParFallible;
-use crate::par_iter_result::IntoResult;
+use crate::ParIterFallible;
+use crate::computational_variants::fallible::ParFallible;
+use crate::par_iter_fallible::IntoResult;
 use crate::values::{Vector, WhilstAtom};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -66,8 +66,6 @@ where
     I: ConcurrentIter,
 {
     type Item = I::Item;
-
-    type ConIter = I;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
         &self.iter
@@ -169,7 +167,7 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
+    fn into_fallible<Out, Err>(self) -> impl ParIterFallible<R, Success = Out, Error = Err>
     where
         Self::Item: IntoResult<Out, Err>,
         Err: Send,

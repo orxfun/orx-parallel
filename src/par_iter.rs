@@ -1,5 +1,5 @@
-use crate::ParIterResult;
-use crate::par_iter_result::IntoResult;
+use crate::ParIterFallible;
+use crate::par_iter_fallible::IntoResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -19,8 +19,6 @@ where
 {
     /// Element type of the parallel iterator.
     type Item;
-
-    type ConIter: ConcurrentIter;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
@@ -243,7 +241,7 @@ where
     ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
     /// );
     /// ```
-    fn iteration_order(self, collect: IterationOrder) -> Self;
+    fn iteration_order(self, order: IterationOrder) -> Self;
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
@@ -653,7 +651,7 @@ where
         self.map(map)
     }
 
-    // computation transformations - derived from whilst
+    // computation transformations - derived from take_while
 
     fn map_while<Out, MapWhile>(self, map_while: MapWhile) -> impl ParIter<R, Item = Out>
     where
@@ -669,10 +667,12 @@ where
 
     fn into_fallible<Success, Error>(
         self,
-    ) -> impl ParIterResult<R, Success = Success, Error = Error>
+    ) -> impl ParIterFallible<R, Success = Success, Error = Error>
     where
         Self::Item: IntoResult<Success, Error>,
-        Error: Send;
+        Error: Send,
+        Self::Item: Send,
+        Success: Send;
 
     // special item transformations
 

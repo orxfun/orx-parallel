@@ -1,8 +1,8 @@
-use crate::computational_variants::Par;
+use crate::computational_variants::{Par, ParMap, ParXap};
 use crate::computations::X;
-use crate::par_iter_result::{IntoResult, ParIterResult};
+use crate::par_iter_fallible::{IntoResult, ParIterFallible};
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::{IterationOrder, ParCollectInto, ParIter};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<I, T, E, R> ParIterResult<R> for ParFallible<I, T, E, R>
+impl<I, T, E, R> ParIterFallible<R> for ParFallible<I, T, E, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -43,8 +43,35 @@ where
 
     type Error = E;
 
+    type RegularItem = I::Item;
+
+    type RegularParIter = Par<I, R>;
+
     fn con_iter_len(&self) -> Option<usize> {
         self.par.con_iter().try_get_len()
+    }
+
+    fn into_regular_par(self) -> Self::RegularParIter {
+        self.par
+    }
+
+    fn from_regular_par(regular_par: Self::RegularParIter) -> Self {
+        Self {
+            par: regular_par,
+            phantom: PhantomData,
+        }
+    }
+
+    // params transformations
+
+    fn with_runner<Q: ParallelRunner>(
+        self,
+    ) -> impl ParIterFallible<Q, Success = Self::Success, Error = Self::Error> {
+        let (params, iter) = self.par.destruct();
+        ParFallible {
+            par: Par::new(params, iter),
+            phantom: PhantomData,
+        }
     }
 
     // collect
