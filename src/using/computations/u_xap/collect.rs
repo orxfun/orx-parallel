@@ -4,7 +4,7 @@ use crate::using::runner::parallel_runner_compute::{u_collect_arbitrary, u_colle
 use crate::{
     IterationOrder,
     runner::{ParallelRunner, ParallelRunnerCompute},
-    values::TransformableValues,
+    values::Values,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -13,7 +13,7 @@ impl<U, I, Vo, M1> UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     Vo::Item: Send,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {

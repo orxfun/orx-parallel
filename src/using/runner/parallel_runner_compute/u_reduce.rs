@@ -1,8 +1,9 @@
 use super::super::thread_runner_compute as thread;
+use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
+use crate::values::Values;
 use crate::values::runner_results::{Fallibility, Reduce};
-use crate::{runner::ParallelRunnerCompute, values::TransformableValues};
 use orx_concurrent_iter::ConcurrentIter;
 
 // m
@@ -69,7 +70,7 @@ where
     C: ParallelRunnerCompute,
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     Vo::Item: Send,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,

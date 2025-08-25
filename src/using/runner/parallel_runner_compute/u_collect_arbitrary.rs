@@ -4,7 +4,7 @@ use crate::using::Using;
 #[cfg(test)]
 use crate::using::computations::UM;
 use crate::using::computations::UX;
-use crate::values::TransformableValues;
+use crate::values::Values;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -64,7 +64,7 @@ where
     C: ParallelRunnerCompute,
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     Vo::Item: Send,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,

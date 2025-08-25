@@ -1,7 +1,7 @@
 use crate::{
     ThreadRunner,
     values::{
-        TransformableValues,
+        Values,
         runner_results::{Reduce, StopReduce},
     },
 };
@@ -97,7 +97,7 @@ pub fn u_x<C, U, I, Vo, X1, Red>(
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     X1: Fn(&mut U, I::Item) -> Vo,
     Red: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
 {
