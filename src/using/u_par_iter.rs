@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use orx_concurrent_iter::ConcurrentIter;
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 
 /// Parallel iterator which allows mutable access to a variable of type `U` within its iterator methods.
 ///

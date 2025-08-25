@@ -1,7 +1,9 @@
 use super::xap::ParXap;
 use crate::ParIterFallible;
 use crate::computational_variants::fallible::ParMapFallible;
+use crate::computational_variants::optional_depr::ParMapOptional;
 use crate::par_iter_fallible::IntoResult;
+use crate::par_iter_optional_depr::{IntoOption, ParIterOptionalDeprecated};
 use crate::values::{Vector, WhilstAtom};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -182,6 +184,14 @@ where
         Err: Send,
     {
         ParMapFallible::new(self)
+    }
+
+    fn into_optional<Success>(self) -> impl ParIterOptionalDeprecated<R, Success = Success>
+    where
+        Self::Item: IntoOption<Success>,
+        Self::Item: Send,
+    {
+        ParMapOptional::new(self)
     }
 
     // collect

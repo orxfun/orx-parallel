@@ -1,7 +1,7 @@
 use crate::computational_variants::{Par, ParMap, ParXap};
 use crate::computations::X;
 use crate::par_iter_fallible::{IntoResult, ParIterFallible};
-use crate::par_iter_optional::{IntoOption, ParIterOptional};
+use crate::par_iter_optional_depr::{IntoOption, ParIterOptionalDeprecated};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
@@ -31,7 +31,7 @@ where
     }
 }
 
-impl<I, T, R> ParIterOptional<R> for ParOptional<I, T, R>
+impl<I, T, R> ParIterOptionalDeprecated<R> for ParOptional<I, T, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -60,7 +60,9 @@ where
 
     // params transformations
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOptional<Q, Success = Self::Success> {
+    fn with_runner<Q: ParallelRunner>(
+        self,
+    ) -> impl ParIterOptionalDeprecated<Q, Success = Self::Success> {
         let (params, iter) = self.par.destruct();
         ParOptional {
             par: Par::new(params, iter),
