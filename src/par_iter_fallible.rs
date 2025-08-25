@@ -1,5 +1,5 @@
-use crate::Sum;
 use crate::computations::{map_count, reduce_sum, reduce_unit};
+use crate::{ChunkSize, IterationOrder, NumThreads, Sum};
 use crate::{
     DefaultRunner, ParCollectInto, ParIter, ParallelRunner,
     values::{Vector, VectorResult, fallible_iterators::ResultOfIter},
@@ -21,6 +21,35 @@ where
     fn con_iter_len(&self) -> Option<usize>;
 
     fn into_regular_par(self) -> Self::RegularParIter;
+
+    fn from_regular_par(regular_par: Self::RegularParIter) -> Self;
+
+    // params transformations
+
+    fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self
+    where
+        Self: Sized,
+    {
+        Self::from_regular_par(self.into_regular_par().num_threads(num_threads))
+    }
+
+    fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self
+    where
+        Self: Sized,
+    {
+        Self::from_regular_par(self.into_regular_par().chunk_size(chunk_size))
+    }
+
+    fn iteration_order(self, order: IterationOrder) -> Self
+    where
+        Self: Sized,
+    {
+        Self::from_regular_par(self.into_regular_par().iteration_order(order))
+    }
+
+    fn with_runner<Q: ParallelRunner>(
+        self,
+    ) -> impl ParIterFallible<Q, Success = Self::Success, Error = Self::Error>;
 
     // computation transformations
 

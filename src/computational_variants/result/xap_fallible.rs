@@ -65,6 +65,25 @@ where
         self.par
     }
 
+    fn from_regular_par(regular_par: Self::RegularParIter) -> Self {
+        Self {
+            par: regular_par,
+            phantom: PhantomData,
+        }
+    }
+
+    // params transformations
+
+    fn with_runner<Q: ParallelRunner>(
+        self,
+    ) -> impl ParIterFallible<Q, Success = Self::Success, Error = Self::Error> {
+        let (params, iter, m1) = self.par.destruct();
+        ParXapFallible {
+            par: ParXap::new(params, iter, m1),
+            phantom: PhantomData,
+        }
+    }
+
     // collect
 
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>

@@ -243,7 +243,7 @@ where
     ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
     /// );
     /// ```
-    fn iteration_order(self, collect: IterationOrder) -> Self;
+    fn iteration_order(self, order: IterationOrder) -> Self;
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
@@ -653,7 +653,7 @@ where
         self.map(map)
     }
 
-    // computation transformations - derived from whilst
+    // computation transformations - derived from take_while
 
     fn map_while<Out, MapWhile>(self, map_while: MapWhile) -> impl ParIter<R, Item = Out>
     where
