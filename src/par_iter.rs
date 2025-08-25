@@ -1,5 +1,6 @@
 use crate::ParIterFallible;
 use crate::par_iter_fallible::IntoResult;
+use crate::par_iter_optional::{IntoOption, ParIterOptional};
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -673,6 +674,11 @@ where
         Error: Send,
         Self::Item: Send,
         Success: Send;
+
+    // fn into_optional<Success>(self) -> impl ParIterOptional<R, Success = Success>
+    // where
+    //     Self::Item: IntoOption<Success>,
+    //     Self::Item: Send;
 
     // special item transformations
 

@@ -22,6 +22,7 @@ pub mod iter;
 mod iter_into_par_iter;
 mod par_iter;
 mod par_iter_fallible;
+mod par_iter_optional;
 mod parallel_drainable;
 mod parallelizable;
 mod parallelizable_collection;
