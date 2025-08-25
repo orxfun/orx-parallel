@@ -1,3 +1,4 @@
+pub mod fallible_iterators;
 mod option;
 mod option_result;
 mod result;
