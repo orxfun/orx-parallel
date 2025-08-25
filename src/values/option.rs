@@ -171,4 +171,16 @@ impl<T> TransformableValues for Option<T> {
         let opt_res = self.map(map_res);
         OptionResult(opt_res)
     }
+
+    #[inline(always)]
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        self.map(|x| map(u, x))
+    }
 }

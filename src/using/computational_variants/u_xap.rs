@@ -109,6 +109,11 @@ where
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
+        // let x1 = move |u: &mut U::Item, i: I::Item| {
+        //     let vo = x1(u, i);
+        //     vo.u_map(u, map.clone())
+        // };
+
         let x1 = move |u: &mut U::Item, i: I::Item| {
             // TODO: avoid allocation
             let vo: Vec<_> = x1(u, i)

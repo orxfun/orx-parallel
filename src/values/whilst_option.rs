@@ -206,4 +206,19 @@ impl<T> TransformableValues for WhilstOption<T> {
             Self::Stop => WhilstOptionResult::StopWhile,
         }
     }
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        match self {
+            Self::ContinueSome(x) => WhilstOption::ContinueSome(map(u, x)),
+            Self::ContinueNone => WhilstOption::ContinueNone,
+            Self::Stop => WhilstOption::Stop,
+        }
+    }
 }

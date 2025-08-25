@@ -42,4 +42,12 @@ pub trait TransformableValues: Values {
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send;
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O;
 }

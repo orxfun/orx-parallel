@@ -179,4 +179,15 @@ where
         let iter_res = self.0.into_iter().map(move |x| map_res(x));
         VectorResult(iter_res)
     }
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        Vector(self.0.into_iter().map(move |x| map(u, x)))
+    }
 }

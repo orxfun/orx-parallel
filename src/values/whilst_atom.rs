@@ -207,4 +207,18 @@ impl<T> TransformableValues for WhilstAtom<T> {
             Self::Stop => WhilstAtomResult::StopWhile,
         }
     }
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        match self {
+            Self::Continue(x) => WhilstAtom::Continue(map(u, x)),
+            Self::Stop => WhilstAtom::Stop,
+        }
+    }
 }

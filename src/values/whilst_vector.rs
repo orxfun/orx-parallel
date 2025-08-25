@@ -245,4 +245,19 @@ where
         });
         WhilstVectorResult(iter)
     }
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        let iter = self.0.into_iter().map(move |x| match x {
+            WhilstAtom::Continue(x) => WhilstAtom::Continue(map(u, x)),
+            WhilstAtom::Stop => WhilstAtom::Stop,
+        });
+        WhilstVector(iter)
+    }
 }
