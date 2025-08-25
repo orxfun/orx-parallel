@@ -245,4 +245,71 @@ where
         });
         WhilstVectorResult(iter)
     }
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        let iter = self.0.into_iter().map(move |x| match x {
+            WhilstAtom::Continue(x) => WhilstAtom::Continue(map(u, x)),
+            WhilstAtom::Stop => WhilstAtom::Stop,
+        });
+        WhilstVector(iter)
+    }
+
+    fn u_filter<U, F>(
+        self,
+        u: &mut U,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        F: Fn(&mut U, &Self::Item) -> bool,
+    {
+        let iter = self.0.into_iter().filter_map(move |x| match x {
+            WhilstAtom::Continue(x) => match filter(u, &x) {
+                true => Some(WhilstAtom::Continue(x)),
+                false => None,
+            },
+            WhilstAtom::Stop => Some(WhilstAtom::Stop),
+        });
+        WhilstVector(iter)
+    }
+
+    fn u_flat_map<U, Fm, Vo>(
+        self,
+        u: &mut U,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(&mut U, Self::Item) -> Vo,
+    {
+        let iter = self
+            .0
+            .into_iter()
+            .flat_map(move |atom| WhilstAtomFlatMapIter::u_from_atom(u, atom, &flat_map));
+        WhilstVector(iter)
+    }
+
+    fn u_filter_map<U, Fm, O>(
+        self,
+        u: &mut U,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        Fm: Fn(&mut U, Self::Item) -> Option<O>,
+    {
+        let iter = self.0.into_iter().filter_map(move |x| match x {
+            WhilstAtom::Continue(x) => match filter_map(u, x) {
+                Some(x) => Some(WhilstAtom::Continue(x)),
+                None => None,
+            },
+            WhilstAtom::Stop => Some(WhilstAtom::Stop),
+        });
+        WhilstVector(iter)
+    }
 }

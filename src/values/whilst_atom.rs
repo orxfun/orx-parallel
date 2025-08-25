@@ -207,4 +207,65 @@ impl<T> TransformableValues for WhilstAtom<T> {
             Self::Stop => WhilstAtomResult::StopWhile,
         }
     }
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        match self {
+            Self::Continue(x) => WhilstAtom::Continue(map(u, x)),
+            Self::Stop => WhilstAtom::Stop,
+        }
+    }
+
+    fn u_filter<U, F>(
+        self,
+        u: &mut U,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        F: Fn(&mut U, &Self::Item) -> bool,
+    {
+        match self {
+            Self::Continue(x) => match filter(u, &x) {
+                true => WhilstOption::ContinueSome(x),
+                false => WhilstOption::ContinueNone,
+            },
+            Self::Stop => WhilstOption::Stop,
+        }
+    }
+
+    fn u_flat_map<U, Fm, Vo>(
+        self,
+        u: &mut U,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(&mut U, Self::Item) -> Vo,
+    {
+        let iter = WhilstAtomFlatMapIter::u_from_atom(u, self, &flat_map);
+        WhilstVector(iter)
+    }
+
+    fn u_filter_map<U, Fm, O>(
+        self,
+        u: &mut U,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        Fm: Fn(&mut U, Self::Item) -> Option<O>,
+    {
+        match self {
+            Self::Continue(x) => match filter_map(u, x) {
+                Some(x) => WhilstOption::ContinueSome(x),
+                None => WhilstOption::ContinueNone,
+            },
+            Self::Stop => WhilstOption::Stop,
+        }
+    }
 }

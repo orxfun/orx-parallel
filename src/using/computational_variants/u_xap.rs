@@ -2,7 +2,7 @@ use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     runner::{DefaultRunner, ParallelRunner},
     using::{Using, computations::UX, u_par_iter::ParIterUsing},
-    values::{TransformableValues, Vector, runner_results::Infallible},
+    values::{TransformableValues, Values, Vector, runner_results::Infallible},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -109,17 +109,16 @@ where
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: I::Item| {
+
+        let x2 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            let values = vo.u_map(u, map.clone());
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, i)
-                .values_to_depracate()
-                .into_iter()
-                .map(|x| map(u, x))
-                .collect();
-            Vector(vo)
+            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
+            Vector(x)
         };
 
-        UParXap::new(using, params, iter, x1)
+        UParXap::new(using, params, iter, x2)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
@@ -128,15 +127,11 @@ where
     {
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
-            let filter = filter.clone();
-            let values = x1(u, i);
-            // TODO: avoid vec collection
-            let filtered: Vec<_> = values
-                .values_to_depracate()
-                .into_iter()
-                .filter(move |x| filter(u, x))
-                .collect();
-            Vector(filtered)
+            let vo = x1(u, i);
+            let values = vo.u_filter(u, filter.clone());
+            // TODO: avoid allocation
+            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
+            Vector(x)
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -150,11 +145,12 @@ where
         FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, t: I::Item| {
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            let values = vo.u_flat_map(u, flat_map.clone());
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values_to_depracate().into_iter().collect();
-            let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
-            Vector(vo)
+            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
+            Vector(x)
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -167,11 +163,12 @@ where
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, t: I::Item| {
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            let values = vo.u_filter_map(u, filter_map.clone());
             // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values_to_depracate().into_iter().collect();
-            let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
-            Vector(vo)
+            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
+            Vector(x)
         };
         UParXap::new(using, params, iter, x1)
     }

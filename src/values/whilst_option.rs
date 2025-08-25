@@ -206,4 +206,68 @@ impl<T> TransformableValues for WhilstOption<T> {
             Self::Stop => WhilstOptionResult::StopWhile,
         }
     }
+
+    fn u_map<U, M, O>(
+        self,
+        u: &mut U,
+        map: M,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(&mut U, Self::Item) -> O,
+    {
+        match self {
+            Self::ContinueSome(x) => WhilstOption::ContinueSome(map(u, x)),
+            Self::ContinueNone => WhilstOption::ContinueNone,
+            Self::Stop => WhilstOption::Stop,
+        }
+    }
+
+    fn u_filter<U, F>(
+        self,
+        u: &mut U,
+        filter: F,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        F: Fn(&mut U, &Self::Item) -> bool,
+    {
+        match self {
+            Self::ContinueSome(x) => match filter(u, &x) {
+                true => Self::ContinueSome(x),
+                false => Self::ContinueNone,
+            },
+            Self::ContinueNone => Self::ContinueNone,
+            Self::Stop => Self::Stop,
+        }
+    }
+
+    fn u_flat_map<U, Fm, Vo>(
+        self,
+        u: &mut U,
+        flat_map: Fm,
+    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(&mut U, Self::Item) -> Vo,
+    {
+        let iter = WhilstOptionFlatMapIter::u_from_option(u, self, &flat_map);
+        WhilstVector(iter)
+    }
+
+    fn u_filter_map<U, Fm, O>(
+        self,
+        u: &mut U,
+        filter_map: Fm,
+    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        Fm: Fn(&mut U, Self::Item) -> Option<O>,
+    {
+        match self {
+            Self::ContinueSome(x) => match filter_map(u, x) {
+                Some(x) => WhilstOption::ContinueSome(x),
+                None => WhilstOption::ContinueNone,
+            },
+            Self::ContinueNone => WhilstOption::ContinueNone,
+            Self::Stop => WhilstOption::Stop,
+        }
+    }
 }
