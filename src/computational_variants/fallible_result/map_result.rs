@@ -1,12 +1,12 @@
 use crate::computational_variants::ParMap;
 use crate::computations::X;
-use crate::par_iter_fallible::{IntoResult, ParIterFallible};
+use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParMapFallible<I, T, E, O, M1, R = DefaultRunner>
+pub struct ParMapResult<I, T, E, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -18,7 +18,7 @@ where
     phantom: PhantomData<(T, E)>,
 }
 
-impl<I, T, E, O, M1, R> ParMapFallible<I, T, E, O, M1, R>
+impl<I, T, E, O, M1, R> ParMapResult<I, T, E, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -34,7 +34,7 @@ where
     }
 }
 
-impl<I, T, E, O, M1, R> ParIterFallible<R> for ParMapFallible<I, T, E, O, M1, R>
+impl<I, T, E, O, M1, R> ParIterResult<R> for ParMapResult<I, T, E, O, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -69,9 +69,9 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterFallible<Q, Success = Self::Success, Error = Self::Error> {
+    ) -> impl ParIterResult<Q, Success = Self::Success, Error = Self::Error> {
         let (params, iter, m1) = self.par.destruct();
-        ParMapFallible {
+        ParMapResult {
             par: ParMap::new(params, iter, m1),
             phantom: PhantomData,
         }

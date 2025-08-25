@@ -1,6 +1,6 @@
 use crate::computational_variants::ParXap;
 use crate::computations::X;
-use crate::par_iter_fallible::{IntoResult, ParIterFallible};
+use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
@@ -8,7 +8,7 @@ use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParXapFallible<I, T, E, Vo, M1, R = DefaultRunner>
+pub struct ParXapResult<I, T, E, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -21,7 +21,7 @@ where
     phantom: PhantomData<(T, E)>,
 }
 
-impl<I, T, E, Vo, M1, R> ParXapFallible<I, T, E, Vo, M1, R>
+impl<I, T, E, Vo, M1, R> ParXapResult<I, T, E, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -38,7 +38,7 @@ where
     }
 }
 
-impl<I, T, E, Vo, M1, R> ParIterFallible<R> for ParXapFallible<I, T, E, Vo, M1, R>
+impl<I, T, E, Vo, M1, R> ParIterResult<R> for ParXapResult<I, T, E, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -76,9 +76,9 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterFallible<Q, Success = Self::Success, Error = Self::Error> {
+    ) -> impl ParIterResult<Q, Success = Self::Success, Error = Self::Error> {
         let (params, iter, m1) = self.par.destruct();
-        ParXapFallible {
+        ParXapResult {
             par: ParXap::new(params, iter, m1),
             phantom: PhantomData,
         }

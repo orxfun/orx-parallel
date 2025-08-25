@@ -1,12 +1,12 @@
 use crate::computational_variants::{Par, ParMap, ParXap};
 use crate::computations::X;
-use crate::par_iter_fallible::{IntoResult, ParIterFallible};
+use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParFallible<I, T, E, R = DefaultRunner>
+pub struct ParResult<I, T, E, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -17,7 +17,7 @@ where
     phantom: PhantomData<(T, E)>,
 }
 
-impl<I, T, E, R> ParFallible<I, T, E, R>
+impl<I, T, E, R> ParResult<I, T, E, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<I, T, E, R> ParIterFallible<R> for ParFallible<I, T, E, R>
+impl<I, T, E, R> ParIterResult<R> for ParResult<I, T, E, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
@@ -66,9 +66,9 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterFallible<Q, Success = Self::Success, Error = Self::Error> {
+    ) -> impl ParIterResult<Q, Success = Self::Success, Error = Self::Error> {
         let (params, iter) = self.par.destruct();
-        ParFallible {
+        ParResult {
             par: Par::new(params, iter),
             phantom: PhantomData,
         }

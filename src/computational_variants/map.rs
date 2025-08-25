@@ -1,9 +1,9 @@
 use super::xap::ParXap;
-use crate::ParIterFallible;
-use crate::computational_variants::fallible::ParMapFallible;
-use crate::computational_variants::optional::ParOptional;
-use crate::par_iter_fallible::IntoResult;
-use crate::par_iter_optional::{IntoOption, ParIterOptional};
+use crate::ParIterResult;
+use crate::computational_variants::fallible_result::ParMapResult;
+use crate::computational_variants::fallible_option::ParOption;
+use crate::par_iter_optional::{IntoOption, ParIterOption};
+use crate::par_iter_result::IntoResult;
 use crate::values::{Vector, WhilstAtom};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
@@ -178,12 +178,12 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    fn into_fallible<Out, Err>(self) -> impl ParIterFallible<R, Success = Out, Error = Err>
+    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
     where
         Self::Item: IntoResult<Out, Err>,
         Err: Send,
     {
-        ParMapFallible::new(self)
+        ParMapResult::new(self)
     }
 
     // collect

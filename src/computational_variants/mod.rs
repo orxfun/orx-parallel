@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests;
 
-pub mod fallible;
+pub(crate) mod fallible_option;
+mod fallible_result;
 mod map;
-pub mod optional;
 mod par;
 mod xap;
 

@@ -6,7 +6,7 @@ use crate::{
 };
 use core::cmp::Ordering;
 
-pub trait ParIterFallible<R = DefaultRunner>
+pub trait ParIterResult<R = DefaultRunner>
 where
     R: ParallelRunner,
 {
@@ -49,11 +49,11 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterFallible<Q, Success = Self::Success, Error = Self::Error>;
+    ) -> impl ParIterResult<Q, Success = Self::Success, Error = Self::Error>;
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
     where
         Self: Sized,
         Map: Fn(Self::Success) -> Out + Sync + Clone,
@@ -67,7 +67,7 @@ where
     fn filter<Filter>(
         self,
         filter: Filter,
-    ) -> impl ParIterFallible<R, Success = Self::Success, Error = Self::Error>
+    ) -> impl ParIterResult<R, Success = Self::Success, Error = Self::Error>
     where
         Self: Sized,
         Filter: Fn(&Self::Success) -> bool + Sync + Clone,
@@ -87,7 +87,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterFallible<R, Success = IOut::Item, Error = Self::Error>
+    ) -> impl ParIterResult<R, Success = IOut::Item, Error = Self::Error>
     where
         Self: Sized,
         IOut: IntoIterator,
@@ -105,7 +105,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
+    ) -> impl ParIterResult<R, Success = Out, Error = Self::Error>
     where
         Self: Sized,
         FilterMap: Fn(Self::Success) -> Option<Out> + Sync + Clone,
@@ -122,7 +122,7 @@ where
     fn inspect<Operation>(
         self,
         operation: Operation,
-    ) -> impl ParIterFallible<R, Success = Self::Success, Error = Self::Error>
+    ) -> impl ParIterResult<R, Success = Self::Success, Error = Self::Error>
     where
         Self: Sized,
         Operation: Fn(&Self::Success) + Sync + Clone,

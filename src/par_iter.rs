@@ -1,7 +1,7 @@
-use crate::ParIterFallible;
-use crate::computational_variants::optional::ParOptional;
-use crate::par_iter_fallible::IntoResult;
-use crate::par_iter_optional::{IntoOption, ParIterOptional};
+use crate::ParIterResult;
+use crate::computational_variants::fallible_option::ParOption;
+use crate::par_iter_optional::{IntoOption, ParIterOption};
+use crate::par_iter_result::IntoResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -669,20 +669,20 @@ where
 
     fn into_fallible<Success, Error>(
         self,
-    ) -> impl ParIterFallible<R, Success = Success, Error = Error>
+    ) -> impl ParIterResult<R, Success = Success, Error = Error>
     where
         Self::Item: IntoResult<Success, Error>,
         Error: Send,
         Self::Item: Send,
         Success: Send;
 
-    fn into_optional<Success>(self) -> impl ParIterOptional<R, Success = Success>
+    fn into_optional<Success>(self) -> impl ParIterOption<R, Success = Success>
     where
         Self::Item: IntoOption<Success>,
         Self::Item: Send,
         Success: Send,
     {
-        ParOptional::new(self.map(|x| x.into_result_with_unit_err()).into_fallible())
+        ParOption::new(self.map(|x| x.into_result_with_unit_err()).into_fallible())
     }
 
     // special item transformations
