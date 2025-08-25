@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests;
 
+pub mod fallible;
 mod map;
 mod par;
-pub mod result;
 mod xap;
 
 pub use map::ParMap;

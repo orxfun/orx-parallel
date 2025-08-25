@@ -1,6 +1,6 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::ParIterFallible;
-use crate::computational_variants::result::ParFallible;
+use crate::computational_variants::fallible::ParFallible;
 use crate::par_iter_fallible::IntoResult;
 use crate::values::{Vector, WhilstAtom};
 use crate::{

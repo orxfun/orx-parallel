@@ -1,5 +1,5 @@
 use crate::ParIterFallible;
-use crate::computational_variants::result::ParXapFallible;
+use crate::computational_variants::fallible::ParXapFallible;
 use crate::par_iter_fallible::IntoResult;
 use crate::values::TransformableValues;
 use crate::values::runner_results::Infallible;
