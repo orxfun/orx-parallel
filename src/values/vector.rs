@@ -77,16 +77,19 @@ where
         }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         let reduced = self.0.into_iter().reduce(|a, b| reduce(u, a, b));
-        match (acc, reduced) {
-            (Some(x), Some(y)) => Some(reduce(u, x, y)),
-            (Some(x), None) => Some(x),
-            (None, Some(y)) => Some(y),
-            (None, None) => None,
+
+        Reduce::Done {
+            acc: match (acc, reduced) {
+                (Some(x), Some(y)) => Some(reduce(u, x, y)),
+                (Some(x), None) => Some(x),
+                (None, Some(y)) => Some(y),
+                (None, None) => None,
+            },
         }
     }
 

@@ -31,17 +31,11 @@ pub trait Values: Sized {
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send;
 
-    /// Returns (true, _) if the computation must early exit.
     fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item;
 
-    fn u_acc_reduce<U, X>(
-        self,
-        u: &mut U,
-        acc: Option<Self::Item>,
-        reduce: X,
-    ) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item;
 

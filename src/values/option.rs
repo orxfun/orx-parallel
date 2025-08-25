@@ -71,15 +71,17 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        match (acc, self) {
-            (Some(x), Some(y)) => Some(reduce(u, x, y)),
-            (Some(x), None) => Some(x),
-            (None, Some(y)) => Some(y),
-            (None, None) => None,
+        Reduce::Done {
+            acc: match (acc, self) {
+                (Some(x), Some(y)) => Some(reduce(u, x, y)),
+                (Some(x), None) => Some(x),
+                (None, Some(y)) => Some(y),
+                (None, None) => None,
+            },
         }
     }
 

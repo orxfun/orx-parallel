@@ -92,21 +92,20 @@ where
         }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueSomeOk(x) => {
-                let acc = Some(match acc {
-                    Some(y) => reduce(u, y, x),
+            Self::ContinueSomeOk(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(u, acc, x),
                     None => x,
-                });
-                acc
-            }
-            Self::ContinueNone => acc,
-            Self::StopErr(error) => None,
-            Self::StopWhile => acc,
+                }),
+            },
+            Self::ContinueNone => Reduce::Done { acc },
+            Self::StopErr(error) => Reduce::StoppedByError { error },
+            Self::StopWhile => Reduce::StoppedByWhileCondition { acc },
         }
     }
 

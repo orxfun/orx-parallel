@@ -3,7 +3,8 @@ use crate::runner::ParallelRunner;
 use crate::using::Using;
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
 use crate::using::computations::{UM, UX};
-use crate::values::TransformableValues;
+use crate::values::Values;
+use crate::values::runner_results::Infallible;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
@@ -39,7 +40,7 @@ where
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vo: TransformableValues<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();

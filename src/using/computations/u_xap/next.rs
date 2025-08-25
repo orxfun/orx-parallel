@@ -2,15 +2,15 @@ use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::computations::UX;
 use crate::using::runner::parallel_runner_compute::{u_next, u_next_any};
+use crate::values::Values;
 use crate::values::runner_results::Infallible;
-use crate::values::{TransformableValues, Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<U, I, Vo, M1> UX<U, I, Vo, M1>
 where
     U: Using,
     I: ConcurrentIter,
-    Vo: TransformableValues,
+    Vo: Values,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     Vo::Item: Send,
 {
