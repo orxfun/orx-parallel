@@ -5,6 +5,7 @@ use crate::using::Using;
 use crate::using::computations::UM;
 use crate::using::computations::UX;
 use crate::values::Values;
+use crate::values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -59,7 +60,11 @@ where
 
 // x
 
-pub fn u_x<C, U, I, Vo, M1, P>(runner: C, x: UX<U, I, Vo, M1>, pinned_vec: P) -> (usize, P)
+pub fn u_x<C, U, I, Vo, M1, P>(
+    runner: C,
+    x: UX<U, I, Vo, M1>,
+    pinned_vec: P,
+) -> (usize, ParallelCollectArbitrary<Vo, P>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -85,11 +90,13 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    std::thread::scope(|s| {
+    let result: ThreadCollectArbitrary<Vo::Fallibility> = std::thread::scope(|s| {
+        let mut handles = vec![];
+
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             let u = using.create(num_spawned);
             num_spawned += 1;
-            s.spawn(|| {
+            handles.push(s.spawn(|| {
                 thread::u_collect_arbitrary::u_x(
                     runner.new_thread_runner(shared_state),
                     u,
@@ -97,10 +104,53 @@ where
                     shared_state,
                     &xap1,
                     &bag,
-                );
-            });
+                )
+            }));
         }
+
+        let mut early_exit_result = None;
+        while !handles.is_empty() {
+            let mut finished_idx = None;
+            for (h, handle) in handles.iter().enumerate() {
+                if handle.is_finished() {
+                    finished_idx = Some(h);
+                    break;
+                }
+            }
+
+            if let Some(h) = finished_idx {
+                let handle = handles.remove(h);
+                let result = handle.join().expect("failed to join the thread");
+                match &result {
+                    ThreadCollectArbitrary::AllCollected => {}
+                    ThreadCollectArbitrary::StoppedByError { error: _ } => {
+                        early_exit_result = Some(result);
+                        break;
+                    }
+                    ThreadCollectArbitrary::StoppedByWhileCondition => {
+                        early_exit_result = Some(result);
+                    }
+                }
+            }
+        }
+
+        early_exit_result.unwrap_or(ThreadCollectArbitrary::AllCollected)
     });
-    let values = bag.into_inner();
-    (num_spawned, values)
+
+    (
+        num_spawned,
+        match result {
+            ThreadCollectArbitrary::AllCollected => ParallelCollectArbitrary::AllCollected {
+                pinned_vec: bag.into_inner(),
+            },
+            ThreadCollectArbitrary::StoppedByWhileCondition => {
+                ParallelCollectArbitrary::StoppedByWhileCondition {
+                    pinned_vec: bag.into_inner(),
+                }
+            }
+            ThreadCollectArbitrary::StoppedByError { error } => {
+                ParallelCollectArbitrary::StoppedByError { error }
+            }
+        },
+    )
 }
