@@ -1,5 +1,7 @@
 use crate::ParIterFallible;
+use crate::computational_variants::optional::ParOptional;
 use crate::par_iter_fallible::IntoResult;
+use crate::par_iter_optional::{IntoOption, ParIterOptional};
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -9,8 +11,8 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
 };
+use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
-use std::cmp::Ordering;
 
 /// Parallel iterator.
 pub trait ParIter<R = DefaultRunner>: Sized + Send + Sync
@@ -673,6 +675,15 @@ where
         Error: Send,
         Self::Item: Send,
         Success: Send;
+
+    fn into_optional<Success>(self) -> impl ParIterOptional<R, Success = Success>
+    where
+        Self::Item: IntoOption<Success>,
+        Self::Item: Send,
+        Success: Send,
+    {
+        ParOptional::new(self.map(|x| x.into_result_with_unit_err()).into_fallible())
+    }
 
     // special item transformations
 

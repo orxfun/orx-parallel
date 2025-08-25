@@ -1,5 +1,5 @@
 use crate::{test_utils::*, *};
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 use test_case::test_matrix;
 
 fn input<O: FromIterator<String>>(n: usize) -> O {

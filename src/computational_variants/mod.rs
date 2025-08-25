@@ -3,6 +3,7 @@ mod tests;
 
 pub mod fallible;
 mod map;
+pub mod optional;
 mod par;
 mod xap;
 

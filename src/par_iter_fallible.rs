@@ -2,7 +2,7 @@ use crate::computations::{map_count, reduce_sum, reduce_unit};
 use crate::{ChunkSize, IterationOrder, NumThreads, Sum};
 use crate::{
     DefaultRunner, ParCollectInto, ParIter, ParallelRunner,
-    values::{Vector, VectorResult, fallible_iterators::ResultOfIter},
+    values::fallible_iterators::ResultOfIter,
 };
 use core::cmp::Ordering;
 
