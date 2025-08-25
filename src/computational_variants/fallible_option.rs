@@ -1,7 +1,7 @@
 use crate::{
     ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
     ParallelRunner,
-    par_iter_optional::{ParIterOption, ResultIntoOption},
+    par_iter_option::{ParIterOption, ResultIntoOption},
 };
 use std::marker::PhantomData;
 

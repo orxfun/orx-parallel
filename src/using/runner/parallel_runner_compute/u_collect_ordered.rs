@@ -1,5 +1,4 @@
 use super::super::thread_runner_compute as thread;
-use crate::computations::heap_sort_into;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};

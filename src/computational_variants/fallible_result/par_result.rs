@@ -1,8 +1,8 @@
-use crate::computational_variants::{Par, ParMap, ParXap};
+use crate::computational_variants::Par;
 use crate::computations::X;
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter};
+use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 

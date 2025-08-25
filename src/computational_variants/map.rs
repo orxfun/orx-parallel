@@ -1,8 +1,6 @@
 use super::xap::ParXap;
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParMapResult;
-use crate::computational_variants::fallible_option::ParOption;
-use crate::par_iter_optional::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
 use crate::values::{Vector, WhilstAtom};
 use crate::{
