@@ -90,16 +90,18 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::Continue(x) => match acc {
-                Some(acc) => Some(reduce(u, acc, x)),
-                None => Some(x),
+            Self::Continue(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(u, acc, x),
+                    None => x,
+                }),
             },
-            Self::Stop => acc,
+            Self::Stop => Reduce::StoppedByWhileCondition { acc },
         }
     }
 

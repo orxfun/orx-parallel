@@ -1,4 +1,10 @@
-use crate::{ThreadRunner, values::TransformableValues};
+use crate::{
+    ThreadRunner,
+    values::{
+        TransformableValues,
+        runner_results::{Reduce, StopReduce},
+    },
+};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 // m
@@ -85,9 +91,9 @@ pub fn u_x<C, U, I, Vo, X1, Red>(
     mut u: U,
     iter: &I,
     shared_state: &C::SharedState,
-    map1: &X1,
+    xap1: &X1,
     reduce: &Red,
-) -> Option<Vo::Item>
+) -> Reduce<Vo>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -109,8 +115,24 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    let vo = map1(u, i);
-                    acc = vo.u_acc_reduce(u, acc, reduce);
+                    let vo = xap1(u, i);
+                    let reduce = vo.u_acc_reduce(u, acc, reduce);
+                    acc = match Vo::reduce_to_stop(reduce) {
+                        Ok(acc) => acc,
+                        Err(stop) => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            match stop {
+                                StopReduce::DueToWhile { acc } => {
+                                    return Reduce::StoppedByWhileCondition { acc };
+                                }
+                                StopReduce::DueToError { error } => {
+                                    return Reduce::StoppedByError { error };
+                                }
+                            }
+                        }
+                    };
                 }
                 None => break,
             },
@@ -122,8 +144,24 @@ where
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         for i in chunk {
-                            let vo = map1(u, i);
-                            acc = vo.u_acc_reduce(u, acc, reduce);
+                            let vo = xap1(u, i);
+                            let reduce = vo.u_acc_reduce(u, acc, reduce);
+                            acc = match Vo::reduce_to_stop(reduce) {
+                                Ok(acc) => acc,
+                                Err(stop) => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    match stop {
+                                        StopReduce::DueToWhile { acc } => {
+                                            return Reduce::StoppedByWhileCondition { acc };
+                                        }
+                                        StopReduce::DueToError { error } => {
+                                            return Reduce::StoppedByError { error };
+                                        }
+                                    }
+                                }
+                            };
                         }
                     }
                     None => break,
@@ -135,5 +173,6 @@ where
     }
 
     runner.complete_task(shared_state);
-    acc
+
+    Reduce::Done { acc }
 }

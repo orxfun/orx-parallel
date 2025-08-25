@@ -83,16 +83,18 @@ where
         }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Ok(x) => match acc {
-                Some(acc) => Some(reduce(u, acc, x)),
-                None => Some(x),
+            Ok(x) => Reduce::Done {
+                acc: Some(match acc {
+                    Some(acc) => reduce(u, acc, x),
+                    None => x,
+                }),
             },
-            Err(e) => None, // resets entire reduction so far!
+            Err(error) => Reduce::StoppedByError { error },
         }
     }
 

@@ -1,6 +1,7 @@
 use super::super::thread_runner_compute as thread;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
+use crate::values::runner_results::{Fallibility, Reduce};
 use crate::{runner::ParallelRunnerCompute, values::TransformableValues};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -60,7 +61,10 @@ pub fn u_x<C, U, I, Vo, M1, Red>(
     runner: C,
     x: UX<U, I, Vo, M1>,
     reduce: Red,
-) -> (usize, Option<Vo::Item>)
+) -> (
+    usize,
+    Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>,
+)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -76,7 +80,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let results = std::thread::scope(|s| {
+    let result: Result<Vec<Vo::Item>, _> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -95,16 +99,40 @@ where
         }
 
         let mut results = Vec::with_capacity(handles.len());
-        for x in handles {
-            if let Some(x) = x.join().expect("failed to join the thread") {
-                results.push(x);
+
+        let mut error = None;
+        while !handles.is_empty() {
+            let mut finished_idx = None;
+            for (h, handle) in handles.iter().enumerate() {
+                if handle.is_finished() {
+                    finished_idx = Some(h);
+                    break;
+                }
+            }
+
+            if let Some(h) = finished_idx {
+                let handle = handles.remove(h);
+                let result = handle.join().expect("failed to join the thread");
+                match result {
+                    Reduce::Done { acc: Some(acc) } => results.push(acc),
+                    Reduce::StoppedByWhileCondition { acc: Some(acc) } => results.push(acc),
+                    Reduce::StoppedByError { error: e } => {
+                        error = Some(e);
+                        break;
+                    }
+                    _ => {}
+                }
             }
         }
-        results
+
+        match error {
+            Some(error) => Err(error),
+            None => Ok(results),
+        }
     });
 
     let mut u = using.into_inner();
-    let acc = results.into_iter().reduce(|a, b| reduce(&mut u, a, b));
+    let acc = result.map(|results| results.into_iter().reduce(|a, b| reduce(&mut u, a, b)));
 
     (num_spawned, acc)
 }

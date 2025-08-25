@@ -1,6 +1,6 @@
 use crate::values::{
     Values,
-    runner_results::{ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush, Stop},
+    runner_results::{ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush},
     whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -83,20 +83,19 @@ where
         }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self.0 {
-            Some(Ok(x)) => {
-                let acc = Some(match acc {
+            Some(Ok(x)) => Reduce::Done {
+                acc: Some(match acc {
                     Some(y) => reduce(u, y, x),
                     None => x,
-                });
-                acc
-            }
-            Some(Err(error)) => None,
-            None => acc,
+                }),
+            },
+            None => Reduce::Done { acc },
+            Some(Err(error)) => Reduce::StoppedByError { error },
         }
     }
 

@@ -99,7 +99,7 @@ where
         Reduce::Done { acc: Some(acc) }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Option<Self::Item>
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
@@ -110,10 +110,10 @@ where
             None => {
                 let first = iter.next();
                 match first {
-                    None => return None, // empty iterator but not stopped, acc is None
+                    None => return Reduce::Done { acc: None }, // empty iterator but not stopped, acc is None
                     Some(x) => match x {
                         WhilstAtom::Continue(x) => x,
-                        WhilstAtom::Stop => return None, // first element is stop, acc is None
+                        WhilstAtom::Stop => return Reduce::StoppedByWhileCondition { acc: None }, // first element is stop, acc is None
                     },
                 }
             }
@@ -122,11 +122,11 @@ where
         for x in iter {
             match x {
                 WhilstAtom::Continue(x) => acc = reduce(u, acc, x),
-                WhilstAtom::Stop => return Some(acc),
+                WhilstAtom::Stop => return Reduce::StoppedByWhileCondition { acc: Some(acc) },
             }
         }
 
-        Some(acc)
+        Reduce::Done { acc: Some(acc) }
     }
 
     fn first_to_depracate(self) -> WhilstOption<Self::Item> {
