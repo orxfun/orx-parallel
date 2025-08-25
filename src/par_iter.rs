@@ -20,8 +20,6 @@ where
     /// Element type of the parallel iterator.
     type Item;
 
-    type ConIter: ConcurrentIter;
-
     /// Returns a reference to the input concurrent iterator.
     fn con_iter(&self) -> &impl ConcurrentIter;
 

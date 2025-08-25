@@ -65,8 +65,6 @@ where
 {
     type Item = O;
 
-    type ConIter = I;
-
     fn con_iter(&self) -> &impl ConcurrentIter {
         self.m.iter()
     }

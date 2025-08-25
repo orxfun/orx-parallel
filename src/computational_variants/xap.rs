@@ -72,8 +72,6 @@ where
 {
     type Item = Vo::Item;
 
-    type ConIter = I;
-
     fn con_iter(&self) -> &impl ConcurrentIter {
         self.x.iter()
     }

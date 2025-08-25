@@ -67,8 +67,6 @@ where
 {
     type Item = I::Item;
 
-    type ConIter = I;
-
     fn con_iter(&self) -> &impl ConcurrentIter {
         &self.iter
     }
