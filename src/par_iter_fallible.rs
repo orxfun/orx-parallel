@@ -1,4 +1,4 @@
-use crate::{DefaultRunner, ParCollectInto, ParallelRunner};
+use crate::{DefaultRunner, ParCollectInto, ParIter, ParallelRunner};
 
 pub trait ParIterFallible<R = DefaultRunner>
 where
@@ -8,14 +8,49 @@ where
 
     type Error: Send;
 
+    type RegularItem: IntoResult<Self::Success, Self::Error>;
+
+    type RegularParIter: ParIter<R, Item = Self::RegularItem>;
+
     fn con_iter_len(&self) -> Option<usize>;
+
+    fn into_regular_par(self) -> Self::RegularParIter;
 
     // computation transformations
 
     fn map<Out, Map>(self, map: Map) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
     where
+        Self: Sized,
         Map: Fn(Self::Success) -> Out + Sync + Clone,
-        Out: Send;
+        Out: Send,
+    {
+        let par = self.into_regular_par();
+        let map = par.map(move |x| x.into_result().map(map.clone()));
+        map.into_fallible()
+    }
+
+    fn filter<Filter>(
+        self,
+        filter: Filter,
+    ) -> impl ParIterFallible<R, Success = Self::Success, Error = Self::Error>
+    where
+        Self: Sized,
+        Filter: Fn(&Self::Success) -> bool + Sync + Clone,
+        Self::Success: Send,
+    {
+        let par = self.into_regular_par();
+        let filter_map = par.filter_map(move |x| {
+            let x = x.into_result();
+            match x {
+                Ok(x) => match filter(&x) {
+                    true => Some(Ok(x)),
+                    false => None,
+                },
+                Err(e) => Some(Err(e)),
+            }
+        });
+        filter_map.into_fallible()
+    }
 
     // collect
 

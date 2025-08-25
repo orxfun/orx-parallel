@@ -46,21 +46,16 @@ where
 
     type Error = E;
 
+    type RegularItem = O;
+
+    type RegularParIter = ParMap<I, O, M1, R>;
+
     fn con_iter_len(&self) -> Option<usize> {
         self.par.con_iter().try_get_len()
     }
 
-    // computation transformations
-
-    fn map<Out, Map>(self, map: Map) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
-    where
-        Map: Fn(Self::Success) -> Out + Sync,
-        Out: Send,
-    {
-        let (params, iter, m1) = self.par.destruct();
-        let m1 = move |i: I::Item| m1(i).into_result().map(&map);
-        let map = ParMap::new(params, iter, m1);
-        map.into_fallible()
+    fn into_regular_par(self) -> Self::RegularParIter {
+        self.par
     }
 
     // collect

@@ -53,24 +53,16 @@ where
 
     type Error = E;
 
+    type RegularItem = Vo::Item;
+
+    type RegularParIter = ParXap<I, Vo, M1, R>;
+
     fn con_iter_len(&self) -> Option<usize> {
         self.par.con_iter().try_get_len()
     }
 
-    // computation transformations
-
-    fn map<Out, Map>(self, map: Map) -> impl ParIterFallible<R, Success = Out, Error = Self::Error>
-    where
-        Map: Fn(Self::Success) -> Out + Sync + Clone,
-        Out: Send,
-    {
-        let (params, iter, x1) = self.par.destruct();
-        let x1 = move |i: I::Item| {
-            let map = map.clone();
-            x1(i).map(move |x| x.into_result().map(&map))
-        };
-        let xap = ParXap::new(params, iter, x1);
-        xap.into_fallible()
+    fn into_regular_par(self) -> Self::RegularParIter {
+        self.par
     }
 
     // collect
