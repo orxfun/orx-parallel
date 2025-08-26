@@ -128,7 +128,7 @@ where
         }
     }
 
-    pub fn to_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
+    pub fn into_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),
             Self::StoppedByWhileCondition {

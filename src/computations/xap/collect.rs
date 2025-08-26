@@ -1,12 +1,12 @@
 use super::x::X;
-use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
 use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
+use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
 use crate::{
     IterationOrder,
-    runner::{ParallelRunner, ParallelRunnerCompute},
     generic_values::Values,
+    runner::{ParallelRunner, ParallelRunnerCompute},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -68,7 +68,7 @@ where
             }
             (false, IterationOrder::Ordered) => {
                 let (nt, result) = collect_ordered::x(R::collection(p, len), self, pinned_vec);
-                (nt, result.to_result())
+                (nt, result.into_result())
             }
         }
     }
