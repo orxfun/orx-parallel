@@ -12,14 +12,6 @@ fn abc() {
     use orx_concurrent_bag::*;
     use std::num::ParseIntError;
 
-    fn safe_div(a: u32, b: u32) -> Result<u32, char> {
-        match b {
-            0 => Err('!'),
-            b => Ok(a / b),
-        }
-    }
-    use std::sync::mpsc::channel;
-
     let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
     assert_eq!(a.par().copied().into_fallible_result().max(), Ok(Some(3)));
 
@@ -29,33 +21,34 @@ fn abc() {
     let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
     assert_eq!(c.par().copied().into_fallible_result().max(), Err('x'));
 
-    assert_eq!(b.par().max(), None);
+    // by
 
-    // all Ok
-    let (tx, rx) = channel();
-    let result = vec!["0", "1", "2", "3", "4"]
-        .into_par()
-        .map(|x| x.parse::<i32>())
-        .into_fallible_result()
-        .map(|x| x * 2 + 1)
-        .for_each(move |x| tx.send(x).unwrap());
+    let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    assert_eq!(
+        a.par()
+            .copied()
+            .into_fallible_result()
+            .max_by(|a, b| a.cmp(b)),
+        Ok(Some(3))
+    );
 
-    assert_eq!(result, Ok(()));
+    let b: Vec<Result<i32, char>> = vec![];
+    assert_eq!(
+        b.par()
+            .copied()
+            .into_fallible_result()
+            .max_by(|a, b| a.cmp(b)),
+        Ok(None)
+    );
 
-    let mut v: Vec<_> = rx.iter().collect();
-    v.sort(); // order can be mixed, since messages will be sent in parallel
-    assert_eq!(v, vec![1, 3, 5, 7, 9]);
-
-    // at least one Err
-    let (tx, _rx) = channel();
-    let result = vec!["0", "1", "2", "x!", "4"]
-        .into_par()
-        .map(|x| x.parse::<i32>())
-        .into_fallible_result()
-        .map(|x| x * 2 + 1)
-        .for_each(move |x| tx.send(x).unwrap());
-
-    assert!(result.is_err());
+    let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    assert_eq!(
+        c.par()
+            .copied()
+            .into_fallible_result()
+            .max_by(|a, b| a.cmp(b)),
+        Err('x')
+    );
 
     // let vec = a
     //     .par()
@@ -933,6 +926,40 @@ where
         self.reduce(Ord::max)
     }
 
+    /// Returns the element that gives the maximum value with respect to the specified `compare` function.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .max_by(|a, b| a.cmp(b)),
+    ///     Ok(Some(3))
+    /// );
+    ///
+    /// let b: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .max_by(|a, b| a.cmp(b)),
+    ///     Ok(None)
+    /// );
+    ///
+    /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .max_by(|a, b| a.cmp(b)),
+    ///     Err('x')
+    /// );
+    /// ```
     fn max_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
@@ -986,6 +1013,40 @@ where
         self.reduce(Ord::min)
     }
 
+    /// Returns the element that gives the maximum value with respect to the specified `compare` function.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .min_by(|a, b| a.cmp(b)),
+    ///     Ok(Some(1))
+    /// );
+    ///
+    /// let b: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .min_by(|a, b| a.cmp(b)),
+    ///     Ok(None)
+    /// );
+    ///
+    /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .min_by(|a, b| a.cmp(b)),
+    ///     Err('x')
+    /// );
+    /// ```
     fn min_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
