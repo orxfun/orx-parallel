@@ -11,7 +11,6 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 ///   the only relevant value is the created error.
 /// * Computed values are relevant iff entire inputs result in an Ok variant.
 /// * Therefore, observation of an error case allows to immediately stop computation.
-
 impl<T, E> Values for Result<T, E>
 where
     E: Send,

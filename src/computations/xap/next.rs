@@ -32,12 +32,7 @@ where
         (num_threads, next)
     }
 
-    pub fn try_next<R>(
-        self,
-    ) -> (
-        usize,
-        Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>,
-    )
+    pub fn try_next<R>(self) -> (usize, ResultTryNext<Vo>)
     where
         R: ParallelRunner,
     {
@@ -47,12 +42,7 @@ where
         (num_threads, result)
     }
 
-    pub fn try_next_any<R>(
-        self,
-    ) -> (
-        usize,
-        Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>,
-    )
+    pub fn try_next_any<R>(self) -> (usize, ResultTryNext<Vo>)
     where
         R: ParallelRunner,
     {
@@ -61,3 +51,6 @@ where
         (num_threads, result)
     }
 }
+
+type ResultTryNext<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;

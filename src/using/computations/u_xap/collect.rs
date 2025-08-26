@@ -65,7 +65,7 @@ where
         for i in iter {
             let vt = xap1(&mut u, i);
             let done = vt.push_to_pinned_vec(&mut pinned_vec);
-            if let Some(_) = Vo::sequential_push_to_stop(done) {
+            if Vo::sequential_push_to_stop(done).is_some() {
                 break;
             }
         }

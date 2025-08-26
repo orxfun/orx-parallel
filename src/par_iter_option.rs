@@ -239,10 +239,8 @@ pub(crate) trait ResultIntoOption<T> {
 }
 
 impl<T> ResultIntoOption<T> for Result<T, ()> {
+    #[inline(always)]
     fn into_option(self) -> Option<T> {
-        match self {
-            Ok(x) => Some(x),
-            Err(_) => None,
-        }
+        self.ok()
     }
 }

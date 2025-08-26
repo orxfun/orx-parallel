@@ -1,7 +1,7 @@
 use crate::computations::{M, X};
-use crate::runner::thread_runner_compute as thread;
 use crate::generic_values::runner_results::Fallibility;
-use crate::{runner::ParallelRunnerCompute, generic_values::Values};
+use crate::runner::thread_runner_compute as thread;
+use crate::{generic_values::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1>(runner: C, m: M<I, O, M1>) -> (usize, Option<O>)
@@ -41,13 +41,10 @@ where
     (num_spawned, result)
 }
 
-pub fn x<C, I, Vo, X1>(
-    runner: C,
-    x: X<I, Vo, X1>,
-) -> (
-    usize,
-    Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>,
-)
+type ResultNextAny<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
+
+pub fn x<C, I, Vo, X1>(runner: C, x: X<I, Vo, X1>) -> (usize, ResultNextAny<Vo>)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,

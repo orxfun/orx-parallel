@@ -23,13 +23,7 @@ where
         (num_threads, acc)
     }
 
-    pub fn try_reduce<R, Red>(
-        self,
-        reduce: Red,
-    ) -> (
-        usize,
-        Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>,
-    )
+    pub fn try_reduce<R, Red>(self, reduce: Red) -> (usize, ResultTryReduce<Vo>)
     where
         R: ParallelRunner,
         Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
@@ -38,3 +32,6 @@ where
         reduce::x(R::reduce(p, len), self, reduce)
     }
 }
+
+type ResultTryReduce<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
