@@ -23,12 +23,12 @@ fn abc() {
 
     // by
 
-    let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    let a: Vec<Result<i32, char>> = vec![Ok(-1), Ok(2), Ok(-3)];
     assert_eq!(
         a.par()
             .copied()
             .into_fallible_result()
-            .max_by(|a, b| a.cmp(b)),
+            .max_by_key(|x| x.abs()),
         Ok(Some(3))
     );
 
@@ -37,7 +37,7 @@ fn abc() {
         b.par()
             .copied()
             .into_fallible_result()
-            .max_by(|a, b| a.cmp(b)),
+            .max_by_key(|x| x.abs()),
         Ok(None)
     );
 
@@ -46,7 +46,7 @@ fn abc() {
         c.par()
             .copied()
             .into_fallible_result()
-            .max_by(|a, b| a.cmp(b)),
+            .max_by_key(|x| x.abs()),
         Err('x')
     );
 
@@ -973,6 +973,42 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the element that gives the maximum value from the specified function.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(-1), Ok(2), Ok(-3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .max_by_key(|x| x.abs()),
+    ///     Ok(Some(3))
+    /// );
+    ///
+    /// let b: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .max_by_key(|x| x.abs()),
+    ///     Ok(None)
+    /// );
+    ///
+    /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .max_by_key(|x| x.abs()),
+    ///     Err('x')
+    /// );
+    /// ```
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
@@ -1060,6 +1096,42 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the element that gives the minimum value from the specified function.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(-1), Ok(2), Ok(-3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .min_by_key(|x| x.abs()),
+    ///     Ok(Some(1))
+    /// );
+    ///
+    /// let b: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .min_by_key(|x| x.abs()),
+    ///     Ok(None)
+    /// );
+    ///
+    /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_result()
+    ///         .min_by_key(|x| x.abs()),
+    ///     Err('x')
+    /// );
+    /// ```
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
