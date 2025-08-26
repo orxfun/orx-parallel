@@ -193,10 +193,7 @@ where
         Fm: Fn(Self::Item) -> Option<O>,
     {
         let iter = self.0.into_iter().filter_map(move |x| match x {
-            WhilstAtom::Continue(x) => match filter_map(x) {
-                Some(x) => Some(WhilstAtom::Continue(x)),
-                None => None,
-            },
+            WhilstAtom::Continue(x) => filter_map(x).map(WhilstAtom::Continue),
             WhilstAtom::Stop => Some(WhilstAtom::Stop),
         });
         WhilstVector(iter)
@@ -289,10 +286,7 @@ where
         Fm: Fn(&mut U, Self::Item) -> Option<O>,
     {
         let iter = self.0.into_iter().filter_map(move |x| match x {
-            WhilstAtom::Continue(x) => match filter_map(u, x) {
-                Some(x) => Some(WhilstAtom::Continue(x)),
-                None => None,
-            },
+            WhilstAtom::Continue(x) => filter_map(u, x).map(WhilstAtom::Continue),
             WhilstAtom::Stop => Some(WhilstAtom::Stop),
         });
         WhilstVector(iter)

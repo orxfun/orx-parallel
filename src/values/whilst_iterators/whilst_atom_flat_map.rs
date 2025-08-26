@@ -42,11 +42,8 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.current_iter {
-            WhilstAtom::Continue(x) => match x.next() {
-                Some(x) => Some(WhilstAtom::Continue(x)),
-                None => None, // flat map iterator is consumed
-            },
-            WhilstAtom::Stop => Some(WhilstAtom::Stop), // input is Stop
+            WhilstAtom::Continue(x) => x.next().map(WhilstAtom::Continue), // None if flat-map iterator is consumed
+            WhilstAtom::Stop => Some(WhilstAtom::Stop),                    // input is Stop
         }
     }
 }
