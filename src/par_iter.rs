@@ -676,6 +676,28 @@ where
 
     // while transformations
 
+    /// Creates an iterator that yields elements based on the predicate `take_while`.
+    ///
+    /// It will call this closure on each element of the iterator, and yield elements while it returns true.
+    ///
+    /// After false is returned, take_while’s job is over, and the rest of the elements are ignored.
+    ///
+    /// Unlike regular sequential iterators, the result is not always deterministic due to parallel execution.
+    ///
+    /// However, as demonstrated in the example below, `collect` with ordered execution makes sure that all
+    /// elements before the predicate returns false are collected in the correct order; and hence, the result
+    /// is deterministic.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let iter = (0..10_000).par().take_while(|x| *x != 5_000);
+    /// let b: Vec<_> = iter.collect();
+    ///
+    /// assert_eq!(b, (0..5_000).collect::<Vec<_>>());
+    /// ```
     fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
     where
         While: Fn(&Self::Item) -> bool + Sync + Clone;
@@ -1270,4 +1292,16 @@ where
     {
         self.filter(&predicate).first()
     }
+}
+
+#[test]
+fn abc() {
+    use crate::*;
+
+    // ordered
+
+    let iter = (0..10_000).par().take_while(|x| *x != 5_000);
+    let b: Vec<_> = iter.collect();
+
+    assert_eq!(b, (0..5_000).collect::<Vec<_>>());
 }
