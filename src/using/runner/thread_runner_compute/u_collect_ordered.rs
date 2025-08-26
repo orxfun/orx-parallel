@@ -1,6 +1,6 @@
 use crate::{
     ThreadRunner,
-    values::{
+    generic_values::{
         Values,
         runner_results::{StopWithIdx, ThreadCollect},
     },

@@ -1,8 +1,8 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
+    generic_values::{TransformableValues, runner_results::Infallible},
     runner::{DefaultRunner, ParallelRunner},
     using::{Using, computations::UX, u_par_iter::ParIterUsing},
-    values::{TransformableValues, Values, Vector, runner_results::Infallible},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;

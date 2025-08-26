@@ -1,7 +1,6 @@
-use crate::values::{
-    Values,
-    runner_results::{ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush},
-    whilst_option::WhilstOption,
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{
+    ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -17,11 +16,6 @@ where
     type Item = T;
 
     type Fallibility = Fallible<E>;
-
-    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
-        todo!();
-        core::iter::empty()
-    }
 
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
@@ -96,14 +90,6 @@ where
             },
             None => Reduce::Done { acc },
             Some(Err(error)) => Reduce::StoppedByError { error },
-        }
-    }
-
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self.0 {
-            Some(Ok(x)) => WhilstOption::ContinueSome(x),
-            Some(Err(error)) => WhilstOption::Stop,
-            None => WhilstOption::ContinueNone,
         }
     }
 

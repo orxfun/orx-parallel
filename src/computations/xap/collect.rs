@@ -1,12 +1,12 @@
 use super::x::X;
-use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
-use crate::values::runner_results::{
+use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
+use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
 use crate::{
     IterationOrder,
+    generic_values::Values,
     runner::{ParallelRunner, ParallelRunnerCompute},
-    values::Values,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -64,11 +64,11 @@ where
             (true, _) => (0, self.try_sequential(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
                 let (nt, result) = collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
-                (nt, result.to_result())
+                (nt, result.into_result())
             }
             (false, IterationOrder::Ordered) => {
                 let (nt, result) = collect_ordered::x(R::collection(p, len), self, pinned_vec);
-                (nt, result.to_result())
+                (nt, result.into_result())
             }
         }
     }
@@ -83,7 +83,7 @@ where
         for i in iter {
             let vt = xap1(i);
             let done = vt.push_to_pinned_vec(&mut pinned_vec);
-            if let Some(_) = Vo::sequential_push_to_stop(done) {
+            if Vo::sequential_push_to_stop(done).is_some() {
                 break;
             }
         }

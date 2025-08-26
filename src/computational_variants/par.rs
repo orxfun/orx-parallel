@@ -2,7 +2,7 @@ use super::{map::ParMap, xap::ParXap};
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParResult;
 use crate::par_iter_result::IntoResult;
-use crate::values::{Vector, WhilstAtom};
+use crate::generic_values::{Vector, WhilstAtom};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::{M, map_self},

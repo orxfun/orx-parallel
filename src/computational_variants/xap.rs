@@ -1,8 +1,8 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParXapResult;
 use crate::par_iter_result::IntoResult;
-use crate::values::TransformableValues;
-use crate::values::runner_results::Infallible;
+use crate::generic_values::TransformableValues;
+use crate::generic_values::runner_results::Infallible;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::X,

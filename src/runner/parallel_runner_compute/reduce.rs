@@ -1,7 +1,7 @@
 use crate::computations::{M, X};
+use crate::generic_values::runner_results::{Fallibility, Reduce};
 use crate::runner::thread_runner_compute as thread;
-use crate::values::runner_results::{Fallibility, Reduce};
-use crate::{runner::ParallelRunnerCompute, values::Values};
+use crate::{generic_values::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 // m
@@ -52,14 +52,10 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, Red>(
-    runner: C,
-    x: X<I, Vo, M1>,
-    reduce: Red,
-) -> (
-    usize,
-    Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>,
-)
+type ResultReduce<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
+
+pub fn x<C, I, Vo, M1, Red>(runner: C, x: X<I, Vo, M1>, reduce: Red) -> (usize, ResultReduce<Vo>)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,

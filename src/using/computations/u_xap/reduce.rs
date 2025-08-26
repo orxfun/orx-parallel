@@ -1,9 +1,9 @@
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::Infallible;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::computations::UX;
 use crate::using::runner::parallel_runner_compute::u_reduce;
-use crate::values::Values;
-use crate::values::runner_results::Infallible;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<U, I, Vo, M1> UX<U, I, Vo, M1>
@@ -21,9 +21,7 @@ where
         Vo: Values<Fallibility = Infallible>,
     {
         let (len, p) = self.len_and_params();
-        let (num_threads, result) = u_reduce::u_x(R::reduce(p, len), self, reduce);
-        match result {
-            Ok(acc) => (num_threads, acc),
-        }
+        let (num_threads, Ok(acc)) = u_reduce::u_x(R::reduce(p, len), self, reduce);
+        (num_threads, acc)
     }
 }

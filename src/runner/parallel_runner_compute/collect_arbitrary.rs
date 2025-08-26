@@ -1,8 +1,8 @@
 #[cfg(test)]
 use crate::computations::M;
 use crate::runner::thread_runner_compute as thread;
-use crate::values::Values;
-use crate::values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
 use crate::{computations::X, runner::ParallelRunnerCompute};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;

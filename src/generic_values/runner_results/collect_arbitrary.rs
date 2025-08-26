@@ -1,4 +1,4 @@
-use crate::values::{Values, runner_results::Fallibility};
+use crate::generic_values::{Values, runner_results::Fallibility};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 pub enum ArbitraryPush<F: Fallibility> {
@@ -67,7 +67,7 @@ where
     V: Values,
     P: IntoConcurrentPinnedVec<V::Item>,
 {
-    pub fn to_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
+    pub fn into_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),
             Self::StoppedByWhileCondition { pinned_vec } => Ok(pinned_vec),

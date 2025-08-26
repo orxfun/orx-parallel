@@ -1,4 +1,4 @@
-use crate::values::{Values, option_result::OptionResult, runner_results::Fallible};
+use crate::generic_values::{Values, runner_results::Fallible};
 
 pub trait TransformableValues: Values {
     fn map<M, O>(

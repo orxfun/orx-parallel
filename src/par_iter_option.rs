@@ -1,7 +1,6 @@
 use crate::computations::{map_count, reduce_sum, reduce_unit};
 use crate::{
-    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
-    ParallelRunner, Sum,
+    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParallelRunner, Sum,
 };
 use core::cmp::Ordering;
 
@@ -240,10 +239,8 @@ pub(crate) trait ResultIntoOption<T> {
 }
 
 impl<T> ResultIntoOption<T> for Result<T, ()> {
+    #[inline(always)]
     fn into_option(self) -> Option<T> {
-        match self {
-            Ok(x) => Some(x),
-            Err(_) => None,
-        }
+        self.ok()
     }
 }

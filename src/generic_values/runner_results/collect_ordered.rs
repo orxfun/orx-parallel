@@ -1,6 +1,6 @@
 use crate::{
     computations::heap_sort_into,
-    values::{Values, runner_results::Fallibility},
+    generic_values::{Values, runner_results::Fallibility},
 };
 use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -128,7 +128,7 @@ where
         }
     }
 
-    pub fn to_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
+    pub fn into_result(self) -> Result<P, <V::Fallibility as Fallibility>::Error> {
         match self {
             Self::AllCollected { pinned_vec } => Ok(pinned_vec),
             Self::StoppedByWhileCondition {

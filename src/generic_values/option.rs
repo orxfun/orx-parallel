@@ -1,37 +1,27 @@
-use super::transformable_values::TransformableValues;
-use crate::values::{
-    Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
+use super::{TransformableValues, Vector};
+use crate::generic_values::Values;
+use crate::generic_values::{
+    option_result::OptionResult,
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
+    whilst_option::WhilstOption,
 };
 use orx_concurrent_bag::ConcurrentBag;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
-use orx_pinned_vec::PinnedVec;
+use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub struct Vector<I>(pub I)
-where
-    I: IntoIterator;
-
-impl<I> Values for Vector<I>
-where
-    I: IntoIterator,
-{
-    type Item = I::Item;
+impl<T> Values for Option<T> {
+    type Item = T;
 
     type Fallibility = Infallible;
-
-    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
-        self.0
-    }
 
     #[inline(always)]
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,
     {
-        for x in self.0 {
-            vector.push(x);
+        if let Some(x) = self {
+            vector.push(x)
         }
         SequentialPush::Done
     }
@@ -42,7 +32,7 @@ where
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
     ) -> OrderedPush<Self::Fallibility> {
-        for x in self.0 {
+        if let Some(x) = self {
             vec.push((idx, x));
         }
         OrderedPush::Done
@@ -54,7 +44,7 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        for x in self.0 {
+        if let Some(x) = self {
             bag.push(x);
         }
         ArbitraryPush::Done
@@ -65,10 +55,8 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        let reduced = self.0.into_iter().reduce(&reduce);
-
         Reduce::Done {
-            acc: match (acc, reduced) {
+            acc: match (acc, self) {
                 (Some(x), Some(y)) => Some(reduce(x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
@@ -77,14 +65,13 @@ where
         }
     }
 
+    #[inline(always)]
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        let reduced = self.0.into_iter().reduce(|a, b| reduce(u, a, b));
-
         Reduce::Done {
-            acc: match (acc, reduced) {
+            acc: match (acc, self) {
                 (Some(x), Some(y)) => Some(reduce(u, x, y)),
                 (Some(x), None) => Some(x),
                 (None, Some(y)) => Some(y),
@@ -93,25 +80,12 @@ where
         }
     }
 
-    #[inline(always)]
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self.0.into_iter().next() {
-            Some(x) => WhilstOption::ContinueSome(x),
-            None => WhilstOption::ContinueNone,
-        }
-    }
-
     fn next(self) -> Next<Self> {
-        Next::Done {
-            value: self.0.into_iter().next(),
-        }
+        Next::Done { value: self }
     }
 }
 
-impl<I> TransformableValues for Vector<I>
-where
-    I: IntoIterator,
-{
+impl<T> TransformableValues for Option<T> {
     #[inline(always)]
     fn map<M, O>(
         self,
@@ -120,7 +94,7 @@ where
     where
         M: Fn(Self::Item) -> O,
     {
-        Vector(self.0.into_iter().map(map))
+        self.map(map)
     }
 
     #[inline(always)]
@@ -131,7 +105,7 @@ where
     where
         F: Fn(&Self::Item) -> bool,
     {
-        Vector(self.0.into_iter().filter(filter))
+        self.filter(filter)
     }
 
     #[inline(always)]
@@ -143,7 +117,7 @@ where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
-        Vector(self.0.into_iter().flat_map(flat_map))
+        Vector(self.into_iter().flat_map(flat_map))
     }
 
     #[inline(always)]
@@ -154,7 +128,10 @@ where
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
-        Vector(self.0.into_iter().filter_map(filter_map))
+        match self {
+            Some(x) => filter_map(x),
+            _ => None,
+        }
     }
 
     fn whilst(
@@ -164,11 +141,13 @@ where
     where
         Self: Sized,
     {
-        let iter = self.0.into_iter().map(move |x| match whilst(&x) {
-            true => WhilstAtom::Continue(x),
-            false => WhilstAtom::Stop,
-        });
-        WhilstVector(iter)
+        match self {
+            Some(x) => match whilst(&x) {
+                true => WhilstOption::ContinueSome(x),
+                false => WhilstOption::Stop,
+            },
+            _ => WhilstOption::ContinueNone,
+        }
     }
 
     fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallibility = Fallible<E>>
@@ -176,10 +155,11 @@ where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
     {
-        let iter_res = self.0.into_iter().map(move |x| map_res(x));
-        VectorResult(iter_res)
+        let opt_res = self.map(map_res);
+        OptionResult(opt_res)
     }
 
+    #[inline(always)]
     fn u_map<U, M, O>(
         self,
         u: &mut U,
@@ -188,9 +168,10 @@ where
     where
         M: Fn(&mut U, Self::Item) -> O,
     {
-        Vector(self.0.into_iter().map(move |x| map(u, x)))
+        self.map(|x| map(u, x))
     }
 
+    #[inline(always)]
     fn u_filter<U, F>(
         self,
         u: &mut U,
@@ -199,7 +180,7 @@ where
     where
         F: Fn(&mut U, &Self::Item) -> bool,
     {
-        Vector(self.0.into_iter().filter(move |x| filter(u, x)))
+        self.filter(|x| filter(u, x))
     }
 
     fn u_flat_map<U, Fm, Vo>(
@@ -211,7 +192,7 @@ where
         Vo: IntoIterator,
         Fm: Fn(&mut U, Self::Item) -> Vo,
     {
-        Vector(self.0.into_iter().flat_map(move |x| flat_map(u, x)))
+        Vector(self.into_iter().flat_map(move |x| flat_map(u, x)))
     }
 
     fn u_filter_map<U, Fm, O>(
@@ -222,6 +203,9 @@ where
     where
         Fm: Fn(&mut U, Self::Item) -> Option<O>,
     {
-        Vector(self.0.into_iter().filter_map(move |x| filter_map(u, x)))
+        match self {
+            Some(x) => filter_map(u, x),
+            _ => None,
+        }
     }
 }

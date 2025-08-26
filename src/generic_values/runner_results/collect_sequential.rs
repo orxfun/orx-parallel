@@ -1,4 +1,4 @@
-use crate::values::runner_results::Fallibility;
+use crate::generic_values::runner_results::Fallibility;
 
 pub enum SequentialPush<F: Fallibility> {
     Done,

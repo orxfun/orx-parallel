@@ -1,6 +1,6 @@
 use super::transformable_values::TransformableValues;
-use crate::values::{
-    Values, WhilstAtom, WhilstOption,
+use crate::generic_values::{
+    Values, WhilstAtom,
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
@@ -22,11 +22,6 @@ where
     type Item = T;
 
     type Fallibility = Infallible;
-
-    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
-        todo!();
-        core::iter::empty()
-    }
 
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
@@ -129,16 +124,6 @@ where
         Reduce::Done { acc: Some(acc) }
     }
 
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self.0.into_iter().next() {
-            Some(x) => match x {
-                WhilstAtom::Continue(x) => WhilstOption::ContinueSome(x),
-                WhilstAtom::Stop => WhilstOption::Stop,
-            },
-            None => WhilstOption::ContinueNone,
-        }
-    }
-
     fn next(self) -> Next<Self> {
         match self.0.into_iter().next() {
             Some(x) => match x {
@@ -208,10 +193,7 @@ where
         Fm: Fn(Self::Item) -> Option<O>,
     {
         let iter = self.0.into_iter().filter_map(move |x| match x {
-            WhilstAtom::Continue(x) => match filter_map(x) {
-                Some(x) => Some(WhilstAtom::Continue(x)),
-                None => None,
-            },
+            WhilstAtom::Continue(x) => filter_map(x).map(WhilstAtom::Continue),
             WhilstAtom::Stop => Some(WhilstAtom::Stop),
         });
         WhilstVector(iter)
@@ -304,10 +286,7 @@ where
         Fm: Fn(&mut U, Self::Item) -> Option<O>,
     {
         let iter = self.0.into_iter().filter_map(move |x| match x {
-            WhilstAtom::Continue(x) => match filter_map(u, x) {
-                Some(x) => Some(WhilstAtom::Continue(x)),
-                None => None,
-            },
+            WhilstAtom::Continue(x) => filter_map(u, x).map(WhilstAtom::Continue),
             WhilstAtom::Stop => Some(WhilstAtom::Stop),
         });
         WhilstVector(iter)

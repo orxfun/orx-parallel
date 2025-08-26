@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::values::Values;
-use crate::values::runner_results::{Fallibility, Infallible};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::{
     collect_into::utils::split_vec_reserve,
     computations::{M, X},

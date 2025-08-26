@@ -1,4 +1,4 @@
-use crate::values::Vector;
+use crate::generic_values::Vector;
 use crate::{IterationOrder, Params, computations::X, runner::DefaultRunner};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;

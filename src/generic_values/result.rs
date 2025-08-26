@@ -1,6 +1,6 @@
-use crate::values::{
-    Values, WhilstOption,
-    runner_results::{ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush},
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{
+    ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -11,7 +11,6 @@ use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 ///   the only relevant value is the created error.
 /// * Computed values are relevant iff entire inputs result in an Ok variant.
 /// * Therefore, observation of an error case allows to immediately stop computation.
-
 impl<T, E> Values for Result<T, E>
 where
     E: Send,
@@ -19,13 +18,6 @@ where
     type Item = T;
 
     type Fallibility = Fallible<E>;
-
-    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
-        match self {
-            Ok(x) => Some(x).into_iter(),
-            _ => None.into_iter(),
-        }
-    }
 
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
@@ -96,10 +88,6 @@ where
             },
             Err(error) => Reduce::StoppedByError { error },
         }
-    }
-
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        todo!()
     }
 
     fn next(self) -> Next<Self> {

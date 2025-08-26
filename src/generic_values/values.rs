@@ -1,9 +1,6 @@
-use crate::values::{
-    WhilstOption,
-    runner_results::{
-        ArbitraryPush, Fallibility, Next, OrderedPush, Reduce, SequentialPush, Stop, StopReduce,
-        StopWithIdx,
-    },
+use crate::generic_values::runner_results::{
+    ArbitraryPush, Fallibility, Next, OrderedPush, Reduce, SequentialPush, Stop, StopReduce,
+    StopWithIdx,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -13,8 +10,6 @@ pub trait Values: Sized {
     type Item;
 
     type Fallibility: Fallibility;
-
-    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item>;
 
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
@@ -38,8 +33,6 @@ pub trait Values: Sized {
     fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item;
-
-    fn first_to_depracate(self) -> WhilstOption<Self::Item>;
 
     fn next(self) -> Next<Self>;
 
