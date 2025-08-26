@@ -12,29 +12,36 @@ fn abc() {
     use orx_concurrent_bag::*;
     use std::num::ParseIntError;
 
-    let vec: Vec<i32> = vec![0, 1];
+    fn safe_div(a: u32, b: u32) -> Result<u32, char> {
+        match b {
+            0 => Err('!'),
+            b => Ok(a / b),
+        }
+    }
 
     // all succeeds
-
-    let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
-        .into_par()
-        .map(|x| x.parse::<i32>())
+    let reduced: Result<u32, char> = (1..10)
+        .par()
+        .map(|x| safe_div(100, x as u32))
         .into_fallible_result()
-        .map(|x| x * 2)
-        .collect();
+        .sum();
+    assert_eq!(reduced, Ok(281));
 
-    assert_eq!(result_doubled, Ok(vec![2, 4, 6]));
+    // all succeeds - empty iterator
+    let reduced: Result<u32, char> = (1..1)
+        .par()
+        .map(|x| safe_div(100, x as u32))
+        .into_fallible_result()
+        .sum();
+    assert_eq!(reduced, Ok(0));
 
     // at least one fails
-
-    let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
-        .into_par()
-        .map(|x| x.parse::<i32>())
+    let reduced: Result<u32, char> = (0..10)
+        .par()
+        .map(|x| safe_div(100, x as u32))
         .into_fallible_result()
-        .map(|x| x * 2)
-        .collect();
-
-    assert!(result_doubled.is_err());
+        .sum();
+    assert_eq!(reduced, Err('!'));
 
     // let vec = a
     //     .par()
@@ -631,6 +638,49 @@ where
 
     // reduce
 
+    /// Reduces the elements to a single one, by repeatedly applying a reducing operation.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// If the iterator is empty, returns `Ok(None)`; otherwise, returns `Ok` of result of the reduction.
+    ///
+    /// The `reduce` function is a closure with two arguments: an ‘accumulator’, and an element.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// fn safe_div(a: u32, b: u32) -> Result<u32, char> {
+    ///     match b {
+    ///         0 => Err('!'),
+    ///         b => Ok(a / b),
+    ///     }
+    /// }
+    ///
+    /// // all succeeds
+    /// let reduced: Result<Option<u32>, char> = (1..10)
+    ///     .par()
+    ///     .map(|x| safe_div(100, x as u32))
+    ///     .into_fallible_result()
+    ///     .reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, Ok(Some(281)));
+    ///
+    /// // all succeeds - empty iterator
+    /// let reduced: Result<Option<u32>, char> = (1..1)
+    ///     .par()
+    ///     .map(|x| safe_div(100, x as u32))
+    ///     .into_fallible_result()
+    ///     .reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, Ok(None));
+    ///
+    /// // at least one fails
+    /// let reduced: Result<Option<u32>, char> = (0..10)
+    ///     .par()
+    ///     .map(|x| safe_div(100, x as u32))
+    ///     .into_fallible_result()
+    ///     .reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, Err('!'));
+    /// ```
     fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self::Ok: Send,
@@ -743,6 +793,47 @@ where
         self.reduce(reduce)
     }
 
+    /// Sums the elements of an iterator.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// If the iterator is empty, returns zero; otherwise, returns `Ok` of the sum.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// fn safe_div(a: u32, b: u32) -> Result<u32, char> {
+    ///     match b {
+    ///         0 => Err('!'),
+    ///         b => Ok(a / b),
+    ///     }
+    /// }
+    ///
+    /// // all succeeds
+    /// let reduced: Result<u32, char> = (1..10)
+    ///     .par()
+    ///     .map(|x| safe_div(100, x as u32))
+    ///     .into_fallible_result()
+    ///     .sum();
+    /// assert_eq!(reduced, Ok(281));
+    ///
+    /// // all succeeds - empty iterator
+    /// let reduced: Result<u32, char> = (1..1)
+    ///     .par()
+    ///     .map(|x| safe_div(100, x as u32))
+    ///     .into_fallible_result()
+    ///     .sum();
+    /// assert_eq!(reduced, Ok(0));
+    ///
+    /// // at least one fails
+    /// let reduced: Result<u32, char> = (0..10)
+    ///     .par()
+    ///     .map(|x| safe_div(100, x as u32))
+    ///     .into_fallible_result()
+    ///     .sum();
+    /// assert_eq!(reduced, Err('!'));
+    /// ```
     fn sum<Out>(self) -> Result<Out, Self::Err>
     where
         Self: Sized,
