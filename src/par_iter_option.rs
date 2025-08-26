@@ -4,6 +4,203 @@ use crate::{
 };
 use core::cmp::Ordering;
 
+#[test]
+fn abc() {
+    use crate::*;
+
+    let expected_results = [Some((0..100).collect::<Vec<_>>()), None];
+
+    for expected in expected_results {
+        let expected_some = expected.is_some();
+        let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
+        if !expected_some {
+            inputs.insert(50, "x".to_string()); // plant an error case
+        }
+
+        // regular parallel iterator
+        let results = inputs.par().map(|x| x.parse::<u32>().ok());
+        let numbers: Vec<_> = results.filter_map(|x| x).collect();
+        if expected_some {
+            assert_eq!(&expected, &Some(numbers));
+        } else {
+            // otherwise, numbers contains some numbers, but we are not sure
+            // if the computation completely succeeded or not
+        }
+
+        // fallible parallel iterator
+        let results = inputs.par().map(|x| x.parse::<u32>().ok());
+        let result: Option<Vec<_>> = results.into_fallible_option().collect();
+        assert_eq!(&expected, &result);
+    }
+
+    for will_fail in [false, true] {
+        let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
+        if will_fail {
+            inputs.insert(50, "x".to_string()); // plant an error case
+        }
+
+        // sum
+        let results = inputs.par().map(|x| x.parse::<u32>().ok());
+        let result: Option<u32> = results.into_fallible_option().sum();
+        match will_fail {
+            true => assert_eq!(result, None),
+            false => assert_eq!(result, Some(4950)),
+        }
+
+        // max
+        let results = inputs.par().map(|x| x.parse::<u32>().ok());
+        let result: Option<Option<u32>> = results.into_fallible_option().max();
+        match will_fail {
+            true => assert_eq!(result, None),
+            false => assert_eq!(result, Some(Some(99))),
+        }
+    }
+
+    for will_fail in [false, true] {
+        let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
+        if will_fail {
+            inputs.insert(50, "x".to_string()); // plant an error case
+        }
+
+        // fallible iter
+        let results = inputs.par().map(|x| x.parse::<u32>().ok());
+        let fallible = results.into_fallible_option();
+
+        // transformations
+
+        let result: Option<usize> = fallible
+            .filter(|x| x % 2 == 1) // Item: u32
+            .map(|x| 3 * x) // Item: u32
+            .filter_map(|x| (x % 10 != 0).then_some(x)) // Item: u32
+            .flat_map(|x| [x.to_string(), (10 * x).to_string()]) // Item: String
+            .map(|x| x.len()) // Item: usize
+            .sum();
+
+        match will_fail {
+            true => assert_eq!(result, None),
+            false => assert_eq!(result, Some(312)),
+        }
+    }
+}
+
+/// A parallel iterator for which the computation either completely succeeds,
+/// or fails and **early exits** with None.
+///
+/// # Examples
+///
+/// To demonstrate the difference of fallible iterator's behavior, consider the following simple example.
+/// We parse a series of strings into integers.
+/// We try this twice:
+/// * in the first one, all inputs are good, hence, we obtain Some of parsed numbers,
+/// * in the second one, the value in the middle is faulty, we expect the computation to fail.
+///
+/// In the following, we try to achieve this both with a regular parallel iterator ([`ParIter`]) and a fallible
+/// parallel iterator, `ParIterOption` in this case.
+///
+/// You may notice the following differences:
+/// * In the regular iterator, it is not very convenient to keep both the resulting numbers and a potential error.
+///   Here, we make use of `filter_map`.
+/// * On the other hand, the `collect` method of the fallible iterator directly returns an `Option` of the computation
+///   which is either Some of all parsed numbers or None if any computation fails.
+/// * Also importantly note that the regular iterator will try to parse all the strings, regardless of how many times
+///   the parsing fails.
+/// * Fallible iterator, on the other hand, stops immediately after observing the first None and short circuits the
+///   computation.
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// let expected_results = [Some((0..100).collect::<Vec<_>>()), None];
+///
+/// for expected in expected_results {
+///     let expected_some = expected.is_some();
+///     let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
+///     if !expected_some {
+///         inputs.insert(50, "x".to_string()); // plant an error case
+///     }
+///
+///     // regular parallel iterator
+///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
+///     let numbers: Vec<_> = results.filter_map(|x| x).collect();
+///     if expected_some {
+///         assert_eq!(&expected, &Some(numbers));
+///     } else {
+///         // otherwise, numbers contains some numbers, but we are not sure
+///         // if the computation completely succeeded or not
+///     }
+///
+///     // fallible parallel iterator
+///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
+///     let result: Option<Vec<_>> = results.into_fallible_option().collect();
+///     assert_eq!(&expected, &result);
+/// }
+/// ```
+///
+/// These differences are not specific to `collect`; all fallible iterator methods return an option.
+/// The following demonstrate reduction examples, where the result is either the reduced value if the entire computation
+/// succeeds, or None.
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// for will_fail in [false, true] {
+///     let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
+///     if will_fail {
+///         inputs.insert(50, "x".to_string()); // plant an error case
+///     }
+///
+///     // sum
+///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
+///     let result: Option<u32> = results.into_fallible_option().sum();
+///     match will_fail {
+///         true => assert_eq!(result, None),
+///         false => assert_eq!(result, Some(4950)),
+///     }
+///
+///     // max
+///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
+///     let result: Option<Option<u32>> = results.into_fallible_option().max();
+///     match will_fail {
+///         true => assert_eq!(result, None),
+///         false => assert_eq!(result, Some(Some(99))),
+///     }
+/// }
+/// ```
+///
+/// Finally, similar to regular iterators, a fallible parallel iterator can be tranformed using iterator methods.
+/// However, the transformation is on the success path, the failure case of None always short circuits and returns None.
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// for will_fail in [false, true] {
+///     let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
+///     if will_fail {
+///         inputs.insert(50, "x".to_string()); // plant an error case
+///     }
+///
+///     // fallible iter
+///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
+///     let fallible = results.into_fallible_option();
+///
+///     // transformations
+///
+///     let result: Option<usize> = fallible
+///         .filter(|x| x % 2 == 1)                                 // Item: u32
+///         .map(|x| 3 * x)                                         // Item: u32
+///         .filter_map(|x| (x % 10 != 0).then_some(x))             // Item: u32
+///         .flat_map(|x| [x.to_string(), (10 * x).to_string()])    // Item: String
+///         .map(|x| x.len())                                       // Item: usize
+///         .sum();
+///
+///     match will_fail {
+///         true => assert_eq!(result, None),
+///         false => assert_eq!(result, Some(312)),
+///     }
+/// }
+/// ```
+///
+/// [`ParIter`]: crate::ParIter
 pub trait ParIterOption<R = DefaultRunner>
 where
     R: ParallelRunner,
