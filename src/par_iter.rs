@@ -502,13 +502,52 @@ where
 
     // transformations into fallible computations
 
-    /// Transforms the `ParIter<Item = Result<T, E>>` into
-    fn into_fallible_result<Ok, Err>(self) -> impl ParIterResult<R, Item = Ok, Err = Err>
+    /// Transforms a parallel iterator where elements are of the result type; i.e., `ParIter<R, Item = Result<T, E>>`,
+    ///  into fallible parallel iterator with item type `T` and error type `E`; i.e., into `ParIterResult<R, Item = T, Err = E>`.
+    ///
+    /// `ParIterResult` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// as follows:
+    ///
+    /// * All of its methods are based on the success path with item type of `T`.
+    /// * However, computations short-circuit and immediately return the observed error if any of the items
+    ///   is of the `Err` variant of the result enum.
+    ///
+    /// See [`ParIterResult`] for details.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    ///
+    /// let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())  // ParIter with Item=Result<i32, ParseIntError>
+    ///     .into_fallible_result()     // ParIterResult with Item=i32 and Err=ParseIntError
+    ///     .map(|x| x * 2)             // methods focus on the success path with Item=i32
+    ///     .collect();                 // methods return Result<_, Err>
+    ///                                 // where the Ok variant depends on the computation
+    ///
+    /// assert_eq!(result_doubled, Ok(vec![2, 4, 6]));
+    ///
+    /// // at least one fails
+    ///
+    /// let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert!(result_doubled.is_err());
+    /// ```
+    fn into_fallible_result<T, E>(self) -> impl ParIterResult<R, Item = T, Err = E>
     where
-        Self::Item: IntoResult<Ok, Err>,
-        Err: Send,
+        Self::Item: IntoResult<T, E>,
+        E: Send,
         Self::Item: Send,
-        Ok: Send;
+        T: Send;
 
     fn into_fallible_option<Some>(self) -> impl ParIterOption<R, Item = Some>
     where
@@ -1330,4 +1369,6 @@ fn abc() {
     let b: Vec<_> = iter.collect();
 
     assert_eq!(b, (-5_000..0).map(|x| 16 / x).collect::<Vec<_>>());
+
+    let x = "a".parse::<i32>();
 }
