@@ -12,77 +12,22 @@ fn abc() {
     use orx_concurrent_bag::*;
     use std::num::ParseIntError;
 
-    let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    assert_eq!(a.par().copied().into_fallible_result().max(), Ok(Some(3)));
-
-    let b: Vec<Result<i32, char>> = vec![];
-    assert_eq!(b.par().copied().into_fallible_result().max(), Ok(None));
-
-    let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
-    assert_eq!(c.par().copied().into_fallible_result().max(), Err('x'));
-
-    // by
-
-    let a: Vec<Result<i32, char>> = vec![Ok(-1), Ok(2), Ok(-3)];
+    let a: Vec<Result<i32, char>> = vec![];
     assert_eq!(
-        a.par()
-            .copied()
-            .into_fallible_result()
-            .max_by_key(|x| x.abs()),
-        Ok(Some(3))
-    );
-
-    let b: Vec<Result<i32, char>> = vec![];
-    assert_eq!(
-        b.par()
-            .copied()
-            .into_fallible_result()
-            .max_by_key(|x| x.abs()),
+        a.par().copied().into_fallible_result().find(|x| *x > 2),
         Ok(None)
     );
 
-    let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
     assert_eq!(
-        c.par()
-            .copied()
-            .into_fallible_result()
-            .max_by_key(|x| x.abs()),
-        Err('x')
+        a.par().copied().into_fallible_result().find(|x| *x > 2),
+        Ok(Some(3))
     );
 
-    // let vec = a
-    //     .par()
-    //     .into_fallible_result()
-    //     .map(|&x| x * 10)
-    //     .collect_into(vec);
-    // assert!(result.is_ok());
-    // let vec = result.unwrap();
-
-    // assert_eq!(vec, vec![0, 1, 2, 4, 6, 10, 20, 30]);
-
-    // at least one fails
-    let a: Vec<Result<u32, ParseIntError>> = ["1", "4", "x", "3"]
-        .into_iter()
-        .map(|x| x.parse::<u32>())
-        .collect();
-
-    // let's add some inspect() calls to investigate what's happening
-    // - log some events
-    // - use a concurrent bag to collect and investigate numbers contributing to the sum
-    let bag = ConcurrentBag::new();
-
-    let sum = a
-        .par()
-        .cloned()
-        .into_fallible_result()
-        .inspect(|x| println!("about to filter: {x}"))
-        .filter(|x| x % 2 == 0)
-        .inspect(|x| {
-            bag.push(*x);
-            println!("made it through filter: {x}");
-        })
-        .sum();
-    assert!(sum.is_err());
+    let a: Vec<Result<i32, char>> = vec![Ok(1), Err('x'), Ok(3)];
+    let result = a.par().copied().into_fallible_result().find(|x| *x > 2);
+    // depends on whichever is observed first in parallel execution
+    assert!(result == Ok(Some(3)) || result == Err('x'));
 }
 
 /// A parallel iterator for which the computation either completely succeeds,
@@ -988,7 +933,7 @@ where
     ///         .copied()
     ///         .into_fallible_result()
     ///         .max_by_key(|x| x.abs()),
-    ///     Ok(Some(3))
+    ///     Ok(Some(-3))
     /// );
     ///
     /// let b: Vec<Result<i32, char>> = vec![];
@@ -1111,7 +1056,7 @@ where
     ///         .copied()
     ///         .into_fallible_result()
     ///         .min_by_key(|x| x.abs()),
-    ///     Ok(Some(1))
+    ///     Ok(Some(-1))
     /// );
     ///
     /// let b: Vec<Result<i32, char>> = vec![];
@@ -1200,10 +1145,74 @@ where
 
     // early exit
 
+    /// Returns the first (or any) element of the iterator.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if an Err element is observed first.
+    ///
+    /// * first element is returned if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element is returned if `IterationOrder::Arbitrary` is set.
+    ///
+    /// Note that `find` itself is short-circuiting in addition to fallible computation.
+    /// Therefore, in case the fallible iterator contains both an Err and an Ok element,
+    /// the result is **not deterministic**:
+    /// * it might be the `Err` if it is observed first;
+    /// * or `Ok(element)` if the Ok element is observed first.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(a.par().copied().into_fallible_result().first(), Ok(None));
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// assert_eq!(a.par().copied().into_fallible_result().first(), Ok(Some(1)));
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Err('x'), Ok(3)];
+    /// let result = a.par().copied().into_fallible_result().first();
+    /// // depends on whichever is observed first in parallel execution
+    /// assert!(result == Ok(Some(1)) || result == Err('x'));
+    /// ```
     fn first(self) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self::Ok: Send;
 
+    /// Returns the first (or any) element of the iterator that satisfies the `predicate`.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if an Err element is observed first.
+    ///
+    /// * first element is returned if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element is returned if `IterationOrder::Arbitrary` is set.
+    ///
+    /// Note that `find` itself is short-circuiting in addition to fallible computation.
+    /// Therefore, in case the fallible iterator contains both an Err and an Ok element,
+    /// the result is **not deterministic**:
+    /// * it might be the `Err` if it is observed first;
+    /// * or `Ok(element)` if the Ok element is observed first.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(
+    ///     a.par().copied().into_fallible_result().find(|x| *x > 2),
+    ///     Ok(None)
+    /// );
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// assert_eq!(
+    ///     a.par().copied().into_fallible_result().find(|x| *x > 2),
+    ///     Ok(Some(3))
+    /// );
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Err('x'), Ok(3)];
+    /// let result = a.par().copied().into_fallible_result().find(|x| *x > 2);
+    /// // depends on whichever is observed first in parallel execution
+    /// assert!(result == Ok(Some(3)) || result == Err('x'));
+    /// ```
     fn find<Predicate>(self, predicate: Predicate) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,

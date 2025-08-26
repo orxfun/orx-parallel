@@ -1216,6 +1216,7 @@ where
     /// // or equivalently,
     /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
+    /// ```
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send;
