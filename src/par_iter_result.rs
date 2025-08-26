@@ -18,35 +18,32 @@ fn abc() {
             b => Ok(a / b),
         }
     }
+    use std::sync::mpsc::channel;
 
     // all Ok
-    let result = vec!["1", "2", "3"]
+    let (tx, rx) = channel();
+    let result = vec!["0", "1", "2", "3", "4"]
         .into_par()
         .map(|x| x.parse::<i32>())
         .into_fallible_result()
-        .any(|x| *x > 1);
-    assert_eq!(result, Ok(true));
+        .map(|x| x * 2 + 1)
+        .for_each(move |x| tx.send(x).unwrap());
 
-    let result = vec!["1", "2", "3"]
-        .into_par()
-        .map(|x| x.parse::<i32>())
-        .into_fallible_result()
-        .any(|x| *x > 3);
-    assert_eq!(result, Ok(false));
+    assert_eq!(result, Ok(()));
 
-    let result = Vec::<&str>::new()
-        .into_par()
-        .map(|x| x.parse::<i32>())
-        .into_fallible_result()
-        .any(|x| *x > 1);
-    assert_eq!(result, Ok(false)); // empty iterator
+    let mut v: Vec<_> = rx.iter().collect();
+    v.sort(); // order can be mixed, since messages will be sent in parallel
+    assert_eq!(v, vec![1, 3, 5, 7, 9]);
 
     // at least one Err
-    let result = vec!["1", "x!", "3"]
+    let (tx, _rx) = channel();
+    let result = vec!["0", "1", "2", "x!", "4"]
         .into_par()
         .map(|x| x.parse::<i32>())
         .into_fallible_result()
-        .any(|x| *x > 5);
+        .map(|x| x * 2 + 1)
+        .for_each(move |x| tx.send(x).unwrap());
+
     assert!(result.is_err());
 
     // let vec = a
@@ -818,6 +815,32 @@ where
         self.find(predicate).map(|x| x.is_some())
     }
 
+    /// Consumes the iterator, counting the number of iterations and returning it.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all Ok
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .filter(|x| *x >= 2)
+    ///     .count();
+    /// assert_eq!(result, Ok(2));
+    ///
+    /// // at least one Err
+    /// let result = vec!["x!", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .filter(|x| *x >= 2)
+    ///     .count();
+    /// assert!(result.is_err());
+    /// ```
     fn count(self) -> Result<usize, Self::Err>
     where
         Self: Sized,
@@ -827,6 +850,43 @@ where
             .map(|x| x.unwrap_or(0))
     }
 
+    /// Calls a closure on each element of an iterator.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use std::sync::mpsc::channel;
+    ///
+    /// // all Ok
+    /// let (tx, rx) = channel();
+    /// let result = vec!["0", "1", "2", "3", "4"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 2 + 1)
+    ///     .for_each(move |x| tx.send(x).unwrap());
+    ///
+    /// assert_eq!(result, Ok(()));
+    ///
+    /// let mut v: Vec<_> = rx.iter().collect();
+    /// v.sort(); // order can be mixed, since messages will be sent in parallel
+    /// assert_eq!(v, vec![1, 3, 5, 7, 9]);
+    ///
+    /// // at least one Err
+    /// let (tx, _rx) = channel();
+    /// let result = vec!["0", "1", "2", "x!", "4"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 2 + 1)
+    ///     .for_each(move |x| tx.send(x).unwrap());
+    ///
+    /// assert!(result.is_err());
+    /// ```
     fn for_each<Operation>(self, operation: Operation) -> Result<(), Self::Err>
     where
         Self: Sized,
