@@ -64,7 +64,7 @@ where
             (true, _) => (0, self.try_sequential(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
                 let (nt, result) = collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
-                (nt, result.to_result())
+                (nt, result.into_result())
             }
             (false, IterationOrder::Ordered) => {
                 let (nt, result) = collect_ordered::x(R::collection(p, len), self, pinned_vec);
