@@ -110,8 +110,11 @@ where
     {
         let (using, params, iter, x1) = self.destruct();
 
-        let x2 = move |u: &mut U::Item, i: I::Item| {
+        let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
             let u = unsafe {
                 &mut *{
                     let p: *mut U::Item = u;
@@ -121,7 +124,7 @@ where
             vo.u_map(u, map.clone())
         };
 
-        UParXap::new(using, params, iter, x2)
+        UParXap::new(using, params, iter, x1)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
@@ -131,6 +134,9 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
             let u = unsafe {
                 &mut *{
                     let p: *mut U::Item = u;
@@ -153,6 +159,9 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
             let u = unsafe {
                 &mut *{
                     let p: *mut U::Item = u;
@@ -174,6 +183,9 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
             let u = unsafe {
                 &mut *{
                     let p: *mut U::Item = u;
