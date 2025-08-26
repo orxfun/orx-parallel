@@ -221,22 +221,37 @@ pub trait ParIterResult<R = DefaultRunner>
 where
     R: ParallelRunner,
 {
+    /// Type of the Ok element, to be received as the Ok variant iff the entire computation succeeds.
     type Ok;
 
-    type Error: Send;
+    /// Type of the Err element, to be received if any of the computations fails.
+    type Err: Send;
 
-    type RegularItem: IntoResult<Self::Ok, Self::Error>;
+    /// Element type of the regular parallel iterator this fallible iterator can be converted to, simply `Result<Self::Ok, Self::Err>`.
+    type RegularItem: IntoResult<Self::Ok, Self::Err>;
 
+    /// Regular parallel iterator this fallible iterator can be converted into.
     type RegularParIter: ParIter<R, Item = Self::RegularItem>;
 
+    /// Returns a reference to the input concurrent iterator.
     fn con_iter_len(&self) -> Option<usize>;
 
+    /// Converts this fallible iterator into a regular parallel iterator; i.e., [`ParIter`], with `Item = Result<Self::Ok, Self::Err>`.
     fn into_regular_par(self) -> Self::RegularParIter;
 
+    /// Converts the `regular_par` iterator with `Item = Result<Self::Ok, Self::Err>` into fallible result iterator.
     fn from_regular_par(regular_par: Self::RegularParIter) -> Self;
 
     // params transformations
 
+    /// Sets the number of threads to be used in the parallel execution.
+    /// Integers can be used as the argument with the following mapping:
+    ///
+    /// * `0` -> `NumThreads::Auto`
+    /// * `1` -> `NumThreads::sequential()`
+    /// * `n > 0` -> `NumThreads::Max(n)`
+    ///
+    /// See [`NumThreads`] and [`ParIter::num_threads`] for details.
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self
     where
         Self: Sized,
@@ -244,6 +259,15 @@ where
         Self::from_regular_par(self.into_regular_par().num_threads(num_threads))
     }
 
+    /// Sets the number of elements to be pulled from the concurrent iterator during the
+    /// parallel execution. When integers are used as argument, the following mapping applies:
+    ///
+    /// * `0` -> `ChunkSize::Auto`
+    /// * `n > 0` -> `ChunkSize::Exact(n)`
+    ///
+    /// Please use the default enum constructor for creating `ChunkSize::Min` variant.
+    ///
+    /// See [`ChunkSize`] and [`ParIter::chunk_size`] for details.
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self
     where
         Self: Sized,
@@ -251,6 +275,9 @@ where
         Self::from_regular_par(self.into_regular_par().chunk_size(chunk_size))
     }
 
+    /// Sets the iteration order of the parallel computation.
+    ///
+    /// See [`IterationOrder`] and [`ParIter::iteration_order`] for details.
     fn iteration_order(self, order: IterationOrder) -> Self
     where
         Self: Sized,
@@ -258,13 +285,16 @@ where
         Self::from_regular_par(self.into_regular_par().iteration_order(order))
     }
 
+    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
+    ///
+    /// See [`ParIter::with_runner`] for details.
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterResult<Q, Ok = Self::Ok, Error = Self::Error>;
+    ) -> impl ParIterResult<Q, Ok = Self::Ok, Err = Self::Err>;
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Ok = Out, Error = Self::Error>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Ok = Out, Err = Self::Err>
     where
         Self: Sized,
         Map: Fn(Self::Ok) -> Out + Sync + Clone,
@@ -275,10 +305,7 @@ where
         map.into_fallible_result()
     }
 
-    fn filter<Filter>(
-        self,
-        filter: Filter,
-    ) -> impl ParIterResult<R, Ok = Self::Ok, Error = Self::Error>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterResult<R, Ok = Self::Ok, Err = Self::Err>
     where
         Self: Sized,
         Filter: Fn(&Self::Ok) -> bool + Sync + Clone,
@@ -298,7 +325,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterResult<R, Ok = IOut::Item, Error = Self::Error>
+    ) -> impl ParIterResult<R, Ok = IOut::Item, Err = Self::Err>
     where
         Self: Sized,
         IOut: IntoIterator,
@@ -316,7 +343,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterResult<R, Ok = Out, Error = Self::Error>
+    ) -> impl ParIterResult<R, Ok = Out, Err = Self::Err>
     where
         Self: Sized,
         FilterMap: Fn(Self::Ok) -> Option<Out> + Sync + Clone,
@@ -333,7 +360,7 @@ where
     fn inspect<Operation>(
         self,
         operation: Operation,
-    ) -> impl ParIterResult<R, Ok = Self::Ok, Error = Self::Error>
+    ) -> impl ParIterResult<R, Ok = Self::Ok, Err = Self::Err>
     where
         Self: Sized,
         Operation: Fn(&Self::Ok) + Sync + Clone,
@@ -348,11 +375,11 @@ where
 
     // collect
 
-    fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
+    fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
         C: ParCollectInto<Self::Ok>;
 
-    fn collect<C>(self) -> Result<C, Self::Error>
+    fn collect<C>(self) -> Result<C, Self::Err>
     where
         Self: Sized,
         C: ParCollectInto<Self::Ok>,
@@ -363,12 +390,12 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Ok>, Self::Error>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self::Ok: Send,
         Reduce: Fn(Self::Ok, Self::Ok) -> Self::Ok + Sync;
 
-    fn all<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Error>
+    fn all<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Err>
     where
         Self: Sized,
         Self::Ok: Send,
@@ -378,7 +405,7 @@ where
         self.find(violates).map(|x| x.is_none())
     }
 
-    fn any<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Error>
+    fn any<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Err>
     where
         Self: Sized,
         Self::Ok: Send,
@@ -387,7 +414,7 @@ where
         self.find(predicate).map(|x| x.is_some())
     }
 
-    fn count(self) -> Result<usize, Self::Error>
+    fn count(self) -> Result<usize, Self::Err>
     where
         Self: Sized,
     {
@@ -396,7 +423,7 @@ where
             .map(|x| x.unwrap_or(0))
     }
 
-    fn for_each<Operation>(self, operation: Operation) -> Result<(), Self::Error>
+    fn for_each<Operation>(self, operation: Operation) -> Result<(), Self::Err>
     where
         Self: Sized,
         Operation: Fn(Self::Ok) + Sync,
@@ -405,7 +432,7 @@ where
         self.map(map).reduce(reduce_unit).map(|_| ())
     }
 
-    fn max(self) -> Result<Option<Self::Ok>, Self::Error>
+    fn max(self) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
         Self::Ok: Ord + Send,
@@ -413,7 +440,7 @@ where
         self.reduce(Ord::max)
     }
 
-    fn max_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Error>
+    fn max_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
         Self::Ok: Send,
@@ -426,7 +453,7 @@ where
         self.reduce(reduce)
     }
 
-    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Result<Option<Self::Ok>, Self::Error>
+    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
         Self::Ok: Send,
@@ -440,7 +467,7 @@ where
         self.reduce(reduce)
     }
 
-    fn min(self) -> Result<Option<Self::Ok>, Self::Error>
+    fn min(self) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
         Self::Ok: Ord + Send,
@@ -448,7 +475,7 @@ where
         self.reduce(Ord::min)
     }
 
-    fn min_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Error>
+    fn min_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
         Self::Ok: Send,
@@ -461,7 +488,7 @@ where
         self.reduce(reduce)
     }
 
-    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Result<Option<Self::Ok>, Self::Error>
+    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
         Self::Ok: Send,
@@ -475,7 +502,7 @@ where
         self.reduce(reduce)
     }
 
-    fn sum<Out>(self) -> Result<Out, Self::Error>
+    fn sum<Out>(self) -> Result<Out, Self::Err>
     where
         Self: Sized,
         Self::Ok: Sum<Out>,
@@ -488,11 +515,11 @@ where
 
     // early exit
 
-    fn first(self) -> Result<Option<Self::Ok>, Self::Error>
+    fn first(self) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self::Ok: Send;
 
-    fn find<Predicate>(self, predicate: Predicate) -> Result<Option<Self::Ok>, Self::Error>
+    fn find<Predicate>(self, predicate: Predicate) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
         Self::Ok: Send,

@@ -51,7 +51,7 @@ where
 {
     type Ok = T;
 
-    type Error = E;
+    type Err = E;
 
     type RegularItem = Vo::Item;
 
@@ -76,7 +76,7 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterResult<Q, Ok = Self::Ok, Error = Self::Error> {
+    ) -> impl ParIterResult<Q, Ok = Self::Ok, Err = Self::Err> {
         let (params, iter, m1) = self.par.destruct();
         ParXapResult {
             par: ParXap::new(params, iter, m1),
@@ -86,7 +86,7 @@ where
 
     // collect
 
-    fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
+    fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
         C: ParCollectInto<Self::Ok>,
     {
@@ -98,7 +98,7 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Ok>, Self::Error>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self::Ok: Send,
         Reduce: Fn(Self::Ok, Self::Ok) -> Self::Ok + Sync,
@@ -111,7 +111,7 @@ where
 
     // early exit
 
-    fn first(self) -> Result<Option<Self::Ok>, Self::Error>
+    fn first(self) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self::Ok: Send,
     {

@@ -215,6 +215,8 @@ where
 
     /// Sets the iteration order of the parallel computation.
     ///
+    /// See [`IterationOrder`] for details.
+    ///
     /// # Examples
     ///
     /// ```
@@ -502,7 +504,7 @@ where
 
     fn into_fallible_result<Success, Error>(
         self,
-    ) -> impl ParIterResult<R, Ok = Success, Error = Error>
+    ) -> impl ParIterResult<R, Ok = Success, Err = Error>
     where
         Self::Item: IntoResult<Success, Error>,
         Error: Send,
