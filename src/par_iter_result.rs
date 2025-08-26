@@ -6,30 +6,6 @@ use crate::{
 };
 use core::cmp::Ordering;
 
-#[test]
-fn abc() {
-    use crate::*;
-    use orx_concurrent_bag::*;
-    use std::num::ParseIntError;
-
-    let a: Vec<Result<i32, char>> = vec![];
-    assert_eq!(
-        a.par().copied().into_fallible_result().find(|x| *x > 2),
-        Ok(None)
-    );
-
-    let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    assert_eq!(
-        a.par().copied().into_fallible_result().find(|x| *x > 2),
-        Ok(Some(3))
-    );
-
-    let a: Vec<Result<i32, char>> = vec![Ok(1), Err('x'), Ok(3)];
-    let result = a.par().copied().into_fallible_result().find(|x| *x > 2);
-    // depends on whichever is observed first in parallel execution
-    assert!(result == Ok(Some(3)) || result == Err('x'));
-}
-
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
 ///
