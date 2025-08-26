@@ -546,11 +546,9 @@ where
     where
         Self::Item: IntoResult<T, E>;
 
-    fn into_fallible_option<Some>(self) -> impl ParIterOption<R, Item = Some>
+    fn into_fallible_option<T>(self) -> impl ParIterOption<R, Item = T>
     where
-        Self::Item: IntoOption<Some>,
-        Self::Item: Send,
-        Some: Send,
+        Self::Item: IntoOption<T>,
     {
         ParOption::new(
             self.map(|x| x.into_result_with_unit_err())
