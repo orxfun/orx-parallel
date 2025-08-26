@@ -1,9 +1,9 @@
 use super::super::thread_runner_compute as thread;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn u_m<C, U, I, O, M1>(runner: C, m: UM<U, I, O, M1>) -> (usize, Option<O>)
@@ -51,13 +51,12 @@ where
     (num_spawned, acc)
 }
 
-pub fn u_x<C, U, I, Vo, X1>(
-    runner: C,
-    x: UX<U, I, Vo, X1>,
-) -> (
-    usize,
-    Result<Option<(usize, Vo::Item)>, <Vo::Fallibility as Fallibility>::Error>,
-)
+type ResultNext<Vo> = Result<
+    Option<(usize, <Vo as Values>::Item)>,
+    <<Vo as Values>::Fallibility as Fallibility>::Error,
+>;
+
+pub fn u_x<C, U, I, Vo, X1>(runner: C, x: UX<U, I, Vo, X1>) -> (usize, ResultNext<Vo>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -126,7 +125,7 @@ where
         }
     });
 
-    let next = result.map(|results| NextSuccess::reduce(results));
+    let next = result.map(NextSuccess::reduce);
 
     (num_spawned, next)
 }

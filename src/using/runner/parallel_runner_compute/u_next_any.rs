@@ -1,8 +1,8 @@
 use super::super::thread_runner_compute as thread;
+use crate::generic_values::runner_results::Fallibility;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::generic_values::runner_results::Fallibility;
-use crate::{runner::ParallelRunnerCompute, generic_values::Values};
+use crate::{generic_values::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn u_m<C, U, I, O, M1>(runner: C, m: UM<U, I, O, M1>) -> (usize, Option<O>)
@@ -45,13 +45,10 @@ where
     (num_spawned, result)
 }
 
-pub fn u_x<C, U, I, Vo, X1>(
-    runner: C,
-    x: UX<U, I, Vo, X1>,
-) -> (
-    usize,
-    Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>,
-)
+type ResultNextAny<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
+
+pub fn u_x<C, U, I, Vo, X1>(runner: C, x: UX<U, I, Vo, X1>) -> (usize, ResultNextAny<Vo>)
 where
     C: ParallelRunnerCompute,
     U: Using,

@@ -1,8 +1,8 @@
 use super::x::X;
-use crate::runner::parallel_runner_compute::{next, next_any};
-use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::runner::parallel_runner_compute::{next, next_any};
+use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<I, Vo, M1> X<I, Vo, M1>
@@ -18,11 +18,8 @@ where
         Vo: Values<Fallibility = Infallible>,
     {
         let (len, p) = self.len_and_params();
-        let (num_threads, result) = next::x(R::early_return(p, len), self);
-        let next = match result {
-            Ok(x) => x.map(|x| x.1),
-        };
-        (num_threads, next)
+        let (num_threads, Ok(result)) = next::x(R::early_return(p, len), self);
+        (num_threads, result.map(|x| x.1))
     }
 
     pub fn next_any<R>(self) -> (usize, Option<Vo::Item>)
@@ -31,10 +28,7 @@ where
         Vo: Values<Fallibility = Infallible>,
     {
         let (len, p) = self.len_and_params();
-        let (num_threads, result) = next_any::x(R::early_return(p, len), self);
-        let next = match result {
-            Ok(x) => x,
-        };
+        let (num_threads, Ok(next)) = next_any::x(R::early_return(p, len), self);
         (num_threads, next)
     }
 
