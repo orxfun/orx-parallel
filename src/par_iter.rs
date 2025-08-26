@@ -702,6 +702,30 @@ where
     where
         While: Fn(&Self::Item) -> bool + Sync + Clone;
 
+    /// Creates an iterator that both yields elements based on the predicate `map_while` and maps.
+    ///
+    /// `map_while` takes a closure as an argument.
+    /// It will call this closure on each element of the iterator, and yield elements while it returns Some(_).
+    ///
+    /// After None is returned, map_while job is over, and the rest of the elements are ignored.
+    ///
+    /// Unlike regular sequential iterators, the result is not always deterministic due to parallel execution.
+    ///
+    /// However, as demonstrated in the example below, `collect` with ordered execution makes sure that all
+    /// elements before the predicate returns None are collected in the correct order; and hence, the result
+    /// is deterministic.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let iter = (0..10_000)
+    ///     .par()
+    ///     .map(|x| x as i32 - 5_000) // -5_000..10_000
+    ///     .map_while(|x| 16i32.checked_div(x));
+    /// let b: Vec<_> = iter.collect();
+    ///
+    /// assert_eq!(b, (-5_000..0).map(|x| 16 / x).collect::<Vec<_>>());
+    /// ```
     fn map_while<Out, MapWhile>(self, map_while: MapWhile) -> impl ParIter<R, Item = Out>
     where
         MapWhile: Fn(Self::Item) -> Option<Out> + Sync + Clone,
@@ -1300,8 +1324,11 @@ fn abc() {
 
     // ordered
 
-    let iter = (0..10_000).par().take_while(|x| *x != 5_000);
+    let iter = (0..10_000)
+        .par()
+        .map(|x| x as i32 - 5_000) // -5_000..10_000
+        .map_while(|x| 16i32.checked_div(x));
     let b: Vec<_> = iter.collect();
 
-    assert_eq!(b, (0..5_000).collect::<Vec<_>>());
+    assert_eq!(b, (-5_000..0).map(|x| 16 / x).collect::<Vec<_>>());
 }
