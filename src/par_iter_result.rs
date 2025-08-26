@@ -20,6 +20,17 @@ fn abc() {
     }
     use std::sync::mpsc::channel;
 
+    let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    assert_eq!(a.par().copied().into_fallible_result().max(), Ok(Some(3)));
+
+    let b: Vec<Result<i32, char>> = vec![];
+    assert_eq!(b.par().copied().into_fallible_result().max(), Ok(None));
+
+    let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    assert_eq!(c.par().copied().into_fallible_result().max(), Err('x'));
+
+    assert_eq!(b.par().max(), None);
+
     // all Ok
     let (tx, rx) = channel();
     let result = vec!["0", "1", "2", "3", "4"]
@@ -850,7 +861,7 @@ where
             .map(|x| x.unwrap_or(0))
     }
 
-    /// Calls a closure on each element of an iterator.
+    /// Calls a closure on each element of an iterator, and returns `Ok(())` if all elements succeed.
     /// Early exits and returns the error if any of the elements is an Err.
     ///
     /// # Examples
@@ -896,6 +907,24 @@ where
         self.map(map).reduce(reduce_unit).map(|_| ())
     }
 
+    /// Returns Ok of maximum element of an iterator if all elements succeed.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// assert_eq!(a.par().copied().into_fallible_result().max(), Ok(Some(3)));
+    ///
+    /// let b: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(b.par().copied().into_fallible_result().max(), Ok(None));
+    ///
+    /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    /// assert_eq!(c.par().copied().into_fallible_result().max(), Err('x'));
+    /// ```
     fn max(self) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
@@ -931,6 +960,24 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns Ok of minimum element of an iterator if all elements succeed.
+    /// If the iterator is empty, `Ok(None)` is returned.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// assert_eq!(a.par().copied().into_fallible_result().min(), Ok(Some(1)));
+    ///
+    /// let b: Vec<Result<i32, char>> = vec![];
+    /// assert_eq!(b.par().copied().into_fallible_result().min(), Ok(None));
+    ///
+    /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
+    /// assert_eq!(c.par().copied().into_fallible_result().min(), Err('x'));
+    /// ```
     fn min(self) -> Result<Option<Self::Ok>, Self::Err>
     where
         Self: Sized,
