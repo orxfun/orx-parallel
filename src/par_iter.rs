@@ -606,10 +606,6 @@ where
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone;
 
-    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
-    where
-        While: Fn(&Self::Item) -> bool + Sync + Clone;
-
     /// Does something with each element of an iterator, passing the value on.
     ///
     /// When using iterators, you’ll often chain several of them together.
@@ -678,7 +674,11 @@ where
         self.map(map)
     }
 
-    // computation transformations - derived from take_while
+    // while transformations
+
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
+    where
+        While: Fn(&Self::Item) -> bool + Sync + Clone;
 
     fn map_while<Out, MapWhile>(self, map_while: MapWhile) -> impl ParIter<R, Item = Out>
     where

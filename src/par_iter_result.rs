@@ -9,44 +9,66 @@ use core::cmp::Ordering;
 #[test]
 fn abc() {
     use crate::*;
+    use orx_concurrent_bag::*;
+    use std::num::ParseIntError;
+
+    let vec: Vec<i32> = vec![0, 1];
 
     // all succeeds
-    let words: Vec<Result<&str, char>> = vec![Ok("alpha"), Ok("beta"), Ok("gamma")];
 
-    let all_chars: Result<Vec<_>, _> = words
+    let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
         .into_par()
+        .map(|x| x.parse::<i32>())
         .into_fallible_result()
-        .flat_map(|s| s.chars()) // chars() returns an iterator
+        .map(|x| x * 2)
         .collect();
 
-    let merged: Result<String, _> = all_chars.map(|chars| chars.iter().collect());
-    assert_eq!(merged, Ok("alphabetagamma".to_string()));
+    assert_eq!(result_doubled, Ok(vec![2, 4, 6]));
 
     // at least one fails
-    let words: Vec<Result<&str, char>> = vec![Ok("alpha"), Ok("beta"), Err('x'), Ok("gamma")];
 
-    let all_chars: Result<Vec<_>, _> = words
+    let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
         .into_par()
+        .map(|x| x.parse::<i32>())
         .into_fallible_result()
-        .flat_map(|s| s.chars()) // chars() returns an iterator
+        .map(|x| x * 2)
         .collect();
 
-    let merged: Result<String, _> = all_chars.map(|chars| chars.iter().collect());
-    assert_eq!(merged, Err('x'));
+    assert!(result_doubled.is_err());
 
-    // all succeeds
-    let a: Vec<Result<u32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
+    // let vec = a
+    //     .par()
+    //     .into_fallible_result()
+    //     .map(|&x| x * 10)
+    //     .collect_into(vec);
+    // assert!(result.is_ok());
+    // let vec = result.unwrap();
 
-    let b: Result<Vec<_>, _> = iter.collect();
-    assert_eq!(b, Ok(vec![2, 4, 6]));
+    // assert_eq!(vec, vec![0, 1, 2, 4, 6, 10, 20, 30]);
 
     // at least one fails
-    let a = vec![Ok(1), Err('x'), Ok(3)];
-    let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
+    let a: Vec<Result<u32, ParseIntError>> = ["1", "4", "x", "3"]
+        .into_iter()
+        .map(|x| x.parse::<u32>())
+        .collect();
 
-    let b: Result<Vec<_>, _> = iter.collect();
-    assert_eq!(b, Err('x'));
+    // let's add some inspect() calls to investigate what's happening
+    // - log some events
+    // - use a concurrent bag to collect and investigate numbers contributing to the sum
+    let bag = ConcurrentBag::new();
+
+    let sum = a
+        .par()
+        .cloned()
+        .into_fallible_result()
+        .inspect(|x| println!("about to filter: {x}"))
+        .filter(|x| x % 2 == 0)
+        .inspect(|x| {
+            bag.push(*x);
+            println!("made it through filter: {x}");
+        })
+        .sum();
+    assert!(sum.is_err());
 }
 
 /// A parallel iterator for which the computation either completely succeeds,
@@ -376,6 +398,40 @@ where
         map.into_fallible_result()
     }
 
+    /// Creates an iterator that both filters and maps.
+    ///
+    /// The returned iterator yields only the values for which the supplied closure `filter_map` returns `Some(value)`.
+    ///
+    /// `filter_map` can be used to make chains of `filter` and `map` more concise.
+    /// The example below shows how a `map().filter().map()` can be shortened to a single call to `filter_map`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    /// let a: Vec<Result<&str, char>> = vec![Ok("1"), Ok("two"), Ok("NaN"), Ok("four"), Ok("5")];
+    ///
+    /// let numbers: Result<Vec<_>, char> = a
+    ///     .into_par()
+    ///     .into_fallible_result()
+    ///     .filter_map(|s| s.parse::<usize>().ok())
+    ///     .collect();
+    ///
+    /// assert_eq!(numbers, Ok(vec![1, 5]));
+    ///
+    /// // at least one fails
+    /// let a: Vec<Result<&str, char>> = vec![Ok("1"), Ok("two"), Err('x'), Ok("four"), Ok("5")];
+    ///
+    /// let numbers: Result<Vec<_>, char> = a
+    ///     .into_par()
+    ///     .into_fallible_result()
+    ///     .filter_map(|s| s.parse::<usize>().ok())
+    ///     .collect();
+    ///
+    /// assert_eq!(numbers, Err('x'));
+    /// ```
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
@@ -393,6 +449,78 @@ where
         filter_map.into_fallible_result()
     }
 
+    /// Does something with each successful element of an iterator, passing the value on, provided that all elements are of Ok variant;
+    /// short-circuits and returns the error otherwise.
+    ///
+    /// When using iterators, you’ll often chain several of them together.
+    /// While working on such code, you might want to check out what’s happening at various parts in the pipeline.
+    /// To do that, insert a call to `inspect()`.
+    ///
+    /// It’s more common for `inspect()` to be used as a debugging tool than to exist in your final code,
+    /// but applications may find it useful in certain situations when errors need to be logged before being discarded.
+    ///
+    /// It is often convenient to use thread-safe collections such as [`ConcurrentBag`] and
+    /// [`ConcurrentVec`](https://crates.io/crates/orx-concurrent-vec) to
+    /// collect some intermediate values during parallel execution for further inspection.
+    /// The following example demonstrates such a use case.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use orx_concurrent_bag::*;
+    /// use std::num::ParseIntError;
+    ///
+    /// // all succeeds
+    /// let a: Vec<Result<u32, ParseIntError>> = ["1", "4", "2", "3"]
+    ///     .into_iter()
+    ///     .map(|x| x.parse::<u32>())
+    ///     .collect();
+    ///
+    /// // let's add some inspect() calls to investigate what's happening
+    /// // - log some events
+    /// // - use a concurrent bag to collect and investigate numbers contributing to the sum
+    /// let bag = ConcurrentBag::new();
+    ///
+    /// let sum = a
+    ///     .par()
+    ///     .cloned()
+    ///     .into_fallible_result()
+    ///     .inspect(|x| println!("about to filter: {x}"))
+    ///     .filter(|x| x % 2 == 0)
+    ///     .inspect(|x| {
+    ///         bag.push(*x);
+    ///         println!("made it through filter: {x}");
+    ///     })
+    ///     .sum();
+    /// assert_eq!(sum, Ok(4 + 2));
+    ///
+    /// let mut values_made_through = bag.into_inner();
+    /// values_made_through.sort();
+    /// assert_eq!(values_made_through, [2, 4]);
+    ///
+    /// // at least one fails
+    /// let a: Vec<Result<u32, ParseIntError>> = ["1", "4", "x", "3"]
+    ///     .into_iter()
+    ///     .map(|x| x.parse::<u32>())
+    ///     .collect();
+    ///
+    /// // let's add some inspect() calls to investigate what's happening
+    /// // - log some events
+    /// // - use a concurrent bag to collect and investigate numbers contributing to the sum
+    /// let bag = ConcurrentBag::new();
+    ///
+    /// let sum = a
+    ///     .par()
+    ///     .cloned()
+    ///     .into_fallible_result()
+    ///     .inspect(|x| println!("about to filter: {x}"))
+    ///     .filter(|x| x % 2 == 0)
+    ///     .inspect(|x| {
+    ///         bag.push(*x);
+    ///         println!("made it through filter: {x}");
+    ///     })
+    ///     .sum();
+    /// assert!(sum.is_err());
+    /// ```
     fn inspect<Operation>(
         self,
         operation: Operation,
@@ -411,10 +539,87 @@ where
 
     // collect
 
+    /// Collects all the items from an iterator into a collection iff all elements are of Ok variant.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// This is useful when you already have a collection and want to add the iterator items to it.
+    ///
+    /// The collection is passed in as owned value, and returned back with the additional elements.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let vec: Vec<i32> = vec![0, 1];
+    ///
+    /// // all succeeds
+    /// let result = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 10)
+    ///     .collect_into(vec);
+    ///
+    /// assert!(result.is_ok());
+    /// let vec = result.unwrap();
+    /// assert_eq!(vec, vec![0, 1, 10, 20, 30]);
+    ///
+    /// // at least one fails
+    ///
+    /// let result = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 10)
+    ///     .collect_into(vec);
+    /// assert!(result.is_err());
+    /// ```
     fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
         C: ParCollectInto<Self::Ok>;
 
+    /// Transforms an iterator into a collection iff all elements are of Ok variant.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// Similar to [`Iterator::collect`], the type annotation on the left-hand-side determines
+    /// the type of the result collection; or turbofish annotation can be used.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    ///
+    /// let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert_eq!(result_doubled, Ok(vec![2, 4, 6]));
+    ///
+    /// // at least one fails
+    ///
+    /// let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert!(result_doubled.is_err());
+    /// ```
     fn collect<C>(self) -> Result<C, Self::Err>
     where
         Self: Sized,
