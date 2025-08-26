@@ -1,4 +1,4 @@
-use crate::values::{WhilstAtom, WhilstOption};
+use crate::generic_values::{WhilstAtom, WhilstOption};
 
 pub struct WhilstOptionFlatMapIter<Vo>
 where

@@ -1,15 +1,18 @@
-use crate::values::Values;
-use crate::values::runner_results::{
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{
     ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub struct OptionResult<T, E>(pub(crate) Option<Result<T, E>>)
-where
-    E: Send;
+/// Represents scalar value for early stopping error cases:
+///
+/// * Whenever computation creates an error at any point, all computed values are irrelevant,
+///   the only relevant value is the created error.
+/// * Computed values are relevant iff entire inputs result in an Ok variant.
+/// * Therefore, observation of an error case allows to immediately stop computation.
 
-impl<T, E> Values for OptionResult<T, E>
+impl<T, E> Values for Result<T, E>
 where
     E: Send,
 {
@@ -21,13 +24,12 @@ where
     where
         P: PinnedVec<Self::Item>,
     {
-        match self.0 {
-            Some(Ok(x)) => {
+        match self {
+            Ok(x) => {
                 vector.push(x);
                 SequentialPush::Done
             }
-            Some(Err(error)) => SequentialPush::StoppedByError { error },
-            None => SequentialPush::Done,
+            Err(error) => SequentialPush::StoppedByError { error },
         }
     }
 
@@ -36,13 +38,12 @@ where
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
     ) -> OrderedPush<Self::Fallibility> {
-        match self.0 {
-            Some(Ok(x)) => {
+        match self {
+            Ok(x) => {
                 vec.push((idx, x));
                 OrderedPush::Done
             }
-            Some(Err(error)) => OrderedPush::StoppedByError { idx, error },
-            None => OrderedPush::Done,
+            Err(error) => OrderedPush::StoppedByError { idx, error },
         }
     }
 
@@ -51,13 +52,12 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        match self.0 {
-            Some(Ok(x)) => {
-                _ = bag.push(x);
+        match self {
+            Ok(x) => {
+                bag.push(x);
                 ArbitraryPush::Done
             }
-            Some(Err(error)) => ArbitraryPush::StoppedByError { error },
-            None => ArbitraryPush::Done,
+            Err(error) => ArbitraryPush::StoppedByError { error },
         }
     }
 
@@ -65,15 +65,14 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        match self.0 {
-            Some(Ok(x)) => Reduce::Done {
+        match self {
+            Ok(x) => Reduce::Done {
                 acc: Some(match acc {
-                    Some(y) => reduce(y, x),
+                    Some(acc) => reduce(acc, x),
                     None => x,
                 }),
             },
-            None => Reduce::Done { acc },
-            Some(Err(error)) => Reduce::StoppedByError { error },
+            Err(error) => Reduce::StoppedByError { error },
         }
     }
 
@@ -81,23 +80,21 @@ where
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        match self.0 {
-            Some(Ok(x)) => Reduce::Done {
+        match self {
+            Ok(x) => Reduce::Done {
                 acc: Some(match acc {
-                    Some(y) => reduce(u, y, x),
+                    Some(acc) => reduce(u, acc, x),
                     None => x,
                 }),
             },
-            None => Reduce::Done { acc },
-            Some(Err(error)) => Reduce::StoppedByError { error },
+            Err(error) => Reduce::StoppedByError { error },
         }
     }
 
     fn next(self) -> Next<Self> {
-        match self.0 {
-            Some(Ok(value)) => Next::Done { value: Some(value) },
-            None => Next::Done { value: None },
-            Some(Err(error)) => Next::StoppedByError { error },
+        match self {
+            Ok(x) => Next::Done { value: Some(x) },
+            Err(error) => Next::StoppedByError { error },
         }
     }
 }

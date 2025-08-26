@@ -1,4 +1,4 @@
-use crate::values::runner_results::{
+use crate::generic_values::runner_results::{
     ArbitraryPush, Fallibility, Next, OrderedPush, Reduce, SequentialPush, Stop, StopReduce,
     StopWithIdx,
 };

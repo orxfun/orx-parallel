@@ -1,5 +1,5 @@
-use crate::values::Values;
-use crate::values::runner_results::{
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{
     ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use orx_concurrent_bag::ConcurrentBag;

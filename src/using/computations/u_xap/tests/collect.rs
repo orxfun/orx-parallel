@@ -2,7 +2,7 @@ use crate::{
     IterationOrder, Params,
     runner::DefaultRunner,
     using::{UsingClone, computations::UX},
-    values::Vector,
+    generic_values::Vector,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;

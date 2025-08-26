@@ -1,11 +1,13 @@
 use crate::using::Using;
 use crate::using::computations::UX;
 use crate::using::runner::parallel_runner_compute::{u_collect_arbitrary, u_collect_ordered};
-use crate::values::runner_results::{Infallible, ParallelCollect, ParallelCollectArbitrary};
+use crate::generic_values::runner_results::{
+    Infallible, ParallelCollect, ParallelCollectArbitrary,
+};
 use crate::{
     IterationOrder,
     runner::{ParallelRunner, ParallelRunnerCompute},
-    values::Values,
+    generic_values::Values,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

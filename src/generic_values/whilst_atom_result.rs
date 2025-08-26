@@ -1,18 +1,20 @@
-use crate::values::Values;
-use crate::values::runner_results::{
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{
     ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-/// Represents scalar value for early stopping error cases:
-///
-/// * Whenever computation creates an error at any point, all computed values are irrelevant,
-///   the only relevant value is the created error.
-/// * Computed values are relevant iff entire inputs result in an Ok variant.
-/// * Therefore, observation of an error case allows to immediately stop computation.
+pub enum WhilstAtomResult<T, E>
+where
+    E: Send,
+{
+    ContinueOk(T),
+    StopErr(E),
+    StopWhile,
+}
 
-impl<T, E> Values for Result<T, E>
+impl<T, E> Values for WhilstAtomResult<T, E>
 where
     E: Send,
 {
@@ -25,11 +27,12 @@ where
         P: PinnedVec<Self::Item>,
     {
         match self {
-            Ok(x) => {
+            Self::ContinueOk(x) => {
                 vector.push(x);
                 SequentialPush::Done
             }
-            Err(error) => SequentialPush::StoppedByError { error },
+            Self::StopErr(error) => SequentialPush::StoppedByError { error },
+            Self::StopWhile => SequentialPush::StoppedByWhileCondition,
         }
     }
 
@@ -39,11 +42,12 @@ where
         vec: &mut Vec<(usize, Self::Item)>,
     ) -> OrderedPush<Self::Fallibility> {
         match self {
-            Ok(x) => {
+            Self::ContinueOk(x) => {
                 vec.push((idx, x));
                 OrderedPush::Done
             }
-            Err(error) => OrderedPush::StoppedByError { idx, error },
+            Self::StopErr(error) => OrderedPush::StoppedByError { idx, error },
+            Self::StopWhile => OrderedPush::StoppedByWhileCondition { idx },
         }
     }
 
@@ -53,11 +57,12 @@ where
         Self::Item: Send,
     {
         match self {
-            Ok(x) => {
+            Self::ContinueOk(x) => {
                 bag.push(x);
                 ArbitraryPush::Done
             }
-            Err(error) => ArbitraryPush::StoppedByError { error },
+            Self::StopErr(error) => ArbitraryPush::StoppedByError { error },
+            Self::StopWhile => ArbitraryPush::StoppedByWhileCondition,
         }
     }
 
@@ -66,13 +71,14 @@ where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Ok(x) => Reduce::Done {
+            Self::ContinueOk(x) => Reduce::Done {
                 acc: Some(match acc {
                     Some(acc) => reduce(acc, x),
                     None => x,
                 }),
             },
-            Err(error) => Reduce::StoppedByError { error },
+            Self::StopErr(error) => Reduce::StoppedByError { error },
+            Self::StopWhile => Reduce::StoppedByWhileCondition { acc },
         }
     }
 
@@ -81,20 +87,22 @@ where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Ok(x) => Reduce::Done {
+            Self::ContinueOk(x) => Reduce::Done {
                 acc: Some(match acc {
                     Some(acc) => reduce(u, acc, x),
                     None => x,
                 }),
             },
-            Err(error) => Reduce::StoppedByError { error },
+            Self::StopErr(error) => Reduce::StoppedByError { error },
+            Self::StopWhile => Reduce::StoppedByWhileCondition { acc },
         }
     }
 
     fn next(self) -> Next<Self> {
         match self {
-            Ok(x) => Next::Done { value: Some(x) },
-            Err(error) => Next::StoppedByError { error },
+            Self::ContinueOk(x) => Next::Done { value: Some(x) },
+            Self::StopErr(error) => Next::StoppedByError { error },
+            Self::StopWhile => Next::StoppedByWhileCondition,
         }
     }
 }

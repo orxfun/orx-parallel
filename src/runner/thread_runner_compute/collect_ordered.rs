@@ -1,6 +1,6 @@
 use crate::ThreadRunner;
-use crate::values::Values;
-use crate::values::runner_results::{StopWithIdx, ThreadCollect};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{StopWithIdx, ThreadCollect};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

@@ -1,6 +1,6 @@
 use crate::runner::thread_runner_compute as thread;
-use crate::values::Values;
-use crate::values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
 use crate::{
     computations::{M, X},
     runner::ParallelRunnerCompute,

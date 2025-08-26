@@ -1,19 +1,28 @@
-use crate::values::runner_results::{
+use crate::generic_values::runner_results::{
     ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
 };
-use crate::values::whilst_iterators::WhilstOptionFlatMapIter;
-use crate::values::whilst_option_result::WhilstOptionResult;
-use crate::values::{TransformableValues, Values, WhilstVector};
+use crate::generic_values::whilst_atom_result::WhilstAtomResult;
+use crate::generic_values::whilst_iterators::WhilstAtomFlatMapIter;
+use crate::generic_values::{TransformableValues, Values, WhilstOption, WhilstVector};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub enum WhilstOption<T> {
-    ContinueSome(T),
-    ContinueNone,
+pub enum WhilstAtom<T> {
+    Continue(T),
     Stop,
 }
 
-impl<T> Values for WhilstOption<T> {
+impl<T> WhilstAtom<T> {
+    #[inline(always)]
+    pub fn new(value: T, whilst: impl Fn(&T) -> bool) -> Self {
+        match whilst(&value) {
+            true => Self::Continue(value),
+            false => Self::Stop,
+        }
+    }
+}
+
+impl<T> Values for WhilstAtom<T> {
     type Item = T;
 
     type Fallibility = Infallible;
@@ -23,11 +32,10 @@ impl<T> Values for WhilstOption<T> {
         P: PinnedVec<Self::Item>,
     {
         match self {
-            Self::ContinueSome(x) => {
+            Self::Continue(x) => {
                 vector.push(x);
                 SequentialPush::Done
             }
-            Self::ContinueNone => SequentialPush::Done,
             Self::Stop => SequentialPush::StoppedByWhileCondition,
         }
     }
@@ -38,11 +46,10 @@ impl<T> Values for WhilstOption<T> {
         vec: &mut Vec<(usize, Self::Item)>,
     ) -> OrderedPush<Self::Fallibility> {
         match self {
-            Self::ContinueSome(x) => {
+            Self::Continue(x) => {
                 vec.push((idx, x));
                 OrderedPush::Done
             }
-            Self::ContinueNone => OrderedPush::Done,
             Self::Stop => OrderedPush::StoppedByWhileCondition { idx },
         }
     }
@@ -53,11 +60,10 @@ impl<T> Values for WhilstOption<T> {
         Self::Item: Send,
     {
         match self {
-            Self::ContinueSome(x) => {
+            Self::Continue(x) => {
                 bag.push(x);
                 ArbitraryPush::Done
             }
-            Self::ContinueNone => ArbitraryPush::Done,
             Self::Stop => ArbitraryPush::StoppedByWhileCondition,
         }
     }
@@ -67,13 +73,12 @@ impl<T> Values for WhilstOption<T> {
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueSome(x) => Reduce::Done {
+            Self::Continue(x) => Reduce::Done {
                 acc: Some(match acc {
                     Some(acc) => reduce(acc, x),
                     None => x,
                 }),
             },
-            Self::ContinueNone => Reduce::Done { acc },
             Self::Stop => Reduce::StoppedByWhileCondition { acc },
         }
     }
@@ -83,27 +88,25 @@ impl<T> Values for WhilstOption<T> {
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self {
-            Self::ContinueSome(x) => Reduce::Done {
+            Self::Continue(x) => Reduce::Done {
                 acc: Some(match acc {
                     Some(acc) => reduce(u, acc, x),
                     None => x,
                 }),
             },
-            Self::ContinueNone => Reduce::Done { acc },
             Self::Stop => Reduce::StoppedByWhileCondition { acc },
         }
     }
 
     fn next(self) -> Next<Self> {
         match self {
-            Self::ContinueSome(x) => Next::Done { value: Some(x) },
-            Self::ContinueNone => Next::Done { value: None },
+            Self::Continue(x) => Next::Done { value: Some(x) },
             Self::Stop => Next::StoppedByWhileCondition,
         }
     }
 }
 
-impl<T> TransformableValues for WhilstOption<T> {
+impl<T> TransformableValues for WhilstAtom<T> {
     fn map<M, O>(
         self,
         map: M,
@@ -112,9 +115,8 @@ impl<T> TransformableValues for WhilstOption<T> {
         M: Fn(Self::Item) -> O + Clone,
     {
         match self {
-            Self::ContinueSome(x) => WhilstOption::ContinueSome(map(x)),
-            Self::ContinueNone => WhilstOption::ContinueNone,
-            Self::Stop => WhilstOption::Stop,
+            Self::Continue(x) => WhilstAtom::Continue(map(x)),
+            Self::Stop => WhilstAtom::Stop,
         }
     }
 
@@ -126,12 +128,11 @@ impl<T> TransformableValues for WhilstOption<T> {
         F: Fn(&Self::Item) -> bool + Clone,
     {
         match self {
-            Self::ContinueSome(x) => match filter(&x) {
-                true => Self::ContinueSome(x),
-                false => Self::ContinueNone,
+            Self::Continue(x) => match filter(&x) {
+                true => WhilstOption::ContinueSome(x),
+                false => WhilstOption::ContinueNone,
             },
-            Self::ContinueNone => Self::ContinueNone,
-            Self::Stop => Self::Stop,
+            Self::Stop => WhilstOption::Stop,
         }
     }
 
@@ -143,7 +144,7 @@ impl<T> TransformableValues for WhilstOption<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo + Clone,
     {
-        let iter = WhilstOptionFlatMapIter::from_option(self, &flat_map);
+        let iter = WhilstAtomFlatMapIter::from_atom(self, &flat_map);
         WhilstVector(iter)
     }
 
@@ -155,11 +156,10 @@ impl<T> TransformableValues for WhilstOption<T> {
         Fm: Fn(Self::Item) -> Option<O>,
     {
         match self {
-            Self::ContinueSome(x) => match filter_map(x) {
+            Self::Continue(x) => match filter_map(x) {
                 Some(x) => WhilstOption::ContinueSome(x),
                 None => WhilstOption::ContinueNone,
             },
-            Self::ContinueNone => WhilstOption::ContinueNone,
             Self::Stop => WhilstOption::Stop,
         }
     }
@@ -172,11 +172,10 @@ impl<T> TransformableValues for WhilstOption<T> {
         Self: Sized,
     {
         match self {
-            Self::ContinueSome(x) => match whilst(&x) {
-                true => Self::ContinueSome(x),
+            Self::Continue(x) => match whilst(&x) {
+                true => Self::Continue(x),
                 false => Self::Stop,
             },
-            Self::ContinueNone => Self::ContinueNone,
             Self::Stop => Self::Stop,
         }
     }
@@ -187,12 +186,11 @@ impl<T> TransformableValues for WhilstOption<T> {
         E: Send,
     {
         match self {
-            Self::ContinueSome(x) => match map_res(x) {
-                Ok(x) => WhilstOptionResult::ContinueSomeOk(x),
-                Err(e) => WhilstOptionResult::StopErr(e),
+            Self::Continue(x) => match map_res(x) {
+                Ok(x) => WhilstAtomResult::ContinueOk(x),
+                Err(e) => WhilstAtomResult::StopErr(e),
             },
-            Self::ContinueNone => WhilstOptionResult::ContinueNone,
-            Self::Stop => WhilstOptionResult::StopWhile,
+            Self::Stop => WhilstAtomResult::StopWhile,
         }
     }
 
@@ -205,9 +203,8 @@ impl<T> TransformableValues for WhilstOption<T> {
         M: Fn(&mut U, Self::Item) -> O,
     {
         match self {
-            Self::ContinueSome(x) => WhilstOption::ContinueSome(map(u, x)),
-            Self::ContinueNone => WhilstOption::ContinueNone,
-            Self::Stop => WhilstOption::Stop,
+            Self::Continue(x) => WhilstAtom::Continue(map(u, x)),
+            Self::Stop => WhilstAtom::Stop,
         }
     }
 
@@ -220,12 +217,11 @@ impl<T> TransformableValues for WhilstOption<T> {
         F: Fn(&mut U, &Self::Item) -> bool,
     {
         match self {
-            Self::ContinueSome(x) => match filter(u, &x) {
-                true => Self::ContinueSome(x),
-                false => Self::ContinueNone,
+            Self::Continue(x) => match filter(u, &x) {
+                true => WhilstOption::ContinueSome(x),
+                false => WhilstOption::ContinueNone,
             },
-            Self::ContinueNone => Self::ContinueNone,
-            Self::Stop => Self::Stop,
+            Self::Stop => WhilstOption::Stop,
         }
     }
 
@@ -238,7 +234,7 @@ impl<T> TransformableValues for WhilstOption<T> {
         Vo: IntoIterator,
         Fm: Fn(&mut U, Self::Item) -> Vo,
     {
-        let iter = WhilstOptionFlatMapIter::u_from_option(u, self, &flat_map);
+        let iter = WhilstAtomFlatMapIter::u_from_atom(u, self, &flat_map);
         WhilstVector(iter)
     }
 
@@ -251,11 +247,10 @@ impl<T> TransformableValues for WhilstOption<T> {
         Fm: Fn(&mut U, Self::Item) -> Option<O>,
     {
         match self {
-            Self::ContinueSome(x) => match filter_map(u, x) {
+            Self::Continue(x) => match filter_map(u, x) {
                 Some(x) => WhilstOption::ContinueSome(x),
                 None => WhilstOption::ContinueNone,
             },
-            Self::ContinueNone => WhilstOption::ContinueNone,
             Self::Stop => WhilstOption::Stop,
         }
     }

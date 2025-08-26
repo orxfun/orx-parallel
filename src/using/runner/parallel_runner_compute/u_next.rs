@@ -2,8 +2,8 @@ use super::super::thread_runner_compute as thread;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
-use crate::values::Values;
-use crate::values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn u_m<C, U, I, O, M1>(runner: C, m: UM<U, I, O, M1>) -> (usize, Option<O>)

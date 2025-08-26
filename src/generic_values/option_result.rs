@@ -1,20 +1,15 @@
-use crate::values::Values;
-use crate::values::runner_results::{
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{
     ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
-pub enum WhilstAtomResult<T, E>
+pub struct OptionResult<T, E>(pub(crate) Option<Result<T, E>>)
 where
-    E: Send,
-{
-    ContinueOk(T),
-    StopErr(E),
-    StopWhile,
-}
+    E: Send;
 
-impl<T, E> Values for WhilstAtomResult<T, E>
+impl<T, E> Values for OptionResult<T, E>
 where
     E: Send,
 {
@@ -26,13 +21,13 @@ where
     where
         P: PinnedVec<Self::Item>,
     {
-        match self {
-            Self::ContinueOk(x) => {
+        match self.0 {
+            Some(Ok(x)) => {
                 vector.push(x);
                 SequentialPush::Done
             }
-            Self::StopErr(error) => SequentialPush::StoppedByError { error },
-            Self::StopWhile => SequentialPush::StoppedByWhileCondition,
+            Some(Err(error)) => SequentialPush::StoppedByError { error },
+            None => SequentialPush::Done,
         }
     }
 
@@ -41,13 +36,13 @@ where
         idx: usize,
         vec: &mut Vec<(usize, Self::Item)>,
     ) -> OrderedPush<Self::Fallibility> {
-        match self {
-            Self::ContinueOk(x) => {
+        match self.0 {
+            Some(Ok(x)) => {
                 vec.push((idx, x));
                 OrderedPush::Done
             }
-            Self::StopErr(error) => OrderedPush::StoppedByError { idx, error },
-            Self::StopWhile => OrderedPush::StoppedByWhileCondition { idx },
+            Some(Err(error)) => OrderedPush::StoppedByError { idx, error },
+            None => OrderedPush::Done,
         }
     }
 
@@ -56,13 +51,13 @@ where
         P: IntoConcurrentPinnedVec<Self::Item>,
         Self::Item: Send,
     {
-        match self {
-            Self::ContinueOk(x) => {
-                bag.push(x);
+        match self.0 {
+            Some(Ok(x)) => {
+                _ = bag.push(x);
                 ArbitraryPush::Done
             }
-            Self::StopErr(error) => ArbitraryPush::StoppedByError { error },
-            Self::StopWhile => ArbitraryPush::StoppedByWhileCondition,
+            Some(Err(error)) => ArbitraryPush::StoppedByError { error },
+            None => ArbitraryPush::Done,
         }
     }
 
@@ -70,15 +65,15 @@ where
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item,
     {
-        match self {
-            Self::ContinueOk(x) => Reduce::Done {
+        match self.0 {
+            Some(Ok(x)) => Reduce::Done {
                 acc: Some(match acc {
-                    Some(acc) => reduce(acc, x),
+                    Some(y) => reduce(y, x),
                     None => x,
                 }),
             },
-            Self::StopErr(error) => Reduce::StoppedByError { error },
-            Self::StopWhile => Reduce::StoppedByWhileCondition { acc },
+            None => Reduce::Done { acc },
+            Some(Err(error)) => Reduce::StoppedByError { error },
         }
     }
 
@@ -86,23 +81,23 @@ where
     where
         X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
     {
-        match self {
-            Self::ContinueOk(x) => Reduce::Done {
+        match self.0 {
+            Some(Ok(x)) => Reduce::Done {
                 acc: Some(match acc {
-                    Some(acc) => reduce(u, acc, x),
+                    Some(y) => reduce(u, y, x),
                     None => x,
                 }),
             },
-            Self::StopErr(error) => Reduce::StoppedByError { error },
-            Self::StopWhile => Reduce::StoppedByWhileCondition { acc },
+            None => Reduce::Done { acc },
+            Some(Err(error)) => Reduce::StoppedByError { error },
         }
     }
 
     fn next(self) -> Next<Self> {
-        match self {
-            Self::ContinueOk(x) => Next::Done { value: Some(x) },
-            Self::StopErr(error) => Next::StoppedByError { error },
-            Self::StopWhile => Next::StoppedByWhileCondition,
+        match self.0 {
+            Some(Ok(value)) => Next::Done { value: Some(value) },
+            None => Next::Done { value: None },
+            Some(Err(error)) => Next::StoppedByError { error },
         }
     }
 }

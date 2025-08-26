@@ -1,6 +1,6 @@
 use super::{TransformableValues, Vector};
-use crate::values::Values;
-use crate::values::{
+use crate::generic_values::Values;
+use crate::generic_values::{
     option_result::OptionResult,
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,

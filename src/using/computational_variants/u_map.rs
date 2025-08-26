@@ -3,7 +3,7 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     using::u_par_iter::ParIterUsing,
     using::{Using, computational_variants::u_xap::UParXap, computations::UM},
-    values::Vector,
+    generic_values::Vector,
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;

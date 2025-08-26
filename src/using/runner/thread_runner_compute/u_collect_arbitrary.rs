@@ -1,6 +1,6 @@
-use crate::values::Values;
-use crate::values::runner_results::Stop;
-use crate::{ThreadRunner, values::runner_results::ThreadCollectArbitrary};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::Stop;
+use crate::{ThreadRunner, generic_values::runner_results::ThreadCollectArbitrary};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_fixed_vec::IntoConcurrentPinnedVec;
