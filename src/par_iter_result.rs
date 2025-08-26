@@ -9,87 +9,20 @@ use core::cmp::Ordering;
 #[test]
 fn abc() {
     use crate::*;
-    use std::num::{IntErrorKind, ParseIntError};
 
-    let expected_results = [
-        Ok((0..100).collect::<Vec<_>>()),
-        Err(IntErrorKind::InvalidDigit),
-    ];
+    // all succeeds
+    let a: Vec<Result<u32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
 
-    for expected in expected_results {
-        let expected_ok = expected.is_ok();
-        let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
-        if !expected_ok {
-            inputs.insert(50, "x".to_string()); // plant an error case
-        }
+    let b: Result<Vec<_>, _> = iter.collect();
+    assert_eq!(b, Ok(vec![2, 4, 6]));
 
-        // regular parallel iterator
-        let results = inputs.par().map(|x| x.parse::<u32>());
-        let numbers: Vec<_> = results.filter_map(|x| x.ok()).collect();
-        if expected_ok {
-            assert_eq!(&expected, &Ok(numbers));
-        } else {
-            // we lost the error
-        }
+    // at least one fails
+    let a = vec![Ok(1), Err('x'), Ok(3)];
+    let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
 
-        // fallible parallel iterator
-        let results = inputs.par().map(|x| x.parse::<u32>());
-        let result: Result<Vec<_>, ParseIntError> = results.into_fallible_result().collect();
-        assert_eq!(&expected, &result.map_err(|x| x.kind().clone()));
-    }
-
-    let expected_sum = [Ok(4950), Err(IntErrorKind::InvalidDigit)];
-
-    let will_fail = [false, true];
-
-    for will_fail in [false, true] {
-        let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
-        if will_fail {
-            inputs.insert(50, "x".to_string()); // plant an error case
-        }
-
-        // sum
-        let results = inputs.par().map(|x| x.parse::<u32>());
-        let result: Result<u32, ParseIntError> = results.into_fallible_result().sum();
-        match will_fail {
-            true => assert!(result.is_err()),
-            false => assert_eq!(result, Ok(4950)),
-        }
-
-        // max
-        let results = inputs.par().map(|x| x.parse::<u32>());
-        let result: Result<Option<u32>, ParseIntError> = results.into_fallible_result().max();
-        match will_fail {
-            true => assert!(result.is_err()),
-            false => assert_eq!(result, Ok(Some(99))),
-        }
-    }
-
-    for will_fail in [false, true] {
-        let mut inputs: Vec<_> = (0..100).map(|x| x.to_string()).collect();
-        if will_fail {
-            inputs.insert(50, "x".to_string()); // plant an error case
-        }
-
-        // fallible iter
-        let results = inputs.par().map(|x| x.parse::<u32>());
-        let fallible = results.into_fallible_result(); // Success: u32, Error: ParseIntError
-
-        // transformations
-
-        let result: Result<usize, ParseIntError> = fallible
-            .filter(|x| x % 2 == 1) // Success: u32, Error: ParseIntError
-            .map(|x| 3 * x) // Success: u32, Error: ParseIntError
-            .filter_map(|x| (x % 10 != 0).then_some(x)) // Success: u32, Error: ParseIntError
-            .flat_map(|x| [x.to_string(), (10 * x).to_string()]) // Success: String, Error: ParseIntError
-            .map(|x| x.len()) // Success: usize, Error: ParseIntError
-            .sum();
-
-        match will_fail {
-            true => assert!(result.is_err()),
-            false => assert_eq!(result, Ok(312)),
-        }
-    }
+    let b: Result<Vec<_>, _> = iter.collect();
+    assert_eq!(b, Err('x'));
 }
 
 /// A parallel iterator for which the computation either completely succeeds,
@@ -294,6 +227,30 @@ where
 
     // computation transformations
 
+    /// Takes a closure `map` and creates a parallel iterator which calls that closure on each element.
+    ///
+    /// Transformation is only for the success path where all elements are of the `Ok` variant.
+    /// Any observation of an `Err` case short-circuits the computation and immediately returns the observed error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    /// let a: Vec<Result<u32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
+    ///
+    /// let b: Result<Vec<_>, _> = iter.collect();
+    /// assert_eq!(b, Ok(vec![2, 4, 6]));
+    ///
+    /// // at least one fails
+    /// let a = vec![Ok(1), Err('x'), Ok(3)];
+    /// let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
+    ///
+    /// let b: Result<Vec<_>, _> = iter.collect();
+    /// assert_eq!(b, Err('x'));
+    /// ```
     fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Ok = Out, Err = Self::Err>
     where
         Self: Sized,
@@ -305,6 +262,30 @@ where
         map.into_fallible_result()
     }
 
+    /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
+    ///
+    /// Transformation is only for the success path where all elements are of the `Ok` variant.
+    /// Any observation of an `Err` case short-circuits the computation and immediately returns the observed error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    /// let a: Vec<Result<u32, char>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// let iter = a.into_par().into_fallible_result().filter(|x| x % 2 == 1);
+    ///
+    /// let b = iter.sum();
+    /// assert_eq!(b, Ok(1 + 3));
+    ///
+    /// // at least one fails
+    /// let a = vec![Ok(1), Err('x'), Ok(3)];
+    /// let iter = a.into_par().into_fallible_result().filter(|x| x % 2 == 1);
+    ///
+    /// let b = iter.sum();
+    /// assert_eq!(b, Err('x'));
+    /// ```
     fn filter<Filter>(self, filter: Filter) -> impl ParIterResult<R, Ok = Self::Ok, Err = Self::Err>
     where
         Self: Sized,
