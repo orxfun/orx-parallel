@@ -18,13 +18,6 @@ impl<T> Values for WhilstOption<T> {
 
     type Fallibility = Infallible;
 
-    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
-        match self {
-            Self::ContinueSome(x) => Some(x).into_iter(),
-            _ => None.into_iter(),
-        }
-    }
-
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
         P: PinnedVec<Self::Item>,

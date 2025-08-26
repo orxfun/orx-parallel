@@ -21,10 +21,6 @@ where
 
     type Fallibility = Infallible;
 
-    fn values_to_depracate(self) -> impl IntoIterator<Item = Self::Item> {
-        self.0
-    }
-
     #[inline(always)]
     fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
     where
