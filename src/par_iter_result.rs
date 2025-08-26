@@ -19,29 +19,35 @@ fn abc() {
         }
     }
 
-    // all succeeds
-    let reduced: Result<u32, char> = (1..10)
-        .par()
-        .map(|x| safe_div(100, x as u32))
+    // all Ok
+    let result = vec!["1", "2", "3"]
+        .into_par()
+        .map(|x| x.parse::<i32>())
         .into_fallible_result()
-        .sum();
-    assert_eq!(reduced, Ok(281));
+        .any(|x| *x > 1);
+    assert_eq!(result, Ok(true));
 
-    // all succeeds - empty iterator
-    let reduced: Result<u32, char> = (1..1)
-        .par()
-        .map(|x| safe_div(100, x as u32))
+    let result = vec!["1", "2", "3"]
+        .into_par()
+        .map(|x| x.parse::<i32>())
         .into_fallible_result()
-        .sum();
-    assert_eq!(reduced, Ok(0));
+        .any(|x| *x > 3);
+    assert_eq!(result, Ok(false));
 
-    // at least one fails
-    let reduced: Result<u32, char> = (0..10)
-        .par()
-        .map(|x| safe_div(100, x as u32))
+    let result = Vec::<&str>::new()
+        .into_par()
+        .map(|x| x.parse::<i32>())
         .into_fallible_result()
-        .sum();
-    assert_eq!(reduced, Err('!'));
+        .any(|x| *x > 1);
+    assert_eq!(result, Ok(false)); // empty iterator
+
+    // at least one Err
+    let result = vec!["1", "x!", "3"]
+        .into_par()
+        .map(|x| x.parse::<i32>())
+        .into_fallible_result()
+        .any(|x| *x > 5);
+    assert!(result.is_err());
 
     // let vec = a
     //     .par()
@@ -686,6 +692,59 @@ where
         Self::Ok: Send,
         Reduce: Fn(Self::Ok, Self::Ok) -> Self::Ok + Sync;
 
+    /// Tests if every element of the iterator matches a predicate.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// `all` takes a `predicate` that returns true or false.
+    /// It applies this closure to each Ok element of the iterator,
+    /// and if they all return true, then so does `all`.
+    /// If any of them returns false, it returns false.
+    ///
+    /// Note that `all` computation is itself also short-circuiting; in other words, it will stop processing as soon as it finds a false,
+    /// given that no matter what else happens, the result will also be false.
+    ///
+    /// Therefore, in case the fallible iterator contains both an Err element and an Ok element which violates the `predicate`,
+    /// the result is **not deterministic**. It might be the `Err` if it is observed first; or `Ok(false)` if the violation is observed first.
+    ///
+    /// On the other hand, when it returns `Ok(true)`, we are certain that all elements are of `Ok` variant and all satisfy the `predicate`.
+    ///
+    /// An empty iterator returns `Ok(true)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all Ok
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .all(|x| *x > 0);
+    /// assert_eq!(result, Ok(true));
+    ///
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .all(|x| *x > 1);
+    /// assert_eq!(result, Ok(false));
+    ///
+    /// let result = Vec::<&str>::new()
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .all(|x| *x > 1);
+    /// assert_eq!(result, Ok(true)); // empty iterator
+    ///
+    /// // at least one Err
+    /// let result = vec!["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .all(|x| *x > 0);
+    /// assert!(result.is_err());
+    /// ```
     fn all<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Err>
     where
         Self: Sized,
@@ -696,6 +755,60 @@ where
         self.find(violates).map(|x| x.is_none())
     }
 
+    /// Tests if any element of the iterator matches a predicate.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// `any` takes a `predicate` that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and if any of the elements returns true, then so does `any`.
+    /// If all of them return false, it returns false.
+    ///
+    /// Note that `any` computation is itself also short-circuiting; in other words, it will stop processing as soon as it finds a true,
+    /// given that no matter what else happens, the result will also be true.
+    ///
+    /// Therefore, in case the fallible iterator contains both an Err element and an Ok element which satisfies the `predicate`,
+    /// the result is **not deterministic**. It might be the `Err` if it is observed first; or `Ok(true)` if element satisfying the predicate
+    /// is observed first.
+    ///
+    /// On the other hand, when it returns `Ok(false)`, we are certain that all elements are of `Ok` variant and none of them satisfies the `predicate`.
+    ///
+    /// An empty iterator returns `Ok(false)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all Ok
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .any(|x| *x > 1);
+    /// assert_eq!(result, Ok(true));
+    ///
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .any(|x| *x > 3);
+    /// assert_eq!(result, Ok(false));
+    ///
+    /// let result = Vec::<&str>::new()
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .any(|x| *x > 1);
+    /// assert_eq!(result, Ok(false)); // empty iterator
+    ///
+    /// // at least one Err
+    /// let result = vec!["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .any(|x| *x > 5);
+    /// assert!(result.is_err());
+    /// ```
     fn any<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Err>
     where
         Self: Sized,
