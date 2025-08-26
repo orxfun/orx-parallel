@@ -502,7 +502,7 @@ where
 
     fn into_fallible_result<Success, Error>(
         self,
-    ) -> impl ParIterResult<R, Success = Success, Error = Error>
+    ) -> impl ParIterResult<R, Ok = Success, Error = Error>
     where
         Self::Item: IntoResult<Success, Error>,
         Error: Send,

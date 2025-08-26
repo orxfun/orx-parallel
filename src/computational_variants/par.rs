@@ -1,8 +1,8 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParResult;
-use crate::par_iter_result::IntoResult;
 use crate::generic_values::{Vector, WhilstAtom};
+use crate::par_iter_result::IntoResult;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::{M, map_self},
@@ -167,7 +167,7 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
+    fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Ok = Out, Error = Err>
     where
         Self::Item: IntoResult<Out, Err>,
         Err: Send,

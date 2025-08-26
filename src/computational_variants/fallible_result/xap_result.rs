@@ -49,7 +49,7 @@ where
     T: Send,
     Vo::Item: Send,
 {
-    type Success = T;
+    type Ok = T;
 
     type Error = E;
 
@@ -76,7 +76,7 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterResult<Q, Success = Self::Success, Error = Self::Error> {
+    ) -> impl ParIterResult<Q, Ok = Self::Ok, Error = Self::Error> {
         let (params, iter, m1) = self.par.destruct();
         ParXapResult {
             par: ParXap::new(params, iter, m1),
@@ -88,7 +88,7 @@ where
 
     fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
     where
-        C: ParCollectInto<Self::Success>,
+        C: ParCollectInto<Self::Ok>,
     {
         let (params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
@@ -98,10 +98,10 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Success>, Self::Error>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Ok>, Self::Error>
     where
-        Self::Success: Send,
-        Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync,
+        Self::Ok: Send,
+        Reduce: Fn(Self::Ok, Self::Ok) -> Self::Ok + Sync,
     {
         let (params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
@@ -111,9 +111,9 @@ where
 
     // early exit
 
-    fn first(self) -> Result<Option<Self::Success>, Self::Error>
+    fn first(self) -> Result<Option<Self::Ok>, Self::Error>
     where
-        Self::Success: Send,
+        Self::Ok: Send,
     {
         let (params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());

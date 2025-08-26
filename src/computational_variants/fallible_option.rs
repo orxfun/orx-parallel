@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 pub struct ParOption<F, T, R = DefaultRunner>
 where
     R: ParallelRunner,
-    F: ParIterResult<R, Success = T, Error = ()>,
+    F: ParIterResult<R, Ok = T, Error = ()>,
 {
     par: F,
     phantom: PhantomData<(T, R)>,
@@ -17,7 +17,7 @@ where
 impl<F, T, R> ParOption<F, T, R>
 where
     R: ParallelRunner,
-    F: ParIterResult<R, Success = T, Error = ()>,
+    F: ParIterResult<R, Ok = T, Error = ()>,
 {
     pub(crate) fn new(par: F) -> Self {
         Self {
@@ -30,7 +30,7 @@ where
 impl<F, T, R> ParIterOption<R> for ParOption<F, T, R>
 where
     R: ParallelRunner,
-    F: ParIterResult<R, Success = T, Error = ()>,
+    F: ParIterResult<R, Ok = T, Error = ()>,
 {
     type Success = T;
 
