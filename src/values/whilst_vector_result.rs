@@ -1,5 +1,5 @@
 use crate::values::{
-    Values, WhilstAtom, WhilstOption,
+    Values, WhilstAtom,
     runner_results::{ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush},
 };
 use orx_concurrent_bag::ConcurrentBag;
@@ -134,17 +134,6 @@ where
         }
 
         Reduce::Done { acc: Some(acc) }
-    }
-
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self.0.into_iter().next() {
-            Some(x) => match x {
-                WhilstAtom::Continue(Ok(x)) => WhilstOption::ContinueSome(x),
-                WhilstAtom::Continue(Err(error)) => WhilstOption::Stop,
-                WhilstAtom::Stop => WhilstOption::Stop,
-            },
-            None => WhilstOption::ContinueNone,
-        }
     }
 
     fn next(self) -> Next<Self> {

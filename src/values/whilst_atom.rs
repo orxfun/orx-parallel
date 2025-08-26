@@ -98,13 +98,6 @@ impl<T> Values for WhilstAtom<T> {
         }
     }
 
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self {
-            Self::Continue(x) => WhilstOption::ContinueSome(x),
-            Self::Stop => WhilstOption::Stop,
-        }
-    }
-
     fn next(self) -> Next<Self> {
         match self {
             Self::Continue(x) => Next::Done { value: Some(x) },

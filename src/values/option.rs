@@ -1,6 +1,6 @@
 use super::{TransformableValues, Vector};
+use crate::values::Values;
 use crate::values::{
-    Values,
     option_result::OptionResult,
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
@@ -77,14 +77,6 @@ impl<T> Values for Option<T> {
                 (None, Some(y)) => Some(y),
                 (None, None) => None,
             },
-        }
-    }
-
-    #[inline(always)]
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self {
-            Some(x) => WhilstOption::ContinueSome(x),
-            None => WhilstOption::ContinueNone,
         }
     }
 

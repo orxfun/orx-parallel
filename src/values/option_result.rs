@@ -1,7 +1,6 @@
-use crate::values::{
-    Values,
-    runner_results::{ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush},
-    whilst_option::WhilstOption,
+use crate::values::Values;
+use crate::values::runner_results::{
+    ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
@@ -91,14 +90,6 @@ where
             },
             None => Reduce::Done { acc },
             Some(Err(error)) => Reduce::StoppedByError { error },
-        }
-    }
-
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self.0 {
-            Some(Ok(x)) => WhilstOption::ContinueSome(x),
-            Some(Err(error)) => WhilstOption::Stop,
-            None => WhilstOption::ContinueNone,
         }
     }
 

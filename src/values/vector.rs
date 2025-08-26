@@ -1,6 +1,6 @@
 use super::transformable_values::TransformableValues;
 use crate::values::{
-    Values, VectorResult, WhilstAtom, WhilstOption, WhilstVector,
+    Values, VectorResult, WhilstAtom, WhilstVector,
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
@@ -86,14 +86,6 @@ where
                 (None, Some(y)) => Some(y),
                 (None, None) => None,
             },
-        }
-    }
-
-    #[inline(always)]
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        match self.0.into_iter().next() {
-            Some(x) => WhilstOption::ContinueSome(x),
-            None => WhilstOption::ContinueNone,
         }
     }
 

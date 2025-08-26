@@ -94,10 +94,6 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn first_to_depracate(self) -> WhilstOption<Self::Item> {
-        self
-    }
-
     fn next(self) -> Next<Self> {
         match self {
             Self::ContinueSome(x) => Next::Done { value: Some(x) },
