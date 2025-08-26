@@ -11,7 +11,6 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     I::Item: IntoResult<T, E>,
-    E: Send,
 {
     par: Par<I, R>,
     phantom: PhantomData<(T, E)>,
@@ -22,7 +21,6 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     I::Item: IntoResult<T, E>,
-    E: Send,
 {
     pub(crate) fn new(par: Par<I, R>) -> Self {
         Self {
@@ -37,7 +35,6 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
     I::Item: IntoResult<T, E>,
-    E: Send,
 {
     type Item = T;
 
@@ -79,6 +76,8 @@ where
     fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
         C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+        Self::Err: Send,
     {
         let (params, iter) = self.par.destruct();
         let x1 = |i: I::Item| i.into_result();
@@ -91,6 +90,7 @@ where
     fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Err>
     where
         Self::Item: Send,
+        Self::Err: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (params, iter) = self.par.destruct();
@@ -104,6 +104,7 @@ where
     fn first(self) -> Result<Option<Self::Item>, Self::Err>
     where
         Self::Item: Send,
+        Self::Err: Send,
     {
         let (params, iter) = self.par.destruct();
         let x1 = |i: I::Item| i.into_result();

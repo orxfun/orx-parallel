@@ -12,7 +12,6 @@ where
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
-    E: Send,
 {
     par: ParMap<I, O, M1, R>,
     phantom: PhantomData<(T, E)>,
@@ -24,7 +23,6 @@ where
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
-    E: Send,
 {
     pub(crate) fn new(par: ParMap<I, O, M1, R>) -> Self {
         Self {
@@ -40,7 +38,6 @@ where
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
-    E: Send,
 {
     type Item = T;
 
@@ -82,6 +79,8 @@ where
     fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
         C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+        Self::Err: Send,
     {
         let (params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
@@ -94,6 +93,7 @@ where
     fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Err>
     where
         Self::Item: Send,
+        Self::Err: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (params, iter, m1) = self.par.destruct();
@@ -107,6 +107,7 @@ where
     fn first(self) -> Result<Option<Self::Item>, Self::Err>
     where
         Self::Item: Send,
+        Self::Err: Send,
     {
         let (params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();

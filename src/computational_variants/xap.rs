@@ -198,9 +198,6 @@ where
     fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
     where
         Self::Item: IntoResult<Out, Err>,
-        Err: Send,
-        Self::Item: Send,
-        Out: Send,
     {
         ParXapResult::new(self)
     }

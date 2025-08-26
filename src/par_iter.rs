@@ -544,10 +544,7 @@ where
     /// ```
     fn into_fallible_result<T, E>(self) -> impl ParIterResult<R, Item = T, Err = E>
     where
-        Self::Item: IntoResult<T, E>,
-        E: Send,
-        Self::Item: Send,
-        T: Send;
+        Self::Item: IntoResult<T, E>;
 
     fn into_fallible_option<Some>(self) -> impl ParIterOption<R, Item = Some>
     where

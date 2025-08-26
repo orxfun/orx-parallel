@@ -103,6 +103,7 @@ where
 
     fn collect_into<C>(self, output: C) -> Option<C>
     where
+        Self::Item: Send,
         C: ParCollectInto<Self::Item>,
     {
         self.par.collect_into(output).into_option()
@@ -110,6 +111,7 @@ where
 
     fn collect<C>(self) -> Option<C>
     where
+        Self::Item: Send,
         C: ParCollectInto<Self::Item>,
     {
         self.par.collect().into_option()

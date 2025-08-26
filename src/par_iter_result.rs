@@ -139,7 +139,7 @@ where
     type Item;
 
     /// Type of the Err element, to be received if any of the computations fails.
-    type Err: Send;
+    type Err;
 
     /// Element type of the regular parallel iterator this fallible iterator can be converted to, simply `Result<Self::Ok, Self::Err>`.
     type RegularItem: IntoResult<Self::Item, Self::Err>;
@@ -519,7 +519,9 @@ where
     /// ```
     fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
-        C: ParCollectInto<Self::Item>;
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+        Self::Err: Send;
 
     /// Transforms an iterator into a collection iff all elements are of Ok variant.
     /// Early exits and returns the error if any of the elements is an Err.
@@ -561,6 +563,8 @@ where
     fn collect<C>(self) -> Result<C, Self::Err>
     where
         Self: Sized,
+        Self::Item: Send,
+        Self::Err: Send,
         C: ParCollectInto<Self::Item>,
     {
         let output = C::empty(self.con_iter_len());
@@ -615,6 +619,7 @@ where
     fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Err>
     where
         Self::Item: Send,
+        Self::Err: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync;
 
     /// Tests if every element of the iterator matches a predicate.
@@ -674,6 +679,7 @@ where
     where
         Self: Sized,
         Self::Item: Send,
+        Self::Err: Send,
         Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         let violates = |x: &Self::Item| !predicate(x);
@@ -738,6 +744,7 @@ where
     where
         Self: Sized,
         Self::Item: Send,
+        Self::Err: Send,
         Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.find(predicate).map(|x| x.is_some())
@@ -772,6 +779,7 @@ where
     fn count(self) -> Result<usize, Self::Err>
     where
         Self: Sized,
+        Self::Err: Send,
     {
         self.map(map_count)
             .reduce(reduce_sum)
@@ -818,6 +826,7 @@ where
     fn for_each<Operation>(self, operation: Operation) -> Result<(), Self::Err>
     where
         Self: Sized,
+        Self::Err: Send,
         Operation: Fn(Self::Item) + Sync,
     {
         let map = |x| operation(x);
@@ -845,6 +854,7 @@ where
     fn max(self) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
+        Self::Err: Send,
         Self::Item: Ord + Send,
     {
         self.reduce(Ord::max)
@@ -888,6 +898,7 @@ where
     where
         Self: Sized,
         Self::Item: Send,
+        Self::Err: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
@@ -937,6 +948,7 @@ where
     where
         Self: Sized,
         Self::Item: Send,
+        Self::Err: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -969,6 +981,7 @@ where
     where
         Self: Sized,
         Self::Item: Ord + Send,
+        Self::Err: Send,
     {
         self.reduce(Ord::min)
     }
@@ -1011,6 +1024,7 @@ where
     where
         Self: Sized,
         Self::Item: Send,
+        Self::Err: Send,
         Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
@@ -1060,6 +1074,7 @@ where
     where
         Self: Sized,
         Self::Item: Send,
+        Self::Err: Send,
         Key: Ord,
         GetKey: Fn(&Self::Item) -> Key + Sync,
     {
@@ -1115,6 +1130,7 @@ where
     where
         Self: Sized,
         Self::Item: Sum<Out>,
+        Self::Err: Send,
         Out: Send,
     {
         self.map(Self::Item::map)
@@ -1155,7 +1171,8 @@ where
     /// ```
     fn first(self) -> Result<Option<Self::Item>, Self::Err>
     where
-        Self::Item: Send;
+        Self::Item: Send,
+        Self::Err: Send;
 
     /// Returns the first (or any) element of the iterator that satisfies the `predicate`.
     /// If the iterator is empty, `Ok(None)` is returned.
@@ -1196,6 +1213,7 @@ where
     where
         Self: Sized,
         Self::Item: Send,
+        Self::Err: Send,
         Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.filter(&predicate).first()

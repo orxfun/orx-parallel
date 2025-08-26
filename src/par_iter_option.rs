@@ -57,10 +57,12 @@ where
 
     fn collect_into<C>(self, output: C) -> Option<C>
     where
+        Self::Item: Send,
         C: ParCollectInto<Self::Item>;
 
     fn collect<C>(self) -> Option<C>
     where
+        Self::Item: Send,
         C: ParCollectInto<Self::Item>;
 
     // reduce
