@@ -2,7 +2,7 @@ use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     runner::{DefaultRunner, ParallelRunner},
     using::{Using, computations::UX, u_par_iter::ParIterUsing},
-    values::{TransformableValues, Values, Vector, runner_results::Infallible},
+    values::{TransformableValues, runner_results::Infallible},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
