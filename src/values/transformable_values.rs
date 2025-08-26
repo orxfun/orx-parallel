@@ -1,4 +1,4 @@
-use crate::values::{Values, runner_results::Fallible};
+use crate::values::{Values, option_result::OptionResult, runner_results::Fallible};
 
 pub trait TransformableValues: Values {
     fn map<M, O>(
@@ -50,6 +50,16 @@ pub trait TransformableValues: Values {
     ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         M: Fn(&mut U, Self::Item) -> O;
+
+    // fn u_map2<U, M, O>(
+    //     self,
+    //     u: &mut U,
+    //     map: M,
+    // ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility> + 'static
+    // where
+    //     M: Fn(&mut U, Self::Item) -> O,
+    // {
+    // }
 
     fn u_filter<U, F>(
         self,

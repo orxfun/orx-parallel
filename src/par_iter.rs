@@ -475,7 +475,7 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send,
+        U: Send + 'static,
         F: FnMut(usize) -> U;
 
     /// Converts the [`ParIter`] into [`ParIterUsing`] which will have access to a mutable reference of the
@@ -496,7 +496,7 @@ where
         value: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send;
+        U: Clone + Send + 'static;
 
     // computation transformations
 

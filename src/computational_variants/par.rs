@@ -103,7 +103,7 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send,
+        U: Send + 'static,
         F: FnMut(usize) -> U,
     {
         let using = UsingFun::new(using);
@@ -115,7 +115,7 @@ where
         using: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send,
+        U: Clone + Send + 'static,
     {
         let using = UsingClone::new(using);
         UPar::new(using, self.params, self.iter)

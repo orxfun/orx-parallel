@@ -110,15 +110,21 @@ where
     {
         let (using, params, iter, x1) = self.destruct();
 
-        let x2 = move |u: &mut U::Item, i: I::Item| {
+        let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_map(u, map.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_map(u, map.clone())
         };
 
-        UParXap::new(using, params, iter, x2)
+        UParXap::new(using, params, iter, x1)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
@@ -128,10 +134,16 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_filter(u, filter.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter(u, filter.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -147,10 +159,16 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_flat_map(u, flat_map.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_flat_map(u, flat_map.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -165,10 +183,16 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_filter_map(u, filter_map.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter_map(u, filter_map.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
