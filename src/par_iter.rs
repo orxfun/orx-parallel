@@ -498,6 +498,29 @@ where
     where
         U: Clone + Send + 'static;
 
+    // transformations into fallible computations
+
+    fn into_fallible_result<Success, Error>(
+        self,
+    ) -> impl ParIterResult<R, Success = Success, Error = Error>
+    where
+        Self::Item: IntoResult<Success, Error>,
+        Error: Send,
+        Self::Item: Send,
+        Success: Send;
+
+    fn into_fallible_option<Success>(self) -> impl ParIterOption<R, Success = Success>
+    where
+        Self::Item: IntoOption<Success>,
+        Self::Item: Send,
+        Success: Send,
+    {
+        ParOption::new(
+            self.map(|x| x.into_result_with_unit_err())
+                .into_fallible_result(),
+        )
+    }
+
     // computation transformations
 
     /// Takes a closure `map` and creates a parallel iterator which calls that closure on each element.
@@ -663,26 +686,6 @@ where
             // SAFETY: since x passed the whilst(is-some) check, unwrap_unchecked
             unsafe { x.unwrap_unchecked() }
         })
-    }
-
-    // transformations into fallible computations
-
-    fn into_fallible<Success, Error>(
-        self,
-    ) -> impl ParIterResult<R, Success = Success, Error = Error>
-    where
-        Self::Item: IntoResult<Success, Error>,
-        Error: Send,
-        Self::Item: Send,
-        Success: Send;
-
-    fn into_optional<Success>(self) -> impl ParIterOption<R, Success = Success>
-    where
-        Self::Item: IntoOption<Success>,
-        Self::Item: Send,
-        Success: Send,
-    {
-        ParOption::new(self.map(|x| x.into_result_with_unit_err()).into_fallible())
     }
 
     // special item transformations

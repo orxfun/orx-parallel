@@ -14,7 +14,7 @@ fn map_while_ok_from_par_when_ok() {
         .into_par()
         .iteration_order(IterationOrder::Arbitrary)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
     let result = sort_if_ok(result);
     let expected = Ok((0..1024).collect::<Vec<_>>());
@@ -36,7 +36,7 @@ fn map_while_ok_from_par_when_error() {
         .into_par()
         .iteration_order(IterationOrder::Arbitrary)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     let result = result.map_err(|e| {

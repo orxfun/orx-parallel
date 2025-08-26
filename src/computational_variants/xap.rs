@@ -195,7 +195,7 @@ where
         ParXap::new(params, iter, x1)
     }
 
-    fn into_fallible<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
+    fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Success = Out, Error = Err>
     where
         Self::Item: IntoResult<Out, Err>,
         Err: Send,

@@ -16,7 +16,7 @@ fn map_while_ok_from_xap_flat_map_when_ok() {
         .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
     let expected = Ok((0..1024).flat_map(flat_map).collect::<Vec<_>>());
 
@@ -42,7 +42,7 @@ fn map_while_ok_from_xap_flat_map_when_error() {
         .iteration_order(IterationOrder::Arbitrary)
         .flat_map(flat_map)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     let result = result.map_err(|e| {
@@ -68,7 +68,7 @@ fn map_while_ok_from_xap_flat_map_whilst_when_ok() {
         .flat_map(flat_map)
         .take_while(|i| i < &2777)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     assert!(result.is_ok());
@@ -94,7 +94,7 @@ fn map_while_ok_from_xap_flat_map_whilst_when_error() {
         .flat_map(flat_map)
         .take_while(|i| i < &2777)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     let result = result.map_err(|e| {
@@ -120,7 +120,7 @@ fn map_while_ok_from_xap_flat_map_whilst_when_error_out_of_reach() {
         .flat_map(flat_map)
         .take_while(|i| i < &2777)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     assert!(result.is_ok());

@@ -105,7 +105,7 @@ fn orx(
     map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
 ) -> Result<Vec<String>, ERR> {
     use orx_parallel::*;
-    inputs.into_par().map(map).into_fallible().collect()
+    inputs.into_par().map(map).into_fallible_result().collect()
 }
 
 fn orx_arbitrary(
@@ -117,7 +117,7 @@ fn orx_arbitrary(
         .into_par()
         .iteration_order(IterationOrder::Arbitrary)
         .map(map)
-        .into_fallible()
+        .into_fallible_result()
         .collect()
 }
 

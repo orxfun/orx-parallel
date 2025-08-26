@@ -91,7 +91,7 @@ fn collect_result() {
     let output: Result<Vec<_>, _> = good_input()
         .par()
         .map(|x| x.parse::<usize>())
-        .into_fallible()
+        .into_fallible_result()
         .collect();
     assert_eq!(
         output.map_err(|x| x.to_string()),
@@ -101,7 +101,7 @@ fn collect_result() {
     let output: Result<Vec<_>, _> = bad_input()
         .par()
         .map(|x| x.parse::<usize>())
-        .into_fallible()
+        .into_fallible_result()
         .collect();
     assert_eq!(
         output.map_err(|x| x.to_string()),

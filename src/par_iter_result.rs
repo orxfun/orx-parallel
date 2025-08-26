@@ -61,7 +61,7 @@ where
     {
         let par = self.into_regular_par();
         let map = par.map(move |x| x.into_result().map(map.clone()));
-        map.into_fallible()
+        map.into_fallible_result()
     }
 
     fn filter<Filter>(
@@ -81,7 +81,7 @@ where
             },
             Err(e) => Some(Err(e)),
         });
-        filter_map.into_fallible()
+        filter_map.into_fallible_result()
     }
 
     fn flat_map<IOut, FlatMap>(
@@ -99,7 +99,7 @@ where
             Ok(x) => ResultOfIter::ok(flat_map(x).into_iter()),
             Err(e) => ResultOfIter::err(e),
         });
-        map.into_fallible()
+        map.into_fallible_result()
     }
 
     fn filter_map<Out, FilterMap>(
@@ -116,7 +116,7 @@ where
             Ok(x) => filter_map(x).map(|x| Ok(x)),
             Err(e) => Some(Err(e)),
         });
-        filter_map.into_fallible()
+        filter_map.into_fallible_result()
     }
 
     fn inspect<Operation>(
