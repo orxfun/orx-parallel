@@ -6,8 +6,20 @@ use crate::{
         computations::{u_map_clone, u_map_copy, u_map_count, u_reduce_sum, u_reduce_unit},
     },
 };
-use orx_concurrent_iter::ConcurrentIter;
 use core::cmp::Ordering;
+use orx_concurrent_iter::ConcurrentIter;
+
+pub trait ParIterUsing2<U, R = DefaultRunner>
+where
+    R: ParallelRunner,
+    U: Using,
+{
+    type Item;
+
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing2<U, R, Item = Out>
+    where
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone;
+}
 
 /// Parallel iterator which allows mutable access to a variable of type `U` within its iterator methods.
 ///

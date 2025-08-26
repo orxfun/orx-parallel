@@ -4,7 +4,7 @@
 /// [`create`]: crate::using::Using::create
 pub trait Using {
     /// Item to be used mutably by each threads used in parallel computation.
-    type Item: Send;
+    type Item: Send + 'static;
 
     /// Creates an instance of the variable to be used by the `thread_idx`-th thread.
     fn create(&mut self, thread_idx: usize) -> Self::Item;
@@ -14,15 +14,15 @@ pub trait Using {
 }
 
 /// Using variant that creates instances of each thread by cloning an initial value.
-pub struct UsingClone<T: Clone + Send>(T);
+pub struct UsingClone<T: Clone + Send + 'static>(T);
 
-impl<T: Clone + Send> UsingClone<T> {
+impl<T: Clone + Send + 'static> UsingClone<T> {
     pub(crate) fn new(value: T) -> Self {
         Self(value)
     }
 }
 
-impl<T: Clone + Send> Using for UsingClone<T> {
+impl<T: Clone + Send + 'static> Using for UsingClone<T> {
     type Item = T;
 
     fn create(&mut self, _: usize) -> T {
@@ -37,7 +37,7 @@ impl<T: Clone + Send> Using for UsingClone<T> {
 /// Using variant that creates instances of each thread using a closure.
 pub struct UsingFun<F, T>
 where
-    T: Send,
+    T: Send + 'static,
     F: FnMut(usize) -> T,
 {
     fun: F,
@@ -45,7 +45,7 @@ where
 
 impl<F, T> UsingFun<F, T>
 where
-    T: Send,
+    T: Send + 'static,
     F: FnMut(usize) -> T,
 {
     pub(crate) fn new(fun: F) -> Self {
@@ -55,7 +55,7 @@ where
 
 impl<F, T> Using for UsingFun<F, T>
 where
-    T: Send,
+    T: Send + 'static,
     F: FnMut(usize) -> T,
 {
     type Item = T;

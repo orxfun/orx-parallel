@@ -112,10 +112,13 @@ where
 
         let x2 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_map(u, map.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_map(u, map.clone())
         };
 
         UParXap::new(using, params, iter, x2)
@@ -128,10 +131,13 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_filter(u, filter.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter(u, filter.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -147,10 +153,13 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_flat_map(u, flat_map.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_flat_map(u, flat_map.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -165,10 +174,13 @@ where
         let (using, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
             let vo = x1(u, i);
-            let values = vo.u_filter_map(u, filter_map.clone());
-            // TODO: avoid allocation
-            let x: Vec<_> = values.values_to_depracate().into_iter().collect();
-            Vector(x)
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter_map(u, filter_map.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
