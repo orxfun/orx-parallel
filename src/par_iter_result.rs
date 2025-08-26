@@ -136,13 +136,13 @@ where
     R: ParallelRunner,
 {
     /// Type of the Ok element, to be received as the Ok variant iff the entire computation succeeds.
-    type Ok;
+    type Item;
 
     /// Type of the Err element, to be received if any of the computations fails.
     type Err: Send;
 
     /// Element type of the regular parallel iterator this fallible iterator can be converted to, simply `Result<Self::Ok, Self::Err>`.
-    type RegularItem: IntoResult<Self::Ok, Self::Err>;
+    type RegularItem: IntoResult<Self::Item, Self::Err>;
 
     /// Regular parallel iterator this fallible iterator can be converted into.
     type RegularParIter: ParIter<R, Item = Self::RegularItem>;
@@ -204,7 +204,7 @@ where
     /// See [`ParIter::with_runner`] for details.
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterResult<Q, Ok = Self::Ok, Err = Self::Err>;
+    ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err>;
 
     // computation transformations
 
@@ -232,10 +232,10 @@ where
     /// let b: Result<Vec<_>, _> = iter.collect();
     /// assert_eq!(b, Err('x'));
     /// ```
-    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Ok = Out, Err = Self::Err>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterResult<R, Item = Out, Err = Self::Err>
     where
         Self: Sized,
-        Map: Fn(Self::Ok) -> Out + Sync + Clone,
+        Map: Fn(Self::Item) -> Out + Sync + Clone,
         Out: Send,
     {
         let par = self.into_regular_par();
@@ -267,11 +267,14 @@ where
     /// let b = iter.sum();
     /// assert_eq!(b, Err('x'));
     /// ```
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterResult<R, Ok = Self::Ok, Err = Self::Err>
+    fn filter<Filter>(
+        self,
+        filter: Filter,
+    ) -> impl ParIterResult<R, Item = Self::Item, Err = Self::Err>
     where
         Self: Sized,
-        Filter: Fn(&Self::Ok) -> bool + Sync + Clone,
-        Self::Ok: Send,
+        Filter: Fn(&Self::Item) -> bool + Sync + Clone,
+        Self::Item: Send,
     {
         let par = self.into_regular_par();
         let filter_map = par.filter_map(move |x| match x.into_result() {
@@ -318,12 +321,12 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterResult<R, Ok = IOut::Item, Err = Self::Err>
+    ) -> impl ParIterResult<R, Item = IOut::Item, Err = Self::Err>
     where
         Self: Sized,
         IOut: IntoIterator,
         IOut::Item: Send,
-        FlatMap: Fn(Self::Ok) -> IOut + Sync + Clone,
+        FlatMap: Fn(Self::Item) -> IOut + Sync + Clone,
     {
         let par = self.into_regular_par();
         let map = par.flat_map(move |x| match x.into_result() {
@@ -370,10 +373,10 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterResult<R, Ok = Out, Err = Self::Err>
+    ) -> impl ParIterResult<R, Item = Out, Err = Self::Err>
     where
         Self: Sized,
-        FilterMap: Fn(Self::Ok) -> Option<Out> + Sync + Clone,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
         Out: Send,
     {
         let par = self.into_regular_par();
@@ -459,11 +462,11 @@ where
     fn inspect<Operation>(
         self,
         operation: Operation,
-    ) -> impl ParIterResult<R, Ok = Self::Ok, Err = Self::Err>
+    ) -> impl ParIterResult<R, Item = Self::Item, Err = Self::Err>
     where
         Self: Sized,
-        Operation: Fn(&Self::Ok) + Sync + Clone,
-        Self::Ok: Send,
+        Operation: Fn(&Self::Item) + Sync + Clone,
+        Self::Item: Send,
     {
         let map = move |x| {
             operation(&x);
@@ -516,7 +519,7 @@ where
     /// ```
     fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
-        C: ParCollectInto<Self::Ok>;
+        C: ParCollectInto<Self::Item>;
 
     /// Transforms an iterator into a collection iff all elements are of Ok variant.
     /// Early exits and returns the error if any of the elements is an Err.
@@ -558,7 +561,7 @@ where
     fn collect<C>(self) -> Result<C, Self::Err>
     where
         Self: Sized,
-        C: ParCollectInto<Self::Ok>,
+        C: ParCollectInto<Self::Item>,
     {
         let output = C::empty(self.con_iter_len());
         self.collect_into(output)
@@ -609,10 +612,10 @@ where
     ///     .reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, Err('!'));
     /// ```
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Ok>, Self::Err>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Err>
     where
-        Self::Ok: Send,
-        Reduce: Fn(Self::Ok, Self::Ok) -> Self::Ok + Sync;
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync;
 
     /// Tests if every element of the iterator matches a predicate.
     /// Early exits and returns the error if any of the elements is an Err.
@@ -670,10 +673,10 @@ where
     fn all<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Send,
-        Predicate: Fn(&Self::Ok) -> bool + Sync,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
-        let violates = |x: &Self::Ok| !predicate(x);
+        let violates = |x: &Self::Item| !predicate(x);
         self.find(violates).map(|x| x.is_none())
     }
 
@@ -734,8 +737,8 @@ where
     fn any<Predicate>(self, predicate: Predicate) -> Result<bool, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Send,
-        Predicate: Fn(&Self::Ok) -> bool + Sync,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.find(predicate).map(|x| x.is_some())
     }
@@ -815,7 +818,7 @@ where
     fn for_each<Operation>(self, operation: Operation) -> Result<(), Self::Err>
     where
         Self: Sized,
-        Operation: Fn(Self::Ok) + Sync,
+        Operation: Fn(Self::Item) + Sync,
     {
         let map = |x| operation(x);
         self.map(map).reduce(reduce_unit).map(|_| ())
@@ -839,10 +842,10 @@ where
     /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
     /// assert_eq!(c.par().copied().into_fallible_result().max(), Err('x'));
     /// ```
-    fn max(self) -> Result<Option<Self::Ok>, Self::Err>
+    fn max(self) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Ord + Send,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::max)
     }
@@ -881,11 +884,11 @@ where
     ///     Err('x')
     /// );
     /// ```
-    fn max_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Err>
+    fn max_by<Compare>(self, compare: Compare) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Send,
-        Compare: Fn(&Self::Ok, &Self::Ok) -> Ordering + Sync,
+        Self::Item: Send,
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
@@ -930,12 +933,12 @@ where
     ///     Err('x')
     /// );
     /// ```
-    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Result<Option<Self::Ok>, Self::Err>
+    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Send,
+        Self::Item: Send,
         Key: Ord,
-        GetKey: Fn(&Self::Ok) -> Key + Sync,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
     {
         let reduce = |x, y| match key(&x).cmp(&key(&y)) {
             Ordering::Greater | Ordering::Equal => x,
@@ -962,10 +965,10 @@ where
     /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
     /// assert_eq!(c.par().copied().into_fallible_result().min(), Err('x'));
     /// ```
-    fn min(self) -> Result<Option<Self::Ok>, Self::Err>
+    fn min(self) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Ord + Send,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::min)
     }
@@ -1004,11 +1007,11 @@ where
     ///     Err('x')
     /// );
     /// ```
-    fn min_by<Compare>(self, compare: Compare) -> Result<Option<Self::Ok>, Self::Err>
+    fn min_by<Compare>(self, compare: Compare) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Send,
-        Compare: Fn(&Self::Ok, &Self::Ok) -> Ordering + Sync,
+        Self::Item: Send,
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
             Ordering::Less | Ordering::Equal => x,
@@ -1053,12 +1056,12 @@ where
     ///     Err('x')
     /// );
     /// ```
-    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Result<Option<Self::Ok>, Self::Err>
+    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Send,
+        Self::Item: Send,
         Key: Ord,
-        GetKey: Fn(&Self::Ok) -> Key + Sync,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
     {
         let reduce = |x, y| match get_key(&x).cmp(&get_key(&y)) {
             Ordering::Less | Ordering::Equal => x,
@@ -1111,12 +1114,12 @@ where
     fn sum<Out>(self) -> Result<Out, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Sum<Out>,
+        Self::Item: Sum<Out>,
         Out: Send,
     {
-        self.map(Self::Ok::map)
-            .reduce(Self::Ok::reduce)
-            .map(|x| x.unwrap_or(Self::Ok::zero()))
+        self.map(Self::Item::map)
+            .reduce(Self::Item::reduce)
+            .map(|x| x.unwrap_or(Self::Item::zero()))
     }
 
     // early exit
@@ -1150,9 +1153,9 @@ where
     /// // depends on whichever is observed first in parallel execution
     /// assert!(result == Ok(Some(1)) || result == Err('x'));
     /// ```
-    fn first(self) -> Result<Option<Self::Ok>, Self::Err>
+    fn first(self) -> Result<Option<Self::Item>, Self::Err>
     where
-        Self::Ok: Send;
+        Self::Item: Send;
 
     /// Returns the first (or any) element of the iterator that satisfies the `predicate`.
     /// If the iterator is empty, `Ok(None)` is returned.
@@ -1189,11 +1192,11 @@ where
     /// // depends on whichever is observed first in parallel execution
     /// assert!(result == Ok(Some(3)) || result == Err('x'));
     /// ```
-    fn find<Predicate>(self, predicate: Predicate) -> Result<Option<Self::Ok>, Self::Err>
+    fn find<Predicate>(self, predicate: Predicate) -> Result<Option<Self::Item>, Self::Err>
     where
         Self: Sized,
-        Self::Ok: Send,
-        Predicate: Fn(&Self::Ok) -> bool + Sync,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.filter(&predicate).first()
     }

@@ -8,7 +8,7 @@ pub trait ParIterOption<R = DefaultRunner>
 where
     R: ParallelRunner,
 {
-    type Success;
+    type Item;
 
     // params transformations
 
@@ -18,82 +18,73 @@ where
 
     fn iteration_order(self, order: IterationOrder) -> Self;
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Success = Self::Success>;
+    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Item = Self::Item>;
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterOption<R, Success = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterOption<R, Item = Out>
     where
         Self: Sized,
-        Map: Fn(Self::Success) -> Out + Sync + Clone,
+        Map: Fn(Self::Item) -> Out + Sync + Clone,
         Out: Send;
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterOption<R, Success = Self::Success>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterOption<R, Item = Self::Item>
     where
         Self: Sized,
-        Filter: Fn(&Self::Success) -> bool + Sync + Clone,
-        Self::Success: Send;
+        Filter: Fn(&Self::Item) -> bool + Sync + Clone,
+        Self::Item: Send;
 
-    fn flat_map<IOut, FlatMap>(
-        self,
-        flat_map: FlatMap,
-    ) -> impl ParIterOption<R, Success = IOut::Item>
+    fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIterOption<R, Item = IOut::Item>
     where
         Self: Sized,
         IOut: IntoIterator,
         IOut::Item: Send,
-        FlatMap: Fn(Self::Success) -> IOut + Sync + Clone;
+        FlatMap: Fn(Self::Item) -> IOut + Sync + Clone;
 
-    fn filter_map<Out, FilterMap>(
-        self,
-        filter_map: FilterMap,
-    ) -> impl ParIterOption<R, Success = Out>
+    fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIterOption<R, Item = Out>
     where
         Self: Sized,
-        FilterMap: Fn(Self::Success) -> Option<Out> + Sync + Clone,
+        FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
         Out: Send;
 
-    fn inspect<Operation>(
-        self,
-        operation: Operation,
-    ) -> impl ParIterOption<R, Success = Self::Success>
+    fn inspect<Operation>(self, operation: Operation) -> impl ParIterOption<R, Item = Self::Item>
     where
         Self: Sized,
-        Operation: Fn(&Self::Success) + Sync + Clone,
-        Self::Success: Send;
+        Operation: Fn(&Self::Item) + Sync + Clone,
+        Self::Item: Send;
 
     // collect
 
     fn collect_into<C>(self, output: C) -> Option<C>
     where
-        C: ParCollectInto<Self::Success>;
+        C: ParCollectInto<Self::Item>;
 
     fn collect<C>(self) -> Option<C>
     where
-        C: ParCollectInto<Self::Success>;
+        C: ParCollectInto<Self::Item>;
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Option<Self::Success>>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Option<Self::Item>>
     where
-        Self::Success: Send,
-        Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync;
+        Self::Item: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync;
 
     fn all<Predicate>(self, predicate: Predicate) -> Option<bool>
     where
         Self: Sized,
-        Self::Success: Send,
-        Predicate: Fn(&Self::Success) -> bool + Sync,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
-        let violates = |x: &Self::Success| !predicate(x);
+        let violates = |x: &Self::Item| !predicate(x);
         self.find(violates).map(|x| x.is_none())
     }
 
     fn any<Predicate>(self, predicate: Predicate) -> Option<bool>
     where
         Self: Sized,
-        Self::Success: Send,
-        Predicate: Fn(&Self::Success) -> bool + Sync,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.find(predicate).map(|x| x.is_some())
     }
@@ -110,25 +101,25 @@ where
     fn for_each<Operation>(self, operation: Operation) -> Option<()>
     where
         Self: Sized,
-        Operation: Fn(Self::Success) + Sync,
+        Operation: Fn(Self::Item) + Sync,
     {
         let map = |x| operation(x);
         self.map(map).reduce(reduce_unit).map(|_| ())
     }
 
-    fn max(self) -> Option<Option<Self::Success>>
+    fn max(self) -> Option<Option<Self::Item>>
     where
         Self: Sized,
-        Self::Success: Ord + Send,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::max)
     }
 
-    fn max_by<Compare>(self, compare: Compare) -> Option<Option<Self::Success>>
+    fn max_by<Compare>(self, compare: Compare) -> Option<Option<Self::Item>>
     where
         Self: Sized,
-        Self::Success: Send,
-        Compare: Fn(&Self::Success, &Self::Success) -> Ordering + Sync,
+        Self::Item: Send,
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
@@ -137,12 +128,12 @@ where
         self.reduce(reduce)
     }
 
-    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Option<Self::Success>>
+    fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Option<Self::Item>>
     where
         Self: Sized,
-        Self::Success: Send,
+        Self::Item: Send,
         Key: Ord,
-        GetKey: Fn(&Self::Success) -> Key + Sync,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
     {
         let reduce = |x, y| match key(&x).cmp(&key(&y)) {
             Ordering::Greater | Ordering::Equal => x,
@@ -151,19 +142,19 @@ where
         self.reduce(reduce)
     }
 
-    fn min(self) -> Option<Option<Self::Success>>
+    fn min(self) -> Option<Option<Self::Item>>
     where
         Self: Sized,
-        Self::Success: Ord + Send,
+        Self::Item: Ord + Send,
     {
         self.reduce(Ord::min)
     }
 
-    fn min_by<Compare>(self, compare: Compare) -> Option<Option<Self::Success>>
+    fn min_by<Compare>(self, compare: Compare) -> Option<Option<Self::Item>>
     where
         Self: Sized,
-        Self::Success: Send,
-        Compare: Fn(&Self::Success, &Self::Success) -> Ordering + Sync,
+        Self::Item: Send,
+        Compare: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
     {
         let reduce = |x, y| match compare(&x, &y) {
             Ordering::Less | Ordering::Equal => x,
@@ -172,12 +163,12 @@ where
         self.reduce(reduce)
     }
 
-    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Option<Self::Success>>
+    fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Option<Self::Item>>
     where
         Self: Sized,
-        Self::Success: Send,
+        Self::Item: Send,
         Key: Ord,
-        GetKey: Fn(&Self::Success) -> Key + Sync,
+        GetKey: Fn(&Self::Item) -> Key + Sync,
     {
         let reduce = |x, y| match get_key(&x).cmp(&get_key(&y)) {
             Ordering::Less | Ordering::Equal => x,
@@ -189,25 +180,25 @@ where
     fn sum<Out>(self) -> Option<Out>
     where
         Self: Sized,
-        Self::Success: Sum<Out>,
+        Self::Item: Sum<Out>,
         Out: Send,
     {
-        self.map(Self::Success::map)
-            .reduce(Self::Success::reduce)
-            .map(|x| x.unwrap_or(Self::Success::zero()))
+        self.map(Self::Item::map)
+            .reduce(Self::Item::reduce)
+            .map(|x| x.unwrap_or(Self::Item::zero()))
     }
 
     // early exit
 
-    fn first(self) -> Option<Option<Self::Success>>
+    fn first(self) -> Option<Option<Self::Item>>
     where
-        Self::Success: Send;
+        Self::Item: Send;
 
-    fn find<Predicate>(self, predicate: Predicate) -> Option<Option<Self::Success>>
+    fn find<Predicate>(self, predicate: Predicate) -> Option<Option<Self::Item>>
     where
         Self: Sized,
-        Self::Success: Send,
-        Predicate: Fn(&Self::Success) -> bool + Sync,
+        Self::Item: Send,
+        Predicate: Fn(&Self::Item) -> bool + Sync,
     {
         self.filter(&predicate).first()
     }

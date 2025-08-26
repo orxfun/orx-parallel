@@ -502,20 +502,19 @@ where
 
     // transformations into fallible computations
 
-    fn into_fallible_result<Success, Error>(
-        self,
-    ) -> impl ParIterResult<R, Ok = Success, Err = Error>
+    /// Transforms the `ParIter<Item = Result<T, E>>` into
+    fn into_fallible_result<Ok, Err>(self) -> impl ParIterResult<R, Item = Ok, Err = Err>
     where
-        Self::Item: IntoResult<Success, Error>,
-        Error: Send,
+        Self::Item: IntoResult<Ok, Err>,
+        Err: Send,
         Self::Item: Send,
-        Success: Send;
+        Ok: Send;
 
-    fn into_fallible_option<Success>(self) -> impl ParIterOption<R, Success = Success>
+    fn into_fallible_option<Some>(self) -> impl ParIterOption<R, Item = Some>
     where
-        Self::Item: IntoOption<Success>,
+        Self::Item: IntoOption<Some>,
         Self::Item: Send,
-        Success: Send,
+        Some: Send,
     {
         ParOption::new(
             self.map(|x| x.into_result_with_unit_err())
