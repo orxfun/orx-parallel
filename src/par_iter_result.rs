@@ -11,6 +11,30 @@ fn abc() {
     use crate::*;
 
     // all succeeds
+    let words: Vec<Result<&str, char>> = vec![Ok("alpha"), Ok("beta"), Ok("gamma")];
+
+    let all_chars: Result<Vec<_>, _> = words
+        .into_par()
+        .into_fallible_result()
+        .flat_map(|s| s.chars()) // chars() returns an iterator
+        .collect();
+
+    let merged: Result<String, _> = all_chars.map(|chars| chars.iter().collect());
+    assert_eq!(merged, Ok("alphabetagamma".to_string()));
+
+    // at least one fails
+    let words: Vec<Result<&str, char>> = vec![Ok("alpha"), Ok("beta"), Err('x'), Ok("gamma")];
+
+    let all_chars: Result<Vec<_>, _> = words
+        .into_par()
+        .into_fallible_result()
+        .flat_map(|s| s.chars()) // chars() returns an iterator
+        .collect();
+
+    let merged: Result<String, _> = all_chars.map(|chars| chars.iter().collect());
+    assert_eq!(merged, Err('x'));
+
+    // all succeeds
     let a: Vec<Result<u32, char>> = vec![Ok(1), Ok(2), Ok(3)];
     let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
 
@@ -303,6 +327,37 @@ where
         filter_map.into_fallible_result()
     }
 
+    /// Creates an iterator that works like map, but flattens nested structure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    /// let words: Vec<Result<&str, char>> = vec![Ok("alpha"), Ok("beta"), Ok("gamma")];
+    ///
+    /// let all_chars: Result<Vec<_>, _> = words
+    ///     .into_par()
+    ///     .into_fallible_result()
+    ///     .flat_map(|s| s.chars()) // chars() returns an iterator
+    ///     .collect();
+    ///
+    /// let merged: Result<String, _> = all_chars.map(|chars| chars.iter().collect());
+    /// assert_eq!(merged, Ok("alphabetagamma".to_string()));
+    ///
+    /// // at least one fails
+    /// let words: Vec<Result<&str, char>> = vec![Ok("alpha"), Ok("beta"), Err('x'), Ok("gamma")];
+    ///
+    /// let all_chars: Result<Vec<_>, _> = words
+    ///     .into_par()
+    ///     .into_fallible_result()
+    ///     .flat_map(|s| s.chars()) // chars() returns an iterator
+    ///     .collect();
+    ///
+    /// let merged: Result<String, _> = all_chars.map(|chars| chars.iter().collect());
+    /// assert_eq!(merged, Err('x'));
+    /// ```
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
