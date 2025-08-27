@@ -473,11 +473,100 @@ where
 
     // reduce
 
+    /// Reduces the elements to a single one, by repeatedly applying a reducing operation.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// If the iterator is empty, returns `Some(None)`; otherwise, returns `Some` of result of the reduction.
+    ///
+    /// The `reduce` function is a closure with two arguments: an ‘accumulator’, and an element.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    /// let reduced: Option<Option<u32>> = (1..10)
+    ///     .par()
+    ///     .map(|x| 100u32.checked_div(x as u32))
+    ///     .into_fallible_option()
+    ///     .reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, Some(Some(281)));
+    ///
+    /// // all succeeds - empty iterator
+    /// let reduced: Option<Option<u32>> = (1..1)
+    ///     .par()
+    ///     .map(|x| 100u32.checked_div(x as u32))
+    ///     .into_fallible_option()
+    ///     .reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, Some(None));
+    ///
+    /// // at least one fails
+    /// let reduced: Option<Option<u32>> = (0..10)
+    ///     .par()
+    ///     .map(|x| 100u32.checked_div(x as u32))
+    ///     .into_fallible_option()
+    ///     .reduce(|acc, e| acc + e);
+    /// assert_eq!(reduced, None);
+    /// ```
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync;
 
+    /// Tests if every element of the iterator matches a predicate.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// `all` takes a `predicate` that returns true or false.
+    /// It applies this closure to each Ok element of the iterator,
+    /// and if they all return true, then so does `all`.
+    /// If any of them returns false, it returns false.
+    ///
+    /// Note that `all` computation is itself also short-circuiting; in other words, it will stop processing as soon as it finds a false,
+    /// given that no matter what else happens, the result will also be false.
+    ///
+    /// Therefore, in case the fallible iterator contains both a None element and a Some element which violates the `predicate`,
+    /// the result is **not deterministic**. It might be the `None` if it is observed first; or `Some(false)` if the violation is observed first.
+    ///
+    /// On the other hand, when it returns `Some(true)`, we are certain that all elements are of `Some` variant and all satisfy the `predicate`.
+    ///
+    /// An empty iterator returns `Some(true)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all Some
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .all(|x| *x > 0);
+    /// assert_eq!(result, Some(true));
+    ///
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .all(|x| *x > 1);
+    /// assert_eq!(result, Some(false));
+    ///
+    /// let result = Vec::<&str>::new()
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .all(|x| *x > 1);
+    /// assert_eq!(result, Some(true)); // empty iterator
+    ///
+    /// // at least one None
+    /// let result = vec!["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .all(|x| *x > 0);
+    /// assert_eq!(result, None);
+    /// ```
     fn all<Predicate>(self, predicate: Predicate) -> Option<bool>
     where
         Self: Sized,
@@ -488,6 +577,60 @@ where
         self.find(violates).map(|x| x.is_none())
     }
 
+    /// Tests if any element of the iterator matches a predicate.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// `any` takes a `predicate` that returns true or false.
+    /// It applies this closure to each element of the iterator,
+    /// and if any of the elements returns true, then so does `any`.
+    /// If all of them return false, it returns false.
+    ///
+    /// Note that `any` computation is itself also short-circuiting; in other words, it will stop processing as soon as it finds a true,
+    /// given that no matter what else happens, the result will also be true.
+    ///
+    /// Therefore, in case the fallible iterator contains both a None element and a Some element which satisfies the `predicate`,
+    /// the result is **not deterministic**. It might be the `None` if it is observed first; or `Some(true)` if element satisfying the predicate
+    /// is observed first.
+    ///
+    /// On the other hand, when it returns `Some(false)`, we are certain that all elements are of `Some` variant and none of them satisfies the `predicate`.
+    ///
+    /// An empty iterator returns `Some(false)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all Some
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .any(|x| *x > 1);
+    /// assert_eq!(result, Some(true));
+    ///
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .any(|x| *x > 3);
+    /// assert_eq!(result, Some(false));
+    ///
+    /// let result = Vec::<&str>::new()
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .any(|x| *x > 1);
+    /// assert_eq!(result, Some(false)); // empty iterator
+    ///
+    /// // at least one None
+    /// let result = vec!["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .any(|x| *x > 5);
+    /// assert_eq!(result, None);
+    /// ```
     fn any<Predicate>(self, predicate: Predicate) -> Option<bool>
     where
         Self: Sized,
@@ -497,6 +640,32 @@ where
         self.find(predicate).map(|x| x.is_some())
     }
 
+    /// Consumes the iterator, counting the number of iterations and returning it.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all Some
+    /// let result = vec!["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .filter(|x| *x >= 2)
+    ///     .count();
+    /// assert_eq!(result, Some(2));
+    ///
+    /// // at least one None
+    /// let result = vec!["x!", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .filter(|x| *x >= 2)
+    ///     .count();
+    /// assert_eq!(result, None);
+    /// ```
     fn count(self) -> Option<usize>
     where
         Self: Sized,
@@ -506,6 +675,43 @@ where
             .map(|x| x.unwrap_or(0))
     }
 
+    /// Calls a closure on each element of an iterator, and returns `Ok(())` if all elements succeed.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use std::sync::mpsc::channel;
+    ///
+    /// // all Some
+    /// let (tx, rx) = channel();
+    /// let result = vec!["0", "1", "2", "3", "4"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 2 + 1)
+    ///     .for_each(move |x| tx.send(x).unwrap());
+    ///
+    /// assert_eq!(result, Some(()));
+    ///
+    /// let mut v: Vec<_> = rx.iter().collect();
+    /// v.sort(); // order can be mixed, since messages will be sent in parallel
+    /// assert_eq!(v, vec![1, 3, 5, 7, 9]);
+    ///
+    /// // at least one None
+    /// let (tx, _rx) = channel();
+    /// let result = vec!["0", "1", "2", "x!", "4"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 2 + 1)
+    ///     .for_each(move |x| tx.send(x).unwrap());
+    ///
+    /// assert_eq!(result, None);
+    /// ```
     fn for_each<Operation>(self, operation: Operation) -> Option<()>
     where
         Self: Sized,
@@ -515,6 +721,24 @@ where
         self.map(map).reduce(reduce_unit).map(|_| ())
     }
 
+    /// Returns Some of maximum element of an iterator if all elements succeed.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![Some(1), Some(2), Some(3)];
+    /// assert_eq!(a.par().copied().into_fallible_option().max(), Some(Some(3)));
+    ///
+    /// let b: Vec<Option<i32>> = vec![];
+    /// assert_eq!(b.par().copied().into_fallible_option().max(), Some(None));
+    ///
+    /// let c = vec![Some(1), Some(2), None];
+    /// assert_eq!(c.par().copied().into_fallible_option().max(), None);
+    /// ```
     fn max(self) -> Option<Option<Self::Item>>
     where
         Self: Sized,
@@ -523,6 +747,40 @@ where
         self.reduce(Ord::max)
     }
 
+    /// Returns the element that gives the maximum value with respect to the specified `compare` function.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .max_by(|a, b| a.cmp(b)),
+    ///     Some(Some(3))
+    /// );
+    ///
+    /// let b: Vec<Option<i32>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .max_by(|a, b| a.cmp(b)),
+    ///     Some(None)
+    /// );
+    ///
+    /// let c: Vec<Option<i32>> = vec![Some(1), Some(2), None];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .max_by(|a, b| a.cmp(b)),
+    ///     None
+    /// );
+    /// ```
     fn max_by<Compare>(self, compare: Compare) -> Option<Option<Self::Item>>
     where
         Self: Sized,
@@ -536,6 +794,42 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the element that gives the maximum value from the specified function.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(-1), Some(2), Some(-3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .max_by_key(|x| x.abs()),
+    ///     Some(Some(-3))
+    /// );
+    ///
+    /// let b: Vec<Option<i32>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .max_by_key(|x| x.abs()),
+    ///     Some(None)
+    /// );
+    ///
+    /// let c: Vec<Option<i32>> = vec![Some(1), Some(2), None];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .max_by_key(|x| x.abs()),
+    ///     None
+    /// );
+    /// ```
     fn max_by_key<Key, GetKey>(self, key: GetKey) -> Option<Option<Self::Item>>
     where
         Self: Sized,
@@ -550,6 +844,24 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns Some of minimum element of an iterator if all elements succeed.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec![Some(1), Some(2), Some(3)];
+    /// assert_eq!(a.par().copied().into_fallible_option().min(), Some(Some(1)));
+    ///
+    /// let b: Vec<Option<i32>> = vec![];
+    /// assert_eq!(b.par().copied().into_fallible_option().min(), Some(None));
+    ///
+    /// let c = vec![Some(1), Some(2), None];
+    /// assert_eq!(c.par().copied().into_fallible_option().min(), None);
+    /// ```
     fn min(self) -> Option<Option<Self::Item>>
     where
         Self: Sized,
@@ -558,6 +870,40 @@ where
         self.reduce(Ord::min)
     }
 
+    /// Returns the element that gives the minimum value with respect to the specified `compare` function.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .min_by(|a, b| a.cmp(b)),
+    ///     Some(Some(1))
+    /// );
+    ///
+    /// let b: Vec<Option<i32>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .min_by(|a, b| a.cmp(b)),
+    ///     Some(None)
+    /// );
+    ///
+    /// let c: Vec<Option<i32>> = vec![Some(1), Some(2), None];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .min_by(|a, b| a.cmp(b)),
+    ///     None
+    /// );
+    /// ```
     fn min_by<Compare>(self, compare: Compare) -> Option<Option<Self::Item>>
     where
         Self: Sized,
@@ -571,6 +917,42 @@ where
         self.reduce(reduce)
     }
 
+    /// Returns the element that gives the minimum value from the specified function.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(-1), Some(2), Some(-3)];
+    /// assert_eq!(
+    ///     a.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .min_by_key(|x| x.abs()),
+    ///     Some(Some(-1))
+    /// );
+    ///
+    /// let b: Vec<Option<i32>> = vec![];
+    /// assert_eq!(
+    ///     b.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .min_by_key(|x| x.abs()),
+    ///     Some(None)
+    /// );
+    ///
+    /// let c: Vec<Option<i32>> = vec![Some(1), Some(2), None];
+    /// assert_eq!(
+    ///     c.par()
+    ///         .copied()
+    ///         .into_fallible_option()
+    ///         .min_by_key(|x| x.abs()),
+    ///     None
+    /// );
+    /// ```
     fn min_by_key<Key, GetKey>(self, get_key: GetKey) -> Option<Option<Self::Item>>
     where
         Self: Sized,
@@ -585,6 +967,40 @@ where
         self.reduce(reduce)
     }
 
+    /// Sums the elements of an iterator.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// If the iterator is empty, returns zero; otherwise, returns `Some` of the sum.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    /// let reduced: Option<u32> = (1..10)
+    ///     .par()
+    ///     .map(|x| 100u32.checked_div(x as u32))
+    ///     .into_fallible_option()
+    ///     .sum();
+    /// assert_eq!(reduced, Some(281));
+    ///
+    /// // all succeeds - empty iterator
+    /// let reduced: Option<u32> = (1..1)
+    ///     .par()
+    ///     .map(|x| 100u32.checked_div(x as u32))
+    ///     .into_fallible_option()
+    ///     .sum();
+    /// assert_eq!(reduced, Some(0));
+    ///
+    /// // at least one fails
+    /// let reduced: Option<u32> = (0..10)
+    ///     .par()
+    ///     .map(|x| 100u32.checked_div(x as u32))
+    ///     .into_fallible_option()
+    ///     .sum();
+    /// assert_eq!(reduced, None);
+    /// ```
     fn sum<Out>(self) -> Option<Out>
     where
         Self: Sized,
