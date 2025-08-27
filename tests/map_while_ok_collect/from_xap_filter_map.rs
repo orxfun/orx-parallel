@@ -13,7 +13,7 @@ fn map_while_ok_from_xap_filter_map_when_ok() {
         .into_par()
         .filter_map(filter_map)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
     let expected = Ok((0..1024).filter_map(filter_map).collect::<Vec<_>>());
 
@@ -35,7 +35,7 @@ fn map_while_ok_from_xap_filter_map_when_error() {
         .into_par()
         .filter_map(filter_map)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     let result = result.map_err(|e| {
@@ -59,7 +59,7 @@ fn map_while_ok_from_xap_filter_map_whilst_when_ok() {
         .filter_map(filter_map)
         .take_while(|i| i < &777)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
     let expected = Ok((0..1024)
         .filter_map(filter_map)
@@ -85,7 +85,7 @@ fn map_while_ok_from_xap_filter_map_whilst_when_error() {
         .filter_map(filter_map)
         .take_while(|i| i < &777)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     let result = result.map_err(|e| {
@@ -110,7 +110,7 @@ fn map_while_ok_from_xap_filter_map_whilst_when_error_out_of_reach() {
         .filter_map(filter_map)
         .take_while(|i| i < &777)
         .map(map_res)
-        .into_fallible()
+        .into_fallible_result()
         .collect();
 
     let expected = Ok((0..1024)

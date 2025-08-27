@@ -12,7 +12,6 @@ where
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
-    E: Send,
 {
     par: ParMap<I, O, M1, R>,
     phantom: PhantomData<(T, E)>,
@@ -24,7 +23,6 @@ where
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
-    E: Send,
 {
     pub(crate) fn new(par: ParMap<I, O, M1, R>) -> Self {
         Self {
@@ -40,11 +38,10 @@ where
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
-    E: Send,
 {
-    type Success = T;
+    type Item = T;
 
-    type Error = E;
+    type Err = E;
 
     type RegularItem = O;
 
@@ -69,7 +66,7 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterResult<Q, Success = Self::Success, Error = Self::Error> {
+    ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
         let (params, iter, m1) = self.par.destruct();
         ParMapResult {
             par: ParMap::new(params, iter, m1),
@@ -79,9 +76,11 @@ where
 
     // collect
 
-    fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
+    fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
-        C: ParCollectInto<Self::Success>,
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+        Self::Err: Send,
     {
         let (params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
@@ -91,10 +90,11 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Success>, Self::Error>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Err>
     where
-        Self::Success: Send,
-        Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync,
+        Self::Item: Send,
+        Self::Err: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
@@ -104,9 +104,10 @@ where
 
     // early exit
 
-    fn first(self) -> Result<Option<Self::Success>, Self::Error>
+    fn first(self) -> Result<Option<Self::Item>, Self::Err>
     where
-        Self::Success: Send,
+        Self::Item: Send,
+        Self::Err: Send,
     {
         let (params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();

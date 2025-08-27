@@ -1,9 +1,9 @@
 use crate::computational_variants::ParXap;
 use crate::computations::X;
-use crate::par_iter_result::{IntoResult, ParIterResult};
-use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
+use crate::par_iter_result::{IntoResult, ParIterResult};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -15,7 +15,6 @@ where
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
     M1: Fn(I::Item) -> Vo + Sync,
-    E: Send,
 {
     par: ParXap<I, Vo, M1, R>,
     phantom: PhantomData<(T, E)>,
@@ -28,7 +27,6 @@ where
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
     M1: Fn(I::Item) -> Vo + Sync,
-    E: Send,
 {
     pub(crate) fn new(par: ParXap<I, Vo, M1, R>) -> Self {
         Self {
@@ -45,13 +43,10 @@ where
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
     M1: Fn(I::Item) -> Vo + Sync,
-    E: Send,
-    T: Send,
-    Vo::Item: Send,
 {
-    type Success = T;
+    type Item = T;
 
-    type Error = E;
+    type Err = E;
 
     type RegularItem = Vo::Item;
 
@@ -76,7 +71,7 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
-    ) -> impl ParIterResult<Q, Success = Self::Success, Error = Self::Error> {
+    ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
         let (params, iter, m1) = self.par.destruct();
         ParXapResult {
             par: ParXap::new(params, iter, m1),
@@ -86,9 +81,12 @@ where
 
     // collect
 
-    fn collect_into<C>(self, output: C) -> Result<C, Self::Error>
+    fn collect_into<C>(self, output: C) -> Result<C, Self::Err>
     where
-        C: ParCollectInto<Self::Success>,
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+        Self::Err: Send,
+        Self::Err: Send,
     {
         let (params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
@@ -98,10 +96,11 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Success>, Self::Error>
+    fn reduce<Reduce>(self, reduce: Reduce) -> Result<Option<Self::Item>, Self::Err>
     where
-        Self::Success: Send,
-        Reduce: Fn(Self::Success, Self::Success) -> Self::Success + Sync,
+        Self::Item: Send,
+        Self::Err: Send,
+        Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
@@ -111,9 +110,10 @@ where
 
     // early exit
 
-    fn first(self) -> Result<Option<Self::Success>, Self::Error>
+    fn first(self) -> Result<Option<Self::Item>, Self::Err>
     where
-        Self::Success: Send,
+        Self::Item: Send,
+        Self::Err: Send,
     {
         let (params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());

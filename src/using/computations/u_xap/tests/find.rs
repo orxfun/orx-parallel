@@ -1,7 +1,7 @@
 use crate::{
     DefaultRunner, Params,
-    using::{UsingClone, computations::UX},
     generic_values::Vector,
+    using::{UsingClone, computations::UX},
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
