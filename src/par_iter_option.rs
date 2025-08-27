@@ -385,11 +385,87 @@ where
 
     // collect
 
+    /// Collects all the items from an iterator into a collection iff all elements are of Some variant.
+    /// Early exits and returns None if any of the elements is None.
+    ///
+    /// This is useful when you already have a collection and want to add the iterator items to it.
+    ///
+    /// The collection is passed in as owned value, and returned back with the additional elements.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let vec: Vec<i32> = vec![0, 1];
+    ///
+    /// // all succeeds
+    /// let result = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 10)
+    ///     .collect_into(vec);
+    /// assert_eq!(result, Some(vec![0, 1, 10, 20, 30]));
+    ///
+    /// let vec = result.unwrap();
+    ///
+    /// // at least one fails
+    ///
+    /// let result = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 10)
+    ///     .collect_into(vec);
+    /// assert_eq!(result, None);
+    /// ```
     fn collect_into<C>(self, output: C) -> Option<C>
     where
         Self::Item: Send,
         C: ParCollectInto<Self::Item>;
 
+    /// Transforms an iterator into a collection iff all elements are of Ok variant.
+    /// Early exits and returns the error if any of the elements is an Err.
+    ///
+    /// Similar to [`Iterator::collect`], the type annotation on the left-hand-side determines
+    /// the type of the result collection; or turbofish annotation can be used.
+    ///
+    /// All collections implementing [`ParCollectInto`] can be used to collect into.
+    ///
+    /// [`ParCollectInto`]: crate::ParCollectInto
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    ///
+    /// let result_doubled: Option<Vec<i32>> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert_eq!(result_doubled, Some(vec![2, 4, 6]));
+    ///
+    /// // at least one fails
+    ///
+    /// let result_doubled: Option<Vec<i32>> = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert_eq!(result_doubled, None);
+    /// ```
     fn collect<C>(self) -> Option<C>
     where
         Self::Item: Send,
