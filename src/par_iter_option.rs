@@ -1014,10 +1014,75 @@ where
 
     // early exit
 
+    /// Returns the first (or any) element of the iterator.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if a None element is observed first.
+    ///
+    /// * first element is returned if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element is returned if `IterationOrder::Arbitrary` is set.
+    ///
+    /// Note that `find` itself is short-circuiting in addition to fallible computation.
+    /// Therefore, in case the fallible iterator contains both a None and a Some element,
+    /// the result is **not deterministic**:
+    /// * it might be the `None` if it is observed first;
+    /// * or `Some(element)` if the Some element is observed first.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let a: Vec<Option<i32>> = vec![];
+    /// assert_eq!(a.par().copied().into_fallible_option().first(), Some(None));
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
+    /// assert_eq!(
+    ///     a.par().copied().into_fallible_option().first(),
+    ///     Some(Some(1))
+    /// );
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(1), None, Some(3)];
+    /// let result = a.par().copied().into_fallible_option().first();
+    /// // depends on whichever is observed first in parallel execution
+    /// assert!(result == Some(Some(1)) || result == None);
+    /// ```
     fn first(self) -> Option<Option<Self::Item>>
     where
         Self::Item: Send;
 
+    /// Returns the first (or any) element of the iterator that satisfies the `predicate`.
+    /// If the iterator is empty, `Some(None)` is returned.
+    /// Early exits and returns None if a None element is observed first.
+    ///
+    /// * first element is returned if default iteration order `IterationOrder::Ordered` is used,
+    /// * any element is returned if `IterationOrder::Arbitrary` is set.
+    ///
+    /// Note that `find` itself is short-circuiting in addition to fallible computation.
+    /// Therefore, in case the fallible iterator contains both a None and a Some element,
+    /// the result is **not deterministic**:
+    /// * it might be the `None` if it is observed first;
+    /// * or `Some(element)` if the Some element satisfying the predicate is observed first.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a: Vec<Option<i32>> = vec![];
+    /// assert_eq!(
+    ///     a.par().copied().into_fallible_option().find(|x| *x > 2),
+    ///     Some(None)
+    /// );
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
+    /// assert_eq!(
+    ///     a.par().copied().into_fallible_option().find(|x| *x > 2),
+    ///     Some(Some(3))
+    /// );
+    ///
+    /// let a: Vec<Option<i32>> = vec![Some(1), None, Some(3)];
+    /// let result = a.par().copied().into_fallible_option().find(|x| *x > 2);
+    /// // depends on whichever is observed first in parallel execution
+    /// assert!(result == Some(Some(3)) || result == None);
+    /// ```
     fn find<Predicate>(self, predicate: Predicate) -> Option<Option<Self::Item>>
     where
         Self: Sized,

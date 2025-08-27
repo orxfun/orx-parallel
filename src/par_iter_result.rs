@@ -1188,7 +1188,7 @@ where
     /// Therefore, in case the fallible iterator contains both an Err and an Ok element,
     /// the result is **not deterministic**:
     /// * it might be the `Err` if it is observed first;
-    /// * or `Ok(element)` if the Ok element is observed first.
+    /// * or `Ok(element)` if the Ok element satisfying the predicate is observed first.
     ///
     /// # Examples
     ///
@@ -1232,63 +1232,4 @@ impl<T, E> IntoResult<T, E> for Result<T, E> {
     fn into_result(self) -> Result<T, E> {
         self
     }
-}
-
-#[test]
-fn abc() {
-    use crate::*;
-    use orx_concurrent_bag::*;
-    use std::num::ParseIntError;
-
-    // all succeeds
-    let a: Vec<Option<u32>> = ["1", "4", "2", "3"]
-        .into_iter()
-        .map(|x| x.parse::<u32>().ok())
-        .collect();
-
-    // let's add some inspect() calls to investigate what's happening
-    // - log some events
-    // - use a concurrent bag to collect and investigate numbers contributing to the sum
-    let bag = ConcurrentBag::new();
-
-    let sum = a
-        .par()
-        .cloned()
-        .into_fallible_option()
-        .inspect(|x| println!("about to filter: {x}"))
-        .filter(|x| x % 2 == 0)
-        .inspect(|x| {
-            bag.push(*x);
-            println!("made it through filter: {x}");
-        })
-        .sum();
-    assert_eq!(sum, Some(4 + 2));
-
-    let mut values_made_through = bag.into_inner();
-    values_made_through.sort();
-    assert_eq!(values_made_through, [2, 4]);
-
-    // at least one fails
-    let a: Vec<Option<u32>> = ["1", "4", "x", "3"]
-        .into_iter()
-        .map(|x| x.parse::<u32>().ok())
-        .collect();
-
-    // let's add some inspect() calls to investigate what's happening
-    // - log some events
-    // - use a concurrent bag to collect and investigate numbers contributing to the sum
-    let bag = ConcurrentBag::new();
-
-    let sum = a
-        .par()
-        .cloned()
-        .into_fallible_option()
-        .inspect(|x| println!("about to filter: {x}"))
-        .filter(|x| x % 2 == 0)
-        .inspect(|x| {
-            bag.push(*x);
-            println!("made it through filter: {x}");
-        })
-        .sum();
-    assert_eq!(sum, None);
 }
