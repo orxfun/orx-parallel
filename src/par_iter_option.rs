@@ -1030,6 +1030,8 @@ where
     /// # Examples
     ///
     /// ```
+    /// use orx_parallel::*;
+    ///
     /// let a: Vec<Option<i32>> = vec![];
     /// assert_eq!(a.par().copied().into_fallible_option().first(), Some(None));
     ///
