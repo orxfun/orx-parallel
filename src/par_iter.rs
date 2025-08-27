@@ -546,6 +546,46 @@ where
     where
         Self::Item: IntoResult<T, E>;
 
+    /// Transforms a parallel iterator where elements are of the option type; i.e., `ParIter<R, Item = Option<T>>`,
+    ///  into fallible parallel iterator with item type `T`; i.e., into `ParIterOption<R, Item = T>`.
+    ///
+    /// `ParIterOption` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// as follows:
+    ///
+    /// * All of its methods are based on the success path with item type of `T`.
+    /// * However, computations short-circuit and immediately return None if any of the items
+    ///   is of the `None` variant of the option enum.
+    ///
+    /// See [`ParIterResult`] for details.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    ///
+    /// let result_doubled: Option<Vec<i32>> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())     // ParIter with Item=Option<i32>
+    ///     .into_fallible_option()             // ParIterOption with Item=i32
+    ///     .map(|x| x * 2)                     // methods focus on the success path with Item=i32
+    ///     .collect();                         // methods return Option<T>
+    ///                                         // where T depends on the computation
+    ///
+    /// assert_eq!(result_doubled, Some(vec![2, 4, 6]));
+    ///
+    /// // at least one fails
+    ///
+    /// let result_doubled: Option<Vec<i32>> = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert_eq!(result_doubled, None);
+    /// ```
     fn into_fallible_option<T>(self) -> impl ParIterOption<R, Item = T>
     where
         Self::Item: IntoOption<T>,
