@@ -205,16 +205,40 @@ pub trait ParIterOption<R = DefaultRunner>
 where
     R: ParallelRunner,
 {
+    /// Type of the success element, to be received as the Some variant iff the entire computation succeeds.
     type Item;
 
     // params transformations
 
+    /// Sets the number of threads to be used in the parallel execution.
+    /// Integers can be used as the argument with the following mapping:
+    ///
+    /// * `0` -> `NumThreads::Auto`
+    /// * `1` -> `NumThreads::sequential()`
+    /// * `n > 0` -> `NumThreads::Max(n)`
+    ///
+    /// See [`NumThreads`] and [`ParIter::num_threads`] for details.
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
+    /// Sets the number of elements to be pulled from the concurrent iterator during the
+    /// parallel execution. When integers are used as argument, the following mapping applies:
+    ///
+    /// * `0` -> `ChunkSize::Auto`
+    /// * `n > 0` -> `ChunkSize::Exact(n)`
+    ///
+    /// Please use the default enum constructor for creating `ChunkSize::Min` variant.
+    ///
+    /// See [`ChunkSize`] and [`ParIter::chunk_size`] for details.
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
+    /// Sets the iteration order of the parallel computation.
+    ///
+    /// See [`IterationOrder`] and [`ParIter::iteration_order`] for details.
     fn iteration_order(self, order: IterationOrder) -> Self;
 
+    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
+    ///
+    /// See [`ParIter::with_runner`] for details.
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Item = Self::Item>;
 
     // computation transformations
