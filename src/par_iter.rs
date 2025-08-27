@@ -1350,20 +1350,3 @@ where
         self.filter(&predicate).first()
     }
 }
-
-#[test]
-fn abc() {
-    use crate::*;
-
-    // ordered
-
-    let iter = (0..10_000)
-        .par()
-        .map(|x| x as i32 - 5_000) // -5_000..10_000
-        .map_while(|x| 16i32.checked_div(x));
-    let b: Vec<_> = iter.collect();
-
-    assert_eq!(b, (-5_000..0).map(|x| 16 / x).collect::<Vec<_>>());
-
-    let x = "a".parse::<i32>();
-}
