@@ -1,8 +1,8 @@
 use crate::{
     Params,
+    generic_values::Vector,
     runner::DefaultRunner,
     using::{UsingClone, computations::UX},
-    generic_values::Vector,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
