@@ -1,4 +1,6 @@
-use crate::computations::{M, Values, X};
+use crate::computations::{M, X};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::runner::ParallelRunner;
 use crate::using::UParCollectIntoCore;
 use orx_concurrent_iter::ConcurrentIter;
@@ -20,8 +22,19 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(I::Item) -> Vo + Sync;
+
+    fn x_try_collect_into<R, I, Vo, M1>(
+        self,
+        x: X<I, Vo, M1>,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        M1: Fn(I::Item) -> Vo + Sync,
+        Vo: Values<Item = O>,
+        Self: Sized;
 
     // test
 

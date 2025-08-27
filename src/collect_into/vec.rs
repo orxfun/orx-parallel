@@ -1,6 +1,8 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::collect_into::utils::extend_vec_from_split;
-use crate::computations::{M, Values, X};
+use crate::computations::{M, X};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -45,12 +47,28 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
         extend_vec_from_split(self, split_vec)
+    }
+
+    fn x_try_collect_into<R, I, Vo, M1>(
+        self,
+        x: X<I, Vo, M1>,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vo + Sync,
+        Self: Sized,
+    {
+        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
+        let result = split_vec.x_try_collect_into::<R, _, _, _>(x);
+        result.map(|split_vec| extend_vec_from_split(self, split_vec))
     }
 
     // test

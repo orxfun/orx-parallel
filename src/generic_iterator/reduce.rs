@@ -1,6 +1,6 @@
 use super::iter::GenericIterator;
 use crate::ParIter;
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 
 impl<T, S, R, O> GenericIterator<T, S, R, O>
 where

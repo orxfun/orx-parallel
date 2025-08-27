@@ -1,9 +1,12 @@
+use crate::generic_values::runner_results::{
+    Infallible, ParallelCollect, ParallelCollectArbitrary,
+};
 use crate::using::Using;
 use crate::using::computations::UX;
 use crate::using::runner::parallel_runner_compute::{u_collect_arbitrary, u_collect_ordered};
 use crate::{
     IterationOrder,
-    computations::Values,
+    generic_values::Values,
     runner::{ParallelRunner, ParallelRunnerCompute},
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -21,16 +24,32 @@ where
     where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<Vo::Item>,
+        Vo: Values<Fallibility = Infallible>,
     {
-        let len = self.iter().try_get_len();
-        let p = self.params();
+        let (len, p) = self.len_and_params();
+
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, self.sequential(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
-                u_collect_arbitrary::u_x(R::collection(p, len), self, pinned_vec)
+                let (num_threads, result) =
+                    u_collect_arbitrary::u_x(R::collection(p, len), self, pinned_vec);
+                let pinned_vec = match result {
+                    ParallelCollectArbitrary::AllCollected { pinned_vec } => pinned_vec,
+                    ParallelCollectArbitrary::StoppedByWhileCondition { pinned_vec } => pinned_vec,
+                };
+                (num_threads, pinned_vec)
             }
             (false, IterationOrder::Ordered) => {
-                u_collect_ordered::u_x(R::collection(p, len), self, pinned_vec)
+                let (num_threads, result) =
+                    u_collect_ordered::u_x(R::collection(p, len), self, pinned_vec);
+                let pinned_vec = match result {
+                    ParallelCollect::AllCollected { pinned_vec } => pinned_vec,
+                    ParallelCollect::StoppedByWhileCondition {
+                        pinned_vec,
+                        stopped_idx: _,
+                    } => pinned_vec,
+                };
+                (num_threads, pinned_vec)
             }
         }
     }
@@ -45,7 +64,10 @@ where
         let iter = iter.into_seq_iter();
         for i in iter {
             let vt = xap1(&mut u, i);
-            vt.push_to_pinned_vec(&mut pinned_vec);
+            let done = vt.push_to_pinned_vec(&mut pinned_vec);
+            if Vo::sequential_push_to_stop(done).is_some() {
+                break;
+            }
         }
 
         pinned_vec

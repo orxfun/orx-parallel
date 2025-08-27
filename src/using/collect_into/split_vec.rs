@@ -1,8 +1,10 @@
 use crate::collect_into::utils::split_vec_reserve;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::Infallible;
+use crate::runner::ParallelRunner;
 use crate::using::Using;
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
 use crate::using::computations::{UM, UX};
-use crate::{computations::Values, runner::ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
@@ -29,7 +31,7 @@ where
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());

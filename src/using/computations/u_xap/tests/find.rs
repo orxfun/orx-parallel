@@ -1,6 +1,6 @@
 use crate::{
     DefaultRunner, Params,
-    computations::Vector,
+    generic_values::Vector,
     using::{UsingClone, computations::UX},
 };
 use orx_concurrent_iter::IntoConcurrentIter;

@@ -1,4 +1,5 @@
-use crate::computations::Values;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::Infallible;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::computations::UX;
@@ -17,9 +18,10 @@ where
     where
         R: ParallelRunner,
         Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
+        Vo: Values<Fallibility = Infallible>,
     {
-        let len = self.iter().try_get_len();
-        let p = self.params();
-        u_reduce::u_x(R::reduce(p, len), self, reduce)
+        let (len, p) = self.len_and_params();
+        let (num_threads, Ok(acc)) = u_reduce::u_x(R::reduce(p, len), self, reduce);
+        (num_threads, acc)
     }
 }

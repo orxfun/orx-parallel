@@ -1,4 +1,8 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{
+    ThreadRunner,
+    generic_values::Values,
+    generic_values::runner_results::{Fallibility, Next},
+};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn m<C, I, O, M1>(
@@ -64,7 +68,7 @@ pub fn x<C, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> Option<Vo::Item>
+) -> Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -84,12 +88,27 @@ where
             0 | 1 => match item_puller.next() {
                 Some(i) => {
                     let vt = xap1(i);
-                    let maybe_next = vt.first();
-                    if maybe_next.is_some() {
-                        iter.skip_to_end();
-                        runner.complete_chunk(shared_state, chunk_size);
-                        runner.complete_task(shared_state);
-                        return maybe_next;
+                    match vt.next() {
+                        Next::Done { value } => {
+                            if let Some(value) = value {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                return Ok(Some(value));
+                            }
+                        }
+                        Next::StoppedByError { error } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return Err(error);
+                        }
+                        Next::StoppedByWhileCondition => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return Ok(None);
+                        }
                     }
                 }
                 None => break,
@@ -103,12 +122,27 @@ where
                     Some(chunk) => {
                         for i in chunk {
                             let vt = xap1(i);
-                            let maybe_next = vt.first();
-                            if maybe_next.is_some() {
-                                iter.skip_to_end();
-                                runner.complete_chunk(shared_state, chunk_size);
-                                runner.complete_task(shared_state);
-                                return maybe_next;
+                            match vt.next() {
+                                Next::Done { value } => {
+                                    if let Some(value) = value {
+                                        iter.skip_to_end();
+                                        runner.complete_chunk(shared_state, chunk_size);
+                                        runner.complete_task(shared_state);
+                                        return Ok(Some(value));
+                                    }
+                                }
+                                Next::StoppedByError { error } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return Err(error);
+                                }
+                                Next::StoppedByWhileCondition => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return Ok(None);
+                                }
                             }
                         }
                     }
@@ -121,5 +155,5 @@ where
     }
 
     runner.complete_task(shared_state);
-    None
+    Ok(None)
 }

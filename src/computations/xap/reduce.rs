@@ -1,5 +1,6 @@
 use super::x::X;
-use crate::computations::Values;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::runner::parallel_runner_compute::reduce;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
@@ -15,8 +16,22 @@ where
     where
         R: ParallelRunner,
         Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
+        Vo: Values<Fallibility = Infallible>,
+    {
+        let (len, p) = self.len_and_params();
+        let (num_threads, Ok(acc)) = reduce::x(R::reduce(p, len), self, reduce);
+        (num_threads, acc)
+    }
+
+    pub fn try_reduce<R, Red>(self, reduce: Red) -> (usize, ResultTryReduce<Vo>)
+    where
+        R: ParallelRunner,
+        Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
     {
         let (len, p) = self.len_and_params();
         reduce::x(R::reduce(p, len), self, reduce)
     }
 }
+
+type ResultTryReduce<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;

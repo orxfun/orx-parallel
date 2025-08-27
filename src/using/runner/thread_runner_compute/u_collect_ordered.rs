@@ -1,4 +1,10 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{
+    ThreadRunner,
+    generic_values::{
+        Values,
+        runner_results::{StopWithIdx, ThreadCollect},
+    },
+};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -62,7 +68,7 @@ pub fn u_x<C, U, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> Vec<(usize, Vo::Item)>
+) -> ThreadCollect<Vo>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -84,7 +90,23 @@ where
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     let vo = xap1(&mut u, i);
-                    vo.push_to_vec_with_idx(idx, out_vec);
+                    let done = vo.push_to_vec_with_idx(idx, out_vec);
+                    if let Some(stop) = Vo::ordered_push_to_stop(done) {
+                        iter.skip_to_end();
+                        runner.complete_chunk(shared_state, chunk_size);
+                        runner.complete_task(shared_state);
+                        match stop {
+                            StopWithIdx::DueToWhile { idx } => {
+                                return ThreadCollect::StoppedByWhileCondition {
+                                    vec: collected,
+                                    stopped_idx: idx,
+                                };
+                            }
+                            StopWithIdx::DueToError { idx: _, error } => {
+                                return ThreadCollect::StoppedByError { error };
+                            }
+                        }
+                    }
                 }
                 None => break,
             },
@@ -97,7 +119,23 @@ where
                     Some((chunk_begin_idx, chunk)) => {
                         for i in chunk {
                             let vo = xap1(&mut u, i);
-                            vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
+                            let done = vo.push_to_vec_with_idx(chunk_begin_idx, out_vec);
+                            if let Some(stop) = Vo::ordered_push_to_stop(done) {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                match stop {
+                                    StopWithIdx::DueToWhile { idx } => {
+                                        return ThreadCollect::StoppedByWhileCondition {
+                                            vec: collected,
+                                            stopped_idx: idx,
+                                        };
+                                    }
+                                    StopWithIdx::DueToError { idx: _, error } => {
+                                        return ThreadCollect::StoppedByError { error };
+                                    }
+                                }
+                            }
                         }
                     }
                     None => break,
@@ -110,5 +148,5 @@ where
 
     runner.complete_task(shared_state);
 
-    collected
+    ThreadCollect::AllCollected { vec: collected }
 }

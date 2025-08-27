@@ -1,6 +1,11 @@
+use crate::ParIterResult;
+use crate::computational_variants::fallible_result::ParXapResult;
+use crate::generic_values::TransformableValues;
+use crate::generic_values::runner_results::Infallible;
+use crate::par_iter_result::IntoResult;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{Values, Vector, X},
+    computations::X,
     runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UParXap},
 };
@@ -14,7 +19,7 @@ pub struct ParXap<I, Vo, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     x: X<I, Vo, M1>,
@@ -25,7 +30,7 @@ impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
@@ -35,7 +40,7 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I, M1) {
+    pub(crate) fn destruct(self) -> (Params, I, M1) {
         self.x.destruct()
     }
 }
@@ -44,7 +49,7 @@ unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -53,7 +58,7 @@ unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
 }
@@ -62,7 +67,7 @@ impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
@@ -104,7 +109,7 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send,
+        U: Send + 'static,
         F: FnMut(usize) -> U,
     {
         let using = UsingFun::new(using);
@@ -118,7 +123,7 @@ where
         using: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send,
+        U: Clone + Send + 'static,
     {
         let using = UsingClone::new(using);
         let (params, iter, x1) = self.destruct();
@@ -148,8 +153,7 @@ where
         let (params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let values = x1(i);
-            let filtered = values.values().into_iter().filter(filter.clone());
-            Vector(filtered)
+            values.filter(filter.clone())
         };
         ParXap::new(params, iter, x1)
     }
@@ -177,6 +181,25 @@ where
             vo.filter_map(filter_map.clone())
         };
         ParXap::new(params, iter, x1)
+    }
+
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
+    where
+        While: Fn(&Self::Item) -> bool + Sync + Clone,
+    {
+        let (params, iter, x1) = self.destruct();
+        let x1 = move |i: I::Item| {
+            let vo = x1(i);
+            vo.whilst(take_while.clone())
+        };
+        ParXap::new(params, iter, x1)
+    }
+
+    fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+    {
+        ParXapResult::new(self)
     }
 
     // collect

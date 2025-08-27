@@ -1,4 +1,10 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{
+    ThreadRunner,
+    generic_values::{
+        Values,
+        runner_results::{Next, NextWithIdx},
+    },
+};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn u_m<C, U, I, O, M1>(
@@ -66,7 +72,7 @@ pub fn u_x<C, U, I, Vo, X1>(
     iter: &I,
     shared_state: &C::SharedState,
     xap1: &X1,
-) -> Option<(usize, Vo::Item)>
+) -> NextWithIdx<Vo>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -86,11 +92,27 @@ where
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     let vt = xap1(u, i);
-                    if let Some(first) = vt.first() {
-                        iter.skip_to_end();
-                        runner.complete_chunk(shared_state, chunk_size);
-                        runner.complete_task(shared_state);
-                        return Some((idx, first));
+                    match vt.next() {
+                        Next::Done { value } => {
+                            if let Some(value) = value {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                return NextWithIdx::Found { idx, value };
+                            }
+                        }
+                        Next::StoppedByError { error } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return NextWithIdx::StoppedByError { error };
+                        }
+                        Next::StoppedByWhileCondition => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return NextWithIdx::StoppedByWhileCondition { idx };
+                        }
                     }
                 }
                 None => break,
@@ -104,11 +126,27 @@ where
                     Some((idx, chunk)) => {
                         for i in chunk {
                             let vt = xap1(u, i);
-                            if let Some(first) = vt.first() {
-                                iter.skip_to_end();
-                                runner.complete_chunk(shared_state, chunk_size);
-                                runner.complete_task(shared_state);
-                                return Some((idx, first));
+                            match vt.next() {
+                                Next::Done { value } => {
+                                    if let Some(value) = value {
+                                        iter.skip_to_end();
+                                        runner.complete_chunk(shared_state, chunk_size);
+                                        runner.complete_task(shared_state);
+                                        return NextWithIdx::Found { idx, value };
+                                    }
+                                }
+                                Next::StoppedByError { error } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return NextWithIdx::StoppedByError { error };
+                                }
+                                Next::StoppedByWhileCondition => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return NextWithIdx::StoppedByWhileCondition { idx };
+                                }
                             }
                         }
                     }
@@ -121,5 +159,5 @@ where
     }
 
     runner.complete_task(shared_state);
-    None
+    NextWithIdx::NotFound
 }

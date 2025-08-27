@@ -1,6 +1,7 @@
 use crate::computations::{M, X};
+use crate::generic_values::runner_results::Fallibility;
 use crate::runner::thread_runner_compute as thread;
-use crate::{computations::Values, runner::ParallelRunnerCompute};
+use crate::{generic_values::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1>(runner: C, m: M<I, O, M1>) -> (usize, Option<O>)
@@ -40,7 +41,10 @@ where
     (num_spawned, result)
 }
 
-pub fn x<C, I, Vo, X1>(runner: C, x: X<I, Vo, X1>) -> (usize, Option<Vo::Item>)
+type ResultNextAny<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
+
+pub fn x<C, I, Vo, X1>(runner: C, x: X<I, Vo, X1>) -> (usize, ResultNextAny<Vo>)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
@@ -69,10 +73,33 @@ where
             }));
         }
 
-        // do not wait to join other threads
-        handles
-            .into_iter()
-            .find_map(|x| x.join().expect("failed to join the thread"))
+        let mut result = Ok(None);
+        while !handles.is_empty() {
+            let mut finished_idx = None;
+            for (h, handle) in handles.iter().enumerate() {
+                if handle.is_finished() {
+                    finished_idx = Some(h);
+                    break;
+                }
+            }
+
+            if let Some(h) = finished_idx {
+                let handle = handles.remove(h);
+                match handle.join().expect("failed to join the thread") {
+                    Ok(Some(x)) => {
+                        result = Ok(Some(x));
+                        break;
+                    }
+                    Err(error) => {
+                        result = Err(error);
+                        break;
+                    }
+                    Ok(None) => {}
+                }
+            }
+        }
+
+        result
     });
 
     (num_spawned, result)

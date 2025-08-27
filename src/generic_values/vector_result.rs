@@ -1,0 +1,133 @@
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{
+    ArbitraryPush, Fallible, Next, OrderedPush, Reduce, SequentialPush,
+};
+use orx_concurrent_bag::ConcurrentBag;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
+use orx_pinned_vec::PinnedVec;
+
+pub struct VectorResult<I, T, E>(pub(crate) I)
+where
+    I: IntoIterator<Item = Result<T, E>>,
+    E: Send;
+
+impl<I, T, E> Values for VectorResult<I, T, E>
+where
+    I: IntoIterator<Item = Result<T, E>>,
+    E: Send,
+{
+    type Item = T;
+
+    type Fallibility = Fallible<E>;
+
+    fn push_to_pinned_vec<P>(self, vector: &mut P) -> SequentialPush<Self::Fallibility>
+    where
+        P: PinnedVec<Self::Item>,
+    {
+        for x in self.0 {
+            match x {
+                Ok(x) => vector.push(x),
+                Err(error) => return SequentialPush::StoppedByError { error },
+            }
+        }
+        SequentialPush::Done
+    }
+
+    fn push_to_vec_with_idx(
+        self,
+        idx: usize,
+        vec: &mut Vec<(usize, Self::Item)>,
+    ) -> OrderedPush<Self::Fallibility> {
+        for x in self.0 {
+            match x {
+                Ok(x) => vec.push((idx, x)),
+                Err(error) => return OrderedPush::StoppedByError { idx, error },
+            }
+        }
+        OrderedPush::Done
+    }
+
+    fn push_to_bag<P>(self, bag: &ConcurrentBag<Self::Item, P>) -> ArbitraryPush<Self::Fallibility>
+    where
+        P: IntoConcurrentPinnedVec<Self::Item>,
+        Self::Item: Send,
+    {
+        for x in self.0 {
+            match x {
+                Ok(x) => _ = bag.push(x),
+                Err(error) => return ArbitraryPush::StoppedByError { error },
+            }
+        }
+        ArbitraryPush::Done
+    }
+
+    fn acc_reduce<X>(self, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
+    where
+        X: Fn(Self::Item, Self::Item) -> Self::Item,
+    {
+        let mut iter = self.0.into_iter();
+
+        let mut acc = match acc {
+            Some(x) => x,
+            None => {
+                let first = iter.next();
+                match first {
+                    None => return Reduce::Done { acc: None }, // empty iterator but not stopped, acc is None
+                    Some(x) => match x {
+                        Ok(x) => x,
+                        Err(error) => return Reduce::StoppedByError { error }, // first element is stop, acc is None
+                    },
+                }
+            }
+        };
+
+        for x in iter {
+            match x {
+                Ok(x) => acc = reduce(acc, x),
+                Err(error) => return Reduce::StoppedByError { error },
+            }
+        }
+
+        Reduce::Done { acc: Some(acc) }
+    }
+
+    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
+    where
+        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
+    {
+        let mut iter = self.0.into_iter();
+
+        let mut acc = match acc {
+            Some(x) => x,
+            None => {
+                let first = iter.next();
+                match first {
+                    None => return Reduce::Done { acc: None }, // empty iterator but not stopped, acc is None
+                    Some(x) => match x {
+                        Ok(x) => x,
+                        Err(error) => return Reduce::StoppedByError { error }, // first element is stop, acc is None
+                    },
+                }
+            }
+        };
+
+        for x in iter {
+            match x {
+                Ok(x) => acc = reduce(u, acc, x),
+                Err(error) => return Reduce::StoppedByError { error },
+            }
+        }
+
+        Reduce::Done { acc: Some(acc) }
+    }
+
+    fn next(self) -> Next<Self> {
+        match self.0.into_iter().next() {
+            Some(x) => match x {
+                Ok(x) => Next::Done { value: Some(x) },
+                Err(error) => Next::StoppedByError { error },
+            },
+            None => Next::Done { value: None },
+        }
+    }
+}

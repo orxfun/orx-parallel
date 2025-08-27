@@ -1,5 +1,6 @@
 use crate::collect_into::ParCollectIntoCore;
-use crate::computations::Values;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::Infallible;
 use crate::runner::ParallelRunner;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
@@ -18,6 +19,6 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
 }

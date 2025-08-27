@@ -1,10 +1,13 @@
 use super::xap::ParXap;
+use crate::ParIterResult;
+use crate::computational_variants::fallible_result::ParMapResult;
+use crate::generic_values::{Vector, WhilstAtom};
+use crate::par_iter_result::IntoResult;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{M, Vector},
+    computations::M,
     runner::{DefaultRunner, ParallelRunner},
-    using::computational_variants::UParMap,
-    using::{UsingClone, UsingFun},
+    using::{UsingClone, UsingFun, computational_variants::UParMap},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -33,7 +36,7 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I, M1) {
+    pub(crate) fn destruct(self) -> (Params, I, M1) {
         self.m.destruct()
     }
 }
@@ -99,7 +102,7 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send,
+        U: Send + 'static,
         F: FnMut(usize) -> U,
     {
         let using = UsingFun::new(using);
@@ -113,7 +116,7 @@ where
         using: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send,
+        U: Clone + Send + 'static,
     {
         let using = UsingClone::new(using);
         let (params, iter, m1) = self.destruct();
@@ -162,6 +165,22 @@ where
         let (params, iter, m1) = self.destruct();
         let x1 = move |i: I::Item| filter_map(m1(i));
         ParXap::new(params, iter, x1)
+    }
+
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
+    where
+        While: Fn(&Self::Item) -> bool + Sync,
+    {
+        let (params, iter, m1) = self.destruct();
+        let x1 = move |value: I::Item| WhilstAtom::new(m1(value), &take_while);
+        ParXap::new(params, iter, x1)
+    }
+
+    fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+    {
+        ParMapResult::new(self)
     }
 
     // collect

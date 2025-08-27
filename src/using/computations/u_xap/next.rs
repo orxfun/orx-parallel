@@ -1,4 +1,5 @@
-use crate::computations::Values;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::Infallible;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::computations::UX;
@@ -13,26 +14,23 @@ where
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     Vo::Item: Send,
 {
-    pub fn next2(self) -> Option<Vo::Item> {
-        let (using, _, iter, xap1) = self.destruct();
-        let mut u = using.into_inner();
-        iter.next()
-            .and_then(|i| xap1(&mut u, i).values().into_iter().next())
-    }
-
     pub fn next<R>(self) -> (usize, Option<Vo::Item>)
     where
         R: ParallelRunner,
+        Vo: Values<Fallibility = Infallible>,
     {
         let (len, p) = self.len_and_params();
-        u_next::u_x(R::early_return(p, len), self)
+        let (num_threads, Ok(result)) = u_next::u_x(R::early_return(p, len), self);
+        (num_threads, result.map(|x| x.1))
     }
 
     pub fn next_any<R>(self) -> (usize, Option<Vo::Item>)
     where
         R: ParallelRunner,
+        Vo: Values<Fallibility = Infallible>,
     {
         let (len, p) = self.len_and_params();
-        u_next_any::u_x(R::early_return(p, len), self)
+        let (num_threads, Ok(next)) = u_next_any::u_x(R::early_return(p, len), self);
+        (num_threads, next)
     }
 }

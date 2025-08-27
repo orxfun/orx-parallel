@@ -17,6 +17,7 @@ orx-fixed-vec = { version = "3.18.0", default-features = false }
 orx-split-vec = { version = "3.18.0", default-features = false }
 orx-pinned-concurrent-col = { version = "2.14.0", default-features = false }
 orx-concurrent-bag = { version = "3.0.0", default-features = false }
+orx-concurrent-option = { version = "1.5.0", default-features = false }
 orx-concurrent-ordered-bag = { version = "3.0.0", default-features = false }
 orx-iterable = { version = "1.3.0", default-features = false }
 orx-priority-queue = { version = "1.7.0", default-features = false }
@@ -34,7 +35,7 @@ rayon = "1.10.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "mut_for_each_iter"
+name = "find"
 harness = false
 
 [features]

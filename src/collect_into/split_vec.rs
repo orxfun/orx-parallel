@@ -1,7 +1,9 @@
 use super::par_collect_into::ParCollectIntoCore;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::{
     collect_into::utils::split_vec_reserve,
-    computations::{M, Values, X},
+    computations::{M, X},
     runner::ParallelRunner,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -39,12 +41,28 @@ where
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());
         let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
         pinned_vec
+    }
+
+    fn x_try_collect_into<R, I, Vo, M1>(
+        mut self,
+        x: X<I, Vo, M1>,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        Vo: Values<Item = O>,
+        M1: Fn(I::Item) -> Vo + Sync,
+        Self: Sized,
+    {
+        split_vec_reserve(&mut self, x.par_len());
+        let (_num_spawned, result) = x.try_collect_into::<R, _>(self);
+        result
     }
 
     // test
