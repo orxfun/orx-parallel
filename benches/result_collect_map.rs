@@ -124,7 +124,7 @@ fn orx_arbitrary(
 fn run(c: &mut Criterion) {
     let treatments = [N_EARLY, N_MIDDLE, N_LATE, N_NEVER];
 
-    let mut group = c.benchmark_group("collect_result");
+    let mut group = c.benchmark_group("result_collect_map");
 
     for n_when in &treatments {
         let input = inputs(N, *n_when);

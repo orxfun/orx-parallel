@@ -6,6 +6,15 @@
 
 [High performance](#performance-and-benchmarks), [configurable](#configurable) and [expressive](#parallel-computation-by-iterators) parallel computation library.
 
+* [Parallel Computation by Iterators](#parallel-computation-by-iterators)
+* [Parallelizable Collections](#parallelizable-collections)
+* [Performance and Benchmarks](#performance-and-benchmarks)
+* [Fallible Parallel Iterators](#fallible-parallel-iterators)
+* [Using Mutable Variables](#using-mutable-variables)
+* [Configurations](#configurations)
+* [Underlying Approach and Parallel Runners](#underlying-approach-and-parallel-runners)
+* [Contributing](#contributing)
+
 ## Parallel Computation by Iterators
 
 Parallel computation is defined using the parallel iterator trait [`ParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html).
@@ -218,8 +227,135 @@ Nevertheless, the results suggest that the functions are efficiently composed by
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_long_chain.rs)|`…long_chain.collect()`|14.27 (1.00)|6.33 (0.44)|**3.80 (0.27)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/reduce_long_chain.rs)|`…long_chain.reduce(_)`|15.08 (1.00)|6.10 (0.40)|**4.03 (0.27)**|
 
+## Fallible Parallel Iterators
 
-## Configurable
+We enjoy rust's [`?`](https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-question-mark-operator) operator when working with fallible computations. It allows us to focus on and code only the success path. Failure at any step of the computation leads to a short-circuit immediately returning from the function.
+
+```rust
+fn try_to_parse() -> Result<i32, std::num::ParseIntError> {
+    let x: i32 = "123".parse()?; // x = 123
+    let y: i32 = "24a".parse()?; // returns an Err() immediately
+    Ok(x + y)                    // Doesn't run.
+}
+```
+
+However, we do not have this convenience while working with iterators.
+
+`collect` is the only exception. Normally, it allows us to pick the container to collect the items into.
+
+```rust
+let into_vec: Vec<usize> = (0..10).collect();
+let into_set: std::collections::HashSet<usize> = (0..10).collect();
+```
+
+But it also does something exceptional when the item type is a result:
+* The first computation below is similar to above, it simply collects each element to the container which is defined as a vector.
+* The second computation; however, is fundamentally different. It collects elements iff all elements are of the Ok variant. Further, it short-circuits the computation as soon as an Err is observed. This is exactly how the `?` operator works, for a series of computations rather than one.
+
+```rust
+let into_vec_of_results: Vec<Result<usize, char>> = (0..10).map(|x| Ok(x)).collect();
+let into_result_of_vec: Result<Vec<usize>, char> = (0..10).map(|x| Ok(x)).collect();
+```
+
+Although convenient, change in the behavior of the collect computation might be considered *unexpected*, at least for me.
+
+Further, we do have not short-circuiting methods for computations other than collect. For instance, it is not as convenient to compute the sum of numbers of an iterator provided that all elements are of the Ok variant, or to receive the error otherwise.
+
+In general, the requirement to early exit in fallible computation is common and important both for performance and convenience.
+
+For parallel computation, this crate proposes to explicitly transform an iterator with fallible elements into a fallible parallel iterator.
+
+```rust
+use orx_parallel::*;
+use std::num::ParseIntError;
+
+let collect: Result<Vec<i32>, ParseIntError> = vec!["7", "2", "34"]
+    .into_par()
+    .map(|x| x.parse::<i32>())
+    .into_fallible_result() // <-- explicit transformation to fallible iterator
+    .collect();
+```
+
+Currently, there exist two fallible parallel iterators [`ParIterResult`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIterResult.html) and [`ParIterOption`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIterOption.html). The transformation is as follows:
+
+| Regular Iterator | Transformation  Method| Fallible Iterator |
+| --- | --- | --- |
+| `ParIter<Item=Result<T, E>>` | `into_fallible_result()` | `ParIterResult<Item=T, Error=E>` |
+| `ParIter<Item=Option<T>>` | `into_fallible_option()` | `ParIterOption<Item=T>` |
+
+After converting into a fallible iterator, each chaining transformation is based on the success item type. Similar to `?` operator, this allows us to focus on and implement the success path while any error case will be handled by early returning from the iterator with the error.
+
+```rust
+use orx_parallel::*;
+use std::num::ParseIntError;
+
+let sum: Result<i32, ParseIntError> = vec!["7", "2", "34"]
+    .into_par()
+    .map(|x| x.parse::<i32>()) // Item = Result<i32, ParseIntError>
+    .into_fallible_result() // we are only working with success type after this point
+    .map(|x| x + 1)
+    .filter(|x| x % 2 == 0)
+    .flat_map(|x| [x, x + 1, x + 2])
+    .sum(); // returns Result, rather than i32
+assert_eq!(sum, Ok(27));
+
+let sum: Result<i32, ParseIntError> = vec!["7", "!!!", "34"]
+    .into_par()
+    .map(|x| x.parse::<i32>())
+    .into_fallible_result()
+    .map(|x| x + 1)
+    .filter(|x| x % 2 == 0)
+    .flat_map(|x| [x, x + 1, x + 2])
+    .sum();
+assert!(sum.is_err());
+```
+
+As demonstrated above, not only `collect` but all computation methods return a `Result`.
+
+To summarize:
+* We can use all iterator methods with fallible iterators as well.
+* The transformations are based on the success type. All computations return a `Result`:
+  * if all computations succeed, it is `Ok` of the value that an infallible iterator would return;
+  * it is the first discovered `Err` if any of the computations fail.
+* Finally, all computations immediately return if any of the elements fail to compute.
+
+Optional fallible iterator behaves exactly the same, except that `None` is treated as the failure case.
+
+## Using Mutable Variables
+
+Iterator methods allow us to define expressive computations using closures. These closures are often `FnMut` for sequential iterators allowing to mutably capture variables from the scope. It is clear that this is not possible for parallel iterators due to the fact that it would lead to race condition since multiple threads will have access to the captured solution. Therefore, parallel counterpart of the iterator methods often accept closures implementing `Fn`.
+
+However, it is necessary to have mutable variables for certain programs. A very common example is computations requiring random number generators which are stateful and can create random numbers only with a mutable reference.
+
+[`using`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.using) transformation aims to provide a general and safe solution to this problem as follows:
+* One mutable variable per thread; hence, no race conditions.
+* The mutable variable is explicitly and mutably accessible by all iterator methods of the parallel iterator obtained by transforming a regular parallel iterator providing the variable to be used.
+
+The following two examples demonstrate the idea and usage; further details can be found in [using.md](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+
+```rust ignore
+input
+    .into_par()
+    .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64)) // <-- explicit using
+    .map(|_, i| fibonacci((i % 50) + 1) % 100)   // rng: &mut ChaCha20Rng
+    .filter(|rng, _: &u64| rng.random_bool(0.4)) // is accessible for
+    .map(|rng, i: u64| rng.random_range(0..i))   // all iter methods
+    .sum()
+
+let (sender, receiver) = channel();
+```
+
+```rust ignore
+let (sender, receiver) = channel();
+(0..5)
+    .into_par()
+    .using_clone(sender)
+    .for_each(|s, x| s.send(x).unwrap());
+
+let mut res: Vec<_> = receiver.iter().collect();
+```
+
+## Configurations
 
 ### Configuration per Computation
 
@@ -270,41 +406,6 @@ This is guaranteed by the fact that both consuming computation calls and configu
 ### Global Configuration
 
 Additionally, maximum number of threads that can be used by parallel computations can be globally bounded by the environment variable `ORX_PARALLEL_MAX_NUM_THREADS`. Please see the corresponding [example](https://github.com/orxfun/orx-parallel/blob/main/examples/max_num_threads_config.rs) for details.
-
-## Using Transformation for Mutable Variables
-
-Iterator methods allow us to define expressive computations using closures. These closures are often `FnMut` for sequential iterators allowing to mutably capture variables from the scope. It is clear that this is not possible for parallel iterators due to the fact that it would lead to race condition since multiple threads will have access to the captured solution. Therefore, parallel counterpart of the iterator methods often accept closures implementing `Fn`.
-
-However, it is necessary to have mutable variables for certain programs. A very common example is computations requiring random number generators which are stateful and can create random numbers only with a mutable reference.
-
-[`using`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.using) transformation aims to provide a general and safe solution to this problem as follows:
-* One mutable variable per thread; hence, no race conditions.
-* The mutable variable is explicitly and mutably accessible by all iterator methods of the parallel iterator obtained by transforming a regular parallel iterator providing the variable to be used.
-
-The following two examples demonstrate the idea and usage; further details can be found in [using.md](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-
-```rust ignore
-input
-    .into_par()
-    .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64)) // <-- explicit using
-    .map(|_, i| fibonacci((i % 50) + 1) % 100)   // rng: &mut ChaCha20Rng
-    .filter(|rng, _: &u64| rng.random_bool(0.4)) // is accessible for
-    .map(|rng, i: u64| rng.random_range(0..i))   // all iter methods
-    .sum()
-
-let (sender, receiver) = channel();
-```
-
-```rust ignore
-let (sender, receiver) = channel();
-(0..5)
-    .into_par()
-    .using_clone(sender)
-    .for_each(|s, x| s.send(x).unwrap());
-
-let mut res: Vec<_> = receiver.iter().collect();
-```
-
 
 
 ## Underlying Approach and Parallel Runners

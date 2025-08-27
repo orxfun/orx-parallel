@@ -18,6 +18,7 @@ fn bad_input() -> Vec<String> {
         .collect()
 }
 
+// demonstrates an attempt to handle fallible parallel iteration manually, not so convenient
 fn collection_of_results_good_case() {
     for iteration_order in ITERATION_ORDERS {
         let error = ConcurrentOption::none();
@@ -45,6 +46,7 @@ fn collection_of_results_good_case() {
     }
 }
 
+// demonstrates an attempt to handle fallible parallel iteration manually, not so convenient
 fn collection_of_results_bad_case() {
     for iteration_order in ITERATION_ORDERS {
         let error = ConcurrentOption::none();
@@ -87,6 +89,7 @@ fn collection_of_results_bad_case() {
     }
 }
 
+// using fallible parallel iterator instead, which directly returns the Result
 fn collect_result() {
     let output: Result<Vec<_>, _> = good_input()
         .par()
