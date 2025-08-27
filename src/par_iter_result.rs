@@ -405,6 +405,8 @@ where
     /// collect some intermediate values during parallel execution for further inspection.
     /// The following example demonstrates such a use case.
     ///
+    /// [`ConcurrentBag`]: orx_concurrent_bag::ConcurrentBag
+    ///
     /// ```
     /// use orx_parallel::*;
     /// use orx_concurrent_bag::*;

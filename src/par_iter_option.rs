@@ -138,7 +138,7 @@ where
     /// * `1` -> `NumThreads::sequential()`
     /// * `n > 0` -> `NumThreads::Max(n)`
     ///
-    /// See [`NumThreads`] and [`ParIter::num_threads`] for details.
+    /// See [`NumThreads`] and [`crate::ParIter::num_threads`] for details.
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
     /// Sets the number of elements to be pulled from the concurrent iterator during the
@@ -149,17 +149,17 @@ where
     ///
     /// Please use the default enum constructor for creating `ChunkSize::Min` variant.
     ///
-    /// See [`ChunkSize`] and [`ParIter::chunk_size`] for details.
+    /// See [`ChunkSize`] and [`crate::ParIter::chunk_size`] for details.
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
     /// Sets the iteration order of the parallel computation.
     ///
-    /// See [`IterationOrder`] and [`ParIter::iteration_order`] for details.
+    /// See [`IterationOrder`] and [`crate::ParIter::iteration_order`] for details.
     fn iteration_order(self, order: IterationOrder) -> Self;
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
-    /// See [`ParIter::with_runner`] for details.
+    /// See [`crate::ParIter::with_runner`] for details.
     fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Item = Self::Item>;
 
     // computation transformations
@@ -319,6 +319,8 @@ where
     /// [`ConcurrentVec`](https://crates.io/crates/orx-concurrent-vec) to
     /// collect some intermediate values during parallel execution for further inspection.
     /// The following example demonstrates such a use case.
+    ///
+    /// [`ConcurrentBag`]: orx_concurrent_bag::ConcurrentBag
     ///
     /// ```
     /// use orx_parallel::*;
