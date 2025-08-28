@@ -171,7 +171,9 @@ In this group of benchmarks, outputs of parallel computations are collected into
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_flatmap.rs)|`.flat_map(_).collect()`|77.93 (1.00)|239.83 (3.08)|31.73 (0.41)|**23.79 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map_filter.rs)|`.map(_).filter(_).collect()`|19.24 (1.00)|9.99 (0.52)|6.21 (0.32)|**5.98 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map.rs)|`.map(_).collect()`|18.08 (1.00)|7.98 (0.44)|**5.28 (0.29)**|6.09 (0.34)|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/drain_vec_collect_map_filter.rs)|`.map(_).filter(_).collect()`|19.41 (1.00)|7.54 (0.39)|5.90 (0.30)|**5.77 (0.30)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/drain_vec_collect_map_filter.rs)|`.map(_).filter(_).collect()` [☆][draining_iterator]|19.41 (1.00)|7.54 (0.39)|5.90 (0.30)|**5.77 (0.30)**|
+
+[draining_iterator]: ## "parallel draining iterator"
 
 
 ### Reduce
