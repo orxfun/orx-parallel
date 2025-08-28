@@ -92,16 +92,16 @@ This crate provides direct implementations of std collections; the table below l
 | `s: &mut [T]` | | `s.into_par()` | |
 | `r: Range<usize>`| | | `r.par()`<br>`r.into_par()` |
 
-Implementations of custom collections must belong to the respective crates as they most likely require to access the internals. Currently, the following collections are known to allow parallel computation using this crate:
+Implementations of custom collections belong to their respective crates as they most likely require access to internals. Currently, the following collections are known to allow parallel computation using this crate:
 
 │ [SplitVec](https://crates.io/crates/orx-split-vec) │ [FixedVec](https://crates.io/crates/orx-fixed-vec) │ [LinkedList](https://crates.io/crates/orx-linked-list) │ [Tree](https://crates.io/crates/orx-tree) │ [ImpVec](https://crates.io/crates/orx-imp-vec) │
 
-Since these implementations are particularly optimized for the collection type, it is preferable to start defining parallel computation from the collection whenever available. In other words, for a vector `v`,
+Since these implementations are particularly optimized for the collection type, it is preferable to start defining parallel computation from the collection whenever available. In other words, for a direclty parallelizable collection `col`,
 
-* `v.par().map(_).filter(_).reduce(_)` is a better approach than
-* `v.iter().iter_into_par().map(_).filter(_).reduce(_)`, which will be explained in the next subsection.
+* `col.par().map(_).filter(_).reduce(_)` is a better approach than
+* `col.iter().iter_into_par().map(_).filter(_).reduce(_)`, which will be explained in the next subsection.
 
-> **extensibility**: Note that any input collection or generator that implements [`IntoConcurrentIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IntoConcurrentIter.html) automatically implements [`IntoParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.IntoParIter.html). Therefore, a new collection can be directly parallelized provided that its concurrent iterator is implemented.
+> **extensibility**: Note that any input collection or generator that implements [`IntoConcurrentIter`](https://docs.rs/orx-concurrent-iter/latest/orx_concurrent_iter/trait.IntoConcurrentIter.html) automatically implements [`IntoParIter`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.IntoParIter.html). Therefore, a new collection can be parallelized provided that its concurrent iterator is implemented.
 
 In addition, there exist the following special parallel iterators that can be directly created from the collection.
 
@@ -120,12 +120,14 @@ use orx_parallel::*;
 use std::collections::HashMap;
 
 let mut map: HashMap<_, _> = (0..1024).map(|x| (x.to_string(), x)).collect();
+
 let par = map.values_mut().iter_into_par(); // mutable parallel iterator from Iterator
 par.filter(|x| **x != 42).for_each(|x| *x *= 0);
+
 assert_eq!(map.values().iter_into_par().sum(), 42); // parallel iterator from Iterator
 ```
 
-This is very powerful since it allows to parallelize all iterables, which includes pretty much every collection and more.
+This is powerful since it allows to parallelize all iterables, including pretty much every collection and more.
 
 On the other hand, due to being a generic implementation without collection specific optimizations, parallelized computation might underperform its sequential counterpart if the work to be done on each input element is insignificant. For instance, `i` being an arbitrary iterator of numbers, `i.sum()` will most likely be faster than `i.iter_into_par().sum()`.
 
@@ -137,7 +139,7 @@ Lastly, consider a collection which does not provide a direct concurrent iterato
 
 There are two methods to parallelize computations over such collections:
 * (ii) parallelize using the collection's iterator, or
-* (i) collect the elements in a vector and then parallelize the vector.
+* (i) collect the elements in a vector and then parallelize work over the vector.
 
 The following table demonstrates these methods for the `HashSet`; however, they are applicable to any collection with `iter` and `into_iter` methods.
 
@@ -146,7 +148,7 @@ The following table demonstrates these methods for the `HashSet`; however, they 
 | `h: HashSet<T>` | ii | `h.iter()`<br>&nbsp;&nbsp;`.iter_into_par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.iter_into_par()` |
 |                 | i  | `h.iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.into_par()` |
 
-Note that each approach can be more efficient in different scenarios. As a rule of thumb, the less insignificant the work to be done on elements is, the less critical is the choice, in which case parallelization over iterator (ii) is preferable since it avoids the allocation of the vector.
+Note that each approach can be more efficient in different scenarios. For large elements, (ii) might be preferred to avoid allocation of the vector. For insignificant tasks to be performed on each element, (i) might be preferred to take full benefit of vector-specific optimizations.
 
 ## Performance and Benchmarks
 
@@ -171,7 +173,9 @@ In this group of benchmarks, outputs of parallel computations are collected into
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_flatmap.rs)|`.flat_map(_).collect()`|77.93 (1.00)|239.83 (3.08)|31.73 (0.41)|**23.79 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map_filter.rs)|`.map(_).filter(_).collect()`|19.24 (1.00)|9.99 (0.52)|6.21 (0.32)|**5.98 (0.31)**|
 |[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/collect_map.rs)|`.map(_).collect()`|18.08 (1.00)|7.98 (0.44)|**5.28 (0.29)**|6.09 (0.34)|
-|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/drain_vec_collect_map_filter.rs)|`.map(_).filter(_).collect()`|19.41 (1.00)|7.54 (0.39)|5.90 (0.30)|**5.77 (0.30)**|
+|[⇨](https://github.com/orxfun/orx-parallel/blob/main/benches/drain_vec_collect_map_filter.rs)|`.map(_).filter(_).collect()` [☆][draining_iterator]|19.41 (1.00)|7.54 (0.39)|5.90 (0.30)|**5.77 (0.30)**|
+
+[draining_iterator]: ## "parallel draining iterator"
 
 
 ### Reduce
@@ -187,7 +191,7 @@ In this group, instead of collecting outputs, the results are reduced to a singl
 
 ### Find
 
-In this category of computations, computations that allow for *early exit* or *short-circuit* are investigated. As an example, experiments on `find` method are presented; methods such as `find_any`, `any` or `all` lead to similar results.
+Here, computations that allow for *early exit* or *short-circuit* are investigated. As an example, experiments on `find` method are presented; methods such as `find_any`, `any` or `all` lead to similar results.
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
@@ -198,7 +202,7 @@ In this category of computations, computations that allow for *early exit* or *s
 
 ### Parallelization of Arbitrary Iterators
 
-As discussed in [ii](#ii-parallelization-of-any-iterator), parallelization of regular iterators is a very powerful feature. The benchmarks in this category demonstrate that significant improvements can be achieved provided that the computation on elements is not insignificant. Note that every computation defined after `iter_into_par()` are parallelized; and hence, the work on elements here are the `map` and `filter` computations.
+As discussed in [ii](#ii-parallelization-of-any-iterator), parallelization of regular iterators is a powerful feature. The benchmarks in this category demonstrate that improvements can be achieved provided that the computation on elements is not insignificant.
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
@@ -208,7 +212,7 @@ As discussed in [ii](#ii-parallelization-of-any-iterator), parallelization of re
 
 ### Parallel Mutable Iterators
 
-Finally, we investigate the performance of parallel computation which mutates the input elements. In the benchmarks, we filter elements and update the ones which satisfy the given criterion within the `for_each` call.
+In this group, we investigate the performance of parallel computation which mutates the input elements. In the benchmarks, we filter elements and update the ones which satisfy the given criterion within the `for_each` call.
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
@@ -218,9 +222,9 @@ Finally, we investigate the performance of parallel computation which mutates th
 
 ### Composition
 
-In the final category of benchmarks, impact of long chains of transformations on computation time is tested. You may see such example long chains in the benchmark computations below, where `long_chain.` is a shorthand for `.map(map1).filter(filter1).map(map2).filter(filter2).map(map3).map(map4).filter(filter4)`. Notice that the caller can actually shorten the chains by composing some of them. An obvious one is the `.map(map3).map(map4)` call which could have been one call like `map(map3-then-map4)`. However, this is not always possible as the computation might be conditionally built up in stages.
+In the final category of benchmarks, impact of long chains of transformations on computation time is tested. You may see such example long chains in the benchmark computations below, where `long_chain` is a shorthand for `.map(map1).filter(filter1).map(map2).filter(filter2).map(map3).map(map4).filter(filter4)`. Notice that the caller can actually shorten the chains by composing some of them. An obvious one is the `.map(map3).map(map4)` call which could have been one call like `map(map3-then-map4)`. However, this is not always possible as the computation might be conditionally built up in stages. Further, breaking transformations into smaller pieces help in achieving more descriptive computation definitions.
 
-Nevertheless, the results suggest that the functions are efficiently composed by the parallel iterator.
+The results suggest that the functions are efficiently composed by the parallel iterator.
 
 |file|computation|sequential|rayon|orx-parallel|
 |---|---|---:|---:|---:|
@@ -229,7 +233,7 @@ Nevertheless, the results suggest that the functions are efficiently composed by
 
 ## Fallible Parallel Iterators
 
-We enjoy rust's [`?`](https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-question-mark-operator) operator when working with fallible computations. It allows us to focus on and code only the success path. Failure at any step of the computation leads to a short-circuit immediately returning from the function.
+We enjoy rust's [`?`](https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-question-mark-operator) operator when working with fallible computations. It allows us to focus on and code only the success path. Failure at any step of the computation leads to a short-circuit and immediately returns from the function.
 
 ```rust
 fn try_to_parse() -> Result<i32, std::num::ParseIntError> {
@@ -250,7 +254,7 @@ let into_set: std::collections::HashSet<usize> = (0..10).collect();
 
 But it also does something exceptional when the item type is a result:
 * The first computation below is similar to above, it simply collects each element to the container which is defined as a vector.
-* The second computation; however, is fundamentally different. It collects elements iff all elements are of the Ok variant. Further, it short-circuits the computation as soon as an Err is observed. This is exactly how the `?` operator works, for a series of computations rather than one.
+* The second computation; however, is fundamentally different. It collects elements iff all elements are of the Ok variant. Further, it short-circuits the computation as soon as an Err is observed. This is exactly how the `?` operator behaves.
 
 ```rust
 let into_vec_of_results: Vec<Result<usize, char>> = (0..10).map(|x| Ok(x)).collect();
@@ -259,9 +263,9 @@ let into_result_of_vec: Result<Vec<usize>, char> = (0..10).map(|x| Ok(x)).collec
 
 Although convenient, change in the behavior of the collect computation might be considered *unexpected*, at least for me.
 
-Further, we do have not short-circuiting methods for computations other than collect. For instance, it is not as convenient to compute the sum of numbers of an iterator provided that all elements are of the Ok variant, or to receive the error otherwise.
+Further, we do have not short-circuiting methods for computations other than collect. For instance, it is not as convenient to compute the sum of numbers of an iterator provided that all elements are of the Ok variant, and receive the error otherwise.
 
-In general, the requirement to early exit in fallible computation is common and important both for performance and convenience.
+In general, the requirement to early exit in fallible computation is common and important both for performance and convenience reasons.
 
 For parallel computation, this crate proposes to explicitly transform an iterator with fallible elements into a fallible parallel iterator.
 
@@ -283,7 +287,7 @@ Currently, there exist two fallible parallel iterators [`ParIterResult`](https:/
 | `ParIter<Item=Result<T, E>>` | `into_fallible_result()` | `ParIterResult<Item=T, Error=E>` |
 | `ParIter<Item=Option<T>>` | `into_fallible_option()` | `ParIterOption<Item=T>` |
 
-After converting into a fallible iterator, each chaining transformation is based on the success item type. Similar to `?` operator, this allows us to focus on and implement the success path while any error case will be handled by early returning from the iterator with the error.
+After converting into a fallible iterator, each chaining transformation is based on the success item type. Similar to `?` operator, this allows us to focus on the success path while any error case will be handled by early returning from the iterator with the error.
 
 ```rust
 use orx_parallel::*;
@@ -316,30 +320,35 @@ To summarize:
 * We can use all iterator methods with fallible iterators as well.
 * The transformations are based on the success type. All computations return a `Result`:
   * if all computations succeed, it is `Ok` of the value that an infallible iterator would return;
-  * it is the first discovered `Err` if any of the computations fail.
-* Finally, all computations immediately return if any of the elements fail to compute.
+  * it is the first discovered `Err` if any of the computations fails.
+* Finally, all computations immediately return in case of an error.
 
 Optional fallible iterator behaves exactly the same, except that `None` is treated as the failure case.
 
 ## Using Mutable Variables
 
-Iterator methods allow us to define expressive computations using closures. These closures are often `FnMut` for sequential iterators allowing to mutably capture variables from the scope. It is clear that this is not possible for parallel iterators due to the fact that it would lead to race condition since multiple threads will have access to the captured solution. Therefore, parallel counterpart of the iterator methods often accept closures implementing `Fn`.
+Iterator methods allow us to define expressive computations using closures. These closures are often `FnMut` for sequential iterators allowing to mutably capture variables from the scope. It is clear that this is not possible for parallel iterators as it would lead to race condition when multiple threads simultaneously try to access the captured mutable variable. Therefore, parallel counterpart of the iterator methods often accept closures implementing `Fn`.
 
 However, it is necessary to have mutable variables for certain programs. A very common example is computations requiring random number generators which are stateful and can create random numbers only with a mutable reference.
 
-[`using`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.using) transformation aims to provide a general and safe solution to this problem as follows:
+**using** transformation aims to provide a general and safe solution to this problem as follows:
 * One mutable variable per thread; hence, no race conditions.
-* The mutable variable is explicitly and mutably accessible by all iterator methods of the parallel iterator obtained by transforming a regular parallel iterator providing the variable to be used.
+* The mutable variable is explicitly and mutably available to all iterator methods.
 
-The following two examples demonstrate the idea and usage; further details can be found in [using.md](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+The following two examples demonstrate the idea and usage:
+
+* [`using`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.using) takes a closure with thread index as the argument, describing how the mutable variable should be created for each thread.
+* [`using_clone`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.using_clone), on the other hand, takes the value to be used as the mutable variable and shares a clone of it with each thread (just a shorthand for `using(|_| sender.clone())`).
+
+In either case, there will exactly be `n` mutable variables created provided that the parallel computation uses `n` threads.
 
 ```rust ignore
 input
     .into_par()
     .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64)) // <-- explicit using
-    .map(|_, i| fibonacci((i % 50) + 1) % 100)   // rng: &mut ChaCha20Rng
-    .filter(|rng, _: &u64| rng.random_bool(0.4)) // is accessible for
-    .map(|rng, i: u64| rng.random_range(0..i))   // all iter methods
+    .map(|_, i| fibonacci((i % 50) + 1) % 10)       // rng: &mut ChaCha20Rng
+    .filter(|rng, _: &u64| rng.random_bool(0.4))    // is accessible for
+    .map(|rng, i: u64| rng.random_range(0..i))      // all iterator methods
     .sum()
 
 let (sender, receiver) = channel();
@@ -355,20 +364,23 @@ let (sender, receiver) = channel();
 let mut res: Vec<_> = receiver.iter().collect();
 ```
 
+Further details can be found in [using.md](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+
 ## Configurations
 
 ### Configuration per Computation
 
 Each parallel computation is governed by two main straightforward parameters.
 
-* [`NumThreads`](https://docs.rs/orx-parallel/latest/orx_parallel/enum.NumThreads.html) is the degree of parallelization. This is a *capacity parameter* used to limit the resources that can be used by the computation.
-  * `Auto`: All available threads can be used, but not necessarily.
-  * `Max(n)`: The computation can spawn at most n threads.
-  * `Max(1)`: Falls back to sequential execution on the main thread.
-* [`ChunkSize`](https://docs.rs/orx-parallel/latest/orx_parallel/enum.ChunkSize.html) represents the number of elements a parallel worker will pull and process every time it becomes idle. This is an *optimization parameter* that can be tuned to balance the overhead of parallelization and cost of heterogeneity of tasks.
-  * `Auto`: Let the parallel executor dynamically decide, achieves high performance in general and can be used unless we have useful computation specific knowledge.
-  * `Exact(c)`: Chunks will have c elements; gives complete control to the caller. Useful when we have a very good knowledge or want to tune the computation for certain data.
-  * `Min(c)`: Chunk will have at least c elements. Parallel executor; however, might decide to pull more if each computation is handled very fast.
+[`NumThreads`](https://docs.rs/orx-parallel/latest/orx_parallel/enum.NumThreads.html) is the degree of parallelization. This is a *capacity parameter* used to limit the resources that can be used by the computation.
+* `Auto`: All available threads can be used, but not necessarily.
+* `Max(n)`: The computation can spawn at most n threads.
+* `Max(1)`: Falls back to sequential execution on the main thread.
+
+[`ChunkSize`](https://docs.rs/orx-parallel/latest/orx_parallel/enum.ChunkSize.html) represents the number of elements a parallel worker will pull and process every time it becomes idle. This is an *optimization parameter* that can be tuned to balance the overhead of parallelization and cost of heterogeneity of tasks.
+* `Auto`: Let the parallel executor dynamically decide, achieves high performance in general and can be used unless we have useful computation specific knowledge.
+* `Exact(c)`: Chunks will have c elements; gives complete control to the caller. Useful when we have a very good knowledge or want to tune the computation for certain data.
+* `Min(c)`: Every chunk will have at least c elements. Parallel executor; however, might decide to pull more if each computation is handled very fast.
 
 See also the last parameter [`IterationOrder`](https://docs.rs/orx-parallel/latest/orx_parallel/enum.IterationOrder.html) with variants `Ordered` (default) and `Arbitrary` which is another useful optimization parameter for specific use cases.
 
@@ -393,7 +405,7 @@ _ = (0..n).par().chunk_size(c).sum(); // chunks of at least 16 elements
 _ = (0..n).par().num_threads(4).chunk_size(16).sum(); // set both params
 ```
 
-Note that `NumThreads::Max(1)` executes the computation sequentially, without any parallelization overhead and benefiting from optimizations of regular iterators.
+Note that `NumThreads::Max(1)` executes the computation sequentially.
 
 This gives the consumer, who actually executes the defined computation, complete control to:
 
@@ -410,14 +422,14 @@ Additionally, maximum number of threads that can be used by parallel computation
 
 ## Underlying Approach and Parallel Runners
 
-This crate defines parallel computation by combining two basic aspects.
+This crate defines parallel computation by combining two basic components.
 
 * Pulling **inputs** in parallel is achieved through [`ConcurrentIter`](https://crates.io/crates/orx-concurrent-iter). Concurrent iterator implementations are lock-free, efficient and support pull-by-chunks optimization to reduce the parallelization overhead. A thread can pull any number of inputs from the concurrent iterator every time it becomes idle. This provides the means to dynamically decide on the chunk sizes.
 * Writing **outputs** in parallel is handled using thread-safe containers such as [`ConcurrentBag`](https://crates.io/crates/orx-concurrent-bag) and [`ConcurrentOrderedBag`](https://crates.io/crates/orx-concurrent-ordered-bag). Similarly, these are lock-free collections that aim for high performance collection of results.
 
 Finally, [`ParallelRunner`](https://docs.rs/orx-parallel/latest/orx_parallel/runner/trait.ParallelRunner.html) trait manages parallelization of the given computation with desired configuration. The objective of the parallel runner is to optimize the chunk sizes to solve the tradeoff between impact of heterogeneity of individual computations and overhead of parallelization.
 
-Since it is a trait, parallel runner is customizable. It is possible to implement and use your *own runner* simply by calling [`with_runner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.with_runner) transformation method on the parallel iterator. Default parallel runner targets to be efficient in general. When we have a use case with special characteristics, we can implement a `ParallelRunner` optimized for this scenario and use with the parallel iterators.
+Since it is a trait, parallel runner is customizable. It is possible to implement and use your *own runner* by calling [`with_runner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.with_runner) transformation method on the parallel iterator. Default parallel runner targets to be efficient in general. When we have a use case with special characteristics, we can implement a `ParallelRunner` optimized for this scenario and use with the parallel iterators.
 
 ## Contributing
 
