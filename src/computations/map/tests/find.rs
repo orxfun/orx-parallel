@@ -1,5 +1,5 @@
 use crate::{
-    Params,
+    DefaultRunner, Params,
     computations::{map::m::M, map_self},
 };
 use orx_concurrent_iter::IntoConcurrentIter;
@@ -24,7 +24,7 @@ fn m_find(n: usize, nt: usize, chunk: usize) {
     let iter = input.into_con_iter();
     let m = M::new(params, iter, map_self);
 
-    let output = m.next();
+    let output = m.next::<DefaultRunner>().1;
     assert_eq!(expected, output);
 }
 
@@ -42,7 +42,7 @@ fn m_map_find(n: usize, nt: usize, chunk: usize) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let m = M::new(params, iter, map);
-    let output = m.next();
+    let output = m.next::<DefaultRunner>().1;
 
     assert_eq!(expected, output);
 }

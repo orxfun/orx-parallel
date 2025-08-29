@@ -1,6 +1,6 @@
 use crate::{
     IterationOrder, Params,
-    computations::Vector,
+    generic_values::Vector,
     runner::DefaultRunner,
     using::{UsingClone, computations::UX},
 };

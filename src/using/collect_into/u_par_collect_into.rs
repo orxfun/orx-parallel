@@ -1,8 +1,9 @@
 use crate::collect_into::ParCollectIntoCore;
-use crate::computations::Values;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::Infallible;
 use crate::runner::ParallelRunner;
 use crate::using::Using;
-use crate::using::computations::{UM, UX, UXfx};
+use crate::using::computations::{UM, UX};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
@@ -18,20 +19,6 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         R: ParallelRunner,
         U: Using,
         I: ConcurrentIter,
-        Vo: Values<Item = O>,
+        Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
-
-    fn u_xfx_collect_into<R, U, I, Vt, Vo, M1, F, M2>(
-        self,
-        xfx: UXfx<U, I, Vt, Vo, M1, F, M2>,
-    ) -> Self
-    where
-        R: ParallelRunner,
-        U: Using,
-        I: ConcurrentIter,
-        Vt: Values,
-        Vo: Values<Item = O>,
-        M1: Fn(&mut U::Item, I::Item) -> Vt + Sync,
-        F: Fn(&mut U::Item, &Vt::Item) -> bool + Sync,
-        M2: Fn(&mut U::Item, Vt::Item) -> Vo + Sync;
 }

@@ -1,5 +1,5 @@
 use crate::using::Using;
-use crate::{ChunkSize, IterationOrder, NumThreads, Params, computations::Values};
+use crate::{ChunkSize, IterationOrder, NumThreads, Params, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct UX<U, I, Vo, M1>
@@ -37,6 +37,10 @@ where
 
     pub fn params(&self) -> Params {
         self.params
+    }
+
+    pub fn len_and_params(&self) -> (Option<usize>, Params) {
+        (self.iter.try_get_len(), self.params)
     }
 
     pub fn num_threads(&mut self, num_threads: impl Into<NumThreads>) {

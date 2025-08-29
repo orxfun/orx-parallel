@@ -1,7 +1,9 @@
 use super::super::thread_runner_compute as thread;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, Reduce};
+use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
-use crate::using::computations::{UM, UX, UXfx};
-use crate::{computations::Values, runner::ParallelRunnerCompute};
+use crate::using::computations::{UM, UX};
 use orx_concurrent_iter::ConcurrentIter;
 
 // m
@@ -56,11 +58,14 @@ where
 
 // x
 
+type ResultReduce<Vo> =
+    Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
+
 pub fn u_x<C, U, I, Vo, M1, Red>(
     runner: C,
     x: UX<U, I, Vo, M1>,
     reduce: Red,
-) -> (usize, Option<Vo::Item>)
+) -> (usize, ResultReduce<Vo>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -76,7 +81,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let results = std::thread::scope(|s| {
+    let result: Result<Vec<Vo::Item>, _> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -95,76 +100,40 @@ where
         }
 
         let mut results = Vec::with_capacity(handles.len());
-        for x in handles {
-            if let Some(x) = x.join().expect("failed to join the thread") {
-                results.push(x);
+
+        let mut error = None;
+        while !handles.is_empty() {
+            let mut finished_idx = None;
+            for (h, handle) in handles.iter().enumerate() {
+                if handle.is_finished() {
+                    finished_idx = Some(h);
+                    break;
+                }
+            }
+
+            if let Some(h) = finished_idx {
+                let handle = handles.remove(h);
+                let result = handle.join().expect("failed to join the thread");
+                match result {
+                    Reduce::Done { acc: Some(acc) } => results.push(acc),
+                    Reduce::StoppedByWhileCondition { acc: Some(acc) } => results.push(acc),
+                    Reduce::StoppedByError { error: e } => {
+                        error = Some(e);
+                        break;
+                    }
+                    _ => {}
+                }
             }
         }
-        results
+
+        match error {
+            Some(error) => Err(error),
+            None => Ok(results),
+        }
     });
 
     let mut u = using.into_inner();
-    let acc = results.into_iter().reduce(|a, b| reduce(&mut u, a, b));
-
-    (num_spawned, acc)
-}
-
-// xfx
-
-pub fn u_xfx<C, U, I, Vt, Vo, M1, F, M2, Red>(
-    runner: C,
-    xfx: UXfx<U, I, Vt, Vo, M1, F, M2>,
-    reduce: Red,
-) -> (usize, Option<Vo::Item>)
-where
-    C: ParallelRunnerCompute,
-    U: Using,
-    I: ConcurrentIter,
-    Vt: Values,
-    Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(&mut U::Item, I::Item) -> Vt + Sync,
-    F: Fn(&mut U::Item, &Vt::Item) -> bool + Sync,
-    M2: Fn(&mut U::Item, Vt::Item) -> Vo + Sync,
-    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
-{
-    let (mut using, _, iter, xap1, filter, xap2) = xfx.destruct();
-
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = 0;
-    let results = std::thread::scope(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            let u = using.create(num_spawned);
-            num_spawned += 1;
-            handles.push(s.spawn(|| {
-                thread::u_reduce::u_xfx(
-                    runner.new_thread_runner(shared_state),
-                    u,
-                    &iter,
-                    shared_state,
-                    &xap1,
-                    &filter,
-                    &xap2,
-                    &reduce,
-                )
-            }));
-        }
-
-        let mut results = Vec::with_capacity(handles.len());
-        for x in handles {
-            if let Some(x) = x.join().expect("failed to join the thread") {
-                results.push(x);
-            }
-        }
-        results
-    });
-
-    let mut u = using.into_inner();
-    let acc = results.into_iter().reduce(|a, b| reduce(&mut u, a, b));
+    let acc = result.map(|results| results.into_iter().reduce(|a, b| reduce(&mut u, a, b)));
 
     (num_spawned, acc)
 }

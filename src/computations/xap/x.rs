@@ -1,4 +1,4 @@
-use crate::{ChunkSize, IterationOrder, NumThreads, Params, computations::Values};
+use crate::{ChunkSize, IterationOrder, NumThreads, Params, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct X<I, Vo, M1>
@@ -30,8 +30,12 @@ where
         self.params
     }
 
+    pub fn len_and_params(&self) -> (Option<usize>, Params) {
+        (self.iter.try_get_len(), self.params)
+    }
+
     pub fn num_threads(&mut self, num_threads: impl Into<NumThreads>) {
-        self.params = self.params().with_num_threads(num_threads);
+        self.params = self.params.with_num_threads(num_threads);
     }
 
     pub fn chunk_size(&mut self, chunk_size: impl Into<ChunkSize>) {

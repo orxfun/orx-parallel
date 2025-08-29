@@ -1,4 +1,10 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{
+    ThreadRunner,
+    generic_values::{
+        Values,
+        runner_results::{Reduce, StopReduce},
+    },
+};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 // m
@@ -70,9 +76,9 @@ pub fn x<C, I, Vo, X1, Red>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
-    map1: &X1,
+    xap1: &X1,
     reduce: &Red,
-) -> Option<Vo::Item>
+) -> Reduce<Vo>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
@@ -92,8 +98,24 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    let vo = map1(i);
-                    acc = vo.acc_reduce(acc, reduce);
+                    let vo = xap1(i);
+                    let reduce = vo.acc_reduce(acc, reduce);
+                    acc = match Vo::reduce_to_stop(reduce) {
+                        Ok(acc) => acc,
+                        Err(stop) => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            match stop {
+                                StopReduce::DueToWhile { acc } => {
+                                    return Reduce::StoppedByWhileCondition { acc };
+                                }
+                                StopReduce::DueToError { error } => {
+                                    return Reduce::StoppedByError { error };
+                                }
+                            }
+                        }
+                    };
                 }
                 None => break,
             },
@@ -105,8 +127,24 @@ where
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         for i in chunk {
-                            let vo = map1(i);
-                            acc = vo.acc_reduce(acc, reduce);
+                            let vo = xap1(i);
+                            let reduce = vo.acc_reduce(acc, reduce);
+                            acc = match Vo::reduce_to_stop(reduce) {
+                                Ok(acc) => acc,
+                                Err(stop) => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    match stop {
+                                        StopReduce::DueToWhile { acc } => {
+                                            return Reduce::StoppedByWhileCondition { acc };
+                                        }
+                                        StopReduce::DueToError { error } => {
+                                            return Reduce::StoppedByError { error };
+                                        }
+                                    }
+                                }
+                            };
                         }
                     }
                     None => break,
@@ -118,68 +156,6 @@ where
     }
 
     runner.complete_task(shared_state);
-    acc
-}
 
-// xfx
-
-pub fn xfx<C, I, Vt, Vo, M1, F, M2, X>(
-    mut runner: C,
-    iter: &I,
-    shared_state: &C::SharedState,
-    map1: &M1,
-    filter: &F,
-    map2: &M2,
-    reduce: &X,
-) -> Option<Vo::Item>
-where
-    C: ThreadRunner,
-    I: ConcurrentIter,
-    Vt: Values,
-    Vo: Values,
-    M1: Fn(I::Item) -> Vt,
-    F: Fn(&Vt::Item) -> bool,
-    M2: Fn(Vt::Item) -> Vo,
-    X: Fn(Vo::Item, Vo::Item) -> Vo::Item,
-{
-    let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller();
-
-    let mut acc = None;
-
-    loop {
-        let chunk_size = runner.next_chunk_size(shared_state, iter);
-
-        runner.begin_chunk(chunk_size);
-
-        match chunk_size {
-            0 | 1 => match item_puller.next() {
-                Some(i) => {
-                    let vt = map1(i);
-                    acc = vt.fx_reduce(acc, filter, map2, reduce);
-                }
-                None => break,
-            },
-            c => {
-                if c > chunk_puller.chunk_size() {
-                    chunk_puller = iter.chunk_puller(c);
-                }
-
-                match chunk_puller.pull() {
-                    Some(chunk) => {
-                        for i in chunk {
-                            let vt = map1(i);
-                            acc = vt.fx_reduce(acc, filter, map2, reduce);
-                        }
-                    }
-                    None => break,
-                }
-            }
-        }
-
-        runner.complete_chunk(shared_state, chunk_size);
-    }
-
-    runner.complete_task(shared_state);
-    acc
+    Reduce::Done { acc }
 }

@@ -5,7 +5,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// A parallel runner which is responsible for taking a computation defined as a composition
 /// of iterator methods, spawns threads, shares tasks and returns the result of the parallel
 /// execution.
-pub trait ParallelRunner: Sized + Sync {
+pub trait ParallelRunner: Sized + Sync + 'static {
     /// Data shared to the thread runners.
     type SharedState: Send + Sync;
 

@@ -1,3 +1,7 @@
+use crate::ParIterResult;
+use crate::computational_variants::fallible_option::ParOption;
+use crate::par_iter_option::{IntoOption, ParIterOption};
+use crate::par_iter_result::IntoResult;
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
@@ -7,8 +11,8 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     special_type_sets::Sum,
 };
+use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
-use std::cmp::Ordering;
 
 /// Parallel iterator.
 pub trait ParIter<R = DefaultRunner>: Sized + Send + Sync
@@ -211,6 +215,8 @@ where
 
     /// Sets the iteration order of the parallel computation.
     ///
+    /// See [`IterationOrder`] for details.
+    ///
     /// # Examples
     ///
     /// ```
@@ -239,7 +245,7 @@ where
     ///     Params::new(NumThreads::Auto, ChunkSize::Auto, IterationOrder::Arbitrary)
     /// );
     /// ```
-    fn iteration_order(self, collect: IterationOrder) -> Self;
+    fn iteration_order(self, order: IterationOrder) -> Self;
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
@@ -471,7 +477,7 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send,
+        U: Send + 'static,
         F: FnMut(usize) -> U;
 
     /// Converts the [`ParIter`] into [`ParIterUsing`] which will have access to a mutable reference of the
@@ -492,7 +498,103 @@ where
         value: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send;
+        U: Clone + Send + 'static;
+
+    // transformations into fallible computations
+
+    /// Transforms a parallel iterator where elements are of the result type; i.e., `ParIter<R, Item = Result<T, E>>`,
+    ///  into fallible parallel iterator with item type `T` and error type `E`; i.e., into `ParIterResult<R, Item = T, Err = E>`.
+    ///
+    /// `ParIterResult` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// as follows:
+    ///
+    /// * All of its methods are based on the success path with item type of `T`.
+    /// * However, computations short-circuit and immediately return the observed error if any of the items
+    ///   is of the `Err` variant of the result enum.
+    ///
+    /// See [`ParIterResult`] for details.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    ///
+    /// let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())  // ParIter with Item=Result<i32, ParseIntError>
+    ///     .into_fallible_result()     // ParIterResult with Item=i32 and Err=ParseIntError
+    ///     .map(|x| x * 2)             // methods focus on the success path with Item=i32
+    ///     .collect();                 // methods return Result<_, Err>
+    ///                                 // where the Ok variant depends on the computation
+    ///
+    /// assert_eq!(result_doubled, Ok(vec![2, 4, 6]));
+    ///
+    /// // at least one fails
+    ///
+    /// let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
+    ///     .into_fallible_result()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert!(result_doubled.is_err());
+    /// ```
+    fn into_fallible_result<T, E>(self) -> impl ParIterResult<R, Item = T, Err = E>
+    where
+        Self::Item: IntoResult<T, E>;
+
+    /// Transforms a parallel iterator where elements are of the option type; i.e., `ParIter<R, Item = Option<T>>`,
+    ///  into fallible parallel iterator with item type `T`; i.e., into `ParIterOption<R, Item = T>`.
+    ///
+    /// `ParIterOption` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// as follows:
+    ///
+    /// * All of its methods are based on the success path with item type of `T`.
+    /// * However, computations short-circuit and immediately return None if any of the items
+    ///   is of the `None` variant of the option enum.
+    ///
+    /// See [`ParIterResult`] for details.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeeds
+    ///
+    /// let result_doubled: Option<Vec<i32>> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())     // ParIter with Item=Option<i32>
+    ///     .into_fallible_option()             // ParIterOption with Item=i32
+    ///     .map(|x| x * 2)                     // methods focus on the success path with Item=i32
+    ///     .collect();                         // methods return Option<T>
+    ///                                         // where T depends on the computation
+    ///
+    /// assert_eq!(result_doubled, Some(vec![2, 4, 6]));
+    ///
+    /// // at least one fails
+    ///
+    /// let result_doubled: Option<Vec<i32>> = ["1", "x!", "3"]
+    ///     .into_par()
+    ///     .map(|x| x.parse::<i32>().ok())
+    ///     .into_fallible_option()
+    ///     .map(|x| x * 2)
+    ///     .collect();
+    ///
+    /// assert_eq!(result_doubled, None);
+    /// ```
+    fn into_fallible_option<T>(self) -> impl ParIterOption<R, Item = T>
+    where
+        Self::Item: IntoOption<T>,
+    {
+        ParOption::new(
+            self.map(|x| x.into_result_with_unit_err())
+                .into_fallible_result(),
+        )
+    }
 
     // computation transformations
 
@@ -643,6 +745,68 @@ where
             x
         };
         self.map(map)
+    }
+
+    // while transformations
+
+    /// Creates an iterator that yields elements based on the predicate `take_while`.
+    ///
+    /// It will call this closure on each element of the iterator, and yield elements while it returns true.
+    ///
+    /// After false is returned, take_while’s job is over, and the rest of the elements are ignored.
+    ///
+    /// Unlike regular sequential iterators, the result is not always deterministic due to parallel execution.
+    ///
+    /// However, as demonstrated in the example below, `collect` with ordered execution makes sure that all
+    /// elements before the predicate returns false are collected in the correct order; and hence, the result
+    /// is deterministic.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let iter = (0..10_000).par().take_while(|x| *x != 5_000);
+    /// let b: Vec<_> = iter.collect();
+    ///
+    /// assert_eq!(b, (0..5_000).collect::<Vec<_>>());
+    /// ```
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
+    where
+        While: Fn(&Self::Item) -> bool + Sync + Clone;
+
+    /// Creates an iterator that both yields elements based on the predicate `map_while` and maps.
+    ///
+    /// `map_while` takes a closure as an argument.
+    /// It will call this closure on each element of the iterator, and yield elements while it returns Some(_).
+    ///
+    /// After None is returned, map_while job is over, and the rest of the elements are ignored.
+    ///
+    /// Unlike regular sequential iterators, the result is not always deterministic due to parallel execution.
+    ///
+    /// However, as demonstrated in the example below, `collect` with ordered execution makes sure that all
+    /// elements before the predicate returns None are collected in the correct order; and hence, the result
+    /// is deterministic.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let iter = (0..10_000)
+    ///     .par()
+    ///     .map(|x| x as i32 - 5_000) // -5_000..10_000
+    ///     .map_while(|x| 16i32.checked_div(x));
+    /// let b: Vec<_> = iter.collect();
+    ///
+    /// assert_eq!(b, (-5_000..0).map(|x| 16 / x).collect::<Vec<_>>());
+    /// ```
+    fn map_while<Out, MapWhile>(self, map_while: MapWhile) -> impl ParIter<R, Item = Out>
+    where
+        MapWhile: Fn(Self::Item) -> Option<Out> + Sync + Clone,
+    {
+        self.map(map_while).take_while(|x| x.is_some()).map(|x| {
+            // SAFETY: since x passed the whilst(is-some) check, unwrap_unchecked
+            unsafe { x.unwrap_unchecked() }
+        })
     }
 
     // special item transformations
@@ -1171,6 +1335,7 @@ where
     /// // or equivalently,
     /// let any = a.par().iteration_order(IterationOrder::Arbitrary).find(|x| x % 3421 == 0).unwrap();
     /// assert!([3421, 2 * 3421].contains(&any));
+    /// ```
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send;

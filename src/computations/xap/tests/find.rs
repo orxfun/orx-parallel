@@ -1,7 +1,5 @@
-use crate::{
-    Params,
-    computations::{Vector, X},
-};
+use crate::generic_values::Vector;
+use crate::{DefaultRunner, Params, computations::X};
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
 
@@ -26,7 +24,7 @@ fn x_flat_map_find(n: usize, nt: usize, chunk: usize) {
     let iter = input.into_con_iter();
     let x = X::new(params, iter, xmap);
 
-    let output = x.next();
+    let output = x.next::<DefaultRunner>().1;
 
     assert_eq!(expected, output);
 }
@@ -47,7 +45,7 @@ fn x_filter_map_find(n: usize, nt: usize, chunk: usize) {
     let iter = input.into_con_iter();
     let x = X::new(params, iter, xmap);
 
-    let output = x.next();
+    let output = x.next::<DefaultRunner>().1;
 
     assert_eq!(expected, output);
 }

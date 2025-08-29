@@ -1,6 +1,6 @@
 [package]
 name = "orx-parallel"
-version = "3.0.0"
+version = "3.1.0"
 edition = "2024"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 readme = "README.md"
@@ -27,6 +27,7 @@ rayon = { version = "1.10.0", optional = true }
 chrono = "0.4.39"
 clap = { version = "4.5.36", features = ["derive"] }
 criterion = "0.5.1"
+orx-concurrent-option = { version = "1.5.0", default-features = false }
 orx-concurrent-vec = "3.6.0"
 rand = "0.9"
 rand_chacha = "0.9"
@@ -34,7 +35,7 @@ rayon = "1.10.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "mut_for_each_slice"
+name = "find"
 harness = false
 
 [features]

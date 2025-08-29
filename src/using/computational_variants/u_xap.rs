@@ -1,13 +1,8 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
-    computations::{Values, Vector},
+    generic_values::{TransformableValues, runner_results::Infallible},
     runner::{DefaultRunner, ParallelRunner},
-    using::u_par_iter::ParIterUsing,
-    using::{
-        Using,
-        computational_variants::u_xap_filter_xap::UParXapFilterXap,
-        computations::{UX, u_map_self_atom},
-    },
+    using::{Using, computations::UX, u_par_iter::ParIterUsing},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -20,7 +15,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     ux: UX<U, I, Vo, M1>,
@@ -32,7 +27,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(using: U, params: Params, iter: I, x1: M1) -> Self {
@@ -52,7 +47,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -62,7 +57,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
 }
@@ -72,7 +67,7 @@ where
     R: ParallelRunner,
     U: Using,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
@@ -114,10 +109,19 @@ where
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
+
         let x1 = move |u: &mut U::Item, i: I::Item| {
-            // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, i).values().into_iter().map(|x| map(u, x)).collect();
-            Vector(vo)
+            let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_map(u, map.clone())
         };
 
         UParXap::new(using, params, iter, x1)
@@ -128,8 +132,20 @@ where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let filter = move |u: &mut U::Item, x: &Self::Item| filter(u, x);
-        UParXapFilterXap::new(using, params, iter, x1, filter, u_map_self_atom)
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter(u, filter.clone())
+        };
+        UParXap::new(using, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(
@@ -141,11 +157,18 @@ where
         FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, t: I::Item| {
-            // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
-            let vo: Vec<_> = vo.into_iter().flat_map(|x| flat_map(u, x)).collect();
-            Vector(vo)
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_flat_map(u, flat_map.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -158,11 +181,18 @@ where
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, params, iter, x1) = self.destruct();
-        let x1 = move |u: &mut U::Item, t: I::Item| {
-            // TODO: avoid allocation
-            let vo: Vec<_> = x1(u, t).values().into_iter().collect();
-            let vo: Vec<_> = vo.into_iter().filter_map(|x| filter_map(u, x)).collect();
-            Vector(vo)
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter_map(u, filter_map.clone())
         };
         UParXap::new(using, params, iter, x1)
     }
@@ -188,7 +218,10 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.ux.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        self.ux.next::<R>().1
     }
 }

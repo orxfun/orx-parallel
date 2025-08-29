@@ -1,23 +1,21 @@
-use crate::{ThreadRunner, computations::Values};
+use crate::{
+    ThreadRunner,
+    generic_values::Values,
+    generic_values::runner_results::{Fallibility, Next},
+};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn xfx<C, I, Vt, Vo, M1, F, M2>(
+pub fn m<C, I, O, M1>(
     mut runner: C,
     iter: &I,
     shared_state: &C::SharedState,
     map1: &M1,
-    filter: &F,
-    map2: &M2,
-) -> Option<Vo::Item>
+) -> Option<O>
 where
     C: ThreadRunner,
     I: ConcurrentIter,
-    Vt: Values,
-    Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(I::Item) -> Vt,
-    F: Fn(&Vt::Item) -> bool,
-    M2: Fn(Vt::Item) -> Vo,
+    O: Send,
+    M1: Fn(I::Item) -> O,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
@@ -30,14 +28,11 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    let vt = map1(i);
-                    let maybe_next = vt.fx_next(filter, map2);
-                    if maybe_next.is_some() {
-                        iter.skip_to_end();
-                        runner.complete_chunk(shared_state, chunk_size);
-                        runner.complete_task(shared_state);
-                        return maybe_next;
-                    }
+                    let first = map1(i);
+                    iter.skip_to_end();
+                    runner.complete_chunk(shared_state, chunk_size);
+                    runner.complete_task(shared_state);
+                    return Some(first);
                 }
                 None => break,
             },
@@ -47,16 +42,13 @@ where
                 }
 
                 match chunk_puller.pull() {
-                    Some(chunk) => {
-                        for i in chunk {
-                            let vt = map1(i);
-                            let maybe_next = vt.fx_next(filter, map2);
-                            if maybe_next.is_some() {
-                                iter.skip_to_end();
-                                runner.complete_chunk(shared_state, chunk_size);
-                                runner.complete_task(shared_state);
-                                return maybe_next;
-                            }
+                    Some(mut chunk) => {
+                        if let Some(i) = chunk.next() {
+                            let first = map1(i);
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return Some(first);
                         }
                     }
                     None => break,
@@ -69,4 +61,99 @@ where
 
     runner.complete_task(shared_state);
     None
+}
+
+pub fn x<C, I, Vo, X1>(
+    mut runner: C,
+    iter: &I,
+    shared_state: &C::SharedState,
+    xap1: &X1,
+) -> Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>
+where
+    C: ThreadRunner,
+    I: ConcurrentIter,
+    Vo: Values,
+    Vo::Item: Send,
+    X1: Fn(I::Item) -> Vo,
+{
+    let mut chunk_puller = iter.chunk_puller(0);
+    let mut item_puller = iter.item_puller();
+
+    loop {
+        let chunk_size = runner.next_chunk_size(shared_state, iter);
+
+        runner.begin_chunk(chunk_size);
+
+        match chunk_size {
+            0 | 1 => match item_puller.next() {
+                Some(i) => {
+                    let vt = xap1(i);
+                    match vt.next() {
+                        Next::Done { value } => {
+                            if let Some(value) = value {
+                                iter.skip_to_end();
+                                runner.complete_chunk(shared_state, chunk_size);
+                                runner.complete_task(shared_state);
+                                return Ok(Some(value));
+                            }
+                        }
+                        Next::StoppedByError { error } => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return Err(error);
+                        }
+                        Next::StoppedByWhileCondition => {
+                            iter.skip_to_end();
+                            runner.complete_chunk(shared_state, chunk_size);
+                            runner.complete_task(shared_state);
+                            return Ok(None);
+                        }
+                    }
+                }
+                None => break,
+            },
+            c => {
+                if c > chunk_puller.chunk_size() {
+                    chunk_puller = iter.chunk_puller(c);
+                }
+
+                match chunk_puller.pull() {
+                    Some(chunk) => {
+                        for i in chunk {
+                            let vt = xap1(i);
+                            match vt.next() {
+                                Next::Done { value } => {
+                                    if let Some(value) = value {
+                                        iter.skip_to_end();
+                                        runner.complete_chunk(shared_state, chunk_size);
+                                        runner.complete_task(shared_state);
+                                        return Ok(Some(value));
+                                    }
+                                }
+                                Next::StoppedByError { error } => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return Err(error);
+                                }
+                                Next::StoppedByWhileCondition => {
+                                    iter.skip_to_end();
+                                    runner.complete_chunk(shared_state, chunk_size);
+                                    runner.complete_task(shared_state);
+                                    return Ok(None);
+                                }
+                            }
+                        }
+                    }
+                    None => break,
+                }
+            }
+        }
+
+        runner.complete_chunk(shared_state, chunk_size);
+    }
+
+    runner.complete_task(shared_state);
+    Ok(None)
 }

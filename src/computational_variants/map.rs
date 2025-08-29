@@ -1,10 +1,13 @@
-use super::{xap::ParXap, xap_filter_xap::ParXapFilterXap};
+use super::xap::ParXap;
+use crate::ParIterResult;
+use crate::computational_variants::fallible_result::ParMapResult;
+use crate::generic_values::{Vector, WhilstAtom};
+use crate::par_iter_result::IntoResult;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{Atom, M, Vector, map_self_atom},
+    computations::M,
     runner::{DefaultRunner, ParallelRunner},
-    using::computational_variants::UParMap,
-    using::{UsingClone, UsingFun},
+    using::{UsingClone, UsingFun, computational_variants::UParMap},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -33,7 +36,7 @@ where
         }
     }
 
-    fn destruct(self) -> (Params, I, M1) {
+    pub(crate) fn destruct(self) -> (Params, I, M1) {
         self.m.destruct()
     }
 }
@@ -99,7 +102,7 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send,
+        U: Send + 'static,
         F: FnMut(usize) -> U,
     {
         let using = UsingFun::new(using);
@@ -113,7 +116,7 @@ where
         using: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send,
+        U: Clone + Send + 'static,
     {
         let using = UsingClone::new(using);
         let (params, iter, m1) = self.destruct();
@@ -137,8 +140,12 @@ where
         Filter: Fn(&Self::Item) -> bool + Sync,
     {
         let (params, iter, m1) = self.destruct();
-        let m1 = move |i: I::Item| Atom(m1(i));
-        ParXapFilterXap::new(params, iter, m1, filter, map_self_atom)
+
+        let x1 = move |i: I::Item| {
+            let value = m1(i);
+            filter(&value).then_some(value)
+        };
+        ParXap::new(params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
@@ -158,6 +165,22 @@ where
         let (params, iter, m1) = self.destruct();
         let x1 = move |i: I::Item| filter_map(m1(i));
         ParXap::new(params, iter, x1)
+    }
+
+    fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
+    where
+        While: Fn(&Self::Item) -> bool + Sync,
+    {
+        let (params, iter, m1) = self.destruct();
+        let x1 = move |value: I::Item| WhilstAtom::new(m1(value), &take_while);
+        ParXap::new(params, iter, x1)
+    }
+
+    fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+    {
+        ParMapResult::new(self)
     }
 
     // collect
@@ -181,7 +204,13 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Self::Item> {
-        self.m.next()
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        match self.params().iteration_order {
+            IterationOrder::Ordered => self.m.next::<R>().1,
+            IterationOrder::Arbitrary => self.m.next_any::<R>().1,
+        }
     }
 }

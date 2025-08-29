@@ -1,6 +1,8 @@
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
 use crate::runner::thread_runner_compute as thread;
 use crate::{
-    computations::{M, Values, X, Xfx, heap_sort_into},
+    computations::{M, X},
     runner::ParallelRunnerCompute,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -49,12 +51,17 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, P>(runner: C, x: X<I, Vo, M1>, mut pinned_vec: P) -> (usize, P)
+pub fn x<C, I, Vo, M1, P>(
+    runner: C,
+    x: X<I, Vo, M1>,
+    pinned_vec: P,
+) -> (usize, ParallelCollect<Vo, P>)
 where
     C: ParallelRunnerCompute,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
+    <Vo::Fallibility as Fallibility>::Error: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
@@ -65,81 +72,57 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let vectors = std::thread::scope(|s| {
-        let mut handles = vec![];
+    let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
+        std::thread::scope(|s| {
+            let mut handles = vec![];
 
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
-            handles.push(s.spawn(|| {
-                thread::collect_ordered::x(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                )
-            }));
-        }
+            while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+                num_spawned += 1;
+                handles.push(s.spawn(|| {
+                    thread::collect_ordered::x(
+                        runner.new_thread_runner(shared_state),
+                        &iter,
+                        shared_state,
+                        &xap1,
+                    )
+                }));
+            }
 
-        let mut vectors = Vec::with_capacity(handles.len());
-        for x in handles {
-            vectors.push(x.join().expect("failed to join the thread"));
-        }
-        vectors
-    });
+            let mut results = Vec::with_capacity(handles.len());
 
-    heap_sort_into(vectors, &mut pinned_vec);
-    (num_spawned, pinned_vec)
-}
+            let mut error = None;
+            while !handles.is_empty() {
+                let mut finished_idx = None;
+                for (h, handle) in handles.iter().enumerate() {
+                    if handle.is_finished() {
+                        finished_idx = Some(h);
+                        break;
+                    }
+                }
 
-// xfx
+                if let Some(h) = finished_idx {
+                    let handle = handles.remove(h);
+                    let result = handle.join().expect("failed to join the thread");
+                    match result.into_result() {
+                        Ok(result) => results.push(result),
+                        Err(e) => {
+                            error = Some(e);
+                            break;
+                        }
+                    }
+                }
+            }
 
-pub fn xfx<C, I, Vt, Vo, M1, F, M2, P>(
-    runner: C,
-    xfx: Xfx<I, Vt, Vo, M1, F, M2>,
-    mut pinned_vec: P,
-) -> (usize, P)
-where
-    C: ParallelRunnerCompute,
-    I: ConcurrentIter,
-    Vt: Values,
-    Vo: Values,
-    Vo::Item: Send,
-    M1: Fn(I::Item) -> Vt + Sync,
-    F: Fn(&Vt::Item) -> bool + Sync,
-    M2: Fn(Vt::Item) -> Vo + Sync,
-    P: IntoConcurrentPinnedVec<Vo::Item>,
-{
-    let (_, iter, xap1, filter, xap2) = xfx.destruct();
+            match error {
+                Some(error) => Err(error),
+                None => Ok(results),
+            }
+        });
 
-    // compute
-    let state = runner.new_shared_state();
-    let shared_state = &state;
+    let result = match result {
+        Err(error) => ParallelCollect::StoppedByError { error },
+        Ok(results) => ParallelCollect::reduce(results, pinned_vec),
+    };
 
-    let mut num_spawned = 0;
-    let vectors = std::thread::scope(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
-            handles.push(s.spawn(|| {
-                thread::collect_ordered::xfx(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                    &filter,
-                    &xap2,
-                )
-            }));
-        }
-
-        let mut vectors = Vec::with_capacity(handles.len());
-        for x in handles {
-            vectors.push(x.join().expect("failed to join the thread"));
-        }
-        vectors
-    });
-
-    heap_sort_into(vectors, &mut pinned_vec);
-    (num_spawned, pinned_vec)
+    (num_spawned, result)
 }
