@@ -1,5 +1,4 @@
 use super::{map::ParMap, xap::ParXap};
-use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
 use crate::par_iter_result::IntoResult;
@@ -9,7 +8,9 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UPar},
 };
-use orx_concurrent_iter::ConcurrentIter;
+use crate::{IntoParIter, ParIterResult};
+use orx_concurrent_iter::chain::{ChainKnownLenI, ChainUnknownLenI};
+use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 use std::marker::PhantomData;
 
 /// A parallel iterator.
@@ -58,6 +59,31 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
 {
+}
+
+impl<I, R> Par<I, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+{
+    pub fn chain_inexact<C>(self, other: C) -> Par<ChainUnknownLenI<I, C::IntoIter>, R>
+    where
+        C: IntoParIter<Item = I::Item>,
+    {
+        let (params, iter) = self.destruct();
+        let iter = iter.chain_inexact(other);
+        Par::new(params, iter)
+    }
+
+    pub fn chain<C>(self, other: C) -> Par<ChainKnownLenI<I, C::IntoIter>, R>
+    where
+        I: ExactSizeConcurrentIter,
+        C: IntoParIter<Item = I::Item>,
+    {
+        let (params, iter) = self.destruct();
+        let iter = iter.chain(other);
+        Par::new(params, iter)
+    }
 }
 
 impl<I, R> ParIter<R> for Par<I, R>
