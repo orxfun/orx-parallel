@@ -1,5 +1,5 @@
-use crate::{ParIter, Params, computational_variants::Par, runner::DefaultRunner};
-use orx_concurrent_iter::IterIntoConcurrentIter;
+use crate::{Params, computational_variants::Par, runner::DefaultRunner};
+use orx_concurrent_iter::{IterIntoConcurrentIter, implementations::ConIterOfIter};
 
 /// Any regular iterator implements [`IterIntoParIter`] trait allowing them to be used
 /// as a parallel iterator; i.e., [`ParIter`], by calling [`iter_into_par`].
@@ -116,7 +116,10 @@ pub trait IterIntoParIter: Iterator {
     ///
     /// assert_eq!(sum_evens, 3782);
     /// ```
-    fn iter_into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item>;
+    fn iter_into_par(self) -> Par<ConIterOfIter<Self>, DefaultRunner>
+    where
+        Self: Sized,
+        Self::Item: Send;
 }
 
 impl<I> IterIntoParIter for I
@@ -124,7 +127,7 @@ where
     I: Iterator,
     I::Item: Send + Sync,
 {
-    fn iter_into_par(self) -> impl ParIter<DefaultRunner, Item = Self::Item> {
+    fn iter_into_par(self) -> Par<ConIterOfIter<Self>, DefaultRunner> {
         Par::new(Params::default(), self.iter_into_con_iter())
     }
 }

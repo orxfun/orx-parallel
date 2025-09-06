@@ -17,7 +17,7 @@ where
     let _par_iter = a.iter_into_par();
 }
 
-fn take_iter_into_par_iter_into_par_bounds<T>(a: impl IterIntoParIter<Item = T>) {
+fn take_iter_into_par_iter_into_par_bounds<T: Send>(a: impl IterIntoParIter<Item = T>) {
     let _ = a.iter_into_par();
 }
 

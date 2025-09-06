@@ -10,7 +10,9 @@ use crate::{
 };
 use crate::{IntoParIter, ParIterResult};
 use orx_concurrent_iter::chain::{ChainKnownLenI, ChainUnknownLenI};
-use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
+use orx_concurrent_iter::{
+    ConcurrentIter, ExactSizeConcurrentIter, IntoConcurrentIter, IterIntoConcurrentIter,
+};
 use std::marker::PhantomData;
 
 /// A parallel iterator.
@@ -59,31 +61,6 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
 {
-}
-
-impl<I, R> Par<I, R>
-where
-    R: ParallelRunner,
-    I: ConcurrentIter,
-{
-    pub fn chain_inexact<C>(self, other: C) -> Par<ChainUnknownLenI<I, C::IntoIter>, R>
-    where
-        C: IntoParIter<Item = I::Item>,
-    {
-        let (params, iter) = self.destruct();
-        let iter = iter.chain_inexact(other);
-        Par::new(params, iter)
-    }
-
-    pub fn chain<C>(self, other: C) -> Par<ChainKnownLenI<I, C::IntoIter>, R>
-    where
-        I: ExactSizeConcurrentIter,
-        C: IntoParIter<Item = I::Item>,
-    {
-        let (params, iter) = self.destruct();
-        let iter = iter.chain(other);
-        Par::new(params, iter)
-    }
 }
 
 impl<I, R> ParIter<R> for Par<I, R>
@@ -226,5 +203,77 @@ where
             IterationOrder::Ordered => self.m().next::<R>().1,
             IterationOrder::Arbitrary => self.m().next_any::<R>().1,
         }
+    }
+}
+
+impl<I, R> Par<I, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+{
+    /// Creates a chain of this and `other` parallel iterators.
+    ///
+    /// It is preferable to call [`chain`] over `chain_inexact` whenever the input concurrent iterator
+    /// of this parallel iterator implements `ExactSizeConcurrentIter`.
+    ///
+    /// [`chain`]: Par::chain
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let chars: Vec<_> = vec!['a', 'b', 'c']
+    ///     .into_iter()
+    ///     .filter(|x| x != &'x')
+    ///     .iter_into_par() // inexact iter
+    ///     .chain_inexact(vec!['d', 'e', 'f'].into_par())
+    ///     .collect();
+    /// assert_eq!(chars, vec!['a', 'b', 'c', 'd', 'e', 'f']);
+    /// ```
+    pub fn chain_inexact<C, Q>(self, other: Par<C, Q>) -> Par<ChainUnknownLenI<I, C>, R>
+    where
+        C: ConcurrentIter<Item = I::Item>,
+        Q: ParallelRunner,
+    {
+        let (params, iter) = self.destruct();
+        let iter = iter.chain_inexact(other.iter);
+        Par::new(params, iter)
+    }
+
+    /// Creates a chain of this and `other` parallel iterators.
+    ///
+    /// It is preferable to call `chain` over [`chain_inexact`] whenever the input concurrent iterator
+    /// of this parallel iterator implements `ExactSizeConcurrentIter`.
+    ///
+    /// [`chain_inexact`]: Par::chain_inexact
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let chars: Vec<_> = vec!['a', 'b', 'c']
+    ///     .into_par() // exact iter
+    ///     .chain(vec!['d', 'e', 'f'].into_par())
+    ///     .collect();
+    /// assert_eq!(chars, vec!['a', 'b', 'c', 'd', 'e', 'f']);
+    ///
+    /// let chars: Vec<_> = ['a', 'b', 'c']
+    ///     .into_iter()
+    ///     .iter_into_par() // exact iter
+    ///     .chain("def".chars().iter_into_par())
+    ///     .collect();
+    /// assert_eq!(chars, vec!['a', 'b', 'c', 'd', 'e', 'f']);
+    /// ```
+    pub fn chain<C, Q>(self, other: Par<C, Q>) -> Par<ChainKnownLenI<I, C>, R>
+    where
+        I: ExactSizeConcurrentIter,
+        C: ConcurrentIter<Item = I::Item>,
+        Q: ParallelRunner,
+    {
+        let (params, iter) = self.destruct();
+        let iter = iter.chain(other.iter);
+        Par::new(params, iter)
     }
 }
