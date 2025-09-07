@@ -10,6 +10,7 @@ use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 ///
 /// [`into_par`]: crate::IntoParIter::into_par
 /// [`IntoConcurrentIter`]: orx_concurrent_iter::IntoConcurrentIter
+/// [`ParIter`]: crate::ParIter
 ///
 /// # Examples
 ///
@@ -31,6 +32,7 @@ pub trait IntoParIter: IntoConcurrentIter {
     /// It can be considered as the *concurrent counterpart* of the [`IntoIterator`] trait.
     ///
     /// [`into_par`]: crate::IntoParIter::into_par
+    /// [`ParIter`]: crate::ParIter
     ///
     /// # Examples
     ///
