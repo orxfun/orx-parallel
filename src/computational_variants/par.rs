@@ -211,40 +211,7 @@ where
 {
     /// Creates a chain of this and `other` parallel iterators.
     ///
-    /// It is preferable to call [`chain`] over `chain_inexact` whenever the input concurrent iterator
-    /// of this parallel iterator implements `ExactSizeConcurrentIter`.
-    ///
-    /// [`chain`]: Par::chain
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let a = vec!['a', 'b', 'c'].into_iter().filter(|x| *x != 'x'); // with inexact len
-    /// let b = vec!['d', 'e', 'f'];
-    ///
-    /// let chain = a.iter_into_par().chain_inexact(b);
-    /// assert_eq!(
-    ///     chain.collect::<Vec<_>>(),
-    ///     vec!['a', 'b', 'c', 'd', 'e', 'f'],
-    /// );
-    /// ```
-    pub fn chain_inexact<C>(self, other: C) -> Par<ChainUnknownLenI<I, C::IntoIter>, R>
-    where
-        C: IntoParIter<Item = I::Item>,
-    {
-        let (params, iter) = self.destruct();
-        let iter = iter.chain_inexact(other.into_con_iter());
-        Par::new(params, iter)
-    }
-
-    /// Creates a chain of this and `other` parallel iterators.
-    ///
-    /// It is preferable to call `chain` over [`chain_inexact`] whenever the input concurrent iterator
-    /// of this parallel iterator implements `ExactSizeConcurrentIter`.
-    ///
-    /// [`chain_inexact`]: Par::chain_inexact
+    /// The first iterator is required to have a known length for chaining.
     ///
     /// # Examples
     ///
