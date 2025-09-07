@@ -10,9 +10,7 @@ use crate::{
 };
 use crate::{IntoParIter, ParIterResult};
 use orx_concurrent_iter::chain::{ChainKnownLenI, ChainUnknownLenI};
-use orx_concurrent_iter::{
-    ConcurrentIter, ExactSizeConcurrentIter, IntoConcurrentIter, IterIntoConcurrentIter,
-};
+use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 use std::marker::PhantomData;
 
 /// A parallel iterator.
@@ -223,21 +221,21 @@ where
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let chars: Vec<_> = vec!['a', 'b', 'c']
-    ///     .into_iter()
-    ///     .filter(|x| x != &'x')
-    ///     .iter_into_par() // inexact iter
-    ///     .chain_inexact(vec!['d', 'e', 'f'].into_par())
-    ///     .collect();
-    /// assert_eq!(chars, vec!['a', 'b', 'c', 'd', 'e', 'f']);
+    /// let a = vec!['a', 'b', 'c'].into_iter().filter(|x| *x != 'x'); // with inexact len
+    /// let b = vec!['d', 'e', 'f'];
+    ///
+    /// let chain = a.iter_into_par().chain_inexact(b);
+    /// assert_eq!(
+    ///     chain.collect::<Vec<_>>(),
+    ///     vec!['a', 'b', 'c', 'd', 'e', 'f'],
+    /// );
     /// ```
-    pub fn chain_inexact<C, Q>(self, other: Par<C, Q>) -> Par<ChainUnknownLenI<I, C>, R>
+    pub fn chain_inexact<C>(self, other: C) -> Par<ChainUnknownLenI<I, C::IntoIter>, R>
     where
-        C: ConcurrentIter<Item = I::Item>,
-        Q: ParallelRunner,
+        C: IntoParIter<Item = I::Item>,
     {
         let (params, iter) = self.destruct();
-        let iter = iter.chain_inexact(other.iter);
+        let iter = iter.chain_inexact(other.into_con_iter());
         Par::new(params, iter)
     }
 
@@ -253,27 +251,22 @@ where
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let chars: Vec<_> = vec!['a', 'b', 'c']
-    ///     .into_par() // exact iter
-    ///     .chain(vec!['d', 'e', 'f'].into_par())
-    ///     .collect();
-    /// assert_eq!(chars, vec!['a', 'b', 'c', 'd', 'e', 'f']);
+    /// let a = vec!['a', 'b', 'c']; // with exact len
+    /// let b = vec!['d', 'e', 'f'].into_iter().filter(|x| *x != 'x');
     ///
-    /// let chars: Vec<_> = ['a', 'b', 'c']
-    ///     .into_iter()
-    ///     .iter_into_par() // exact iter
-    ///     .chain("def".chars().iter_into_par())
-    ///     .collect();
-    /// assert_eq!(chars, vec!['a', 'b', 'c', 'd', 'e', 'f']);
+    /// let chain = a.into_par().chain(b.iter_into_par());
+    /// assert_eq!(
+    ///     chain.collect::<Vec<_>>(),
+    ///     vec!['a', 'b', 'c', 'd', 'e', 'f'],
+    /// );
     /// ```
-    pub fn chain<C, Q>(self, other: Par<C, Q>) -> Par<ChainKnownLenI<I, C>, R>
+    pub fn chain<C>(self, other: C) -> Par<ChainKnownLenI<I, C::IntoIter>, R>
     where
         I: ExactSizeConcurrentIter,
-        C: ConcurrentIter<Item = I::Item>,
-        Q: ParallelRunner,
+        C: IntoParIter<Item = I::Item>,
     {
         let (params, iter) = self.destruct();
-        let iter = iter.chain(other.iter);
+        let iter = iter.chain(other.into_con_iter());
         Par::new(params, iter)
     }
 }

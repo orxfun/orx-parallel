@@ -22,7 +22,6 @@ mod into_par_iter;
 pub mod iter;
 mod iter_into_par_iter;
 mod par_iter;
-mod par_iter_chain;
 mod par_iter_option;
 mod par_iter_result;
 mod parallel_drainable;
