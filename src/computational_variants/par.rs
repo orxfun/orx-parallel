@@ -1,5 +1,4 @@
 use super::{map::ParMap, xap::ParXap};
-use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
 use crate::par_iter_result::IntoResult;
@@ -9,7 +8,9 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UPar},
 };
-use orx_concurrent_iter::ConcurrentIter;
+use crate::{IntoParIter, ParIterResult};
+use orx_concurrent_iter::chain::ChainKnownLenI;
+use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 use std::marker::PhantomData;
 
 /// A parallel iterator.
@@ -200,5 +201,39 @@ where
             IterationOrder::Ordered => self.m().next::<R>().1,
             IterationOrder::Arbitrary => self.m().next_any::<R>().1,
         }
+    }
+}
+
+impl<I, R> Par<I, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+{
+    /// Creates a chain of this and `other` parallel iterators.
+    ///
+    /// The first iterator is required to have a known length for chaining.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let a = vec!['a', 'b', 'c']; // with exact len
+    /// let b = vec!['d', 'e', 'f'].into_iter().filter(|x| *x != 'x');
+    ///
+    /// let chain = a.into_par().chain(b.iter_into_par());
+    /// assert_eq!(
+    ///     chain.collect::<Vec<_>>(),
+    ///     vec!['a', 'b', 'c', 'd', 'e', 'f'],
+    /// );
+    /// ```
+    pub fn chain<C>(self, other: C) -> Par<ChainKnownLenI<I, C::IntoIter>, R>
+    where
+        I: ExactSizeConcurrentIter,
+        C: IntoParIter<Item = I::Item>,
+    {
+        let (params, iter) = self.destruct();
+        let iter = iter.chain(other.into_con_iter());
+        Par::new(params, iter)
     }
 }
