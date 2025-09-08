@@ -9,7 +9,7 @@ use crate::{
     using::{UsingClone, UsingFun, computational_variants::UPar},
 };
 use crate::{IntoParIter, ParIterResult};
-use orx_concurrent_iter::chain::{ChainKnownLenI, ChainUnknownLenI};
+use orx_concurrent_iter::chain::ChainKnownLenI;
 use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 use std::marker::PhantomData;
 
