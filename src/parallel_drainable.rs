@@ -50,7 +50,7 @@ pub trait ParallelDrainableOverSlice: ConcurrentDrainableOverSlice {
     where
         R: RangeBounds<usize>,
     {
-        Par::new(Params::default(), self.con_drain(range))
+        Par::new(Default::default(), Params::default(), self.con_drain(range))
     }
 }
 

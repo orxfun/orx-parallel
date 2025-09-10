@@ -62,7 +62,7 @@ pub trait Parallelizable: ConcurrentIterable {
     /// assert_eq!(range.par().max(), Some(4));
     /// ```
     fn par(&self) -> Par<<Self as ConcurrentIterable>::Iter, DefaultOrchestrator> {
-        Par::new(Params::default(), self.con_iter())
+        Par::new(Default::default(), Params::default(), self.con_iter())
     }
 }
 

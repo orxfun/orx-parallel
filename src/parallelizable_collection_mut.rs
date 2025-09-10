@@ -61,7 +61,7 @@ pub trait ParallelizableCollectionMut: ConcurrentCollectionMut + ParallelizableC
     /// assert_eq!(&vec, &[1, 2, 13, 14]);
     /// ```
     fn par_mut(&mut self) -> impl ParIter<DefaultOrchestrator, Item = &mut Self::Item> {
-        Par::new(Params::default(), self.con_iter_mut())
+        Par::new(Default::default(), Params::default(), self.con_iter_mut())
     }
 }
 

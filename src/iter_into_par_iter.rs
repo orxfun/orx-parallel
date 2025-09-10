@@ -128,6 +128,10 @@ where
     I::Item: Send + Sync,
 {
     fn iter_into_par(self) -> Par<ConIterOfIter<Self>, DefaultOrchestrator> {
-        Par::new(Params::default(), self.iter_into_con_iter())
+        Par::new(
+            Default::default(),
+            Params::default(),
+            self.iter_into_con_iter(),
+        )
     }
 }
