@@ -1,102 +1,162 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParXapResult;
 use crate::generic_values::TransformableValues;
-use crate::generic_values::runner_results::Infallible;
+use crate::generic_values::runner_results::{
+    Infallible, ParallelCollect, ParallelCollectArbitrary,
+};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
+use crate::runner::parallel_runner_compute;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::X,
     using::{UsingClone, UsingFun, computational_variants::UParXap},
 };
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 /// A parallel iterator that xaps inputs.
 ///
 /// *xap* is a generalization of  one-to-one map, filter-map and flat-map operations.
-pub struct ParXap<I, Vo, M1, R = DefaultOrchestrator>
+pub struct ParXap<I, Vo, X1, R = DefaultOrchestrator>
 where
     R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
     orchestrator: R,
-    x: X<I, Vo, M1>,
-    phantom: PhantomData<R>,
+    params: Params,
+    iter: I,
+    xap1: X1,
 }
 
-impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
+impl<I, Vo, X1, R> ParXap<I, Vo, X1, R>
 where
     R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
-    pub(crate) fn new(orchestrator: R, params: Params, iter: I, x1: M1) -> Self {
+    pub(crate) fn new(orchestrator: R, params: Params, iter: I, xap1: X1) -> Self {
         Self {
             orchestrator,
-            x: X::new(params, iter, x1),
-            phantom: PhantomData,
+            params,
+            iter,
+            xap1,
         }
     }
 
-    pub(crate) fn destruct(self) -> (R, Params, I, M1) {
-        let (params, iter, x1) = self.x.destruct();
-        (self.orchestrator, params, iter, x1)
+    pub(crate) fn destruct(self) -> (R, Params, I, X1) {
+        (self.orchestrator, self.params, self.iter, self.xap1)
+    }
+
+    pub(crate) fn par_len(&self) -> Option<usize> {
+        match (self.params.is_sequential(), self.iter.try_get_len()) {
+            (true, _) => None, // not required to concurrent reserve when seq
+            (false, x) => x,
+        }
+    }
+
+    pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, P)
+    where
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+        Vo: TransformableValues<Fallibility = Infallible>,
+        Vo::Item: Send,
+    {
+        match (self.params.is_sequential(), self.params.iteration_order) {
+            (true, _) => (0, self.seq_collect_into(pinned_vec)),
+            (false, IterationOrder::Arbitrary) => {
+                let (num_threads, result) =
+                    parallel_runner_compute::collect_arbitrary::x(self, pinned_vec);
+                let pinned_vec = match result {
+                    ParallelCollectArbitrary::AllCollected { pinned_vec } => pinned_vec,
+                    ParallelCollectArbitrary::StoppedByWhileCondition { pinned_vec } => pinned_vec,
+                };
+                (num_threads, pinned_vec)
+            }
+            (false, IterationOrder::Ordered) => {
+                let (num_threads, result) =
+                    parallel_runner_compute::collect_ordered::x(self, pinned_vec);
+                let pinned_vec = match result {
+                    ParallelCollect::AllCollected { pinned_vec } => pinned_vec,
+                    ParallelCollect::StoppedByWhileCondition {
+                        pinned_vec,
+                        stopped_idx: _,
+                    } => pinned_vec,
+                };
+                (num_threads, pinned_vec)
+            }
+        }
+    }
+
+    fn seq_collect_into<P>(self, mut pinned_vec: P) -> P
+    where
+        P: IntoConcurrentPinnedVec<Vo::Item>,
+    {
+        let (_, _, iter, xap1) = self.destruct();
+
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            let vt = xap1(i);
+            let done = vt.push_to_pinned_vec(&mut pinned_vec);
+            if Vo::sequential_push_to_stop(done).is_some() {
+                break;
+            }
+        }
+
+        pinned_vec
     }
 }
 
-unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
+unsafe impl<I, Vo, X1, R> Send for ParXap<I, Vo, X1, R>
 where
     R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
 }
 
-unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
+unsafe impl<I, Vo, X1, R> Sync for ParXap<I, Vo, X1, R>
 where
     R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
 }
 
-impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
+impl<I, Vo, X1, R> ParIter<R> for ParXap<I, Vo, X1, R>
 where
     R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
     type Item = Vo::Item;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
-        self.x.iter()
+        &self.iter
     }
 
     fn params(&self) -> Params {
-        self.x.params()
+        self.params
     }
 
     // params transformations
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
-        self.x.num_threads(num_threads);
+        self.params = self.params.with_num_threads(num_threads);
         self
     }
 
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
-        self.x.chunk_size(chunk_size);
+        self.params = self.params.with_chunk_size(chunk_size);
         self
     }
 
     fn iteration_order(mut self, collect: IterationOrder) -> Self {
-        self.x.iteration_order(collect);
+        self.params = self.params.with_collect_ordering(collect);
         self
     }
 
@@ -211,7 +271,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.x_collect_into::<R::Runner, _, _, _>(self.x)
+        output.x_collect_into(self)
     }
 
     // reduce
@@ -221,7 +281,8 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.x.reduce::<R::Runner, _>(reduce).1
+        let (_, Ok(acc)) = parallel_runner_compute::reduce::x(self, reduce);
+        acc
     }
 
     // early exit
@@ -230,9 +291,15 @@ where
     where
         Self::Item: Send,
     {
-        match self.params().iteration_order {
-            IterationOrder::Ordered => self.x.next::<R::Runner>().1,
-            IterationOrder::Arbitrary => self.x.next_any::<R::Runner>().1,
+        match self.params.iteration_order {
+            IterationOrder::Ordered => {
+                let (_num_threads, Ok(result)) = parallel_runner_compute::next::x(self);
+                result.map(|x| x.1)
+            }
+            IterationOrder::Arbitrary => {
+                let (_num_threads, Ok(result)) = parallel_runner_compute::next_any::x(self);
+                result
+            }
         }
     }
 }

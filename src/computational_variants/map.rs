@@ -248,7 +248,7 @@ where
     where
         Self::Item: Send,
     {
-        match self.params().iteration_order {
+        match self.params.iteration_order {
             IterationOrder::Ordered => parallel_runner_compute::next::m(self).1,
             IterationOrder::Arbitrary => parallel_runner_compute::next_any::m(self).1,
         }

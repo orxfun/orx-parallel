@@ -1,7 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computational_variants::ParMap;
-use crate::generic_values::Values;
+use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
 use crate::{collect_into::utils::split_vec_reserve, computations::X, runner::ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
@@ -35,15 +35,15 @@ where
         pinned_vec
     }
 
-    fn x_collect_into<R, I, Vo, M1>(mut self, x: X<I, Vo, M1>) -> Self
+    fn x_collect_into<R, I, Vo, X1>(mut self, x: ParXap<I, Vo, X1, R>) -> Self
     where
-        R: ParallelRunner,
+        R: Orchestrator,
         I: ConcurrentIter,
-        Vo: Values<Item = O, Fallibility = Infallible>,
-        M1: Fn(I::Item) -> Vo + Sync,
+        Vo: TransformableValues<Item = O, Fallibility = Infallible>,
+        X1: Fn(I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, x.par_len());
-        let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
+        let (_num_spawned, pinned_vec) = x.par_collect_into(self);
         pinned_vec
     }
 

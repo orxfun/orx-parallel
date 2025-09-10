@@ -1,15 +1,15 @@
 use crate::{ChunkSize, IterationOrder, NumThreads, Params, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct X<I, Vo, M1>
+pub struct X<I, Vo, X1>
 where
     I: ConcurrentIter,
     Vo: Values,
-    M1: Fn(I::Item) -> Vo,
+    X1: Fn(I::Item) -> Vo,
 {
     params: Params,
     iter: I,
-    xap1: M1,
+    xap1: X1,
 }
 
 impl<I, Vo, M1> X<I, Vo, M1>
