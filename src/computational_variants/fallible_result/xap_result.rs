@@ -47,6 +47,34 @@ where
         (self.orchestrator, self.params, self.iter, self.xap1)
     }
 
+    fn par_collect_into<P>(self, pinned_vec: P) -> (usize, Result<P, E>)
+    where
+        P: IntoConcurrentPinnedVec<T>,
+        Vo::Item: Send,
+        E: Send,
+        T: Send,
+    {
+        match (self.params.is_sequential(), self.params.iteration_order) {
+            (true, _) => (0, self.seq_try_collect_into(pinned_vec)),
+
+            (false, IterationOrder::Arbitrary) => {
+                let (orchestrator, params, iter, x1) = self.destruct();
+                let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
+                let x = ParXap::new(orchestrator, params, iter, x1);
+                let (nt, result) = parallel_runner_compute::collect_arbitrary::x(x, pinned_vec);
+                (nt, result.into_result())
+            }
+
+            (false, IterationOrder::Ordered) => {
+                let (orchestrator, params, iter, x1) = self.destruct();
+                let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
+                let x = ParXap::new(orchestrator, params, iter, x1);
+                let (nt, result) = parallel_runner_compute::collect_ordered::x(x, pinned_vec);
+                (nt, result.into_result())
+            }
+        }
+    }
+
     fn seq_try_collect_into<P>(self, mut pinned_vec: P) -> Result<P, E>
     where
         P: IntoConcurrentPinnedVec<T>,

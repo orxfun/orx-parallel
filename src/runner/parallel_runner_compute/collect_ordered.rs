@@ -1,8 +1,8 @@
 use crate::computational_variants::{ParMap, ParXap};
-use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ThreadCollect,
 };
+use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
 use crate::runner::parallel_runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
@@ -57,7 +57,7 @@ pub fn x<C, I, Vo, X1, P>(x: ParXap<I, Vo, X1, C>, pinned_vec: P) -> (usize, Par
 where
     C: Orchestrator,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: Values,
     Vo::Item: Send,
     <Vo::Fallibility as Fallibility>::Error: Send,
     X1: Fn(I::Item) -> Vo + Sync,
