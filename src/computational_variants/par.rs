@@ -48,6 +48,11 @@ where
         let (orchestrator, params, iter) = self.destruct();
         M::new(orchestrator, params, iter, map_self)
     }
+
+    fn into_map(self) -> ParMap<I, I::Item, impl Fn(I::Item) -> I::Item, R> {
+        let (orchestrator, params, iter) = self.destruct();
+        ParMap::new(orchestrator, params, iter, map_self)
+    }
 }
 
 unsafe impl<I, R> Send for Par<I, R>
@@ -184,7 +189,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into(self.m())
+        output.m_collect_into(self.into_map())
     }
 
     // reduce

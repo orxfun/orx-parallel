@@ -1,3 +1,4 @@
+use crate::computational_variants::ParMap;
 use crate::computations::{M, X};
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
@@ -13,7 +14,7 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
 
     fn empty(iter_len: Option<usize>) -> Self;
 
-    fn m_collect_into<R, I, M1>(self, m: M<R, I, O, M1>) -> Self
+    fn m_collect_into<R, I, M1>(self, m: ParMap<I, O, M1, R>) -> Self
     where
         R: Orchestrator,
         I: ConcurrentIter,

@@ -190,7 +190,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into(self.m)
+        output.m_collect_into(self)
     }
 
     // reduce
