@@ -140,7 +140,7 @@ where
     {
         let (orchestrator, params, iter) = self.destruct();
         let x1 = move |i: Self::Item| filter(&i).then_some(i);
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
@@ -150,7 +150,7 @@ where
     {
         let (orchestrator, params, iter) = self.destruct();
         let x1 = move |i: Self::Item| Vector(flat_map(i)); // TODO: inline
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
@@ -158,7 +158,7 @@ where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync,
     {
         let (orchestrator, params, iter) = self.destruct();
-        ParXap::new(params, iter, filter_map)
+        ParXap::new(orchestrator, params, iter, filter_map)
     }
 
     fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
@@ -167,7 +167,7 @@ where
     {
         let (orchestrator, params, iter) = self.destruct();
         let x1 = move |value: Self::Item| WhilstAtom::new(value, &take_while);
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
@@ -236,6 +236,6 @@ where
     {
         let (orchestrator, params, iter) = self.destruct();
         let iter = iter.chain(other.into_con_iter());
-        Par::new(params, iter)
+        Par::new(orchestrator, params, iter)
     }
 }
