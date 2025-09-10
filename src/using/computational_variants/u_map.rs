@@ -162,7 +162,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.u_m_collect_into::<R, _, _, _>(self.um)
+        output.u_m_collect_into::<R::Runner, _, _, _>(self.um)
     }
 
     // reduce
@@ -172,7 +172,7 @@ where
         Self::Item: Send,
         Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.um.reduce::<R, _>(reduce).1
+        self.um.reduce::<R::Runner, _>(reduce).1
     }
 
     // early exit
@@ -181,6 +181,6 @@ where
     where
         Self::Item: Send,
     {
-        self.um.next::<R>().1
+        self.um.next::<R::Runner>().1
     }
 }
