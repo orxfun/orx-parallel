@@ -1,10 +1,10 @@
 use crate::ParallelRunner;
-use crate::computational_variants::ParMap;
-use crate::computations::X;
-use crate::generic_values::runner_results::Fallibility;
+use crate::computational_variants::{ParMap, ParXap};
+use crate::generic_values::TransformableValues;
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::orch::Orchestrator;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
-use crate::{generic_values::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1>(m: ParMap<I, O, M1, C>) -> (usize, Option<O>)
@@ -48,15 +48,16 @@ where
 type ResultNextAny<Vo> =
     Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
 
-pub fn x<C, I, Vo, X1>(runner: C, x: X<I, Vo, X1>) -> (usize, ResultNextAny<Vo>)
+pub fn x<C, I, Vo, X1>(x: ParXap<I, Vo, X1, C>) -> (usize, ResultNextAny<Vo>)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
 {
-    let (_, iter, xap1) = x.destruct();
+    let (orchestrator, params, iter, xap1) = x.destruct();
+    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
     let shared_state = &state;

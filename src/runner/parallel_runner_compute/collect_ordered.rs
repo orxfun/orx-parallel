@@ -1,10 +1,11 @@
-use crate::computational_variants::ParMap;
-use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
+use crate::computational_variants::{ParMap, ParXap};
+use crate::generic_values::TransformableValues;
+use crate::generic_values::runner_results::{
+    Fallibility, Infallible, ParallelCollect, ThreadCollect,
+};
 use crate::orch::Orchestrator;
 use crate::runner::parallel_runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
-use crate::{computations::X, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -52,21 +53,18 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, P>(
-    runner: C,
-    x: X<I, Vo, M1>,
-    pinned_vec: P,
-) -> (usize, ParallelCollect<Vo, P>)
+pub fn x<C, I, Vo, X1, P>(x: ParXap<I, Vo, X1, C>, pinned_vec: P) -> (usize, ParallelCollect<Vo, P>)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: Send,
     <Vo::Fallibility as Fallibility>::Error: Send,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    let (_, iter, xap1) = x.destruct();
+    let (orchestrator, params, iter, xap1) = x.destruct();
+    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     // compute
     let state = runner.new_shared_state();
