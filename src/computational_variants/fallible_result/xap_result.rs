@@ -2,15 +2,15 @@ use crate::computational_variants::ParXap;
 use crate::computations::X;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
+use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
-use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
-pub struct ParXapResult<I, T, E, Vo, M1, R = DefaultRunner>
+pub struct ParXapResult<I, T, E, Vo, M1, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
@@ -22,7 +22,7 @@ where
 
 impl<I, T, E, Vo, M1, R> ParXapResult<I, T, E, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
@@ -38,7 +38,7 @@ where
 
 impl<I, T, E, Vo, M1, R> ParIterResult<R> for ParXapResult<I, T, E, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
@@ -69,7 +69,7 @@ where
 
     // params transformations
 
-    fn with_runner<Q: ParallelRunner>(
+    fn with_runner<Q: Orchestrator>(
         self,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
         let (params, iter, m1) = self.par.destruct();

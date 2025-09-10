@@ -1,13 +1,13 @@
 use crate::{
-    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
-    ParallelRunner,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
+    orch::{DefaultOrchestrator, Orchestrator},
     par_iter_option::{ParIterOption, ResultIntoOption},
 };
 use std::marker::PhantomData;
 
-pub struct ParOption<F, T, R = DefaultRunner>
+pub struct ParOption<F, T, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     F: ParIterResult<R, Item = T, Err = ()>,
 {
     par: F,
@@ -16,7 +16,7 @@ where
 
 impl<F, T, R> ParOption<F, T, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     F: ParIterResult<R, Item = T, Err = ()>,
 {
     pub(crate) fn new(par: F) -> Self {
@@ -29,7 +29,7 @@ where
 
 impl<F, T, R> ParIterOption<R> for ParOption<F, T, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     F: ParIterResult<R, Item = T, Err = ()>,
 {
     type Item = T;
@@ -48,7 +48,7 @@ where
         Self::new(self.par.iteration_order(order))
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIterOption<Q, Item = Self::Item> {
         ParOption::new(self.par.with_runner())
     }
 
