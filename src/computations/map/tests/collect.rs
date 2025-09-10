@@ -1,4 +1,4 @@
-use crate::{IterationOrder, Params, computations::map::m::M, runner::DefaultRunner};
+use crate::{IterationOrder, Params, computations::map::m::M, orch::DefaultOrchestrator};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
@@ -33,9 +33,9 @@ fn m_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let m = M::new(params, iter, map);
+    let m = M::new(DefaultOrchestrator::default(), params, iter, map);
 
-    let (_, mut output) = m.collect_into::<DefaultRunner, _>(output);
+    let (_, mut output) = m.collect_into(output);
 
     if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
