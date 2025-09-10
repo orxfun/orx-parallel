@@ -43,9 +43,9 @@ where
         (self.orchestrator, self.params, self.iter)
     }
 
-    fn m(self) -> M<I, I::Item, impl Fn(I::Item) -> I::Item> {
+    fn m(self) -> M<R, I, I::Item, impl Fn(I::Item) -> I::Item> {
         let (orchestrator, params, iter) = self.destruct();
-        M::new(params, iter, map_self)
+        M::new(orchestrator, params, iter, map_self)
     }
 }
 
@@ -193,15 +193,15 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.m().reduce::<R::Runner, _>(reduce).1
+        self.m().reduce(reduce).1
     }
 
     // early exit
 
     fn first(self) -> Option<Self::Item> {
         match self.params().iteration_order {
-            IterationOrder::Ordered => self.m().next::<R::Runner>().1,
-            IterationOrder::Arbitrary => self.m().next_any::<R::Runner>().1,
+            IterationOrder::Ordered => self.m().next().1,
+            IterationOrder::Arbitrary => self.m().next_any().1,
         }
     }
 }

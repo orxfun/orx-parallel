@@ -5,7 +5,6 @@ use crate::orch::Orchestrator;
 #[cfg(test)]
 use crate::runner::parallel_runner_compute::collect_arbitrary;
 use crate::runner::parallel_runner_compute::collect_ordered;
-use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
@@ -24,10 +23,8 @@ where
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, self.sequential(pinned_vec)),
             #[cfg(test)]
-            (false, IterationOrder::Arbitrary) => {
-                collect_arbitrary::m(R::Runner::collection(p, len), self, pinned_vec)
-            }
-            (false, _) => collect_ordered::m(R::Runner::collection(p, len), self, pinned_vec),
+            (false, IterationOrder::Arbitrary) => collect_arbitrary::m(self, pinned_vec),
+            (false, _) => collect_ordered::m(self, pinned_vec),
         }
     }
 
