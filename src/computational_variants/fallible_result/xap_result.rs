@@ -119,10 +119,16 @@ where
     {
         let (orchestrator, params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-        let x = X::new(params, iter, x1);
+        let x = ParXap::new(orchestrator, params, iter, x1);
         match params.iteration_order {
-            IterationOrder::Ordered => x.try_next::<R::Runner>().1,
-            IterationOrder::Arbitrary => x.try_next_any::<R::Runner>().1,
+            IterationOrder::Ordered => {
+                let (_, result) = parallel_runner_compute::next::x(x);
+                result.map(|x| x.map(|y| y.1))
+            }
+            IterationOrder::Arbitrary => {
+                let (_, result) = parallel_runner_compute::next_any::x(x);
+                result
+            }
         }
     }
 }
