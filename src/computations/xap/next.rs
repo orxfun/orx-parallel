@@ -12,26 +12,6 @@ where
     M1: Fn(I::Item) -> Vo + Sync,
     Vo::Item: Send,
 {
-    pub fn next<R>(self) -> (usize, Option<Vo::Item>)
-    where
-        R: ParallelRunner,
-        Vo: Values<Fallibility = Infallible>,
-    {
-        let (len, p) = self.len_and_params();
-        let (num_threads, Ok(result)) = next::x(R::early_return(p, len), self);
-        (num_threads, result.map(|x| x.1))
-    }
-
-    pub fn next_any<R>(self) -> (usize, Option<Vo::Item>)
-    where
-        R: ParallelRunner,
-        Vo: Values<Fallibility = Infallible>,
-    {
-        let (len, p) = self.len_and_params();
-        let (num_threads, Ok(next)) = next_any::x(R::early_return(p, len), self);
-        (num_threads, next)
-    }
-
     pub fn try_next<R>(self) -> (usize, ResultTryNext<Vo>)
     where
         R: ParallelRunner,

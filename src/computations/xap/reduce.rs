@@ -12,17 +12,6 @@ where
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vo + Sync,
 {
-    pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
-    where
-        R: ParallelRunner,
-        Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
-        Vo: Values<Fallibility = Infallible>,
-    {
-        let (len, p) = self.len_and_params();
-        let (num_threads, Ok(acc)) = reduce::x(R::reduce(p, len), self, reduce);
-        (num_threads, acc)
-    }
-
     pub fn try_reduce<R, Red>(self, reduce: Red) -> (usize, ResultTryReduce<Vo>)
     where
         R: ParallelRunner,
