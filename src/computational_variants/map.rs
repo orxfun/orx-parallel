@@ -148,7 +148,7 @@ where
             let value = m1(i);
             filter(&value).then_some(value)
         };
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
@@ -158,7 +158,7 @@ where
     {
         let (orchestrator, params, iter, m1) = self.destruct();
         let x1 = move |i: I::Item| Vector(flat_map(m1(i)));
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
@@ -167,7 +167,7 @@ where
     {
         let (orchestrator, params, iter, m1) = self.destruct();
         let x1 = move |i: I::Item| filter_map(m1(i));
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
@@ -176,7 +176,7 @@ where
     {
         let (orchestrator, params, iter, m1) = self.destruct();
         let x1 = move |value: I::Item| WhilstAtom::new(m1(value), &take_while);
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
@@ -192,7 +192,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into::<R, _, _>(self.m)
+        output.m_collect_into::<R::Runner, _, _>(self.m)
     }
 
     // reduce
@@ -202,7 +202,7 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.m.reduce::<R, _>(reduce).1
+        self.m.reduce::<R::Runner, _>(reduce).1
     }
 
     // early exit
@@ -212,8 +212,8 @@ where
         Self::Item: Send,
     {
         match self.params().iteration_order {
-            IterationOrder::Ordered => self.m.next::<R>().1,
-            IterationOrder::Arbitrary => self.m.next_any::<R>().1,
+            IterationOrder::Ordered => self.m.next::<R::Runner>().1,
+            IterationOrder::Arbitrary => self.m.next_any::<R::Runner>().1,
         }
     }
 }
