@@ -73,7 +73,7 @@ where
         self,
         orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
-        let (orchestrator, params, iter, m1) = self.par.destruct();
+        let (_, params, iter, m1) = self.par.destruct();
         ParXapResult {
             par: ParXap::new(orchestrator, params, iter, m1),
             phantom: PhantomData,
@@ -92,7 +92,7 @@ where
         let (orchestrator, params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
         let x = X::new(params, iter, x1);
-        output.x_try_collect_into::<R, _, _, _>(x)
+        output.x_try_collect_into::<R::Runner, _, _, _>(x)
     }
 
     // reduce
@@ -106,7 +106,7 @@ where
         let (orchestrator, params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
         let x = X::new(params, iter, x1);
-        x.try_reduce::<R, _>(reduce).1
+        x.try_reduce::<R::Runner, _>(reduce).1
     }
 
     // early exit
@@ -120,8 +120,8 @@ where
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
         let x = X::new(params, iter, x1);
         match params.iteration_order {
-            IterationOrder::Ordered => x.try_next::<R>().1,
-            IterationOrder::Arbitrary => x.try_next_any::<R>().1,
+            IterationOrder::Ordered => x.try_next::<R::Runner>().1,
+            IterationOrder::Arbitrary => x.try_next_any::<R::Runner>().1,
         }
     }
 }
