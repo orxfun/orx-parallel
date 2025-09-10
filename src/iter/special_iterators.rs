@@ -1,8 +1,8 @@
-use crate::{computational_variants::Par, runner::DefaultRunner};
+use crate::{computational_variants::Par, orch::DefaultOrchestrator};
 use orx_concurrent_iter::implementations::ConIterEmpty;
 
 /// An empty parallel iterator which does not yield any elements.
-pub type ParEmpty<T, R = DefaultRunner> = Par<ConIterEmpty<T>, R>;
+pub type ParEmpty<T, R = DefaultOrchestrator> = Par<ConIterEmpty<T>, R>;
 
 /// Creates an empty parallel iterator which does not yield any elements.
 pub fn empty<T: Send + Sync>() -> ParEmpty<T> {

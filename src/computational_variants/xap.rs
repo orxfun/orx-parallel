@@ -2,11 +2,11 @@ use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParXapResult;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
+use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::X,
-    runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UParXap},
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -15,9 +15,9 @@ use std::marker::PhantomData;
 /// A parallel iterator that xaps inputs.
 ///
 /// *xap* is a generalization of  one-to-one map, filter-map and flat-map operations.
-pub struct ParXap<I, Vo, M1, R = DefaultRunner>
+pub struct ParXap<I, Vo, M1, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
@@ -28,7 +28,7 @@ where
 
 impl<I, Vo, M1, R> ParXap<I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
@@ -47,7 +47,7 @@ where
 
 unsafe impl<I, Vo, M1, R> Send for ParXap<I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
@@ -56,7 +56,7 @@ where
 
 unsafe impl<I, Vo, M1, R> Sync for ParXap<I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
@@ -65,7 +65,7 @@ where
 
 impl<I, Vo, M1, R> ParIter<R> for ParXap<I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
@@ -97,7 +97,7 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIter<Q, Item = Self::Item> {
         let (params, iter, map1) = self.destruct();
         ParXap::new(params, iter, map1)
     }

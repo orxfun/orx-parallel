@@ -21,6 +21,7 @@ mod into_par_iter;
 /// Module for creating special iterators.
 pub mod iter;
 mod iter_into_par_iter;
+/// Orchestrator for parallel execution and managing threads.
 pub mod orch;
 mod par_iter;
 mod par_iter_option;

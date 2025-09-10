@@ -2,20 +2,20 @@ use super::xap::ParXap;
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParMapResult;
 use crate::generic_values::{Vector, WhilstAtom};
+use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::M,
-    runner::{DefaultRunner, ParallelRunner},
     using::{UsingClone, UsingFun, computational_variants::UParMap},
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
 /// A parallel iterator that maps inputs.
-pub struct ParMap<I, O, M1, R = DefaultRunner>
+pub struct ParMap<I, O, M1, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -25,7 +25,7 @@ where
 
 impl<I, O, M1, R> ParMap<I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -43,7 +43,7 @@ where
 
 unsafe impl<I, O, M1, R> Send for ParMap<I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -51,7 +51,7 @@ where
 
 unsafe impl<I, O, M1, R> Sync for ParMap<I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -59,7 +59,7 @@ where
 
 impl<I, O, M1, R> ParIter<R> for ParMap<I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -90,7 +90,7 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIter<Q, Item = Self::Item> {
         let (params, iter, map) = self.destruct();
         ParMap::new(params, iter, map)
     }

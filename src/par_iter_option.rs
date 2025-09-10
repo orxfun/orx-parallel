@@ -1,7 +1,6 @@
 use crate::computations::{map_count, reduce_sum, reduce_unit};
-use crate::{
-    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParallelRunner, Sum,
-};
+use crate::orch::{DefaultOrchestrator, Orchestrator};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
 use core::cmp::Ordering;
 
 /// A parallel iterator for which the computation either completely succeeds,
@@ -122,9 +121,9 @@ use core::cmp::Ordering;
 /// ```
 ///
 /// [`ParIter`]: crate::ParIter
-pub trait ParIterOption<R = DefaultRunner>
+pub trait ParIterOption<R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
 {
     /// Type of the success element, to be received as the Some variant iff the entire computation succeeds.
     type Item;
@@ -157,10 +156,10 @@ where
     /// See [`IterationOrder`] and [`crate::ParIter::iteration_order`] for details.
     fn iteration_order(self, order: IterationOrder) -> Self;
 
-    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
+    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`Orchestrator`].
     ///
     /// See [`crate::ParIter::with_runner`] for details.
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Item = Self::Item>;
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIterOption<Q, Item = Self::Item>;
 
     // computation transformations
 
