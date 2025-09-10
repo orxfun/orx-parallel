@@ -201,8 +201,8 @@ where
 
     fn first(self) -> Option<Self::Item> {
         match self.params().iteration_order {
-            IterationOrder::Ordered => self.m().next().1,
-            IterationOrder::Arbitrary => self.m().next_any().1,
+            IterationOrder::Ordered => parallel_runner_compute::next::m(self.m()).1,
+            IterationOrder::Arbitrary => parallel_runner_compute::next_any::m(self.m()).1,
         }
     }
 }
