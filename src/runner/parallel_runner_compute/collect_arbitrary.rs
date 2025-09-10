@@ -1,10 +1,10 @@
 #[cfg(test)]
 use crate::computational_variants::ParMap;
 use crate::computational_variants::ParXap;
-use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::{
     Infallible, ParallelCollectArbitrary, ThreadCollectArbitrary,
 };
+use crate::generic_values::{TransformableValues, Values};
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use crate::{orch::Orchestrator, runner::ParallelRunner};
 use orx_concurrent_bag::ConcurrentBag;
@@ -68,7 +68,7 @@ pub fn x<C, I, Vo, M1, P>(
 where
     C: Orchestrator,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: Values,
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,

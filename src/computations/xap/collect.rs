@@ -26,18 +26,19 @@ where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
-        let (len, p) = self.len_and_params();
-        match (p.is_sequential(), p.iteration_order) {
-            (true, _) => (0, self.try_sequential(pinned_vec)),
-            (false, IterationOrder::Arbitrary) => {
-                let (nt, result) = collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
-                (nt, result.into_result())
-            }
-            (false, IterationOrder::Ordered) => {
-                let (nt, result) = collect_ordered::x(R::collection(p, len), self, pinned_vec);
-                (nt, result.into_result())
-            }
-        }
+        todo!()
+        // let (len, p) = self.len_and_params();
+        // match (p.is_sequential(), p.iteration_order) {
+        //     (true, _) => (0, self.try_sequential(pinned_vec)),
+        //     (false, IterationOrder::Arbitrary) => {
+        //         let (nt, result) = collect_arbitrary::x(R::collection(p, len), self, pinned_vec);
+        //         (nt, result.into_result())
+        //     }
+        //     (false, IterationOrder::Ordered) => {
+        //         let (nt, result) = collect_ordered::x(R::collection(p, len), self, pinned_vec);
+        //         (nt, result.into_result())
+        //     }
+        // }
     }
 
     fn try_sequential<P>(

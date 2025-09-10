@@ -17,8 +17,9 @@ where
         R: ParallelRunner,
         Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
     {
-        let (len, p) = self.len_and_params();
-        reduce::x(R::reduce(p, len), self, reduce)
+        todo!()
+        // let (len, p) = self.len_and_params();
+        // reduce::x(R::reduce(p, len), self, reduce)
     }
 }
 

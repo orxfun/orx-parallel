@@ -89,7 +89,7 @@ where
         }
     }
 
-    fn seq_collect_into<P>(self, mut pinned_vec: P) -> P
+    pub(crate) fn seq_collect_into<P>(self, mut pinned_vec: P) -> P
     where
         P: IntoConcurrentPinnedVec<Vo::Item>,
     {
@@ -262,7 +262,8 @@ where
     where
         Self::Item: IntoResult<Out, Err>,
     {
-        ParXapResult::new(self)
+        let (orchestrator, params, iter, x1) = self.destruct();
+        ParXapResult::new(orchestrator, params, iter, x1)
     }
 
     // collect

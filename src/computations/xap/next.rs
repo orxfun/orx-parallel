@@ -16,19 +16,21 @@ where
     where
         R: ParallelRunner,
     {
-        let (len, p) = self.len_and_params();
-        let (num_threads, result) = next::x(R::early_return(p, len), self);
-        let result = result.map(|x| x.map(|y| y.1));
-        (num_threads, result)
+        todo!()
+        // let (len, p) = self.len_and_params();
+        // let (num_threads, result) = next::x(R::early_return(p, len), self);
+        // let result = result.map(|x| x.map(|y| y.1));
+        // (num_threads, result)
     }
 
     pub fn try_next_any<R>(self) -> (usize, ResultTryNext<Vo>)
     where
         R: ParallelRunner,
     {
-        let (len, p) = self.len_and_params();
-        let (num_threads, result) = next_any::x(R::early_return(p, len), self);
-        (num_threads, result)
+        todo!()
+        // let (len, p) = self.len_and_params();
+        // let (num_threads, result) = next_any::x(R::early_return(p, len), self);
+        // (num_threads, result)
     }
 }
 
