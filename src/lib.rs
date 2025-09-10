@@ -21,6 +21,7 @@ mod into_par_iter;
 /// Module for creating special iterators.
 pub mod iter;
 mod iter_into_par_iter;
+pub mod orch;
 mod par_iter;
 mod par_iter_option;
 mod par_iter_result;
