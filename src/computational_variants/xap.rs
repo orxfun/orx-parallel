@@ -146,7 +146,7 @@ where
             vo.map(map.clone())
         };
 
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
@@ -158,7 +158,7 @@ where
             let values = x1(i);
             values.filter(filter.clone())
         };
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
@@ -171,7 +171,7 @@ where
             let vo = x1(i);
             vo.flat_map(flat_map.clone())
         };
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
@@ -183,7 +183,7 @@ where
             let vo = x1(i);
             vo.filter_map(filter_map.clone())
         };
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
@@ -195,7 +195,7 @@ where
             let vo = x1(i);
             vo.whilst(take_while.clone())
         };
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
