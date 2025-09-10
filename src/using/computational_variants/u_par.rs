@@ -1,22 +1,22 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     generic_values::Vector,
-    runner::{DefaultRunner, ParallelRunner},
-    using::u_par_iter::ParIterUsing,
+    orch::{DefaultOrchestrator, Orchestrator},
     using::{
         Using,
         computational_variants::{u_map::UParMap, u_xap::UParXap},
         computations::{UM, u_map_self},
+        u_par_iter::ParIterUsing,
     },
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
 /// A parallel iterator.
-pub struct UPar<U, I, R = DefaultRunner>
+pub struct UPar<U, I, R = DefaultOrchestrator>
 where
     U: Using,
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
     using: U,
@@ -28,7 +28,7 @@ where
 impl<U, I, R> UPar<U, I, R>
 where
     U: Using,
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
     pub(crate) fn new(using: U, params: Params, iter: I) -> Self {
@@ -54,7 +54,7 @@ where
 unsafe impl<U, I, R> Send for UPar<U, I, R>
 where
     U: Using,
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
 }
@@ -62,7 +62,7 @@ where
 unsafe impl<U, I, R> Sync for UPar<U, I, R>
 where
     U: Using,
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
 }
@@ -70,7 +70,7 @@ where
 impl<U, I, R> ParIterUsing<U, R> for UPar<U, I, R>
 where
     U: Using,
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
     type Item = I::Item;
@@ -100,7 +100,7 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
         UPar::new(self.using, self.params, self.iter)
     }
 

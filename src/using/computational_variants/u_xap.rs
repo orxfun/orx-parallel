@@ -1,7 +1,7 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     generic_values::{TransformableValues, runner_results::Infallible},
-    runner::{DefaultRunner, ParallelRunner},
+    orch::{DefaultOrchestrator, Orchestrator},
     using::{Using, computations::UX, u_par_iter::ParIterUsing},
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -10,9 +10,9 @@ use std::marker::PhantomData;
 /// A parallel iterator that xaps inputs.
 ///
 /// *xap* is a generalization of  one-to-one map, filter-map and flat-map operations.
-pub struct UParXap<U, I, Vo, M1, R = DefaultRunner>
+pub struct UParXap<U, I, Vo, M1, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -24,7 +24,7 @@ where
 
 impl<U, I, Vo, M1, R> UParXap<U, I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -44,7 +44,7 @@ where
 
 unsafe impl<U, I, Vo, M1, R> Send for UParXap<U, I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -54,7 +54,7 @@ where
 
 unsafe impl<U, I, Vo, M1, R> Sync for UParXap<U, I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -64,7 +64,7 @@ where
 
 impl<U, I, Vo, M1, R> ParIterUsing<U, R> for UParXap<U, I, Vo, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -97,7 +97,7 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
         let (using, params, iter, map1) = self.destruct();
         UParXap::new(using, params, iter, map1)
     }

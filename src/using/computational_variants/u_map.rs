@@ -1,17 +1,18 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     generic_values::Vector,
-    runner::{DefaultRunner, ParallelRunner},
-    using::u_par_iter::ParIterUsing,
-    using::{Using, computational_variants::u_xap::UParXap, computations::UM},
+    orch::{DefaultOrchestrator, Orchestrator},
+    using::{
+        Using, computational_variants::u_xap::UParXap, computations::UM, u_par_iter::ParIterUsing,
+    },
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
 /// A parallel iterator that maps inputs.
-pub struct UParMap<U, I, O, M1, R = DefaultRunner>
+pub struct UParMap<U, I, O, M1, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -22,7 +23,7 @@ where
 
 impl<U, I, O, M1, R> UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -41,7 +42,7 @@ where
 
 unsafe impl<U, I, O, M1, R> Send for UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -50,7 +51,7 @@ where
 
 unsafe impl<U, I, O, M1, R> Sync for UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -59,7 +60,7 @@ where
 
 impl<U, I, O, M1, R> ParIterUsing<U, R> for UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -91,7 +92,7 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
         let (using, params, iter, map) = self.destruct();
         UParMap::new(using, params, iter, map)
     }
