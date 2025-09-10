@@ -65,6 +65,7 @@ impl<I: ConcurrentIter> IntoConcurrentIter for Par<I, DefaultOrchestrator> {
     type IntoIter = I;
 
     fn into_con_iter(self) -> Self::IntoIter {
-        self.destruct().2
+        let (_, _, iter) = self.destruct();
+        iter
     }
 }
