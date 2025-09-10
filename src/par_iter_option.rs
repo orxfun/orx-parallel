@@ -159,7 +159,10 @@ where
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`Orchestrator`].
     ///
     /// See [`crate::ParIter::with_runner`] for details.
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIterOption<Q, Item = Self::Item>;
+    fn with_runner<Q: Orchestrator>(
+        self,
+        orchestrator: Q,
+    ) -> impl ParIterOption<Q, Item = Self::Item>;
 
     // computation transformations
 

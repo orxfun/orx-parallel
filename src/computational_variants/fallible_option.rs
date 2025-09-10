@@ -48,8 +48,11 @@ where
         Self::new(self.par.iteration_order(order))
     }
 
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIterOption<Q, Item = Self::Item> {
-        ParOption::new(self.par.with_runner())
+    fn with_runner<Q: Orchestrator>(
+        self,
+        orchestrator: Q,
+    ) -> impl ParIterOption<Q, Item = Self::Item> {
+        ParOption::new(self.par.with_runner(orchestrator))
     }
 
     // computation transformations
