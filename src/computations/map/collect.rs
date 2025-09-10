@@ -19,7 +19,7 @@ where
     where
         P: IntoConcurrentPinnedVec<O>,
     {
-        let (len, p) = self.len_and_params();
+        let (_, p) = self.len_and_params();
         match (p.is_sequential(), p.iteration_order) {
             (true, _) => (0, self.sequential(pinned_vec)),
             #[cfg(test)]
