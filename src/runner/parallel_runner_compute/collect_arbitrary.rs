@@ -1,10 +1,11 @@
 #[cfg(test)]
 use crate::computational_variants::ParMap;
-use crate::generic_values::Values;
-use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
-use crate::runner::thread_runner_compute as thread;
-use crate::{computations::X, runner::ParallelRunnerCompute};
-#[cfg(test)]
+use crate::computational_variants::ParXap;
+use crate::generic_values::TransformableValues;
+use crate::generic_values::runner_results::{
+    Infallible, ParallelCollectArbitrary, ThreadCollectArbitrary,
+};
+use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use crate::{orch::Orchestrator, runner::ParallelRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -61,21 +62,22 @@ where
 // x
 
 pub fn x<C, I, Vo, M1, P>(
-    runner: C,
-    x: X<I, Vo, M1>,
+    x: ParXap<I, Vo, M1, C>,
     pinned_vec: P,
 ) -> (usize, ParallelCollectArbitrary<Vo, P>)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: Send,
     M1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let (_, iter, xap1) = x.destruct();
+
+    let (orchestrator, params, iter, xap1) = x.destruct();
+    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
     match iter.try_get_len() {
