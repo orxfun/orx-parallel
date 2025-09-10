@@ -1,6 +1,6 @@
 use crate::ParallelRunner;
 use crate::computational_variants::ParMap;
-use crate::computations::{M, X};
+use crate::computations::X;
 use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
 use crate::orch::Orchestrator;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};

@@ -6,7 +6,7 @@ use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{M, map_self},
+    computations::map_self,
     using::{UsingClone, UsingFun, computational_variants::UPar},
 };
 use crate::{IntoParIter, ParIterResult};
@@ -42,11 +42,6 @@ where
 
     pub(crate) fn destruct(self) -> (R, Params, I) {
         (self.orchestrator, self.params, self.iter)
-    }
-
-    fn m(self) -> M<R, I, I::Item, impl Fn(I::Item) -> I::Item> {
-        let (orchestrator, params, iter) = self.destruct();
-        M::new(orchestrator, params, iter, map_self)
     }
 
     fn into_map(self) -> ParMap<I, I::Item, impl Fn(I::Item) -> I::Item, R> {
