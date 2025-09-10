@@ -183,7 +183,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into::<R::Runner, _, _>(self.m())
+        output.m_collect_into(self.m())
     }
 
     // reduce
