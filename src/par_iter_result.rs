@@ -202,6 +202,7 @@ where
     /// See [`ParIter::with_runner`] for details.
     fn with_runner<Q: Orchestrator>(
         self,
+        orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err>;
 
     // computation transformations

@@ -66,10 +66,11 @@ where
 
     fn with_runner<Q: Orchestrator>(
         self,
+        orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
-        let (params, iter, m1) = self.par.destruct();
+        let (_, params, iter, m1) = self.par.destruct();
         ParMapResult {
-            par: ParMap::new(params, iter, m1),
+            par: ParMap::new(orchestrator, params, iter, m1),
             phantom: PhantomData,
         }
     }
@@ -82,7 +83,7 @@ where
         Self::Item: Send,
         Self::Err: Send,
     {
-        let (params, iter, m1) = self.par.destruct();
+        let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
         let x = X::new(params, iter, x1);
         output.x_try_collect_into::<R, _, _, _>(x)
@@ -96,7 +97,7 @@ where
         Self::Err: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        let (params, iter, m1) = self.par.destruct();
+        let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
         let x = X::new(params, iter, x1);
         x.try_reduce::<R, _>(reduce).1
@@ -109,7 +110,7 @@ where
         Self::Item: Send,
         Self::Err: Send,
     {
-        let (params, iter, m1) = self.par.destruct();
+        let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
         let x = X::new(params, iter, x1);
         match params.iteration_order {
