@@ -15,7 +15,7 @@ where
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
-    pub fn collect_into<P>(self, pinned_vec: P) -> (usize, P)
+    pub fn collect_into2<P>(self, pinned_vec: P) -> (usize, P)
     where
         P: IntoConcurrentPinnedVec<O>,
     {
