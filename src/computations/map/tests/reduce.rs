@@ -2,6 +2,7 @@ use crate::{
     Params,
     computations::{map::m::M, map_self},
     orch::DefaultOrchestrator,
+    runner::parallel_runner_compute,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
@@ -28,7 +29,7 @@ fn m_reduce(n: usize, nt: usize, chunk: usize) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let m = M::new(DefaultOrchestrator::default(), params, iter, map_self);
-    let (_, output) = m.reduce(reduce);
+    let (_, output) = parallel_runner_compute::reduce::m(m, reduce);
 
     assert_eq!(expected, output);
 }
@@ -51,7 +52,7 @@ fn m_map_reduce(n: usize, nt: usize, chunk: usize) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
     let m = M::new(DefaultOrchestrator::default(), params, iter, map);
-    let (_, output) = m.reduce(reduce);
+    let (_, output) = parallel_runner_compute::reduce::m(m, reduce);
 
     assert_eq!(expected, output);
 }

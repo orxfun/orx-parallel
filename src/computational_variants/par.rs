@@ -3,6 +3,7 @@ use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
+use crate::runner::parallel_runner_compute;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::{M, map_self},
@@ -193,7 +194,7 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.m().reduce(reduce).1
+        parallel_runner_compute::reduce::m(self.m(), reduce).1
     }
 
     // early exit
