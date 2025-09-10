@@ -64,7 +64,7 @@ pub fn x<C, I, Vo, X1, Red>(x: ParXap<I, Vo, X1, C>, reduce: Red) -> (usize, Res
 where
     C: Orchestrator,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: Values,
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,

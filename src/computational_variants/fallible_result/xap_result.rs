@@ -4,6 +4,7 @@ use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
+use crate::runner::parallel_runner_compute;
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -105,8 +106,8 @@ where
     {
         let (orchestrator, params, iter, x1) = self.par.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-        let x = X::new(params, iter, x1);
-        x.try_reduce::<R::Runner, _>(reduce).1
+        let x = ParXap::new(orchestrator, params, iter, x1);
+        parallel_runner_compute::reduce::x(x, reduce).1
     }
 
     // early exit

@@ -1,9 +1,9 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParXapResult;
-use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::{
     Infallible, ParallelCollect, ParallelCollectArbitrary,
 };
+use crate::generic_values::{TransformableValues, Values};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute;
@@ -21,7 +21,7 @@ pub struct ParXap<I, Vo, X1, R = DefaultOrchestrator>
 where
     R: Orchestrator,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: Values,
     X1: Fn(I::Item) -> Vo + Sync,
 {
     orchestrator: R,
@@ -34,7 +34,7 @@ impl<I, Vo, X1, R> ParXap<I, Vo, X1, R>
 where
     R: Orchestrator,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: Values,
     X1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(orchestrator: R, params: Params, iter: I, xap1: X1) -> Self {
