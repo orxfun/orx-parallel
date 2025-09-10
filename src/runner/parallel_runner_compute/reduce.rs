@@ -1,20 +1,23 @@
+use crate::ParallelRunner;
 use crate::computations::{M, X};
 use crate::generic_values::runner_results::{Fallibility, Reduce};
-use crate::runner::thread_runner_compute as thread;
+use crate::orch::Orchestrator;
+use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use crate::{generic_values::Values, runner::ParallelRunnerCompute};
 use orx_concurrent_iter::ConcurrentIter;
 
 // m
 
-pub fn m<C, I, O, M1, Red>(runner: C, m: M<I, O, M1>, reduce: Red) -> (usize, Option<O>)
+pub fn m<C, I, O, M1, Red>(m: M<C, I, O, M1>, reduce: Red) -> (usize, Option<O>)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
     Red: Fn(O, O) -> O + Sync,
     O: Send,
 {
-    let (_, iter, map1) = m.destruct();
+    let (orchestrator, params, iter, map1) = m.destruct();
+    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
     let shared_state = &state;

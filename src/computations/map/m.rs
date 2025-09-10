@@ -1,27 +1,35 @@
-use crate::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::{ChunkSize, IterationOrder, NumThreads, Params, orch::Orchestrator};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct M<I, O, M1>
+pub struct M<R, I, O, M1>
 where
+    R: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O,
 {
+    orchestrator: R,
     params: Params,
     iter: I,
     map1: M1,
 }
 
-impl<I, O, M1> M<I, O, M1>
+impl<R, I, O, M1> M<R, I, O, M1>
 where
+    R: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O,
 {
-    pub fn new(params: Params, iter: I, map1: M1) -> Self {
-        Self { params, iter, map1 }
+    pub fn new(orchestrator: R, params: Params, iter: I, map1: M1) -> Self {
+        Self {
+            orchestrator,
+            params,
+            iter,
+            map1,
+        }
     }
 
-    pub fn destruct(self) -> (Params, I, M1) {
-        (self.params, self.iter, self.map1)
+    pub fn destruct(self) -> (R, Params, I, M1) {
+        (self.orchestrator, self.params, self.iter, self.map1)
     }
 
     pub fn params(&self) -> Params {

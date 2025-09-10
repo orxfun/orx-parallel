@@ -1,8 +1,8 @@
-#[cfg(test)]
-use crate::computations::M;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
 use crate::runner::thread_runner_compute as thread;
+#[cfg(test)]
+use crate::{computations::M, orch::Orchestrator, runner::ParallelRunner};
 use crate::{computations::X, runner::ParallelRunnerCompute};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -11,17 +11,20 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 // m
 
 #[cfg(test)]
-pub fn m<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
+pub fn m<C, I, O, M1, P>(m: M<C, I, O, M1>, pinned_vec: P) -> (usize, P)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
+    use crate::runner::ComputationKind;
+
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let (_, iter, map1) = m.destruct();
+    let (orchestrator, params, iter, map1) = m.destruct();
+    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let mut bag: ConcurrentBag<O, P> = pinned_vec.into();
     match iter.try_get_len() {

@@ -19,8 +19,7 @@ where
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
-    orchestrator: R,
-    m: M<I, O, M1>,
+    m: M<R, I, O, M1>,
     phantom: PhantomData<R>,
 }
 
@@ -32,15 +31,13 @@ where
 {
     pub(crate) fn new(orchestrator: R, params: Params, iter: I, m1: M1) -> Self {
         Self {
-            orchestrator,
-            m: M::new(params, iter, m1),
+            m: M::new(orchestrator, params, iter, m1),
             phantom: PhantomData,
         }
     }
 
     pub(crate) fn destruct(self) -> (R, Params, I, M1) {
-        let (params, iter, m1) = self.m.destruct();
-        (self.orchestrator, params, iter, m1)
+        self.m.destruct()
     }
 }
 

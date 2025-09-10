@@ -13,7 +13,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 // m
 
-pub fn m2<C, I, O, M1, P>(orchestrator: &mut C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
+pub fn m<C, I, O, M1, P>(m: M<C, I, O, M1>, pinned_vec: P) -> (usize, P)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -22,46 +22,8 @@ where
     P: IntoConcurrentPinnedVec<O>,
 {
     let offset = pinned_vec.len();
-    let (params, iter, map1) = m.destruct();
+    let (orchestrator, params, iter, map1) = m.destruct();
     let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
-    let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-
-    // compute
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = 0;
-    std::thread::scope(|s| {
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
-            s.spawn(|| {
-                thread::collect_ordered::m(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &map1,
-                    &o_bag,
-                    offset,
-                );
-            });
-        }
-    });
-
-    let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
-    (num_spawned, values)
-}
-
-pub fn m<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
-where
-    C: ParallelRunnerCompute,
-    I: ConcurrentIter,
-    O: Send,
-    M1: Fn(I::Item) -> O + Sync,
-    P: IntoConcurrentPinnedVec<O>,
-{
-    let offset = pinned_vec.len();
-    let (_, iter, map1) = m.destruct();
 
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
 
