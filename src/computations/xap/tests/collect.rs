@@ -1,5 +1,8 @@
+use crate::ParIter;
+use crate::computational_variants::ParXap;
 use crate::generic_values::Vector;
-use crate::{IterationOrder, Params, computations::X, runner::DefaultRunner};
+use crate::orch::DefaultOrchestrator;
+use crate::{IterationOrder, Params};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
@@ -37,9 +40,9 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrde
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let x = X::new(params, iter, xmap);
+    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
 
-    let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
+    let mut output = x.collect_into(output);
 
     if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
@@ -76,9 +79,9 @@ fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOr
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let x = X::new(params, iter, xmap);
+    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
 
-    let (_, mut output) = x.collect_into::<DefaultRunner, _>(output);
+    let mut output = x.collect_into(output);
 
     if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();
