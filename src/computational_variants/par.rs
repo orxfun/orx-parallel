@@ -19,8 +19,9 @@ where
     R: Orchestrator,
     I: ConcurrentIter,
 {
-    iter: I,
+    orchestrator: R,
     params: Params,
+    iter: I,
     phantom: PhantomData<R>,
 }
 
@@ -29,20 +30,21 @@ where
     R: Orchestrator,
     I: ConcurrentIter,
 {
-    pub(crate) fn new(params: Params, iter: I) -> Self {
+    pub(crate) fn new(orchestrator: R, params: Params, iter: I) -> Self {
         Self {
+            orchestrator,
             iter,
             params,
             phantom: PhantomData,
         }
     }
 
-    pub(crate) fn destruct(self) -> (Params, I) {
-        (self.params, self.iter)
+    pub(crate) fn destruct(self) -> (R, Params, I) {
+        (self.orchestrator, self.params, self.iter)
     }
 
     fn m(self) -> M<I, I::Item, impl Fn(I::Item) -> I::Item> {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         M::new(params, iter, map_self)
     }
 }
@@ -93,8 +95,8 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIter<Q, Item = Self::Item> {
-        Par::new(self.params, self.iter)
+    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+        Par::new(orchestrator, self.params, self.iter)
     }
 
     // using transformations
@@ -128,15 +130,15 @@ where
     where
         Map: Fn(Self::Item) -> Out + Sync,
     {
-        let (params, iter) = self.destruct();
-        ParMap::new(params, iter, map)
+        let (orchestrator, params, iter) = self.destruct();
+        ParMap::new(orchestrator, params, iter, map)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
         Filter: Fn(&Self::Item) -> bool + Sync,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let x1 = move |i: Self::Item| filter(&i).then_some(i);
         ParXap::new(params, iter, x1)
     }
@@ -146,7 +148,7 @@ where
         IOut: IntoIterator,
         FlatMap: Fn(Self::Item) -> IOut + Sync,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let x1 = move |i: Self::Item| Vector(flat_map(i)); // TODO: inline
         ParXap::new(params, iter, x1)
     }
@@ -155,7 +157,7 @@ where
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         ParXap::new(params, iter, filter_map)
     }
 
@@ -163,7 +165,7 @@ where
     where
         While: Fn(&Self::Item) -> bool + Sync,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let x1 = move |value: Self::Item| WhilstAtom::new(value, &take_while);
         ParXap::new(params, iter, x1)
     }
@@ -232,7 +234,7 @@ where
         I: ExactSizeConcurrentIter,
         C: IntoParIter<Item = I::Item>,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let iter = iter.chain(other.into_con_iter());
         Par::new(params, iter)
     }

@@ -262,7 +262,7 @@ where
     /// // uses the custom parallel runner MyParallelRunner: ParallelRunner
     /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
     /// ```
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIter<Q, Item = Self::Item>;
+    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item>;
 
     // using transformations
 

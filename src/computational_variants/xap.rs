@@ -22,6 +22,7 @@ where
     Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
+    orchestrator: R,
     x: X<I, Vo, M1>,
     phantom: PhantomData<R>,
 }
@@ -33,15 +34,17 @@ where
     Vo: TransformableValues<Fallibility = Infallible>,
     M1: Fn(I::Item) -> Vo + Sync,
 {
-    pub(crate) fn new(params: Params, iter: I, x1: M1) -> Self {
+    pub(crate) fn new(orchestrator: R, params: Params, iter: I, x1: M1) -> Self {
         Self {
+            orchestrator,
             x: X::new(params, iter, x1),
             phantom: PhantomData,
         }
     }
 
-    pub(crate) fn destruct(self) -> (Params, I, M1) {
-        self.x.destruct()
+    pub(crate) fn destruct(self) -> (R, Params, I, M1) {
+        let (params, iter, x1) = self.x.destruct();
+        (self.orchestrator, params, iter, x1)
     }
 }
 
@@ -97,9 +100,9 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIter<Q, Item = Self::Item> {
-        let (params, iter, map1) = self.destruct();
-        ParXap::new(params, iter, map1)
+    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+        let (_, params, iter, x1) = self.destruct();
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     // using transformations
@@ -113,7 +116,7 @@ where
         F: FnMut(usize) -> U,
     {
         let using = UsingFun::new(using);
-        let (params, iter, x1) = self.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let m1 = move |_: &mut U, t: I::Item| x1(t);
         UParXap::new(using, params, iter, m1)
     }
@@ -126,7 +129,7 @@ where
         U: Clone + Send + 'static,
     {
         let using = UsingClone::new(using);
-        let (params, iter, x1) = self.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let m1 = move |_: &mut U, t: I::Item| x1(t);
         UParXap::new(using, params, iter, m1)
     }
@@ -137,7 +140,7 @@ where
     where
         Map: Fn(Self::Item) -> Out + Sync + Clone,
     {
-        let (params, iter, x1) = self.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let vo = x1(i);
             vo.map(map.clone())
@@ -150,7 +153,7 @@ where
     where
         Filter: Fn(&Self::Item) -> bool + Sync + Clone,
     {
-        let (params, iter, x1) = self.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let values = x1(i);
             values.filter(filter.clone())
@@ -163,7 +166,7 @@ where
         IOut: IntoIterator,
         FlatMap: Fn(Self::Item) -> IOut + Sync + Clone,
     {
-        let (params, iter, x1) = self.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let vo = x1(i);
             vo.flat_map(flat_map.clone())
@@ -175,7 +178,7 @@ where
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
     {
-        let (params, iter, x1) = self.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let vo = x1(i);
             vo.filter_map(filter_map.clone())
@@ -187,7 +190,7 @@ where
     where
         While: Fn(&Self::Item) -> bool + Sync + Clone,
     {
-        let (params, iter, x1) = self.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |i: I::Item| {
             let vo = x1(i);
             vo.whilst(take_while.clone())
