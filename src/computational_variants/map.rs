@@ -95,7 +95,7 @@ where
 
     fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
         let (_, params, iter, map) = self.destruct();
-        ParMap::new(self.orchestrator, params, iter, map)
+        ParMap::new(orchestrator, params, iter, map)
     }
 
     // using transformations

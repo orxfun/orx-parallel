@@ -183,7 +183,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into::<R, _, _>(self.m())
+        output.m_collect_into::<R::Runner, _, _>(self.m())
     }
 
     // reduce
@@ -193,15 +193,15 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.m().reduce::<R, _>(reduce).1
+        self.m().reduce::<R::Runner, _>(reduce).1
     }
 
     // early exit
 
     fn first(self) -> Option<Self::Item> {
         match self.params().iteration_order {
-            IterationOrder::Ordered => self.m().next::<R>().1,
-            IterationOrder::Arbitrary => self.m().next_any::<R>().1,
+            IterationOrder::Ordered => self.m().next::<R::Runner>().1,
+            IterationOrder::Arbitrary => self.m().next_any::<R::Runner>().1,
         }
     }
 }
