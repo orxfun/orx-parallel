@@ -8,6 +8,15 @@ where
     r: PhantomData<R>,
 }
 
+impl<R> Default for StdOrchestrator<R>
+where
+    R: ParallelRunner,
+{
+    fn default() -> Self {
+        Self { r: PhantomData }
+    }
+}
+
 impl<R> Orchestrator for StdOrchestrator<R>
 where
     R: ParallelRunner,
