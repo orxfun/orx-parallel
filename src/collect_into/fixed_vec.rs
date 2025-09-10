@@ -2,6 +2,7 @@ use super::par_collect_into::ParCollectIntoCore;
 use crate::computations::{M, X};
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::orch::Orchestrator;
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -19,9 +20,9 @@ where
         vec.into()
     }
 
-    fn m_collect_into<R, I, M1>(self, m: M<I, O, M1>) -> Self
+    fn m_collect_into<R, I, M1>(self, m: M<R, I, O, M1>) -> Self
     where
-        R: ParallelRunner,
+        R: Orchestrator,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync,
         O: Send,

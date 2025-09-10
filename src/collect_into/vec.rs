@@ -3,6 +3,7 @@ use crate::collect_into::utils::extend_vec_from_split;
 use crate::computations::{M, X};
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::orch::Orchestrator;
 use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -21,9 +22,9 @@ where
         }
     }
 
-    fn m_collect_into<R, I, M1>(mut self, m: M<I, O, M1>) -> Self
+    fn m_collect_into<R, I, M1>(mut self, m: M<R, I, O, M1>) -> Self
     where
-        R: ParallelRunner,
+        R: Orchestrator,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
@@ -31,13 +32,13 @@ where
         match m.par_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-                let split_vec = split_vec.m_collect_into::<R, _, _>(m);
+                let split_vec = split_vec.m_collect_into(m);
                 extend_vec_from_split(self, split_vec)
             }
             Some(len) => {
                 self.reserve(len);
                 let fixed_vec = FixedVec::from(self);
-                let (_num_spawned, fixed_vec) = m.collect_into::<R, _>(fixed_vec);
+                let (_num_spawned, fixed_vec) = m.collect_into(fixed_vec);
                 Vec::from(fixed_vec)
             }
         }

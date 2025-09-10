@@ -1,6 +1,7 @@
 use crate::computations::{M, X};
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::orch::Orchestrator;
 use crate::runner::ParallelRunner;
 use crate::using::UParCollectIntoCore;
 use orx_concurrent_iter::ConcurrentIter;
@@ -12,9 +13,9 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
 
     fn empty(iter_len: Option<usize>) -> Self;
 
-    fn m_collect_into<R, I, M1>(self, m: M<I, O, M1>) -> Self
+    fn m_collect_into<R, I, M1>(self, m: M<R, I, O, M1>) -> Self
     where
-        R: ParallelRunner,
+        R: Orchestrator,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync;
 

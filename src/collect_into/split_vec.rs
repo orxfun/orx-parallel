@@ -1,6 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::orch::Orchestrator;
 use crate::{
     collect_into::utils::split_vec_reserve,
     computations::{M, X},
@@ -25,15 +26,15 @@ where
         vec
     }
 
-    fn m_collect_into<R, I, M1>(mut self, m: M<I, O, M1>) -> Self
+    fn m_collect_into<R, I, M1>(mut self, m: M<R, I, O, M1>) -> Self
     where
-        R: ParallelRunner,
+        R: Orchestrator,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
     {
         split_vec_reserve(&mut self, m.par_len());
-        let (_num_spawned, pinned_vec) = m.collect_into::<R, _>(self);
+        let (_num_spawned, pinned_vec) = m.collect_into(self);
         pinned_vec
     }
 
