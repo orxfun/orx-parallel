@@ -7,11 +7,10 @@ use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::M,
     using::{UsingClone, UsingFun, computational_variants::UParMap},
 };
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
+use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 /// A parallel iterator that maps inputs.
 pub struct ParMap<I, O, M1, R = DefaultOrchestrator>
@@ -20,8 +19,10 @@ where
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
-    m: M<R, I, O, M1>,
-    phantom: PhantomData<R>,
+    orchestrator: R,
+    params: Params,
+    iter: I,
+    map1: M1,
 }
 
 impl<I, O, M1, R> ParMap<I, O, M1, R>
@@ -30,15 +31,53 @@ where
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
-    pub(crate) fn new(orchestrator: R, params: Params, iter: I, m1: M1) -> Self {
+    pub(crate) fn new(orchestrator: R, params: Params, iter: I, map1: M1) -> Self {
         Self {
-            m: M::new(orchestrator, params, iter, m1),
-            phantom: PhantomData,
+            orchestrator,
+            params,
+            iter,
+            map1,
         }
     }
 
     pub(crate) fn destruct(self) -> (R, Params, I, M1) {
-        self.m.destruct()
+        (self.orchestrator, self.params, self.iter, self.map1)
+    }
+
+    pub(crate) fn par_len(&self) -> Option<usize> {
+        match (self.params.is_sequential(), self.iter.try_get_len()) {
+            (true, _) => None, // not required to concurrent reserve when seq
+            (false, x) => x,
+        }
+    }
+
+    pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, P)
+    where
+        P: IntoConcurrentPinnedVec<O>,
+        O: Send,
+    {
+        match (self.params.is_sequential(), self.params.iteration_order) {
+            (true, _) => (0, self.seq_collect_into(pinned_vec)),
+            #[cfg(test)]
+            (false, IterationOrder::Arbitrary) => {
+                parallel_runner_compute::collect_arbitrary::m(self, pinned_vec)
+            }
+            (false, _) => parallel_runner_compute::collect_ordered::m(self, pinned_vec),
+        }
+    }
+
+    fn seq_collect_into<P>(self, mut pinned_vec: P) -> P
+    where
+        P: IntoConcurrentPinnedVec<O>,
+    {
+        let (_, _, iter, map1) = self.destruct();
+
+        let iter = iter.into_seq_iter();
+        for i in iter {
+            pinned_vec.push(map1(i));
+        }
+
+        pinned_vec
     }
 }
 
@@ -67,27 +106,27 @@ where
     type Item = O;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
-        self.m.iter()
+        &self.iter
     }
 
     fn params(&self) -> Params {
-        self.m.params()
+        self.params
     }
 
     // params transformations
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
-        self.m.num_threads(num_threads);
+        self.params = self.params.with_num_threads(num_threads);
         self
     }
 
     fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
-        self.m.chunk_size(chunk_size);
+        self.params = self.params.with_chunk_size(chunk_size);
         self
     }
 
     fn iteration_order(mut self, collect: IterationOrder) -> Self {
-        self.m.iteration_order(collect);
+        self.params = self.params.with_collect_ordering(collect);
         self
     }
 
@@ -200,7 +239,7 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        parallel_runner_compute::reduce::m(self.m, reduce).1
+        parallel_runner_compute::reduce::m(self, reduce).1
     }
 
     // early exit
@@ -210,8 +249,8 @@ where
         Self::Item: Send,
     {
         match self.params().iteration_order {
-            IterationOrder::Ordered => parallel_runner_compute::next::m(self.m).1,
-            IterationOrder::Arbitrary => parallel_runner_compute::next_any::m(self.m).1,
+            IterationOrder::Ordered => parallel_runner_compute::next::m(self).1,
+            IterationOrder::Arbitrary => parallel_runner_compute::next_any::m(self).1,
         }
     }
 }

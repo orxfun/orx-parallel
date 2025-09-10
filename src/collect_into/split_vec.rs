@@ -3,11 +3,7 @@ use crate::computational_variants::ParMap;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::orch::Orchestrator;
-use crate::{
-    collect_into::utils::split_vec_reserve,
-    computations::{M, X},
-    runner::ParallelRunner,
-};
+use crate::{collect_into::utils::split_vec_reserve, computations::X, runner::ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
 #[cfg(test)]
 use orx_pinned_vec::PinnedVec;
@@ -35,7 +31,7 @@ where
         O: Send,
     {
         split_vec_reserve(&mut self, m.par_len());
-        let (_num_spawned, pinned_vec) = m.collect_into(self);
+        let (_, pinned_vec) = m.par_collect_into(self);
         pinned_vec
     }
 

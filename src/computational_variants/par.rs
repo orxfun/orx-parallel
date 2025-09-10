@@ -199,15 +199,15 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        parallel_runner_compute::reduce::m(self.m(), reduce).1
+        parallel_runner_compute::reduce::m(self.into_map(), reduce).1
     }
 
     // early exit
 
     fn first(self) -> Option<Self::Item> {
         match self.params().iteration_order {
-            IterationOrder::Ordered => parallel_runner_compute::next::m(self.m()).1,
-            IterationOrder::Arbitrary => parallel_runner_compute::next_any::m(self.m()).1,
+            IterationOrder::Ordered => parallel_runner_compute::next::m(self.into_map()).1,
+            IterationOrder::Arbitrary => parallel_runner_compute::next_any::m(self.into_map()).1,
         }
     }
 }

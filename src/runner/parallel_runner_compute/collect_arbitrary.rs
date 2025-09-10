@@ -1,9 +1,11 @@
+#[cfg(test)]
+use crate::computational_variants::ParMap;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
 use crate::runner::thread_runner_compute as thread;
-#[cfg(test)]
-use crate::{computations::M, orch::Orchestrator, runner::ParallelRunner};
 use crate::{computations::X, runner::ParallelRunnerCompute};
+#[cfg(test)]
+use crate::{orch::Orchestrator, runner::ParallelRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -11,7 +13,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 // m
 
 #[cfg(test)]
-pub fn m<C, I, O, M1, P>(m: M<C, I, O, M1>, pinned_vec: P) -> (usize, P)
+pub fn m<C, I, O, M1, P>(m: ParMap<I, O, M1, C>, pinned_vec: P) -> (usize, P)
 where
     C: Orchestrator,
     I: ConcurrentIter,

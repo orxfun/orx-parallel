@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::computational_variants::ParMap;
-use crate::computations::{M, X};
+use crate::computations::X;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::orch::Orchestrator;

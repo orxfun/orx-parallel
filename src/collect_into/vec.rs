@@ -1,7 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::collect_into::utils::extend_vec_from_split;
 use crate::computational_variants::ParMap;
-use crate::computations::{M, X};
+use crate::computations::X;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::orch::Orchestrator;
@@ -39,7 +39,7 @@ where
             Some(len) => {
                 self.reserve(len);
                 let fixed_vec = FixedVec::from(self);
-                let (_num_spawned, fixed_vec) = m.collect_into(fixed_vec);
+                let (_, fixed_vec) = m.par_collect_into(fixed_vec);
                 Vec::from(fixed_vec)
             }
         }

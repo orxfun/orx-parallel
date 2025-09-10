@@ -1,4 +1,5 @@
 use crate::ParallelRunner;
+use crate::computational_variants::ParMap;
 use crate::computations::{M, X};
 use crate::generic_values::runner_results::{Fallibility, Reduce};
 use crate::orch::Orchestrator;
@@ -8,7 +9,7 @@ use orx_concurrent_iter::ConcurrentIter;
 
 // m
 
-pub fn m<C, I, O, M1, Red>(m: M<C, I, O, M1>, reduce: Red) -> (usize, Option<O>)
+pub fn m<C, I, O, M1, Red>(m: ParMap<I, O, M1, C>, reduce: Red) -> (usize, Option<O>)
 where
     C: Orchestrator,
     I: ConcurrentIter,

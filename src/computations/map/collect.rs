@@ -19,13 +19,14 @@ where
     where
         P: IntoConcurrentPinnedVec<O>,
     {
-        let (_, p) = self.len_and_params();
-        match (p.is_sequential(), p.iteration_order) {
-            (true, _) => (0, self.sequential(pinned_vec)),
-            #[cfg(test)]
-            (false, IterationOrder::Arbitrary) => collect_arbitrary::m(self, pinned_vec),
-            (false, _) => collect_ordered::m(self, pinned_vec),
-        }
+        // let (_, p) = self.len_and_params();
+        // match (p.is_sequential(), p.iteration_order) {
+        //     (true, _) => (0, self.sequential(pinned_vec)),
+        //     #[cfg(test)]
+        //     (false, IterationOrder::Arbitrary) => collect_arbitrary::m(self, pinned_vec),
+        //     (false, _) => collect_ordered::m(self, pinned_vec),
+        // }
+        todo!()
     }
 
     fn sequential<P>(self, mut pinned_vec: P) -> P
