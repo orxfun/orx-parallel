@@ -4,6 +4,7 @@ pub trait Orchestrator {
     type Runner: ParallelRunner;
 
     fn new_runner(
+        &self,
         kind: ComputationKind,
         params: Params,
         initial_input_len: Option<usize>,
