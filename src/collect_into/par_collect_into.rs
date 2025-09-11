@@ -1,8 +1,10 @@
+use crate::computational_variants::fallible_result::ParXapResult;
 use crate::computational_variants::{ParMap, ParXap};
 use crate::computations::X;
-use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::generic_values::runner_results::{Fallibility, Fallible, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
+use crate::par_iter_result::IntoResult;
 use crate::runner::ParallelRunner;
 use crate::using::UParCollectIntoCore;
 use orx_concurrent_iter::ConcurrentIter;
@@ -37,6 +39,22 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         M1: Fn(I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,
         Self: Sized;
+
+    fn x_try_collect_into_2<I, E, Vo, X1, R>(
+        self,
+        x: ParXapResult<I, O, E, Vo, X1, R>,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    where
+        R: Orchestrator,
+        I: ConcurrentIter,
+        Vo: TransformableValues<Fallibility = Fallible<E>>,
+        X1: Fn(I::Item) -> Vo + Sync,
+        Vo::Item: IntoResult<O, E> + Send,
+        E: Send,
+        Self: Sized,
+    {
+        todo!()
+    }
 
     // test
 
