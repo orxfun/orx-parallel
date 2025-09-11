@@ -43,22 +43,7 @@ where
         FixedVec::from(vec.x_collect_into(x))
     }
 
-    fn x_try_collect_into<R, I, Vo, M1>(
-        self,
-        x: X<R, I, Vo, M1>,
-    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
-    where
-        R: Orchestrator,
-        I: ConcurrentIter,
-        Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vo + Sync,
-        Self: Sized,
-    {
-        let vec = Vec::from(self);
-        vec.x_try_collect_into(x).map(FixedVec::from)
-    }
-
-    fn x_try_collect_into2<R, I, Vo, X1>(
+    fn x_try_collect_into<R, I, Vo, X1>(
         self,
         orchestrator: R,
         params: Params,
@@ -70,10 +55,9 @@ where
         I: ConcurrentIter,
         X1: Fn(I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,
-        Self: Sized,
     {
         let vec = Vec::from(self);
-        vec.x_try_collect_into2(orchestrator, params, iter, xap1)
+        vec.x_try_collect_into(orchestrator, params, iter, xap1)
             .map(FixedVec::from)
     }
 

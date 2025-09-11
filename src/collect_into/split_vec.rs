@@ -49,23 +49,7 @@ where
         pinned_vec
     }
 
-    fn x_try_collect_into<R, I, Vo, M1>(
-        mut self,
-        x: X<R, I, Vo, M1>,
-    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
-    where
-        R: Orchestrator,
-        I: ConcurrentIter,
-        Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vo + Sync,
-        Self: Sized,
-    {
-        split_vec_reserve(&mut self, x.par_len());
-        let (_num_spawned, result) = x.try_collect_into(self);
-        result
-    }
-
-    fn x_try_collect_into2<R, I, Vo, X1>(
+    fn x_try_collect_into<R, I, Vo, X1>(
         mut self,
         orchestrator: R,
         params: Params,

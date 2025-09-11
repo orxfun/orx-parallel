@@ -27,18 +27,7 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(I::Item) -> Vo + Sync;
 
-    fn x_try_collect_into<R, I, Vo, M1>(
-        self,
-        x: X<R, I, Vo, M1>,
-    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
-    where
-        R: Orchestrator,
-        I: ConcurrentIter,
-        M1: Fn(I::Item) -> Vo + Sync,
-        Vo: Values<Item = O>,
-        Self: Sized;
-
-    fn x_try_collect_into2<R, I, Vo, X1>(
+    fn x_try_collect_into<R, I, Vo, X1>(
         self,
         orchestrator: R,
         params: Params,
@@ -50,10 +39,7 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         I: ConcurrentIter,
         X1: Fn(I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,
-        Self: Sized,
-    {
-        todo!()
-    }
+        Self: Sized;
 
     // test
 

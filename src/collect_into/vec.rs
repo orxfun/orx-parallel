@@ -57,23 +57,7 @@ where
         extend_vec_from_split(self, split_vec)
     }
 
-    fn x_try_collect_into<R, I, Vo, M1>(
-        self,
-        x: X<R, I, Vo, M1>,
-    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
-    where
-        R: Orchestrator,
-        I: ConcurrentIter,
-        Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vo + Sync,
-        Self: Sized,
-    {
-        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-        let result = split_vec.x_try_collect_into(x);
-        result.map(|split_vec| extend_vec_from_split(self, split_vec))
-    }
-
-    fn x_try_collect_into2<R, I, Vo, X1>(
+    fn x_try_collect_into<R, I, Vo, X1>(
         self,
         orchestrator: R,
         params: Params,
@@ -88,7 +72,7 @@ where
         Self: Sized,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-        let result = split_vec.x_try_collect_into2(orchestrator, params, iter, xap1);
+        let result = split_vec.x_try_collect_into(orchestrator, params, iter, xap1);
         result.map(|split_vec| extend_vec_from_split(self, split_vec))
     }
 

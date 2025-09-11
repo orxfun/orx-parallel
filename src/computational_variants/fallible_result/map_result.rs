@@ -86,8 +86,7 @@ where
     {
         let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = X::new(orchestrator, params, iter, x1);
-        output.x_try_collect_into(x)
+        output.x_try_collect_into(orchestrator, params, iter, x1)
     }
 
     // reduce
