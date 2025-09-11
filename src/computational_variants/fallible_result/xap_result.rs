@@ -14,7 +14,7 @@ pub struct ParXapResult<I, T, E, Vo, X1, R = DefaultOrchestrator>
 where
     R: Orchestrator,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
     X1: Fn(I::Item) -> Vo + Sync,
 {
@@ -29,7 +29,7 @@ impl<I, T, E, Vo, X1, R> ParXapResult<I, T, E, Vo, X1, R>
 where
     R: Orchestrator,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
     X1: Fn(I::Item) -> Vo + Sync,
 {
@@ -45,6 +45,13 @@ where
 
     fn destruct(self) -> (R, Params, I, X1) {
         (self.orchestrator, self.params, self.iter, self.xap1)
+    }
+
+    pub(crate) fn par_len(&self) -> Option<usize> {
+        match (self.params.is_sequential(), self.iter.try_get_len()) {
+            (true, _) => None, // not required to concurrent reserve when seq
+            (false, x) => x,
+        }
     }
 
     pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, Result<P, E>)

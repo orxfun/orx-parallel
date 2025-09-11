@@ -1,8 +1,10 @@
 use super::par_collect_into::ParCollectIntoCore;
+use crate::computational_variants::fallible_result::ParXapResult;
 use crate::computational_variants::{ParMap, ParXap};
-use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::generic_values::runner_results::{Fallibility, Fallible, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
+use crate::par_iter_result::IntoResult;
 use crate::{collect_into::utils::split_vec_reserve, computations::X, runner::ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
 #[cfg(test)]
@@ -60,6 +62,23 @@ where
     {
         split_vec_reserve(&mut self, x.par_len());
         let (_num_spawned, result) = x.try_collect_into::<R, _>(self);
+        result
+    }
+
+    fn x_try_collect_into_2<I, E, Vo, X1, R>(
+        mut self,
+        x: ParXapResult<I, O, E, Vo, X1, R>,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    where
+        R: Orchestrator,
+        I: ConcurrentIter,
+        Vo: TransformableValues<Fallibility = Fallible<E>>,
+        X1: Fn(I::Item) -> Vo + Sync,
+        Vo::Item: IntoResult<O, E> + Send,
+        E: Send,
+    {
+        split_vec_reserve(&mut self, x.par_len());
+        let (_num_spawned, result) = x.par_collect_into(self);
         result
     }
 
