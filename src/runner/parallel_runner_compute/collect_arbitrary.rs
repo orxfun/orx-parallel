@@ -1,6 +1,4 @@
 use crate::Params;
-#[cfg(test)]
-use crate::computational_variants::ParMap;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
@@ -12,7 +10,13 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 // m
 
 #[cfg(test)]
-pub fn m<C, I, O, M1, P>(m: ParMap<I, O, M1, C>, pinned_vec: P) -> (usize, P)
+pub fn m<C, I, O, M1, P>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    map1: M1,
+    pinned_vec: P,
+) -> (usize, P)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -24,7 +28,6 @@ where
 
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let (orchestrator, params, iter, map1) = m.destruct();
     let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let mut bag: ConcurrentBag<O, P> = pinned_vec.into();

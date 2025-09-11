@@ -53,7 +53,14 @@ where
             (true, _) => (0, self.seq_collect_into(pinned_vec)),
             #[cfg(test)]
             (false, IterationOrder::Arbitrary) => {
-                parallel_runner_compute::collect_arbitrary::m(self, pinned_vec)
+                let (orchestrator, params, iter, m1) = self.destruct();
+                parallel_runner_compute::collect_arbitrary::m(
+                    orchestrator,
+                    params,
+                    iter,
+                    m1,
+                    pinned_vec,
+                )
             }
             (false, _) => parallel_runner_compute::collect_ordered::m(self, pinned_vec),
         }
