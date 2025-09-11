@@ -1,4 +1,5 @@
 use super::par_collect_into::ParCollectIntoCore;
+use crate::Params;
 use crate::collect_into::utils::extend_vec_from_split;
 use crate::computational_variants::fallible_result::computations::X;
 use crate::computational_variants::{ParMap, ParXap};
@@ -69,6 +70,25 @@ where
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let result = split_vec.x_try_collect_into(x);
+        result.map(|split_vec| extend_vec_from_split(self, split_vec))
+    }
+
+    fn x_try_collect_into2<R, I, Vo, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    where
+        R: Orchestrator,
+        I: ConcurrentIter,
+        X1: Fn(I::Item) -> Vo + Sync,
+        Vo: Values<Item = O>,
+        Self: Sized,
+    {
+        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
+        let result = split_vec.x_try_collect_into2(orchestrator, params, iter, xap1);
         result.map(|split_vec| extend_vec_from_split(self, split_vec))
     }
 

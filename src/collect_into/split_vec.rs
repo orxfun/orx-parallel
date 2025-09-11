@@ -1,6 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
+use crate::Params;
 use crate::collect_into::utils::split_vec_reserve;
-use crate::computational_variants::fallible_result::computations::X;
+use crate::computational_variants::fallible_result::computations::{X, try_collect_into};
 use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
@@ -61,6 +62,30 @@ where
     {
         split_vec_reserve(&mut self, x.par_len());
         let (_num_spawned, result) = x.try_collect_into(self);
+        result
+    }
+
+    fn x_try_collect_into2<R, I, Vo, X1>(
+        mut self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    where
+        R: Orchestrator,
+        I: ConcurrentIter,
+        X1: Fn(I::Item) -> Vo + Sync,
+        Vo: Values<Item = O>,
+        Self: Sized,
+    {
+        let par_len = match (params.is_sequential(), iter.try_get_len()) {
+            (true, _) => None, // not required to concurrent reserve when seq
+            (false, x) => x,
+        };
+
+        split_vec_reserve(&mut self, par_len);
+        let (_num_spawned, result) = try_collect_into(orchestrator, params, iter, xap1, self);
         result
     }
 
