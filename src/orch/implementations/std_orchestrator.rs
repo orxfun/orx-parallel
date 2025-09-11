@@ -9,6 +9,10 @@ impl<'scope, T> ParHandle<'scope, T> for StdHandle<'scope, T> {
     fn join(self) -> JoinResult<T> {
         self.0.join()
     }
+
+    fn is_finished(&self) -> bool {
+        self.0.is_finished()
+    }
 }
 
 impl<'env, 'scope> ParScope<'env, 'scope> for std::thread::Scope<'scope, 'env> {

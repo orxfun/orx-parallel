@@ -1,7 +1,7 @@
 use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
-use crate::orch::Orchestrator;
+use crate::orch::{Orchestrator, ParHandle, ParScope};
 use crate::runner::parallel_runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_iter::ConcurrentIter;
@@ -34,7 +34,8 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    std::thread::scope(|s| {
+
+    C::scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
@@ -80,7 +81,7 @@ where
 
     let mut num_spawned = 0;
     let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
-        std::thread::scope(|s| {
+        C::scope(|s| {
             let mut handles = vec![];
 
             while runner.do_spawn_new(num_spawned, shared_state, &iter) {
