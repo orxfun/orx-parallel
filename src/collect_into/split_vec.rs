@@ -1,7 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::Params;
 use crate::collect_into::utils::split_vec_reserve;
-use crate::computational_variants::fallible_result::computations::{X, try_collect_into};
+use crate::computational_variants::fallible_result::computations::try_collect_into;
 use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};

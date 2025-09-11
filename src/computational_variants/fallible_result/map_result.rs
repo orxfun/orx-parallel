@@ -1,4 +1,3 @@
-use crate::computational_variants::fallible_result::computations::X;
 use crate::computational_variants::{ParMap, ParXap};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
