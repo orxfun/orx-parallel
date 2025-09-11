@@ -1,4 +1,4 @@
-use crate::computational_variants::{ParMap, ParXap};
+use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
 use crate::orch::Orchestrator;
@@ -10,7 +10,13 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 // m
 
-pub fn m<C, I, O, M1, P>(m: ParMap<I, O, M1, C>, pinned_vec: P) -> (usize, P)
+pub fn m<C, I, O, M1, P>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    map1: M1,
+    pinned_vec: P,
+) -> (usize, P)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -19,7 +25,6 @@ where
     P: IntoConcurrentPinnedVec<O>,
 {
     let offset = pinned_vec.len();
-    let (orchestrator, params, iter, map1) = m.destruct();
     let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
@@ -51,7 +56,13 @@ where
 
 // x
 
-pub fn x<C, I, Vo, X1, P>(x: ParXap<I, Vo, X1, C>, pinned_vec: P) -> (usize, ParallelCollect<Vo, P>)
+pub fn x<C, I, Vo, X1, P>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    xap1: X1,
+    pinned_vec: P,
+) -> (usize, ParallelCollect<Vo, P>)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -61,7 +72,6 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    let (orchestrator, params, iter, xap1) = x.destruct();
     let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     // compute

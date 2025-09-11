@@ -74,8 +74,14 @@ where
                 (num_threads, pinned_vec)
             }
             (false, IterationOrder::Ordered) => {
-                let (num_threads, result) =
-                    parallel_runner_compute::collect_ordered::x(self, pinned_vec);
+                let (orchestrator, params, iter, x1) = self.destruct();
+                let (num_threads, result) = parallel_runner_compute::collect_ordered::x(
+                    orchestrator,
+                    params,
+                    iter,
+                    x1,
+                    pinned_vec,
+                );
                 let pinned_vec = match result {
                     ParallelCollect::AllCollected { pinned_vec } => pinned_vec,
                     ParallelCollect::StoppedByWhileCondition {

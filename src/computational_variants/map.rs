@@ -62,7 +62,16 @@ where
                     pinned_vec,
                 )
             }
-            (false, _) => parallel_runner_compute::collect_ordered::m(self, pinned_vec),
+            (false, _) => {
+                let (orchestrator, params, iter, m1) = self.destruct();
+                parallel_runner_compute::collect_ordered::m(
+                    orchestrator,
+                    params,
+                    iter,
+                    m1,
+                    pinned_vec,
+                )
+            }
         }
     }
 

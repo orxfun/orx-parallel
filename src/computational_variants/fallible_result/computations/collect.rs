@@ -1,5 +1,4 @@
 use crate::Params;
-use crate::computational_variants::ParXap;
 use crate::generic_values::runner_results::{Fallibility, Stop};
 use crate::orch::Orchestrator;
 use crate::runner::parallel_runner_compute::{collect_arbitrary, collect_ordered};
@@ -29,8 +28,7 @@ where
             (nt, result.into_result())
         }
         (false, IterationOrder::Ordered) => {
-            let xap = ParXap::new(orchestrator, params, iter, xap1);
-            let (nt, result) = collect_ordered::x(xap, pinned_vec);
+            let (nt, result) = collect_ordered::x(orchestrator, params, iter, xap1, pinned_vec);
             (nt, result.into_result())
         }
     }
