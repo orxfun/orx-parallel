@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests;
 
-mod computations;
+pub(crate) mod computations;
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.
 pub mod fallible_option;
