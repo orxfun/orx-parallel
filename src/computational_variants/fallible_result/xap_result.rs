@@ -47,7 +47,7 @@ where
         (self.orchestrator, self.params, self.iter, self.xap1)
     }
 
-    fn par_collect_into<P>(self, pinned_vec: P) -> (usize, Result<P, E>)
+    pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, Result<P, E>)
     where
         P: IntoConcurrentPinnedVec<T>,
         Vo::Item: Send,
@@ -145,7 +145,6 @@ where
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send,
-        Self::Err: Send,
         Self::Err: Send,
     {
         let (orchestrator, params, iter, x1) = self.destruct();
