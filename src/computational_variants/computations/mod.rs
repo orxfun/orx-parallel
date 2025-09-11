@@ -1,3 +1,3 @@
 mod collect;
 
-pub use collect::try_collect_into;
+pub use collect::{collect_into, try_collect_into};
