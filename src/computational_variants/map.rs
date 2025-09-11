@@ -238,7 +238,8 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into(self)
+        let (orchestrator, params, iter, m1) = self.destruct();
+        output.m_collect_into(orchestrator, params, iter, m1)
     }
 
     // reduce

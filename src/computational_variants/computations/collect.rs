@@ -8,7 +8,55 @@ use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-pub fn collect_into<R, I, Vo, X1, P>(
+pub fn map_collect_into<R, I, O, M1, P>(
+    orchestrator: R,
+    params: Params,
+    iter: I,
+    map1: M1,
+    pinned_vec: P,
+) -> (usize, P)
+where
+    R: Orchestrator,
+    I: ConcurrentIter,
+    M1: Fn(I::Item) -> O + Sync,
+    O: Send,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    match (params.is_sequential(), params.iteration_order) {
+        (true, _) => (0, map_collect_into_seq(iter, map1, pinned_vec)),
+        #[cfg(test)]
+        (false, IterationOrder::Arbitrary) => parallel_runner_compute::collect_arbitrary::m(
+            orchestrator,
+            params,
+            iter,
+            map1,
+            pinned_vec,
+        ),
+        (false, _) => parallel_runner_compute::collect_ordered::m(
+            orchestrator,
+            params,
+            iter,
+            map1,
+            pinned_vec,
+        ),
+    }
+}
+
+fn map_collect_into_seq<I, O, M1, P>(iter: I, map1: M1, mut pinned_vec: P) -> P
+where
+    I: ConcurrentIter,
+    M1: Fn(I::Item) -> O + Sync,
+    O: Send,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    let iter = iter.into_seq_iter();
+    for i in iter {
+        pinned_vec.push(map1(i));
+    }
+    pinned_vec
+}
+
+pub fn xap_collect_into<R, I, Vo, X1, P>(
     orchestrator: R,
     params: Params,
     iter: I,
@@ -24,7 +72,7 @@ where
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     match (params.is_sequential(), params.iteration_order) {
-        (true, _) => (0, sequential(iter, xap1, pinned_vec)),
+        (true, _) => (0, xap_collect_into_seq(iter, xap1, pinned_vec)),
         (false, IterationOrder::Arbitrary) => {
             let (num_threads, result) = parallel_runner_compute::collect_arbitrary::x(
                 orchestrator,
@@ -59,7 +107,7 @@ where
     }
 }
 
-fn sequential<I, Vo, X1, P>(iter: I, xap1: X1, mut pinned_vec: P) -> P
+fn xap_collect_into_seq<I, Vo, X1, P>(iter: I, xap1: X1, mut pinned_vec: P) -> P
 where
     I: ConcurrentIter,
     Vo: Values,
@@ -79,7 +127,7 @@ where
     pinned_vec
 }
 
-pub fn try_collect_into<R, I, Vo, X1, P>(
+pub fn xap_try_collect_into<R, I, Vo, X1, P>(
     orchestrator: R,
     params: Params,
     iter: I,
@@ -95,7 +143,7 @@ where
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     match (params.is_sequential(), params.iteration_order) {
-        (true, _) => (0, try_sequential(iter, xap1, pinned_vec)),
+        (true, _) => (0, xap_try_collect_into_seq(iter, xap1, pinned_vec)),
         (false, IterationOrder::Arbitrary) => {
             let (nt, result) = parallel_runner_compute::collect_arbitrary::x(
                 orchestrator,
@@ -119,7 +167,7 @@ where
     }
 }
 
-fn try_sequential<I, Vo, X1, P>(
+fn xap_try_collect_into_seq<I, Vo, X1, P>(
     iter: I,
     xap1: X1,
     mut pinned_vec: P,

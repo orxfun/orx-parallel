@@ -1,5 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::collect_into::utils::extend_vec_from_split;
+use crate::computational_variants::computations::map_collect_into;
 use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
@@ -22,23 +23,29 @@ where
         }
     }
 
-    fn m_collect_into<R, I, M1>(mut self, m: ParMap<I, O, M1, R>) -> Self
+    fn m_collect_into<R, I, M1>(
+        mut self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        map1: M1,
+    ) -> Self
     where
         R: Orchestrator,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
     {
-        match m.con_iter().try_get_len() {
+        match iter.try_get_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-                let split_vec = split_vec.m_collect_into(m);
+                let split_vec = split_vec.m_collect_into(orchestrator, params, iter, map1);
                 extend_vec_from_split(self, split_vec)
             }
             Some(len) => {
                 self.reserve(len);
                 let fixed_vec = FixedVec::from(self);
-                let (_, fixed_vec) = m.par_collect_into(fixed_vec);
+                let (_, fixed_vec) = map_collect_into(orchestrator, params, iter, map1, fixed_vec);
                 Vec::from(fixed_vec)
             }
         }

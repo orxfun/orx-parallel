@@ -1,6 +1,5 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::Params;
-use crate::computational_variants::ParMap;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
@@ -20,7 +19,7 @@ where
         vec.into()
     }
 
-    fn m_collect_into<R, I, M1>(self, m: ParMap<I, O, M1, R>) -> Self
+    fn m_collect_into<R, I, M1>(self, orchestrator: R, params: Params, iter: I, map1: M1) -> Self
     where
         R: Orchestrator,
         I: ConcurrentIter,
@@ -28,7 +27,7 @@ where
         O: Send,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.m_collect_into(m))
+        FixedVec::from(vec.m_collect_into(orchestrator, params, iter, map1))
     }
 
     fn x_collect_into<R, I, Vo, X1>(
