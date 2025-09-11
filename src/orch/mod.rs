@@ -1,11 +1,9 @@
 mod implementations;
 mod orchestrator;
-mod par_handle;
-mod par_scope;
+mod thread_pool;
 
-pub use crate::orch::implementations::StdOrchestrator;
+pub use crate::orch::implementations::DefaultStdOrchestrator;
 pub use orchestrator::Orchestrator;
-pub use par_handle::ParHandle;
-pub use par_scope::ParScope;
+pub use thread_pool::{ParHandle, ParScope, ParThreadPool};
 
-pub type DefaultOrchestrator = StdOrchestrator<crate::DefaultRunner>;
+pub type DefaultOrchestrator = DefaultStdOrchestrator;
