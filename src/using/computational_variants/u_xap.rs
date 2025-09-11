@@ -73,7 +73,7 @@ where
     type Item = Vo::Item;
 
     fn con_iter(&self) -> &impl ConcurrentIter {
-        self.ux.iter()
+        self.ux.con_iter()
     }
 
     fn params(&self) -> Params {

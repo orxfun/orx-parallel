@@ -11,3 +11,4 @@ mod range;
 mod slice;
 mod sum;
 mod vectors;
+mod xap;

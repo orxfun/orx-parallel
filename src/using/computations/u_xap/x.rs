@@ -55,7 +55,7 @@ where
         self.params = self.params.with_collect_ordering(collect);
     }
 
-    pub(crate) fn iter(&self) -> &I {
+    pub(crate) fn con_iter(&self) -> &I {
         &self.iter
     }
 }

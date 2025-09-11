@@ -41,7 +41,7 @@ where
         split_vec_reserve(
             &mut self,
             x.params().is_sequential(),
-            x.iter().try_get_len(),
+            x.con_iter().try_get_len(),
         );
         let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
         pinned_vec
