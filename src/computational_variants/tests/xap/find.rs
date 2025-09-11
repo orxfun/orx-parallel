@@ -1,5 +1,8 @@
+use crate::ParIter;
+use crate::Params;
+use crate::computational_variants::ParXap;
 use crate::generic_values::Vector;
-use crate::{DefaultRunner, Params, computations::X};
+use crate::orch::DefaultOrchestrator;
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
 
@@ -22,9 +25,9 @@ fn x_flat_map_find(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let x = X::new(params, iter, xmap);
+    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
 
-    let output = x.next::<DefaultRunner>().1;
+    let output = x.first();
 
     assert_eq!(expected, output);
 }
@@ -43,9 +46,9 @@ fn x_filter_map_find(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let x = X::new(params, iter, xmap);
+    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
 
-    let output = x.next::<DefaultRunner>().1;
+    let output = x.first();
 
     assert_eq!(expected, output);
 }

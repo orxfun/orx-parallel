@@ -1,17 +1,18 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
     generic_values::Vector,
-    runner::{DefaultRunner, ParallelRunner},
-    using::u_par_iter::ParIterUsing,
-    using::{Using, computational_variants::u_xap::UParXap, computations::UM},
+    orch::{DefaultOrchestrator, Orchestrator},
+    using::{
+        Using, computational_variants::u_xap::UParXap, computations::UM, u_par_iter::ParIterUsing,
+    },
 };
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
 /// A parallel iterator that maps inputs.
-pub struct UParMap<U, I, O, M1, R = DefaultRunner>
+pub struct UParMap<U, I, O, M1, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -22,7 +23,7 @@ where
 
 impl<U, I, O, M1, R> UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -41,7 +42,7 @@ where
 
 unsafe impl<U, I, O, M1, R> Send for UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -50,7 +51,7 @@ where
 
 unsafe impl<U, I, O, M1, R> Sync for UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -59,7 +60,7 @@ where
 
 impl<U, I, O, M1, R> ParIterUsing<U, R> for UParMap<U, I, O, M1, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     U: Using,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -91,7 +92,7 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
         let (using, params, iter, map) = self.destruct();
         UParMap::new(using, params, iter, map)
     }
@@ -161,7 +162,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.u_m_collect_into::<R, _, _, _>(self.um)
+        output.u_m_collect_into::<R::Runner, _, _, _>(self.um)
     }
 
     // reduce
@@ -171,7 +172,7 @@ where
         Self::Item: Send,
         Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.um.reduce::<R, _>(reduce).1
+        self.um.reduce::<R::Runner, _>(reduce).1
     }
 
     // early exit
@@ -180,6 +181,6 @@ where
     where
         Self::Item: Send,
     {
-        self.um.next::<R>().1
+        self.um.next::<R::Runner>().1
     }
 }

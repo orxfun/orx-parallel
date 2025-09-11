@@ -1,11 +1,12 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
+use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
+use crate::runner::parallel_runner_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    computations::{M, map_self},
-    runner::{DefaultRunner, ParallelRunner},
+    computations::map_self,
     using::{UsingClone, UsingFun, computational_variants::UPar},
 };
 use crate::{IntoParIter, ParIterResult};
@@ -14,56 +15,53 @@ use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 use std::marker::PhantomData;
 
 /// A parallel iterator.
-pub struct Par<I, R = DefaultRunner>
+pub struct Par<I, R = DefaultOrchestrator>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
-    iter: I,
+    orchestrator: R,
     params: Params,
+    iter: I,
     phantom: PhantomData<R>,
 }
 
 impl<I, R> Par<I, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
-    pub(crate) fn new(params: Params, iter: I) -> Self {
+    pub(crate) fn new(orchestrator: R, params: Params, iter: I) -> Self {
         Self {
+            orchestrator,
             iter,
             params,
             phantom: PhantomData,
         }
     }
 
-    pub(crate) fn destruct(self) -> (Params, I) {
-        (self.params, self.iter)
-    }
-
-    fn m(self) -> M<I, I::Item, impl Fn(I::Item) -> I::Item> {
-        let (params, iter) = self.destruct();
-        M::new(params, iter, map_self)
+    pub(crate) fn destruct(self) -> (R, Params, I) {
+        (self.orchestrator, self.params, self.iter)
     }
 }
 
 unsafe impl<I, R> Send for Par<I, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
 }
 
 unsafe impl<I, R> Sync for Par<I, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
 }
 
 impl<I, R> ParIter<R> for Par<I, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
     type Item = I::Item;
@@ -93,8 +91,8 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIter<Q, Item = Self::Item> {
-        Par::new(self.params, self.iter)
+    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+        Par::new(orchestrator, self.params, self.iter)
     }
 
     // using transformations
@@ -128,17 +126,17 @@ where
     where
         Map: Fn(Self::Item) -> Out + Sync,
     {
-        let (params, iter) = self.destruct();
-        ParMap::new(params, iter, map)
+        let (orchestrator, params, iter) = self.destruct();
+        ParMap::new(orchestrator, params, iter, map)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIter<R, Item = Self::Item>
     where
         Filter: Fn(&Self::Item) -> bool + Sync,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let x1 = move |i: Self::Item| filter(&i).then_some(i);
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(self, flat_map: FlatMap) -> impl ParIter<R, Item = IOut::Item>
@@ -146,26 +144,26 @@ where
         IOut: IntoIterator,
         FlatMap: Fn(Self::Item) -> IOut + Sync,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let x1 = move |i: Self::Item| Vector(flat_map(i)); // TODO: inline
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync,
     {
-        let (params, iter) = self.destruct();
-        ParXap::new(params, iter, filter_map)
+        let (orchestrator, params, iter) = self.destruct();
+        ParXap::new(orchestrator, params, iter, filter_map)
     }
 
     fn take_while<While>(self, take_while: While) -> impl ParIter<R, Item = Self::Item>
     where
         While: Fn(&Self::Item) -> bool + Sync,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let x1 = move |value: Self::Item| WhilstAtom::new(value, &take_while);
-        ParXap::new(params, iter, x1)
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
@@ -181,7 +179,8 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.m_collect_into::<R, _, _>(self.m())
+        let (orchestrator, params, iter) = self.destruct();
+        output.m_collect_into(orchestrator, params, iter, map_self)
     }
 
     // reduce
@@ -191,22 +190,24 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.m().reduce::<R, _>(reduce).1
+        let (orchestrator, params, iter) = self.destruct();
+        prc::reduce::m(orchestrator, params, iter, map_self, reduce).1
     }
 
     // early exit
 
     fn first(self) -> Option<Self::Item> {
-        match self.params().iteration_order {
-            IterationOrder::Ordered => self.m().next::<R>().1,
-            IterationOrder::Arbitrary => self.m().next_any::<R>().1,
+        let (orchestrator, params, iter) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => prc::next::m(orchestrator, params, iter, map_self).1,
+            IterationOrder::Arbitrary => prc::next_any::m(orchestrator, params, iter, map_self).1,
         }
     }
 }
 
 impl<I, R> Par<I, R>
 where
-    R: ParallelRunner,
+    R: Orchestrator,
     I: ConcurrentIter,
 {
     /// Creates a chain of this and `other` parallel iterators.
@@ -232,8 +233,8 @@ where
         I: ExactSizeConcurrentIter,
         C: IntoParIter<Item = I::Item>,
     {
-        let (params, iter) = self.destruct();
+        let (orchestrator, params, iter) = self.destruct();
         let iter = iter.chain(other.into_con_iter());
-        Par::new(params, iter)
+        Par::new(orchestrator, params, iter)
     }
 }

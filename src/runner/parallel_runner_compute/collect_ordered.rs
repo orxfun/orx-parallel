@@ -1,26 +1,31 @@
+use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
-use crate::runner::thread_runner_compute as thread;
-use crate::{
-    computations::{M, X},
-    runner::ParallelRunnerCompute,
-};
+use crate::orch::{Orchestrator, ParHandle, ParScope, ParThreadPool};
+use crate::runner::parallel_runner::ParallelRunner;
+use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 // m
 
-pub fn m<C, I, O, M1, P>(runner: C, m: M<I, O, M1>, pinned_vec: P) -> (usize, P)
+pub fn m<C, I, O, M1, P>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    map1: M1,
+    pinned_vec: P,
+) -> (usize, P)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
     let offset = pinned_vec.len();
-    let (_, iter, map1) = m.destruct();
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
 
@@ -29,7 +34,8 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    std::thread::scope(|s| {
+
+    orchestrator.thread_pool().scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
@@ -51,21 +57,23 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, P>(
-    runner: C,
-    x: X<I, Vo, M1>,
+pub fn x<C, I, Vo, X1, P>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    xap1: X1,
     pinned_vec: P,
 ) -> (usize, ParallelCollect<Vo, P>)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
     <Vo::Fallibility as Fallibility>::Error: Send,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    let (_, iter, xap1) = x.destruct();
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     // compute
     let state = runner.new_shared_state();
@@ -73,7 +81,7 @@ where
 
     let mut num_spawned = 0;
     let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
-        std::thread::scope(|s| {
+        orchestrator.thread_pool().scope(|s| {
             let mut handles = vec![];
 
             while runner.do_spawn_new(num_spawned, shared_state, &iter) {

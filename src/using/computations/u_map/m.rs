@@ -52,14 +52,7 @@ where
         self.params = self.params.with_collect_ordering(collect);
     }
 
-    pub fn iter(&self) -> &I {
+    pub(crate) fn iter(&self) -> &I {
         &self.iter
-    }
-
-    pub fn par_len(&self) -> Option<usize> {
-        match (self.params.is_sequential(), self.iter.try_get_len()) {
-            (true, _) => None, // not required to concurrent reserve when seq
-            (false, x) => x,
-        }
     }
 }

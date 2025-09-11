@@ -1,26 +1,33 @@
-use crate::computations::{M, X};
+use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Reduce};
-use crate::runner::thread_runner_compute as thread;
-use crate::{generic_values::Values, runner::ParallelRunnerCompute};
+use crate::orch::{Orchestrator, ParHandle, ParScope, ParThreadPool};
+use crate::runner::{ComputationKind, thread_runner_compute as thread};
+use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 // m
 
-pub fn m<C, I, O, M1, Red>(runner: C, m: M<I, O, M1>, reduce: Red) -> (usize, Option<O>)
+pub fn m<C, I, O, M1, Red>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    map1: M1,
+    reduce: Red,
+) -> (usize, Option<O>)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
     Red: Fn(O, O) -> O + Sync,
     O: Send,
 {
-    let (_, iter, map1) = m.destruct();
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let results = std::thread::scope(|s| {
+    let results = orchestrator.thread_pool().scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -55,22 +62,28 @@ where
 type ResultReduce<Vo> =
     Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
 
-pub fn x<C, I, Vo, M1, Red>(runner: C, x: X<I, Vo, M1>, reduce: Red) -> (usize, ResultReduce<Vo>)
+pub fn x<C, I, Vo, X1, Red>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    xap1: X1,
+    reduce: Red,
+) -> (usize, ResultReduce<Vo>)
 where
-    C: ParallelRunnerCompute,
+    C: Orchestrator,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
-    let (_, iter, xap1) = x.destruct();
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result: Result<Vec<Vo::Item>, _> = std::thread::scope(|s| {
+    let result: Result<Vec<Vo::Item>, _> = orchestrator.thread_pool().scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
