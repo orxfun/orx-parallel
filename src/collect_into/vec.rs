@@ -44,7 +44,13 @@ where
         }
     }
 
-    fn x_collect_into<R, I, Vo, X1>(self, x: ParXap<I, Vo, X1, R>) -> Self
+    fn x_collect_into<R, I, Vo, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Self
     where
         R: Orchestrator,
         I: ConcurrentIter,
@@ -52,7 +58,7 @@ where
         X1: Fn(I::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-        let split_vec = split_vec.x_collect_into(x);
+        let split_vec = split_vec.x_collect_into(orchestrator, params, iter, xap1);
         extend_vec_from_split(self, split_vec)
     }
 

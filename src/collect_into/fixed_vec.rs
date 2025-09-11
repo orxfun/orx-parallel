@@ -1,6 +1,6 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::Params;
-use crate::computational_variants::{ParMap, ParXap};
+use crate::computational_variants::ParMap;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
@@ -31,7 +31,13 @@ where
         FixedVec::from(vec.m_collect_into(m))
     }
 
-    fn x_collect_into<R, I, Vo, X1>(self, x: ParXap<I, Vo, X1, R>) -> Self
+    fn x_collect_into<R, I, Vo, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Self
     where
         R: Orchestrator,
         I: ConcurrentIter,
@@ -39,7 +45,7 @@ where
         X1: Fn(I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.x_collect_into(x))
+        FixedVec::from(vec.x_collect_into(orchestrator, params, iter, xap1))
     }
 
     fn x_try_collect_into<R, I, Vo, X1>(

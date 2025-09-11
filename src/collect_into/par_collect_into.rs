@@ -1,5 +1,5 @@
 use crate::Params;
-use crate::computational_variants::{ParMap, ParXap};
+use crate::computational_variants::ParMap;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
@@ -19,7 +19,13 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync;
 
-    fn x_collect_into<R, I, Vo, X1>(self, x: ParXap<I, Vo, X1, R>) -> Self
+    fn x_collect_into<R, I, Vo, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Self
     where
         R: Orchestrator,
         I: ConcurrentIter,

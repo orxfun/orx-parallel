@@ -1,8 +1,6 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParXapResult;
-use crate::generic_values::runner_results::{
-    Infallible, ParallelCollect, ParallelCollectArbitrary,
-};
+use crate::generic_values::runner_results::Infallible;
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
@@ -12,7 +10,6 @@ use crate::{
     using::{UsingClone, UsingFun, computational_variants::UParXap},
 };
 use orx_concurrent_iter::ConcurrentIter;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 /// A parallel iterator that xaps inputs.
 ///
@@ -48,68 +45,6 @@ where
 
     pub(crate) fn destruct(self) -> (R, Params, I, X1) {
         (self.orchestrator, self.params, self.iter, self.xap1)
-    }
-
-    pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, P)
-    where
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-        Vo: TransformableValues<Fallibility = Infallible>,
-        Vo::Item: Send,
-    {
-        match (self.params.is_sequential(), self.params.iteration_order) {
-            (true, _) => (0, self.seq_collect_into(pinned_vec)),
-            (false, IterationOrder::Arbitrary) => {
-                let (orchestrator, params, iter, x1) = self.destruct();
-                let (num_threads, result) = parallel_runner_compute::collect_arbitrary::x(
-                    orchestrator,
-                    params,
-                    iter,
-                    x1,
-                    pinned_vec,
-                );
-                let pinned_vec = match result {
-                    ParallelCollectArbitrary::AllCollected { pinned_vec } => pinned_vec,
-                    ParallelCollectArbitrary::StoppedByWhileCondition { pinned_vec } => pinned_vec,
-                };
-                (num_threads, pinned_vec)
-            }
-            (false, IterationOrder::Ordered) => {
-                let (orchestrator, params, iter, x1) = self.destruct();
-                let (num_threads, result) = parallel_runner_compute::collect_ordered::x(
-                    orchestrator,
-                    params,
-                    iter,
-                    x1,
-                    pinned_vec,
-                );
-                let pinned_vec = match result {
-                    ParallelCollect::AllCollected { pinned_vec } => pinned_vec,
-                    ParallelCollect::StoppedByWhileCondition {
-                        pinned_vec,
-                        stopped_idx: _,
-                    } => pinned_vec,
-                };
-                (num_threads, pinned_vec)
-            }
-        }
-    }
-
-    pub(crate) fn seq_collect_into<P>(self, mut pinned_vec: P) -> P
-    where
-        P: IntoConcurrentPinnedVec<Vo::Item>,
-    {
-        let (_, _, iter, xap1) = self.destruct();
-
-        let iter = iter.into_seq_iter();
-        for i in iter {
-            let vt = xap1(i);
-            let done = vt.push_to_pinned_vec(&mut pinned_vec);
-            if Vo::sequential_push_to_stop(done).is_some() {
-                break;
-            }
-        }
-
-        pinned_vec
     }
 }
 
@@ -277,7 +212,8 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.x_collect_into(self)
+        let (orchestrator, params, iter, x1) = self.destruct();
+        output.x_collect_into(orchestrator, params, iter, x1)
     }
 
     // reduce
