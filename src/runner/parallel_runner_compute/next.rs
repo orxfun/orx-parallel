@@ -1,6 +1,6 @@
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
-use crate::orch::{Orchestrator, ParHandle, ParScope};
+use crate::orch::{Orchestrator, ParHandle, ParScope, ParThreadPool};
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
@@ -12,13 +12,13 @@ where
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
-    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let results = C::scope(|s| {
+    let results = orchestrator.thread_pool().scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -65,13 +65,13 @@ where
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
 {
-    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result: Result<Vec<NextSuccess<Vo::Item>>, _> = C::scope(|s| {
+    let result: Result<Vec<NextSuccess<Vo::Item>>, _> = orchestrator.thread_pool().scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {

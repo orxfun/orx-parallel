@@ -1,7 +1,4 @@
-use super::super::par_handle::{JoinResult, ParHandle};
-use super::super::par_scope::ParScope;
-use crate::{ParallelRunner, orch::Orchestrator};
-use std::marker::PhantomData;
+use crate::orch::{ParHandle, ParScope, ParThreadPool, thread_pool::par_handle::JoinResult};
 
 pub struct StdHandle<'scope, T>(std::thread::ScopedJoinHandle<'scope, T>);
 
@@ -15,7 +12,7 @@ impl<'scope, T> ParHandle<'scope, T> for StdHandle<'scope, T> {
     }
 }
 
-impl<'env, 'scope> ParScope<'env, 'scope> for std::thread::Scope<'scope, 'env> {
+impl<'scope, 'env> ParScope<'scope, 'env> for std::thread::Scope<'scope, 'env> {
     type Handle<T>
         = StdHandle<'scope, T>
     where
@@ -31,37 +28,19 @@ impl<'env, 'scope> ParScope<'env, 'scope> for std::thread::Scope<'scope, 'env> {
     }
 }
 
-pub struct StdOrchestrator<R>
-where
-    R: ParallelRunner,
-{
-    r: PhantomData<R>,
-}
+#[derive(Default)]
+pub struct StdDefaultThreadPool;
 
-impl<R> Default for StdOrchestrator<R>
-where
-    R: ParallelRunner,
-{
-    fn default() -> Self {
-        Self { r: PhantomData }
-    }
-}
-
-impl<R> Orchestrator for StdOrchestrator<R>
-where
-    R: ParallelRunner,
-{
-    type Runner = R;
-
-    type Scope<'env, 'scope>
+impl ParThreadPool for StdDefaultThreadPool {
+    type Scope<'scope, 'env>
         = std::thread::Scope<'scope, 'env>
     where
         'env: 'scope;
 
-    fn scope<'env, F, T>(f: F) -> T
+    fn scope<'env, F, T>(&'env self, f: F) -> T
     where
         F: for<'scope> FnOnce(&'scope std::thread::Scope<'scope, 'env>) -> T,
     {
-        std::thread::scope(|s| f(s))
+        std::thread::scope(f)
     }
 }

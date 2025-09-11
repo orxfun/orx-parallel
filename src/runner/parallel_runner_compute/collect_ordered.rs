@@ -1,7 +1,7 @@
 use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
-use crate::orch::{Orchestrator, ParHandle, ParScope};
+use crate::orch::{Orchestrator, ParHandle, ParScope, ParThreadPool};
 use crate::runner::parallel_runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_iter::ConcurrentIter;
@@ -25,7 +25,7 @@ where
     P: IntoConcurrentPinnedVec<O>,
 {
     let offset = pinned_vec.len();
-    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
 
@@ -35,7 +35,7 @@ where
 
     let mut num_spawned = 0;
 
-    C::scope(|s| {
+    orchestrator.thread_pool().scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
@@ -73,7 +73,7 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     // compute
     let state = runner.new_shared_state();
@@ -81,7 +81,7 @@ where
 
     let mut num_spawned = 0;
     let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
-        C::scope(|s| {
+        orchestrator.thread_pool().scope(|s| {
             let mut handles = vec![];
 
             while runner.do_spawn_new(num_spawned, shared_state, &iter) {

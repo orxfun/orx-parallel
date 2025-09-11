@@ -1,6 +1,6 @@
 use super::par_handle::ParHandle;
 
-pub trait ParScope<'env, 'scope>
+pub trait ParScope<'scope, 'env>
 where
     'env: 'scope,
 {

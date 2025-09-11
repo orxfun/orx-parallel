@@ -1,15 +1,11 @@
-use super::par_scope::ParScope;
-use crate::{ParallelRunner, Params, runner::ComputationKind};
+use crate::{ParallelRunner, Params, orch::thread_pool::ParThreadPool, runner::ComputationKind};
 
 pub trait Orchestrator {
     type Runner: ParallelRunner;
 
-    type Scope<'env, 'scope>: ParScope<'env, 'scope>
-    where
-        'env: 'scope;
+    type ThreadPool: ParThreadPool;
 
     fn new_runner(
-        &self,
         kind: ComputationKind,
         params: Params,
         initial_input_len: Option<usize>,
@@ -17,7 +13,5 @@ pub trait Orchestrator {
         <Self::Runner as ParallelRunner>::new(kind, params, initial_input_len)
     }
 
-    fn scope<'env, F, T>(f: F) -> T
-    where
-        F: for<'scope> FnOnce(&'scope Self::Scope<'env, 'scope>) -> T;
+    fn thread_pool(&self) -> &Self::ThreadPool;
 }

@@ -1,7 +1,7 @@
 use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
-use crate::orch::{Orchestrator, ParHandle, ParScope};
+use crate::orch::{Orchestrator, ParHandle, ParScope, ParThreadPool};
 use crate::runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_bag::ConcurrentBag;
@@ -29,7 +29,7 @@ where
 
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let mut bag: ConcurrentBag<O, P> = pinned_vec.into();
     match iter.try_get_len() {
@@ -43,7 +43,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    C::scope(|s| {
+    orchestrator.thread_pool().scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
@@ -81,7 +81,7 @@ where
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
 
-    let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();
     match iter.try_get_len() {
@@ -95,7 +95,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result: ThreadCollectArbitrary<Vo::Fallibility> = C::scope(|s| {
+    let result: ThreadCollectArbitrary<Vo::Fallibility> = orchestrator.thread_pool().scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
