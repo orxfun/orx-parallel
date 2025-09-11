@@ -28,7 +28,7 @@ where
         O: Send,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.m_collect_into::<R, _, _>(m))
+        FixedVec::from(vec.m_collect_into(m))
     }
 
     fn x_collect_into<R, I, Vo, X1>(self, x: ParXap<I, Vo, X1, R>) -> Self
@@ -39,7 +39,7 @@ where
         X1: Fn(I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.x_collect_into::<R, _, _, _>(x))
+        FixedVec::from(vec.x_collect_into(x))
     }
 
     fn x_try_collect_into<R, I, Vo, M1>(
@@ -54,8 +54,7 @@ where
         Self: Sized,
     {
         let vec = Vec::from(self);
-        let result = vec.x_try_collect_into(x);
-        result.map(FixedVec::from)
+        vec.x_try_collect_into(x).map(FixedVec::from)
     }
 
     // test

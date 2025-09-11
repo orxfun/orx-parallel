@@ -52,7 +52,7 @@ where
         X1: Fn(I::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-        let split_vec = split_vec.x_collect_into::<R, _, _, _>(x);
+        let split_vec = split_vec.x_collect_into(x);
         extend_vec_from_split(self, split_vec)
     }
 
