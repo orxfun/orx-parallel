@@ -43,11 +43,6 @@ where
     pub(crate) fn destruct(self) -> (R, Params, I) {
         (self.orchestrator, self.params, self.iter)
     }
-
-    fn into_map(self) -> ParMap<I, I::Item, impl Fn(I::Item) -> I::Item, R> {
-        let (orchestrator, params, iter) = self.destruct();
-        ParMap::new(orchestrator, params, iter, map_self)
-    }
 }
 
 unsafe impl<I, R> Send for Par<I, R>

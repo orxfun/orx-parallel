@@ -43,51 +43,6 @@ where
     pub(crate) fn destruct(self) -> (R, Params, I, M1) {
         (self.orchestrator, self.params, self.iter, self.map1)
     }
-
-    pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, P)
-    where
-        P: IntoConcurrentPinnedVec<O>,
-        O: Send,
-    {
-        match (self.params.is_sequential(), self.params.iteration_order) {
-            (true, _) => (0, self.seq_collect_into(pinned_vec)),
-            #[cfg(test)]
-            (false, IterationOrder::Arbitrary) => {
-                let (orchestrator, params, iter, m1) = self.destruct();
-                parallel_runner_compute::collect_arbitrary::m(
-                    orchestrator,
-                    params,
-                    iter,
-                    m1,
-                    pinned_vec,
-                )
-            }
-            (false, _) => {
-                let (orchestrator, params, iter, m1) = self.destruct();
-                parallel_runner_compute::collect_ordered::m(
-                    orchestrator,
-                    params,
-                    iter,
-                    m1,
-                    pinned_vec,
-                )
-            }
-        }
-    }
-
-    fn seq_collect_into<P>(self, mut pinned_vec: P) -> P
-    where
-        P: IntoConcurrentPinnedVec<O>,
-    {
-        let (_, _, iter, map1) = self.destruct();
-
-        let iter = iter.into_seq_iter();
-        for i in iter {
-            pinned_vec.push(map1(i));
-        }
-
-        pinned_vec
-    }
 }
 
 unsafe impl<I, O, M1, R> Send for ParMap<I, O, M1, R>

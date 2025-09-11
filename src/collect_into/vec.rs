@@ -1,11 +1,10 @@
 use super::par_collect_into::ParCollectIntoCore;
+use crate::Params;
 use crate::collect_into::utils::extend_vec_from_split;
 use crate::computational_variants::computations::map_collect_into;
-use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
-use crate::{ParIter, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
