@@ -21,7 +21,11 @@ where
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     {
-        split_vec_reserve(&mut self, m.par_len());
+        split_vec_reserve(
+            &mut self,
+            m.params().is_sequential(),
+            m.iter().try_get_len(),
+        );
         let (_num_spawned, pinned_vec) = m.collect_into::<R, _>(self);
         pinned_vec
     }
@@ -34,7 +38,11 @@ where
         Vo: Values<Item = O, Fallibility = Infallible>,
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     {
-        split_vec_reserve(&mut self, x.par_len());
+        split_vec_reserve(
+            &mut self,
+            x.params().is_sequential(),
+            x.iter().try_get_len(),
+        );
         let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
         pinned_vec
     }

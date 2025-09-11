@@ -20,8 +20,14 @@ where
 
 pub fn split_vec_reserve<T, G: GrowthWithConstantTimeAccess>(
     split_vec: &mut SplitVec<T, G>,
-    len_to_extend: Option<usize>,
+    is_sequential: bool,
+    iter_len: Option<usize>,
 ) {
+    let len_to_extend = match (is_sequential, iter_len) {
+        (true, _) => None, // not required to concurrent reserve when seq
+        (false, x) => x,
+    };
+
     match len_to_extend {
         None => {
             let capacity_bound = split_vec.capacity_bound();

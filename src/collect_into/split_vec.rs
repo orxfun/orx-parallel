@@ -1,11 +1,11 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::Params;
 use crate::collect_into::utils::split_vec_reserve;
 use crate::computational_variants::fallible_result::computations::try_collect_into;
 use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
+use crate::{ParIter, Params};
 use orx_concurrent_iter::ConcurrentIter;
 #[cfg(test)]
 use orx_pinned_vec::PinnedVec;
@@ -21,7 +21,7 @@ where
 
     fn empty(iter_len: Option<usize>) -> Self {
         let mut vec = Self::pseudo_default();
-        split_vec_reserve(&mut vec, iter_len);
+        split_vec_reserve(&mut vec, false, iter_len);
         vec
     }
 
@@ -32,7 +32,11 @@ where
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
     {
-        split_vec_reserve(&mut self, m.par_len());
+        split_vec_reserve(
+            &mut self,
+            m.params().is_sequential(),
+            m.con_iter().try_get_len(),
+        );
         let (_, pinned_vec) = m.par_collect_into(self);
         pinned_vec
     }
@@ -44,7 +48,11 @@ where
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(I::Item) -> Vo + Sync,
     {
-        split_vec_reserve(&mut self, x.par_len());
+        split_vec_reserve(
+            &mut self,
+            x.params().is_sequential(),
+            x.con_iter().try_get_len(),
+        );
         let (_num_spawned, pinned_vec) = x.par_collect_into(self);
         pinned_vec
     }
@@ -63,12 +71,7 @@ where
         Vo: Values<Item = O>,
         Self: Sized,
     {
-        let par_len = match (params.is_sequential(), iter.try_get_len()) {
-            (true, _) => None, // not required to concurrent reserve when seq
-            (false, x) => x,
-        };
-
-        split_vec_reserve(&mut self, par_len);
+        split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
         let (_num_spawned, result) = try_collect_into(orchestrator, params, iter, xap1, self);
         result
     }

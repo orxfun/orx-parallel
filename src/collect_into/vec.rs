@@ -1,10 +1,10 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::Params;
 use crate::collect_into::utils::extend_vec_from_split;
 use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
+use crate::{ParIter, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
@@ -29,7 +29,7 @@ where
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
     {
-        match m.par_len() {
+        match m.con_iter().try_get_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
                 let split_vec = split_vec.m_collect_into(m);

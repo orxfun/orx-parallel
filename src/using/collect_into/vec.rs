@@ -20,7 +20,7 @@ where
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     {
-        match m.par_len() {
+        match m.iter().try_get_len() {
             None => {
                 let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
                 let split_vec = split_vec.u_m_collect_into::<R, _, _, _>(m);

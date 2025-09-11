@@ -50,13 +50,6 @@ where
         (self.orchestrator, self.params, self.iter, self.xap1)
     }
 
-    pub(crate) fn par_len(&self) -> Option<usize> {
-        match (self.params.is_sequential(), self.iter.try_get_len()) {
-            (true, _) => None, // not required to concurrent reserve when seq
-            (false, x) => x,
-        }
-    }
-
     pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, P)
     where
         P: IntoConcurrentPinnedVec<Vo::Item>,
