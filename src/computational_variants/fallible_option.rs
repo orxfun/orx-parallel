@@ -5,6 +5,8 @@ use crate::{
 };
 use std::marker::PhantomData;
 
+/// A parallel iterator for which the computation either completely succeeds,
+/// or fails and **early exits** with None.
 pub struct ParOption<F, T, R = DefaultOrchestrator>
 where
     R: Orchestrator,

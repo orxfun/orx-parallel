@@ -8,6 +8,8 @@ use crate::{IterationOrder, ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
+/// A parallel iterator for which the computation either completely succeeds,
+/// or fails and **early exits** with an error.
 pub struct ParXapResult<I, T, E, Vo, X1, R = DefaultOrchestrator>
 where
     R: Orchestrator,

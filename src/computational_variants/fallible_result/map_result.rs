@@ -6,6 +6,8 @@ use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
 
+/// A parallel iterator for which the computation either completely succeeds,
+/// or fails and **early exits** with an error.
 pub struct ParMapResult<I, T, E, O, M1, R = DefaultOrchestrator>
 where
     R: Orchestrator,

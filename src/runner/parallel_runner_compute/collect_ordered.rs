@@ -1,8 +1,6 @@
 use crate::computational_variants::{ParMap, ParXap};
-use crate::generic_values::runner_results::{
-    Fallibility, Infallible, ParallelCollect, ThreadCollect,
-};
-use crate::generic_values::{TransformableValues, Values};
+use crate::generic_values::Values;
+use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
 use crate::orch::Orchestrator;
 use crate::runner::parallel_runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};

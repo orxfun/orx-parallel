@@ -1,8 +1,7 @@
 use crate::ParallelRunner;
 use crate::computational_variants::{ParMap, ParXap};
-use crate::generic_values::TransformableValues;
 use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, Infallible, NextSuccess, NextWithIdx};
+use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
 use crate::orch::Orchestrator;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_iter::ConcurrentIter;
