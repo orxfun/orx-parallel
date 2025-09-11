@@ -1,4 +1,4 @@
-use crate::computational_variants::{ParMap, ParXap};
+use crate::computational_variants::ParMap;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::parallel_runner_compute;
@@ -100,8 +100,7 @@ where
     {
         let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = ParXap::new(orchestrator, params, iter, x1);
-        parallel_runner_compute::reduce::x(x, reduce).1
+        parallel_runner_compute::reduce::x(orchestrator, params, iter, x1, reduce).1
     }
 
     // early exit
@@ -113,14 +112,14 @@ where
     {
         let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = ParXap::new(orchestrator, params, iter, x1);
         match params.iteration_order {
             IterationOrder::Ordered => {
-                let (_, result) = parallel_runner_compute::next::x(x);
+                let (_, result) = parallel_runner_compute::next::x(orchestrator, params, iter, x1);
                 result.map(|x| x.map(|y| y.1))
             }
             IterationOrder::Arbitrary => {
-                let (_, result) = parallel_runner_compute::next_any::x(x);
+                let (_, result) =
+                    parallel_runner_compute::next_any::x(orchestrator, params, iter, x1);
                 result
             }
         }

@@ -194,15 +194,21 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        parallel_runner_compute::reduce::m(self.into_map(), reduce).1
+        let (orchestrator, params, iter) = self.destruct();
+        parallel_runner_compute::reduce::m(orchestrator, params, iter, map_self, reduce).1
     }
 
     // early exit
 
     fn first(self) -> Option<Self::Item> {
-        match self.params().iteration_order {
-            IterationOrder::Ordered => parallel_runner_compute::next::m(self.into_map()).1,
-            IterationOrder::Arbitrary => parallel_runner_compute::next_any::m(self.into_map()).1,
+        let (orchestrator, params, iter) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => {
+                parallel_runner_compute::next::m(orchestrator, params, iter, map_self).1
+            }
+            IterationOrder::Arbitrary => {
+                parallel_runner_compute::next_any::m(orchestrator, params, iter, map_self).1
+            }
         }
     }
 }

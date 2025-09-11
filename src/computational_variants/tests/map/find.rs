@@ -1,6 +1,5 @@
 use crate::{
-    Params, computational_variants::ParMap, computations::map_self, orch::DefaultOrchestrator,
-    runner::parallel_runner_compute,
+    Params, computations::map_self, orch::DefaultOrchestrator, runner::parallel_runner_compute,
 };
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
@@ -22,9 +21,9 @@ fn m_find(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let m = ParMap::new(DefaultOrchestrator::default(), params, iter, map_self);
 
-    let output = parallel_runner_compute::next::m(m).1;
+    let output =
+        parallel_runner_compute::next::m(DefaultOrchestrator::default(), params, iter, map_self).1;
     assert_eq!(expected, output);
 }
 
@@ -41,8 +40,8 @@ fn m_map_find(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let m = ParMap::new(DefaultOrchestrator::default(), params, iter, map);
-    let output = parallel_runner_compute::next::m(m).1;
+    let output =
+        parallel_runner_compute::next::m(DefaultOrchestrator::default(), params, iter, map).1;
 
     assert_eq!(expected, output);
 }

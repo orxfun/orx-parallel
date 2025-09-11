@@ -287,7 +287,9 @@ where
         Self::Item: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        let (_, Ok(acc)) = parallel_runner_compute::reduce::x(self, reduce);
+        let (orchestrator, params, iter, x1) = self.destruct();
+        let (_, Ok(acc)) =
+            parallel_runner_compute::reduce::x(orchestrator, params, iter, x1, reduce);
         acc
     }
 
@@ -297,13 +299,16 @@ where
     where
         Self::Item: Send,
     {
-        match self.params.iteration_order {
+        let (orchestrator, params, iter, x1) = self.destruct();
+        match params.iteration_order {
             IterationOrder::Ordered => {
-                let (_num_threads, Ok(result)) = parallel_runner_compute::next::x(self);
+                let (_num_threads, Ok(result)) =
+                    parallel_runner_compute::next::x(orchestrator, params, iter, x1);
                 result.map(|x| x.1)
             }
             IterationOrder::Arbitrary => {
-                let (_num_threads, Ok(result)) = parallel_runner_compute::next_any::x(self);
+                let (_num_threads, Ok(result)) =
+                    parallel_runner_compute::next_any::x(orchestrator, params, iter, x1);
                 result
             }
         }

@@ -1,19 +1,17 @@
-use crate::ParallelRunner;
-use crate::computational_variants::{ParMap, ParXap};
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
 use crate::orch::Orchestrator;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
+use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub fn m<C, I, O, M1>(m: ParMap<I, O, M1, C>) -> (usize, Option<O>)
+pub fn m<C, I, O, M1>(orchestrator: C, params: Params, iter: I, map1: M1) -> (usize, Option<O>)
 where
     C: Orchestrator,
     I: ConcurrentIter,
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
-    let (orchestrator, params, iter, map1) = m.destruct();
     let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
@@ -54,7 +52,12 @@ type ResultNext<Vo> = Result<
     <<Vo as Values>::Fallibility as Fallibility>::Error,
 >;
 
-pub fn x<C, I, Vo, X1>(x: ParXap<I, Vo, X1, C>) -> (usize, ResultNext<Vo>)
+pub fn x<C, I, Vo, X1>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    xap1: X1,
+) -> (usize, ResultNext<Vo>)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -62,7 +65,6 @@ where
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
 {
-    let (orchestrator, params, iter, xap1) = x.destruct();
     let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();
