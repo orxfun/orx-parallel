@@ -1,6 +1,6 @@
+use crate::Params;
 #[cfg(test)]
 use crate::computational_variants::ParMap;
-use crate::computational_variants::ParXap;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
@@ -59,8 +59,11 @@ where
 
 // x
 
-pub fn x<C, I, Vo, M1, P>(
-    x: ParXap<I, Vo, M1, C>,
+pub fn x<C, I, Vo, X1, P>(
+    orchestrator: C,
+    params: Params,
+    iter: I,
+    xap1: X1,
     pinned_vec: P,
 ) -> (usize, ParallelCollectArbitrary<Vo, P>)
 where
@@ -68,13 +71,12 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
 
-    let (orchestrator, params, iter, xap1) = x.destruct();
     let runner = orchestrator.new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let mut bag: ConcurrentBag<Vo::Item, P> = pinned_vec.into();

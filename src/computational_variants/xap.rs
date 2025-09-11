@@ -59,8 +59,14 @@ where
         match (self.params.is_sequential(), self.params.iteration_order) {
             (true, _) => (0, self.seq_collect_into(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
-                let (num_threads, result) =
-                    parallel_runner_compute::collect_arbitrary::x(self, pinned_vec);
+                let (orchestrator, params, iter, x1) = self.destruct();
+                let (num_threads, result) = parallel_runner_compute::collect_arbitrary::x(
+                    orchestrator,
+                    params,
+                    iter,
+                    x1,
+                    pinned_vec,
+                );
                 let pinned_vec = match result {
                     ParallelCollectArbitrary::AllCollected { pinned_vec } => pinned_vec,
                     ParallelCollectArbitrary::StoppedByWhileCondition { pinned_vec } => pinned_vec,

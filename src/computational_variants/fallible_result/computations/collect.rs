@@ -25,8 +25,7 @@ where
     match (params.is_sequential(), params.iteration_order) {
         (true, _) => (0, try_sequential(iter, xap1, pinned_vec)),
         (false, IterationOrder::Arbitrary) => {
-            let xap = ParXap::new(orchestrator, params, iter, xap1);
-            let (nt, result) = collect_arbitrary::x(xap, pinned_vec);
+            let (nt, result) = collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);
             (nt, result.into_result())
         }
         (false, IterationOrder::Ordered) => {
