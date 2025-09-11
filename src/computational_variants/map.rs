@@ -4,13 +4,12 @@ use crate::computational_variants::fallible_result::ParMapResult;
 use crate::generic_values::{Vector, WhilstAtom};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
-use crate::runner::parallel_runner_compute;
+use crate::runner::parallel_runner_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     using::{UsingClone, UsingFun, computational_variants::UParMap},
 };
 use orx_concurrent_iter::ConcurrentIter;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 /// A parallel iterator that maps inputs.
 pub struct ParMap<I, O, M1, R = DefaultOrchestrator>
@@ -205,7 +204,7 @@ where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (orchestrator, params, iter, m1) = self.destruct();
-        parallel_runner_compute::reduce::m(orchestrator, params, iter, m1, reduce).1
+        prc::reduce::m(orchestrator, params, iter, m1, reduce).1
     }
 
     // early exit
@@ -216,12 +215,8 @@ where
     {
         let (orchestrator, params, iter, m1) = self.destruct();
         match params.iteration_order {
-            IterationOrder::Ordered => {
-                parallel_runner_compute::next::m(orchestrator, params, iter, m1).1
-            }
-            IterationOrder::Arbitrary => {
-                parallel_runner_compute::next_any::m(orchestrator, params, iter, m1).1
-            }
+            IterationOrder::Ordered => prc::next::m(orchestrator, params, iter, m1).1,
+            IterationOrder::Arbitrary => prc::next_any::m(orchestrator, params, iter, m1).1,
         }
     }
 }

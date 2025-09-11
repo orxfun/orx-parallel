@@ -1,7 +1,7 @@
 use crate::computational_variants::ParMap;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
-use crate::runner::parallel_runner_compute;
+use crate::runner::parallel_runner_compute as prc;
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use std::marker::PhantomData;
@@ -100,7 +100,7 @@ where
     {
         let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        parallel_runner_compute::reduce::x(orchestrator, params, iter, x1, reduce).1
+        prc::reduce::x(orchestrator, params, iter, x1, reduce).1
     }
 
     // early exit
@@ -114,12 +114,11 @@ where
         let x1 = |i: I::Item| m1(i).into_result();
         match params.iteration_order {
             IterationOrder::Ordered => {
-                let (_, result) = parallel_runner_compute::next::x(orchestrator, params, iter, x1);
+                let (_, result) = prc::next::x(orchestrator, params, iter, x1);
                 result.map(|x| x.map(|y| y.1))
             }
             IterationOrder::Arbitrary => {
-                let (_, result) =
-                    parallel_runner_compute::next_any::x(orchestrator, params, iter, x1);
+                let (_, result) = prc::next_any::x(orchestrator, params, iter, x1);
                 result
             }
         }

@@ -4,7 +4,7 @@ use crate::generic_values::runner_results::Infallible;
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
-use crate::runner::parallel_runner_compute;
+use crate::runner::parallel_runner_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     using::{UsingClone, UsingFun, computational_variants::UParXap},
@@ -224,8 +224,7 @@ where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (orchestrator, params, iter, x1) = self.destruct();
-        let (_, Ok(acc)) =
-            parallel_runner_compute::reduce::x(orchestrator, params, iter, x1, reduce);
+        let (_, Ok(acc)) = prc::reduce::x(orchestrator, params, iter, x1, reduce);
         acc
     }
 
@@ -238,13 +237,11 @@ where
         let (orchestrator, params, iter, x1) = self.destruct();
         match params.iteration_order {
             IterationOrder::Ordered => {
-                let (_num_threads, Ok(result)) =
-                    parallel_runner_compute::next::x(orchestrator, params, iter, x1);
+                let (_num_threads, Ok(result)) = prc::next::x(orchestrator, params, iter, x1);
                 result.map(|x| x.1)
             }
             IterationOrder::Arbitrary => {
-                let (_num_threads, Ok(result)) =
-                    parallel_runner_compute::next_any::x(orchestrator, params, iter, x1);
+                let (_num_threads, Ok(result)) = prc::next_any::x(orchestrator, params, iter, x1);
                 result
             }
         }

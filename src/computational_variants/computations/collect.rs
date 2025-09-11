@@ -3,7 +3,7 @@ use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
 use crate::orch::Orchestrator;
-use crate::runner::parallel_runner_compute;
+use crate::runner::parallel_runner_compute as prc;
 use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -25,20 +25,10 @@ where
     match (params.is_sequential(), params.iteration_order) {
         (true, _) => (0, map_collect_into_seq(iter, map1, pinned_vec)),
         #[cfg(test)]
-        (false, IterationOrder::Arbitrary) => parallel_runner_compute::collect_arbitrary::m(
-            orchestrator,
-            params,
-            iter,
-            map1,
-            pinned_vec,
-        ),
-        (false, _) => parallel_runner_compute::collect_ordered::m(
-            orchestrator,
-            params,
-            iter,
-            map1,
-            pinned_vec,
-        ),
+        (false, IterationOrder::Arbitrary) => {
+            prc::collect_arbitrary::m(orchestrator, params, iter, map1, pinned_vec)
+        }
+        (false, _) => prc::collect_ordered::m(orchestrator, params, iter, map1, pinned_vec),
     }
 }
 
@@ -74,13 +64,8 @@ where
     match (params.is_sequential(), params.iteration_order) {
         (true, _) => (0, xap_collect_into_seq(iter, xap1, pinned_vec)),
         (false, IterationOrder::Arbitrary) => {
-            let (num_threads, result) = parallel_runner_compute::collect_arbitrary::x(
-                orchestrator,
-                params,
-                iter,
-                xap1,
-                pinned_vec,
-            );
+            let (num_threads, result) =
+                prc::collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);
             let pinned_vec = match result {
                 ParallelCollectArbitrary::AllCollected { pinned_vec } => pinned_vec,
                 ParallelCollectArbitrary::StoppedByWhileCondition { pinned_vec } => pinned_vec,
@@ -88,13 +73,8 @@ where
             (num_threads, pinned_vec)
         }
         (false, IterationOrder::Ordered) => {
-            let (num_threads, result) = parallel_runner_compute::collect_ordered::x(
-                orchestrator,
-                params,
-                iter,
-                xap1,
-                pinned_vec,
-            );
+            let (num_threads, result) =
+                prc::collect_ordered::x(orchestrator, params, iter, xap1, pinned_vec);
             let pinned_vec = match result {
                 ParallelCollect::AllCollected { pinned_vec } => pinned_vec,
                 ParallelCollect::StoppedByWhileCondition {
@@ -145,23 +125,13 @@ where
     match (params.is_sequential(), params.iteration_order) {
         (true, _) => (0, xap_try_collect_into_seq(iter, xap1, pinned_vec)),
         (false, IterationOrder::Arbitrary) => {
-            let (nt, result) = parallel_runner_compute::collect_arbitrary::x(
-                orchestrator,
-                params,
-                iter,
-                xap1,
-                pinned_vec,
-            );
+            let (nt, result) =
+                prc::collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);
             (nt, result.into_result())
         }
         (false, IterationOrder::Ordered) => {
-            let (nt, result) = parallel_runner_compute::collect_ordered::x(
-                orchestrator,
-                params,
-                iter,
-                xap1,
-                pinned_vec,
-            );
+            let (nt, result) =
+                prc::collect_ordered::x(orchestrator, params, iter, xap1, pinned_vec);
             (nt, result.into_result())
         }
     }

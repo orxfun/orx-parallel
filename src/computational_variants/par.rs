@@ -3,7 +3,7 @@ use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
-use crate::runner::parallel_runner_compute;
+use crate::runner::parallel_runner_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::map_self,
@@ -191,7 +191,7 @@ where
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (orchestrator, params, iter) = self.destruct();
-        parallel_runner_compute::reduce::m(orchestrator, params, iter, map_self, reduce).1
+        prc::reduce::m(orchestrator, params, iter, map_self, reduce).1
     }
 
     // early exit
@@ -199,12 +199,8 @@ where
     fn first(self) -> Option<Self::Item> {
         let (orchestrator, params, iter) = self.destruct();
         match params.iteration_order {
-            IterationOrder::Ordered => {
-                parallel_runner_compute::next::m(orchestrator, params, iter, map_self).1
-            }
-            IterationOrder::Arbitrary => {
-                parallel_runner_compute::next_any::m(orchestrator, params, iter, map_self).1
-            }
+            IterationOrder::Ordered => prc::next::m(orchestrator, params, iter, map_self).1,
+            IterationOrder::Arbitrary => prc::next_any::m(orchestrator, params, iter, map_self).1,
         }
     }
 }
