@@ -1,5 +1,5 @@
 use crate::computational_variants::ParXap;
-use crate::computations::X;
+use crate::computational_variants::fallible_result::computations::{ParResultCollectInto, X};
 use crate::generic_values::runner_results::{Fallibility, Fallible, Infallible, Stop};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
@@ -45,64 +45,6 @@ where
 
     fn destruct(self) -> (R, Params, I, X1) {
         (self.orchestrator, self.params, self.iter, self.xap1)
-    }
-
-    pub(crate) fn par_len(&self) -> Option<usize> {
-        match (self.params.is_sequential(), self.iter.try_get_len()) {
-            (true, _) => None, // not required to concurrent reserve when seq
-            (false, x) => x,
-        }
-    }
-
-    pub(crate) fn par_collect_into<P>(self, pinned_vec: P) -> (usize, Result<P, E>)
-    where
-        P: IntoConcurrentPinnedVec<T>,
-        Vo::Item: Send,
-        E: Send,
-        T: Send,
-    {
-        match (self.params.is_sequential(), self.params.iteration_order) {
-            (true, _) => (0, self.seq_try_collect_into(pinned_vec)),
-
-            (false, IterationOrder::Arbitrary) => {
-                let (orchestrator, params, iter, x1) = self.destruct();
-                let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-                let x = ParXap::new(orchestrator, params, iter, x1);
-                let (nt, result) = parallel_runner_compute::collect_arbitrary::x(x, pinned_vec);
-                (nt, result.into_result())
-            }
-
-            (false, IterationOrder::Ordered) => {
-                let (orchestrator, params, iter, x1) = self.destruct();
-                let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-                let x = ParXap::new(orchestrator, params, iter, x1);
-                let (nt, result) = parallel_runner_compute::collect_ordered::x(x, pinned_vec);
-                (nt, result.into_result())
-            }
-        }
-    }
-
-    fn seq_try_collect_into<P>(self, mut pinned_vec: P) -> Result<P, E>
-    where
-        P: IntoConcurrentPinnedVec<T>,
-        E: Send,
-    {
-        let (_, _, iter, x1) = self.destruct();
-        let iter = iter.into_seq_iter();
-        let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-
-        for i in iter {
-            let vt = x1(i);
-            let done = vt.push_to_pinned_vec(&mut pinned_vec);
-            if let Some(stop) = Fallible::<E>::sequential_push_to_stop(done) {
-                match stop {
-                    Stop::DueToWhile => return Ok(pinned_vec),
-                    Stop::DueToError { error } => return Err(error),
-                }
-            }
-        }
-
-        Ok(pinned_vec)
     }
 }
 
@@ -156,8 +98,8 @@ where
     {
         let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-        let x = X::new(params, iter, x1);
-        output.x_try_collect_into::<R::Runner, _, _, _>(x)
+        let x = X::new(orchestrator, params, iter, x1);
+        output.x_try_collect_into(x)
     }
 
     // reduce

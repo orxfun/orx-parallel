@@ -1,7 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::computational_variants::fallible_result::ParXapResult;
+use crate::computational_variants::fallible_result::computations::{ParResultCollectInto, X};
 use crate::computational_variants::{ParMap, ParXap};
-use crate::computations::X;
 use crate::generic_values::runner_results::{Fallibility, Fallible, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
@@ -47,37 +47,56 @@ where
 
     fn x_try_collect_into<R, I, Vo, M1>(
         self,
-        x: X<I, Vo, M1>,
+        x: X<R, I, Vo, M1>,
     ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
-        R: ParallelRunner,
+        R: Orchestrator,
         I: ConcurrentIter,
         Vo: Values<Item = O>,
         M1: Fn(I::Item) -> Vo + Sync,
         Self: Sized,
     {
         let vec = Vec::from(self);
-        let result = vec.x_try_collect_into::<R, _, _, _>(x);
+        let result = vec.x_try_collect_into(x);
         result.map(FixedVec::from)
     }
 
-    fn x_try_collect_into_2<I, E, Vo, X1, R>(
+    fn x_try_collect_into_3<I, E, Vo, X1, R>(
         self,
-        x: ParXapResult<I, O, E, Vo, X1, R>,
-    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+        c: ParResultCollectInto<R, I, O, E, Vo, X1>,
+    ) -> Result<Self, E>
     where
         R: Orchestrator,
         I: ConcurrentIter,
-        Vo: TransformableValues<Fallibility = Fallible<E>>,
+        Vo: TransformableValues,
+        Vo::Item: IntoResult<O, E>,
         X1: Fn(I::Item) -> Vo + Sync,
-        Vo::Item: IntoResult<O, E> + Send,
+        O: Send,
         E: Send,
         Self: Sized,
     {
         let vec = Vec::from(self);
-        let result = vec.x_try_collect_into_2(x);
+        let result = vec.x_try_collect_into_3(c);
         result.map(FixedVec::from)
     }
+
+    // fn x_try_collect_into_2<I, E, Vo, X1, R>(
+    //     self,
+    //     x: ParXapResult<I, O, E, Vo, X1, R>,
+    // ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
+    // where
+    //     R: Orchestrator,
+    //     I: ConcurrentIter,
+    //     Vo: TransformableValues<Fallibility = Fallible<E>>,
+    //     X1: Fn(I::Item) -> Vo + Sync,
+    //     Vo::Item: IntoResult<O, E> + Send,
+    //     E: Send,
+    //     Self: Sized,
+    // {
+    //     let vec = Vec::from(self);
+    //     let result = vec.x_try_collect_into_2(x);
+    //     result.map(FixedVec::from)
+    // }
 
     // test
 

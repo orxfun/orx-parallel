@@ -1,5 +1,5 @@
 use crate::computational_variants::ParMap;
-use crate::computations::X;
+use crate::computational_variants::fallible_result::computations::X;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::{IterationOrder, ParCollectInto, ParIter};
@@ -85,8 +85,8 @@ where
     {
         let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = X::new(params, iter, x1);
-        output.x_try_collect_into::<R::Runner, _, _, _>(x)
+        let x = X::new(orchestrator, params, iter, x1);
+        output.x_try_collect_into(x)
     }
 
     // reduce
@@ -99,8 +99,8 @@ where
     {
         let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = X::new(params, iter, x1);
-        x.try_reduce::<R::Runner, _>(reduce).1
+        let x = X::new(orchestrator, params, iter, x1);
+        x.try_reduce(reduce).1
     }
 
     // early exit
@@ -112,10 +112,10 @@ where
     {
         let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = X::new(params, iter, x1);
+        let x = X::new(orchestrator, params, iter, x1);
         match params.iteration_order {
-            IterationOrder::Ordered => x.try_next::<R::Runner>().1,
-            IterationOrder::Arbitrary => x.try_next_any::<R::Runner>().1,
+            IterationOrder::Ordered => x.try_next().1,
+            IterationOrder::Arbitrary => x.try_next_any().1,
         }
     }
 }
