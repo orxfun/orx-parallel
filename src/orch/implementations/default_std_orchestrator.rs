@@ -1,15 +1,15 @@
 use crate::{
     DefaultRunner,
-    orch::{Orchestrator, thread_pool::implementations::StdDefaultThreadPool},
+    orch::{Orchestrator, thread_pool::implementations::StdOsThreadPool},
 };
 
 #[derive(Default)]
-pub struct DefaultStdOrchestrator(StdDefaultThreadPool);
+pub struct DefaultStdOrchestrator(StdOsThreadPool);
 
 impl Orchestrator for DefaultStdOrchestrator {
     type Runner = DefaultRunner;
 
-    type ThreadPool = StdDefaultThreadPool;
+    type ThreadPool = StdOsThreadPool;
 
     fn thread_pool(&self) -> &Self::ThreadPool {
         &self.0
