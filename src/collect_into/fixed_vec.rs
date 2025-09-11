@@ -1,12 +1,9 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computational_variants::fallible_result::ParXapResult;
-use crate::computational_variants::fallible_result::computations::{ParResultCollectInto, X};
+use crate::computational_variants::fallible_result::computations::X;
 use crate::computational_variants::{ParMap, ParXap};
-use crate::generic_values::runner_results::{Fallibility, Fallible, Infallible};
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
-use crate::par_iter_result::IntoResult;
-use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 #[cfg(test)]
@@ -60,43 +57,6 @@ where
         let result = vec.x_try_collect_into(x);
         result.map(FixedVec::from)
     }
-
-    fn x_try_collect_into_3<I, E, Vo, X1, R>(
-        self,
-        c: ParResultCollectInto<R, I, O, E, Vo, X1>,
-    ) -> Result<Self, E>
-    where
-        R: Orchestrator,
-        I: ConcurrentIter,
-        Vo: TransformableValues,
-        Vo::Item: IntoResult<O, E>,
-        X1: Fn(I::Item) -> Vo + Sync,
-        O: Send,
-        E: Send,
-        Self: Sized,
-    {
-        let vec = Vec::from(self);
-        let result = vec.x_try_collect_into_3(c);
-        result.map(FixedVec::from)
-    }
-
-    // fn x_try_collect_into_2<I, E, Vo, X1, R>(
-    //     self,
-    //     x: ParXapResult<I, O, E, Vo, X1, R>,
-    // ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
-    // where
-    //     R: Orchestrator,
-    //     I: ConcurrentIter,
-    //     Vo: TransformableValues<Fallibility = Fallible<E>>,
-    //     X1: Fn(I::Item) -> Vo + Sync,
-    //     Vo::Item: IntoResult<O, E> + Send,
-    //     E: Send,
-    //     Self: Sized,
-    // {
-    //     let vec = Vec::from(self);
-    //     let result = vec.x_try_collect_into_2(x);
-    //     result.map(FixedVec::from)
-    // }
 
     // test
 

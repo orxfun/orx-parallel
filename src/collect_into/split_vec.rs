@@ -1,12 +1,10 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computational_variants::fallible_result::ParXapResult;
-use crate::computational_variants::fallible_result::computations::{ParResultCollectInto, X};
+use crate::collect_into::utils::split_vec_reserve;
+use crate::computational_variants::fallible_result::computations::X;
 use crate::computational_variants::{ParMap, ParXap};
-use crate::generic_values::runner_results::{Fallibility, Fallible, Infallible};
+use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
-use crate::par_iter_result::IntoResult;
-use crate::{collect_into::utils::split_vec_reserve, runner::ParallelRunner};
 use orx_concurrent_iter::ConcurrentIter;
 #[cfg(test)]
 use orx_pinned_vec::PinnedVec;
@@ -65,42 +63,6 @@ where
         let (_num_spawned, result) = x.try_collect_into(self);
         result
     }
-
-    fn x_try_collect_into_3<I, E, Vo, X1, R>(
-        mut self,
-        c: ParResultCollectInto<R, I, O, E, Vo, X1>,
-    ) -> Result<Self, E>
-    where
-        R: Orchestrator,
-        I: ConcurrentIter,
-        Vo: TransformableValues,
-        Vo::Item: IntoResult<O, E>,
-        X1: Fn(I::Item) -> Vo + Sync,
-        O: Send,
-        E: Send,
-        Self: Sized,
-    {
-        split_vec_reserve(&mut self, c.par_len());
-        let (_num_spawned, result) = c.par_collect_into(self);
-        result
-    }
-
-    // fn x_try_collect_into_2<I, E, Vo, X1, R>(
-    //     mut self,
-    //     x: ParXapResult<I, O, E, Vo, X1, R>,
-    // ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
-    // where
-    //     R: Orchestrator,
-    //     I: ConcurrentIter,
-    //     Vo: TransformableValues<Fallibility = Fallible<E>>,
-    //     X1: Fn(I::Item) -> Vo + Sync,
-    //     Vo::Item: IntoResult<O, E> + Send,
-    //     E: Send,
-    // {
-    //     split_vec_reserve(&mut self, x.par_len());
-    //     let (_num_spawned, result) = x.par_collect_into(self);
-    //     result
-    // }
 
     // test
 

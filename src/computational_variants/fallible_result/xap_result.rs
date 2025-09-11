@@ -1,13 +1,12 @@
 use crate::computational_variants::ParXap;
-use crate::computational_variants::fallible_result::computations::{ParResultCollectInto, X};
-use crate::generic_values::runner_results::{Fallibility, Fallible, Infallible, Stop};
-use crate::generic_values::{TransformableValues, Values};
+use crate::computational_variants::fallible_result::computations::X;
+use crate::generic_values::TransformableValues;
+use crate::generic_values::runner_results::Infallible;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::parallel_runner_compute;
-use crate::{IterationOrder, ParCollectInto, ParIter, Params};
+use crate::{IterationOrder, ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_fixed_vec::IntoConcurrentPinnedVec;
 use std::marker::PhantomData;
 
 pub struct ParXapResult<I, T, E, Vo, X1, R = DefaultOrchestrator>
