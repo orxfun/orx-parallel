@@ -18,15 +18,7 @@ impl<'scope, T> ParHandle<'scope, T> for ThreadPoolHandle<'scope, T> {
     }
 }
 
-pub struct ScopedThreadPoolScope<'scope, 'env>
-where
-    'env: 'scope,
-{
-    inner_scope: Scope<'env, 'scope>,
-    bag: ConcurrentBag<bool>,
-}
-
-impl<'scope, 'env> ParScope<'scope, 'env> for ScopedThreadPoolScope<'scope, 'env>
+impl<'scope, 'env> ParScope<'scope, 'env> for Scope<'env, 'scope>
 where
     'env: 'scope,
 {
@@ -45,20 +37,30 @@ where
     }
 }
 
-// impl ParThreadPool for Pool {
-//     type Scope<'scope, 'env>
-//         = ScopedThreadPoolScope<'scope, 'env>
-//     where
-//         'env: 'scope;
+impl ParThreadPool for Pool {
+    type Scope<'scope, 'env>
+        = Scope<'env, 'scope>
+    where
+        'env: 'scope;
 
-//     fn scope<'env, F, T>(&'env self, f: F) -> T
-//     where
-//         F: for<'scope> FnOnce(&'scope ScopedThreadPoolScope<'scope, 'env>) -> T,
-//     {
-//         self.scoped(|s| {});
-//         todo!()
-//     }
+    fn scope<'env, F, T>(&'env mut self, f: F) -> T
+    where
+        F: for<'scope> FnOnce(&'scope Scope<'env, 'scope>) -> T,
+    {
+        // self.scoped(f);
+        todo!()
+    }
+}
+
+// fn turn<'scope, 'env: 'scope, T>(
+//     f: impl FnOnce(&'scope Scope<'env, 'scope>) -> T,
+// ) -> impl FnOnce(&Scope<'env, 'scope>) -> T {
+//     f
 // }
+
+// pub fn scoped<'pool, 'scope, F, R>(&'pool mut self, f: F) -> R
+// where
+//     F: FnOnce(&Scope<'pool, 'scope>) -> R,
 
 fn main() {
     // Create a threadpool holding 4 threads

@@ -42,5 +42,5 @@ name = "reduce_map_filter"
 harness = false
 
 [features]
-default = ["scoped_threadpool"]
+default = ["threadpool", "scoped_threadpool", "rayon"]
 generic_iterator = ["rayon"]

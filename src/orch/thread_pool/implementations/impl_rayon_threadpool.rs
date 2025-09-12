@@ -1,7 +1,6 @@
 use crate::orch::{ParHandle, ParScope, ParThreadPool, thread_pool::par_handle::JoinResult};
 use orx_concurrent_bag::ConcurrentBag;
-use std::marker::PhantomData;
-use threadpool::ThreadPool;
+use rayon::{Scope, ThreadPool};
 
 pub struct ThreadPoolHandle<'scope, T> {
     idx: usize,
@@ -19,16 +18,7 @@ impl<'scope, T> ParHandle<'scope, T> for ThreadPoolHandle<'scope, T> {
     }
 }
 
-pub struct ThreadPoolScope<'scope, 'env>
-where
-    'env: 'scope,
-{
-    pool: &'env ThreadPool,
-    bag: ConcurrentBag<bool>,
-    p: PhantomData<&'scope ()>,
-}
-
-impl<'scope, 'env> ParScope<'scope, 'env> for ThreadPoolScope<'scope, 'env>
+impl<'scope, 'env> ParScope<'scope, 'env> for Scope<'scope>
 where
     'env: 'scope,
 {
@@ -47,16 +37,16 @@ where
     }
 }
 
-impl ParThreadPool for ThreadPool {
-    type Scope<'scope, 'env>
-        = ThreadPoolScope<'scope, 'env>
-    where
-        'env: 'scope;
+// impl ParThreadPool for ThreadPool {
+//     type Scope<'scope, 'env>
+//         = Scope<'scope>
+//     where
+//         'env: 'scope;
 
-    fn scope<'env, F, T>(&'env mut self, f: F) -> T
-    where
-        F: for<'scope> FnOnce(&'scope ThreadPoolScope<'scope, 'env>) -> T,
-    {
-        todo!()
-    }
-}
+//     fn scope<'env, F, T>(&'env mut self, f: F) -> T
+//     where
+//         F: for<'scope> FnOnce(&'scope Scope<'scope>) -> T,
+//     {
+//         todo!()
+//     }
+// }
