@@ -53,7 +53,7 @@ impl ParThreadPool for ThreadPool {
     where
         'env: 'scope;
 
-    fn scope<'env, F, T>(&'env mut self, f: F) -> T
+    fn scope<'env, F, T>(&'env self, f: F) -> T
     where
         F: for<'scope> FnOnce(&'scope ThreadPoolScope<'scope, 'env>) -> T,
     {
