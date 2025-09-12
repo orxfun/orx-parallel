@@ -5,7 +5,7 @@ use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub fn m<C, I, O, M1>(orchestrator: C, params: Params, iter: I, map1: M1) -> (usize, Option<O>)
+pub fn m<C, I, O, M1>(mut orchestrator: C, params: Params, iter: I, map1: M1) -> (usize, Option<O>)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -53,7 +53,7 @@ type ResultNext<Vo> = Result<
 >;
 
 pub fn x<C, I, Vo, X1>(
-    orchestrator: C,
+    mut orchestrator: C,
     params: Params,
     iter: I,
     xap1: X1,

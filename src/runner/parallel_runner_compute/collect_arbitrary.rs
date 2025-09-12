@@ -12,7 +12,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 #[cfg(test)]
 pub fn m<C, I, O, M1, P>(
-    orchestrator: C,
+    mut orchestrator: C,
     params: Params,
     iter: I,
     map1: M1,
@@ -64,7 +64,7 @@ where
 // x
 
 pub fn x<C, I, Vo, X1, P>(
-    orchestrator: C,
+    mut orchestrator: C,
     params: Params,
     iter: I,
     xap1: X1,

@@ -8,7 +8,7 @@ use orx_concurrent_iter::ConcurrentIter;
 // m
 
 pub fn m<C, I, O, M1, Red>(
-    orchestrator: C,
+    mut orchestrator: C,
     params: Params,
     iter: I,
     map1: M1,
@@ -63,7 +63,7 @@ type ResultReduce<Vo> =
     Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
 
 pub fn x<C, I, Vo, X1, Red>(
-    orchestrator: C,
+    mut orchestrator: C,
     params: Params,
     iter: I,
     xap1: X1,

@@ -13,5 +13,5 @@ pub trait Orchestrator {
         <Self::Runner as ParallelRunner>::new(kind, params, initial_input_len)
     }
 
-    fn thread_pool(&self) -> &Self::ThreadPool;
+    fn thread_pool(&mut self) -> &mut Self::ThreadPool;
 }
