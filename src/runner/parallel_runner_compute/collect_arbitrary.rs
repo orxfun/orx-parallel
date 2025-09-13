@@ -26,8 +26,6 @@ where
     M1: Fn(I::Item) -> O + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
-    use crate::runner::ComputationKind;
-
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
     let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());

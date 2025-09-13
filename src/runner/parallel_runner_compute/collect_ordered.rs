@@ -26,30 +26,24 @@ where
 {
     let offset = pinned_vec.len();
     let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-
-    // compute
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = NumSpawned::zero();
+    let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, shared_state, &iter);
 
-    orchestrator.thread_pool().scope_zzz(|s| {
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            s.spawn(|| {
-                thread::collect_ordered::m(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &map1,
-                    &o_bag,
-                    offset,
-                );
-            });
-        }
-    });
+    let work = || {
+        thread::collect_ordered::m(
+            runner.new_thread_runner(shared_state),
+            &iter,
+            shared_state,
+            &map1,
+            &o_bag,
+            offset,
+        );
+    };
+
+    let num_spawned = orchestrator.thread_pool().run(do_spawn, work);
 
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)
