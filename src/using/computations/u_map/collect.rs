@@ -1,6 +1,7 @@
 use super::m::UM;
 #[cfg(test)]
 use crate::IterationOrder;
+use crate::orch::NumSpawned;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 #[cfg(test)]
@@ -16,7 +17,7 @@ where
     O: Send,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
-    pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
+    pub fn collect_into<R, P>(self, pinned_vec: P) -> (NumSpawned, P)
     where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<O>,
@@ -24,7 +25,7 @@ where
         let len = self.iter().try_get_len();
         let p = self.params();
         match (p.is_sequential(), p.iteration_order) {
-            (true, _) => (0, self.sequential(pinned_vec)),
+            (true, _) => (NumSpawned::zero(), self.sequential(pinned_vec)),
             #[cfg(test)]
             (false, IterationOrder::Arbitrary) => {
                 u_collect_arbitrary::u_m(R::collection(p, len), self, pinned_vec)

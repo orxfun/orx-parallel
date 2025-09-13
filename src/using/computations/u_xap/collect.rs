@@ -1,6 +1,7 @@
 use crate::generic_values::runner_results::{
     Infallible, ParallelCollect, ParallelCollectArbitrary,
 };
+use crate::orch::NumSpawned;
 use crate::using::Using;
 use crate::using::computations::UX;
 use crate::using::runner::parallel_runner_compute::{u_collect_arbitrary, u_collect_ordered};
@@ -20,7 +21,7 @@ where
     Vo::Item: Send,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
-    pub fn collect_into<R, P>(self, pinned_vec: P) -> (usize, P)
+    pub fn collect_into<R, P>(self, pinned_vec: P) -> (NumSpawned, P)
     where
         R: ParallelRunner,
         P: IntoConcurrentPinnedVec<Vo::Item>,
@@ -29,7 +30,7 @@ where
         let (len, p) = self.len_and_params();
 
         match (p.is_sequential(), p.iteration_order) {
-            (true, _) => (0, self.sequential(pinned_vec)),
+            (true, _) => (NumSpawned::zero(), self.sequential(pinned_vec)),
             (false, IterationOrder::Arbitrary) => {
                 let (num_threads, result) =
                     u_collect_arbitrary::u_x(R::collection(p, len), self, pinned_vec);

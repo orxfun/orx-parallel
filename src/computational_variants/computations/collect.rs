@@ -2,7 +2,7 @@ use crate::Params;
 use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
-use crate::orch::Orchestrator;
+use crate::orch::{NumSpawned, Orchestrator};
 use crate::runner::parallel_runner_compute as prc;
 use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
@@ -14,7 +14,7 @@ pub fn map_collect_into<R, I, O, M1, P>(
     iter: I,
     map1: M1,
     pinned_vec: P,
-) -> (usize, P)
+) -> (NumSpawned, P)
 where
     R: Orchestrator,
     I: ConcurrentIter,
@@ -23,7 +23,10 @@ where
     P: IntoConcurrentPinnedVec<O>,
 {
     match (params.is_sequential(), params.iteration_order) {
-        (true, _) => (0, map_collect_into_seq(iter, map1, pinned_vec)),
+        (true, _) => (
+            NumSpawned::zero(),
+            map_collect_into_seq(iter, map1, pinned_vec),
+        ),
         #[cfg(test)]
         (false, IterationOrder::Arbitrary) => {
             prc::collect_arbitrary::m(orchestrator, params, iter, map1, pinned_vec)
@@ -52,7 +55,7 @@ pub fn xap_collect_into<R, I, Vo, X1, P>(
     iter: I,
     xap1: X1,
     pinned_vec: P,
-) -> (usize, P)
+) -> (NumSpawned, P)
 where
     R: Orchestrator,
     I: ConcurrentIter,
@@ -62,7 +65,10 @@ where
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     match (params.is_sequential(), params.iteration_order) {
-        (true, _) => (0, xap_collect_into_seq(iter, xap1, pinned_vec)),
+        (true, _) => (
+            NumSpawned::zero(),
+            xap_collect_into_seq(iter, xap1, pinned_vec),
+        ),
         (false, IterationOrder::Arbitrary) => {
             let (num_threads, result) =
                 prc::collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);
@@ -113,7 +119,10 @@ pub fn xap_try_collect_into<R, I, Vo, X1, P>(
     iter: I,
     xap1: X1,
     pinned_vec: P,
-) -> (usize, Result<P, <Vo::Fallibility as Fallibility>::Error>)
+) -> (
+    NumSpawned,
+    Result<P, <Vo::Fallibility as Fallibility>::Error>,
+)
 where
     R: Orchestrator,
     I: ConcurrentIter,
@@ -123,7 +132,10 @@ where
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     match (params.is_sequential(), params.iteration_order) {
-        (true, _) => (0, xap_try_collect_into_seq(iter, xap1, pinned_vec)),
+        (true, _) => (
+            NumSpawned::zero(),
+            xap_try_collect_into_seq(iter, xap1, pinned_vec),
+        ),
         (false, IterationOrder::Arbitrary) => {
             let (nt, result) =
                 prc::collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);

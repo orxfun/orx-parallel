@@ -1,7 +1,7 @@
 use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
-use crate::orch::{Orchestrator, ParHandle, ParScope, ParThreadPool};
+use crate::orch::{NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool};
 use crate::runner::parallel_runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_iter::ConcurrentIter;
@@ -16,7 +16,7 @@ pub fn m<C, I, O, M1, P>(
     iter: I,
     map1: M1,
     pinned_vec: P,
-) -> (usize, P)
+) -> (NumSpawned, P)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -33,11 +33,11 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
 
     orchestrator.thread_pool().scope_zzz(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
+            num_spawned.increment();
             s.spawn(|| {
                 thread::collect_ordered::m(
                     runner.new_thread_runner(shared_state),
@@ -63,7 +63,7 @@ pub fn x<C, I, Vo, X1, P>(
     iter: I,
     xap1: X1,
     pinned_vec: P,
-) -> (usize, ParallelCollect<Vo, P>)
+) -> (NumSpawned, ParallelCollect<Vo, P>)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -79,13 +79,13 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
         orchestrator.thread_pool().scope_zzz(|s| {
             let mut handles = vec![];
 
             while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-                num_spawned += 1;
+                num_spawned.increment();
                 handles.push(s.spawn(|| {
                     thread::collect_ordered::x(
                         runner.new_thread_runner(shared_state),

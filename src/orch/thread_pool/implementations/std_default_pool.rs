@@ -30,7 +30,7 @@ impl ParThreadPool for StdDefaultPool {
         std::thread::scope(|s| f(&s))
     }
 
-    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
     where
         'scope: 's,
         'env: 'scope + 's,

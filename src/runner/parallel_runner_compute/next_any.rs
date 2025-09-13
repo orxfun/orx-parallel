@@ -1,11 +1,16 @@
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
-use crate::orch::{Orchestrator, ParHandle, ParScope, ParThreadPool};
+use crate::orch::{NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool};
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub fn m<C, I, O, M1>(mut orchestrator: C, params: Params, iter: I, map1: M1) -> (usize, Option<O>)
+pub fn m<C, I, O, M1>(
+    mut orchestrator: C,
+    params: Params,
+    iter: I,
+    map1: M1,
+) -> (NumSpawned, Option<O>)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -17,12 +22,12 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let result = orchestrator.thread_pool().scope_zzz(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
+            num_spawned.increment();
             handles.push(s.spawn(|| {
                 thread::next_any::m(
                     runner.new_thread_runner(shared_state),
@@ -50,7 +55,7 @@ pub fn x<C, I, Vo, X1>(
     params: Params,
     iter: I,
     xap1: X1,
-) -> (usize, ResultNextAny<Vo>)
+) -> (NumSpawned, ResultNextAny<Vo>)
 where
     C: Orchestrator,
     I: ConcurrentIter,
@@ -63,12 +68,12 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let result = orchestrator.thread_pool().scope_zzz(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
+            num_spawned.increment();
             handles.push(s.spawn(|| {
                 thread::next_any::x(
                     runner.new_thread_runner(shared_state),

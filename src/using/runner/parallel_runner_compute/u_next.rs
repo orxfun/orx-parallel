@@ -1,12 +1,13 @@
 use super::super::thread_runner_compute as thread;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
+use crate::orch::NumSpawned;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub fn u_m<C, U, I, O, M1>(runner: C, m: UM<U, I, O, M1>) -> (usize, Option<O>)
+pub fn u_m<C, U, I, O, M1>(runner: C, m: UM<U, I, O, M1>) -> (NumSpawned, Option<O>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -19,13 +20,13 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let results = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            let u = using.create(num_spawned);
-            num_spawned += 1;
+            let u = using.create(num_spawned.into_inner());
+            num_spawned.increment();
             handles.push(s.spawn(|| {
                 thread::u_next::u_m(
                     runner.new_thread_runner(shared_state),
@@ -56,7 +57,7 @@ type ResultNext<Vo> = Result<
     <<Vo as Values>::Fallibility as Fallibility>::Error,
 >;
 
-pub fn u_x<C, U, I, Vo, X1>(runner: C, x: UX<U, I, Vo, X1>) -> (usize, ResultNext<Vo>)
+pub fn u_x<C, U, I, Vo, X1>(runner: C, x: UX<U, I, Vo, X1>) -> (NumSpawned, ResultNext<Vo>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -70,13 +71,13 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let result: Result<Vec<NextSuccess<Vo::Item>>, _> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            let u = using.create(num_spawned);
-            num_spawned += 1;
+            let u = using.create(num_spawned.into_inner());
+            num_spawned.increment();
             handles.push(s.spawn(|| {
                 thread::u_next::u_x(
                     runner.new_thread_runner(shared_state),
