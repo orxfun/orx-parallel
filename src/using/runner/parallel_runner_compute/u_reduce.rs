@@ -1,6 +1,7 @@
 use super::super::thread_runner_compute as thread;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Reduce};
+use crate::orch::NumSpawned;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 use crate::using::computations::{UM, UX};
@@ -8,7 +9,11 @@ use orx_concurrent_iter::ConcurrentIter;
 
 // m
 
-pub fn u_m<C, U, I, O, M1, Red>(runner: C, m: UM<U, I, O, M1>, reduce: Red) -> (usize, Option<O>)
+pub fn u_m<C, U, I, O, M1, Red>(
+    runner: C,
+    m: UM<U, I, O, M1>,
+    reduce: Red,
+) -> (NumSpawned, Option<O>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -22,13 +27,13 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let results = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            let u = using.create(num_spawned);
-            num_spawned += 1;
+            let u = using.create(num_spawned.into_inner());
+            num_spawned.increment();
             handles.push(s.spawn(|| {
                 thread::u_reduce::u_m(
                     runner.new_thread_runner(shared_state),
@@ -65,7 +70,7 @@ pub fn u_x<C, U, I, Vo, M1, Red>(
     runner: C,
     x: UX<U, I, Vo, M1>,
     reduce: Red,
-) -> (usize, ResultReduce<Vo>)
+) -> (NumSpawned, ResultReduce<Vo>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -80,13 +85,13 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let result: Result<Vec<Vo::Item>, _> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            let u = using.create(num_spawned);
-            num_spawned += 1;
+            let u = using.create(num_spawned.into_inner());
+            num_spawned.increment();
             handles.push(s.spawn(|| {
                 thread::u_reduce::u_x(
                     runner.new_thread_runner(shared_state),

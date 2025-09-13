@@ -1,5 +1,5 @@
 use super::{computation_kind::ComputationKind, thread_runner::ThreadRunner};
-use crate::parameters::Params;
+use crate::{orch::NumSpawned, parameters::Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel runner which is responsible for taking a computation defined as a composition
@@ -25,7 +25,7 @@ pub trait ParallelRunner: Sized + Sync + 'static {
     /// * `shared_state` is the current parallel execution state.
     fn do_spawn_new<I>(
         &self,
-        num_spawned: usize,
+        num_spawned: NumSpawned,
         shared_state: &Self::SharedState,
         iter: &I,
     ) -> bool

@@ -3,6 +3,7 @@ use super::{
     thread_runner::FixedChunkThreadRunner,
 };
 use crate::{
+    orch::NumSpawned,
     parameters::Params,
     runner::{computation_kind::ComputationKind, parallel_runner::ParallelRunner},
 };
@@ -92,10 +93,11 @@ impl ParallelRunner for FixedChunkRunner {
 
     fn new_shared_state(&self) -> Self::SharedState {}
 
-    fn do_spawn_new<I>(&self, num_spawned: usize, _: &Self::SharedState, iter: &I) -> bool
+    fn do_spawn_new<I>(&self, num_spawned: NumSpawned, _: &Self::SharedState, iter: &I) -> bool
     where
         I: ConcurrentIter,
     {
+        let num_spawned = num_spawned.into_inner();
         if num_spawned % LAG_PERIODICITY == 0 {
             match self.next_chunk(num_spawned, iter.try_get_len()) {
                 Some(c) => self.current_chunk_size.store(c, Ordering::Relaxed),

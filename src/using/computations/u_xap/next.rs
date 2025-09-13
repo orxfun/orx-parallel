@@ -1,5 +1,6 @@
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Infallible;
+use crate::orch::NumSpawned;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::computations::UX;
@@ -14,7 +15,7 @@ where
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     Vo::Item: Send,
 {
-    pub fn next<R>(self) -> (usize, Option<Vo::Item>)
+    pub fn next<R>(self) -> (NumSpawned, Option<Vo::Item>)
     where
         R: ParallelRunner,
         Vo: Values<Fallibility = Infallible>,
@@ -24,7 +25,7 @@ where
         (num_threads, result.map(|x| x.1))
     }
 
-    pub fn next_any<R>(self) -> (usize, Option<Vo::Item>)
+    pub fn next_any<R>(self) -> (NumSpawned, Option<Vo::Item>)
     where
         R: ParallelRunner,
         Vo: Values<Fallibility = Infallible>,

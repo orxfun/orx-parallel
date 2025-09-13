@@ -1,3 +1,4 @@
+use crate::orch::NumSpawned;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::computations::UM;
@@ -11,7 +12,7 @@ where
     O: Send,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
-    pub fn reduce<R, X>(self, reduce: X) -> (usize, Option<O>)
+    pub fn reduce<R, X>(self, reduce: X) -> (NumSpawned, Option<O>)
     where
         R: ParallelRunner,
         X: Fn(&mut U::Item, O, O) -> O + Sync,

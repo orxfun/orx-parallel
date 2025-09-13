@@ -1,4 +1,5 @@
 use super::m::UM;
+use crate::orch::NumSpawned;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::runner::parallel_runner_compute::{u_next, u_next_any};
@@ -11,7 +12,7 @@ where
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     O: Send,
 {
-    pub fn next<R>(self) -> (usize, Option<O>)
+    pub fn next<R>(self) -> (NumSpawned, Option<O>)
     where
         R: ParallelRunner,
     {
@@ -19,7 +20,7 @@ where
         u_next::u_m(R::early_return(p, len), self)
     }
 
-    pub fn next_any<R>(self) -> (usize, Option<O>)
+    pub fn next_any<R>(self) -> (NumSpawned, Option<O>)
     where
         R: ParallelRunner,
     {

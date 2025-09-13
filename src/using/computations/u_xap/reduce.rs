@@ -1,5 +1,6 @@
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Infallible;
+use crate::orch::NumSpawned;
 use crate::runner::{ParallelRunner, ParallelRunnerCompute};
 use crate::using::Using;
 use crate::using::computations::UX;
@@ -14,7 +15,7 @@ where
     Vo::Item: Send,
     M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
 {
-    pub fn reduce<R, Red>(self, reduce: Red) -> (usize, Option<Vo::Item>)
+    pub fn reduce<R, Red>(self, reduce: Red) -> (NumSpawned, Option<Vo::Item>)
     where
         R: ParallelRunner,
         Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,

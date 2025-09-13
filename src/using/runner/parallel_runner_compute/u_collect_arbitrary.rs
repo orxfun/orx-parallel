@@ -1,6 +1,7 @@
 use super::super::thread_runner_compute as thread;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
+use crate::orch::NumSpawned;
 use crate::runner::ParallelRunnerCompute;
 use crate::using::Using;
 #[cfg(test)]
@@ -13,7 +14,7 @@ use orx_fixed_vec::IntoConcurrentPinnedVec;
 // m
 
 #[cfg(test)]
-pub fn u_m<C, U, I, O, M1, P>(runner: C, m: UM<U, I, O, M1>, pinned_vec: P) -> (usize, P)
+pub fn u_m<C, U, I, O, M1, P>(runner: C, m: UM<U, I, O, M1>, pinned_vec: P) -> (NumSpawned, P)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -37,11 +38,11 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     std::thread::scope(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            let u = using.create(num_spawned);
-            num_spawned += 1;
+            let u = using.create(num_spawned.into_inner());
+            num_spawned.increment();
             s.spawn(|| {
                 thread::u_collect_arbitrary::u_m(
                     runner.new_thread_runner(shared_state),
@@ -64,7 +65,7 @@ pub fn u_x<C, U, I, Vo, M1, P>(
     runner: C,
     x: UX<U, I, Vo, M1>,
     pinned_vec: P,
-) -> (usize, ParallelCollectArbitrary<Vo, P>)
+) -> (NumSpawned, ParallelCollectArbitrary<Vo, P>)
 where
     C: ParallelRunnerCompute,
     U: Using,
@@ -89,13 +90,13 @@ where
     let state = runner.new_shared_state();
     let shared_state = &state;
 
-    let mut num_spawned = 0;
+    let mut num_spawned = NumSpawned::zero();
     let result: ThreadCollectArbitrary<Vo::Fallibility> = std::thread::scope(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            let u = using.create(num_spawned);
-            num_spawned += 1;
+            let u = using.create(num_spawned.into_inner());
+            num_spawned.increment();
             handles.push(s.spawn(|| {
                 thread::u_collect_arbitrary::u_x(
                     runner.new_thread_runner(shared_state),
