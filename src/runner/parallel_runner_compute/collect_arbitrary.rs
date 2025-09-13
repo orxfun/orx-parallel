@@ -26,36 +26,21 @@ where
     M1: Fn(I::Item) -> O + Sync,
     P: IntoConcurrentPinnedVec<O>,
 {
+    use crate::orch::{SharedStateOf, ThreadRunnerOf};
+
     let capacity_bound = pinned_vec.capacity_bound();
     let offset = pinned_vec.len();
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
     let mut bag: ConcurrentBag<O, P> = pinned_vec.into();
     match iter.try_get_len() {
         Some(iter_len) => bag.reserve_maximum_capacity(offset + iter_len),
         None => bag.reserve_maximum_capacity(capacity_bound),
     };
 
-    // compute
+    let thread_work = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+        thread::collect_arbitrary::m(thread_runner, iter, state, &map1, &bag);
+    };
+    let num_spawned = orchestrator.run(params, iter, ComputationKind::Collect, thread_work);
 
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    orchestrator.thread_pool().scope_zzz(|s| {
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            s.spawn(|| {
-                thread::collect_arbitrary::m(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &map1,
-                    &bag,
-                );
-            });
-        }
-    });
     let values = bag.into_inner();
     (num_spawned, values)
 }
