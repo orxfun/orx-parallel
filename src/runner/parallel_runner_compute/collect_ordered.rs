@@ -28,15 +28,14 @@ where
     let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
     let state = runner.new_shared_state();
-    let shared_state = &state;
 
-    let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, shared_state, &iter);
+    let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
 
     let work = || {
         thread::collect_ordered::m(
-            runner.new_thread_runner(shared_state),
+            runner.new_thread_runner(&state),
             &iter,
-            shared_state,
+            &state,
             &map1,
             &o_bag,
             offset,
