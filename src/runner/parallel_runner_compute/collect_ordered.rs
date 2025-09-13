@@ -1,7 +1,9 @@
 use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
-use crate::orch::{NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool};
+use crate::orch::{
+    NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool, SharedStateOf, ThreadRunnerOf,
+};
 use crate::runner::parallel_runner::ParallelRunner;
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_iter::ConcurrentIter;
@@ -25,24 +27,12 @@ where
     P: IntoConcurrentPinnedVec<O>,
 {
     let offset = pinned_vec.len();
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
-    let state = runner.new_shared_state();
 
-    let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
-
-    let work = || {
-        thread::collect_ordered::m(
-            runner.new_thread_runner(&state),
-            &iter,
-            &state,
-            &map1,
-            &o_bag,
-            offset,
-        );
+    let thread_work = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+        thread::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
     };
-
-    let num_spawned = orchestrator.thread_pool().run(do_spawn, work);
+    let num_spawned = orchestrator.run(params, iter, ComputationKind::Collect, thread_work);
 
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)
