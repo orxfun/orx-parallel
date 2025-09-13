@@ -18,7 +18,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result = orchestrator.thread_pool().scope(|s| {
+    let result = orchestrator.thread_pool().scope_zzz(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -64,7 +64,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result = orchestrator.thread_pool().scope(|s| {
+    let result = orchestrator.thread_pool().scope_zzz(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {

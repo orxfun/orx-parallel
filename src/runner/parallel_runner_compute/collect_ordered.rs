@@ -35,7 +35,7 @@ where
 
     let mut num_spawned = 0;
 
-    orchestrator.thread_pool().scope(|s| {
+    orchestrator.thread_pool().scope_zzz(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
@@ -81,7 +81,7 @@ where
 
     let mut num_spawned = 0;
     let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
-        orchestrator.thread_pool().scope(|s| {
+        orchestrator.thread_pool().scope_zzz(|s| {
             let mut handles = vec![];
 
             while runner.do_spawn_new(num_spawned, shared_state, &iter) {

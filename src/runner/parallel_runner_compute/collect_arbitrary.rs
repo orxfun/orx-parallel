@@ -43,7 +43,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    orchestrator.thread_pool().scope(|s| {
+    orchestrator.thread_pool().scope_zzz(|s| {
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned += 1;
             s.spawn(|| {
@@ -95,50 +95,51 @@ where
     let shared_state = &state;
 
     let mut num_spawned = 0;
-    let result: ThreadCollectArbitrary<Vo::Fallibility> = orchestrator.thread_pool().scope(|s| {
-        let mut handles = vec![];
+    let result: ThreadCollectArbitrary<Vo::Fallibility> =
+        orchestrator.thread_pool().scope_zzz(|s| {
+            let mut handles = vec![];
 
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned += 1;
-            handles.push(s.spawn(|| {
-                thread::collect_arbitrary::x(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                    &bag,
-                )
-            }));
-        }
-
-        let mut early_exit_result = None;
-        while !handles.is_empty() {
-            let mut finished_idx = None;
-            for (h, handle) in handles.iter().enumerate() {
-                if handle.is_finished() {
-                    finished_idx = Some(h);
-                    break;
-                }
+            while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+                num_spawned += 1;
+                handles.push(s.spawn(|| {
+                    thread::collect_arbitrary::x(
+                        runner.new_thread_runner(shared_state),
+                        &iter,
+                        shared_state,
+                        &xap1,
+                        &bag,
+                    )
+                }));
             }
 
-            if let Some(h) = finished_idx {
-                let handle = handles.remove(h);
-                let result = handle.join().expect("failed to join the thread");
-                match &result {
-                    ThreadCollectArbitrary::AllCollected => {}
-                    ThreadCollectArbitrary::StoppedByError { error: _ } => {
-                        early_exit_result = Some(result);
+            let mut early_exit_result = None;
+            while !handles.is_empty() {
+                let mut finished_idx = None;
+                for (h, handle) in handles.iter().enumerate() {
+                    if handle.is_finished() {
+                        finished_idx = Some(h);
                         break;
                     }
-                    ThreadCollectArbitrary::StoppedByWhileCondition => {
-                        early_exit_result = Some(result);
+                }
+
+                if let Some(h) = finished_idx {
+                    let handle = handles.remove(h);
+                    let result = handle.join().expect("failed to join the thread");
+                    match &result {
+                        ThreadCollectArbitrary::AllCollected => {}
+                        ThreadCollectArbitrary::StoppedByError { error: _ } => {
+                            early_exit_result = Some(result);
+                            break;
+                        }
+                        ThreadCollectArbitrary::StoppedByWhileCondition => {
+                            early_exit_result = Some(result);
+                        }
                     }
                 }
             }
-        }
 
-        early_exit_result.unwrap_or(ThreadCollectArbitrary::AllCollected)
-    });
+            early_exit_result.unwrap_or(ThreadCollectArbitrary::AllCollected)
+        });
 
     (
         num_spawned,

@@ -47,16 +47,16 @@ where
     }
 }
 
-impl ParThreadPool for ThreadPool {
-    type Scope<'scope, 'env>
-        = ThreadPoolScope<'scope, 'env>
-    where
-        'env: 'scope;
+// impl ParThreadPool for ThreadPool {
+//     type ScopeZzz<'scope, 'env>
+//         = ThreadPoolScope<'scope, 'env>
+//     where
+//         'env: 'scope;
 
-    fn scope<'env, F, T>(&'env self, f: F) -> T
-    where
-        F: for<'scope> FnOnce(&'scope ThreadPoolScope<'scope, 'env>) -> T,
-    {
-        todo!()
-    }
-}
+//     fn scope_zzz<'env, F, T>(&'env self, f: F) -> T
+//     where
+//         F: for<'scope> FnOnce(&'scope ThreadPoolScope<'scope, 'env>) -> T,
+//     {
+//         todo!()
+//     }
+// }

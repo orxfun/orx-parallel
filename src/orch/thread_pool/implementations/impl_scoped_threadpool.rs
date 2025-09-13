@@ -38,12 +38,12 @@ where
 }
 
 impl ParThreadPool for Pool {
-    type Scope<'scope, 'env>
+    type ScopeZzz<'scope, 'env>
         = Scope<'env, 'scope>
     where
         'env: 'scope;
 
-    fn scope<'env, F, T>(&'env self, f: F) -> T
+    fn scope_zzz<'env, F, T>(&'env self, f: F) -> T
     where
         F: for<'scope> FnOnce(&'scope Scope<'env, 'scope>) -> T,
     {
