@@ -1,7 +1,6 @@
-use orx_concurrent_bag::ConcurrentBag;
-
 use super::par_scope::ParScope;
 use crate::orch::num_spawned::NumSpawned;
+use orx_concurrent_bag::ConcurrentBag;
 
 pub trait ParThreadPool {
     type ScopeZzz<'scope, 'env>: ParScope<'scope, 'env>
@@ -58,8 +57,7 @@ pub trait ParThreadPool {
         E: Send,
     {
         let mut nt = NumSpawned::zero();
-
-        let thread_results = ConcurrentBag::new();
+        let thread_results = ConcurrentBag::with_fixed_capacity(64);
         let work = || _ = thread_results.push(thread_map());
         self.scope(|s| {
             while do_spawn(nt) {

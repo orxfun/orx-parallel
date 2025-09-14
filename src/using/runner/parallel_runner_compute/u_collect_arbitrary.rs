@@ -141,11 +141,13 @@ where
     (
         num_spawned,
         match result {
-            ThreadCollectArbitrary::AllCollected => ParallelCollectArbitrary::AllCollected {
-                pinned_vec: bag.into_inner(),
-            },
+            ThreadCollectArbitrary::AllCollected => {
+                ParallelCollectArbitrary::AllOrUntilWhileCollected {
+                    pinned_vec: bag.into_inner(),
+                }
+            }
             ThreadCollectArbitrary::StoppedByWhileCondition => {
-                ParallelCollectArbitrary::StoppedByWhileCondition {
+                ParallelCollectArbitrary::AllOrUntilWhileCollected {
                     pinned_vec: bag.into_inner(),
                 }
             }

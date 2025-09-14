@@ -56,10 +56,10 @@ where
     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         thread::collect_ordered::x(thread_runner, iter, state, &xap1).into_result()
     };
-    let (num_spawned, results) =
+    let (num_spawned, result) =
         orchestrator.map_all(params, iter, ComputationKind::Collect, thread_map);
 
-    let result = match results {
+    let result = match result {
         Err(error) => ParallelCollect::StoppedByError { error },
         Ok(results) => ParallelCollect::reduce(results, pinned_vec),
     };

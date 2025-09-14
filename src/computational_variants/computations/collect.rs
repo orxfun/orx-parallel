@@ -73,8 +73,7 @@ where
             let (num_threads, result) =
                 prc::collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);
             let pinned_vec = match result {
-                ParallelCollectArbitrary::AllCollected { pinned_vec } => pinned_vec,
-                ParallelCollectArbitrary::StoppedByWhileCondition { pinned_vec } => pinned_vec,
+                ParallelCollectArbitrary::AllOrUntilWhileCollected { pinned_vec } => pinned_vec,
             };
             (num_threads, pinned_vec)
         }
