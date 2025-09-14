@@ -1,3 +1,5 @@
+use orx_concurrent_bag::ConcurrentBag;
+
 use super::par_scope::ParScope;
 use crate::orch::num_spawned::NumSpawned;
 
@@ -46,5 +48,34 @@ pub trait ParThreadPool {
             }
         });
         nt
+    }
+
+    fn map<S, M, T, E>(&mut self, do_spawn: S, map: M) -> (NumSpawned, Result<Vec<T>, E>)
+    where
+        S: Fn(NumSpawned) -> bool + Sync,
+        M: Fn() -> Result<T, E> + Sync,
+        T: Send,
+        E: Send,
+    {
+        let mut nt = NumSpawned::zero();
+
+        let thread_results = ConcurrentBag::new();
+        let work = || _ = thread_results.push(map());
+        self.scope(|s| {
+            while do_spawn(nt) {
+                nt.increment();
+                Self::run_in_scope(&s, &work);
+            }
+        });
+
+        let mut results = vec![];
+        for r in thread_results.into_inner() {
+            match r {
+                Ok(x) => results.push(x),
+                Err(e) => return (nt, Err(e)),
+            }
+        }
+
+        (nt, Ok(results))
     }
 }
