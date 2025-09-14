@@ -46,7 +46,7 @@ pub trait Orchestrator {
         self.thread_pool().run(do_spawn, work)
     }
 
-    fn map<I, M, T, E>(
+    fn map2<I, M, T, E>(
         &mut self,
         params: Params,
         iter: I,
