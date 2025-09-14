@@ -29,7 +29,7 @@ where
     let thread_do = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         thread::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
     };
-    let num_spawned = orchestrator.run(params, iter, ComputationKind::Collect, thread_do);
+    let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_do);
 
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)
@@ -57,7 +57,7 @@ where
         thread::collect_ordered::x(thread_runner, iter, state, &xap1).into_result()
     };
     let (num_spawned, results) =
-        orchestrator.map2(params, iter, ComputationKind::Collect, thread_map);
+        orchestrator.map_all(params, iter, ComputationKind::Collect, thread_map);
 
     let result = match results {
         Err(error) => ParallelCollect::StoppedByError { error },

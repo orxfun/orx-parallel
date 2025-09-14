@@ -22,7 +22,7 @@ pub trait Orchestrator {
 
     // derived
 
-    fn run<I, F>(
+    fn run_all<I, F>(
         &mut self,
         params: Params,
         iter: I,
@@ -46,7 +46,7 @@ pub trait Orchestrator {
         self.thread_pool().run(do_spawn, work)
     }
 
-    fn map2<I, M, T, E>(
+    fn map_all<I, M, T, E>(
         &mut self,
         params: Params,
         iter: I,
