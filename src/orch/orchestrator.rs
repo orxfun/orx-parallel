@@ -68,11 +68,13 @@ pub trait Orchestrator {
         T: Send,
         E: Send,
     {
-        let runner = Self::new_runner(kind, params, iter.try_get_len());
+        let iter_len = iter.try_get_len();
+        let runner = Self::new_runner(kind, params, iter_len);
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = || thread_map(&iter, &state, runner.new_thread_runner(&state));
-        self.thread_pool_mut().map(do_spawn, work)
+        let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
+        self.thread_pool_mut().map(do_spawn, work, max_num_threads)
     }
 
     fn max_num_threads_for_computation(

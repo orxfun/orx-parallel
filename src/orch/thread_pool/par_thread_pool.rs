@@ -53,7 +53,12 @@ pub trait ParThreadPool {
         nt
     }
 
-    fn map<S, M, T, E>(&mut self, do_spawn: S, thread_map: M) -> (NumSpawned, Result<Vec<T>, E>)
+    fn map<S, M, T, E>(
+        &mut self,
+        do_spawn: S,
+        thread_map: M,
+        max_num_threads: NonZeroUsize,
+    ) -> (NumSpawned, Result<Vec<T>, E>)
     where
         S: Fn(NumSpawned) -> bool + Sync,
         M: Fn() -> Result<T, E> + Sync,
@@ -61,7 +66,7 @@ pub trait ParThreadPool {
         E: Send,
     {
         let mut nt = NumSpawned::zero();
-        let thread_results = ConcurrentBag::with_fixed_capacity(64);
+        let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
         let work = || _ = thread_results.push(thread_map());
         self.scope(|s| {
             while do_spawn(nt) {
