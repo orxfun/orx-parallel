@@ -1,6 +1,6 @@
 use crate::{
     NumThreads, ParallelRunner, Params,
-    generic_values::runner_results::Fallibility,
+    generic_values::runner_results::{Fallibility, Infallible, Never},
     orch::{NumSpawned, thread_pool::ParThreadPool},
     runner::ComputationKind,
 };
@@ -68,6 +68,21 @@ pub trait Orchestrator {
         let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
         self.thread_pool_mut()
             .map_all::<F, _, _, _>(do_spawn, work, max_num_threads)
+    }
+
+    fn map_infallible<I, M, T>(
+        &mut self,
+        params: Params,
+        iter: I,
+        kind: ComputationKind,
+        thread_map: M,
+    ) -> (NumSpawned, Result<Vec<T>, Never>)
+    where
+        I: ConcurrentIter,
+        M: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, Never> + Sync,
+        T: Send,
+    {
+        self.map_all::<Infallible, _, _, _>(params, iter, kind, thread_map)
     }
 
     fn max_num_threads_for_computation(

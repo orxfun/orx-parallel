@@ -1,5 +1,5 @@
 use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, Reduce};
+use crate::generic_values::runner_results::{Fallibility, Infallible, Reduce};
 use crate::orch::{
     NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool, SharedStateOf, ThreadRunnerOf,
 };
@@ -24,50 +24,15 @@ where
     O: Send,
 {
     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        let x = thread::reduce::m(thread_runner, iter, state, &map1, &reduce);
-        todo!()
+        let result = thread::reduce::m(thread_runner, iter, state, &map1, &reduce);
+        Ok(result)
     };
-    // let (num_spawned, result) =
-    //     orchestrator.map_all(params, iter, ComputationKind::Collect, thread_map);
+    let (num_spawned, result) =
+        orchestrator.map_infallible(params, iter, ComputationKind::Collect, thread_map);
 
-    // let result = match result {
-    //     Err(error) => ParallelCollect::StoppedByError { error },
-    //     Ok(results) => ParallelCollect::reduce(results, pinned_vec),
-    // };
-    // (num_spawned, result);
-
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    let results = orchestrator.thread_pool_mut().scope_zzz(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            handles.push(s.spawn(|| {
-                thread::reduce::m(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &map1,
-                    &reduce,
-                )
-            }));
-        }
-
-        let mut results = Vec::with_capacity(handles.len());
-        for x in handles {
-            if let Some(x) = x.join().expect("failed to join the thread") {
-                results.push(x);
-            }
-        }
-        results
-    });
-
-    let acc = results.into_iter().reduce(reduce);
+    let acc = match result {
+        Ok(results) => results.into_iter().filter_map(|x| x).reduce(reduce),
+    };
 
     (num_spawned, acc)
 }
