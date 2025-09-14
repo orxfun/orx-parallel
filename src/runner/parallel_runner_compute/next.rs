@@ -23,7 +23,7 @@ where
     let shared_state = &state;
 
     let mut num_spawned = NumSpawned::zero();
-    let results = orchestrator.thread_pool().scope_zzz(|s| {
+    let results = orchestrator.thread_pool_mut().scope_zzz(|s| {
         let mut handles = vec![];
 
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
@@ -76,57 +76,58 @@ where
     let shared_state = &state;
 
     let mut num_spawned = NumSpawned::zero();
-    let result: Result<Vec<NextSuccess<Vo::Item>>, _> = orchestrator.thread_pool().scope_zzz(|s| {
-        let mut handles = vec![];
+    let result: Result<Vec<NextSuccess<Vo::Item>>, _> =
+        orchestrator.thread_pool_mut().scope_zzz(|s| {
+            let mut handles = vec![];
 
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            handles.push(s.spawn(|| {
-                thread::next::x(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                )
-            }))
-        }
-
-        let mut results = Vec::with_capacity(handles.len());
-
-        let mut error = None;
-        while !handles.is_empty() {
-            let mut finished_idx = None;
-            for (h, handle) in handles.iter().enumerate() {
-                if handle.is_finished() {
-                    finished_idx = Some(h);
-                    break;
-                }
+            while runner.do_spawn_new(num_spawned, shared_state, &iter) {
+                num_spawned.increment();
+                handles.push(s.spawn(|| {
+                    thread::next::x(
+                        runner.new_thread_runner(shared_state),
+                        &iter,
+                        shared_state,
+                        &xap1,
+                    )
+                }))
             }
 
-            if let Some(h) = finished_idx {
-                let handle = handles.remove(h);
-                let result = handle.join().expect("failed to join the thread");
-                match result {
-                    NextWithIdx::Found { idx, value } => {
-                        results.push(NextSuccess::Found { idx, value })
-                    }
-                    NextWithIdx::NotFound => {}
-                    NextWithIdx::StoppedByWhileCondition { idx } => {
-                        results.push(NextSuccess::StoppedByWhileCondition { idx });
-                    }
-                    NextWithIdx::StoppedByError { error: e } => {
-                        error = Some(e);
+            let mut results = Vec::with_capacity(handles.len());
+
+            let mut error = None;
+            while !handles.is_empty() {
+                let mut finished_idx = None;
+                for (h, handle) in handles.iter().enumerate() {
+                    if handle.is_finished() {
+                        finished_idx = Some(h);
                         break;
                     }
                 }
-            }
-        }
 
-        match error {
-            Some(error) => Err(error),
-            None => Ok(results),
-        }
-    });
+                if let Some(h) = finished_idx {
+                    let handle = handles.remove(h);
+                    let result = handle.join().expect("failed to join the thread");
+                    match result {
+                        NextWithIdx::Found { idx, value } => {
+                            results.push(NextSuccess::Found { idx, value })
+                        }
+                        NextWithIdx::NotFound => {}
+                        NextWithIdx::StoppedByWhileCondition { idx } => {
+                            results.push(NextSuccess::StoppedByWhileCondition { idx });
+                        }
+                        NextWithIdx::StoppedByError { error: e } => {
+                            error = Some(e);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            match error {
+                Some(error) => Err(error),
+                None => Ok(results),
+            }
+        });
 
     let next = result.map(NextSuccess::reduce);
 

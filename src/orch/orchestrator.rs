@@ -18,7 +18,9 @@ pub trait Orchestrator {
         <Self::Runner as ParallelRunner>::new(kind, params, initial_input_len)
     }
 
-    fn thread_pool(&mut self) -> &mut Self::ThreadPool;
+    fn thread_pool(&mut self) -> &Self::ThreadPool;
+
+    fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool;
 
     // derived
 
@@ -43,7 +45,7 @@ pub trait Orchestrator {
         let work = || {
             thread_do(&iter, &state, runner.new_thread_runner(&state));
         };
-        self.thread_pool().run(do_spawn, work)
+        self.thread_pool_mut().run(do_spawn, work)
     }
 
     fn map_all<I, M, T, E>(
@@ -68,7 +70,11 @@ pub trait Orchestrator {
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = || thread_map(&iter, &state, runner.new_thread_runner(&state));
-        self.thread_pool().map(do_spawn, work)
+        self.thread_pool_mut().map(do_spawn, work)
+    }
+
+    fn max_num_threads_for_computation(&self, params: Params) -> usize {
+        1
     }
 }
 

@@ -1,7 +1,35 @@
-use crate::orch::{NumSpawned, ParThreadPool};
+use crate::{env::MAX_NUM_THREADS_ENV_VARIABLE, orch::ParThreadPool};
 
-#[derive(Default)]
-pub struct StdDefaultPool;
+const MAX_UNSET_NUM_THREADS: usize = 8;
+
+pub struct StdDefaultPool {
+    max_num_threads: usize,
+}
+
+impl Default for StdDefaultPool {
+    fn default() -> Self {
+        let env_max_num_threads = match std::env::var(MAX_NUM_THREADS_ENV_VARIABLE) {
+            Ok(s) => match s.parse::<usize>() {
+                Ok(0) => None,    // consistent with .num_threads(0) representing no bound
+                Ok(x) => Some(x), // set to a positive bound
+                Err(_e) => None,  // not a number, ignored assuming no bound
+            },
+            Err(_e) => None, // not set, no bound
+        };
+
+        let ava_max_num_threads: Option<usize> =
+            std::thread::available_parallelism().map(|x| x.into()).ok();
+
+        let max_num_threads = match (env_max_num_threads, ava_max_num_threads) {
+            (Some(env), Some(ava)) => env.min(ava),
+            (Some(env), None) => env,
+            (None, Some(ava)) => ava,
+            (None, None) => MAX_UNSET_NUM_THREADS,
+        };
+
+        Self { max_num_threads }
+    }
+}
 
 impl ParThreadPool for StdDefaultPool {
     type ScopeZzz<'scope, 'env>
@@ -21,6 +49,10 @@ impl ParThreadPool for StdDefaultPool {
     where
         'scope: 's,
         'env: 'scope + 's;
+
+    fn max_num_threads(&self) -> usize {
+        self.max_num_threads
+    }
 
     fn scope<'env, 'scope, F>(&'env mut self, f: F)
     where
