@@ -35,22 +35,22 @@ pub trait ParThreadPool {
 
     // derived
 
-    fn run<S, W>(&mut self, do_spawn: S, work: W) -> NumSpawned
+    fn run<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
     where
         S: Fn(NumSpawned) -> bool + Sync,
-        W: Fn() + Sync,
+        F: Fn() + Sync,
     {
         let mut nt = NumSpawned::zero();
         self.scope(|s| {
             while do_spawn(nt) {
                 nt.increment();
-                Self::run_in_scope(&s, &work);
+                Self::run_in_scope(&s, &thread_do);
             }
         });
         nt
     }
 
-    fn map<S, M, T, E>(&mut self, do_spawn: S, map: M) -> (NumSpawned, Result<Vec<T>, E>)
+    fn map<S, M, T, E>(&mut self, do_spawn: S, thread_map: M) -> (NumSpawned, Result<Vec<T>, E>)
     where
         S: Fn(NumSpawned) -> bool + Sync,
         M: Fn() -> Result<T, E> + Sync,
@@ -60,7 +60,7 @@ pub trait ParThreadPool {
         let mut nt = NumSpawned::zero();
 
         let thread_results = ConcurrentBag::new();
-        let work = || _ = thread_results.push(map());
+        let work = || _ = thread_results.push(thread_map());
         self.scope(|s| {
             while do_spawn(nt) {
                 nt.increment();

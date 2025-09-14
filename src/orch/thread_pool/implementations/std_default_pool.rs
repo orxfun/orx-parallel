@@ -1,4 +1,4 @@
-use crate::orch::ParThreadPool;
+use crate::orch::{NumSpawned, ParThreadPool};
 
 #[derive(Default)]
 pub struct StdDefaultPool;
