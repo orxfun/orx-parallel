@@ -1,6 +1,8 @@
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, Reduce};
-use crate::orch::{NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool};
+use crate::orch::{
+    NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool, SharedStateOf, ThreadRunnerOf,
+};
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
@@ -21,6 +23,19 @@ where
     Red: Fn(O, O) -> O + Sync,
     O: Send,
 {
+    // let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    //     let x = thread::reduce::m(thread_runner, iter, state, &map1, &reduce);
+    //     todo!()
+    // };
+    // let (num_spawned, result) =
+    //     orchestrator.map_fallible(params, iter, ComputationKind::Collect, thread_map);
+
+    // let result = match result {
+    //     Err(error) => ParallelCollect::StoppedByError { error },
+    //     Ok(results) => ParallelCollect::reduce(results, pinned_vec),
+    // };
+    // (num_spawned, result);
+
     let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
 
     let state = runner.new_shared_state();

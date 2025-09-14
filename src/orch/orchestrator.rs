@@ -2,6 +2,7 @@ use std::num::NonZeroUsize;
 
 use crate::{
     NumThreads, ParallelRunner, Params,
+    generic_values::runner_results::Fallibility,
     orch::{NumSpawned, thread_pool::ParThreadPool},
     runner::ComputationKind,
 };
@@ -50,23 +51,24 @@ pub trait Orchestrator {
         self.thread_pool_mut().run(do_spawn, work)
     }
 
-    fn map_all<I, M, T, E>(
+    fn map_all<F, I, M, T>(
         &mut self,
         params: Params,
         iter: I,
         kind: ComputationKind,
         thread_map: M,
-    ) -> (NumSpawned, Result<Vec<T>, E>)
+    ) -> (NumSpawned, Result<Vec<T>, F::Error>)
     where
+        F: Fallibility,
         I: ConcurrentIter,
         M: Fn(
                 &I,
                 &<Self::Runner as ParallelRunner>::SharedState,
                 <Self::Runner as ParallelRunner>::ThreadRunner,
-            ) -> Result<T, E>
+            ) -> Result<T, F::Error>
             + Sync,
         T: Send,
-        E: Send,
+        F::Error: Send,
     {
         let iter_len = iter.try_get_len();
         let runner = Self::new_runner(kind, params, iter_len);
@@ -74,7 +76,8 @@ pub trait Orchestrator {
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = || thread_map(&iter, &state, runner.new_thread_runner(&state));
         let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
-        self.thread_pool_mut().map(do_spawn, work, max_num_threads)
+        self.thread_pool_mut()
+            .map_all::<F, _, _, _>(do_spawn, work, max_num_threads)
     }
 
     fn max_num_threads_for_computation(

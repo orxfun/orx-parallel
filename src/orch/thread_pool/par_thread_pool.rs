@@ -1,8 +1,7 @@
-use std::num::NonZeroUsize;
-
 use super::par_scope::ParScope;
-use crate::orch::num_spawned::NumSpawned;
+use crate::{generic_values::runner_results::Fallibility, orch::num_spawned::NumSpawned};
 use orx_concurrent_bag::ConcurrentBag;
+use std::num::NonZeroUsize;
 
 pub trait ParThreadPool {
     type ScopeZzz<'scope, 'env>: ParScope<'scope, 'env>
@@ -53,7 +52,31 @@ pub trait ParThreadPool {
         nt
     }
 
-    fn map<S, M, T, E>(
+    fn map_infallible<S, M, T>(
+        &mut self,
+        do_spawn: S,
+        thread_map: M,
+        max_num_threads: NonZeroUsize,
+    ) -> (NumSpawned, Vec<T>)
+    where
+        S: Fn(NumSpawned) -> bool + Sync,
+        M: Fn() -> T + Sync,
+        T: Send,
+    {
+        let mut nt = NumSpawned::zero();
+        let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
+        let work = || _ = thread_results.push(thread_map());
+        self.scope(|s| {
+            while do_spawn(nt) {
+                nt.increment();
+                Self::run_in_scope(&s, &work);
+            }
+        });
+
+        (nt, thread_results.into_inner().into())
+    }
+
+    fn map_fallible<S, M, T, E>(
         &mut self,
         do_spawn: S,
         thread_map: M,
@@ -84,5 +107,34 @@ pub trait ParThreadPool {
         }
 
         (nt, Ok(results))
+    }
+
+    fn map_all<F, S, M, T>(
+        &mut self,
+        do_spawn: S,
+        thread_map: M,
+        max_num_threads: NonZeroUsize,
+    ) -> (NumSpawned, Result<Vec<T>, F::Error>)
+    where
+        F: Fallibility,
+        S: Fn(NumSpawned) -> bool + Sync,
+        M: Fn() -> Result<T, F::Error> + Sync,
+        T: Send,
+        F::Error: Send,
+    {
+        let mut nt = NumSpawned::zero();
+        let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
+        let work = || _ = thread_results.push(thread_map());
+        self.scope(|s| {
+            while do_spawn(nt) {
+                nt.increment();
+                Self::run_in_scope(&s, &work);
+            }
+        });
+
+        let thread_results: Vec<_> = thread_results.into_inner().into();
+        let result = F::reduce_results(thread_results);
+
+        (nt, result)
     }
 }

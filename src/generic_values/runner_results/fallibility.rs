@@ -18,6 +18,8 @@ pub trait Fallibility: Sized {
     fn reduce_to_stop<V>(reduce: Reduce<V>) -> Result<Option<V::Item>, StopReduce<V>>
     where
         V: Values<Fallibility = Self>;
+
+    fn reduce_results<T>(results: Vec<Result<T, Self::Error>>) -> Result<Vec<T>, Self::Error>;
 }
 
 pub struct Infallible;
@@ -58,6 +60,15 @@ impl Fallibility for Infallible {
             Reduce::Done { acc } => Ok(acc),
             Reduce::StoppedByWhileCondition { acc } => Err(StopReduce::DueToWhile { acc }),
         }
+    }
+
+    fn reduce_results<T>(results: Vec<Result<T, Self::Error>>) -> Result<Vec<T>, Self::Error> {
+        Ok(results
+            .into_iter()
+            .map(|x| match x {
+                Ok(x) => x,
+            })
+            .collect())
     }
 }
 
@@ -105,6 +116,17 @@ impl<E: Send> Fallibility for Fallible<E> {
             Reduce::StoppedByWhileCondition { acc } => Err(StopReduce::DueToWhile { acc }),
             Reduce::StoppedByError { error } => Err(StopReduce::DueToError { error }),
         }
+    }
+
+    fn reduce_results<T>(results: Vec<Result<T, Self::Error>>) -> Result<Vec<T>, Self::Error> {
+        let mut ok_results = Vec::with_capacity(results.len());
+        for result in results {
+            match result {
+                Ok(x) => ok_results.push(x),
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(ok_results)
     }
 }
 

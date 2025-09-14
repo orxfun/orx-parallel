@@ -71,8 +71,12 @@ where
     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         thread::collect_arbitrary::x(thread_runner, iter, state, &xap1, &bag).into_result()
     };
-    let (num_spawned, result) =
-        orchestrator.map_all(params, iter, ComputationKind::Collect, thread_map);
+    let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
+        params,
+        iter,
+        ComputationKind::Collect,
+        thread_map,
+    );
 
     let result = match result {
         Err(error) => ParallelCollectArbitrary::StoppedByError { error },
