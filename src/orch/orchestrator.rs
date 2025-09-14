@@ -27,7 +27,7 @@ pub trait Orchestrator {
         params: Params,
         iter: I,
         kind: ComputationKind,
-        thread_work: F,
+        thread_do: F,
     ) -> NumSpawned
     where
         I: ConcurrentIter,
@@ -41,9 +41,34 @@ pub trait Orchestrator {
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = || {
-            thread_work(&iter, &state, runner.new_thread_runner(&state));
+            thread_do(&iter, &state, runner.new_thread_runner(&state));
         };
         self.thread_pool().run(do_spawn, work)
+    }
+
+    fn map<I, M, T, E>(
+        &mut self,
+        params: Params,
+        iter: I,
+        kind: ComputationKind,
+        thread_map: M,
+    ) -> (NumSpawned, Result<Vec<T>, E>)
+    where
+        I: ConcurrentIter,
+        M: Fn(
+                &I,
+                &<Self::Runner as ParallelRunner>::SharedState,
+                <Self::Runner as ParallelRunner>::ThreadRunner,
+            ) -> Result<T, E>
+            + Sync,
+        T: Send,
+        E: Send,
+    {
+        let runner = Self::new_runner(kind, params, iter.try_get_len());
+        let state = runner.new_shared_state();
+        let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
+        let work = || thread_map(&iter, &state, runner.new_thread_runner(&state));
+        self.thread_pool().map(do_spawn, work)
     }
 }
 

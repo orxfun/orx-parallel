@@ -29,10 +29,10 @@ where
     let offset = pinned_vec.len();
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
 
-    let thread_work = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_do = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         thread::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
     };
-    let num_spawned = orchestrator.run(params, iter, ComputationKind::Collect, thread_work);
+    let num_spawned = orchestrator.run(params, iter, ComputationKind::Collect, thread_do);
 
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)
