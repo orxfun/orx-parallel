@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use super::par_scope::ParScope;
 use crate::orch::num_spawned::NumSpawned;
 use orx_concurrent_bag::ConcurrentBag;
@@ -32,7 +34,7 @@ pub trait ParThreadPool {
         todo!()
     }
 
-    fn max_num_threads(&self) -> usize;
+    fn max_num_threads(&self) -> NonZeroUsize;
 
     // derived
 

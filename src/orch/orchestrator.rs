@@ -1,5 +1,7 @@
+use std::num::NonZeroUsize;
+
 use crate::{
-    ParallelRunner, Params,
+    NumThreads, ParallelRunner, Params,
     orch::{NumSpawned, thread_pool::ParThreadPool},
     runner::ComputationKind,
 };
@@ -18,7 +20,7 @@ pub trait Orchestrator {
         <Self::Runner as ParallelRunner>::new(kind, params, initial_input_len)
     }
 
-    fn thread_pool(&mut self) -> &Self::ThreadPool;
+    fn thread_pool(&self) -> &Self::ThreadPool;
 
     fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool;
 
@@ -73,8 +75,21 @@ pub trait Orchestrator {
         self.thread_pool_mut().map(do_spawn, work)
     }
 
-    fn max_num_threads_for_computation(&self, params: Params) -> usize {
-        1
+    fn max_num_threads_for_computation(
+        &self,
+        params: Params,
+        iter_len: Option<usize>,
+    ) -> NonZeroUsize {
+        let ava = self.thread_pool().max_num_threads();
+
+        let req = match (iter_len, params.num_threads) {
+            (Some(len), NumThreads::Auto) => NonZeroUsize::new(len.max(1)).expect(">0"),
+            (Some(len), NumThreads::Max(nt)) => NonZeroUsize::new(len.max(1)).expect(">0").min(nt),
+            (None, NumThreads::Auto) => NonZeroUsize::MAX,
+            (None, NumThreads::Max(nt)) => nt,
+        };
+
+        req.min(ava)
     }
 }
 

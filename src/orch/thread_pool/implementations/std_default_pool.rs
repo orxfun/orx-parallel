@@ -1,9 +1,10 @@
 use crate::{env::MAX_NUM_THREADS_ENV_VARIABLE, orch::ParThreadPool};
+use std::num::NonZeroUsize;
 
 const MAX_UNSET_NUM_THREADS: usize = 8;
 
 pub struct StdDefaultPool {
-    max_num_threads: usize,
+    max_num_threads: NonZeroUsize,
 }
 
 impl Default for StdDefaultPool {
@@ -26,6 +27,8 @@ impl Default for StdDefaultPool {
             (None, Some(ava)) => ava,
             (None, None) => MAX_UNSET_NUM_THREADS,
         };
+
+        let max_num_threads = NonZeroUsize::new(max_num_threads.max(1)).expect(">=1");
 
         Self { max_num_threads }
     }
@@ -50,7 +53,7 @@ impl ParThreadPool for StdDefaultPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn max_num_threads(&self) -> usize {
+    fn max_num_threads(&self) -> NonZeroUsize {
         self.max_num_threads
     }
 
