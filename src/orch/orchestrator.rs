@@ -1,5 +1,3 @@
-use std::num::NonZeroUsize;
-
 use crate::{
     NumThreads, ParallelRunner, Params,
     generic_values::runner_results::Fallibility,
@@ -7,6 +5,7 @@ use crate::{
     runner::ComputationKind,
 };
 use orx_concurrent_iter::ConcurrentIter;
+use std::num::NonZeroUsize;
 
 pub trait Orchestrator {
     type Runner: ParallelRunner;
@@ -36,11 +35,7 @@ pub trait Orchestrator {
     ) -> NumSpawned
     where
         I: ConcurrentIter,
-        F: Fn(
-                &I,
-                &<Self::Runner as ParallelRunner>::SharedState,
-                <Self::Runner as ParallelRunner>::ThreadRunner,
-            ) + Sync,
+        F: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
         let runner = Self::new_runner(kind, params, iter.try_get_len());
         let state = runner.new_shared_state();
@@ -61,12 +56,7 @@ pub trait Orchestrator {
     where
         F: Fallibility,
         I: ConcurrentIter,
-        M: Fn(
-                &I,
-                &<Self::Runner as ParallelRunner>::SharedState,
-                <Self::Runner as ParallelRunner>::ThreadRunner,
-            ) -> Result<T, F::Error>
-            + Sync,
+        M: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, F::Error> + Sync,
         T: Send,
         F::Error: Send,
     {

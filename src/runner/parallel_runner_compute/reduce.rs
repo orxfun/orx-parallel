@@ -23,12 +23,12 @@ where
     Red: Fn(O, O) -> O + Sync,
     O: Send,
 {
-    // let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-    //     let x = thread::reduce::m(thread_runner, iter, state, &map1, &reduce);
-    //     todo!()
-    // };
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+        let x = thread::reduce::m(thread_runner, iter, state, &map1, &reduce);
+        todo!()
+    };
     // let (num_spawned, result) =
-    //     orchestrator.map_fallible(params, iter, ComputationKind::Collect, thread_map);
+    //     orchestrator.map_all(params, iter, ComputationKind::Collect, thread_map);
 
     // let result = match result {
     //     Err(error) => ParallelCollect::StoppedByError { error },
