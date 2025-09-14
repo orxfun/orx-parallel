@@ -1,10 +1,7 @@
 use crate::Params;
 use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
-use crate::orch::{
-    NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool, SharedStateOf, ThreadRunnerOf,
-};
-use crate::runner::parallel_runner::ParallelRunner;
+use crate::generic_values::runner_results::{Fallibility, ParallelCollect};
+use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
 use crate::runner::{ComputationKind, thread_runner_compute as thread};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
@@ -61,6 +58,7 @@ where
     };
     let (num_spawned, results) =
         orchestrator.map2(params, iter, ComputationKind::Collect, thread_map);
+
     let result = match results {
         Err(error) => ParallelCollect::StoppedByError { error },
         Ok(results) => ParallelCollect::reduce(results, pinned_vec),
