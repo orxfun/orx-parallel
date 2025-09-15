@@ -60,34 +60,3 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
         NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
     }
 }
-
-// &mut
-
-impl<'a> ParThreadPool for &'a mut rayon::ThreadPool {
-    type ScopeRef<'s, 'env, 'scope>
-        = &'s rayon::Scope<'scope>
-    where
-        'scope: 's,
-        'env: 'scope + 's;
-
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Sync + 'scope + 'env,
-    {
-        s.spawn(|_| work());
-    }
-
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
-    where
-        'env: 'scope,
-        for<'s> F: FnOnce(&'s rayon::Scope<'scope>) + Send,
-    {
-        self.scope(f)
-    }
-
-    fn max_num_threads(&self) -> NonZeroUsize {
-        NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
-    }
-}

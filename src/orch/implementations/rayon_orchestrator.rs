@@ -15,11 +15,11 @@ where
     runner: PhantomData<R>,
 }
 
-impl<R> RayonOrchestrator<ThreadPool, R>
+impl<R> From<ThreadPool> for RayonOrchestrator<ThreadPool, R>
 where
     R: ParallelRunner,
 {
-    pub fn new(pool: ThreadPool) -> Self {
+    fn from(pool: ThreadPool) -> Self {
         Self {
             pool,
             runner: PhantomData,
@@ -27,11 +27,11 @@ where
     }
 }
 
-impl<'a, R> RayonOrchestrator<&'a ThreadPool, R>
+impl<'a, R> From<&'a ThreadPool> for RayonOrchestrator<&'a ThreadPool, R>
 where
     R: ParallelRunner,
 {
-    pub fn new(pool: &'a ThreadPool) -> Self {
+    fn from(pool: &'a ThreadPool) -> Self {
         Self {
             pool,
             runner: PhantomData,

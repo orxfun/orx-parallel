@@ -1,4 +1,4 @@
-use crate::{IntoParIter, IterationOrder, ParIter};
+use crate::{IntoParIter, IterationOrder, ParIter, orch::implementations::RayonOrchestrator};
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 use test_case::test_matrix;
@@ -30,8 +30,14 @@ fn pool_rayon_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     }
     expected.extend(input.clone().into_iter().map(|x| map(x)));
 
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(nt)
+        .build()
+        .unwrap();
+    let orch: RayonOrchestrator<_> = (&pool).into();
     let mut output = input
         .into_par()
+        .with_runner(orch)
         .chunk_size(chunk)
         .iteration_order(ordering)
         .map(map)
