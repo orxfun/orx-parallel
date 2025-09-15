@@ -30,7 +30,7 @@ pub enum NextSuccess<T> {
 }
 
 impl<T> NextSuccess<T> {
-    pub fn reduce(results: Vec<Self>) -> Option<(usize, T)> {
+    pub fn reduce(results: impl IntoIterator<Item = Self>) -> Option<(usize, T)> {
         let mut result = None;
         let mut idx_bound = usize::MAX;
         for x in results {

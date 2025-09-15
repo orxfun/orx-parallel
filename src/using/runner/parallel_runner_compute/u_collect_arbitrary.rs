@@ -1,4 +1,4 @@
-use super::super::thread_runner_compute as thread;
+use super::super::thread_runner_compute as th;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{ParallelCollectArbitrary, ThreadCollectArbitrary};
 use crate::orch::NumSpawned;
@@ -44,7 +44,7 @@ where
             let u = using.create(num_spawned.into_inner());
             num_spawned.increment();
             s.spawn(|| {
-                thread::u_collect_arbitrary::u_m(
+                th::u_collect_arbitrary::u_m(
                     runner.new_thread_runner(shared_state),
                     u,
                     &iter,
@@ -98,7 +98,7 @@ where
             let u = using.create(num_spawned.into_inner());
             num_spawned.increment();
             handles.push(s.spawn(|| {
-                thread::u_collect_arbitrary::u_x(
+                th::u_collect_arbitrary::u_x(
                     runner.new_thread_runner(shared_state),
                     u,
                     &iter,
@@ -141,11 +141,13 @@ where
     (
         num_spawned,
         match result {
-            ThreadCollectArbitrary::AllCollected => ParallelCollectArbitrary::AllCollected {
-                pinned_vec: bag.into_inner(),
-            },
+            ThreadCollectArbitrary::AllCollected => {
+                ParallelCollectArbitrary::AllOrUntilWhileCollected {
+                    pinned_vec: bag.into_inner(),
+                }
+            }
             ThreadCollectArbitrary::StoppedByWhileCondition => {
-                ParallelCollectArbitrary::StoppedByWhileCondition {
+                ParallelCollectArbitrary::AllOrUntilWhileCollected {
                     pinned_vec: bag.into_inner(),
                 }
             }

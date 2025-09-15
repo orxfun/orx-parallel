@@ -11,7 +11,11 @@ impl Orchestrator for DefaultStdOrchestrator {
 
     type ThreadPool = StdDefaultPool;
 
-    fn thread_pool(&mut self) -> &mut Self::ThreadPool {
+    fn thread_pool(&self) -> &Self::ThreadPool {
+        &self.0
+    }
+
+    fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool {
         &mut self.0
     }
 }

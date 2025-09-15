@@ -1,11 +1,8 @@
 use crate::Params;
 use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, ParallelCollect, ThreadCollect};
-use crate::orch::{
-    NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool, SharedStateOf, ThreadRunnerOf,
-};
-use crate::runner::parallel_runner::ParallelRunner;
-use crate::runner::{ComputationKind, thread_runner_compute as thread};
+use crate::generic_values::runner_results::{Fallibility, ParallelCollect};
+use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
+use crate::runner::{ComputationKind, thread_runner_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -29,10 +26,10 @@ where
     let offset = pinned_vec.len();
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
 
-    let thread_work = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        thread::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
+    let thread_do = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+        th::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
     };
-    let num_spawned = orchestrator.run(params, iter, ComputationKind::Collect, thread_work);
+    let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_do);
 
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)
@@ -56,64 +53,19 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
-    // compute
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    let result: Result<Vec<ThreadCollect<Vo>>, <Vo::Fallibility as Fallibility>::Error> =
-        orchestrator.thread_pool().scope_zzz(|s| {
-            let mut handles = vec![];
-
-            while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-                num_spawned.increment();
-                handles.push(s.spawn(|| {
-                    thread::collect_ordered::x(
-                        runner.new_thread_runner(shared_state),
-                        &iter,
-                        shared_state,
-                        &xap1,
-                    )
-                }));
-            }
-
-            let mut results = Vec::with_capacity(handles.len());
-
-            let mut error = None;
-            while !handles.is_empty() {
-                let mut finished_idx = None;
-                for (h, handle) in handles.iter().enumerate() {
-                    if handle.is_finished() {
-                        finished_idx = Some(h);
-                        break;
-                    }
-                }
-
-                if let Some(h) = finished_idx {
-                    let handle = handles.remove(h);
-                    let result = handle.join().expect("failed to join the thread");
-                    match result.into_result() {
-                        Ok(result) => results.push(result),
-                        Err(e) => {
-                            error = Some(e);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            match error {
-                Some(error) => Err(error),
-                None => Ok(results),
-            }
-        });
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+        th::collect_ordered::x(thread_runner, iter, state, &xap1).into_result()
+    };
+    let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
+        params,
+        iter,
+        ComputationKind::Collect,
+        thread_map,
+    );
 
     let result = match result {
         Err(error) => ParallelCollect::StoppedByError { error },
         Ok(results) => ParallelCollect::reduce(results, pinned_vec),
     };
-
     (num_spawned, result)
 }

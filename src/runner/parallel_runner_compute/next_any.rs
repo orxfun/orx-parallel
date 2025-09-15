@@ -1,8 +1,8 @@
+use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
-use crate::orch::{NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool};
-use crate::runner::{ComputationKind, thread_runner_compute as thread};
-use crate::{ParallelRunner, Params};
+use crate::orch::{NumSpawned, Orchestrator, SharedStateOf};
+use crate::runner::{ComputationKind, thread_runner_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1>(
@@ -17,34 +17,16 @@ where
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner| {
+        Ok(th::next_any::m(thread_runner, iter, state, &map1))
+    };
+    let (num_spawned, result) =
+        orchestrator.map_infallible(params, iter, ComputationKind::Collect, thread_map);
 
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    let result = orchestrator.thread_pool().scope_zzz(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            handles.push(s.spawn(|| {
-                thread::next_any::m(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &map1,
-                )
-            }));
-        }
-
-        // do not wait to join other threads
-        handles
-            .into_iter()
-            .find_map(|x| x.join().expect("failed to join the thread"))
-    });
-
-    (num_spawned, result)
+    let next = match result {
+        Ok(results) => results.into_iter().filter_map(|x| x).next(),
+    };
+    (num_spawned, next)
 }
 
 type ResultNextAny<Vo> =
@@ -63,55 +45,15 @@ where
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
 {
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    let result = orchestrator.thread_pool().scope_zzz(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            handles.push(s.spawn(|| {
-                thread::next_any::x(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                )
-            }));
-        }
-
-        let mut result = Ok(None);
-        while !handles.is_empty() {
-            let mut finished_idx = None;
-            for (h, handle) in handles.iter().enumerate() {
-                if handle.is_finished() {
-                    finished_idx = Some(h);
-                    break;
-                }
-            }
-
-            if let Some(h) = finished_idx {
-                let handle = handles.remove(h);
-                match handle.join().expect("failed to join the thread") {
-                    Ok(Some(x)) => {
-                        result = Ok(Some(x));
-                        break;
-                    }
-                    Err(error) => {
-                        result = Err(error);
-                        break;
-                    }
-                    Ok(None) => {}
-                }
-            }
-        }
-
-        result
-    });
-
-    (num_spawned, result)
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, th_runner| {
+        th::next_any::x(th_runner, iter, state, &xap1)
+    };
+    let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
+        params,
+        iter,
+        ComputationKind::Collect,
+        thread_map,
+    );
+    let next = result.map(|results| results.into_iter().filter_map(|x| x).next());
+    (num_spawned, next)
 }

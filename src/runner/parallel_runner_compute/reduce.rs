@@ -1,8 +1,8 @@
+use crate::Params;
 use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, Reduce};
-use crate::orch::{NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool};
-use crate::runner::{ComputationKind, thread_runner_compute as thread};
-use crate::{ParallelRunner, Params};
+use crate::generic_values::runner_results::Fallibility;
+use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
+use crate::runner::{ComputationKind, thread_runner_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 
 // m
@@ -21,38 +21,15 @@ where
     Red: Fn(O, O) -> O + Sync,
     O: Send,
 {
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+        Ok(th::reduce::m(thread_runner, iter, state, &map1, &reduce))
+    };
+    let (num_spawned, result) =
+        orchestrator.map_infallible(params, iter, ComputationKind::Collect, thread_map);
 
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    let results = orchestrator.thread_pool().scope_zzz(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            handles.push(s.spawn(|| {
-                thread::reduce::m(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &map1,
-                    &reduce,
-                )
-            }));
-        }
-
-        let mut results = Vec::with_capacity(handles.len());
-        for x in handles {
-            if let Some(x) = x.join().expect("failed to join the thread") {
-                results.push(x);
-            }
-        }
-        results
-    });
-
-    let acc = results.into_iter().reduce(reduce);
+    let acc = match result {
+        Ok(results) => results.into_iter().filter_map(|x| x).reduce(reduce),
+    };
 
     (num_spawned, acc)
 }
@@ -77,62 +54,15 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    let result: Result<Vec<Vo::Item>, _> = orchestrator.thread_pool().scope_zzz(|s| {
-        let mut handles = vec![];
-
-        while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-            num_spawned.increment();
-            handles.push(s.spawn(|| {
-                thread::reduce::x(
-                    runner.new_thread_runner(shared_state),
-                    &iter,
-                    shared_state,
-                    &xap1,
-                    &reduce,
-                )
-            }));
-        }
-
-        let mut results = Vec::with_capacity(handles.len());
-
-        let mut error = None;
-        while !handles.is_empty() {
-            let mut finished_idx = None;
-            for (h, handle) in handles.iter().enumerate() {
-                if handle.is_finished() {
-                    finished_idx = Some(h);
-                    break;
-                }
-            }
-
-            if let Some(h) = finished_idx {
-                let handle = handles.remove(h);
-                let result = handle.join().expect("failed to join the thread");
-                match result {
-                    Reduce::Done { acc: Some(acc) } => results.push(acc),
-                    Reduce::StoppedByWhileCondition { acc: Some(acc) } => results.push(acc),
-                    Reduce::StoppedByError { error: e } => {
-                        error = Some(e);
-                        break;
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        match error {
-            Some(error) => Err(error),
-            None => Ok(results),
-        }
-    });
-
-    let acc = result.map(|results| results.into_iter().reduce(reduce));
-
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+        th::reduce::x(thread_runner, iter, state, &xap1, &reduce).into_result()
+    };
+    let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
+        params,
+        iter,
+        ComputationKind::Collect,
+        thread_map,
+    );
+    let acc = result.map(|results| results.into_iter().filter_map(|x| x).reduce(reduce));
     (num_spawned, acc)
 }
