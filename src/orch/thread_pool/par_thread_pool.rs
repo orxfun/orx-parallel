@@ -4,14 +4,6 @@ use orx_concurrent_bag::ConcurrentBag;
 use std::num::NonZeroUsize;
 
 pub trait ParThreadPool {
-    type ScopeZzz<'scope, 'env>: ParScope<'scope, 'env>
-    where
-        'env: 'scope;
-
-    fn scope_zzz<'env, F, T>(&'env self, f: F) -> T
-    where
-        F: for<'scope> FnOnce(&'scope Self::ScopeZzz<'scope, 'env>) -> T;
-
     type ScopeRef<'s, 'env, 'scope>
     where
         'scope: 's,
