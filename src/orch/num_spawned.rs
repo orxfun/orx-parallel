@@ -1,15 +1,19 @@
+/// Number of spawned threads to execute a parallel computation.
 #[derive(Clone, Copy)]
 pub struct NumSpawned(usize);
 
 impl NumSpawned {
+    /// Zero.
     pub fn zero() -> Self {
         Self(0)
     }
 
+    /// Adds one to the spawned thread count.
     pub fn increment(&mut self) {
         self.0 += 1;
     }
 
+    /// Converts into usize.
     pub fn into_inner(self) -> usize {
         self.0
     }
