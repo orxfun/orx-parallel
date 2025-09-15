@@ -1,4 +1,3 @@
-use super::par_scope::ParScope;
 use crate::{generic_values::runner_results::Fallibility, orch::num_spawned::NumSpawned};
 use orx_concurrent_bag::ConcurrentBag;
 use std::num::NonZeroUsize;
@@ -13,17 +12,12 @@ pub trait ParThreadPool {
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Sync + 'scope + 'env,
-    {
-    }
+        W: Fn() + Sync + 'scope + 'env;
 
     fn scope<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
-        for<'s> F: FnOnce(Self::ScopeRef<'s, 'env, 'scope>) + Send,
-    {
-        todo!()
-    }
+        for<'s> F: FnOnce(Self::ScopeRef<'s, 'env, 'scope>) + Send;
 
     fn max_num_threads(&self) -> NonZeroUsize;
 

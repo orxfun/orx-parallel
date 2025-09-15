@@ -1,5 +1,4 @@
 mod std_default_pool;
-mod std_scoped_threads;
 
 // #[cfg(feature = "threadpool")]
 // mod impl_threadpool;
