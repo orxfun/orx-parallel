@@ -1,5 +1,5 @@
 use crate::generic_values::Values;
-use crate::generic_values::runner_results::{Fallibility, Infallible, Reduce};
+use crate::generic_values::runner_results::{Fallibility, Infallible, ParallelCollect, Reduce};
 use crate::orch::{
     NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool, SharedStateOf, ThreadRunnerOf,
 };
