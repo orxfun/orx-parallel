@@ -1,4 +1,4 @@
-use super::super::thread_runner_compute as thread;
+use super::super::thread_runner_compute as th;
 use crate::generic_values::runner_results::Fallibility;
 use crate::orch::NumSpawned;
 use crate::using::Using;
@@ -27,7 +27,7 @@ where
             let u = using.create(num_spawned.into_inner());
             num_spawned.increment();
             handles.push(s.spawn(|| {
-                thread::u_next_any::u_m(
+                th::u_next_any::u_m(
                     runner.new_thread_runner(shared_state),
                     u,
                     &iter,
@@ -71,7 +71,7 @@ where
             let u = using.create(num_spawned.into_inner());
             num_spawned.increment();
             handles.push(s.spawn(|| {
-                thread::u_next_any::u_x(
+                th::u_next_any::u_x(
                     runner.new_thread_runner(shared_state),
                     u,
                     &iter,

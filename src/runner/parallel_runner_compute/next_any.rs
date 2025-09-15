@@ -1,7 +1,7 @@
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
 use crate::orch::{NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool};
-use crate::runner::{ComputationKind, thread_runner_compute as thread};
+use crate::runner::{ComputationKind, thread_runner_compute as th};
 use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -29,7 +29,7 @@ where
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned.increment();
             handles.push(s.spawn(|| {
-                thread::next_any::m(
+                th::next_any::m(
                     runner.new_thread_runner(shared_state),
                     &iter,
                     shared_state,
@@ -75,7 +75,7 @@ where
         while runner.do_spawn_new(num_spawned, shared_state, &iter) {
             num_spawned.increment();
             handles.push(s.spawn(|| {
-                thread::next_any::x(
+                th::next_any::x(
                     runner.new_thread_runner(shared_state),
                     &iter,
                     shared_state,

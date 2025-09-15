@@ -3,7 +3,7 @@ use crate::generic_values::Values;
 use crate::generic_values::runner_results::ParallelCollectArbitrary;
 use crate::orch::Orchestrator;
 use crate::orch::{NumSpawned, SharedStateOf, ThreadRunnerOf};
-use crate::runner::{ComputationKind, thread_runner_compute as thread};
+use crate::runner::{ComputationKind, thread_runner_compute as th};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -34,7 +34,7 @@ where
     };
 
     let thread_work = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        thread::collect_arbitrary::m(thread_runner, iter, state, &map1, &bag);
+        th::collect_arbitrary::m(thread_runner, iter, state, &map1, &bag);
     };
     let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_work);
 
@@ -69,7 +69,7 @@ where
     };
 
     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        thread::collect_arbitrary::x(thread_runner, iter, state, &xap1, &bag).into_result()
+        th::collect_arbitrary::x(thread_runner, iter, state, &xap1, &bag).into_result()
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
         params,

@@ -2,7 +2,7 @@ use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
 use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
-use crate::runner::{ComputationKind, thread_runner_compute as thread};
+use crate::runner::{ComputationKind, thread_runner_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 
 // m
@@ -22,8 +22,7 @@ where
     O: Send,
 {
     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        let result = thread::reduce::m(thread_runner, iter, state, &map1, &reduce);
-        Ok(result)
+        Ok(th::reduce::m(thread_runner, iter, state, &map1, &reduce))
     };
     let (num_spawned, result) =
         orchestrator.map_infallible(params, iter, ComputationKind::Collect, thread_map);
@@ -56,7 +55,7 @@ where
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        thread::reduce::x(thread_runner, iter, state, &xap1, &reduce).into_result()
+        th::reduce::x(thread_runner, iter, state, &xap1, &reduce).into_result()
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
         params,

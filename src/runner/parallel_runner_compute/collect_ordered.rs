@@ -2,7 +2,7 @@ use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect};
 use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
-use crate::runner::{ComputationKind, thread_runner_compute as thread};
+use crate::runner::{ComputationKind, thread_runner_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -27,7 +27,7 @@ where
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
 
     let thread_do = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        thread::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
+        th::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
     };
     let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_do);
 
@@ -54,7 +54,7 @@ where
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        thread::collect_ordered::x(thread_runner, iter, state, &xap1).into_result()
+        th::collect_ordered::x(thread_runner, iter, state, &xap1).into_result()
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
         params,
