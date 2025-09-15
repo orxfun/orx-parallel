@@ -1,10 +1,8 @@
+use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, NextSuccess, NextWithIdx};
-use crate::orch::{
-    NumSpawned, Orchestrator, ParHandle, ParScope, ParThreadPool, SharedStateOf, ThreadRunnerOf,
-};
+use crate::orch::{NumSpawned, Orchestrator, SharedStateOf};
 use crate::runner::{ComputationKind, thread_runner_compute as th};
-use crate::{ParallelRunner, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1>(
@@ -19,7 +17,7 @@ where
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner| {
         Ok(th::next::m(thread_runner, iter, state, &map1))
     };
     let (num_spawned, result) =
@@ -53,8 +51,15 @@ where
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
 {
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-        let x = th::next::x(thread_runner, iter, state, &xap1);
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, th_runner| match th::next::x(
+        th_runner, iter, state, &xap1,
+    ) {
+        NextWithIdx::Found { idx, value } => Ok(Some(NextSuccess::Found { idx, value })),
+        NextWithIdx::NotFound => Ok(None),
+        NextWithIdx::StoppedByWhileCondition { idx } => {
+            Ok(Some(NextSuccess::StoppedByWhileCondition { idx }))
+        }
+        NextWithIdx::StoppedByError { error } => Err(error),
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
         params,
@@ -62,67 +67,6 @@ where
         ComputationKind::Collect,
         thread_map,
     );
-
-    let runner = C::new_runner(ComputationKind::Collect, params, iter.try_get_len());
-
-    let state = runner.new_shared_state();
-    let shared_state = &state;
-
-    let mut num_spawned = NumSpawned::zero();
-    let result: Result<Vec<NextSuccess<Vo::Item>>, _> =
-        orchestrator.thread_pool_mut().scope_zzz(|s| {
-            let mut handles = vec![];
-
-            while runner.do_spawn_new(num_spawned, shared_state, &iter) {
-                num_spawned.increment();
-                handles.push(s.spawn(|| {
-                    th::next::x(
-                        runner.new_thread_runner(shared_state),
-                        &iter,
-                        shared_state,
-                        &xap1,
-                    )
-                }))
-            }
-
-            let mut results = Vec::with_capacity(handles.len());
-
-            let mut error = None;
-            while !handles.is_empty() {
-                let mut finished_idx = None;
-                for (h, handle) in handles.iter().enumerate() {
-                    if handle.is_finished() {
-                        finished_idx = Some(h);
-                        break;
-                    }
-                }
-
-                if let Some(h) = finished_idx {
-                    let handle = handles.remove(h);
-                    let result = handle.join().expect("failed to join the thread");
-                    match result {
-                        NextWithIdx::Found { idx, value } => {
-                            results.push(NextSuccess::Found { idx, value })
-                        }
-                        NextWithIdx::NotFound => {}
-                        NextWithIdx::StoppedByWhileCondition { idx } => {
-                            results.push(NextSuccess::StoppedByWhileCondition { idx });
-                        }
-                        NextWithIdx::StoppedByError { error: e } => {
-                            error = Some(e);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            match error {
-                Some(error) => Err(error),
-                None => Ok(results),
-            }
-        });
-
-    let next = result.map(NextSuccess::reduce);
-
+    let next = result.map(|results| NextSuccess::reduce(results.into_iter().filter_map(|x| x)));
     (num_spawned, next)
 }

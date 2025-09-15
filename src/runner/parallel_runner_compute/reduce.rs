@@ -63,6 +63,6 @@ where
         ComputationKind::Collect,
         thread_map,
     );
-    let acc = result.map(|results| results.into_iter().flat_map(|x| x).reduce(reduce));
+    let acc = result.map(|results| results.into_iter().filter_map(|x| x).reduce(reduce));
     (num_spawned, acc)
 }
