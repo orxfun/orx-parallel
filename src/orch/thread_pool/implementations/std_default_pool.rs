@@ -45,7 +45,7 @@ impl ParThreadPool for StdDefaultPool {
         self.max_num_threads
     }
 
-    fn scope<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,

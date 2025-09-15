@@ -14,7 +14,7 @@ pub trait ParThreadPool {
         'env: 'scope + 's,
         W: Fn() + Sync + 'scope + 'env;
 
-    fn scope<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(Self::ScopeRef<'s, 'env, 'scope>) + Send;
@@ -31,7 +31,7 @@ pub trait ParThreadPoolCompute: ParThreadPool {
         F: Fn() + Sync,
     {
         let mut nt = NumSpawned::zero();
-        self.scope(|s| {
+        self.scoped_computation(|s| {
             while do_spawn(nt) {
                 nt.increment();
                 Self::run_in_scope(&s, &thread_do);
@@ -56,7 +56,7 @@ pub trait ParThreadPoolCompute: ParThreadPool {
         let mut nt = NumSpawned::zero();
         let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
         let work = || _ = thread_results.push(thread_map());
-        self.scope(|s| {
+        self.scoped_computation(|s| {
             while do_spawn(nt) {
                 nt.increment();
                 Self::run_in_scope(&s, &work);

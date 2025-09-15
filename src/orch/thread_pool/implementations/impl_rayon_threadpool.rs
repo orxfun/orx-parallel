@@ -1,52 +1,34 @@
-use crate::orch::{ParHandle, ParScope, ParThreadPool, thread_pool::par_handle::JoinResult};
-use orx_concurrent_bag::ConcurrentBag;
-use rayon::{Scope, ThreadPool};
+use crate::orch::ParThreadPool;
+use std::num::NonZeroUsize;
 
-pub struct ThreadPoolHandle<'scope, T> {
-    idx: usize,
-    result: Option<T>,
-    bag: &'scope ConcurrentBag<bool>,
-}
-
-impl<'scope, T> ParHandle<'scope, T> for ThreadPoolHandle<'scope, T> {
-    fn join(self) -> JoinResult<T> {
-        todo!()
-    }
-
-    fn is_finished(&self) -> bool {
-        todo!()
-    }
-}
-
-impl<'scope, 'env> ParScope<'scope, 'env> for Scope<'scope>
-where
-    'env: 'scope,
-{
-    type Handle<T>
-        = ThreadPoolHandle<'scope, T>
+impl ParThreadPool for rayon::ThreadPool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s rayon::Scope<'scope>
     where
-        Self: 'scope,
-        T: 'scope;
+        'scope: 's,
+        'env: 'scope + 's;
 
-    fn spawn<F, T>(&'scope self, f: F) -> Self::Handle<T>
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
     where
-        F: FnOnce() -> T + Send + 'scope,
-        T: Send + 'scope,
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Sync + 'scope + 'env,
     {
-        todo!()
+        s.spawn(|_| work());
+    }
+
+    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s rayon::Scope<'scope>) + Send,
+    {
+        self.scope(f)
+    }
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        match self.current_num_threads() {
+            0 => NonZeroUsize::new(1).expect(">0"),
+            n => NonZeroUsize::new(n).expect(">0"),
+        }
     }
 }
-
-// impl ParThreadPool for ThreadPool {
-//     type Scope<'scope, 'env>
-//         = Scope<'scope>
-//     where
-//         'env: 'scope;
-
-//     fn scope<'env, F, T>(&'env mut self, f: F) -> T
-//     where
-//         F: for<'scope> FnOnce(&'scope Scope<'scope>) -> T,
-//     {
-//         todo!()
-//     }
-// }
