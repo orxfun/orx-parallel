@@ -20,9 +20,9 @@ pub trait ParThreadPool {
         for<'s> F: FnOnce(Self::ScopeRef<'s, 'env, 'scope>) + Send;
 
     fn max_num_threads(&self) -> NonZeroUsize;
+}
 
-    // derived
-
+pub trait ParThreadPoolCompute: ParThreadPool {
     fn run<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
     where
         S: Fn(NumSpawned) -> bool + Sync,
@@ -67,3 +67,5 @@ pub trait ParThreadPool {
         (nt, result)
     }
 }
+
+impl<X: ParThreadPool> ParThreadPoolCompute for X {}
