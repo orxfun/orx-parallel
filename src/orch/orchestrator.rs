@@ -108,3 +108,22 @@ pub trait Orchestrator {
 
 pub(crate) type SharedStateOf<C> = <<C as Orchestrator>::Runner as ParallelRunner>::SharedState;
 pub(crate) type ThreadRunnerOf<C> = <<C as Orchestrator>::Runner as ParallelRunner>::ThreadRunner;
+
+// auto impl for &mut pool
+
+impl<'a, O> Orchestrator for &'a mut O
+where
+    O: Orchestrator,
+{
+    type Runner = O::Runner;
+
+    type ThreadPool = O::ThreadPool;
+
+    fn thread_pool(&self) -> &Self::ThreadPool {
+        O::thread_pool(self)
+    }
+
+    fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool {
+        O::thread_pool_mut(self)
+    }
+}

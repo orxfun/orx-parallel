@@ -34,10 +34,10 @@ fn pool_rayon_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
         .num_threads(nt)
         .build()
         .unwrap();
-    let orch: RayonOrchestrator<_> = (&pool).into();
+    let mut orch: RayonOrchestrator<_> = (pool).into();
     let mut output = input
         .into_par()
-        .with_runner(orch)
+        .with_runner(&mut orch)
         .chunk_size(chunk)
         .iteration_order(ordering)
         .map(map)
