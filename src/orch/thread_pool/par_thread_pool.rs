@@ -22,6 +22,8 @@ pub trait ParThreadPool {
     fn max_num_threads(&self) -> NonZeroUsize;
 }
 
+// derived
+
 pub trait ParThreadPoolCompute: ParThreadPool {
     fn run<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
     where
