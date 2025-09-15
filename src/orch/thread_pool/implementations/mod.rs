@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod std_default_pool;
 
 // #[cfg(feature = "threadpool")]
