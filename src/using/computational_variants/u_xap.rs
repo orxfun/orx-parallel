@@ -138,7 +138,21 @@ where
     where
         Filter: Fn(&mut <U as Using>::Item, &Self::Item) -> bool + Sync + Clone,
     {
-        todo!()
+        let (using, orchestrator, params, iter, x1) = self.destruct();
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter(u, filter.clone())
+        };
+        UParXap::new(using, orchestrator, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(
@@ -149,7 +163,21 @@ where
         IOut: IntoIterator,
         FlatMap: Fn(&mut <U as Using>::Item, Self::Item) -> IOut + Sync + Clone,
     {
-        todo!()
+        let (using, orchestrator, params, iter, x1) = self.destruct();
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_flat_map(u, flat_map.clone())
+        };
+        UParXap::new(using, orchestrator, params, iter, x1)
     }
 
     fn filter_map<Out, FilterMap>(
@@ -159,7 +187,21 @@ where
     where
         FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
-        todo!()
+        let (using, orchestrator, params, iter, x1) = self.destruct();
+        let x1 = move |u: &mut U::Item, i: I::Item| {
+            let vo = x1(u, i);
+            // SAFETY: all threads are guaranteed to have its own Using::Item value that is not shared with other threads.
+            // This guarantees that there will be no race conditions.
+            // TODO: the reason to have this unsafe block is the complication in lifetimes, which must be possible to fix; however with a large refactoring.
+            let u = unsafe {
+                &mut *{
+                    let p: *mut U::Item = u;
+                    p
+                }
+            };
+            vo.u_filter_map(u, filter_map.clone())
+        };
+        UParXap::new(using, orchestrator, params, iter, x1)
     }
 
     fn collect_into<C>(self, output: C) -> C
