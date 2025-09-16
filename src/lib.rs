@@ -10,7 +10,7 @@
     clippy::missing_panics_doc,
     clippy::todo
 )]
-#![no_std]
+// #![no_std]
 
 extern crate alloc;
 
