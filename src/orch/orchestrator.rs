@@ -1,10 +1,7 @@
 use crate::{
     NumThreads, ParallelRunner, Params,
     generic_values::runner_results::{Fallibility, Infallible, Never},
-    orch::{
-        NumSpawned,
-        thread_pool::{ParThreadPool, ParThreadPoolCompute},
-    },
+    orch::{NumSpawned, ParThreadPool, ParThreadPoolCompute},
     runner::ComputationKind,
 };
 use orx_concurrent_iter::ConcurrentIter;
