@@ -1,3 +1,5 @@
+use alloc::vec;
+use alloc::vec::Vec;
 use orx_pinned_vec::PinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
