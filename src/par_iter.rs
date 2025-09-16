@@ -3,7 +3,7 @@ use crate::computational_variants::fallible_option::ParOption;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
-use crate::using::{UsingClone, UsingFun};
+use crate::using_old::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
     collect_into::ParCollectInto,

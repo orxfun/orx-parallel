@@ -7,7 +7,7 @@ use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    using::{UsingClone, UsingFun, computational_variants::UParMap},
+    using_old::{UsingClone, UsingFun, computational_variants::UParMap},
 };
 use orx_concurrent_iter::ConcurrentIter;
 

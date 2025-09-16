@@ -7,7 +7,7 @@ use crate::runner::parallel_runner_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
     computations::map_self,
-    using::{UsingClone, UsingFun, computational_variants::UPar},
+    using_old::{UsingClone, UsingFun, computational_variants::UPar},
 };
 use crate::{IntoParIter, ParIterResult};
 use orx_concurrent_iter::chain::ChainKnownLenI;
