@@ -1,2 +1,2 @@
 #[cfg(feature = "rayon")]
-mod rayon_threadpool;
+mod rayon;
