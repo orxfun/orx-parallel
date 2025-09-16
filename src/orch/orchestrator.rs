@@ -1,14 +1,12 @@
 use crate::{
     NumThreads, ParallelRunner, Params,
     generic_values::runner_results::{Fallibility, Infallible, Never},
-    orch::{
-        NumSpawned,
-        thread_pool::{ParThreadPool, ParThreadPoolCompute},
-    },
+    orch::{NumSpawned, ParThreadPool, ParThreadPoolCompute},
     runner::ComputationKind,
 };
+use alloc::vec::Vec;
+use core::num::NonZeroUsize;
 use orx_concurrent_iter::ConcurrentIter;
-use std::num::NonZeroUsize;
 
 pub trait Orchestrator {
     type Runner: ParallelRunner;

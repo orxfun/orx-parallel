@@ -1,20 +1,11 @@
-use crate::{IntoParIter, IterationOrder, ParIter, orch::implementations::RayonOrchestrator};
+use crate::{IntoParIter, IterationOrder, ParIter, orch::Orchestrator};
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
-use test_case::test_matrix;
 
-#[cfg(miri)]
-const N: [usize; 2] = [37, 125];
-#[cfg(not(miri))]
-const N: [usize; 2] = [1025, 4735];
-
-#[test_matrix(
-    [0, 1, N[0], N[1]],
-    [1, 4],
-    [1, 64],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary])
-]
-fn pool_rayon_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
+pub fn run_map(n: usize, chunk: usize, ordering: IterationOrder, mut orch: impl Orchestrator) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
@@ -30,11 +21,6 @@ fn pool_rayon_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     }
     expected.extend(input.clone().into_iter().map(|x| map(x)));
 
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(nt)
-        .build()
-        .unwrap();
-    let mut orch: RayonOrchestrator<_> = (pool).into();
     let mut output = input
         .into_par()
         .with_runner(&mut orch)

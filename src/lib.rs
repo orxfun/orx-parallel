@@ -10,6 +10,12 @@
     clippy::missing_panics_doc,
     clippy::todo
 )]
+// #![no_std]
+
+extern crate alloc;
+
+#[cfg(any(test, feature = "std"))]
+extern crate std;
 
 mod collect_into;
 /// Module containing variants of parallel iterators.

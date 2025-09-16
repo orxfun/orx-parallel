@@ -4,6 +4,7 @@ use crate::generic_values::runner_results::{
 use crate::generic_values::whilst_atom_result::WhilstAtomResult;
 use crate::generic_values::whilst_iterators::WhilstAtomFlatMapIter;
 use crate::generic_values::{TransformableValues, Values, WhilstOption, WhilstVector};
+use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 

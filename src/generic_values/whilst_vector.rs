@@ -7,6 +7,7 @@ use crate::generic_values::{
     whilst_iterators::WhilstAtomFlatMapIter,
     whilst_vector_result::WhilstVectorResult,
 };
+use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 use orx_pinned_vec::PinnedVec;

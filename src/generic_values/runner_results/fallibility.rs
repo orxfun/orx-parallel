@@ -4,6 +4,7 @@ use crate::generic_values::{
         ArbitraryPush, OrderedPush, Reduce, SequentialPush, Stop, StopWithIdx, stop::StopReduce,
     },
 };
+use alloc::vec::Vec;
 use std::marker::PhantomData;
 
 pub trait Fallibility: Sized {

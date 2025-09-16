@@ -2,6 +2,7 @@ use crate::{
     computations::heap_sort_into,
     generic_values::{Values, runner_results::Fallibility},
 };
+use alloc::vec::Vec;
 use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 

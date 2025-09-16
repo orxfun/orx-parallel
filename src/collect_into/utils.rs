@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{GrowthWithConstantTimeAccess, SplitVec};
 

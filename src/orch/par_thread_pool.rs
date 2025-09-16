@@ -1,6 +1,7 @@
 use crate::{generic_values::runner_results::Fallibility, orch::num_spawned::NumSpawned};
+use alloc::vec::Vec;
+use core::num::NonZeroUsize;
 use orx_concurrent_bag::ConcurrentBag;
-use std::num::NonZeroUsize;
 
 pub trait ParThreadPool {
     type ScopeRef<'s, 'env, 'scope>
