@@ -59,7 +59,10 @@ where
     /// Rather than the [`DefaultOrchestrator`], uses the parallel runner `Q` which implements [`Orchestrator`].
     ///
     /// See [crate::ParIter::with_runner] for details.
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsing<U, Q, Item = Self::Item>;
+    fn with_runner<Q: Orchestrator>(
+        self,
+        orchestrator: Q,
+    ) -> impl ParIterUsing<U, Q, Item = Self::Item>;
 
     // computation transformations
 

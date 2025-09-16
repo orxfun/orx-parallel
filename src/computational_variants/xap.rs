@@ -18,7 +18,7 @@ pub struct ParXap<I, Vo, X1, R = DefaultOrchestrator>
 where
     R: Orchestrator,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
 {
     orchestrator: R,
@@ -31,7 +31,7 @@ impl<I, Vo, X1, R> ParXap<I, Vo, X1, R>
 where
     R: Orchestrator,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(orchestrator: R, params: Params, iter: I, xap1: X1) -> Self {
