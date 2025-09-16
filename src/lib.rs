@@ -70,4 +70,5 @@ pub use parallelizable_collection_mut::ParallelizableCollectionMut;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use runner::{DefaultRunner, ParallelRunner, ThreadRunner};
 pub use special_type_sets::Sum;
-pub use using_old::ParIterUsing;
+pub use using::ParIterUsing;
+pub use using_old::ParIterUsingOld;

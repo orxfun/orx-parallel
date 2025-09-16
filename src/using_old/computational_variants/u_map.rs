@@ -3,7 +3,8 @@ use crate::{
     generic_values::Vector,
     orch::{DefaultOrchestrator, Orchestrator},
     using_old::{
-        Using, computational_variants::u_xap::UParXap, computations::UM, u_par_iter::ParIterUsing,
+        Using, computational_variants::u_xap::UParXap, computations::UM,
+        u_par_iter::ParIterUsingOld,
     },
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -58,7 +59,7 @@ where
 {
 }
 
-impl<U, I, O, M1, R> ParIterUsing<U, R> for UParMap<U, I, O, M1, R>
+impl<U, I, O, M1, R> ParIterUsingOld<U, R> for UParMap<U, I, O, M1, R>
 where
     R: Orchestrator,
     U: Using,
@@ -92,14 +93,14 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsingOld<U, Q, Item = Self::Item> {
         let (using, params, iter, map) = self.destruct();
         UParMap::new(using, params, iter, map)
     }
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsingOld<U, R, Item = Out>
     where
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
@@ -111,7 +112,7 @@ where
         UParMap::new(using, params, iter, m1)
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsingOld<U, R, Item = Self::Item>
     where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
@@ -128,7 +129,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
+    ) -> impl ParIterUsingOld<U, R, Item = IOut::Item>
     where
         IOut: IntoIterator,
         FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
@@ -144,7 +145,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterUsing<U, R, Item = Out>
+    ) -> impl ParIterUsingOld<U, R, Item = Out>
     where
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {

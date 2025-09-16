@@ -5,7 +5,7 @@ use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
 use crate::using_old::{UsingClone, UsingFun};
 use crate::{
-    ParIterUsing, Params,
+    ParIterUsingOld, Params,
     collect_into::ParCollectInto,
     computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, IterationOrder, NumThreads},
@@ -475,7 +475,7 @@ where
     fn using<U, F>(
         self,
         using: F,
-    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsingOld<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Send + 'static,
         F: FnMut(usize) -> U;
@@ -496,7 +496,7 @@ where
     fn using_clone<U>(
         self,
         value: U,
-    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsingOld<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + Send + 'static;
 

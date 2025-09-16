@@ -7,5 +7,5 @@ mod u_par_iter;
 mod using_variants;
 
 pub(crate) use collect_into::UParCollectIntoCore;
-pub use u_par_iter::ParIterUsing;
+pub use u_par_iter::ParIterUsingOld;
 pub use using_variants::{Using, UsingClone, UsingFun};

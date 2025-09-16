@@ -5,7 +5,7 @@ use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute as prc;
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsingOld, Params,
     computations::map_self,
     using_old::{UsingClone, UsingFun, computational_variants::UPar},
 };
@@ -100,7 +100,7 @@ where
     fn using<U, F>(
         self,
         using: F,
-    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsingOld<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Send + 'static,
         F: FnMut(usize) -> U,
@@ -112,7 +112,7 @@ where
     fn using_clone<U>(
         self,
         using: U,
-    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsingOld<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + Send + 'static,
     {
