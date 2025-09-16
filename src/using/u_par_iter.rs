@@ -1,4 +1,4 @@
-use super::default_fns::*;
+use crate::default_fns::*;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params, Sum,
     orch::{DefaultOrchestrator, Orchestrator},

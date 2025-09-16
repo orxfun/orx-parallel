@@ -7,7 +7,7 @@ use crate::using_old::{UsingClone, UsingFun};
 use crate::{
     ParIterUsingOld, Params,
     collect_into::ParCollectInto,
-    computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
+    default_fns::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, IterationOrder, NumThreads},
     special_type_sets::Sum,
 };

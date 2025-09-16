@@ -6,7 +6,7 @@ use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsingOld, Params,
-    computations::map_self,
+    default_fns::map_self,
     using_old::{UsingClone, UsingFun, computational_variants::UPar},
 };
 use crate::{IntoParIter, ParIterResult};

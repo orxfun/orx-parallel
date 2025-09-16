@@ -1,5 +1,5 @@
 use crate::{
-    Params, computations::map_self, orch::DefaultOrchestrator, runner::parallel_runner_compute,
+    Params, default_fns::map_self, orch::DefaultOrchestrator, runner::parallel_runner_compute,
 };
 use alloc::format;
 use alloc::string::{String, ToString};

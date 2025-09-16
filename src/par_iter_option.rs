@@ -1,4 +1,4 @@
-use crate::computations::{map_count, reduce_sum, reduce_unit};
+use crate::default_fns::{map_count, reduce_sum, reduce_unit};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
 use core::cmp::Ordering;
