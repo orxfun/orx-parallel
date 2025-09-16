@@ -43,5 +43,6 @@ name = "find_iter_into_par"
 harness = false
 
 [features]
-default = ["threadpool", "scoped_threadpool", "rayon"]
+default = ["std", "scoped_threadpool", "rayon"]
+std = []
 generic_iterator = ["rayon"]
