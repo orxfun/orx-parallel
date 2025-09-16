@@ -41,6 +41,8 @@ mod parameters;
 pub mod runner;
 mod special_type_sets;
 /// Module defining parallel iterators with mutable access to values distributed to each thread.
+pub mod using;
+/// Module defining parallel iterators with mutable access to values distributed to each thread.
 pub mod using_old;
 
 /// Module defining the GenericIterator which is a generalization over
