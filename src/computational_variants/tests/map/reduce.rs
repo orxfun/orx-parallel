@@ -1,6 +1,9 @@
 use crate::{
     Params, computations::map_self, orch::DefaultOrchestrator, runner::parallel_runner_compute,
 };
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
 

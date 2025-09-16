@@ -1,4 +1,7 @@
 use crate::{test_utils::*, *};
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use test_case::test_matrix;
 
 fn input<O: FromIterator<String>>(n: usize) -> O {

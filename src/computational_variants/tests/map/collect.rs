@@ -2,6 +2,9 @@ use crate::{
     IterationOrder, Params, computational_variants::computations::map_collect_into,
     orch::DefaultOrchestrator,
 };
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;

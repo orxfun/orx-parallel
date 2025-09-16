@@ -1,4 +1,7 @@
 use crate::{test_utils::*, *};
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use alloc::{format, vec};
 use test_case::test_matrix;
 
 #[test_matrix(N, NT, CHUNK)]
