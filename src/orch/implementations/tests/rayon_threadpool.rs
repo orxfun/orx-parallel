@@ -34,7 +34,7 @@ fn pool_rayon_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
         .num_threads(nt)
         .build()
         .unwrap();
-    let mut orch: RayonOrchestrator<_> = (pool).into();
+    let mut orch: RayonOrchestrator<_> = (&pool).into();
     let mut output = input
         .into_par()
         .with_runner(&mut orch)
