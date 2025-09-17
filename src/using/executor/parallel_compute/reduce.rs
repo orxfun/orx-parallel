@@ -34,7 +34,7 @@ where
     let acc = match result {
         Ok(results) => results
             .into_iter()
-            .filter_map(|x| x)
+            .flatten()
             .reduce(|a, b| reduce(&mut u, a, b)),
     };
 
@@ -76,7 +76,7 @@ where
     let acc = result.map(|results| {
         results
             .into_iter()
-            .filter_map(|x| x)
+            .flatten()
             .reduce(|a, b| reduce(&mut u, a, b))
     });
     (num_spawned, acc)

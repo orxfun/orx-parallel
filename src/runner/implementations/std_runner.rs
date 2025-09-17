@@ -6,7 +6,7 @@ use core::num::NonZeroUsize;
 
 // POOL
 
-const MAX_UNSET_NUM_THREADS: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(8) };
+const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 
 pub struct StdDefaultPool {
     max_num_threads: NonZeroUsize,
@@ -45,7 +45,7 @@ impl ParThreadPool for StdDefaultPool {
         'env: 'scope,
         for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
     {
-        std::thread::scope(|s| f(&s))
+        std::thread::scope(f)
     }
 
     fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
@@ -54,7 +54,7 @@ impl ParThreadPool for StdDefaultPool {
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        s.spawn(move || work());
+        s.spawn(work);
     }
 }
 

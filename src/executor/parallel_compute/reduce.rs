@@ -26,7 +26,7 @@ where
         orchestrator.map_infallible(params, iter, ComputationKind::Collect, thread_map);
 
     let acc = match result {
-        Ok(results) => results.into_iter().filter_map(|x| x).reduce(reduce),
+        Ok(results) => results.into_iter().flatten().reduce(reduce),
     };
 
     (num_spawned, acc)
@@ -59,6 +59,6 @@ where
         ComputationKind::Collect,
         thread_map,
     );
-    let acc = result.map(|results| results.into_iter().filter_map(|x| x).reduce(reduce));
+    let acc = result.map(|results| results.into_iter().flatten().reduce(reduce));
     (num_spawned, acc)
 }

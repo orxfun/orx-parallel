@@ -26,7 +26,7 @@ where
     let next = match result {
         Ok(results) => results
             .into_iter()
-            .filter_map(|x| x)
+            .flatten()
             .min_by_key(|x| x.0)
             .map(|x| x.1),
     };
@@ -67,6 +67,6 @@ where
         ComputationKind::Collect,
         thread_map,
     );
-    let next = result.map(|results| NextSuccess::reduce(results.into_iter().filter_map(|x| x)));
+    let next = result.map(|results| NextSuccess::reduce(results.into_iter().flatten()));
     (num_spawned, next)
 }

@@ -56,7 +56,7 @@ where
     /// See [crate::ParIter::iteration_order] for details.
     fn iteration_order(self, collect: IterationOrder) -> Self;
 
-    /// Rather than the [`DefaultOrchestrator`], uses the parallel runner `Q` which implements [`ParallelRunner`].
+    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
     /// See [crate::ParIter::with_runner] for details.
     fn with_runner<Q: ParallelRunner>(
