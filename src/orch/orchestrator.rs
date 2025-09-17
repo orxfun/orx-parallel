@@ -36,15 +36,15 @@ pub trait Orchestrator {
     ) -> NumSpawned
     where
         I: ConcurrentIter,
-        F: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
+        F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
         let runner = Self::new_runner(kind, params, iter.try_get_len());
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
-        let work = || {
-            thread_do(&iter, &state, runner.new_thread_runner(&state));
+        let work = |num_spawned| {
+            thread_do(num_spawned, &iter, &state, runner.new_thread_runner(&state));
         };
-        self.thread_pool_mut().run(do_spawn, work)
+        self.thread_pool_mut().run_in_pool(do_spawn, work)
     }
 
     fn map_all<F, I, M, T>(
@@ -68,7 +68,7 @@ pub trait Orchestrator {
         let work = || thread_map(&iter, &state, runner.new_thread_runner(&state));
         let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
         self.thread_pool_mut()
-            .map_all::<F, _, _, _>(do_spawn, work, max_num_threads)
+            .map_in_pool::<F, _, _, _>(do_spawn, work, max_num_threads)
     }
 
     fn map_infallible<I, M, T>(
@@ -120,7 +120,7 @@ pub trait Orchestrator {
         let work = |nt| {
             thread_do(nt, &iter, &state, runner.new_thread_runner(&state));
         };
-        self.thread_pool_mut().run_using(do_spawn, work)
+        self.thread_pool_mut().run_in_pool(do_spawn, work)
     }
 }
 

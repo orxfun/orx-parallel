@@ -28,22 +28,7 @@ pub trait ParThreadPool {
 // derived
 
 pub trait ParThreadPoolCompute: ParThreadPool {
-    fn run<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
-    where
-        S: Fn(NumSpawned) -> bool + Sync,
-        F: Fn() + Sync,
-    {
-        let mut nt = NumSpawned::zero();
-        self.scoped_computation(|s| {
-            while do_spawn(nt) {
-                nt.increment();
-                Self::run_in_scope(&s, &thread_do);
-            }
-        });
-        nt
-    }
-
-    fn map_all<F, S, M, T>(
+    fn map_in_pool<F, S, M, T>(
         &mut self,
         do_spawn: S,
         thread_map: M,
@@ -72,9 +57,7 @@ pub trait ParThreadPoolCompute: ParThreadPool {
         (nt, result)
     }
 
-    // using
-
-    fn run_using<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
+    fn run_in_pool<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
     where
         S: Fn(NumSpawned) -> bool + Sync,
         F: Fn(NumSpawned) + Sync,
