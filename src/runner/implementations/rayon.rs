@@ -36,7 +36,7 @@ impl ParThreadPool for ThreadPool {
     }
 }
 
-impl<'a> ParThreadPool for &'a rayon::ThreadPool {
+impl ParThreadPool for &rayon::ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s rayon::Scope<'scope>
     where

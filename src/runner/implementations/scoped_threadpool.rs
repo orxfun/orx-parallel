@@ -36,7 +36,7 @@ impl ParThreadPool for Pool {
     }
 }
 
-impl<'a> ParThreadPool for &'a mut Pool {
+impl ParThreadPool for &mut Pool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s scoped_threadpool::Scope<'env, 'scope>
     where
