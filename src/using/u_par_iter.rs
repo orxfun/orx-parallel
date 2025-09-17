@@ -1,10 +1,8 @@
+use crate::default_fns::*;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params, Sum,
-    orch::{DefaultOrchestrator, Orchestrator},
-    using::{
-        Using,
-        computations::{u_map_clone, u_map_copy, u_map_count, u_reduce_sum, u_reduce_unit},
-    },
+    runner::{DefaultRunner, ParallelRunner},
+    using::using_variants::Using,
 };
 use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
@@ -12,9 +10,9 @@ use orx_concurrent_iter::ConcurrentIter;
 /// Parallel iterator which allows mutable access to a variable of type `U` within its iterator methods.
 ///
 /// Note that one variable will be created per thread used by the parallel computation.
-pub trait ParIterUsing<U, R = DefaultOrchestrator>: Sized + Send + Sync
+pub trait ParIterUsing<U, R = DefaultRunner>: Sized + Send + Sync
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     U: Using,
 {
     /// Element type of the parallel iterator.
@@ -58,10 +56,13 @@ where
     /// See [crate::ParIter::iteration_order] for details.
     fn iteration_order(self, collect: IterationOrder) -> Self;
 
-    /// Rather than the [`DefaultOrchestrator`], uses the parallel runner `Q` which implements [`Orchestrator`].
+    /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
     /// See [crate::ParIter::with_runner] for details.
-    fn with_runner<Q: Orchestrator>(self) -> impl ParIterUsing<U, Q, Item = Self::Item>;
+    fn with_runner<Q: ParallelRunner>(
+        self,
+        orchestrator: Q,
+    ) -> impl ParIterUsing<U, Q, Item = Self::Item>;
 
     // computation transformations
 

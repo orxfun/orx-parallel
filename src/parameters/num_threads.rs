@@ -1,4 +1,4 @@
-use std::num::NonZeroUsize;
+use core::num::NonZeroUsize;
 
 /// `NumThreads` represents the degree of parallelization. It is possible to define an upper bound on the number of threads to be used for the parallel computation.
 /// When set to **1**, the computation will be executed sequentially without any overhead.

@@ -1,6 +1,5 @@
 use crate::{
-    ParIter, ParallelizableCollection, Params, computational_variants::Par,
-    orch::DefaultOrchestrator,
+    ParIter, ParallelizableCollection, Params, computational_variants::Par, runner::DefaultRunner,
 };
 use orx_concurrent_iter::ConcurrentCollectionMut;
 
@@ -60,7 +59,7 @@ pub trait ParallelizableCollectionMut: ConcurrentCollectionMut + ParallelizableC
     ///
     /// assert_eq!(&vec, &[1, 2, 13, 14]);
     /// ```
-    fn par_mut(&mut self) -> impl ParIter<DefaultOrchestrator, Item = &mut Self::Item> {
+    fn par_mut(&mut self) -> impl ParIter<DefaultRunner, Item = &mut Self::Item> {
         Par::new(Default::default(), Params::default(), self.con_iter_mut())
     }
 }

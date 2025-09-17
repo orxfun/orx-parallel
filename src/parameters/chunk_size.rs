@@ -1,4 +1,4 @@
-use std::num::NonZeroUsize;
+use core::num::NonZeroUsize;
 
 /// `ChunkSize` represents the batch size of elements each thread will pull from the main iterator once it becomes idle again.
 /// It is possible to define a minimum or exact chunk size.

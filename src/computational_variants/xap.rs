@@ -1,24 +1,22 @@
-use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParXapResult;
+use crate::executor::parallel_compute as prc;
+use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::generic_values::{TransformableValues, Values};
-use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
-use crate::runner::parallel_runner_compute as prc;
-use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    using::{UsingClone, UsingFun, computational_variants::UParXap},
-};
+use crate::runner::{DefaultRunner, ParallelRunner};
+use crate::using::{UParXap, UsingClone, UsingFun};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params};
+use crate::{ParIterResult, ParIterUsing};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator that xaps inputs.
 ///
 /// *xap* is a generalization of  one-to-one map, filter-map and flat-map operations.
-pub struct ParXap<I, Vo, X1, R = DefaultOrchestrator>
+pub struct ParXap<I, Vo, X1, R = DefaultRunner>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
 {
     orchestrator: R,
@@ -29,9 +27,9 @@ where
 
 impl<I, Vo, X1, R> ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values,
+    Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(orchestrator: R, params: Params, iter: I, xap1: X1) -> Self {
@@ -50,7 +48,7 @@ where
 
 unsafe impl<I, Vo, X1, R> Send for ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -59,7 +57,7 @@ where
 
 unsafe impl<I, Vo, X1, R> Sync for ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -68,7 +66,7 @@ where
 
 impl<I, Vo, X1, R> ParIter<R> for ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -100,7 +98,7 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
         let (_, params, iter, x1) = self.destruct();
         ParXap::new(orchestrator, params, iter, x1)
     }
@@ -112,26 +110,26 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send + 'static,
-        F: FnMut(usize) -> U,
+        U: 'static,
+        F: Fn(usize) -> U + Sync,
     {
         let using = UsingFun::new(using);
         let (orchestrator, params, iter, x1) = self.destruct();
         let m1 = move |_: &mut U, t: I::Item| x1(t);
-        UParXap::new(using, params, iter, m1)
+        UParXap::new(using, orchestrator, params, iter, m1)
     }
 
     fn using_clone<U>(
         self,
-        using: U,
+        value: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send + 'static,
+        U: Clone + 'static,
     {
-        let using = UsingClone::new(using);
+        let using = UsingClone::new(value);
         let (orchestrator, params, iter, x1) = self.destruct();
         let m1 = move |_: &mut U, t: I::Item| x1(t);
-        UParXap::new(using, params, iter, m1)
+        UParXap::new(using, orchestrator, params, iter, m1)
     }
 
     // computation transformations

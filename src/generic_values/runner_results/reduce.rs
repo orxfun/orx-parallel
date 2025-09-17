@@ -23,7 +23,7 @@ impl<V: Values> Reduce<V> {
 }
 
 impl<V: Values> core::fmt::Debug for Reduce<V> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Done { acc: _ } => f.debug_struct("Done").finish(),
             Self::StoppedByWhileCondition { acc: _ } => {

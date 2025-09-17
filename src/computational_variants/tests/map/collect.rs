@@ -1,7 +1,5 @@
-use crate::{
-    IterationOrder, Params, computational_variants::computations::map_collect_into,
-    orch::DefaultOrchestrator,
-};
+use crate::collect_into::collect::map_collect_into;
+use crate::{IterationOrder, Params, runner::DefaultRunner};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -39,8 +37,7 @@ fn m_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let (_, mut output) =
-        map_collect_into(DefaultOrchestrator::default(), params, iter, map, output);
+    let (_, mut output) = map_collect_into(DefaultRunner::default(), params, iter, map, output);
 
     if !params.is_sequential() && matches!(params.iteration_order, IterationOrder::Arbitrary) {
         expected.sort();

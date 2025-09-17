@@ -1,6 +1,6 @@
-use crate::{Params, computational_variants::Par, orch::DefaultOrchestrator};
+use crate::{Params, computational_variants::Par, runner::DefaultRunner};
+use core::ops::RangeBounds;
 use orx_concurrent_iter::ConcurrentDrainableOverSlice;
-use std::ops::RangeBounds;
 
 /// A type which can create a parallel draining iterator over any of its sub-slices.
 ///
@@ -46,7 +46,7 @@ pub trait ParallelDrainableOverSlice: ConcurrentDrainableOverSlice {
     fn par_drain<R>(
         &mut self,
         range: R,
-    ) -> Par<<Self as ConcurrentDrainableOverSlice>::DrainingIter<'_>, DefaultOrchestrator>
+    ) -> Par<<Self as ConcurrentDrainableOverSlice>::DrainingIter<'_>, DefaultRunner>
     where
         R: RangeBounds<usize>,
     {

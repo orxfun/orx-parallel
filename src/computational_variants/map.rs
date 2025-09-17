@@ -1,20 +1,18 @@
 use super::xap::ParXap;
-use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParMapResult;
+use crate::executor::parallel_compute as prc;
 use crate::generic_values::{Vector, WhilstAtom};
-use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
-use crate::runner::parallel_runner_compute as prc;
-use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsing, Params,
-    using::{UsingClone, UsingFun, computational_variants::UParMap},
-};
+use crate::runner::{DefaultRunner, ParallelRunner};
+use crate::using::{UParMap, UsingClone, UsingFun};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params};
+use crate::{ParIterResult, ParIterUsing};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator that maps inputs.
-pub struct ParMap<I, O, M1, R = DefaultOrchestrator>
+pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -26,7 +24,7 @@ where
 
 impl<I, O, M1, R> ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -46,7 +44,7 @@ where
 
 unsafe impl<I, O, M1, R> Send for ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -54,7 +52,7 @@ where
 
 unsafe impl<I, O, M1, R> Sync for ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -62,7 +60,7 @@ where
 
 impl<I, O, M1, R> ParIter<R> for ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -93,7 +91,7 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
         let (_, params, iter, map) = self.destruct();
         ParMap::new(orchestrator, params, iter, map)
     }
@@ -105,26 +103,26 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send + 'static,
-        F: FnMut(usize) -> U,
+        U: 'static,
+        F: Fn(usize) -> U + Sync,
     {
         let using = UsingFun::new(using);
-        let (orchestrator, params, iter, m1) = self.destruct();
-        let m1 = move |_: &mut U, t: I::Item| m1(t);
-        UParMap::new(using, params, iter, m1)
+        let (orchestrator, params, iter, x1) = self.destruct();
+        let m1 = move |_: &mut U, t: I::Item| x1(t);
+        UParMap::new(using, orchestrator, params, iter, m1)
     }
 
     fn using_clone<U>(
         self,
-        using: U,
+        value: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send + 'static,
+        U: Clone + 'static,
     {
-        let using = UsingClone::new(using);
-        let (orchestrator, params, iter, m1) = self.destruct();
-        let m1 = move |_: &mut U, t: I::Item| m1(t);
-        UParMap::new(using, params, iter, m1)
+        let using = UsingClone::new(value);
+        let (orchestrator, params, iter, x1) = self.destruct();
+        let m1 = move |_: &mut U, t: I::Item| x1(t);
+        UParMap::new(using, orchestrator, params, iter, m1)
     }
 
     // computation transformations

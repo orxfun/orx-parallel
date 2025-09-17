@@ -1,6 +1,4 @@
-use crate::{
-    Params, computations::map_self, orch::DefaultOrchestrator, runner::parallel_runner_compute,
-};
+use crate::{Params, default_fns::map_self, executor::parallel_compute, runner::DefaultRunner};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -25,8 +23,7 @@ fn m_find(n: usize, nt: usize, chunk: usize) {
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
 
-    let output =
-        parallel_runner_compute::next::m(DefaultOrchestrator::default(), params, iter, map_self).1;
+    let output = parallel_compute::next::m(DefaultRunner::default(), params, iter, map_self).1;
     assert_eq!(expected, output);
 }
 
@@ -43,8 +40,7 @@ fn m_map_find(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let output =
-        parallel_runner_compute::next::m(DefaultOrchestrator::default(), params, iter, map).1;
+    let output = parallel_compute::next::m(DefaultRunner::default(), params, iter, map).1;
 
     assert_eq!(expected, output);
 }

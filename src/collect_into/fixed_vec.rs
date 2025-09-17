@@ -2,7 +2,7 @@ use super::par_collect_into::ParCollectIntoCore;
 use crate::Params;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
-use crate::orch::Orchestrator;
+use crate::runner::ParallelRunner;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -22,7 +22,7 @@ where
 
     fn m_collect_into<R, I, M1>(self, orchestrator: R, params: Params, iter: I, map1: M1) -> Self
     where
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
@@ -39,7 +39,7 @@ where
         xap1: X1,
     ) -> Self
     where
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(I::Item) -> Vo + Sync,
@@ -56,7 +56,7 @@ where
         xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         X1: Fn(I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,

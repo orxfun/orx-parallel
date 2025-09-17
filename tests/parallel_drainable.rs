@@ -1,5 +1,5 @@
+use core::ops::Range;
 use orx_parallel::*;
-use std::ops::Range;
 use test_case::test_matrix;
 
 #[derive(Clone, Debug)]

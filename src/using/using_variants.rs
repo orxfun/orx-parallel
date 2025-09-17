@@ -2,30 +2,30 @@
 /// and used mutable by the defined computation.
 ///
 /// [`create`]: crate::using::Using::create
-pub trait Using {
+pub trait Using: Sync {
     /// Item to be used mutably by each threads used in parallel computation.
-    type Item: Send + 'static;
+    type Item: 'static;
 
     /// Creates an instance of the variable to be used by the `thread_idx`-th thread.
-    fn create(&mut self, thread_idx: usize) -> Self::Item;
+    fn create(&self, thread_idx: usize) -> Self::Item;
 
     /// Consumes self and creates exactly one instance of the variable.
     fn into_inner(self) -> Self::Item;
 }
 
 /// Using variant that creates instances of each thread by cloning an initial value.
-pub struct UsingClone<T: Clone + Send + 'static>(T);
+pub struct UsingClone<T: Clone + 'static>(T);
 
-impl<T: Clone + Send + 'static> UsingClone<T> {
+impl<T: Clone + 'static> UsingClone<T> {
     pub(crate) fn new(value: T) -> Self {
         Self(value)
     }
 }
 
-impl<T: Clone + Send + 'static> Using for UsingClone<T> {
+impl<T: Clone + 'static> Using for UsingClone<T> {
     type Item = T;
 
-    fn create(&mut self, _: usize) -> T {
+    fn create(&self, _: usize) -> T {
         self.0.clone()
     }
 
@@ -34,19 +34,21 @@ impl<T: Clone + Send + 'static> Using for UsingClone<T> {
     }
 }
 
+unsafe impl<T: Clone + 'static> Sync for UsingClone<T> {}
+
 /// Using variant that creates instances of each thread using a closure.
 pub struct UsingFun<F, T>
 where
-    T: Send + 'static,
-    F: FnMut(usize) -> T,
+    T: 'static,
+    F: Fn(usize) -> T + Sync,
 {
     fun: F,
 }
 
 impl<F, T> UsingFun<F, T>
 where
-    T: Send + 'static,
-    F: FnMut(usize) -> T,
+    T: 'static,
+    F: Fn(usize) -> T + Sync,
 {
     pub(crate) fn new(fun: F) -> Self {
         Self { fun }
@@ -55,16 +57,16 @@ where
 
 impl<F, T> Using for UsingFun<F, T>
 where
-    T: Send + 'static,
-    F: FnMut(usize) -> T,
+    T: 'static,
+    F: Fn(usize) -> T + Sync,
 {
     type Item = T;
 
-    fn create(&mut self, thread_idx: usize) -> Self::Item {
+    fn create(&self, thread_idx: usize) -> Self::Item {
         (self.fun)(thread_idx)
     }
 
-    fn into_inner(mut self) -> Self::Item {
+    fn into_inner(self) -> Self::Item {
         (self.fun)(0)
     }
 }

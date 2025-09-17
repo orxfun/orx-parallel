@@ -1,13 +1,13 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_option::ParOption;
-use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,
     collect_into::ParCollectInto,
-    computations::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
+    default_fns::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, IterationOrder, NumThreads},
     special_type_sets::Sum,
 };
@@ -15,9 +15,9 @@ use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Parallel iterator.
-pub trait ParIter<R = DefaultOrchestrator>: Sized + Send + Sync
+pub trait ParIter<R = DefaultRunner>: Sized + Send + Sync
 where
-    R: Orchestrator,
+    R: ParallelRunner,
 {
     /// Element type of the parallel iterator.
     type Item;
@@ -262,7 +262,7 @@ where
     /// // uses the custom parallel runner MyParallelRunner: ParallelRunner
     /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
     /// ```
-    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item>;
+    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item>;
 
     // using transformations
 
@@ -401,6 +401,7 @@ where
     /// struct ComputationMetrics {
     ///     thread_metrics: UnsafeCell<[ThreadMetrics; MAX_NUM_THREADS]>,
     /// }
+    /// unsafe impl Sync for ComputationMetrics {}
     /// impl ComputationMetrics {
     ///     fn new() -> Self {
     ///         let mut thread_metrics: [ThreadMetrics; MAX_NUM_THREADS] = Default::default();
@@ -414,7 +415,7 @@ where
     /// }
     ///
     /// impl ComputationMetrics {
-    ///     unsafe fn create_for_thread<'a>(&mut self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
+    ///     unsafe fn create_for_thread<'a>(&self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
     ///         // SAFETY: here we create a mutable variable to the thread_idx-th metrics
     ///         // * If we call this method multiple times with the same index,
     ///         //   we create multiple mutable references to the same ThreadMetrics,
@@ -441,6 +442,8 @@ where
     ///     .par()
     ///     // SAFETY: we do not call `create_for_thread` externally;
     ///     // it is safe if it is called only by the parallel computation.
+    ///     // Since we unsafely implement Sync for ComputationMetrics,
+    ///     // we must ensure that ComputationMetrics is not used elsewhere.
     ///     .using(|t| unsafe { metrics.create_for_thread(t) })
     ///     .map(|m: &mut ThreadMetricsWriter<'_>, i| {
     ///         // collect some useful metrics
@@ -462,6 +465,8 @@ where
     ///     .num_threads(MAX_NUM_THREADS)
     ///     .sum();
     ///
+    /// assert_eq!(sum, 9100);
+    ///
     /// let total_by_metrics: usize = metrics
     ///     .thread_metrics
     ///     .get_mut()
@@ -477,8 +482,8 @@ where
         using: F,
     ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send + 'static,
-        F: FnMut(usize) -> U;
+        U: 'static,
+        F: Fn(usize) -> U + Sync;
 
     /// Converts the [`ParIter`] into [`ParIterUsing`] which will have access to a mutable reference of the
     /// used variable throughout the computation.
@@ -498,7 +503,7 @@ where
         value: U,
     ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send + 'static;
+        U: Clone + 'static;
 
     // transformations into fallible computations
 

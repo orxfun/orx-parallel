@@ -5,7 +5,7 @@ use crate::generic_values::{
     },
 };
 use alloc::vec::Vec;
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 pub trait Fallibility: Sized {
     type Error: Send;

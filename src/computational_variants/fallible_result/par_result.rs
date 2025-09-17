@@ -1,16 +1,16 @@
 use crate::computational_variants::Par;
-use crate::orch::{DefaultOrchestrator, Orchestrator};
+use crate::executor::parallel_compute as prc;
 use crate::par_iter_result::{IntoResult, ParIterResult};
-use crate::runner::parallel_runner_compute as prc;
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
+use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub struct ParResult<I, T, E, R = DefaultOrchestrator>
+pub struct ParResult<I, T, E, R = DefaultRunner>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     I::Item: IntoResult<T, E>,
 {
@@ -20,7 +20,7 @@ where
 
 impl<I, T, E, R> ParResult<I, T, E, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     I::Item: IntoResult<T, E>,
 {
@@ -34,7 +34,7 @@ where
 
 impl<I, T, E, R> ParIterResult<R> for ParResult<I, T, E, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     I::Item: IntoResult<T, E>,
 {
@@ -63,7 +63,7 @@ where
 
     // params transformations
 
-    fn with_runner<Q: Orchestrator>(
+    fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
