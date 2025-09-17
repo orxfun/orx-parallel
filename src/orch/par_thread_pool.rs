@@ -45,9 +45,10 @@ pub trait ParThreadPoolCompute: ParThreadPool {
         let bag = &thread_results;
         self.scoped_computation(|s| {
             while do_spawn(nt) {
+                let num_spawned = nt;
                 nt.increment();
                 let work = move || {
-                    bag.push(thread_map(nt));
+                    bag.push(thread_map(num_spawned));
                 };
                 Self::run_in_scope(&s, work);
             }
@@ -68,8 +69,9 @@ pub trait ParThreadPoolCompute: ParThreadPool {
         let mut nt = NumSpawned::zero();
         self.scoped_computation(|s| {
             while do_spawn(nt) {
+                let num_spawned = nt;
                 nt.increment();
-                let work = move || thread_do(nt);
+                let work = move || thread_do(num_spawned);
                 Self::run_in_scope(&s, work);
             }
         });

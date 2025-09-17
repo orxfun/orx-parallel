@@ -415,7 +415,7 @@ where
     /// }
     ///
     /// impl ComputationMetrics {
-    ///     unsafe fn create_for_thread<'a>(&mut self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
+    ///     unsafe fn create_for_thread<'a>(&self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
     ///         // SAFETY: here we create a mutable variable to the thread_idx-th metrics
     ///         // * If we call this method multiple times with the same index,
     ///         //   we create multiple mutable references to the same ThreadMetrics,
@@ -464,6 +464,8 @@ where
     ///     })
     ///     .num_threads(MAX_NUM_THREADS)
     ///     .sum();
+    ///
+    /// assert_eq!(sum, 9100);
     ///
     /// let total_by_metrics: usize = metrics
     ///     .thread_metrics
