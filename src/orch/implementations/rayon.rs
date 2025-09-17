@@ -2,9 +2,9 @@ use crate::{
     DefaultRunner, ParallelRunner,
     orch::{Orchestrator, ParThreadPool},
 };
+use core::{marker::PhantomData, num::NonZeroUsize};
 use orx_self_or::SoR;
 use rayon::ThreadPool;
-use std::{marker::PhantomData, num::NonZeroUsize};
 
 // POOL
 

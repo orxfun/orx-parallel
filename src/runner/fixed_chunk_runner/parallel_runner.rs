@@ -7,8 +7,8 @@ use crate::{
     parameters::Params,
     runner::{computation_kind::ComputationKind, parallel_runner::ParallelRunner},
 };
+use core::sync::atomic::{AtomicUsize, Ordering};
 use orx_concurrent_iter::ConcurrentIter;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 const LAG_PERIODICITY: usize = 4;
 

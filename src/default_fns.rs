@@ -1,4 +1,4 @@
-use std::ops::Add;
+use core::ops::Add;
 
 #[inline(always)]
 pub fn map_self<T>(input: T) -> T {

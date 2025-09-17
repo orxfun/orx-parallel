@@ -1,4 +1,4 @@
-use std::ops::Add;
+use core::ops::Add;
 
 /// Number that can be summed over.
 pub trait Sum<Output> {

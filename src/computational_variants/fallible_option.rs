@@ -3,7 +3,7 @@ use crate::{
     orch::{DefaultOrchestrator, Orchestrator},
     par_iter_option::{ParIterOption, ResultIntoOption},
 };
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.

@@ -26,7 +26,7 @@ impl<F: Fallibility> ThreadCollectArbitrary<F> {
 }
 
 impl<F: Fallibility> core::fmt::Debug for ThreadCollectArbitrary<F> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::AllCollected => write!(f, "AllCollected"),
             Self::StoppedByWhileCondition => write!(f, "StoppedByWhileCondition"),
@@ -54,7 +54,7 @@ where
     V: Values,
     P: IntoConcurrentPinnedVec<V::Item>,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::AllOrUntilWhileCollected { pinned_vec } => f
                 .debug_struct("AllCollected")

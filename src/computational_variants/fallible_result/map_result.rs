@@ -3,8 +3,8 @@ use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::parallel_runner_compute as prc;
 use crate::{IterationOrder, ParCollectInto, ParIter};
+use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.

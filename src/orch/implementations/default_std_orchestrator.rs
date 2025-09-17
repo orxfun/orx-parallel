@@ -1,6 +1,6 @@
 use crate::{DefaultRunner, orch::Orchestrator};
 use crate::{env::MAX_NUM_THREADS_ENV_VARIABLE, orch::ParThreadPool};
-use std::num::NonZeroUsize;
+use core::num::NonZeroUsize;
 
 // POOL
 
