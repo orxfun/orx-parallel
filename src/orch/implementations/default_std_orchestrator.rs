@@ -1,10 +1,10 @@
+use crate::orch::ParThreadPool;
 use crate::{DefaultRunner, orch::Orchestrator};
-use crate::{env::MAX_NUM_THREADS_ENV_VARIABLE, orch::ParThreadPool};
 use core::num::NonZeroUsize;
 
 // POOL
 
-const MAX_UNSET_NUM_THREADS: usize = 8;
+const MAX_UNSET_NUM_THREADS: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(8) };
 
 pub struct StdDefaultPool {
     max_num_threads: NonZeroUsize,
@@ -12,17 +12,9 @@ pub struct StdDefaultPool {
 
 impl Default for StdDefaultPool {
     fn default() -> Self {
-        let env_max_num_threads = match std::env::var(MAX_NUM_THREADS_ENV_VARIABLE) {
-            Ok(s) => match s.parse::<usize>() {
-                Ok(0) => None,    // consistent with .num_threads(0) representing no bound
-                Ok(x) => Some(x), // set to a positive bound
-                Err(_e) => None,  // not a number, ignored assuming no bound
-            },
-            Err(_e) => None, // not set, no bound
-        };
+        let env_max_num_threads = crate::env::max_num_threads_by_env_variable();
 
-        let ava_max_num_threads: Option<usize> =
-            std::thread::available_parallelism().map(|x| x.into()).ok();
+        let ava_max_num_threads = std::thread::available_parallelism().ok();
 
         let max_num_threads = match (env_max_num_threads, ava_max_num_threads) {
             (Some(env), Some(ava)) => env.min(ava),
@@ -30,8 +22,6 @@ impl Default for StdDefaultPool {
             (None, Some(ava)) => ava,
             (None, None) => MAX_UNSET_NUM_THREADS,
         };
-
-        let max_num_threads = NonZeroUsize::new(max_num_threads.max(1)).expect(">=1");
 
         Self { max_num_threads }
     }

@@ -1,4 +1,5 @@
 use crate::{parameters::ChunkSize, runner::computation_kind::ComputationKind};
+use core::num::NonZeroUsize;
 
 const MAX_CHUNK_SIZE: usize = 1 << 20;
 const DESIRED_MIN_CHUNK_SIZE: usize = 64;
@@ -13,7 +14,7 @@ impl ResolvedChunkSize {
     pub fn new(
         kind: ComputationKind,
         initial_len: Option<usize>,
-        max_num_threads: usize,
+        max_num_threads: NonZeroUsize,
         chunk_size: ChunkSize,
     ) -> Self {
         match chunk_size {
@@ -42,7 +43,7 @@ const fn min_required_len(kind: ComputationKind, one_round_len: usize) -> usize 
 fn auto_chunk_size(
     kind: ComputationKind,
     initial_len: Option<usize>,
-    max_num_threads: usize,
+    max_num_threads: NonZeroUsize,
 ) -> usize {
     fn find_chunk_size(kind: ComputationKind, input_len: usize, num_threads: usize) -> usize {
         let mut chunk_size = MAX_CHUNK_SIZE;
@@ -74,11 +75,16 @@ fn auto_chunk_size(
     match initial_len {
         None => 1, // TODO: is this a good choice?
         Some(0) => 1,
-        Some(input_len) => find_chunk_size(kind, input_len, max_num_threads),
+        Some(input_len) => find_chunk_size(kind, input_len, max_num_threads.into()),
     }
 }
 
-fn min_chunk_size(initial_len: Option<usize>, max_num_threads: usize, chunk_size: usize) -> usize {
+fn min_chunk_size(
+    initial_len: Option<usize>,
+    max_num_threads: NonZeroUsize,
+    chunk_size: usize,
+) -> usize {
+    let max_num_threads: usize = max_num_threads.into();
     match initial_len {
         None => chunk_size,
         Some(0) => 1,

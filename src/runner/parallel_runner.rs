@@ -19,7 +19,7 @@ pub trait ParallelRunner: Sized + Sync + 'static {
         kind: ComputationKind,
         params: Params,
         initial_input_len: Option<usize>,
-        // max_num_threads: NonZeroUsize,
+        max_num_threads: NonZeroUsize,
     ) -> Self;
 
     /// Creates an initial shared state.

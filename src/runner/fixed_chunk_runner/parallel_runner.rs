@@ -2,12 +2,12 @@ use super::{chunk_size::ResolvedChunkSize, thread_runner::FixedChunkThreadRunner
 use crate::{
     orch::NumSpawned,
     parameters::Params,
-    runner::{
-        computation_kind::ComputationKind, fixed_chunk_runner::num_threads::maximum_num_threads2,
-        parallel_runner::ParallelRunner,
-    },
+    runner::{computation_kind::ComputationKind, parallel_runner::ParallelRunner},
 };
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::{
+    num::NonZeroUsize,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 use orx_concurrent_iter::ConcurrentIter;
 
 const LAG_PERIODICITY: usize = 4;
@@ -78,15 +78,19 @@ impl ParallelRunner for FixedChunkRunner {
 
     type ThreadRunner = FixedChunkThreadRunner;
 
-    fn new(kind: ComputationKind, params: Params, initial_len: Option<usize>) -> Self {
-        let max_num_threads = maximum_num_threads2(initial_len, params.num_threads);
+    fn new(
+        kind: ComputationKind,
+        params: Params,
+        initial_len: Option<usize>,
+        max_num_threads: NonZeroUsize,
+    ) -> Self {
         let resolved_chunk_size =
             ResolvedChunkSize::new(kind, initial_len, max_num_threads, params.chunk_size);
 
         Self {
             initial_len,
             resolved_chunk_size,
-            max_num_threads,
+            max_num_threads: max_num_threads.into(),
             current_chunk_size: resolved_chunk_size.chunk_size().into(),
         }
     }

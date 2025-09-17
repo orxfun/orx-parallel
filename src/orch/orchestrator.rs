@@ -14,11 +14,13 @@ pub trait Orchestrator {
     type ThreadPool: ParThreadPool;
 
     fn new_runner(
+        &self,
         kind: ComputationKind,
         params: Params,
         initial_input_len: Option<usize>,
     ) -> Self::Runner {
-        <Self::Runner as ParallelRunner>::new(kind, params, initial_input_len)
+        let max_num_threads = self.max_num_threads_for_computation(params, initial_input_len);
+        <Self::Runner as ParallelRunner>::new(kind, params, initial_input_len, max_num_threads)
     }
 
     fn thread_pool(&self) -> &Self::ThreadPool;
@@ -38,7 +40,7 @@ pub trait Orchestrator {
         I: ConcurrentIter,
         F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
-        let runner = Self::new_runner(kind, params, iter.try_get_len());
+        let runner = self.new_runner(kind, params, iter.try_get_len());
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = |num_spawned| {
@@ -63,7 +65,7 @@ pub trait Orchestrator {
         F::Error: Send,
     {
         let iter_len = iter.try_get_len();
-        let runner = Self::new_runner(kind, params, iter_len);
+        let runner = self.new_runner(kind, params, iter_len);
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = |nt| thread_map(nt, &iter, &state, runner.new_thread_runner(&state));
@@ -93,7 +95,9 @@ pub trait Orchestrator {
         params: Params,
         iter_len: Option<usize>,
     ) -> NonZeroUsize {
-        let ava = self.thread_pool().max_num_threads();
+        let pool = self.thread_pool().max_num_threads();
+
+        let env = crate::env::max_num_threads_by_env_variable().unwrap_or(NonZeroUsize::MAX);
 
         let req = match (iter_len, params.num_threads) {
             (Some(len), NumThreads::Auto) => NonZeroUsize::new(len.max(1)).expect(">0"),
@@ -102,7 +106,7 @@ pub trait Orchestrator {
             (None, NumThreads::Max(nt)) => nt,
         };
 
-        req.min(ava)
+        req.min(pool.min(env))
     }
 }
 
