@@ -1,5 +1,6 @@
 use super::iter::GenericIterator;
 use crate::ParIter;
+use alloc::vec::Vec;
 
 impl<T, S, R, O> GenericIterator<T, S, R, O>
 where
