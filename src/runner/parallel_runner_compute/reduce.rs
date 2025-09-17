@@ -5,8 +5,6 @@ use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
 use crate::runner::{ComputationKind, thread_runner_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 
-// m
-
 pub fn m<C, I, O, M1, Red>(
     mut orchestrator: C,
     params: Params,
@@ -33,8 +31,6 @@ where
 
     (num_spawned, acc)
 }
-
-// x
 
 type ResultReduce<Vo> =
     Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
