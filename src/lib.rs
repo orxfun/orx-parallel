@@ -22,6 +22,8 @@ mod collect_into;
 pub mod computational_variants;
 mod default_fns;
 mod env;
+/// Module defining the parallel runner trait and the default parallel runner.
+pub mod executor;
 mod generic_values;
 mod heap_sort;
 mod into_par_iter;
@@ -38,8 +40,6 @@ mod parallelizable;
 mod parallelizable_collection;
 mod parallelizable_collection_mut;
 mod parameters;
-/// Module defining the parallel runner trait and the default parallel runner.
-pub mod runner;
 mod special_type_sets;
 /// Module defining parallel iterators with mutable access to values distributed to each thread.
 pub mod using;
@@ -57,6 +57,7 @@ pub mod generic_iterator;
 mod test_utils;
 
 pub use collect_into::ParCollectInto;
+pub use executor::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
 pub use into_par_iter::IntoParIter;
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
@@ -67,6 +68,5 @@ pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;
 pub use parallelizable_collection_mut::ParallelizableCollectionMut;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-pub use runner::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
 pub use special_type_sets::Sum;
 pub use using::ParIterUsing;

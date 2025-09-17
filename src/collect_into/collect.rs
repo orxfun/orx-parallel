@@ -3,7 +3,7 @@ use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
 use crate::orch::{NumSpawned, Orchestrator};
-use crate::runner::parallel_compute as prc;
+use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

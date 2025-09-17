@@ -2,7 +2,7 @@ use super::{chunk_size::ResolvedChunkSize, thread_executor::FixedChunkThreadExec
 use crate::{
     orch::NumSpawned,
     parameters::Params,
-    runner::{computation_kind::ComputationKind, parallel_executor::ParallelExecutor},
+    executor::{computation_kind::ComputationKind, parallel_executor::ParallelExecutor},
 };
 use core::{
     num::NonZeroUsize,

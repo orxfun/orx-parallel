@@ -3,7 +3,7 @@ use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
-use crate::runner::parallel_compute as prc;
+use crate::executor::parallel_compute as prc;
 use crate::using::{UPar, UsingClone, UsingFun};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params, default_fns::map_self,

@@ -1,4 +1,4 @@
-use crate::runner::thread_executor::ThreadExecutor;
+use crate::executor::thread_executor::ThreadExecutor;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct FixedChunkThreadExecutor {

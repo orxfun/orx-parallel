@@ -3,7 +3,7 @@ use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
-use crate::runner::parallel_compute as prc;
+use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, ParCollectInto, Params};
 use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
