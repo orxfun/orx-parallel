@@ -9,9 +9,9 @@ pub use std_runner::StdRunner;
 #[cfg(feature = "rayon")]
 mod rayon;
 #[cfg(feature = "rayon")]
-pub use rayon::RayonOrchestrator;
+pub use rayon::RunnerWithRayonPool;
 
 #[cfg(feature = "scoped_threadpool")]
 mod scoped_threadpool;
 #[cfg(feature = "scoped_threadpool")]
-pub use scoped_threadpool::ScopedThreadPoolOrchestrator;
+pub use scoped_threadpool::RunnerWithScopedThreadPool;

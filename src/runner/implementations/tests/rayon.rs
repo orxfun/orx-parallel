@@ -1,5 +1,5 @@
 use super::run_map;
-use crate::{IterationOrder, runner::implementations::RayonOrchestrator};
+use crate::{IterationOrder, runner::implementations::RunnerWithRayonPool};
 use test_case::test_matrix;
 
 #[cfg(miri)]
@@ -18,6 +18,6 @@ fn pool_rayon_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
         .num_threads(nt)
         .build()
         .unwrap();
-    let orch: RayonOrchestrator<_> = (&pool).into();
+    let orch: RunnerWithRayonPool<_> = (&pool).into();
     run_map(n, chunk, ordering, orch);
 }

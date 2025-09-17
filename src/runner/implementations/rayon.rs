@@ -67,7 +67,7 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
 
 // RUNNER
 
-pub struct RayonOrchestrator<P, R = DefaultExecutor>
+pub struct RunnerWithRayonPool<P, R = DefaultExecutor>
 where
     R: ParallelExecutor,
     P: SoR<ThreadPool> + ParThreadPool,
@@ -76,7 +76,7 @@ where
     runner: PhantomData<R>,
 }
 
-impl<R> From<ThreadPool> for RayonOrchestrator<ThreadPool, R>
+impl<R> From<ThreadPool> for RunnerWithRayonPool<ThreadPool, R>
 where
     R: ParallelExecutor,
 {
@@ -88,7 +88,7 @@ where
     }
 }
 
-impl<'a, R> From<&'a ThreadPool> for RayonOrchestrator<&'a ThreadPool, R>
+impl<'a, R> From<&'a ThreadPool> for RunnerWithRayonPool<&'a ThreadPool, R>
 where
     R: ParallelExecutor,
 {
@@ -100,7 +100,7 @@ where
     }
 }
 
-impl<P, R> ParallelRunner for RayonOrchestrator<P, R>
+impl<P, R> ParallelRunner for RunnerWithRayonPool<P, R>
 where
     R: ParallelExecutor,
     P: SoR<ThreadPool> + ParThreadPool,

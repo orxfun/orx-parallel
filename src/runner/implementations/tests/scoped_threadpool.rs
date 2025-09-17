@@ -1,5 +1,5 @@
 use super::run_map;
-use crate::{IterationOrder, runner::implementations::ScopedThreadPoolOrchestrator};
+use crate::{IterationOrder, runner::implementations::RunnerWithScopedThreadPool};
 use scoped_threadpool::Pool;
 use test_case::test_matrix;
 
@@ -16,6 +16,6 @@ const N: [usize; 2] = [1025, 4735];
 ]
 fn pool_scoped_threadpool_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let mut pool = Pool::new(nt as u32);
-    let orch: ScopedThreadPoolOrchestrator<_> = (&mut pool).into();
+    let orch: RunnerWithScopedThreadPool<_> = (&mut pool).into();
     run_map(n, chunk, ordering, orch);
 }

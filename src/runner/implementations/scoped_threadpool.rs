@@ -67,7 +67,7 @@ impl<'a> ParThreadPool for &'a mut Pool {
 
 // RUNNER
 
-pub struct ScopedThreadPoolOrchestrator<P, R = DefaultExecutor>
+pub struct RunnerWithScopedThreadPool<P, R = DefaultExecutor>
 where
     R: ParallelExecutor,
     P: SoM<Pool> + ParThreadPool,
@@ -76,7 +76,7 @@ where
     runner: PhantomData<R>,
 }
 
-impl<R> From<Pool> for ScopedThreadPoolOrchestrator<Pool, R>
+impl<R> From<Pool> for RunnerWithScopedThreadPool<Pool, R>
 where
     R: ParallelExecutor,
 {
@@ -88,7 +88,7 @@ where
     }
 }
 
-impl<'a, R> From<&'a mut Pool> for ScopedThreadPoolOrchestrator<&'a mut Pool, R>
+impl<'a, R> From<&'a mut Pool> for RunnerWithScopedThreadPool<&'a mut Pool, R>
 where
     R: ParallelExecutor,
 {
@@ -100,7 +100,7 @@ where
     }
 }
 
-impl<P, R> ParallelRunner for ScopedThreadPoolOrchestrator<P, R>
+impl<P, R> ParallelRunner for RunnerWithScopedThreadPool<P, R>
 where
     R: ParallelExecutor,
     P: SoM<Pool> + ParThreadPool,
