@@ -4,7 +4,7 @@ use crate::generic_values::Vector;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::using::computational_variants::u_map::UParMap;
 use crate::using::computational_variants::u_xap::UParXap;
-use crate::using::runner::parallel_compute as prc;
+use crate::using::executor::parallel_compute as prc;
 use crate::using::using_variants::Using;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
