@@ -8,8 +8,6 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-// m
-
 #[cfg(test)]
 pub fn m<C, I, O, M1, P>(
     mut orchestrator: C,
@@ -41,8 +39,6 @@ where
     let values = bag.into_inner();
     (num_spawned, values)
 }
-
-// x
 
 pub fn x<C, I, Vo, X1, P>(
     mut orchestrator: C,
