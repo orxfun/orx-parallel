@@ -1,7 +1,7 @@
 use crate::{
     NumThreads, ParallelExecutor, Params,
-    executor::ComputationKind,
     generic_values::runner_results::{Fallibility, Infallible, Never},
+    orch::ComputationKind,
     orch::{NumSpawned, ParThreadPool, ParThreadPoolCompute},
 };
 use alloc::vec::Vec;

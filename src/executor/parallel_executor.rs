@@ -1,5 +1,8 @@
-use super::{computation_kind::ComputationKind, thread_executor::ThreadExecutor};
-use crate::{orch::NumSpawned, parameters::Params};
+use super::thread_executor::ThreadExecutor;
+use crate::{
+    orch::{ComputationKind, NumSpawned},
+    parameters::Params,
+};
 use core::num::NonZeroUsize;
 use orx_concurrent_iter::ConcurrentIter;
 

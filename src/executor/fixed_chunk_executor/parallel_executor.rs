@@ -1,9 +1,6 @@
 use super::{chunk_size::ResolvedChunkSize, thread_executor::FixedChunkThreadExecutor};
-use crate::{
-    orch::NumSpawned,
-    parameters::Params,
-    executor::{computation_kind::ComputationKind, parallel_executor::ParallelExecutor},
-};
+use crate::orch::ComputationKind;
+use crate::{executor::parallel_executor::ParallelExecutor, orch::NumSpawned, parameters::Params};
 use core::{
     num::NonZeroUsize,
     sync::atomic::{AtomicUsize, Ordering},

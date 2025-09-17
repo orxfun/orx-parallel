@@ -1,9 +1,7 @@
 use crate::Params;
-use crate::executor::ComputationKind;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::ParallelCollectArbitrary;
-use crate::orch::Orchestrator;
-use crate::orch::{NumSpawned, SharedStateOf, ThreadRunnerOf};
+use crate::orch::{ComputationKind, NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
 use crate::using::executor::thread_compute as th;
 use crate::using::using_variants::Using;
 use orx_concurrent_bag::ConcurrentBag;

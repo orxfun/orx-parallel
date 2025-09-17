@@ -1,8 +1,7 @@
 use crate::Params;
-use crate::executor::ComputationKind;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
-use crate::orch::{NumSpawned, Orchestrator, SharedStateOf};
+use crate::orch::{ComputationKind, NumSpawned, Orchestrator, SharedStateOf};
 use crate::using::executor::thread_compute as th;
 use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
