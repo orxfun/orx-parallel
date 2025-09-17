@@ -56,16 +56,7 @@ impl ParThreadPool for StdDefaultPool {
         std::thread::scope(|s| f(&s))
     }
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Sync + 'scope + 'env,
-    {
-        s.spawn(|| work());
-    }
-
-    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,

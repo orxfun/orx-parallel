@@ -15,13 +15,13 @@ impl ParThreadPool for ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Sync + 'scope + 'env,
+        W: Fn() + Send + 'scope + 'env,
     {
-        s.spawn(|_| work());
+        s.spawn(move |_| work());
     }
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
@@ -34,15 +34,6 @@ impl ParThreadPool for ThreadPool {
 
     fn max_num_threads(&self) -> NonZeroUsize {
         NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
-    }
-
-    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.spawn(move |_| work());
     }
 }
 
@@ -53,13 +44,13 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Sync + 'scope + 'env,
+        W: Fn() + Send + 'scope + 'env,
     {
-        s.spawn(|_| work());
+        s.spawn(move |_| work());
     }
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
@@ -72,15 +63,6 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
 
     fn max_num_threads(&self) -> NonZeroUsize {
         NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
-    }
-
-    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.spawn(move |_| work());
     }
 }
 

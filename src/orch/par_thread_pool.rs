@@ -11,13 +11,7 @@ pub trait ParThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Sync + 'scope + 'env;
-
-    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
@@ -91,7 +85,7 @@ pub trait ParThreadPoolCompute: ParThreadPool {
             while do_spawn(nt) {
                 nt.increment();
                 let work = move || thread_do(nt);
-                Self::run_in_scope2(&s, work);
+                Self::run_in_scope(&s, work);
             }
         });
         nt
