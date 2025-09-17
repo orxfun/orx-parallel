@@ -1,6 +1,6 @@
 use crate::fibonacci;
-use std::hint::black_box;
 use orx_parallel::*;
+use std::hint::black_box;
 use test_case::test_case;
 
 #[test_case(511, 0, 0, &[333], &[333], None)]

@@ -1,7 +1,7 @@
 use super::thread_executor::ThreadExecutor;
 use crate::{
-    runner::{ComputationKind, NumSpawned},
     parameters::Params,
+    runner::{ComputationKind, NumSpawned},
 };
 use core::num::NonZeroUsize;
 use orx_concurrent_iter::ConcurrentIter;

@@ -1,7 +1,7 @@
 use crate::computational_variants::ParMap;
-use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::executor::parallel_compute as prc;
+use crate::par_iter_result::{IntoResult, ParIterResult};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;

@@ -1,9 +1,9 @@
 use super::xap::ParXap;
 use crate::computational_variants::fallible_result::ParMapResult;
-use crate::generic_values::{Vector, WhilstAtom};
-use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
+use crate::generic_values::{Vector, WhilstAtom};
+use crate::par_iter_result::IntoResult;
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::{UParMap, UsingClone, UsingFun};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params};
 use crate::{ParIterResult, ParIterUsing};

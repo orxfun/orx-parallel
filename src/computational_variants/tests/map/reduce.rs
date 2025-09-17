@@ -1,4 +1,4 @@
-use crate::{Params, default_fns::map_self, runner::DefaultRunner, executor::parallel_compute};
+use crate::{Params, default_fns::map_self, executor::parallel_compute, runner::DefaultRunner};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -26,13 +26,8 @@ fn m_reduce(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let (_, output) = parallel_compute::reduce::m(
-        DefaultRunner::default(),
-        params,
-        iter,
-        map_self,
-        reduce,
-    );
+    let (_, output) =
+        parallel_compute::reduce::m(DefaultRunner::default(), params, iter, map_self, reduce);
 
     assert_eq!(expected, output);
 }

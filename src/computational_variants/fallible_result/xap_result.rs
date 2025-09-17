@@ -1,9 +1,9 @@
 use crate::computational_variants::ParXap;
+use crate::executor::parallel_compute as prc;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_result::{IntoResult, ParIterResult};
-use crate::executor::parallel_compute as prc;
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, Params};
 use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;

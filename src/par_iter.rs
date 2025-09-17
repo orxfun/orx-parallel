@@ -1,8 +1,8 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_option::ParOption;
-use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::{UsingClone, UsingFun};
 use crate::{
     ParIterUsing, Params,

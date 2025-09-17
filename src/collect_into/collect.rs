@@ -1,9 +1,9 @@
 use crate::Params;
+use crate::executor::parallel_compute as prc;
 use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
 use crate::runner::{NumSpawned, ParallelRunner};
-use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

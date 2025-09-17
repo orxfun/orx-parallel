@@ -1,6 +1,5 @@
 use crate::{
-    ParIter, ParallelizableCollection, Params, computational_variants::Par,
-    runner::DefaultRunner,
+    ParIter, ParallelizableCollection, Params, computational_variants::Par, runner::DefaultRunner,
 };
 use orx_concurrent_iter::ConcurrentCollectionMut;
 

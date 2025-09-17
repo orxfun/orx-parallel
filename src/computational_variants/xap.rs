@@ -1,9 +1,9 @@
 use crate::computational_variants::fallible_result::ParXapResult;
+use crate::executor::parallel_compute as prc;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_result::IntoResult;
-use crate::executor::parallel_compute as prc;
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::{UParXap, UsingClone, UsingFun};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params};
 use crate::{ParIterResult, ParIterUsing};
