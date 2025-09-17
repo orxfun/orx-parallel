@@ -76,10 +76,7 @@ where
     runner: PhantomData<R>,
 }
 
-impl<R> From<Pool> for RunnerWithScopedThreadPool<Pool, R>
-where
-    R: ParallelExecutor,
-{
+impl From<Pool> for RunnerWithScopedThreadPool<Pool, DefaultExecutor> {
     fn from(pool: Pool) -> Self {
         Self {
             pool,
@@ -88,10 +85,7 @@ where
     }
 }
 
-impl<'a, R> From<&'a mut Pool> for RunnerWithScopedThreadPool<&'a mut Pool, R>
-where
-    R: ParallelExecutor,
-{
+impl<'a> From<&'a mut Pool> for RunnerWithScopedThreadPool<&'a mut Pool, DefaultExecutor> {
     fn from(pool: &'a mut Pool) -> Self {
         Self {
             pool,

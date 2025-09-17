@@ -41,7 +41,7 @@ test-case = "3.3.1"
 name = "find_iter_into_par"
 harness = false
 
-[package.metadata."docs.rs"]
+[package.metadata.docs.rs]
 all-features = true
 
 [features]
