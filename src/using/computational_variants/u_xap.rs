@@ -1,10 +1,11 @@
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParIterUsing, Params,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterUsing, Params,
     generic_values::{TransformableValues, runner_results::Infallible},
     orch::{DefaultOrchestrator, Orchestrator},
-    using::using_variants::Using,
+    using::{runner::parallel_runner_compute as prc, using_variants::Using},
 };
 use orx_concurrent_iter::ConcurrentIter;
+// use crate::runner::parallel_runner_compute as prc;
 
 pub struct UParXap<U, I, Vo, X1, R = DefaultOrchestrator>
 where
@@ -206,8 +207,10 @@ where
 
     fn collect_into<C>(self, output: C) -> C
     where
-        C: crate::ParCollectInto<Self::Item>,
+        C: ParCollectInto<Self::Item>,
     {
+        // let (using, orchestrator, params, iter, x1) = self.destruct();
+        // output.x_collect_into(using, orchestrator, params, iter, x1)
         todo!()
     }
 
@@ -216,13 +219,27 @@ where
         Self::Item: Send,
         Reduce: Fn(&mut <U as Using>::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        todo!()
+        let (using, orchestrator, params, iter, x1) = self.destruct();
+        let (_, Ok(acc)) = prc::reduce::x(using, orchestrator, params, iter, x1, reduce);
+        acc
     }
 
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send,
     {
-        todo!()
+        let (using, orchestrator, params, iter, x1) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => {
+                let (_num_threads, Ok(result)) =
+                    prc::next::x(using, orchestrator, params, iter, x1);
+                result.map(|x| x.1)
+            }
+            IterationOrder::Arbitrary => {
+                let (_num_threads, Ok(result)) =
+                    prc::next_any::x(using, orchestrator, params, iter, x1);
+                result
+            }
+        }
     }
 }
