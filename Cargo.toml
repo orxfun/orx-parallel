@@ -13,8 +13,8 @@ categories = ["concurrency", "algorithms"]
 [dependencies]
 orx-pseudo-default = { version = "2.1.0", default-features = false }
 orx-pinned-vec = { version = "3.17.0", default-features = false }
-orx-fixed-vec = { version = "3.18.0", default-features = false }
-orx-split-vec = { version = "3.18.0", default-features = false }
+orx-fixed-vec = { version = "3.19.0", default-features = false }
+orx-split-vec = { version = "3.19.0", default-features = false }
 orx-pinned-concurrent-col = { version = "2.14.0", default-features = false }
 orx-concurrent-bag = { version = "3.0.0", default-features = false }
 orx-concurrent-ordered-bag = { version = "3.0.0", default-features = false }
