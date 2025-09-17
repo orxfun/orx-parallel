@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests;
 
+mod sequential;
+pub use sequential::SequentialRunner;
+
 #[cfg(feature = "std")]
 mod std_runner;
 #[cfg(feature = "std")]

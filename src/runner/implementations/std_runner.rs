@@ -66,7 +66,7 @@ pub struct StdRunner<E: ParallelExecutor = DefaultExecutor> {
     executor: PhantomData<E>,
 }
 
-impl<E: ParallelExecutor> Default for StdRunner<E> {
+impl Default for StdRunner<DefaultExecutor> {
     fn default() -> Self {
         Self {
             pool: Default::default(),

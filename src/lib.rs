@@ -78,5 +78,6 @@ pub use runner::DefaultRunner;
 pub use runner::RunnerWithRayonPool;
 #[cfg(feature = "scoped_threadpool")]
 pub use runner::RunnerWithScopedThreadPool;
+pub use runner::SequentialRunner;
 #[cfg(feature = "std")]
 pub use runner::StdRunner;
