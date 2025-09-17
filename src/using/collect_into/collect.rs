@@ -1,6 +1,6 @@
 use crate::Params;
 use crate::generic_values::runner_results::{
-    Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
+    Infallible, ParallelCollect, ParallelCollectArbitrary,
 };
 use crate::orch::{NumSpawned, Orchestrator};
 use crate::using::runner::parallel_runner_compute as prc;
@@ -54,65 +54,69 @@ where
     pinned_vec
 }
 
-// pub fn xap_collect_into<R, I, Vo, X1, P>(
-//     orchestrator: R,
-//     params: Params,
-//     iter: I,
-//     xap1: X1,
-//     pinned_vec: P,
-// ) -> (NumSpawned, P)
-// where
-//     R: Orchestrator,
-//     I: ConcurrentIter,
-//     Vo: Values<Fallibility = Infallible>,
-//     Vo::Item: Send,
-//     X1: Fn(I::Item) -> Vo + Sync,
-//     P: IntoConcurrentPinnedVec<Vo::Item>,
-// {
-//     match (params.is_sequential(), params.iteration_order) {
-//         (true, _) => (
-//             NumSpawned::zero(),
-//             xap_collect_into_seq(iter, xap1, pinned_vec),
-//         ),
-//         (false, IterationOrder::Arbitrary) => {
-//             let (num_threads, result) =
-//                 prc::collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);
-//             let pinned_vec = match result {
-//                 ParallelCollectArbitrary::AllOrUntilWhileCollected { pinned_vec } => pinned_vec,
-//             };
-//             (num_threads, pinned_vec)
-//         }
-//         (false, IterationOrder::Ordered) => {
-//             let (num_threads, result) =
-//                 prc::collect_ordered::x(orchestrator, params, iter, xap1, pinned_vec);
-//             let pinned_vec = match result {
-//                 ParallelCollect::AllCollected { pinned_vec } => pinned_vec,
-//                 ParallelCollect::StoppedByWhileCondition {
-//                     pinned_vec,
-//                     stopped_idx: _,
-//                 } => pinned_vec,
-//             };
-//             (num_threads, pinned_vec)
-//         }
-//     }
-// }
+pub fn xap_collect_into<U, R, I, Vo, X1, P>(
+    using: U,
+    orchestrator: R,
+    params: Params,
+    iter: I,
+    xap1: X1,
+    pinned_vec: P,
+) -> (NumSpawned, P)
+where
+    U: Using,
+    R: Orchestrator,
+    I: ConcurrentIter,
+    Vo: Values<Fallibility = Infallible>,
+    Vo::Item: Send,
+    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    match (params.is_sequential(), params.iteration_order) {
+        (true, _) => (
+            NumSpawned::zero(),
+            xap_collect_into_seq(using, iter, xap1, pinned_vec),
+        ),
+        (false, IterationOrder::Arbitrary) => {
+            let (num_threads, result) =
+                prc::collect_arbitrary::x(using, orchestrator, params, iter, xap1, pinned_vec);
+            let pinned_vec = match result {
+                ParallelCollectArbitrary::AllOrUntilWhileCollected { pinned_vec } => pinned_vec,
+            };
+            (num_threads, pinned_vec)
+        }
+        (false, IterationOrder::Ordered) => {
+            let (num_threads, result) =
+                prc::collect_ordered::x(using, orchestrator, params, iter, xap1, pinned_vec);
+            let pinned_vec = match result {
+                ParallelCollect::AllCollected { pinned_vec } => pinned_vec,
+                ParallelCollect::StoppedByWhileCondition {
+                    pinned_vec,
+                    stopped_idx: _,
+                } => pinned_vec,
+            };
+            (num_threads, pinned_vec)
+        }
+    }
+}
 
-// fn xap_collect_into_seq<I, Vo, X1, P>(iter: I, xap1: X1, mut pinned_vec: P) -> P
-// where
-//     I: ConcurrentIter,
-//     Vo: Values,
-//     Vo::Item: Send,
-//     X1: Fn(I::Item) -> Vo + Sync,
-//     P: IntoConcurrentPinnedVec<Vo::Item>,
-// {
-//     let iter = iter.into_seq_iter();
-//     for i in iter {
-//         let vt = xap1(i);
-//         let done = vt.push_to_pinned_vec(&mut pinned_vec);
-//         if Vo::sequential_push_to_stop(done).is_some() {
-//             break;
-//         }
-//     }
+fn xap_collect_into_seq<U, I, Vo, X1, P>(using: U, iter: I, xap1: X1, mut pinned_vec: P) -> P
+where
+    U: Using,
+    I: ConcurrentIter,
+    Vo: Values,
+    Vo::Item: Send,
+    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    let mut u = using.into_inner();
+    let iter = iter.into_seq_iter();
+    for i in iter {
+        let vt = xap1(&mut u, i);
+        let done = vt.push_to_pinned_vec(&mut pinned_vec);
+        if Vo::sequential_push_to_stop(done).is_some() {
+            break;
+        }
+    }
 
-//     pinned_vec
-// }
+    pinned_vec
+}
