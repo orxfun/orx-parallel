@@ -17,7 +17,7 @@ where
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner| {
+    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, thread_runner| {
         Ok(th::next_any::m(thread_runner, iter, state, &map1))
     };
     let (num_spawned, result) =
@@ -45,7 +45,7 @@ where
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
 {
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, th_runner| {
+    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, th_runner| {
         th::next_any::x(th_runner, iter, state, &xap1)
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(

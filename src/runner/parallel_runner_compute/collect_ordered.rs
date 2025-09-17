@@ -53,7 +53,7 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         th::collect_ordered::x(thread_runner, iter, state, &xap1).into_result()
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(

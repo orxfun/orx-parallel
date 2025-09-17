@@ -68,7 +68,7 @@ where
         None => bag.reserve_maximum_capacity(capacity_bound),
     };
 
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         th::collect_arbitrary::x(thread_runner, iter, state, &xap1, &bag).into_result()
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(

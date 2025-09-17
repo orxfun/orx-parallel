@@ -21,7 +21,7 @@ where
     Red: Fn(O, O) -> O + Sync,
     O: Send,
 {
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         Ok(th::reduce::m(thread_runner, iter, state, &map1, &reduce))
     };
     let (num_spawned, result) =
@@ -54,7 +54,7 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     Red: Fn(Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
-    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         th::reduce::x(thread_runner, iter, state, &xap1, &reduce).into_result()
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
