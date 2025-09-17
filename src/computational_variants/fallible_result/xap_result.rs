@@ -1,7 +1,7 @@
 use crate::computational_variants::ParXap;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, ParCollectInto, Params};
@@ -10,7 +10,7 @@ use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub struct ParXapResult<I, T, E, Vo, X1, R = DefaultOrchestrator>
+pub struct ParXapResult<I, T, E, Vo, X1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,

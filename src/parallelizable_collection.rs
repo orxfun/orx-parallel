@@ -1,4 +1,4 @@
-use crate::{Params, computational_variants::Par, runner::DefaultOrchestrator};
+use crate::{Params, computational_variants::Par, runner::DefaultRunner};
 use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 
 /// A type implementing [`ParallelizableCollection`] is a collection owning the elements such that
@@ -75,7 +75,7 @@ pub trait ParallelizableCollection: ConcurrentCollection {
         &self,
     ) -> Par<
         <<Self as ConcurrentCollection>::Iterable<'_> as ConcurrentIterable>::Iter,
-        DefaultOrchestrator,
+        DefaultRunner,
     > {
         Par::new(Default::default(), Params::default(), self.con_iter())
     }

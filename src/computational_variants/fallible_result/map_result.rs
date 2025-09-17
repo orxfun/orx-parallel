@@ -1,5 +1,5 @@
 use crate::computational_variants::ParMap;
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, ParCollectInto, ParIter};
@@ -8,7 +8,7 @@ use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub struct ParMapResult<I, T, E, O, M1, R = DefaultOrchestrator>
+pub struct ParMapResult<I, T, E, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,

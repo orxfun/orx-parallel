@@ -65,7 +65,7 @@ impl<'a> ParThreadPool for &'a mut Pool {
     }
 }
 
-// ORCH
+// RUNNER
 
 pub struct ScopedThreadPoolOrchestrator<P, R = DefaultExecutor>
 where

@@ -1,4 +1,4 @@
-use crate::{Params, computational_variants::Par, runner::DefaultOrchestrator};
+use crate::{Params, computational_variants::Par, runner::DefaultRunner};
 use core::ops::RangeBounds;
 use orx_concurrent_iter::ConcurrentDrainableOverSlice;
 
@@ -46,7 +46,7 @@ pub trait ParallelDrainableOverSlice: ConcurrentDrainableOverSlice {
     fn par_drain<R>(
         &mut self,
         range: R,
-    ) -> Par<<Self as ConcurrentDrainableOverSlice>::DrainingIter<'_>, DefaultOrchestrator>
+    ) -> Par<<Self as ConcurrentDrainableOverSlice>::DrainingIter<'_>, DefaultRunner>
     where
         R: RangeBounds<usize>,
     {

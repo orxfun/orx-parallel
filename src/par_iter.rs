@@ -1,6 +1,6 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_option::ParOption;
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
 use crate::using::{UsingClone, UsingFun};
@@ -15,7 +15,7 @@ use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Parallel iterator.
-pub trait ParIter<R = DefaultOrchestrator>: Sized + Send + Sync
+pub trait ParIter<R = DefaultRunner>: Sized + Send + Sync
 where
     R: ParallelRunner,
 {

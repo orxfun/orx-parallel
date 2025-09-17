@@ -1,5 +1,5 @@
 use crate::default_fns::{map_count, reduce_sum, reduce_unit};
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
 use core::cmp::Ordering;
 
@@ -121,7 +121,7 @@ use core::cmp::Ordering;
 /// ```
 ///
 /// [`ParIter`]: crate::ParIter
-pub trait ParIterOption<R = DefaultOrchestrator>
+pub trait ParIterOption<R = DefaultRunner>
 where
     R: ParallelRunner,
 {

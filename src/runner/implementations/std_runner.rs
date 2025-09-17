@@ -1,5 +1,7 @@
+use crate::ParallelExecutor;
 use crate::par_thread_pool::ParThreadPool;
 use crate::{DefaultExecutor, runner::ParallelRunner};
+use core::marker::PhantomData;
 use core::num::NonZeroUsize;
 
 // POOL
@@ -56,21 +58,32 @@ impl ParThreadPool for StdDefaultPool {
     }
 }
 
-// ORCH
+// RUNNER
 
-#[derive(Default)]
-pub struct DefaultStdOrchestrator(StdDefaultPool);
+pub struct StdRunner<E: ParallelExecutor = DefaultExecutor> {
+    pool: StdDefaultPool,
+    executor: PhantomData<E>,
+}
 
-impl ParallelRunner for DefaultStdOrchestrator {
-    type Runner = DefaultExecutor;
+impl<E: ParallelExecutor> Default for StdRunner<E> {
+    fn default() -> Self {
+        Self {
+            pool: Default::default(),
+            executor: PhantomData,
+        }
+    }
+}
+
+impl<E: ParallelExecutor> ParallelRunner for StdRunner<E> {
+    type Runner = E;
 
     type ThreadPool = StdDefaultPool;
 
     fn thread_pool(&self) -> &Self::ThreadPool {
-        &self.0
+        &self.pool
     }
 
     fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool {
-        &mut self.0
+        &mut self.pool
     }
 }

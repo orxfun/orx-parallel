@@ -1,7 +1,7 @@
 use crate::ParIterUsing;
 use crate::default_fns::u_map_self;
 use crate::generic_values::Vector;
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::computational_variants::u_map::UParMap;
 use crate::using::computational_variants::u_xap::UParXap;
 use crate::using::executor::parallel_compute as prc;
@@ -10,7 +10,7 @@ use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator.
-pub struct UPar<U, I, R = DefaultOrchestrator>
+pub struct UPar<U, I, R = DefaultRunner>
 where
     U: Using,
     R: ParallelRunner,

@@ -1,7 +1,7 @@
 use super::xap::ParXap;
 use crate::computational_variants::fallible_result::ParMapResult;
 use crate::generic_values::{Vector, WhilstAtom};
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
 use crate::using::{UParMap, UsingClone, UsingFun};
@@ -10,7 +10,7 @@ use crate::{ParIterResult, ParIterUsing};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator that maps inputs.
-pub struct ParMap<I, O, M1, R = DefaultOrchestrator>
+pub struct ParMap<I, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,

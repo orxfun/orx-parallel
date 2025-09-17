@@ -1,7 +1,7 @@
 use crate::default_fns::*;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params, Sum,
-    runner::{DefaultOrchestrator, ParallelRunner},
+    runner::{DefaultRunner, ParallelRunner},
     using::using_variants::Using,
 };
 use core::cmp::Ordering;
@@ -10,7 +10,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// Parallel iterator which allows mutable access to a variable of type `U` within its iterator methods.
 ///
 /// Note that one variable will be created per thread used by the parallel computation.
-pub trait ParIterUsing<U, R = DefaultOrchestrator>: Sized + Send + Sync
+pub trait ParIterUsing<U, R = DefaultRunner>: Sized + Send + Sync
 where
     R: ParallelRunner,
     U: Using,

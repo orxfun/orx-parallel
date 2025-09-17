@@ -1,7 +1,7 @@
 use crate::computational_variants::fallible_result::ParXapResult;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
 use crate::using::{UParXap, UsingClone, UsingFun};
@@ -12,7 +12,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// A parallel iterator that xaps inputs.
 ///
 /// *xap* is a generalization of  one-to-one map, filter-map and flat-map operations.
-pub struct ParXap<I, Vo, X1, R = DefaultOrchestrator>
+pub struct ParXap<I, Vo, X1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,

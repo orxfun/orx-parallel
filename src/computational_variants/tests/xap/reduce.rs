@@ -2,7 +2,7 @@ use crate::ParIter;
 use crate::Params;
 use crate::computational_variants::ParXap;
 use crate::generic_values::Vector;
-use crate::runner::DefaultOrchestrator;
+use crate::runner::DefaultRunner;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -32,7 +32,7 @@ fn x_flat_map_reduce(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
+    let x = ParXap::new(DefaultRunner::default(), params, iter, xmap);
 
     let output = x.reduce(reduce);
 
@@ -57,7 +57,7 @@ fn x_filter_map_reduce(n: usize, nt: usize, chunk: usize) {
 
     let params = Params::new(nt, chunk, Default::default());
     let iter = input.into_con_iter();
-    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
+    let x = ParXap::new(DefaultRunner::default(), params, iter, xmap);
 
     let output = x.reduce(reduce);
 

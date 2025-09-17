@@ -2,9 +2,9 @@
 mod tests;
 
 #[cfg(feature = "std")]
-mod default_std_orchestrator;
+mod std_runner;
 #[cfg(feature = "std")]
-pub use default_std_orchestrator::DefaultStdOrchestrator;
+pub use std_runner::StdRunner;
 
 #[cfg(feature = "rayon")]
 mod rayon;

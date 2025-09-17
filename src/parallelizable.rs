@@ -1,4 +1,4 @@
-use crate::{computational_variants::Par, runner::DefaultOrchestrator, parameters::Params};
+use crate::{computational_variants::Par, parameters::Params, runner::DefaultRunner};
 use orx_concurrent_iter::ConcurrentIterable;
 
 /// `Parallelizable` types are those from which parallel iterators can be created
@@ -61,7 +61,7 @@ pub trait Parallelizable: ConcurrentIterable {
     /// assert_eq!(range.par().sum(), 10);
     /// assert_eq!(range.par().max(), Some(4));
     /// ```
-    fn par(&self) -> Par<<Self as ConcurrentIterable>::Iter, DefaultOrchestrator> {
+    fn par(&self) -> Par<<Self as ConcurrentIterable>::Iter, DefaultRunner> {
         Par::new(Default::default(), Params::default(), self.con_iter())
     }
 }

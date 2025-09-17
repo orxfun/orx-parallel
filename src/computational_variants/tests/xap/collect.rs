@@ -1,7 +1,7 @@
 use crate::ParIter;
 use crate::computational_variants::ParXap;
 use crate::generic_values::Vector;
-use crate::runner::DefaultOrchestrator;
+use crate::runner::DefaultRunner;
 use crate::{IterationOrder, Params};
 use alloc::format;
 use alloc::string::{String, ToString};
@@ -44,7 +44,7 @@ fn todo_panic_at_con_bag_new() {
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
+    let x = ParXap::new(DefaultRunner::default(), params, iter, xmap);
 
     let mut output = x.collect_into(output);
 
@@ -83,7 +83,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrde
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
+    let x = ParXap::new(DefaultRunner::default(), params, iter, xmap);
 
     let mut output = x.collect_into(output);
 
@@ -122,7 +122,7 @@ fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOr
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();
-    let x = ParXap::new(DefaultOrchestrator::default(), params, iter, xmap);
+    let x = ParXap::new(DefaultRunner::default(), params, iter, xmap);
 
     let mut output = x.collect_into(output);
 

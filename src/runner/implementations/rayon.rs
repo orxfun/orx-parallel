@@ -65,7 +65,7 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
     }
 }
 
-// ORCH
+// RUNNER
 
 pub struct RayonOrchestrator<P, R = DefaultExecutor>
 where

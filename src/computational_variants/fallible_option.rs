@@ -1,13 +1,13 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
-    runner::{DefaultOrchestrator, ParallelRunner},
+    runner::{DefaultRunner, ParallelRunner},
     par_iter_option::{ParIterOption, ResultIntoOption},
 };
 use core::marker::PhantomData;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.
-pub struct ParOption<F, T, R = DefaultOrchestrator>
+pub struct ParOption<F, T, R = DefaultRunner>
 where
     R: ParallelRunner,
     F: ParIterResult<R, Item = T, Err = ()>,

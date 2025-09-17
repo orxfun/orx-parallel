@@ -2,13 +2,13 @@ use crate::using::executor::parallel_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterUsing, Params,
     generic_values::{TransformableValues, runner_results::Infallible},
-    runner::{DefaultOrchestrator, ParallelRunner},
+    runner::{DefaultRunner, ParallelRunner},
     using::using_variants::Using,
 };
 use orx_concurrent_iter::ConcurrentIter;
 // use crate::runner::parallel_runner_compute as prc;
 
-pub struct UParXap<U, I, Vo, X1, R = DefaultOrchestrator>
+pub struct UParXap<U, I, Vo, X1, R = DefaultRunner>
 where
     U: Using,
     R: ParallelRunner,

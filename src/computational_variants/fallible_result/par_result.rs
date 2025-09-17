@@ -1,14 +1,14 @@
 use crate::computational_variants::Par;
 use crate::executor::parallel_compute as prc;
 use crate::par_iter_result::{IntoResult, ParIterResult};
-use crate::runner::{DefaultOrchestrator, ParallelRunner};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
 use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub struct ParResult<I, T, E, R = DefaultOrchestrator>
+pub struct ParResult<I, T, E, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
