@@ -12,7 +12,6 @@ use crate::{
 use crate::{IntoParIter, ParIterResult};
 use orx_concurrent_iter::chain::ChainKnownLenI;
 use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
-use std::marker::PhantomData;
 
 /// A parallel iterator.
 pub struct Par<I, R = DefaultOrchestrator>
@@ -23,7 +22,6 @@ where
     orchestrator: R,
     params: Params,
     iter: I,
-    phantom: PhantomData<R>,
 }
 
 impl<I, R> Par<I, R>
@@ -36,7 +34,6 @@ where
             orchestrator,
             iter,
             params,
-            phantom: PhantomData,
         }
     }
 
@@ -145,7 +142,7 @@ where
         FlatMap: Fn(Self::Item) -> IOut + Sync,
     {
         let (orchestrator, params, iter) = self.destruct();
-        let x1 = move |i: Self::Item| Vector(flat_map(i)); // TODO: inline
+        let x1 = move |i: Self::Item| Vector(flat_map(i));
         ParXap::new(orchestrator, params, iter, x1)
     }
 
