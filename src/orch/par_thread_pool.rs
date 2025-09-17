@@ -9,11 +9,11 @@ pub trait ParThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Sync + 'scope + 'env;
+        W: Fn() + Send + 'scope + 'env;
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
