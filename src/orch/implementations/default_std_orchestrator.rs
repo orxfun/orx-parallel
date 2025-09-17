@@ -1,4 +1,4 @@
-use crate::orch::ParThreadPool;
+use crate::par_thread_pool::ParThreadPool;
 use crate::{DefaultExecutor, orch::Orchestrator};
 use core::num::NonZeroUsize;
 

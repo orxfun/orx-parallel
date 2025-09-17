@@ -1,8 +1,8 @@
 use crate::{
     NumThreads, ParallelExecutor, Params,
     generic_values::runner_results::{Fallibility, Infallible, Never},
-    orch::ComputationKind,
-    orch::{NumSpawned, ParThreadPool, ParThreadPoolCompute},
+    orch::{ComputationKind, NumSpawned},
+    par_thread_pool::{ParThreadPool, ParThreadPoolCompute},
 };
 use alloc::vec::Vec;
 use core::num::NonZeroUsize;

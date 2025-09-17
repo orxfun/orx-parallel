@@ -1,6 +1,5 @@
 use crate::{
-    DefaultExecutor, ParallelExecutor,
-    orch::{Orchestrator, ParThreadPool},
+    DefaultExecutor, ParallelExecutor, orch::Orchestrator, par_thread_pool::ParThreadPool,
 };
 use core::{marker::PhantomData, num::NonZeroUsize};
 use orx_self_or::SoR;
