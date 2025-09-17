@@ -1,6 +1,6 @@
 use crate::{
-    computations::heap_sort_into,
     generic_values::{Values, runner_results::Fallibility},
+    heap_sort::heap_sort_into,
 };
 use alloc::vec::Vec;
 use core::fmt::Debug;

@@ -20,10 +20,10 @@ extern crate std;
 mod collect_into;
 /// Module containing variants of parallel iterators.
 pub mod computational_variants;
-mod computations;
 mod default_fns;
 mod env;
 mod generic_values;
+mod heap_sort;
 mod into_par_iter;
 /// Module for creating special iterators.
 pub mod iter;
