@@ -2,16 +2,16 @@ use crate::generic_values::Values;
 use crate::generic_values::runner_results::Infallible;
 use crate::runner::ParallelRunner;
 use crate::using_old::Using;
-use crate::using_old::collect_into::u_par_collect_into::UParCollectIntoCore;
+use crate::using_old::collect_into::u_par_collect_into::UParCollectIntoCoreOld;
 use crate::using_old::computations::{UM, UX};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
-impl<O> UParCollectIntoCore<O> for FixedVec<O>
+impl<O> UParCollectIntoCoreOld<O> for FixedVec<O>
 where
     O: Send + Sync,
 {
-    fn u_m_collect_into<R, U, I, M1>(self, m: UM<U, I, O, M1>) -> Self
+    fn u_m_collect_into_old<R, U, I, M1>(self, m: UM<U, I, O, M1>) -> Self
     where
         R: ParallelRunner,
         U: Using,
@@ -19,10 +19,10 @@ where
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.u_m_collect_into::<R, _, _, _>(m))
+        FixedVec::from(vec.u_m_collect_into_old::<R, _, _, _>(m))
     }
 
-    fn u_x_collect_into<R, U, I, Vo, M1>(self, x: UX<U, I, Vo, M1>) -> Self
+    fn u_x_collect_into_old<R, U, I, Vo, M1>(self, x: UX<U, I, Vo, M1>) -> Self
     where
         R: ParallelRunner,
         U: Using,
@@ -32,6 +32,6 @@ where
         M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.u_x_collect_into::<R, _, _, _, _>(x))
+        FixedVec::from(vec.u_x_collect_into_old::<R, _, _, _, _>(x))
     }
 }

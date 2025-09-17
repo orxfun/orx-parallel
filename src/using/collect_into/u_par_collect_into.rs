@@ -36,8 +36,3 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
 }
-
-/// Collection types into which outputs of a parallel computations can be collected into.
-pub trait UParCollectInto<O>: UParCollectIntoCore<O> {}
-
-impl<O, C> UParCollectInto<O> for C where C: UParCollectIntoCore<O> {}

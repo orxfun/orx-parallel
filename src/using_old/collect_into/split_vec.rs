@@ -3,18 +3,18 @@ use crate::generic_values::Values;
 use crate::generic_values::runner_results::Infallible;
 use crate::runner::ParallelRunner;
 use crate::using_old::Using;
-use crate::using_old::collect_into::u_par_collect_into::UParCollectIntoCore;
+use crate::using_old::collect_into::u_par_collect_into::UParCollectIntoCoreOld;
 use crate::using_old::computations::{UM, UX};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
-impl<O, G> UParCollectIntoCore<O> for SplitVec<O, G>
+impl<O, G> UParCollectIntoCoreOld<O> for SplitVec<O, G>
 where
     O: Send + Sync,
     G: GrowthWithConstantTimeAccess,
     Self: PseudoDefault,
 {
-    fn u_m_collect_into<R, U, I, M1>(mut self, m: UM<U, I, O, M1>) -> Self
+    fn u_m_collect_into_old<R, U, I, M1>(mut self, m: UM<U, I, O, M1>) -> Self
     where
         R: ParallelRunner,
         U: Using,
@@ -30,7 +30,7 @@ where
         pinned_vec
     }
 
-    fn u_x_collect_into<R, U, I, Vo, M1>(mut self, x: UX<U, I, Vo, M1>) -> Self
+    fn u_x_collect_into_old<R, U, I, Vo, M1>(mut self, x: UX<U, I, Vo, M1>) -> Self
     where
         R: ParallelRunner,
         U: Using,

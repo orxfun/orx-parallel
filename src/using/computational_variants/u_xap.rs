@@ -209,9 +209,8 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        // let (using, orchestrator, params, iter, x1) = self.destruct();
-        // output.x_collect_into(using, orchestrator, params, iter, x1)
-        todo!()
+        let (using, orchestrator, params, iter, x1) = self.destruct();
+        output.u_x_collect_into(using, orchestrator, params, iter, x1)
     }
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>

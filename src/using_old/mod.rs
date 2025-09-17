@@ -6,6 +6,6 @@ mod runner;
 mod u_par_iter;
 mod using_variants;
 
-pub(crate) use collect_into::UParCollectIntoCore;
+pub(crate) use collect_into::UParCollectIntoCoreOld;
 pub use u_par_iter::ParIterUsingOld;
 pub use using_variants::{Using, UsingClone, UsingFun};

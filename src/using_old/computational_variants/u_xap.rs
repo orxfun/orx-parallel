@@ -203,7 +203,7 @@ where
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.u_x_collect_into::<R::Runner, _, _, _, _>(self.ux)
+        output.u_x_collect_into_old::<R::Runner, _, _, _, _>(self.ux)
     }
 
     // reduce
