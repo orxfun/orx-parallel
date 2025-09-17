@@ -1,11 +1,11 @@
-use crate::runner::thread_runner::ThreadRunner;
+use crate::runner::thread_executor::ThreadExecutor;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct FixedChunkThreadRunner {
+pub struct FixedChunkThreadExecutor {
     pub(super) chunk_size: usize,
 }
 
-impl ThreadRunner for FixedChunkThreadRunner {
+impl ThreadExecutor for FixedChunkThreadExecutor {
     type SharedState = ();
 
     #[inline(always)]

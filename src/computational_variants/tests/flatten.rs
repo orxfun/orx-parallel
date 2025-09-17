@@ -73,7 +73,7 @@ fn flatten_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
         };
         let filter = |x: &Vec<String>| x.len() == 2;
         let map = |mut x: Vec<String>| {
-            x.push("abc".to_string());
+            x.push("lorem".to_string());
             x
         };
         let expected: Vec<_> = input()

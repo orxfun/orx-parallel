@@ -95,18 +95,3 @@ where
         self.len()
     }
 }
-
-// #[cfg(test)]
-// mod tsts {
-//     use crate::*;
-//     use alloc::vec::Vec;
-//     use orx_split_vec::SplitVec;
-
-//     #[test]
-//     fn abc() {
-//         fn take<C: ParCollectInto<usize>>(c: C) {}
-
-//         take(SplitVec::new());
-//         take(Vec::new());
-//     }
-// }

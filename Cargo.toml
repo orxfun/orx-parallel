@@ -41,8 +41,11 @@ test-case = "3.3.1"
 name = "find_iter_into_par"
 harness = false
 
+[package.metadata."docs.rs"]
+all-features = true
+
 [features]
-default = ["std"]
-# default = ["std", "scoped_threadpool", "rayon"]
+# default = ["std"]
+default = ["std", "scoped_threadpool", "rayon", "generic_iterator"]
 std = []
 generic_iterator = ["rayon"]

@@ -1,4 +1,4 @@
-use crate::ThreadRunner;
+use crate::ThreadExecutor;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{StopWithIdx, ThreadCollect};
 use alloc::vec::Vec;
@@ -14,7 +14,7 @@ pub fn m<C, I, O, M1, P>(
     o_bag: &ConcurrentOrderedBag<O, P>,
     offset: usize,
 ) where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O,
     P: IntoConcurrentPinnedVec<O>,
@@ -60,7 +60,7 @@ pub fn x<C, I, Vo, X1>(
     xap1: &X1,
 ) -> ThreadCollect<Vo>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     Vo: Values,
     X1: Fn(I::Item) -> Vo,

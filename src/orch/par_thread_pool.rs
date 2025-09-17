@@ -3,6 +3,12 @@ use alloc::vec::Vec;
 use core::num::NonZeroUsize;
 use orx_concurrent_bag::ConcurrentBag;
 
+/// A thread pool that can be used for parallel computation.
+///
+/// # Examples
+///
+/// ```
+/// ```
 pub trait ParThreadPool {
     type ScopeRef<'s, 'env, 'scope>
     where
@@ -80,3 +86,16 @@ pub trait ParThreadPoolCompute: ParThreadPool {
 }
 
 impl<X: ParThreadPool> ParThreadPoolCompute for X {}
+
+#[cfg(test)]
+mod tsts {
+    use crate::*;
+
+    #[test]
+    fn abc() {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(4)
+            .build()
+            .unwrap();
+    }
+}

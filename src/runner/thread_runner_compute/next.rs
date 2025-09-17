@@ -1,5 +1,5 @@
 use crate::{
-    ThreadRunner,
+    ThreadExecutor,
     generic_values::Values,
     generic_values::runner_results::{Next, NextWithIdx},
 };
@@ -12,7 +12,7 @@ pub fn m<C, I, O, M1>(
     map1: &M1,
 ) -> Option<(usize, O)>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O,
 {
@@ -69,7 +69,7 @@ pub fn x<C, I, Vo, X1>(
     xap1: &X1,
 ) -> NextWithIdx<Vo>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     Vo: Values,
     X1: Fn(I::Item) -> Vo,

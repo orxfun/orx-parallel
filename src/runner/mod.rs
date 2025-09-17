@@ -1,18 +1,13 @@
 mod computation_kind;
-mod fixed_chunk_runner;
-mod parallel_runner;
+mod fixed_chunk_executor;
+mod parallel_executor;
 pub(crate) mod parallel_runner_compute;
-mod thread_runner;
+mod thread_executor;
 mod thread_runner_compute;
 
 pub use computation_kind::ComputationKind;
-pub use parallel_runner::ParallelRunner;
-pub use thread_runner::ThreadRunner;
+pub use parallel_executor::ParallelExecutor;
+pub use thread_executor::ThreadExecutor;
 
-/// Default parallel runner.
-///
-/// Unless explicitly set to another parallel runner by [`with_runner`] method,
-/// parallel computations will be executed using the default parallel runner.
-///
-/// [`with_runner`]: crate::ParIter::with_runner
-pub type DefaultRunner = fixed_chunk_runner::FixedChunkRunner;
+/// Default parallel executor.
+pub type DefaultExecutor = fixed_chunk_executor::FixedChunkRunner;

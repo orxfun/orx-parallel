@@ -1,5 +1,5 @@
 use crate::{
-    DefaultRunner, ParallelRunner,
+    DefaultExecutor, ParallelExecutor,
     orch::{Orchestrator, ParThreadPool},
 };
 use core::{marker::PhantomData, num::NonZeroUsize};
@@ -68,9 +68,9 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
 
 // ORCH
 
-pub struct RayonOrchestrator<P, R = DefaultRunner>
+pub struct RayonOrchestrator<P, R = DefaultExecutor>
 where
-    R: ParallelRunner,
+    R: ParallelExecutor,
     P: SoR<ThreadPool> + ParThreadPool,
 {
     pool: P,
@@ -79,7 +79,7 @@ where
 
 impl<R> From<ThreadPool> for RayonOrchestrator<ThreadPool, R>
 where
-    R: ParallelRunner,
+    R: ParallelExecutor,
 {
     fn from(pool: ThreadPool) -> Self {
         Self {
@@ -91,7 +91,7 @@ where
 
 impl<'a, R> From<&'a ThreadPool> for RayonOrchestrator<&'a ThreadPool, R>
 where
-    R: ParallelRunner,
+    R: ParallelExecutor,
 {
     fn from(pool: &'a ThreadPool) -> Self {
         Self {
@@ -103,7 +103,7 @@ where
 
 impl<P, R> Orchestrator for RayonOrchestrator<P, R>
 where
-    R: ParallelRunner,
+    R: ParallelExecutor,
     P: SoR<ThreadPool> + ParThreadPool,
 {
     type Runner = R;

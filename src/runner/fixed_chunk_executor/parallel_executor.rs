@@ -1,8 +1,8 @@
-use super::{chunk_size::ResolvedChunkSize, thread_runner::FixedChunkThreadRunner};
+use super::{chunk_size::ResolvedChunkSize, thread_executor::FixedChunkThreadExecutor};
 use crate::{
     orch::NumSpawned,
     parameters::Params,
-    runner::{computation_kind::ComputationKind, parallel_runner::ParallelRunner},
+    runner::{computation_kind::ComputationKind, parallel_executor::ParallelExecutor},
 };
 use core::{
     num::NonZeroUsize,
@@ -73,10 +73,10 @@ impl FixedChunkRunner {
     }
 }
 
-impl ParallelRunner for FixedChunkRunner {
+impl ParallelExecutor for FixedChunkRunner {
     type SharedState = ();
 
-    type ThreadRunner = FixedChunkThreadRunner;
+    type ThreadExecutor = FixedChunkThreadExecutor;
 
     fn new(
         kind: ComputationKind,
@@ -112,8 +112,8 @@ impl ParallelRunner for FixedChunkRunner {
         self.spawn_new(num_spawned, iter.try_get_len())
     }
 
-    fn new_thread_runner(&self, _: &Self::SharedState) -> Self::ThreadRunner {
-        Self::ThreadRunner {
+    fn new_thread_executor(&self, _: &Self::SharedState) -> Self::ThreadExecutor {
+        Self::ThreadExecutor {
             chunk_size: self.current_chunk_size.load(Ordering::Relaxed),
         }
     }

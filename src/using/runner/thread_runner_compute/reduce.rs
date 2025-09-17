@@ -1,5 +1,5 @@
 use crate::{
-    ThreadRunner,
+    ThreadExecutor,
     generic_values::{
         Values,
         runner_results::{Reduce, StopReduce},
@@ -18,7 +18,7 @@ pub fn m<U, C, I, O, M1, Red>(
     reduce: &Red,
 ) -> Option<O>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     M1: Fn(&mut U, I::Item) -> O,
     Red: Fn(&mut U, O, O) -> O,
@@ -90,7 +90,7 @@ pub fn x<U, C, I, Vo, X1, Red>(
     reduce: &Red,
 ) -> Reduce<Vo>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     Vo: Values,
     X1: Fn(&mut U, I::Item) -> Vo,

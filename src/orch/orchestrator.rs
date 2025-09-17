@@ -1,5 +1,5 @@
 use crate::{
-    NumThreads, ParallelRunner, Params,
+    NumThreads, ParallelExecutor, Params,
     generic_values::runner_results::{Fallibility, Infallible, Never},
     orch::{NumSpawned, ParThreadPool, ParThreadPoolCompute},
     runner::ComputationKind,
@@ -9,7 +9,7 @@ use core::num::NonZeroUsize;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait Orchestrator {
-    type Runner: ParallelRunner;
+    type Runner: ParallelExecutor;
 
     type ThreadPool: ParThreadPool;
 
@@ -20,7 +20,7 @@ pub trait Orchestrator {
         initial_input_len: Option<usize>,
     ) -> Self::Runner {
         let max_num_threads = self.max_num_threads_for_computation(params, initial_input_len);
-        <Self::Runner as ParallelRunner>::new(kind, params, initial_input_len, max_num_threads)
+        <Self::Runner as ParallelExecutor>::new(kind, params, initial_input_len, max_num_threads)
     }
 
     fn thread_pool(&self) -> &Self::ThreadPool;
@@ -44,7 +44,12 @@ pub trait Orchestrator {
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = |num_spawned| {
-            thread_do(num_spawned, &iter, &state, runner.new_thread_runner(&state));
+            thread_do(
+                num_spawned,
+                &iter,
+                &state,
+                runner.new_thread_executor(&state),
+            );
         };
         self.thread_pool_mut().run_in_pool(do_spawn, work)
     }
@@ -68,7 +73,7 @@ pub trait Orchestrator {
         let runner = self.new_runner(kind, params, iter_len);
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
-        let work = |nt| thread_map(nt, &iter, &state, runner.new_thread_runner(&state));
+        let work = |nt| thread_map(nt, &iter, &state, runner.new_thread_executor(&state));
         let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
         self.thread_pool_mut()
             .map_in_pool::<F, _, _, _>(do_spawn, work, max_num_threads)
@@ -110,8 +115,9 @@ pub trait Orchestrator {
     }
 }
 
-pub(crate) type SharedStateOf<C> = <<C as Orchestrator>::Runner as ParallelRunner>::SharedState;
-pub(crate) type ThreadRunnerOf<C> = <<C as Orchestrator>::Runner as ParallelRunner>::ThreadRunner;
+pub(crate) type SharedStateOf<C> = <<C as Orchestrator>::Runner as ParallelExecutor>::SharedState;
+pub(crate) type ThreadRunnerOf<C> =
+    <<C as Orchestrator>::Runner as ParallelExecutor>::ThreadExecutor;
 
 // auto impl for &mut pool
 

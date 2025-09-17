@@ -1,4 +1,4 @@
-use crate::ThreadRunner;
+use crate::ThreadExecutor;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Stop, ThreadCollectArbitrary};
 use orx_concurrent_bag::ConcurrentBag;
@@ -16,7 +16,7 @@ pub fn m<U, C, I, O, M1, P>(
     map1: &M1,
     bag: &ConcurrentBag<O, P>,
 ) where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     M1: Fn(&mut U, I::Item) -> O,
     P: IntoConcurrentPinnedVec<O>,
@@ -65,7 +65,7 @@ pub fn x<U, C, I, Vo, X1, P>(
     bag: &ConcurrentBag<Vo::Item, P>,
 ) -> ThreadCollectArbitrary<Vo::Fallibility>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     Vo: Values,
     X1: Fn(&mut U, I::Item) -> Vo,

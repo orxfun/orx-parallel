@@ -1,5 +1,5 @@
 use crate::{
-    ThreadRunner,
+    ThreadExecutor,
     generic_values::Values,
     generic_values::runner_results::{Fallibility, Next},
 };
@@ -12,7 +12,7 @@ pub fn m<C, I, O, M1>(
     map1: &M1,
 ) -> Option<O>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     O: Send,
     M1: Fn(I::Item) -> O,
@@ -70,7 +70,7 @@ pub fn x<C, I, Vo, X1>(
     xap1: &X1,
 ) -> Result<Option<Vo::Item>, <Vo::Fallibility as Fallibility>::Error>
 where
-    C: ThreadRunner,
+    C: ThreadExecutor,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,

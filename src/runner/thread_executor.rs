@@ -1,8 +1,8 @@
 use orx_concurrent_iter::ConcurrentIter;
 
-/// Thread runner responsible for executing the tasks assigned to the thread by the
-/// parallel runner.
-pub trait ThreadRunner: Sized {
+/// Thread executor responsible for executing the tasks assigned to the thread by the
+/// parallel executor.
+pub trait ThreadExecutor: Sized {
     /// Type of the shared state among threads.
     type SharedState;
 
@@ -17,11 +17,11 @@ pub trait ThreadRunner: Sized {
 
     /// Hook that will be called after completing the chunk of the given `chunk_size`.
     /// The `shared_state` is also provided so that it can be updated to send information to the
-    /// parallel runner and other thread runners.
+    /// parallel executor and other thread executors.
     fn complete_chunk(&mut self, shared_state: &Self::SharedState, chunk_size: usize);
 
     /// Hook that will be called after completing the task.
     /// The `shared_state` is also provided so that it can be updated to send information to the
-    /// parallel runner and other thread runners.
+    /// parallel executor and other thread executors.
     fn complete_task(&mut self, shared_state: &Self::SharedState);
 }

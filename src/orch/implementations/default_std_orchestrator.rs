@@ -1,5 +1,5 @@
 use crate::orch::ParThreadPool;
-use crate::{DefaultRunner, orch::Orchestrator};
+use crate::{DefaultExecutor, orch::Orchestrator};
 use core::num::NonZeroUsize;
 
 // POOL
@@ -62,7 +62,7 @@ impl ParThreadPool for StdDefaultPool {
 pub struct DefaultStdOrchestrator(StdDefaultPool);
 
 impl Orchestrator for DefaultStdOrchestrator {
-    type Runner = DefaultRunner;
+    type Runner = DefaultExecutor;
 
     type ThreadPool = StdDefaultPool;
 
