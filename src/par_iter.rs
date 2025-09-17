@@ -3,9 +3,9 @@ use crate::computational_variants::fallible_option::ParOption;
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
-use crate::using_old::{UsingClone, UsingFun};
+use crate::using::{UsingClone, UsingFun};
 use crate::{
-    ParIterUsingOld, Params,
+    ParIterUsing, Params,
     collect_into::ParCollectInto,
     default_fns::{map_clone, map_copy, map_count, reduce_sum, reduce_unit},
     parameters::{ChunkSize, IterationOrder, NumThreads},
@@ -475,10 +475,10 @@ where
     fn using<U, F>(
         self,
         using: F,
-    ) -> impl ParIterUsingOld<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send + 'static,
-        F: FnMut(usize) -> U;
+        U: 'static,
+        F: Fn(usize) -> U + Sync;
 
     /// Converts the [`ParIter`] into [`ParIterUsing`] which will have access to a mutable reference of the
     /// used variable throughout the computation.
@@ -496,9 +496,9 @@ where
     fn using_clone<U>(
         self,
         value: U,
-    ) -> impl ParIterUsingOld<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send + 'static;
+        U: Clone + 'static;
 
     // transformations into fallible computations
 

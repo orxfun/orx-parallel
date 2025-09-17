@@ -4,10 +4,9 @@ use crate::generic_values::{Vector, WhilstAtom};
 use crate::orch::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute as prc;
+use crate::using::{UPar, UsingClone, UsingFun};
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, ParIterUsingOld, Params,
-    default_fns::map_self,
-    using_old::{UsingClone, UsingFun, computational_variants::UPar},
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params, default_fns::map_self,
 };
 use crate::{IntoParIter, ParIterResult};
 use orx_concurrent_iter::chain::ChainKnownLenI;
@@ -97,24 +96,26 @@ where
     fn using<U, F>(
         self,
         using: F,
-    ) -> impl ParIterUsingOld<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl crate::ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Send + 'static,
-        F: FnMut(usize) -> U,
+        U: 'static,
+        F: Fn(usize) -> U + Sync,
     {
         let using = UsingFun::new(using);
-        UPar::new(using, self.params, self.iter)
+        let (orchestrator, params, iter) = self.destruct();
+        UPar::new(using, orchestrator, params, iter)
     }
 
     fn using_clone<U>(
         self,
-        using: U,
-    ) -> impl ParIterUsingOld<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+        value: U,
+    ) -> impl crate::ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: Clone + Send + 'static,
+        U: Clone + 'static,
     {
-        let using = UsingClone::new(using);
-        UPar::new(using, self.params, self.iter)
+        let using = UsingClone::new(value);
+        let (orchestrator, params, iter) = self.destruct();
+        UPar::new(using, orchestrator, params, iter)
     }
 
     // computation transformations

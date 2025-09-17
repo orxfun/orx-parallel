@@ -14,15 +14,15 @@ pub trait Using: Sync {
 }
 
 /// Using variant that creates instances of each thread by cloning an initial value.
-pub struct UsingClone<T: Clone + Sync + 'static>(T);
+pub struct UsingClone<T: Clone + 'static>(T);
 
-impl<T: Clone + Sync + 'static> UsingClone<T> {
+impl<T: Clone + 'static> UsingClone<T> {
     pub(crate) fn new(value: T) -> Self {
         Self(value)
     }
 }
 
-impl<T: Clone + Sync + 'static> Using for UsingClone<T> {
+impl<T: Clone + 'static> Using for UsingClone<T> {
     type Item = T;
 
     fn create(&self, _: usize) -> T {
@@ -33,6 +33,8 @@ impl<T: Clone + Sync + 'static> Using for UsingClone<T> {
         self.0
     }
 }
+
+unsafe impl<T: Clone + 'static> Sync for UsingClone<T> {}
 
 /// Using variant that creates instances of each thread using a closure.
 pub struct UsingFun<F, T>
