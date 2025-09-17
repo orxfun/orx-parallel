@@ -1,4 +1,4 @@
-use crate::{computational_variants::Par, orch::DefaultOrchestrator};
+use crate::{computational_variants::Par, runner::DefaultOrchestrator};
 use orx_concurrent_iter::implementations::ConIterEmpty;
 
 /// An empty parallel iterator which does not yield any elements.

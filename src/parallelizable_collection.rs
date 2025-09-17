@@ -1,4 +1,4 @@
-use crate::{Params, computational_variants::Par, orch::DefaultOrchestrator};
+use crate::{Params, computational_variants::Par, runner::DefaultOrchestrator};
 use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 
 /// A type implementing [`ParallelizableCollection`] is a collection owning the elements such that

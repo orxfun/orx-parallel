@@ -1,7 +1,7 @@
 use crate::default_fns::*;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params, Sum,
-    orch::{DefaultOrchestrator, Orchestrator},
+    runner::{DefaultOrchestrator, Orchestrator},
     using::using_variants::Using,
 };
 use core::cmp::Ordering;

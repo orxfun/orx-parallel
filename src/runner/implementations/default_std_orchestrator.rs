@@ -1,5 +1,5 @@
 use crate::par_thread_pool::ParThreadPool;
-use crate::{DefaultExecutor, orch::Orchestrator};
+use crate::{DefaultExecutor, runner::Orchestrator};
 use core::num::NonZeroUsize;
 
 // POOL

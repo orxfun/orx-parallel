@@ -1,4 +1,6 @@
-use crate::{Params, default_fns::map_self, orch::DefaultOrchestrator, executor::parallel_compute};
+use crate::{
+    Params, default_fns::map_self, executor::parallel_compute, runner::DefaultOrchestrator,
+};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;

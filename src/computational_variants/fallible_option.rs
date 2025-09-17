@@ -1,6 +1,6 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
-    orch::{DefaultOrchestrator, Orchestrator},
+    runner::{DefaultOrchestrator, Orchestrator},
     par_iter_option::{ParIterOption, ResultIntoOption},
 };
 use core::marker::PhantomData;

@@ -2,7 +2,7 @@ use crate::using::executor::parallel_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterUsing, Params,
     generic_values::{TransformableValues, runner_results::Infallible},
-    orch::{DefaultOrchestrator, Orchestrator},
+    runner::{DefaultOrchestrator, Orchestrator},
     using::using_variants::Using,
 };
 use orx_concurrent_iter::ConcurrentIter;

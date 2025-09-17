@@ -1,5 +1,5 @@
 use crate::computational_variants::ParMap;
-use crate::orch::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, ParCollectInto, ParIter};

@@ -1,6 +1,6 @@
 use super::thread_executor::ThreadExecutor;
 use crate::{
-    orch::{ComputationKind, NumSpawned},
+    runner::{ComputationKind, NumSpawned},
     parameters::Params,
 };
 use core::num::NonZeroUsize;

@@ -30,8 +30,6 @@ mod into_par_iter;
 /// Module for creating special iterators.
 pub mod iter;
 mod iter_into_par_iter;
-/// Orchestrator for parallel execution and managing threads.
-pub mod orch;
 mod par_iter;
 mod par_iter_option;
 mod par_iter_result;
@@ -41,6 +39,8 @@ mod parallelizable;
 mod parallelizable_collection;
 mod parallelizable_collection_mut;
 mod parameters;
+/// Orchestrator for parallel execution and managing threads.
+pub mod runner;
 mod special_type_sets;
 /// Module defining parallel iterators with mutable access to values distributed to each thread.
 pub mod using;

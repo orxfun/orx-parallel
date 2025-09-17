@@ -1,4 +1,4 @@
-use crate::{orch::ComputationKind, parameters::ChunkSize};
+use crate::{parameters::ChunkSize, runner::ComputationKind};
 use core::num::NonZeroUsize;
 
 const MAX_CHUNK_SIZE: usize = 1 << 20;

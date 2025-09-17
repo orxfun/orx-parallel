@@ -1,4 +1,4 @@
-use crate::{Params, computational_variants::Par, orch::DefaultOrchestrator};
+use crate::{Params, computational_variants::Par, runner::DefaultOrchestrator};
 use orx_concurrent_iter::{IterIntoConcurrentIter, implementations::ConIterOfIter};
 
 /// Any regular iterator implements [`IterIntoParIter`] trait allowing them to be used

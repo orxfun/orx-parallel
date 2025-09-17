@@ -1,4 +1,4 @@
-use crate::{Params, computational_variants::Par, orch::DefaultOrchestrator};
+use crate::{Params, computational_variants::Par, runner::DefaultOrchestrator};
 use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
 
 /// Trait to convert a source (collection or generator) into a parallel iterator; i.e., [`ParIter`],

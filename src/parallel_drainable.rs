@@ -1,4 +1,4 @@
-use crate::{Params, computational_variants::Par, orch::DefaultOrchestrator};
+use crate::{Params, computational_variants::Par, runner::DefaultOrchestrator};
 use core::ops::RangeBounds;
 use orx_concurrent_iter::ConcurrentDrainableOverSlice;
 

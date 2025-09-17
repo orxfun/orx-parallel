@@ -1,7 +1,7 @@
 use crate::computational_variants::fallible_result::ParXapResult;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::orch::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
 use crate::using::{UParXap, UsingClone, UsingFun};

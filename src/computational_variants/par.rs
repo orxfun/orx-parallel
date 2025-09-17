@@ -1,7 +1,7 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
-use crate::orch::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, Orchestrator};
 use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
 use crate::using::{UPar, UsingClone, UsingFun};

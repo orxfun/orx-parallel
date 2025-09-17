@@ -1,7 +1,7 @@
 use crate::ParIterUsing;
 use crate::default_fns::u_map_self;
 use crate::generic_values::Vector;
-use crate::orch::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, Orchestrator};
 use crate::using::computational_variants::u_map::UParMap;
 use crate::using::computational_variants::u_xap::UParXap;
 use crate::using::executor::parallel_compute as prc;

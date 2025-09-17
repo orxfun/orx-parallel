@@ -2,7 +2,7 @@ use crate::Params;
 use crate::generic_values::runner_results::{
     Infallible, ParallelCollect, ParallelCollectArbitrary,
 };
-use crate::orch::{NumSpawned, Orchestrator};
+use crate::runner::{NumSpawned, Orchestrator};
 use crate::using::executor::parallel_compute as prc;
 use crate::using::using_variants::Using;
 use crate::{IterationOrder, generic_values::Values};
