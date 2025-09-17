@@ -1,6 +1,6 @@
-use criterion::black_box;
 use orx_parallel::*;
 use std::collections::HashMap;
+use std::hint::black_box;
 use test_case::test_matrix;
 
 #[cfg(miri)]

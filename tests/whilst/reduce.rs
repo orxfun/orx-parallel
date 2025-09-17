@@ -1,5 +1,5 @@
 use crate::fibonacci;
-use criterion::black_box;
+use std::hint::black_box;
 use orx_parallel::*;
 use test_case::test_case;
 
