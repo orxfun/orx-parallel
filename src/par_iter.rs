@@ -401,6 +401,7 @@ where
     /// struct ComputationMetrics {
     ///     thread_metrics: UnsafeCell<[ThreadMetrics; MAX_NUM_THREADS]>,
     /// }
+    /// unsafe impl Sync for ComputationMetrics {}
     /// impl ComputationMetrics {
     ///     fn new() -> Self {
     ///         let mut thread_metrics: [ThreadMetrics; MAX_NUM_THREADS] = Default::default();
@@ -441,6 +442,8 @@ where
     ///     .par()
     ///     // SAFETY: we do not call `create_for_thread` externally;
     ///     // it is safe if it is called only by the parallel computation.
+    ///     // Since we unsafely implement Sync for ComputationMetrics,
+    ///     // we must ensure that ComputationMetrics is not used elsewhere.
     ///     .using(|t| unsafe { metrics.create_for_thread(t) })
     ///     .map(|m: &mut ThreadMetricsWriter<'_>, i| {
     ///         // collect some useful metrics

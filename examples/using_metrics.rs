@@ -43,8 +43,10 @@ impl ComputationMetrics {
     }
 }
 
+unsafe impl Sync for ComputationMetrics {}
+
 impl ComputationMetrics {
-    unsafe fn create_for_thread<'a>(&mut self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
+    unsafe fn create_for_thread<'a>(&self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
         // SAFETY: here we create a mutable variable to the thread_idx-th metrics
         // * If we call this method multiple times with the same index,
         //   we create multiple mutable references to the same ThreadMetrics,
@@ -72,6 +74,8 @@ fn main() {
         .par()
         // SAFETY: we do not call `create_for_thread` externally;
         // it is safe if it is called only by the parallel computation.
+        // Since we unsafely implement Sync for ComputationMetrics,
+        // we must ensure that ComputationMetrics is not used elsewhere.
         .using(|t| unsafe { metrics.create_for_thread(t) })
         .map(|m: &mut ThreadMetricsWriter<'_>, i| {
             // collect some useful metrics

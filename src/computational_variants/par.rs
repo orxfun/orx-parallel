@@ -8,7 +8,7 @@ use crate::using::{UPar, UsingClone, UsingFun};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params, default_fns::map_self,
 };
-use crate::{IntoParIter, ParIterResult};
+use crate::{IntoParIter, ParIterResult, ParIterUsing};
 use orx_concurrent_iter::chain::ChainKnownLenI;
 use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 
@@ -96,7 +96,7 @@ where
     fn using<U, F>(
         self,
         using: F,
-    ) -> impl crate::ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: 'static,
         F: Fn(usize) -> U + Sync,
@@ -109,7 +109,7 @@ where
     fn using_clone<U>(
         self,
         value: U,
-    ) -> impl crate::ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + 'static,
     {

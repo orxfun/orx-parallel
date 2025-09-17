@@ -1,4 +1,3 @@
-use crate::ParIterResult;
 use crate::computational_variants::fallible_result::ParXapResult;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
@@ -7,6 +6,7 @@ use crate::par_iter_result::IntoResult;
 use crate::runner::parallel_runner_compute as prc;
 use crate::using::{UParXap, UsingClone, UsingFun};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params};
+use crate::{ParIterResult, ParIterUsing};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator that xaps inputs.
@@ -108,7 +108,7 @@ where
     fn using<U, F>(
         self,
         using: F,
-    ) -> impl crate::ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: 'static,
         F: Fn(usize) -> U + Sync,
@@ -122,7 +122,7 @@ where
     fn using_clone<U>(
         self,
         value: U,
-    ) -> impl crate::ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + 'static,
     {
