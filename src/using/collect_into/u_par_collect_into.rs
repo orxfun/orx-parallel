@@ -1,95 +1,43 @@
 use crate::Params;
-use crate::generic_values::runner_results::{Fallibility, Infallible};
-use crate::generic_values::{TransformableValues, Values};
+use crate::collect_into::ParCollectIntoCore;
+use crate::generic_values::TransformableValues;
+use crate::generic_values::runner_results::Infallible;
 use crate::orch::Orchestrator;
+use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_iterable::Collection;
-use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub trait UParCollectIntoCore<O>: Collection<Item = O> {
-    type BridgePinnedVec: IntoConcurrentPinnedVec<O>;
-
-    fn empty(iter_len: Option<usize>) -> Self;
-
-    fn m_collect_into<R, I, M1>(self, orchestrator: R, params: Params, iter: I, map1: M1) -> Self
+pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
+    fn u_m_collect_into<U, R, I, M1>(
+        self,
+        using: U,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        map1: M1,
+    ) -> Self
     where
+        U: Using,
         R: Orchestrator,
         I: ConcurrentIter,
-        M1: Fn(I::Item) -> O + Sync;
+        M1: Fn(&mut U::Item, I::Item) -> O + Sync;
 
-    fn x_collect_into<R, I, Vo, X1>(
+    fn u_x_collect_into<U, R, I, Vo, X1>(
         self,
+        using: U,
         orchestrator: R,
         params: Params,
         iter: I,
         xap1: X1,
     ) -> Self
     where
+        U: Using,
         R: Orchestrator,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
-        X1: Fn(I::Item) -> Vo + Sync;
-
-    fn x_try_collect_into<R, I, Vo, X1>(
-        self,
-        orchestrator: R,
-        params: Params,
-        iter: I,
-        xap1: X1,
-    ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
-    where
-        R: Orchestrator,
-        I: ConcurrentIter,
-        X1: Fn(I::Item) -> Vo + Sync,
-        Vo: Values<Item = O>,
-        Self: Sized;
-
-    // test
-
-    #[cfg(test)]
-    fn length(&self) -> usize;
-
-    #[cfg(test)]
-    fn is_empty(&self) -> bool {
-        self.length() == 0
-    }
-
-    #[cfg(test)]
-    fn is_equal_to<'a>(&self, b: impl orx_iterable::Iterable<Item = &'a O>) -> bool
-    where
-        O: PartialEq + 'a,
-    {
-        let mut b = b.iter();
-        for x in self.iter() {
-            match b.next() {
-                Some(y) if x != y => return false,
-                None => return false,
-                _ => {}
-            }
-        }
-
-        b.next().is_none()
-    }
-
-    #[cfg(test)]
-    fn is_equal_to_ref(&self, b: impl orx_iterable::Iterable<Item = O>) -> bool
-    where
-        O: PartialEq,
-    {
-        let mut b = b.iter();
-        for x in self.iter() {
-            match b.next() {
-                Some(y) if x != &y => return false,
-                None => return false,
-                _ => {}
-            }
-        }
-
-        b.next().is_none()
-    }
+        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
 }
 
 /// Collection types into which outputs of a parallel computations can be collected into.
-pub trait UParCollectInto<O>: UParCollectIntoCore<O> + UParCollectIntoCore<O> {}
+pub trait UParCollectInto<O>: UParCollectIntoCore<O> {}
 
-impl<O, C> UParCollectInto<O> for C where C: UParCollectIntoCore<O> + UParCollectIntoCore<O> {}
+impl<O, C> UParCollectInto<O> for C where C: UParCollectIntoCore<O> {}
