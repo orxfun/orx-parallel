@@ -60,6 +60,7 @@ impl ParThreadPool for StdDefaultPool {
 
 // RUNNER
 
+/// Parallel runner using std threads.
 pub struct StdRunner<E: ParallelExecutor = DefaultExecutor> {
     pool: StdDefaultPool,
     executor: PhantomData<E>,
@@ -75,7 +76,7 @@ impl<E: ParallelExecutor> Default for StdRunner<E> {
 }
 
 impl<E: ParallelExecutor> ParallelRunner for StdRunner<E> {
-    type Runner = E;
+    type Executor = E;
 
     type ThreadPool = StdDefaultPool;
 

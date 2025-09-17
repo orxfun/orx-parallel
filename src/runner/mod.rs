@@ -9,8 +9,6 @@ pub use computation_kind::ComputationKind;
 pub use num_spawned::NumSpawned;
 pub use parallel_runner::ParallelRunner;
 
-pub type DefaultRunner = StdRunner;
-
 #[cfg(feature = "std")]
 pub use implementations::StdRunner;
 
@@ -19,3 +17,9 @@ pub use implementations::RunnerWithRayonPool;
 
 #[cfg(feature = "scoped_threadpool")]
 pub use implementations::RunnerWithScopedThreadPool;
+
+/// Default runner used by orx-parallel computations:
+///
+/// * [`StdRunner`] when "std" feature is enabled,
+/// * TODO otherwise.
+pub type DefaultRunner = StdRunner;

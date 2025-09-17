@@ -8,27 +8,34 @@ use alloc::vec::Vec;
 use core::num::NonZeroUsize;
 use orx_concurrent_iter::ConcurrentIter;
 
+/// Parallel runner defining how the threads must be spawned and job must be distributed.
 pub trait ParallelRunner {
-    type Runner: ParallelExecutor;
+    /// Parallel executor responsible for distribution of tasks to the threads.
+    type Executor: ParallelExecutor;
 
+    /// Thread pool responsible for providing threads to the parallel computation.
     type ThreadPool: ParThreadPool;
 
-    fn new_runner(
+    /// Creates a new parallel executor for a parallel computation.
+    fn new_executor(
         &self,
         kind: ComputationKind,
         params: Params,
         initial_input_len: Option<usize>,
-    ) -> Self::Runner {
+    ) -> Self::Executor {
         let max_num_threads = self.max_num_threads_for_computation(params, initial_input_len);
-        <Self::Runner as ParallelExecutor>::new(kind, params, initial_input_len, max_num_threads)
+        <Self::Executor as ParallelExecutor>::new(kind, params, initial_input_len, max_num_threads)
     }
 
+    /// Reference to the underlying thread pool.
     fn thread_pool(&self) -> &Self::ThreadPool;
 
+    /// Mutable reference to the underlying thread pool.
     fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool;
 
     // derived
 
+    /// Runs `thread_do` using threads provided by the thread pool.
     fn run_all<I, F>(
         &mut self,
         params: Params,
@@ -40,7 +47,7 @@ pub trait ParallelRunner {
         I: ConcurrentIter,
         F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
-        let runner = self.new_runner(kind, params, iter.try_get_len());
+        let runner = self.new_executor(kind, params, iter.try_get_len());
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = |num_spawned| {
@@ -54,6 +61,7 @@ pub trait ParallelRunner {
         self.thread_pool_mut().run_in_pool(do_spawn, work)
     }
 
+    /// Runs `thread_map` using threads provided by the thread pool.
     fn map_all<F, I, M, T>(
         &mut self,
         params: Params,
@@ -70,7 +78,7 @@ pub trait ParallelRunner {
         F::Error: Send,
     {
         let iter_len = iter.try_get_len();
-        let runner = self.new_runner(kind, params, iter_len);
+        let runner = self.new_executor(kind, params, iter_len);
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
         let work = |nt| thread_map(nt, &iter, &state, runner.new_thread_executor(&state));
@@ -79,6 +87,7 @@ pub trait ParallelRunner {
             .map_in_pool::<F, _, _, _>(do_spawn, work, max_num_threads)
     }
 
+    /// Runs infallible `thread_map` using threads provided by the thread pool.
     fn map_infallible<I, M, T>(
         &mut self,
         params: Params,
@@ -95,6 +104,8 @@ pub trait ParallelRunner {
         self.map_all::<Infallible, _, _, _>(params, iter, kind, thread_map)
     }
 
+    /// Returns the maximum number of threads that can be used for the computation defined by
+    /// the `params` and input `iter_len`.
     fn max_num_threads_for_computation(
         &self,
         params: Params,
@@ -115,9 +126,10 @@ pub trait ParallelRunner {
     }
 }
 
-pub(crate) type SharedStateOf<C> = <<C as ParallelRunner>::Runner as ParallelExecutor>::SharedState;
+pub(crate) type SharedStateOf<C> =
+    <<C as ParallelRunner>::Executor as ParallelExecutor>::SharedState;
 pub(crate) type ThreadRunnerOf<C> =
-    <<C as ParallelRunner>::Runner as ParallelExecutor>::ThreadExecutor;
+    <<C as ParallelRunner>::Executor as ParallelExecutor>::ThreadExecutor;
 
 // auto impl for &mut pool
 
@@ -125,7 +137,7 @@ impl<'a, O> ParallelRunner for &'a mut O
 where
     O: ParallelRunner,
 {
-    type Runner = O::Runner;
+    type Executor = O::Executor;
 
     type ThreadPool = O::ThreadPool;
 

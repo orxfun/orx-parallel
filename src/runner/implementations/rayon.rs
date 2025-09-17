@@ -67,6 +67,7 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
 
 // RUNNER
 
+/// Parallel runner using threads provided by rayon thread pool.
 pub struct RunnerWithRayonPool<P, R = DefaultExecutor>
 where
     R: ParallelExecutor,
@@ -99,7 +100,7 @@ where
     R: ParallelExecutor,
     P: SoR<ThreadPool> + ParThreadPool,
 {
-    type Runner = R;
+    type Executor = R;
 
     type ThreadPool = P;
 
