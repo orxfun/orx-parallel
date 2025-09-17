@@ -1,4 +1,6 @@
-use crate::{generic_values::runner_results::Fallibility, orch::num_spawned::NumSpawned};
+use crate::{
+    generic_values::runner_results::Fallibility, orch::num_spawned::NumSpawned, using_old::Using,
+};
 use alloc::vec::Vec;
 use core::num::NonZeroUsize;
 use orx_concurrent_bag::ConcurrentBag;
@@ -14,6 +16,12 @@ pub trait ParThreadPool {
         'scope: 's,
         'env: 'scope + 's,
         W: Fn() + Sync + 'scope + 'env;
+
+    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env;
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
@@ -68,6 +76,25 @@ pub trait ParThreadPoolCompute: ParThreadPool {
         let result = F::reduce_results(thread_results);
 
         (nt, result)
+    }
+
+    // using
+
+    fn run_using<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
+    where
+        S: Fn(NumSpawned) -> bool + Sync,
+        F: Fn(NumSpawned) + Sync,
+    {
+        let thread_do = &thread_do;
+        let mut nt = NumSpawned::zero();
+        self.scoped_computation(|s| {
+            while do_spawn(nt) {
+                nt.increment();
+                let work = move || thread_do(nt);
+                Self::run_in_scope2(&s, work);
+            }
+        });
+        nt
     }
 }
 

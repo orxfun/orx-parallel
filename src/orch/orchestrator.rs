@@ -102,6 +102,26 @@ pub trait Orchestrator {
 
         req.min(ava)
     }
+
+    fn run_all_using<I, F>(
+        &mut self,
+        params: Params,
+        iter: I,
+        kind: ComputationKind,
+        thread_do: F,
+    ) -> NumSpawned
+    where
+        I: ConcurrentIter,
+        F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
+    {
+        let runner = Self::new_runner(kind, params, iter.try_get_len());
+        let state = runner.new_shared_state();
+        let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
+        let work = |nt| {
+            thread_do(nt, &iter, &state, runner.new_thread_runner(&state));
+        };
+        self.thread_pool_mut().run_using(do_spawn, work)
+    }
 }
 
 pub(crate) type SharedStateOf<C> = <<C as Orchestrator>::Runner as ParallelRunner>::SharedState;

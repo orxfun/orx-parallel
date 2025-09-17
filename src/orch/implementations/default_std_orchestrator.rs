@@ -64,6 +64,15 @@ impl ParThreadPool for StdDefaultPool {
     {
         s.spawn(|| work());
     }
+
+    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        s.spawn(move || work());
+    }
 }
 
 // ORCH

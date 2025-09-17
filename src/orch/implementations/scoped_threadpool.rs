@@ -24,6 +24,15 @@ impl ParThreadPool for Pool {
         s.execute(work);
     }
 
+    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        s.execute(work);
+    }
+
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
@@ -49,6 +58,15 @@ impl<'a> ParThreadPool for &'a mut Pool {
         'scope: 's,
         'env: 'scope + 's,
         W: Fn() + Sync + 'scope + 'env,
+    {
+        s.execute(work);
+    }
+
+    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
     {
         s.execute(work);
     }

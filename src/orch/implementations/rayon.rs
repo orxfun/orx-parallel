@@ -35,6 +35,15 @@ impl ParThreadPool for ThreadPool {
     fn max_num_threads(&self) -> NonZeroUsize {
         NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
     }
+
+    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        s.spawn(move |_| work());
+    }
 }
 
 impl<'a> ParThreadPool for &'a rayon::ThreadPool {
@@ -63,6 +72,15 @@ impl<'a> ParThreadPool for &'a rayon::ThreadPool {
 
     fn max_num_threads(&self) -> NonZeroUsize {
         NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
+    }
+
+    fn run_in_scope2<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        s.spawn(move |_| work());
     }
 }
 
