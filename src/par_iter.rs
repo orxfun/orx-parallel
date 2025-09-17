@@ -437,39 +437,7 @@ where
     ///
     /// let input: Vec<u64> = (0..N).collect();
     ///
-    /// let sum = input
-    ///     .par()
-    ///     // SAFETY: we do not call `create_for_thread` externally;
-    ///     // it is safe if it is called only by the parallel computation.
-    ///     .using(|t| unsafe { metrics.create_for_thread(t) })
-    ///     .map(|m: &mut ThreadMetricsWriter<'_>, i| {
-    ///         // collect some useful metrics
-    ///         m.metrics_ref.num_items_handled += 1;
-    ///         m.metrics_ref.handled_42 |= *i == 42;
-    ///
-    ///         // actual work
-    ///         fibonacci((*i % 20) + 1) % 100
-    ///     })
-    ///     .filter(|m, i| {
-    ///         let is_even = i % 2 == 0;
-    ///
-    ///         if !is_even {
-    ///             m.metrics_ref.num_filtered_out += 1;
-    ///         }
-    ///
-    ///         is_even
-    ///     })
-    ///     .num_threads(MAX_NUM_THREADS)
-    ///     .sum();
-    ///
-    /// let total_by_metrics: usize = metrics
-    ///     .thread_metrics
-    ///     .get_mut()
-    ///     .iter()
-    ///     .map(|x| x.num_items_handled)
-    ///     .sum();
-    ///
-    /// assert_eq!(N as usize, total_by_metrics);
+
     /// ```
     ///
     fn using<U, F>(

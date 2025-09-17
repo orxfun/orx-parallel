@@ -3,7 +3,6 @@ use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;
 use crate::using::UParCollectIntoCore;
-use crate::using_old::UParCollectIntoCoreOld;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_iterable::Collection;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
@@ -92,12 +91,6 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
 }
 
 /// Collection types into which outputs of a parallel computations can be collected into.
-pub trait ParCollectInto<O>:
-    ParCollectIntoCore<O> + UParCollectIntoCore<O> + UParCollectIntoCoreOld<O>
-{
-}
+pub trait ParCollectInto<O>: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}
 
-impl<O, C> ParCollectInto<O> for C where
-    C: ParCollectIntoCore<O> + UParCollectIntoCore<O> + UParCollectIntoCoreOld<O>
-{
-}
+impl<O, C> ParCollectInto<O> for C where C: ParCollectIntoCore<O> + UParCollectIntoCore<O> {}

@@ -43,8 +43,6 @@ pub mod runner;
 mod special_type_sets;
 /// Module defining parallel iterators with mutable access to values distributed to each thread.
 pub mod using;
-/// Module defining parallel iterators with mutable access to values distributed to each thread.
-pub mod using_old;
 
 /// Module defining the GenericIterator which is a generalization over
 /// sequential iterator, rayon's parallel iterator and orx-parallel's
@@ -72,4 +70,3 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use runner::{DefaultRunner, ParallelRunner, ThreadRunner};
 pub use special_type_sets::Sum;
 pub use using::ParIterUsing;
-pub use using_old::ParIterUsingOld;
