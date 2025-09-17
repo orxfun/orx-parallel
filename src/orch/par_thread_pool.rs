@@ -37,17 +37,21 @@ pub trait ParThreadPoolCompute: ParThreadPool {
     where
         F: Fallibility,
         S: Fn(NumSpawned) -> bool + Sync,
-        M: Fn() -> Result<T, F::Error> + Sync,
+        M: Fn(NumSpawned) -> Result<T, F::Error> + Sync,
         T: Send,
         F::Error: Send,
     {
+        let thread_map = &thread_map;
         let mut nt = NumSpawned::zero();
         let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
-        let work = || _ = thread_results.push(thread_map());
+        let bag = &thread_results;
         self.scoped_computation(|s| {
             while do_spawn(nt) {
                 nt.increment();
-                Self::run_in_scope(&s, &work);
+                let work = move || {
+                    bag.push(thread_map(nt));
+                };
+                Self::run_in_scope(&s, work);
             }
         });
 
