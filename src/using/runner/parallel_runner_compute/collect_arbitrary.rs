@@ -21,7 +21,6 @@ pub fn m<U, C, I, O, M1, P>(
 ) -> (NumSpawned, P)
 where
     U: Using + Sync,
-    U::Item: Send,
     C: Orchestrator,
     I: ConcurrentIter,
     O: Send,
@@ -56,7 +55,6 @@ pub fn x<U, C, I, Vo, X1, P>(
 ) -> (NumSpawned, ParallelCollectArbitrary<Vo, P>)
 where
     U: Using + Sync,
-    U::Item: Send,
     C: Orchestrator,
     I: ConcurrentIter,
     Vo: Values,

@@ -16,7 +16,6 @@ pub fn m<U, C, I, O, M1>(
 ) -> (NumSpawned, Option<O>)
 where
     U: Using + Sync,
-    U::Item: Send,
     C: Orchestrator,
     I: ConcurrentIter,
     O: Send,
@@ -47,7 +46,6 @@ pub fn x<U, C, I, Vo, X1>(
 ) -> (NumSpawned, ResultNextAny<Vo>)
 where
     U: Using + Sync,
-    U::Item: Send,
     C: Orchestrator,
     I: ConcurrentIter,
     Vo: Values,
