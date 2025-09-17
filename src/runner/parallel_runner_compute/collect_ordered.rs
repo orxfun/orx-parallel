@@ -7,8 +7,6 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-// m
-
 pub fn m<C, I, O, M1, P>(
     mut orchestrator: C,
     params: Params,
@@ -34,8 +32,6 @@ where
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)
 }
-
-// x
 
 pub fn x<C, I, Vo, X1, P>(
     mut orchestrator: C,
