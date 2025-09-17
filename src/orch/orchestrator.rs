@@ -36,13 +36,13 @@ pub trait Orchestrator {
     ) -> NumSpawned
     where
         I: ConcurrentIter,
-        F: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
+        F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
         let runner = Self::new_runner(kind, params, iter.try_get_len());
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
-        let work = || {
-            thread_do(&iter, &state, runner.new_thread_runner(&state));
+        let work = |num_spawned| {
+            thread_do(num_spawned, &iter, &state, runner.new_thread_runner(&state));
         };
         self.thread_pool_mut().run(do_spawn, work)
     }

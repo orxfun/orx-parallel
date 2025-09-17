@@ -33,7 +33,7 @@ where
         None => bag.reserve_maximum_capacity(capacity_bound),
     };
 
-    let thread_work = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_work = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         th::collect_arbitrary::m(thread_runner, iter, state, &map1, &bag);
     };
     let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_work);
