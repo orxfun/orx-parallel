@@ -30,9 +30,9 @@ orx-self-or = { version = "1.2.0" }
 [dev-dependencies]
 chrono = "0.4.39"
 clap = { version = "4.5.36", features = ["derive"] }
-criterion = "0.5.1"
+criterion = "0.7.0"
 orx-concurrent-option = { version = "1.5.0", default-features = false }
-orx-concurrent-vec = "3.6.0"
+orx-concurrent-vec = "3.8.0"
 rand = "0.9"
 rand_chacha = "0.9"
 rayon = "1.10.0"

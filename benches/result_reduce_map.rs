@@ -1,7 +1,8 @@
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_concurrent_option::{ConcurrentOption, IntoOption};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use std::hint::black_box;
 use std::num::ParseIntError;
 
 type ERR = ParseIntError;
