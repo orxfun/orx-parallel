@@ -2,7 +2,7 @@ use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect};
 use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
-use crate::runner::{ComputationKind, thread_runner_compute as th};
+use crate::runner::{ComputationKind, thread_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;

@@ -2,7 +2,7 @@ use crate::Params;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
 use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
-use crate::runner::{ComputationKind, thread_runner_compute as th};
+use crate::runner::{ComputationKind, thread_compute as th};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1, Red>(

@@ -1,2 +1,2 @@
-pub(super) mod parallel_runner_compute;
-mod thread_runner_compute;
+pub(super) mod parallel_compute;
+mod thread_compute;

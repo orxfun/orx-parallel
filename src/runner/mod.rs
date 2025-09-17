@@ -1,9 +1,9 @@
 mod computation_kind;
 mod fixed_chunk_executor;
+pub(crate) mod parallel_compute;
 mod parallel_executor;
-pub(crate) mod parallel_runner_compute;
+mod thread_compute;
 mod thread_executor;
-mod thread_runner_compute;
 
 pub use computation_kind::ComputationKind;
 pub use parallel_executor::ParallelExecutor;

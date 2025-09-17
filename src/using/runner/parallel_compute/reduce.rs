@@ -3,7 +3,7 @@ use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
 use crate::orch::{NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
 use crate::runner::ComputationKind;
-use crate::using::runner::thread_runner_compute as th;
+use crate::using::runner::thread_compute as th;
 use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
 

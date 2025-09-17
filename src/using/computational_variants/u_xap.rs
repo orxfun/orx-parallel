@@ -1,4 +1,4 @@
-use crate::using::runner::parallel_runner_compute as prc;
+use crate::using::runner::parallel_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterUsing, Params,
     generic_values::{TransformableValues, runner_results::Infallible},
