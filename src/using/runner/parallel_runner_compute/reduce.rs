@@ -7,10 +7,10 @@ use crate::using::runner::thread_runner_compute as th;
 use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
-// // m
+// m
 
 // pub fn m<U, C, I, O, M1, Red>(
-//     using: U,
+//     mut using: U,
 //     mut orchestrator: C,
 //     params: Params,
 //     iter: I,
@@ -21,18 +21,24 @@ use orx_concurrent_iter::ConcurrentIter;
 //     U: Using,
 //     C: Orchestrator,
 //     I: ConcurrentIter,
-//     M1: Fn(I::Item) -> O + Sync,
-//     Red: Fn(O, O) -> O + Sync,
+//     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
+//     Red: Fn(&mut U::Item, O, O) -> O + Sync,
 //     O: Send,
 // {
-//     let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
-//         Ok(th::reduce::m(thread_runner, iter, state, &map1, &reduce))
-//     };
+//     let thread_map =
+//         |nt: NumSpawned, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+//             let u = using.create(nt.into_inner());
+//             Ok(th::reduce::m(u, thread_runner, iter, state, &map1, &reduce))
+//         };
 //     let (num_spawned, result) =
 //         orchestrator.map_infallible(params, iter, ComputationKind::Collect, thread_map);
 
+//     let mut u = using.into_inner();
 //     let acc = match result {
-//         Ok(results) => results.into_iter().filter_map(|x| x).reduce(reduce),
+//         Ok(results) => results
+//             .into_iter()
+//             .filter_map(|x| x)
+//             .reduce(|a, b| reduce(&mut u, a, b)),
 //     };
 
 //     (num_spawned, acc)

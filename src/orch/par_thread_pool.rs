@@ -9,11 +9,11 @@ pub trait ParThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: &'env W)
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env;
+        W: Fn() + Sync + 'scope + 'env;
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
@@ -29,14 +29,13 @@ pub trait ParThreadPoolCompute: ParThreadPool {
     fn run<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
     where
         S: Fn(NumSpawned) -> bool + Sync,
-        F: Fn(NumSpawned) + Sync,
+        F: Fn() + Sync,
     {
-        let thread_do = &thread_do;
         let mut nt = NumSpawned::zero();
         self.scoped_computation(|s| {
             while do_spawn(nt) {
                 nt.increment();
-                Self::run_in_scope(&s, move || thread_do(nt));
+                Self::run_in_scope(&s, &thread_do);
             }
         });
         nt
@@ -51,17 +50,17 @@ pub trait ParThreadPoolCompute: ParThreadPool {
     where
         F: Fallibility,
         S: Fn(NumSpawned) -> bool + Sync,
-        M: Fn(NumSpawned) -> Result<T, F::Error> + Sync,
+        M: Fn() -> Result<T, F::Error> + Sync,
         T: Send,
         F::Error: Send,
     {
         let mut nt = NumSpawned::zero();
         let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
-        let work = |nt| _ = thread_results.push(thread_map(nt));
+        let work = || _ = thread_results.push(thread_map());
         self.scoped_computation(|s| {
             while do_spawn(nt) {
                 nt.increment();
-                Self::run_in_scope(&s, move || work(nt));
+                Self::run_in_scope(&s, &work);
             }
         });
 

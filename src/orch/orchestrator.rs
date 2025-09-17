@@ -36,13 +36,13 @@ pub trait Orchestrator {
     ) -> NumSpawned
     where
         I: ConcurrentIter,
-        F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
+        F: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
         let runner = Self::new_runner(kind, params, iter.try_get_len());
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
-        let work = |num_spawned| {
-            thread_do(num_spawned, &iter, &state, runner.new_thread_runner(&state));
+        let work = || {
+            thread_do(&iter, &state, runner.new_thread_runner(&state));
         };
         self.thread_pool_mut().run(do_spawn, work)
     }
@@ -57,8 +57,7 @@ pub trait Orchestrator {
     where
         F: Fallibility,
         I: ConcurrentIter,
-        M: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, F::Error>
-            + Sync,
+        M: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, F::Error> + Sync,
         T: Send,
         F::Error: Send,
     {
@@ -66,8 +65,7 @@ pub trait Orchestrator {
         let runner = Self::new_runner(kind, params, iter_len);
         let state = runner.new_shared_state();
         let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
-        let work =
-            |num_spawned| thread_map(num_spawned, &iter, &state, runner.new_thread_runner(&state));
+        let work = || thread_map(&iter, &state, runner.new_thread_runner(&state));
         let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
         self.thread_pool_mut()
             .map_all::<F, _, _, _>(do_spawn, work, max_num_threads)
@@ -82,8 +80,7 @@ pub trait Orchestrator {
     ) -> (NumSpawned, Result<Vec<T>, Never>)
     where
         I: ConcurrentIter,
-        M: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, Never>
-            + Sync,
+        M: Fn(&I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, Never> + Sync,
         T: Send,
     {
         self.map_all::<Infallible, _, _, _>(params, iter, kind, thread_map)

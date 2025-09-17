@@ -26,7 +26,7 @@ where
     let offset = pinned_vec.len();
     let o_bag: ConcurrentOrderedBag<O, P> = pinned_vec.into();
 
-    let thread_do = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_do = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         th::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
     };
     let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_do);
@@ -53,7 +53,7 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
-    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         th::collect_ordered::x(thread_runner, iter, state, &xap1).into_result()
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(

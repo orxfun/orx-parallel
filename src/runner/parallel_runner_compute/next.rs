@@ -17,7 +17,7 @@ where
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
 {
-    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, thread_runner| {
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, thread_runner| {
         Ok(th::next::m(thread_runner, iter, state, &map1))
     };
     let (num_spawned, result) =
@@ -51,7 +51,7 @@ where
     Vo::Item: Send,
     X1: Fn(I::Item) -> Vo + Sync,
 {
-    let thread_map = |_, iter: &I, state: &SharedStateOf<C>, th_runner| match th::next::x(
+    let thread_map = |iter: &I, state: &SharedStateOf<C>, th_runner| match th::next::x(
         th_runner, iter, state, &xap1,
     ) {
         NextWithIdx::Found { idx, value } => Ok(Some(NextSuccess::Found { idx, value })),
