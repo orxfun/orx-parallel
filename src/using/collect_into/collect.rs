@@ -3,55 +3,56 @@ use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
 use crate::orch::{NumSpawned, Orchestrator};
-use crate::runner::parallel_runner_compute as prc;
+use crate::using::runner::parallel_runner_compute as prc;
 use crate::using::using_variants::Using;
 use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-// pub fn map_collect_into<U, R, I, O, M1, P>(
-//     using: U,
-//     orchestrator: R,
-//     params: Params,
-//     iter: I,
-//     map1: M1,
-//     pinned_vec: P,
-// ) -> (NumSpawned, P)
-// where
-//     U: Using,
-//     R: Orchestrator,
-//     I: ConcurrentIter,
-//     M1: Fn(I::Item) -> O + Sync,
-//     O: Send,
-//     P: IntoConcurrentPinnedVec<O>,
-// {
-//     match (params.is_sequential(), params.iteration_order) {
-//         (true, _) => (
-//             NumSpawned::zero(),
-//             map_collect_into_seq(iter, map1, pinned_vec),
-//         ),
-//         #[cfg(test)]
-//         (false, IterationOrder::Arbitrary) => {
-//             prc::collect_arbitrary::m(orchestrator, params, iter, map1, pinned_vec)
-//         }
-//         (false, _) => prc::collect_ordered::m(orchestrator, params, iter, map1, pinned_vec),
-//     }
-// }
+pub fn map_collect_into<U, R, I, O, M1, P>(
+    using: U,
+    orchestrator: R,
+    params: Params,
+    iter: I,
+    map1: M1,
+    pinned_vec: P,
+) -> (NumSpawned, P)
+where
+    U: Using,
+    R: Orchestrator,
+    I: ConcurrentIter,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
+    O: Send,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    match (params.is_sequential(), params.iteration_order) {
+        (true, _) => (
+            NumSpawned::zero(),
+            map_collect_into_seq(using, iter, map1, pinned_vec),
+        ),
+        #[cfg(test)]
+        (false, IterationOrder::Arbitrary) => {
+            prc::collect_arbitrary::m(using, orchestrator, params, iter, map1, pinned_vec)
+        }
+        (false, _) => prc::collect_ordered::m(using, orchestrator, params, iter, map1, pinned_vec),
+    }
+}
 
-// fn map_collect_into_seq<U, I, O, M1, P>(using: U, iter: I, map1: M1, mut pinned_vec: P) -> P
-// where
-//     U: Using,
-//     I: ConcurrentIter,
-//     M1: Fn(I::Item) -> O + Sync,
-//     O: Send,
-//     P: IntoConcurrentPinnedVec<O>,
-// {
-//     let iter = iter.into_seq_iter();
-//     for i in iter {
-//         pinned_vec.push(map1(i));
-//     }
-//     pinned_vec
-// }
+fn map_collect_into_seq<U, I, O, M1, P>(using: U, iter: I, map1: M1, mut pinned_vec: P) -> P
+where
+    U: Using,
+    I: ConcurrentIter,
+    M1: Fn(&mut U::Item, I::Item) -> O + Sync,
+    O: Send,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    let mut u = using.into_inner();
+    let iter = iter.into_seq_iter();
+    for i in iter {
+        pinned_vec.push(map1(&mut u, i));
+    }
+    pinned_vec
+}
 
 // pub fn xap_collect_into<R, I, Vo, X1, P>(
 //     orchestrator: R,
