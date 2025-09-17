@@ -1,5 +1,7 @@
 use crate::{collect_into::ParCollectIntoCore, test_utils::*, *};
+use alloc::format;
 use alloc::string::{String, ToString};
+use alloc::vec;
 use alloc::vec::Vec;
 use orx_fixed_vec::FixedVec;
 use orx_iterable::{Collection, IntoCloningIterable};
