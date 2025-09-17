@@ -1,5 +1,5 @@
 use crate::{
-    DefaultExecutor, ParallelExecutor, par_thread_pool::ParThreadPool, runner::Orchestrator,
+    DefaultExecutor, ParallelExecutor, par_thread_pool::ParThreadPool, runner::ParallelRunner,
 };
 use core::{marker::PhantomData, num::NonZeroUsize};
 use orx_self_or::SoM;
@@ -100,7 +100,7 @@ where
     }
 }
 
-impl<P, R> Orchestrator for ScopedThreadPoolOrchestrator<P, R>
+impl<P, R> ParallelRunner for ScopedThreadPoolOrchestrator<P, R>
 where
     R: ParallelExecutor,
     P: SoM<Pool> + ParThreadPool,

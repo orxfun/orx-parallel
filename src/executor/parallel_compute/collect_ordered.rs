@@ -2,7 +2,7 @@ use crate::Params;
 use crate::executor::thread_compute as th;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::{Fallibility, ParallelCollect};
-use crate::runner::{ComputationKind, NumSpawned, Orchestrator, SharedStateOf, ThreadRunnerOf};
+use crate::runner::{ComputationKind, NumSpawned, ParallelRunner, SharedStateOf, ThreadRunnerOf};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
@@ -15,7 +15,7 @@ pub fn m<C, I, O, M1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, P)
 where
-    C: Orchestrator,
+    C: ParallelRunner,
     I: ConcurrentIter,
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
@@ -41,7 +41,7 @@ pub fn x<C, I, Vo, X1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, ParallelCollect<Vo, P>)
 where
-    C: Orchestrator,
+    C: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,

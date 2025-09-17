@@ -1,7 +1,7 @@
 use super::{map::ParMap, xap::ParXap};
 use crate::computational_variants::fallible_result::ParResult;
 use crate::generic_values::{Vector, WhilstAtom};
-use crate::runner::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, ParallelRunner};
 use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
 use crate::using::{UPar, UsingClone, UsingFun};
@@ -15,7 +15,7 @@ use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 /// A parallel iterator.
 pub struct Par<I, R = DefaultOrchestrator>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     orchestrator: R,
@@ -25,7 +25,7 @@ where
 
 impl<I, R> Par<I, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     pub(crate) fn new(orchestrator: R, params: Params, iter: I) -> Self {
@@ -43,21 +43,21 @@ where
 
 unsafe impl<I, R> Send for Par<I, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
 }
 
 unsafe impl<I, R> Sync for Par<I, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
 }
 
 impl<I, R> ParIter<R> for Par<I, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     type Item = I::Item;
@@ -87,7 +87,7 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
         Par::new(orchestrator, self.params, self.iter)
     }
 
@@ -205,7 +205,7 @@ where
 
 impl<I, R> Par<I, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
 {
     /// Creates a chain of this and `other` parallel iterators.

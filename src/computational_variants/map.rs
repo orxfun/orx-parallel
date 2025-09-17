@@ -1,7 +1,7 @@
 use super::xap::ParXap;
 use crate::computational_variants::fallible_result::ParMapResult;
 use crate::generic_values::{Vector, WhilstAtom};
-use crate::runner::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, ParallelRunner};
 use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
 use crate::using::{UParMap, UsingClone, UsingFun};
@@ -12,7 +12,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// A parallel iterator that maps inputs.
 pub struct ParMap<I, O, M1, R = DefaultOrchestrator>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -24,7 +24,7 @@ where
 
 impl<I, O, M1, R> ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -44,7 +44,7 @@ where
 
 unsafe impl<I, O, M1, R> Send for ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -52,7 +52,7 @@ where
 
 unsafe impl<I, O, M1, R> Sync for ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -60,7 +60,7 @@ where
 
 impl<I, O, M1, R> ParIter<R> for ParMap<I, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
 {
@@ -91,7 +91,7 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
         let (_, params, iter, map) = self.destruct();
         ParMap::new(orchestrator, params, iter, map)
     }

@@ -39,7 +39,7 @@ mod parallelizable;
 mod parallelizable_collection;
 mod parallelizable_collection_mut;
 mod parameters;
-/// Orchestrator for parallel execution and managing threads.
+/// ParallelRunner for parallel execution and managing threads.
 pub mod runner;
 mod special_type_sets;
 /// Module defining parallel iterators with mutable access to values distributed to each thread.

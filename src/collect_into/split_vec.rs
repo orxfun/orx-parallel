@@ -4,7 +4,7 @@ use crate::Params;
 use crate::collect_into::utils::split_vec_reserve;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
-use crate::runner::Orchestrator;
+use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 #[cfg(test)]
 use orx_pinned_vec::PinnedVec;
@@ -32,7 +32,7 @@ where
         map1: M1,
     ) -> Self
     where
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
@@ -50,7 +50,7 @@ where
         xap1: X1,
     ) -> Self
     where
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(I::Item) -> Vo + Sync,
@@ -68,7 +68,7 @@ where
         xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         X1: Fn(I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,

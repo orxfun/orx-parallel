@@ -1,6 +1,6 @@
 use crate::ParIterResult;
 use crate::computational_variants::fallible_option::ParOption;
-use crate::runner::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, ParallelRunner};
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
 use crate::using::{UsingClone, UsingFun};
@@ -17,7 +17,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// Parallel iterator.
 pub trait ParIter<R = DefaultOrchestrator>: Sized + Send + Sync
 where
-    R: Orchestrator,
+    R: ParallelRunner,
 {
     /// Element type of the parallel iterator.
     type Item;
@@ -262,7 +262,7 @@ where
     /// // uses the custom parallel runner MyParallelRunner: ParallelRunner
     /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
     /// ```
-    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item>;
+    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item>;
 
     // using transformations
 

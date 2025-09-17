@@ -1,5 +1,5 @@
 use crate::computational_variants::ParMap;
-use crate::runner::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, ParallelRunner};
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, ParCollectInto, ParIter};
@@ -10,7 +10,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// or fails and **early exits** with an error.
 pub struct ParMapResult<I, T, E, O, M1, R = DefaultOrchestrator>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
@@ -21,7 +21,7 @@ where
 
 impl<I, T, E, O, M1, R> ParMapResult<I, T, E, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
@@ -36,7 +36,7 @@ where
 
 impl<I, T, E, O, M1, R> ParIterResult<R> for ParMapResult<I, T, E, O, M1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(I::Item) -> O + Sync,
@@ -66,7 +66,7 @@ where
 
     // params transformations
 
-    fn with_runner<Q: Orchestrator>(
+    fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {

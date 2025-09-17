@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use core::num::NonZeroUsize;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait Orchestrator {
+pub trait ParallelRunner {
     type Runner: ParallelExecutor;
 
     type ThreadPool: ParThreadPool;
@@ -115,15 +115,15 @@ pub trait Orchestrator {
     }
 }
 
-pub(crate) type SharedStateOf<C> = <<C as Orchestrator>::Runner as ParallelExecutor>::SharedState;
+pub(crate) type SharedStateOf<C> = <<C as ParallelRunner>::Runner as ParallelExecutor>::SharedState;
 pub(crate) type ThreadRunnerOf<C> =
-    <<C as Orchestrator>::Runner as ParallelExecutor>::ThreadExecutor;
+    <<C as ParallelRunner>::Runner as ParallelExecutor>::ThreadExecutor;
 
 // auto impl for &mut pool
 
-impl<'a, O> Orchestrator for &'a mut O
+impl<'a, O> ParallelRunner for &'a mut O
 where
-    O: Orchestrator,
+    O: ParallelRunner,
 {
     type Runner = O::Runner;
 

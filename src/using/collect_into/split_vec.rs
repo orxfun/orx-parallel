@@ -2,7 +2,7 @@ use crate::Params;
 use crate::collect_into::utils::split_vec_reserve;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::runner::Orchestrator;
+use crate::runner::ParallelRunner;
 use crate::using::collect_into::collect::{map_collect_into, xap_collect_into};
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
 use orx_concurrent_iter::ConcurrentIter;
@@ -24,7 +24,7 @@ where
     ) -> Self
     where
         U: crate::using::using_variants::Using,
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     {
@@ -43,7 +43,7 @@ where
     ) -> Self
     where
         U: crate::using::using_variants::Using,
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,

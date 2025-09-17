@@ -1,7 +1,7 @@
 use crate::computational_variants::fallible_result::ParXapResult;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::runner::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, ParallelRunner};
 use crate::par_iter_result::IntoResult;
 use crate::executor::parallel_compute as prc;
 use crate::using::{UParXap, UsingClone, UsingFun};
@@ -14,7 +14,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// *xap* is a generalization of  one-to-one map, filter-map and flat-map operations.
 pub struct ParXap<I, Vo, X1, R = DefaultOrchestrator>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -27,7 +27,7 @@ where
 
 impl<I, Vo, X1, R> ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -48,7 +48,7 @@ where
 
 unsafe impl<I, Vo, X1, R> Send for ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -57,7 +57,7 @@ where
 
 unsafe impl<I, Vo, X1, R> Sync for ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -66,7 +66,7 @@ where
 
 impl<I, Vo, X1, R> ParIter<R> for ParXap<I, Vo, X1, R>
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
@@ -98,7 +98,7 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
+    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item> {
         let (_, params, iter, x1) = self.destruct();
         ParXap::new(orchestrator, params, iter, x1)
     }

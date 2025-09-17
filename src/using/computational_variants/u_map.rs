@@ -1,6 +1,6 @@
 use crate::ParIterUsing;
 use crate::generic_values::Vector;
-use crate::runner::{DefaultOrchestrator, Orchestrator};
+use crate::runner::{DefaultOrchestrator, ParallelRunner};
 use crate::using::computational_variants::u_xap::UParXap;
 use crate::using::executor::parallel_compute as prc;
 use crate::using::using_variants::Using;
@@ -11,7 +11,7 @@ use orx_concurrent_iter::ConcurrentIter;
 pub struct UParMap<U, I, O, M1, R = DefaultOrchestrator>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
@@ -25,7 +25,7 @@ where
 impl<U, I, O, M1, R> UParMap<U, I, O, M1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
@@ -53,7 +53,7 @@ where
 unsafe impl<U, I, O, M1, R> Send for UParMap<U, I, O, M1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
@@ -62,7 +62,7 @@ where
 unsafe impl<U, I, O, M1, R> Sync for UParMap<U, I, O, M1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
@@ -71,7 +71,7 @@ where
 impl<U, I, O, M1, R> ParIterUsing<U, R> for UParMap<U, I, O, M1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
@@ -100,7 +100,7 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(
+    fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
     ) -> impl ParIterUsing<U, Q, Item = Self::Item> {

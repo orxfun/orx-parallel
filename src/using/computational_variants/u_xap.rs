@@ -2,7 +2,7 @@ use crate::using::executor::parallel_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterUsing, Params,
     generic_values::{TransformableValues, runner_results::Infallible},
-    runner::{DefaultOrchestrator, Orchestrator},
+    runner::{DefaultOrchestrator, ParallelRunner},
     using::using_variants::Using,
 };
 use orx_concurrent_iter::ConcurrentIter;
@@ -11,7 +11,7 @@ use orx_concurrent_iter::ConcurrentIter;
 pub struct UParXap<U, I, Vo, X1, R = DefaultOrchestrator>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
@@ -26,7 +26,7 @@ where
 impl<U, I, Vo, X1, R> UParXap<U, I, Vo, X1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
@@ -55,7 +55,7 @@ where
 unsafe impl<U, I, Vo, X1, R> Send for UParXap<U, I, Vo, X1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
@@ -65,7 +65,7 @@ where
 unsafe impl<U, I, Vo, X1, R> Sync for UParXap<U, I, Vo, X1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
@@ -75,7 +75,7 @@ where
 impl<U, I, Vo, X1, R> ParIterUsing<U, R> for UParXap<U, I, Vo, X1, R>
 where
     U: Using,
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
@@ -105,7 +105,7 @@ where
         self
     }
 
-    fn with_runner<Q: Orchestrator>(
+    fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
     ) -> impl ParIterUsing<U, Q, Item = Self::Item> {

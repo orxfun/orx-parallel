@@ -2,7 +2,7 @@ use crate::Params;
 use crate::executor::thread_compute as th;
 use crate::generic_values::Values;
 use crate::generic_values::runner_results::Fallibility;
-use crate::runner::{ComputationKind, NumSpawned, Orchestrator, SharedStateOf};
+use crate::runner::{ComputationKind, NumSpawned, ParallelRunner, SharedStateOf};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub fn m<C, I, O, M1>(
@@ -12,7 +12,7 @@ pub fn m<C, I, O, M1>(
     map1: M1,
 ) -> (NumSpawned, Option<O>)
 where
-    C: Orchestrator,
+    C: ParallelRunner,
     I: ConcurrentIter,
     O: Send,
     M1: Fn(I::Item) -> O + Sync,
@@ -39,7 +39,7 @@ pub fn x<C, I, Vo, X1>(
     xap1: X1,
 ) -> (NumSpawned, ResultNextAny<Vo>)
 where
-    C: Orchestrator,
+    C: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,

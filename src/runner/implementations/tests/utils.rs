@@ -1,11 +1,11 @@
-use crate::{IntoParIter, IterationOrder, ParIter, runner::Orchestrator};
+use crate::{IntoParIter, IterationOrder, ParIter, runner::ParallelRunner};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 
-pub fn run_map(n: usize, chunk: usize, ordering: IterationOrder, mut orch: impl Orchestrator) {
+pub fn run_map(n: usize, chunk: usize, ordering: IterationOrder, mut orch: impl ParallelRunner) {
     let offset = 33;
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();

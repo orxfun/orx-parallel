@@ -2,7 +2,7 @@ use crate::Params;
 use crate::collect_into::ParCollectIntoCore;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
-use crate::runner::Orchestrator;
+use crate::runner::ParallelRunner;
 use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -17,7 +17,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
     ) -> Self
     where
         U: Using,
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync;
 
@@ -31,7 +31,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
     ) -> Self
     where
         U: Using,
-        R: Orchestrator,
+        R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(&mut U::Item, I::Item) -> Vo + Sync;

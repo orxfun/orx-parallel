@@ -2,7 +2,7 @@ use crate::Params;
 use crate::generic_values::runner_results::{
     Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
-use crate::runner::{NumSpawned, Orchestrator};
+use crate::runner::{NumSpawned, ParallelRunner};
 use crate::executor::parallel_compute as prc;
 use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
@@ -16,7 +16,7 @@ pub fn map_collect_into<R, I, O, M1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, P)
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(I::Item) -> O + Sync,
     O: Send,
@@ -57,7 +57,7 @@ pub fn xap_collect_into<R, I, Vo, X1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, P)
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values<Fallibility = Infallible>,
     Vo::Item: Send,
@@ -123,7 +123,7 @@ pub fn xap_try_collect_into<R, I, Vo, X1, P>(
     Result<P, <Vo::Fallibility as Fallibility>::Error>,
 )
 where
-    R: Orchestrator,
+    R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
