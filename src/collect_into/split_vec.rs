@@ -1,9 +1,7 @@
+use super::collect::{map_collect_into, xap_collect_into, xap_try_collect_into};
 use super::par_collect_into::ParCollectIntoCore;
 use crate::Params;
 use crate::collect_into::utils::split_vec_reserve;
-use crate::computational_variants::computations::{
-    map_collect_into, xap_collect_into, xap_try_collect_into,
-};
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;

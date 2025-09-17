@@ -1,7 +1,7 @@
 use super::par_collect_into::ParCollectIntoCore;
 use crate::Params;
+use crate::collect_into::collect::map_collect_into;
 use crate::collect_into::utils::extend_vec_from_split;
-use crate::computational_variants::computations::map_collect_into;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
 use crate::orch::Orchestrator;

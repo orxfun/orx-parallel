@@ -1,7 +1,5 @@
-use crate::{
-    IterationOrder, Params, computational_variants::computations::map_collect_into,
-    orch::DefaultOrchestrator,
-};
+use crate::collect_into::collect::map_collect_into;
+use crate::{IterationOrder, Params, orch::DefaultOrchestrator};
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
