@@ -20,7 +20,7 @@ pub fn m<U, C, I, O, M1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, P)
 where
-    U: Using + Sync,
+    U: Using,
     C: Orchestrator,
     I: ConcurrentIter,
     O: Send,
@@ -54,7 +54,7 @@ pub fn x<U, C, I, Vo, X1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, ParallelCollectArbitrary<Vo, P>)
 where
-    U: Using + Sync,
+    U: Using,
     C: Orchestrator,
     I: ConcurrentIter,
     Vo: Values,

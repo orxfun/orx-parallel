@@ -16,7 +16,7 @@ pub fn m<U, C, I, O, M1, Red>(
     reduce: Red,
 ) -> (NumSpawned, Option<O>)
 where
-    U: Using + Sync,
+    U: Using,
     C: Orchestrator,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -54,7 +54,7 @@ pub fn x<U, C, I, Vo, X1, Red>(
     reduce: Red,
 ) -> (NumSpawned, ResultReduce<Vo>)
 where
-    U: Using + Sync,
+    U: Using,
     C: Orchestrator,
     I: ConcurrentIter,
     Vo: Values,
