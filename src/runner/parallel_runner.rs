@@ -1,5 +1,6 @@
 use super::{computation_kind::ComputationKind, thread_runner::ThreadRunner};
 use crate::{orch::NumSpawned, parameters::Params};
+use core::num::NonZeroUsize;
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel runner which is responsible for taking a computation defined as a composition
@@ -14,7 +15,12 @@ pub trait ParallelRunner: Sized + Sync + 'static {
 
     /// Creates a new parallel runner for the given computation `kind`, parallelization `params`
     /// and `initial_input_len`.
-    fn new(kind: ComputationKind, params: Params, initial_input_len: Option<usize>) -> Self;
+    fn new(
+        kind: ComputationKind,
+        params: Params,
+        initial_input_len: Option<usize>,
+        // max_num_threads: NonZeroUsize,
+    ) -> Self;
 
     /// Creates an initial shared state.
     fn new_shared_state(&self) -> Self::SharedState;

@@ -2,7 +2,7 @@ use crate::{env::MAX_NUM_THREADS_ENV_VARIABLE, parameters::NumThreads};
 
 const MAX_UNSET_NUM_THREADS: usize = 8;
 
-pub fn maximum_num_threads(input_len: Option<usize>, num_threads: NumThreads) -> usize {
+pub fn maximum_num_threads2(input_len: Option<usize>, num_threads: NumThreads) -> usize {
     let max_num_threads = max_num_threads_by_env_variable().unwrap_or(usize::MAX);
     match num_threads {
         NumThreads::Auto => from_auto_num_threads(input_len),

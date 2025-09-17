@@ -7,7 +7,6 @@ mod thread_runner_compute;
 
 pub use computation_kind::ComputationKind;
 pub use parallel_runner::ParallelRunner;
-pub(crate) use parallel_runner_compute::ParallelRunnerCompute;
 pub use thread_runner::ThreadRunner;
 
 /// Default parallel runner.
