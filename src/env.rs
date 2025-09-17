@@ -1,5 +1,6 @@
 use core::num::NonZeroUsize;
 
+#[cfg(feature = "std")]
 const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_PARALLEL_MAX_NUM_THREADS";
 
 pub fn max_num_threads_by_env_variable() -> Option<NonZeroUsize> {

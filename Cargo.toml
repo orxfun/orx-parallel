@@ -45,8 +45,8 @@ harness = false
 all-features = true
 
 [features]
-# default = []
+default = []
 # default = ["std"]
-default = ["std", "scoped_threadpool", "rayon", "generic_iterator"]
+# default = ["std", "scoped_threadpool", "rayon", "generic_iterator"]
 std = []
 generic_iterator = ["rayon"]
