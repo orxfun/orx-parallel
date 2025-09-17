@@ -1,5 +1,5 @@
-pub(crate) mod collect_arbitrary;
-pub(crate) mod collect_ordered;
-pub(crate) mod next;
-pub(crate) mod next_any;
-pub(crate) mod reduce;
+pub(super) mod collect_arbitrary;
+pub(super) mod collect_ordered;
+pub(super) mod next;
+pub(super) mod next_any;
+pub(super) mod reduce;
