@@ -173,6 +173,14 @@ where
     pub fn into_inner_pool(self) -> P {
         self.pool
     }
+
+    /// Converts the runner into one using the [`ParallelExecutor`] `Q` rather than `R`.
+    pub fn with_executor<Q: ParallelExecutor>(self) -> RunnerWithPool<P, Q> {
+        RunnerWithPool {
+            pool: self.pool,
+            runner: PhantomData,
+        }
+    }
 }
 
 impl<P, R> ParallelRunner for RunnerWithPool<P, R>
