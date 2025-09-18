@@ -76,7 +76,7 @@ pub use using::ParIterUsing;
 pub use runner::DefaultRunner;
 #[cfg(feature = "poolite")]
 pub use runner::RunnerWithPoolitePool;
-#[cfg(feature = "rayon")]
+#[cfg(feature = "rayon-core")]
 pub use runner::RunnerWithRayonPool;
 #[cfg(feature = "scoped-pool")]
 pub use runner::RunnerWithScopedPool;

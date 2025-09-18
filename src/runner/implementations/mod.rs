@@ -19,10 +19,10 @@ mod poolite;
 #[cfg(feature = "poolite")]
 pub use poolite::RunnerWithPoolitePool;
 
-#[cfg(feature = "rayon")]
-mod rayon;
-#[cfg(feature = "rayon")]
-pub use rayon::RunnerWithRayonPool;
+#[cfg(feature = "rayon-core")]
+mod rayon_core;
+#[cfg(feature = "rayon-core")]
+pub use rayon_core::RunnerWithRayonPool;
 
 #[cfg(feature = "scoped-pool")]
 mod scoped_pool;

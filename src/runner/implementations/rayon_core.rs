@@ -3,13 +3,13 @@ use crate::{
 };
 use core::{marker::PhantomData, num::NonZeroUsize};
 use orx_self_or::SoR;
-use rayon::ThreadPool;
+use rayon_core::ThreadPool;
 
 // POOL
 
 impl ParThreadPool for ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
-        = &'s rayon::Scope<'scope>
+        = &'s rayon_core::Scope<'scope>
     where
         'scope: 's,
         'env: 'scope + 's;
@@ -26,7 +26,7 @@ impl ParThreadPool for ThreadPool {
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
-        for<'s> F: FnOnce(&'s rayon::Scope<'scope>) + Send,
+        for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,
     {
         self.scope(f)
     }
@@ -36,9 +36,9 @@ impl ParThreadPool for ThreadPool {
     }
 }
 
-impl ParThreadPool for &rayon::ThreadPool {
+impl ParThreadPool for &rayon_core::ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
-        = &'s rayon::Scope<'scope>
+        = &'s rayon_core::Scope<'scope>
     where
         'scope: 's,
         'env: 'scope + 's;
@@ -55,7 +55,7 @@ impl ParThreadPool for &rayon::ThreadPool {
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
-        for<'s> F: FnOnce(&'s rayon::Scope<'scope>) + Send,
+        for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,
     {
         self.scope(f)
     }
@@ -67,7 +67,7 @@ impl ParThreadPool for &rayon::ThreadPool {
 
 // RUNNER
 
-/// Parallel runner using threads provided by rayon::ThreadPool.
+/// Parallel runner using threads provided by rayon_core::ThreadPool.
 pub struct RunnerWithRayonPool<P, R = DefaultExecutor>
 where
     R: ParallelExecutor,

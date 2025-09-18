@@ -20,7 +20,7 @@ pub use implementations::{PondPool, RunnerWithPondPool};
 #[cfg(feature = "poolite")]
 pub use implementations::RunnerWithPoolitePool;
 
-#[cfg(feature = "rayon")]
+#[cfg(feature = "rayon-core")]
 pub use implementations::RunnerWithRayonPool;
 
 #[cfg(feature = "scoped-pool")]
