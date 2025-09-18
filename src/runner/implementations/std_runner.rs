@@ -6,15 +6,18 @@ const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 /// Native standard thread pool.
 ///
 /// This is the default thread pool used when "std" feature is enabled.
+/// Note that the thread pool to be used for a parallel computation can be set by the
+/// [`with_runner`] transformation separately for each parallel iterator.
 ///
 /// Uses `std::thread::scope` and `scope.spawn(..)` to distribute work to threads.
 ///
-/// Its [`max_num_threads`] is determined as the minimum of:
+/// Value of [`max_num_threads`] is determined as the minimum of:
 ///
 /// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
-/// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", only if set.
+/// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", when set.
 ///
 /// [`max_num_threads`]: ParThreadPool::max_num_threads
+/// [`with_runner`]: crate::ParIter::with_runner
 pub struct StdDefaultPool {
     max_num_threads: NonZeroUsize,
 }
