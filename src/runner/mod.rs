@@ -9,7 +9,7 @@ pub use computation_kind::ComputationKind;
 pub use num_spawned::NumSpawned;
 pub use parallel_runner::ParallelRunner;
 
-pub use implementations::SequentialRunner;
+pub use implementations::{RunnerWithPool, SequentialRunner};
 
 #[cfg(feature = "std")]
 pub use implementations::StdRunner;

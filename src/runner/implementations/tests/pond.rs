@@ -1,7 +1,7 @@
 use super::run_map;
 use crate::{
     IterationOrder,
-    runner::implementations::{PondPool, RunnerWithPondPool},
+    runner::implementations::{PondPool, RunnerWithPool},
 };
 use test_case::test_matrix;
 
@@ -18,6 +18,6 @@ const N: [usize; 2] = [1025, 4735];
 ]
 fn pool_pond_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let mut pool = PondPool::new_threads_unbounded(nt);
-    let orch: RunnerWithPondPool<_> = (&mut pool).into();
+    let orch: RunnerWithPool<_> = (&mut pool).into();
     run_map(n, chunk, ordering, orch);
 }

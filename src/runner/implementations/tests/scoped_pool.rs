@@ -1,5 +1,5 @@
 use super::run_map;
-use crate::{IterationOrder, runner::implementations::RunnerWithScopedPool};
+use crate::{IterationOrder, runner::implementations::RunnerWithPool};
 use scoped_pool::Pool;
 use test_case::test_matrix;
 
@@ -16,6 +16,6 @@ const N: [usize; 2] = [1025, 4735];
 ]
 fn pool_scoped_pool_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let pool = Pool::new(nt);
-    let orch: RunnerWithScopedPool<_> = (&pool).into();
+    let orch: RunnerWithPool<_> = (&pool).into();
     run_map(n, chunk, ordering, orch);
 }

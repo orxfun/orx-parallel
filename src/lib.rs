@@ -73,7 +73,8 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use special_type_sets::Sum;
 pub use using::ParIterUsing;
 
-pub use runner::DefaultRunner;
+pub use runner::{DefaultRunner, RunnerWithPool};
+
 #[cfg(feature = "poolite")]
 pub use runner::RunnerWithPoolitePool;
 #[cfg(feature = "rayon-core")]

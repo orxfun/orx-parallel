@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests;
 
+mod runner_with_pool;
+pub use runner_with_pool::RunnerWithPool;
+
 mod sequential;
 pub use sequential::SequentialRunner;
 

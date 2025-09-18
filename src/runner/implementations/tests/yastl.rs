@@ -1,7 +1,7 @@
 use super::run_map;
 use crate::{
     IterationOrder,
-    runner::implementations::{RunnerWithYastlPool, YastlPool},
+    runner::implementations::{RunnerWithPool, YastlPool},
 };
 use test_case::test_matrix;
 use yastl::ThreadConfig;
@@ -19,10 +19,10 @@ const N: [usize; 2] = [1025, 4735];
 ]
 fn pool_yastl_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let pool = YastlPool::new(nt);
-    let orch: RunnerWithYastlPool<_> = (&pool).into();
+    let orch: RunnerWithPool<_> = (&pool).into();
     run_map(n, chunk, ordering, orch);
 
     let pool = YastlPool::with_config(nt, ThreadConfig::new());
-    let orch: RunnerWithYastlPool<_> = (&pool).into();
+    let orch: RunnerWithPool<_> = (&pool).into();
     run_map(n, chunk, ordering, orch);
 }
