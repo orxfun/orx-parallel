@@ -21,15 +21,21 @@ pub use implementations::YastlPool;
 
 // DEFAULT
 
-/// Default runner used by orx-parallel computations:
+/// Default pool used by orx-parallel computations:
+///
+/// * [`StdDefaultPool`] when "std" feature is enabled,
+/// * [`SequentialPool`] otherwise.
+#[cfg(feature = "std")]
+pub type DefaultPool = StdDefaultPool;
+/// Default pool used by orx-parallel computations:
+///
+/// * `StdDefaultPool` when "std" feature is enabled,
+/// * [`SequentialPool`] otherwise.
+#[cfg(not(feature = "std"))]
+pub type DefaultPool = SequentialPool;
+
+/// Default runner used by orx-parallel computations, using the [`DefaultPool`]:
 ///
 /// * [`RunnerWithPool`] with [`StdDefaultPool`] when "std" feature is enabled,
 /// * [`RunnerWithPool`] with [`SequentialPool`] otherwise.
-#[cfg(feature = "std")]
-pub type DefaultRunner = RunnerWithPool<StdDefaultPool>;
-/// Default runner used by orx-parallel computations:
-///
-/// * [`RunnerWithPool`] with `StdDefaultPool` when "std" feature is enabled,
-/// * [`RunnerWithPool`] with [`SequentialPool`] otherwise.
-#[cfg(not(feature = "std"))]
-pub type DefaultRunner = RunnerWithPool<SequentialPool>;
+pub type DefaultRunner = RunnerWithPool<DefaultPool>;
