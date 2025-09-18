@@ -322,6 +322,11 @@ where
     /// When working in a no-std environment, the default pool falls back to sequential.
     /// In this case, a thread pool must be passed in using `with_pool` transformation to achieve parallel computation.
     ///
+    /// Note that if a thread pool, say `pool`, is of a type that implements [`ParThreadPool`]; then:
+    /// * `with_pool` can be called with owned value `with_pool(pool)` for all implementors; but also,
+    /// * with a shared reference `with_pool(&pool)` for most of the implementations (eg: rayon-core, yastl), and
+    /// * with a mutable reference `with_pool(&mut pool)` for others (eg: scoped_threadpool).
+    ///
     /// [`DefaultPool`]: crate::DefaultPool
     /// [`RunnerWithPool`]: crate::RunnerWithPool
     /// [`StdDefaultPool`]: crate::StdDefaultPool
