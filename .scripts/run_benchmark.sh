@@ -1,4 +1,4 @@
-original_bench=find
+original_bench=find_iter_into_par
 bench=$1
 
 sed -i "s/$original_bench/$bench/g" Cargo.toml
