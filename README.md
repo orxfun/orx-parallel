@@ -492,6 +492,8 @@ assert_eq!(sum, sum2);
 
 `ParThreadPool` implementations of several thread pools are provided in this crate as optional features (see [features](#features) section). Provided that the pool supports scoped computations, it is trivial to implement this trait in most cases (see [implementations](https://github.com/orxfun/orx-parallel/tree/main/src/runner/implementations) for examples).
 
+In order to have quick tests on the performance of different thread pools, you may use the example [`benchmark_pools`](https://github.com/orxfun/orx-parallel/blob/main/examples/benchmark_pools.rs). In most of the cases, using native threads with `StdDefaultPool`, *rayon-core*, *scoped_threadpool* and *scoped_pool* consistently perform similar and better than others for the tested computations.
+
 ### ParallelExecutor: chunk size
 
 Once thread pool provides the computation resources, it is [`ParallelExecutor`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParallelExecutor)'s task to distribute work to available threads. As mentioned above, all threads receive exactly the same closure. This closure continues to pull elements from the input concurrent iterator and operate on the inputs until all elements are processed.
