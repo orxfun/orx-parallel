@@ -1,9 +1,6 @@
-use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
-use core::{marker::PhantomData, num::NonZeroUsize};
-use orx_self_or::SoR;
+use crate::par_thread_pool::ParThreadPool;
+use core::num::NonZeroUsize;
 use scoped_pool::{Pool, Scope};
-
-// POOL
 
 impl ParThreadPool for Pool {
     type ScopeRef<'s, 'env, 'scope>
@@ -60,53 +57,5 @@ impl ParThreadPool for &Pool {
 
     fn max_num_threads(&self) -> core::num::NonZeroUsize {
         NonZeroUsize::new(self.workers().max(1)).expect(">0")
-    }
-}
-
-// RUNNER
-
-/// Parallel runner using threads provided by scoped_pool::Pool.
-pub struct RunnerWithScopedPool<P, R = DefaultExecutor>
-where
-    R: ParallelExecutor,
-    P: SoR<Pool> + ParThreadPool,
-{
-    pool: P,
-    runner: PhantomData<R>,
-}
-
-impl From<Pool> for RunnerWithScopedPool<Pool, DefaultExecutor> {
-    fn from(pool: Pool) -> Self {
-        Self {
-            pool,
-            runner: PhantomData,
-        }
-    }
-}
-
-impl<'a> From<&'a Pool> for RunnerWithScopedPool<&'a Pool, DefaultExecutor> {
-    fn from(pool: &'a Pool) -> Self {
-        Self {
-            pool,
-            runner: PhantomData,
-        }
-    }
-}
-
-impl<P, R> ParallelRunner for RunnerWithScopedPool<P, R>
-where
-    R: ParallelExecutor,
-    P: SoR<Pool> + ParThreadPool,
-{
-    type Executor = R;
-
-    type ThreadPool = P;
-
-    fn thread_pool(&self) -> &Self::ThreadPool {
-        &self.pool
-    }
-
-    fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool {
-        &mut self.pool
     }
 }

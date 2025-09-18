@@ -1,9 +1,6 @@
-use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
-use core::{marker::PhantomData, num::NonZeroUsize};
-use orx_self_or::SoR;
+use crate::ParThreadPool;
+use core::num::NonZeroUsize;
 use yastl::{Pool, Scope, ThreadConfig};
-
-// POOL
 
 /// A wrapper for `yastl::Pool` and number of threads it was built with.
 ///
@@ -103,53 +100,5 @@ impl ParThreadPool for &YastlPool {
 
     fn max_num_threads(&self) -> NonZeroUsize {
         self.1
-    }
-}
-
-// RUNNER
-
-/// Parallel runner using threads provided by yastl::Pool.
-pub struct RunnerWithYastlPool<P, R = DefaultExecutor>
-where
-    R: ParallelExecutor,
-    P: SoR<YastlPool> + ParThreadPool,
-{
-    pool: P,
-    runner: PhantomData<R>,
-}
-
-impl From<YastlPool> for RunnerWithYastlPool<YastlPool, DefaultExecutor> {
-    fn from(pool: YastlPool) -> Self {
-        Self {
-            pool,
-            runner: PhantomData,
-        }
-    }
-}
-
-impl<'a> From<&'a YastlPool> for RunnerWithYastlPool<&'a YastlPool, DefaultExecutor> {
-    fn from(pool: &'a YastlPool) -> Self {
-        Self {
-            pool,
-            runner: PhantomData,
-        }
-    }
-}
-
-impl<P, R> ParallelRunner for RunnerWithYastlPool<P, R>
-where
-    R: ParallelExecutor,
-    P: SoR<YastlPool> + ParThreadPool,
-{
-    type Executor = R;
-
-    type ThreadPool = P;
-
-    fn thread_pool(&self) -> &Self::ThreadPool {
-        &self.pool
-    }
-
-    fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool {
-        &mut self.pool
     }
 }

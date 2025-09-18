@@ -1,10 +1,5 @@
-use crate::ParallelExecutor;
 use crate::par_thread_pool::ParThreadPool;
-use crate::{DefaultExecutor, runner::ParallelRunner};
-use core::marker::PhantomData;
 use core::num::NonZeroUsize;
-
-// POOL
 
 const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 
@@ -84,36 +79,5 @@ impl ParThreadPool for &StdDefaultPool {
         W: Fn() + Send + 'scope + 'env,
     {
         s.spawn(work);
-    }
-}
-
-// RUNNER
-
-/// Parallel runner using std threads.
-pub struct StdRunner<E: ParallelExecutor = DefaultExecutor> {
-    pool: StdDefaultPool,
-    executor: PhantomData<E>,
-}
-
-impl Default for StdRunner<DefaultExecutor> {
-    fn default() -> Self {
-        Self {
-            pool: Default::default(),
-            executor: PhantomData,
-        }
-    }
-}
-
-impl<E: ParallelExecutor> ParallelRunner for StdRunner<E> {
-    type Executor = E;
-
-    type ThreadPool = StdDefaultPool;
-
-    fn thread_pool(&self) -> &Self::ThreadPool {
-        &self.pool
-    }
-
-    fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool {
-        &mut self.pool
     }
 }

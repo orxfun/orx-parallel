@@ -10,6 +10,19 @@ where
     runner: PhantomData<R>,
 }
 
+impl<P, R> Default for RunnerWithPool<P, R>
+where
+    P: ParThreadPool + Default,
+    R: ParallelExecutor,
+{
+    fn default() -> Self {
+        Self {
+            pool: Default::default(),
+            runner: PhantomData,
+        }
+    }
+}
+
 impl<P: ParThreadPool> From<P> for RunnerWithPool<P, DefaultExecutor> {
     fn from(pool: P) -> Self {
         Self {

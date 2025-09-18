@@ -175,7 +175,7 @@ fn main() {
             num_repetitions: usize,
             input: &[usize],
         ) -> Vec<String> {
-            let mut runner = SequentialRunner::default();
+            let mut runner = RunnerWithPool::from(SequentialPool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 

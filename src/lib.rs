@@ -75,18 +75,8 @@ pub use using::ParIterUsing;
 
 pub use runner::{DefaultRunner, RunnerWithPool};
 
-#[cfg(feature = "poolite")]
-pub use runner::RunnerWithPoolitePool;
-#[cfg(feature = "rayon-core")]
-pub use runner::RunnerWithRayonPool;
-#[cfg(feature = "scoped-pool")]
-pub use runner::RunnerWithScopedPool;
-#[cfg(feature = "scoped_threadpool")]
-pub use runner::RunnerWithScopedThreadPool;
-pub use runner::SequentialRunner;
-#[cfg(feature = "std")]
-pub use runner::StdRunner;
 #[cfg(feature = "pond")]
-pub use runner::{PondPool, RunnerWithPondPool};
+pub use runner::PondPool;
+pub use runner::SequentialPool;
 #[cfg(feature = "yastl")]
-pub use runner::{RunnerWithYastlPool, YastlPool};
+pub use runner::YastlPool;

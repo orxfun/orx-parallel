@@ -1,6 +1,7 @@
 use super::run_map;
 use crate::{
-    IterationOrder, RunnerWithPool, StdRunner, runner::implementations::std_runner::StdDefaultPool,
+    DefaultRunner, IterationOrder, RunnerWithPool,
+    runner::implementations::std_runner::StdDefaultPool,
 };
 use test_case::test_matrix;
 
@@ -16,7 +17,7 @@ const N: [usize; 2] = [1025, 4735];
     [IterationOrder::Ordered, IterationOrder::Arbitrary])
 ]
 fn pool_scoped_threadpool_map(n: usize, _: usize, chunk: usize, ordering: IterationOrder) {
-    let orch = StdRunner::default();
+    let orch = DefaultRunner::default();
     run_map(n, chunk, ordering, orch);
 
     let pool = StdDefaultPool::default();

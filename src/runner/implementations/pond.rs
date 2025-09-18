@@ -1,9 +1,6 @@
-use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
-use core::{marker::PhantomData, num::NonZeroUsize};
-use orx_self_or::SoM;
+use crate::par_thread_pool::ParThreadPool;
+use core::num::NonZeroUsize;
 use pond::{Pool, Scope};
-
-// POOL
 
 /// A wrapper for `pond::Pool` and number of threads it was built with.
 ///
@@ -95,53 +92,5 @@ impl ParThreadPool for &mut PondPool {
 
     fn max_num_threads(&self) -> NonZeroUsize {
         self.1
-    }
-}
-
-// RUNNER
-
-/// Parallel runner using threads provided by pond::Pool.
-pub struct RunnerWithPondPool<P, R = DefaultExecutor>
-where
-    R: ParallelExecutor,
-    P: SoM<PondPool> + ParThreadPool,
-{
-    pool: P,
-    runner: PhantomData<R>,
-}
-
-impl From<PondPool> for RunnerWithPondPool<PondPool, DefaultExecutor> {
-    fn from(pool: PondPool) -> Self {
-        Self {
-            pool,
-            runner: PhantomData,
-        }
-    }
-}
-
-impl<'a> From<&'a mut PondPool> for RunnerWithPondPool<&'a mut PondPool, DefaultExecutor> {
-    fn from(pool: &'a mut PondPool) -> Self {
-        Self {
-            pool,
-            runner: PhantomData,
-        }
-    }
-}
-
-impl<P, R> ParallelRunner for RunnerWithPondPool<P, R>
-where
-    R: ParallelExecutor,
-    P: SoM<PondPool> + ParThreadPool,
-{
-    type Executor = R;
-
-    type ThreadPool = P;
-
-    fn thread_pool(&self) -> &Self::ThreadPool {
-        &self.pool
-    }
-
-    fn thread_pool_mut(&mut self) -> &mut Self::ThreadPool {
-        &mut self.pool
     }
 }
