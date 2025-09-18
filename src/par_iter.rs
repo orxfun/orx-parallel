@@ -249,18 +249,57 @@ where
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
+    /// Parallel runner of each computation can be independently specified using `with_runner`.
+    ///
+    /// When not specified the default runner is used, which is:
+    /// * [`RunnerWithPool`] with [`StdDefaultPool`] when "std" feature is enabled,
+    /// * [`RunnerWithPool`] with [`SequentialPool`] when "std" feature is disabled.
+    ///
+    /// Note that [`StdDefaultPool`] uses standard native threads.
+    ///
+    /// When working in a no-std environment, the default runner falls back to sequential.
+    /// In this case, `RunnerWithPool` using a particular thread pool must be passed in using `with_runner`
+    /// transformation to achieve parallel computation.
+    ///
+    /// [`RunnerWithPool`]: crate::[`RunnerWithPool`]
+    /// [`StdDefaultPool`]: crate::[`StdDefaultPool`]
+    /// [`SequentialPool`]: crate::[`SequentialPool`]
+    ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// use orx_parallel::*;
     ///
-    /// let inputs = vec![1, 2, 3, 4];
+    /// let inputs: Vec<_> = (0..42).collect();
     ///
-    /// // uses the default runner
+    /// // uses the DefaultRunner
+    /// // assuming "std" enabled, RunnerWithPool<StdDefaultPool> will be used; i.e., native threads
     /// let sum = inputs.par().sum();
     ///
-    /// // uses the custom parallel runner MyParallelRunner: ParallelRunner
-    /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
+    /// // equivalent to:
+    /// let sum2 = inputs.par().with_runner(RunnerWithPool::from(StdDefaultPool::default())).sum();
+    /// assert_eq!(sum, sum2);
+    ///
+    /// #[cfg(feature = "scoped_threadpool")]
+    /// {
+    ///     let mut pool = scoped_threadpool::Pool::new(8);
+    ///
+    ///     // uses the scoped_threadpool::Pool created with 8 threads
+    ///     let sum2 = inputs.par().with_runner(RunnerWithPool::from(&mut pool)).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
+    ///
+    /// #[cfg(feature = "rayon-core")]
+    /// {
+    ///     let pool = rayon_core::ThreadPoolBuilder::new()
+    ///         .num_threads(8)
+    ///         .build()
+    ///         .unwrap();
+    ///
+    ///     // uses the rayon-core::ThreadPool created with 8 threads
+    ///     let sum2 = inputs.par().with_runner(RunnerWithPool::from(&pool)).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
     /// ```
     fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item>;
 
