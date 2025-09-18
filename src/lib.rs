@@ -76,6 +76,8 @@ pub use using::ParIterUsing;
 pub use runner::DefaultRunner;
 #[cfg(feature = "rayon")]
 pub use runner::RunnerWithRayonPool;
+#[cfg(feature = "scoped-pool")]
+pub use runner::RunnerWithScopedPool;
 #[cfg(feature = "scoped_threadpool")]
 pub use runner::RunnerWithScopedThreadPool;
 pub use runner::SequentialRunner;

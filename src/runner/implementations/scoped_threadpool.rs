@@ -67,7 +67,7 @@ impl ParThreadPool for &mut Pool {
 
 // RUNNER
 
-/// Parallel runner using threads provided by scoped_threadpool.
+/// Parallel runner using threads provided by scoped_threadpool::Pool.
 pub struct RunnerWithScopedThreadPool<P, R = DefaultExecutor>
 where
     R: ParallelExecutor,

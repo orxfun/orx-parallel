@@ -20,6 +20,11 @@ pub use implementations::RunnerWithRayonPool;
 #[cfg(feature = "scoped_threadpool")]
 pub use implementations::RunnerWithScopedThreadPool;
 
+#[cfg(feature = "scoped-pool")]
+pub use implementations::RunnerWithScopedPool;
+
+// DEFAULT
+
 /// Default runner used by orx-parallel computations:
 ///
 /// * [`StdRunner`] when "std" feature is enabled,
