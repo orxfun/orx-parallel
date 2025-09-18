@@ -11,6 +11,8 @@ use core::marker::PhantomData;
 /// * `RunnerWithPool<StdDefaultPool>` when "std" feature is enabled,
 /// * `RunnerWithPool<SequentialPool>` when "std" feature is disabled.
 ///
+/// [`DefaultRunner`]: crate::DefaultRunner
+///
 /// # Examples
 ///
 /// ```
