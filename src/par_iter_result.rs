@@ -200,6 +200,8 @@ where
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
     /// See [`ParIter::with_runner`] for details.
+    ///
+    /// [`DefaultRunner`]: crate::DefaultRunner
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
@@ -209,6 +211,8 @@ where
     /// [`ParThreadPool`].
     ///
     /// See [`ParIter::with_pool`] for details.
+    ///
+    /// [`DefaultPool`]: crate::DefaultPool
     fn with_pool<P: ParThreadPool>(
         self,
         pool: P,
