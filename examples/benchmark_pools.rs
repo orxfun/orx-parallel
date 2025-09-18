@@ -1,6 +1,4 @@
-mod utils;
-
-// cargo run --all-features --release --example using_pools
+// cargo run --all-features --release --example benchmark_pools
 // to run with all options:
 //
 // output:
@@ -15,7 +13,7 @@ mod utils;
 // ScopedThreadPool => 17.228307255s
 // Yastl => 43.914882593s
 
-// cargo run --all-features --release --example using_pools -- --pool-type scoped-pool
+// cargo run --all-features --release --example benchmark_pools -- --pool-type scoped-pool
 // to run only using scoped-pool
 //
 // output:
@@ -23,13 +21,15 @@ mod utils;
 // Args { pool_type: ScopedPool, num_threads: 16, len: 100000, num_repetitions: 1000 }
 // ScopedPool => 16.640308686s
 
-// cargo run --all-features --release --example using_pools -- --pool-type rayon-core --len 1000 --num-repetitions 10000
+// cargo run --all-features --release --example benchmark_pools -- --pool-type rayon-core --len 1000 --num-repetitions 10000
 // to run only using rayon-core ThreadPool, with 10000 repetitions for input size of 1000
 //
 // output:
 //
 // Args { pool_type: RayonCore, num_threads: 16, len: 1000, num_repetitions: 10000 }
 // RayonCore => 6.950370104s
+
+mod utils;
 
 fn main() {
     #[cfg(feature = "std")]
@@ -181,7 +181,7 @@ fn main() {
 
         fn run_pond(num_threads: usize, num_repetitions: usize, input: &[usize]) -> Vec<String> {
             let mut pool = PondPool::new_threads_unbounded(num_threads);
-            let mut runner = RunnerWithPondPool::from(&mut pool);
+            let mut runner = RunnerWithPool::from(&mut pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -190,7 +190,7 @@ fn main() {
                 poolite::Builder::new().min(num_threads).max(num_threads),
             )
             .unwrap();
-            let mut runner = RunnerWithPoolitePool::from(&pool);
+            let mut runner = RunnerWithPool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -203,7 +203,7 @@ fn main() {
                 .num_threads(num_threads)
                 .build()
                 .unwrap();
-            let mut runner = RunnerWithRayonPool::from(&pool);
+            let mut runner = RunnerWithPool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -213,7 +213,7 @@ fn main() {
             input: &[usize],
         ) -> Vec<String> {
             let pool = scoped_pool::Pool::new(num_threads);
-            let mut runner = RunnerWithScopedPool::from(&pool);
+            let mut runner = RunnerWithPool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -223,13 +223,13 @@ fn main() {
             input: &[usize],
         ) -> Vec<String> {
             let mut pool = scoped_threadpool::Pool::new(num_threads as u32);
-            let mut runner = RunnerWithScopedThreadPool::from(&mut pool);
+            let mut runner = RunnerWithPool::from(&mut pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
         fn run_yastl(num_threads: usize, num_repetitions: usize, input: &[usize]) -> Vec<String> {
             let pool = YastlPool::new(num_threads);
-            let mut runner = RunnerWithYastlPool::from(&pool);
+            let mut runner = RunnerWithPool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
