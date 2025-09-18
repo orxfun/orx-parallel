@@ -53,6 +53,14 @@ harness = false
 all-features = true
 
 [features]
-default = ["std", "rayon-core"]
+default = [
+    "std",
+    "pond",
+    "poolite",
+    "rayon-core",
+    "scoped-pool",
+    "scoped_threadpool",
+    "yastl",
+]
 std = []
 generic_iterator = ["rayon"]
