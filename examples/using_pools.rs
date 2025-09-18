@@ -1,34 +1,35 @@
 mod utils;
 
 // cargo run --all-features --release --example using_pools
-// to run with all options
+// to run with all options:
+//
+// output:
+//
+// Args { pool_type: All, num_threads: 16, len: 100000, num_repetitions: 1000 }
+// Std => 15.912437916s
+// Sequential => 46.194610858s
+// Pond => 42.560279289s
+// Poolite => 21.422590826s
+// RayonCore => 16.227641997s
+// ScopedPool => 15.958834105s
+// ScopedThreadPool => 17.228307255s
+// Yastl => 43.914882593s
 
 // cargo run --all-features --release --example using_pools -- --pool-type scoped-pool
 // to run only using scoped-pool
+//
+// output:
+//
+// Args { pool_type: ScopedPool, num_threads: 16, len: 100000, num_repetitions: 1000 }
+// ScopedPool => 16.640308686s
 
-// cargo run --all-features --release --example using_pools -- --pool-type scoped-thread-pool --len 100 --num-repetitions 100000
-// to run only using scoped_threadpool, with 100000 repetitions for input size of 100
-
-// cargo run --all-features --release --example using_pools -- --pool-type sequential
-// 11.02s
-
-// cargo run --all-features --release --example using_pools -- --pool-type std
-// 3.66s
-
-// cargo run --all-features --release --example using_pools -- --pool-type pond
-// 11.49s
-
-// cargo run --all-features --release --example using_pools -- --pool-type poolite
-// 12.27s
-
-// cargo run --all-features --release --example using_pools -- --pool-type rayon-core
-// 3.76s
-
-// cargo run --all-features --release --example using_pools -- --pool-type scoped_threadpool
-// 3.70s
-
-// cargo run --all-features --release --example using_pools -- --pool-type yastl
-// 11.47s
+// cargo run --all-features --release --example using_pools -- --pool-type rayon-core --len 1000 --num-repetitions 10000
+// to run only using rayon-core ThreadPool, with 10000 repetitions for input size of 1000
+//
+// output:
+//
+// Args { pool_type: RayonCore, num_threads: 16, len: 1000, num_repetitions: 10000 }
+// RayonCore => 6.950370104s
 
 fn main() {
     #[cfg(feature = "std")]
@@ -131,11 +132,11 @@ fn main() {
                         .flat_map(|x| {
                             [
                                 *x,
-                                fib(x % 10),
-                                fib(x % 21),
-                                fib(x % 17),
-                                fib(x % 33),
-                                fib(x % 21),
+                                fibonacci(x % 10),
+                                fibonacci(x % 21),
+                                fibonacci(x % 17),
+                                fibonacci(x % 33),
+                                fibonacci(x % 21),
                             ]
                         })
                         .map(|x| 3 * x)
@@ -153,7 +154,7 @@ fn main() {
             result
         }
 
-        fn fib(n: usize) -> usize {
+        fn fibonacci(n: usize) -> usize {
             let mut a = 0;
             let mut b = 1;
             for _ in 0..n {
@@ -179,17 +180,17 @@ fn main() {
         }
 
         fn run_pond(num_threads: usize, num_repetitions: usize, input: &[usize]) -> Vec<String> {
-            let mut pond = PondPool::new_threads_unbounded(num_threads);
-            let mut runner = RunnerWithPondPool::from(&mut pond);
+            let mut pool = PondPool::new_threads_unbounded(num_threads);
+            let mut runner = RunnerWithPondPool::from(&mut pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
         fn run_poolite(num_threads: usize, num_repetitions: usize, input: &[usize]) -> Vec<String> {
-            let pond = poolite::Pool::with_builder(
+            let pool = poolite::Pool::with_builder(
                 poolite::Builder::new().min(num_threads).max(num_threads),
             )
             .unwrap();
-            let mut runner = RunnerWithPoolitePool::from(&pond);
+            let mut runner = RunnerWithPoolitePool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -198,11 +199,11 @@ fn main() {
             num_repetitions: usize,
             input: &[usize],
         ) -> Vec<String> {
-            let pond = rayon_core::ThreadPoolBuilder::new()
+            let pool = rayon_core::ThreadPoolBuilder::new()
                 .num_threads(num_threads)
                 .build()
                 .unwrap();
-            let mut runner = RunnerWithRayonPool::from(&pond);
+            let mut runner = RunnerWithRayonPool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -211,8 +212,8 @@ fn main() {
             num_repetitions: usize,
             input: &[usize],
         ) -> Vec<String> {
-            let pond = scoped_pool::Pool::new(num_threads);
-            let mut runner = RunnerWithScopedPool::from(&pond);
+            let pool = scoped_pool::Pool::new(num_threads);
+            let mut runner = RunnerWithScopedPool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -221,14 +222,14 @@ fn main() {
             num_repetitions: usize,
             input: &[usize],
         ) -> Vec<String> {
-            let mut pond = scoped_threadpool::Pool::new(num_threads as u32);
-            let mut runner = RunnerWithScopedThreadPool::from(&mut pond);
+            let mut pool = scoped_threadpool::Pool::new(num_threads as u32);
+            let mut runner = RunnerWithScopedThreadPool::from(&mut pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
         fn run_yastl(num_threads: usize, num_repetitions: usize, input: &[usize]) -> Vec<String> {
-            let pond = YastlPool::new(num_threads);
-            let mut runner = RunnerWithYastlPool::from(&pond);
+            let pool = YastlPool::new(num_threads);
+            let mut runner = RunnerWithYastlPool::from(&pool);
             run_with_runner(&mut runner, num_threads, num_repetitions, input)
         }
 
@@ -241,11 +242,11 @@ fn main() {
             .flat_map(|x| {
                 [
                     *x,
-                    fib(x % 10),
-                    fib(x % 21),
-                    fib(x % 17),
-                    fib(x % 33),
-                    fib(x % 21),
+                    fibonacci(x % 10),
+                    fibonacci(x % 21),
+                    fibonacci(x % 17),
+                    fibonacci(x % 33),
+                    fibonacci(x % 21),
                 ]
             })
             .map(|x| 3 * x)
