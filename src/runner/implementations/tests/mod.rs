@@ -13,6 +13,9 @@ mod scoped_threadpool;
 #[cfg(feature = "std")]
 mod std;
 
+#[cfg(feature = "yastl")]
+mod yastl;
+
 mod sequential;
 
 mod utils;
