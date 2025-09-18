@@ -3,8 +3,6 @@ mod pond;
 
 #[cfg(feature = "poolite")]
 mod poolite;
-#[cfg(feature = "yastl")]
-mod yastl;
 
 #[cfg(feature = "rayon-core")]
 mod rayon_core;
