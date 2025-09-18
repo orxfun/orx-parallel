@@ -91,7 +91,7 @@ fn main() {
                     Self::All => panic!("all is handled by run_all"),
                 };
                 let elapsed = now.elapsed().unwrap();
-                println!("\n{self:?} => {elapsed:?}");
+                println!("{self:?} => {elapsed:?}");
                 assert_eq!(expected, result);
             }
 
@@ -120,23 +120,48 @@ fn main() {
             num_repetitions: usize,
             input: &[usize],
         ) -> Vec<String> {
+            let mut dummy = vec![];
             let mut result = vec![];
-            for _ in 0..num_repetitions {
+            for i in 0..num_repetitions {
                 result = black_box(
                     input
                         .par()
                         .num_threads(num_threads)
                         .with_runner(&mut runner)
-                        .map(|x| x.to_string())
-                        .filter_map(|x| (!x.starts_with('1')).then_some(x))
-                        .flat_map(|x| [format!("{}!", &x), x])
-                        .filter(|x| !x.starts_with('2'))
-                        .filter_map(|x| x.parse::<u64>().ok())
+                        .flat_map(|x| {
+                            [
+                                *x,
+                                fib(x % 10),
+                                fib(x % 21),
+                                fib(x % 17),
+                                fib(x % 33),
+                                fib(x % 21),
+                            ]
+                        })
+                        .map(|x| 3 * x)
+                        .filter(|x| !(100..150).contains(x))
                         .map(|x| x.to_string())
                         .collect(),
                 );
+                if i < num_repetitions.min(result.len()) {
+                    dummy.push(result[i].clone())
+                };
+            }
+            for i in 0..dummy.len() {
+                assert_eq!(&dummy[i], &result[i]);
             }
             result
+        }
+
+        fn fib(n: usize) -> usize {
+            let mut a = 0;
+            let mut b = 1;
+            for _ in 0..n {
+                let c = a + b;
+                a = b;
+                b = c;
+            }
+            a
         }
 
         fn run_std(num_threads: usize, num_repetitions: usize, input: &[usize]) -> Vec<String> {
@@ -208,16 +233,23 @@ fn main() {
         }
 
         let args = Args::parse();
-        println!("\n{args:?}");
+        println!("{args:?}");
 
         let input: Vec<_> = (0..args.len as usize).collect::<Vec<_>>();
         let expected: Vec<_> = input
             .iter()
-            .map(|x| x.to_string())
-            .filter_map(|x| (!x.starts_with('1')).then_some(x))
-            .flat_map(|x| [format!("{}!", &x), x])
-            .filter(|x| !x.starts_with('2'))
-            .filter_map(|x| x.parse::<u64>().ok())
+            .flat_map(|x| {
+                [
+                    *x,
+                    fib(x % 10),
+                    fib(x % 21),
+                    fib(x % 17),
+                    fib(x % 33),
+                    fib(x % 21),
+                ]
+            })
+            .map(|x| 3 * x)
+            .filter(|x| !(100..150).contains(x))
             .map(|x| x.to_string())
             .collect();
 
