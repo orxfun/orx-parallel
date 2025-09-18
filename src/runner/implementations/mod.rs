@@ -32,4 +32,4 @@ pub use scoped_threadpool::RunnerWithScopedThreadPool;
 #[cfg(feature = "yastl")]
 mod yastl;
 #[cfg(feature = "yastl")]
-pub use yastl::RunnerWithYastlPool;
+pub use yastl::{RunnerWithYastlPool, YastlPool};

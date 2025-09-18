@@ -26,6 +26,9 @@ pub use implementations::RunnerWithScopedPool;
 #[cfg(feature = "scoped_threadpool")]
 pub use implementations::RunnerWithScopedThreadPool;
 
+#[cfg(feature = "yastl")]
+pub use implementations::{RunnerWithYastlPool, YastlPool};
+
 // DEFAULT
 
 /// Default runner used by orx-parallel computations:

@@ -85,3 +85,5 @@ pub use runner::RunnerWithScopedThreadPool;
 pub use runner::SequentialRunner;
 #[cfg(feature = "std")]
 pub use runner::StdRunner;
+#[cfg(feature = "yastl")]
+pub use runner::{RunnerWithYastlPool, YastlPool};
