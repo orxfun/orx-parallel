@@ -163,6 +163,7 @@ where
     /// See [`ParIter::with_runner`] for details.
     ///
     /// [`DefaultRunner`]: crate::DefaultRunner
+    /// [`ParIter::with_runner`]: crate::ParIter::with_runner
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
@@ -174,6 +175,7 @@ where
     /// See [`ParIter::with_pool`] for details.
     ///
     /// [`DefaultPool`]: crate::DefaultPool
+    /// [`ParIter::with_pool`]: crate::ParIter::with_pool
     fn with_pool<P: ParThreadPool>(
         self,
         pool: P,
