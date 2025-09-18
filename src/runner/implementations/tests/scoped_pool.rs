@@ -16,6 +16,6 @@ const N: [usize; 2] = [1025, 4735];
 ]
 fn pool_scoped_pool_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let pool = Pool::new(nt);
-    let orch: RunnerWithPool<_> = (&pool).into();
+    let orch = RunnerWithPool::from(&pool);
     run_map(n, chunk, ordering, orch);
 }

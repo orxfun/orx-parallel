@@ -40,7 +40,7 @@ use orx_concurrent_bag::ConcurrentBag;
 /// ```
 /// use orx_parallel::*;
 ///
-/// #[cfg(feature = "rayon")]
+/// #[cfg(feature = "rayon-core")]
 /// {
 ///     let pool = rayon::ThreadPoolBuilder::new()
 ///         .num_threads(4)
@@ -48,19 +48,19 @@ use orx_concurrent_bag::ConcurrentBag;
 ///         .unwrap();
 ///
 ///     // creating a runner for the computation
-///     let runner = RunnerWithRayonPool::from(&pool);
+///     let runner = RunnerWithPool::from(&pool);
 ///     let sum = (0..1000).par().with_runner(runner).sum();
 ///     assert_eq!(sum, 1000 * 999 / 2);
 ///
 ///     // or reuse a runner multiple times (identical under the hood)
-///     let mut runner = RunnerWithRayonPool::from(&pool);
+///     let mut runner = RunnerWithPool::from(&pool);
 ///     let sum = (0..1000).par().with_runner(&mut runner).sum();
 ///     assert_eq!(sum, 1000 * 999 / 2);
 /// }
 /// ```
 ///
 /// Note that since rayon::ThreadPool::scope only requires a shared reference `&self`,
-/// we can create as many runners as we want from the same thread pool and use them concurrently.
+/// we can concurrently create as many runners as we want from the same thread pool and use them concurrently.
 ///
 /// ## Scoped thread pool
 ///
@@ -76,13 +76,13 @@ use orx_concurrent_bag::ConcurrentBag;
 /// {
 ///     // creating a runner for the computation
 ///     let mut pool = scoped_threadpool::Pool::new(4);
-///     let runner = RunnerWithScopedThreadPool::from(&mut pool);
+///     let runner = RunnerWithPool::from(&mut pool);
 ///     let sum = (0..1000).par().with_runner(runner).sum();
 ///     assert_eq!(sum, 1000 * 999 / 2);
 ///
 ///     // or reuse a runner multiple times (identical under the hood)
 ///     let mut pool = scoped_threadpool::Pool::new(4);
-///     let mut runner = RunnerWithScopedThreadPool::from(&mut pool);
+///     let runner = RunnerWithPool::from(&mut pool);
 ///     let sum = (0..1000).par().with_runner(&mut runner).sum();
 ///     assert_eq!(sum, 1000 * 999 / 2);
 /// }
