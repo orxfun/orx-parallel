@@ -101,7 +101,7 @@ impl ParallelExecutor for FixedChunkRunner {
         I: ConcurrentIter,
     {
         let num_spawned = num_spawned.into_inner();
-        if num_spawned % LAG_PERIODICITY == 0 {
+        if num_spawned.is_multiple_of(LAG_PERIODICITY) {
             match self.next_chunk(num_spawned, iter.try_get_len()) {
                 Some(c) => self.current_chunk_size.store(c, Ordering::Relaxed),
                 None => return false,
