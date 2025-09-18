@@ -520,7 +520,8 @@ Please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or cre
 
 * if you notice an error,
 * have a question or think something could be improved,
-* have an input collection or generator that needs to be parallelized, or
+* have an input collection or generator that needs to be parallelized,
+* want to use a particular thread pool with parallel iterators,
 * having trouble representing a particular parallel computation with parallel iterators,
 * or anything else:)
 
