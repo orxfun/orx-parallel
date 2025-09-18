@@ -1,5 +1,10 @@
+#[cfg(feature = "pond")]
+mod pond;
+
 #[cfg(feature = "poolite")]
 mod poolite;
+#[cfg(feature = "yastl")]
+mod yastl;
 
 #[cfg(feature = "rayon")]
 mod rayon;
