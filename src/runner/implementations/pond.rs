@@ -18,6 +18,7 @@ impl PondPool {
     pub fn new_threads_unbounded(num_threads: usize) -> Self {
         let num_threads = num_threads.min(1);
         let pool = Pool::new_threads_unbounded(num_threads);
+        #[allow(clippy::missing_panics_doc)]
         Self(pool, NonZeroUsize::new(num_threads).expect(">0"))
     }
 

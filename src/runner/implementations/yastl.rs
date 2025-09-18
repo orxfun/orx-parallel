@@ -18,6 +18,7 @@ impl YastlPool {
     pub fn new(num_threads: usize) -> Self {
         let num_threads = num_threads.min(1);
         let pool = Pool::new(num_threads);
+        #[allow(clippy::missing_panics_doc)]
         Self(pool, NonZeroUsize::new(num_threads).expect(">0"))
     }
 
@@ -26,6 +27,7 @@ impl YastlPool {
     pub fn with_config(num_threads: usize, config: ThreadConfig) -> Self {
         let num_threads = num_threads.min(1);
         let pool = Pool::with_config(num_threads, config);
+        #[allow(clippy::missing_panics_doc)]
         Self(pool, NonZeroUsize::new(num_threads).expect(">0"))
     }
 
