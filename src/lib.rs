@@ -73,10 +73,11 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use special_type_sets::Sum;
 pub use using::ParIterUsing;
 
-pub use runner::{DefaultRunner, RunnerWithPool};
+pub use runner::{DefaultRunner, ParallelRunner, RunnerWithPool, SequentialPool};
 
 #[cfg(feature = "pond")]
 pub use runner::PondPool;
-pub use runner::SequentialPool;
+#[cfg(feature = "std")]
+pub use runner::StdDefaultPool;
 #[cfg(feature = "yastl")]
 pub use runner::YastlPool;

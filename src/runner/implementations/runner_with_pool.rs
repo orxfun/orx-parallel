@@ -1,6 +1,93 @@
 use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
 use core::marker::PhantomData;
 
+/// Parallel runner with a given pool of type `P` and parallel executor of `R`.
+///
+/// It can be constructed from any pool, or reference of a pool, implementing [`ParThreadPool`]
+/// since `RunnerWithPool<P, DefaultExecutor>` implements `From<P>`.
+///
+/// Note that default parallel runner; i.e., [`DefaultRunner`] is:
+/// * `RunnerWithPool<StdDefaultPool>` when "std" feature is enabled,
+/// * `RunnerWithPool<SequentialPool>` when "std" feature is disabled.
+///
+/// # Examples
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// // parallel computation generic over parallel runner; and hence, the thread pool
+/// fn run_with_runner<R: ParallelRunner>(runner: R, input: &[usize]) -> Vec<String> {
+///     input
+///         .par()
+///         .with_runner(runner)
+///         .flat_map(|x| [*x, 2 * x, x / 7])
+///         .map(|x| x.to_string())
+///         .collect()
+/// }
+///
+/// let vec: Vec<_> = (0..42).collect();
+/// let input = vec.as_slice();
+///
+/// // runs on the main thread
+/// let runner = RunnerWithPool::from(SequentialPool);
+/// let expected = run_with_runner(runner, input);
+///
+/// // uses native threads
+/// let runner = RunnerWithPool::from(StdDefaultPool::default());
+/// let result = run_with_runner(runner, input);
+/// assert_eq!(&expected, &result);
+///
+/// // uses rayon-core ThreadPool with 8 threads
+/// #[cfg(feature = "rayon-core")]
+/// {
+///     let pool = rayon_core::ThreadPoolBuilder::new()
+///         .num_threads(8)
+///         .build()
+///         .unwrap();
+///     let result = run_with_runner(RunnerWithPool::from(&pool), input);
+///     assert_eq!(&expected, &result);
+/// }
+///
+/// // uses scoped-pool Pool with 8 threads
+/// #[cfg(feature = "scoped-pool")]
+/// {
+///     let pool = scoped_pool::Pool::new(8);
+///     let result = run_with_runner(RunnerWithPool::from(&pool), input);
+///     assert_eq!(&expected, &result);
+/// }
+///
+/// // uses scoped_threadpool Pool with 8 threads
+/// #[cfg(feature = "scoped_threadpool")]
+/// {
+///     let mut pool = scoped_threadpool::Pool::new(8);
+///     let result = run_with_runner(RunnerWithPool::from(&mut pool), input); // requires &mut pool
+///     assert_eq!(&expected, &result);
+/// }
+///
+/// // uses yastl Pool wrapped as YastlPool with 8 threads
+/// #[cfg(feature = "yastl")]
+/// {
+///     let pool = YastlPool::new(8);
+///     let result = run_with_runner(RunnerWithPool::from(&pool), input);
+///     assert_eq!(&expected, &result);
+/// }
+///
+/// // uses pond Pool wrapped as PondPool with 8 threads
+/// #[cfg(feature = "pond")]
+/// {
+///     let mut pool = PondPool::new_threads_unbounded(8);
+///     let result = run_with_runner(RunnerWithPool::from(&mut pool), input); // requires &mut pool
+///     assert_eq!(&expected, &result);
+/// }
+///
+/// // uses poolite Pool with 8 threads
+/// #[cfg(feature = "poolite")]
+/// {
+///     let pool = poolite::Pool::with_builder(poolite::Builder::new().min(8).max(8)).unwrap();
+///     let result = run_with_runner(RunnerWithPool::from(&pool), input);
+///     assert_eq!(&expected, &result);
+/// }
+/// ```
 pub struct RunnerWithPool<P, R = DefaultExecutor>
 where
     P: ParThreadPool,

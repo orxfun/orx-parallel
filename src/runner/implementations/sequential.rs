@@ -1,7 +1,7 @@
 use crate::ParThreadPool;
 use core::num::NonZeroUsize;
 
-/// A fake thread pool with [`max_num_threads`] of 1.
+/// A 'thread pool' with [`max_num_threads`] of 1.
 /// All computations using this thread pool are executed sequentially by the main thread.
 ///
 /// This is the default thread pool used when "std" feature is disabled.
