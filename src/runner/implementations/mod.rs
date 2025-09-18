@@ -18,3 +18,8 @@ pub use rayon::RunnerWithRayonPool;
 mod scoped_threadpool;
 #[cfg(feature = "scoped_threadpool")]
 pub use scoped_threadpool::RunnerWithScopedThreadPool;
+
+#[cfg(feature = "scoped-pool")]
+mod scoped_pool;
+#[cfg(feature = "scoped-pool")]
+pub use scoped_pool::RunnerWithScopedPool;
