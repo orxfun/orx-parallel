@@ -141,6 +141,9 @@ where
     /// ```
     /// use orx_parallel::*;
     ///
+    /// let vec: Vec<_> = (0..42).collect();
+    /// let input = vec.as_slice();
+    ///
     /// #[cfg(feature = "rayon-core")]
     /// {
     ///     let pool = rayon_core::ThreadPoolBuilder::new()
