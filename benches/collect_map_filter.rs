@@ -83,6 +83,16 @@ fn orx_into_split_vec(inputs: &[usize]) -> SplitVec<Output> {
     inputs.into_par().map(map).filter(filter).collect()
 }
 
+#[allow(dead_code)]
+fn orx_into_vec_with<P: ParThreadPool>(inputs: &[usize], pool: P) -> Vec<Output> {
+    inputs
+        .into_par()
+        .with_pool(pool)
+        .map(map)
+        .filter(filter)
+        .collect()
+}
+
 fn run(c: &mut Criterion) {
     let treatments = [65_536 * 2];
 
@@ -113,6 +123,64 @@ fn run(c: &mut Criterion) {
             assert_eq!(&expected, &orx_into_split_vec(&input));
             b.iter(|| orx_into_split_vec(black_box(&input)))
         });
+
+        #[cfg(feature = "rayon-core")]
+        group.bench_with_input(
+            BenchmarkId::new("orx-into-vec (rayon-core::ThreadPool)", n),
+            n,
+            |b, _| {
+                let pool = rayon_core::ThreadPoolBuilder::new()
+                    .num_threads(32)
+                    .build()
+                    .unwrap();
+                assert_eq!(&expected, &orx_into_vec_with(&input, &pool));
+                b.iter(|| orx_into_vec_with(black_box(&input), &pool))
+            },
+        );
+
+        #[cfg(feature = "scoped-pool")]
+        group.bench_with_input(
+            BenchmarkId::new("orx-into-vec (scoped-pool::Pool)", n),
+            n,
+            |b, _| {
+                let pool = scoped_pool::Pool::new(32);
+                assert_eq!(&expected, &orx_into_vec_with(&input, &pool));
+                b.iter(|| orx_into_vec_with(black_box(&input), &pool))
+            },
+        );
+
+        #[cfg(feature = "scoped_threadpool")]
+        group.bench_with_input(
+            BenchmarkId::new("orx-into-vec (scoped_threadpool::Pool)", n),
+            n,
+            |b, _| {
+                let pool = || scoped_threadpool::Pool::new(32);
+                assert_eq!(&expected, &orx_into_vec_with(&input, pool()));
+                b.iter(|| orx_into_vec_with(black_box(&input), pool()))
+            },
+        );
+
+        #[cfg(feature = "yastl")]
+        group.bench_with_input(
+            BenchmarkId::new("orx-into-vec (yastl::Pool)", n),
+            n,
+            |b, _| {
+                let pool = YastlPool::new(32);
+                assert_eq!(&expected, &orx_into_vec_with(&input, &pool));
+                b.iter(|| orx_into_vec_with(black_box(&input), &pool))
+            },
+        );
+
+        #[cfg(feature = "pond")]
+        group.bench_with_input(
+            BenchmarkId::new("orx-into-vec (pond::Pool)", n),
+            n,
+            |b, _| {
+                let pool = || PondPool::new_threads_unbounded(32);
+                assert_eq!(&expected, &orx_into_vec_with(&input, pool()));
+                b.iter(|| orx_into_vec_with(black_box(&input), pool()))
+            },
+        );
     }
 
     group.finish();
