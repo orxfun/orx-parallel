@@ -1,5 +1,6 @@
 use super::run_map;
-use crate::{IterationOrder, RunnerWithPool, runner::implementations::sequential::SequentialPool};
+use crate::{IterationOrder, runner::implementations::RunnerWithPool};
+use scoped_pool::Pool;
 use test_case::test_matrix;
 
 #[cfg(miri)]
@@ -13,7 +14,8 @@ const N: [usize; 2] = [1025, 4735];
     [1, 64],
     [IterationOrder::Ordered, IterationOrder::Arbitrary])
 ]
-fn pool_scoped_threadpool_map(n: usize, _: usize, chunk: usize, ordering: IterationOrder) {
-    let orch = RunnerWithPool::from(SequentialPool);
+fn pool_scoped_pool_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
+    let pool = Pool::new(nt);
+    let orch = RunnerWithPool::from(&pool);
     run_map(n, chunk, ordering, orch);
 }

@@ -1,9 +1,9 @@
-use crate::ParIterResult;
 use crate::computational_variants::fallible_option::ParOption;
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::{UsingClone, UsingFun};
+use crate::{ParIterResult, ParThreadPool, RunnerWithPool};
 use crate::{
     ParIterUsing, Params,
     collect_into::ParCollectInto,
@@ -249,20 +249,133 @@ where
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
+    /// See also [`with_pool`].
+    ///
+    /// Parallel runner of each computation can be independently specified using `with_runner`.
+    ///
+    /// When not specified the default runner is used, which is:
+    /// * [`RunnerWithPool`] with [`StdDefaultPool`] when "std" feature is enabled,
+    /// * [`RunnerWithPool`] with [`SequentialPool`] when "std" feature is disabled.
+    ///
+    /// Note that [`StdDefaultPool`] uses standard native threads.
+    ///
+    /// When working in a no-std environment, the default runner falls back to sequential.
+    /// In this case, `RunnerWithPool` using a particular thread pool must be passed in using `with_runner`
+    /// transformation to achieve parallel computation.
+    ///
+    /// [`RunnerWithPool`]: crate::RunnerWithPool
+    /// [`StdDefaultPool`]: crate::StdDefaultPool
+    /// [`SequentialPool`]: crate::SequentialPool
+    /// [`with_pool`]: crate::ParIter::with_pool
+    ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// use orx_parallel::*;
     ///
-    /// let inputs = vec![1, 2, 3, 4];
+    /// let inputs: Vec<_> = (0..42).collect();
     ///
-    /// // uses the default runner
+    /// // uses the DefaultRunner
+    /// // assuming "std" enabled, RunnerWithPool<StdDefaultPool> will be used; i.e., native threads
     /// let sum = inputs.par().sum();
     ///
-    /// // uses the custom parallel runner MyParallelRunner: ParallelRunner
-    /// let sum = inputs.par().with_runner::<MyParallelRunner>().sum();
+    /// // equivalent to:
+    /// let sum2 = inputs.par().with_runner(RunnerWithPool::from(StdDefaultPool::default())).sum();
+    /// assert_eq!(sum, sum2);
+    ///
+    /// #[cfg(feature = "scoped_threadpool")]
+    /// {
+    ///     let mut pool = scoped_threadpool::Pool::new(8);
+    ///
+    ///     // uses the scoped_threadpool::Pool created with 8 threads
+    ///     let sum2 = inputs.par().with_runner(RunnerWithPool::from(&mut pool)).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
+    ///
+    /// #[cfg(feature = "rayon-core")]
+    /// {
+    ///     let pool = rayon_core::ThreadPoolBuilder::new()
+    ///         .num_threads(8)
+    ///         .build()
+    ///         .unwrap();
+    ///
+    ///     // uses the rayon-core::ThreadPool created with 8 threads
+    ///     let sum2 = inputs.par().with_runner(RunnerWithPool::from(&pool)).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
     /// ```
-    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> impl ParIter<Q, Item = Self::Item>;
+    fn with_runner<Q: ParallelRunner>(self, runner: Q) -> impl ParIter<Q, Item = Self::Item>;
+
+    /// Rather than [`DefaultPool`], uses the parallel runner with the given `pool` implementing
+    /// [`ParThreadPool`].
+    ///
+    /// See also [`with_runner`].
+    ///
+    /// Thread pool of each computation can be independently specified using `with_pool`.
+    ///
+    /// When not specified the default pool is used, which is:
+    /// * [`StdDefaultPool`] when "std" feature is enabled,
+    /// * [`SequentialPool`] when "std" feature is disabled.
+    ///
+    /// Note that [`StdDefaultPool`] uses standard native threads.
+    ///
+    /// When working in a no-std environment, the default pool falls back to sequential.
+    /// In this case, a thread pool must be passed in using `with_pool` transformation to achieve parallel computation.
+    ///
+    /// Note that if a thread pool, say `pool`, is of a type that implements [`ParThreadPool`]; then:
+    /// * `with_pool` can be called with owned value `with_pool(pool)` for all implementors; but also,
+    /// * with a shared reference `with_pool(&pool)` for most of the implementations (eg: rayon-core, yastl), and
+    /// * with a mutable reference `with_pool(&mut pool)` for others (eg: scoped_threadpool).
+    ///
+    /// [`DefaultPool`]: crate::DefaultPool
+    /// [`RunnerWithPool`]: crate::RunnerWithPool
+    /// [`StdDefaultPool`]: crate::StdDefaultPool
+    /// [`SequentialPool`]: crate::SequentialPool
+    /// [`with_runner`]: crate::ParIter::with_runner
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let inputs: Vec<_> = (0..42).collect();
+    ///
+    /// // uses the DefaultPool
+    /// // assuming "std" enabled, StdDefaultPool will be used; i.e., native threads
+    /// let sum = inputs.par().sum();
+    ///
+    /// // equivalent to:
+    /// let sum2 = inputs.par().with_pool(StdDefaultPool::default()).sum();
+    /// assert_eq!(sum, sum2);
+    ///
+    /// #[cfg(feature = "scoped_threadpool")]
+    /// {
+    ///     let mut pool = scoped_threadpool::Pool::new(8);
+    ///
+    ///     // uses the scoped_threadpool::Pool created with 8 threads
+    ///     let sum2 = inputs.par().with_pool(&mut pool).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
+    ///
+    /// #[cfg(feature = "rayon-core")]
+    /// {
+    ///     let pool = rayon_core::ThreadPoolBuilder::new()
+    ///         .num_threads(8)
+    ///         .build()
+    ///         .unwrap();
+    ///
+    ///     // uses the rayon-core::ThreadPool created with 8 threads
+    ///     let sum2 = inputs.par().with_pool(&pool).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
+    /// ```
+    fn with_pool<P: ParThreadPool>(
+        self,
+        pool: P,
+    ) -> impl ParIter<RunnerWithPool<P, R::Executor>, Item = Self::Item> {
+        let runner = RunnerWithPool::from(pool).with_executor::<R::Executor>();
+        self.with_runner(runner)
+    }
 
     // using transformations
 
