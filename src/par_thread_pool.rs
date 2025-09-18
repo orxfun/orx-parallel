@@ -82,7 +82,7 @@ use orx_concurrent_bag::ConcurrentBag;
 ///
 ///     // or reuse a runner multiple times (identical under the hood)
 ///     let mut pool = scoped_threadpool::Pool::new(4);
-///     let runner = RunnerWithPool::from(&mut pool);
+///     let mut runner = RunnerWithPool::from(&mut pool);
 ///     let sum = (0..1000).par().with_runner(&mut runner).sum();
 ///     assert_eq!(sum, 1000 * 999 / 2);
 /// }

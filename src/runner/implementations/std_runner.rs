@@ -3,6 +3,18 @@ use core::num::NonZeroUsize;
 
 const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 
+/// Native standard thread pool.
+///
+/// This is the default thread pool used when "std" feature is enabled.
+///
+/// Uses `std::thread::scope` and `scope.spawn(..)` to distribute work to threads.
+///
+/// Its [`max_num_threads`] is determined as the minimum of:
+///
+/// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
+/// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", only if set.
+///
+/// [`max_num_threads`]: ParThreadPool::max_num_threads
 pub struct StdDefaultPool {
     max_num_threads: NonZeroUsize,
 }
