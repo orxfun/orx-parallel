@@ -1,56 +1,48 @@
 use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
 use core::{marker::PhantomData, num::NonZeroUsize};
-use orx_self_or::SoR;
-use yastl::{Pool, Scope, ThreadConfig};
+use orx_self_or::SoM;
+use pond::{Pool, Scope};
 
 // POOL
 
-/// A wrapper for `yastl::Pool` and number of threads it was built with.
+/// A wrapper for `pond::Pool` and number of threads it was built with.
 ///
-/// NOTE: The reason why `yastl::Pool` does not directly implement `ParThreadPool`
+/// NOTE: The reason why `pond::Pool` does not directly implement `ParThreadPool`
 /// is simply to be able to provide `max_num_threads` which is the argument used
 /// to create the pool with.
 ///
-/// Two constructors of the `yastl::Pool` are made available to `YastlPool`:
-/// * [`YastlPool::new`]
-/// * [`YastlPool::with_config`]
-pub struct YastlPool(Pool, NonZeroUsize);
+/// Following constructor of the `pond::Pool` is made available to `PondPool`:
+/// * [`PondPool::new_threads_unbounded`]
+pub struct PondPool(Pool, NonZeroUsize);
 
-impl YastlPool {
-    /// Create a new Pool that will execute it's tasks on `num_threads` worker threads.
-    pub fn new(num_threads: usize) -> Self {
+impl PondPool {
+    /// Spawn a number of threads. The pool's queue of pending jobs is limited.
+    /// The backlog is unbounded as in unbounded.
+    pub fn new_threads_unbounded(num_threads: usize) -> Self {
         let num_threads = num_threads.min(1);
-        let pool = Pool::new(num_threads);
+        let pool = Pool::new_threads_unbounded(num_threads);
         Self(pool, NonZeroUsize::new(num_threads).expect(">0"))
     }
 
-    /// Create a new Pool that will execute it's tasks on `num_threads` worker threads and
-    /// spawn them using the given `config`.
-    pub fn with_config(num_threads: usize, config: ThreadConfig) -> Self {
-        let num_threads = num_threads.min(1);
-        let pool = Pool::with_config(num_threads, config);
-        Self(pool, NonZeroUsize::new(num_threads).expect(">0"))
-    }
-
-    /// Reference to wrapped `yastl::Pool`.
+    /// Reference to wrapped `pond::Pool`.
     pub fn inner(&self) -> &Pool {
         &self.0
     }
 
-    /// Mutable reference to wrapped `yastl::Pool`.
+    /// Mutable reference to wrapped `pond::Pool`.
     pub fn inner_mut(&mut self) -> &mut Pool {
         &mut self.0
     }
 
-    /// Returns the wrapped `yastl::Pool`.
+    /// Returns the wrapped `pond::Pool`.
     pub fn into_inner(self) -> Pool {
         self.0
     }
 }
 
-impl ParThreadPool for YastlPool {
+impl ParThreadPool for PondPool {
     type ScopeRef<'s, 'env, 'scope>
-        = &'s Scope<'scope>
+        = Scope<'env, 'scope>
     where
         'scope: 's,
         'env: 'scope + 's;
@@ -67,7 +59,7 @@ impl ParThreadPool for YastlPool {
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
-        for<'s> F: FnOnce(&'s Scope<'scope>) + Send,
+        for<'s> F: FnOnce(Scope<'env, 'scope>) + Send,
     {
         self.0.scoped(f)
     }
@@ -77,9 +69,9 @@ impl ParThreadPool for YastlPool {
     }
 }
 
-impl ParThreadPool for &YastlPool {
+impl ParThreadPool for &mut PondPool {
     type ScopeRef<'s, 'env, 'scope>
-        = &'s Scope<'scope>
+        = Scope<'env, 'scope>
     where
         'scope: 's,
         'env: 'scope + 's;
@@ -96,7 +88,7 @@ impl ParThreadPool for &YastlPool {
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
     where
         'env: 'scope,
-        for<'s> F: FnOnce(&'s Scope<'scope>) + Send,
+        for<'s> F: FnOnce(Scope<'env, 'scope>) + Send,
     {
         self.0.scoped(f)
     }
@@ -108,18 +100,18 @@ impl ParThreadPool for &YastlPool {
 
 // RUNNER
 
-/// Parallel runner using threads provided by yastl::Pool.
-pub struct RunnerWithYastlPool<P, R = DefaultExecutor>
+/// Parallel runner using threads provided by pond::Pool.
+pub struct RunnerWithPondPool<P, R = DefaultExecutor>
 where
     R: ParallelExecutor,
-    P: SoR<YastlPool> + ParThreadPool,
+    P: SoM<PondPool> + ParThreadPool,
 {
     pool: P,
     runner: PhantomData<R>,
 }
 
-impl From<YastlPool> for RunnerWithYastlPool<YastlPool, DefaultExecutor> {
-    fn from(pool: YastlPool) -> Self {
+impl From<PondPool> for RunnerWithPondPool<PondPool, DefaultExecutor> {
+    fn from(pool: PondPool) -> Self {
         Self {
             pool,
             runner: PhantomData,
@@ -127,8 +119,8 @@ impl From<YastlPool> for RunnerWithYastlPool<YastlPool, DefaultExecutor> {
     }
 }
 
-impl<'a> From<&'a YastlPool> for RunnerWithYastlPool<&'a YastlPool, DefaultExecutor> {
-    fn from(pool: &'a YastlPool) -> Self {
+impl<'a> From<&'a mut PondPool> for RunnerWithPondPool<&'a mut PondPool, DefaultExecutor> {
+    fn from(pool: &'a mut PondPool) -> Self {
         Self {
             pool,
             runner: PhantomData,
@@ -136,10 +128,10 @@ impl<'a> From<&'a YastlPool> for RunnerWithYastlPool<&'a YastlPool, DefaultExecu
     }
 }
 
-impl<P, R> ParallelRunner for RunnerWithYastlPool<P, R>
+impl<P, R> ParallelRunner for RunnerWithPondPool<P, R>
 where
     R: ParallelExecutor,
-    P: SoR<YastlPool> + ParThreadPool,
+    P: SoM<PondPool> + ParThreadPool,
 {
     type Executor = R;
 

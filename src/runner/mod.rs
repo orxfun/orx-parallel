@@ -14,6 +14,9 @@ pub use implementations::SequentialRunner;
 #[cfg(feature = "std")]
 pub use implementations::StdRunner;
 
+#[cfg(feature = "pond")]
+pub use implementations::{PondPool, RunnerWithPondPool};
+
 #[cfg(feature = "poolite")]
 pub use implementations::RunnerWithPoolitePool;
 

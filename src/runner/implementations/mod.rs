@@ -9,6 +9,11 @@ mod std_runner;
 #[cfg(feature = "std")]
 pub use std_runner::StdRunner;
 
+#[cfg(feature = "pond")]
+mod pond;
+#[cfg(feature = "pond")]
+pub use pond::{PondPool, RunnerWithPondPool};
+
 #[cfg(feature = "poolite")]
 mod poolite;
 #[cfg(feature = "poolite")]

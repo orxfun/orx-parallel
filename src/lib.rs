@@ -85,5 +85,7 @@ pub use runner::RunnerWithScopedThreadPool;
 pub use runner::SequentialRunner;
 #[cfg(feature = "std")]
 pub use runner::StdRunner;
+#[cfg(feature = "pond")]
+pub use runner::{PondPool, RunnerWithPondPool};
 #[cfg(feature = "yastl")]
 pub use runner::{RunnerWithYastlPool, YastlPool};

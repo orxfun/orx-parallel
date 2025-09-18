@@ -28,6 +28,7 @@ scoped_threadpool = { version = "0.1.9", optional = true }
 scoped-pool = { version = "1.0.0", optional = true }
 poolite = { version = "0.7.1", optional = true }
 yastl = { version = "0.1.2", optional = true }
+pond = { version = "0.3.1", optional = true }
 
 [dev-dependencies]
 chrono = "0.4.42"
@@ -48,6 +49,6 @@ harness = false
 all-features = true
 
 [features]
-default = ["std", "yastl"]
+default = ["std", "pond"]
 std = []
 generic_iterator = ["rayon"]
