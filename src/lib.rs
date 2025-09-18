@@ -74,6 +74,8 @@ pub use special_type_sets::Sum;
 pub use using::ParIterUsing;
 
 pub use runner::DefaultRunner;
+#[cfg(feature = "poolite")]
+pub use runner::RunnerWithPoolitePool;
 #[cfg(feature = "rayon")]
 pub use runner::RunnerWithRayonPool;
 #[cfg(feature = "scoped-pool")]

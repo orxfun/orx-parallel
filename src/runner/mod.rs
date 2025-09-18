@@ -14,14 +14,17 @@ pub use implementations::SequentialRunner;
 #[cfg(feature = "std")]
 pub use implementations::StdRunner;
 
+#[cfg(feature = "poolite")]
+pub use implementations::RunnerWithPoolitePool;
+
 #[cfg(feature = "rayon")]
 pub use implementations::RunnerWithRayonPool;
 
-#[cfg(feature = "scoped_threadpool")]
-pub use implementations::RunnerWithScopedThreadPool;
-
 #[cfg(feature = "scoped-pool")]
 pub use implementations::RunnerWithScopedPool;
+
+#[cfg(feature = "scoped_threadpool")]
+pub use implementations::RunnerWithScopedThreadPool;
 
 // DEFAULT
 
