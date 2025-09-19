@@ -59,7 +59,7 @@ fn main() {
             #[arg(long, default_value_t = 100000)]
             len: usize,
             /// Number of repetitions to measure time; total time will be reported.
-            #[arg(long, default_value_t = 1000)]
+            #[arg(long, default_value_t = 100)]
             num_repetitions: usize,
         }
 
