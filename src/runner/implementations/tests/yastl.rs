@@ -23,6 +23,6 @@ fn pool_yastl_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     run_map(n, chunk, ordering, orch);
 
     let pool = YastlPool::with_config(nt, ThreadConfig::new());
-    let orch: RunnerWithPool<_> = (&pool).into();
+    let orch: RunnerWithPool<_> = (pool).into();
     run_map(n, chunk, ordering, orch);
 }
