@@ -1,6 +1,5 @@
 use crate::ParThreadPool;
 use core::num::NonZeroUsize;
-use orx_self_or::SoR;
 use yastl::{Pool, Scope, ThreadConfig};
 
 /// A wrapper for `yastl::Pool` and number of threads it was built with.
@@ -48,7 +47,7 @@ impl YastlPool {
     }
 }
 
-impl<P: SoR<YastlPool>> ParThreadPool for P {
+impl ParThreadPool for YastlPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s Scope<'scope>
     where
@@ -69,10 +68,39 @@ impl<P: SoR<YastlPool>> ParThreadPool for P {
         'env: 'scope,
         for<'s> F: FnOnce(&'s Scope<'scope>) + Send,
     {
-        P::get_ref(self).0.scoped(f)
+        self.0.scoped(f)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
-        self.get_ref().1
+        self.1
+    }
+}
+
+impl ParThreadPool for &YastlPool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s Scope<'scope>
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        s.execute(work);
+    }
+
+    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s Scope<'scope>) + Send,
+    {
+        self.0.scoped(f)
+    }
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        self.1
     }
 }
