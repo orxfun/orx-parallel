@@ -12,8 +12,18 @@ pub enum Reduce<V: Values> {
     },
 }
 
+impl<V: Values> Reduce<V> {
+    pub fn into_result(self) -> Result<Option<V::Item>, <V::Fallibility as Fallibility>::Error> {
+        match self {
+            Reduce::Done { acc } => Ok(acc),
+            Reduce::StoppedByWhileCondition { acc } => Ok(acc),
+            Reduce::StoppedByError { error } => Err(error),
+        }
+    }
+}
+
 impl<V: Values> core::fmt::Debug for Reduce<V> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Done { acc: _ } => f.debug_struct("Done").finish(),
             Self::StoppedByWhileCondition { acc: _ } => {

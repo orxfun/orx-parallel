@@ -1,10 +1,12 @@
 use crate::{
-    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
-    ParallelRunner,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterResult,
     par_iter_option::{ParIterOption, ResultIntoOption},
+    runner::{DefaultRunner, ParallelRunner},
 };
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
+/// A parallel iterator for which the computation either completely succeeds,
+/// or fails and **early exits** with None.
 pub struct ParOption<F, T, R = DefaultRunner>
 where
     R: ParallelRunner,
@@ -48,8 +50,11 @@ where
         Self::new(self.par.iteration_order(order))
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Item = Self::Item> {
-        ParOption::new(self.par.with_runner())
+    fn with_runner<Q: ParallelRunner>(
+        self,
+        orchestrator: Q,
+    ) -> impl ParIterOption<Q, Item = Self::Item> {
+        ParOption::new(self.par.with_runner(orchestrator))
     }
 
     // computation transformations

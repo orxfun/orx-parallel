@@ -1,9 +1,7 @@
-use crate::computations::{map_count, reduce_sum, reduce_unit};
-use crate::{ChunkSize, IterationOrder, NumThreads, Sum};
-use crate::{
-    DefaultRunner, ParCollectInto, ParIter, ParallelRunner,
-    generic_values::fallible_iterators::ResultOfIter,
-};
+use crate::default_fns::{map_count, reduce_sum, reduce_unit};
+use crate::runner::{DefaultRunner, ParallelRunner};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParThreadPool, RunnerWithPool, Sum};
+use crate::{ParCollectInto, ParIter, generic_values::fallible_iterators::ResultOfIter};
 use core::cmp::Ordering;
 
 /// A parallel iterator for which the computation either completely succeeds,
@@ -202,9 +200,31 @@ where
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
     /// See [`ParIter::with_runner`] for details.
+    ///
+    /// [`DefaultRunner`]: crate::DefaultRunner
+    /// [`ParIter::with_runner`]: crate::ParIter::with_runner
     fn with_runner<Q: ParallelRunner>(
         self,
+        orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err>;
+
+    /// Rather than [`DefaultPool`], uses the parallel runner with the given `pool` implementing
+    /// [`ParThreadPool`].
+    ///
+    /// See [`ParIter::with_pool`] for details.
+    ///
+    /// [`DefaultPool`]: crate::DefaultPool
+    /// [`ParIter::with_pool`]: crate::ParIter::with_pool
+    fn with_pool<P: ParThreadPool>(
+        self,
+        pool: P,
+    ) -> impl ParIterResult<RunnerWithPool<P, R::Executor>, Item = Self::Item, Err = Self::Err>
+    where
+        Self: Sized,
+    {
+        let runner = RunnerWithPool::from(pool).with_executor::<R::Executor>();
+        self.with_runner(runner)
+    }
 
     // computation transformations
 

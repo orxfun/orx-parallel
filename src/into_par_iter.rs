@@ -55,7 +55,7 @@ where
     I: IntoConcurrentIter,
 {
     fn into_par(self) -> Par<Self::IntoIter, DefaultRunner> {
-        Par::new(Params::default(), self.into_con_iter())
+        Par::new(Default::default(), Params::default(), self.into_con_iter())
     }
 }
 
@@ -65,6 +65,7 @@ impl<I: ConcurrentIter> IntoConcurrentIter for Par<I, DefaultRunner> {
     type IntoIter = I;
 
     fn into_con_iter(self) -> Self::IntoIter {
-        self.destruct().1
+        let (_, _, iter) = self.destruct();
+        iter
     }
 }

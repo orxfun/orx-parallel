@@ -1,11 +1,13 @@
 use crate::computational_variants::ParMap;
-use crate::computations::X;
+use crate::executor::parallel_compute as prc;
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{IterationOrder, ParCollectInto, ParIter};
+use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
 
+/// A parallel iterator for which the computation either completely succeeds,
+/// or fails and **early exits** with an error.
 pub struct ParMapResult<I, T, E, O, M1, R = DefaultRunner>
 where
     R: ParallelRunner,
@@ -66,10 +68,11 @@ where
 
     fn with_runner<Q: ParallelRunner>(
         self,
+        orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
-        let (params, iter, m1) = self.par.destruct();
+        let (_, params, iter, m1) = self.par.destruct();
         ParMapResult {
-            par: ParMap::new(params, iter, m1),
+            par: ParMap::new(orchestrator, params, iter, m1),
             phantom: PhantomData,
         }
     }
@@ -82,10 +85,9 @@ where
         Self::Item: Send,
         Self::Err: Send,
     {
-        let (params, iter, m1) = self.par.destruct();
+        let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = X::new(params, iter, x1);
-        output.x_try_collect_into::<R, _, _, _>(x)
+        output.x_try_collect_into(orchestrator, params, iter, x1)
     }
 
     // reduce
@@ -96,10 +98,9 @@ where
         Self::Err: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        let (params, iter, m1) = self.par.destruct();
+        let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = X::new(params, iter, x1);
-        x.try_reduce::<R, _>(reduce).1
+        prc::reduce::x(orchestrator, params, iter, x1, reduce).1
     }
 
     // early exit
@@ -109,12 +110,17 @@ where
         Self::Item: Send,
         Self::Err: Send,
     {
-        let (params, iter, m1) = self.par.destruct();
+        let (orchestrator, params, iter, m1) = self.par.destruct();
         let x1 = |i: I::Item| m1(i).into_result();
-        let x = X::new(params, iter, x1);
         match params.iteration_order {
-            IterationOrder::Ordered => x.try_next::<R>().1,
-            IterationOrder::Arbitrary => x.try_next_any::<R>().1,
+            IterationOrder::Ordered => {
+                let (_, result) = prc::next::x(orchestrator, params, iter, x1);
+                result.map(|x| x.map(|y| y.1))
+            }
+            IterationOrder::Arbitrary => {
+                let (_, result) = prc::next_any::x(orchestrator, params, iter, x1);
+                result
+            }
         }
     }
 }

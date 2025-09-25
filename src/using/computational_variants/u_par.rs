@@ -1,16 +1,13 @@
-use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params,
-    generic_values::Vector,
-    runner::{DefaultRunner, ParallelRunner},
-    using::u_par_iter::ParIterUsing,
-    using::{
-        Using,
-        computational_variants::{u_map::UParMap, u_xap::UParXap},
-        computations::{UM, u_map_self},
-    },
-};
+use crate::ParIterUsing;
+use crate::default_fns::u_map_self;
+use crate::generic_values::Vector;
+use crate::runner::{DefaultRunner, ParallelRunner};
+use crate::using::computational_variants::u_map::UParMap;
+use crate::using::computational_variants::u_xap::UParXap;
+use crate::using::executor::parallel_compute as prc;
+use crate::using::using_variants::Using;
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
 
 /// A parallel iterator.
 pub struct UPar<U, I, R = DefaultRunner>
@@ -20,9 +17,9 @@ where
     I: ConcurrentIter,
 {
     using: U,
-    iter: I,
+    orchestrator: R,
     params: Params,
-    phantom: PhantomData<R>,
+    iter: I,
 }
 
 impl<U, I, R> UPar<U, I, R>
@@ -31,23 +28,17 @@ where
     R: ParallelRunner,
     I: ConcurrentIter,
 {
-    pub(crate) fn new(using: U, params: Params, iter: I) -> Self {
+    pub(crate) fn new(using: U, orchestrator: R, params: Params, iter: I) -> Self {
         Self {
             using,
-            iter,
+            orchestrator,
             params,
-            phantom: PhantomData,
+            iter,
         }
     }
 
-    fn destruct(self) -> (U, Params, I) {
-        (self.using, self.params, self.iter)
-    }
-
-    #[allow(clippy::type_complexity)]
-    fn u_m(self) -> UM<U, I, I::Item, impl Fn(&mut U::Item, I::Item) -> I::Item> {
-        let (using, params, iter) = self.destruct();
-        UM::new(using, params, iter, u_map_self)
+    pub(crate) fn destruct(self) -> (U, R, Params, I) {
+        (self.using, self.orchestrator, self.params, self.iter)
     }
 }
 
@@ -83,8 +74,6 @@ where
         self.params
     }
 
-    // params transformations
-
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
@@ -100,28 +89,29 @@ where
         self
     }
 
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterUsing<U, Q, Item = Self::Item> {
-        UPar::new(self.using, self.params, self.iter)
+    fn with_runner<Q: ParallelRunner>(
+        self,
+        orchestrator: Q,
+    ) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+        let (using, _, params, iter) = self.destruct();
+        UPar::new(using, orchestrator, params, iter)
     }
-
-    // computational transformations
 
     fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
     where
         Map: Fn(&mut <U as Using>::Item, Self::Item) -> Out + Sync + Clone,
     {
-        let (using, params, iter) = self.destruct();
-        let map = move |u: &mut U::Item, x: Self::Item| map(u, x);
-        UParMap::new(using, params, iter, map)
+        let (using, orchestrator, params, iter) = self.destruct();
+        UParMap::new(using, orchestrator, params, iter, map)
     }
 
     fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
     where
-        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
+        Filter: Fn(&mut <U as Using>::Item, &Self::Item) -> bool + Sync + Clone,
     {
-        let (using, params, iter) = self.destruct();
+        let (using, orchestrator, params, iter) = self.destruct();
         let x1 = move |u: &mut U::Item, i: Self::Item| filter(u, &i).then_some(i);
-        UParXap::new(using, params, iter, x1)
+        UParXap::new(using, orchestrator, params, iter, x1)
     }
 
     fn flat_map<IOut, FlatMap>(
@@ -130,11 +120,11 @@ where
     ) -> impl ParIterUsing<U, R, Item = IOut::Item>
     where
         IOut: IntoIterator,
-        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
+        FlatMap: Fn(&mut <U as Using>::Item, Self::Item) -> IOut + Sync + Clone,
     {
-        let (using, params, iter) = self.destruct();
+        let (using, orchestrator, params, iter) = self.destruct();
         let x1 = move |u: &mut U::Item, i: Self::Item| Vector(flat_map(u, i));
-        UParXap::new(using, params, iter, x1)
+        UParXap::new(using, orchestrator, params, iter, x1)
     }
 
     fn filter_map<Out, FilterMap>(
@@ -144,36 +134,39 @@ where
     where
         FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
-        let (using, params, iter) = self.destruct();
-        let x1 = move |u: &mut U::Item, x: Self::Item| filter_map(u, x);
-        UParXap::new(using, params, iter, x1)
+        let (using, orchestrator, params, iter) = self.destruct();
+        UParXap::new(using, orchestrator, params, iter, filter_map)
     }
-
-    // collect
 
     fn collect_into<C>(self, output: C) -> C
     where
         C: ParCollectInto<Self::Item>,
     {
-        output.u_m_collect_into::<R, _, _, _>(self.u_m())
+        let (using, orchestrator, params, iter) = self.destruct();
+        output.u_m_collect_into(using, orchestrator, params, iter, u_map_self)
     }
-
-    // reduce
 
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
         Self::Item: Send,
-        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
+        Reduce: Fn(&mut <U as Using>::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        self.u_m().reduce::<R, _>(reduce).1
+        let (using, orchestrator, params, iter) = self.destruct();
+        prc::reduce::m(using, orchestrator, params, iter, u_map_self, reduce).1
     }
-
-    // early exit
 
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send,
     {
-        self.u_m().next::<R>().1
+        let (using, orchestrator, params, iter) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => {
+                prc::next::m(using, orchestrator, params, iter, u_map_self).1
+            }
+            IterationOrder::Arbitrary => {
+                prc::next_any::m(using, orchestrator, params, iter, u_map_self).1
+            }
+        }
     }
 }

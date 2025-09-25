@@ -1,6 +1,7 @@
-use crate::computations::{map_count, reduce_sum, reduce_unit};
+use crate::default_fns::{map_count, reduce_sum, reduce_unit};
+use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::{
-    ChunkSize, DefaultRunner, IterationOrder, NumThreads, ParCollectInto, ParallelRunner, Sum,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParThreadPool, RunnerWithPool, Sum,
 };
 use core::cmp::Ordering;
 
@@ -159,8 +160,32 @@ where
 
     /// Rather than the [`DefaultRunner`], uses the parallel runner `Q` which implements [`ParallelRunner`].
     ///
-    /// See [`crate::ParIter::with_runner`] for details.
-    fn with_runner<Q: ParallelRunner>(self) -> impl ParIterOption<Q, Item = Self::Item>;
+    /// See [`ParIter::with_runner`] for details.
+    ///
+    /// [`DefaultRunner`]: crate::DefaultRunner
+    /// [`ParIter::with_runner`]: crate::ParIter::with_runner
+    fn with_runner<Q: ParallelRunner>(
+        self,
+        orchestrator: Q,
+    ) -> impl ParIterOption<Q, Item = Self::Item>;
+
+    /// Rather than [`DefaultPool`], uses the parallel runner with the given `pool` implementing
+    /// [`ParThreadPool`].
+    ///
+    /// See [`ParIter::with_pool`] for details.
+    ///
+    /// [`DefaultPool`]: crate::DefaultPool
+    /// [`ParIter::with_pool`]: crate::ParIter::with_pool
+    fn with_pool<P: ParThreadPool>(
+        self,
+        pool: P,
+    ) -> impl ParIterOption<RunnerWithPool<P, R::Executor>, Item = Self::Item>
+    where
+        Self: Sized,
+    {
+        let runner = RunnerWithPool::from(pool).with_executor::<R::Executor>();
+        self.with_runner(runner)
+    }
 
     // computation transformations
 

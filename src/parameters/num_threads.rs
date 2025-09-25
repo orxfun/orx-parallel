@@ -1,4 +1,4 @@
-use std::num::NonZeroUsize;
+use core::num::NonZeroUsize;
 
 /// `NumThreads` represents the degree of parallelization. It is possible to define an upper bound on the number of threads to be used for the parallel computation.
 /// When set to **1**, the computation will be executed sequentially without any overhead.
@@ -37,7 +37,7 @@ pub enum NumThreads {
     Max(NonZeroUsize),
 }
 
-const SEQUENTIAL_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(1).expect("seq=1 is positive");
+const ONE: NonZeroUsize = NonZeroUsize::new(1).expect("seq=1 is positive");
 
 impl From<usize> for NumThreads {
     /// Converts the nonnegative integer to number of threads as follows:
@@ -58,13 +58,13 @@ impl NumThreads {
     /// This will lead to a sequential execution of the defined computation on the main thread.
     /// Both in terms of used resources and computation time, this mode is not similar but **identical** to a sequential execution using the regular sequential `Iterator`s.
     pub const fn sequential() -> Self {
-        NumThreads::Max(SEQUENTIAL_NUM_THREADS)
+        NumThreads::Max(ONE)
     }
 
     /// Returns true if number of threads is set to 1.
     ///
     /// Note that in this case the computation will be executed sequentially using regular iterators.
     pub fn is_sequential(self) -> bool {
-        matches!(self, Self::Max(n) if n == SEQUENTIAL_NUM_THREADS)
+        matches!(self, Self::Max(n) if n == ONE)
     }
 }

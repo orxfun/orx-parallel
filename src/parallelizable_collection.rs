@@ -77,7 +77,7 @@ pub trait ParallelizableCollection: ConcurrentCollection {
         <<Self as ConcurrentCollection>::Iterable<'_> as ConcurrentIterable>::Iter,
         DefaultRunner,
     > {
-        Par::new(Params::default(), self.con_iter())
+        Par::new(Default::default(), Params::default(), self.con_iter())
     }
 }
 

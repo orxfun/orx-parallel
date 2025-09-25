@@ -50,7 +50,7 @@ fn main() {
         }
     }
 
-    let n = 1 << 30;
+    let n = 1 << 31;
     let input = 0..n;
 
     // default -> might use all threads

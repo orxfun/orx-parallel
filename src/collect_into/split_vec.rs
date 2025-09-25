@@ -1,11 +1,10 @@
+use super::collect::{map_collect_into, xap_collect_into, xap_try_collect_into};
 use super::par_collect_into::ParCollectIntoCore;
-use crate::generic_values::Values;
+use crate::Params;
+use crate::collect_into::utils::split_vec_reserve;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
-use crate::{
-    collect_into::utils::split_vec_reserve,
-    computations::{M, X},
-    runner::ParallelRunner,
-};
+use crate::generic_values::{TransformableValues, Values};
+use crate::runner::ParallelRunner;
 use orx_concurrent_iter::ConcurrentIter;
 #[cfg(test)]
 use orx_pinned_vec::PinnedVec;
@@ -21,47 +20,62 @@ where
 
     fn empty(iter_len: Option<usize>) -> Self {
         let mut vec = Self::pseudo_default();
-        split_vec_reserve(&mut vec, iter_len);
+        split_vec_reserve(&mut vec, false, iter_len);
         vec
     }
 
-    fn m_collect_into<R, I, M1>(mut self, m: M<I, O, M1>) -> Self
+    fn m_collect_into<R, I, M1>(
+        mut self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        map1: M1,
+    ) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(I::Item) -> O + Sync,
         O: Send,
     {
-        split_vec_reserve(&mut self, m.par_len());
-        let (_num_spawned, pinned_vec) = m.collect_into::<R, _>(self);
+        split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
+        let (_, pinned_vec) = map_collect_into(orchestrator, params, iter, map1, self);
         pinned_vec
     }
 
-    fn x_collect_into<R, I, Vo, M1>(mut self, x: X<I, Vo, M1>) -> Self
+    fn x_collect_into<R, I, Vo, X1>(
+        mut self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O, Fallibility = Infallible>,
-        M1: Fn(I::Item) -> Vo + Sync,
+        Vo: TransformableValues<Item = O, Fallibility = Infallible>,
+        X1: Fn(I::Item) -> Vo + Sync,
     {
-        split_vec_reserve(&mut self, x.par_len());
-        let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
+        split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
+        let (_num_spawned, pinned_vec) = xap_collect_into(orchestrator, params, iter, xap1, self);
         pinned_vec
     }
 
-    fn x_try_collect_into<R, I, Vo, M1>(
+    fn x_try_collect_into<R, I, Vo, X1>(
         mut self,
-        x: X<I, Vo, M1>,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
         R: ParallelRunner,
         I: ConcurrentIter,
+        X1: Fn(I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vo + Sync,
         Self: Sized,
     {
-        split_vec_reserve(&mut self, x.par_len());
-        let (_num_spawned, result) = x.try_collect_into::<R, _>(self);
+        split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
+        let (_num_spawned, result) = xap_try_collect_into(orchestrator, params, iter, xap1, self);
         result
     }
 

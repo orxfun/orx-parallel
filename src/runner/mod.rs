@@ -1,19 +1,41 @@
 mod computation_kind;
-mod fixed_chunk_runner;
+mod implementations;
+mod num_spawned;
 mod parallel_runner;
-pub(crate) mod parallel_runner_compute;
-mod thread_runner;
-mod thread_runner_compute;
+
+pub(crate) use parallel_runner::{SharedStateOf, ThreadRunnerOf};
 
 pub use computation_kind::ComputationKind;
+pub use implementations::{RunnerWithPool, SequentialPool};
+pub use num_spawned::NumSpawned;
 pub use parallel_runner::ParallelRunner;
-pub(crate) use parallel_runner_compute::ParallelRunnerCompute;
-pub use thread_runner::ThreadRunner;
 
-/// Default parallel runner.
+#[cfg(feature = "pond")]
+pub use implementations::PondPool;
+
+#[cfg(feature = "std")]
+pub use implementations::StdDefaultPool;
+
+#[cfg(feature = "yastl")]
+pub use implementations::YastlPool;
+
+// DEFAULT
+
+/// Default pool used by orx-parallel computations:
 ///
-/// Unless explicitly set to another parallel runner by [`with_runner`] method,
-/// parallel computations will be executed using the default parallel runner.
+/// * [`StdDefaultPool`] when "std" feature is enabled,
+/// * [`SequentialPool`] otherwise.
+#[cfg(feature = "std")]
+pub type DefaultPool = StdDefaultPool;
+/// Default pool used by orx-parallel computations:
 ///
-/// [`with_runner`]: crate::ParIter::with_runner
-pub type DefaultRunner = fixed_chunk_runner::FixedChunkRunner;
+/// * `StdDefaultPool` when "std" feature is enabled,
+/// * [`SequentialPool`] otherwise.
+#[cfg(not(feature = "std"))]
+pub type DefaultPool = SequentialPool;
+
+/// Default runner used by orx-parallel computations, using the [`DefaultPool`]:
+///
+/// * [`RunnerWithPool`] with [`StdDefaultPool`] when "std" feature is enabled,
+/// * [`RunnerWithPool`] with [`SequentialPool`] otherwise.
+pub type DefaultRunner = RunnerWithPool<DefaultPool>;

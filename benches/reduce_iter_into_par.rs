@@ -1,8 +1,9 @@
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::ParallelBridge;
+use std::hint::black_box;
 
 const TEST_LARGE_OUTPUT: bool = false;
 
@@ -92,6 +93,17 @@ fn orx(inputs: &[usize]) -> Option<Output> {
         .reduce(reduce)
 }
 
+#[allow(dead_code)]
+fn orx_with<P: ParThreadPool>(inputs: &[usize], pool: P) -> Option<Output> {
+    inputs
+        .into_iter()
+        .iter_into_par()
+        .with_pool(pool)
+        .map(map)
+        .filter(filter)
+        .reduce(reduce)
+}
+
 fn run(c: &mut Criterion) {
     let treatments = [65_536 * 2];
 
@@ -114,6 +126,52 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("orx", n), n, |b, _| {
             assert_eq!(&expected, &orx(&input));
             b.iter(|| orx(black_box(&input)))
+        });
+
+        #[cfg(feature = "rayon-core")]
+        group.bench_with_input(
+            BenchmarkId::new("orx (rayon-core::ThreadPool)", n),
+            n,
+            |b, _| {
+                let pool = rayon_core::ThreadPoolBuilder::new()
+                    .num_threads(32)
+                    .build()
+                    .unwrap();
+                assert_eq!(&expected, &orx_with(&input, &pool));
+                b.iter(|| orx_with(black_box(&input), &pool))
+            },
+        );
+
+        #[cfg(feature = "scoped-pool")]
+        group.bench_with_input(BenchmarkId::new("orx (scoped-pool::Pool)", n), n, |b, _| {
+            let pool = scoped_pool::Pool::new(32);
+            assert_eq!(&expected, &orx_with(&input, &pool));
+            b.iter(|| orx_with(black_box(&input), &pool))
+        });
+
+        #[cfg(feature = "scoped_threadpool")]
+        group.bench_with_input(
+            BenchmarkId::new("orx (scoped_threadpool::Pool)", n),
+            n,
+            |b, _| {
+                let pool = || scoped_threadpool::Pool::new(32);
+                assert_eq!(&expected, &orx_with(&input, pool()));
+                b.iter(|| orx_with(black_box(&input), pool()))
+            },
+        );
+
+        #[cfg(feature = "yastl")]
+        group.bench_with_input(BenchmarkId::new("orx (yastl::Pool)", n), n, |b, _| {
+            let pool = YastlPool::new(32);
+            assert_eq!(&expected, &orx_with(&input, &pool));
+            b.iter(|| orx_with(black_box(&input), &pool))
+        });
+
+        #[cfg(feature = "pond")]
+        group.bench_with_input(BenchmarkId::new("orx (pond::Pool)", n), n, |b, _| {
+            let pool = || PondPool::new_threads_unbounded(32);
+            assert_eq!(&expected, &orx_with(&input, pool()));
+            b.iter(|| orx_with(black_box(&input), pool()))
         });
     }
 

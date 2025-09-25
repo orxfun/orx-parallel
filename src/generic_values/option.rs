@@ -7,6 +7,7 @@ use crate::generic_values::{
     },
     whilst_option::WhilstOption,
 };
+use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 

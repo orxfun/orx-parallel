@@ -1,10 +1,10 @@
+use crate::Params;
 use crate::collect_into::utils::split_vec_reserve;
-use crate::generic_values::Values;
+use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
 use crate::runner::ParallelRunner;
-use crate::using::Using;
+use crate::using::collect_into::collect::{map_collect_into, xap_collect_into};
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
-use crate::using::computations::{UM, UX};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
@@ -14,28 +14,43 @@ where
     G: GrowthWithConstantTimeAccess,
     Self: PseudoDefault,
 {
-    fn u_m_collect_into<R, U, I, M1>(mut self, m: UM<U, I, O, M1>) -> Self
+    fn u_m_collect_into<U, R, I, M1>(
+        mut self,
+        using: U,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        map1: M1,
+    ) -> Self
     where
+        U: crate::using::using_variants::Using,
         R: ParallelRunner,
-        U: Using,
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     {
-        split_vec_reserve(&mut self, m.par_len());
-        let (_num_spawned, pinned_vec) = m.collect_into::<R, _>(self);
+        split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
+        let (_, pinned_vec) = map_collect_into(using, orchestrator, params, iter, map1, self);
         pinned_vec
     }
 
-    fn u_x_collect_into<R, U, I, Vo, M1>(mut self, x: UX<U, I, Vo, M1>) -> Self
+    fn u_x_collect_into<U, R, I, Vo, X1>(
+        mut self,
+        using: U,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Self
     where
+        U: crate::using::using_variants::Using,
         R: ParallelRunner,
-        U: Using,
         I: ConcurrentIter,
-        Vo: Values<Item = O, Fallibility = Infallible>,
-        M1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        Vo: TransformableValues<Item = O, Fallibility = Infallible>,
+        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
     {
-        split_vec_reserve(&mut self, x.par_len());
-        let (_num_spawned, pinned_vec) = x.collect_into::<R, _>(self);
+        split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
+        let (_num_spawned, pinned_vec) =
+            xap_collect_into(using, orchestrator, params, iter, xap1, self);
         pinned_vec
     }
 }

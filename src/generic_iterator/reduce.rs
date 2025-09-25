@@ -159,7 +159,7 @@ where
     /// [`sum`]: crate::ParIter::sum
     pub fn sum(self) -> T
     where
-        T: crate::special_type_sets::Sum<T> + std::iter::Sum<T>,
+        T: crate::special_type_sets::Sum<T> + core::iter::Sum<T>,
     {
         match self {
             GenericIterator::Sequential(x) => x.sum(),

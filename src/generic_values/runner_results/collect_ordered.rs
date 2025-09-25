@@ -1,7 +1,8 @@
 use crate::{
-    computations::heap_sort_into,
     generic_values::{Values, runner_results::Fallibility},
+    heap_sort::heap_sort_into,
 };
+use alloc::vec::Vec;
 use core::fmt::Debug;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
@@ -28,7 +29,7 @@ where
 }
 
 impl<V: Values> Debug for ThreadCollect<V> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::AllCollected { vec } => f
                 .debug_struct("AllCollected")
@@ -75,7 +76,7 @@ where
     V: Values,
     P: IntoConcurrentPinnedVec<V::Item>,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::AllCollected { pinned_vec } => f
                 .debug_struct("AllCollected")

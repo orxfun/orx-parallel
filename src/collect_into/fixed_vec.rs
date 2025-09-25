@@ -1,8 +1,9 @@
 use super::par_collect_into::ParCollectIntoCore;
-use crate::computations::{M, X};
-use crate::generic_values::Values;
+use crate::Params;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
+use crate::generic_values::{TransformableValues, Values};
 use crate::runner::ParallelRunner;
+use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 #[cfg(test)]
@@ -19,7 +20,7 @@ where
         vec.into()
     }
 
-    fn m_collect_into<R, I, M1>(self, m: M<I, O, M1>) -> Self
+    fn m_collect_into<R, I, M1>(self, orchestrator: R, params: Params, iter: I, map1: M1) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
@@ -27,34 +28,42 @@ where
         O: Send,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.m_collect_into::<R, _, _>(m))
+        FixedVec::from(vec.m_collect_into(orchestrator, params, iter, map1))
     }
 
-    fn x_collect_into<R, I, Vo, M1>(self, x: X<I, Vo, M1>) -> Self
+    fn x_collect_into<R, I, Vo, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Self
     where
         R: ParallelRunner,
         I: ConcurrentIter,
-        Vo: Values<Item = O, Fallibility = Infallible>,
-        M1: Fn(I::Item) -> Vo + Sync,
+        Vo: TransformableValues<Item = O, Fallibility = Infallible>,
+        X1: Fn(I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
-        FixedVec::from(vec.x_collect_into::<R, _, _, _>(x))
+        FixedVec::from(vec.x_collect_into(orchestrator, params, iter, xap1))
     }
 
-    fn x_try_collect_into<R, I, Vo, M1>(
+    fn x_try_collect_into<R, I, Vo, X1>(
         self,
-        x: X<I, Vo, M1>,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
         R: ParallelRunner,
         I: ConcurrentIter,
+        X1: Fn(I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,
-        M1: Fn(I::Item) -> Vo + Sync,
-        Self: Sized,
     {
         let vec = Vec::from(self);
-        let result = vec.x_try_collect_into::<R, _, _, _>(x);
-        result.map(FixedVec::from)
+        vec.x_try_collect_into(orchestrator, params, iter, xap1)
+            .map(FixedVec::from)
     }
 
     // test

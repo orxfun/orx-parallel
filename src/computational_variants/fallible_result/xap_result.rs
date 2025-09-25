@@ -1,48 +1,60 @@
 use crate::computational_variants::ParXap;
-use crate::computations::X;
+use crate::executor::parallel_compute as prc;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
 use crate::par_iter_result::{IntoResult, ParIterResult};
 use crate::runner::{DefaultRunner, ParallelRunner};
-use crate::{IterationOrder, ParCollectInto, ParIter};
+use crate::{IterationOrder, ParCollectInto, Params};
+use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
-use std::marker::PhantomData;
 
-pub struct ParXapResult<I, T, E, Vo, M1, R = DefaultRunner>
+/// A parallel iterator for which the computation either completely succeeds,
+/// or fails and **early exits** with an error.
+pub struct ParXapResult<I, T, E, Vo, X1, R = DefaultRunner>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
-    par: ParXap<I, Vo, M1, R>,
+    orchestrator: R,
+    params: Params,
+    iter: I,
+    xap1: X1,
     phantom: PhantomData<(T, E)>,
 }
 
-impl<I, T, E, Vo, M1, R> ParXapResult<I, T, E, Vo, M1, R>
+impl<I, T, E, Vo, X1, R> ParXapResult<I, T, E, Vo, X1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: TransformableValues<Fallibility = Infallible>,
+    Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
-    pub(crate) fn new(par: ParXap<I, Vo, M1, R>) -> Self {
+    pub(crate) fn new(orchestrator: R, params: Params, iter: I, xap1: X1) -> Self {
         Self {
-            par,
+            orchestrator,
+            params,
+            iter,
+            xap1,
             phantom: PhantomData,
         }
     }
+
+    fn destruct(self) -> (R, Params, I, X1) {
+        (self.orchestrator, self.params, self.iter, self.xap1)
+    }
 }
 
-impl<I, T, E, Vo, M1, R> ParIterResult<R> for ParXapResult<I, T, E, Vo, M1, R>
+impl<I, T, E, Vo, X1, R> ParIterResult<R> for ParXapResult<I, T, E, Vo, X1, R>
 where
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
-    M1: Fn(I::Item) -> Vo + Sync,
+    X1: Fn(I::Item) -> Vo + Sync,
 {
     type Item = T;
 
@@ -50,33 +62,30 @@ where
 
     type RegularItem = Vo::Item;
 
-    type RegularParIter = ParXap<I, Vo, M1, R>;
+    type RegularParIter = ParXap<I, Vo, X1, R>;
 
     fn con_iter_len(&self) -> Option<usize> {
-        self.par.con_iter().try_get_len()
+        self.iter.try_get_len()
     }
 
     fn into_regular_par(self) -> Self::RegularParIter {
-        self.par
+        let (orchestrator, params, iter, x1) = self.destruct();
+        ParXap::new(orchestrator, params, iter, x1)
     }
 
     fn from_regular_par(regular_par: Self::RegularParIter) -> Self {
-        Self {
-            par: regular_par,
-            phantom: PhantomData,
-        }
+        let (orchestrator, params, iter, x1) = regular_par.destruct();
+        Self::new(orchestrator, params, iter, x1)
     }
 
     // params transformations
 
     fn with_runner<Q: ParallelRunner>(
         self,
+        orchestrator: Q,
     ) -> impl ParIterResult<Q, Item = Self::Item, Err = Self::Err> {
-        let (params, iter, m1) = self.par.destruct();
-        ParXapResult {
-            par: ParXap::new(params, iter, m1),
-            phantom: PhantomData,
-        }
+        let (_, params, iter, x1) = self.destruct();
+        ParXapResult::new(orchestrator, params, iter, x1)
     }
 
     // collect
@@ -86,12 +95,10 @@ where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send,
         Self::Err: Send,
-        Self::Err: Send,
     {
-        let (params, iter, x1) = self.par.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-        let x = X::new(params, iter, x1);
-        output.x_try_collect_into::<R, _, _, _>(x)
+        output.x_try_collect_into(orchestrator, params, iter, x1)
     }
 
     // reduce
@@ -102,10 +109,9 @@ where
         Self::Err: Send,
         Reduce: Fn(Self::Item, Self::Item) -> Self::Item + Sync,
     {
-        let (params, iter, x1) = self.par.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-        let x = X::new(params, iter, x1);
-        x.try_reduce::<R, _>(reduce).1
+        prc::reduce::x(orchestrator, params, iter, x1, reduce).1
     }
 
     // early exit
@@ -115,12 +121,17 @@ where
         Self::Item: Send,
         Self::Err: Send,
     {
-        let (params, iter, x1) = self.par.destruct();
+        let (orchestrator, params, iter, x1) = self.destruct();
         let x1 = |i: I::Item| x1(i).map_while_ok(|x| x.into_result());
-        let x = X::new(params, iter, x1);
         match params.iteration_order {
-            IterationOrder::Ordered => x.try_next::<R>().1,
-            IterationOrder::Arbitrary => x.try_next_any::<R>().1,
+            IterationOrder::Ordered => {
+                let (_, result) = prc::next::x(orchestrator, params, iter, x1);
+                result.map(|x| x.map(|y| y.1))
+            }
+            IterationOrder::Arbitrary => {
+                let (_, result) = prc::next_any::x(orchestrator, params, iter, x1);
+                result
+            }
         }
     }
 }
