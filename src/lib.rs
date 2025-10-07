@@ -27,6 +27,7 @@ pub mod executor;
 mod generic_values;
 mod heap_sort;
 mod into_par_iter;
+mod into_par_iter_rec;
 /// Module for creating special iterators.
 pub mod iter;
 mod iter_into_par_iter;
@@ -60,6 +61,7 @@ mod test_utils;
 pub use collect_into::ParCollectInto;
 pub use executor::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
 pub use into_par_iter::IntoParIter;
+pub use into_par_iter_rec::IntoParIterRec;
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
 pub use par_iter_option::ParIterOption;
