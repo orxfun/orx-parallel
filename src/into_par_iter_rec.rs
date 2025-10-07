@@ -4,7 +4,6 @@ use orx_concurrent_recursive_iter::ConcurrentRecursiveIter;
 pub trait IntoParIterRec
 where
     Self: IntoIterator,
-    <Self as IntoIterator>::IntoIter: ExactSizeIterator,
     <Self as IntoIterator>::Item: Send,
 {
     fn into_par_rec<E, I>(
