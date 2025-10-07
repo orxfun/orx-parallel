@@ -24,11 +24,11 @@ where
     fn into_par_rec<E, I>(
         self,
         extend: E,
-    ) -> Par<ConcurrentRecursiveIter<<Self as IntoIterator>::Item, E, I>, DefaultRunner>
+    ) -> Par<ConcurrentRecursiveIter<Self::Item, E, I>, DefaultRunner>
     where
-        I: IntoIterator<Item = <Self as IntoIterator>::Item>,
+        I: IntoIterator<Item = Self::Item>,
         I::IntoIter: ExactSizeIterator,
-        E: Fn(&<Self as IntoIterator>::Item) -> I + Sync,
+        E: Fn(&Self::Item) -> I + Sync,
     {
         let con_rec_iter = ConcurrentRecursiveIter::new(extend, self);
         Par::new(DefaultRunner::default(), Params::default(), con_rec_iter)
