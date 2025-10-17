@@ -1,8 +1,13 @@
-use crate::{ParallelRunner, computational_variants::Par};
+use crate::{
+    ParallelRunner,
+    computational_variants::{Par, ParMap},
+};
 use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter, implementations::ConIterVec};
 use orx_concurrent_recursive_iter::ConcurrentRecursiveIter;
 
-impl<E, I, R> Par<ConcurrentRecursiveIter<I::Item, E, I>, R>
+type Rec<I, E> = ConcurrentRecursiveIter<<I as IntoIterator>::Item, E, I>;
+
+impl<E, I, R> Par<Rec<I, E>, R>
 where
     I: IntoIterator,
     I::IntoIter: ExactSizeIterator,
@@ -17,3 +22,7 @@ where
         Par::new(orchestrator, params, iter)
     }
 }
+
+// pub struct ParMap<I, O, M1, R = DefaultRunner>
+
+// impl<E,I,R, O,M1> ParMap<>
