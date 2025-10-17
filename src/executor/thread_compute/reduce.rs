@@ -49,6 +49,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
+                        // println!("chunk = {}", chunk.len());
                         let res = chunk.map(map1).reduce(reduce);
                         acc = match acc {
                             Some(x) => match res {
