@@ -98,7 +98,6 @@ fn orx_lazy_exact(root: &Node) -> u64 {
 
     [root]
         .into_par_rec_exact(extend, num_nodes)
-        .chunk_size(1024 * 64)
         .map(|x| fibonacci(x.value))
         .sum()
 }
