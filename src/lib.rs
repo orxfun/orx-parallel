@@ -60,7 +60,7 @@ mod test_utils;
 pub use collect_into::ParCollectInto;
 pub use executor::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
 pub use into_par_iter::IntoParIter;
-pub use iter::IntoParIterRec;
+pub use iter::{IntoParIterRec, IntoParIterRecExact};
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
 pub use par_iter_option::ParIterOption;
