@@ -77,7 +77,7 @@ fn rayon(root: &Node) -> u64 {
     sum.into_inner()
 }
 
-fn orx(root: &Node) -> u64 {
+fn orx_lazy(root: &Node) -> u64 {
     fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
         &node.children
     }
@@ -89,6 +89,18 @@ fn orx(root: &Node) -> u64 {
         .sum()
 }
 
+fn orx_eager(root: &Node) -> u64 {
+    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
+        &node.children
+    }
+
+    [root]
+        .into_par_rec(extend)
+        .into_eager()
+        .map(|x| fibonacci(x.value))
+        .sum()
+}
+
 fn orx_static(root: &Node) -> u64 {
     fn add_tasks<'a>(tasks: &mut Vec<&'a Node>, node: &'a Node) {
         tasks.push(node);
@@ -96,7 +108,8 @@ fn orx_static(root: &Node) -> u64 {
             add_tasks(tasks, child);
         }
     }
-    let mut tasks = Vec::with_capacity(root.seq_num_nodes() + 1);
+    // let mut tasks = Vec::with_capacity(root.seq_num_nodes() + 1);
+    let mut tasks = Vec::new();
     add_tasks(&mut tasks, root);
     tasks.par().map(|x| fibonacci(x.value)).sum()
 }
@@ -150,9 +163,14 @@ fn run(c: &mut Criterion) {
         b.iter(|| rayon(black_box(&root)))
     });
 
-    group.bench_with_input(BenchmarkId::new("orx", n), n, |b, _| {
-        assert_eq!(&expected, &orx(&root));
-        b.iter(|| orx(black_box(&root)))
+    group.bench_with_input(BenchmarkId::new("orx_lazy", n), n, |b, _| {
+        assert_eq!(&expected, &orx_lazy(&root));
+        b.iter(|| orx_lazy(black_box(&root)))
+    });
+
+    group.bench_with_input(BenchmarkId::new("orx_eager", n), n, |b, _| {
+        assert_eq!(&expected, &orx_eager(&root));
+        b.iter(|| orx_eager(black_box(&root)))
     });
 
     group.bench_with_input(BenchmarkId::new("orx_static", n), n, |b, _| {
