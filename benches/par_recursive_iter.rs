@@ -77,13 +77,27 @@ fn rayon(root: &Node) -> u64 {
     sum.into_inner()
 }
 
-fn orx_lazy(root: &Node) -> u64 {
+fn orx_lazy_unknown(root: &Node) -> u64 {
     fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
         &node.children
     }
 
     [root]
         .into_par_rec(extend)
+        // .chunk_size(1024 * 64)
+        .map(|x| fibonacci(x.value))
+        .sum()
+}
+
+fn orx_lazy_exact(root: &Node) -> u64 {
+    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
+        &node.children
+    }
+
+    let num_nodes = root.seq_num_nodes();
+
+    [root]
+        .into_par_rec_exact(extend, num_nodes)
         .chunk_size(1024 * 64)
         .map(|x| fibonacci(x.value))
         .sum()
@@ -163,9 +177,14 @@ fn run(c: &mut Criterion) {
         b.iter(|| rayon(black_box(&root)))
     });
 
-    group.bench_with_input(BenchmarkId::new("orx_lazy", n), n, |b, _| {
-        assert_eq!(&expected, &orx_lazy(&root));
-        b.iter(|| orx_lazy(black_box(&root)))
+    group.bench_with_input(BenchmarkId::new("orx_lazy_unknown", n), n, |b, _| {
+        assert_eq!(&expected, &orx_lazy_unknown(&root));
+        b.iter(|| orx_lazy_unknown(black_box(&root)))
+    });
+
+    group.bench_with_input(BenchmarkId::new("orx_lazy_exact", n), n, |b, _| {
+        assert_eq!(&expected, &orx_lazy_exact(&root));
+        b.iter(|| orx_lazy_exact(black_box(&root)))
     });
 
     group.bench_with_input(BenchmarkId::new("orx_eager", n), n, |b, _| {
