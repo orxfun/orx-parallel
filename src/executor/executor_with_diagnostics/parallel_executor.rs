@@ -1,10 +1,9 @@
-use orx_concurrent_iter::ConcurrentIter;
-
 use super::{
     shared_state::SharedStateWithDiagnostics, thread_executor::ThreadExecutorWithDiagnostics,
 };
 use crate::ParallelExecutor;
 use crate::runner::{ComputationKind, NumSpawned};
+use orx_concurrent_iter::ConcurrentIter;
 use std::num::NonZeroUsize;
 
 pub struct ParallelExecutorWithDiagnostics<E>
