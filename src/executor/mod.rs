@@ -5,6 +5,7 @@ mod parallel_executor;
 mod thread_compute;
 mod thread_executor;
 
+pub use executor_with_diagnostics::ParallelExecutorWithDiagnostics;
 pub use parallel_executor::ParallelExecutor;
 pub use thread_executor::ThreadExecutor;
 

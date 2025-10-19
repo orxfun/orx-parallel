@@ -58,7 +58,9 @@ pub mod generic_iterator;
 mod test_utils;
 
 pub use collect_into::ParCollectInto;
-pub use executor::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
+pub use executor::{
+    DefaultExecutor, ParallelExecutor, ParallelExecutorWithDiagnostics, ThreadExecutor,
+};
 pub use into_par_iter::IntoParIter;
 pub use iter::{IntoParIterRec, IntoParIterRecExact};
 pub use iter_into_par_iter::IterIntoParIter;
