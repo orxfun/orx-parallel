@@ -1,3 +1,4 @@
+mod executor_with_diagnostics;
 mod fixed_chunk_executor;
 pub(crate) mod parallel_compute;
 mod parallel_executor;
