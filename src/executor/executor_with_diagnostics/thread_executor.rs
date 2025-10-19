@@ -21,18 +21,19 @@ where
     where
         I: ConcurrentIter,
     {
-        todo!()
+        self.executor.next_chunk_size(shared_state.inner(), iter)
     }
 
     fn begin_chunk(&mut self, chunk_size: usize) {
-        todo!()
+        self.executor.begin_chunk(chunk_size);
     }
 
     fn complete_chunk(&mut self, shared_state: &Self::SharedState, chunk_size: usize) {
-        todo!()
+        self.executor
+            .complete_chunk(shared_state.inner(), chunk_size);
     }
 
     fn complete_task(&mut self, shared_state: &Self::SharedState) {
-        todo!()
+        self.executor.complete_task(shared_state.inner());
     }
 }

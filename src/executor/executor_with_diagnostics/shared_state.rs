@@ -1,3 +1,10 @@
 pub struct SharedStateWithDiagnostics<S> {
-    base_state: S,
+    inner: S,
+}
+
+impl<S> SharedStateWithDiagnostics<S> {
+    #[inline(always)]
+    pub fn inner(&self) -> &S {
+        &self.inner
+    }
 }
