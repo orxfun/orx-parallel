@@ -1,6 +1,8 @@
 use crate::{
     ParallelExecutor,
-    executor::executor_with_diagnostics::shared_state::SharedStateWithDiagnostics,
+    executor::executor_with_diagnostics::{
+        shared_state::SharedStateWithDiagnostics, thread_executor::ThreadExecutorWithDiagnostics,
+    },
     runner::{ComputationKind, NumSpawned},
 };
 
@@ -17,7 +19,7 @@ where
 {
     type SharedState = SharedStateWithDiagnostics<E::SharedState>;
 
-    type ThreadExecutor = ();
+    type ThreadExecutor = ThreadExecutorWithDiagnostics<E::ThreadExecutor>;
 
     fn new(
         kind: ComputationKind,
