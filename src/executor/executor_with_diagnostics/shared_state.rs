@@ -29,9 +29,8 @@ impl<S> SharedStateWithDiagnostics<S> {
 
         println!("\n# Parallel Executor Diagnostics");
         println!("\n- Number of threads used = {}", task_counts.len());
-        println!();
 
-        println!("\n- Threads");
+        println!("\n- [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes");
 
         for (thread_idx, task_counts) in task_counts {
             let total: usize = task_counts.iter().sum();
@@ -41,11 +40,10 @@ impl<S> SharedStateWithDiagnostics<S> {
                 n => total / n,
             };
             let first_chunks: Vec<_> = task_counts.iter().copied().take(10).collect();
-            println!("\n- Thread # {}", thread_idx);
-            println!("  - total number of calls = {}", num_calls);
-            println!("  - total number of tasks = {}", total);
-            println!("  - average chunk size = {}", avg_chunk_size);
-            println!("  - first chunks sizes = {:?}", first_chunks);
+
+            println!(
+                "  - [{thread_idx}]: {num_calls}, {total}, {avg_chunk_size}, {first_chunks:?}",
+            );
         }
     }
 }
