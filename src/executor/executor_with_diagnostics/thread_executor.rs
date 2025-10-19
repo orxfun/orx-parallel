@@ -1,11 +1,12 @@
 use super::shared_state::SharedStateWithDiagnostics;
-use crate::{ParallelExecutor, ThreadExecutor, executor};
+use crate::{ParallelExecutor, ThreadExecutor};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ThreadExecutorWithDiagnostics<E>
 where
     E: ParallelExecutor,
 {
+    thread_idx: usize,
     executor: E::ThreadExecutor,
 }
 
@@ -13,8 +14,11 @@ impl<E> ThreadExecutorWithDiagnostics<E>
 where
     E: ParallelExecutor,
 {
-    pub(super) fn new(executor: E::ThreadExecutor) -> Self {
-        Self { executor }
+    pub(super) fn new(thread_idx: usize, executor: E::ThreadExecutor) -> Self {
+        Self {
+            thread_idx,
+            executor,
+        }
     }
 }
 

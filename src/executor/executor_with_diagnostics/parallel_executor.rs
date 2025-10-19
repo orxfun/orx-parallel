@@ -57,6 +57,6 @@ where
         let executor = self
             .executor
             .new_thread_executor(thread_idx, shared_state.inner());
-        ThreadExecutorWithDiagnostics::new(executor)
+        ThreadExecutorWithDiagnostics::new(thread_idx, executor)
     }
 }
