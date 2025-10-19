@@ -61,7 +61,6 @@ where
     }
 
     fn complete_task(self, shared_state: Self::SharedState) {
-        //
-        todo!()
+        shared_state.display();
     }
 }
