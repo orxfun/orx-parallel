@@ -1,4 +1,7 @@
-use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
+use crate::{
+    DefaultExecutor, ParThreadPool, ParallelExecutor, ParallelExecutorWithDiagnostics,
+    runner::ParallelRunner,
+};
 use core::marker::PhantomData;
 
 /// Parallel runner with a given pool of type `P` and parallel executor of `R`.
@@ -176,6 +179,13 @@ where
 
     /// Converts the runner into one using the [`ParallelExecutor`] `Q` rather than `R`.
     pub fn with_executor<Q: ParallelExecutor>(self) -> RunnerWithPool<P, Q> {
+        RunnerWithPool {
+            pool: self.pool,
+            runner: PhantomData,
+        }
+    }
+
+    pub fn with_diagnostics(self) -> RunnerWithPool<P, ParallelExecutorWithDiagnostics<R>> {
         RunnerWithPool {
             pool: self.pool,
             runner: PhantomData,

@@ -52,8 +52,12 @@ fn par_rec(root: &Node) -> u64 {
     }
     let count = root.seq_num_nodes();
 
+    let runner = DefaultRunner::default().with_diagnostics();
+
     [root]
         .into_par_rec_exact(extend, count)
+        .with_runner(runner)
+        // .with_runner(DefaultRunner::with_executor(self))
         // .chunk_size(1024 * 1024)
         .num_threads(32)
         .map(|x| fibonacci(x.value))
@@ -109,13 +113,13 @@ fn main() {
 
     // let expected = root.seq_sum_fib();
 
-    // let sum_fib = par_rec(&root);
-    // assert_eq!(sum_fib, expected);
-    // println!("Sum of Fibonacci of node values is {sum_fib}");
-
-    let sum_fib = iter(&root);
+    let sum_fib = par_rec(&root);
     // assert_eq!(sum_fib, expected);
     println!("Sum of Fibonacci of node values is {sum_fib}");
+
+    // let sum_fib = iter(&root);
+    // assert_eq!(sum_fib, expected);
+    // println!("Sum of Fibonacci of node values is {sum_fib}");
 
     println!("\n\n");
 }
