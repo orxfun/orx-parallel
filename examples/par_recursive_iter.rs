@@ -102,8 +102,8 @@ fn iter(root: &Node) -> u64 {
 fn main() {
     println!("\n\n");
     let mut rng = ChaCha8Rng::seed_from_u64(42);
-    // let root = Node::new(&mut rng, 550);
-    let root = Node::new(&mut rng, 250);
+    let root = Node::new(&mut rng, 550);
+    // let root = Node::new(&mut rng, 250);
 
     // let par = [&root].into_par_rec(extend);
     // let count = par.count();
