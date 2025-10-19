@@ -40,6 +40,7 @@ where
     }
 
     fn complete_chunk(&mut self, shared_state: &Self::SharedState, chunk_size: usize) {
+        shared_state.add_task_count(self.thread_idx, chunk_size);
         self.executor
             .complete_chunk(shared_state.inner(), chunk_size);
     }
