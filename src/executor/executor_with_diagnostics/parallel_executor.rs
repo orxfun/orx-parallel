@@ -19,7 +19,7 @@ where
 {
     type SharedState = SharedStateWithDiagnostics<E::SharedState>;
 
-    type ThreadExecutor = ThreadExecutorWithDiagnostics<E::ThreadExecutor>;
+    type ThreadExecutor = ThreadExecutorWithDiagnostics<E>;
 
     fn new(
         kind: ComputationKind,

@@ -1,20 +1,21 @@
 use crate::{
-    ThreadExecutor, executor::executor_with_diagnostics::shared_state::SharedStateWithDiagnostics,
+    ParallelExecutor, ThreadExecutor,
+    executor::executor_with_diagnostics::shared_state::SharedStateWithDiagnostics,
 };
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ThreadExecutorWithDiagnostics<E>
 where
-    E: ThreadExecutor,
+    E: ParallelExecutor,
 {
-    executor: E,
+    executor: E::ThreadExecutor,
 }
 
 impl<E> ThreadExecutor for ThreadExecutorWithDiagnostics<E>
 where
-    E: ThreadExecutor,
+    E: ParallelExecutor,
 {
-    type SharedState = SharedStateWithDiagnostics<E>;
+    type SharedState = SharedStateWithDiagnostics<E::SharedState>;
 
     fn next_chunk_size<I>(&self, shared_state: &Self::SharedState, iter: &I) -> usize
     where
