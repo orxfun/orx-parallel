@@ -1,7 +1,5 @@
-use crate::{
-    ParallelExecutor, ThreadExecutor,
-    executor::executor_with_diagnostics::shared_state::SharedStateWithDiagnostics,
-};
+use super::shared_state::SharedStateWithDiagnostics;
+use crate::{ParallelExecutor, ThreadExecutor};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ThreadExecutorWithDiagnostics<E>

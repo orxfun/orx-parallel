@@ -1,10 +1,9 @@
-use crate::{
-    ParallelExecutor,
-    executor::executor_with_diagnostics::{
-        shared_state::SharedStateWithDiagnostics, thread_executor::ThreadExecutorWithDiagnostics,
-    },
-    runner::{ComputationKind, NumSpawned},
+use super::{
+    shared_state::SharedStateWithDiagnostics, thread_executor::ThreadExecutorWithDiagnostics,
 };
+use crate::ParallelExecutor;
+use crate::runner::{ComputationKind, NumSpawned};
+use std::num::NonZeroUsize;
 
 pub struct ParallelExecutorWithDiagnostics<E>
 where
@@ -25,7 +24,7 @@ where
         kind: ComputationKind,
         params: crate::Params,
         initial_input_len: Option<usize>,
-        max_num_threads: std::num::NonZeroUsize,
+        max_num_threads: NonZeroUsize,
     ) -> Self {
         todo!()
     }
