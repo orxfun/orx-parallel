@@ -47,19 +47,21 @@ pub trait ParallelRunner {
         I: ConcurrentIter,
         F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
-        let runner = self.new_executor(kind, params, iter.try_get_len());
-        let state = runner.new_shared_state();
-        let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
+        let mut executor = self.new_executor(kind, params, iter.try_get_len());
+        let state = executor.new_shared_state();
+        let do_spawn = |num_spawned| executor.do_spawn_new(num_spawned, &state, &iter);
         let work = |num_spawned: NumSpawned| {
             let thread_idx = num_spawned.into_inner();
             thread_do(
                 num_spawned,
                 &iter,
                 &state,
-                runner.new_thread_executor(thread_idx, &state),
+                executor.new_thread_executor(thread_idx, &state),
             );
         };
-        self.thread_pool_mut().run_in_pool(do_spawn, work)
+        let result = self.thread_pool_mut().run_in_pool(do_spawn, work);
+        executor.complete_task(state);
+        result
     }
 
     /// Runs `thread_map` using threads provided by the thread pool.
@@ -79,21 +81,24 @@ pub trait ParallelRunner {
         F::Error: Send,
     {
         let iter_len = iter.try_get_len();
-        let runner = self.new_executor(kind, params, iter_len);
-        let state = runner.new_shared_state();
-        let do_spawn = |num_spawned| runner.do_spawn_new(num_spawned, &state, &iter);
+        let mut executor = self.new_executor(kind, params, iter_len);
+        let state = executor.new_shared_state();
+        let do_spawn = |num_spawned| executor.do_spawn_new(num_spawned, &state, &iter);
         let work = |num_spawned: NumSpawned| {
             let thread_idx = num_spawned.into_inner();
             thread_map(
                 num_spawned,
                 &iter,
                 &state,
-                runner.new_thread_executor(thread_idx, &state),
+                executor.new_thread_executor(thread_idx, &state),
             )
         };
         let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
-        self.thread_pool_mut()
-            .map_in_pool::<F, _, _, _>(do_spawn, work, max_num_threads)
+        let result =
+            self.thread_pool_mut()
+                .map_in_pool::<F, _, _, _>(do_spawn, work, max_num_threads);
+        executor.complete_task(state);
+        result
     }
 
     /// Runs infallible `thread_map` using threads provided by the thread pool.

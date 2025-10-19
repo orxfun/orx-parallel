@@ -48,4 +48,7 @@ pub trait ParallelExecutor: Sized + Sync + 'static {
         thread_idx: usize,
         shared_state: &Self::SharedState,
     ) -> Self::ThreadExecutor;
+
+    /// Executes the finalization tasks when the entire parallel computation is completed.
+    fn complete_task(&mut self, shared_state: Self::SharedState);
 }

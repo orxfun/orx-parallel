@@ -59,4 +59,9 @@ where
             .new_thread_executor(thread_idx, shared_state.inner());
         ThreadExecutorWithDiagnostics::new(thread_idx, executor)
     }
+
+    fn complete_task(&mut self, shared_state: Self::SharedState) {
+        //
+        todo!()
+    }
 }

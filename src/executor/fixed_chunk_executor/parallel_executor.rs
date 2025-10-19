@@ -116,4 +116,6 @@ impl ParallelExecutor for FixedChunkRunner {
             chunk_size: self.current_chunk_size.load(Ordering::Relaxed),
         }
     }
+
+    fn complete_task(&mut self, _: Self::SharedState) {}
 }
