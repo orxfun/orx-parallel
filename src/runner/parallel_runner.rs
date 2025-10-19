@@ -47,7 +47,7 @@ pub trait ParallelRunner {
         I: ConcurrentIter,
         F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
-        let mut executor = self.new_executor(kind, params, iter.try_get_len());
+        let executor = self.new_executor(kind, params, iter.try_get_len());
         let state = executor.new_shared_state();
         let do_spawn = |num_spawned| executor.do_spawn_new(num_spawned, &state, &iter);
         let work = |num_spawned: NumSpawned| {
@@ -81,7 +81,7 @@ pub trait ParallelRunner {
         F::Error: Send,
     {
         let iter_len = iter.try_get_len();
-        let mut executor = self.new_executor(kind, params, iter_len);
+        let executor = self.new_executor(kind, params, iter_len);
         let state = executor.new_shared_state();
         let do_spawn = |num_spawned| executor.do_spawn_new(num_spawned, &state, &iter);
         let work = |num_spawned: NumSpawned| {

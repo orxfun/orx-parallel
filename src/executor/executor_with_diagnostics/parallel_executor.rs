@@ -60,7 +60,7 @@ where
         ThreadExecutorWithDiagnostics::new(thread_idx, executor)
     }
 
-    fn complete_task(&mut self, shared_state: Self::SharedState) {
+    fn complete_task(self, shared_state: Self::SharedState) {
         //
         todo!()
     }

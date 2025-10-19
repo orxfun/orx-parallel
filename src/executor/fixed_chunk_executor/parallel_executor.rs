@@ -117,5 +117,5 @@ impl ParallelExecutor for FixedChunkRunner {
         }
     }
 
-    fn complete_task(&mut self, _: Self::SharedState) {}
+    fn complete_task(self, _: Self::SharedState) {}
 }

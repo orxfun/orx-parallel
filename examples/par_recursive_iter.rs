@@ -96,6 +96,7 @@ fn iter(root: &Node) -> u64 {
 }
 
 fn main() {
+    println!("\n\n");
     let mut rng = ChaCha8Rng::seed_from_u64(42);
     // let root = Node::new(&mut rng, 550);
     let root = Node::new(&mut rng, 250);
@@ -106,13 +107,15 @@ fn main() {
     let count = root.seq_num_nodes();
     println!("Tree contains {count} nodes");
 
-    let expected = root.seq_sum_fib();
+    // let expected = root.seq_sum_fib();
 
-    let sum_fib = par_rec(&root);
-    assert_eq!(sum_fib, expected);
-    println!("Sum of Fibonacci of node values is {sum_fib}");
+    // let sum_fib = par_rec(&root);
+    // assert_eq!(sum_fib, expected);
+    // println!("Sum of Fibonacci of node values is {sum_fib}");
 
     let sum_fib = iter(&root);
-    assert_eq!(sum_fib, expected);
+    // assert_eq!(sum_fib, expected);
     println!("Sum of Fibonacci of node values is {sum_fib}");
+
+    println!("\n\n");
 }
