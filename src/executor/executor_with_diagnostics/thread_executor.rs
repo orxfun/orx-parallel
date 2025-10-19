@@ -8,6 +8,7 @@ where
 {
     thread_idx: usize,
     executor: E::ThreadExecutor,
+    task_counts: Vec<usize>, // (thread_idx, chunk_size)
 }
 
 impl<E> ThreadExecutorWithDiagnostics<E>
@@ -18,6 +19,7 @@ where
         Self {
             thread_idx,
             executor,
+            task_counts: vec![],
         }
     }
 }
@@ -40,12 +42,13 @@ where
     }
 
     fn complete_chunk(&mut self, shared_state: &Self::SharedState, chunk_size: usize) {
-        shared_state.add_task_count(self.thread_idx, chunk_size);
+        self.task_counts.push(chunk_size);
         self.executor
             .complete_chunk(shared_state.inner(), chunk_size);
     }
 
     fn complete_task(&mut self, shared_state: &Self::SharedState) {
         self.executor.complete_task(shared_state.inner());
+        shared_state.add_task_counts_of_thread(self.thread_idx, self.task_counts.clone());
     }
 }

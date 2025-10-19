@@ -2,7 +2,7 @@ use orx_concurrent_bag::ConcurrentBag;
 
 pub struct SharedStateWithDiagnostics<S> {
     inner: S,
-    task_counts: ConcurrentBag<(usize, usize)>, // (thread_idx, chunk_size)
+    task_counts: ConcurrentBag<(usize, Vec<usize>)>, // (thread_idx, chunk sizes)
 }
 
 impl<S> SharedStateWithDiagnostics<S> {
@@ -19,7 +19,7 @@ impl<S> SharedStateWithDiagnostics<S> {
         &self.inner
     }
 
-    pub fn add_task_count(&self, thread_idx: usize, chunk_size: usize) {
-        self.task_counts.push((thread_idx, chunk_size));
+    pub fn add_task_counts_of_thread(&self, thread_idx: usize, chunk_sizes: Vec<usize>) {
+        self.task_counts.push((thread_idx, chunk_sizes));
     }
 }
