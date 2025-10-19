@@ -160,7 +160,7 @@ fn iter(root: &Node) -> u64 {
 
 fn run(c: &mut Criterion) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
-    let root = Node::new(&mut rng, 250);
+    let root = Node::new(&mut rng, 500);
     let n = &root.seq_num_nodes();
     let expected = root.seq_sum_fib();
 
@@ -176,10 +176,10 @@ fn run(c: &mut Criterion) {
         b.iter(|| rayon(black_box(&root)))
     });
 
-    group.bench_with_input(BenchmarkId::new("orx_lazy_unknown", n), n, |b, _| {
-        assert_eq!(&expected, &orx_lazy_unknown(&root));
-        b.iter(|| orx_lazy_unknown(black_box(&root)))
-    });
+    // group.bench_with_input(BenchmarkId::new("orx_lazy_unknown", n), n, |b, _| {
+    //     assert_eq!(&expected, &orx_lazy_unknown(&root));
+    //     b.iter(|| orx_lazy_unknown(black_box(&root)))
+    // });
 
     group.bench_with_input(BenchmarkId::new("orx_lazy_exact", n), n, |b, _| {
         assert_eq!(&expected, &orx_lazy_exact(&root));

@@ -1,5 +1,5 @@
 use orx_concurrent_recursive_iter::ConcurrentRecursiveIter;
-use orx_parallel::{IntoParIterRec, ParIter};
+use orx_parallel::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::sync::atomic::Ordering;
@@ -50,10 +50,11 @@ fn par_rec(root: &Node) -> u64 {
     fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
         &node.children
     }
+    let count = root.seq_num_nodes();
 
     [root]
-        .into_par_rec(extend)
-        .chunk_size(1024 * 1024)
+        .into_par_rec_exact(extend, count)
+        // .chunk_size(1024 * 1024)
         .num_threads(32)
         .map(|x| fibonacci(x.value))
         .sum()
@@ -96,7 +97,8 @@ fn iter(root: &Node) -> u64 {
 
 fn main() {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
-    let root = Node::new(&mut rng, 550);
+    // let root = Node::new(&mut rng, 550);
+    let root = Node::new(&mut rng, 250);
 
     // let par = [&root].into_par_rec(extend);
     // let count = par.count();
