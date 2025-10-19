@@ -111,7 +111,7 @@ impl ParallelExecutor for FixedChunkRunner {
         self.spawn_new(num_spawned, iter.try_get_len())
     }
 
-    fn new_thread_executor(&self, _: &Self::SharedState) -> Self::ThreadExecutor {
+    fn new_thread_executor(&self, _: usize, _: &Self::SharedState) -> Self::ThreadExecutor {
         Self::ThreadExecutor {
             chunk_size: self.current_chunk_size.load(Ordering::Relaxed),
         }

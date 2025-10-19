@@ -43,5 +43,9 @@ pub trait ParallelExecutor: Sized + Sync + 'static {
 
     /// Creates a new thread executor provided that the current parallel execution state is
     /// `shared_state`.
-    fn new_thread_executor(&self, shared_state: &Self::SharedState) -> Self::ThreadExecutor;
+    fn new_thread_executor(
+        &self,
+        thread_idx: usize,
+        shared_state: &Self::SharedState,
+    ) -> Self::ThreadExecutor;
 }

@@ -49,8 +49,14 @@ where
             .do_spawn_new(num_spawned, shared_state.inner(), iter)
     }
 
-    fn new_thread_executor(&self, shared_state: &Self::SharedState) -> Self::ThreadExecutor {
-        let executor = self.executor.new_thread_executor(shared_state.inner());
+    fn new_thread_executor(
+        &self,
+        thread_idx: usize,
+        shared_state: &Self::SharedState,
+    ) -> Self::ThreadExecutor {
+        let executor = self
+            .executor
+            .new_thread_executor(thread_idx, shared_state.inner());
         ThreadExecutorWithDiagnostics::new(executor)
     }
 }
