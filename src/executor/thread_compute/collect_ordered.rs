@@ -30,7 +30,11 @@ pub fn m<C, I, O, M1, P>(
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, value)) => unsafe { o_bag.set_value(offset + idx, map1(value)) },
-                None => break,
+                None => {
+                    if iter.is_completed_when_none_returned() {
+                        break;
+                    }
+                }
             },
             c => {
                 if c > chunk_puller.chunk_size() {
@@ -42,7 +46,11 @@ pub fn m<C, I, O, M1, P>(
                         let values = chunk.map(map1);
                         unsafe { o_bag.set_values(offset + begin_idx, values) };
                     }
-                    None => break,
+                    None => {
+                        if iter.is_completed_when_none_returned() {
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -98,7 +106,11 @@ where
                         }
                     }
                 }
-                None => break,
+                None => {
+                    if iter.is_completed_when_none_returned() {
+                        break;
+                    }
+                }
             },
             c => {
                 if c > chunk_puller.chunk_size() {
@@ -128,7 +140,11 @@ where
                             }
                         }
                     }
-                    None => break,
+                    None => {
+                        if iter.is_completed_when_none_returned() {
+                            break;
+                        }
+                    }
                 }
             }
         }

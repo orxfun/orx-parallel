@@ -33,7 +33,11 @@ where
                     runner.complete_task(shared_state);
                     return Some((idx, first));
                 }
-                None => break,
+                None => {
+                    if iter.is_completed_when_none_returned() {
+                        break;
+                    }
+                }
             },
             c => {
                 if c > chunk_puller.chunk_size() {
@@ -50,7 +54,11 @@ where
                             return Some((idx, first));
                         }
                     }
-                    None => break,
+                    None => {
+                        if iter.is_completed_when_none_returned() {
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -109,7 +117,11 @@ where
                         }
                     }
                 }
-                None => break,
+                None => {
+                    if iter.is_completed_when_none_returned() {
+                        break;
+                    }
+                }
             },
             c => {
                 if c > chunk_puller.chunk_size() {
@@ -144,7 +156,11 @@ where
                             }
                         }
                     }
-                    None => break,
+                    None => {
+                        if iter.is_completed_when_none_returned() {
+                            break;
+                        }
+                    }
                 }
             }
         }
