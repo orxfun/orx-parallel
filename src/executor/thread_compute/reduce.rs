@@ -40,7 +40,11 @@ where
                         None => Some(y),
                     };
                 }
-                None => break,
+                None => {
+                    if iter.is_completed_when_none_returned() {
+                        break;
+                    }
+                }
             },
             c => {
                 if c > chunk_puller.chunk_size() {
@@ -59,7 +63,11 @@ where
                             None => res,
                         };
                     }
-                    None => break,
+                    None => {
+                        if iter.is_completed_when_none_returned() {
+                            break;
+                        }
+                    }
                 }
             }
         }

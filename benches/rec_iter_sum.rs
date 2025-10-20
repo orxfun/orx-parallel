@@ -14,20 +14,15 @@ struct Node {
 }
 
 fn fibonacci(n: u64) -> u64 {
-    // let n = n % 42; // let's not overflow
-    (0..100)
-        .map(|i| {
-            let n = i + n;
-            let mut a = 0;
-            let mut b = 1;
-            for _ in 0..n {
-                let c = a + b;
-                a = b;
-                b = c;
-            }
-            a
-        })
-        .sum()
+    let n = black_box(n % 100);
+    let mut a = 0;
+    let mut b = 1;
+    for _ in 0..n {
+        let c = a + b;
+        a = b;
+        b = c;
+    }
+    a
 }
 
 impl Node {
@@ -164,7 +159,7 @@ fn run(c: &mut Criterion) {
     let n = &root.seq_num_nodes();
     let expected = root.seq_sum_fib();
 
-    let mut group = c.benchmark_group("par_recursive_iter");
+    let mut group = c.benchmark_group("rec_iter_sum");
 
     group.bench_with_input(BenchmarkId::new("seq", n), n, |b, _| {
         assert_eq!(&expected, &seq(&root));

@@ -2,7 +2,7 @@ use orx_concurrent_recursive_iter::ConcurrentRecursiveIter;
 use orx_parallel::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-use std::sync::atomic::Ordering;
+use std::{hint::black_box, sync::atomic::Ordering};
 
 struct Node {
     value: u64,
@@ -10,20 +10,15 @@ struct Node {
 }
 
 fn fibonacci(n: u64) -> u64 {
-    (0..100)
-        .map(|j| {
-            let n = n + j;
-            // let n = n % 42; // let's not overflow
-            let mut a = 0;
-            let mut b = 1;
-            for _ in 0..n {
-                let c = a + b;
-                a = b;
-                b = c;
-            }
-            a
-        })
-        .sum()
+    let n = black_box(n % 100);
+    let mut a = 0;
+    let mut b = 1;
+    for _ in 0..n {
+        let c = a + b;
+        a = b;
+        b = c;
+    }
+    a
 }
 
 impl Node {
@@ -116,7 +111,7 @@ fn iter(root: &Node) -> u64 {
                             thread_sum += chunk.into_iter().map(|x| fibonacci(x.value)).sum::<u64>()
                         }
                         None => {
-                            if iter.is_completed() {
+                            if iter.is_completed_when_none_returned() {
                                 break;
                             }
                         }
@@ -134,7 +129,7 @@ fn iter(root: &Node) -> u64 {
 fn main() {
     println!("\n\n");
     let mut rng = ChaCha8Rng::seed_from_u64(42);
-    let root = Node::new(&mut rng, 100);
+    let root = Node::new(&mut rng, 300);
     // let root = Node::new(&mut rng, 250);
 
     // let par = [&root].into_par_rec(extend);
@@ -153,9 +148,9 @@ fn main() {
     // assert_eq!(sum_fib, expected);
     println!("Sum of Fibonacci of node values is {sum_fib}");
 
-    let sum_fib = iter(&root);
-    // assert_eq!(sum_fib, expected);
-    println!("Sum of Fibonacci of node values is {sum_fib}");
+    // let sum_fib = iter(&root);
+    // // assert_eq!(sum_fib, expected);
+    // println!("Sum of Fibonacci of node values is {sum_fib}");
 
     println!("\n\n");
 }

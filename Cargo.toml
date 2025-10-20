@@ -14,7 +14,8 @@ categories = ["concurrency", "algorithms"]
 orx-pinned-vec = { version = "3.20.0", default-features = false }
 orx-fixed-vec = { version = "3.21.0", default-features = false }
 orx-split-vec = { version = "3.21.0", default-features = false }
-orx-concurrent-iter = { version = "3.2.0", default-features = false }
+# orx-concurrent-iter = { version = "3.2.0", default-features = false }
+orx-concurrent-iter = { path = "../orx-concurrent-iter", default-features = false }
 orx-concurrent-bag = { version = "3.3.0", default-features = false }
 orx-concurrent-ordered-bag = { version = "3.3.0", default-features = false }
 orx-pinned-concurrent-col = { version = "2.17.0", default-features = false }
@@ -47,7 +48,7 @@ rayon = "1.11.0"
 test-case = "3.3.1"
 
 [[bench]]
-name = "par_recursive_iter"
+name = "rec_iter_sum"
 harness = false
 
 [package.metadata.docs.rs]
