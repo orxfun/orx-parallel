@@ -185,6 +185,53 @@ where
         }
     }
 
+    /// Converts executor of this runner `R` into one with diagnostics; i.e.,`ParallelExecutorWithDiagnostics<R>`.
+    ///
+    /// Note that [`ParallelExecutorWithDiagnostics`] prints the diagnostics on the stdout. Therefore, it must
+    /// only be used while testing a program, not in production.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // normal execution
+    ///
+    /// let range = 0..64 * 1024;
+    /// let sum = range
+    ///     .par()
+    ///     .map(|x| x + 1)
+    ///     .filter(|x| x.is_multiple_of(2))
+    ///     .sum();
+    /// assert_eq!(sum, 1073774592);
+    ///
+    /// // execution with diagnostics
+    ///
+    /// let range = 0..64 * 1024;
+    /// let sum = range
+    ///     .par()
+    ///     .with_runner(DefaultRunner::default().with_diagnostics())
+    ///     .map(|x| x + 1)
+    ///     .filter(|x| x.is_multiple_of(2))
+    ///     .sum();
+    /// assert_eq!(sum, 1073774592);
+    ///
+    /// // prints diagnostics, which looks something like the following:
+    /// //
+    /// // - Number of threads used = 15
+    /// //
+    /// // - [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes
+    /// //   - [0]: 32, 16384, 512, [512, 512, 512, 512, 512, 512, 512, 512, 512, 512]
+    /// //   - [1]: 26, 13312, 512, [512, 512, 512, 512, 512, 512, 512, 512, 512, 512]
+    /// //   - [2]: 2, 2048, 1024, [1024, 1024]
+    /// //   - [3]: 8, 8192, 1024, [1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024]
+    /// //   - [4]: 0, 0, 0, []
+    /// //   - [5]: 20, 10240, 512, [512, 512, 512, 512, 512, 512, 512, 512, 512, 512]
+    /// //   - [6]: 9, 9216, 1024, [1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024]
+    /// //   - [7]: 6, 6144, 1024, [1024, 1024, 1024, 1024, 1024, 1024]
+    /// //   - [8]: 0, 0, 0, []
+    /// //   - [9]: 0, 0, 0, []
+    /// ```
     pub fn with_diagnostics(self) -> RunnerWithPool<P, ParallelExecutorWithDiagnostics<R>> {
         RunnerWithPool {
             pool: self.pool,
