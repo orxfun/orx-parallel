@@ -6,6 +6,57 @@ use crate::runner::{ComputationKind, NumSpawned};
 use orx_concurrent_iter::ConcurrentIter;
 use std::num::NonZeroUsize;
 
+/// A parallel executor which wraps another parallel executor `E` and collects diagnostics about:
+///
+/// * how many threads are used for the parallel computation
+/// * how many times each thread received a tasks
+/// * average chunk size; i.e., average number of tasks, that each thread received
+/// * and finally, explicit chunk sizes for the first task assignments.
+///
+/// The diagnostics are printed on the stdout once the parallel computation is completed.
+/// Therefore, this executor is suitable only for test purposed, but not for production.
+///
+/// Any executor can be converted into executor with diagnostics.
+/// In the example below, executor of the default runner is converted to executor with diagnostics.
+///
+///
+/// # Examples
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// // normal execution
+///
+/// let range = 0..4096;
+/// let sum = range
+///     .par()
+///     .map(|x| x + 1)
+///     .filter(|x| x.is_multiple_of(2))
+///     .sum();
+/// assert_eq!(sum, 1073774592);
+///
+/// // execution with diagnostics
+///
+/// let range = 0..4096;
+/// let sum = range
+///     .par()
+///     .with_runner(DefaultRunner::default().with_diagnostics())
+///     .map(|x| x + 1)
+///     .filter(|x| x.is_multiple_of(2))
+///     .sum();
+/// assert_eq!(sum, 1073774592);
+///
+/// // prints diagnostics, which looks something like the following:
+/// //
+/// // - Number of threads used = 5
+/// //
+/// // - [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes
+/// //   - [0]: 25, 1600, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+/// //   - [1]: 26, 1664, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+/// //   - [2]: 13, 832, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+/// //   - [3]: 0, 0, 0, []
+/// //   - [4]: 0, 0, 0, []
+/// ```
 pub struct ParallelExecutorWithDiagnostics<E>
 where
     E: ParallelExecutor,
