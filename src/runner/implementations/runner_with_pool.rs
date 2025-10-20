@@ -203,7 +203,7 @@ where
     ///     .map(|x| x + 1)
     ///     .filter(|x| x.is_multiple_of(2))
     ///     .sum();
-    /// assert_eq!(sum, 1073774592);
+    /// assert_eq!(sum, 4196352);
     ///
     /// // execution with diagnostics
     ///
@@ -214,7 +214,7 @@ where
     ///     .map(|x| x + 1)
     ///     .filter(|x| x.is_multiple_of(2))
     ///     .sum();
-    /// assert_eq!(sum, 1073774592);
+    /// assert_eq!(sum, 4196352);
     ///
     /// // prints diagnostics, which looks something like the following:
     /// //
