@@ -91,7 +91,8 @@ where
     ///
     /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
     /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
-    /// overhead. An alternative approach is to flatten the tasks and then perform the parallel computation.
+    /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
+    /// computation over the flattened input of tasks.
     ///
     /// This might increase performance in certain cases; however, requires storing the flattened tasks.
     /// Therefore, it fits best to situations where the input elements are not very large.
@@ -329,7 +330,8 @@ where
     ///
     /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
     /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
-    /// overhead. An alternative approach is to flatten the tasks and then perform the parallel computation.
+    /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
+    /// computation over the flattened input of tasks.
     ///
     /// This might increase performance in certain cases; however, requires storing the flattened tasks.
     /// Therefore, it fits best to situations where the input elements are not very large.

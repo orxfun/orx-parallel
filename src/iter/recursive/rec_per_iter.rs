@@ -17,6 +17,18 @@ where
     E: Fn(&I::Item) -> I + Sync,
     R: ParallelRunner,
 {
+    /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
+    /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
+    /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
+    /// computation over the flattened input of tasks.
+    ///
+    /// This might increase performance in certain cases; however, requires storing the flattened tasks.
+    /// Therefore, it fits best to situations where the input elements are not very large.
+    ///
+    /// See [`into_par_rec`] and [`into_par_rec_exact`] for examples.
+    ///
+    /// [`into_par_rec`]: crate::IntoParIterRec::into_par_rec
+    /// [`into_par_rec_exact`]: crate::IntoParIterRecExact::into_par_rec_exact
     pub fn into_eager(self) -> Par<ConIterVec<I::Item>, R> {
         let (orchestrator, params, iter) = self.destruct();
         let items = collect_items(iter);
@@ -35,6 +47,18 @@ where
     R: ParallelRunner,
     M1: Fn(I::Item) -> O + Sync,
 {
+    /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
+    /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
+    /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
+    /// computation over the flattened input of tasks.
+    ///
+    /// This might increase performance in certain cases; however, requires storing the flattened tasks.
+    /// Therefore, it fits best to situations where the input elements are not very large.
+    ///
+    /// See [`into_par_rec`] and [`into_par_rec_exact`] for examples.
+    ///
+    /// [`into_par_rec`]: crate::IntoParIterRec::into_par_rec
+    /// [`into_par_rec_exact`]: crate::IntoParIterRecExact::into_par_rec_exact
     pub fn into_eager(self) -> ParMap<ConIterVec<I::Item>, O, M1, R> {
         let (orchestrator, params, iter, map1) = self.destruct();
         let items = collect_items(iter);
@@ -54,6 +78,18 @@ where
     X1: Fn(I::Item) -> Vo + Sync,
     Vo: TransformableValues<Fallibility = Infallible>,
 {
+    /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
+    /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
+    /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
+    /// computation over the flattened input of tasks.
+    ///
+    /// This might increase performance in certain cases; however, requires storing the flattened tasks.
+    /// Therefore, it fits best to situations where the input elements are not very large.
+    ///
+    /// See [`into_par_rec`] and [`into_par_rec_exact`] for examples.
+    ///
+    /// [`into_par_rec`]: crate::IntoParIterRec::into_par_rec
+    /// [`into_par_rec_exact`]: crate::IntoParIterRecExact::into_par_rec_exact
     pub fn into_eager(self) -> ParXap<ConIterVec<I::Item>, Vo, X1, R> {
         let (orchestrator, params, iter, xap1) = self.destruct();
         let items = collect_items(iter);
