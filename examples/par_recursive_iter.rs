@@ -98,7 +98,6 @@ fn iter(root: &Node) -> u64 {
     let chunk_size = 1024;
     let iter = ConcurrentRecursiveIter::new(extend, [root]);
     let num_spawned = core::sync::atomic::AtomicUsize::new(0);
-    let num_handled = core::sync::atomic::AtomicUsize::new(0);
 
     std::thread::scope(|s| {
         let mut handles = vec![];
@@ -111,8 +110,17 @@ fn iter(root: &Node) -> u64 {
                 // computation: parallel reduction
                 let mut thread_sum = 0;
                 let mut puller = iter.chunk_puller(chunk_size);
-                while let Some(chunk) = puller.pull() {
-                    thread_sum += chunk.into_iter().map(|x| fibonacci(x.value)).sum::<u64>();
+                loop {
+                    match puller.pull() {
+                        Some(chunk) => {
+                            thread_sum += chunk.into_iter().map(|x| fibonacci(x.value)).sum::<u64>()
+                        }
+                        None => {
+                            if iter.is_completed() {
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 thread_sum
@@ -145,9 +153,9 @@ fn main() {
     // assert_eq!(sum_fib, expected);
     println!("Sum of Fibonacci of node values is {sum_fib}");
 
-    // let sum_fib = iter(&root);
+    let sum_fib = iter(&root);
     // assert_eq!(sum_fib, expected);
-    // println!("Sum of Fibonacci of node values is {sum_fib}");
+    println!("Sum of Fibonacci of node values is {sum_fib}");
 
     println!("\n\n");
 }

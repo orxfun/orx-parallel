@@ -14,7 +14,7 @@
 
 extern crate alloc;
 
-#[cfg(any(test, feature = "std"))]
+// #[cfg(any(test, feature = "std"))]
 extern crate std;
 
 mod collect_into;
