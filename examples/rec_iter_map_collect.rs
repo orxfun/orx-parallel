@@ -1,5 +1,5 @@
 use orx_parallel::*;
-use orx_split_vec::{PinnedVec, SplitVec};
+use orx_split_vec::SplitVec;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -76,12 +76,11 @@ fn par_rec_eager(roots: &[Node]) -> SplitVec<u64> {
     fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
         &node.children
     }
-    let count: usize = roots.iter().map(|x| x.seq_num_nodes()).sum();
 
     let runner = DefaultRunner::default().with_diagnostics();
 
     roots
-        .into_par_rec_exact(extend, count)
+        .into_par_rec(extend)
         .into_eager()
         .with_runner(runner)
         .flat_map(|x| x.value.iter().map(|x| fibonacci(*x)))
@@ -97,11 +96,6 @@ fn main() {
         Node::new(4000, &mut rng),
     ];
 
-    // let root = Node::new(&mut rng, 250);
-
-    // let par = [&root].into_par_rec(extend);
-    // let count = par.count();
-    // assert_eq!(count, root.seq_num_nodes());
     let count: usize = roots.iter().map(|x| x.seq_num_nodes()).sum();
     println!("Tree contains {count} nodes");
 
@@ -112,18 +106,12 @@ fn main() {
     expected.sort();
 
     println!("\n\n# par_rec");
-    let mut result = par_rec(&roots);
-    // result.sort();
-    // assert_eq!(result, expected);
+    let mut result = par_rec(&roots).to_vec();
+    result.sort();
+    assert_eq!(result, expected);
 
     println!("\n\n# par_rec_eager");
-    let mut result = par_rec_eager(&roots);
-    // result.sort();
-    // assert_eq!(result, expected);
-
-    // // let sum_fib = iter(&root);
-    // // // assert_eq!(sum_fib, expected);
-    // // println!("Sum of Fibonacci of node values is {sum_fib}");
-
-    // println!("\n\n");
+    let mut result = par_rec_eager(&roots).to_vec();
+    result.sort();
+    assert_eq!(result, expected);
 }

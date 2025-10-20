@@ -73,12 +73,11 @@ fn par_rec_eager(roots: &[Node]) -> u64 {
     fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
         &node.children
     }
-    let count: usize = roots.iter().map(|x| x.seq_num_nodes()).sum();
 
     let runner = DefaultRunner::default().with_diagnostics();
 
     roots
-        .into_par_rec_exact(extend, count)
+        .into_par_rec(extend)
         .into_eager()
         .with_runner(runner)
         .map(|x| x.value.iter().map(|x| fibonacci(*x)).sum::<u64>())
@@ -94,11 +93,6 @@ fn main() {
         Node::new(400, &mut rng),
     ];
 
-    // let root = Node::new(&mut rng, 250);
-
-    // let par = [&root].into_par_rec(extend);
-    // let count = par.count();
-    // assert_eq!(count, root.seq_num_nodes());
     let count: usize = roots.iter().map(|x| x.seq_num_nodes()).sum();
     println!("Tree contains {count} nodes");
 
@@ -111,10 +105,4 @@ fn main() {
     let sum_fib = par_rec(&roots);
     assert_eq!(sum_fib, expected);
     println!("Sum of Fibonacci of node values is {sum_fib}");
-
-    // // let sum_fib = iter(&root);
-    // // // assert_eq!(sum_fib, expected);
-    // // println!("Sum of Fibonacci of node values is {sum_fib}");
-
-    // println!("\n\n");
 }
