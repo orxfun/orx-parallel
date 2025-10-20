@@ -160,7 +160,7 @@ fn iter(root: &Node) -> u64 {
 
 fn run(c: &mut Criterion) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
-    let root = Node::new(&mut rng, 500);
+    let root = Node::new(&mut rng, 300);
     let n = &root.seq_num_nodes();
     let expected = root.seq_sum_fib();
 

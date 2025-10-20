@@ -10,15 +10,20 @@ struct Node {
 }
 
 fn fibonacci(n: u64) -> u64 {
-    let n = n % 42; // let's not overflow
-    let mut a = 0;
-    let mut b = 1;
-    for _ in 0..n {
-        let c = a + b;
-        a = b;
-        b = c;
-    }
-    a
+    (0..100)
+        .map(|j| {
+            let n = n + j;
+            // let n = n % 42; // let's not overflow
+            let mut a = 0;
+            let mut b = 1;
+            for _ in 0..n {
+                let c = a + b;
+                a = b;
+                b = c;
+            }
+            a
+        })
+        .sum()
 }
 
 impl Node {
@@ -58,8 +63,27 @@ fn par_rec(root: &Node) -> u64 {
         .into_par_rec_exact(extend, count)
         .with_runner(runner)
         // .with_runner(DefaultRunner::with_executor(self))
-        // .chunk_size(1024 * 1024)
+        // .chunk_size(64)
         .num_threads(32)
+        .map(|x| fibonacci(x.value))
+        .sum()
+}
+
+fn par_rec_eager(root: &Node) -> u64 {
+    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
+        &node.children
+    }
+    let count = root.seq_num_nodes();
+
+    let runner = DefaultRunner::default().with_diagnostics();
+
+    [root]
+        .into_par_rec_exact(extend, count)
+        .into_eager()
+        .with_runner(runner)
+        // .with_runner(DefaultRunner::with_executor(self))
+        // .chunk_size(1024 * 1024)
+        // .num_threads(1024)
         .map(|x| fibonacci(x.value))
         .sum()
 }
@@ -102,7 +126,7 @@ fn iter(root: &Node) -> u64 {
 fn main() {
     println!("\n\n");
     let mut rng = ChaCha8Rng::seed_from_u64(42);
-    let root = Node::new(&mut rng, 550);
+    let root = Node::new(&mut rng, 100);
     // let root = Node::new(&mut rng, 250);
 
     // let par = [&root].into_par_rec(extend);
@@ -112,6 +136,10 @@ fn main() {
     println!("Tree contains {count} nodes");
 
     // let expected = root.seq_sum_fib();
+
+    // let sum_fib = par_rec_eager(&root);
+    // // assert_eq!(sum_fib, expected);
+    // println!("Sum of Fibonacci of node values is {sum_fib}");
 
     let sum_fib = par_rec(&root);
     // assert_eq!(sum_fib, expected);
