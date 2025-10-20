@@ -1,10 +1,9 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use orx_concurrent_bag::ConcurrentBag;
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_parallel::*;
 use orx_split_vec::SplitVec;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use std::{hint::black_box, sync::atomic::AtomicU64};
+use std::hint::black_box;
 
 fn fibonacci(n: u64, work: usize) -> u64 {
     (7..(work + 7))
