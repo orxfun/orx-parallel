@@ -197,7 +197,7 @@ where
     ///
     /// // normal execution
     ///
-    /// let range = 0..64 * 1024;
+    /// let range = 0..4096;
     /// let sum = range
     ///     .par()
     ///     .map(|x| x + 1)
@@ -207,7 +207,7 @@ where
     ///
     /// // execution with diagnostics
     ///
-    /// let range = 0..64 * 1024;
+    /// let range = 0..4096;
     /// let sum = range
     ///     .par()
     ///     .with_runner(DefaultRunner::default().with_diagnostics())
@@ -218,19 +218,14 @@ where
     ///
     /// // prints diagnostics, which looks something like the following:
     /// //
-    /// // - Number of threads used = 15
+    /// // - Number of threads used = 5
     /// //
     /// // - [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes
-    /// //   - [0]: 32, 16384, 512, [512, 512, 512, 512, 512, 512, 512, 512, 512, 512]
-    /// //   - [1]: 26, 13312, 512, [512, 512, 512, 512, 512, 512, 512, 512, 512, 512]
-    /// //   - [2]: 2, 2048, 1024, [1024, 1024]
-    /// //   - [3]: 8, 8192, 1024, [1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024]
+    /// //   - [0]: 25, 1600, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+    /// //   - [1]: 26, 1664, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+    /// //   - [2]: 13, 832, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+    /// //   - [3]: 0, 0, 0, []
     /// //   - [4]: 0, 0, 0, []
-    /// //   - [5]: 20, 10240, 512, [512, 512, 512, 512, 512, 512, 512, 512, 512, 512]
-    /// //   - [6]: 9, 9216, 1024, [1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024]
-    /// //   - [7]: 6, 6144, 1024, [1024, 1024, 1024, 1024, 1024, 1024]
-    /// //   - [8]: 0, 0, 0, []
-    /// //   - [9]: 0, 0, 0, []
     /// ```
     pub fn with_diagnostics(self) -> RunnerWithPool<P, ParallelExecutorWithDiagnostics<R>> {
         RunnerWithPool {
