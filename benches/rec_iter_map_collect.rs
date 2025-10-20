@@ -1,4 +1,4 @@
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_parallel::*;
 use orx_split_vec::SplitVec;
@@ -75,34 +75,6 @@ fn seq(roots: &[Node], work: usize) -> Vec<u64> {
     result
 }
 
-fn rayon(roots: &[Node], work: usize) -> SplitVec<u64> {
-    use rayon::iter::*;
-    fn process_node<'scope>(
-        work: usize,
-        sum: &'scope AtomicU64,
-        node: &'scope Node,
-        s: &rayon::Scope<'scope>,
-        result: &'scope ConcurrentBag<u64>,
-    ) {
-        for child in &node.children {
-            s.spawn(move |s| {
-                process_node(work, sum, child, s, result);
-            });
-        }
-        let x: Vec<_> = node.value.par_iter().map(|x| fibonacci(*x, work)).collect();
-        result.extend(x);
-    }
-
-    let sum = AtomicU64::new(0);
-    let result = ConcurrentBag::new();
-    rayon::in_place_scope(|s| {
-        for root in roots {
-            process_node(work, &sum, root, s, &result);
-        }
-    });
-    result.into_inner()
-}
-
 fn orx_lazy_unknown_chunk1024(roots: &[Node], work: usize) -> SplitVec<u64> {
     fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
         &node.children
@@ -161,11 +133,11 @@ fn run(c: &mut Criterion) {
             b.iter(|| seq(&roots, *work))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon", work), work, |b, _| {
-            let mut result = rayon(&roots, *work).to_vec();
+        group.bench_with_input(BenchmarkId::new("orx_lazy_exact", work), work, |b, _| {
+            let mut result = orx_lazy_exact(&roots, *work, num_nodes).to_vec();
             result.sort();
             assert_eq!(&expected, &result);
-            b.iter(|| rayon(&roots, *work))
+            b.iter(|| orx_lazy_exact(&roots, *work, num_nodes))
         });
 
         group.bench_with_input(
@@ -178,13 +150,6 @@ fn run(c: &mut Criterion) {
                 b.iter(|| orx_lazy_unknown_chunk1024(&roots, *work))
             },
         );
-
-        group.bench_with_input(BenchmarkId::new("orx_lazy_exact", work), work, |b, _| {
-            let mut result = orx_lazy_exact(&roots, *work, num_nodes).to_vec();
-            result.sort();
-            assert_eq!(&expected, &result);
-            b.iter(|| orx_lazy_exact(&roots, *work, num_nodes))
-        });
 
         group.bench_with_input(BenchmarkId::new("orx_eager", work), work, |b, _| {
             let mut result = orx_eager(&roots, *work).to_vec();
