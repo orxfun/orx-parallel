@@ -5,18 +5,15 @@ use orx_concurrent_recursive_iter::{ConcurrentRecursiveIter, Queue};
 
 /// Trait to convert an iterator into a recursive parallel iterator together with the `extend` method.
 ///
-/// Created parallel iterator is a regular parallel iterator; i.e., we have access to
-/// all [`ParIter`] features.
+/// Created parallel iterator is a regular parallel iterator; i.e., we have access to all [`ParIter`] features.
 ///
 /// It is recursive due to the extension. The recursive parallel iterator will yield
 /// * all initial elements contained in this iterator,
-/// * all elements created by calling `extend` on each of the initial elements, let's call these depth-1 elements,
-/// * all elements created by calling `extend` on each of the depth-1 elements, let's call these depth-2 elements,
-/// * ..., and so on.
+/// * all elements dynamically added to the queue with the `extend` method while processing the elements.
 ///
-/// You may read more about the [`ConcurrentRecursiveIterCore`].
+/// You may read more about the [`ConcurrentRecursiveIter`].
 ///
-/// See also [`IntoParIterRecExact`]
+/// [`ParIter`]: crate::ParIter
 pub trait IntoParIterRec
 where
     Self: IntoIterator,
