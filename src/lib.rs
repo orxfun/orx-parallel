@@ -57,6 +57,11 @@ pub mod generic_iterator;
 #[cfg(test)]
 mod test_utils;
 
+// re-export
+pub use orx_concurrent_recursive_iter::Queue;
+
+// export
+
 pub use collect_into::ParCollectInto;
 pub use executor::{
     DefaultExecutor, ParallelExecutor, ParallelExecutorWithDiagnostics, ThreadExecutor,

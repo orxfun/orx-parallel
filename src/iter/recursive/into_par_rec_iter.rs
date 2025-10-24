@@ -22,39 +22,51 @@ where
     Self: IntoIterator,
     Self::Item: Send,
 {
-    /// Converts this iterator into a recursive parallel iterator together with the `extend`
-    /// method.
+    /// Converts this iterator into a recursive parallel iterator together with the `extend` method.
     ///
-    /// Created parallel iterator is a regular parallel iterator; i.e., we have access to
-    /// all [`ParIter`] features.
+    /// Created parallel iterator is a regular parallel iterator; i.e., we have access to all [`ParIter`] features.
     ///
     /// It is recursive due to the extension. The recursive parallel iterator will yield
     /// * all initial elements contained in this iterator,
-    /// * all elements created by calling `extend` on each of the initial elements, let's call these depth-1 elements,
-    /// * all elements created by calling `extend` on each of the depth-1 elements, let's call these depth-2 elements,
-    /// * ..., and so on.
+    /// * all elements dynamically added to the queue with the `extend` method while processing the elements.
     ///
-    /// You may read more about the [`ConcurrentRecursiveIterCore`].
-    ///
-    /// See also [`IntoParIterRecExact`]
+    /// You may read more about the [`ConcurrentRecursiveIter`].
     ///
     /// # Examples
     ///
     /// The following example has some code to set up until the `# usage` line. Notice that the `Node`
-    /// is a recursive data structure with children being other nodes.
+    /// is a non-linear data structure, each node having children nodes to be recursively processed.
     ///
     /// We have three initial elements `roots`.
     ///
-    /// We want to compute is the sum of Fibonacci numbers of values of all nodes descending from the
-    /// roots.
+    /// We want to compute sum of Fibonacci numbers of values of all nodes descending from the roots.
     ///
-    /// The `expand` function defines the recursive expansion behavior:
-    /// * every process node first adds its children to the end of the iterator,
-    /// * then, once they are process, we will create the children of these children as well,
-    /// * this process will recursively continue until there is no unprocessed node left.
+    /// The `expand` function defines the recursive expansion behavior. It takes two arguments:
+    /// * `element: &Self::Item` is the item being processed.
+    /// * `queue: Queue<Self::Item, P>` is the queue of remaining elements/tasks which exposes two methods:
+    ///   * `push(item)` allows us to add one item to the queue,
+    ///   * `extend(items)` allows us to add all of the items to the queue. Here `items` must have a known
+    ///     size (`ExactSizeIterator`).
     ///
-    /// This crate makes use of the [`ConcurrentRecursiveIter`] and [`ConcurrentRecursiveIterExact`]
-    /// for this computation and provides three ways to execute this computation in parallel.
+    /// Using either of the methods might be beneficial for different use cases.
+    ///
+    /// Pushing children one by one makes the new task available for other threads as fast as possible. Further,
+    /// when we don't know the exact number of children ahead of time, and we don't want to use heap allocation
+    /// to store the children in a vec before adding them to the queue just to make it sized, we can add the
+    /// elements one-by-one with the `queue.push(item)` method. On the other hand, this approach will have more
+    /// parallelization overhead.
+    ///
+    /// When we extending children all at once using `queue.extend(items)`, we minimize the parallelization overhead
+    /// for adding tasks to the queue. On the other hand, the children will be available only when writing of all
+    /// children to the queue is complete which might cause idleness when tasks are scarce. Still, the recommendation
+    /// is to try to `extend` first whenever possible due to the following: (i) if we extend with a lot of children,
+    /// the tasks will not be scarce; (ii) and if we extend with only a few of items, the delay of making the tasks
+    /// available for other threads will be short.
+    ///
+    /// Nevertheless, the decision is use-case specific and best to benchmark for the specific input.
+    ///
+    /// This crate makes use of the [`ConcurrentRecursiveIter`] for this computation and provides three ways to execute
+    /// this computation in parallel.
     ///
     /// ## A. Recursive Iterator with Exact Length
     ///
@@ -94,19 +106,12 @@ where
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
     /// computation over the flattened input of tasks.
     ///
-    /// This might increase performance in certain cases; however, requires storing the flattened tasks.
-    /// Therefore, it fits best to situations where the input elements are not very large.
-    /// In the following example, for instance, elements are of type `&Node` which is a pointer size
-    /// which makes it suitable for this approach.
+    /// Note that exact size will be obtained during flattening; and hence, we do not need to provide the `count`.
     ///
-    /// Note that exact size will be obtained during flattening; and hence, we do not need to provide the
-    /// `count`.
-    ///
-    /// In the example, we create eagerly flattened parallel iterator with the
-    /// `(&roots).into_par_rec(extend).into_eager()` call.
+    /// In the example, we create eagerly flattened parallel iterator with the `(&roots).into_par_rec(extend).into_eager()` call.
     ///
     /// [`ParIter`]: crate::ParIter
-    /// [`ConcurrentRecursiveIterCore`]: orx_concurrent_recursive_iter::ConcurrentRecursiveIterCore
+    /// [`ConcurrentRecursiveIter`]: orx_concurrent_recursive_iter::ConcurrentRecursiveIter
     ///
     /// ## Example with all three approaches
     ///
@@ -171,8 +176,8 @@ where
     ///
     /// // this defines how the iterator must extend:
     /// // each node drawn from the iterator adds its children to the end of the iterator
-    /// fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
-    ///     &node.children
+    /// fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    ///     queue.extend(&node.children);
     /// }
     ///
     /// let mut rng = ChaCha8Rng::seed_from_u64(42);
