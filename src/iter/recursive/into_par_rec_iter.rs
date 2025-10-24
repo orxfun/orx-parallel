@@ -48,6 +48,11 @@ where
     ///   * `extend(items)` allows us to add all of the items to the queue. Here `items` must have a known
     ///     size (`ExactSizeIterator`).
     ///
+    /// Adding children one-by-one with `push` or all together with `extend` might be the extreme options.
+    /// Actually, any intermediate approach is also possible. For instance, we can choose to `extend` in
+    /// chunks of say 50 tasks. If the item happens to create 140 children, we can handle this with four
+    /// `extend` calls.
+    ///
     /// Using either of the methods might be beneficial for different use cases.
     ///
     /// Pushing children one by one makes the new task available for other threads as fast as possible. Further,
@@ -249,6 +254,11 @@ where
     ///   * `push(item)` allows us to add one item to the queue,
     ///   * `extend(items)` allows us to add all of the items to the queue. Here `items` must have a known
     ///     size (`ExactSizeIterator`).
+    ///
+    /// Adding children one-by-one with `push` or all together with `extend` might be the extreme options.
+    /// Actually, any intermediate approach is also possible. For instance, we can choose to `extend` in
+    /// chunks of say 50 tasks. If the item happens to create 140 children, we can handle this with four
+    /// `extend` calls.
     ///
     /// Using either of the methods might be beneficial for different use cases.
     ///
