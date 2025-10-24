@@ -1,3 +1,4 @@
+use orx_concurrent_recursive_iter::Queue;
 use orx_parallel::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -55,9 +56,10 @@ impl Node {
 }
 
 fn par_rec(roots: &[Node]) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
-        &node.children
+    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+        queue.extend(&node.children);
     }
+
     let count: usize = roots.iter().map(|x| x.seq_num_nodes()).sum();
 
     let runner = DefaultRunner::default().with_diagnostics();
@@ -70,8 +72,8 @@ fn par_rec(roots: &[Node]) -> u64 {
 }
 
 fn par_rec_eager(roots: &[Node]) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
-        &node.children
+    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+        queue.extend(&node.children);
     }
 
     let runner = DefaultRunner::default().with_diagnostics();

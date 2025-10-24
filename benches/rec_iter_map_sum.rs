@@ -1,4 +1,5 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use orx_concurrent_recursive_iter::Queue;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -101,8 +102,8 @@ fn rayon(roots: &[Node], work: usize) -> u64 {
 }
 
 fn orx_lazy_unknown_chunk1024(roots: &[Node], work: usize) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
-        &node.children
+    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+        queue.extend(&node.children);
     }
 
     roots
@@ -113,8 +114,8 @@ fn orx_lazy_unknown_chunk1024(roots: &[Node], work: usize) -> u64 {
 }
 
 fn orx_lazy_exact(roots: &[Node], work: usize, num_nodes: usize) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
-        &node.children
+    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+        queue.extend(&node.children);
     }
 
     roots
@@ -124,8 +125,8 @@ fn orx_lazy_exact(roots: &[Node], work: usize, num_nodes: usize) -> u64 {
 }
 
 fn orx_lazy_exact_flat_map(roots: &[Node], work: usize, num_nodes: usize) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
-        &node.children
+    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+        queue.extend(&node.children);
     }
 
     roots
@@ -135,8 +136,8 @@ fn orx_lazy_exact_flat_map(roots: &[Node], work: usize, num_nodes: usize) -> u64
 }
 
 fn orx_eager(roots: &[Node], work: usize) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
-        &node.children
+    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+        queue.extend(&node.children);
     }
 
     roots
