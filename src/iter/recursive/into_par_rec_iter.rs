@@ -32,7 +32,7 @@ where
     /// # Examples
     ///
     /// The following example has some code to set up until the `# usage` line. Notice that the `Node`
-    /// is a non-linear data structure, each node having children nodes to be recursively processed.
+    /// is a **non-linear** data structure, each node having children nodes to be recursively processed.
     ///
     /// We have three initial elements `roots`.
     ///
@@ -239,7 +239,7 @@ where
     /// # Examples
     ///
     /// The following example has some code to set up until the `# usage` line. Notice that the `Node`
-    /// is a non-linear data structure, each node having children nodes to be recursively processed.
+    /// is a **non-linear** data structure, each node having children nodes to be recursively processed.
     ///
     /// We have three initial elements `roots`.
     ///
