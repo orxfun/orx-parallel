@@ -22,7 +22,7 @@ created with an "extend" function which defines the recursive behavior.
 In this example we create an iterator where elements are "&Node".
 We define the "extend" function as follows:
 
-fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {{
+fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {{
     queue.extend(&node.children);
 }}
 

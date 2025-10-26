@@ -169,7 +169,7 @@ Assume that we want to map all the data with `map: impl Fn(T) -> u64` and comput
 We can express this computation and execute in parallel with the following:
 
 ```rust ignore
-fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
     queue.extend(&node.children);
 }
 

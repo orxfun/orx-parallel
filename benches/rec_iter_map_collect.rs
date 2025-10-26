@@ -76,7 +76,7 @@ fn seq(roots: &[Node], work: usize) -> Vec<u64> {
 }
 
 fn orx_lazy_unknown_chunk1024(roots: &[Node], work: usize) -> SplitVec<u64> {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 
@@ -88,7 +88,7 @@ fn orx_lazy_unknown_chunk1024(roots: &[Node], work: usize) -> SplitVec<u64> {
 }
 
 fn orx_lazy_exact(roots: &[Node], work: usize, num_nodes: usize) -> SplitVec<u64> {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 
@@ -99,7 +99,7 @@ fn orx_lazy_exact(roots: &[Node], work: usize, num_nodes: usize) -> SplitVec<u64
 }
 
 fn orx_eager(roots: &[Node], work: usize) -> SplitVec<u64> {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 

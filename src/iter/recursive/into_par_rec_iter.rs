@@ -178,7 +178,7 @@ where
     ///
     /// // this defines how the iterator must extend:
     /// // each node drawn from the iterator adds its children to the end of the iterator
-    /// fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    /// fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
     ///     queue.extend(&node.children);
     /// }
     ///
@@ -385,7 +385,7 @@ where
     ///
     /// // this defines how the iterator must extend:
     /// // each node drawn from the iterator adds its children to the end of the iterator
-    /// fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    /// fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
     ///     queue.extend(&node.children);
     /// }
     ///
