@@ -106,12 +106,12 @@ fn main() {
     }
     expected.sort();
 
-    println!("\n\n# par_rec");
+    println!("\n\n\n\n# par_rec");
     let mut result = par_rec(&roots).to_vec();
     result.sort();
     assert_eq!(result, expected);
 
-    println!("\n\n# par_rec_eager");
+    println!("\n\n\n\n# par_rec_eager");
     let mut result = par_rec_eager(&roots).to_vec();
     result.sort();
     assert_eq!(result, expected);
