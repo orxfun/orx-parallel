@@ -8,6 +8,7 @@
 
 * [Parallel Computation by Iterators](#parallel-computation-by-iterators)
 * [Parallelizable Collections](#parallelizable-collections)
+* [Parallelization over Nonlinear Data Structures](#parallelization-over-nonlinear-data-structures)
 * [Performance and Benchmarks](#performance-and-benchmarks)
 * [Fallible Parallel Iterators](#fallible-parallel-iterators)
 * [Using Mutable Variables](#using-mutable-variables)
@@ -149,6 +150,41 @@ The following table demonstrates these methods for the `HashSet`; however, they 
 |                 | i  | `h.iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.par()` | `h.into_iter()`<br>&nbsp;&nbsp;`.collect::<Vec<_>>()`<br>&nbsp;&nbsp;`.into_par()` |
 
 Note that each approach can be more efficient in different scenarios. For large elements, (ii) might be preferred to avoid allocation of the vector. For insignificant tasks to be performed on each element, (i) might be preferred to take full benefit of vector-specific optimizations.
+
+## Parallelization over Nonlinear Data Structures
+
+[IntoParIterRec](https://docs.rs/orx-parallel/latest/orx_parallel/trait.IntoParIterRec.html) trait can be used to create a **parallel recursive iterator** over an initial set of elements which is useful when working with non-linear data structures such as **trees** and **graphs**.
+
+Consider, for instance, a tree which is defined by the following node struct:
+
+```rust ignore
+pub struct Node<T> {
+    pub data: T,
+    pub children: Vec<Node<T>>,
+}
+```
+
+Assume that we want to map all the data with `map: impl Fn(T) -> u64` and compute the sum of mapped values of all nodes descending from a `root: &Node`.
+
+We can express this computation and execute in parallel with the following:
+
+```rust ignore
+fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    queue.extend(&node.children);
+}
+
+[root].into_par_rec(extend).map(map).sum()
+```
+
+Instead of `into_par`, we use `into_par_rec` and provide `extend` function as its argument. This function defines the recursive extension of the parallel iterator such that every time we process a `node` we first add its children to the `queue`. `Queue` is the queue of elements to be processed and it exposes two growth methods: `push` and `extend` that we can use to define the recursive extension.
+
+Although we create the parallel iterator differently, we get a `ParIter`. Therefore, we have access to all features of a regular parallel iterator.
+
+For instance, assume we want to filter nodes first. Further, instead of summing up the mapped values, we need to collect them in a vector. We can express this computation just as we would do on a linear data structure:
+
+```rust ignore
+[root].into_par_rec(extend).filter(filter).map(map).collect()
+```
 
 ## Performance and Benchmarks
 
