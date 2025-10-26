@@ -100,7 +100,7 @@ pub fn rayon(root: &Node) -> u64 {
 /// be more important in non-linear data structures compared to linear
 /// due to the dynamic nature of iteration.
 fn orx_rec(root: &Node) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 
@@ -115,7 +115,7 @@ fn orx_rec(root: &Node) -> u64 {
 /// input, the iterator first flattens the tasks with the `into_eager`
 /// call and then operates on it as if it is over a linear data structure.
 fn orx_rec_eager(root: &Node) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 
@@ -134,7 +134,7 @@ fn orx_rec_eager(root: &Node) -> u64 {
 /// On the other hand, it is good not to keep the chunk size too large in a recursive
 /// iterator, as we limit it to 32 in the following.
 fn orx_rec_exact(root: &Node) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 

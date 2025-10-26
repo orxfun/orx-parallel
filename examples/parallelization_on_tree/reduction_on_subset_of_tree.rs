@@ -83,7 +83,7 @@ fn sequential(root: &Node) -> u64 {
 /// * (+) does not require allocation.
 /// * (-) might have greater parallelization overhead.
 fn push_orx_rec(root: &Node) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         for child in node.children.iter().filter(filter) {
             queue.push(child);
         }
@@ -100,7 +100,7 @@ fn push_orx_rec(root: &Node) -> u64 {
 /// * (+) will have the minimum parallelization overhead.
 /// * (-) requires allocation for processing each node.
 fn collect_extend_orx_rec(root: &Node) -> u64 {
-    fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         let children: Vec<_> = node.children.iter().filter(filter).collect();
         queue.extend(children);
     }
