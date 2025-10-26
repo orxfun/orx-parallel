@@ -176,7 +176,7 @@ fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
 [root].into_par_rec(extend).map(map).sum()
 ```
 
-Instead of `into_par`, we use `into_par_rec` and provide `extend` function as its argument. This function defines the recursive extension of the parallel iterator such that every time we process a `node` we first add its children to the `queue`. `Queue` is the queue of elements to be processed and it exposes two growth methods: `push` and `extend` that we can use to define the recursive extension.
+Instead of `into_par`, we use `into_par_rec` and provide `extend` function as its argument. This function defines the recursive extension of the parallel iterator such that every time we process a `node` we first add its children to the `queue`. [`Queue`](https://docs.rs/orx-concurrent-recursive-iter/latest/orx_concurrent_recursive_iter/struct.Queue.html) is the queue of elements to be processed and it exposes two growth methods to define the recursive extension: `push` and `extend`.
 
 Although we create the parallel iterator differently, we get a `ParIter`. Therefore, we have access to all features of a regular parallel iterator.
 
@@ -185,6 +185,8 @@ For instance, assume we want to filter nodes first. Further, instead of summing 
 ```rust ignore
 [root].into_par_rec(extend).filter(filter).map(map).collect()
 ```
+
+For more details, you may see the [parallelization_on_tree](https://github.com/orxfun/orx-parallel/blob/main/examples/parallelization_on_tree) example.
 
 ## Performance and Benchmarks
 
