@@ -4,6 +4,8 @@ use orx_concurrent_recursive_iter::{ConcurrentRecursiveIter, Queue};
 // unknown size
 
 /// Trait to convert an iterator into a recursive parallel iterator together with the `extend` method.
+/// Recursive iterators are most useful for defining parallel computations over non-linear data structures
+/// such as trees or graphs.
 ///
 /// Created parallel iterator is a regular parallel iterator; i.e., we have access to all [`ParIter`] features.
 ///
@@ -20,6 +22,8 @@ where
     Self::Item: Send,
 {
     /// Converts this iterator into a recursive parallel iterator together with the `extend` method.
+    /// Recursive iterators are most useful for defining parallel computations over non-linear data structures
+    /// such as trees or graphs.
     ///
     /// Created parallel iterator is a regular parallel iterator; i.e., we have access to all [`ParIter`] features.
     ///
@@ -29,16 +33,7 @@ where
     ///
     /// You may read more about the [`ConcurrentRecursiveIter`].
     ///
-    /// # Examples
-    ///
-    /// The following example has some code to set up until the `# usage` line. Notice that the `Node`
-    /// is a **non-linear** data structure, each node having children nodes to be recursively processed.
-    ///
-    /// We have three initial elements `roots`.
-    ///
-    /// We want to compute sum of Fibonacci numbers of values of all nodes descending from the roots.
-    ///
-    /// The `expand` function defines the recursive expansion behavior. It takes two arguments:
+    /// The `extend` function defines the recursive expansion behavior. It takes two arguments:
     /// * `element: &Self::Item` is the item being processed.
     /// * `queue: Queue<Self::Item, P>` is the queue of remaining elements/tasks which exposes two methods:
     ///   * `push(item)` allows us to add one item to the queue,
@@ -65,7 +60,7 @@ where
     /// the tasks will not be scarce; (ii) and if we extend with only a few of items, the delay of making the tasks
     /// available for other threads will be short.
     ///
-    /// Nevertheless, the decision is use-case specific and best to benchmark for the specific input.
+    /// The decision is use-case specific and best to benchmark for the specific input.
     ///
     /// This crate makes use of the [`ConcurrentRecursiveIter`] for this computation and provides three ways to execute
     /// this computation in parallel.
@@ -77,12 +72,7 @@ where
     /// iterator is the total of all elements that will be created. This gives the parallel executor
     /// opportunity to optimize the chunk sizes.
     ///
-    /// In the following example, we first calculate this number with `roots.iter().map(|x| x.seq_num_nodes()).sum();`
-    /// and then use `(&roots).into_par_rec_exact(extend, count)` to create our exact length recursive parallel
-    /// iterator.
-    ///
-    /// Note that, once we create the recursive parallel iterator, it is just another [`ParIter`]. In other words,
-    /// we have access to all parallel iterator features.
+    /// We can use `initial_elements.into_par_rec_exact(extend, count)` to create the iterator with exact length.
     ///
     /// ## B. Recursive Iterator with Unknown Length
     ///
@@ -91,133 +81,136 @@ where
     /// chunk size explicitly depending on the number of threads that will be used and any estimate on the exact
     /// length.
     ///
-    /// In the following example, we directly create the parallel iterator with `(&roots).into_par_rec(extend)`
-    /// without providing any length information. Then, we ask the parallel executor to pull tasks in chunks of
-    /// 1024 with `.chunk_size(1024)`. Recall the general rule-of-thumb on chunk size parameter:
-    /// * the longer each individual computation, the smaller the chunks can be,
-    /// * when it is too small, we might suffer from parallelization overhead,
-    /// * when it is too large, we might suffer from heterogeneity of tasks which might lead to imbalance of
-    ///   load of threads,
-    /// * we might try to set it to a large enough value to reduce parallelization overhead without causing
-    ///   imbalance.
+    /// We can use `initial_elements.into_par_rec(extend)` to create the iterator without length information.
     ///
     /// ## C. Into Eager Transformation
     ///
     /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
     /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
-    /// computation over the flattened input of tasks.
+    /// computation over the flattened input of tasks using [`into_eager`] transformation.
     ///
-    /// Note that exact size will be obtained during flattening; and hence, we do not need to provide the `count`.
-    ///
-    /// In the example, we create eagerly flattened parallel iterator with the `(&roots).into_par_rec(extend).into_eager()` call.
+    /// We can use `initial_elements.into_par_rec(extend).into_eager()` to create the flattened iterator.
     ///
     /// [`ParIter`]: crate::ParIter
     /// [`ConcurrentRecursiveIter`]: orx_concurrent_recursive_iter::ConcurrentRecursiveIter
+    /// [`into_eager`]: crate::computational_variants::Par::into_eager
     ///
-    /// ## Example with all three approaches
+    /// ## Examples
+    ///
+    /// In the following example we perform some parallel computations over a tree.
+    /// It demonstrates that a "recursive parallel iterator" is just a parallel iterator with
+    /// access to all [`ParIter`] methods.
+    /// Once we create the recursive parallel iterator with the `extend` definition, we can use it as
+    /// a regular parallel iterator.
+    ///
+    /// Unfortunately, the example requires a long set up for completeness. Note that the relevant
+    /// code blocks begin after line `// parallel reduction`.
     ///
     /// ```
     /// use orx_parallel::*;
     /// use rand::{Rng, SeedableRng};
     /// use rand_chacha::ChaCha8Rng;
+    /// use std::{collections::HashSet, ops::Range};
     ///
-    /// struct Node {
-    ///     value: Vec<u64>,
-    ///     children: Vec<Node>,
+    /// pub struct Node<T> {
+    ///     pub idx: usize,
+    ///     pub data: T,
+    ///     pub children: Vec<Node<T>>,
     /// }
     ///
-    /// impl Node {
-    ///     fn new(mut n: u32, rng: &mut impl Rng) -> Self {
-    ///         let mut children = Vec::new();
-    ///         if n < 5 {
-    ///             for _ in 0..n {
-    ///                 children.push(Node::new(0, rng));
-    ///             }
-    ///         } else {
-    ///             while n > 0 {
-    ///                 let n2 = rng.random_range(0..=n);
-    ///                 children.push(Node::new(n2, rng));
-    ///                 n -= n2;
-    ///             }
-    ///         }
-    ///         Self {
-    ///             value: (0..rng.random_range(1..500))
-    ///                 .map(|_| rng.random_range(0..40))
+    /// impl<T> Node<T> {
+    ///     fn create_node(out_edges: &[Vec<usize>], idx: usize, data: fn(usize) -> T) -> Node<T> {
+    ///         Node {
+    ///             idx,
+    ///             data: data(idx),
+    ///             children: out_edges[idx]
+    ///                 .iter()
+    ///                 .map(|child_idx| Self::create_node(out_edges, *child_idx, data))
     ///                 .collect(),
-    ///             children,
     ///         }
     ///     }
     ///
-    ///     fn seq_num_nodes(&self) -> usize {
-    ///         1 + self
-    ///             .children
-    ///             .iter()
-    ///             .map(|node| node.seq_num_nodes())
-    ///             .sum::<usize>()
-    ///     }
+    ///     pub fn new_tree(
+    ///         num_nodes: usize,
+    ///         degree: Range<usize>,
+    ///         data: fn(usize) -> T,
+    ///         rng: &mut impl Rng,
+    ///     ) -> Node<T> {
+    ///         assert!(num_nodes >= 2);
     ///
-    ///     fn seq_sum_fib(&self) -> u64 {
-    ///         self.value.iter().map(|x| fibonacci(*x)).sum::<u64>()
-    ///             + self.children.iter().map(|x| x.seq_sum_fib()).sum::<u64>()
+    ///         let mut leaves = vec![0];
+    ///         let mut remaining: Vec<_> = (1..num_nodes).collect();
+    ///         let mut edges = vec![];
+    ///         let mut out_edges = vec![vec![]; num_nodes];
+    ///
+    ///         while !remaining.is_empty() {
+    ///             let leaf_idx = rng.random_range(0..leaves.len());
+    ///             let leaf = leaves.remove(leaf_idx);
+    ///
+    ///             let degree = rng.random_range(degree.clone());
+    ///             match degree == 0 {
+    ///                 true => leaves.push(leaf),
+    ///                 false => {
+    ///                     let children_indices: HashSet<_> = (0..degree)
+    ///                         .map(|_| rng.random_range(0..remaining.len()))
+    ///                         .collect();
+    ///
+    ///                     let mut sorted: Vec<_> = children_indices.iter().copied().collect();
+    ///                     sorted.sort();
+    ///
+    ///                     edges.extend(children_indices.iter().map(|c| (leaf, remaining[*c])));
+    ///                     out_edges[leaf] = children_indices.iter().map(|c| remaining[*c]).collect();
+    ///                     leaves.extend(children_indices.iter().map(|c| remaining[*c]));
+    ///
+    ///                     for idx in sorted.into_iter().rev() {
+    ///                         remaining.remove(idx);
+    ///                     }
+    ///                 }
+    ///             }
+    ///         }
+    ///
+    ///         Self::create_node(&out_edges, 0, data)
     ///     }
     /// }
     ///
-    /// fn fibonacci(n: u64) -> u64 {
-    ///     let mut a = 0;
-    ///     let mut b = 1;
-    ///     for _ in 0..n {
-    ///         let c = a + b;
-    ///         a = b;
-    ///         b = c;
-    ///     }
-    ///     a
-    /// }
+    /// let num_nodes = 1_000;
+    /// let out_degree = 0..100;
+    /// let mut rng = ChaCha8Rng::seed_from_u64(42);
+    /// let data = |idx: usize| idx.to_string();
+    /// let root = Node::new_tree(num_nodes, out_degree, data, &mut rng);
     ///
-    /// // # usage
+    /// let compute = |node: &Node<String>| node.data.parse::<u64>().unwrap();
     ///
-    /// // this defines how the iterator must extend:
-    /// // each node drawn from the iterator adds its children to the end of the iterator
-    /// fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
+    /// // parallel reduction
+    ///
+    /// fn extend<'a, T: Sync>(node: &&'a Node<T>, queue: &Queue<&'a Node<T>>) {
     ///     queue.extend(&node.children);
     /// }
     ///
-    /// let mut rng = ChaCha8Rng::seed_from_u64(42);
-    /// let roots = vec![
-    ///     Node::new(50, &mut rng),
-    ///     Node::new(20, &mut rng),
-    ///     Node::new(40, &mut rng),
-    /// ];
+    /// let sum = [&root].into_par_rec(extend).map(compute).sum();
+    /// assert_eq!(sum, 499500);
     ///
-    /// let seq_sum: u64 = roots.iter().map(|x| x.seq_sum_fib()).sum();
+    /// // or any parallel computation such as map->filter->collect
     ///
-    /// // A. exact length, recommended when possible
-    ///
-    /// let count: usize = roots.iter().map(|x| x.seq_num_nodes()).sum();
-    ///
-    /// let sum = (&roots)
-    ///     .into_par_rec_exact(extend, count)
-    ///     .map(|x| x.value.iter().map(|x| fibonacci(*x)).sum::<u64>())
-    ///     .sum();
-    /// assert_eq!(sum, seq_sum);
-    ///
-    /// // B. guide the computation with chunk size, when length is unknown
-    ///
-    /// let sum = (&roots)
+    /// let result: Vec<_> = [&root]
     ///     .into_par_rec(extend)
-    ///     .chunk_size(1024)
-    ///     .map(|x| x.value.iter().map(|x| fibonacci(*x)).sum::<u64>())
-    ///     .sum();
-    /// assert_eq!(sum, seq_sum);
+    ///     .map(compute)
+    ///     .filter(|x| x.is_multiple_of(7))
+    ///     .collect();
+    /// assert_eq!(result.len(), 143);
     ///
-    /// // C. eagerly convert to a flat iterator
+    /// // or filter during extension
+    /// fn extend_filtered<'a>(node: &&'a Node<String>, queue: &Queue<&'a Node<String>>) {
+    ///     for child in &node.children {
+    ///         if child.idx != 42 {
+    ///             queue.push(child);
+    ///         }
+    ///     }
+    /// }
     ///
-    /// let sum = (&roots)
-    ///     .into_par_rec(extend)
-    ///     .into_eager()
-    ///     .map(|x| x.value.iter().map(|x| fibonacci(*x)).sum::<u64>())
-    ///     .sum();
-    /// assert_eq!(sum, seq_sum);
+    /// let sum = [&root].into_par_rec(extend_filtered).map(compute).sum();
+    /// assert_eq!(sum, 499458);
     /// ```
     fn into_par_rec<E>(
         self,
@@ -227,6 +220,8 @@ where
         E: Fn(&Self::Item, &Queue<Self::Item>) + Sync;
 
     /// Converts this iterator into a recursive parallel iterator together with the `extend` method.
+    /// Recursive iterators are most useful for defining parallel computations over non-linear data structures
+    /// such as trees or graphs.
     ///
     /// Created parallel iterator is a regular parallel iterator; i.e., we have access to all [`ParIter`] features.
     ///
@@ -236,16 +231,7 @@ where
     ///
     /// You may read more about the [`ConcurrentRecursiveIter`].
     ///
-    /// # Examples
-    ///
-    /// The following example has some code to set up until the `# usage` line. Notice that the `Node`
-    /// is a **non-linear** data structure, each node having children nodes to be recursively processed.
-    ///
-    /// We have three initial elements `roots`.
-    ///
-    /// We want to compute sum of Fibonacci numbers of values of all nodes descending from the roots.
-    ///
-    /// The `expand` function defines the recursive expansion behavior. It takes two arguments:
+    /// The `extend` function defines the recursive expansion behavior. It takes two arguments:
     /// * `element: &Self::Item` is the item being processed.
     /// * `queue: Queue<Self::Item, P>` is the queue of remaining elements/tasks which exposes two methods:
     ///   * `push(item)` allows us to add one item to the queue,
@@ -272,7 +258,7 @@ where
     /// the tasks will not be scarce; (ii) and if we extend with only a few of items, the delay of making the tasks
     /// available for other threads will be short.
     ///
-    /// Nevertheless, the decision is use-case specific and best to benchmark for the specific input.
+    /// The decision is use-case specific and best to benchmark for the specific input.
     ///
     /// This crate makes use of the [`ConcurrentRecursiveIter`] for this computation and provides three ways to execute
     /// this computation in parallel.
@@ -284,12 +270,7 @@ where
     /// iterator is the total of all elements that will be created. This gives the parallel executor
     /// opportunity to optimize the chunk sizes.
     ///
-    /// In the following example, we first calculate this number with `roots.iter().map(|x| x.seq_num_nodes()).sum();`
-    /// and then use `(&roots).into_par_rec_exact(extend, count)` to create our exact length recursive parallel
-    /// iterator.
-    ///
-    /// Note that, once we create the recursive parallel iterator, it is just another [`ParIter`]. In other words,
-    /// we have access to all parallel iterator features.
+    /// We can use `initial_elements.into_par_rec_exact(extend, count)` to create the iterator with exact length.
     ///
     /// ## B. Recursive Iterator with Unknown Length
     ///
@@ -298,133 +279,136 @@ where
     /// chunk size explicitly depending on the number of threads that will be used and any estimate on the exact
     /// length.
     ///
-    /// In the following example, we directly create the parallel iterator with `(&roots).into_par_rec(extend)`
-    /// without providing any length information. Then, we ask the parallel executor to pull tasks in chunks of
-    /// 1024 with `.chunk_size(1024)`. Recall the general rule-of-thumb on chunk size parameter:
-    /// * the longer each individual computation, the smaller the chunks can be,
-    /// * when it is too small, we might suffer from parallelization overhead,
-    /// * when it is too large, we might suffer from heterogeneity of tasks which might lead to imbalance of
-    ///   load of threads,
-    /// * we might try to set it to a large enough value to reduce parallelization overhead without causing
-    ///   imbalance.
+    /// We can use `initial_elements.into_par_rec(extend)` to create the iterator without length information.
     ///
     /// ## C. Into Eager Transformation
     ///
     /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
     /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
-    /// computation over the flattened input of tasks.
+    /// computation over the flattened input of tasks using [`into_eager`] transformation.
     ///
-    /// Note that exact size will be obtained during flattening; and hence, we do not need to provide the `count`.
-    ///
-    /// In the example, we create eagerly flattened parallel iterator with the `(&roots).into_par_rec(extend).into_eager()` call.
+    /// We can use `initial_elements.into_par_rec(extend).into_eager()` to create the flattened iterator.
     ///
     /// [`ParIter`]: crate::ParIter
     /// [`ConcurrentRecursiveIter`]: orx_concurrent_recursive_iter::ConcurrentRecursiveIter
+    /// [`into_eager`]: crate::computational_variants::Par::into_eager
     ///
-    /// ## Example with all three approaches
+    /// ## Examples
+    ///
+    /// In the following example we perform some parallel computations over a tree.
+    /// It demonstrates that a "recursive parallel iterator" is just a parallel iterator with
+    /// access to all [`ParIter`] methods.
+    /// Once we create the recursive parallel iterator with the `extend` definition, we can use it as
+    /// a regular parallel iterator.
+    ///
+    /// Unfortunately, the example requires a long set up for completeness. Note that the relevant
+    /// code blocks begin after line `// parallel reduction`.
     ///
     /// ```
     /// use orx_parallel::*;
     /// use rand::{Rng, SeedableRng};
     /// use rand_chacha::ChaCha8Rng;
+    /// use std::{collections::HashSet, ops::Range};
     ///
-    /// struct Node {
-    ///     value: Vec<u64>,
-    ///     children: Vec<Node>,
+    /// pub struct Node<T> {
+    ///     pub idx: usize,
+    ///     pub data: T,
+    ///     pub children: Vec<Node<T>>,
     /// }
     ///
-    /// impl Node {
-    ///     fn new(mut n: u32, rng: &mut impl Rng) -> Self {
-    ///         let mut children = Vec::new();
-    ///         if n < 5 {
-    ///             for _ in 0..n {
-    ///                 children.push(Node::new(0, rng));
-    ///             }
-    ///         } else {
-    ///             while n > 0 {
-    ///                 let n2 = rng.random_range(0..=n);
-    ///                 children.push(Node::new(n2, rng));
-    ///                 n -= n2;
-    ///             }
-    ///         }
-    ///         Self {
-    ///             value: (0..rng.random_range(1..500))
-    ///                 .map(|_| rng.random_range(0..40))
+    /// impl<T> Node<T> {
+    ///     fn create_node(out_edges: &[Vec<usize>], idx: usize, data: fn(usize) -> T) -> Node<T> {
+    ///         Node {
+    ///             idx,
+    ///             data: data(idx),
+    ///             children: out_edges[idx]
+    ///                 .iter()
+    ///                 .map(|child_idx| Self::create_node(out_edges, *child_idx, data))
     ///                 .collect(),
-    ///             children,
     ///         }
     ///     }
     ///
-    ///     fn seq_num_nodes(&self) -> usize {
-    ///         1 + self
-    ///             .children
-    ///             .iter()
-    ///             .map(|node| node.seq_num_nodes())
-    ///             .sum::<usize>()
-    ///     }
+    ///     pub fn new_tree(
+    ///         num_nodes: usize,
+    ///         degree: Range<usize>,
+    ///         data: fn(usize) -> T,
+    ///         rng: &mut impl Rng,
+    ///     ) -> Node<T> {
+    ///         assert!(num_nodes >= 2);
     ///
-    ///     fn seq_sum_fib(&self) -> u64 {
-    ///         self.value.iter().map(|x| fibonacci(*x)).sum::<u64>()
-    ///             + self.children.iter().map(|x| x.seq_sum_fib()).sum::<u64>()
+    ///         let mut leaves = vec![0];
+    ///         let mut remaining: Vec<_> = (1..num_nodes).collect();
+    ///         let mut edges = vec![];
+    ///         let mut out_edges = vec![vec![]; num_nodes];
+    ///
+    ///         while !remaining.is_empty() {
+    ///             let leaf_idx = rng.random_range(0..leaves.len());
+    ///             let leaf = leaves.remove(leaf_idx);
+    ///
+    ///             let degree = rng.random_range(degree.clone());
+    ///             match degree == 0 {
+    ///                 true => leaves.push(leaf),
+    ///                 false => {
+    ///                     let children_indices: HashSet<_> = (0..degree)
+    ///                         .map(|_| rng.random_range(0..remaining.len()))
+    ///                         .collect();
+    ///
+    ///                     let mut sorted: Vec<_> = children_indices.iter().copied().collect();
+    ///                     sorted.sort();
+    ///
+    ///                     edges.extend(children_indices.iter().map(|c| (leaf, remaining[*c])));
+    ///                     out_edges[leaf] = children_indices.iter().map(|c| remaining[*c]).collect();
+    ///                     leaves.extend(children_indices.iter().map(|c| remaining[*c]));
+    ///
+    ///                     for idx in sorted.into_iter().rev() {
+    ///                         remaining.remove(idx);
+    ///                     }
+    ///                 }
+    ///             }
+    ///         }
+    ///
+    ///         Self::create_node(&out_edges, 0, data)
     ///     }
     /// }
     ///
-    /// fn fibonacci(n: u64) -> u64 {
-    ///     let mut a = 0;
-    ///     let mut b = 1;
-    ///     for _ in 0..n {
-    ///         let c = a + b;
-    ///         a = b;
-    ///         b = c;
-    ///     }
-    ///     a
-    /// }
+    /// let num_nodes = 1_000;
+    /// let out_degree = 0..100;
+    /// let mut rng = ChaCha8Rng::seed_from_u64(42);
+    /// let data = |idx: usize| idx.to_string();
+    /// let root = Node::new_tree(num_nodes, out_degree, data, &mut rng);
     ///
-    /// // # usage
+    /// let compute = |node: &Node<String>| node.data.parse::<u64>().unwrap();
     ///
-    /// // this defines how the iterator must extend:
-    /// // each node drawn from the iterator adds its children to the end of the iterator
-    /// fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
+    /// // parallel reduction
+    ///
+    /// fn extend<'a, T: Sync>(node: &&'a Node<T>, queue: &Queue<&'a Node<T>>) {
     ///     queue.extend(&node.children);
     /// }
     ///
-    /// let mut rng = ChaCha8Rng::seed_from_u64(42);
-    /// let roots = vec![
-    ///     Node::new(50, &mut rng),
-    ///     Node::new(20, &mut rng),
-    ///     Node::new(40, &mut rng),
-    /// ];
+    /// let sum = [&root].into_par_rec(extend).map(compute).sum();
+    /// assert_eq!(sum, 499500);
     ///
-    /// let seq_sum: u64 = roots.iter().map(|x| x.seq_sum_fib()).sum();
+    /// // or any parallel computation such as map->filter->collect
     ///
-    /// // A. exact length, recommended when possible
-    ///
-    /// let count: usize = roots.iter().map(|x| x.seq_num_nodes()).sum();
-    ///
-    /// let sum = (&roots)
-    ///     .into_par_rec_exact(extend, count)
-    ///     .map(|x| x.value.iter().map(|x| fibonacci(*x)).sum::<u64>())
-    ///     .sum();
-    /// assert_eq!(sum, seq_sum);
-    ///
-    /// // B. guide the computation with chunk size, when length is unknown
-    ///
-    /// let sum = (&roots)
+    /// let result: Vec<_> = [&root]
     ///     .into_par_rec(extend)
-    ///     .chunk_size(1024)
-    ///     .map(|x| x.value.iter().map(|x| fibonacci(*x)).sum::<u64>())
-    ///     .sum();
-    /// assert_eq!(sum, seq_sum);
+    ///     .map(compute)
+    ///     .filter(|x| x.is_multiple_of(7))
+    ///     .collect();
+    /// assert_eq!(result.len(), 143);
     ///
-    /// // C. eagerly convert to a flat iterator
+    /// // or filter during extension
+    /// fn extend_filtered<'a>(node: &&'a Node<String>, queue: &Queue<&'a Node<String>>) {
+    ///     for child in &node.children {
+    ///         if child.idx != 42 {
+    ///             queue.push(child);
+    ///         }
+    ///     }
+    /// }
     ///
-    /// let sum = (&roots)
-    ///     .into_par_rec(extend)
-    ///     .into_eager()
-    ///     .map(|x| x.value.iter().map(|x| fibonacci(*x)).sum::<u64>())
-    ///     .sum();
-    /// assert_eq!(sum, seq_sum);
+    /// let sum = [&root].into_par_rec(extend_filtered).map(compute).sum();
+    /// assert_eq!(sum, 499458);
     /// ```
     fn into_par_rec_exact<E>(
         self,
