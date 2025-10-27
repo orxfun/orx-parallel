@@ -190,6 +190,8 @@ For more details, you may see the [parallelization_on_tree](https://github.com/o
 
 ## Performance and Benchmarks
 
+*Please also see [impact of ChunkSize on performance](#impact-of-chunksize-on-performance) section.*
+
 You may find some sample parallel programs in [examples](https://github.com/orxfun/orx-parallel/blob/main/examples) directory. These examples allow to express parallel computations as iterator method compositions and run quick experiments with different approaches. Examples use `GenericIterator`. As the name suggests, it is a generalization of sequential iterator, rayon's parallel iterator and orx-parallel's parallel iterator, and hence, allows for convenient experiments. You may play with the code, update the tested computations and run these examples by including **generic_iterator** feature, such as:
 
 `cargo run --release --features generic_iterator --example benchmark_collect -- --len 123456 --num-repetitions 10`
@@ -456,6 +458,18 @@ This is guaranteed by the fact that both consuming computation calls and configu
 ### Global Configuration
 
 Additionally, maximum number of threads that can be used by parallel computations can be globally bounded by the environment variable `ORX_PARALLEL_MAX_NUM_THREADS`. Please see the corresponding [example](https://github.com/orxfun/orx-parallel/blob/main/examples/max_num_threads_config.rs) for details.
+
+### Impact of `ChunkSize` on Performance
+
+It is more straightforward to estimate the impact of number of threads on computation time. The impact of chunk size might be more complicated while it can be significant.
+
+As a rule of thumb, we want a chunk size that is **just large enough** to mitigate the parallelization overhead but not larger.
+
+When computation on each item is long, parallelization overhead is negligible, and a safe chunk size choice would then be **1**.
+
+The default configuration `par.chunk_size(ChunkSize::Auto)` or `par.chunk_size(0)` uses a heuristic to solve this tradeoff. A difficult case for the heuristic (at least for now, see the [discussion](https://github.com/orxfun/orx-parallel/discussions/26)) is when the tasks are significantly heterogeneous.
+
+The **best way to deal with heterogeneity** is to have `par.chunk_size(1)`. You may of course test larger chunk sizes to optimize the computation for your data.
 
 
 ## Runner: Pools and Executors
