@@ -21,9 +21,9 @@ pub struct FixedChunkRunner {
 impl Clone for FixedChunkRunner {
     fn clone(&self) -> Self {
         Self {
-            initial_len: self.initial_len.clone(),
-            resolved_chunk_size: self.resolved_chunk_size.clone(),
-            max_num_threads: self.max_num_threads.clone(),
+            initial_len: self.initial_len,
+            resolved_chunk_size: self.resolved_chunk_size,
+            max_num_threads: self.max_num_threads,
             current_chunk_size: self.current_chunk_size.load(Ordering::Relaxed).into(),
         }
     }
