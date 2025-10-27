@@ -19,8 +19,9 @@ where
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
     /// computation over the flattened input of tasks.
     ///
-    /// This might increase performance in certain cases; however, requires storing the flattened tasks.
-    /// Therefore, it fits best to situations where the input elements are not very large.
+    /// The `linearize` approach works in two parallelization phases:
+    /// * first phase to linearize the inputs in parallel over the non-linear data, and
+    /// * second phase to perform the computation in parallel over the linear data.
     ///
     /// See [`into_par_rec`] and [`into_par_rec_exact`] for examples.
     ///
@@ -47,8 +48,9 @@ where
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
     /// computation over the flattened input of tasks.
     ///
-    /// This might increase performance in certain cases; however, requires storing the flattened tasks.
-    /// Therefore, it fits best to situations where the input elements are not very large.
+    /// The `linearize` approach works in two parallelization phases:
+    /// * first phase to linearize the inputs in parallel over the non-linear data, and
+    /// * second phase to perform the computation in parallel over the linear data.
     ///
     /// See [`into_par_rec`] and [`into_par_rec_exact`] for examples.
     ///
@@ -76,8 +78,9 @@ where
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
     /// computation over the flattened input of tasks.
     ///
-    /// This might increase performance in certain cases; however, requires storing the flattened tasks.
-    /// Therefore, it fits best to situations where the input elements are not very large.
+    /// The `linearize` approach works in two parallelization phases:
+    /// * first phase to linearize the inputs in parallel over the non-linear data, and
+    /// * second phase to perform the computation in parallel over the linear data.
     ///
     /// See [`into_par_rec`] and [`into_par_rec_exact`] for examples.
     ///
