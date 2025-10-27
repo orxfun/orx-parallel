@@ -98,14 +98,14 @@ fn orx_lazy_exact(roots: &[Node], work: usize, num_nodes: usize) -> SplitVec<u64
         .collect()
 }
 
-fn orx_eager(roots: &[Node], work: usize) -> SplitVec<u64> {
+fn orx_linearized(roots: &[Node], work: usize) -> SplitVec<u64> {
     fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 
     roots
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .flat_map(|x| x.value.iter().map(|x| fibonacci(*x, work)))
         .collect()
 }
@@ -151,11 +151,11 @@ fn run(c: &mut Criterion) {
             },
         );
 
-        group.bench_with_input(BenchmarkId::new("orx_eager", work), work, |b, _| {
-            let mut result = orx_eager(&roots, *work).to_vec();
+        group.bench_with_input(BenchmarkId::new("orx_linearized", work), work, |b, _| {
+            let mut result = orx_linearized(&roots, *work).to_vec();
             result.sort();
             assert_eq!(&expected, &result);
-            b.iter(|| orx_eager(&roots, *work))
+            b.iter(|| orx_linearized(&roots, *work))
         });
     }
 

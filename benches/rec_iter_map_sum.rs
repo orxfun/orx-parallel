@@ -135,14 +135,14 @@ fn orx_lazy_exact_flat_map(roots: &[Node], work: usize, num_nodes: usize) -> u64
         .sum()
 }
 
-fn orx_eager(roots: &[Node], work: usize) -> u64 {
+fn orx_linearized(roots: &[Node], work: usize) -> u64 {
     fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 
     roots
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .map(|x| x.value.iter().map(|x| fibonacci(*x, work)).sum::<u64>())
         .sum()
 }
@@ -198,9 +198,9 @@ fn run(c: &mut Criterion) {
             },
         );
 
-        group.bench_with_input(BenchmarkId::new("orx_eager", work), work, |b, _| {
-            assert_eq!(&expected, &orx_eager(&roots, *work));
-            b.iter(|| orx_eager(&roots, *work))
+        group.bench_with_input(BenchmarkId::new("orx_linearized", work), work, |b, _| {
+            assert_eq!(&expected, &orx_linearized(&roots, *work));
+            b.iter(|| orx_linearized(&roots, *work))
         });
     }
 

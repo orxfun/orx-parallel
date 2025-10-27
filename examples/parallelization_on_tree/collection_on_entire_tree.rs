@@ -31,7 +31,7 @@ into
 
     timed("sequential", || sequential(root), log);
     timed("orx_rec", || orx_rec(root), log);
-    timed("orx_rec_eager", || orx_rec_eager(root), log);
+    timed("orx_rec_linearized", || orx_rec_linearized(root), log);
     timed("orx_rec_exact", || orx_rec_exact(root), log);
 
     println!();
@@ -82,16 +82,16 @@ fn orx_rec(root: &Node) -> Vec<u64> {
 /// Here we parallelize by providing the `extend` function.
 ///
 /// However, rather than parallel processing over a dynamic recursive
-/// input, the iterator first flattens the tasks with the `into_eager`
+/// input, the iterator first flattens the tasks with the `linearize`
 /// call and then operates on it as if it is over a linear data structure.
-fn orx_rec_eager(root: &Node) -> Vec<u64> {
+fn orx_rec_linearized(root: &Node) -> Vec<u64> {
     fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
         queue.extend(&node.children);
     }
 
     [root]
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .map(compute)
         .collect()
 }

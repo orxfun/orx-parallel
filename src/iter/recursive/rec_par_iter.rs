@@ -26,7 +26,7 @@ where
     ///
     /// [`into_par_rec`]: crate::IntoParIterRec::into_par_rec
     /// [`into_par_rec_exact`]: crate::IntoParIterRec::into_par_rec_exact
-    pub fn into_eager(self) -> Par<ConIterVec<T>, R> {
+    pub fn linearize(self) -> Par<ConIterVec<T>, R> {
         let (orchestrator, params, iter) = self.destruct();
         let items = collect_items(iter);
         let iter = items.into_con_iter();
@@ -53,7 +53,7 @@ where
     ///
     /// [`into_par_rec`]: crate::IntoParIterRec::into_par_rec
     /// [`into_par_rec_exact`]: crate::IntoParIterRec::into_par_rec_exact
-    pub fn into_eager(self) -> ParMap<ConIterVec<T>, O, M1, R> {
+    pub fn linearize(self) -> ParMap<ConIterVec<T>, O, M1, R> {
         let (orchestrator, params, iter, map1) = self.destruct();
         let items = collect_items(iter);
         let iter = items.into_con_iter();
@@ -81,7 +81,7 @@ where
     ///
     /// [`into_par_rec`]: crate::IntoParIterRec::into_par_rec
     /// [`into_par_rec_exact`]: crate::IntoParIterRec::into_par_rec_exact
-    pub fn into_eager(self) -> ParXap<ConIterVec<T>, Vo, X1, R> {
+    pub fn linearize(self) -> ParXap<ConIterVec<T>, Vo, X1, R> {
         let (orchestrator, params, iter, xap1) = self.destruct();
         let items = collect_items(iter);
         let iter = items.into_con_iter();

@@ -83,18 +83,18 @@ where
     ///
     /// We can use `initial_elements.into_par_rec(extend)` to create the iterator without length information.
     ///
-    /// ## C. Into Eager Transformation
+    /// ## C. Linearization
     ///
     /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
     /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
-    /// computation over the flattened input of tasks using [`into_eager`] transformation.
+    /// computation over the flattened input of tasks using [`linearize`] transformation.
     ///
-    /// We can use `initial_elements.into_par_rec(extend).into_eager()` to create the flattened iterator.
+    /// We can use `initial_elements.into_par_rec(extend).linearize()` to create the flattened iterator.
     ///
     /// [`ParIter`]: crate::ParIter
     /// [`ConcurrentRecursiveIter`]: orx_concurrent_recursive_iter::ConcurrentRecursiveIter
-    /// [`into_eager`]: crate::computational_variants::Par::into_eager
+    /// [`linearize`]: crate::computational_variants::Par::linearize
     ///
     /// ## Examples
     ///
@@ -281,18 +281,18 @@ where
     ///
     /// We can use `initial_elements.into_par_rec(extend)` to create the iterator without length information.
     ///
-    /// ## C. Into Eager Transformation
+    /// ## C. Linearization
     ///
     /// Even with exact length, a recursive parallel iterator is much more dynamic than a flat parallel
     /// iterator. This dynamic nature of shrinking and growing concurrently requires a greater parallelization
     /// overhead. An alternative approach is to eagerly discover all tasks and then perform the parallel
-    /// computation over the flattened input of tasks using [`into_eager`] transformation.
+    /// computation over the flattened input of tasks using [`linearize`] transformation.
     ///
-    /// We can use `initial_elements.into_par_rec(extend).into_eager()` to create the flattened iterator.
+    /// We can use `initial_elements.into_par_rec(extend).linearize()` to create the flattened iterator.
     ///
     /// [`ParIter`]: crate::ParIter
     /// [`ConcurrentRecursiveIter`]: orx_concurrent_recursive_iter::ConcurrentRecursiveIter
-    /// [`into_eager`]: crate::computational_variants::Par::into_eager
+    /// [`linearize`]: crate::computational_variants::Par::linearize
     ///
     /// ## Examples
     ///
