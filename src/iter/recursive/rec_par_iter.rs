@@ -1,5 +1,5 @@
 use crate::{
-    ParallelRunner,
+    ParIter, ParallelRunner,
     computational_variants::{Par, ParMap, ParXap},
     generic_values::{TransformableValues, runner_results::Infallible},
 };
@@ -10,7 +10,7 @@ type Rec<T, E> = ConcurrentRecursiveIter<T, E>;
 
 impl<E, T, R> Par<Rec<T, E>, R>
 where
-    T: Send,
+    T: Send + Sync,
     E: Fn(&T, &Queue<T>) + Sync,
     R: ParallelRunner,
 {
@@ -27,10 +27,17 @@ where
     /// [`into_par_rec`]: crate::IntoParIterRec::into_par_rec
     /// [`into_par_rec_exact`]: crate::IntoParIterRec::into_par_rec_exact
     pub fn linearize(self) -> Par<ConIterVec<T>, R> {
-        let (orchestrator, params, iter) = self.destruct();
-        let items = collect_items(iter);
+        let params = self.params();
+
+        let items: Vec<_> = self.map(|x| x).collect();
         let iter = items.into_con_iter();
-        Par::new(orchestrator, params, iter)
+
+        // a
+        todo!()
+        // let (orchestrator, params, iter) = self.destruct();
+        // let items = collect_items(iter);
+        // let iter = items.into_con_iter();
+        // Par::new(orchestrator, params, iter)
     }
 }
 
@@ -102,4 +109,12 @@ where
         }
         None => iter.into_seq_iter().collect(),
     }
+}
+
+fn collect_items_par<T, E>(iter: Rec<T, E>) -> Vec<T>
+where
+    T: Send,
+    E: Fn(&T, &Queue<T>) + Sync,
+{
+    todo!()
 }
