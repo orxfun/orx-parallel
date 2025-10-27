@@ -18,6 +18,7 @@ const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 ///
 /// [`max_num_threads`]: ParThreadPool::max_num_threads
 /// [`with_runner`]: crate::ParIter::with_runner
+#[derive(Clone)]
 pub struct StdDefaultPool {
     max_num_threads: NonZeroUsize,
 }

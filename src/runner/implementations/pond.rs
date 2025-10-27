@@ -10,6 +10,7 @@ use pond::{Pool, Scope};
 ///
 /// Following constructor of the `pond::Pool` is made available to `PondPool`:
 /// * [`PondPool::new_threads_unbounded`]
+#[derive(Clone)]
 pub struct PondPool(Pool, NonZeroUsize);
 
 impl PondPool {

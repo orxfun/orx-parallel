@@ -39,6 +39,10 @@ where
     pub(crate) fn destruct(self) -> (R, Params, I) {
         (self.orchestrator, self.params, self.iter)
     }
+
+    pub(crate) fn orchestrator(&self) -> &R {
+        &self.orchestrator
+    }
 }
 
 unsafe impl<I, R> Send for Par<I, R>

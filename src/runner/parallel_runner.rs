@@ -147,7 +147,7 @@ pub(crate) type ThreadRunnerOf<C> =
 
 // auto impl for &mut pool
 
-impl<O> ParallelRunner for &'_ mut O
+impl<'a, O> ParallelRunner for &'a mut O
 where
     O: ParallelRunner,
 {

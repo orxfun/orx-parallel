@@ -94,6 +94,7 @@ use core::marker::PhantomData;
 ///     assert_eq!(&expected, &result);
 /// }
 /// ```
+#[derive(Clone)]
 pub struct RunnerWithPool<P, R = DefaultExecutor>
 where
     P: ParThreadPool,

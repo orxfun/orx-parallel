@@ -18,6 +18,17 @@ pub struct FixedChunkRunner {
     current_chunk_size: AtomicUsize,
 }
 
+impl Clone for FixedChunkRunner {
+    fn clone(&self) -> Self {
+        Self {
+            initial_len: self.initial_len.clone(),
+            resolved_chunk_size: self.resolved_chunk_size.clone(),
+            max_num_threads: self.max_num_threads.clone(),
+            current_chunk_size: self.current_chunk_size.load(Ordering::Relaxed).into(),
+        }
+    }
+}
+
 impl FixedChunkRunner {
     fn spawn_new(&self, num_spawned: usize, remaining: Option<usize>) -> bool {
         match (num_spawned, remaining) {

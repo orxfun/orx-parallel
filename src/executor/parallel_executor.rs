@@ -9,7 +9,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// A parallel executor which is responsible for taking a computation defined as a composition
 /// of iterator methods, spawns threads, shares tasks and returns the result of the parallel
 /// execution.
-pub trait ParallelExecutor: Sized + Sync + 'static {
+pub trait ParallelExecutor: Sized + Sync + 'static + Clone {
     /// Data shared to the thread executors.
     type SharedState: Send + Sync;
 

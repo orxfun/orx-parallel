@@ -57,6 +57,7 @@ use std::num::NonZeroUsize;
 /// //   - [3]: 0, 0, 0, []
 /// //   - [4]: 0, 0, 0, []
 /// ```
+#[derive(Clone)]
 pub struct ParallelExecutorWithDiagnostics<E>
 where
     E: ParallelExecutor,
