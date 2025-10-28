@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         toolchain: ["stable"]
-        features: ["", "--features generic_iterator"]
+        features: ["", "--all-features", "no-default-features"]
 
     steps:
     - uses: actions/checkout@v4
