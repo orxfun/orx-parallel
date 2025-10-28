@@ -1,7 +1,6 @@
-use crate::{
-    DefaultExecutor, ParThreadPool, ParallelExecutor, ParallelExecutorWithDiagnostics,
-    runner::ParallelRunner,
-};
+#[cfg(feature = "std")]
+use crate::executor::ParallelExecutorWithDiagnostics;
+use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
 use core::marker::PhantomData;
 
 /// Parallel runner with a given pool of type `P` and parallel executor of `R`.
@@ -39,9 +38,12 @@ use core::marker::PhantomData;
 /// let expected = run_with_runner(runner, input);
 ///
 /// // uses native threads
-/// let runner = RunnerWithPool::from(StdDefaultPool::default());
-/// let result = run_with_runner(runner, input);
-/// assert_eq!(&expected, &result);
+/// #[cfg(feature = "std")]
+/// {
+///     let runner = RunnerWithPool::from(StdDefaultPool::default());
+///     let result = run_with_runner(runner, input);
+///     assert_eq!(&expected, &result);
+/// }
 ///
 /// // uses rayon-core ThreadPool with 8 threads
 /// #[cfg(feature = "rayon-core")]
@@ -228,6 +230,7 @@ where
     /// //   - [3]: 0, 0, 0, []
     /// //   - [4]: 0, 0, 0, []
     /// ```
+    #[cfg(feature = "std")]
     pub fn with_diagnostics(self) -> RunnerWithPool<P, ParallelExecutorWithDiagnostics<R>> {
         RunnerWithPool {
             pool: self.pool,

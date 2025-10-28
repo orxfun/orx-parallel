@@ -280,8 +280,11 @@ where
     /// let sum = inputs.par().sum();
     ///
     /// // equivalent to:
-    /// let sum2 = inputs.par().with_runner(RunnerWithPool::from(StdDefaultPool::default())).sum();
-    /// assert_eq!(sum, sum2);
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     let sum2 = inputs.par().with_runner(RunnerWithPool::from(StdDefaultPool::default())).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
     ///
     /// #[cfg(feature = "scoped_threadpool")]
     /// {
@@ -345,8 +348,11 @@ where
     /// let sum = inputs.par().sum();
     ///
     /// // equivalent to:
-    /// let sum2 = inputs.par().with_pool(StdDefaultPool::default()).sum();
-    /// assert_eq!(sum, sum2);
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     let sum2 = inputs.par().with_pool(StdDefaultPool::default()).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
     ///
     /// #[cfg(feature = "scoped_threadpool")]
     /// {
