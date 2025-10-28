@@ -3,6 +3,7 @@ use crate::{
     computational_variants::{Par, ParMap, ParXap},
     generic_values::{TransformableValues, runner_results::Infallible},
 };
+use alloc::vec::Vec;
 use orx_concurrent_iter::{IntoConcurrentIter, implementations::ConIterVec};
 use orx_concurrent_recursive_iter::{ConcurrentRecursiveIter, Queue};
 

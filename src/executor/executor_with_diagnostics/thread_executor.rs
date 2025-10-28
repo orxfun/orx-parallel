@@ -1,5 +1,7 @@
 use super::shared_state::SharedStateWithDiagnostics;
 use crate::{ParallelExecutor, ThreadExecutor};
+use alloc::vec;
+use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ThreadExecutorWithDiagnostics<E>
