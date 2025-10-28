@@ -468,8 +468,8 @@ Our objective is to minimize the sum of two computational costs:
 * cost of heterogeneity => it gets larger as chunk size gets greater
 
 Parallelization overhead can further be divided into two:
-* concurrent state update: This often corresponds to one atomic update per chunk. It might be significant if our computation is very small such as `input.par().sum()`. Otherwise, cost of atomic update could be negligible.
-* false sharing: This is relevant only if we are one-to-one mapping an input and collecting the results such as `input.par().map(|x| x.to_string()).collect()`. Here, the performance might suffer from false sharing when the chunk size × output size is not large enough. You may also see [false sharing](https://docs.rs/orx-concurrent-bag/latest/orx_concurrent_bag/#false-sharing) section for `ConcurrentBag`.
+* concurrent state update: This often corresponds to one atomic update per chunk. It may be significant if our computation is very small such as `input.par().sum()`. Otherwise, cost of atomic update could be negligible.
+* false sharing: This is relevant only if we are writing results. For instance, when we are one-to-one mapping an input and collecting the results such as `input.par().map(|x| x.to_string()).collect()`, or if are writing with mut references such as `input.par().for_each(|x| *x += 1)`. Here, the performance might suffer from false sharing when the `chunk size × size of output item` is not large enough. You may also see [false sharing](https://docs.rs/orx-concurrent-bag/latest/orx_concurrent_bag/#false-sharing) section for `ConcurrentBag`.
 
 Firstly, when computation on each item is sufficiently long, parallelization overhead is negligible. Here, we want to make sure that we do not have heterogeneity cost. Therefore, a safe chunk size choice would then be one, `par.chunk_size(1)`.
 
