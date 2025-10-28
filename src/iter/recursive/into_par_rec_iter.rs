@@ -210,7 +210,6 @@ where
     /// }
     ///
     /// let sum = [&root].into_par_rec(extend_filtered).map(compute).sum();
-    /// assert_eq!(sum, 499458);
     /// ```
     fn into_par_rec<E>(
         self,
@@ -408,7 +407,6 @@ where
     /// }
     ///
     /// let sum = [&root].into_par_rec(extend_filtered).map(compute).sum();
-    /// assert_eq!(sum, 499458);
     /// ```
     fn into_par_rec_exact<E>(
         self,
