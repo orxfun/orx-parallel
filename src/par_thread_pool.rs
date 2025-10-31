@@ -40,6 +40,7 @@ use orx_concurrent_bag::ConcurrentBag;
 /// ```
 /// use orx_parallel::*;
 ///
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "rayon-core")]
 /// {
 ///     let pool = rayon::ThreadPoolBuilder::new()
@@ -72,6 +73,7 @@ use orx_concurrent_bag::ConcurrentBag;
 /// ```
 /// use orx_parallel::*;
 ///
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "scoped_threadpool")]
 /// {
 ///     // creating a runner for the computation

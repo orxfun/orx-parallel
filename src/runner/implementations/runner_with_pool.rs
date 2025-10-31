@@ -46,6 +46,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses rayon-core ThreadPool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "rayon-core")]
 /// {
 ///     let pool = rayon_core::ThreadPoolBuilder::new()
@@ -57,6 +58,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses scoped-pool Pool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "scoped-pool")]
 /// {
 ///     let pool = scoped_pool::Pool::new(8);
@@ -65,6 +67,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses scoped_threadpool Pool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "scoped_threadpool")]
 /// {
 ///     let mut pool = scoped_threadpool::Pool::new(8);
@@ -73,6 +76,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses yastl Pool wrapped as YastlPool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "yastl")]
 /// {
 ///     let pool = YastlPool::new(8);
@@ -81,6 +85,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses pond Pool wrapped as PondPool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "pond")]
 /// {
 ///     let mut pool = PondPool::new_threads_unbounded(8);
@@ -89,6 +94,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses poolite Pool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "poolite")]
 /// {
 ///     let pool = poolite::Pool::with_builder(poolite::Builder::new().min(8).max(8)).unwrap();
@@ -153,6 +159,7 @@ where
     /// let vec: Vec<_> = (0..42).collect();
     /// let input = vec.as_slice();
     ///
+    /// #[cfg(not(miri))]
     /// #[cfg(feature = "rayon-core")]
     /// {
     ///     let pool = rayon_core::ThreadPoolBuilder::new()
