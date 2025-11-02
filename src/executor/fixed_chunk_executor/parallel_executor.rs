@@ -18,6 +18,17 @@ pub struct FixedChunkRunner {
     current_chunk_size: AtomicUsize,
 }
 
+impl Clone for FixedChunkRunner {
+    fn clone(&self) -> Self {
+        Self {
+            initial_len: self.initial_len,
+            resolved_chunk_size: self.resolved_chunk_size,
+            max_num_threads: self.max_num_threads,
+            current_chunk_size: self.current_chunk_size.load(Ordering::Relaxed).into(),
+        }
+    }
+}
+
 impl FixedChunkRunner {
     fn spawn_new(&self, num_spawned: usize, remaining: Option<usize>) -> bool {
         match (num_spawned, remaining) {
@@ -111,9 +122,11 @@ impl ParallelExecutor for FixedChunkRunner {
         self.spawn_new(num_spawned, iter.try_get_len())
     }
 
-    fn new_thread_executor(&self, _: &Self::SharedState) -> Self::ThreadExecutor {
+    fn new_thread_executor(&self, _: usize, _: &Self::SharedState) -> Self::ThreadExecutor {
         Self::ThreadExecutor {
             chunk_size: self.current_chunk_size.load(Ordering::Relaxed),
         }
     }
+
+    fn complete_task(self, _: Self::SharedState) {}
 }

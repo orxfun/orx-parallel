@@ -9,7 +9,7 @@ use orx_concurrent_iter::ConcurrentIter;
 /// A parallel executor which is responsible for taking a computation defined as a composition
 /// of iterator methods, spawns threads, shares tasks and returns the result of the parallel
 /// execution.
-pub trait ParallelExecutor: Sized + Sync + 'static {
+pub trait ParallelExecutor: Sized + Sync + 'static + Clone {
     /// Data shared to the thread executors.
     type SharedState: Send + Sync;
 
@@ -43,5 +43,12 @@ pub trait ParallelExecutor: Sized + Sync + 'static {
 
     /// Creates a new thread executor provided that the current parallel execution state is
     /// `shared_state`.
-    fn new_thread_executor(&self, shared_state: &Self::SharedState) -> Self::ThreadExecutor;
+    fn new_thread_executor(
+        &self,
+        thread_idx: usize,
+        shared_state: &Self::SharedState,
+    ) -> Self::ThreadExecutor;
+
+    /// Executes the finalization tasks when the entire parallel computation is completed.
+    fn complete_task(self, shared_state: Self::SharedState);
 }

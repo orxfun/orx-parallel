@@ -57,9 +57,15 @@ pub mod generic_iterator;
 #[cfg(test)]
 mod test_utils;
 
+// re-export
+pub use orx_concurrent_recursive_iter::Queue;
+
+// export
+
 pub use collect_into::ParCollectInto;
 pub use executor::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
 pub use into_par_iter::IntoParIter;
+pub use iter::IntoParIterRec;
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_iter::ParIter;
 pub use par_iter_option::ParIterOption;
@@ -70,10 +76,12 @@ pub use parallelizable::Parallelizable;
 pub use parallelizable_collection::ParallelizableCollection;
 pub use parallelizable_collection_mut::ParallelizableCollectionMut;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+pub use runner::{DefaultPool, DefaultRunner, ParallelRunner, RunnerWithPool, SequentialPool};
 pub use special_type_sets::Sum;
 pub use using::ParIterUsing;
 
-pub use runner::{DefaultPool, DefaultRunner, ParallelRunner, RunnerWithPool, SequentialPool};
+#[cfg(feature = "std")]
+pub use executor::ParallelExecutorWithDiagnostics;
 
 #[cfg(feature = "pond")]
 pub use runner::PondPool;

@@ -10,7 +10,7 @@ use core::num::NonZeroUsize;
 ///
 /// [`max_num_threads`]: ParThreadPool::max_num_threads
 /// [`with_runner`]: crate::ParIter::with_runner
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct SequentialPool;
 
 impl ParThreadPool for SequentialPool {

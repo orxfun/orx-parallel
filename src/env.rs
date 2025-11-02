@@ -7,9 +7,8 @@ pub fn max_num_threads_by_env_variable() -> Option<NonZeroUsize> {
     #[cfg(feature = "std")]
     match std::env::var(MAX_NUM_THREADS_ENV_VARIABLE) {
         Ok(s) => match s.parse::<usize>() {
-            Ok(0) => None, // consistent with .num_threads(0) representing no bound
-            Ok(x) => Some(NonZeroUsize::new(x).expect("x>0")), // set to a positive bound
-            Err(_e) => None, // not a number, ignored assuming no bound
+            Ok(x) => NonZeroUsize::new(x), // None if 0; Some(x) if x is set to a positive bound
+            Err(_e) => None,               // not a number, ignored assuming no bound
         },
         Err(_e) => None, // not set, no bound
     }

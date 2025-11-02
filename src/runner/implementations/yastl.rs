@@ -11,6 +11,7 @@ use yastl::{Pool, Scope, ThreadConfig};
 /// Two constructors of the `yastl::Pool` are made available to `YastlPool`:
 /// * [`YastlPool::new`]
 /// * [`YastlPool::with_config`]
+#[derive(Clone)]
 pub struct YastlPool(Pool, NonZeroUsize);
 
 impl YastlPool {

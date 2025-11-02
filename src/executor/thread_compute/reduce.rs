@@ -40,7 +40,11 @@ where
                         None => Some(y),
                     };
                 }
-                None => break,
+                None => {
+                    if iter.is_completed_when_none_returned() {
+                        break;
+                    }
+                }
             },
             c => {
                 if c > chunk_puller.chunk_size() {
@@ -49,6 +53,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
+                        // println!("chunk = {}", chunk.len());
                         let res = chunk.map(map1).reduce(reduce);
                         acc = match acc {
                             Some(x) => match res {
@@ -58,7 +63,11 @@ where
                             None => res,
                         };
                     }
-                    None => break,
+                    None => {
+                        if iter.is_completed_when_none_returned() {
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -117,7 +126,11 @@ where
                         }
                     };
                 }
-                None => break,
+                None => {
+                    if iter.is_completed_when_none_returned() {
+                        break;
+                    }
+                }
             },
             c => {
                 if c > chunk_puller.chunk_size() {
@@ -147,7 +160,11 @@ where
                             };
                         }
                     }
-                    None => break,
+                    None => {
+                        if iter.is_completed_when_none_returned() {
+                            break;
+                        }
+                    }
                 }
             }
         }

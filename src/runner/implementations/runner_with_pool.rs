@@ -1,3 +1,5 @@
+#[cfg(feature = "std")]
+use crate::executor::ParallelExecutorWithDiagnostics;
 use crate::{DefaultExecutor, ParThreadPool, ParallelExecutor, runner::ParallelRunner};
 use core::marker::PhantomData;
 
@@ -36,11 +38,15 @@ use core::marker::PhantomData;
 /// let expected = run_with_runner(runner, input);
 ///
 /// // uses native threads
-/// let runner = RunnerWithPool::from(StdDefaultPool::default());
-/// let result = run_with_runner(runner, input);
-/// assert_eq!(&expected, &result);
+/// #[cfg(feature = "std")]
+/// {
+///     let runner = RunnerWithPool::from(StdDefaultPool::default());
+///     let result = run_with_runner(runner, input);
+///     assert_eq!(&expected, &result);
+/// }
 ///
 /// // uses rayon-core ThreadPool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "rayon-core")]
 /// {
 ///     let pool = rayon_core::ThreadPoolBuilder::new()
@@ -52,6 +58,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses scoped-pool Pool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "scoped-pool")]
 /// {
 ///     let pool = scoped_pool::Pool::new(8);
@@ -60,6 +67,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses scoped_threadpool Pool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "scoped_threadpool")]
 /// {
 ///     let mut pool = scoped_threadpool::Pool::new(8);
@@ -68,6 +76,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses yastl Pool wrapped as YastlPool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "yastl")]
 /// {
 ///     let pool = YastlPool::new(8);
@@ -76,6 +85,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses pond Pool wrapped as PondPool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "pond")]
 /// {
 ///     let mut pool = PondPool::new_threads_unbounded(8);
@@ -84,6 +94,7 @@ use core::marker::PhantomData;
 /// }
 ///
 /// // uses poolite Pool with 8 threads
+/// #[cfg(not(miri))]
 /// #[cfg(feature = "poolite")]
 /// {
 ///     let pool = poolite::Pool::with_builder(poolite::Builder::new().min(8).max(8)).unwrap();
@@ -91,6 +102,7 @@ use core::marker::PhantomData;
 ///     assert_eq!(&expected, &result);
 /// }
 /// ```
+#[derive(Clone)]
 pub struct RunnerWithPool<P, R = DefaultExecutor>
 where
     P: ParThreadPool,
@@ -147,6 +159,7 @@ where
     /// let vec: Vec<_> = (0..42).collect();
     /// let input = vec.as_slice();
     ///
+    /// #[cfg(not(miri))]
     /// #[cfg(feature = "rayon-core")]
     /// {
     ///     let pool = rayon_core::ThreadPoolBuilder::new()
@@ -176,6 +189,56 @@ where
 
     /// Converts the runner into one using the [`ParallelExecutor`] `Q` rather than `R`.
     pub fn with_executor<Q: ParallelExecutor>(self) -> RunnerWithPool<P, Q> {
+        RunnerWithPool {
+            pool: self.pool,
+            runner: PhantomData,
+        }
+    }
+
+    /// Converts executor of this runner `R` into one with diagnostics; i.e.,`ParallelExecutorWithDiagnostics<R>`.
+    ///
+    /// Note that [`ParallelExecutorWithDiagnostics`] prints the diagnostics on the stdout. Therefore, it must
+    /// only be used while testing a program, not in production.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // normal execution
+    ///
+    /// let range = 0..4096;
+    /// let sum = range
+    ///     .par()
+    ///     .map(|x| x + 1)
+    ///     .filter(|x| x.is_multiple_of(2))
+    ///     .sum();
+    /// assert_eq!(sum, 4196352);
+    ///
+    /// // execution with diagnostics
+    ///
+    /// let range = 0..4096;
+    /// let sum = range
+    ///     .par()
+    ///     .with_runner(DefaultRunner::default().with_diagnostics())
+    ///     .map(|x| x + 1)
+    ///     .filter(|x| x.is_multiple_of(2))
+    ///     .sum();
+    /// assert_eq!(sum, 4196352);
+    ///
+    /// // prints diagnostics, which looks something like the following:
+    /// //
+    /// // - Number of threads used = 5
+    /// //
+    /// // - [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes
+    /// //   - [0]: 25, 1600, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+    /// //   - [1]: 26, 1664, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+    /// //   - [2]: 13, 832, 64, [64, 64, 64, 64, 64, 64, 64, 64, 64, 64]
+    /// //   - [3]: 0, 0, 0, []
+    /// //   - [4]: 0, 0, 0, []
+    /// ```
+    #[cfg(feature = "std")]
+    pub fn with_diagnostics(self) -> RunnerWithPool<P, ParallelExecutorWithDiagnostics<R>> {
         RunnerWithPool {
             pool: self.pool,
             runner: PhantomData,

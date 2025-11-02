@@ -280,9 +280,13 @@ where
     /// let sum = inputs.par().sum();
     ///
     /// // equivalent to:
-    /// let sum2 = inputs.par().with_runner(RunnerWithPool::from(StdDefaultPool::default())).sum();
-    /// assert_eq!(sum, sum2);
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     let sum2 = inputs.par().with_runner(RunnerWithPool::from(StdDefaultPool::default())).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
     ///
+    /// #[cfg(not(miri))]
     /// #[cfg(feature = "scoped_threadpool")]
     /// {
     ///     let mut pool = scoped_threadpool::Pool::new(8);
@@ -292,6 +296,7 @@ where
     ///     assert_eq!(sum, sum2);
     /// }
     ///
+    /// #[cfg(not(miri))]
     /// #[cfg(feature = "rayon-core")]
     /// {
     ///     let pool = rayon_core::ThreadPoolBuilder::new()
@@ -345,9 +350,13 @@ where
     /// let sum = inputs.par().sum();
     ///
     /// // equivalent to:
-    /// let sum2 = inputs.par().with_pool(StdDefaultPool::default()).sum();
-    /// assert_eq!(sum, sum2);
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     let sum2 = inputs.par().with_pool(StdDefaultPool::default()).sum();
+    ///     assert_eq!(sum, sum2);
+    /// }
     ///
+    /// #[cfg(not(miri))]
     /// #[cfg(feature = "scoped_threadpool")]
     /// {
     ///     let mut pool = scoped_threadpool::Pool::new(8);
@@ -357,6 +366,7 @@ where
     ///     assert_eq!(sum, sum2);
     /// }
     ///
+    /// #[cfg(not(miri))]
     /// #[cfg(feature = "rayon-core")]
     /// {
     ///     let pool = rayon_core::ThreadPoolBuilder::new()

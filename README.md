@@ -8,6 +8,7 @@
 
 * [Parallel Computation by Iterators](#parallel-computation-by-iterators)
 * [Parallelizable Collections](#parallelizable-collections)
+* [Parallelization over Nonlinear Data Structures](#parallelization-over-nonlinear-data-structures)
 * [Performance and Benchmarks](#performance-and-benchmarks)
 * [Fallible Parallel Iterators](#fallible-parallel-iterators)
 * [Using Mutable Variables](#using-mutable-variables)
@@ -150,7 +151,46 @@ The following table demonstrates these methods for the `HashSet`; however, they 
 
 Note that each approach can be more efficient in different scenarios. For large elements, (ii) might be preferred to avoid allocation of the vector. For insignificant tasks to be performed on each element, (i) might be preferred to take full benefit of vector-specific optimizations.
 
+## Parallelization over Nonlinear Data Structures
+
+[IntoParIterRec](https://docs.rs/orx-parallel/latest/orx_parallel/trait.IntoParIterRec.html) trait can be used to create a **parallel recursive iterator** over an initial set of elements which is useful when working with non-linear data structures such as **trees** and **graphs**.
+
+Consider, for instance, a tree which is defined by the following node struct:
+
+```rust ignore
+pub struct Node<T> {
+    pub data: T,
+    pub children: Vec<Node<T>>,
+}
+```
+
+Assume that we want to map all the data with `map: impl Fn(T) -> u64` and compute the sum of mapped values of all nodes descending from a `root: &Node`.
+
+We can express this computation and execute in parallel with the following:
+
+```rust ignore
+fn extend<'a>(node: &&'a Node, queue: &Queue<&'a Node>) {
+    queue.extend(&node.children);
+}
+
+[root].into_par_rec(extend).map(map).sum()
+```
+
+Instead of `into_par`, we use `into_par_rec` and provide `extend` function as its argument. This function defines the recursive extension of the parallel iterator such that every time we process a `node` we first add its children to the `queue`. [`Queue`](https://docs.rs/orx-concurrent-recursive-iter/latest/orx_concurrent_recursive_iter/struct.Queue.html) is the queue of elements to be processed and it exposes two growth methods to define the recursive extension: `push` and `extend`.
+
+Although we create the parallel iterator differently, we get a `ParIter`. Therefore, we have access to all features of a regular parallel iterator.
+
+For instance, assume we want to filter nodes first. Further, instead of summing up the mapped values, we need to collect them in a vector. We can express this computation just as we would do on a linear data structure:
+
+```rust ignore
+[root].into_par_rec(extend).filter(filter).map(map).collect()
+```
+
+For more details, you may see the [parallelization_on_tree](https://github.com/orxfun/orx-parallel/blob/main/examples/parallelization_on_tree) example.
+
 ## Performance and Benchmarks
+
+*Please also see [impact of ChunkSize on performance](#impact-of-chunksize-on-performance) section.*
 
 You may find some sample parallel programs in [examples](https://github.com/orxfun/orx-parallel/blob/main/examples) directory. These examples allow to express parallel computations as iterator method compositions and run quick experiments with different approaches. Examples use `GenericIterator`. As the name suggests, it is a generalization of sequential iterator, rayon's parallel iterator and orx-parallel's parallel iterator, and hence, allows for convenient experiments. You may play with the code, update the tested computations and run these examples by including **generic_iterator** feature, such as:
 
@@ -419,6 +459,26 @@ This is guaranteed by the fact that both consuming computation calls and configu
 
 Additionally, maximum number of threads that can be used by parallel computations can be globally bounded by the environment variable `ORX_PARALLEL_MAX_NUM_THREADS`. Please see the corresponding [example](https://github.com/orxfun/orx-parallel/blob/main/examples/max_num_threads_config.rs) for details.
 
+### Impact of `ChunkSize` on Performance
+
+The impact of the chunk size on performance might be significant.
+
+Our objective is to minimize the sum of two computational costs:
+* parallelization overhead => it gets smaller as chunk size gets greater
+* cost of heterogeneity => it gets larger as chunk size gets greater
+
+Parallelization overhead can further be divided into two:
+* concurrent state update: This often corresponds to one atomic update per chunk. It may be significant if our computation is very small such as `input.par().sum()`. Otherwise, cost of atomic update could be negligible.
+* false sharing: This is relevant only if we are writing results. For instance, when we are one-to-one mapping an input and collecting the results such as `input.par().map(|x| x.to_string()).collect()`, or if are writing with mut references such as `input.par().for_each(|x| *x += 1)`. Here, the performance might suffer from false sharing when the `chunk size × size of output item` is not large enough. You may also see [false sharing](https://docs.rs/orx-concurrent-bag/latest/orx_concurrent_bag/#false-sharing) section for `ConcurrentBag`.
+
+In either case, when computation on each item is sufficiently long, parallelization overhead is negligible. Here, we want to make sure that we do not have heterogeneity cost. Therefore, a safe chunk size choice would be one, `par.chunk_size(1)`.
+
+Otherwise, our choice depends on the use case. As a rule of thumb, we want a chunk size that is **just large enough** to mitigate the parallelization overhead but not larger so that we do not suffer from heterogeneity.
+
+The default configuration `par.chunk_size(ChunkSize::Auto)` or `par.chunk_size(0)` uses a heuristic to solve this tradeoff. A difficult case for the current version is when the tasks are significantly heterogeneous (see the [discussion](https://github.com/orxfun/orx-parallel/discussions/26) for future improvements).
+
+As described above, the **best way to deal with heterogeneity** is to have `par.chunk_size(1)`. You may of course test larger chunk sizes to optimize the computation for your data.
+
 
 ## Runner: Pools and Executors
 
@@ -459,9 +519,13 @@ let inputs: Vec<_> = (0..42).collect();
 let sum = inputs.par().sum();
 
 // equivalent to:
-let sum2 = inputs.par().with_pool(StdDefaultPool::default()).sum();
-assert_eq!(sum, sum2);
+#[cfg(feature = "std")]
+{
+    let sum2 = inputs.par().with_pool(StdDefaultPool::default()).sum();
+    assert_eq!(sum, sum2);
+}
 
+#[cfg(not(miri))]
 #[cfg(feature = "scoped_threadpool")]
 {
     let mut pool = scoped_threadpool::Pool::new(8);
@@ -470,6 +534,7 @@ assert_eq!(sum, sum2);
     assert_eq!(sum, sum2);
 }
 
+#[cfg(not(miri))]
 #[cfg(feature = "rayon-core")]
 {
     let pool = rayon_core::ThreadPoolBuilder::new()
@@ -481,6 +546,7 @@ assert_eq!(sum, sum2);
     assert_eq!(sum, sum2);
 }
 
+#[cfg(not(miri))]
 #[cfg(feature = "yastl")]
 {
     let pool = YastlPool::new(8);
