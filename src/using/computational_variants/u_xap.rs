@@ -1,3 +1,6 @@
+use crate::par_iter_result::IntoResult;
+use crate::using::ParIterResultUsing;
+use crate::using::computational_variants::u_fallible_result::UParXapResult;
 use crate::using::executor::parallel_compute as prc;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIterUsing, Params,
@@ -204,6 +207,14 @@ where
             vo.u_filter_map(u, filter_map.clone())
         };
         UParXap::new(using, orchestrator, params, iter, x1)
+    }
+
+    fn into_fallible_result<Out, Err>(self) -> impl ParIterResultUsing<U, R, Item = Out, Err = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+    {
+        let (using, orchestrator, params, iter, x1) = self.destruct();
+        UParXapResult::new(using, orchestrator, params, iter, x1)
     }
 
     fn collect_into<C>(self, output: C) -> C
