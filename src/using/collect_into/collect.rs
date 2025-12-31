@@ -9,7 +9,7 @@ use crate::{IterationOrder, generic_values::Values};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
-pub fn map_collect_into<U, R, I, O, M1, P>(
+pub fn map_collect_into<'using, U, R, I, O, M1, P>(
     using: U,
     orchestrator: R,
     params: Params,
@@ -18,7 +18,7 @@ pub fn map_collect_into<U, R, I, O, M1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, P)
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -38,9 +38,9 @@ where
     }
 }
 
-fn map_collect_into_seq<U, I, O, M1, P>(using: U, iter: I, map1: M1, mut pinned_vec: P) -> P
+fn map_collect_into_seq<'using, U, I, O, M1, P>(using: U, iter: I, map1: M1, mut pinned_vec: P) -> P
 where
-    U: Using,
+    U: Using<'using>,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
     O: Send,
@@ -54,7 +54,7 @@ where
     pinned_vec
 }
 
-pub fn xap_collect_into<U, R, I, Vo, X1, P>(
+pub fn xap_collect_into<'using, U, R, I, Vo, X1, P>(
     using: U,
     orchestrator: R,
     params: Params,
@@ -63,7 +63,7 @@ pub fn xap_collect_into<U, R, I, Vo, X1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, P)
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values<Fallibility = Infallible>,
@@ -99,9 +99,14 @@ where
     }
 }
 
-fn xap_collect_into_seq<U, I, Vo, X1, P>(using: U, iter: I, xap1: X1, mut pinned_vec: P) -> P
+fn xap_collect_into_seq<'using, U, I, Vo, X1, P>(
+    using: U,
+    iter: I,
+    xap1: X1,
+    mut pinned_vec: P,
+) -> P
 where
-    U: Using,
+    U: Using<'using>,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
@@ -121,7 +126,7 @@ where
     pinned_vec
 }
 
-pub fn xap_try_collect_into<U, R, I, Vo, X1, P>(
+pub fn xap_try_collect_into<'using, U, R, I, Vo, X1, P>(
     using: U,
     orchestrator: R,
     params: Params,
@@ -133,7 +138,7 @@ pub fn xap_try_collect_into<U, R, I, Vo, X1, P>(
     Result<P, <Vo::Fallibility as Fallibility>::Error>,
 )
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
@@ -159,14 +164,14 @@ where
     }
 }
 
-fn xap_try_collect_into_seq<U, I, Vo, X1, P>(
+fn xap_try_collect_into_seq<'using, U, I, Vo, X1, P>(
     using: U,
     iter: I,
     xap1: X1,
     mut pinned_vec: P,
 ) -> Result<P, <Vo::Fallibility as Fallibility>::Error>
 where
-    U: Using,
+    U: Using<'using>,
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,

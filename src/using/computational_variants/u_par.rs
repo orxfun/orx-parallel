@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use crate::ParIterUsing;
 use crate::default_fns::u_map_self;
 use crate::generic_values::Vector;
@@ -13,9 +15,9 @@ use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator.
-pub struct UPar<U, I, R = DefaultRunner>
+pub struct UPar<'using, U, I, R = DefaultRunner>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
 {
@@ -23,11 +25,12 @@ where
     orchestrator: R,
     params: Params,
     iter: I,
+    phantom: PhantomData<&'using ()>,
 }
 
-impl<U, I, R> UPar<U, I, R>
+impl<'using, U, I, R> UPar<'using, U, I, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
 {
@@ -37,6 +40,7 @@ where
             orchestrator,
             params,
             iter,
+            phantom: PhantomData,
         }
     }
 
@@ -45,25 +49,25 @@ where
     }
 }
 
-unsafe impl<U, I, R> Send for UPar<U, I, R>
+unsafe impl<'using, U, I, R> Send for UPar<'using, U, I, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
 {
 }
 
-unsafe impl<U, I, R> Sync for UPar<U, I, R>
+unsafe impl<'using, U, I, R> Sync for UPar<'using, U, I, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
 {
 }
 
-impl<U, I, R> ParIterUsing<U, R> for UPar<U, I, R>
+impl<'using, U, I, R> ParIterUsing<'using, U, R> for UPar<'using, U, I, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
 {
@@ -95,22 +99,22 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    ) -> impl ParIterUsing<'using, U, Q, Item = Self::Item> {
         let (using, _, params, iter) = self.destruct();
         UPar::new(using, orchestrator, params, iter)
     }
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
-        Map: Fn(&mut <U as Using>::Item, Self::Item) -> Out + Sync + Clone,
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
         let (using, orchestrator, params, iter) = self.destruct();
         UParMap::new(using, orchestrator, params, iter, map)
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<'using, U, R, Item = Self::Item>
     where
-        Filter: Fn(&mut <U as Using>::Item, &Self::Item) -> bool + Sync + Clone,
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, orchestrator, params, iter) = self.destruct();
         let x1 = move |u: &mut U::Item, i: Self::Item| filter(u, &i).then_some(i);
@@ -120,10 +124,10 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
+    ) -> impl ParIterUsing<'using, U, R, Item = IOut::Item>
     where
         IOut: IntoIterator,
-        FlatMap: Fn(&mut <U as Using>::Item, Self::Item) -> IOut + Sync + Clone,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, orchestrator, params, iter) = self.destruct();
         let x1 = move |u: &mut U::Item, i: Self::Item| Vector(flat_map(u, i));
@@ -133,15 +137,17 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterUsing<U, R, Item = Out>
+    ) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
-        FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Sync + Clone,
+        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, orchestrator, params, iter) = self.destruct();
         UParXap::new(using, orchestrator, params, iter, filter_map)
     }
 
-    fn into_fallible_result<Out, Err>(self) -> impl ParIterResultUsing<U, R, Item = Out, Err = Err>
+    fn into_fallible_result<Out, Err>(
+        self,
+    ) -> impl ParIterResultUsing<'using, U, R, Item = Out, Err = Err>
     where
         Self::Item: IntoResult<Out, Err>,
     {
@@ -159,7 +165,7 @@ where
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
         Self::Item: Send,
-        Reduce: Fn(&mut <U as Using>::Item, Self::Item, Self::Item) -> Self::Item + Sync,
+        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (using, orchestrator, params, iter) = self.destruct();
         prc::reduce::m(using, orchestrator, params, iter, u_map_self, reduce).1

@@ -3,6 +3,7 @@ use crate::collect_into::utils::split_vec_reserve;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
 use crate::runner::ParallelRunner;
+use crate::using::Using;
 use crate::using::collect_into::collect::{
     map_collect_into, xap_collect_into, xap_try_collect_into,
 };
@@ -16,7 +17,7 @@ where
     G: GrowthWithConstantTimeAccess,
     Self: PseudoDefault,
 {
-    fn u_m_collect_into<U, R, I, M1>(
+    fn u_m_collect_into<'using, U, R, I, M1>(
         mut self,
         using: U,
         orchestrator: R,
@@ -25,7 +26,7 @@ where
         map1: M1,
     ) -> Self
     where
-        U: crate::using::using_variants::Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -35,7 +36,7 @@ where
         pinned_vec
     }
 
-    fn u_x_collect_into<U, R, I, Vo, X1>(
+    fn u_x_collect_into<'using, U, R, I, Vo, X1>(
         mut self,
         using: U,
         orchestrator: R,
@@ -44,7 +45,7 @@ where
         xap1: X1,
     ) -> Self
     where
-        U: crate::using::using_variants::Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
@@ -56,7 +57,7 @@ where
         pinned_vec
     }
 
-    fn u_x_try_collect_into<U, R, I, Vo, X1>(
+    fn u_x_try_collect_into<'using, U, R, I, Vo, X1>(
         mut self,
         using: U,
         orchestrator: R,
@@ -65,7 +66,7 @@ where
         xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as crate::generic_values::runner_results::Fallibility>::Error>
     where
-        U: crate::using::Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,

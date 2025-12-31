@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use crate::ParIterUsing;
 use crate::generic_values::Vector;
 use crate::par_iter_result::IntoResult;
@@ -11,9 +13,9 @@ use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator that maps inputs.
-pub struct UParMap<U, I, O, M1, R = DefaultRunner>
+pub struct UParMap<'using, U, I, O, M1, R = DefaultRunner>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -23,11 +25,12 @@ where
     params: Params,
     iter: I,
     map1: M1,
+    phantom: PhantomData<&'using ()>,
 }
 
-impl<U, I, O, M1, R> UParMap<U, I, O, M1, R>
+impl<'using, U, I, O, M1, R> UParMap<'using, U, I, O, M1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -39,6 +42,7 @@ where
             params,
             iter,
             map1,
+            phantom: PhantomData,
         }
     }
 
@@ -53,27 +57,27 @@ where
     }
 }
 
-unsafe impl<U, I, O, M1, R> Send for UParMap<U, I, O, M1, R>
+unsafe impl<'using, U, I, O, M1, R> Send for UParMap<'using, U, I, O, M1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
 }
 
-unsafe impl<U, I, O, M1, R> Sync for UParMap<U, I, O, M1, R>
+unsafe impl<'using, U, I, O, M1, R> Sync for UParMap<'using, U, I, O, M1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
 }
 
-impl<U, I, O, M1, R> ParIterUsing<U, R> for UParMap<U, I, O, M1, R>
+impl<'using, U, I, O, M1, R> ParIterUsing<'using, U, R> for UParMap<'using, U, I, O, M1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -106,12 +110,12 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    ) -> impl ParIterUsing<'using, U, Q, Item = Self::Item> {
         let (using, _, params, iter, x1) = self.destruct();
         UParMap::new(using, orchestrator, params, iter, x1)
     }
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
@@ -123,7 +127,7 @@ where
         UParMap::new(using, orchestrator, params, iter, m1)
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<'using, U, R, Item = Self::Item>
     where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
@@ -139,7 +143,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
+    ) -> impl ParIterUsing<'using, U, R, Item = IOut::Item>
     where
         IOut: IntoIterator,
         FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
@@ -155,7 +159,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterUsing<U, R, Item = Out>
+    ) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
@@ -167,7 +171,9 @@ where
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
-    fn into_fallible_result<Out, Err>(self) -> impl ParIterResultUsing<U, R, Item = Out, Err = Err>
+    fn into_fallible_result<Out, Err>(
+        self,
+    ) -> impl ParIterResultUsing<'using, U, R, Item = Out, Err = Err>
     where
         Self::Item: IntoResult<Out, Err>,
     {

@@ -10,9 +10,9 @@ use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub struct UParXapResult<U, I, T, E, Vo, X1, R = DefaultRunner>
+pub struct UParXapResult<'using, U, I, T, E, Vo, X1, R = DefaultRunner>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues,
@@ -24,12 +24,12 @@ where
     params: Params,
     iter: I,
     xap1: X1,
-    phantom: PhantomData<(T, E)>,
+    phantom: PhantomData<(&'using (), T, E)>,
 }
 
-impl<U, I, T, E, Vo, X1, R> UParXapResult<U, I, T, E, Vo, X1, R>
+impl<'using, U, I, T, E, Vo, X1, R> UParXapResult<'using, U, I, T, E, Vo, X1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues,
@@ -58,9 +58,10 @@ where
     }
 }
 
-impl<U, I, T, E, Vo, X1, R> ParIterResultUsing<U, R> for UParXapResult<U, I, T, E, Vo, X1, R>
+impl<'using, U, I, T, E, Vo, X1, R> ParIterResultUsing<'using, U, R>
+    for UParXapResult<'using, U, I, T, E, Vo, X1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -73,7 +74,7 @@ where
 
     type RegularItem = Vo::Item;
 
-    type RegularParIter = UParXap<U, I, Vo, X1, R>;
+    type RegularParIter = UParXap<'using, U, I, Vo, X1, R>;
 
     fn con_iter_len(&self) -> Option<usize> {
         self.iter.try_get_len()
@@ -94,7 +95,7 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterResultUsing<U, Q, Item = Self::Item, Err = Self::Err> {
+    ) -> impl ParIterResultUsing<'using, U, Q, Item = Self::Item, Err = Self::Err> {
         let (using, _, params, iter, x1) = self.destruct();
         UParXapResult::new(using, orchestrator, params, iter, x1)
     }
@@ -137,7 +138,7 @@ where
         match params.iteration_order {
             IterationOrder::Ordered => {
                 let (_, result) = prc::next::x(using, orchestrator, params, iter, x1);
-                result.map(|x| x.map(|y| y.1))
+                result.map(|x: Option<(usize, T)>| x.map(|y| y.1))
             }
             IterationOrder::Arbitrary => {
                 let (_, result) = prc::next_any::x(using, orchestrator, params, iter, x1);

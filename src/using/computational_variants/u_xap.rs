@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use crate::par_iter_result::IntoResult;
 use crate::using::ParIterResultUsing;
 use crate::using::computational_variants::u_fallible_result::UParXapResult;
@@ -11,9 +13,9 @@ use crate::{
 use orx_concurrent_iter::ConcurrentIter;
 // use crate::runner::parallel_runner_compute as prc;
 
-pub struct UParXap<U, I, Vo, X1, R = DefaultRunner>
+pub struct UParXap<'using, U, I, Vo, X1, R = DefaultRunner>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -24,11 +26,12 @@ where
     params: Params,
     iter: I,
     xap1: X1,
+    phantom: PhantomData<&'using ()>,
 }
 
-impl<U, I, Vo, X1, R> UParXap<U, I, Vo, X1, R>
+impl<'using, U, I, Vo, X1, R> UParXap<'using, U, I, Vo, X1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -41,6 +44,7 @@ where
             params,
             iter,
             xap1,
+            phantom: PhantomData,
         }
     }
 
@@ -55,9 +59,9 @@ where
     }
 }
 
-unsafe impl<U, I, Vo, X1, R> Send for UParXap<U, I, Vo, X1, R>
+unsafe impl<'using, U, I, Vo, X1, R> Send for UParXap<'using, U, I, Vo, X1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -65,9 +69,9 @@ where
 {
 }
 
-unsafe impl<U, I, Vo, X1, R> Sync for UParXap<U, I, Vo, X1, R>
+unsafe impl<'using, U, I, Vo, X1, R> Sync for UParXap<'using, U, I, Vo, X1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -75,9 +79,9 @@ where
 {
 }
 
-impl<U, I, Vo, X1, R> ParIterUsing<U, R> for UParXap<U, I, Vo, X1, R>
+impl<'using, U, I, Vo, X1, R> ParIterUsing<'using, U, R> for UParXap<'using, U, I, Vo, X1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
@@ -111,14 +115,14 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterUsing<U, Q, Item = Self::Item> {
+    ) -> impl ParIterUsing<'using, U, Q, Item = Self::Item> {
         let (using, _, params, iter, x1) = self.destruct();
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
-        Map: Fn(&mut <U as Using>::Item, Self::Item) -> Out + Sync + Clone,
+        Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
 
@@ -139,9 +143,9 @@ where
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<'using, U, R, Item = Self::Item>
     where
-        Filter: Fn(&mut <U as Using>::Item, &Self::Item) -> bool + Sync + Clone,
+        Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
@@ -163,10 +167,10 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
+    ) -> impl ParIterUsing<'using, U, R, Item = IOut::Item>
     where
         IOut: IntoIterator,
-        FlatMap: Fn(&mut <U as Using>::Item, Self::Item) -> IOut + Sync + Clone,
+        FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
@@ -188,9 +192,9 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterUsing<U, R, Item = Out>
+    ) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
-        FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Sync + Clone,
+        FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
         let x1 = move |u: &mut U::Item, i: I::Item| {
@@ -209,7 +213,9 @@ where
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
-    fn into_fallible_result<Out, Err>(self) -> impl ParIterResultUsing<U, R, Item = Out, Err = Err>
+    fn into_fallible_result<Out, Err>(
+        self,
+    ) -> impl ParIterResultUsing<'using, U, R, Item = Out, Err = Err>
     where
         Self::Item: IntoResult<Out, Err>,
     {
@@ -228,7 +234,7 @@ where
     fn reduce<Reduce>(self, reduce: Reduce) -> Option<Self::Item>
     where
         Self::Item: Send,
-        Reduce: Fn(&mut <U as Using>::Item, Self::Item, Self::Item) -> Self::Item + Sync,
+        Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
         let (_, Ok(acc)) = prc::reduce::x(using, orchestrator, params, iter, x1, reduce);

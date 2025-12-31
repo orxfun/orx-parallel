@@ -9,7 +9,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::IntoConcurrentPinnedVec;
 
 #[cfg(test)]
-pub fn m<U, C, I, O, M1, P>(
+pub fn m<'using, U, C, I, O, M1, P>(
     using: U,
     mut orchestrator: C,
     params: Params,
@@ -18,7 +18,7 @@ pub fn m<U, C, I, O, M1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, P)
 where
-    U: Using,
+    U: Using<'using>,
     C: ParallelRunner,
     I: ConcurrentIter,
     O: Send,
@@ -43,7 +43,7 @@ where
     (num_spawned, values)
 }
 
-pub fn x<U, C, I, Vo, X1, P>(
+pub fn x<'using, U, C, I, Vo, X1, P>(
     using: U,
     mut orchestrator: C,
     params: Params,
@@ -52,7 +52,7 @@ pub fn x<U, C, I, Vo, X1, P>(
     pinned_vec: P,
 ) -> (NumSpawned, ParallelCollectArbitrary<Vo, P>)
 where
-    U: Using,
+    U: Using<'using>,
     C: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,

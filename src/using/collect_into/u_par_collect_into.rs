@@ -7,7 +7,7 @@ use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
-    fn u_m_collect_into<U, R, I, M1>(
+    fn u_m_collect_into<'using, U, R, I, M1>(
         self,
         using: U,
         orchestrator: R,
@@ -16,12 +16,12 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         map1: M1,
     ) -> Self
     where
-        U: Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync;
 
-    fn u_x_collect_into<U, R, I, Vo, X1>(
+    fn u_x_collect_into<'using, U, R, I, Vo, X1>(
         self,
         using: U,
         orchestrator: R,
@@ -30,13 +30,13 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         xap1: X1,
     ) -> Self
     where
-        U: Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
 
-    fn u_x_try_collect_into<U, R, I, Vo, X1>(
+    fn u_x_try_collect_into<'using, U, R, I, Vo, X1>(
         self,
         using: U,
         orchestrator: R,
@@ -45,7 +45,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as Fallibility>::Error>
     where
-        U: Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,

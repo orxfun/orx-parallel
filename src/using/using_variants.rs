@@ -2,9 +2,9 @@
 /// and used mutable by the defined computation.
 ///
 /// [`create`]: crate::using::Using::create
-pub trait Using: Sync {
+pub trait Using<'using>: Sync {
     /// Item to be used mutably by each threads used in parallel computation.
-    type Item: 'static;
+    type Item: 'using;
 
     /// Creates an instance of the variable to be used by the `thread_idx`-th thread.
     fn create(&self, thread_idx: usize) -> Self::Item;
@@ -22,7 +22,7 @@ impl<T: Clone + 'static> UsingClone<T> {
     }
 }
 
-impl<T: Clone + 'static> Using for UsingClone<T> {
+impl<T: Clone + 'static> Using<'static> for UsingClone<T> {
     type Item = T;
 
     fn create(&self, _: usize) -> T {
@@ -39,7 +39,6 @@ unsafe impl<T: Clone + 'static> Sync for UsingClone<T> {}
 /// Using variant that creates instances of each thread using a closure.
 pub struct UsingFun<F, T>
 where
-    T: 'static,
     F: Fn(usize) -> T + Sync,
 {
     fun: F,
@@ -47,7 +46,6 @@ where
 
 impl<F, T> UsingFun<F, T>
 where
-    T: 'static,
     F: Fn(usize) -> T + Sync,
 {
     pub(crate) fn new(fun: F) -> Self {
@@ -55,9 +53,9 @@ where
     }
 }
 
-impl<F, T> Using for UsingFun<F, T>
+impl<'using, F, T> Using<'using> for UsingFun<F, T>
 where
-    T: 'static,
+    T: 'using,
     F: Fn(usize) -> T + Sync,
 {
     type Item = T;

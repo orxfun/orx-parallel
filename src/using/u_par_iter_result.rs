@@ -16,10 +16,10 @@ use core::cmp::Ordering;
 /// Please see [`crate::ParIterUsing`] for details and examples.
 ///
 /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-pub trait ParIterResultUsing<U, R = DefaultRunner>
+pub trait ParIterResultUsing<'using, U, R = DefaultRunner>
 where
     R: ParallelRunner,
-    U: Using,
+    U: Using<'using>,
 {
     /// Type of the Ok element, to be received as the Ok variant iff the entire computation succeeds.
     type Item;
@@ -31,7 +31,7 @@ where
     type RegularItem: IntoResult<Self::Item, Self::Err>;
 
     /// Regular parallel iterator this fallible iterator can be converted into.
-    type RegularParIter: ParIterUsing<U, R, Item = Self::RegularItem>;
+    type RegularParIter: ParIterUsing<'using, U, R, Item = Self::RegularItem>;
 
     /// Returns a reference to the input concurrent iterator.
     fn con_iter_len(&self) -> Option<usize>;
@@ -94,7 +94,7 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterResultUsing<U, Q, Item = Self::Item, Err = Self::Err>;
+    ) -> impl ParIterResultUsing<'using, U, Q, Item = Self::Item, Err = Self::Err>;
 
     /// Rather than [`DefaultPool`], uses the parallel runner with the given `pool` implementing
     /// [`ParThreadPool`].
@@ -106,7 +106,13 @@ where
     fn with_pool<P: ParThreadPool>(
         self,
         pool: P,
-    ) -> impl ParIterResultUsing<U, RunnerWithPool<P, R::Executor>, Item = Self::Item, Err = Self::Err>
+    ) -> impl ParIterResultUsing<
+        'using,
+        U,
+        RunnerWithPool<P, R::Executor>,
+        Item = Self::Item,
+        Err = Self::Err,
+    >
     where
         Self: Sized,
     {
@@ -126,7 +132,10 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn map<Out, Map>(self, map: Map) -> impl ParIterResultUsing<U, R, Item = Out, Err = Self::Err>
+    fn map<Out, Map>(
+        self,
+        map: Map,
+    ) -> impl ParIterResultUsing<'using, U, R, Item = Out, Err = Self::Err>
     where
         Self: Sized,
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
@@ -150,7 +159,7 @@ where
     fn filter<Filter>(
         self,
         filter: Filter,
-    ) -> impl ParIterResultUsing<U, R, Item = Self::Item, Err = Self::Err>
+    ) -> impl ParIterResultUsing<'using, U, R, Item = Self::Item, Err = Self::Err>
     where
         Self: Sized,
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
@@ -180,7 +189,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterResultUsing<U, R, Item = IOut::Item, Err = Self::Err>
+    ) -> impl ParIterResultUsing<'using, U, R, Item = IOut::Item, Err = Self::Err>
     where
         Self: Sized,
         IOut: IntoIterator,
@@ -210,7 +219,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterResultUsing<U, R, Item = Out, Err = Self::Err>
+    ) -> impl ParIterResultUsing<'using, U, R, Item = Out, Err = Self::Err>
     where
         Self: Sized,
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
@@ -235,7 +244,7 @@ where
     fn inspect<Operation>(
         self,
         operation: Operation,
-    ) -> impl ParIterResultUsing<U, R, Item = Self::Item, Err = Self::Err>
+    ) -> impl ParIterResultUsing<'using, U, R, Item = Self::Item, Err = Self::Err>
     where
         Self: Sized,
         Operation: Fn(&mut U::Item, &Self::Item) + Sync + Clone,
