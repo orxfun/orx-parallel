@@ -92,90 +92,44 @@ where
 
     // transformations into fallible computations
 
-    /// Transforms a parallel iterator where elements are of the result type; i.e., `ParIter<R, Item = Result<T, E>>`,
-    ///  into fallible parallel iterator with item type `T` and error type `E`; i.e., into `ParIterResult<R, Item = T, Err = E>`.
+    /// Transforms a parallel iterator where elements are of the result type; i.e., `ParIterUsing<U, R, Item = Result<T, E>>`,
+    ///  into fallible parallel iterator with item type `T` and error type `E`; i.e., into `ParIterResultUsing<U, R, Item = T, Err = E>`.
     ///
-    /// `ParIterResult` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// `ParIterResultUsing` is also a parallel iterator; however, with methods specialized for handling fallible computations
     /// as follows:
     ///
     /// * All of its methods are based on the success path with item type of `T`.
     /// * However, computations short-circuit and immediately return the observed error if any of the items
     ///   is of the `Err` variant of the result enum.
     ///
-    /// See [`ParIterResult`] for details.
+    /// See [`ParIterUsing`] for details.
     ///
-    /// # Examples
+    /// Unlike [crate::ParIter::into_fallible_result], the methods of `ParIterResultUsing` give a mutable reference to the used variable.
     ///
-    /// ```
-    /// use orx_parallel::*;
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
-    /// // all succeeds
-    ///
-    /// let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|x| x.parse::<i32>())  // ParIter with Item=Result<i32, ParseIntError>
-    ///     .into_fallible_result()     // ParIterResult with Item=i32 and Err=ParseIntError
-    ///     .map(|x| x * 2)             // methods focus on the success path with Item=i32
-    ///     .collect();                 // methods return Result<_, Err>
-    ///                                 // where the Ok variant depends on the computation
-    ///
-    /// assert_eq!(result_doubled, Ok(vec![2, 4, 6]));
-    ///
-    /// // at least one fails
-    ///
-    /// let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
-    ///     .into_par()
-    ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
-    ///     .map(|x| x * 2)
-    ///     .collect();
-    ///
-    /// assert!(result_doubled.is_err());
-    /// ```
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn into_fallible_result<T, E>(self) -> impl ParIterResultUsing<U, R, Item = T, Err = E>
     where
         Self::Item: IntoResult<T, E>;
 
-    /// Transforms a parallel iterator where elements are of the option type; i.e., `ParIter<R, Item = Option<T>>`,
-    ///  into fallible parallel iterator with item type `T`; i.e., into `ParIterOption<R, Item = T>`.
+    /// Transforms a parallel iterator where elements are of the option type; i.e., `ParIterUsing<U, R, Item = Option<T>>`,
+    ///  into fallible parallel iterator with item type `T`; i.e., into `ParIterOptionUsing<U, R, Item = T>`.
     ///
-    /// `ParIterOption` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// `ParIterOptionUsing` is also a parallel iterator; however, with methods specialized for handling fallible computations
     /// as follows:
     ///
     /// * All of its methods are based on the success path with item type of `T`.
     /// * However, computations short-circuit and immediately return None if any of the items
     ///   is of the `None` variant of the option enum.
     ///
-    /// See [`ParIterResult`] for details.
+    /// See [`ParIterOptionUsing`] for details.
     ///
-    /// # Examples
+    /// Unlike [crate::ParIter::into_fallible_option], the methods of `ParIterOptionUsing` give a mutable reference to the used variable.
     ///
-    /// ```
-    /// use orx_parallel::*;
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
-    /// // all succeeds
-    ///
-    /// let result_doubled: Option<Vec<i32>> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|x| x.parse::<i32>().ok())     // ParIter with Item=Option<i32>
-    ///     .into_fallible_option()             // ParIterOption with Item=i32
-    ///     .map(|x| x * 2)                     // methods focus on the success path with Item=i32
-    ///     .collect();                         // methods return Option<T>
-    ///                                         // where T depends on the computation
-    ///
-    /// assert_eq!(result_doubled, Some(vec![2, 4, 6]));
-    ///
-    /// // at least one fails
-    ///
-    /// let result_doubled: Option<Vec<i32>> = ["1", "x!", "3"]
-    ///     .into_par()
-    ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
-    ///     .map(|x| x * 2)
-    ///     .collect();
-    ///
-    /// assert_eq!(result_doubled, None);
-    /// ```
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
     fn into_fallible_option<T>(self) -> impl ParIterOptionUsing<U, R, Item = T>
     where
         Self::Item: IntoOption<T>,
@@ -230,7 +184,6 @@ where
     /// The returned iterator yields only the values for which the supplied closure `filter_map` returns `Some(value)`.
     ///
     /// `filter_map` can be used to make chains of `filter` and `map` more concise.
-    /// The example below shows how a `map().filter().map()` can be shortened to a single call to `filter_map`.
     ///
     /// Unlike [crate::ParIter::filter_map], the closure allows access to mutable reference of the used variable.
     ///

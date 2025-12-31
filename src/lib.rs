@@ -78,6 +78,8 @@ pub use parallelizable_collection_mut::ParallelizableCollectionMut;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use runner::{DefaultPool, DefaultRunner, ParallelRunner, RunnerWithPool, SequentialPool};
 pub use special_type_sets::Sum;
+pub use using::ParIterOptionUsing;
+pub use using::ParIterResultUsing;
 pub use using::ParIterUsing;
 
 #[cfg(feature = "std")]
