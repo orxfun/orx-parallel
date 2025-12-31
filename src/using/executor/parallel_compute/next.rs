@@ -6,7 +6,7 @@ use crate::using::executor::thread_compute as th;
 use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub fn m<U, C, I, O, M1>(
+pub fn m<'using, U, C, I, O, M1>(
     using: U,
     mut orchestrator: C,
     params: Params,
@@ -14,7 +14,7 @@ pub fn m<U, C, I, O, M1>(
     map1: M1,
 ) -> (NumSpawned, Option<O>)
 where
-    U: Using,
+    U: Using<'using>,
     C: ParallelRunner,
     I: ConcurrentIter,
     O: Send,
@@ -42,7 +42,7 @@ type ResultNext<Vo> = Result<
     <<Vo as Values>::Fallibility as Fallibility>::Error,
 >;
 
-pub fn x<U, C, I, Vo, X1>(
+pub fn x<'using, U, C, I, Vo, X1>(
     using: U,
     mut orchestrator: C,
     params: Params,
@@ -50,7 +50,7 @@ pub fn x<U, C, I, Vo, X1>(
     xap1: X1,
 ) -> (NumSpawned, ResultNext<Vo>)
 where
-    U: Using,
+    U: Using<'using>,
     C: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,

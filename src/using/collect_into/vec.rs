@@ -15,7 +15,7 @@ impl<O> UParCollectIntoCore<O> for Vec<O>
 where
     O: Send + Sync,
 {
-    fn u_m_collect_into<U, R, I, M1>(
+    fn u_m_collect_into<'using, U, R, I, M1>(
         mut self,
         using: U,
         orchestrator: R,
@@ -24,7 +24,7 @@ where
         map1: M1,
     ) -> Self
     where
-        U: Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -45,7 +45,7 @@ where
         }
     }
 
-    fn u_x_collect_into<U, R, I, Vo, X1>(
+    fn u_x_collect_into<'using, U, R, I, Vo, X1>(
         self,
         using: U,
         orchestrator: R,
@@ -54,7 +54,7 @@ where
         xap1: X1,
     ) -> Self
     where
-        U: Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
@@ -65,7 +65,7 @@ where
         extend_vec_from_split(self, split_vec)
     }
 
-    fn u_x_try_collect_into<U, R, I, Vo, X1>(
+    fn u_x_try_collect_into<'using, U, R, I, Vo, X1>(
         self,
         using: U,
         orchestrator: R,
@@ -74,7 +74,7 @@ where
         xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as crate::generic_values::runner_results::Fallibility>::Error>
     where
-        U: Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,

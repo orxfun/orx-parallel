@@ -2,6 +2,7 @@ use crate::Params;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
 use crate::runner::ParallelRunner;
+use crate::using::Using;
 use crate::using::collect_into::u_par_collect_into::UParCollectIntoCore;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
@@ -11,7 +12,7 @@ impl<O> UParCollectIntoCore<O> for FixedVec<O>
 where
     O: Send + Sync,
 {
-    fn u_m_collect_into<U, R, I, M1>(
+    fn u_m_collect_into<'using, U, R, I, M1>(
         self,
         using: U,
         orchestrator: R,
@@ -20,7 +21,7 @@ where
         map1: M1,
     ) -> Self
     where
-        U: crate::using::using_variants::Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -29,7 +30,7 @@ where
         FixedVec::from(vec.u_m_collect_into(using, orchestrator, params, iter, map1))
     }
 
-    fn u_x_collect_into<U, R, I, Vo, X1>(
+    fn u_x_collect_into<'using, U, R, I, Vo, X1>(
         self,
         using: U,
         orchestrator: R,
@@ -38,7 +39,7 @@ where
         xap1: X1,
     ) -> Self
     where
-        U: crate::using::using_variants::Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
@@ -48,7 +49,7 @@ where
         FixedVec::from(vec.u_x_collect_into(using, orchestrator, params, iter, xap1))
     }
 
-    fn u_x_try_collect_into<U, R, I, Vo, X1>(
+    fn u_x_try_collect_into<'using, U, R, I, Vo, X1>(
         self,
         using: U,
         orchestrator: R,
@@ -57,7 +58,7 @@ where
         xap1: X1,
     ) -> Result<Self, <Vo::Fallibility as crate::generic_values::runner_results::Fallibility>::Error>
     where
-        U: crate::using::Using,
+        U: Using<'using>,
         R: ParallelRunner,
         I: ConcurrentIter,
         X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,

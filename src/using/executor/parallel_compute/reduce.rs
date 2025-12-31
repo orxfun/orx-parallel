@@ -6,7 +6,7 @@ use crate::using::executor::thread_compute as th;
 use crate::using::using_variants::Using;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub fn m<U, C, I, O, M1, Red>(
+pub fn m<'using, U, C, I, O, M1, Red>(
     using: U,
     mut orchestrator: C,
     params: Params,
@@ -15,7 +15,7 @@ pub fn m<U, C, I, O, M1, Red>(
     reduce: Red,
 ) -> (NumSpawned, Option<O>)
 where
-    U: Using,
+    U: Using<'using>,
     C: ParallelRunner,
     I: ConcurrentIter,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
@@ -44,7 +44,7 @@ where
 type ResultReduce<Vo> =
     Result<Option<<Vo as Values>::Item>, <<Vo as Values>::Fallibility as Fallibility>::Error>;
 
-pub fn x<U, C, I, Vo, X1, Red>(
+pub fn x<'using, U, C, I, Vo, X1, Red>(
     using: U,
     mut orchestrator: C,
     params: Params,
@@ -53,7 +53,7 @@ pub fn x<U, C, I, Vo, X1, Red>(
     reduce: Red,
 ) -> (NumSpawned, ResultReduce<Vo>)
 where
-    U: Using,
+    U: Using<'using>,
     C: ParallelRunner,
     I: ConcurrentIter,
     Vo: Values,
