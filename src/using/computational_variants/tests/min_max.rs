@@ -184,8 +184,6 @@ fn min_max_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
             (0..n).map(|i| a + i).collect::<Vec<_>>()
         };
 
-        let a = &flat_map;
-
         let par = || {
             input()
                 .into_par()

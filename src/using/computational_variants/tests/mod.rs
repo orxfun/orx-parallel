@@ -12,5 +12,5 @@ mod min_max;
 mod range;
 mod slice;
 mod sum;
-// mod vectors;
+mod vectors;
 mod xap;
