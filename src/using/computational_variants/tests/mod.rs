@@ -11,6 +11,6 @@ mod map;
 mod min_max;
 mod range;
 mod slice;
-// mod sum;
+mod sum;
 // mod vectors;
 mod xap;
