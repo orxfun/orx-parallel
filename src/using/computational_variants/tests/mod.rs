@@ -1,5 +1,7 @@
+mod utils;
+
 mod copied;
-// mod count;
+mod count;
 // mod flatten;
 // mod for_each;
 // mod inspect;
