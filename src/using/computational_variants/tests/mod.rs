@@ -7,7 +7,7 @@ mod for_each;
 mod inspect;
 mod iter_consuming;
 mod iter_ref;
-// mod map;
+mod map;
 // mod min_max;
 // mod range;
 // mod slice;

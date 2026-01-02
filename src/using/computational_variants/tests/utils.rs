@@ -19,3 +19,13 @@ pub(super) fn make_u_filter<I>(
         filter(x)
     }
 }
+
+pub(super) fn make_u_reduce<I>(
+    reduce: impl Fn(I, I) -> I + Clone,
+) -> impl Fn(&mut String, I, I) -> I + Clone {
+    move |u: &mut String, x: I, y: I| {
+        let u = u.as_mut_str();
+        u.get_mut(0..2).unwrap().make_ascii_uppercase();
+        reduce(x, y)
+    }
+}
