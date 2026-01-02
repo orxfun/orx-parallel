@@ -10,7 +10,7 @@ mod iter_ref;
 mod map;
 mod min_max;
 mod range;
-// mod slice;
+mod slice;
 // mod sum;
 // mod vectors;
 mod xap;
