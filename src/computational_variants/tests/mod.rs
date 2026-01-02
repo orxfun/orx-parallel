@@ -1,5 +1,7 @@
 mod copied;
 mod count;
+mod fallible_option;
+mod fallible_result;
 mod flatten;
 mod for_each;
 mod inspect;
