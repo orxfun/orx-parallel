@@ -13,4 +13,4 @@ mod map;
 // mod slice;
 // mod sum;
 // mod vectors;
-// mod xap;
+mod xap;
