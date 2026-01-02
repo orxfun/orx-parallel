@@ -9,7 +9,7 @@ mod iter_consuming;
 mod iter_ref;
 mod map;
 mod min_max;
-// mod range;
+mod range;
 // mod slice;
 // mod sum;
 // mod vectors;
