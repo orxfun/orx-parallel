@@ -6,7 +6,7 @@ mod flatten;
 mod for_each;
 mod inspect;
 mod iter_consuming;
-// mod iter_ref;
+mod iter_ref;
 // mod map;
 // mod min_max;
 // mod range;
