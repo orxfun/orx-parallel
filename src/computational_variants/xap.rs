@@ -115,7 +115,7 @@ where
     {
         let using = UsingFun::new(using);
         let (orchestrator, params, iter, x1) = self.destruct();
-        let m1 = move |_: &mut U, t: I::Item| x1(t);
+        let m1 = move |_: *mut U, t: I::Item| x1(t);
         UParXap::new(using, orchestrator, params, iter, m1)
     }
 
@@ -128,7 +128,7 @@ where
     {
         let using = UsingClone::new(value);
         let (orchestrator, params, iter, x1) = self.destruct();
-        let m1 = move |_: &mut U, t: I::Item| x1(t);
+        let m1 = move |_: *mut U, t: I::Item| x1(t);
         UParXap::new(using, orchestrator, params, iter, m1)
     }
 
