@@ -113,7 +113,11 @@ where
         Filter: Fn(&mut <U as Using>::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, orchestrator, params, iter) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: Self::Item| filter(u, &i).then_some(i);
+        let x1 = move |u: *mut U::Item, i: Self::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
+            filter(u, &i).then_some(i)
+        };
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
@@ -126,7 +130,11 @@ where
         FlatMap: Fn(&mut <U as Using>::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, orchestrator, params, iter) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: Self::Item| Vector(flat_map(u, i));
+        let x1 = move |u: *mut U::Item, i: Self::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
+            Vector(flat_map(u, i))
+        };
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
@@ -138,7 +146,12 @@ where
         FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, orchestrator, params, iter) = self.destruct();
-        UParXap::new(using, orchestrator, params, iter, filter_map)
+        let x1 = move |u: *mut U::Item, i: Self::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
+            filter_map(u, i)
+        };
+        UParXap::new(using, orchestrator, params, iter, x1)
     }
 
     fn into_fallible_result<Out, Err>(self) -> impl ParIterResultUsing<U, R, Item = Out, Err = Err>
