@@ -34,7 +34,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync;
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync;
 
     fn u_x_try_collect_into<U, R, I, Vo, X1>(
         self,
