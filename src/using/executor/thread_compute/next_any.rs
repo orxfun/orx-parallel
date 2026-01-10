@@ -77,9 +77,9 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U, I::Item) -> Vo,
+    X1: Fn(*mut U, I::Item) -> Vo,
 {
-    let u = &mut using;
+    let u = &mut using as *mut U;
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
 
