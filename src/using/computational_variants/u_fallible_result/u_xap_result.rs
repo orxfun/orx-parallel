@@ -133,7 +133,7 @@ where
         Self::Err: Send,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = |u: &mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let x1 = |u: *mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
         match params.iteration_order {
             IterationOrder::Ordered => {
                 let (_, result) = prc::next::x(using, orchestrator, params, iter, x1);
