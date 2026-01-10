@@ -77,7 +77,7 @@ where
         U: Using,
         R: ParallelRunner,
         I: ConcurrentIter,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
         Vo: crate::generic_values::Values<Item = O>,
         Self: Sized,
     {

@@ -48,7 +48,7 @@ pub trait UParCollectIntoCore<O>: ParCollectIntoCore<O> {
         U: Using,
         R: ParallelRunner,
         I: ConcurrentIter,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
         Vo: Values<Item = O>,
         Self: Sized;
 }
