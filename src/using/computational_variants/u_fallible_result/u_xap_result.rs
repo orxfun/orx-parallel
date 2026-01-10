@@ -17,7 +17,7 @@ where
     I: ConcurrentIter,
     Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
 {
     using: U,
     orchestrator: R,
@@ -34,7 +34,7 @@ where
     I: ConcurrentIter,
     Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(using: U, orchestrator: R, params: Params, iter: I, xap1: X1) -> Self {
         Self {
@@ -65,7 +65,7 @@ where
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
 {
     type Item = T;
 
