@@ -58,7 +58,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let thread_map =

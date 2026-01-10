@@ -93,7 +93,7 @@ where
     C: ThreadExecutor,
     I: ConcurrentIter,
     Vo: Values,
-    X1: Fn(&mut U, I::Item) -> Vo,
+    X1: Fn(*mut U, I::Item) -> Vo,
     Red: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
 {
     let u = &mut u;
