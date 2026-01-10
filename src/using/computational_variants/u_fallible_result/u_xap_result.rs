@@ -108,7 +108,7 @@ where
         Self::Err: Send,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = |u: &mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let x1 = |u: *mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
         output.u_x_try_collect_into(using, orchestrator, params, iter, x1)
     }
 
@@ -121,7 +121,7 @@ where
         Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = |u: &mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let x1 = |u: *mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
         prc::reduce::x(using, orchestrator, params, iter, x1, reduce).1
     }
 
