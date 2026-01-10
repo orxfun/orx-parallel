@@ -129,7 +129,9 @@ where
     {
         let (using, orchestrator, params, iter, m1) = self.destruct();
 
-        let x1 = move |u: &mut U::Item, i: I::Item| {
+        let x1 = move |u: *mut U::Item, i: I::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
             let value = m1(u, i);
             filter(u, &value).then_some(value)
         };
@@ -145,7 +147,9 @@ where
         FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, orchestrator, params, iter, m1) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: I::Item| {
+        let x1 = move |u: *mut U::Item, i: I::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
             let a = m1(u, i);
             Vector(flat_map(u, a))
         };
@@ -160,7 +164,9 @@ where
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, orchestrator, params, iter, m1) = self.destruct();
-        let x1 = move |u: &mut U::Item, i: I::Item| {
+        let x1 = move |u: *mut U::Item, i: I::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
             let a = m1(u, i);
             filter_map(u, a)
         };
