@@ -94,9 +94,9 @@ where
     I: ConcurrentIter,
     Vo: Values,
     X1: Fn(*mut U, I::Item) -> Vo,
-    Red: Fn(&mut U, Vo::Item, Vo::Item) -> Vo::Item,
+    Red: Fn(*mut U, Vo::Item, Vo::Item) -> Vo::Item,
 {
-    let u = &mut u;
+    let u = &mut u as *mut U;
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
 

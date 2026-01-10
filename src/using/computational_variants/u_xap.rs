@@ -122,9 +122,13 @@ where
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
 
-        let x1 = move |u: *mut U::Item, i: I::Item| {
+        let map = move |u: *mut U::Item, i: Self::Item| {
             // SAFETY: TODO-USING
             let u = unsafe { &mut *u };
+            map(u, i)
+        };
+
+        let x1 = move |u: *mut U::Item, i: I::Item| {
             let vo = x1(u, i);
             vo.u_map(u, map.clone())
         };
@@ -137,9 +141,14 @@ where
         Filter: Fn(&mut <U as Using>::Item, &Self::Item) -> bool + Sync + Clone,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |u: *mut U::Item, i: I::Item| {
+
+        let filter = move |u: *mut U::Item, i: &Self::Item| {
             // SAFETY: TODO-USING
             let u = unsafe { &mut *u };
+            filter(u, i)
+        };
+
+        let x1 = move |u: *mut U::Item, i: I::Item| {
             let vo = x1(u, i);
             vo.u_filter(u, filter.clone())
         };
@@ -155,9 +164,14 @@ where
         FlatMap: Fn(&mut <U as Using>::Item, Self::Item) -> IOut + Sync + Clone,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |u: *mut U::Item, i: I::Item| {
+
+        let flat_map = move |u: *mut U::Item, i: Self::Item| {
             // SAFETY: TODO-USING
             let u = unsafe { &mut *u };
+            flat_map(u, i)
+        };
+
+        let x1 = move |u: *mut U::Item, i: I::Item| {
             let vo = x1(u, i);
             vo.u_flat_map(u, flat_map.clone())
         };
@@ -172,9 +186,14 @@ where
         FilterMap: Fn(&mut <U as Using>::Item, Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |u: *mut U::Item, i: I::Item| {
+
+        let filter_map = move |u: *mut U::Item, i: Self::Item| {
             // SAFETY: TODO-USING
             let u = unsafe { &mut *u };
+            filter_map(u, i)
+        };
+
+        let x1 = move |u: *mut U::Item, i: I::Item| {
             let vo = x1(u, i);
             vo.u_filter_map(u, filter_map.clone())
         };
@@ -203,6 +222,12 @@ where
         Reduce: Fn(&mut <U as Using>::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
+        let reduce = move |u: *mut U::Item, a: Self::Item, b: Self::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
+            reduce(u, a, b)
+        };
+
         let (_, Ok(acc)) = prc::reduce::x(using, orchestrator, params, iter, x1, reduce);
         acc
     }

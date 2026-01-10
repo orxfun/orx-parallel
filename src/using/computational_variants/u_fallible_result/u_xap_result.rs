@@ -122,6 +122,11 @@ where
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
         let x1 = |u: *mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let reduce = move |u: *mut U::Item, a: Self::Item, b: Self::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
+            reduce(u, a, b)
+        };
         prc::reduce::x(using, orchestrator, params, iter, x1, reduce).1
     }
 

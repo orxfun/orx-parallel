@@ -79,9 +79,9 @@ impl<T> Values for WhilstOption<T> {
         }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
+    fn u_acc_reduce<U, X>(self, u: *mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
-        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
+        X: Fn(*mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self {
             Self::ContinueSome(x) => Reduce::Done {
@@ -199,11 +199,11 @@ impl<T> TransformableValues for WhilstOption<T> {
 
     fn u_map<U, M, O>(
         self,
-        u: &mut U,
+        u: *mut U,
         map: M,
     ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
-        M: Fn(&mut U, Self::Item) -> O,
+        M: Fn(*mut U, Self::Item) -> O,
     {
         match self {
             Self::ContinueSome(x) => WhilstOption::ContinueSome(map(u, x)),
@@ -214,11 +214,11 @@ impl<T> TransformableValues for WhilstOption<T> {
 
     fn u_filter<U, F>(
         self,
-        u: &mut U,
+        u: *mut U,
         filter: F,
     ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
-        F: Fn(&mut U, &Self::Item) -> bool,
+        F: Fn(*mut U, &Self::Item) -> bool,
     {
         match self {
             Self::ContinueSome(x) => match filter(u, &x) {
@@ -232,12 +232,12 @@ impl<T> TransformableValues for WhilstOption<T> {
 
     fn u_flat_map<U, Fm, Vo>(
         self,
-        u: &mut U,
+        u: *mut U,
         flat_map: Fm,
     ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
     where
         Vo: IntoIterator,
-        Fm: Fn(&mut U, Self::Item) -> Vo,
+        Fm: Fn(*mut U, Self::Item) -> Vo,
     {
         let iter = WhilstOptionFlatMapIter::u_from_option(u, self, &flat_map);
         WhilstVector(iter)
@@ -245,11 +245,11 @@ impl<T> TransformableValues for WhilstOption<T> {
 
     fn u_filter_map<U, Fm, O>(
         self,
-        u: &mut U,
+        u: *mut U,
         filter_map: Fm,
     ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
-        Fm: Fn(&mut U, Self::Item) -> Option<O>,
+        Fm: Fn(*mut U, Self::Item) -> Option<O>,
     {
         match self {
             Self::ContinueSome(x) => match filter_map(u, x) {

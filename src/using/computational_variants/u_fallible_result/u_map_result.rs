@@ -111,6 +111,11 @@ where
             let u = unsafe { &mut *u };
             m1(u, i).into_result()
         };
+        let reduce = move |u: *mut U::Item, a: Self::Item, b: Self::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
+            reduce(u, a, b)
+        };
         prc::reduce::x(using, orchestrator, params, iter, x1, reduce).1
     }
 
