@@ -57,7 +57,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let capacity_bound = pinned_vec.capacity_bound();

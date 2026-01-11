@@ -58,8 +58,8 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
-    Red: Fn(&mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
+    Red: Fn(*mut U::Item, Vo::Item, Vo::Item) -> Vo::Item + Sync,
 {
     let thread_map =
         |nt: NumSpawned, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {

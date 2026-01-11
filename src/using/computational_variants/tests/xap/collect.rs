@@ -2,7 +2,7 @@ use crate::generic_values::Vector;
 use crate::runner::DefaultRunner;
 use crate::using::UsingClone;
 use crate::using::computational_variants::UParXap;
-use crate::using::computational_variants::tests::utils::make_u_map;
+use crate::using::computational_variants::tests::utils::make_u_xap;
 use crate::using::u_par_iter::ParIterUsing;
 use crate::{IterationOrder, Params};
 use alloc::format;
@@ -51,7 +51,7 @@ fn todo_panic_at_con_bag_new() {
         DefaultRunner::default(),
         params,
         iter,
-        make_u_map(xmap),
+        make_u_xap(xmap),
     );
 
     let mut output = x.collect_into(output);
@@ -96,7 +96,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrde
         DefaultRunner::default(),
         params,
         iter,
-        make_u_map(xmap),
+        make_u_xap(xmap),
     );
 
     let mut output = x.collect_into(output);
@@ -141,7 +141,7 @@ fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOr
         DefaultRunner::default(),
         params,
         iter,
-        make_u_map(xmap),
+        make_u_xap(xmap),
     );
 
     let mut output = x.collect_into(output);

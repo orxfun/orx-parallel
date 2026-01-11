@@ -31,9 +31,9 @@ pub trait Values: Sized {
     where
         X: Fn(Self::Item, Self::Item) -> Self::Item;
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
+    fn u_acc_reduce<U, X>(self, u: *mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
-        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item;
+        X: Fn(*mut U, Self::Item, Self::Item) -> Self::Item;
 
     fn next(self) -> Next<Self>;
 

@@ -23,9 +23,9 @@ where
         Self { current_iter }
     }
 
-    pub fn u_from_option<U, T, Fm>(u: &mut U, atom: WhilstOption<T>, flat_map: Fm) -> Self
+    pub fn u_from_option<U, T, Fm>(u: *mut U, atom: WhilstOption<T>, flat_map: Fm) -> Self
     where
-        Fm: Fn(&mut U, T) -> Vo,
+        Fm: Fn(*mut U, T) -> Vo,
     {
         let current_iter = match atom {
             WhilstOption::ContinueSome(x) => WhilstOption::ContinueSome(flat_map(u, x).into_iter()),

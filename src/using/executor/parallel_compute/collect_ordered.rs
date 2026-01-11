@@ -53,7 +53,7 @@ where
     Vo: Values,
     Vo::Item: Send,
     <Vo::Fallibility as Fallibility>::Error: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let thread_map =

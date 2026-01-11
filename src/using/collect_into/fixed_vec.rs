@@ -42,7 +42,7 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     {
         let vec = Vec::from(self);
         FixedVec::from(vec.u_x_collect_into(using, orchestrator, params, iter, xap1))
@@ -60,7 +60,7 @@ where
         U: crate::using::Using,
         R: ParallelRunner,
         I: ConcurrentIter,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
         Vo: crate::generic_values::Values<Item = O>,
         Self: Sized,
     {

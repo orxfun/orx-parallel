@@ -4,8 +4,8 @@ use crate::generic_values::Vector;
 use crate::runner::DefaultRunner;
 use crate::using::UsingClone;
 use crate::using::computational_variants::UParXap;
-use crate::using::computational_variants::tests::utils::make_u_map;
 use crate::using::computational_variants::tests::utils::make_u_reduce;
+use crate::using::computational_variants::tests::utils::make_u_xap;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -40,7 +40,7 @@ fn x_flat_map_reduce(n: usize, nt: usize, chunk: usize) {
         DefaultRunner::default(),
         params,
         iter,
-        make_u_map(xmap),
+        make_u_xap(xmap),
     );
 
     let output = x.reduce(make_u_reduce(reduce));
@@ -71,7 +71,7 @@ fn x_filter_map_reduce(n: usize, nt: usize, chunk: usize) {
         DefaultRunner::default(),
         params,
         iter,
-        make_u_map(xmap),
+        make_u_xap(xmap),
     );
 
     let output = x.reduce(make_u_reduce(reduce));
