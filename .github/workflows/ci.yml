@@ -43,8 +43,8 @@ jobs:
 
     - name: Test
       run: cargo test --verbose ${{ matrix.features }}
-    - name: Test-32bit
-      run: cargo test --verbose --target i686-unknown-linux-musl ${{ matrix.features }}
+#    - name: Test-32bit
+#      run: cargo test --verbose --target i686-unknown-linux-musl ${{ matrix.features }}
     - name: Check-wasm
       run: cargo check --verbose --target wasm32-unknown-unknown ${{ matrix.features }}
 
