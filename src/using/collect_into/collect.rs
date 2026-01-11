@@ -1,6 +1,6 @@
 use crate::Params;
 use crate::generic_values::runner_results::{
-    Infallible, ParallelCollect, ParallelCollectArbitrary,
+    Fallibility, Infallible, ParallelCollect, ParallelCollectArbitrary, Stop,
 };
 use crate::runner::{NumSpawned, ParallelRunner};
 use crate::using::executor::parallel_compute as prc;
@@ -119,4 +119,72 @@ where
     }
 
     pinned_vec
+}
+
+pub fn xap_try_collect_into<U, R, I, Vo, X1, P>(
+    using: U,
+    orchestrator: R,
+    params: Params,
+    iter: I,
+    xap1: X1,
+    pinned_vec: P,
+) -> (
+    NumSpawned,
+    Result<P, <Vo::Fallibility as Fallibility>::Error>,
+)
+where
+    U: Using,
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    Vo: Values,
+    Vo::Item: Send,
+    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    match (params.is_sequential(), params.iteration_order) {
+        (true, _) => (
+            NumSpawned::zero(),
+            xap_try_collect_into_seq(using, iter, xap1, pinned_vec),
+        ),
+        (false, IterationOrder::Arbitrary) => {
+            let (nt, result) =
+                prc::collect_arbitrary::x(using, orchestrator, params, iter, xap1, pinned_vec);
+            (nt, result.into_result())
+        }
+        (false, IterationOrder::Ordered) => {
+            let (nt, result) =
+                prc::collect_ordered::x(using, orchestrator, params, iter, xap1, pinned_vec);
+            (nt, result.into_result())
+        }
+    }
+}
+
+fn xap_try_collect_into_seq<U, I, Vo, X1, P>(
+    using: U,
+    iter: I,
+    xap1: X1,
+    mut pinned_vec: P,
+) -> Result<P, <Vo::Fallibility as Fallibility>::Error>
+where
+    U: Using,
+    I: ConcurrentIter,
+    Vo: Values,
+    Vo::Item: Send,
+    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    P: IntoConcurrentPinnedVec<Vo::Item>,
+{
+    let mut u = using.into_inner();
+    let iter = iter.into_seq_iter();
+    for i in iter {
+        let vt = xap1(&mut u, i);
+        let done = vt.push_to_pinned_vec(&mut pinned_vec);
+        if let Some(stop) = Vo::sequential_push_to_stop(done) {
+            match stop {
+                Stop::DueToWhile => return Ok(pinned_vec),
+                Stop::DueToError { error } => return Err(error),
+            }
+        }
+    }
+
+    Ok(pinned_vec)
 }

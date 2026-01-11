@@ -64,4 +64,25 @@ where
         let split_vec = split_vec.u_x_collect_into(using, orchestrator, params, iter, xap1);
         extend_vec_from_split(self, split_vec)
     }
+
+    fn u_x_try_collect_into<U, R, I, Vo, X1>(
+        self,
+        using: U,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Result<Self, <Vo::Fallibility as crate::generic_values::runner_results::Fallibility>::Error>
+    where
+        U: Using,
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        Vo: crate::generic_values::Values<Item = O>,
+        Self: Sized,
+    {
+        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
+        let result = split_vec.u_x_try_collect_into(using, orchestrator, params, iter, xap1);
+        result.map(|split_vec| extend_vec_from_split(self, split_vec))
+    }
 }

@@ -1,7 +1,12 @@
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, Params, RunnerWithPool, Sum,
+    par_iter_option::IntoOption,
+    par_iter_result::IntoResult,
     runner::{DefaultRunner, ParallelRunner},
-    using::using_variants::Using,
+    using::{
+        ParIterOptionUsing, ParIterResultUsing,
+        computational_variants::u_fallible_option::UParOption, using_variants::Using,
+    },
 };
 use crate::{ParThreadPool, default_fns::*};
 use core::cmp::Ordering;
@@ -85,6 +90,56 @@ where
         self.with_runner(runner)
     }
 
+    // transformations into fallible computations
+
+    /// Transforms a parallel iterator where elements are of the result type; i.e., `ParIterUsing<U, R, Item = Result<T, E>>`,
+    ///  into fallible parallel iterator with item type `T` and error type `E`; i.e., into `ParIterResultUsing<U, R, Item = T, Err = E>`.
+    ///
+    /// `ParIterResultUsing` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// as follows:
+    ///
+    /// * All of its methods are based on the success path with item type of `T`.
+    /// * However, computations short-circuit and immediately return the observed error if any of the items
+    ///   is of the `Err` variant of the result enum.
+    ///
+    /// See [`ParIterUsing`] for details.
+    ///
+    /// Unlike [crate::ParIter::into_fallible_result], the methods of `ParIterResultUsing` give a mutable reference to the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+    fn into_fallible_result<T, E>(self) -> impl ParIterResultUsing<U, R, Item = T, Err = E>
+    where
+        Self::Item: IntoResult<T, E>;
+
+    /// Transforms a parallel iterator where elements are of the option type; i.e., `ParIterUsing<U, R, Item = Option<T>>`,
+    ///  into fallible parallel iterator with item type `T`; i.e., into `ParIterOptionUsing<U, R, Item = T>`.
+    ///
+    /// `ParIterOptionUsing` is also a parallel iterator; however, with methods specialized for handling fallible computations
+    /// as follows:
+    ///
+    /// * All of its methods are based on the success path with item type of `T`.
+    /// * However, computations short-circuit and immediately return None if any of the items
+    ///   is of the `None` variant of the option enum.
+    ///
+    /// See [`ParIterOptionUsing`] for details.
+    ///
+    /// Unlike [crate::ParIter::into_fallible_option], the methods of `ParIterOptionUsing` give a mutable reference to the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+    fn into_fallible_option<T>(self) -> impl ParIterOptionUsing<U, R, Item = T>
+    where
+        Self::Item: IntoOption<T>,
+    {
+        UParOption::new(
+            self.map(|_, x| x.into_result_with_unit_err())
+                .into_fallible_result(),
+        )
+    }
+
     // computation transformations
 
     /// Takes a closure `map` and creates a parallel iterator which calls that closure on each element.
@@ -129,7 +184,6 @@ where
     /// The returned iterator yields only the values for which the supplied closure `filter_map` returns `Some(value)`.
     ///
     /// `filter_map` can be used to make chains of `filter` and `map` more concise.
-    /// The example below shows how a `map().filter().map()` can be shortened to a single call to `filter_map`.
     ///
     /// Unlike [crate::ParIter::filter_map], the closure allows access to mutable reference of the used variable.
     ///

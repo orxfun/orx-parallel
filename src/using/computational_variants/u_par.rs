@@ -1,7 +1,10 @@
 use crate::ParIterUsing;
 use crate::default_fns::u_map_self;
 use crate::generic_values::Vector;
+use crate::par_iter_result::IntoResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
+use crate::using::ParIterResultUsing;
+use crate::using::computational_variants::u_fallible_result::UParResult;
 use crate::using::computational_variants::u_map::UParMap;
 use crate::using::computational_variants::u_xap::UParXap;
 use crate::using::executor::parallel_compute as prc;
@@ -136,6 +139,13 @@ where
     {
         let (using, orchestrator, params, iter) = self.destruct();
         UParXap::new(using, orchestrator, params, iter, filter_map)
+    }
+
+    fn into_fallible_result<Out, Err>(self) -> impl ParIterResultUsing<U, R, Item = Out, Err = Err>
+    where
+        Self::Item: IntoResult<Out, Err>,
+    {
+        UParResult::new(self)
     }
 
     fn collect_into<C>(self, output: C) -> C
