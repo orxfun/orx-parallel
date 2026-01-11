@@ -58,7 +58,7 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     {
         let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
         let split_vec = split_vec.u_x_collect_into(using, orchestrator, params, iter, xap1);
@@ -77,7 +77,7 @@ where
         U: Using,
         R: ParallelRunner,
         I: ConcurrentIter,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
         Vo: crate::generic_values::Values<Item = O>,
         Self: Sized,
     {

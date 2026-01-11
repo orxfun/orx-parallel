@@ -55,7 +55,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
 {
     let thread_map = |nt: NumSpawned, iter: &I, state: &SharedStateOf<C>, th_runner| {
         let u = using.create(nt.into_inner());

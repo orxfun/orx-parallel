@@ -48,7 +48,7 @@ where
         R: ParallelRunner,
         I: ConcurrentIter,
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     {
         split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
         let (_num_spawned, pinned_vec) =
@@ -68,7 +68,7 @@ where
         U: crate::using::Using,
         R: ParallelRunner,
         I: ConcurrentIter,
-        X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+        X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
         Vo: crate::generic_values::Values<Item = O>,
         Self: Sized,
     {

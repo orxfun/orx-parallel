@@ -68,7 +68,7 @@ where
     I: ConcurrentIter,
     Vo: Values<Fallibility = Infallible>,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     match (params.is_sequential(), params.iteration_order) {
@@ -105,7 +105,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let mut u = using.into_inner();
@@ -138,7 +138,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     match (params.is_sequential(), params.iteration_order) {
@@ -170,7 +170,7 @@ where
     I: ConcurrentIter,
     Vo: Values,
     Vo::Item: Send,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
     let mut u = using.into_inner();

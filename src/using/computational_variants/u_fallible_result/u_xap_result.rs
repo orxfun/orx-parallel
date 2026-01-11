@@ -17,7 +17,7 @@ where
     I: ConcurrentIter,
     Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
 {
     using: U,
     orchestrator: R,
@@ -34,7 +34,7 @@ where
     I: ConcurrentIter,
     Vo: TransformableValues,
     Vo::Item: IntoResult<T, E>,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
 {
     pub(crate) fn new(using: U, orchestrator: R, params: Params, iter: I, xap1: X1) -> Self {
         Self {
@@ -65,7 +65,7 @@ where
     I: ConcurrentIter,
     Vo: TransformableValues<Fallibility = Infallible>,
     Vo::Item: IntoResult<T, E>,
-    X1: Fn(&mut U::Item, I::Item) -> Vo + Sync,
+    X1: Fn(*mut U::Item, I::Item) -> Vo + Sync,
 {
     type Item = T;
 
@@ -108,7 +108,7 @@ where
         Self::Err: Send,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = |u: &mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let x1 = |u: *mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
         output.u_x_try_collect_into(using, orchestrator, params, iter, x1)
     }
 
@@ -121,7 +121,12 @@ where
         Reduce: Fn(&mut U::Item, Self::Item, Self::Item) -> Self::Item + Sync,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = |u: &mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let x1 = |u: *mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let reduce = move |u: *mut U::Item, a: Self::Item, b: Self::Item| {
+            // SAFETY: TODO-USING
+            let u = unsafe { &mut *u };
+            reduce(u, a, b)
+        };
         prc::reduce::x(using, orchestrator, params, iter, x1, reduce).1
     }
 
@@ -133,7 +138,7 @@ where
         Self::Err: Send,
     {
         let (using, orchestrator, params, iter, x1) = self.destruct();
-        let x1 = |u: &mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
+        let x1 = |u: *mut U::Item, i: I::Item| x1(u, i).map_while_ok(|x| x.into_result());
         match params.iteration_order {
             IterationOrder::Ordered => {
                 let (_, result) = prc::next::x(using, orchestrator, params, iter, x1);

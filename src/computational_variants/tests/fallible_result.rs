@@ -1,0 +1,95 @@
+use crate::{test_utils::*, *};
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use test_case::test_matrix;
+
+fn input<O: FromIterator<String>>(n: usize) -> O {
+    let elem = |x: usize| (x + 10).to_string();
+    (0..n).map(elem).collect()
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct MyErr(String);
+impl MyErr {
+    fn new() -> Self {
+        Self("error".to_string())
+    }
+}
+
+#[test_matrix(NT, CHUNK)]
+fn fallible_result_collect_empty(nt: &[usize], chunk: &[usize]) {
+    let test = |_, nt, chunk| {
+        let input = || input::<Vec<_>>(0);
+
+        let par = input()
+            .into_iter()
+            .map(|_| Err::<String, _>(MyErr::new()))
+            .collect::<Vec<_>>()
+            .into_par()
+            .num_threads(nt)
+            .chunk_size(chunk)
+            .into_fallible_result();
+        let output: Result<Vec<_>, MyErr> = par.collect();
+
+        assert_eq!(output, Ok(Vec::new()));
+    };
+    test_n_nt_chunk(&[0], nt, chunk, test);
+}
+
+#[test_matrix(N, NT, CHUNK)]
+fn fallible_result_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
+    let test = |n, nt, chunk| {
+        let input = || input::<Vec<_>>(n);
+
+        let par = input()
+            .into_par()
+            .num_threads(nt)
+            .chunk_size(chunk)
+            .map(|x| match x == "50" {
+                true => Err(MyErr::new()),
+                false => Ok(x),
+            })
+            .into_fallible_result()
+            .filter(|x| !x.ends_with('9'))
+            .flat_map(|x| [format!("{x}?"), x])
+            .map(|x| format!("{x}!"));
+        let output: Result<Vec<_>, MyErr> = par.collect();
+
+        assert_eq!(output, Err(MyErr::new()));
+    };
+    test_n_nt_chunk(n, nt, chunk, test);
+}
+
+#[test_matrix(N, NT, CHUNK)]
+fn fallible_result_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
+    let test = |n, nt, chunk| {
+        let input = || input::<Vec<_>>(n);
+
+        let expected: Vec<_> = input()
+            .into_iter()
+            .filter(|x| !x.ends_with('9'))
+            .flat_map(|x| [format!("{x}?"), x])
+            .map(|x| format!("{x}!"))
+            .filter_map(|x| Some(x))
+            .collect();
+
+        let par = input()
+            .into_par()
+            .num_threads(nt)
+            .chunk_size(chunk)
+            .map(|x| match x == "xyz" {
+                true => Err(MyErr::new()),
+                false => Ok(x),
+            })
+            .into_fallible_result()
+            .filter(|x| !x.ends_with('9'))
+            .flat_map(|x| [format!("{x}?"), x])
+            .map(|x| format!("{x}!"))
+            .filter_map(|x| Some(x));
+        let output: Result<Vec<_>, MyErr> = par.collect();
+
+        assert_eq!(output, Ok(expected));
+    };
+    test_n_nt_chunk(n, nt, chunk, test);
+}

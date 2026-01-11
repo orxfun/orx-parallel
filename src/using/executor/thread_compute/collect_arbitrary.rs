@@ -68,7 +68,7 @@ where
     C: ThreadExecutor,
     I: ConcurrentIter,
     Vo: Values,
-    X1: Fn(&mut U, I::Item) -> Vo,
+    X1: Fn(*mut U, I::Item) -> Vo,
     P: IntoConcurrentPinnedVec<Vo::Item>,
     Vo::Item: Send,
 {

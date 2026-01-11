@@ -1,3 +1,4 @@
+# Updated workflow (based on .github/workflows/ci.yml at ref d04ad7abce0c67776a7189001f706535e3e5c402)
 name: Rust
 
 on:
@@ -21,31 +22,41 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Cache cargo registry & target
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-stable-${{ matrix.features || 'default' }}
+
     - name: Install toolchain
       uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{ matrix.toolchain }}
 
-    - name: Install 32bit target
+    - name: Install 32bit target (for builds if needed)
       run: rustup target add i686-unknown-linux-musl
+
     - name: Install wasm target
       run: rustup target add wasm32-unknown-unknown
+
     - name: Install miri
       run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu miri
+
     - name: Install no-std-check
       run: cargo install cargo-no-std-check
-      
+
     - name: Build
       run: cargo build --verbose ${{ matrix.features }}
-    - name: Build-32bit
-      run: cargo build --verbose --target i686-unknown-linux-musl ${{ matrix.features }}
+
     - name: Build-wasm
       run: cargo build --verbose --target wasm32-unknown-unknown ${{ matrix.features }}
 
     - name: Test
       run: cargo test --verbose ${{ matrix.features }}
-    - name: Test-32bit
-      run: cargo test --verbose --target i686-unknown-linux-musl ${{ matrix.features }}
+
     - name: Check-wasm
       run: cargo check --verbose --target wasm32-unknown-unknown ${{ matrix.features }}
 
@@ -54,3 +65,43 @@ jobs:
 
     - name: Miri
       run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features }}
+
+
+  test-32:
+    name: Test (i686)
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo registry & target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-stable-i686
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: Set up QEMU for multi-arch Docker
+        uses: docker/setup-qemu-action@v2
+
+      - name: Install Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install cross
+        run: cargo install --locked cross || true
+
+      - name: Run tests for i686 target via cross
+        run: |
+          # Run unit tests under QEMU inside Docker so i686 test binaries are executed reliably.
+          # Uses the glibc i686 target by default. Change to i686-unknown-linux-musl if you require musl.
+          cross test --target i686-unknown-linux-gnu --verbose

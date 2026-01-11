@@ -67,9 +67,9 @@ impl<T> Values for Option<T> {
     }
 
     #[inline(always)]
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
+    fn u_acc_reduce<U, X>(self, u: *mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
-        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
+        X: Fn(*mut U, Self::Item, Self::Item) -> Self::Item,
     {
         Reduce::Done {
             acc: match (acc, self) {
@@ -163,11 +163,11 @@ impl<T> TransformableValues for Option<T> {
     #[inline(always)]
     fn u_map<U, M, O>(
         self,
-        u: &mut U,
+        u: *mut U,
         map: M,
     ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
-        M: Fn(&mut U, Self::Item) -> O,
+        M: Fn(*mut U, Self::Item) -> O,
     {
         self.map(|x| map(u, x))
     }
@@ -175,34 +175,34 @@ impl<T> TransformableValues for Option<T> {
     #[inline(always)]
     fn u_filter<U, F>(
         self,
-        u: &mut U,
+        u: *mut U,
         filter: F,
     ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
-        F: Fn(&mut U, &Self::Item) -> bool,
+        F: Fn(*mut U, &Self::Item) -> bool,
     {
         self.filter(|x| filter(u, x))
     }
 
     fn u_flat_map<U, Fm, Vo>(
         self,
-        u: &mut U,
+        u: *mut U,
         flat_map: Fm,
     ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
     where
         Vo: IntoIterator,
-        Fm: Fn(&mut U, Self::Item) -> Vo,
+        Fm: Fn(*mut U, Self::Item) -> Vo,
     {
         Vector(self.into_iter().flat_map(move |x| flat_map(u, x)))
     }
 
     fn u_filter_map<U, Fm, O>(
         self,
-        u: &mut U,
+        u: *mut U,
         filter_map: Fm,
     ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
-        Fm: Fn(&mut U, Self::Item) -> Option<O>,
+        Fm: Fn(*mut U, Self::Item) -> Option<O>,
     {
         match self {
             Some(x) => filter_map(u, x),

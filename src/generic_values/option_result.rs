@@ -78,9 +78,9 @@ where
         }
     }
 
-    fn u_acc_reduce<U, X>(self, u: &mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
+    fn u_acc_reduce<U, X>(self, u: *mut U, acc: Option<Self::Item>, reduce: X) -> Reduce<Self>
     where
-        X: Fn(&mut U, Self::Item, Self::Item) -> Self::Item,
+        X: Fn(*mut U, Self::Item, Self::Item) -> Self::Item,
     {
         match self.0 {
             Some(Ok(x)) => Reduce::Done {
