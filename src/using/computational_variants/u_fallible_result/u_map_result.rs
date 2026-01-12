@@ -8,27 +8,27 @@ use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub struct UParMapResult<U, I, T, E, O, M1, R = DefaultRunner>
+pub struct UParMapResult<'using, U, I, T, E, O, M1, R = DefaultRunner>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
-    par: UParMap<U, I, O, M1, R>,
+    par: UParMap<'using, U, I, O, M1, R>,
     phantom: PhantomData<(T, E)>,
 }
 
-impl<U, I, T, E, O, M1, R> UParMapResult<U, I, T, E, O, M1, R>
+impl<'using, U, I, T, E, O, M1, R> UParMapResult<'using, U, I, T, E, O, M1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     O: IntoResult<T, E>,
     M1: Fn(&mut U::Item, I::Item) -> O + Sync,
 {
-    pub(crate) fn new(par: UParMap<U, I, O, M1, R>) -> Self {
+    pub(crate) fn new(par: UParMap<'using, U, I, O, M1, R>) -> Self {
         Self {
             par,
             phantom: PhantomData,
@@ -36,9 +36,10 @@ where
     }
 }
 
-impl<U, I, T, E, O, M1, R> ParIterResultUsing<U, R> for UParMapResult<U, I, T, E, O, M1, R>
+impl<'using, U, I, T, E, O, M1, R> ParIterResultUsing<'using, U, R>
+    for UParMapResult<'using, U, I, T, E, O, M1, R>
 where
-    U: Using,
+    U: Using<'using>,
     R: ParallelRunner,
     I: ConcurrentIter,
     O: IntoResult<T, E>,
@@ -50,7 +51,7 @@ where
 
     type RegularItem = O;
 
-    type RegularParIter = UParMap<U, I, O, M1, R>;
+    type RegularParIter = UParMap<'using, U, I, O, M1, R>;
 
     fn con_iter_len(&self) -> Option<usize> {
         self.par.con_iter().try_get_len()
@@ -72,7 +73,7 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterResultUsing<U, Q, Item = Self::Item, Err = Self::Err> {
+    ) -> impl ParIterResultUsing<'using, U, Q, Item = Self::Item, Err = Self::Err> {
         let (using, _, params, iter, m1) = self.par.destruct();
         UParMapResult {
             par: UParMap::new(using, orchestrator, params, iter, m1),
@@ -135,7 +136,7 @@ where
         match params.iteration_order {
             IterationOrder::Ordered => {
                 let (_, result) = prc::next::x(using, orchestrator, params, iter, x1);
-                result.map(|x| x.map(|y| y.1))
+                result.map(|x: Option<(usize, T)>| x.map(|y| y.1))
             }
             IterationOrder::Arbitrary => {
                 let (_, result) = prc::next_any::x(using, orchestrator, params, iter, x1);

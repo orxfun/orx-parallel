@@ -15,10 +15,10 @@ use orx_concurrent_iter::ConcurrentIter;
 /// Parallel iterator which allows mutable access to a variable of type `U` within its iterator methods.
 ///
 /// Note that one variable will be created per thread used by the parallel computation.
-pub trait ParIterUsing<U, R = DefaultRunner>: Sized + Send + Sync
+pub trait ParIterUsing<'using, U, R = DefaultRunner>: Sized + Send + Sync
 where
     R: ParallelRunner,
-    U: Using,
+    U: Using<'using>,
 {
     /// Element type of the parallel iterator.
     type Item;
@@ -70,7 +70,7 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterUsing<U, Q, Item = Self::Item>;
+    ) -> impl ParIterUsing<'using, U, Q, Item = Self::Item>;
 
     /// Rather than [`DefaultPool`], uses the parallel runner with the given `pool` implementing
     /// [`ParThreadPool`].
@@ -82,7 +82,7 @@ where
     fn with_pool<P: ParThreadPool>(
         self,
         pool: P,
-    ) -> impl ParIterUsing<U, RunnerWithPool<P, R::Executor>, Item = Self::Item>
+    ) -> impl ParIterUsing<'using, U, RunnerWithPool<P, R::Executor>, Item = Self::Item>
     where
         Self: Sized,
     {
@@ -109,7 +109,7 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn into_fallible_result<T, E>(self) -> impl ParIterResultUsing<U, R, Item = T, Err = E>
+    fn into_fallible_result<T, E>(self) -> impl ParIterResultUsing<'using, U, R, Item = T, Err = E>
     where
         Self::Item: IntoResult<T, E>;
 
@@ -130,7 +130,7 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn into_fallible_option<T>(self) -> impl ParIterOptionUsing<U, R, Item = T>
+    fn into_fallible_option<T>(self) -> impl ParIterOptionUsing<'using, U, R, Item = T>
     where
         Self::Item: IntoOption<T>,
     {
@@ -149,7 +149,7 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<U, R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone;
 
@@ -160,7 +160,7 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<U, R, Item = Self::Item>
+    fn filter<Filter>(self, filter: Filter) -> impl ParIterUsing<'using, U, R, Item = Self::Item>
     where
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone;
 
@@ -174,7 +174,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterUsing<U, R, Item = IOut::Item>
+    ) -> impl ParIterUsing<'using, U, R, Item = IOut::Item>
     where
         IOut: IntoIterator,
         FlatMap: Fn(&mut U::Item, Self::Item) -> IOut + Sync + Clone;
@@ -193,7 +193,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterUsing<U, R, Item = Out>
+    ) -> impl ParIterUsing<'using, U, R, Item = Out>
     where
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone;
 
@@ -204,7 +204,10 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn inspect<Operation>(self, operation: Operation) -> impl ParIterUsing<U, R, Item = Self::Item>
+    fn inspect<Operation>(
+        self,
+        operation: Operation,
+    ) -> impl ParIterUsing<'using, U, R, Item = Self::Item>
     where
         Operation: Fn(&mut U::Item, &Self::Item) + Sync + Clone,
     {
@@ -224,10 +227,10 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn copied<'a, T>(self) -> impl ParIterUsing<U, R, Item = T>
+    fn copied<'a, T>(self) -> impl ParIterUsing<'using, U, R, Item = T>
     where
         T: 'a + Copy,
-        Self: ParIterUsing<U, R, Item = &'a T>,
+        Self: ParIterUsing<'using, U, R, Item = &'a T>,
     {
         self.map(u_map_copy)
     }
@@ -239,10 +242,10 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn cloned<'a, T>(self) -> impl ParIterUsing<U, R, Item = T>
+    fn cloned<'a, T>(self) -> impl ParIterUsing<'using, U, R, Item = T>
     where
         T: 'a + Clone,
-        Self: ParIterUsing<U, R, Item = &'a T>,
+        Self: ParIterUsing<'using, U, R, Item = &'a T>,
     {
         self.map(u_map_clone)
     }
@@ -254,7 +257,7 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn flatten(self) -> impl ParIterUsing<U, R, Item = <Self::Item as IntoIterator>::Item>
+    fn flatten(self) -> impl ParIterUsing<'using, U, R, Item = <Self::Item as IntoIterator>::Item>
     where
         Self::Item: IntoIterator,
     {

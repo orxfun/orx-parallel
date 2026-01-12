@@ -14,10 +14,10 @@ use core::cmp::Ordering;
 /// Please see [`crate::ParIterUsing`] for details and examples.
 ///
 /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-pub trait ParIterOptionUsing<U, R = DefaultRunner>
+pub trait ParIterOptionUsing<'using, U, R = DefaultRunner>
 where
     R: ParallelRunner,
-    U: Using,
+    U: Using<'using>,
 {
     /// Type of the success element, to be received as the Some variant iff the entire computation succeeds.
     type Item;
@@ -59,7 +59,7 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterOptionUsing<U, Q, Item = Self::Item>;
+    ) -> impl ParIterOptionUsing<'using, U, Q, Item = Self::Item>;
 
     /// Rather than [`DefaultPool`], uses the parallel runner with the given `pool` implementing
     /// [`ParThreadPool`].
@@ -71,7 +71,7 @@ where
     fn with_pool<P: ParThreadPool>(
         self,
         pool: P,
-    ) -> impl ParIterOptionUsing<U, RunnerWithPool<P, R::Executor>, Item = Self::Item>
+    ) -> impl ParIterOptionUsing<'using, U, RunnerWithPool<P, R::Executor>, Item = Self::Item>
     where
         Self: Sized,
     {
@@ -91,7 +91,7 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn map<Out, Map>(self, map: Map) -> impl ParIterOptionUsing<U, R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterOptionUsing<'using, U, R, Item = Out>
     where
         Self: Sized,
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
@@ -107,7 +107,10 @@ where
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterOptionUsing<U, R, Item = Self::Item>
+    fn filter<Filter>(
+        self,
+        filter: Filter,
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = Self::Item>
     where
         Self: Sized,
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
@@ -126,7 +129,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterOptionUsing<U, R, Item = IOut::Item>
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = IOut::Item>
     where
         Self: Sized,
         IOut: IntoIterator,
@@ -147,7 +150,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterOptionUsing<U, R, Item = Out>
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = Out>
     where
         Self: Sized,
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
@@ -164,7 +167,7 @@ where
     fn inspect<Operation>(
         self,
         operation: Operation,
-    ) -> impl ParIterOptionUsing<U, R, Item = Self::Item>
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = Self::Item>
     where
         Self: Sized,
         Operation: Fn(&mut U::Item, &Self::Item) + Sync + Clone,

@@ -8,21 +8,21 @@ use core::marker::PhantomData;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.
-pub struct UParOption<U, F, T, R = DefaultRunner>
+pub struct UParOption<'using, U, F, T, R = DefaultRunner>
 where
     R: ParallelRunner,
-    F: ParIterResultUsing<U, R, Item = T, Err = ()>,
-    U: Using,
+    F: ParIterResultUsing<'using, U, R, Item = T, Err = ()>,
+    U: Using<'using>,
 {
     par: F,
-    phantom: PhantomData<(U, T, R)>,
+    phantom: PhantomData<(&'using (), U, T, R)>,
 }
 
-impl<U, F, T, R> UParOption<U, F, T, R>
+impl<'using, U, F, T, R> UParOption<'using, U, F, T, R>
 where
     R: ParallelRunner,
-    F: ParIterResultUsing<U, R, Item = T, Err = ()>,
-    U: Using,
+    F: ParIterResultUsing<'using, U, R, Item = T, Err = ()>,
+    U: Using<'using>,
 {
     pub(crate) fn new(par: F) -> Self {
         Self {
@@ -32,11 +32,11 @@ where
     }
 }
 
-impl<U, F, T, R> ParIterOptionUsing<U, R> for UParOption<U, F, T, R>
+impl<'using, U, F, T, R> ParIterOptionUsing<'using, U, R> for UParOption<'using, U, F, T, R>
 where
     R: ParallelRunner,
-    F: ParIterResultUsing<U, R, Item = T, Err = ()>,
-    U: Using,
+    F: ParIterResultUsing<'using, U, R, Item = T, Err = ()>,
+    U: Using<'using>,
 {
     type Item = T;
 
@@ -57,13 +57,13 @@ where
     fn with_runner<Q: ParallelRunner>(
         self,
         orchestrator: Q,
-    ) -> impl ParIterOptionUsing<U, Q, Item = Self::Item> {
+    ) -> impl ParIterOptionUsing<'using, U, Q, Item = Self::Item> {
         UParOption::<U, _, _, _>::new(self.par.with_runner(orchestrator))
     }
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIterOptionUsing<U, R, Item = Out>
+    fn map<Out, Map>(self, map: Map) -> impl ParIterOptionUsing<'using, U, R, Item = Out>
     where
         Map: Fn(&mut U::Item, Self::Item) -> Out + Sync + Clone,
         Out: Send,
@@ -71,7 +71,10 @@ where
         UParOption::<U, _, _, _>::new(self.par.map(map))
     }
 
-    fn filter<Filter>(self, filter: Filter) -> impl ParIterOptionUsing<U, R, Item = Self::Item>
+    fn filter<Filter>(
+        self,
+        filter: Filter,
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = Self::Item>
     where
         Self: Sized,
         Filter: Fn(&mut U::Item, &Self::Item) -> bool + Sync + Clone,
@@ -83,7 +86,7 @@ where
     fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
-    ) -> impl ParIterOptionUsing<U, R, Item = IOut::Item>
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = IOut::Item>
     where
         Self: Sized,
         IOut: IntoIterator,
@@ -96,7 +99,7 @@ where
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
-    ) -> impl ParIterOptionUsing<U, R, Item = Out>
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = Out>
     where
         Self: Sized,
         FilterMap: Fn(&mut U::Item, Self::Item) -> Option<Out> + Sync + Clone,
@@ -108,7 +111,7 @@ where
     fn inspect<Operation>(
         self,
         operation: Operation,
-    ) -> impl ParIterOptionUsing<U, R, Item = Self::Item>
+    ) -> impl ParIterOptionUsing<'using, U, R, Item = Self::Item>
     where
         Self: Sized,
         Operation: Fn(&mut U::Item, &Self::Item) + Sync + Clone,

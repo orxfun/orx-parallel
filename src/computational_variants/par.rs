@@ -97,12 +97,12 @@ where
 
     // using transformations
 
-    fn using<U, F>(
+    fn using<'using, U, F>(
         self,
         using: F,
-    ) -> impl ParIterUsing<UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<'using, UsingFun<F, U>, R, Item = <Self as ParIter<R>>::Item>
     where
-        U: 'static,
+        U: 'using,
         F: Fn(usize) -> U + Sync,
     {
         let using = UsingFun::new(using);
@@ -113,7 +113,7 @@ where
     fn using_clone<U>(
         self,
         value: U,
-    ) -> impl ParIterUsing<UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
+    ) -> impl ParIterUsing<'static, UsingClone<U>, R, Item = <Self as ParIter<R>>::Item>
     where
         U: Clone + 'static,
     {
