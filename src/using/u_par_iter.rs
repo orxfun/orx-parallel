@@ -265,6 +265,16 @@ where
         self.flat_map(map)
     }
 
+    /// Creates an iterator which gives each value along with its index in the source collection.
+    ///
+    /// Unlike [crate::ParIter::enumerate], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+    /// ```
+    fn enumerate(self) -> impl ParIterUsing<'using, U, R, Item = (usize, Self::Item)>;
+
     // collect
 
     /// Collects all the items from an iterator into a collection.

@@ -330,6 +330,38 @@ where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
         Out: Send;
 
+    /// Creates an iterator which gives each value along with its index in the source collection.
+    ///
+    /// The iterator returned yields pairs `(i, val)`, where `i` is the index in the source collection,
+    /// and `val` is the value returned by the iterator.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeed
+    /// let vec = vec![Some(26i32), Some(-27), Some(5)];
+    /// let max_abs = vec
+    ///     .into_par()
+    ///     .into_fallible_option()
+    ///     .enumerate()
+    ///     .max_by_key(|(_idx, x)| x.map(i32::abs));
+    /// assert_eq!(max_abs, Some(Some((1, -27))));
+    ///
+    /// // at least one fails
+    /// let vec = vec![Some(26i32), Some(-27), None];
+    /// let max_abs = vec
+    ///     .into_par()
+    ///     .into_fallible_option()
+    ///     .enumerate()
+    ///     .max_by_key(|(_idx, x)| x.map(i32::abs));
+    /// assert_eq!(max_abs, None);
+    /// ```
+    fn enumerate(self) -> impl ParIterOption<R, Item = (usize, Self::Item)>
+    where
+        Self: Sized;
+
     /// Does something with each successful element of an iterator, passing the value on, provided that all elements are of Some variant;
     /// short-circuits and returns None otherwise.
     ///

@@ -410,6 +410,46 @@ where
         filter_map.into_fallible_result()
     }
 
+    /// Creates an iterator which gives each value along with its index in the source collection.
+    ///
+    /// The iterator returned yields pairs `(i, val)`, where `i` is the index in the source collection,
+    /// and `val` is the value returned by the iterator.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // all succeed
+    /// let vec = vec!["26", "27", "5"];
+    /// let max_abs = vec
+    ///     .into_par()
+    ///     .into_fallible_result()
+    ///     .enumerate()
+    ///     .max_by_key(|(_idx, x)| x.parse::<i32>());
+    /// assert_eq!(max_abs, Ok(Ok((1, "27"))));
+    ///
+    /// // at least one fails
+    /// let vec = vec!["26", "27", "abc"];
+    /// let max_abs = vec
+    ///     .into_par()
+    ///     .into_fallible_result()
+    ///     .enumerate()
+    ///     .max_by_key(|(_idx, x)| x.parse::<i32>());
+    /// assert_eq!(max_abs, Err(_));
+    /// ```
+    fn enumerate(self) -> impl ParIterResult<R, Item = (usize, Self::Item), Err = Self::Err>
+    where
+        Self: Sized,
+    {
+        let par = self.into_regular_par();
+        let enumerate = par
+            .enumerate()
+            .map(|(idx, item)| Ok((idx, item.into_result()?)));
+
+        enumerate.into_fallible_result()
+    }
+
     /// Does something with each successful element of an iterator, passing the value on, provided that all elements are of Ok variant;
     /// short-circuits and returns the error otherwise.
     ///

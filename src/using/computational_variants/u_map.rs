@@ -160,6 +160,12 @@ where
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
+    fn enumerate(self) -> impl ParIterUsing<'using, U, R, Item = (usize, Self::Item)> {
+        let (using, orchestrator, params, iter, m1) = self.destruct();
+        let x1 = move |u: &mut U::Item, (x, i): (usize, I::Item)| (x, m1(u, i));
+        UParMap::new(using, orchestrator, params, iter.enumerate(), x1)
+    }
+
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
