@@ -22,6 +22,7 @@ mod collect_into;
 pub mod computational_variants;
 mod default_fns;
 mod env;
+mod exact_size;
 /// Module defining the parallel runner trait and the default parallel runner.
 pub mod executor;
 mod generic_values;
@@ -63,6 +64,7 @@ pub use orx_concurrent_recursive_iter::Queue;
 // export
 
 pub use collect_into::ParCollectInto;
+pub use exact_size::ExactSizeParIter;
 pub use executor::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
 pub use into_par_iter::IntoParIter;
 pub use iter::IntoParIterRec;
