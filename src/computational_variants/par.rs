@@ -151,6 +151,11 @@ where
         ParXap::new(orchestrator, params, iter, x1)
     }
 
+    fn enumerate(self) -> impl ParIter<R, Item = (usize, Self::Item)> {
+        let (orchestrator, params, iter) = self.destruct();
+        Par::new(orchestrator, params, iter.enumerate())
+    }
+
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync,

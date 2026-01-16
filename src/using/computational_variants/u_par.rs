@@ -142,6 +142,11 @@ where
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
+    fn enumerate(self) -> impl ParIterUsing<'using, U, R, Item = (usize, Self::Item)> {
+        let (using, orchestrator, params, iter) = self.destruct();
+        UPar::new(using, orchestrator, params, iter.enumerate())
+    }
+
     fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,

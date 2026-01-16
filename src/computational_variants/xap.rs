@@ -172,6 +172,15 @@ where
         ParXap::new(orchestrator, params, iter, x1)
     }
 
+    fn enumerate(self) -> impl ParIter<R, Item = (usize, Self::Item)> {
+        let (orchestrator, params, iter, x1) = self.destruct();
+        let x1 = move |(x, i): (usize, I::Item)| {
+            let vo = x1(i);
+            vo.map(move |item| (x, item))
+        };
+        ParXap::new(orchestrator, params, iter.enumerate(), x1)
+    }
+
     fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> impl ParIter<R, Item = Out>
     where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,

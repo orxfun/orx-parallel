@@ -233,6 +233,30 @@ where
         filter_map.into_fallible_result()
     }
 
+    /// Creates an iterator which gives each value along with its index in the source collection.
+    ///
+    /// The iterator returned yields pairs `(i, val)`, where `i` is the index in the source collection,
+    /// and `val` is the value returned by the iterator.
+    ///
+    /// Unlike [crate::ParIterResult::enumerate], the closure allows access to mutable reference of the used variable.
+    ///
+    /// Please see [`crate::ParIter::using`] transformation for details and examples.
+    ///
+    /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
+    fn enumerate(
+        self,
+    ) -> impl ParIterResultUsing<'using, U, R, Item = (usize, Self::Item), Err = Self::Err>
+    where
+        Self: Sized,
+    {
+        let par = self.into_regular_par();
+        let enumerate = par
+            .enumerate()
+            .map(|_u, (idx, item)| Ok((idx, item.into_result()?)));
+
+        enumerate.into_fallible_result()
+    }
+
     /// Does something with each successful element of an iterator, passing the value on, provided that all elements are of Ok variant;
     /// short-circuits and returns the error otherwise.
     ///

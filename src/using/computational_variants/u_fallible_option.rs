@@ -108,6 +108,10 @@ where
         UParOption::<U, _, _, _>::new(self.par.filter_map(filter_map))
     }
 
+    fn enumerate(self) -> impl ParIterOptionUsing<'using, U, R, Item = (usize, Self::Item)> {
+        UParOption::<U, _, _, _>::new(self.par.enumerate())
+    }
+
     fn inspect<Operation>(
         self,
         operation: Operation,

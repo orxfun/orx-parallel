@@ -95,6 +95,10 @@ where
         ParOption::new(self.par.filter_map(filter_map))
     }
 
+    fn enumerate(self) -> impl ParIterOption<R, Item = (usize, Self::Item)> {
+        ParOption::new(self.par.enumerate())
+    }
+
     fn inspect<Operation>(self, operation: Operation) -> impl ParIterOption<R, Item = Self::Item>
     where
         Self: Sized,
