@@ -2,6 +2,7 @@ mod utils;
 
 mod copied;
 mod count;
+mod enumerate;
 mod fallible_option;
 mod fallible_result;
 mod flatten;

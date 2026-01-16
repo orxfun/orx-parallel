@@ -172,7 +172,7 @@ where
     ///     .into_par()
     ///     .into_fallible_option()
     ///     .enumerate()
-    ///     .max_by_key(|(_idx, x)| x.map(i32::abs));
+    ///     .max_by_key(|(_idx, x)| x.abs());
     /// assert_eq!(max_abs, Some(Some((1, -27))));
     ///
     /// // at least one fails
@@ -181,7 +181,7 @@ where
     ///     .into_par()
     ///     .into_fallible_option()
     ///     .enumerate()
-    ///     .max_by_key(|(_idx, x)| x.map(i32::abs));
+    ///     .max_by_key(|(_idx, x)| x.abs());
     /// assert_eq!(max_abs, None);
     /// ```
     fn enumerate(self) -> impl ParIterOptionUsing<'using, U, R, Item = (usize, Self::Item)>

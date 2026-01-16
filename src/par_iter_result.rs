@@ -424,19 +424,21 @@ where
     /// let vec = vec!["26", "27", "5"];
     /// let max_abs = vec
     ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
     ///     .into_fallible_result()
     ///     .enumerate()
-    ///     .max_by_key(|(_idx, x)| x.parse::<i32>());
-    /// assert_eq!(max_abs, Ok(Ok((1, "27"))));
+    ///     .max_by_key(|(_idx, x)| *x);
+    /// assert_eq!(max_abs, Ok(Some((1, 27))));
     ///
     /// // at least one fails
     /// let vec = vec!["26", "27", "abc"];
     /// let max_abs = vec
     ///     .into_par()
+    ///     .map(|x| x.parse::<i32>())
     ///     .into_fallible_result()
     ///     .enumerate()
-    ///     .max_by_key(|(_idx, x)| x.parse::<i32>());
-    /// assert_eq!(max_abs, Err(_));
+    ///     .max_by_key(|(_idx, x)| *x);
+    /// assert!(max_abs.is_err());
     /// ```
     fn enumerate(self) -> impl ParIterResult<R, Item = (usize, Self::Item), Err = Self::Err>
     where
