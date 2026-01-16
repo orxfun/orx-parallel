@@ -8,7 +8,7 @@ use crate::using::{UPar, UsingClone, UsingFun};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params, default_fns::map_self,
 };
-use crate::{IntoParIter, ParIterResult, ParIterUsing};
+use crate::{IntoParIter, ParEnumerate, ParIterResult, ParIterUsing};
 use orx_concurrent_iter::chain::ChainKnownLenI;
 use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 
@@ -238,5 +238,16 @@ where
         let (orchestrator, params, iter) = self.destruct();
         let iter = iter.chain(other.into_con_iter());
         Par::new(orchestrator, params, iter)
+    }
+}
+
+impl<I, R> ParEnumerate<R> for Par<I, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+{
+    fn enumerate(self) -> impl ParIter<R, Item = (usize, Self::Item)> {
+        let (orchestrator, params, iter) = self.destruct();
+        Par::new(orchestrator, params, iter.enumerate())
     }
 }

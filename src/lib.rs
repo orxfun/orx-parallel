@@ -21,6 +21,7 @@ mod collect_into;
 /// Module containing variants of parallel iterators.
 pub mod computational_variants;
 mod default_fns;
+mod enumerate;
 mod env;
 /// Module defining the parallel runner trait and the default parallel runner.
 pub mod executor;
@@ -63,6 +64,7 @@ pub use orx_concurrent_recursive_iter::Queue;
 // export
 
 pub use collect_into::ParCollectInto;
+pub use enumerate::ParEnumerate;
 pub use executor::{DefaultExecutor, ParallelExecutor, ThreadExecutor};
 pub use into_par_iter::IntoParIter;
 pub use iter::IntoParIterRec;
