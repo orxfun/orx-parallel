@@ -1,5 +1,9 @@
-use crate::NumThreads;
+use crate::ParThreadPool;
 
-pub fn sort<T: Ord>(slice: &mut [T], num_threads: NumThreads) {
+pub fn sort<P, T>(pool: &mut P, slice: &mut [T])
+where
+    P: ParThreadPool,
+    T: Ord,
+{
     slice.sort();
 }
