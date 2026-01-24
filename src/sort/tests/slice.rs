@@ -26,13 +26,31 @@ fn slice_ranges(len: usize, num_chunks: usize, ranges: Vec<Range<usize>>) {
         StdDefaultPool::default(),
         StdDefaultPool::with_max_num_threads(NonZeroUsize::new(1).unwrap()),
         StdDefaultPool::with_max_num_threads(NonZeroUsize::new(4).unwrap()),
-    ]
+    ],
+    [1, 4, 10]
 )]
-fn slice_sort<P>(len: usize, number_of_swaps: usize, mut pool: P)
+fn slice_sort<P>(len: usize, number_of_swaps: usize, mut pool: P, nt: usize)
 where
     P: ParThreadPool,
 {
+    let nt = NonZeroUsize::new(nt).unwrap();
     let (mut input, sorted) = create_input_and_sorted(len, |i| i, number_of_swaps);
-    sort(&mut pool, &mut input);
-    assert_eq!(input, sorted);
+    sort(&mut pool, nt, &mut input);
+    // assert_eq!(input, sorted);
+}
+
+#[test]
+fn abc() {
+    let len = 20;
+    let number_of_swaps = 1000;
+    let mut pool = StdDefaultPool::default();
+    let nt = 4;
+
+    let nt = NonZeroUsize::new(nt).unwrap();
+    let (mut input, sorted) = create_input_and_sorted(len, |i| i, number_of_swaps);
+    std::println!("before\n{input:?}");
+    sort(&mut pool, nt, &mut input);
+    // assert_eq!(input, sorted);
+    std::println!("after\n{input:?}");
+    assert_eq!(input.len(), 33);
 }

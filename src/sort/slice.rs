@@ -1,13 +1,22 @@
-use crate::ParThreadPool;
+use crate::{ParIter, ParThreadPool, ParallelizableCollection};
 use alloc::vec::Vec;
-use core::ops::Range;
+use core::{num::NonZeroUsize, ops::Range, ptr::slice_from_raw_parts_mut};
 
-pub fn sort<P, T>(pool: &mut P, slice: &mut [T])
+pub fn sort<P, T>(pool: &mut P, num_threads: NonZeroUsize, slice: &mut [T])
 where
     P: ParThreadPool,
     T: Ord,
 {
-    slice.sort();
+    let num_chunks: usize = pool.max_num_threads().min(num_threads).into();
+    let ranges = slice_ranges(slice.len(), num_chunks);
+    let p = slice.as_mut_ptr() as usize;
+    ranges.par().for_each(|range| {
+        let p = p as *mut T;
+        let ptr = unsafe { p.add(range.start) };
+        let slice = unsafe { &mut *slice_from_raw_parts_mut(ptr, range.len()) };
+        slice.sort();
+    });
+    // slice.sort();
 }
 
 pub(super) fn slice_ranges(len: usize, num_chunks: usize) -> Vec<Range<usize>> {
