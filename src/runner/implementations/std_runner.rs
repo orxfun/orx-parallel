@@ -23,6 +23,16 @@ pub struct StdDefaultPool {
     max_num_threads: NonZeroUsize,
 }
 
+impl StdDefaultPool {
+    pub fn with_max_num_threads(max_num_threads: NonZeroUsize) -> Self {
+        let mut pool = Self::default();
+        if max_num_threads < pool.max_num_threads {
+            pool.max_num_threads = max_num_threads;
+        }
+        pool
+    }
+}
+
 impl Default for StdDefaultPool {
     fn default() -> Self {
         let env_max_num_threads = crate::env::max_num_threads_by_env_variable();
