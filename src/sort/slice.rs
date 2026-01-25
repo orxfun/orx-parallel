@@ -1,4 +1,4 @@
-use crate::{ParIter, ParThreadPool, ParallelizableCollection};
+use crate::{ParIter, ParThreadPool, Parallelizable, ParallelizableCollection};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::{num::NonZeroUsize, ptr::slice_from_raw_parts_mut};
@@ -24,9 +24,12 @@ where
     let start = std::time::Instant::now();
     for d in (1..=depth).rev() {
         let num_merges = 1 << (d - 1);
-        for m in 0..num_merges {
+        (0..num_merges).par().for_each(|m| {
             merge(&chunks_a, &chunks_b, depth, d, m);
-        }
+        });
+        // for m in 0..num_merges {
+        //     merge(&chunks_a, &chunks_b, depth, d, m);
+        // }
     }
     std::println!("elapsed 2 = {:?}", start.elapsed());
 }

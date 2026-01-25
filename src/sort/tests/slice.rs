@@ -56,14 +56,13 @@ where
 #[test]
 fn abc() {
     let len = 1 << 22;
-    let len = 10;
     let number_of_swaps = 4 * len;
     let mut pool = StdDefaultPool::default();
     let nt = 32;
 
     let nt = NonZeroUsize::new(nt).unwrap();
     let (mut input, sorted) = create_input_and_sorted(len, |i| i, number_of_swaps);
-    println!("before = {input:?}");
+    // println!("before = {input:?}");
     // std::println!("before\n{input:?}");
     // sort(
     //     &mut pool,
@@ -71,8 +70,8 @@ fn abc() {
     //     &mut input,
     //     SortChunks::SeqWithPriorityQueuePtrs,
     // );
-    sort2(&mut pool, nt, &mut input, 2);
-    println!("after = {input:?}");
+    sort2(&mut pool, nt, &mut input, 10);
+    // println!("after = {input:?}");*
 
     assert_eq!(input, sorted);
     // std::println!("after\n{input:?}");
