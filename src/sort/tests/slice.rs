@@ -1,10 +1,11 @@
-use crate::sort::slice::SortChunks;
+use crate::sort::slice::{SortChunks, sort2};
 use crate::sort::{slice::sort, tests::utils::create_input_and_sorted};
 use crate::{ParThreadPool, StdDefaultPool};
 use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::num::NonZeroUsize;
+use std::println;
 use test_case::{test_case, test_matrix};
 
 #[test_case(0, 0, vec![])]
@@ -43,22 +44,37 @@ where
 {
     let nt = NonZeroUsize::new(nt).unwrap();
     let (mut input, sorted) = create_input_and_sorted(len, |i| Box::new(i), number_of_swaps);
-    sort(&mut pool, nt, &mut input, SortChunks::SeqWithVec);
+    sort(
+        &mut pool,
+        nt,
+        &mut input,
+        SortChunks::SeqWithPriorityQueuePtrs,
+    );
     assert_eq!(input, sorted);
 }
 
 #[test]
 fn abc() {
-    let len = 20;
-    let number_of_swaps = 1000;
+    let len = 1 << 22;
+    let len = 10;
+    let number_of_swaps = 4 * len;
     let mut pool = StdDefaultPool::default();
-    let nt = 4;
+    let nt = 32;
 
     let nt = NonZeroUsize::new(nt).unwrap();
     let (mut input, sorted) = create_input_and_sorted(len, |i| i, number_of_swaps);
-    std::println!("before\n{input:?}");
-    sort(&mut pool, nt, &mut input, SortChunks::SeqWithVec);
+    println!("before = {input:?}");
+    // std::println!("before\n{input:?}");
+    // sort(
+    //     &mut pool,
+    //     nt,
+    //     &mut input,
+    //     SortChunks::SeqWithPriorityQueuePtrs,
+    // );
+    sort2(&mut pool, nt, &mut input, 2);
+    println!("after = {input:?}");
+
     assert_eq!(input, sorted);
-    std::println!("after\n{input:?}");
-    // assert_eq!(input.len(), 33);
+    // std::println!("after\n{input:?}");
+    assert_eq!(input.len(), 33);
 }

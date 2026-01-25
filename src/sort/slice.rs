@@ -4,9 +4,105 @@ use alloc::vec::Vec;
 use core::{num::NonZeroUsize, ptr::slice_from_raw_parts_mut};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
+pub fn sort2<P, T>(pool: &mut P, num_threads: NonZeroUsize, slice: &mut [T], depth: usize)
+where
+    P: ParThreadPool,
+    T: Ord,
+{
+    let n = slice.len();
+    let num_chunks = 1 << depth;
+
+    let mut b = Vec::<T>::with_capacity(n);
+
+    let chunks_a = slice_chunks(slice.as_mut_ptr(), n, num_chunks);
+    let chunks_b = slice_chunks(b.as_mut_ptr(), n, num_chunks);
+
+    let start = std::time::Instant::now();
+    chunks_a.par().for_each(|chunk| chunk.as_mut_slice().sort());
+    std::println!("elapsed 1 = {:?}", start.elapsed());
+
+    let start = std::time::Instant::now();
+    for d in (1..=depth).rev() {
+        let num_merges = 1 << (d - 1);
+        for m in 0..num_merges {
+            merge(&chunks_a, &chunks_b, depth, d, m);
+        }
+    }
+    std::println!("elapsed 2 = {:?}", start.elapsed());
+}
+
+fn merge<T>(
+    chunks_a: &[SliceChunk<T>],
+    chunks_b: &[SliceChunk<T>],
+    depth: usize,
+    d: usize,
+    m: usize,
+) where
+    T: Ord,
+{
+    let inc = 1 << (depth - d);
+    let beg1 = m * 2 * inc;
+    let end1 = beg1 + inc;
+    let beg2 = end1;
+    let end2 = beg2 + inc;
+
+    let (chunks_src, chunks_dst) = match d.is_multiple_of(2) {
+        true => (chunks_a, chunks_b),
+        false => (chunks_b, chunks_a),
+    };
+
+    let src1 = SliceChunk::merged_slice(&chunks_src[beg1..end1]);
+    let src2 = SliceChunk::merged_slice(&chunks_src[beg2..end2]);
+    let dst = SliceChunk::merged_slice(&chunks_dst[beg1..end2]);
+    debug_assert_eq!(src1.len + src2.len, dst.len);
+
+    let mut p1 = src1.data;
+    let mut p2 = src2.data;
+    let inc_end1 = unsafe { p1.add(src1.len - 1) };
+    let inc_end2 = unsafe { p2.add(src2.len - 1) };
+    let mut q = dst.data;
+    for _ in 0..dst.len {
+        match unsafe { &*p1 < &*p2 } {
+            true => {
+                unsafe { q.copy_from_nonoverlapping(p1, 1) };
+                match p1 == inc_end1 {
+                    true => {
+                        let remaining2 = unsafe { inc_end2.offset_from(p2) } as usize + 1;
+                        unsafe { q = q.add(1) };
+                        unsafe { q.copy_from_nonoverlapping(p2, remaining2) };
+                        break;
+                    }
+                    false => {
+                        unsafe { p1 = p1.add(1) };
+                        unsafe { q = q.add(1) };
+                    }
+                }
+            }
+            false => {
+                unsafe { q.copy_from_nonoverlapping(p2, 1) };
+                match p2 == inc_end2 {
+                    true => {
+                        let remaining1 = unsafe { inc_end1.offset_from(p1) } as usize + 1;
+                        unsafe { q = q.add(1) };
+                        unsafe { q.copy_from_nonoverlapping(p1, remaining1) };
+                        break;
+                    }
+                    false => {
+                        unsafe { p2 = p2.add(1) };
+                        unsafe { q = q.add(1) };
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ####################
+
 #[derive(Debug, Copy, Clone)]
 pub enum SortChunks {
     SeqWithPriorityQueue,
+    SeqWithPriorityQueuePtrs,
     SeqWithVec,
 }
 
@@ -25,16 +121,23 @@ where
     let chunks = slice_chunks(buf_ptr, slice.len(), num_chunks);
 
     // chunks.par().for_each(|chunk| chunk.as_mut_slice().sort());
+    let start = std::time::Instant::now();
     std::thread::scope(|s| {
         for chunk in &chunks {
             s.spawn(|| chunk.as_mut_slice().sort());
         }
     });
+    let elapsed = start.elapsed();
+    std::println!("elapsed 1 = {elapsed:?}");
+    let start = std::time::Instant::now();
 
     match sort_chunks {
         SortChunks::SeqWithPriorityQueue => sort_chunks_by_queue(chunks, slice),
+        SortChunks::SeqWithPriorityQueuePtrs => sort_chunks_by_queue_ptrs(chunks, slice),
         SortChunks::SeqWithVec => sort_chunks_by_vec(chunks, slice),
     }
+    let elapsed = start.elapsed();
+    std::println!("elapsed 2 = {elapsed:?}");
 }
 
 fn sort_chunks_by_queue<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])
@@ -62,6 +165,36 @@ where
         };
 
         let src = unsafe { chunks[c].ptr_at(idx) };
+        unsafe { dst.copy_from_nonoverlapping(src, 1) };
+        dst = unsafe { dst.add(1) };
+    }
+}
+
+fn sort_chunks_by_queue_ptrs<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])
+where
+    T: Ord,
+{
+    let mut queue = BinaryHeap::with_capacity(chunks.len());
+    let mut ptrs_counts: Vec<_> = chunks.iter().map(|c| (unsafe { c.ptr_at(0) }, 1)).collect();
+
+    for (c, _) in chunks.iter().enumerate() {
+        queue.push(c, unsafe { &*ptrs_counts[c].0 });
+    }
+
+    let mut dst = slice.as_mut_ptr();
+    let mut curr_c = queue.pop_node();
+    while let Some(c) = curr_c {
+        let (src, count) = ptrs_counts[c];
+
+        curr_c = match count < chunks[c].len {
+            true => {
+                unsafe { ptrs_counts[c].0 = ptrs_counts[c].0.add(1) };
+                ptrs_counts[c].1 += 1;
+                Some(queue.push_then_pop(c, unsafe { &*ptrs_counts[c].0 }).0)
+            }
+            false => queue.pop_node(),
+        };
+
         unsafe { dst.copy_from_nonoverlapping(src, 1) };
         dst = unsafe { dst.add(1) };
     }
@@ -146,6 +279,31 @@ impl<T> SliceChunk<T> {
     #[inline(always)]
     unsafe fn ptr_at(&self, i: usize) -> *const T {
         unsafe { &*self.data.add(i) }
+    }
+
+    /// Returns the slice obtained by merging all `slices`.
+    ///
+    /// # Panics
+    ///
+    /// if `slices` is empty.
+    ///
+    /// # Safety
+    ///
+    /// The `slices` are expected to be contiguous, which can create a large slice
+    /// when joined back to back.
+    fn merged_slice(slices: &[SliceChunk<T>]) -> Self {
+        debug_assert!(!slices.is_empty());
+
+        let mut len = slices[0].len;
+        let data = slices[0].data;
+        let mut end = unsafe { data.add(slices[0].len) };
+
+        for slice in slices.iter().skip(1) {
+            debug_assert_eq!(slice.data, end);
+            len += slice.len;
+            end = unsafe { end.add(slice.len) };
+        }
+        Self { data, len }
     }
 }
 
