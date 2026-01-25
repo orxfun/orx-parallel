@@ -1,8 +1,8 @@
 use crate::{ParIter, ParThreadPool, ParallelizableCollection};
 use alloc::vec;
 use alloc::vec::Vec;
-use core::{num::NonZeroUsize, ops::Range, ptr::slice_from_raw_parts_mut};
-use orx_priority_queue::BinaryHeap;
+use core::{num::NonZeroUsize, ptr::slice_from_raw_parts_mut};
+use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
 pub fn sort<P, T>(pool: &mut P, num_threads: NonZeroUsize, slice: &mut [T])
 where
@@ -10,37 +10,62 @@ where
     T: Ord,
 {
     let num_chunks: usize = pool.max_num_threads().min(num_threads).into();
-    // let ranges = slice_ranges(slice.len(), num_chunks);
 
     let mut buf = Vec::<T>::with_capacity(slice.len());
     let buf_ptr = buf.as_mut_ptr();
     unsafe { buf_ptr.copy_from_nonoverlapping(slice.as_ptr(), slice.len()) };
 
-    let chunks = slice_chunks(slice.as_mut_ptr(), slice.len(), num_chunks);
+    let chunks = slice_chunks(buf_ptr, slice.len(), num_chunks);
 
     chunks.par().for_each(|chunk| chunk.as_mut_slice().sort());
 
-    // let mut queue = BinaryHeap::with_capacity(ranges.len());
-    // let mut indices = vec![0; ranges.len()];
+    let mut queue = BinaryHeap::with_capacity(chunks.len());
+    let mut indices = vec![0; chunks.len()];
 
-    // for (v, vec) in ranges.iter().enumerate() {
-    //     if let Some(x) = vec.get(indices[v])
-    //         && x.0 <= max_idx_or_inf
-    //     {
-    //         queue.push(v, x.0);
-    //     }
-    // }
-    // let mut curr_v = queue.pop_node();
-    // slice.sort();
+    for (c, chunk) in chunks.iter().enumerate() {
+        if let Some(x) = chunk.get(indices[c]) {
+            queue.push(c, x);
+        }
+    }
+
+    let mut dst = slice.as_mut_ptr();
+    let mut curr_c = queue.pop_node();
+    while let Some(c) = curr_c {
+        let idx = indices[c];
+        indices[c] += 1;
+
+        curr_c = match chunks[c].get(indices[c]) {
+            Some(x) => Some(queue.push_then_pop(c, x).0),
+            None => queue.pop_node(),
+        };
+
+        let src = unsafe { chunks[c].ptr_at(idx) };
+        unsafe { dst.copy_from_nonoverlapping(src, 1) };
+        dst = unsafe { dst.add(1) };
+    }
 }
 
-pub(super) struct SliceChunk<T>(*mut T, usize);
+pub(super) struct SliceChunk<T> {
+    data: *mut T,
+    len: usize,
+}
 unsafe impl<T> Send for SliceChunk<T> {}
 unsafe impl<T> Sync for SliceChunk<T> {}
 
 impl<T> SliceChunk<T> {
     pub(super) fn as_mut_slice(&self) -> &mut [T] {
-        unsafe { &mut *slice_from_raw_parts_mut(self.0, self.1) }
+        unsafe { &mut *slice_from_raw_parts_mut(self.data, self.len) }
+    }
+
+    fn get(&self, i: usize) -> Option<&T> {
+        match i < self.len {
+            true => Some(unsafe { &*self.data.add(i) }),
+            false => None,
+        }
+    }
+
+    unsafe fn ptr_at(&self, i: usize) -> *const T {
+        unsafe { &*self.data.add(i) }
     }
 }
 
@@ -66,10 +91,10 @@ pub(super) fn slice_chunks<T>(data: *mut T, len: usize, num_chunks: usize) -> Ve
             };
             for c in 0..num_chunks {
                 let data = unsafe { data.add(begin) };
-                let chunk_size = chunk_size(c);
-                slices.push(SliceChunk(data, chunk_size));
+                let len = chunk_size(c);
+                slices.push(SliceChunk { data, len });
 
-                let end = begin + chunk_size;
+                let end = begin + len;
                 begin = end;
             }
         }
