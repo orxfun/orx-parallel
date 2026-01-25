@@ -1,5 +1,6 @@
 use crate::sort::{slice::sort, tests::utils::create_input_and_sorted};
 use crate::{ParThreadPool, StdDefaultPool};
+use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::num::NonZeroUsize;
@@ -40,9 +41,9 @@ where
     P: ParThreadPool,
 {
     let nt = NonZeroUsize::new(nt).unwrap();
-    let (mut input, sorted) = create_input_and_sorted(len, |i| i, number_of_swaps);
+    let (mut input, sorted) = create_input_and_sorted(len, |i| Box::new(i), number_of_swaps);
     sort(&mut pool, nt, &mut input);
-    // assert_eq!(input, sorted);
+    assert_eq!(input, sorted);
 }
 
 #[test]
@@ -56,7 +57,7 @@ fn abc() {
     let (mut input, sorted) = create_input_and_sorted(len, |i| i, number_of_swaps);
     std::println!("before\n{input:?}");
     sort(&mut pool, nt, &mut input);
-    // assert_eq!(input, sorted);
+    assert_eq!(input, sorted);
     std::println!("after\n{input:?}");
-    assert_eq!(input.len(), 33);
+    // assert_eq!(input.len(), 33);
 }
