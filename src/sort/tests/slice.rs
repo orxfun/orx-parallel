@@ -1,3 +1,4 @@
+use crate::sort::slice::SortChunks;
 use crate::sort::{slice::sort, tests::utils::create_input_and_sorted};
 use crate::{ParThreadPool, StdDefaultPool};
 use alloc::boxed::Box;
@@ -42,7 +43,7 @@ where
 {
     let nt = NonZeroUsize::new(nt).unwrap();
     let (mut input, sorted) = create_input_and_sorted(len, |i| Box::new(i), number_of_swaps);
-    sort(&mut pool, nt, &mut input);
+    sort(&mut pool, nt, &mut input, SortChunks::SeqWithPriorityQueue);
     assert_eq!(input, sorted);
 }
 
@@ -56,7 +57,7 @@ fn abc() {
     let nt = NonZeroUsize::new(nt).unwrap();
     let (mut input, sorted) = create_input_and_sorted(len, |i| i, number_of_swaps);
     std::println!("before\n{input:?}");
-    sort(&mut pool, nt, &mut input);
+    sort(&mut pool, nt, &mut input, SortChunks::SeqWithPriorityQueue);
     assert_eq!(input, sorted);
     std::println!("after\n{input:?}");
     // assert_eq!(input.len(), 33);

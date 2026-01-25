@@ -4,12 +4,18 @@ use alloc::vec::Vec;
 use core::{num::NonZeroUsize, ptr::slice_from_raw_parts_mut};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-pub fn sort<P, T>(pool: &mut P, num_threads: NonZeroUsize, slice: &mut [T])
+#[derive(Debug, Copy, Clone)]
+pub enum SortChunks {
+    SeqWithPriorityQueue,
+}
+
+pub fn sort<P, T>(pool: &mut P, num_threads: NonZeroUsize, slice: &mut [T], sort_chunks: SortChunks)
 where
     P: ParThreadPool,
     T: Ord,
 {
     let num_chunks: usize = pool.max_num_threads().min(num_threads).into();
+    assert_eq!(num_chunks, 32);
 
     let mut buf = Vec::<T>::with_capacity(slice.len());
     let buf_ptr = buf.as_mut_ptr();
@@ -17,8 +23,22 @@ where
 
     let chunks = slice_chunks(buf_ptr, slice.len(), num_chunks);
 
-    chunks.par().for_each(|chunk| chunk.as_mut_slice().sort());
+    // chunks.par().for_each(|chunk| chunk.as_mut_slice().sort());
+    std::thread::scope(|s| {
+        for chunk in &chunks {
+            s.spawn(|| chunk.as_mut_slice().sort());
+        }
+    });
 
+    match sort_chunks {
+        SortChunks::SeqWithPriorityQueue => sort_chunks_by_queue(chunks, slice),
+    }
+}
+
+fn sort_chunks_by_queue<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])
+where
+    T: Ord,
+{
     let mut queue = BinaryHeap::with_capacity(chunks.len());
     let mut indices = vec![0; chunks.len()];
 
@@ -64,6 +84,7 @@ impl<T> SliceChunk<T> {
         }
     }
 
+    #[inline(always)]
     unsafe fn ptr_at(&self, i: usize) -> *const T {
         unsafe { &*self.data.add(i) }
     }
