@@ -43,6 +43,15 @@ fn orx_with_queue(inputs: &mut [Val], nt: usize) {
     );
 }
 
+fn orx_with_vec(inputs: &mut [Val], nt: usize) {
+    orx_parallel::sort::slice::sort(
+        &mut StdDefaultPool::default(),
+        NonZeroUsize::new(nt).unwrap(),
+        inputs,
+        SortChunks::SeqWithVec,
+    );
+}
+
 fn run(c: &mut Criterion) {
     let lengths = [65_536 * 1, 65_536 * 2, 65_536 * 4, 65_536 * 8];
     let num_swaps = [65_536 * 8];
@@ -70,6 +79,12 @@ fn run(c: &mut Criterion) {
             group.bench_with_input(BenchmarkId::new("orx_with_queue", len), len, |b, _| {
                 let mut input = input.clone();
                 b.iter(|| orx_with_queue(black_box(&mut input), 32));
+                assert_eq!(&input, &sorted);
+            });
+
+            group.bench_with_input(BenchmarkId::new("orx_with_vec", len), len, |b, _| {
+                let mut input = input.clone();
+                b.iter(|| orx_with_vec(black_box(&mut input), 32));
                 assert_eq!(&input, &sorted);
             });
         }

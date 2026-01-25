@@ -7,6 +7,7 @@ use orx_priority_queue::{BinaryHeap, PriorityQueue};
 #[derive(Debug, Copy, Clone)]
 pub enum SortChunks {
     SeqWithPriorityQueue,
+    SeqWithVec,
 }
 
 pub fn sort<P, T>(pool: &mut P, num_threads: NonZeroUsize, slice: &mut [T], sort_chunks: SortChunks)
@@ -15,7 +16,7 @@ where
     T: Ord,
 {
     let num_chunks: usize = pool.max_num_threads().min(num_threads).into();
-    assert_eq!(num_chunks, 32);
+    // assert_eq!(num_chunks, 32);
 
     let mut buf = Vec::<T>::with_capacity(slice.len());
     let buf_ptr = buf.as_mut_ptr();
@@ -32,6 +33,7 @@ where
 
     match sort_chunks {
         SortChunks::SeqWithPriorityQueue => sort_chunks_by_queue(chunks, slice),
+        SortChunks::SeqWithVec => sort_chunks_by_vec(chunks, slice),
     }
 }
 
@@ -42,6 +44,63 @@ where
     let mut queue = BinaryHeap::with_capacity(chunks.len());
     let mut indices = vec![0; chunks.len()];
 
+    for (c, chunk) in chunks.iter().enumerate() {
+        if let Some(x) = chunk.get(indices[c]) {
+            queue.push(c, x);
+        }
+    }
+
+    let mut dst = slice.as_mut_ptr();
+    let mut curr_c = queue.pop_node();
+    while let Some(c) = curr_c {
+        let idx = indices[c];
+        indices[c] += 1;
+
+        curr_c = match chunks[c].get(indices[c]) {
+            Some(x) => Some(queue.push_then_pop(c, x).0),
+            None => queue.pop_node(),
+        };
+
+        let src = unsafe { chunks[c].ptr_at(idx) };
+        unsafe { dst.copy_from_nonoverlapping(src, 1) };
+        dst = unsafe { dst.add(1) };
+    }
+}
+
+fn sort_chunks_by_vec<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])
+where
+    T: Ord,
+{
+    let mut indices = vec![0; chunks.len()];
+
+    for dst in slice.iter_mut() {
+        let mut min_c = usize::MAX;
+        let mut curr = None;
+        for (c, chunk) in chunks.iter().enumerate() {
+            match chunk.get(indices[c]) {
+                Some(x) => match curr {
+                    Some(y) if x < y => {
+                        curr = Some(x);
+                        min_c = c;
+                    }
+                    None => {
+                        curr = Some(x);
+                        min_c = c;
+                    }
+                    _ => {}
+                },
+                None => {}
+            }
+        }
+
+        let idx = indices[min_c];
+        indices[min_c] += 1;
+        let src = unsafe { chunks[min_c].ptr_at(idx) };
+        let dst = dst as *mut T;
+        unsafe { dst.copy_from_nonoverlapping(src, 1) };
+    }
+
+    let mut queue = BinaryHeap::with_capacity(chunks.len());
     for (c, chunk) in chunks.iter().enumerate() {
         if let Some(x) = chunk.get(indices[c]) {
             queue.push(c, x);
