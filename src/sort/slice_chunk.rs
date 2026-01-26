@@ -8,6 +8,15 @@ pub(super) struct SliceChunk<T> {
 unsafe impl<T> Send for SliceChunk<T> {}
 unsafe impl<T> Sync for SliceChunk<T> {}
 
+impl<T> From<&mut [T]> for SliceChunk<T> {
+    fn from(value: &mut [T]) -> Self {
+        Self {
+            data: value.as_mut_ptr(),
+            len: value.len(),
+        }
+    }
+}
+
 impl<T> SliceChunk<T> {
     pub fn as_mut_slice(&self) -> &mut [T] {
         unsafe { &mut *slice_from_raw_parts_mut(self.data, self.len) }
