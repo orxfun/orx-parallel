@@ -5,7 +5,6 @@ use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::num::NonZeroUsize;
-use std::println;
 use test_case::{test_case, test_matrix};
 
 #[test_case(0, 0, vec![])]
@@ -20,7 +19,7 @@ use test_case::{test_case, test_matrix};
 fn slice_chunks(len: usize, num_chunks: usize, chunks: Vec<Vec<usize>>) {
     let mut v: Vec<_> = (0..len).collect();
     assert_eq!(
-        crate::sort::slice::slice_chunks(v.as_mut_ptr(), v.len(), num_chunks)
+        crate::sort::slice_chunk::slice_chunks(v.as_mut_ptr(), v.len(), num_chunks)
             .into_iter()
             .map(|c| c.as_mut_slice().iter().copied().collect::<Vec<_>>())
             .collect::<Vec<_>>(),
