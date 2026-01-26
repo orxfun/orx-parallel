@@ -4,9 +4,8 @@ use alloc::vec::Vec;
 use core::{num::NonZeroUsize, ptr::slice_from_raw_parts_mut};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-pub fn sort2<P, T>(pool: &mut P, num_threads: NonZeroUsize, slice: &mut [T], depth: usize)
+pub fn sort3<T>(slice: &mut [T], depth: usize)
 where
-    P: ParThreadPool,
     T: Ord,
 {
     let n = slice.len();
@@ -17,11 +16,11 @@ where
     let chunks_a = slice_chunks(slice.as_mut_ptr(), n, num_chunks);
     let chunks_b = slice_chunks(b.as_mut_ptr(), n, num_chunks);
 
-    let start = std::time::Instant::now();
+    // let start = std::time::Instant::now();
     chunks_a.par().for_each(|chunk| chunk.as_mut_slice().sort());
-    std::println!("elapsed 1 = {:?}", start.elapsed());
+    // std::println!("elapsed = {:?}", start.elapsed());
 
-    let start = std::time::Instant::now();
+    // let start = std::time::Instant::now();
     for d in (1..=depth).rev() {
         let num_merges = 1 << (d - 1);
         (0..num_merges).par().for_each(|m| {
@@ -31,7 +30,38 @@ where
         //     merge(&chunks_a, &chunks_b, depth, d, m);
         // }
     }
-    std::println!("elapsed 2 = {:?}", start.elapsed());
+    // std::println!("elapsed = {:?}", start.elapsed());
+}
+
+// ####################
+
+pub fn sort2<T>(slice: &mut [T], depth: usize)
+where
+    T: Ord,
+{
+    let n = slice.len();
+    let num_chunks = 1 << depth;
+
+    let mut b = Vec::<T>::with_capacity(n);
+
+    let chunks_a = slice_chunks(slice.as_mut_ptr(), n, num_chunks);
+    let chunks_b = slice_chunks(b.as_mut_ptr(), n, num_chunks);
+
+    // let start = std::time::Instant::now();
+    chunks_a.par().for_each(|chunk| chunk.as_mut_slice().sort());
+    // std::println!("elapsed = {:?}", start.elapsed());
+
+    // let start = std::time::Instant::now();
+    for d in (1..=depth).rev() {
+        let num_merges = 1 << (d - 1);
+        (0..num_merges).par().for_each(|m| {
+            merge(&chunks_a, &chunks_b, depth, d, m);
+        });
+        // for m in 0..num_merges {
+        //     merge(&chunks_a, &chunks_b, depth, d, m);
+        // }
+    }
+    // std::println!("elapsed = {:?}", start.elapsed());
 }
 
 fn merge<T>(
@@ -124,23 +154,23 @@ where
     let chunks = slice_chunks(buf_ptr, slice.len(), num_chunks);
 
     // chunks.par().for_each(|chunk| chunk.as_mut_slice().sort());
-    let start = std::time::Instant::now();
+    // let start = std::time::Instant::now();
     std::thread::scope(|s| {
         for chunk in &chunks {
             s.spawn(|| chunk.as_mut_slice().sort());
         }
     });
-    let elapsed = start.elapsed();
-    std::println!("elapsed 1 = {elapsed:?}");
-    let start = std::time::Instant::now();
+    // let elapsed = start.elapsed();
+    // std::println!("elapsed = {elapsed:?}");
+    // let start = std::time::Instant::now();
 
     match sort_chunks {
         SortChunks::SeqWithPriorityQueue => sort_chunks_by_queue(chunks, slice),
         SortChunks::SeqWithPriorityQueuePtrs => sort_chunks_by_queue_ptrs(chunks, slice),
         SortChunks::SeqWithVec => sort_chunks_by_vec(chunks, slice),
     }
-    let elapsed = start.elapsed();
-    std::println!("elapsed 2 = {elapsed:?}");
+    // let elapsed = start.elapsed();
+    // std::println!("elapsed = {elapsed:?}");
 }
 
 fn sort_chunks_by_queue<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])

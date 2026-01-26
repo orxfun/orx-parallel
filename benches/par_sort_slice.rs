@@ -61,9 +61,14 @@ fn orx_with_vec(inputs: &mut [Val], nt: usize) {
     );
 }
 
+fn orx_with_merge(inputs: &mut [Val], depth: usize) {
+    orx_parallel::sort::slice::sort2(inputs, depth);
+}
+
 fn run(c: &mut Criterion) {
     let lengths = [65_536 * 1, 65_536 * 2, 65_536 * 4, 65_536 * 8];
-    let num_swaps = [65_536 * 8];
+    let lengths = [65_536 * 8, 65_536 * 16, 65_536 * 32];
+    let num_swaps = [65_536 * 64];
 
     let mut group = c.benchmark_group("par_sort_slice");
 
@@ -91,17 +96,41 @@ fn run(c: &mut Criterion) {
                 assert_eq!(&input, &sorted);
             });
 
-            group.bench_with_input(BenchmarkId::new("orx_with_queue_ptrs", len), len, |b, _| {
+            group.bench_with_input(BenchmarkId::new("orx_with_merge2", len), len, |b, _| {
                 let mut input = input.clone();
-                b.iter(|| orx_with_queue_ptrs(black_box(&mut input), 32));
+                b.iter(|| orx_with_merge(black_box(&mut input), 2));
                 assert_eq!(&input, &sorted);
             });
 
-            group.bench_with_input(BenchmarkId::new("orx_with_vec", len), len, |b, _| {
+            group.bench_with_input(BenchmarkId::new("orx_with_merge4", len), len, |b, _| {
                 let mut input = input.clone();
-                b.iter(|| orx_with_vec(black_box(&mut input), 32));
+                b.iter(|| orx_with_merge(black_box(&mut input), 4));
                 assert_eq!(&input, &sorted);
             });
+
+            // group.bench_with_input(BenchmarkId::new("orx_with_merge6", len), len, |b, _| {
+            //     let mut input = input.clone();
+            //     b.iter(|| orx_with_merge(black_box(&mut input), 6));
+            //     assert_eq!(&input, &sorted);
+            // });
+
+            group.bench_with_input(BenchmarkId::new("orx_with_merge8", len), len, |b, _| {
+                let mut input = input.clone();
+                b.iter(|| orx_with_merge(black_box(&mut input), 8));
+                assert_eq!(&input, &sorted);
+            });
+
+            group.bench_with_input(BenchmarkId::new("orx_with_merge16", len), len, |b, _| {
+                let mut input = input.clone();
+                b.iter(|| orx_with_merge(black_box(&mut input), 16));
+                assert_eq!(&input, &sorted);
+            });
+
+            // group.bench_with_input(BenchmarkId::new("orx_with_merge32", len), len, |b, _| {
+            //     let mut input = input.clone();
+            //     b.iter(|| orx_with_merge(black_box(&mut input), 32));
+            //     assert_eq!(&input, &sorted);
+            // });
         }
     }
 

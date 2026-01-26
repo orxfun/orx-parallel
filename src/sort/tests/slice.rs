@@ -70,7 +70,7 @@ fn abc() {
     //     &mut input,
     //     SortChunks::SeqWithPriorityQueuePtrs,
     // );
-    sort2(&mut pool, nt, &mut input, 10);
+    sort2(&mut input, 10);
     // println!("after = {input:?}");*
 
     assert_eq!(input, sorted);
