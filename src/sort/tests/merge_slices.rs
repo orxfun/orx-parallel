@@ -14,16 +14,20 @@ use test_case::test_matrix;
 )]
 fn merge_ordered_slices(len: usize, kind: MergeSliceKind) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
-    let mut elem = || Box::new(rng.random_range(0..10 * len));
+    let mut elem = || rng.random_range(0..10 * len);
 
     let mut input: Vec<_> = (0..len).map(|_| elem()).collect();
-    let mut expected = input.clone();
-    expected.sort();
-
     let (slice1, slice2) = input.split_at_mut(len / 2);
     slice1.sort();
     slice2.sort();
 
+    let mut expected = input.clone();
+    expected.sort();
+
+    let expected: Vec<_> = expected.into_iter().map(Box::new).collect();
+    let mut input: Vec<_> = input.into_iter().map(Box::new).collect();
+
+    let (slice1, slice2) = input.split_at_mut(len / 2);
     let mut result: Vec<_> = Vec::with_capacity(len);
 
     let src1 = SliceChunk::from(slice1);
