@@ -3,57 +3,56 @@ use crate::sort::slice_chunk::SliceChunk;
 #[derive(Debug, Clone, Copy)]
 pub enum MergeSliceKind {
     Sequential,
+    Parallel { nt: usize },
 }
 
 pub fn merge_slices<T: Ord>(
     kind: MergeSliceKind,
-    src1: SliceChunk<T>,
-    src2: SliceChunk<T>,
+    left: SliceChunk<T>,
+    right: SliceChunk<T>,
     dst: SliceChunk<T>,
 ) {
     match kind {
-        MergeSliceKind::Sequential => sequential(src1, src2, dst),
+        MergeSliceKind::Sequential => sequential(left, right, dst),
+        MergeSliceKind::Parallel { nt } => parallel(left, right, dst, nt),
     }
 }
 
-fn sequential<T: Ord>(src1: SliceChunk<T>, src2: SliceChunk<T>, dst: SliceChunk<T>) {
-    let mut p1 = src1.data;
-    let mut p2 = src2.data;
-    let inc_end1 = unsafe { p1.add(src1.len - 1) };
-    let inc_end2 = unsafe { p2.add(src2.len - 1) };
+fn sequential<T: Ord>(left: SliceChunk<T>, right: SliceChunk<T>, dst: SliceChunk<T>) {
+    let mut left_ptr = left.data;
+    let mut right_ptr = right.data;
+    let inc_end_left = unsafe { left_ptr.add(left.len - 1) };
+    let inc_end_right = unsafe { right_ptr.add(right.len - 1) };
     let mut q = dst.data;
     for _ in 0..dst.len {
-        match unsafe { &*p1 < &*p2 } {
+        let (less_ptr, less_ptr_end, more_ptr, more_end) = match unsafe { &*left_ptr < &*right_ptr }
+        {
+            true => (&mut left_ptr, inc_end_left, right_ptr, inc_end_right),
+            false => (&mut right_ptr, inc_end_right, left_ptr, inc_end_left),
+        };
+
+        unsafe { q.copy_from_nonoverlapping(*less_ptr, 1) };
+        match *less_ptr == less_ptr_end {
             true => {
-                unsafe { q.copy_from_nonoverlapping(p1, 1) };
-                match p1 == inc_end1 {
-                    true => {
-                        let remaining2 = unsafe { inc_end2.offset_from(p2) } as usize + 1;
-                        unsafe { q = q.add(1) };
-                        unsafe { q.copy_from_nonoverlapping(p2, remaining2) };
-                        break;
-                    }
-                    false => {
-                        unsafe { p1 = p1.add(1) };
-                        unsafe { q = q.add(1) };
-                    }
-                }
+                let remaining = unsafe { more_end.offset_from(more_ptr) } as usize + 1;
+                unsafe { q = q.add(1) };
+                unsafe { q.copy_from_nonoverlapping(more_ptr, remaining) };
+                break;
             }
             false => {
-                unsafe { q.copy_from_nonoverlapping(p2, 1) };
-                match p2 == inc_end2 {
-                    true => {
-                        let remaining1 = unsafe { inc_end1.offset_from(p1) } as usize + 1;
-                        unsafe { q = q.add(1) };
-                        unsafe { q.copy_from_nonoverlapping(p1, remaining1) };
-                        break;
-                    }
-                    false => {
-                        unsafe { p2 = p2.add(1) };
-                        unsafe { q = q.add(1) };
-                    }
-                }
+                unsafe { *less_ptr = less_ptr.add(1) };
+                unsafe { q = q.add(1) };
             }
         }
     }
+}
+
+fn parallel<T: Ord>(left: SliceChunk<T>, right: SliceChunk<T>, dst: SliceChunk<T>, nt: usize) {
+    let left_mid = left.len / 2;
+
+    //
+}
+
+fn find_right_mid_index<T: Ord>(pivot_value: &T, right: SliceChunk<T>, dst: SliceChunk<T>) {
+    // for (i, value) in right
 }

@@ -22,6 +22,40 @@ impl<T> SliceChunk<T> {
         Self { data, len }
     }
 
+    pub(super) fn slice_chunks(data: *mut T, len: usize, num_chunks: usize) -> Vec<SliceChunk<T>> {
+        let num_chunks = match num_chunks > len {
+            true => len,
+            false => num_chunks,
+        };
+
+        let mut slices = Vec::with_capacity(num_chunks);
+
+        match num_chunks {
+            0 => {}
+            _ => {
+                let avg_len = len / num_chunks;
+                let lower_sum = avg_len * num_chunks;
+                let num_larger = len - lower_sum;
+
+                let mut begin = 0;
+                let chunk_size = |c: usize| match c < num_larger {
+                    true => avg_len + 1,
+                    false => avg_len,
+                };
+                for c in 0..num_chunks {
+                    let data = unsafe { data.add(begin) };
+                    let len = chunk_size(c);
+                    slices.push(SliceChunk { data, len });
+
+                    let end = begin + len;
+                    begin = end;
+                }
+            }
+        }
+
+        slices
+    }
+
     pub fn as_mut_slice(&self) -> &mut [T] {
         unsafe { &mut *slice_from_raw_parts_mut(self.data, self.len) }
     }
@@ -62,38 +96,4 @@ impl<T> SliceChunk<T> {
         }
         Self { data, len }
     }
-}
-
-pub(super) fn slice_chunks<T>(data: *mut T, len: usize, num_chunks: usize) -> Vec<SliceChunk<T>> {
-    let num_chunks = match num_chunks > len {
-        true => len,
-        false => num_chunks,
-    };
-
-    let mut slices = Vec::with_capacity(num_chunks);
-
-    match num_chunks {
-        0 => {}
-        _ => {
-            let avg_len = len / num_chunks;
-            let lower_sum = avg_len * num_chunks;
-            let num_larger = len - lower_sum;
-
-            let mut begin = 0;
-            let chunk_size = |c: usize| match c < num_larger {
-                true => avg_len + 1,
-                false => avg_len,
-            };
-            for c in 0..num_chunks {
-                let data = unsafe { data.add(begin) };
-                let len = chunk_size(c);
-                slices.push(SliceChunk { data, len });
-
-                let end = begin + len;
-                begin = end;
-            }
-        }
-    }
-
-    slices
 }

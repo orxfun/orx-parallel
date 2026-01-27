@@ -1,6 +1,5 @@
 use crate::{
-    ParIter, ParThreadPool, Parallelizable, ParallelizableCollection,
-    sort::slice_chunk::{SliceChunk, slice_chunks},
+    ParIter, ParThreadPool, Parallelizable, ParallelizableCollection, sort::slice_chunk::SliceChunk,
 };
 use alloc::vec;
 use alloc::vec::Vec;
@@ -16,8 +15,8 @@ where
 
     let mut b = Vec::<T>::with_capacity(n);
 
-    let chunks_a = slice_chunks(slice.as_mut_ptr(), n, num_chunks);
-    let chunks_b = slice_chunks(b.as_mut_ptr(), n, num_chunks);
+    let chunks_a = SliceChunk::slice_chunks(slice.as_mut_ptr(), n, num_chunks);
+    let chunks_b = SliceChunk::slice_chunks(b.as_mut_ptr(), n, num_chunks);
 
     // let start = std::time::Instant::now();
     chunks_a.par().for_each(|chunk| chunk.as_mut_slice().sort());
@@ -47,8 +46,8 @@ where
 
     let mut b = Vec::<T>::with_capacity(n);
 
-    let chunks_a = slice_chunks(slice.as_mut_ptr(), n, num_chunks);
-    let chunks_b = slice_chunks(b.as_mut_ptr(), n, num_chunks);
+    let chunks_a = SliceChunk::slice_chunks(slice.as_mut_ptr(), n, num_chunks);
+    let chunks_b = SliceChunk::slice_chunks(b.as_mut_ptr(), n, num_chunks);
 
     // let start = std::time::Instant::now();
     chunks_a.par().for_each(|chunk| chunk.as_mut_slice().sort());
@@ -154,7 +153,7 @@ where
     let buf_ptr = buf.as_mut_ptr();
     unsafe { buf_ptr.copy_from_nonoverlapping(slice.as_ptr(), slice.len()) };
 
-    let chunks = slice_chunks(buf_ptr, slice.len(), num_chunks);
+    let chunks = SliceChunk::slice_chunks(buf_ptr, slice.len(), num_chunks);
 
     // chunks.par().for_each(|chunk| chunk.as_mut_slice().sort());
     // let start = std::time::Instant::now();
