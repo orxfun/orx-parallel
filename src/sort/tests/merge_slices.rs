@@ -1,5 +1,5 @@
 use crate::sort::merge_slices::{MergeSliceKind, merge_slices};
-use crate::sort::slice_chunks::SliceChunk;
+use crate::sort::slice_chunks::Slice;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use rand::prelude::*;
@@ -30,9 +30,9 @@ fn merge_ordered_slices(len: usize, kind: MergeSliceKind) {
     let (slice1, slice2) = input.split_at_mut(len / 2);
     let mut result: Vec<_> = Vec::with_capacity(len);
 
-    let src1 = SliceChunk::from(slice1);
-    let src2 = SliceChunk::from(slice2);
-    let dst = SliceChunk::new(result.as_mut_ptr(), len);
+    let src1 = Slice::from(slice1);
+    let src2 = Slice::from(slice2);
+    let dst = Slice::new(result.as_mut_ptr(), len);
 
     merge_slices(kind, src1, src2, dst);
 

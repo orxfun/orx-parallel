@@ -1,5 +1,5 @@
 use crate::sort::slice::{SortChunks, sort2};
-use crate::sort::slice_chunks::SliceChunk;
+use crate::sort::slice_chunks::Slice;
 use crate::sort::{slice::sort, tests::utils::create_input_and_sorted};
 use crate::{ParThreadPool, StdDefaultPool};
 use alloc::boxed::Box;
@@ -20,7 +20,7 @@ use test_case::{test_case, test_matrix};
 fn slice_chunks(len: usize, num_chunks: usize, chunks: Vec<Vec<usize>>) {
     let mut v: Vec<_> = (0..len).collect();
     assert_eq!(
-        SliceChunk::slice_chunks(v.as_mut_ptr(), v.len(), num_chunks)
+        Slice::slice_chunks(v.as_mut_ptr(), v.len(), num_chunks)
             .into_iter()
             .map(|c| c.as_mut_slice().iter().copied().collect::<Vec<_>>())
             .collect::<Vec<_>>(),

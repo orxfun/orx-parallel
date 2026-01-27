@@ -1,14 +1,14 @@
 use alloc::vec::Vec;
 use core::ptr::slice_from_raw_parts_mut;
 
-pub struct SliceChunk<T> {
+pub struct Slice<T> {
     pub data: *mut T,
     pub len: usize,
 }
-unsafe impl<T> Send for SliceChunk<T> {}
-unsafe impl<T> Sync for SliceChunk<T> {}
+unsafe impl<T> Send for Slice<T> {}
+unsafe impl<T> Sync for Slice<T> {}
 
-impl<T> From<&mut [T]> for SliceChunk<T> {
+impl<T> From<&mut [T]> for Slice<T> {
     fn from(value: &mut [T]) -> Self {
         Self {
             data: value.as_mut_ptr(),
@@ -17,12 +17,12 @@ impl<T> From<&mut [T]> for SliceChunk<T> {
     }
 }
 
-impl<T> SliceChunk<T> {
+impl<T> Slice<T> {
     pub fn new(data: *mut T, len: usize) -> Self {
         Self { data, len }
     }
 
-    pub fn slice_chunks(data: *mut T, len: usize, num_chunks: usize) -> Vec<SliceChunk<T>> {
+    pub fn slice_chunks(data: *mut T, len: usize, num_chunks: usize) -> Vec<Slice<T>> {
         let num_chunks = match num_chunks > len {
             true => len,
             false => num_chunks,
@@ -45,7 +45,7 @@ impl<T> SliceChunk<T> {
                 for c in 0..num_chunks {
                     let data = unsafe { data.add(begin) };
                     let len = chunk_size(c);
-                    slices.push(SliceChunk { data, len });
+                    slices.push(Slice { data, len });
 
                     let end = begin + len;
                     begin = end;
@@ -82,7 +82,7 @@ impl<T> SliceChunk<T> {
     ///
     /// The `slices` are expected to be contiguous, which can create a large slice
     /// when joined back to back.
-    pub fn merged_slice(slices: &[SliceChunk<T>]) -> Self {
+    pub fn merged_slice(slices: &[Slice<T>]) -> Self {
         debug_assert!(!slices.is_empty());
 
         let mut len = slices[0].len;

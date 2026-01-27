@@ -1,3 +1,7 @@
-mod slice_chunk;
+#[cfg(test)]
+mod tests;
 
-pub use slice_chunk::SliceChunk;
+mod slice;
+mod slice_iter;
+
+pub use slice::Slice;

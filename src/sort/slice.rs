@@ -1,6 +1,5 @@
 use crate::{
-    ParIter, ParThreadPool, Parallelizable, ParallelizableCollection,
-    sort::slice_chunks::SliceChunk,
+    ParIter, ParThreadPool, Parallelizable, ParallelizableCollection, sort::slice_chunks::Slice,
 };
 use alloc::vec;
 use alloc::vec::Vec;
@@ -16,8 +15,8 @@ where
 
     let mut b = Vec::<T>::with_capacity(n);
 
-    let chunks_a = SliceChunk::slice_chunks(slice.as_mut_ptr(), n, num_chunks);
-    let chunks_b = SliceChunk::slice_chunks(b.as_mut_ptr(), n, num_chunks);
+    let chunks_a = Slice::slice_chunks(slice.as_mut_ptr(), n, num_chunks);
+    let chunks_b = Slice::slice_chunks(b.as_mut_ptr(), n, num_chunks);
 
     // let start = std::time::Instant::now();
     chunks_a.par().for_each(|chunk| chunk.as_mut_slice().sort());
@@ -47,8 +46,8 @@ where
 
     let mut b = Vec::<T>::with_capacity(n);
 
-    let chunks_a = SliceChunk::slice_chunks(slice.as_mut_ptr(), n, num_chunks);
-    let chunks_b = SliceChunk::slice_chunks(b.as_mut_ptr(), n, num_chunks);
+    let chunks_a = Slice::slice_chunks(slice.as_mut_ptr(), n, num_chunks);
+    let chunks_b = Slice::slice_chunks(b.as_mut_ptr(), n, num_chunks);
 
     // let start = std::time::Instant::now();
     chunks_a.par().for_each(|chunk| chunk.as_mut_slice().sort());
@@ -67,13 +66,8 @@ where
     // std::println!("elapsed = {:?}", start.elapsed());
 }
 
-fn merge<T>(
-    chunks_a: &[SliceChunk<T>],
-    chunks_b: &[SliceChunk<T>],
-    depth: usize,
-    d: usize,
-    m: usize,
-) where
+fn merge<T>(chunks_a: &[Slice<T>], chunks_b: &[Slice<T>], depth: usize, d: usize, m: usize)
+where
     T: Ord,
 {
     let inc = 1 << (depth - d);
@@ -87,9 +81,9 @@ fn merge<T>(
         false => (chunks_b, chunks_a),
     };
 
-    let src1 = SliceChunk::merged_slice(&chunks_src[beg1..end1]);
-    let src2 = SliceChunk::merged_slice(&chunks_src[beg2..end2]);
-    let dst = SliceChunk::merged_slice(&chunks_dst[beg1..end2]);
+    let src1 = Slice::merged_slice(&chunks_src[beg1..end1]);
+    let src2 = Slice::merged_slice(&chunks_src[beg2..end2]);
+    let dst = Slice::merged_slice(&chunks_dst[beg1..end2]);
     debug_assert_eq!(src1.len + src2.len, dst.len);
 
     let mut p1 = src1.data;
@@ -154,7 +148,7 @@ where
     let buf_ptr = buf.as_mut_ptr();
     unsafe { buf_ptr.copy_from_nonoverlapping(slice.as_ptr(), slice.len()) };
 
-    let chunks = SliceChunk::slice_chunks(buf_ptr, slice.len(), num_chunks);
+    let chunks = Slice::slice_chunks(buf_ptr, slice.len(), num_chunks);
 
     // chunks.par().for_each(|chunk| chunk.as_mut_slice().sort());
     // let start = std::time::Instant::now();
@@ -176,7 +170,7 @@ where
     // std::println!("elapsed = {elapsed:?}");
 }
 
-fn sort_chunks_by_queue<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])
+fn sort_chunks_by_queue<T>(chunks: Vec<Slice<T>>, slice: &mut [T])
 where
     T: Ord,
 {
@@ -206,7 +200,7 @@ where
     }
 }
 
-fn sort_chunks_by_queue_ptrs<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])
+fn sort_chunks_by_queue_ptrs<T>(chunks: Vec<Slice<T>>, slice: &mut [T])
 where
     T: Ord,
 {
@@ -236,7 +230,7 @@ where
     }
 }
 
-fn sort_chunks_by_vec<T>(chunks: Vec<SliceChunk<T>>, slice: &mut [T])
+fn sort_chunks_by_vec<T>(chunks: Vec<Slice<T>>, slice: &mut [T])
 where
     T: Ord,
 {

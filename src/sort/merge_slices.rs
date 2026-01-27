@@ -1,4 +1,4 @@
-use crate::sort::slice_chunks::SliceChunk;
+use crate::sort::slice_chunks::Slice;
 
 #[derive(Debug, Clone, Copy)]
 pub enum MergeSliceKind {
@@ -8,9 +8,9 @@ pub enum MergeSliceKind {
 
 pub fn merge_slices<T: Ord>(
     kind: MergeSliceKind,
-    left: SliceChunk<T>,
-    right: SliceChunk<T>,
-    dst: SliceChunk<T>,
+    left: Slice<T>,
+    right: Slice<T>,
+    dst: Slice<T>,
 ) {
     match kind {
         MergeSliceKind::Sequential => sequential(left, right, dst),
@@ -18,7 +18,7 @@ pub fn merge_slices<T: Ord>(
     }
 }
 
-fn sequential<T: Ord>(left: SliceChunk<T>, right: SliceChunk<T>, dst: SliceChunk<T>) {
+fn sequential<T: Ord>(left: Slice<T>, right: Slice<T>, dst: Slice<T>) {
     let mut left_ptr = left.data;
     let mut right_ptr = right.data;
     let inc_end_left = unsafe { left_ptr.add(left.len - 1) };
@@ -47,12 +47,12 @@ fn sequential<T: Ord>(left: SliceChunk<T>, right: SliceChunk<T>, dst: SliceChunk
     }
 }
 
-fn parallel<T: Ord>(left: SliceChunk<T>, right: SliceChunk<T>, dst: SliceChunk<T>, nt: usize) {
+fn parallel<T: Ord>(left: Slice<T>, right: Slice<T>, dst: Slice<T>, nt: usize) {
     let left_mid = left.len / 2;
 
     //
 }
 
-fn find_right_mid_index<T: Ord>(pivot_value: &T, right: SliceChunk<T>, dst: SliceChunk<T>) {
+fn find_right_mid_index<T: Ord>(pivot_value: &T, right: Slice<T>, dst: Slice<T>) {
     // for (i, value) in right
 }
