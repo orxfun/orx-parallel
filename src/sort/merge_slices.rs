@@ -1,4 +1,5 @@
 use crate::sort::slice_chunks::Slice;
+use orx_iterable::Iterable;
 
 #[derive(Debug, Clone, Copy)]
 pub enum MergeSliceKind {
@@ -6,12 +7,7 @@ pub enum MergeSliceKind {
     Parallel { nt: usize },
 }
 
-pub fn merge_slices<T: Ord>(
-    kind: MergeSliceKind,
-    left: Slice<T>,
-    right: Slice<T>,
-    dst: Slice<T>,
-) {
+pub fn merge_slices<T: Ord>(kind: MergeSliceKind, left: Slice<T>, right: Slice<T>, dst: Slice<T>) {
     match kind {
         MergeSliceKind::Sequential => sequential(left, right, dst),
         MergeSliceKind::Parallel { nt } => parallel(left, right, dst, nt),
@@ -19,31 +15,26 @@ pub fn merge_slices<T: Ord>(
 }
 
 fn sequential<T: Ord>(left: Slice<T>, right: Slice<T>, dst: Slice<T>) {
-    let mut left_ptr = left.data;
-    let mut right_ptr = right.data;
-    let inc_end_left = unsafe { left_ptr.add(left.len - 1) };
-    let inc_end_right = unsafe { right_ptr.add(right.len - 1) };
-    let mut q = dst.data;
-    for _ in 0..dst.len {
-        let (less_ptr, less_ptr_end, more_ptr, more_end) = match unsafe { &*left_ptr < &*right_ptr }
-        {
-            true => (&mut left_ptr, inc_end_left, right_ptr, inc_end_right),
-            false => (&mut right_ptr, inc_end_right, left_ptr, inc_end_left),
-        };
+    let mut left = (&left).iter();
+    let mut right = (&right).iter();
+    let mut dst = dst.into_dst();
+    match (left.len(), right.len()) {
+        (0, 0) => {}
+        (0, _) => dst.write_remaining_from(&right),
+        (_, 0) => dst.write_remaining_from(&left),
+        _ => loop {
+            let (a, b) = match unsafe { left.peek_value_unchecked() < right.peek_value_unchecked() }
+            {
+                true => (&mut left, &mut right),
+                false => (&mut right, &mut left),
+            };
 
-        unsafe { q.copy_from_nonoverlapping(*less_ptr, 1) };
-        match *less_ptr == less_ptr_end {
-            true => {
-                let remaining = unsafe { more_end.offset_from(more_ptr) } as usize + 1;
-                unsafe { q = q.add(1) };
-                unsafe { q.copy_from_nonoverlapping(more_ptr, remaining) };
+            dst.write_one(unsafe { a.next_unchecked() });
+            if a.is_finished() {
+                dst.write_remaining_from(b);
                 break;
             }
-            false => {
-                unsafe { *less_ptr = less_ptr.add(1) };
-                unsafe { q = q.add(1) };
-            }
-        }
+        },
     }
 }
 

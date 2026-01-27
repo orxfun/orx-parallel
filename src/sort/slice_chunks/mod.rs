@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests;
 
+mod iter;
+mod iter_dst;
 mod slice;
-mod slice_iter;
 
 pub use slice::Slice;

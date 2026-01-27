@@ -1,7 +1,6 @@
+use crate::sort::slice_chunks::{iter::SliceIter, iter_dst::SliceIterDst};
 use alloc::vec::Vec;
 use core::ptr::slice_from_raw_parts_mut;
-
-use crate::sort::slice_chunks::slice_iter::SliceIter;
 
 pub struct Slice<T> {
     pub data: *mut T,
@@ -22,6 +21,10 @@ impl<T> From<&mut [T]> for Slice<T> {
 impl<T> Slice<T> {
     pub fn new(data: *mut T, len: usize) -> Self {
         Self { data, len }
+    }
+
+    pub fn len(&self) -> usize {
+        self.len
     }
 
     pub fn slice_chunks(data: *mut T, len: usize, num_chunks: usize) -> Vec<Slice<T>> {
@@ -98,10 +101,14 @@ impl<T> Slice<T> {
         }
         Self { data, len }
     }
+
+    pub fn into_dst(self) -> SliceIterDst<T> {
+        SliceIterDst::new(self.data, self.len)
+    }
 }
 
 impl<'a, T> IntoIterator for &'a Slice<T> {
-    type Item = &'a T;
+    type Item = *const T;
 
     type IntoIter = SliceIter<'a, T>;
 
