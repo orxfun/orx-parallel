@@ -15,8 +15,8 @@ pub fn merge_slices<T: Ord>(kind: MergeSliceKind, left: Slice<T>, right: Slice<T
 }
 
 fn sequential<T: Ord>(left: Slice<T>, right: Slice<T>, dst: Slice<T>) {
-    let mut left = (&left).iter();
-    let mut right = (&right).iter();
+    let mut left = left.iter_ptr();
+    let mut right = right.iter_ptr();
     let mut dst = dst.into_dst();
     match (left.len(), right.len()) {
         (0, 0) => {}
@@ -40,10 +40,13 @@ fn sequential<T: Ord>(left: Slice<T>, right: Slice<T>, dst: Slice<T>) {
 
 fn parallel<T: Ord>(left: Slice<T>, right: Slice<T>, dst: Slice<T>, nt: usize) {
     let left_mid = left.len / 2;
-
+    let right_mid = find_right_mid_index(&left[left_mid], &right);
     //
 }
 
-fn find_right_mid_index<T: Ord>(pivot_value: &T, right: Slice<T>, dst: Slice<T>) {
-    // for (i, value) in right
+fn find_right_mid_index<T: Ord>(pivot_value: &T, right: &Slice<T>) -> usize {
+    right
+        .iter()
+        .position(|x| x > pivot_value)
+        .unwrap_or(right.len())
 }

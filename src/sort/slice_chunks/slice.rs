@@ -1,6 +1,8 @@
-use crate::sort::slice_chunks::{iter::SliceIter, iter_dst::SliceIterDst};
+use crate::sort::slice_chunks::{
+    iter_dst::SliceIterDst, iter_ptr::SliceIterPtr, iter_ref::SliceIterVal,
+};
 use alloc::vec::Vec;
-use core::ptr::slice_from_raw_parts_mut;
+use core::{ops::Index, ptr::slice_from_raw_parts_mut};
 
 pub struct Slice<T> {
     pub data: *mut T,
@@ -105,14 +107,47 @@ impl<T> Slice<T> {
     pub fn into_dst(self) -> SliceIterDst<T> {
         SliceIterDst::new(self.data, self.len)
     }
+
+    pub fn split_at(self, at: usize) -> [Self; 2] {
+        debug_assert!(at <= self.len);
+        let len_left = at;
+        let len_right = self.len - len_left;
+        let left = Self {
+            data: self.data,
+            len: len_left,
+        };
+        let right = Self {
+            data: unsafe { self.data.add(len_left) },
+            len: len_right,
+        };
+        [left, right]
+    }
+
+    pub fn split_at_mid(self) -> [Self; 2] {
+        let mid = self.len / 2;
+        self.split_at(mid)
+    }
+
+    pub fn iter_ptr(&self) -> SliceIterPtr<'_, T> {
+        SliceIterPtr::new(self.data, self.len)
+    }
 }
 
 impl<'a, T> IntoIterator for &'a Slice<T> {
-    type Item = *const T;
+    type Item = &'a T;
 
-    type IntoIter = SliceIter<'a, T>;
+    type IntoIter = SliceIterVal<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        SliceIter::new(self.data, self.len)
+        SliceIterVal::new(self.data, self.len)
+    }
+}
+
+impl<T> Index<usize> for Slice<T> {
+    type Output = T;
+
+    #[inline(always)]
+    fn index(&self, index: usize) -> &Self::Output {
+        unsafe { &*self.data.add(index) }
     }
 }

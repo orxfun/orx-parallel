@@ -1,4 +1,4 @@
-use crate::sort::slice_chunks::iter::SliceIter;
+use crate::sort::slice_chunks::iter_ptr::SliceIterPtr;
 
 pub struct SliceIterDst<T> {
     data: *mut T,
@@ -38,7 +38,7 @@ impl<T> SliceIterDst<T> {
     }
 
     #[inline(always)]
-    pub fn write_remaining_from(&mut self, iter: &SliceIter<'_, T>) {
+    pub fn write_remaining_from(&mut self, iter: &SliceIterPtr<'_, T>) {
         debug_assert_eq!(self.len(), iter.len());
         if let Some(src) = iter.peek() {
             let len = iter.len();

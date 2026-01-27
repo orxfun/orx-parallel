@@ -1,12 +1,12 @@
 use core::marker::PhantomData;
 
-pub struct SliceIter<'a, T: 'a> {
+pub struct SliceIterPtr<'a, T: 'a> {
     data: *const T,
     exclusive_end: *const T,
     phantom: PhantomData<&'a ()>,
 }
 
-impl<T> Default for SliceIter<'_, T> {
+impl<T> Default for SliceIterPtr<'_, T> {
     fn default() -> Self {
         Self {
             data: core::ptr::null(),
@@ -16,7 +16,7 @@ impl<T> Default for SliceIter<'_, T> {
     }
 }
 
-impl<'a, T> SliceIter<'a, T> {
+impl<'a, T> SliceIterPtr<'a, T> {
     pub fn new(data: *const T, len: usize) -> Self {
         match len {
             0 => Self::default(),
@@ -61,7 +61,7 @@ impl<'a, T> SliceIter<'a, T> {
     }
 }
 
-impl<'a, T: 'a> Iterator for SliceIter<'a, T> {
+impl<'a, T: 'a> Iterator for SliceIterPtr<'a, T> {
     type Item = *const T;
 
     #[inline(always)]
@@ -79,7 +79,7 @@ impl<'a, T: 'a> Iterator for SliceIter<'a, T> {
     }
 }
 
-impl<'a, T: 'a> ExactSizeIterator for SliceIter<'a, T> {
+impl<'a, T: 'a> ExactSizeIterator for SliceIterPtr<'a, T> {
     fn len(&self) -> usize {
         unsafe { self.exclusive_end.offset_from(self.data) as usize }
     }
