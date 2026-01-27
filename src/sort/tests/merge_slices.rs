@@ -7,9 +7,10 @@ use rand_chacha::ChaCha8Rng;
 use test_case::test_matrix;
 
 #[test_matrix(
-    [0, 1, 2, 3, 1000],
+    [0, 1, 2, 3, 4, 5, 1000, 1001],
     [
-        MergeSliceKind::Sequential
+        MergeSliceKind::Sequential,
+        MergeSliceKind::Parallel { nt: 0 },
     ]
 )]
 fn merge_ordered_slices(len: usize, kind: MergeSliceKind) {
@@ -46,8 +47,8 @@ fn merge_ordered_slices(len: usize, kind: MergeSliceKind) {
 
 #[test]
 fn xyz() {
-    let len = 4;
-    let kind = MergeSliceKind::Sequential;
+    let len = 37;
+    let kind = MergeSliceKind::Parallel { nt: 0 };
 
     let mut rng = ChaCha8Rng::seed_from_u64(42);
     let mut elem = || rng.random_range(0..10 * len);
@@ -60,11 +61,11 @@ fn xyz() {
     let mut expected = input.clone();
     expected.sort();
 
-    // let expected: Vec<_> = expected.into_iter().map(Box::new).collect();
-    // let mut input: Vec<_> = input.into_iter().map(Box::new).collect();
+    let expected: Vec<_> = expected.into_iter().map(Box::new).collect();
+    let mut input: Vec<_> = input.into_iter().map(Box::new).collect();
 
-    let expected: Vec<_> = expected.into_iter().map(|x| x).collect();
-    let mut input: Vec<_> = input.into_iter().map(|x| x).collect();
+    // let expected: Vec<_> = expected.into_iter().map(|x| x).collect();
+    // let mut input: Vec<_> = input.into_iter().map(|x| x).collect();
 
     let (slice1, slice2) = input.split_at_mut(len / 2);
     let mut result: Vec<_> = Vec::with_capacity(len);
