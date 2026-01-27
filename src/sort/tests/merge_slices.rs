@@ -1,6 +1,5 @@
 use crate::sort::merge_slices::{MergeSliceKind, merge_slices};
 use crate::sort::slice_chunk::SliceChunk;
-use crate::sort::tests::utils::create_input;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use rand::prelude::*;
@@ -8,17 +7,16 @@ use rand_chacha::ChaCha8Rng;
 use test_case::test_matrix;
 
 #[test_matrix(
-    [4],
-    [0],
+    [1000],
     [
         MergeSliceKind::Sequential
     ]
 )]
-fn merge_ordered_slices(len: usize, number_of_swaps: usize, kind: MergeSliceKind) {
+fn merge_ordered_slices(len: usize, kind: MergeSliceKind) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
     let mut elem = || Box::new(rng.random_range(0..10 * len));
 
-    let mut input = create_input(len, |_| elem(), number_of_swaps);
+    let mut input: Vec<_> = (0..len).map(|_| elem()).collect();
     let mut expected = input.clone();
     expected.sort();
 
