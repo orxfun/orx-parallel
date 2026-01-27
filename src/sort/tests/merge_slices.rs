@@ -1,5 +1,5 @@
 use crate::sort::merge_slices::{MergeSliceKind, merge_slices};
-use crate::sort::slice_chunk::SliceChunk;
+use crate::sort::slice_chunks::SliceChunk;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use rand::prelude::*;

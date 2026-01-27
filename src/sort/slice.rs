@@ -1,5 +1,6 @@
 use crate::{
-    ParIter, ParThreadPool, Parallelizable, ParallelizableCollection, sort::slice_chunk::SliceChunk,
+    ParIter, ParThreadPool, Parallelizable, ParallelizableCollection,
+    sort::slice_chunks::SliceChunk,
 };
 use alloc::vec;
 use alloc::vec::Vec;

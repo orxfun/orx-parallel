@@ -1,4 +1,4 @@
-use crate::sort::slice_chunk::SliceChunk;
+use crate::sort::slice_chunks::SliceChunk;
 
 #[derive(Debug, Clone, Copy)]
 pub enum MergeSliceKind {

@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::ptr::slice_from_raw_parts_mut;
 
-pub(super) struct SliceChunk<T> {
+pub struct SliceChunk<T> {
     pub data: *mut T,
     pub len: usize,
 }
@@ -22,7 +22,7 @@ impl<T> SliceChunk<T> {
         Self { data, len }
     }
 
-    pub(super) fn slice_chunks(data: *mut T, len: usize, num_chunks: usize) -> Vec<SliceChunk<T>> {
+    pub fn slice_chunks(data: *mut T, len: usize, num_chunks: usize) -> Vec<SliceChunk<T>> {
         let num_chunks = match num_chunks > len {
             true => len,
             false => num_chunks,

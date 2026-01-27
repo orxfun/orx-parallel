@@ -1,5 +1,5 @@
 use crate::sort::slice::{SortChunks, sort2};
-use crate::sort::slice_chunk::SliceChunk;
+use crate::sort::slice_chunks::SliceChunk;
 use crate::sort::{slice::sort, tests::utils::create_input_and_sorted};
 use crate::{ParThreadPool, StdDefaultPool};
 use alloc::boxed::Box;
