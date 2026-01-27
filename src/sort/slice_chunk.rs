@@ -18,6 +18,10 @@ impl<T> From<&mut [T]> for SliceChunk<T> {
 }
 
 impl<T> SliceChunk<T> {
+    pub fn new(data: *mut T, len: usize) -> Self {
+        Self { data, len }
+    }
+
     pub fn as_mut_slice(&self) -> &mut [T] {
         unsafe { &mut *slice_from_raw_parts_mut(self.data, self.len) }
     }
