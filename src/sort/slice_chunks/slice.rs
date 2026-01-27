@@ -1,6 +1,8 @@
 use alloc::vec::Vec;
 use core::ptr::slice_from_raw_parts_mut;
 
+use crate::sort::slice_chunks::slice_iter::SliceIter;
+
 pub struct Slice<T> {
     pub data: *mut T,
     pub len: usize,
@@ -95,5 +97,15 @@ impl<T> Slice<T> {
             end = unsafe { end.add(slice.len) };
         }
         Self { data, len }
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Slice<T> {
+    type Item = &'a T;
+
+    type IntoIter = SliceIter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        SliceIter::new(self.data, self.len)
     }
 }
