@@ -1,5 +1,6 @@
 use core::marker::PhantomData;
 
+/// Core structure for iterators over contiguous slices of data.
 pub struct SliceIterCore<'a, T: 'a> {
     data: *const T,
     exclusive_end: *const T,
@@ -7,11 +8,14 @@ pub struct SliceIterCore<'a, T: 'a> {
 }
 
 impl<'a, T: 'a> SliceIterCore<'a, T> {
+    /// Returns true if the end of the slice is reached.
     #[inline(always)]
     pub fn is_finished(&self) -> bool {
         self.data == self.exclusive_end
     }
 
+    /// Returns a reference to the current value.
+    /// Returns None if the end of the slice is reached.
     pub fn peek(&self) -> Option<*const T> {
         match !self.is_finished() {
             true => Some(self.data),
@@ -43,9 +47,10 @@ impl<'a, T: 'a> SliceIterCore<'a, T> {
         }
     }
 
+    /// Returns the remaining number of elements on the slice to be
+    /// iterated.
     #[inline(always)]
-    pub fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = unsafe { self.exclusive_end.offset_from(self.data) as usize };
-        (len, Some(len))
+    pub fn len(&self) -> usize {
+        unsafe { self.exclusive_end.offset_from(self.data) as usize }
     }
 }
