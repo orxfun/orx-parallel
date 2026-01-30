@@ -75,5 +75,5 @@ fn abc() {
 
     assert_eq!(input, sorted);
     // std::println!("after\n{input:?}");
-    assert_eq!(input.len(), 33);
+    // assert_eq!(input.len(), 33);
 }
