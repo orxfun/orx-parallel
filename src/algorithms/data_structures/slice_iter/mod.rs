@@ -1,4 +1,5 @@
-mod core;
-mod over_references;
+mod destination;
+mod over_ptr;
+mod over_ref;
 
-pub use over_references::SliceIterRef;
+pub use over_ref::SliceIterRef;

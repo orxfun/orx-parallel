@@ -1,4 +1,4 @@
-use super::core::SliceIterCore;
+use super::over_ptr::SliceIterCore;
 use crate::algorithms::data_structures::slice::Slice;
 
 pub struct SliceIterRef<'a, T: 'a>(SliceIterCore<'a, T>);
