@@ -30,3 +30,10 @@ impl<'a, T: 'a> ExactSizeIterator for SliceIterRef<'a, T> {
         self.0.len()
     }
 }
+
+impl<'a, T: 'a> SliceIterRef<'a, T> {
+    pub fn peek(&self) -> Option<&'a T> {
+        // SAFETY: SliceIterCore::peek returns a valid pointer.
+        self.0.peek().map(|x| unsafe { &*x })
+    }
+}

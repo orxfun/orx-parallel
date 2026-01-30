@@ -1,6 +1,5 @@
 use crate::algorithms::data_structures::slice::Slice;
 use alloc::vec;
-use alloc::vec::Vec;
 
 #[test]
 fn slice_get() {
@@ -15,4 +14,23 @@ fn slice_get() {
     for i in slice.len()..2 * slice.len() {
         assert_eq!(slice.get(i), None);
     }
+}
+
+#[test]
+fn slice_iter_over_ref() {
+    let vec = vec![0, 1, 2, 3, 4, 5, 6];
+
+    let slice = Slice::from(vec.as_slice());
+
+    let mut iter = slice.iter_over_ref();
+    for i in 0..vec.len() {
+        assert_eq!(iter.peek(), Some(&i));
+        assert_eq!(iter.next(), Some(&i));
+    }
+
+    assert_eq!(iter.peek(), None);
+    assert_eq!(iter.next(), None);
+
+    assert_eq!(iter.peek(), None);
+    assert_eq!(iter.next(), None);
 }
