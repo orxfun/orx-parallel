@@ -1,4 +1,4 @@
-use crate::algorithms::data_structures::slice_iter::{SliceIterDst, SliceIterPtr, SliceIterRef};
+use crate::algorithms::data_structures::slice_iter::{SliceIterPtr, SliceIterRef};
 use core::marker::PhantomData;
 
 /// A slice of contiguous data.
@@ -20,17 +20,15 @@ unsafe impl<T: Send> Send for Slice<'_, T> {}
 /// will be valid.
 unsafe impl<T: Sync> Sync for Slice<'_, T> {}
 
-// constructors
-
 impl<'a, T> From<&'a [T]> for Slice<'a, T> {
+    #[inline(always)]
     fn from(value: &'a [T]) -> Self {
         Self::new(value.as_ptr(), value.len())
     }
 }
 
-// methods
-
 impl<'a, T> Slice<'a, T> {
+    #[inline(always)]
     pub(super) fn new(data: *const T, len: usize) -> Self {
         Self {
             data,
@@ -65,9 +63,5 @@ impl<'a, T> Slice<'a, T> {
 
     pub fn iter_over_ref(&self) -> SliceIterRef<'a, T> {
         SliceIterRef::from(self)
-    }
-
-    pub fn iter_as_dst(&mut self) -> SliceIterDst<'a, T> {
-        SliceIterDst::from(self)
     }
 }

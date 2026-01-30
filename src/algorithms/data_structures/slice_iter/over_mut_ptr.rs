@@ -1,4 +1,4 @@
-use crate::algorithms::data_structures::slice::Slice;
+use crate::algorithms::data_structures::slice_mut::SliceMut;
 use core::marker::PhantomData;
 
 /// Core structure for iterators over contiguous slices of data.
@@ -18,8 +18,8 @@ impl<T> Default for SliceIterMutPtr<'_, T> {
     }
 }
 
-impl<'a, T: 'a> From<&mut Slice<'a, T>> for SliceIterMutPtr<'a, T> {
-    fn from(value: &mut Slice<'a, T>) -> Self {
+impl<'a, T: 'a> From<&mut SliceMut<'a, T>> for SliceIterMutPtr<'a, T> {
+    fn from(value: &mut SliceMut<'a, T>) -> Self {
         match value.len() {
             0 => Self::default(),
             n => {

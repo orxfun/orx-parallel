@@ -1,10 +1,10 @@
 use super::over_mut_ptr::SliceIterMutPtr;
-use crate::algorithms::data_structures::slice::Slice;
+use crate::algorithms::data_structures::{Slice, slice_mut::SliceMut};
 
 pub struct SliceIterDst<'a, T: 'a>(SliceIterMutPtr<'a, T>);
 
-impl<'a, T: 'a> From<&mut Slice<'a, T>> for SliceIterDst<'a, T> {
-    fn from(value: &mut Slice<'a, T>) -> Self {
+impl<'a, T: 'a> From<&mut SliceMut<'a, T>> for SliceIterDst<'a, T> {
+    fn from(value: &mut SliceMut<'a, T>) -> Self {
         Self(value.into())
     }
 }

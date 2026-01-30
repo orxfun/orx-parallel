@@ -1,4 +1,4 @@
-use crate::algorithms::data_structures::slice::Slice;
+use crate::algorithms::data_structures::{slice::Slice, slice_mut::SliceMut};
 use alloc::vec;
 
 #[test]
@@ -40,8 +40,8 @@ fn slice_iter_as_dst_write_one_unchecked() {
     let src_vec = vec![0, 1, 2, 3, 4, 5];
     let src_slice = Slice::from(src_vec.as_slice());
 
-    let dst_vec = vec![42; src_vec.len()];
-    let mut slice = Slice::from(dst_vec.as_slice());
+    let mut dst_vec = vec![42; src_vec.len()];
+    let mut slice = SliceMut::from(dst_vec.as_mut_slice());
     let mut dst = slice.iter_as_dst();
     for src in src_slice.iter_over_ptr() {
         unsafe { dst.write_one_unchecked(src) };
@@ -55,8 +55,8 @@ fn slice_iter_as_dst_write_remaining() {
     let src_vec = vec![0, 1, 2, 3, 4, 5];
     let src_slice = Slice::from(src_vec.as_slice());
 
-    let dst_vec = vec![42; src_vec.len()];
-    let mut slice = Slice::from(dst_vec.as_slice());
+    let mut dst_vec = vec![42; src_vec.len()];
+    let mut slice = SliceMut::from(dst_vec.as_mut_slice());
     let mut dst = slice.iter_as_dst();
     unsafe { dst.write_remaining_from(&src_slice) };
 
@@ -70,8 +70,8 @@ fn slice_iter_as_dst_write_remaining_halfway() {
     let src_vec2 = vec![2, 3, 4, 5];
     let src_slice2 = Slice::from(src_vec2.as_slice());
 
-    let dst_vec = vec![42; src_vec1.len() + src_vec2.len()];
-    let mut slice = Slice::from(dst_vec.as_slice());
+    let mut dst_vec = vec![42; src_vec1.len() + src_vec2.len()];
+    let mut slice = SliceMut::from(dst_vec.as_mut_slice());
     let mut dst = slice.iter_as_dst();
     for src in src_slice1.iter_over_ptr() {
         unsafe { dst.write_one_unchecked(src) };
