@@ -17,6 +17,8 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+/// Module containing specific parallel algorithms.
+pub mod algorithms;
 mod collect_into;
 /// Module containing variants of parallel iterators.
 pub mod computational_variants;
