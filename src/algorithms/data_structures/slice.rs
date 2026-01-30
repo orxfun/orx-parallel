@@ -1,4 +1,4 @@
-use core::marker::PhantomData;
+use core::{marker::PhantomData, ops::Index};
 
 /// A slice of contiguous data.
 ///
@@ -18,3 +18,13 @@ unsafe impl<T: Send> Send for Slice<'_, T> {}
 /// Since the lifetime of the slice is bound to the owner of the data, this pointer
 /// will be valid.
 unsafe impl<T: Sync> Sync for Slice<'_, T> {}
+
+impl<'a, T> Slice<'a, T> {
+    pub fn get(&self, index: usize) -> Option<&'a T> {
+        match index < self.len {
+            // # SAFETY: index is within the bounds and data is a valid pointer.
+            true => Some(unsafe { &*self.data.add(index) }),
+            false => None,
+        }
+    }
+}
