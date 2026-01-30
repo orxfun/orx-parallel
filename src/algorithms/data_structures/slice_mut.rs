@@ -1,4 +1,5 @@
 use crate::algorithms::data_structures::slice_iter::SliceIterDst;
+use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 /// A slice of contiguous data.
@@ -24,6 +25,12 @@ impl<'a, T> From<&'a mut [T]> for SliceMut<'a, T> {
     #[inline(always)]
     fn from(value: &'a mut [T]) -> Self {
         Self::new(value.as_mut_ptr(), value.len())
+    }
+}
+
+impl<'a, T> From<&'a mut Vec<T>> for SliceMut<'a, T> {
+    fn from(value: &'a mut Vec<T>) -> Self {
+        Self::new(value.as_mut_ptr(), value.capacity())
     }
 }
 
