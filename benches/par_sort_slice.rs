@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::{sort::slice::SortChunks, *};
+// use orx_parallel::{sort::slice::SortChunks, *};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::slice::ParallelSliceMut;
@@ -35,34 +35,34 @@ fn rayon(inputs: &mut [Val]) {
 }
 
 fn orx_with_queue(inputs: &mut [Val], nt: usize) {
-    orx_parallel::sort::slice::sort(
-        &mut StdDefaultPool::default(),
-        NonZeroUsize::new(nt).unwrap(),
-        inputs,
-        SortChunks::SeqWithPriorityQueue,
-    );
+    // orx_parallel::sort::slice::sort(
+    //     &mut StdDefaultPool::default(),
+    //     NonZeroUsize::new(nt).unwrap(),
+    //     inputs,
+    //     SortChunks::SeqWithPriorityQueue,
+    // );
 }
 
 fn orx_with_queue_ptrs(inputs: &mut [Val], nt: usize) {
-    orx_parallel::sort::slice::sort(
-        &mut StdDefaultPool::default(),
-        NonZeroUsize::new(nt).unwrap(),
-        inputs,
-        SortChunks::SeqWithPriorityQueuePtrs,
-    );
+    // orx_parallel::sort::slice::sort(
+    //     &mut StdDefaultPool::default(),
+    //     NonZeroUsize::new(nt).unwrap(),
+    //     inputs,
+    //     SortChunks::SeqWithPriorityQueuePtrs,
+    // );
 }
 
 fn orx_with_vec(inputs: &mut [Val], nt: usize) {
-    orx_parallel::sort::slice::sort(
-        &mut StdDefaultPool::default(),
-        NonZeroUsize::new(nt).unwrap(),
-        inputs,
-        SortChunks::SeqWithVec,
-    );
+    // orx_parallel::sort::slice::sort(
+    //     &mut StdDefaultPool::default(),
+    //     NonZeroUsize::new(nt).unwrap(),
+    //     inputs,
+    //     SortChunks::SeqWithVec,
+    // );
 }
 
 fn orx_with_merge(inputs: &mut [Val], depth: usize) {
-    orx_parallel::sort::slice::sort2(inputs, depth);
+    // orx_parallel::sort::slice::sort2(inputs, depth);
 }
 
 fn run(c: &mut Criterion) {
