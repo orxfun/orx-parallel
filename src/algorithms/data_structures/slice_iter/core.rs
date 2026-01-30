@@ -18,8 +18,8 @@ impl<T> Default for SliceIterCore<'_, T> {
     }
 }
 
-impl<'a, T: 'a> From<Slice<'a, T>> for SliceIterCore<'a, T> {
-    fn from(value: Slice<'a, T>) -> Self {
+impl<'a, T: 'a> From<&Slice<'a, T>> for SliceIterCore<'a, T> {
+    fn from(value: &Slice<'a, T>) -> Self {
         match value.len() {
             0 => Self::default(),
             n => Self {

@@ -1,6 +1,13 @@
 use super::core::SliceIterCore;
+use crate::algorithms::data_structures::slice::Slice;
 
 pub struct SliceIterRef<'a, T: 'a>(SliceIterCore<'a, T>);
+
+impl<'a, T: 'a> From<&Slice<'a, T>> for SliceIterRef<'a, T> {
+    fn from(value: &Slice<'a, T>) -> Self {
+        Self(value.into())
+    }
+}
 
 impl<'a, T: 'a> Iterator for SliceIterRef<'a, T> {
     type Item = &'a T;
