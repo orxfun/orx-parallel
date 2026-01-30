@@ -55,6 +55,23 @@ impl<'a, T: 'a> SliceIterMutPtr<'a, T> {
         value
     }
 
+    /// Returns the tuple of the next pointer and the positive number of remaining elements.
+    /// Note that the returned pointer is valid and the length is positive.
+    ///
+    /// If the iterator is already consumed, the method returns None.
+    ///
+    /// Therefore, it will never return an invalid pointer.
+    pub fn next_remaining(&mut self) -> Option<(*mut T, usize)> {
+        match self.len() {
+            0 => None,
+            n => {
+                let value = Some((self.data, n));
+                self.data = unsafe { self.data.add(n) };
+                value
+            }
+        }
+    }
+
     /// Returns the remaining number of elements on the slice to be
     /// iterated.
     #[inline(always)]
