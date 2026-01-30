@@ -34,6 +34,16 @@ impl<'a, T> From<&'a [T]> for Slice<'a, T> {
 // methods
 
 impl<'a, T> Slice<'a, T> {
+    #[inline(always)]
+    pub(super) fn data(&self) -> *const T {
+        self.data
+    }
+
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
     pub fn get(&self, index: usize) -> Option<&'a T> {
         match index < self.len {
             // # SAFETY: index is within the bounds and data is a valid pointer.
@@ -41,4 +51,8 @@ impl<'a, T> Slice<'a, T> {
             false => None,
         }
     }
+
+    // iterators
+
+    // pub fn iter_over_ref(&self) -> SliceI
 }

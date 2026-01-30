@@ -1,2 +1,2 @@
 mod slice;
-mod slice_iter;
+pub mod slice_iter;

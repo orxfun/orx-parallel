@@ -1,3 +1,4 @@
+use crate::algorithms::data_structures::slice::Slice;
 use core::marker::PhantomData;
 
 /// Core structure for iterators over contiguous slices of data.
@@ -5,6 +6,29 @@ pub struct SliceIterCore<'a, T: 'a> {
     data: *const T,
     exclusive_end: *const T,
     phantom: PhantomData<&'a ()>,
+}
+
+impl<T> Default for SliceIterCore<'_, T> {
+    fn default() -> Self {
+        Self {
+            data: core::ptr::null(),
+            exclusive_end: core::ptr::null(),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, T: 'a> From<Slice<'a, T>> for SliceIterCore<'a, T> {
+    fn from(value: Slice<'a, T>) -> Self {
+        match value.len() {
+            0 => Self::default(),
+            n => Self {
+                data: value.data(),
+                exclusive_end: unsafe { value.data().add(n) },
+                phantom: PhantomData,
+            },
+        }
+    }
 }
 
 impl<'a, T: 'a> SliceIterCore<'a, T> {
