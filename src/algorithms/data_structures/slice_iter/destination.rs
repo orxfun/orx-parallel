@@ -1,7 +1,7 @@
-use super::over_ptr::SliceIterCore;
+use super::over_ptr::SliceIterPtr;
 use crate::algorithms::data_structures::slice::Slice;
 
-pub struct SliceIterDst<'a, T: 'a>(SliceIterCore<'a, T>);
+pub struct SliceIterDst<'a, T: 'a>(SliceIterPtr<'a, T>);
 
 impl<'a, T: 'a> From<&Slice<'a, T>> for SliceIterDst<'a, T> {
     fn from(value: &Slice<'a, T>) -> Self {
