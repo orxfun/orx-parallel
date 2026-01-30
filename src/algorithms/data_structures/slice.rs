@@ -24,17 +24,21 @@ unsafe impl<T: Sync> Sync for Slice<'_, T> {}
 
 impl<'a, T> From<&'a [T]> for Slice<'a, T> {
     fn from(value: &'a [T]) -> Self {
-        Self {
-            data: value.as_ptr(),
-            len: value.len(),
-            phantom: PhantomData,
-        }
+        Self::new(value.as_ptr(), value.len())
     }
 }
 
 // methods
 
 impl<'a, T> Slice<'a, T> {
+    pub(super) fn new(data: *const T, len: usize) -> Self {
+        Self {
+            data,
+            len,
+            phantom: PhantomData,
+        }
+    }
+
     #[inline(always)]
     pub(super) fn data(&self) -> *const T {
         self.data

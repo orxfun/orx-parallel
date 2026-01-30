@@ -47,6 +47,12 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
         }
     }
 
+    #[inline(always)]
+    pub unsafe fn current_unchecked(&self) -> &'a T {
+        debug_assert!(!self.is_finished());
+        unsafe { &*self.data }
+    }
+
     /// Returns the next pointer.
     ///
     /// # SAFETY
@@ -66,6 +72,13 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
     #[inline(always)]
     fn remaining(&self) -> usize {
         unsafe { self.exclusive_end.offset_from(self.data) as usize }
+    }
+
+    pub fn remaining_into_slice(&mut self) -> Slice<'a, T> {
+        let n = self.len();
+        let slice = Slice::new(self.data, n);
+        self.data = unsafe { self.data.add(n) };
+        slice
     }
 }
 
