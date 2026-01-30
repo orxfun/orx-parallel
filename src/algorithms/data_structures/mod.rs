@@ -2,4 +2,6 @@
 mod tests;
 
 mod slice;
-pub mod slice_iter;
+mod slice_iter;
+
+pub use slice::Slice;
