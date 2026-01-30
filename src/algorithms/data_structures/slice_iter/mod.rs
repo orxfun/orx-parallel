@@ -4,4 +4,5 @@ mod over_ptr;
 mod over_ref;
 
 pub use destination::SliceIterDst;
+pub use over_ptr::SliceIterPtr;
 pub use over_ref::SliceIterRef;
