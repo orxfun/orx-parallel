@@ -112,10 +112,10 @@ fn naive_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
     });
 }
 
-fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
+fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, with_streaks: bool) {
     let target = target_slice(target);
     let params = MergeSortedSlicesParams {
-        with_streaks: false,
+        with_streaks,
         num_threads: 1,
     };
     orx_parallel::algorithms::merge_sorted_slices(is_leq, left, right, target, params);
@@ -144,10 +144,16 @@ fn run(c: &mut Criterion) {
                     b.iter(|| naive_seq(&left, &right, &mut target));
                 });
 
-                group.bench_with_input(BenchmarkId::new("orx_seq", &t), &t, |b, _| {
-                    orx_seq(&left, &right, &mut target);
+                group.bench_with_input(BenchmarkId::new("orx_seq_no_streak", &t), &t, |b, _| {
+                    orx_seq(&left, &right, &mut target, false);
                     assert_eq!(target_slice(&mut target), &sorted);
-                    b.iter(|| orx_seq(&left, &right, &mut target));
+                    b.iter(|| orx_seq(&left, &right, &mut target, false));
+                });
+
+                group.bench_with_input(BenchmarkId::new("orx_seq_with_streak", &t), &t, |b, _| {
+                    orx_seq(&left, &right, &mut target, true);
+                    assert_eq!(target_slice(&mut target), &sorted);
+                    b.iter(|| orx_seq(&left, &right, &mut target, true));
                 });
 
                 unsafe {
