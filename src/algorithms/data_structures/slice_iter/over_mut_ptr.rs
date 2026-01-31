@@ -41,7 +41,7 @@ impl<'a, T: 'a> SliceIterMutPtr<'a, T> {
         self.data == self.exclusive_end
     }
 
-    /// Returns the next pointer.
+    /// Returns the next pointer, and progresses one element.
     ///
     /// # SAFETY
     ///
@@ -52,6 +52,20 @@ impl<'a, T: 'a> SliceIterMutPtr<'a, T> {
     pub unsafe fn next_unchecked(&mut self) -> *mut T {
         let value = self.data;
         self.data = unsafe { self.data.add(1) };
+        value
+    }
+
+    /// Returns the next pointer, and progresses `count` elements.
+    ///
+    /// # SAFETY
+    ///
+    /// Does not perform bounds-check. Dereferencing the pointer that is
+    /// obtained by calling this method after the end of the slice is reached
+    /// leads to UB.
+    #[inline(always)]
+    pub unsafe fn next_many_unchecked(&mut self, count: usize) -> *mut T {
+        let value = self.data;
+        self.data = unsafe { self.data.add(count) };
         value
     }
 

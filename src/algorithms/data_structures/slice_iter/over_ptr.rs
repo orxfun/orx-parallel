@@ -47,6 +47,13 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
         }
     }
 
+    pub fn current(&self) -> Option<&'a T> {
+        match !self.is_finished() {
+            true => Some(unsafe { &*self.data }),
+            false => None,
+        }
+    }
+
     #[inline(always)]
     pub unsafe fn current_unchecked(&self) -> &'a T {
         debug_assert!(!self.is_finished());
@@ -65,6 +72,20 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
         let value = self.data;
         self.data = unsafe { self.data.add(1) };
         value
+    }
+
+    pub fn next_if_leq<F>(&mut self, is_leq: F, pivot: &T) -> Option<*const T>
+    where
+        F: Fn(&T, &T) -> bool,
+    {
+        match self.current() {
+            Some(x) if is_leq(x, pivot) => {
+                let value = Some(self.data);
+                self.data = unsafe { self.data.add(1) };
+                value
+            }
+            _ => None,
+        }
     }
 
     /// Returns the remaining number of elements on the slice to be

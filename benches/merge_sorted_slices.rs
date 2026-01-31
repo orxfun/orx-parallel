@@ -1,4 +1,5 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use orx_parallel::algorithms::MergeSortedSlicesParams;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::{cmp::Ordering, fmt::Display, ptr::slice_from_raw_parts_mut};
@@ -113,7 +114,11 @@ fn naive_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
 
 fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
     let target = target_slice(target);
-    orx_parallel::algorithms::merge_sorted_slices(is_leq, left, right, target, 1);
+    let params = MergeSortedSlicesParams {
+        with_streaks: false,
+        num_threads: 1,
+    };
+    orx_parallel::algorithms::merge_sorted_slices(is_leq, left, right, target, params);
 }
 
 fn run(c: &mut Criterion) {

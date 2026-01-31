@@ -1,5 +1,6 @@
 use super::utils::{SortKind, new_vec, split_to_sorted_vecs};
 use crate::algorithms::data_structures::{Slice, SliceMut};
+use crate::algorithms::merge_sorted_slices::alg::MergeSortedSlicesParams;
 use crate::algorithms::merge_sorted_slices::sequential;
 use crate::algorithms::merge_sorted_slices::tests::utils::SplitKind;
 use alloc::string::{String, ToString};
@@ -19,13 +20,18 @@ fn elem_string(x: usize) -> String {
     [elem_usize, elem_string],
     [0, 1, 2, 3, 37],
     [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
-    [SplitKind::AllInLeft, SplitKind::AllInRight, SplitKind::OneInLeft, SplitKind::OneInRight, SplitKind::MoreInLeft, SplitKind::MoreInRight, SplitKind::Middle]
+    [SplitKind::AllInLeft, SplitKind::AllInRight, SplitKind::OneInLeft, SplitKind::OneInRight, SplitKind::MoreInLeft, SplitKind::MoreInRight, SplitKind::Middle],
+    [
+        MergeSortedSlicesParams { num_threads: 1, with_streaks: false },
+        MergeSortedSlicesParams { num_threads: 1, with_streaks: true },
+    ]
 )]
 fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
     elem: impl Fn(usize) -> T,
     len: usize,
     sort_kind: SortKind,
     split_kind: SplitKind,
+    params: MergeSortedSlicesParams,
 ) {
     let input = new_vec(len, elem, sort_kind);
     let (mut left, mut right) = split_to_sorted_vecs(&input, split_kind);
@@ -36,6 +42,7 @@ fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
         &Slice::from(left.as_slice()),
         &Slice::from(right.as_slice()),
         &mut SliceMut::from(&mut result),
+        params,
     );
 
     // all elements of left & right are moved to result
@@ -49,4 +56,17 @@ fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
     expected.sort();
 
     assert_eq!(result, expected);
+}
+
+#[test]
+fn abc() {
+    let elem = elem_usize;
+    let len = 6;
+    let sort_kind = SortKind::Mixed;
+    let split_kind = SplitKind::Middle;
+    let params = MergeSortedSlicesParams {
+        num_threads: 1,
+        with_streaks: true,
+    };
+    merge_sorted_slices_seq(elem, len, sort_kind, split_kind, params);
 }

@@ -18,6 +18,18 @@ impl<'a, T: 'a> SliceIterDst<'a, T> {
     }
 
     #[inline(always)]
+    pub unsafe fn write_many_unchecked(
+        &mut self,
+        src_begin: *const T,
+        src_end_inclusive: *const T,
+    ) {
+        let count = unsafe { src_end_inclusive.offset_from(src_begin) + 1 } as usize;
+        debug_assert!(self.0.len() >= count);
+        let dst = unsafe { self.0.next_many_unchecked(count) };
+        unsafe { dst.copy_from_nonoverlapping(src_begin, count) };
+    }
+
+    #[inline(always)]
     pub unsafe fn write_remaining_from(&mut self, src: &Slice<'a, T>) {
         debug_assert_eq!(src.len(), self.0.len());
 

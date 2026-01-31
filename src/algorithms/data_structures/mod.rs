@@ -2,7 +2,7 @@
 mod tests;
 
 mod slice;
-mod slice_iter;
+pub mod slice_iter;
 mod slice_mut;
 
 pub use slice::Slice;
