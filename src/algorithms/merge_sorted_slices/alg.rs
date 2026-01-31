@@ -1,8 +1,14 @@
 use super::sequential;
 use crate::algorithms::data_structures::{Slice, SliceMut};
 
+pub enum StreakSearch {
+    None,
+    Linear,
+    Binary,
+}
+
 pub struct MergeSortedSlicesParams {
-    pub with_streaks: bool,
+    pub streak_search: StreakSearch,
     pub num_threads: usize,
 }
 

@@ -1,6 +1,6 @@
 use crate::algorithms::data_structures::slice_iter::SliceIterDst;
 use crate::algorithms::data_structures::{Slice, SliceMut};
-use crate::algorithms::merge_sorted_slices::alg::MergeSortedSlicesParams;
+use crate::algorithms::merge_sorted_slices::alg::{MergeSortedSlicesParams, StreakSearch};
 
 pub fn merge_sorted_slices<'a, T: 'a, F>(
     is_leq: F,
@@ -18,9 +18,12 @@ pub fn merge_sorted_slices<'a, T: 'a, F>(
     match (left.len(), right.len()) {
         (0, _) => unsafe { dst.write_remaining_from(right) },
         (_, 0) => unsafe { dst.write_remaining_from(left) },
-        _ => match params.with_streaks {
-            false => merge_sorted_slices_no_streak(is_leq, left, right, dst),
-            true => merge_sorted_slices_with_streak(is_leq, left, right, dst),
+        _ => match params.streak_search {
+            StreakSearch::None => merge_sorted_slices_no_streak(is_leq, left, right, dst),
+            StreakSearch::Linear => {
+                merge_sorted_slices_with_linear_streak(is_leq, left, right, dst)
+            }
+            StreakSearch::Binary => todo!(),
         },
     }
 }
@@ -56,7 +59,7 @@ fn merge_sorted_slices_no_streak<'a, T: 'a, F>(
     }
 }
 
-fn merge_sorted_slices_with_streak<'a, T: 'a, F>(
+fn merge_sorted_slices_with_linear_streak<'a, T: 'a, F>(
     is_leq: F,
     left: &Slice<'a, T>,
     right: &Slice<'a, T>,

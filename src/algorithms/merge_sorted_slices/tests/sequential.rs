@@ -1,6 +1,6 @@
 use super::utils::{SortKind, new_vec, split_to_sorted_vecs};
 use crate::algorithms::data_structures::{Slice, SliceMut};
-use crate::algorithms::merge_sorted_slices::alg::MergeSortedSlicesParams;
+use crate::algorithms::merge_sorted_slices::alg::{MergeSortedSlicesParams, StreakSearch};
 use crate::algorithms::merge_sorted_slices::sequential;
 use crate::algorithms::merge_sorted_slices::tests::utils::SplitKind;
 use alloc::string::{String, ToString};
@@ -22,8 +22,9 @@ fn elem_string(x: usize) -> String {
     [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
     [SplitKind::AllInLeft, SplitKind::AllInRight, SplitKind::OneInLeft, SplitKind::OneInRight, SplitKind::MoreInLeft, SplitKind::MoreInRight, SplitKind::Middle],
     [
-        MergeSortedSlicesParams { num_threads: 1, with_streaks: false },
-        MergeSortedSlicesParams { num_threads: 1, with_streaks: true },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::None },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Linear },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Binary },
     ]
 )]
 fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(

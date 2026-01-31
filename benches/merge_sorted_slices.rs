@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::algorithms::MergeSortedSlicesParams;
+use orx_parallel::algorithms::{MergeSortedSlicesParams, StreakSearch};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::{cmp::Ordering, fmt::Display, ptr::slice_from_raw_parts_mut};
@@ -112,10 +112,10 @@ fn naive_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
     });
 }
 
-fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, with_streaks: bool) {
+fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, streak_search: StreakSearch) {
     let target = target_slice(target);
     let params = MergeSortedSlicesParams {
-        with_streaks,
+        streak_search,
         num_threads: 1,
     };
     orx_parallel::algorithms::merge_sorted_slices(is_leq, left, right, target, params);
@@ -144,17 +144,21 @@ fn run(c: &mut Criterion) {
                     b.iter(|| naive_seq(&left, &right, &mut target));
                 });
 
-                group.bench_with_input(BenchmarkId::new("orx_seq_no_streak", &t), &t, |b, _| {
-                    orx_seq(&left, &right, &mut target, false);
+                group.bench_with_input(BenchmarkId::new("orx_seq_streak_none", &t), &t, |b, _| {
+                    orx_seq(&left, &right, &mut target, StreakSearch::None);
                     assert_eq!(target_slice(&mut target), &sorted);
-                    b.iter(|| orx_seq(&left, &right, &mut target, false));
+                    b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::None));
                 });
 
-                group.bench_with_input(BenchmarkId::new("orx_seq_with_streak", &t), &t, |b, _| {
-                    orx_seq(&left, &right, &mut target, true);
-                    assert_eq!(target_slice(&mut target), &sorted);
-                    b.iter(|| orx_seq(&left, &right, &mut target, true));
-                });
+                group.bench_with_input(
+                    BenchmarkId::new("orx_seq_streak_linear", &t),
+                    &t,
+                    |b, _| {
+                        orx_seq(&left, &right, &mut target, StreakSearch::Linear);
+                        assert_eq!(target_slice(&mut target), &sorted);
+                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Linear));
+                    },
+                );
 
                 unsafe {
                     target.set_len(left.len() + right.len());
