@@ -57,16 +57,3 @@ fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
 
     assert_eq!(result, expected);
 }
-
-#[test]
-fn abc() {
-    let elem = elem_usize;
-    let len = 6;
-    let sort_kind = SortKind::Mixed;
-    let split_kind = SplitKind::Middle;
-    let params = MergeSortedSlicesParams {
-        num_threads: 1,
-        with_streaks: true,
-    };
-    merge_sorted_slices_seq(elem, len, sort_kind, split_kind, params);
-}
