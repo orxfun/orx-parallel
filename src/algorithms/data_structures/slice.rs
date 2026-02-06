@@ -1,5 +1,5 @@
 use crate::algorithms::data_structures::slice_iter::{SliceIterPtr, SliceIterRef};
-use core::marker::PhantomData;
+use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
 /// A slice of contiguous data.
 ///
@@ -53,6 +53,17 @@ impl<'a, T> Slice<'a, T> {
             true => Some(unsafe { &*self.data.add(index) }),
             false => None,
         }
+    }
+
+    pub fn subslice_from(&self, begin: *const T) -> Self {
+        debug_assert!(unsafe { begin.offset_from(self.data) >= 0 });
+        debug_assert!(unsafe { self.data.add(self.len).offset_from(begin) > 0 });
+        let len = self.len - unsafe { begin.offset_from(self.data) as usize };
+        Self::new(begin, len)
+    }
+
+    pub fn as_slice(&self) -> &'a [T] {
+        unsafe { &*slice_from_raw_parts(self.data, self.len) }
     }
 
     // iterators

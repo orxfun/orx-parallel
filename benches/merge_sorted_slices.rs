@@ -124,13 +124,9 @@ fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, streak_search: StreakSe
 fn run(c: &mut Criterion) {
     let mut group = c.benchmark_group("merge_sorted_slices");
 
-    let len = [1 << 10, 1 << 15, 1 << 20];
-    let sort = [SortKind::Sorted, SortKind::Mixed];
-    let split = [
-        SplitKind::Middle,
-        SplitKind::MoreInLeft,
-        SplitKind::MoreInRight,
-    ];
+    let len = [1 << 20];
+    let sort = [SortKind::Mixed];
+    let split = [SplitKind::Middle];
 
     for len in len {
         for sort in sort {
@@ -157,6 +153,16 @@ fn run(c: &mut Criterion) {
                         orx_seq(&left, &right, &mut target, StreakSearch::Linear);
                         assert_eq!(target_slice(&mut target), &sorted);
                         b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Linear));
+                    },
+                );
+
+                group.bench_with_input(
+                    BenchmarkId::new("orx_seq_streak_binary", &t),
+                    &t,
+                    |b, _| {
+                        orx_seq(&left, &right, &mut target, StreakSearch::Binary);
+                        assert_eq!(target_slice(&mut target), &sorted);
+                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Binary));
                     },
                 );
 

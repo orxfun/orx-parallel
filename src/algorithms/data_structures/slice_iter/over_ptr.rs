@@ -47,6 +47,12 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
         }
     }
 
+    #[inline(always)]
+    pub fn peek_unchecked(&self) -> *const T {
+        self.data
+    }
+
+    #[inline(always)]
     pub fn current(&self) -> Option<&'a T> {
         match !self.is_finished() {
             true => Some(unsafe { &*self.data }),
@@ -86,6 +92,12 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
             }
             _ => None,
         }
+    }
+
+    pub unsafe fn jump_to(&mut self, last_consumed: *const T) {
+        debug_assert!({ unsafe { last_consumed.offset_from(self.data) >= 0 } });
+        debug_assert!({ unsafe { self.exclusive_end.offset_from(self.data) > 0 } });
+        self.data = unsafe { last_consumed.add(1) };
     }
 
     /// Returns the remaining number of elements on the slice to be
