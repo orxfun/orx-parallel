@@ -37,6 +37,10 @@ impl<'a, T> Slice<'a, T> {
         }
     }
 
+    pub fn clone(&self) -> Self {
+        Self::new(self.data, self.len)
+    }
+
     #[inline(always)]
     pub(super) fn data(&self) -> *const T {
         self.data
@@ -55,6 +59,13 @@ impl<'a, T> Slice<'a, T> {
         }
     }
 
+    pub fn last(&self) -> Option<&'a T> {
+        match self.len {
+            0 => None,
+            n => Some(unsafe { &*self.data.add(n - 1) }),
+        }
+    }
+
     pub fn subslice_from(&self, begin: *const T) -> Self {
         debug_assert!(unsafe { begin.offset_from(self.data) >= 0 });
         debug_assert!(unsafe { self.data.add(self.len).offset_from(begin) > 0 });
@@ -66,7 +77,7 @@ impl<'a, T> Slice<'a, T> {
         unsafe { &*slice_from_raw_parts(self.data, self.len) }
     }
 
-    pub fn split(&self, at: usize) -> [Self; 2] {
+    pub fn split_at(&self, at: usize) -> [Self; 2] {
         let left_len = at;
         let right_len = self.len - left_len;
         let left = Self::new(self.data, left_len);
@@ -75,7 +86,7 @@ impl<'a, T> Slice<'a, T> {
     }
 
     pub fn split_at_mid(&self) -> [Self; 2] {
-        self.split(self.len / 2)
+        self.split_at(self.len / 2)
     }
 
     // iterators

@@ -1,6 +1,6 @@
 use crate::algorithms::data_structures::slice_iter::SliceIterDst;
 use alloc::vec::Vec;
-use core::marker::PhantomData;
+use core::{marker::PhantomData, ops::Range};
 
 /// A slice of contiguous data.
 ///
@@ -52,6 +52,12 @@ impl<'a, T> SliceMut<'a, T> {
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.len
+    }
+
+    pub fn slice(&mut self, range: Range<usize>) -> Self {
+        let data = unsafe { self.data.add(range.start) };
+        let len = range.len();
+        Self::new(data, len)
     }
 
     // iterators

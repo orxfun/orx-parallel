@@ -1,7 +1,8 @@
-use crate::algorithms::data_structures::slice_iter::SliceIterDst;
 use crate::algorithms::data_structures::{Slice, SliceMut};
 use crate::algorithms::merge_sorted_slices::alg::{MergeSortedSlicesParams, StreakSearch};
+use alloc::vec::Vec;
 use core::cmp::Ordering;
+use core::ops::Range;
 
 pub fn merge_sorted_slices<'a, T: 'a, F>(
     is_leq: F,
@@ -14,18 +15,27 @@ pub fn merge_sorted_slices<'a, T: 'a, F>(
 {
     debug_assert_eq!(left.len() + right.len(), target.len());
 
-    let mut dst = target.iter_as_dst();
-
     match (left.len(), right.len()) {
-        (0, _) => unsafe { dst.write_remaining_from(right) },
-        (_, 0) => unsafe { dst.write_remaining_from(left) },
-        _ => match params.streak_search {
-            StreakSearch::None => merge_sorted_slices_streak_none(is_leq, left, right, dst),
-            StreakSearch::Linear => {
-                merge_sorted_slices_with_streak_linear(is_leq, left, right, dst)
-            }
-            StreakSearch::Binary => {
-                merge_sorted_slices_with_streak_binary(is_leq, left, right, dst)
+        (0, _) => unsafe { target.iter_as_dst().write_remaining_from(right) },
+        (_, 0) => unsafe { target.iter_as_dst().write_remaining_from(left) },
+        _ => match params.sequential_merge_threshold {
+            0 => match params.streak_search {
+                StreakSearch::None => merge_sorted_slices_streak_none(is_leq, left, right, target),
+                StreakSearch::Linear => {
+                    merge_sorted_slices_with_streak_linear(is_leq, left, right, target)
+                }
+                StreakSearch::Binary => {
+                    merge_sorted_slices_with_streak_binary(is_leq, left, right, target)
+                }
+            },
+            sequential_merge_threshold => {
+                merge_sorted_slices_by_dividing(
+                    is_leq,
+                    left,
+                    right,
+                    target,
+                    sequential_merge_threshold,
+                );
             }
         },
     }
@@ -35,12 +45,13 @@ fn merge_sorted_slices_streak_none<'a, T: 'a, F>(
     is_leq: F,
     left: &Slice<'a, T>,
     right: &Slice<'a, T>,
-    mut dst: SliceIterDst<'a, T>,
+    target: &mut SliceMut<'a, T>,
 ) where
     F: Fn(&T, &T) -> bool,
 {
     let mut left = left.iter_over_ptr();
     let mut right = right.iter_over_ptr();
+    let mut dst = target.iter_as_dst();
 
     loop {
         let (a, b) = unsafe {
@@ -66,12 +77,13 @@ fn merge_sorted_slices_with_streak_linear<'a, T: 'a, F>(
     is_leq: F,
     left: &Slice<'a, T>,
     right: &Slice<'a, T>,
-    mut dst: SliceIterDst<'a, T>,
+    target: &mut SliceMut<'a, T>,
 ) where
     F: Fn(&T, &T) -> bool,
 {
     let mut left = left.iter_over_ptr();
     let mut right = right.iter_over_ptr();
+    let mut dst = target.iter_as_dst();
 
     loop {
         let (a, b) = unsafe {
@@ -105,12 +117,13 @@ fn merge_sorted_slices_with_streak_binary<'a, T: 'a, F>(
     is_leq: F,
     left: &Slice<'a, T>,
     right: &Slice<'a, T>,
-    mut dst: SliceIterDst<'a, T>,
+    target: &mut SliceMut<'a, T>,
 ) where
     F: Fn(&T, &T) -> bool,
 {
     let mut left_it = left.iter_over_ptr();
     let mut right_it = right.iter_over_ptr();
+    let mut dst = target.iter_as_dst();
 
     loop {
         let l = unsafe { left_it.current_unchecked() };
@@ -163,22 +176,154 @@ fn merge_sorted_slices_with_streak_binary<'a, T: 'a, F>(
     }
 }
 
+// divide & conquer
+
+struct Task<'a, T: 'a> {
+    left: Slice<'a, T>,
+    right: Slice<'a, T>,
+    target_range: Range<usize>,
+}
+
+impl<'a, T: 'a> Task<'a, T> {
+    fn new(left: Slice<'a, T>, right: Slice<'a, T>, target_range: Range<usize>) -> Self {
+        Self {
+            left,
+            right,
+            target_range,
+        }
+    }
+
+    fn do_sequentially(&self, sequential_merge_threshold: usize) -> bool {
+        self.left.len() < 2
+            || self.right.len() < 2
+            || self.left.len() + self.right.len() <= sequential_merge_threshold
+    }
+}
+
+struct TaskQueue<'a, T: 'a> {
+    queue: Vec<Task<'a, T>>,
+}
+
+impl<'a, T: 'a> TaskQueue<'a, T> {
+    fn new(left: Slice<'a, T>, right: Slice<'a, T>) -> Self {
+        let mut queue = Vec::new();
+        let range = 0..(left.len() + right.len());
+        queue.push(Task::new(left, right, range));
+        Self { queue }
+    }
+
+    fn pop(&mut self) -> Option<Task<'a, T>> {
+        self.queue.pop()
+    }
+
+    fn push(&mut self, left: Task<'a, T>, right: Task<'a, T>) {
+        self.queue.push(left);
+        self.queue.push(right);
+    }
+}
+
 fn merge_sorted_slices_by_dividing<'a, T: 'a, F>(
     is_leq: F,
     left: &Slice<'a, T>,
     right: &Slice<'a, T>,
-    mut dst: SliceIterDst<'a, T>,
+    target: &mut SliceMut<'a, T>,
     sequential_merge_threshold: usize,
 ) where
     F: Fn(&T, &T) -> bool,
 {
-    match left.len() < 2
-        || right.len() < 2
-        || left.len() + right.len() <= sequential_merge_threshold
-    {
-        true => merge_sorted_slices_with_streak_linear(is_leq, left, right, dst),
-        false => {
-            //  let left_left
+    let mut queue = TaskQueue::new(left.clone(), right.clone());
+
+    while let Some(task) = queue.pop() {
+        match task.do_sequentially(sequential_merge_threshold) {
+            true => {
+                let mut t = target.slice(task.target_range);
+                merge_sorted_slices_with_streak_linear(&is_leq, &task.left, &task.right, &mut t);
+            }
+            false => {
+                let [left_left, left_right] = task.left.split_at_mid();
+                let pivot = left_left.last().expect("left_left is not empty");
+                // TODO: we could also do this with binary search!
+                let right_split_at = right.iter_over_ref().position(|x| is_leq(pivot, x));
+                let right_split_at = right_split_at.unwrap_or(right.len());
+                let [right_left, right_right] = right.split_at(right_split_at);
+
+                let begin = task.target_range.start;
+                let end = begin + left_left.len() + right_left.len();
+                let left_task = Task::new(left_left, right_left, begin..end);
+
+                let begin = end;
+                let end = begin + left_right.len() + right_right.len();
+                let right_task = Task::new(left_right, right_right, begin..end);
+
+                queue.push(left_task, right_task);
+            }
         }
     }
 }
+
+// impl<'a, T: 'a> Task<'a, T> {
+//     fn new(left: Slice<'a, T>, right: Slice<'a, T>, range: Range<usize>) -> Self {
+//         Self { left, right, range }
+//     }
+
+//     fn clone(&self) -> Self {
+//         Self::new(self.left.clone(), self.right.clone(), self.range.clone())
+//     }
+// }
+
+// fn merge_sorted_slices_by_dividing<'a, T: 'a, F>(
+//     is_leq: F,
+//     left: &Slice<'a, T>,
+//     right: &Slice<'a, T>,
+//     target: &mut SliceMut<'a, T>,
+//     sequential_merge_threshold: usize,
+// ) where
+//     F: Fn(&T, &T) -> bool,
+// {
+//     let mut stack = Vec::new();
+//     stack.push(Task::new(
+//         left.clone(),
+//         right.clone(),
+//         0..(left.len() + right.len()),
+//     ));
+
+//     loop {
+//         match stack.pop() {
+//             Some(task) => merge_sorted_slices_by_dividing_handler(
+//                 &is_leq,
+//                 task,
+//                 target,
+//                 sequential_merge_threshold,
+//                 &mut stack,
+//             ),
+//             None => break,
+//         }
+//     }
+// }
+
+// fn merge_sorted_slices_by_dividing_handler<'a, T: 'a, F>(
+//     is_leq: F,
+//     task: Task<'a, T>,
+//     target: &mut SliceMut<'a, T>,
+//     sequential_merge_threshold: usize,
+//     stack: &mut Vec<Task<'a, T>>,
+// ) where
+//     F: Fn(&T, &T) -> bool,
+// {
+//     match task.left.len() < 2
+//         || task.right.len() < 2
+//         || task.left.len() + task.right.len() <= sequential_merge_threshold
+//     {
+//         true => merge_sorted_slices_with_streak_linear(is_leq, &task.left, &task.right, target),
+//         false => {
+//             let [left_left, left_right] = left.split_at_mid();
+//             let pivot = left_left.last().expect("left_left is not empty");
+//             // TODO: we could also do this with binary search!
+//             let right_split_at = right.iter_over_ref().position(|x| is_leq(pivot, x));
+//             let right_split_at = right_split_at.unwrap_or(right.len());
+//             let [right_left, right_right] = right.split_at(right_split_at);
+//             stack.push([left_left, right_left]);
+//             stack.push([left_right, right_right]);
+//         }
+//     }
+// }

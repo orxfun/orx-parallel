@@ -22,9 +22,9 @@ fn elem_string(x: usize) -> String {
     [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
     [SplitKind::AllInLeft, SplitKind::AllInRight, SplitKind::OneInLeft, SplitKind::OneInRight, SplitKind::MoreInLeft, SplitKind::MoreInRight, SplitKind::Middle],
     [
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::None, sequential_merge_threshold: 1024 },
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Linear, sequential_merge_threshold: 1024 },
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Binary, sequential_merge_threshold: 1024 },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::None, sequential_merge_threshold: 5 },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Linear, sequential_merge_threshold: 5 },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Binary, sequential_merge_threshold: 5 },
     ]
 )]
 fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
@@ -34,6 +34,43 @@ fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
     split_kind: SplitKind,
     params: MergeSortedSlicesParams,
 ) {
+    let input = new_vec(len, elem, sort_kind);
+    let (mut left, mut right) = split_to_sorted_vecs(&input, split_kind);
+
+    let mut result = Vec::with_capacity(input.len());
+    sequential::merge_sorted_slices(
+        |a, b| a < b,
+        &Slice::from(left.as_slice()),
+        &Slice::from(right.as_slice()),
+        &mut SliceMut::from(&mut result),
+        params,
+    );
+
+    // all elements of left & right are moved to result
+    unsafe {
+        result.set_len(left.len() + right.len());
+        left.set_len(0);
+        right.set_len(0);
+    }
+
+    let mut expected = input.clone();
+    expected.sort();
+
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn abc() {
+    let elem = elem_usize;
+    let len = 7;
+    let sort_kind = SortKind::Mixed;
+    let split_kind = SplitKind::Middle;
+    let params = MergeSortedSlicesParams {
+        num_threads: 1,
+        streak_search: StreakSearch::Linear,
+        sequential_merge_threshold: 5,
+    };
+
     let input = new_vec(len, elem, sort_kind);
     let (mut left, mut right) = split_to_sorted_vecs(&input, split_kind);
 
