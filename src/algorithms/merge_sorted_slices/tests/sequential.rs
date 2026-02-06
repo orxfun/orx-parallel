@@ -22,9 +22,9 @@ fn elem_string(x: usize) -> String {
     [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
     [SplitKind::AllInLeft, SplitKind::AllInRight, SplitKind::OneInLeft, SplitKind::OneInRight, SplitKind::MoreInLeft, SplitKind::MoreInRight, SplitKind::Middle],
     [
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::None },
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Linear },
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Binary },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::None, sequential_merge_threshold: 1024 },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Linear, sequential_merge_threshold: 1024 },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Binary, sequential_merge_threshold: 1024 },
     ]
 )]
 fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(

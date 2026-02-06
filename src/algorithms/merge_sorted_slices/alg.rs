@@ -10,6 +10,7 @@ pub enum StreakSearch {
 pub struct MergeSortedSlicesParams {
     pub streak_search: StreakSearch,
     pub num_threads: usize,
+    pub sequential_merge_threshold: usize,
 }
 
 pub fn merge_sorted_slices<T, F>(

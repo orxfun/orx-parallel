@@ -112,10 +112,17 @@ fn naive_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
     });
 }
 
-fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, streak_search: StreakSearch) {
+fn orx_seq(
+    left: &[X],
+    right: &[X],
+    target: &mut Vec<X>,
+    streak_search: StreakSearch,
+    sequential_merge_threshold: usize,
+) {
     let target = target_slice(target);
     let params = MergeSortedSlicesParams {
         streak_search,
+        sequential_merge_threshold,
         num_threads: 1,
     };
     orx_parallel::algorithms::merge_sorted_slices(is_leq, left, right, target, params);
@@ -134,25 +141,25 @@ fn run(c: &mut Criterion) {
                 let t = Treatment::new(sort, split, len);
                 let (mut left, mut right, mut target, sorted) = t.inputs();
 
-                group.bench_with_input(BenchmarkId::new("naive_seq", &t), &t, |b, _| {
-                    naive_seq(&left, &right, &mut target);
-                    assert_eq!(target_slice(&mut target), &sorted);
-                    b.iter(|| naive_seq(&left, &right, &mut target));
-                });
+                // group.bench_with_input(BenchmarkId::new("naive_seq", &t), &t, |b, _| {
+                //     naive_seq(&left, &right, &mut target);
+                //     assert_eq!(target_slice(&mut target), &sorted);
+                //     b.iter(|| naive_seq(&left, &right, &mut target));
+                // });
 
-                group.bench_with_input(BenchmarkId::new("orx_seq_streak_none", &t), &t, |b, _| {
-                    orx_seq(&left, &right, &mut target, StreakSearch::None);
-                    assert_eq!(target_slice(&mut target), &sorted);
-                    b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::None));
-                });
+                // group.bench_with_input(BenchmarkId::new("orx_seq_streak_none", &t), &t, |b, _| {
+                //     orx_seq(&left, &right, &mut target, StreakSearch::None);
+                //     assert_eq!(target_slice(&mut target), &sorted);
+                //     b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::None));
+                // });
 
                 group.bench_with_input(
                     BenchmarkId::new("orx_seq_streak_linear", &t),
                     &t,
                     |b, _| {
-                        orx_seq(&left, &right, &mut target, StreakSearch::Linear);
+                        orx_seq(&left, &right, &mut target, StreakSearch::Linear, 1024);
                         assert_eq!(target_slice(&mut target), &sorted);
-                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Linear));
+                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Linear, 1024));
                     },
                 );
 
@@ -160,9 +167,9 @@ fn run(c: &mut Criterion) {
                     BenchmarkId::new("orx_seq_streak_binary", &t),
                     &t,
                     |b, _| {
-                        orx_seq(&left, &right, &mut target, StreakSearch::Binary);
+                        orx_seq(&left, &right, &mut target, StreakSearch::Binary, 1024);
                         assert_eq!(target_slice(&mut target), &sorted);
-                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Binary));
+                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Binary, 1024));
                     },
                 );
 
