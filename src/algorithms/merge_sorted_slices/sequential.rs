@@ -162,3 +162,23 @@ fn merge_sorted_slices_with_streak_binary<'a, T: 'a, F>(
         }
     }
 }
+
+fn merge_sorted_slices_by_dividing<'a, T: 'a, F>(
+    is_leq: F,
+    left: &Slice<'a, T>,
+    right: &Slice<'a, T>,
+    mut dst: SliceIterDst<'a, T>,
+    sequential_merge_threshold: usize,
+) where
+    F: Fn(&T, &T) -> bool,
+{
+    match left.len() < 2
+        || right.len() < 2
+        || left.len() + right.len() <= sequential_merge_threshold
+    {
+        true => merge_sorted_slices_with_streak_linear(is_leq, left, right, dst),
+        false => {
+            //  let left_left
+        }
+    }
+}

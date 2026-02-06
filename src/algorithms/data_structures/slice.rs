@@ -66,6 +66,18 @@ impl<'a, T> Slice<'a, T> {
         unsafe { &*slice_from_raw_parts(self.data, self.len) }
     }
 
+    pub fn split(&self, at: usize) -> [Self; 2] {
+        let left_len = at;
+        let right_len = self.len - left_len;
+        let left = Self::new(self.data, left_len);
+        let right = Self::new(unsafe { self.data.add(left_len) }, right_len);
+        [left, right]
+    }
+
+    pub fn split_at_mid(&self) -> [Self; 2] {
+        self.split(self.len / 2)
+    }
+
     // iterators
 
     pub fn iter_over_ptr(&self) -> SliceIterPtr<'a, T> {
