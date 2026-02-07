@@ -1,6 +1,8 @@
 use super::utils::{SortKind, new_vec, split_to_sorted_vecs};
 use crate::algorithms::data_structures::{Slice, SliceMut};
-use crate::algorithms::merge_sorted_slices::alg::{MergeSortedSlicesParams, StreakSearch};
+use crate::algorithms::merge_sorted_slices::alg::{
+    MergeSortedSlicesParams, PivotSearch, StreakSearch,
+};
 use crate::algorithms::merge_sorted_slices::sequential;
 use crate::algorithms::merge_sorted_slices::tests::utils::SplitKind;
 use alloc::string::{String, ToString};
@@ -18,13 +20,13 @@ fn elem_string(x: usize) -> String {
 
 #[test_matrix(
     [elem_usize, elem_string],
-    [0, 1, 2, 3, 37],
+    [0, 1, 2, 3, 37, 98],
     [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
     [SplitKind::AllInLeft, SplitKind::AllInRight, SplitKind::OneInLeft, SplitKind::OneInRight, SplitKind::MoreInLeft, SplitKind::MoreInRight, SplitKind::Middle],
     [
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::None, sequential_merge_threshold: 5 },
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Linear, sequential_merge_threshold: 5 },
-        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Binary, sequential_merge_threshold: 5 },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::None, sequential_merge_threshold: 5, pivot_search: PivotSearch::Linear, put_large_to_left: true },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Linear, sequential_merge_threshold: 5, pivot_search: PivotSearch::Linear, put_large_to_left: true },
+        MergeSortedSlicesParams { num_threads: 1, streak_search: StreakSearch::Binary, sequential_merge_threshold: 5, pivot_search: PivotSearch::Linear, put_large_to_left: true },
     ]
 )]
 fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
@@ -62,13 +64,15 @@ fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
 #[test]
 fn abc() {
     let elem = elem_usize;
-    let len = 13;
+    let len = 8;
     let sort_kind = SortKind::Mixed;
     let split_kind = SplitKind::Middle;
     let params = MergeSortedSlicesParams {
         num_threads: 1,
-        streak_search: StreakSearch::Linear,
+        streak_search: StreakSearch::None,
         sequential_merge_threshold: 5,
+        pivot_search: PivotSearch::Binary,
+        put_large_to_left: false,
     };
 
     let input = new_vec(len, elem, sort_kind);

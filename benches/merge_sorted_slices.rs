@@ -1,8 +1,10 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::algorithms::{MergeSortedSlicesParams, StreakSearch};
+use orx_parallel::algorithms::{MergeSortedSlicesParams, PivotSearch, StreakSearch};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use std::{cmp::Ordering, fmt::Display, ptr::slice_from_raw_parts_mut};
+use std::{
+    cmp::Ordering, collections::HashSet, fmt::Display, hash::Hash, ptr::slice_from_raw_parts_mut,
+};
 
 type X = String;
 fn elem(i: usize) -> X {
@@ -98,6 +100,113 @@ impl Display for Treatment {
     }
 }
 
+#[derive(PartialOrd, Ord, Eq, Clone)]
+struct Variant(MergeSortedSlicesParams);
+
+impl Display for Variant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let swap = match self.0.put_large_to_left {
+            true => "swap",
+            false => "no-swap",
+        };
+        let streak = match self.0.streak_search {
+            StreakSearch::None => "none",
+            StreakSearch::Linear => "lin",
+            StreakSearch::Binary => "bin",
+        };
+        let pivot = match self.0.pivot_search {
+            PivotSearch::Linear => "lin",
+            PivotSearch::Binary => "bin",
+        };
+
+        match self.0.sequential_merge_threshold {
+            0 => write!(f, "seq_0_{swap}_str:{streak}"),
+            n => {
+                write!(f, "seq_{n}_{swap}_str:{streak}_piv:{pivot}")
+            }
+        }
+    }
+}
+
+impl Hash for Variant {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        let pivot_search = match self.0.sequential_merge_threshold {
+            0 => PivotSearch::Binary,
+            _ => self.0.pivot_search,
+        };
+
+        let params = MergeSortedSlicesParams {
+            num_threads: self.0.num_threads,
+            sequential_merge_threshold: self.0.sequential_merge_threshold,
+            put_large_to_left: self.0.put_large_to_left,
+            streak_search: self.0.streak_search,
+            pivot_search,
+        };
+
+        params.hash(state);
+    }
+}
+
+impl PartialEq for Variant {
+    fn eq(&self, other: &Self) -> bool {
+        match (
+            self.0.sequential_merge_threshold,
+            other.0.sequential_merge_threshold,
+        ) {
+            (0, 0) => {
+                (self.0.put_large_to_left, self.0.streak_search)
+                    == (other.0.put_large_to_left, other.0.streak_search)
+            }
+            _ => {
+                (
+                    self.0.put_large_to_left,
+                    self.0.streak_search,
+                    self.0.sequential_merge_threshold,
+                    self.0.pivot_search,
+                ) == (
+                    other.0.put_large_to_left,
+                    other.0.streak_search,
+                    other.0.sequential_merge_threshold,
+                    other.0.pivot_search,
+                )
+            }
+        }
+    }
+}
+
+impl Variant {
+    fn all() -> Vec<Self> {
+        let mut all = HashSet::new();
+        let num_threads = 1;
+        let swaps = [false, true];
+        let streaks = [
+            StreakSearch::None,
+            StreakSearch::Linear,
+            StreakSearch::Binary,
+        ];
+        let pivots = [PivotSearch::Linear, PivotSearch::Binary];
+        let thresholds = [0, 128, 1024, 4096];
+        for put_large_to_left in swaps {
+            for streak_search in streaks {
+                for pivot_search in pivots {
+                    for sequential_merge_threshold in thresholds {
+                        all.insert(Self(MergeSortedSlicesParams {
+                            streak_search,
+                            num_threads,
+                            sequential_merge_threshold,
+                            pivot_search,
+                            put_large_to_left,
+                        }));
+                    }
+                }
+            }
+        }
+        let mut all: Vec<_> = all.into_iter().collect();
+        all.sort();
+        all
+    }
+}
+
 fn naive_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
     let dst = target.as_mut_ptr();
     unsafe { dst.copy_from_nonoverlapping(left.as_ptr(), left.len()) };
@@ -112,28 +221,18 @@ fn naive_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
     });
 }
 
-fn orx_seq(
-    left: &[X],
-    right: &[X],
-    target: &mut Vec<X>,
-    streak_search: StreakSearch,
-    sequential_merge_threshold: usize,
-) {
+fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, params: MergeSortedSlicesParams) {
     let target = target_slice(target);
-    let params = MergeSortedSlicesParams {
-        streak_search,
-        sequential_merge_threshold,
-        num_threads: 1,
-    };
     orx_parallel::algorithms::merge_sorted_slices(is_leq, left, right, target, params);
 }
 
 fn run(c: &mut Criterion) {
     let mut group = c.benchmark_group("merge_sorted_slices");
 
-    let len = [1 << 20];
+    let len = [1 << 10, 1 << 15, 1 << 20];
     let sort = [SortKind::Mixed];
     let split = [SplitKind::Middle];
+    let variants = Variant::all();
 
     for len in len {
         for sort in sort {
@@ -141,37 +240,23 @@ fn run(c: &mut Criterion) {
                 let t = Treatment::new(sort, split, len);
                 let (mut left, mut right, mut target, sorted) = t.inputs();
 
-                // group.bench_with_input(BenchmarkId::new("naive_seq", &t), &t, |b, _| {
-                //     naive_seq(&left, &right, &mut target);
-                //     assert_eq!(target_slice(&mut target), &sorted);
-                //     b.iter(|| naive_seq(&left, &right, &mut target));
-                // });
+                group.bench_with_input(BenchmarkId::new("naive_seq", &t), &t, |b, _| {
+                    naive_seq(&left, &right, &mut target);
+                    assert_eq!(target_slice(&mut target), &sorted);
+                    b.iter(|| naive_seq(&left, &right, &mut target));
+                });
 
-                // group.bench_with_input(BenchmarkId::new("orx_seq_streak_none", &t), &t, |b, _| {
-                //     orx_seq(&left, &right, &mut target, StreakSearch::None);
-                //     assert_eq!(target_slice(&mut target), &sorted);
-                //     b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::None));
-                // });
-
-                group.bench_with_input(
-                    BenchmarkId::new("orx_seq_streak_linear", &t),
-                    &t,
-                    |b, _| {
-                        orx_seq(&left, &right, &mut target, StreakSearch::Linear, 1024);
-                        assert_eq!(target_slice(&mut target), &sorted);
-                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Linear, 1024));
-                    },
-                );
-
-                group.bench_with_input(
-                    BenchmarkId::new("orx_seq_streak_binary", &t),
-                    &t,
-                    |b, _| {
-                        orx_seq(&left, &right, &mut target, StreakSearch::Binary, 1024);
-                        assert_eq!(target_slice(&mut target), &sorted);
-                        b.iter(|| orx_seq(&left, &right, &mut target, StreakSearch::Binary, 1024));
-                    },
-                );
+                for variant in &variants {
+                    group.bench_with_input(
+                        BenchmarkId::new(format!("orx_{variant}"), &t),
+                        &t,
+                        |b, _| {
+                            orx_seq(&left, &right, &mut target, variant.0.clone());
+                            assert_eq!(target_slice(&mut target), &sorted);
+                            b.iter(|| orx_seq(&left, &right, &mut target, variant.0.clone()));
+                        },
+                    );
+                }
 
                 unsafe {
                     target.set_len(left.len() + right.len());

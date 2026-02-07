@@ -4,4 +4,4 @@ mod tests;
 mod alg;
 mod sequential;
 
-pub use alg::{MergeSortedSlicesParams, StreakSearch, merge_sorted_slices};
+pub use alg::{MergeSortedSlicesParams, PivotSearch, StreakSearch, merge_sorted_slices};
