@@ -62,7 +62,7 @@ fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
 #[test]
 fn abc() {
     let elem = elem_usize;
-    let len = 7;
+    let len = 13;
     let sort_kind = SortKind::Mixed;
     let split_kind = SplitKind::Middle;
     let params = MergeSortedSlicesParams {
@@ -73,6 +73,9 @@ fn abc() {
 
     let input = new_vec(len, elem, sort_kind);
     let (mut left, mut right) = split_to_sorted_vecs(&input, split_kind);
+
+    std::println!("left = {left:?}");
+    std::println!("right = {right:?}");
 
     let mut result = Vec::with_capacity(input.len());
     sequential::merge_sorted_slices(
