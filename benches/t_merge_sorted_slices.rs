@@ -93,23 +93,23 @@ impl Drop for Input {
 }
 
 struct MergeData {
-    len: usize,
+    e: usize,
     sort: SortKind,
     split: SplitKind,
 }
 
 impl Data for MergeData {
     fn factor_names() -> Vec<&'static str> {
-        vec!["len", "sort", "split"]
+        vec!["e (len=2^e)", "sort", "split"]
     }
 
     fn factor_names_short() -> Vec<&'static str> {
-        vec!["l", "so", "sp"]
+        vec!["e", "so", "sp"]
     }
 
     fn factor_values(&self) -> Vec<String> {
         vec![
-            self.len.to_string(),
+            self.e.to_string(),
             format!("{:?}", self.sort),
             format!("{:?}", self.split),
         ]
@@ -117,7 +117,7 @@ impl Data for MergeData {
 
     fn factor_values_short(&self) -> Vec<String> {
         vec![
-            self.len.to_string(),
+            self.e.to_string(),
             match self.sort {
                 SortKind::Sorted => "T",
                 SortKind::Mixed => "F",
@@ -137,7 +137,7 @@ impl MergeData {
     fn all() -> Vec<Self> {
         let mut all = vec![];
 
-        let len = [1 << 10, 1 << 15, 1 << 20];
+        let e = [10, 15, 20];
         let sort = [SortKind::Mixed, SortKind::Sorted];
         let split = [
             SplitKind::Middle,
@@ -145,14 +145,14 @@ impl MergeData {
             SplitKind::MoreInRight,
         ];
 
-        for len in len {
+        for e in e {
             for sort in sort {
                 for split in split {
-                    all.push(MergeData { len, sort, split });
+                    all.push(MergeData { e, sort, split });
                 }
             }
         }
-        vec![all.into_iter().last().unwrap()]
+        all
     }
 }
 
@@ -285,7 +285,7 @@ impl Params {
         }
         let mut all: Vec<_> = all.into_iter().collect();
         all.sort();
-        vec![all.into_iter().last().unwrap()]
+        all
     }
 }
 
@@ -303,7 +303,8 @@ impl Experiment for TuneExperiment {
     type Output = ();
 
     fn input(treatment: &Self::Data) -> Self::Input {
-        let vec = new_vec(treatment.len, elem, treatment.sort);
+        let len = 1 << treatment.e;
+        let vec = new_vec(len, elem, treatment.sort);
         let (left, right) = split_to_sorted_vecs(&vec, treatment.split);
         let target = Vec::with_capacity(vec.len());
         Input {
