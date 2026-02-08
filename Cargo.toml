@@ -47,7 +47,7 @@ test-case = "3.3.1"
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
 [[bench]]
-name = "tune_merge_sorted_slices"
+name = "t_merge_sorted_slices"
 harness = false
 
 [package.metadata.docs.rs]
