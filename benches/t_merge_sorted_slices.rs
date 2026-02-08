@@ -1,9 +1,8 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use orx_criterion::{Experiment, Treatment, Variant};
+use orx_criterion::{Data, Experiment, Variant};
 use orx_parallel::algorithms::{MergeSortedSlicesParams, PivotSearch, StreakSearch};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rayon::iter::Split;
 use std::{collections::HashSet, hash::Hash, ptr::slice_from_raw_parts_mut};
 
 type X = usize;
@@ -93,23 +92,35 @@ impl Drop for Input {
     }
 }
 
-struct Treat {
+struct MergeData {
     len: usize,
     sort: SortKind,
     split: SplitKind,
 }
 
-impl Treatment for Treat {
+impl Data for MergeData {
     fn factor_names() -> Vec<&'static str> {
-        vec!["len", "srt", "spl"]
+        vec!["len", "sort", "split"]
+    }
+
+    fn factor_names_short() -> Vec<&'static str> {
+        vec!["l", "so", "sp"]
     }
 
     fn factor_values(&self) -> Vec<String> {
         vec![
             self.len.to_string(),
+            format!("{:?}", self.sort),
+            format!("{:?}", self.split),
+        ]
+    }
+
+    fn factor_values_short(&self) -> Vec<String> {
+        vec![
+            self.len.to_string(),
             match self.sort {
-                SortKind::Sorted => "t",
-                SortKind::Mixed => "f",
+                SortKind::Sorted => "T",
+                SortKind::Mixed => "F",
             }
             .to_string(),
             match self.split {
@@ -122,7 +133,7 @@ impl Treatment for Treat {
     }
 }
 
-impl Treat {
+impl MergeData {
     fn all() -> Vec<Self> {
         let mut all = vec![];
 
@@ -137,7 +148,7 @@ impl Treat {
         for len in len {
             for sort in sort {
                 for split in split {
-                    all.push(Treat { len, sort, split });
+                    all.push(MergeData { len, sort, split });
                 }
             }
         }
@@ -152,27 +163,47 @@ struct Params(MergeSortedSlicesParams);
 
 impl Variant for Params {
     fn param_names() -> Vec<&'static str> {
+        vec![
+            "num_threads",
+            "streak_search",
+            "sequential_merge_threshold",
+            "pivot_search",
+            "put_large_to_left",
+        ]
+    }
+
+    fn param_names_short() -> Vec<&'static str> {
         vec!["nt", "ss", "thr", "ps", "sw"]
     }
 
     fn param_values(&self) -> Vec<String> {
         vec![
             self.0.num_threads.to_string(),
+            format!("{:?}", self.0.streak_search),
+            self.0.sequential_merge_threshold.to_string(),
+            format!("{:?}", self.0.pivot_search),
+            self.0.put_large_to_left.to_string(),
+        ]
+    }
+
+    fn param_values_short(&self) -> Vec<String> {
+        vec![
+            self.0.num_threads.to_string(),
             match self.0.streak_search {
-                StreakSearch::None => "n",
-                StreakSearch::Linear => "l",
-                StreakSearch::Binary => "b",
+                StreakSearch::None => "X",
+                StreakSearch::Linear => "L",
+                StreakSearch::Binary => "B",
             }
             .to_string(),
             self.0.sequential_merge_threshold.to_string(),
             match self.0.pivot_search {
-                PivotSearch::Linear => "l",
-                PivotSearch::Binary => "b",
+                PivotSearch::Linear => "L",
+                PivotSearch::Binary => "B",
             }
             .to_string(),
             match self.0.put_large_to_left {
-                true => "t",
-                false => "f",
+                true => "T",
+                false => "F",
             }
             .to_string(),
         ]
@@ -263,7 +294,7 @@ impl Params {
 struct TuneExperiment;
 
 impl Experiment for TuneExperiment {
-    type Treatment = Treat;
+    type Data = MergeData;
 
     type Variant = Params;
 
@@ -271,7 +302,7 @@ impl Experiment for TuneExperiment {
 
     type Output = ();
 
-    fn input(treatment: &Self::Treatment) -> Self::Input {
+    fn input(treatment: &Self::Data) -> Self::Input {
         let vec = new_vec(treatment.len, elem, treatment.sort);
         let (left, right) = split_to_sorted_vecs(&vec, treatment.split);
         let target = Vec::with_capacity(vec.len());
@@ -296,7 +327,7 @@ impl Experiment for TuneExperiment {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = Treat::all();
+    let treatments = MergeData::all();
     let variants = Params::all();
     TuneExperiment::bench(c, "t_merge_sorted_slices", &treatments, &variants);
 }

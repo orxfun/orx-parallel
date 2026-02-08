@@ -16,8 +16,8 @@ pub enum PivotSearch {
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub struct MergeSortedSlicesParams {
-    pub streak_search: StreakSearch,
     pub num_threads: usize,
+    pub streak_search: StreakSearch,
     pub sequential_merge_threshold: usize,
     pub pivot_search: PivotSearch,
     pub put_large_to_left: bool,
