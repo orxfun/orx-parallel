@@ -44,9 +44,10 @@ rand = "0.9.2"
 rand_chacha = "0.9"
 rayon = "1.11.0"
 test-case = "3.3.1"
+orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
 [[bench]]
-name = "merge_sorted_slices"
+name = "tune_merge_sorted_slices"
 harness = false
 
 [package.metadata.docs.rs]
