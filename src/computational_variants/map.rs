@@ -5,7 +5,7 @@ use crate::generic_values::{Vector, WhilstAtom};
 use crate::par_iter_result::IntoResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::{UParMap, UsingClone, UsingFun};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParIter, Params};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParEnumerate, ParIter, Params};
 use crate::{ParIterResult, ParIterUsing};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -216,5 +216,18 @@ where
             IterationOrder::Ordered => prc::next::m(orchestrator, params, iter, m1).1,
             IterationOrder::Arbitrary => prc::next_any::m(orchestrator, params, iter, m1).1,
         }
+    }
+}
+
+impl<I, O, M1, R> ParEnumerate<R> for ParMap<I, O, M1, R>
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    M1: Fn(I::Item) -> O + Sync,
+{
+    fn enumerate(self) -> impl ParIter<R, Item = (usize, Self::Item)> {
+        let (orchestrator, params, iter, m1) = self.destruct();
+        let x1 = move |(x, i): (usize, I::Item)| (x, m1(i));
+        ParMap::new(orchestrator, params, iter.enumerate(), x1)
     }
 }
