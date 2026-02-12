@@ -2,6 +2,7 @@
 mod tests;
 
 mod alg;
+mod parallel;
 mod sequential;
 
 pub use alg::{MergeSortedSlicesParams, PivotSearch, StreakSearch, merge_sorted_slices};

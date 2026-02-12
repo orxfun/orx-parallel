@@ -4,6 +4,7 @@ use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 /// A slice of contiguous data.
 ///
 /// Its lifetime is bound to the owner of the data.
+#[derive(Clone)]
 pub struct Slice<'a, T> {
     data: *const T,
     len: usize,

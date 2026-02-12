@@ -330,3 +330,25 @@ fn merge_sorted_slices_by_dividing<'a, T: 'a, F>(
         }
     }
 }
+
+struct ParTaskQueue<'a, T: 'a> {
+    queue: Vec<Task<'a, T>>,
+}
+
+impl<'a, T: 'a> ParTaskQueue<'a, T> {
+    fn new(left: Slice<'a, T>, right: Slice<'a, T>) -> Self {
+        let mut queue = Vec::new();
+        let range = 0..(left.len() + right.len());
+        queue.push(Task::new(left, right, range));
+        Self { queue }
+    }
+
+    fn pop(&mut self) -> Option<Task<'a, T>> {
+        self.queue.pop()
+    }
+
+    fn push(&mut self, left: Task<'a, T>, right: Task<'a, T>) {
+        self.queue.push(left);
+        self.queue.push(right);
+    }
+}
