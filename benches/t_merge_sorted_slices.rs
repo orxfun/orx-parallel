@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use orx_criterion::{Data, Experiment, Variant};
+use orx_criterion::{Experiment, Factors};
 use orx_parallel::algorithms::{MergeSortedSlicesParams, PivotSearch, StreakSearch};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -98,7 +98,7 @@ struct MergeData {
     split: SplitKind,
 }
 
-impl Data for MergeData {
+impl Factors for MergeData {
     fn factor_names() -> Vec<&'static str> {
         vec!["e (len=2^e)", "sort", "split"]
     }
@@ -107,7 +107,7 @@ impl Data for MergeData {
         vec!["e", "so", "sp"]
     }
 
-    fn factor_values(&self) -> Vec<String> {
+    fn factor_levels(&self) -> Vec<String> {
         vec![
             self.e.to_string(),
             format!("{:?}", self.sort),
@@ -115,7 +115,7 @@ impl Data for MergeData {
         ]
     }
 
-    fn factor_values_short(&self) -> Vec<String> {
+    fn factor_levels_short(&self) -> Vec<String> {
         vec![
             self.e.to_string(),
             match self.sort {
@@ -161,8 +161,8 @@ impl MergeData {
 #[derive(PartialOrd, Ord, Eq, Clone)]
 struct Params(MergeSortedSlicesParams);
 
-impl Variant for Params {
-    fn param_names() -> Vec<&'static str> {
+impl Factors for Params {
+    fn factor_names() -> Vec<&'static str> {
         vec![
             "num_threads",
             "streak_search",
@@ -172,11 +172,11 @@ impl Variant for Params {
         ]
     }
 
-    fn param_names_short() -> Vec<&'static str> {
+    fn factor_names_short() -> Vec<&'static str> {
         vec!["nt", "ss", "thr", "ps", "sw"]
     }
 
-    fn param_values(&self) -> Vec<String> {
+    fn factor_levels(&self) -> Vec<String> {
         vec![
             self.0.num_threads.to_string(),
             format!("{:?}", self.0.streak_search),
@@ -186,7 +186,7 @@ impl Variant for Params {
         ]
     }
 
-    fn param_values_short(&self) -> Vec<String> {
+    fn factor_levels_short(&self) -> Vec<String> {
         vec![
             self.0.num_threads.to_string(),
             match self.0.streak_search {
@@ -294,15 +294,15 @@ impl Params {
 struct TuneExperiment;
 
 impl Experiment for TuneExperiment {
-    type Data = MergeData;
+    type InputFactors = MergeData;
 
-    type Variant = Params;
+    type AlgFactors = Params;
 
     type Input = Input;
 
     type Output = ();
 
-    fn input(treatment: &Self::Data) -> Self::Input {
+    fn input(&mut self, treatment: &Self::InputFactors) -> Self::Input {
         let len = 1 << treatment.e;
         let vec = new_vec(len, elem, treatment.sort);
         let (left, right) = split_to_sorted_vecs(&vec, treatment.split);
@@ -314,7 +314,7 @@ impl Experiment for TuneExperiment {
         }
     }
 
-    fn execute(variant: &Self::Variant, input: &Self::Input) -> Self::Output {
+    fn execute(&mut self, variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
         let target = target_slice(&input.target);
         let params = variant.0;
         orx_parallel::algorithms::merge_sorted_slices(
@@ -330,7 +330,7 @@ impl Experiment for TuneExperiment {
 fn run(c: &mut Criterion) {
     let treatments = MergeData::all();
     let variants = Params::all();
-    TuneExperiment::bench(c, "t_merge_sorted_slices", &treatments, &variants);
+    TuneExperiment.bench(c, "t_merge_sorted_slices", &treatments, &variants);
 }
 
 criterion_group!(benches, run);
