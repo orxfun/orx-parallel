@@ -31,6 +31,10 @@ impl<T> Slice<T> {
         unsafe { Self::new(vec.as_ptr(), vec.capacity()) }
     }
 
+    pub(super) fn data(&self) -> *const T {
+        self.0 as *const T
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }

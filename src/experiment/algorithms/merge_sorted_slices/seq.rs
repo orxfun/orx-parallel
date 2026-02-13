@@ -74,12 +74,8 @@ pub fn seq_merge_unchecked<'a, T: 'a, F>(
     // }
 }
 
-// fn seq_merge_streak_none<'a, T: 'a, F>(
-//     is_leq: F,
-//     left: Slice<T>,
-//     right: Slice<T>,
-//     target: Slice<T>,
-// ) where
+// fn seq_merge_streak_none<'a, T: 'a, F>(is_leq: F, left: Slice<T>, right: Slice<T>, target: Slice<T>)
+// where
 //     F: Fn(&T, &T) -> bool,
 // {
 //     let mut it_left = left.iter_over_ptr();
