@@ -56,6 +56,10 @@ pub mod using;
 #[cfg(feature = "generic_iterator")]
 pub mod generic_iterator;
 
+/// Module containing experiments for new algorithms, computations or factorial analysis.
+#[cfg(feature = "experiment")]
+pub mod experiment;
+
 /// Module with utility methods for testing.
 #[cfg(test)]
 mod test_utils;
