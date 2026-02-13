@@ -54,6 +54,7 @@ harness = false
 all-features = true
 
 [features]
-default = ["std"]
+default = ["std", "tuning"]
 std = []
 generic_iterator = ["rayon"]
+tuning = []
