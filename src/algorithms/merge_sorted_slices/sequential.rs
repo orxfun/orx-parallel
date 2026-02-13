@@ -70,13 +70,25 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
 
             match is_leq(l, r) {
                 true => {
-                    dst.write_one_unchecked(left.next_unchecked());
+                    let src_begin = left.next_unchecked();
+                    let mut src_end_inclusive = src_begin;
+                    while let Some(next) = left.next_if_leq(&is_leq, r) {
+                        src_end_inclusive = next;
+                    }
+                    dst.write_many_unchecked(src_begin, src_end_inclusive);
+
                     if left.is_finished() {
                         dst.write_remaining_from(&right.remaining_into_slice());
                     }
                 }
                 false => {
-                    dst.write_one_unchecked(right.next_unchecked());
+                    let src_begin = right.next_unchecked();
+                    let mut src_end_inclusive = src_begin;
+                    while let Some(next) = right.next_if_leq(&is_leq, l) {
+                        src_end_inclusive = next;
+                    }
+                    dst.write_many_unchecked(src_begin, src_end_inclusive);
+
                     if right.is_finished() {
                         dst.write_remaining_from(&left.remaining_into_slice());
                     }
