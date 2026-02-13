@@ -1,4 +1,4 @@
-use crate::algorithms::data_structures::slice_iter::{SliceIterPtr, SliceIterRef};
+use crate::algorithms::data_structures::slice_iter::{SliceIterDst, SliceIterPtr, SliceIterRef};
 use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
 /// A slice of contiguous data.
@@ -104,5 +104,9 @@ impl<'a, T> Slice<'a, T> {
 
     pub fn iter_over_ref(&self) -> SliceIterRef<'a, T> {
         SliceIterRef::from(self)
+    }
+
+    pub fn iter_as_dst(&self) -> SliceIterDst<'a, T> {
+        SliceIterDst::from(self)
     }
 }

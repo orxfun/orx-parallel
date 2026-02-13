@@ -9,6 +9,12 @@ impl<'a, T: 'a> From<&mut SliceMut<'a, T>> for SliceIterDst<'a, T> {
     }
 }
 
+impl<'a, T: 'a> From<&Slice<'a, T>> for SliceIterDst<'a, T> {
+    fn from(value: &Slice<'a, T>) -> Self {
+        Self(value.into())
+    }
+}
+
 impl<'a, T: 'a> SliceIterDst<'a, T> {
     #[inline(always)]
     pub unsafe fn write_one_unchecked(&mut self, src: *const T) {
