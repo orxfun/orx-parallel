@@ -1,7 +1,6 @@
-use core::cmp::Ordering;
-
 use crate::algorithms::data_structures::Slice;
 use crate::algorithms::merge_sorted_slices::params::ExpSeqMergeSortedSlicesParams;
+use core::cmp::Ordering;
 
 pub fn seq_merge<'a, T: 'a, F>(
     is_leq: F,
@@ -15,6 +14,11 @@ pub fn seq_merge<'a, T: 'a, F>(
     let is_large_on_left = left.len() >= right.len();
     if is_large_on_left != params.put_large_to_left {
         (left, right) = (right, left);
+    }
+
+    match params.streak_search {
+        // StreakSearch::None => {}
+        _ => {}
     }
 }
 
