@@ -1,6 +1,6 @@
 use crate::algorithms::PivotSearch;
 use crate::algorithms::data_structures::{Slice, SliceMut};
-use crate::algorithms::merge_sorted_slices::alg::{MergeSortedSlicesParams, StreakSearch};
+use crate::algorithms::merge_sorted_slices::exp_alg::{ExpMergeSortedSlicesParams, StreakSearch};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 use core::ops::Range;
@@ -10,7 +10,7 @@ pub fn merge_sorted_slices<'a, T: 'a, F>(
     left: &'a Slice<'a, T>,
     right: &'a Slice<'a, T>,
     target: &mut SliceMut<'a, T>,
-    params: MergeSortedSlicesParams,
+    params: ExpMergeSortedSlicesParams,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -39,7 +39,7 @@ fn merge_sorted_slices_streak_none<'a, T: 'a, F>(
     mut left: &'a Slice<'a, T>,
     mut right: &'a Slice<'a, T>,
     target: &mut SliceMut<'a, T>,
-    params: &MergeSortedSlicesParams,
+    params: &ExpMergeSortedSlicesParams,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -82,7 +82,7 @@ fn merge_sorted_slices_with_streak_linear<'a, T: 'a, F>(
     mut left: &'a Slice<'a, T>,
     mut right: &'a Slice<'a, T>,
     target: &mut SliceMut<'a, T>,
-    params: &MergeSortedSlicesParams,
+    params: &ExpMergeSortedSlicesParams,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -133,7 +133,7 @@ fn merge_sorted_slices_with_streak_binary<'a, T: 'a, F>(
     mut left: &'a Slice<'a, T>,
     mut right: &'a Slice<'a, T>,
     target: &mut SliceMut<'a, T>,
-    params: &MergeSortedSlicesParams,
+    params: &ExpMergeSortedSlicesParams,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -259,7 +259,7 @@ fn merge_sorted_slices_by_dividing<'a, T: 'a, F>(
     mut left: Slice<'a, T>,
     mut right: Slice<'a, T>,
     target: &mut SliceMut<'a, T>,
-    params: &MergeSortedSlicesParams,
+    params: &ExpMergeSortedSlicesParams,
 ) where
     F: Fn(&T, &T) -> bool,
 {

@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
-use orx_parallel::algorithms::{MergeSortedSlicesParams, PivotSearch, StreakSearch};
+use orx_parallel::algorithms::{ExpMergeSortedSlicesParams, PivotSearch, StreakSearch};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::{collections::HashSet, hash::Hash, ptr::slice_from_raw_parts_mut};
@@ -159,7 +159,7 @@ impl MergeData {
 // factors
 
 #[derive(PartialOrd, Ord, Eq, Clone)]
-struct Params(MergeSortedSlicesParams);
+struct Params(ExpMergeSortedSlicesParams);
 
 impl Factors for Params {
     fn factor_names() -> Vec<&'static str> {
@@ -217,7 +217,7 @@ impl Hash for Params {
             _ => self.0.pivot_search,
         };
 
-        let params = MergeSortedSlicesParams {
+        let params = ExpMergeSortedSlicesParams {
             num_threads: self.0.num_threads,
             sequential_merge_threshold: self.0.sequential_merge_threshold,
             put_large_to_left: self.0.put_large_to_left,
@@ -272,7 +272,7 @@ impl Params {
             for streak_search in streaks {
                 for pivot_search in pivots {
                     for sequential_merge_threshold in thresholds {
-                        all.insert(Self(MergeSortedSlicesParams {
+                        all.insert(Self(ExpMergeSortedSlicesParams {
                             streak_search,
                             num_threads,
                             sequential_merge_threshold,

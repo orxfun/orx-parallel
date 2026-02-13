@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::algorithms::{MergeSortedSlicesParams, PivotSearch, StreakSearch};
+use orx_parallel::algorithms::{ExpMergeSortedSlicesParams, PivotSearch, StreakSearch};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::{
@@ -101,7 +101,7 @@ impl Display for Treatment {
 }
 
 #[derive(PartialOrd, Ord, Eq, Clone)]
-struct Variant(MergeSortedSlicesParams);
+struct Variant(ExpMergeSortedSlicesParams);
 
 impl Display for Variant {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -135,7 +135,7 @@ impl Hash for Variant {
             _ => self.0.pivot_search,
         };
 
-        let params = MergeSortedSlicesParams {
+        let params = ExpMergeSortedSlicesParams {
             num_threads: self.0.num_threads,
             sequential_merge_threshold: self.0.sequential_merge_threshold,
             put_large_to_left: self.0.put_large_to_left,
@@ -190,7 +190,7 @@ impl Variant {
             for streak_search in streaks {
                 for pivot_search in pivots {
                     for sequential_merge_threshold in thresholds {
-                        all.insert(Self(MergeSortedSlicesParams {
+                        all.insert(Self(ExpMergeSortedSlicesParams {
                             streak_search,
                             num_threads,
                             sequential_merge_threshold,
@@ -221,7 +221,7 @@ fn naive_seq(left: &[X], right: &[X], target: &mut Vec<X>) {
     });
 }
 
-fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, params: MergeSortedSlicesParams) {
+fn orx_seq(left: &[X], right: &[X], target: &mut Vec<X>, params: ExpMergeSortedSlicesParams) {
     let target = target_slice(target);
     orx_parallel::algorithms::merge_sorted_slices(is_leq, left, right, target, params);
 }

@@ -1,4 +1,4 @@
-use super::sequential_test;
+use super::exp_sequential;
 use crate::algorithms::data_structures::{Slice, SliceMut};
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Clone, Copy, Debug, Hash)]
@@ -15,7 +15,7 @@ pub enum PivotSearch {
 }
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Clone, Copy, Debug, Hash)]
-pub struct MergeSortedSlicesParams {
+pub struct ExpMergeSortedSlicesParams {
     pub num_threads: usize,
     pub streak_search: StreakSearch,
     pub sequential_merge_threshold: usize,
@@ -28,7 +28,7 @@ pub fn merge_sorted_slices<T, F>(
     left: &[T],
     right: &[T],
     target: &mut [T],
-    params: MergeSortedSlicesParams,
+    params: ExpMergeSortedSlicesParams,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -39,7 +39,7 @@ pub fn merge_sorted_slices<T, F>(
     let mut target = SliceMut::from(target);
 
     match params.num_threads {
-        1 => sequential_test::merge_sorted_slices(is_leq, &left, &right, &mut target, params),
+        1 => exp_sequential::merge_sorted_slices(is_leq, &left, &right, &mut target, params),
         _ => todo!(),
     }
 }

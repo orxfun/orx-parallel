@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-mod alg;
+mod exp_alg;
+mod exp_sequential;
 mod parallel;
-mod sequential_test;
+mod params;
+mod sequential;
 
-pub use alg::{MergeSortedSlicesParams, PivotSearch, StreakSearch, merge_sorted_slices};
+pub use exp_alg::{ExpMergeSortedSlicesParams, PivotSearch, StreakSearch, merge_sorted_slices};
