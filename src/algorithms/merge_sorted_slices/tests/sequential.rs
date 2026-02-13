@@ -3,7 +3,7 @@ use crate::algorithms::data_structures::{Slice, SliceMut};
 use crate::algorithms::merge_sorted_slices::alg::{
     MergeSortedSlicesParams, PivotSearch, StreakSearch,
 };
-use crate::algorithms::merge_sorted_slices::sequential;
+use crate::algorithms::merge_sorted_slices::sequential_test;
 use crate::algorithms::merge_sorted_slices::tests::utils::SplitKind;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -40,7 +40,7 @@ fn merge_sorted_slices_seq<T: Ord + Clone + Debug>(
     let (mut left, mut right) = split_to_sorted_vecs(&input, split_kind);
 
     let mut result = Vec::with_capacity(input.len());
-    sequential::merge_sorted_slices(
+    sequential_test::merge_sorted_slices(
         |a, b| a < b,
         &Slice::from(left.as_slice()),
         &Slice::from(right.as_slice()),

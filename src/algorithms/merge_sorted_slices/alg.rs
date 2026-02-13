@@ -1,4 +1,4 @@
-use super::sequential;
+use super::sequential_test;
 use crate::algorithms::data_structures::{Slice, SliceMut};
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Clone, Copy, Debug, Hash)]
@@ -39,7 +39,7 @@ pub fn merge_sorted_slices<T, F>(
     let mut target = SliceMut::from(target);
 
     match params.num_threads {
-        1 => sequential::merge_sorted_slices(is_leq, &left, &right, &mut target, params),
+        1 => sequential_test::merge_sorted_slices(is_leq, &left, &right, &mut target, params),
         _ => todo!(),
     }
 }
