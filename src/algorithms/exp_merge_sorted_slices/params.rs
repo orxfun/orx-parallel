@@ -1,9 +1,11 @@
+#[derive(Clone, Copy)]
 pub enum StreakSearch {
     None,
     Linear,
     Binary,
 }
 
+#[derive(Clone, Copy)]
 pub enum SplitPivotSearch {
     Linear,
     Binary,
@@ -17,6 +19,7 @@ pub struct ParamsParMergeSortedSlices {
     pub seq_params: ParamsSeqMergeSortedSlices,
 }
 
+#[derive(Clone, Copy)]
 pub struct ParamsSeqMergeSortedSlices {
     pub streak_search: StreakSearch,
     pub put_large_to_left: bool,

@@ -3,6 +3,7 @@ use alloc::vec::Vec;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 
+#[derive(Clone, Copy)]
 pub enum SortKind {
     Sorted,
     ReverseSorted,
@@ -10,10 +11,10 @@ pub enum SortKind {
 }
 
 pub fn sorted_slices(
-    total_len: usize,
     left_len: usize,
+    total_len: usize,
     sort: SortKind,
-) -> (Vec<String>, Vec<String>) {
+) -> (Vec<String>, Vec<String>, Vec<String>) {
     let mut all: Vec<_> = (0..total_len).map(|x| x.to_string()).collect();
     match sort {
         SortKind::Sorted => all.sort(),
@@ -37,5 +38,5 @@ pub fn sorted_slices(
     let mut right: Vec<_> = right.iter().cloned().collect();
     left.sort();
     right.sort();
-    (left, right)
+    (all, left, right)
 }

@@ -1,4 +1,5 @@
 use crate::algorithms::data_structures::slice_iter::{SliceIterDst, SliceIterPtr, SliceIterRef};
+use alloc::vec::Vec;
 use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
 /// A slice of contiguous data.
@@ -36,6 +37,10 @@ impl<'a, T> Slice<'a, T> {
             len,
             phantom: PhantomData,
         }
+    }
+
+    pub fn for_entire_capacity(value: &'a Vec<T>) -> Self {
+        Self::new(value.as_ptr(), value.capacity())
     }
 
     pub fn clone(&self) -> Self {

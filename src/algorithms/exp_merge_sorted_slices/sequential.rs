@@ -5,9 +5,36 @@ use core::cmp::Ordering;
 
 pub fn seq_merge<'a, T: 'a, F>(
     is_leq: F,
-    mut left: &'a Slice<'a, T>,
-    mut right: &'a Slice<'a, T>,
-    target: &Slice<'a, T>,
+    mut left: Slice<'a, T>,
+    mut right: Slice<'a, T>,
+    target: Slice<'a, T>,
+    params: ParamsSeqMergeSortedSlices,
+) where
+    F: Fn(&T, &T) -> bool,
+{
+    match (left.len(), right.len()) {
+        (0, _) => target.copy_from_nonoverlapping(&right),
+        (_, 0) => target.copy_from_nonoverlapping(&left),
+        _ => {
+            let is_large_on_left = left.len() >= right.len();
+            if is_large_on_left != params.put_large_to_left {
+                (left, right) = (right, left);
+            }
+
+            match params.streak_search {
+                StreakSearch::None => seq_merge_streak_none(is_leq, left, right, target),
+                StreakSearch::Linear => seq_merge_streak_linear(is_leq, left, right, target),
+                StreakSearch::Binary => seq_merge_streak_binary(is_leq, left, right, target),
+            }
+        }
+    }
+}
+
+pub fn seq_merge_unchecked<'a, T: 'a, F>(
+    is_leq: F,
+    mut left: Slice<'a, T>,
+    mut right: Slice<'a, T>,
+    target: Slice<'a, T>,
     params: ParamsSeqMergeSortedSlices,
 ) where
     F: Fn(&T, &T) -> bool,
@@ -26,9 +53,9 @@ pub fn seq_merge<'a, T: 'a, F>(
 
 fn seq_merge_streak_none<'a, T: 'a, F>(
     is_leq: F,
-    left: &'a Slice<'a, T>,
-    right: &'a Slice<'a, T>,
-    target: &Slice<'a, T>,
+    left: Slice<'a, T>,
+    right: Slice<'a, T>,
+    target: Slice<'a, T>,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -46,12 +73,14 @@ fn seq_merge_streak_none<'a, T: 'a, F>(
                     it_dst.write_one_unchecked(it_left.next_unchecked());
                     if it_left.is_finished() {
                         it_dst.write_remaining_from(&it_right.remaining_into_slice());
+                        break;
                     }
                 }
                 false => {
                     it_dst.write_one_unchecked(it_right.next_unchecked());
                     if it_right.is_finished() {
                         it_dst.write_remaining_from(&it_left.remaining_into_slice());
+                        break;
                     }
                 }
             }
@@ -61,9 +90,9 @@ fn seq_merge_streak_none<'a, T: 'a, F>(
 
 fn seq_merge_streak_linear<'a, T: 'a, F>(
     is_leq: F,
-    left: &'a Slice<'a, T>,
-    right: &'a Slice<'a, T>,
-    target: &Slice<'a, T>,
+    left: Slice<'a, T>,
+    right: Slice<'a, T>,
+    target: Slice<'a, T>,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -88,6 +117,7 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
 
                     if it_left.is_finished() {
                         it_dst.write_remaining_from(&it_right.remaining_into_slice());
+                        break;
                     }
                 }
                 false => {
@@ -101,6 +131,7 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
 
                     if it_right.is_finished() {
                         it_dst.write_remaining_from(&it_left.remaining_into_slice());
+                        break;
                     }
                 }
             }
@@ -110,9 +141,9 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
 
 fn seq_merge_streak_binary<'a, T: 'a, F>(
     is_leq: F,
-    left: &'a Slice<'a, T>,
-    right: &'a Slice<'a, T>,
-    target: &Slice<'a, T>,
+    left: Slice<'a, T>,
+    right: Slice<'a, T>,
+    target: Slice<'a, T>,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -145,6 +176,7 @@ fn seq_merge_streak_binary<'a, T: 'a, F>(
 
                     if it_left.is_finished() {
                         it_dst.write_remaining_from(&it_right.remaining_into_slice());
+                        break;
                     }
                 }
                 false => {
@@ -166,6 +198,7 @@ fn seq_merge_streak_binary<'a, T: 'a, F>(
 
                     if it_right.is_finished() {
                         it_dst.write_remaining_from(&it_left.remaining_into_slice());
+                        break;
                     }
                 }
             }
