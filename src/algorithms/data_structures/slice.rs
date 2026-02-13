@@ -90,6 +90,12 @@ impl<'a, T> Slice<'a, T> {
         self.split_at(self.len / 2)
     }
 
+    pub fn copy_from_nonoverlapping(&self, source: &Self) {
+        debug_assert_eq!(self.len, source.len);
+        let dst = self.data as *mut T;
+        unsafe { dst.copy_from_nonoverlapping(source.data, source.len) };
+    }
+
     // iterators
 
     pub fn iter_over_ptr(&self) -> SliceIterPtr<'a, T> {
