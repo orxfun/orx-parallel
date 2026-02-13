@@ -1,6 +1,11 @@
 use alloc::vec::Vec;
 use core::ptr::slice_from_raw_parts;
 
+use crate::experiment::data_structures::{
+    slice_iter_ptr::SliceIterPtr, slice_iter_ptr_dst::SliceIterPtrDst,
+    slice_iter_ptr_src::SliceIterPtrSrc,
+};
+
 /// A raw slice of contiguous data.
 pub struct Slice<T>(*const [T]);
 
@@ -53,5 +58,19 @@ impl<T> Slice<T> {
         // SAFETY: (i) within bounds and (ii) slices do not overlap
         let dst = self.0 as *mut T;
         unsafe { dst.copy_from_nonoverlapping(src.0 as *const T, self.len()) };
+    }
+
+    // iter
+
+    pub fn iter_ptr(&self) -> SliceIterPtr<'_, T> {
+        self.into()
+    }
+
+    pub fn iter_ptr_src(&self) -> SliceIterPtrSrc<'_, T> {
+        self.into()
+    }
+
+    pub fn iter_ptr_dst(&self) -> SliceIterPtrDst<'_, T> {
+        self.into()
     }
 }

@@ -1,4 +1,4 @@
-use crate::experiment::data_structures::slice::Slice;
+use crate::experiment::data_structures::{slice::Slice, slice_iter_ptr::SliceIterPtr};
 
 #[derive(Clone, Copy)]
 pub enum StreakSearch {
@@ -74,38 +74,39 @@ pub fn seq_merge_unchecked<'a, T: 'a, F>(
     // }
 }
 
-// fn seq_merge_streak_none<'a, T: 'a, F>(is_leq: F, left: Slice<T>, right: Slice<T>, target: Slice<T>)
-// where
-//     F: Fn(&T, &T) -> bool,
-// {
-//     let mut it_left = left.iter_over_ptr();
-//     let mut it_right = right.iter_over_ptr();
-//     let mut it_dst = target.iter_as_dst();
+fn seq_merge_streak_none<'a, T: 'a, F>(is_leq: F, left: Slice<T>, right: Slice<T>, target: Slice<T>)
+where
+    F: Fn(&T, &T) -> bool,
+{
+    let left = left.iter_ptr_src();
+    let right = right.iter_ptr_src();
+    let dst = target.iter_ptr_dst();
+    // let mut it_dst = target.iter_as_dst();
 
-//     loop {
-//         unsafe {
-//             let l = it_left.current_unchecked();
-//             let r = it_right.current_unchecked();
+    loop {
+        unsafe {
+            let l = left.current_unchecked();
+            let r = right.current_unchecked();
 
-//             match is_leq(l, r) {
-//                 true => {
-//                     it_dst.write_one_unchecked(it_left.next_unchecked());
-//                     if it_left.is_finished() {
-//                         it_dst.write_remaining_from(&it_right.remaining_into_slice());
-//                         break;
-//                     }
-//                 }
-//                 false => {
-//                     it_dst.write_one_unchecked(it_right.next_unchecked());
-//                     if it_right.is_finished() {
-//                         it_dst.write_remaining_from(&it_left.remaining_into_slice());
-//                         break;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
+            match is_leq(l, r) {
+                true => {
+                    dst.write_one_unchecked(left.next_unchecked());
+                    if left.is_finished() {
+                        dst.write_remaining_from(&right.remaining_into_slice());
+                        break;
+                    }
+                }
+                false => {
+                    dst.write_one_unchecked(right.next_unchecked());
+                    if right.is_finished() {
+                        dst.write_remaining_from(&left.remaining_into_slice());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
 
 // fn seq_merge_streak_linear<'a, T: 'a, F>(
 //     is_leq: F,
