@@ -34,10 +34,10 @@ pub unsafe fn seq_merge<'a, T: 'a, F>(
         // SAFETY: satisfied by (i) and (ii)
         (_, 0) => unsafe { target.copy_from_nonoverlapping(&left) },
         _ => {
-            let is_large_on_left = left.len() >= right.len();
-            if is_large_on_left != params.put_large_to_left {
-                (left, right) = (right, left);
-            }
+            // let is_large_on_left = left.len() >= right.len();
+            // if is_large_on_left != params.put_large_to_left {
+            //     (left, right) = (right, left);
+            // }
 
             // match params.streak_search {
             //     StreakSearch::None => seq_merge_streak_none(is_leq, left, right, target),
@@ -62,10 +62,10 @@ pub fn seq_merge_unchecked<'a, T: 'a, F>(
 ) where
     F: Fn(&T, &T) -> bool,
 {
-    let is_large_on_left = left.len() >= right.len();
-    if is_large_on_left != params.put_large_to_left {
-        (left, right) = (right, left);
-    }
+    // let is_large_on_left = left.len() >= right.len();
+    // if is_large_on_left != params.put_large_to_left {
+    //     (left, right) = (right, left);
+    // }
 
     // match params.streak_search {
     //     StreakSearch::None => seq_merge_streak_none(is_leq, left, right, target),
@@ -78,34 +78,34 @@ fn seq_merge_streak_none<'a, T: 'a, F>(is_leq: F, left: Slice<T>, right: Slice<T
 where
     F: Fn(&T, &T) -> bool,
 {
-    let mut left = left.iter_ptr_src();
-    let mut right = right.iter_ptr_src();
-    let mut dst = target.iter_ptr_dst();
-    // let mut it_dst = target.iter_as_dst();
+    // let mut left = left.iter_ptr_src();
+    // let mut right = right.iter_ptr_src();
+    // let mut dst = target.iter_ptr_dst();
+    // // let mut it_dst = target.iter_as_dst();
 
-    loop {
-        unsafe {
-            let l = left.current_unchecked();
-            let r = right.current_unchecked();
+    // loop {
+    //     unsafe {
+    //         let l = left.current_unchecked();
+    //         let r = right.current_unchecked();
 
-            match is_leq(l, r) {
-                true => {
-                    dst.write_one_from(&mut left);
-                    if left.is_finished() {
-                        dst.write_rest_from(&mut right);
-                        break;
-                    }
-                }
-                false => {
-                    dst.write_one_from(&mut right);
-                    if right.is_finished() {
-                        dst.write_rest_from(&mut left);
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    //         match is_leq(l, r) {
+    //             true => {
+    //                 dst.write_one_from(&mut left);
+    //                 if left.is_finished() {
+    //                     dst.write_rest_from(&mut right);
+    //                     break;
+    //                 }
+    //             }
+    //             false => {
+    //                 dst.write_one_from(&mut right);
+    //                 if right.is_finished() {
+    //                     dst.write_rest_from(&mut left);
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 fn seq_merge_streak_linear<'a, T: 'a, F>(
@@ -118,35 +118,35 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
 {
     const WILL_FIND: &str = "There exists at least one element satisfying the condition";
 
-    let mut left = left.iter_ptr_src();
-    let mut right = right.iter_ptr_src();
-    let mut dst = target.iter_ptr_dst();
+    // let mut left = left.iter_ptr_src();
+    // let mut right = right.iter_ptr_src();
+    // let mut dst = target.iter_ptr_dst();
 
-    loop {
-        unsafe {
-            let l = left.current_unchecked();
-            let r = right.current_unchecked();
+    // loop {
+    //     unsafe {
+    //         let l = left.current_unchecked();
+    //         let r = right.current_unchecked();
 
-            match is_leq(l, r) {
-                true => {
-                    let count = left.values().position(|x| is_leq(x, r)).expect(WILL_FIND);
-                    dst.write_many_from(&mut left, count);
-                    if left.is_finished() {
-                        dst.write_rest_from(&mut right);
-                        break;
-                    }
-                }
-                false => {
-                    let count = right.values().position(|x| is_leq(x, l)).expect(WILL_FIND);
-                    dst.write_many_from(&mut right, count);
-                    if right.is_finished() {
-                        dst.write_rest_from(&mut left);
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    //         match is_leq(l, r) {
+    //             true => {
+    //                 let count = left.values().position(|x| is_leq(x, r)).expect(WILL_FIND);
+    //                 dst.write_many_from(&mut left, count);
+    //                 if left.is_finished() {
+    //                     dst.write_rest_from(&mut right);
+    //                     break;
+    //                 }
+    //             }
+    //             false => {
+    //                 let count = right.values().position(|x| is_leq(x, l)).expect(WILL_FIND);
+    //                 dst.write_many_from(&mut right, count);
+    //                 if right.is_finished() {
+    //                     dst.write_rest_from(&mut left);
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 // fn seq_merge_streak_binary<'a, T: 'a, F>(
