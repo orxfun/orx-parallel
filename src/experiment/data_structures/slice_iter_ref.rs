@@ -1,4 +1,5 @@
 use crate::experiment::data_structures::slice_iter_ptr::SliceIterPtr;
+use alloc::vec::Vec;
 
 /// Iterator over references of values over a contiguous slice.
 ///
