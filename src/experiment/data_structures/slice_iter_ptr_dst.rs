@@ -1,7 +1,6 @@
 use crate::experiment::data_structures::{
     slice::Slice, slice_iter_ptr::SliceIterPtr, slice_iter_ptr_src::SliceIterPtrSrc,
 };
-use core::marker::PhantomData;
 
 /// Iterator over a slice of data that will be completely filled with values
 /// before the iterator is consumed.
@@ -28,7 +27,13 @@ impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
         self.0.is_finished()
     }
 
-    /// Pulls one element from `src` writes it to `self` as destination.
+    /// Returns the number of remaining positions.
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Pulls the next element from `src`, writes it to next position of `self`.
     ///
     /// Progresses both `self` and `src` by one element.
     ///
@@ -38,7 +43,9 @@ impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
     /// - (ii) `self` cannot be `is_finished`
     /// - (iii) `src` and `self` cannot be overlapping
     #[inline(always)]
-    pub unsafe fn write_one(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
+    pub unsafe fn write_one_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
+        debug_assert!(!self.is_finished() && !src.is_finished());
+
         // SAFETY: satisfied by (i)
         let src = unsafe { src.next_unchecked() };
 
@@ -49,8 +56,29 @@ impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
         unsafe { dst.copy_from_nonoverlapping(src, 1) };
     }
 
-    pub unsafe fn write_remaining(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
-        //
+    /// Pulls all remaining elements from `src`, writes them to remaining
+    /// positions of `self`.
+    ///
+    /// Progresses both `self` and `src` to the end.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `src` and `self` mut have equal number of remaining elements
+    /// - (ii) `src` and `self` cannot be overlapping
+    pub unsafe fn write_rest_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
+        debug_assert!(!self.is_finished() && !src.is_finished());
+        debug_assert_eq!(self.len(), src.len());
+
+        if let Some(src) = src.next() {
+            // SAFETY: having same lengths with src by (i), self cannot be finished
+            let dst = unsafe { self.0.next_unchecked() } as *mut T;
+
+            // SAFETY: satisfied by (ii)
+            unsafe { dst.copy_from_nonoverlapping(src, self.len()) };
+        }
+
+        self.0.jump_to_end();
+        src.jump_to_end();
     }
 
     #[inline(always)]

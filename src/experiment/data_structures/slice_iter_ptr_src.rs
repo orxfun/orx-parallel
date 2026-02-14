@@ -1,5 +1,4 @@
 use crate::experiment::data_structures::{slice::Slice, slice_iter_ptr::SliceIterPtr};
-use core::marker::PhantomData;
 
 /// Iterator over a slice of data that will be completely copied to another slice
 /// before the iterator is consumed.
@@ -22,6 +21,12 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     #[inline(always)]
     pub fn is_finished(&self) -> bool {
         self.0.is_finished()
+    }
+
+    /// Returns the number of remaining positions.
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 
     /// Returns a reference to the current element.
@@ -47,5 +52,17 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     #[inline(always)]
     pub unsafe fn next_unchecked(&mut self) -> *const T {
         unsafe { self.0.next_unchecked() }
+    }
+
+    /// Returns the current pointer and progresses the iterator to the next;
+    /// returns None if the iterator `is_finished`.
+    #[inline(always)]
+    pub fn next(&mut self) -> Option<*const T> {
+        self.0.next()
+    }
+
+    /// Brings the iterator to the end, skipping the remaining positions.
+    pub(super) fn jump_to_end(&mut self) {
+        self.0.jump_to_end();
     }
 }

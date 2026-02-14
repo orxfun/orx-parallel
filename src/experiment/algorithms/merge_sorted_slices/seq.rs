@@ -78,9 +78,9 @@ fn seq_merge_streak_none<'a, T: 'a, F>(is_leq: F, left: Slice<T>, right: Slice<T
 where
     F: Fn(&T, &T) -> bool,
 {
-    let left = left.iter_ptr_src();
-    let right = right.iter_ptr_src();
-    let dst = target.iter_ptr_dst();
+    let mut left = left.iter_ptr_src();
+    let mut right = right.iter_ptr_src();
+    let mut dst = target.iter_ptr_dst();
     // let mut it_dst = target.iter_as_dst();
 
     loop {
@@ -90,16 +90,16 @@ where
 
             match is_leq(l, r) {
                 true => {
-                    dst.write_one_unchecked(left.next_unchecked());
+                    dst.write_one_from(&mut left);
                     if left.is_finished() {
-                        dst.write_remaining_from(&right.remaining_into_slice());
+                        dst.write_rest_from(&mut right);
                         break;
                     }
                 }
                 false => {
-                    dst.write_one_unchecked(right.next_unchecked());
+                    dst.write_one_from(&mut right);
                     if right.is_finished() {
-                        dst.write_remaining_from(&left.remaining_into_slice());
+                        dst.write_rest_from(&mut left);
                         break;
                     }
                 }
