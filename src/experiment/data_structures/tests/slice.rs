@@ -10,14 +10,14 @@ fn slice_overlap() {
         let [x, y] = [x, y].map(Slice::from);
         let [x, y] = [&x, &y].map(SliceCore::from);
         assert!(x.is_non_overlapping(&y));
-        assert!(y.is_non_overlapping(&y));
+        assert!(y.is_non_overlapping(&x));
     };
 
     let assert_overlap = |x: &[i32], y: &[i32]| {
         let [x, y] = [x, y].map(Slice::from);
         let [x, y] = [&x, &y].map(SliceCore::from);
         assert!(!x.is_non_overlapping(&y));
-        assert!(!y.is_non_overlapping(&y));
+        assert!(!y.is_non_overlapping(&x));
     };
 
     assert_no_overlap(&a[..], &b[..]);
