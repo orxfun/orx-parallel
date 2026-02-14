@@ -70,6 +70,7 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
     ///   is created for.
     #[inline(always)]
     pub unsafe fn peek_unchecked(&self) -> *const T {
+        debug_assert!(!self.is_finished());
         self.data
     }
 
@@ -116,6 +117,7 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
     ///   is created for.
     #[inline(always)]
     pub unsafe fn next_unchecked(&mut self) -> *const T {
+        debug_assert!(!self.is_finished());
         let value = self.data;
         self.data = unsafe { self.data.add(1) };
         value
@@ -145,6 +147,11 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
             }
             _ => None,
         }
+    }
+
+    /// Brings the iterator to the end, skipping the remaining positions.
+    pub fn jump_to_end(&mut self) {
+        self.data = self.exclusive_end
     }
 }
 
