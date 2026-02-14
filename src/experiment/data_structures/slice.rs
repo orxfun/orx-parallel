@@ -40,6 +40,7 @@ impl<'a, T: 'a> Slice<'a, T> {
         self.raw as *const T
     }
 
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.raw.len()
     }

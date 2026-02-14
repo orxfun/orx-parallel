@@ -7,6 +7,9 @@ use alloc::vec::Vec;
 ///
 /// While constructing this slice, we must guarantee that none of the elements of it
 /// is initialized since they will be overwritten.
+///
+/// This is a write-only slice.
+/// The caller must make sure that there is no other concurrent reads or writes to this slice.
 pub struct SliceDst<'a, T>(Slice<'a, T>);
 
 impl<'a, T> SliceDst<'a, T> {
@@ -28,10 +31,16 @@ impl<'a, T> SliceDst<'a, T> {
     /// # SAFETY
     ///
     /// This slice cannot outlive the `vec` it is created for due to the lifetime relation.
-    pub fn from_vec(vec: &'a Vec<T>) -> Self {
+    pub fn from_vec(vec: &'a mut Vec<T>) -> Self {
         assert_eq!(vec.len(), 0);
 
         // SAFETY: constructing with contiguous un-initialized elements
         unsafe { Self::new(vec.as_ptr(), vec.capacity()) }
+    }
+
+    /// Length of the slice.
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 }

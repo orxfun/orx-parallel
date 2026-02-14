@@ -6,6 +6,9 @@ use crate::experiment::data_structures::slice::Slice;
 ///
 /// While constructing this slice, we must guarantee that all elements of it
 /// are initialized since it will be used as source of values.
+///
+/// This is a read-only slice.
+/// The caller must make sure that there is no concurrent write to this slice.
 pub struct SliceSrc<'a, T>(Slice<'a, T>);
 
 impl<'a, T> SliceSrc<'a, T> {
@@ -18,5 +21,11 @@ impl<'a, T> SliceSrc<'a, T> {
     /// Further, this slice cannot outlive the `slice` it is created for due to the lifetime relation.
     pub fn from_slice(slice: &'a [T]) -> Self {
         Self(Slice::new(slice.as_ptr(), slice.len()))
+    }
+
+    /// Length of the slice.
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 }

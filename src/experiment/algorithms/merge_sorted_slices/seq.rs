@@ -1,4 +1,6 @@
-use crate::experiment::data_structures::{slice::Slice, slice_iter_ptr::SliceIterPtr};
+use crate::experiment::data_structures::{
+    slice::Slice, slice_dst::SliceDst, slice_iter_ptr::SliceIterPtr, slice_src::SliceSrc,
+};
 
 #[derive(Clone, Copy)]
 pub enum StreakSearch {
@@ -19,9 +21,9 @@ pub struct ParamsSeqMergeSortedSlices {
 /// - (ii) no pair of `left`, `right` and `target` can be overlapping.
 pub unsafe fn seq_merge<'a, T: 'a, F>(
     is_leq: F,
-    mut left: Slice<T>,
-    mut right: Slice<T>,
-    target: Slice<T>,
+    mut left: SliceSrc<T>,
+    mut right: SliceSrc<T>,
+    target: SliceDst<T>,
     params: ParamsSeqMergeSortedSlices,
 ) where
     F: Fn(&T, &T) -> bool,
@@ -29,10 +31,10 @@ pub unsafe fn seq_merge<'a, T: 'a, F>(
     debug_assert_eq!(target.len(), left.len() + right.len());
 
     match (left.len(), right.len()) {
-        // SAFETY: satisfied by (i) and (ii)
-        (0, _) => unsafe { target.copy_from_nonoverlapping(&right) },
-        // SAFETY: satisfied by (i) and (ii)
-        (_, 0) => unsafe { target.copy_from_nonoverlapping(&left) },
+        // // SAFETY: satisfied by (i) and (ii)
+        // (0, _) => unsafe { target.copy_from_nonoverlapping(&right) },
+        // // SAFETY: satisfied by (i) and (ii)
+        // (_, 0) => unsafe { target.copy_from_nonoverlapping(&left) },
         _ => {
             // let is_large_on_left = left.len() >= right.len();
             // if is_large_on_left != params.put_large_to_left {
