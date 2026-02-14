@@ -1,4 +1,6 @@
-use crate::experiment::data_structures::{slice::Slice, slice_iter_ptr::SliceIterPtr};
+use crate::experiment::data_structures::{
+    slice::Slice, slice_iter_ptr::SliceIterPtr, slice_iter_ref::SliceIterRef,
+};
 
 /// Iterator over a slice of data that will be completely copied to another slice
 /// before the iterator is consumed.
@@ -92,5 +94,13 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     /// Brings the iterator to the end, skipping the remaining positions.
     pub(super) fn jump_to_end(&mut self) {
         self.0.jump_to_end();
+    }
+
+    /// Creates an iterator over references to values of the remaining elements
+    /// of this iterator.
+    pub fn values(&self) -> SliceIterRef<'a, T> {
+        let ptr = unsafe { self.current_unchecked() };
+        let n = self.len();
+        unsafe { SliceIterRef::new(ptr, n) }
     }
 }

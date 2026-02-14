@@ -116,6 +116,8 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
 ) where
     F: Fn(&T, &T) -> bool,
 {
+    const WILL_FIND: &str = "There exists at least one element satisfying the condition";
+
     let mut left = left.iter_ptr_src();
     let mut right = right.iter_ptr_src();
     let mut dst = target.iter_ptr_dst();
@@ -127,32 +129,20 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
 
             match is_leq(l, r) {
                 true => {
-                    let src_begin = left.next_unchecked();
-                    let mut src_end_inclusive = src_begin;
-                    while let Some(next) = left.next_if_leq(&is_leq, r) {
-                        src_end_inclusive = next;
-                    }
-
-                    it_dst.write_many_unchecked(src_begin, src_end_inclusive);
-
-                    if it_left.is_finished() {
-                        it_dst.write_remaining_from(&it_right.remaining_into_slice());
+                    let count = left.values().position(|x| is_leq(x, r)).expect(WILL_FIND);
+                    dst.write_many_from(&mut left, count);
+                    if left.is_finished() {
+                        dst.write_rest_from(&mut right);
                         break;
                     }
                 }
                 false => {
-                    // let src_begin = it_right.next_unchecked();
-                    // let mut src_end_inclusive = src_begin;
-                    // while let Some(next) = it_right.next_if_leq(&is_leq, l) {
-                    //     src_end_inclusive = next;
-                    // }
-
-                    // it_dst.write_many_unchecked(src_begin, src_end_inclusive);
-
-                    // if it_right.is_finished() {
-                    //     it_dst.write_remaining_from(&it_left.remaining_into_slice());
-                    //     break;
-                    // }
+                    let count = right.values().position(|x| is_leq(x, l)).expect(WILL_FIND);
+                    dst.write_many_from(&mut right, count);
+                    if right.is_finished() {
+                        dst.write_rest_from(&mut left);
+                        break;
+                    }
                 }
             }
         }

@@ -18,20 +18,27 @@ impl<T> Default for SliceIterPtr<'_, T> {
     }
 }
 
+// TODO: cannot safely create from slice
 impl<'a, T: 'a> From<&Slice<T>> for SliceIterPtr<'a, T> {
     fn from(value: &Slice<T>) -> Self {
         match value.len() {
             0 => Self::default(),
             // SAFETY: `value.data() + n` marks the exclusive end which will never be read
-            n => Self::new(value.data(), unsafe { value.data().add(n) }),
+            n => unsafe { Self::new(value.data(), n) },
         }
     }
 }
 
 impl<'a, T: 'a> SliceIterPtr<'a, T> {
-    fn new(data: *const T, exclusive_end: *const T) -> Self {
+    /// Creates a new iterator for `n` elements starting from the given `ptr`.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) either `ptr` is not-null or `n` is zero.
+    pub unsafe fn new(ptr: *const T, n: usize) -> Self {
+        let exclusive_end = unsafe { ptr.add(n) };
         Self {
-            data,
+            data: ptr,
             exclusive_end,
             phantom: PhantomData,
         }
@@ -171,6 +178,7 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
 impl<'a, T: 'a> Iterator for SliceIterPtr<'a, T> {
     type Item = *const T;
 
+    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         match !self.is_finished() {
             true => Some(unsafe { self.next_unchecked() }),
