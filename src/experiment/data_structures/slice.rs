@@ -1,7 +1,3 @@
-use crate::experiment::data_structures::{
-    slice_iter_ptr::SliceIterPtr, slice_iter_ptr_dst::SliceIterPtrDst,
-    slice_iter_ptr_src::SliceIterPtrSrc,
-};
 use alloc::vec::Vec;
 use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
@@ -49,6 +45,13 @@ impl<'a, T: 'a> Slice<'a, T> {
         self.raw.is_empty()
     }
 
+    pub fn last(&self) -> Option<*const T> {
+        match self.len() {
+            0 => None,
+            n => Some(unsafe { self.data().add(n) }),
+        }
+    }
+
     /// # SAFETY
     ///
     /// - (i) `self` and `src` must have the same lengths.
@@ -59,5 +62,20 @@ impl<'a, T: 'a> Slice<'a, T> {
         // SAFETY: (i) within bounds and (ii) slices do not overlap
         let dst = self.raw as *mut T;
         unsafe { dst.copy_from_nonoverlapping(src.raw as *const T, self.len()) };
+    }
+
+    /// Returns true if slices `self` and `other` are non-overlapping.
+    pub fn is_non_overlapping(&self, other: &Self) -> bool {
+        match (self.len(), other.len()) {
+            (0, _) | (_, 0) => true,
+            (n, m) => {
+                let diff = unsafe { self.data().offset_from(other.data()) };
+                let (left, right) = match diff >= 0 {
+                    true => (unsafe { other.data().add(m - 1) }, self.data()),
+                    false => (unsafe { self.data().add(n - 1) }, other.data()),
+                };
+                left < right
+            }
+        }
     }
 }

@@ -15,10 +15,13 @@ pub struct ParamsSeqMergeSortedSlices {
     pub put_large_to_left: bool,
 }
 
+/// # Panics
+///
+/// - (i) if `target.len()` is not equal to `left.len() + right.len()`
+///
 /// # SAFETY
 ///
-/// - (i) length of `target` must equal sum of lengths of `left` and `right`.
-/// - (ii) no pair of `left`, `right` and `target` can be overlapping.
+/// - (i) no pair of `left`, `right` and `target` can be overlapping.
 pub unsafe fn seq_merge<'a, T: 'a, F>(
     is_leq: F,
     mut left: SliceSrc<T>,

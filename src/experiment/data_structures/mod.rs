@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 pub mod slice;
 pub mod slice_dst;
 pub mod slice_iter_ptr;
