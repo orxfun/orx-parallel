@@ -1,4 +1,4 @@
-use crate::experiment::data_structures::slice::Slice;
+use crate::experiment::data_structures::slice::{Slice, SliceCore};
 use alloc::vec::Vec;
 
 /// A raw slice of contiguous data with un-initialized values.
@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 ///
 /// This is a write-only slice.
 /// The caller must make sure that there is no other concurrent reads or writes to this slice.
-pub struct SliceDst<'a, T>(Slice<'a, T>);
+pub struct SliceDst<'a, T>(pub(super) Slice<'a, T>);
 
 impl<'a, T> SliceDst<'a, T> {
     /// Creates a new slice of un-initialized values.
@@ -42,5 +42,16 @@ impl<'a, T> SliceDst<'a, T> {
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    #[inline(always)]
+    pub fn core(&self) -> SliceCore<'_, 'a, T> {
+        self.into()
+    }
+}
+
+impl<'c, 'a, T: 'a> From<&'c SliceDst<'a, T>> for SliceCore<'c, 'a, T> {
+    fn from(value: &'c SliceDst<'a, T>) -> Self {
+        SliceCore::new(&value.0)
     }
 }

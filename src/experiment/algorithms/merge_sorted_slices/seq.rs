@@ -18,11 +18,8 @@ pub struct ParamsSeqMergeSortedSlices {
 /// # Panics
 ///
 /// - (i) if `target.len()` is not equal to `left.len() + right.len()`
-///
-/// # SAFETY
-///
-/// - (i) no pair of `left`, `right` and `target` can be overlapping.
-pub unsafe fn seq_merge<'a, T: 'a, F>(
+/// - (ii) if any pair of of `left`, `right` or `target` are overlapping.
+pub fn seq_merge<'a, T: 'a, F>(
     is_leq: F,
     mut left: SliceSrc<T>,
     mut right: SliceSrc<T>,
@@ -31,7 +28,10 @@ pub unsafe fn seq_merge<'a, T: 'a, F>(
 ) where
     F: Fn(&T, &T) -> bool,
 {
-    debug_assert_eq!(target.len(), left.len() + right.len());
+    assert_eq!(target.len(), left.len() + right.len());
+    assert!(target.core().is_non_overlapping(&left.core()));
+    assert!(target.core().is_non_overlapping(&right.core()));
+    assert!(left.core().is_non_overlapping(&right.core()));
 
     match (left.len(), right.len()) {
         // // SAFETY: satisfied by (i) and (ii)

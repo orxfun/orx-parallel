@@ -63,16 +63,34 @@ impl<'a, T: 'a> Slice<'a, T> {
         let dst = self.raw as *mut T;
         unsafe { dst.copy_from_nonoverlapping(src.raw as *const T, self.len()) };
     }
+}
 
+/// A struct holding a reference to a slice, hiding its unsafe methods,
+/// allowing only safe methods.
+pub struct SliceCore<'c, 'a, T: 'a>(&'c Slice<'a, T>);
+
+impl<'c, 'a, T: 'a> SliceCore<'c, 'a, T> {
+    pub fn new(slice: &'c Slice<'a, T>) -> Self {
+        Self(slice)
+    }
+}
+
+impl<'c, 'a, T: 'a> From<&'c Slice<'a, T>> for SliceCore<'c, 'a, T> {
+    fn from(value: &'c Slice<'a, T>) -> Self {
+        SliceCore::new(value)
+    }
+}
+
+impl<'c, 'a, T: 'a> SliceCore<'c, 'a, T> {
     /// Returns true if slices `self` and `other` are non-overlapping.
     pub fn is_non_overlapping(&self, other: &Self) -> bool {
-        match (self.len(), other.len()) {
+        match (self.0.len(), other.0.len()) {
             (0, _) | (_, 0) => true,
             (n, m) => {
-                let diff = unsafe { self.data().offset_from(other.data()) };
+                let diff = unsafe { self.0.data().offset_from(other.0.data()) };
                 let (left, right) = match diff >= 0 {
-                    true => (unsafe { other.data().add(m - 1) }, self.data()),
-                    false => (unsafe { self.data().add(n - 1) }, other.data()),
+                    true => (unsafe { other.0.data().add(m - 1) }, self.0.data()),
+                    false => (unsafe { self.0.data().add(n - 1) }, other.0.data()),
                 };
                 left < right
             }

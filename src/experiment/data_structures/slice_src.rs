@@ -1,4 +1,4 @@
-use crate::experiment::data_structures::slice::Slice;
+use crate::experiment::data_structures::slice::{Slice, SliceCore};
 
 /// A raw slice of contiguous data with initialized values.
 ///
@@ -27,5 +27,16 @@ impl<'a, T> SliceSrc<'a, T> {
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    #[inline(always)]
+    pub fn core(&self) -> SliceCore<'_, 'a, T> {
+        self.into()
+    }
+}
+
+impl<'c, 'a, T: 'a> From<&'c SliceSrc<'a, T>> for SliceCore<'c, 'a, T> {
+    fn from(value: &'c SliceSrc<'a, T>) -> Self {
+        SliceCore::new(&value.0)
     }
 }
