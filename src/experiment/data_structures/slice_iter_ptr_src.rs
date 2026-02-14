@@ -2,6 +2,11 @@ use crate::experiment::data_structures::{slice::Slice, slice_iter_ptr::SliceIter
 
 /// Iterator over a slice of data that will be completely copied to another slice
 /// before the iterator is consumed.
+///
+/// # SAFETY
+///
+/// While constructing this iterator, we must guarantee that all elements of the
+/// iterator is initialized since it will be used as source of values.
 pub struct SliceIterPtrSrc<'a, T: 'a>(SliceIterPtr<'a, T>);
 
 impl<T> Default for SliceIterPtrSrc<'_, T> {
@@ -59,6 +64,19 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     #[inline(always)]
     pub fn next(&mut self) -> Option<*const T> {
         self.0.next()
+    }
+
+    /// Does nothing if the iterator `is_finished` or `is_leq(current, pivot)`
+    /// returns false.
+    ///
+    /// Otherwise, returns the current pointer and progresses the iterator to the next.
+    #[inline(always)]
+    pub fn next_if_leq<F>(&mut self, is_leq: F, pivot: &T) -> Option<*const T>
+    where
+        F: Fn(&T, &T) -> bool,
+    {
+        // SAFETY: SliceIterPtrSrc contains only initialized values
+        unsafe { self.0.next_if_leq(is_leq, pivot) }
     }
 
     /// Brings the iterator to the end, skipping the remaining positions.

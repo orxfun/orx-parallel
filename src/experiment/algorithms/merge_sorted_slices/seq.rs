@@ -108,56 +108,56 @@ where
     }
 }
 
-// fn seq_merge_streak_linear<'a, T: 'a, F>(
-//     is_leq: F,
-//     left: Slice<T>,
-//     right: Slice<T>,
-//     target: Slice<T>,
-// ) where
-//     F: Fn(&T, &T) -> bool,
-// {
-//     let mut it_left = left.iter_over_ptr();
-//     let mut it_right = right.iter_over_ptr();
-//     let mut it_dst = target.iter_as_dst();
+fn seq_merge_streak_linear<'a, T: 'a, F>(
+    is_leq: F,
+    left: Slice<T>,
+    right: Slice<T>,
+    target: Slice<T>,
+) where
+    F: Fn(&T, &T) -> bool,
+{
+    let mut left = left.iter_ptr_src();
+    let mut right = right.iter_ptr_src();
+    let mut dst = target.iter_ptr_dst();
 
-//     loop {
-//         unsafe {
-//             let l = it_left.current_unchecked();
-//             let r = it_right.current_unchecked();
+    loop {
+        unsafe {
+            let l = left.current_unchecked();
+            let r = right.current_unchecked();
 
-//             match is_leq(l, r) {
-//                 true => {
-//                     let src_begin = it_left.next_unchecked();
-//                     let mut src_end_inclusive = src_begin;
-//                     while let Some(next) = it_left.next_if_leq(&is_leq, r) {
-//                         src_end_inclusive = next;
-//                     }
+            match is_leq(l, r) {
+                true => {
+                    let src_begin = left.next_unchecked();
+                    let mut src_end_inclusive = src_begin;
+                    while let Some(next) = left.next_if_leq(&is_leq, r) {
+                        src_end_inclusive = next;
+                    }
 
-//                     it_dst.write_many_unchecked(src_begin, src_end_inclusive);
+                    it_dst.write_many_unchecked(src_begin, src_end_inclusive);
 
-//                     if it_left.is_finished() {
-//                         it_dst.write_remaining_from(&it_right.remaining_into_slice());
-//                         break;
-//                     }
-//                 }
-//                 false => {
-//                     let src_begin = it_right.next_unchecked();
-//                     let mut src_end_inclusive = src_begin;
-//                     while let Some(next) = it_right.next_if_leq(&is_leq, l) {
-//                         src_end_inclusive = next;
-//                     }
+                    if it_left.is_finished() {
+                        it_dst.write_remaining_from(&it_right.remaining_into_slice());
+                        break;
+                    }
+                }
+                false => {
+                    // let src_begin = it_right.next_unchecked();
+                    // let mut src_end_inclusive = src_begin;
+                    // while let Some(next) = it_right.next_if_leq(&is_leq, l) {
+                    //     src_end_inclusive = next;
+                    // }
 
-//                     it_dst.write_many_unchecked(src_begin, src_end_inclusive);
+                    // it_dst.write_many_unchecked(src_begin, src_end_inclusive);
 
-//                     if it_right.is_finished() {
-//                         it_dst.write_remaining_from(&it_left.remaining_into_slice());
-//                         break;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
+                    // if it_right.is_finished() {
+                    //     it_dst.write_remaining_from(&it_left.remaining_into_slice());
+                    //     break;
+                    // }
+                }
+            }
+        }
+    }
+}
 
 // fn seq_merge_streak_binary<'a, T: 'a, F>(
 //     is_leq: F,

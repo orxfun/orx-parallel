@@ -56,6 +56,31 @@ impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
         unsafe { dst.copy_from_nonoverlapping(src, 1) };
     }
 
+    pub unsafe fn write_many_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>, count: usize) {
+        debug_assert!(!self.is_finished() && !src.is_finished());
+
+        // SAFETY: satisfied by (i)
+        let src = unsafe { src.next_unchecked() };
+
+        // SAFETY: satisfied by (ii)
+        let dst = unsafe { self.0.next_unchecked() } as *mut T;
+
+        // SAFETY: satisfied by (iii)
+        unsafe { dst.copy_from_nonoverlapping(src, 1) };
+
+        //         #[inline(always)]
+        // pub unsafe fn write_many_unchecked(
+        //     &mut self,
+        //     src_begin: *const T,
+        //     src_end_inclusive: *const T,
+        // ) {
+        //     let count = unsafe { src_end_inclusive.offset_from(src_begin) + 1 } as usize;
+        //     debug_assert!(self.0.len() >= count);
+        //     let dst = unsafe { self.0.next_many_unchecked(count) };
+        //     unsafe { dst.copy_from_nonoverlapping(src_begin, count) };
+        // }
+    }
+
     /// Pulls all remaining elements from `src`, writes them to remaining
     /// positions of `self`.
     ///

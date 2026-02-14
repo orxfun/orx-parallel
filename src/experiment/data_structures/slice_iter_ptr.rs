@@ -123,6 +123,19 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
         value
     }
 
+    /// Returns the current pointer and progresses by `count` elements.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) the iterator must have at least `count` more elements; i.e.,
+    ///   `self.remaining() >= count`.
+    pub unsafe fn next_n_unchecked(&mut self, count: usize) -> *const T {
+        debug_assert!(self.remaining() >= count);
+        let value = self.data;
+        self.data = unsafe { self.data.add(count) };
+        value
+    }
+
     /// Does nothing if the iterator `is_finished` or `is_leq(current, pivot)`
     /// returns false.
     ///
@@ -133,7 +146,7 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
     /// Bounds check is applied. However, the following safety
     /// requirement must be satisfied.
     ///
-    /// - (i) the element must be initialized.
+    /// - (i) the elements of `self` must be initialized.
     pub unsafe fn next_if_leq<F>(&mut self, is_leq: F, pivot: &T) -> Option<*const T>
     where
         F: Fn(&T, &T) -> bool,
