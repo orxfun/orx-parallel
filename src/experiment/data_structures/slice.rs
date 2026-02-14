@@ -59,18 +59,4 @@ impl<'a, T: 'a> Slice<'a, T> {
         let dst = self.raw as *mut T;
         unsafe { dst.copy_from_nonoverlapping(src.raw as *const T, self.len()) };
     }
-
-    // iter
-
-    pub fn iter_ptr(&self) -> SliceIterPtr<'_, T> {
-        self.into()
-    }
-
-    pub fn iter_ptr_src(&self) -> SliceIterPtrSrc<'_, T> {
-        self.into()
-    }
-
-    pub fn iter_ptr_dst(&self) -> SliceIterPtrDst<'_, T> {
-        self.into()
-    }
 }

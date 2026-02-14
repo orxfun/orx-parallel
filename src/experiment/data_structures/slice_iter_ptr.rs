@@ -1,4 +1,3 @@
-use crate::experiment::data_structures::slice::Slice;
 use core::marker::PhantomData;
 
 /// Core structure for iterators over contiguous slices of data.
@@ -14,17 +13,6 @@ impl<T> Default for SliceIterPtr<'_, T> {
             data: core::ptr::null(),
             exclusive_end: core::ptr::null(),
             phantom: PhantomData,
-        }
-    }
-}
-
-// TODO: cannot safely create from slice
-impl<'a, T: 'a> From<&Slice<T>> for SliceIterPtr<'a, T> {
-    fn from(value: &Slice<T>) -> Self {
-        match value.len() {
-            0 => Self::default(),
-            // SAFETY: `value.data() + n` marks the exclusive end which will never be read
-            n => unsafe { Self::new(value.data(), n) },
         }
     }
 }

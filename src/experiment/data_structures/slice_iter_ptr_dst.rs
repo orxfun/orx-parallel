@@ -14,12 +14,6 @@ impl<T> Default for SliceIterPtrDst<'_, T> {
     }
 }
 
-impl<'a, T: 'a> From<&Slice<T>> for SliceIterPtrDst<'a, T> {
-    fn from(value: &Slice<T>) -> Self {
-        Self(value.into())
-    }
-}
-
 impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
     /// Returns true if the end of the slice is reached.
     #[inline(always)]
