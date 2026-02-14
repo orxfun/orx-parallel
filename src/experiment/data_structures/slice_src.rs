@@ -8,9 +8,15 @@ use crate::experiment::data_structures::slice::Slice;
 /// are initialized since it will be used as source of values.
 pub struct SliceSrc<'a, T>(Slice<'a, T>);
 
-impl<'a, T> From<&'a [T]> for SliceSrc<'a, T> {
-    fn from(value: &'a [T]) -> Self {
-        // # SAFETY: value initialization is guaranteed by the slice &[T]
-        Self(Slice::new(value.as_ptr(), value.len()))
+impl<'a, T> SliceSrc<'a, T> {
+    /// Creates the source slice from the given `slice`.
+    ///
+    /// # SAFETY
+    ///
+    /// The `slice` guarantees that all elements are initialized.
+    ///
+    /// Further, this slice cannot outlive the `slice` it is created for due to the lifetime relation.
+    pub fn from_slice(slice: &'a [T]) -> Self {
+        Self(Slice::new(slice.as_ptr(), slice.len()))
     }
 }
