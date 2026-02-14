@@ -21,9 +21,9 @@ pub struct ParamsSeqMergeSortedSlices {
 /// - (ii) if any pair of of `left`, `right` or `target` are overlapping.
 pub fn seq_merge<'a, T: 'a, F>(
     is_leq: F,
-    mut left: SliceSrc<T>,
-    mut right: SliceSrc<T>,
-    target: SliceDst<T>,
+    mut left: SliceSrc<'a, T>,
+    mut right: SliceSrc<'a, T>,
+    target: SliceDst<'a, T>,
     params: ParamsSeqMergeSortedSlices,
 ) where
     F: Fn(&T, &T) -> bool,
@@ -32,6 +32,11 @@ pub fn seq_merge<'a, T: 'a, F>(
     assert!(target.core().is_non_overlapping(&left.core()));
     assert!(target.core().is_non_overlapping(&right.core()));
     assert!(left.core().is_non_overlapping(&right.core()));
+
+    let is_large_on_left = left.len() >= right.len();
+    if is_large_on_left != params.put_large_to_left {
+        (left, right) = (right, left);
+    }
 
     match (left.len(), right.len()) {
         // // SAFETY: satisfied by (i) and (ii)
