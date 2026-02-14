@@ -56,29 +56,27 @@ impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
         unsafe { dst.copy_from_nonoverlapping(src, 1) };
     }
 
+    /// Pulls the next `count` elements from `src`, writes them to next `count`
+    /// positions of `self`.
+    ///
+    /// Progresses both `self` and `src` by `count` positions.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `src` must have at least `count` positions.
+    /// - (ii) `self` must have at least `count` positions.
+    /// - (iii) `src` and `self` cannot be overlapping
     pub unsafe fn write_many_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>, count: usize) {
-        debug_assert!(!self.is_finished() && !src.is_finished());
+        debug_assert!(self.len() >= count && src.len() >= count);
 
         // SAFETY: satisfied by (i)
-        let src = unsafe { src.next_unchecked() };
+        let src = unsafe { src.next_n_unchecked(count) };
 
         // SAFETY: satisfied by (ii)
-        let dst = unsafe { self.0.next_unchecked() } as *mut T;
+        let dst = unsafe { self.0.next_n_unchecked(count) } as *mut T;
 
         // SAFETY: satisfied by (iii)
-        unsafe { dst.copy_from_nonoverlapping(src, 1) };
-
-        //         #[inline(always)]
-        // pub unsafe fn write_many_unchecked(
-        //     &mut self,
-        //     src_begin: *const T,
-        //     src_end_inclusive: *const T,
-        // ) {
-        //     let count = unsafe { src_end_inclusive.offset_from(src_begin) + 1 } as usize;
-        //     debug_assert!(self.0.len() >= count);
-        //     let dst = unsafe { self.0.next_many_unchecked(count) };
-        //     unsafe { dst.copy_from_nonoverlapping(src_begin, count) };
-        // }
+        unsafe { dst.copy_from_nonoverlapping(src, count) };
     }
 
     /// Pulls all remaining elements from `src`, writes them to remaining

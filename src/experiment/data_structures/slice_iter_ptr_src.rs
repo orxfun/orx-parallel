@@ -59,6 +59,16 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
         unsafe { self.0.next_unchecked() }
     }
 
+    /// Returns the current pointer and progresses by `count` elements.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) the iterator must have at least `count` more elements; i.e.,
+    ///   `self.remaining() >= count`.
+    pub unsafe fn next_n_unchecked(&mut self, count: usize) -> *const T {
+        unsafe { self.0.next_n_unchecked(count) }
+    }
+
     /// Returns the current pointer and progresses the iterator to the next;
     /// returns None if the iterator `is_finished`.
     #[inline(always)]
