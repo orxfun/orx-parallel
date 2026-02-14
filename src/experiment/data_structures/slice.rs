@@ -1,29 +1,29 @@
-use alloc::vec::Vec;
-use core::ptr::slice_from_raw_parts;
-
 use crate::experiment::data_structures::{
     slice_iter_ptr::SliceIterPtr, slice_iter_ptr_dst::SliceIterPtrDst,
     slice_iter_ptr_src::SliceIterPtrSrc,
 };
+use alloc::vec::Vec;
+use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
 /// A raw slice of contiguous data.
-pub struct Slice<T>(*const [T]);
+pub struct Slice<'a, T: 'a> {
+    raw: *const [T],
+    phantom: PhantomData<&'a ()>,
+}
 
-impl<T> From<&[T]> for Slice<T> {
+impl<'a, T: 'a> From<&[T]> for Slice<'a, T> {
     fn from(value: &[T]) -> Self {
-        // SAFETY: constructing from a valid slice
-        unsafe { Self::new(value.as_ptr(), value.len()) }
+        Self::new(value.as_ptr(), value.len())
     }
 }
 
-impl<T> Slice<T> {
-    /// # SAFETY
-    ///
-    /// - (i) `data` is null and `len` is zero; or
-    /// - (ii) `data` is non-null and points to `len` consecutive initialized values.
+impl<'a, T: 'a> Slice<'a, T> {
+    /// Creates a new raw slice.
     #[inline(always)]
-    unsafe fn new(data: *const T, len: usize) -> Self {
-        Self(slice_from_raw_parts(data, len))
+    pub fn new(data: *const T, len: usize) -> Self {
+        let raw = slice_from_raw_parts(data, len);
+        let phantom = PhantomData;
+        Self { raw, phantom }
     }
 
     pub fn empty() -> Self {
@@ -37,15 +37,15 @@ impl<T> Slice<T> {
     }
 
     pub(super) fn data(&self) -> *const T {
-        self.0 as *const T
+        self.raw as *const T
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.raw.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.raw.is_empty()
     }
 
     /// # SAFETY
@@ -56,8 +56,8 @@ impl<T> Slice<T> {
         debug_assert_eq!(self.len(), src.len());
 
         // SAFETY: (i) within bounds and (ii) slices do not overlap
-        let dst = self.0 as *mut T;
-        unsafe { dst.copy_from_nonoverlapping(src.0 as *const T, self.len()) };
+        let dst = self.raw as *mut T;
+        unsafe { dst.copy_from_nonoverlapping(src.raw as *const T, self.len()) };
     }
 
     // iter

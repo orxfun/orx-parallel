@@ -7,8 +7,8 @@ use crate::experiment::data_structures::{
 ///
 /// # SAFETY
 ///
-/// While constructing this iterator, we must guarantee that all elements of the
-/// iterator is initialized since it will be used as source of values.
+/// While constructing this iterator, we must guarantee that all elements of it
+/// are initialized since it will be used as source of values.
 pub struct SliceIterPtrSrc<'a, T: 'a>(SliceIterPtr<'a, T>);
 
 impl<T> Default for SliceIterPtrSrc<'_, T> {
