@@ -90,7 +90,34 @@ unsafe fn seq_merge_streak_none<'a, T: 'a, F>(
 
     match (left.current(), right.current()) {
         (Some(mut l), Some(mut r)) => {
-            //
+            loop {
+                match is_leq(l, r) {
+                    true => {
+                        // SAFETY: left still has at least one elem `l`, so must `dst`
+                        unsafe { dst.write_one_from(&mut left) };
+                        match left.current() {
+                            Some(x) => l = x,
+                            None => {
+                                // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+                                unsafe { dst.write_rest_from(&mut right) };
+                                break;
+                            }
+                        }
+                    }
+                    false => {
+                        // SAFETY: right still has at least one elem `r`, so must `dst`
+                        unsafe { dst.write_one_from(&mut right) };
+                        match right.current() {
+                            Some(x) => r = x,
+                            None => {
+                                // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+                                unsafe { dst.write_rest_from(&mut left) };
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
         (None, _) => {
             // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
