@@ -21,8 +21,8 @@ pub struct ParamsSeqMergeSortedSlices {
 /// - (ii) if any pair of of `left`, `right` or `target` are overlapping.
 pub fn seq_merge<'a, T: 'a, F>(
     is_leq: F,
-    mut left: SliceSrc<'a, T>,
-    mut right: SliceSrc<'a, T>,
+    left: SliceSrc<'a, T>,
+    right: SliceSrc<'a, T>,
     target: SliceDst<'a, T>,
     params: ParamsSeqMergeSortedSlices,
 ) where
@@ -33,61 +33,57 @@ pub fn seq_merge<'a, T: 'a, F>(
     assert!(target.core().is_non_overlapping(&right.core()));
     assert!(left.core().is_non_overlapping(&right.core()));
 
-    let is_large_on_left = left.len() >= right.len();
-    if is_large_on_left != params.put_large_to_left {
-        (left, right) = (right, left);
-    }
+    // SAFETY: safety requirements are satisfied by panic conditions (i) and (ii)
+    unsafe { seq_merge_unchecked(is_leq, left, right, target, params) }
+}
 
-    match (left.len(), right.len()) {
-        // // SAFETY: satisfied by (i) and (ii)
-        // (0, _) => unsafe { target.copy_from_nonoverlapping(&right) },
-        // // SAFETY: satisfied by (i) and (ii)
-        // (_, 0) => unsafe { target.copy_from_nonoverlapping(&left) },
-        _ => {
-            // let is_large_on_left = left.len() >= right.len();
-            // if is_large_on_left != params.put_large_to_left {
-            //     (left, right) = (right, left);
-            // }
-
-            // match params.streak_search {
-            //     StreakSearch::None => seq_merge_streak_none(is_leq, left, right, target),
-            //     StreakSearch::Linear => seq_merge_streak_linear(is_leq, left, right, target),
-            //     StreakSearch::Binary => seq_merge_streak_binary(is_leq, left, right, target),
-            // }
+/// # SAFETY
+///
+/// - (i) `target.len()` must equal `left.len() + right.len()`
+/// - (ii) no pair of `left`, `right` and `target` can be overlapping.
+pub unsafe fn seq_merge_unchecked<'a, T: 'a, F>(
+    is_leq: F,
+    left: SliceSrc<'a, T>,
+    right: SliceSrc<'a, T>,
+    target: SliceDst<'a, T>,
+    params: ParamsSeqMergeSortedSlices,
+) where
+    F: Fn(&T, &T) -> bool,
+{
+    // SAFETY: safety requirements are satisfied by safety conditions (i) and (ii)
+    unsafe {
+        match params.streak_search {
+            StreakSearch::None => {
+                seq_merge_streak_none(is_leq, left, right, target, params.put_large_to_left)
+            }
+            StreakSearch::Linear => {
+                seq_merge_streak_linear(is_leq, left, right, target, params.put_large_to_left)
+            }
+            StreakSearch::Binary => {
+                seq_merge_streak_binary(is_leq, left, right, target, params.put_large_to_left)
+            }
         }
     }
 }
 
 /// # SAFETY
 ///
-/// - (i) length of `target` must equal sum of lengths of `left` and `right`.
+/// - (i) `target.len()` must equal `left.len() + right.len()`
 /// - (ii) no pair of `left`, `right` and `target` can be overlapping.
-/// - (iii) `left` and `right` must both have positive lengths.
-pub fn seq_merge_unchecked<'a, T: 'a, F>(
+unsafe fn seq_merge_streak_none<'a, T: 'a, F>(
     is_leq: F,
-    mut left: Slice<T>,
-    mut right: Slice<T>,
-    target: Slice<T>,
-    params: ParamsSeqMergeSortedSlices,
+    mut left: SliceSrc<'a, T>,
+    mut right: SliceSrc<'a, T>,
+    target: SliceDst<'a, T>,
+    put_large_to_left: bool,
 ) where
     F: Fn(&T, &T) -> bool,
 {
-    // let is_large_on_left = left.len() >= right.len();
-    // if is_large_on_left != params.put_large_to_left {
-    //     (left, right) = (right, left);
-    // }
+    let is_large_on_left = left.len() >= right.len();
+    if is_large_on_left != put_large_to_left {
+        (left, right) = (right, left);
+    }
 
-    // match params.streak_search {
-    //     StreakSearch::None => seq_merge_streak_none(is_leq, left, right, target),
-    //     StreakSearch::Linear => seq_merge_streak_linear(is_leq, left, right, target),
-    //     StreakSearch::Binary => seq_merge_streak_binary(is_leq, left, right, target),
-    // }
-}
-
-fn seq_merge_streak_none<'a, T: 'a, F>(is_leq: F, left: Slice<T>, right: Slice<T>, target: Slice<T>)
-where
-    F: Fn(&T, &T) -> bool,
-{
     // let mut left = left.iter_ptr_src();
     // let mut right = right.iter_ptr_src();
     // let mut dst = target.iter_ptr_dst();
@@ -118,14 +114,24 @@ where
     // }
 }
 
-fn seq_merge_streak_linear<'a, T: 'a, F>(
+/// # SAFETY
+///
+/// - (i) `target.len()` must equal `left.len() + right.len()`
+/// - (ii) no pair of `left`, `right` and `target` can be overlapping.
+unsafe fn seq_merge_streak_linear<'a, T: 'a, F>(
     is_leq: F,
-    left: Slice<T>,
-    right: Slice<T>,
-    target: Slice<T>,
+    mut left: SliceSrc<'a, T>,
+    mut right: SliceSrc<'a, T>,
+    target: SliceDst<'a, T>,
+    put_large_to_left: bool,
 ) where
     F: Fn(&T, &T) -> bool,
 {
+    let is_large_on_left = left.len() >= right.len();
+    if is_large_on_left != put_large_to_left {
+        (left, right) = (right, left);
+    }
+
     const WILL_FIND: &str = "There exists at least one element satisfying the condition";
 
     // let mut left = left.iter_ptr_src();
@@ -159,69 +165,79 @@ fn seq_merge_streak_linear<'a, T: 'a, F>(
     // }
 }
 
-// fn seq_merge_streak_binary<'a, T: 'a, F>(
-//     is_leq: F,
-//     left: Slice<T>,
-//     right: Slice<T>,
-//     target: Slice<T>,
-// ) where
-//     F: Fn(&T, &T) -> bool,
-// {
-//     let mut it_left = left.iter_over_ptr();
-//     let mut it_right = right.iter_over_ptr();
-//     let mut it_dst = target.iter_as_dst();
+/// # SAFETY
+///
+/// - (i) `target.len()` must equal `left.len() + right.len()`
+/// - (ii) no pair of `left`, `right` and `target` can be overlapping.
+unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
+    is_leq: F,
+    mut left: SliceSrc<'a, T>,
+    mut right: SliceSrc<'a, T>,
+    target: SliceDst<'a, T>,
+    put_large_to_left: bool,
+) where
+    F: Fn(&T, &T) -> bool,
+{
+    let is_large_on_left = left.len() >= right.len();
+    if is_large_on_left != put_large_to_left {
+        (left, right) = (right, left);
+    }
 
-//     loop {
-//         unsafe {
-//             let l = it_left.current_unchecked();
-//             let r = it_right.current_unchecked();
+    // let mut it_left = left.iter_over_ptr();
+    // let mut it_right = right.iter_over_ptr();
+    // let mut it_dst = target.iter_as_dst();
 
-//             match is_leq(l, r) {
-//                 true => {
-//                     let ptr = it_left.peek_unchecked();
-//                     let remaining = left.subslice_from(ptr).as_slice();
-//                     let bin_search = remaining.binary_search_by(|x| match is_leq(x, r) {
-//                         true => Ordering::Less,
-//                         false => Ordering::Greater,
-//                     });
-//                     let idx = match bin_search {
-//                         Ok(idx) => idx,
-//                         Err(idx) => idx,
-//                     };
-//                     let src_begin = it_left.peek_unchecked();
-//                     let src_end_inclusive = src_begin.add(idx - 1);
-//                     it_left.jump_to(src_end_inclusive);
+    // loop {
+    //     unsafe {
+    //         let l = it_left.current_unchecked();
+    //         let r = it_right.current_unchecked();
 
-//                     it_dst.write_many_unchecked(src_begin, src_end_inclusive);
+    //         match is_leq(l, r) {
+    //             true => {
+    //                 let ptr = it_left.peek_unchecked();
+    //                 let remaining = left.subslice_from(ptr).as_slice();
+    //                 let bin_search = remaining.binary_search_by(|x| match is_leq(x, r) {
+    //                     true => Ordering::Less,
+    //                     false => Ordering::Greater,
+    //                 });
+    //                 let idx = match bin_search {
+    //                     Ok(idx) => idx,
+    //                     Err(idx) => idx,
+    //                 };
+    //                 let src_begin = it_left.peek_unchecked();
+    //                 let src_end_inclusive = src_begin.add(idx - 1);
+    //                 it_left.jump_to(src_end_inclusive);
 
-//                     if it_left.is_finished() {
-//                         it_dst.write_remaining_from(&it_right.remaining_into_slice());
-//                         break;
-//                     }
-//                 }
-//                 false => {
-//                     let ptr = it_right.peek_unchecked();
-//                     let remaining = right.subslice_from(ptr).as_slice();
-//                     let bin_search = remaining.binary_search_by(|x| match is_leq(x, l) {
-//                         true => Ordering::Less,
-//                         false => Ordering::Greater,
-//                     });
-//                     let idx = match bin_search {
-//                         Ok(idx) => idx,
-//                         Err(idx) => idx,
-//                     };
-//                     let src_begin = it_right.peek_unchecked();
-//                     let src_end_inclusive = src_begin.add(idx - 1);
-//                     it_right.jump_to(src_end_inclusive);
+    //                 it_dst.write_many_unchecked(src_begin, src_end_inclusive);
 
-//                     it_dst.write_many_unchecked(src_begin, src_end_inclusive);
+    //                 if it_left.is_finished() {
+    //                     it_dst.write_remaining_from(&it_right.remaining_into_slice());
+    //                     break;
+    //                 }
+    //             }
+    //             false => {
+    //                 let ptr = it_right.peek_unchecked();
+    //                 let remaining = right.subslice_from(ptr).as_slice();
+    //                 let bin_search = remaining.binary_search_by(|x| match is_leq(x, l) {
+    //                     true => Ordering::Less,
+    //                     false => Ordering::Greater,
+    //                 });
+    //                 let idx = match bin_search {
+    //                     Ok(idx) => idx,
+    //                     Err(idx) => idx,
+    //                 };
+    //                 let src_begin = it_right.peek_unchecked();
+    //                 let src_end_inclusive = src_begin.add(idx - 1);
+    //                 it_right.jump_to(src_end_inclusive);
 
-//                     if it_right.is_finished() {
-//                         it_dst.write_remaining_from(&it_left.remaining_into_slice());
-//                         break;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
+    //                 it_dst.write_many_unchecked(src_begin, src_end_inclusive);
+
+    //                 if it_right.is_finished() {
+    //                     it_dst.write_remaining_from(&it_left.remaining_into_slice());
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+}
