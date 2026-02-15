@@ -1,4 +1,7 @@
-use crate::experiment::data_structures::slice::{Slice, SliceCore};
+use crate::experiment::data_structures::{
+    slice::{Slice, SliceCore},
+    slice_iter_ptr_dst::SliceIterPtrDst,
+};
 use alloc::vec::Vec;
 
 /// A raw slice of contiguous data with un-initialized values.
@@ -13,6 +16,10 @@ use alloc::vec::Vec;
 pub struct SliceDst<'a, T>(pub(super) Slice<'a, T>);
 
 impl<'a, T> SliceDst<'a, T> {
+    pub fn destruct(self) -> *const [T] {
+        self.0.destruct()
+    }
+
     /// Creates a new slice of un-initialized values.
     ///
     /// # SAFETY
@@ -47,6 +54,10 @@ impl<'a, T> SliceDst<'a, T> {
     #[inline(always)]
     pub fn core(&self) -> SliceCore<'_, 'a, T> {
         self.into()
+    }
+
+    pub fn into_iter(self) -> SliceIterPtrDst<'a, T> {
+        SliceIterPtrDst::new(self)
     }
 }
 

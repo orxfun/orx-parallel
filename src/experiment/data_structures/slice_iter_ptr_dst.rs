@@ -1,5 +1,6 @@
 use crate::experiment::data_structures::{
-    slice::Slice, slice_iter_ptr::SliceIterPtr, slice_iter_ptr_src::SliceIterPtrSrc,
+    slice::Slice, slice_dst::SliceDst, slice_iter_ptr::SliceIterPtr,
+    slice_iter_ptr_src::SliceIterPtrSrc,
 };
 
 /// Iterator over a slice of data that will be completely filled with values
@@ -15,6 +16,16 @@ impl<T> Default for SliceIterPtrDst<'_, T> {
 }
 
 impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
+    /// # SAFETY
+    ///
+    /// Since `slice: SliceDst` satisfies that positions of it are not initialized,
+    /// we satisfy the construction condition for this iterator.
+    pub fn new(slice: SliceDst<'a, T>) -> Self {
+        let raw = slice.destruct();
+        // SAFETY: requirement satisfied by `SliceDst`
+        Self(unsafe { SliceIterPtr::new(raw as *const T, raw.len()) })
+    }
+
     /// Returns true if the end of the slice is reached.
     #[inline(always)]
     pub fn is_finished(&self) -> bool {

@@ -1,4 +1,7 @@
-use crate::experiment::data_structures::slice::{Slice, SliceCore};
+use crate::experiment::data_structures::{
+    slice::{Slice, SliceCore},
+    slice_iter_ptr_src::SliceIterPtrSrc,
+};
 
 /// A raw slice of contiguous data with initialized values.
 ///
@@ -12,6 +15,10 @@ use crate::experiment::data_structures::slice::{Slice, SliceCore};
 pub struct SliceSrc<'a, T>(Slice<'a, T>);
 
 impl<'a, T> SliceSrc<'a, T> {
+    pub fn destruct(self) -> *const [T] {
+        self.0.destruct()
+    }
+
     /// Creates the source slice from the given `slice`.
     ///
     /// # SAFETY
@@ -32,6 +39,10 @@ impl<'a, T> SliceSrc<'a, T> {
     #[inline(always)]
     pub fn core(&self) -> SliceCore<'_, 'a, T> {
         self.into()
+    }
+
+    pub fn into_iter(self) -> SliceIterPtrSrc<'a, T> {
+        SliceIterPtrSrc::new(self)
     }
 }
 

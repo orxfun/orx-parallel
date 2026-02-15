@@ -1,5 +1,5 @@
 use crate::experiment::data_structures::{
-    slice::Slice, slice_iter_ptr::SliceIterPtr, slice_iter_ref::SliceIterRef,
+    slice_iter_ptr::SliceIterPtr, slice_iter_ref::SliceIterRef, slice_src::SliceSrc,
 };
 
 /// Iterator over a slice of data that will be completely copied to another slice
@@ -18,6 +18,16 @@ impl<T> Default for SliceIterPtrSrc<'_, T> {
 }
 
 impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
+    /// # SAFETY
+    ///
+    /// Since `slice: SliceSrc` satisfies that all elements of it are initialized,
+    /// we satisfy the construction condition for this iterator.
+    pub fn new(slice: SliceSrc<'a, T>) -> Self {
+        let raw = slice.destruct();
+        // SAFETY: requirement satisfied by `SliceSrc`
+        Self(unsafe { SliceIterPtr::new(raw as *const T, raw.len()) })
+    }
+
     /// Returns true if the end of the slice is reached.
     #[inline(always)]
     pub fn is_finished(&self) -> bool {

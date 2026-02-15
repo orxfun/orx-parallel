@@ -32,6 +32,10 @@ impl<'a, T: 'a> Slice<'a, T> {
         unsafe { Self::new(vec.as_ptr(), vec.capacity()) }
     }
 
+    pub fn destruct(self) -> *const [T] {
+        self.raw
+    }
+
     pub(super) fn data(&self) -> *const T {
         self.raw as *const T
     }
