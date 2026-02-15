@@ -111,6 +111,7 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     pub fn values(&self) -> SliceIterRef<'a, T> {
         let ptr = unsafe { self.current_unchecked() };
         let n = self.len();
+        // SAFETY: SliceIterPtrSrc guarantees initialized values
         unsafe { SliceIterRef::new(ptr, n) }
     }
 }

@@ -1,15 +1,17 @@
 use crate::experiment::data_structures::slice_iter_ptr::SliceIterPtr;
-use alloc::vec::Vec;
 
 /// Iterator over references of values over a contiguous slice.
 ///
 /// # SAFETY
 ///
 /// While constructing this iterator, we must guarantee that all elements of the
-/// iterator is initialized since it will be used as source of values.
+/// iterator are initialized since it will be used as source of values.
 pub struct SliceIterRef<'a, T: 'a>(SliceIterPtr<'a, T>);
 
 impl<'a, T: 'a> SliceIterRef<'a, T> {
+    /// # SAFETY
+    ///
+    /// (i) `ptr..ptr+n` must represent a contiguous memory of initialized values.
     pub unsafe fn new(ptr: *const T, n: usize) -> Self {
         Self(unsafe { SliceIterPtr::new(ptr, n) })
     }
