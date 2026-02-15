@@ -1,6 +1,5 @@
-use crate::experiment::data_structures::{
-    slice_iter_ptr::SliceIterPtr, slice_iter_ref::SliceIterRef, slice_src::SliceSrc,
-};
+use crate::experiment::data_structures::{slice_iter_ptr::SliceIterPtr, slice_src::SliceSrc};
+use core::slice::from_raw_parts;
 
 /// Iterator over a slice of data that will be completely copied to another slice
 /// before the iterator is consumed.
@@ -108,10 +107,16 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
 
     /// Creates an iterator over references to values of the remaining elements
     /// of this iterator.
-    pub fn values(&self) -> SliceIterRef<'a, T> {
+    pub fn values(&self) -> core::slice::Iter<'a, T> {
+        self.as_slice().iter()
+    }
+
+    /// Creates a slice over references to values of the remaining elements
+    /// of this iterator.
+    pub fn as_slice(&self) -> &'a [T] {
         let ptr = unsafe { self.current_unchecked() };
         let n = self.len();
         // SAFETY: SliceIterPtrSrc guarantees initialized values
-        unsafe { SliceIterRef::new(ptr, n) }
+        unsafe { &*from_raw_parts(ptr, n) }
     }
 }

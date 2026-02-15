@@ -196,36 +196,6 @@ unsafe fn seq_merge_streak_linear<'a, T: 'a, F>(
             unsafe { dst.write_rest_from(&mut left) };
         }
     }
-
-    // let mut left = left.iter_ptr_src();
-    // let mut right = right.iter_ptr_src();
-    // let mut dst = target.iter_ptr_dst();
-
-    // loop {
-    //     unsafe {
-    //         let l = left.current_unchecked();
-    //         let r = right.current_unchecked();
-
-    //         match is_leq(l, r) {
-    //             true => {
-    //                 let count = left.values().position(|x| is_leq(x, r)).expect(WILL_FIND);
-    //                 dst.write_many_from(&mut left, count);
-    //                 if left.is_finished() {
-    //                     dst.write_rest_from(&mut right);
-    //                     break;
-    //                 }
-    //             }
-    //             false => {
-    //                 let count = right.values().position(|x| is_leq(x, l)).expect(WILL_FIND);
-    //                 dst.write_many_from(&mut right, count);
-    //                 if right.is_finished() {
-    //                     dst.write_rest_from(&mut left);
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 /// # SAFETY
@@ -244,6 +214,51 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
     let is_large_on_left = left.len() >= right.len();
     if is_large_on_left != put_large_to_left {
         (left, right) = (right, left);
+    }
+
+    let mut left = left.into_iter();
+    let mut right = right.into_iter();
+    let mut dst = target.into_iter();
+
+    match (left.current(), right.current()) {
+        (Some(mut l), Some(mut r)) => {
+            loop {
+                match is_leq(l, r) {
+                    true => {
+                        // SAFETY: left still has at least one elem `l`, so must `dst`
+                        unsafe { dst.write_one_from(&mut left) };
+                        match left.current() {
+                            Some(x) => l = x,
+                            None => {
+                                // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+                                unsafe { dst.write_rest_from(&mut right) };
+                                break;
+                            }
+                        }
+                    }
+                    false => {
+                        // SAFETY: right still has at least one elem `r`, so must `dst`
+                        unsafe { dst.write_one_from(&mut right) };
+                        match right.current() {
+                            Some(x) => r = x,
+                            None => {
+                                // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+                                unsafe { dst.write_rest_from(&mut left) };
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        (None, _) => {
+            // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+            unsafe { dst.write_rest_from(&mut right) };
+        }
+        (_, None) => {
+            // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+            unsafe { dst.write_rest_from(&mut left) };
+        }
     }
 
     // let mut it_left = left.iter_over_ptr();
