@@ -88,7 +88,11 @@ unsafe fn seq_merge_streak_none<'a, T: 'a, F>(
     let mut right = right.into_iter();
     let mut dst = target.into_iter();
 
-    match left.current_unchecked();
+    match (left.current(), right.current()) {
+        (Some(mut l), Some(mut r)) => {}
+        (None, _) => {}
+        (_, None) => {}
+    }
 
     // let mut left = left.iter_ptr_src();
     // let mut right = right.iter_ptr_src();
