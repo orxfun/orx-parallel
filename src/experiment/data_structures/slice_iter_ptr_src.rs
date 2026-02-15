@@ -42,11 +42,17 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
 
     /// Returns a reference to the current element.
     /// Returns None if the iterator `is_finished`.
+    #[inline(always)]
+    pub fn current(&self) -> Option<&'a T> {
+        // SAFETY: all elements are initialized
+        unsafe { self.0.current() }
+    }
+
+    /// Returns a reference to the current element, without bounds check.
     ///
     /// # SAFETY
     ///
-    /// - (i) the element must be initialized.
-    /// - (ii) the iterator cannot be `is_finished`; otherwise, we
+    /// - (i) the iterator cannot be `is_finished`; otherwise, we
     ///   will have an UB due to dereferencing an invalid pointer.
     #[inline(always)]
     pub unsafe fn current_unchecked(&self) -> &'a T {
