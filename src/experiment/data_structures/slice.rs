@@ -31,20 +31,15 @@ impl<'a, T: 'a> Slice<'a, T> {
         self.raw as *const T
     }
 
+    /// Returns the length of the slice.
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.raw.len()
     }
 
+    /// Returns true if the slice is empty.
     pub fn is_empty(&self) -> bool {
         self.raw.is_empty()
-    }
-
-    pub fn last(&self) -> Option<*const T> {
-        match self.len() {
-            0 => None,
-            n => Some(unsafe { self.data().add(n) }),
-        }
     }
 
     /// # SAFETY
