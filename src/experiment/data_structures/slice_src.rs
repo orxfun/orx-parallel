@@ -14,6 +14,12 @@ use crate::experiment::data_structures::{
 /// The caller must make sure that there is no concurrent write to this slice.
 pub struct SliceSrc<'a, T>(Slice<'a, T>);
 
+impl<'a, T> Clone for SliceSrc<'a, T> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
 impl<'a, T> SliceSrc<'a, T> {
     /// Destructs the slice wrapper and returns the underlying raw slice
     /// that it is created with.

@@ -11,13 +11,17 @@ use alloc::vec::Vec;
 ///
 /// This is a write-only slice.
 /// The caller must make sure that there is no other concurrent reads or writes to this slice.
-pub struct SliceDst<'a, T>(pub(super) Slice<'a, T>);
+pub struct SliceDst<'a, T>(Slice<'a, T>);
 
 impl<'a, T> SliceDst<'a, T> {
     /// Destructs the slice wrapper and returns the underlying raw slice
     /// that it is created with.
     pub fn destruct(self) -> *const [T] {
         self.0.destruct()
+    }
+
+    pub unsafe fn clone(&self) -> Self {
+        Self(self.0.clone())
     }
 
     /// Creates a new slice of un-initialized values.

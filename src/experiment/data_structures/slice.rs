@@ -6,6 +6,15 @@ pub struct Slice<'a, T: 'a> {
     phantom: PhantomData<&'a ()>,
 }
 
+impl<'a, T: 'a> Clone for Slice<'a, T> {
+    fn clone(&self) -> Self {
+        Self {
+            raw: self.raw,
+            phantom: PhantomData,
+        }
+    }
+}
+
 impl<'a, T: 'a> From<&[T]> for Slice<'a, T> {
     fn from(value: &[T]) -> Self {
         Self::new(value.as_ptr(), value.len())

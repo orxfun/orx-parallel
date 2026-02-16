@@ -12,6 +12,16 @@ struct Task<'a, T> {
 
 unsafe impl<'a, T> Send for Task<'a, T> {}
 
+impl<'a, T> Task<'a, T> {
+    unsafe fn clone(&self) -> Self {
+        Self {
+            left: self.left.clone(),
+            right: self.right.clone(),
+            target: unsafe { self.target.clone() },
+        }
+    }
+}
+
 fn handle<'a, 'b, T: 'a, F>(
     is_leq: F,
     t: &'a Task<'b, T>,
@@ -21,19 +31,11 @@ fn handle<'a, 'b, T: 'a, F>(
     T: Send,
     F: Fn(&T, &T) -> bool,
 {
+    let t = unsafe { t.clone() };
     match (t.left.len(), t.right.len()) {
         (0, _) | (_, 0) => {
-            // seq_merge_unchecked(is_leq, t.left, t.right, t.target, params);
+            unsafe { seq_merge_unchecked(is_leq, t.left, t.right, t.target, params) };
         }
         _ => {}
     }
-
-    // match (t.left.len(), t.right.len()) {
-    //     (0, _) => t.copy_right_to_target(),
-    //     (_, 0) => t.copy_left_to_target(),
-    //     _ => {
-    //         //
-    //         todo!()
-    //     }
-    // }
 }
