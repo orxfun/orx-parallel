@@ -1,4 +1,4 @@
-use crate::experiment::data_structures::slice::{Slice, SliceCore};
+use crate::experiment::data_structures::slice::{Slice, SliceSafe};
 use alloc::vec;
 
 #[test]
@@ -8,14 +8,14 @@ fn slice_overlap() {
 
     let assert_no_overlap = |x: &[i32], y: &[i32]| {
         let [x, y] = [x, y].map(Slice::from);
-        let [x, y] = [&x, &y].map(SliceCore::from);
+        let [x, y] = [&x, &y].map(SliceSafe::from);
         assert!(x.is_non_overlapping(&y));
         assert!(y.is_non_overlapping(&x));
     };
 
     let assert_overlap = |x: &[i32], y: &[i32]| {
         let [x, y] = [x, y].map(Slice::from);
-        let [x, y] = [&x, &y].map(SliceCore::from);
+        let [x, y] = [&x, &y].map(SliceSafe::from);
         assert!(!x.is_non_overlapping(&y));
         assert!(!y.is_non_overlapping(&x));
     };

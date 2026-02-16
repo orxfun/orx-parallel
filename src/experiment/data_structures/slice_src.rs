@@ -1,5 +1,5 @@
 use crate::experiment::data_structures::{
-    slice::{Slice, SliceCore},
+    slice::{Slice, SliceSafe},
     slice_iter_ptr_src::SliceIterPtrSrc,
 };
 
@@ -37,7 +37,7 @@ impl<'a, T> SliceSrc<'a, T> {
     }
 
     #[inline(always)]
-    pub fn core(&self) -> SliceCore<'_, 'a, T> {
+    pub fn core(&self) -> SliceSafe<'_, 'a, T> {
         self.into()
     }
 
@@ -46,8 +46,8 @@ impl<'a, T> SliceSrc<'a, T> {
     }
 }
 
-impl<'c, 'a, T: 'a> From<&'c SliceSrc<'a, T>> for SliceCore<'c, 'a, T> {
+impl<'c, 'a, T: 'a> From<&'c SliceSrc<'a, T>> for SliceSafe<'c, 'a, T> {
     fn from(value: &'c SliceSrc<'a, T>) -> Self {
-        SliceCore::new(&value.0)
+        SliceSafe::new(&value.0)
     }
 }

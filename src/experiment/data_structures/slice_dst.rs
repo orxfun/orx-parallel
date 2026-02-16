@@ -1,5 +1,5 @@
 use crate::experiment::data_structures::{
-    slice::{Slice, SliceCore},
+    slice::{Slice, SliceSafe},
     slice_iter_ptr_dst::SliceIterPtrDst,
 };
 use alloc::vec::Vec;
@@ -52,7 +52,7 @@ impl<'a, T> SliceDst<'a, T> {
     }
 
     #[inline(always)]
-    pub fn core(&self) -> SliceCore<'_, 'a, T> {
+    pub fn core(&self) -> SliceSafe<'_, 'a, T> {
         self.into()
     }
 
@@ -61,8 +61,8 @@ impl<'a, T> SliceDst<'a, T> {
     }
 }
 
-impl<'c, 'a, T: 'a> From<&'c SliceDst<'a, T>> for SliceCore<'c, 'a, T> {
+impl<'c, 'a, T: 'a> From<&'c SliceDst<'a, T>> for SliceSafe<'c, 'a, T> {
     fn from(value: &'c SliceDst<'a, T>) -> Self {
-        SliceCore::new(&value.0)
+        SliceSafe::new(&value.0)
     }
 }

@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
 /// A raw slice of contiguous data.
@@ -22,16 +21,8 @@ impl<'a, T: 'a> Slice<'a, T> {
         Self { raw, phantom }
     }
 
-    pub fn empty() -> Self {
-        // SAFETY: satisfies (i)
-        unsafe { Self::new(core::ptr::null(), 0) }
-    }
-
-    pub fn from_vec_capacity(vec: &Vec<T>) -> Self {
-        // SAFETY: constructing from a valid vec allocation.
-        unsafe { Self::new(vec.as_ptr(), vec.capacity()) }
-    }
-
+    /// Destructs the slice wrapper and returns the underlying raw slice
+    /// that it is created with.
     pub fn destruct(self) -> *const [T] {
         self.raw
     }
@@ -71,21 +62,22 @@ impl<'a, T: 'a> Slice<'a, T> {
 
 /// A struct holding a reference to a slice, hiding its unsafe methods,
 /// allowing only safe methods.
-pub struct SliceCore<'c, 'a, T: 'a>(&'c Slice<'a, T>);
+pub struct SliceSafe<'c, 'a, T: 'a>(&'c Slice<'a, T>);
 
-impl<'c, 'a, T: 'a> SliceCore<'c, 'a, T> {
+impl<'c, 'a, T: 'a> SliceSafe<'c, 'a, T> {
+    /// Creates a safe wrapper over the `slice`.
     pub fn new(slice: &'c Slice<'a, T>) -> Self {
         Self(slice)
     }
 }
 
-impl<'c, 'a, T: 'a> From<&'c Slice<'a, T>> for SliceCore<'c, 'a, T> {
+impl<'c, 'a, T: 'a> From<&'c Slice<'a, T>> for SliceSafe<'c, 'a, T> {
     fn from(value: &'c Slice<'a, T>) -> Self {
-        SliceCore::new(value)
+        SliceSafe::new(value)
     }
 }
 
-impl<'c, 'a, T: 'a> SliceCore<'c, 'a, T> {
+impl<'c, 'a, T: 'a> SliceSafe<'c, 'a, T> {
     /// Returns true if slices `self` and `other` are non-overlapping.
     pub fn is_non_overlapping(&self, other: &Self) -> bool {
         match (self.0.len(), other.0.len()) {
