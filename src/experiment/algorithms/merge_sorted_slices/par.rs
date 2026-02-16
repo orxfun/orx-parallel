@@ -47,7 +47,11 @@ fn handle<'a, 'b, T: 'a, F>(
             }
 
             let position = left.len() / 2;
+            // SAFETY: position <= self.len()
             let [left_left, left_right] = unsafe { left.split_at_unchecked(position) };
+
+            // SAFETY: since left.len() >= 2, then left_right.len() > 0
+            let pivot = unsafe { left_right.first_unchecked() };
         }
     }
 }

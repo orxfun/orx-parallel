@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, ptr::slice_from_raw_parts, slice::from_raw_parts};
+use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
 /// A raw slice of contiguous data.
 pub struct Slice<'a, T: 'a> {
