@@ -114,7 +114,7 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     /// Creates a slice over references to values of the remaining elements
     /// of this iterator.
     pub fn as_slice(&self) -> &'a [T] {
-        let ptr = unsafe { self.current_unchecked() };
+        let ptr = unsafe { self.0.peek_unchecked() };
         let n = self.len();
         // SAFETY: SliceIterPtrSrc guarantees initialized values
         unsafe { &*from_raw_parts(ptr, n) }
