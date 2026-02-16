@@ -94,15 +94,16 @@ impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
     /// - (i) `src` and `self` mut have equal number of remaining elements
     /// - (ii) `src` and `self` cannot be overlapping
     pub unsafe fn write_rest_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
-        debug_assert!(!self.is_finished() && !src.is_finished());
         debug_assert_eq!(self.len(), src.len());
 
         if let Some(src) = src.next() {
+            let count = self.len();
+
             // SAFETY: having same lengths with src by (i), self cannot be finished
             let dst = unsafe { self.0.next_unchecked() } as *mut T;
 
             // SAFETY: satisfied by (ii)
-            unsafe { dst.copy_from_nonoverlapping(src, self.len()) };
+            unsafe { dst.copy_from_nonoverlapping(src, count) };
         }
 
         self.0.jump_to_end();
