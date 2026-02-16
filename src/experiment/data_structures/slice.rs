@@ -91,8 +91,7 @@ impl<'c, 'a, T: 'a> SliceCore<'c, 'a, T> {
         match (self.0.len(), other.0.len()) {
             (0, _) | (_, 0) => true,
             (n, m) => {
-                let diff = unsafe { self.0.data().offset_from(other.0.data()) };
-                let (left, right) = match diff >= 0 {
+                let (left, right) = match self.0.data() >= other.0.data() {
                     true => (unsafe { other.0.data().add(m - 1) }, self.0.data()),
                     false => (unsafe { self.0.data().add(n - 1) }, other.0.data()),
                 };
