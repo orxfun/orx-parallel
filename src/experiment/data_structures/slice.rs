@@ -80,6 +80,14 @@ impl<'a, T: 'a> Slice<'a, T> {
         let dst = self.raw as *mut T;
         unsafe { dst.copy_from_nonoverlapping(src.raw as *const T, self.len()) };
     }
+
+    /// # SAFETY
+    ///
+    /// - (i) all values must be initialized.
+    /// - (ii) the values must not be mutated before the returned slice is dropped.
+    pub unsafe fn as_slice(&self) -> &'a [T] {
+        unsafe { &*self.raw }
+    }
 }
 
 /// A struct holding a reference to a slice, hiding its unsafe methods,
