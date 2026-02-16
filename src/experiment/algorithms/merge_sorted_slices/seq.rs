@@ -239,14 +239,13 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
             loop {
                 match is_leq(l, r) {
                     true => {
-                        let idx =
+                        let count =
                             bin_search_idx(left.as_slice().binary_search_by(|x| {
                                 match is_leq(x, r) {
                                     true => Ordering::Less,
                                     false => Ordering::Greater,
                                 }
                             }));
-                        let count = idx - 1;
                         // SAFETY: left still has at least `count` elements, so must `dst`
                         unsafe { dst.write_many_from(&mut left, count) };
 
@@ -260,14 +259,12 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
                         }
                     }
                     false => {
-                        let idx =
-                            bin_search_idx(right.as_slice().binary_search_by(|x| {
-                                match is_leq(x, l) {
-                                    true => Ordering::Less,
-                                    false => Ordering::Greater,
-                                }
-                            }));
-                        let count = idx - 1;
+                        let count = bin_search_idx(right.as_slice().binary_search_by(|x| {
+                            match is_leq(x, l) {
+                                true => Ordering::Less,
+                                false => Ordering::Greater,
+                            }
+                        }));
                         // SAFETY: right still has at least `count` elements, so must `dst`
                         unsafe { dst.write_many_from(&mut right, count) };
 
