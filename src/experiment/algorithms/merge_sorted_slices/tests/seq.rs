@@ -69,14 +69,18 @@ fn xyz((left_len, total_len): (usize, usize), sort: SortKind, params: ParamsSeqM
 
 #[test]
 fn abc() {
-    let left_len = 2;
+    let left_len = 1;
     let total_len = 3;
     let sort = SortKind::Sorted;
-    let params = PARAMS[0];
+    let params = PARAMS[1];
 
     let (mut expected, mut left, mut right) = sorted_slices(left_len, total_len, sort);
 
     let mut result = Vec::<String>::with_capacity(total_len);
+    // result.push("a".to_string());
+    // result.push("b".to_string());
+    // result.push("c".to_string());
+    // unsafe { result.set_len(0) };
 
     // let dst = result.as_ptr() as *mut String;
     // let source = right.as_ptr();

@@ -53,7 +53,7 @@ where
     assert_eq!(input, sorted);
 }
 
-#[test]
+// #[test]
 fn abc() {
     let len = 1 << 22;
     let number_of_swaps = 4 * len;

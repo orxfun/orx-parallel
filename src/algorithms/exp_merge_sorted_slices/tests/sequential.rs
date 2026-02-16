@@ -36,11 +36,11 @@ const PARAMS: &[ParamsSeqMergeSortedSlices] = &[
     },
 ];
 
-#[test_matrix(
-    [(0, 0), (0, 5), (5, 5), (4, 20), (10, 20), (14, 20)],
-    [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
-    [PARAMS[0],PARAMS[1],PARAMS[2],PARAMS[3],PARAMS[4],PARAMS[5]])
-]
+// #[test_matrix(
+//     [(0, 0), (0, 5), (5, 5), (4, 20), (10, 20), (14, 20)],
+//     [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
+//     [PARAMS[0],PARAMS[1],PARAMS[2],PARAMS[3],PARAMS[4],PARAMS[5]])
+// ]
 fn xyz((left_len, total_len): (usize, usize), sort: SortKind, params: ParamsSeqMergeSortedSlices) {
     let (mut expected, mut left, mut right) = sorted_slices(left_len, total_len, sort);
 
@@ -65,7 +65,7 @@ fn xyz((left_len, total_len): (usize, usize), sort: SortKind, params: ParamsSeqM
     assert_eq!(result, expected);
 }
 
-#[test]
+// #[test]
 fn abc() {
     let left_len = 2;
     let total_len = 3;

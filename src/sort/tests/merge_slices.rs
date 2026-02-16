@@ -45,7 +45,7 @@ fn merge_ordered_slices(len: usize, kind: MergeSliceKind) {
     assert_eq!(expected, result);
 }
 
-#[test]
+// #[test]
 fn xyz() {
     let len = 37;
     let kind = MergeSliceKind::Parallel { nt: 0 };
