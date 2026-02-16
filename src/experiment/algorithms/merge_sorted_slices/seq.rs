@@ -1,10 +1,24 @@
 use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSrc};
 use core::cmp::Ordering;
 
+/// Determines the streak search.
+///
+/// Assume at an intermediate step of the algorithm, current value of left slice is
+/// less than current value of right slice.
+///
+/// In this case, we will copy the current element of the left slice to the current
+/// position of the target slice.
+///
+/// However, if next `n` elements of the left slice are all smaller than the current
+/// value of the right slice, we can copy all `n` elements at once. The subslice of
+/// this `n` elements is called the streak.
 #[derive(Clone, Copy)]
 pub enum StreakSearch {
+    /// We don't search for a streak; we copy elements one by one.
     None,
+    /// We search the streak by a linear search.
     Linear,
+    /// We search the streak by a binary search since both source slices are sorted.
     Binary,
 }
 
