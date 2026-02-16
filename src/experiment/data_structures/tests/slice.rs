@@ -2,6 +2,7 @@ use crate::experiment::data_structures::slice::{Slice, SliceSafe};
 use alloc::vec;
 use alloc::vec::Vec;
 use std::string::ToString;
+use test_case::test_matrix;
 
 #[test]
 fn slice_overlap() {
@@ -32,12 +33,9 @@ fn slice_overlap() {
     assert_overlap(&a[0..2], &a[1..2]);
 }
 
-#[test]
-fn slice_split_unchecked() {
-    let vec: Vec<_> = [1, 2, 3, 4, 5, 6]
-        .map(|x| x.to_string())
-        .into_iter()
-        .collect();
+#[test_matrix([0, 1, 2, 3, 6])]
+fn slice_split_unchecked(len: usize) {
+    let vec: Vec<_> = (1..(1 + len)).map(|x| x.to_string()).into_iter().collect();
 
     for i in 0..=vec.len() {
         let s = Slice::from(vec.as_slice());
