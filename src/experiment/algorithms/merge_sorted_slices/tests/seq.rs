@@ -50,7 +50,7 @@ fn xyz((left_len, total_len): (usize, usize), sort: SortKind, params: ParamsSeqM
         SliceSrc::from_slice(left.as_slice()),
         SliceSrc::from_slice(right.as_slice()),
         SliceDst::from_vec(&mut result),
-        params,
+        &params,
     );
 
     // all elements of left & right are moved to result

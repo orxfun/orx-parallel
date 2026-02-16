@@ -41,7 +41,7 @@ pub fn seq_merge<'a, T: 'a, F>(
     left: SliceSrc<'a, T>,
     right: SliceSrc<'a, T>,
     target: SliceDst<'a, T>,
-    params: ParamsSeqMergeSortedSlices,
+    params: &ParamsSeqMergeSortedSlices,
 ) where
     F: Fn(&T, &T) -> bool,
 {
@@ -63,7 +63,7 @@ pub unsafe fn seq_merge_unchecked<'a, T: 'a, F>(
     left: SliceSrc<'a, T>,
     right: SliceSrc<'a, T>,
     target: SliceDst<'a, T>,
-    params: ParamsSeqMergeSortedSlices,
+    params: &ParamsSeqMergeSortedSlices,
 ) where
     F: Fn(&T, &T) -> bool,
 {

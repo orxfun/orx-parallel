@@ -3,3 +3,6 @@ mod tests;
 
 /// Sequential variant for merging two sorted slices into one sorted slice.
 pub mod seq;
+
+/// Parallel variant for merging two sorted slices into one sorted slice.
+pub mod par;

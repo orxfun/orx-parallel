@@ -4,9 +4,11 @@ use orx_parallel::experiment::algorithms::merge_sorted_slices::seq::seq_merge;
 use orx_parallel::experiment::algorithms::merge_sorted_slices::seq::{
     ParamsSeqMergeSortedSlices, StreakSearch,
 };
+use orx_parallel::experiment::data_structures::slice_dst::SliceDst;
+use orx_parallel::experiment::data_structures::slice_src::SliceSrc;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use std::ptr::slice_from_raw_parts_mut;
+use std::cell::UnsafeCell;
 
 type X = usize;
 
@@ -49,11 +51,6 @@ fn split_at<T: Ord + Clone>(vec: &[T], split_at: usize) -> (Vec<T>, Vec<T>) {
     (left, right)
 }
 
-fn target_slice(target: &Vec<X>) -> &mut [X] {
-    let len = target.capacity();
-    unsafe { &mut *slice_from_raw_parts_mut(target.as_ptr() as *mut X, len) }
-}
-
 // treatments
 
 #[derive(Clone, Copy, Debug)]
@@ -82,13 +79,14 @@ impl SplitKind {
 struct Input {
     left: Vec<X>,
     right: Vec<X>,
-    target: Vec<X>,
+    target: UnsafeCell<Vec<X>>,
 }
 
 impl Drop for Input {
     fn drop(&mut self) {
         unsafe {
-            self.target.set_len(self.left.len() + self.right.len());
+            let target = &mut *self.target.get();
+            target.set_len(self.left.len() + self.right.len());
             self.left.set_len(0);
             self.right.set_len(0);
         }
@@ -140,7 +138,7 @@ impl MergeData {
     fn all() -> Vec<Self> {
         let mut all = vec![];
 
-        let e = [10, 15, 20];
+        let e = [15, 20, 22, 25];
         let sort = [SortKind::Mixed, SortKind::Sorted];
         let split = [
             SplitKind::Middle,
@@ -169,7 +167,7 @@ impl Factors for Params {
     }
 
     fn factor_names_short() -> Vec<&'static str> {
-        vec!["nt", "ss", "thr", "ps", "sw"]
+        vec!["nt", "ss"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -234,7 +232,7 @@ impl Experiment for TuneExperiment {
         let len = 1 << treatment.e;
         let vec = new_vec(len, elem, treatment.sort);
         let (left, right) = split_to_sorted_vecs(&vec, treatment.split);
-        let target = Vec::with_capacity(vec.len());
+        let target = Vec::with_capacity(vec.len()).into();
         Input {
             left,
             right,
@@ -243,16 +241,19 @@ impl Experiment for TuneExperiment {
     }
 
     fn execute(&mut self, variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
-        let target = target_slice(&input.target);
-        // let params = variant.0;
-        // seq_merge(is_leq, &input.left, &input.right, target, params);
+        let target = unsafe { &mut *input.target.get() };
+        let target = SliceDst::from_vec(target);
+        let left = SliceSrc::from_slice(input.left.as_slice());
+        let right = SliceSrc::from_slice(input.right.as_slice());
+        let params = variant.0;
+        seq_merge(is_leq, left, right, target, &params);
     }
 }
 
 fn run(c: &mut Criterion) {
     let treatments = MergeData::all();
     let variants = Params::all();
-    TuneExperiment.bench(c, "t_seq_merge_sorted_slices", &treatments, &variants);
+    TuneExperiment.bench(c, "t_seq_merge_sorted", &treatments, &variants);
 }
 
 criterion_group!(benches, run);
