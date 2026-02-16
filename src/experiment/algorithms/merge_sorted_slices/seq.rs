@@ -1,6 +1,5 @@
-use crate::experiment::data_structures::{
-    slice::Slice, slice_dst::SliceDst, slice_iter_ptr::SliceIterPtr, slice_src::SliceSrc,
-};
+use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSrc};
+use core::cmp::Ordering;
 
 #[derive(Clone, Copy)]
 pub enum StreakSearch {
@@ -159,9 +158,10 @@ unsafe fn seq_merge_streak_linear<'a, T: 'a, F>(
             loop {
                 match is_leq(l, r) {
                     true => {
-                        // SAFETY: left still has at least `count` elements, so must `dst`
                         let count = left.values().position(|x| is_leq(x, r)).expect(WILL_FIND);
+                        // SAFETY: left still has at least `count` elements, so must `dst`
                         unsafe { dst.write_many_from(&mut left, count) };
+
                         match left.current() {
                             Some(x) => l = x,
                             None => {
@@ -172,9 +172,10 @@ unsafe fn seq_merge_streak_linear<'a, T: 'a, F>(
                         }
                     }
                     false => {
-                        // SAFETY: right still has at least `count` elements, so must `dst`
                         let count = right.values().position(|x| is_leq(x, l)).expect(WILL_FIND);
+                        // SAFETY: right still has at least `count` elements, so must `dst`
                         unsafe { dst.write_many_from(&mut right, count) };
+
                         match right.current() {
                             Some(x) => r = x,
                             None => {
@@ -220,13 +221,29 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
     let mut right = right.into_iter();
     let mut dst = target.into_iter();
 
+    fn bin_search_idx(idx: Result<usize, usize>) -> usize {
+        match idx {
+            Ok(x) => x,
+            Err(x) => x,
+        }
+    }
+
     match (left.current(), right.current()) {
         (Some(mut l), Some(mut r)) => {
             loop {
                 match is_leq(l, r) {
                     true => {
-                        // SAFETY: left still has at least one elem `l`, so must `dst`
-                        unsafe { dst.write_one_from(&mut left) };
+                        let idx =
+                            bin_search_idx(left.as_slice().binary_search_by(|x| {
+                                match is_leq(x, r) {
+                                    true => Ordering::Less,
+                                    false => Ordering::Greater,
+                                }
+                            }));
+                        let count = idx - 1;
+                        // SAFETY: left still has at least `count` elements, so must `dst`
+                        unsafe { dst.write_many_from(&mut left, count) };
+
                         match left.current() {
                             Some(x) => l = x,
                             None => {
@@ -237,8 +254,17 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
                         }
                     }
                     false => {
-                        // SAFETY: right still has at least one elem `r`, so must `dst`
-                        unsafe { dst.write_one_from(&mut right) };
+                        let idx =
+                            bin_search_idx(right.as_slice().binary_search_by(|x| {
+                                match is_leq(x, l) {
+                                    true => Ordering::Less,
+                                    false => Ordering::Greater,
+                                }
+                            }));
+                        let count = idx - 1;
+                        // SAFETY: right still has at least `count` elements, so must `dst`
+                        unsafe { dst.write_many_from(&mut right, count) };
+
                         match right.current() {
                             Some(x) => r = x,
                             None => {
@@ -260,62 +286,4 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
             unsafe { dst.write_rest_from(&mut left) };
         }
     }
-
-    // let mut it_left = left.iter_over_ptr();
-    // let mut it_right = right.iter_over_ptr();
-    // let mut it_dst = target.iter_as_dst();
-
-    // loop {
-    //     unsafe {
-    //         let l = it_left.current_unchecked();
-    //         let r = it_right.current_unchecked();
-
-    //         match is_leq(l, r) {
-    //             true => {
-    //                 let ptr = it_left.peek_unchecked();
-    //                 let remaining = left.subslice_from(ptr).as_slice();
-    //                 let bin_search = remaining.binary_search_by(|x| match is_leq(x, r) {
-    //                     true => Ordering::Less,
-    //                     false => Ordering::Greater,
-    //                 });
-    //                 let idx = match bin_search {
-    //                     Ok(idx) => idx,
-    //                     Err(idx) => idx,
-    //                 };
-    //                 let src_begin = it_left.peek_unchecked();
-    //                 let src_end_inclusive = src_begin.add(idx - 1);
-    //                 it_left.jump_to(src_end_inclusive);
-
-    //                 it_dst.write_many_unchecked(src_begin, src_end_inclusive);
-
-    //                 if it_left.is_finished() {
-    //                     it_dst.write_remaining_from(&it_right.remaining_into_slice());
-    //                     break;
-    //                 }
-    //             }
-    //             false => {
-    //                 let ptr = it_right.peek_unchecked();
-    //                 let remaining = right.subslice_from(ptr).as_slice();
-    //                 let bin_search = remaining.binary_search_by(|x| match is_leq(x, l) {
-    //                     true => Ordering::Less,
-    //                     false => Ordering::Greater,
-    //                 });
-    //                 let idx = match bin_search {
-    //                     Ok(idx) => idx,
-    //                     Err(idx) => idx,
-    //                 };
-    //                 let src_begin = it_right.peek_unchecked();
-    //                 let src_end_inclusive = src_begin.add(idx - 1);
-    //                 it_right.jump_to(src_end_inclusive);
-
-    //                 it_dst.write_many_unchecked(src_begin, src_end_inclusive);
-
-    //                 if it_right.is_finished() {
-    //                     it_dst.write_remaining_from(&it_left.remaining_into_slice());
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 }
