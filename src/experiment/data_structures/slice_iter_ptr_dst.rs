@@ -1,7 +1,5 @@
 use crate::experiment::data_structures::slice_iter_ptr_src::SliceIterPtrSrc;
-use crate::experiment::data_structures::{
-    slice::Slice, slice_dst::SliceDst, slice_iter_ptr::SliceIterPtr,
-};
+use crate::experiment::data_structures::{slice_dst::SliceDst, slice_iter_ptr::SliceIterPtr};
 
 /// Iterator over a slice of data that will be completely filled with values
 /// before the iterator is consumed.
