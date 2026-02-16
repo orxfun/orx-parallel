@@ -16,6 +16,8 @@ use alloc::vec::Vec;
 pub struct SliceDst<'a, T>(pub(super) Slice<'a, T>);
 
 impl<'a, T> SliceDst<'a, T> {
+    /// Destructs the slice wrapper and returns the underlying raw slice
+    /// that it is created with.
     pub fn destruct(self) -> *const [T] {
         self.0.destruct()
     }
@@ -51,6 +53,7 @@ impl<'a, T> SliceDst<'a, T> {
         self.0.len()
     }
 
+    /// Returns a safe wrapper over this slice.
     #[inline(always)]
     pub fn core(&self) -> SliceSafe<'_, 'a, T> {
         self.into()

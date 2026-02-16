@@ -28,9 +28,9 @@ pub fn seq_merge<'a, T: 'a, F>(
     F: Fn(&T, &T) -> bool,
 {
     assert_eq!(target.len(), left.len() + right.len());
-    // assert!(target.core().is_non_overlapping(&left.core()));
-    // assert!(target.core().is_non_overlapping(&right.core()));
-    // assert!(left.core().is_non_overlapping(&right.core()));
+    assert!(target.core().is_non_overlapping(&left.core()));
+    assert!(target.core().is_non_overlapping(&right.core()));
+    assert!(left.core().is_non_overlapping(&right.core()));
 
     // SAFETY: safety requirements are satisfied by panic conditions (i) and (ii)
     unsafe { seq_merge_unchecked(is_leq, left, right, target, params) }
