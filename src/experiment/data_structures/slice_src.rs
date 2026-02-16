@@ -44,6 +44,7 @@ impl<'a, T> SliceSrc<'a, T> {
         self.into()
     }
 
+    /// Converts the source slice into a source iterator.
     pub fn into_iter(self) -> SliceIterPtrSrc<'a, T> {
         SliceIterPtrSrc::new(self)
     }

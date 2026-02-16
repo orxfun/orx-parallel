@@ -1,7 +1,5 @@
-use crate::experiment::data_structures::{
-    slice::{Slice, SliceSafe},
-    slice_iter_ptr_dst::SliceIterPtrDst,
-};
+use crate::experiment::data_structures::slice::{Slice, SliceSafe};
+use crate::experiment::data_structures::slice_iter_ptr_dst::SliceIterPtrDst;
 use alloc::vec::Vec;
 
 /// A raw slice of contiguous data with un-initialized values.
@@ -59,6 +57,7 @@ impl<'a, T> SliceDst<'a, T> {
         self.into()
     }
 
+    /// Converts the destination slice into a destination iterator.
     pub fn into_iter(self) -> SliceIterPtrDst<'a, T> {
         SliceIterPtrDst::new(self)
     }
