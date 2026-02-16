@@ -12,7 +12,7 @@ use core::cmp::Ordering;
 /// However, if next `n` elements of the left slice are all smaller than the current
 /// value of the right slice, we can copy all `n` elements at once. The subslice of
 /// this `n` elements is called the streak.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum StreakSearch {
     /// We don't search for a streak; we copy elements one by one.
     None,
@@ -23,7 +23,7 @@ pub enum StreakSearch {
 }
 
 /// Parameters of the sequential algorithm for merging two sorted slices into one sorted slice.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct ParamsSeqMergeSortedSlices {
     /// Streak search method.
     pub streak_search: StreakSearch,
