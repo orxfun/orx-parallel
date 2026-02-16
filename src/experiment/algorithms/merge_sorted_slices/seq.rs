@@ -22,9 +22,13 @@ pub enum StreakSearch {
     Binary,
 }
 
+/// Parameters of the sequential algorithm for merging two sorted slices into one sorted slice.
 #[derive(Clone, Copy)]
 pub struct ParamsSeqMergeSortedSlices {
+    /// Streak search method.
     pub streak_search: StreakSearch,
+    /// When true, the algorithm always puts the larger slice to the left;
+    /// otherwise to the right.
     pub put_large_to_left: bool,
 }
 
