@@ -54,6 +54,10 @@ impl<'a, T> SliceSrc<'a, T> {
     pub fn into_iter(self) -> SliceIterPtrSrc<'a, T> {
         SliceIterPtrSrc::new(self)
     }
+
+    pub fn split_at(self, index: usize) -> [Self; 2] {
+        todo!()
+    }
 }
 
 impl<'c, 'a, T: 'a> From<&'c SliceSrc<'a, T>> for SliceSafe<'c, 'a, T> {

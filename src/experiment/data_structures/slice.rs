@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, ptr::slice_from_raw_parts};
+use core::{marker::PhantomData, ptr::slice_from_raw_parts, slice::from_raw_parts};
 
 /// A raw slice of contiguous data.
 pub struct Slice<'a, T: 'a> {
@@ -34,6 +34,24 @@ impl<'a, T: 'a> Slice<'a, T> {
     /// that it is created with.
     pub fn destruct(self) -> *const [T] {
         self.raw
+    }
+
+    /// Creates two slices from this slice:
+    ///
+    /// - first slice for positions [0..position)
+    /// - second slice for positions [position..]
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `position` must be less than or equal to `self.len()`
+    pub unsafe fn split_at_unchecked(self, position: usize) -> [Self; 2] {
+        let len_right = self.len() - position;
+        let ptr_left = self.raw as *const T;
+        let left = Self::new(ptr_left, position);
+        // SAFETY: ptr_right is within bounds due to condition (i)
+        let ptr_right = unsafe { ptr_left.add(position) };
+        let right = Self::new(ptr_right, len_right);
+        [left, right]
     }
 
     pub(super) fn data(&self) -> *const T {

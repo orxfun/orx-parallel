@@ -32,10 +32,21 @@ fn handle<'a, 'b, T: 'a, F>(
     F: Fn(&T, &T) -> bool,
 {
     let t = unsafe { t.clone() };
-    match (t.left.len(), t.right.len()) {
-        (0, _) | (_, 0) => {
-            unsafe { seq_merge_unchecked(is_leq, t.left, t.right, t.target, params) };
+    let (mut left, mut right, target) = (t.left, t.right, t.target);
+    match (left.len(), right.len()) {
+        (x, _) if x < 3 => {
+            unsafe { seq_merge_unchecked(is_leq, left, right, target, params) };
         }
-        _ => {}
+        (_, x) if x < 3 => {
+            unsafe { seq_merge_unchecked(is_leq, left, right, target, params) };
+        }
+        _ => {
+            let is_large_on_left = left.len() >= right.len();
+            if is_large_on_left != params.put_large_to_left {
+                (left, right) = (right, left);
+            }
+
+            let pivot = left;
+        }
     }
 }
