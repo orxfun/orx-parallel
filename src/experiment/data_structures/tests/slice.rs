@@ -50,3 +50,11 @@ fn slice_split_unchecked(len: usize) {
         assert_eq!(&right, &vec[i..]);
     }
 }
+
+#[test_matrix([1, 6])]
+fn slice_first_unchecked(len: usize) {
+    let vec: Vec<_> = (1..(1 + len)).map(|x| x.to_string()).into_iter().collect();
+    let s = Slice::from(vec.as_slice());
+    // SAFETY: s.len() > 0
+    assert_eq!(unsafe { s.first_unchecked() }, &"1".to_string());
+}

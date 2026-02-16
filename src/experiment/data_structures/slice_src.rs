@@ -50,13 +50,34 @@ impl<'a, T> SliceSrc<'a, T> {
         self.into()
     }
 
+    /// Returns a reference to the first element of the slice.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) this must have a positive `len`
+    #[inline(always)]
+    pub unsafe fn first_unchecked(&self) -> &'a T {
+        // SAFETY: req't (i) is satisfied by cond'n (i);
+        // req't (ii) is satisfied by SliceSrc construction.
+        unsafe { self.0.first_unchecked() }
+    }
+
     /// Converts the source slice into a source iterator.
     pub fn into_iter(self) -> SliceIterPtrSrc<'a, T> {
         SliceIterPtrSrc::new(self)
     }
 
-    pub fn split_at(self, index: usize) -> [Self; 2] {
-        todo!()
+    /// Creates two slices from this slice:
+    ///
+    /// - first slice for positions [0..position)
+    /// - second slice for positions [position..]
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `position` must be less than or equal to `self.len()`
+    pub unsafe fn split_at_unchecked(self, position: usize) -> [Self; 2] {
+        // SAFETY: req't (i) is satisfied by cond'n (i)
+        unsafe { self.0.split_at_unchecked(position) }.map(Self)
     }
 }
 

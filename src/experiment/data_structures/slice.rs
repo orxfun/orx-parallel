@@ -54,6 +54,7 @@ impl<'a, T: 'a> Slice<'a, T> {
         [left, right]
     }
 
+    #[inline(always)]
     pub(super) fn data(&self) -> *const T {
         self.raw as *const T
     }
@@ -67,6 +68,17 @@ impl<'a, T: 'a> Slice<'a, T> {
     /// Returns true if the slice is empty.
     pub fn is_empty(&self) -> bool {
         self.raw.is_empty()
+    }
+
+    /// Returns a reference to the first element of the slice.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) this must have a positive `len`
+    /// - (ii) the first element must be initialized
+    #[inline(always)]
+    pub unsafe fn first_unchecked(&self) -> &'a T {
+        unsafe { &*(self.raw as *const T) }
     }
 
     /// # SAFETY
