@@ -52,6 +52,12 @@ fn handle<'a, 'b, T: 'a, F>(
 
             // SAFETY: since left.len() >= 2, then left_right.len() > 0
             let pivot = unsafe { left_right.first_unchecked() };
+
+            let pos_right = unsafe { right.as_slice() }
+                .iter()
+                .position(|r| is_leq(pivot, r))
+                .unwrap_or(right.len());
+            let [right_left, right_right] = unsafe { right.split_at_unchecked(pos_right) };
         }
     }
 }

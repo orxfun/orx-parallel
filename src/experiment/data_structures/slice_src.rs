@@ -79,6 +79,15 @@ impl<'a, T> SliceSrc<'a, T> {
         // SAFETY: req't (i) is satisfied by cond'n (i)
         unsafe { self.0.split_at_unchecked(position) }.map(Self)
     }
+
+    /// # SAFETY
+    ///
+    /// - (i) the values must not be mutated before the returned slice is dropped.
+    pub unsafe fn as_slice(&self) -> &[T] {
+        // SAFETY: (i) all values are initialized by construction,
+        // (ii) is satisfied by cond'n (i).
+        unsafe { self.0.as_slice() }
+    }
 }
 
 impl<'c, 'a, T: 'a> From<&'c SliceSrc<'a, T>> for SliceSafe<'c, 'a, T> {
