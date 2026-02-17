@@ -58,6 +58,21 @@ fn handle<'a, 'b, T: 'a, F>(
                 .position(|r| is_leq(pivot, r))
                 .unwrap_or(right.len());
             let [right_left, right_right] = unsafe { right.split_at_unchecked(pos_right) };
+
+            let target_left_len = left_left.len() + right_left.len();
+            let [target_left, target_right] = unsafe { target.split_at_unchecked(target_left_len) };
+
+            let task_left = Task {
+                left: left_left,
+                right: right_left,
+                target: target_left,
+            };
+            let task_right = Task {
+                left: left_right,
+                right: right_right,
+                target: target_right,
+            };
+            queue.extend([task_left, task_right]);
         }
     }
 }

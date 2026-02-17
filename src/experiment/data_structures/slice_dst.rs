@@ -65,6 +65,19 @@ impl<'a, T> SliceDst<'a, T> {
     pub fn into_iter(self) -> SliceIterPtrDst<'a, T> {
         SliceIterPtrDst::new(self)
     }
+
+    /// Creates two slices from this slice:
+    ///
+    /// - first slice for positions [0..position)
+    /// - second slice for positions [position..]
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `position` must be less than or equal to `self.len()`
+    pub unsafe fn split_at_unchecked(self, position: usize) -> [Self; 2] {
+        // SAFETY: req't (i) is satisfied by cond'n (i)
+        unsafe { self.0.split_at_unchecked(position) }.map(Self)
+    }
 }
 
 impl<'c, 'a, T: 'a> From<&'c SliceDst<'a, T>> for SliceSafe<'c, 'a, T> {
