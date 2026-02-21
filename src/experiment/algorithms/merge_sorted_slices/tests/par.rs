@@ -57,27 +57,29 @@ fn merge_sorted_slices_par(
         put_large_to_left: params.put_large_to_left,
     };
 
-    let (mut expected, mut left, mut right) = sorted_slices(left_len, total_len, sort);
+    run((left_len, total_len), sort, params);
+}
 
-    let mut result = Vec::<String>::with_capacity(total_len);
+#[test_matrix(
+    [(0, 0), (0, 5), (5, 5), (4, 20), (10, 20), (14, 20)],
+    [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
+    [PARAMS[0],PARAMS[1],PARAMS[2],PARAMS[3],PARAMS[4],PARAMS[5]],
+    [0, 1, 64])
+]
+fn merge_sorted_slices_par_single_thread(
+    (left_len, total_len): (usize, usize),
+    sort: SortKind,
+    params: ParamsSeqMergeSortedSlices,
+    chunk_size: usize,
+) {
+    let params = ParamsParMergeSortedSlices {
+        seq_params: params.clone(),
+        chunk_size,
+        num_threads: 1,
+        put_large_to_left: params.put_large_to_left,
+    };
 
-    par_merge(
-        |a, b| a < b,
-        SliceSrc::from_slice(left.as_slice()),
-        SliceSrc::from_slice(right.as_slice()),
-        SliceDst::from_vec(&mut result),
-        &params,
-    );
-
-    // all elements of left & right are moved to result
-    unsafe {
-        result.set_len(left.len() + right.len());
-        left.set_len(0);
-        right.set_len(0);
-    }
-
-    expected.sort();
-    assert_eq!(result, expected);
+    run((left_len, total_len), sort, params);
 }
 
 #[cfg(not(miri))]
@@ -97,9 +99,13 @@ fn merge_sorted_slices_par_large(len: usize, num_threads: usize, chunk_size: usi
         num_threads,
     };
 
-    let (mut expected, mut left, mut right) = sorted_slices(len / 2, len, SortKind::Mixed);
+    run((len / 2, len), SortKind::Mixed, params);
+}
 
-    let mut result = Vec::<String>::with_capacity(len);
+fn run((left_len, total_len): (usize, usize), sort: SortKind, params: ParamsParMergeSortedSlices) {
+    let (mut expected, mut left, mut right) = sorted_slices(left_len, total_len, sort);
+
+    let mut result = Vec::<String>::with_capacity(total_len);
 
     par_merge(
         |a, b| a < b,
