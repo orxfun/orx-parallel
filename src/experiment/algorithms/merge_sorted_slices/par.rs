@@ -1,8 +1,19 @@
-use crate::experiment::{
-    algorithms::merge_sorted_slices::seq::{ParamsSeqMergeSortedSlices, seq_merge_unchecked},
-    data_structures::{slice_dst::SliceDst, slice_src::SliceSrc},
+use crate::experiment::algorithms::merge_sorted_slices::seq::{
+    ParamsSeqMergeSortedSlices, seq_merge_unchecked,
 };
+use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSrc};
+use crate::{IntoParIterRec, ParIter};
 use orx_concurrent_recursive_iter::{ConcurrentRecursiveIter, Queue};
+
+/// Parameters of the sequential algorithm for merging two sorted slices into one sorted slice.
+#[derive(Clone, Copy, Debug)]
+pub struct ParamsParMergeSortedSlices {
+    /// Parameters of sequential merging.
+    pub seq_params: ParamsSeqMergeSortedSlices,
+    /// When true, the algorithm always puts the larger slice to the left;
+    /// otherwise to the right.
+    pub put_large_to_left: bool,
+}
 
 struct Task<'a, T> {
     left: SliceSrc<'a, T>,
@@ -22,23 +33,62 @@ impl<'a, T> Task<'a, T> {
     }
 }
 
-fn handle<'a, 'b, T: 'a, F>(
+/// # Panics
+///
+/// - (i) if `target.len()` is not equal to `left.len() + right.len()`
+/// - (ii) if any pair of of `left`, `right` or `target` are overlapping.
+pub fn par_merge<'a, T: 'a, F>(
     is_leq: F,
-    t: &'a Task<'b, T>,
-    queue: &Queue<'b, Task<'b, T>>,
-    params: &ParamsSeqMergeSortedSlices,
+    left: SliceSrc<'a, T>,
+    right: SliceSrc<'a, T>,
+    target: SliceDst<'a, T>,
+    params: ParamsParMergeSortedSlices,
 ) where
-    T: Send,
-    F: Fn(&T, &T) -> bool,
+    T: Send + Sync,
+    F: Fn(&T, &T) -> bool + Send + Sync,
+{
+    assert_eq!(target.len(), left.len() + right.len());
+    assert!(target.core().is_non_overlapping(&left.core()));
+    assert!(target.core().is_non_overlapping(&right.core()));
+    assert!(left.core().is_non_overlapping(&right.core()));
+
+    let initial_task = [Task {
+        left,
+        right,
+        target,
+    }];
+
+    let handle_extend = |task: &Task<'a, T>, queue: &Queue<'_, Task<'a, T>>| {
+        // SAFETY: req't (i) and (ii) are satisfied by panic conditions
+        unsafe { handle_extend(&is_leq, &params, task, queue) }
+    };
+
+    initial_task.into_par_rec(handle_extend).for_each(|_| {});
+}
+
+/// # SAFETY
+///
+/// - (i) `target.len()` must equal `left.len() + right.len()`
+/// - (ii) no pair of `left`, `right` and `target` can be overlapping.
+unsafe fn handle_extend<'a, T, F>(
+    is_leq: F,
+    params: &ParamsParMergeSortedSlices,
+    t: &Task<'a, T>,
+    queue: &Queue<'_, Task<'a, T>>,
+) where
+    T: Send + Sync,
+    F: Fn(&T, &T) -> bool + Send + Sync,
 {
     let t = unsafe { t.clone() };
     let (mut left, mut right, target) = (t.left, t.right, t.target);
     match (left.len(), right.len()) {
         (x, _) if x < 3 => {
-            unsafe { seq_merge_unchecked(is_leq, left, right, target, params) };
+            // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)
+            unsafe { seq_merge_unchecked(is_leq, left, right, target, &params.seq_params) };
         }
         (_, x) if x < 3 => {
-            unsafe { seq_merge_unchecked(is_leq, left, right, target, params) };
+            // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)
+            unsafe { seq_merge_unchecked(is_leq, left, right, target, &params.seq_params) };
         }
         _ => {
             let is_large_on_left = left.len() >= right.len();
@@ -57,9 +107,11 @@ fn handle<'a, 'b, T: 'a, F>(
                 .iter()
                 .position(|r| is_leq(pivot, r))
                 .unwrap_or(right.len());
+            // SAFETY: (i) pos_right <= right.len() is satisfied by the expression declaring pos_right
             let [right_left, right_right] = unsafe { right.split_at_unchecked(pos_right) };
 
             let target_left_len = left_left.len() + right_left.len();
+            // SAFETY: (i) target_left_len <= target.len() is satisfied by cond'n (i) target.len() == left.len() + right.len()
             let [target_left, target_right] = unsafe { target.split_at_unchecked(target_left_len) };
 
             let task_left = Task {
