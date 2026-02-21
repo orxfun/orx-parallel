@@ -1,13 +1,12 @@
 use crate::experiment::data_structures::slice::{Slice, SliceSafe};
-use alloc::vec;
 use alloc::vec::Vec;
 use std::string::ToString;
 use test_case::test_matrix;
 
 #[test]
 fn slice_overlap() {
-    let a = vec![1, 2, 3, 4, 5, 6];
-    let b = vec![7, 8];
+    let a = [1, 2, 3, 4, 5, 6];
+    let b = [7, 8];
 
     let assert_no_overlap = |x: &[i32], y: &[i32]| {
         let [x, y] = [x, y].map(Slice::from);
@@ -35,7 +34,7 @@ fn slice_overlap() {
 
 #[test_matrix([0, 1, 2, 3, 6])]
 fn slice_split_unchecked(len: usize) {
-    let vec: Vec<_> = (1..(1 + len)).map(|x| x.to_string()).into_iter().collect();
+    let vec: Vec<_> = (1..(1 + len)).map(|x| x.to_string()).collect();
 
     for i in 0..=vec.len() {
         let s = Slice::from(vec.as_slice());
@@ -53,7 +52,7 @@ fn slice_split_unchecked(len: usize) {
 
 #[test_matrix([1, 6])]
 fn slice_first_unchecked(len: usize) {
-    let vec: Vec<_> = (1..(1 + len)).map(|x| x.to_string()).into_iter().collect();
+    let vec: Vec<_> = (1..(1 + len)).map(|x| x.to_string()).collect();
     let s = Slice::from(vec.as_slice());
     // SAFETY: s.len() > 0
     assert_eq!(unsafe { s.first_unchecked() }, &"1".to_string());

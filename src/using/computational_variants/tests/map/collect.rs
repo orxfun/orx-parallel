@@ -35,7 +35,7 @@ fn m_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
         output.push(value());
         expected.push(value());
     }
-    expected.extend(input.clone().into_iter().map(|x| map(x)));
+    expected.extend(input.clone().into_iter().map(map));
 
     let params = Params::new(nt, chunk, ordering);
     let iter = input.into_con_iter();

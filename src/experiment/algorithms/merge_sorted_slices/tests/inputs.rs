@@ -34,8 +34,8 @@ pub fn sorted_slices(
     }
 
     let (left, right) = all.split_at(left_len);
-    let mut left: Vec<_> = left.iter().cloned().collect();
-    let mut right: Vec<_> = right.iter().cloned().collect();
+    let mut left = left.to_vec();
+    let mut right = right.to_vec();
     left.sort();
     right.sort();
     (all, left, right)
