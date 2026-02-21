@@ -48,24 +48,8 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
     // non-progressing methods
 
     /// Returns the current pointer.
-    /// Returns None if the iterator `is_finished`.
-    pub fn peek(&self) -> Option<*const T> {
-        match !self.is_finished() {
-            true => Some(self.data),
-            false => None,
-        }
-    }
-
-    /// Returns the current pointer.
-    ///
-    /// # SAFETY
-    ///
-    /// - (i) the iterator cannot be `is_finished`; otherwise, the
-    ///   obtained pointer does not belong to the slice the iterator
-    ///   is created for.
     #[inline(always)]
-    pub unsafe fn peek_unchecked(&self) -> *const T {
-        debug_assert!(!self.is_finished());
+    pub fn peek(&self) -> *const T {
         self.data
     }
 
@@ -127,34 +111,9 @@ impl<'a, T: 'a> SliceIterPtr<'a, T> {
     pub unsafe fn next_n_unchecked(&mut self, count: usize) -> *const T {
         debug_assert!(self.remaining() >= count);
         let value = self.data;
+        // SAFETY: by cond'n (i), data + count is within bounds
         self.data = unsafe { self.data.add(count) };
         value
-    }
-
-    /// Does nothing if the iterator `is_finished` or `is_leq(current, pivot)`
-    /// returns false.
-    ///
-    /// Otherwise, returns the current pointer and progresses the iterator to the next.
-    ///
-    /// # SAFETY
-    ///
-    /// Bounds check is applied. However, the following safety
-    /// requirement must be satisfied.
-    ///
-    /// - (i) the elements of `self` must be initialized.
-    pub unsafe fn next_if_leq<F>(&mut self, is_leq: F, pivot: &T) -> Option<*const T>
-    where
-        F: Fn(&T, &T) -> bool,
-    {
-        // SAFETY: satisfied by (i)
-        match unsafe { self.current() } {
-            Some(x) if is_leq(x, pivot) => {
-                let value = Some(self.data);
-                self.data = unsafe { self.data.add(1) };
-                value
-            }
-            _ => None,
-        }
     }
 
     /// Brings the iterator to the end, skipping the remaining positions.

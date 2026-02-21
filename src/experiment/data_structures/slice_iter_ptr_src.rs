@@ -56,6 +56,7 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     ///   will have an UB due to dereferencing an invalid pointer.
     #[inline(always)]
     pub unsafe fn current_unchecked(&self) -> &'a T {
+        // SAFETY: matching req't and cond'n (i)
         unsafe { self.0.current_unchecked() }
     }
 
@@ -68,6 +69,7 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     ///   is created for.
     #[inline(always)]
     pub unsafe fn next_unchecked(&mut self) -> *const T {
+        // SAFETY: matching req't and cond'n (i)
         unsafe { self.0.next_unchecked() }
     }
 
@@ -78,6 +80,7 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     /// - (i) the iterator must have at least `count` more elements; i.e.,
     ///   `self.remaining() >= count`.
     pub unsafe fn next_n_unchecked(&mut self, count: usize) -> *const T {
+        // SAFETY: matching req't and cond'n (i)
         unsafe { self.0.next_n_unchecked(count) }
     }
 
@@ -86,19 +89,6 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     #[inline(always)]
     pub fn next(&mut self) -> Option<*const T> {
         self.0.next()
-    }
-
-    /// Does nothing if the iterator `is_finished` or `is_leq(current, pivot)`
-    /// returns false.
-    ///
-    /// Otherwise, returns the current pointer and progresses the iterator to the next.
-    #[inline(always)]
-    pub fn next_if_leq<F>(&mut self, is_leq: F, pivot: &T) -> Option<*const T>
-    where
-        F: Fn(&T, &T) -> bool,
-    {
-        // SAFETY: SliceIterPtrSrc contains only initialized values
-        unsafe { self.0.next_if_leq(is_leq, pivot) }
     }
 
     /// Brings the iterator to the end, skipping the remaining positions.
@@ -115,7 +105,7 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     /// Creates a slice over references to values of the remaining elements
     /// of this iterator.
     pub fn as_slice(&self) -> &'a [T] {
-        let ptr = unsafe { self.0.peek_unchecked() };
+        let ptr = self.0.peek();
         let n = self.len();
         // SAFETY: SliceIterPtrSrc guarantees initialized values
         unsafe { &*from_raw_parts(ptr, n) }
