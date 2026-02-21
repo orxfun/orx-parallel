@@ -83,7 +83,7 @@ fn seq(inputs: &[usize], find: impl Fn(&Output) -> bool) -> Option<Output> {
 fn rayon(inputs: &[usize], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<Output> {
     use rayon::iter::ParallelIterator;
     inputs
-        .into_iter()
+        .iter()
         .par_bridge()
         .map(map)
         .filter(filter)
@@ -92,7 +92,7 @@ fn rayon(inputs: &[usize], find: impl Fn(&Output) -> bool + Send + Sync) -> Opti
 
 fn orx(inputs: &[usize], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<Output> {
     inputs
-        .into_iter()
+        .iter()
         .iter_into_par()
         .map(map)
         .filter(filter)

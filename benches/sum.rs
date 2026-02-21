@@ -33,7 +33,7 @@ fn inputs(len: usize) -> Vec<u32> {
 }
 
 fn seq(inputs: &[u32]) -> u32 {
-    inputs.into_iter().sum()
+    inputs.iter().sum()
 }
 
 fn rayon(inputs: &[u32]) -> u32 {

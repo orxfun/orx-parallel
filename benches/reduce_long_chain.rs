@@ -60,7 +60,7 @@ fn map2(input: Out1) -> Out2 {
 }
 
 fn filter2(output: &Out2) -> bool {
-    output.number % 2 == 0 || output.name.contains('0')
+    output.number.is_multiple_of(2) || output.name.contains('0')
 }
 
 fn map3(input: Out2) -> Out3 {
@@ -80,11 +80,11 @@ fn filter4(output: &Out4) -> bool {
 }
 
 fn reduce(x: Out4, y: Out4) -> Out4 {
-    let a = match x.fib % 2 == 0 {
+    let a = match x.fib.is_multiple_of(2) {
         true => x.a,
         false => y.a,
     };
-    let b = match y.fib % 2 == 0 {
+    let b = match y.fib.is_multiple_of(2) {
         true => x.b,
         false => y.b,
     };

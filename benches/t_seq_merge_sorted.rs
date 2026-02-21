@@ -44,8 +44,8 @@ fn split_to_sorted_vecs<T: Ord + Clone>(vec: &[T], split_kind: SplitKind) -> (Ve
 
 fn split_at<T: Ord + Clone>(vec: &[T], split_at: usize) -> (Vec<T>, Vec<T>) {
     let (left, right) = vec.split_at(split_at);
-    let mut left: Vec<_> = left.iter().cloned().collect();
-    let mut right: Vec<_> = right.iter().cloned().collect();
+    let mut left = left.to_vec();
+    let mut right = right.to_vec();
     left.sort();
     right.sort();
     (left, right)

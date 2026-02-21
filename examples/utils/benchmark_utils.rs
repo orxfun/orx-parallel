@@ -35,11 +35,13 @@ where
     now.elapsed().unwrap()
 }
 
+type Computation<'a, O> = (&'a str, Box<dyn Fn() -> O>);
+
 pub fn timed_reduce_all<O>(
     benchmark_name: &str,
     num_repetitions: usize,
     expected_output: Option<O>,
-    computations: &[(&str, Box<dyn Fn() -> O>)],
+    computations: &[Computation<'_, O>],
 ) where
     O: PartialEq + Debug + Clone,
 {

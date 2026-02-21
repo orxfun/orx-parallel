@@ -14,7 +14,7 @@ fn map(idx: &usize) -> u32 {
 }
 
 fn filter(output: &u32) -> bool {
-    output % 3 != 0
+    !output.is_multiple_of(3)
 }
 
 fn fibonacci(n: &u32) -> u32 {
