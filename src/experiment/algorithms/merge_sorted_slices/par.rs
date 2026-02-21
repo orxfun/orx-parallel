@@ -3,7 +3,7 @@ use crate::experiment::algorithms::merge_sorted_slices::seq::{
 };
 use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSrc};
 use crate::{IntoParIterRec, ParIter};
-use orx_concurrent_recursive_iter::{ConcurrentRecursiveIter, Queue};
+use orx_concurrent_recursive_iter::Queue;
 
 /// Parameters of the sequential algorithm for merging two sorted slices into one sorted slice.
 #[derive(Clone, Copy, Debug)]
@@ -13,6 +13,10 @@ pub struct ParamsParMergeSortedSlices {
     /// When true, the algorithm always puts the larger slice to the left;
     /// otherwise to the right.
     pub put_large_to_left: bool,
+    /// Number of threads.
+    pub num_threads: usize,
+    /// Chunk size to be used by parallelization.
+    pub chunk_size: usize,
 }
 
 struct Task<'a, T> {
@@ -63,7 +67,11 @@ pub fn par_merge<'a, T: 'a, F>(
         unsafe { handle_extend(&is_leq, &params, task, queue) }
     };
 
-    initial_task.into_par_rec(handle_extend).for_each(|_| {});
+    initial_task
+        .into_par_rec(handle_extend)
+        .num_threads(params.num_threads)
+        .chunk_size(params.chunk_size)
+        .for_each(|_| {});
 }
 
 /// # SAFETY
