@@ -16,12 +16,12 @@ fn par(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .chunk_size(c)
         .take_while(|x| {
             let _fib = black_box(fibonacci(42));
-            x.len() != until_num_digits || !x.starts_with(&until_digits)
+            x.len() != until_num_digits || !x.starts_with(until_digits)
         })
         .collect();
     let expected: Vec<_> = (0..n)
         .map(|x| x.to_string())
-        .take_while(|x| x.len() != until_num_digits || !x.starts_with(&until_digits))
+        .take_while(|x| x.len() != until_num_digits || !x.starts_with(until_digits))
         .collect();
 
     assert_eq!(output, expected);
@@ -41,12 +41,12 @@ fn map(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .map(|x| x.to_string())
         .take_while(|x| {
             let _fib = black_box(fibonacci(42));
-            x.len() != until_num_digits || !x.starts_with(&until_digits)
+            x.len() != until_num_digits || !x.starts_with(until_digits)
         })
         .collect();
     let expected: Vec<_> = (0..n)
         .map(|x| x.to_string())
-        .take_while(|x| x.len() != until_num_digits || !x.starts_with(&until_digits))
+        .take_while(|x| x.len() != until_num_digits || !x.starts_with(until_digits))
         .collect();
 
     assert_eq!(output, expected);

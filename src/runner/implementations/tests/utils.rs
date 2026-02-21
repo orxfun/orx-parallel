@@ -19,7 +19,7 @@ pub fn run_map(n: usize, chunk: usize, ordering: IterationOrder, mut orch: impl 
         output.push(value());
         expected.push(value());
     }
-    expected.extend(input.clone().into_iter().map(|x| map(x)));
+    expected.extend(input.clone().into_iter().map(map));
 
     let mut output = input
         .into_par()

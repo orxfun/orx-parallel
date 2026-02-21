@@ -29,6 +29,7 @@ fn flatten_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let input = || (0..n).collect::<Vec<_>>();
         let map = |i: usize| vec![i.to_string(), (i + 1).to_string()];
 
+        #[allow(clippy::map_flatten)]
         let expected: Vec<_> = input().into_iter().map(&map).flatten().collect();
 
         let par = input().into_par().num_threads(nt).chunk_size(chunk);
@@ -48,6 +49,7 @@ fn flatten_xap_filter_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
                 .then(|| vec![x.clone(), format!("{}!", x)])
         };
 
+        #[allow(clippy::map_flatten)]
         let expected: Vec<_> = input()
             .clone()
             .into_iter()
