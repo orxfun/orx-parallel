@@ -24,6 +24,11 @@ pub struct StdDefaultPool {
 }
 
 impl StdDefaultPool {
+    /// By default (`StdDefaultPool::default()`), std thread pool assumes that all threads are available
+    /// for the parallel computations.
+    ///
+    /// Constructing the pool with this method makes sure that parallel computations cannot use more than
+    /// `max_num_threads` threads.
     pub fn with_max_num_threads(max_num_threads: NonZeroUsize) -> Self {
         let mut pool = Self::default();
         if max_num_threads < pool.max_num_threads {
