@@ -72,7 +72,7 @@ impl<'a, T> SliceDst<'a, T> {
     }
 
     /// Converts the destination slice into a destination iterator.
-    pub fn into_iter(self) -> SliceIterPtrDst<'a, T> {
+    pub fn into_ptr_iter(self) -> SliceIterPtrDst<'a, T> {
         SliceIterPtrDst::new(self)
     }
 

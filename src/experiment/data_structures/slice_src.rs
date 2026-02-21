@@ -40,6 +40,7 @@ impl<'a, T> SliceSrc<'a, T> {
 
     /// Length of the slice.
     #[inline(always)]
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -63,7 +64,7 @@ impl<'a, T> SliceSrc<'a, T> {
     }
 
     /// Converts the source slice into a source iterator.
-    pub fn into_iter(self) -> SliceIterPtrSrc<'a, T> {
+    pub fn into_ptr_iter(self) -> SliceIterPtrSrc<'a, T> {
         SliceIterPtrSrc::new(self)
     }
 

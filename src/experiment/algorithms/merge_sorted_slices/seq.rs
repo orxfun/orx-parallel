@@ -101,9 +101,9 @@ unsafe fn seq_merge_streak_none<'a, T: 'a, F>(
         (left, right) = (right, left);
     }
 
-    let mut left = left.into_iter();
-    let mut right = right.into_iter();
-    let mut dst = target.into_iter();
+    let mut left = left.into_ptr_iter();
+    let mut right = right.into_ptr_iter();
+    let mut dst = target.into_ptr_iter();
 
     match (left.current(), right.current()) {
         (Some(mut l), Some(mut r)) => {
@@ -167,9 +167,9 @@ unsafe fn seq_merge_streak_linear<'a, T: 'a, F>(
         (left, right) = (right, left);
     }
 
-    let mut left = left.into_iter();
-    let mut right = right.into_iter();
-    let mut dst = target.into_iter();
+    let mut left = left.into_ptr_iter();
+    let mut right = right.into_ptr_iter();
+    let mut dst = target.into_ptr_iter();
 
     match (left.current(), right.current()) {
         (Some(mut l), Some(mut r)) => {
@@ -241,9 +241,9 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
         (left, right) = (right, left);
     }
 
-    let mut left = left.into_iter();
-    let mut right = right.into_iter();
-    let mut dst = target.into_iter();
+    let mut left = left.into_ptr_iter();
+    let mut right = right.into_ptr_iter();
+    let mut dst = target.into_ptr_iter();
 
     fn bin_search_idx(idx: Result<usize, usize>) -> usize {
         match idx {

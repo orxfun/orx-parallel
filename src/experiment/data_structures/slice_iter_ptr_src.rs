@@ -33,31 +33,12 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
         self.0.is_finished()
     }
 
-    /// Returns the number of remaining positions.
-    #[inline(always)]
-    #[allow(clippy::len_without_is_empty)]
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
     /// Returns a reference to the current element.
     /// Returns None if the iterator `is_finished`.
     #[inline(always)]
     pub fn current(&self) -> Option<&'a T> {
         // SAFETY: all elements are initialized
         unsafe { self.0.current() }
-    }
-
-    /// Returns a reference to the current element, without bounds check.
-    ///
-    /// # SAFETY
-    ///
-    /// - (i) the iterator cannot be `is_finished`; otherwise, we
-    ///   will have an UB due to dereferencing an invalid pointer.
-    #[inline(always)]
-    pub unsafe fn current_unchecked(&self) -> &'a T {
-        // SAFETY: matching req't and cond'n (i)
-        unsafe { self.0.current_unchecked() }
     }
 
     /// Returns the current pointer and progresses the iterator to the next.
@@ -84,13 +65,6 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
         unsafe { self.0.next_n_unchecked(count) }
     }
 
-    /// Returns the current pointer and progresses the iterator to the next;
-    /// returns None if the iterator `is_finished`.
-    #[inline(always)]
-    pub fn next(&mut self) -> Option<*const T> {
-        self.0.next()
-    }
-
     /// Brings the iterator to the end, skipping the remaining positions.
     pub(super) fn jump_to_end(&mut self) {
         self.0.jump_to_end();
@@ -108,6 +82,30 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
         let ptr = self.0.peek();
         let n = self.len();
         // SAFETY: SliceIterPtrSrc guarantees initialized values
-        unsafe { &*from_raw_parts(ptr, n) }
+        unsafe { from_raw_parts(ptr, n) }
+    }
+}
+
+impl<'a, T> Iterator for SliceIterPtrSrc<'a, T> {
+    type Item = *const T;
+
+    /// Returns the current pointer and progresses the iterator to the next;
+    /// returns None if the iterator `is_finished`.
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.0.len();
+        (len, Some(len))
+    }
+}
+
+impl<'a, T> ExactSizeIterator for SliceIterPtrSrc<'a, T> {
+    #[inline(always)]
+    fn len(&self) -> usize {
+        self.0.len()
     }
 }
