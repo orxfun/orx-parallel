@@ -6,7 +6,7 @@ fn map_while_ok_from_xap_chain_when_ok() {
     let flat_map = |i: usize| [i, 1000 + i, 2000 + i];
     let filter = |i: &usize| i < &2000;
     let map = |i: usize| 2 * i;
-    let filter_map = |i: usize| (i % 2 == 0).then_some(i);
+    let filter_map = |i: usize| i.is_multiple_of(2).then_some(i);
     let map2 = |i: usize| i / 2;
     let map_res = |i: usize| match (11300..11350).contains(&i) {
         true => Err(i.to_string()),
@@ -40,7 +40,7 @@ fn map_while_ok_from_xap_chain_when_error() {
     let flat_map = |i: usize| [i, 1000 + i, 2000 + i];
     let filter = |i: &usize| i < &2000;
     let map = |i: usize| 2 * i;
-    let filter_map = |i: usize| (i % 2 == 0).then_some(i);
+    let filter_map = |i: usize| i.is_multiple_of(2).then_some(i);
     let map2 = |i: usize| i / 2;
     let is_error =
         |i: &usize| (300..350).contains(i) || (400..450).contains(i) || (500..550).contains(i);

@@ -65,7 +65,7 @@ fn compute(node: &Node) -> u64 {
 fn sequential(root: &Node) -> u64 {
     fn seq_compute_node(node: &Node) -> u64 {
         let node_value = compute(node);
-        let child_values = node.children.iter().map(|x| seq_compute_node(x));
+        let child_values = node.children.iter().map(seq_compute_node);
         node_value + child_values.sum::<u64>()
     }
 

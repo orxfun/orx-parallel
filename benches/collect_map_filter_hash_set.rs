@@ -76,7 +76,7 @@ fn rayon(inputs: &HashSet<usize>) -> Vec<Output> {
 }
 
 fn orx_through_vec(inputs: &HashSet<usize>) -> Vec<Output> {
-    let inputs: Vec<_> = inputs.into_iter().collect();
+    let inputs: Vec<_> = inputs.iter().collect();
     inputs.into_par().map(map).filter(filter).collect()
 }
 
