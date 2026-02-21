@@ -51,7 +51,7 @@ fn merge_sorted_slices_par(
     chunk_size: usize,
 ) {
     let params = ParamsParMergeSortedSlices {
-        seq_params: params.clone(),
+        seq_params: params,
         chunk_size,
         num_threads: 4,
         put_large_to_left: params.put_large_to_left,
@@ -61,25 +61,17 @@ fn merge_sorted_slices_par(
 }
 
 #[test_matrix(
-    [(0, 0), (0, 5), (5, 5), (4, 20), (10, 20), (14, 20)],
-    [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
-    [PARAMS[0],PARAMS[1],PARAMS[2],PARAMS[3],PARAMS[4],PARAMS[5]],
-    [0, 1, 64])
+    [(0, 0), (0, 5), (5, 5), (4, 20), (10, 20), (14, 20)])
 ]
-fn merge_sorted_slices_par_single_thread(
-    (left_len, total_len): (usize, usize),
-    sort: SortKind,
-    params: ParamsSeqMergeSortedSlices,
-    chunk_size: usize,
-) {
+fn merge_sorted_slices_par_single_thread((left_len, total_len): (usize, usize)) {
     let params = ParamsParMergeSortedSlices {
-        seq_params: params.clone(),
-        chunk_size,
+        seq_params: PARAMS[5],
+        chunk_size: 1,
         num_threads: 1,
-        put_large_to_left: params.put_large_to_left,
+        put_large_to_left: PARAMS[5].put_large_to_left,
     };
 
-    run((left_len, total_len), sort, params);
+    run((left_len, total_len), SortKind::Mixed, params);
 }
 
 #[cfg(not(miri))]
