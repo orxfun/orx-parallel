@@ -22,7 +22,7 @@ struct Output {
 }
 
 fn filter_map(idx: &usize) -> Option<Output> {
-    (idx % 3 == 0).then(|| to_output(idx))
+    idx.is_multiple_of(3).then(|| to_output(idx))
 }
 
 fn to_output(idx: &usize) -> Output {

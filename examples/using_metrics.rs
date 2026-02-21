@@ -34,8 +34,8 @@ struct ComputationMetrics {
 impl ComputationMetrics {
     fn new() -> Self {
         let mut thread_metrics: [ThreadMetrics; MAX_NUM_THREADS] = Default::default();
-        for i in 0..MAX_NUM_THREADS {
-            thread_metrics[i].thread_idx = i;
+        for (i, metrics) in thread_metrics.iter_mut().enumerate().take(MAX_NUM_THREADS) {
+            metrics.thread_idx = i;
         }
         Self {
             thread_metrics: UnsafeCell::new(thread_metrics),

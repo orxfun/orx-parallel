@@ -77,7 +77,7 @@ fn seq(inputs: &[usize]) -> Option<Output> {
 fn rayon(inputs: &[usize]) -> Option<Output> {
     use rayon::iter::ParallelIterator;
     inputs
-        .into_iter()
+        .iter()
         .map(map)
         .filter(filter)
         .par_bridge()
@@ -86,7 +86,7 @@ fn rayon(inputs: &[usize]) -> Option<Output> {
 
 fn orx(inputs: &[usize]) -> Option<Output> {
     inputs
-        .into_iter()
+        .iter()
         .iter_into_par()
         .map(map)
         .filter(filter)
@@ -96,7 +96,7 @@ fn orx(inputs: &[usize]) -> Option<Output> {
 #[allow(dead_code)]
 fn orx_with<P: ParThreadPool>(inputs: &[usize], pool: P) -> Option<Output> {
     inputs
-        .into_iter()
+        .iter()
         .iter_into_par()
         .with_pool(pool)
         .map(map)

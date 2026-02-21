@@ -39,16 +39,16 @@ fn update(data: &mut Data) {
     }
 }
 
-fn seq(inputs: &mut Vec<Data>) {
+fn seq(inputs: &mut [Data]) {
     inputs.iter_mut().filter(filter).for_each(update);
 }
 
-fn rayon(inputs: &mut Vec<Data>) {
+fn rayon(inputs: &mut [Data]) {
     use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
     inputs.par_iter_mut().filter(filter).for_each(update);
 }
 
-fn orx(inputs: &mut Vec<Data>) {
+fn orx(inputs: &mut [Data]) {
     use orx_parallel::*;
     inputs.into_par().filter(filter).for_each(update);
 }

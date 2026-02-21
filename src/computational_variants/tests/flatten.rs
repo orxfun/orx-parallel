@@ -76,6 +76,7 @@ fn flatten_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
             x.push("lorem".to_string());
             x
         };
+        #[allow(clippy::map_flatten)]
         let expected: Vec<_> = input()
             .clone()
             .into_iter()

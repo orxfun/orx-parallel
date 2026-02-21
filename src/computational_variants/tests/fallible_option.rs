@@ -38,7 +38,7 @@ fn fallible_option_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[u
             .into_par()
             .num_threads(nt)
             .chunk_size(chunk)
-            .map(|x| (x != "50").then(|| x))
+            .map(|x| (x != "50").then_some(x))
             .into_fallible_option()
             .filter(|x| !x.ends_with('9'))
             .flat_map(|x| [format!("{x}?"), x])
@@ -60,19 +60,19 @@ fn fallible_option_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[
             .filter(|x| !x.ends_with('9'))
             .flat_map(|x| [format!("{x}?"), x])
             .map(|x| format!("{x}!"))
-            .filter_map(|x| Some(x))
+            .filter_map(Some)
             .collect();
 
         let par = input()
             .into_par()
             .num_threads(nt)
             .chunk_size(chunk)
-            .map(|x| (x != "xyz").then(|| x))
+            .map(|x| (x != "xyz").then_some(x))
             .into_fallible_option()
             .filter(|x| !x.ends_with('9'))
             .flat_map(|x| [format!("{x}?"), x])
             .map(|x| format!("{x}!"))
-            .filter_map(|x| Some(x));
+            .filter_map(Some);
         let output: Option<Vec<_>> = par.collect();
 
         assert_eq!(output, Some(expected));

@@ -21,7 +21,7 @@ struct Output {
 }
 
 fn filter_map(idx: &usize) -> Option<u64> {
-    (idx % 3 == 0)
+    idx.is_multiple_of(3)
         .then(|| to_output(idx))
         .map(|x| x.name.len() as u64)
 }

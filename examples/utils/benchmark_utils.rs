@@ -82,7 +82,7 @@ pub fn timed_collect_all<Out, O>(
     benchmark_name: &str,
     num_repetitions: usize,
     expected_output: &[O],
-    computations: &[(&str, Box<dyn Fn() -> Out>)],
+    computations: &[Computation<'_, Out>],
 ) where
     Out: IntoIterator<Item = O>,
     O: PartialEq + Debug,
