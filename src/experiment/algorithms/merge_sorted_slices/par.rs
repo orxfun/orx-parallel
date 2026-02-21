@@ -50,7 +50,7 @@ impl<'a, T> Task<'a, T> {
 ///
 /// - (i) if `target.len()` is not equal to `left.len() + right.len()`
 /// - (ii) if any pair of of `left`, `right` or `target` are overlapping.
-pub fn par_merge<'a, T: 'a, F>(
+pub fn par_merge<'a, T, F>(
     is_leq: F,
     left: SliceSrc<'a, T>,
     right: SliceSrc<'a, T>,
@@ -58,7 +58,7 @@ pub fn par_merge<'a, T: 'a, F>(
     params: &ParamsParMergeSortedSlices,
 ) where
     T: Send + Sync,
-    F: Fn(&T, &T) -> bool + Send + Sync,
+    F: Fn(&T, &T) -> bool + Sync,
 {
     assert_eq!(target.len(), left.len() + right.len());
     assert!(target.core().is_non_overlapping(&left.core()));
@@ -94,7 +94,7 @@ unsafe fn handle_extend<'a, T, F>(
     queue: &Queue<'_, Task<'a, T>>,
 ) where
     T: Send + Sync,
-    F: Fn(&T, &T) -> bool + Send + Sync,
+    F: Fn(&T, &T) -> bool,
 {
     // SAFETY: this method both handles and extends the queue; which will be
     // visited only once; hence, the reference `task` will not be used to

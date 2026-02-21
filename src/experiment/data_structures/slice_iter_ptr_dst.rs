@@ -32,6 +32,7 @@ impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
 
     /// Returns the number of remaining positions.
     #[inline(always)]
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.0.len()
     }

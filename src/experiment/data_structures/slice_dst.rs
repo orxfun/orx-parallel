@@ -44,7 +44,7 @@ impl<'a, T> SliceDst<'a, T> {
 
     /// Creates a new slice for the entire capacity of the vector.
     ///
-    /// # PANICS
+    /// # Panics
     ///
     /// - (i) if `vec.len()` is not zero.
     ///
@@ -52,7 +52,7 @@ impl<'a, T> SliceDst<'a, T> {
     ///
     /// This slice cannot outlive the `vec` it is created for due to the lifetime relation.
     pub fn from_vec(vec: &'a mut Vec<T>) -> Self {
-        assert_eq!(vec.len(), 0);
+        assert!(vec.is_empty());
 
         // SAFETY: constructing with contiguous un-initialized elements
         unsafe { Self::new(vec.as_ptr(), vec.capacity()) }
@@ -60,6 +60,7 @@ impl<'a, T> SliceDst<'a, T> {
 
     /// Length of the slice.
     #[inline(always)]
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.0.len()
     }
