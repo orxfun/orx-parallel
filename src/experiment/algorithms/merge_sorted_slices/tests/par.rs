@@ -1,6 +1,6 @@
 use super::inputs::{SortKind, sorted_slices};
 use crate::experiment::algorithms::merge_sorted_slices::par::{
-    ParamsParMergeSortedSlices, par_merge,
+    ParamsParMergeSortedSlices, PivotSearch, par_merge,
 };
 use crate::experiment::algorithms::merge_sorted_slices::seq::{
     ParamsSeqMergeSortedSlices, StreakSearch,
@@ -42,19 +42,22 @@ const PARAMS: &[ParamsSeqMergeSortedSlices] = &[
     [(0, 0), (0, 5), (5, 5), (4, 20), (10, 20), (14, 20)],
     [SortKind::Sorted, SortKind::ReverseSorted, SortKind::Mixed],
     [PARAMS[0],PARAMS[1],PARAMS[2],PARAMS[3],PARAMS[4],PARAMS[5]],
+    [PivotSearch::Linear, PivotSearch::Binary],
     [0, 1, 64])
 ]
 fn merge_sorted_slices_par(
     (left_len, total_len): (usize, usize),
     sort: SortKind,
-    params: ParamsSeqMergeSortedSlices,
+    seq_params: ParamsSeqMergeSortedSlices,
+    pivot_search: PivotSearch,
     chunk_size: usize,
 ) {
     let params = ParamsParMergeSortedSlices {
-        seq_params: params,
+        seq_params: seq_params,
         chunk_size,
         num_threads: 4,
-        put_large_to_left: params.put_large_to_left,
+        pivot_search,
+        put_large_to_left: seq_params.put_large_to_left,
     };
 
     run((left_len, total_len), sort, params);
@@ -68,6 +71,7 @@ fn merge_sorted_slices_par_single_thread((left_len, total_len): (usize, usize)) 
         seq_params: PARAMS[5],
         chunk_size: 1,
         num_threads: 1,
+        pivot_search: PivotSearch::Binary,
         put_large_to_left: PARAMS[5].put_large_to_left,
     };
 
@@ -86,6 +90,7 @@ fn merge_sorted_slices_par_large(len: usize, num_threads: usize, chunk_size: usi
             streak_search: StreakSearch::Linear,
             put_large_to_left: true,
         },
+        pivot_search: PivotSearch::Binary,
         put_large_to_left: true,
         chunk_size,
         num_threads,

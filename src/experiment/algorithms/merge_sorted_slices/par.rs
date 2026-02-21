@@ -5,6 +5,15 @@ use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSr
 use crate::{IntoParIterRec, ParIter};
 use orx_concurrent_recursive_iter::Queue;
 
+/// Determines how to search the pivot for splitting the slices.
+#[derive(Clone, Copy, Debug)]
+pub enum PivotSearch {
+    /// We search the pivot position by a linear search.
+    Linear,
+    /// We search the pivot position by a binary search since both source slices are sorted.
+    Binary,
+}
+
 /// Parameters of the sequential algorithm for merging two sorted slices into one sorted slice.
 #[derive(Clone, Copy, Debug)]
 pub struct ParamsParMergeSortedSlices {
@@ -13,6 +22,8 @@ pub struct ParamsParMergeSortedSlices {
     /// When true, the algorithm always puts the larger slice to the left;
     /// otherwise to the right.
     pub put_large_to_left: bool,
+    /// Determines how to search the pivot for splitting the slices.
+    pub pivot_search: PivotSearch,
     /// Number of threads.
     pub num_threads: usize,
     /// Chunk size to be used by parallelization.
