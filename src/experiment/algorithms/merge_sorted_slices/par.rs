@@ -46,7 +46,7 @@ pub fn par_merge<'a, T: 'a, F>(
     left: SliceSrc<'a, T>,
     right: SliceSrc<'a, T>,
     target: SliceDst<'a, T>,
-    params: ParamsParMergeSortedSlices,
+    params: &ParamsParMergeSortedSlices,
 ) where
     T: Send + Sync,
     F: Fn(&T, &T) -> bool + Send + Sync,
@@ -64,7 +64,7 @@ pub fn par_merge<'a, T: 'a, F>(
 
     let handle_extend = |task: &Task<'a, T>, queue: &Queue<'_, Task<'a, T>>| {
         // SAFETY: req't (i) and (ii) are satisfied by panic conditions
-        unsafe { handle_extend(&is_leq, &params, task, queue) }
+        unsafe { handle_extend(&is_leq, params, task, queue) }
     };
 
     initial_task
