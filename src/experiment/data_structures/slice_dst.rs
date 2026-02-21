@@ -20,6 +20,15 @@ impl<'a, T> SliceDst<'a, T> {
         self.0.destruct()
     }
 
+    /// Clones the destination slice.
+    ///
+    /// # SAFETY
+    ///
+    /// The purpose of destination slice is to mutate the underlying memory.
+    /// Therefore, cloning is marked as unsafe.
+    ///
+    /// - (i) assuming the clone will be used to mutate the memory, caller must
+    ///   ensure that `&self` will not be used.
     pub unsafe fn clone(&self) -> Self {
         Self(self.0.clone())
     }

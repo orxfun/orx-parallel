@@ -28,6 +28,15 @@ struct Task<'a, T> {
 unsafe impl<'a, T> Send for Task<'a, T> {}
 
 impl<'a, T> Task<'a, T> {
+    /// Clones the task.
+    ///
+    /// # SAFETY
+    ///
+    /// The purpose of destination slice `target` is to mutate the underlying memory.
+    /// Therefore, cloning task is marked as unsafe.
+    ///
+    /// - (i) assuming the clone will be used to mutate the memory, caller must
+    ///   ensure that `&self.target` will not be used.
     unsafe fn clone(&self) -> Self {
         Self {
             left: self.left.clone(),
@@ -81,14 +90,18 @@ pub fn par_merge<'a, T: 'a, F>(
 unsafe fn handle_extend<'a, T, F>(
     is_leq: F,
     params: &ParamsParMergeSortedSlices,
-    t: &Task<'a, T>,
+    task: &Task<'a, T>,
     queue: &Queue<'_, Task<'a, T>>,
 ) where
     T: Send + Sync,
     F: Fn(&T, &T) -> bool + Send + Sync,
 {
-    let t = unsafe { t.clone() };
-    let (mut left, mut right, target) = (t.left, t.right, t.target);
+    // SAFETY: this method both handles and extends the queue; which will be
+    // visited only once; hence, the reference `task` will not be used to
+    // mutate the underlying memory, satisfying condition (i).
+    let task = unsafe { task.clone() };
+
+    let (mut left, mut right, target) = (task.left, task.right, task.target);
     match (left.len(), right.len()) {
         (x, _) if x < 3 => {
             // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)

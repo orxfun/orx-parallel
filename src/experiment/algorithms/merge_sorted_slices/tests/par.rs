@@ -3,7 +3,7 @@ use crate::experiment::algorithms::merge_sorted_slices::par::{
     ParamsParMergeSortedSlices, par_merge,
 };
 use crate::experiment::algorithms::merge_sorted_slices::seq::{
-    ParamsSeqMergeSortedSlices, StreakSearch, seq_merge,
+    ParamsSeqMergeSortedSlices, StreakSearch,
 };
 use crate::experiment::data_structures::slice_dst::SliceDst;
 use crate::experiment::data_structures::slice_src::SliceSrc;
