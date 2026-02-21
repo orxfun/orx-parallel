@@ -80,7 +80,7 @@ fn copied_cloned_xap_flat_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
 fn copied_cloned_xap_filter_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = input::<Vec<_>>(n);
-        let filter_map = |x: usize| (x % 3 != 0).then(|| x + 1);
+        let filter_map = |x: usize| (!x.is_multiple_of(3)).then_some(x + 1);
         let expected: usize = input.iter().copied().filter_map(&filter_map).sum();
         let par = || {
             input
@@ -103,7 +103,7 @@ fn copied_cloned_xap_filter_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
 fn copied_cloned_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = input::<Vec<_>>(n);
-        let filter_map = |x: usize| (x % 3 != 0).then(|| x + 1);
+        let filter_map = |x: usize| (!x.is_multiple_of(3)).then_some(x + 1);
         let filter = |x: &usize| x % 3 != 1;
         let flat_map = |x: usize| [x, x + 1, x + 2];
         let expected: usize = input

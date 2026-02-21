@@ -4,7 +4,7 @@ use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 use std::num::ParseIntError;
 
-type ERR = ParseIntError;
+type Err = ParseIntError;
 
 const TEST_LARGE_OUTPUT: bool = false;
 const N: usize = 65_536 * 4;
@@ -58,7 +58,7 @@ fn to_bad_input() -> Input {
     }
 }
 
-fn map_input_to_result(input: &Input) -> Result<String, ERR> {
+fn map_input_to_result(input: &Input) -> Result<String, Err> {
     match input.id.parse::<usize>() {
         Ok(_) => Ok(input.id.clone()),
         Err(e) => Err(e),
@@ -89,30 +89,30 @@ fn inputs(len: usize, idx_error: usize) -> Vec<Input> {
         .collect()
 }
 
-fn seq(inputs: &[Input], map: impl Fn(&Input) -> Result<String, ERR>) -> Result<Vec<String>, ERR> {
-    inputs.into_iter().map(map).collect()
+fn seq(inputs: &[Input], map: impl Fn(&Input) -> Result<String, Err>) -> Result<Vec<String>, Err> {
+    inputs.iter().map(map).collect()
 }
 
 fn rayon(
     inputs: &[Input],
-    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Send,
-) -> Result<Vec<String>, ERR> {
+    map: impl Fn(&Input) -> Result<String, Err> + Sync + Send,
+) -> Result<Vec<String>, Err> {
     use rayon::iter::*;
     inputs.into_par_iter().map(map).collect()
 }
 
 fn orx(
     inputs: &[Input],
-    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
-) -> Result<Vec<String>, ERR> {
+    map: impl Fn(&Input) -> Result<String, Err> + Sync + Clone,
+) -> Result<Vec<String>, Err> {
     use orx_parallel::*;
     inputs.into_par().map(map).into_fallible_result().collect()
 }
 
 fn orx_arbitrary(
     inputs: &[Input],
-    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
-) -> Result<Vec<String>, ERR> {
+    map: impl Fn(&Input) -> Result<String, Err> + Sync + Clone,
+) -> Result<Vec<String>, Err> {
     use orx_parallel::*;
     inputs
         .into_par()

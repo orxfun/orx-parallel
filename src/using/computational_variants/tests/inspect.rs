@@ -30,7 +30,7 @@ fn inspect_empty(n: &[usize], nt: &[usize], chunk: &[usize]) {
 
         par.inspect(|u, x| {
             let u = u.as_mut_str();
-            u.get_mut(0..2).unwrap().make_ascii_uppercase();
+            u.get_mut(0..2).expect("len>1").make_ascii_uppercase();
             _ = vec.push(x.clone());
         })
         .count();
@@ -55,7 +55,7 @@ fn inspect_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let vec = ConcurrentVec::new();
         par.inspect(|u, x| {
             let u = u.as_mut_str();
-            u.get_mut(0..2).unwrap().make_ascii_uppercase();
+            u.get_mut(0..2).expect("len>1").make_ascii_uppercase();
             _ = vec.push(x.clone());
         })
         .count();
@@ -83,7 +83,7 @@ fn inspect_xap_flat_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let vec = ConcurrentVec::new();
         par.inspect(|u, x| {
             let u = u.as_mut_str();
-            u.get_mut(0..2).unwrap().make_ascii_uppercase();
+            u.get_mut(0..2).expect("len>1").make_ascii_uppercase();
             _ = vec.push(x.clone());
         })
         .count();
@@ -111,7 +111,7 @@ fn inspect_xap_filter_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let vec = ConcurrentVec::new();
         par.inspect(|u, x| {
             let u = u.as_mut_str();
-            u.get_mut(0..2).unwrap().make_ascii_uppercase();
+            u.get_mut(0..2).expect("len>1").make_ascii_uppercase();
             _ = vec.push(x.clone());
         })
         .count();
@@ -144,7 +144,7 @@ fn inspect_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let vec = ConcurrentVec::new();
         par.inspect(|u, x| {
             let u = u.as_mut_str();
-            u.get_mut(0..2).unwrap().make_ascii_uppercase();
+            u.get_mut(0..2).expect("len>1").make_ascii_uppercase();
             _ = vec.push(x.clone());
         })
         .count();
