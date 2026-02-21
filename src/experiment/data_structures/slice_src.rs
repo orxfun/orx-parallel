@@ -81,13 +81,16 @@ impl<'a, T> SliceSrc<'a, T> {
         unsafe { self.0.split_at_unchecked(position) }.map(Self)
     }
 
-    /// # SAFETY
-    ///
-    /// - (i) the values must not be mutated before the returned slice is dropped.
-    pub unsafe fn as_slice(&self) -> &[T] {
+    /// Returns the data as a slice.
+    pub fn as_slice(&self) -> &[T] {
         // SAFETY: (i) all values are initialized by construction,
-        // (ii) is satisfied by cond'n (i).
+        // (ii) is satisfied by construction by shared reference of the data.
         unsafe { self.0.as_slice() }
+    }
+
+    /// Creates an iterator over references to values of the slice.
+    pub fn values(&'a self) -> core::slice::Iter<'a, T> {
+        self.as_slice().iter()
     }
 }
 

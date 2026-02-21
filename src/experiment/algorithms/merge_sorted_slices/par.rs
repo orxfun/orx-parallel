@@ -1,9 +1,12 @@
 use crate::experiment::algorithms::merge_sorted_slices::seq::{
-    ParamsSeqMergeSortedSlices, seq_merge_unchecked,
+    ParamsSeqMergeSortedSlices, bin_search_idx, seq_merge_unchecked,
 };
 use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSrc};
 use crate::{IntoParIterRec, ParIter};
+use core::cmp::Ordering;
 use orx_concurrent_recursive_iter::Queue;
+
+const MIN_SPLIT_LEN: usize = 3;
 
 /// Determines how to search the pivot for splitting the slices.
 #[derive(Clone, Copy, Debug)]
@@ -114,11 +117,11 @@ unsafe fn handle_extend<'a, T, F>(
 
     let (mut left, mut right, target) = (task.left, task.right, task.target);
     match (left.len(), right.len()) {
-        (x, _) if x < 3 => {
+        (x, _) if x < MIN_SPLIT_LEN => {
             // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)
             unsafe { seq_merge_unchecked(is_leq, left, right, target, &params.seq_params) };
         }
-        (_, x) if x < 3 => {
+        (_, x) if x < MIN_SPLIT_LEN => {
             // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)
             unsafe { seq_merge_unchecked(is_leq, left, right, target, &params.seq_params) };
         }
@@ -135,10 +138,20 @@ unsafe fn handle_extend<'a, T, F>(
             // SAFETY: since left.len() >= 2, then left_right.len() > 0
             let pivot = unsafe { left_right.first_unchecked() };
 
-            let pos_right = unsafe { right.as_slice() }
-                .iter()
-                .position(|r| is_leq(pivot, r))
-                .unwrap_or(right.len());
+            let pos_right =
+                match params.pivot_search {
+                    PivotSearch::Linear => right
+                        .values()
+                        .position(|r| is_leq(pivot, r))
+                        .unwrap_or(right.len()),
+                    PivotSearch::Binary => bin_search_idx(right.as_slice().binary_search_by(|r| {
+                        match is_leq(r, pivot) {
+                            true => Ordering::Less,
+                            false => Ordering::Greater,
+                        }
+                    })),
+                };
+
             // SAFETY: (i) pos_right <= right.len() is satisfied by the expression declaring pos_right
             let [right_left, right_right] = unsafe { right.split_at_unchecked(pos_right) };
 

@@ -1,6 +1,13 @@
 use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSrc};
 use core::cmp::Ordering;
 
+pub(super) fn bin_search_idx(idx: Result<usize, usize>) -> usize {
+    match idx {
+        Ok(x) => x,
+        Err(x) => x,
+    }
+}
+
 /// Determines the streak search.
 ///
 /// Assume at an intermediate step of the algorithm, current value of left slice is
@@ -244,13 +251,6 @@ unsafe fn seq_merge_streak_binary<'a, T: 'a, F>(
     let mut left = left.into_ptr_iter();
     let mut right = right.into_ptr_iter();
     let mut dst = target.into_ptr_iter();
-
-    fn bin_search_idx(idx: Result<usize, usize>) -> usize {
-        match idx {
-            Ok(x) => x,
-            Err(x) => x,
-        }
-    }
 
     match (left.current(), right.current()) {
         (Some(mut l), Some(mut r)) => {
