@@ -63,6 +63,7 @@ fn merge_sorted_slices_par(
         num_threads: 4,
         pivot_search,
         put_large_to_left: seq_params.put_large_to_left,
+        min_split_len: 3,
     };
 
     run((left_len, total_len), sort, params);
@@ -78,6 +79,7 @@ fn merge_sorted_slices_par_single_thread((left_len, total_len): (usize, usize)) 
         num_threads: 1,
         pivot_search: PivotSearch::Binary,
         put_large_to_left: PARAMS[5].put_large_to_left,
+        min_split_len: 3,
     };
 
     run((left_len, total_len), SortKind::Mixed, params);
@@ -97,6 +99,7 @@ fn merge_sorted_slices_par_large(len: usize, num_threads: usize, chunk_size: usi
         },
         pivot_search: PivotSearch::Binary,
         put_large_to_left: true,
+        min_split_len: 3,
         chunk_size,
         num_threads,
     };

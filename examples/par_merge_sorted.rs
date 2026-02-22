@@ -80,6 +80,8 @@ impl Drop for Input {
 struct Args {
     #[arg(long, default_value_t = false)]
     with_diagnostics: bool,
+    #[arg(long, default_value_t = 1024)]
+    min_split_len: usize,
     #[arg(long, default_value_t = 8)]
     num_threads: usize,
     #[arg(long, default_value_t = 1024)]
@@ -93,6 +95,7 @@ fn main() {
 
     let Args {
         with_diagnostics,
+        min_split_len,
         num_threads,
         chunk_size,
         len,
@@ -119,6 +122,7 @@ fn main() {
         },
         pivot_search: PivotSearch::Binary,
         put_large_to_left: true,
+        min_split_len,
         chunk_size,
         num_threads,
     };

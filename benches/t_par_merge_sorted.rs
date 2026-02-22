@@ -168,13 +168,14 @@ impl Factors for Params {
             "streak_search",
             "pivot_search",
             "put_large_to_left",
+            "min_split_len",
             "chunk_size",
             "num_threads",
         ]
     }
 
     fn factor_names_short() -> Vec<&'static str> {
-        vec!["ss", "ps", "ll", "ch", "nt"]
+        vec!["ss", "ps", "ll", "min", "ch", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -182,6 +183,7 @@ impl Factors for Params {
             format!("{:?}", self.0.seq_params.streak_search),
             format!("{:?}", self.0.pivot_search),
             self.0.put_large_to_left.to_string(),
+            self.0.min_split_len.to_string(),
             self.0.chunk_size.to_string(),
             self.0.num_threads.to_string(),
         ]
@@ -205,6 +207,7 @@ impl Factors for Params {
                 false => "F",
             }
             .to_string(),
+            self.0.min_split_len.to_string(),
             self.0.chunk_size.to_string(),
             self.0.num_threads.to_string(),
         ]
@@ -215,26 +218,30 @@ impl Params {
     fn all() -> Vec<Self> {
         let mut all = vec![];
         let put_large_to_left = [false, true];
+        let min_split_len = [1024];
         let streak_search = [StreakSearch::None, StreakSearch::Linear];
         let pivot_search = [PivotSearch::Linear, PivotSearch::Binary];
         let chunk_size = [1, 1024];
         let num_threads = [1, 8];
 
         for put_large_to_left in put_large_to_left[..1].to_vec() {
-            for streak_search in streak_search[..1].to_vec() {
-                for pivot_search in pivot_search[..1].to_vec() {
-                    for chunk_size in chunk_size[..1].to_vec() {
-                        for num_threads in num_threads {
-                            all.push(Self(ParamsParMergeSortedSlices {
-                                seq_params: ParamsSeqMergeSortedSlices {
-                                    streak_search,
+            for min_split_len in min_split_len[..1].to_vec() {
+                for streak_search in streak_search[..1].to_vec() {
+                    for pivot_search in pivot_search[..1].to_vec() {
+                        for chunk_size in chunk_size[..1].to_vec() {
+                            for num_threads in num_threads {
+                                all.push(Self(ParamsParMergeSortedSlices {
+                                    seq_params: ParamsSeqMergeSortedSlices {
+                                        streak_search,
+                                        put_large_to_left,
+                                    },
                                     put_large_to_left,
-                                },
-                                put_large_to_left,
-                                pivot_search,
-                                num_threads,
-                                chunk_size,
-                            }));
+                                    min_split_len,
+                                    pivot_search,
+                                    num_threads,
+                                    chunk_size,
+                                }));
+                            }
                         }
                     }
                 }

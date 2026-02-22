@@ -6,8 +6,6 @@ use crate::{IntoParIterRec, ParIter, ParallelRunner};
 use core::cmp::Ordering;
 use orx_concurrent_recursive_iter::Queue;
 
-const MIN_SPLIT_LEN: usize = 3;
-
 /// Determines how to search the pivot for splitting the slices.
 #[derive(Clone, Copy, Debug)]
 pub enum PivotSearch {
@@ -31,6 +29,8 @@ pub struct ParamsParMergeSortedSlices {
     pub num_threads: usize,
     /// Chunk size to be used by parallelization.
     pub chunk_size: usize,
+    /// Minimum length of a slice to be split into two tasks.
+    pub min_split_len: usize,
 }
 
 struct Task<'a, T> {
@@ -119,11 +119,7 @@ unsafe fn handle_extend<'a, T, F>(
 
     let (mut left, mut right, target) = (task.left, task.right, task.target);
     match (left.len(), right.len()) {
-        (x, _) if x < MIN_SPLIT_LEN => {
-            // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)
-            unsafe { seq_merge_unchecked(is_leq, left, right, target, &params.seq_params) };
-        }
-        (_, x) if x < MIN_SPLIT_LEN => {
+        (x, y) if x + y < params.min_split_len => {
             // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)
             unsafe { seq_merge_unchecked(is_leq, left, right, target, &params.seq_params) };
         }
