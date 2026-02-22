@@ -80,14 +80,14 @@ impl Drop for Input {
 struct Args {
     #[arg(long, default_value_t = false)]
     with_diagnostics: bool,
-    #[arg(long, default_value_t = 1024)]
-    min_split_len: usize,
+    #[arg(long, default_value_t = 10)]
+    min_split_len_e: usize,
     #[arg(long, default_value_t = 8)]
     num_threads: usize,
     #[arg(long, default_value_t = 1024)]
     chunk_size: usize,
-    #[arg(long, default_value_t = 1 << 22)]
-    len: usize,
+    #[arg(long, default_value_t = 23)]
+    len_e: usize,
 }
 
 fn main() {
@@ -95,12 +95,14 @@ fn main() {
 
     let Args {
         with_diagnostics,
-        min_split_len,
+        min_split_len_e,
         num_threads,
         chunk_size,
-        len,
+        len_e,
     } = args;
 
+    let len = 1 << len_e;
+    let min_split_len = 1 << min_split_len_e;
     let par = num_threads != 1;
     let vec = new_vec(len, elem);
     let (left, right) = split_to_sorted_vecs(&vec);
