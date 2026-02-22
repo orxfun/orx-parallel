@@ -112,6 +112,8 @@ unsafe fn handle_extend<'a, T, F>(
     T: Send + Sync,
     F: Fn(&T, &T) -> bool,
 {
+    let min_split_len = core::cmp::min(params.min_split_len, 3);
+
     // SAFETY: this method both handles and extends the queue; which will be
     // visited only once; hence, the reference `task` will not be used to
     // mutate the underlying memory, satisfying condition (i).
@@ -119,7 +121,7 @@ unsafe fn handle_extend<'a, T, F>(
 
     let (mut left, mut right, target) = (task.left, task.right, task.target);
     match (left.len(), right.len()) {
-        (x, y) if x + y < params.min_split_len => {
+        (x, y) if x < min_split_len || y < min_split_len => {
             // SAFETY: req't (i) & (ii) are satisfied by conditions (i) & (ii)
             unsafe { seq_merge_unchecked(is_leq, left, right, target, &params.seq_params) };
         }
