@@ -1,5 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
+use orx_parallel::DefaultRunner;
 use orx_parallel::experiment::algorithms::merge_sorted_slices::par::{
     ParamsParMergeSortedSlices, PivotSearch, par_merge,
 };
@@ -275,7 +276,14 @@ impl Experiment for TuneExperiment {
         let left = SliceSrc::from_slice(input.left.as_slice());
         let right = SliceSrc::from_slice(input.right.as_slice());
         let params = variant.0;
-        par_merge(is_leq, left, right, target, &params);
+        par_merge(
+            is_leq,
+            left,
+            right,
+            target,
+            &params,
+            DefaultRunner::default(),
+        );
     }
 }
 

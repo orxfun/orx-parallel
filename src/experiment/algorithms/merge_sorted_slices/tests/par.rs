@@ -7,9 +7,14 @@ use crate::experiment::algorithms::merge_sorted_slices::seq::{
 };
 use crate::experiment::data_structures::slice_dst::SliceDst;
 use crate::experiment::data_structures::slice_src::SliceSrc;
+use crate::{DefaultPool, DefaultRunner, RunnerWithPool};
 use alloc::string::String;
 use alloc::vec::Vec;
 use test_case::test_matrix;
+
+fn runner() -> RunnerWithPool<DefaultPool> {
+    DefaultRunner::default()
+}
 
 const PARAMS: &[ParamsSeqMergeSortedSlices] = &[
     ParamsSeqMergeSortedSlices {
@@ -110,6 +115,7 @@ fn run((left_len, total_len): (usize, usize), sort: SortKind, params: ParamsParM
         SliceSrc::from_slice(right.as_slice()),
         SliceDst::from_vec(&mut result),
         &params,
+        runner(),
     );
 
     // all elements of left & right are moved to result

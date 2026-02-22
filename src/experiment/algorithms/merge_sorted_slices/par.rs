@@ -2,7 +2,7 @@ use crate::experiment::algorithms::merge_sorted_slices::seq::{
     ParamsSeqMergeSortedSlices, bin_search_idx, seq_merge_unchecked,
 };
 use crate::experiment::data_structures::{slice_dst::SliceDst, slice_src::SliceSrc};
-use crate::{IntoParIterRec, ParIter};
+use crate::{IntoParIterRec, ParIter, ParallelRunner};
 use core::cmp::Ordering;
 use orx_concurrent_recursive_iter::Queue;
 
@@ -64,12 +64,13 @@ impl<'a, T> Task<'a, T> {
 ///
 /// - (i) if `target.len()` is not equal to `left.len() + right.len()`
 /// - (ii) if any pair of of `left`, `right` or `target` are overlapping.
-pub fn par_merge<'a, T, F>(
+pub fn par_merge<'a, T, F, R: ParallelRunner>(
     is_leq: F,
     left: SliceSrc<'a, T>,
     right: SliceSrc<'a, T>,
     target: SliceDst<'a, T>,
     params: &ParamsParMergeSortedSlices,
+    runner: R,
 ) where
     T: Send + Sync,
     F: Fn(&T, &T) -> bool + Sync,
@@ -92,6 +93,7 @@ pub fn par_merge<'a, T, F>(
 
     initial_task
         .into_par_rec(handle_extend)
+        .with_runner(runner)
         .num_threads(params.num_threads)
         .chunk_size(params.chunk_size)
         .for_each(|_| {});
