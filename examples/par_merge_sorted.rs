@@ -1,16 +1,17 @@
+use clap::Parser;
 use orx_parallel::{
     DefaultRunner,
     experiment::{
         algorithms::merge_sorted_slices::{
             par::{ParamsParMergeSortedSlices, PivotSearch, par_merge},
-            seq::{ParamsSeqMergeSortedSlices, StreakSearch},
+            seq::{ParamsSeqMergeSortedSlices, StreakSearch, seq_merge},
         },
         data_structures::{slice_dst::SliceDst, slice_src::SliceSrc},
     },
 };
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use std::cell::UnsafeCell;
+use std::{cell::UnsafeCell, time::Instant};
 
 type X = usize;
 
@@ -55,6 +56,15 @@ struct Input {
     target: UnsafeCell<Vec<X>>,
 }
 
+impl Input {
+    fn is_target_sorted(&mut self) -> bool {
+        let target = self.target.get_mut();
+        let mut sorted = target.clone();
+        sorted.sort();
+        target == &sorted
+    }
+}
+
 impl Drop for Input {
     fn drop(&mut self) {
         unsafe {
@@ -66,12 +76,33 @@ impl Drop for Input {
     }
 }
 
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(long, default_value_t = false)]
+    with_diagnostics: bool,
+    #[arg(long, default_value_t = 8)]
+    num_threads: usize,
+    #[arg(long, default_value_t = 1024)]
+    chunk_size: usize,
+    #[arg(long, default_value_t = 1 << 22)]
+    len: usize,
+}
+
 fn main() {
-    let len = 1 << 15;
+    let args = Args::parse();
+
+    let Args {
+        with_diagnostics,
+        num_threads,
+        chunk_size,
+        len,
+    } = args;
+
+    let par = num_threads != 1;
     let vec = new_vec(len, elem);
     let (left, right) = split_to_sorted_vecs(&vec);
     let target = Vec::with_capacity(vec.len()).into();
-    let input = Input {
+    let mut input = Input {
         left,
         right,
         target,
@@ -88,15 +119,32 @@ fn main() {
         },
         pivot_search: PivotSearch::Binary,
         put_large_to_left: true,
-        chunk_size: 1,
-        num_threads: 8,
+        chunk_size,
+        num_threads,
     };
-    par_merge(
-        is_leq,
-        left,
-        right,
-        target,
-        &params,
-        DefaultRunner::default(),
-    );
+
+    let begin = Instant::now();
+    match par {
+        true => match with_diagnostics {
+            true => par_merge(
+                is_leq,
+                left,
+                right,
+                target,
+                &params,
+                DefaultRunner::default().with_diagnostics(),
+            ),
+            false => par_merge(
+                is_leq,
+                left,
+                right,
+                target,
+                &params,
+                DefaultRunner::default(),
+            ),
+        },
+        false => seq_merge(is_leq, left, right, target, &params.seq_params),
+    }
+    println!("{:?}", begin.elapsed());
+    assert!(input.is_target_sorted());
 }
