@@ -47,21 +47,21 @@ pub trait ParallelRunner {
         I: ConcurrentIter,
         F: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) + Sync,
     {
-        let executor = self.new_executor(kind, params, iter.try_get_len());
-        let state = executor.new_shared_state();
-        let do_spawn = |num_spawned| executor.do_spawn_new(num_spawned, &state, &iter);
-        let work = |num_spawned: NumSpawned| {
-            let thread_idx = num_spawned.into_inner();
-            thread_do(
-                num_spawned,
-                &iter,
-                &state,
-                executor.new_thread_executor(thread_idx, &state),
-            );
-        };
-        let result = self.thread_pool_mut().run_in_pool(do_spawn, work);
-        executor.complete_task(state);
-        result
+        let executor = &self.new_executor(kind, params, iter.try_get_len());
+        let state = &executor.new_shared_state();
+        let (iter, thread_do) = (&iter, &thread_do);
+        let mut num_spawned = NumSpawned::zero();
+        self.thread_pool_mut().scoped_computation(|s| {
+            while executor.do_spawn_new(num_spawned, state, iter) {
+                let thread_num = num_spawned;
+                num_spawned.increment();
+                <Self::ThreadPool as ParThreadPool>::run_in_scope(&s, move || {
+                    let executor = executor.new_thread_executor(thread_num.into_inner(), state);
+                    thread_do(thread_num, iter, state, executor);
+                });
+            }
+        });
+        num_spawned
     }
 
     /// Runs `thread_map` using threads provided by the thread pool.
