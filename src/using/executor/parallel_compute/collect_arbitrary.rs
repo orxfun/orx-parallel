@@ -37,7 +37,7 @@ where
             let u = using.create(nt.into_inner());
             th::collect_arbitrary::m(u, thread_runner, iter, state, &map1, &bag);
         };
-    let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_work);
+    let num_spawned = orchestrator.run_all(params, &iter, ComputationKind::Collect, &thread_work);
 
     let values = bag.into_inner();
     (num_spawned, values)
