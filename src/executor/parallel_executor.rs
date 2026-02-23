@@ -14,7 +14,7 @@ pub trait ParallelExecutor: Sized + Sync + 'static + Clone {
     type SharedState: Send + Sync;
 
     /// Thread executor that is responsible for executing the tasks allocated to a thread.
-    type ThreadExecutor: ThreadExecutor<SharedState = Self::SharedState>;
+    type ThreadExecutor: ThreadExecutor<SharedState = Self::SharedState> + Send;
 
     /// Creates a new parallel executor for the given computation `kind`, parallelization `params`
     /// and `initial_input_len`.
