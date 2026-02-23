@@ -39,9 +39,9 @@ pub trait ParallelRunner {
     fn run_all<I, F>(
         &mut self,
         params: Params,
-        iter: I,
+        iter: &I,
         kind: ComputationKind,
-        thread_do: F,
+        thread_do: &F,
     ) -> NumSpawned
     where
         I: ConcurrentIter,
@@ -49,7 +49,6 @@ pub trait ParallelRunner {
     {
         let executor = &self.new_executor(kind, params, iter.try_get_len());
         let state = &executor.new_shared_state();
-        let (iter, thread_do) = (&iter, &thread_do);
         let mut num_spawned = NumSpawned::zero();
         self.thread_pool_mut().scoped_computation(|s| {
             while executor.do_spawn_new(num_spawned, state, iter) {

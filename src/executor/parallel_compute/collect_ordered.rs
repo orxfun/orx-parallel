@@ -27,7 +27,7 @@ where
     let thread_do = |_, iter: &I, state: &SharedStateOf<C>, thread_runner: ThreadRunnerOf<C>| {
         th::collect_ordered::m(thread_runner, iter, state, &map1, &o_bag, offset);
     };
-    let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_do);
+    let num_spawned = orchestrator.run_all(params, &iter, ComputationKind::Collect, &thread_do);
 
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)

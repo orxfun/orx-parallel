@@ -32,7 +32,7 @@ where
             let u = using.create(nt.into_inner());
             th::collect_ordered::m(u, thread_runner, iter, state, &map1, &o_bag, offset);
         };
-    let num_spawned = orchestrator.run_all(params, iter, ComputationKind::Collect, thread_do);
+    let num_spawned = orchestrator.run_all(params, &iter, ComputationKind::Collect, &thread_do);
 
     let values = unsafe { o_bag.into_inner().unwrap_only_if_counts_match() };
     (num_spawned, values)
