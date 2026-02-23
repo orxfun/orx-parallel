@@ -152,24 +152,6 @@ pub trait ParThreadPoolCompute: ParThreadPool {
 
         (nt, result)
     }
-
-    fn run_in_pool<S, F>(&mut self, do_spawn: S, thread_do: F) -> NumSpawned
-    where
-        S: Fn(NumSpawned) -> bool + Sync,
-        F: Fn(NumSpawned) + Sync,
-    {
-        let thread_do = &thread_do;
-        let mut nt = NumSpawned::zero();
-        self.scoped_computation(|s| {
-            while do_spawn(nt) {
-                let num_spawned = nt;
-                nt.increment();
-                let work = move || thread_do(num_spawned);
-                Self::run_in_scope(&s, work);
-            }
-        });
-        nt
-    }
 }
 
 impl<X: ParThreadPool> ParThreadPoolCompute for X {}
