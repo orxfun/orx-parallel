@@ -61,7 +61,7 @@ fn map2(input: Out1) -> Out2 {
 }
 
 fn filter2(output: &Out2) -> bool {
-    output.number % 2 == 0 || output.name.contains('0')
+    output.number.is_multiple_of(2) || output.name.contains('0')
 }
 
 fn map3(input: Out2) -> Out3 {

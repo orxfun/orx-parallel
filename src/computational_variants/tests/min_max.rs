@@ -26,7 +26,7 @@ fn min_max_empty(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let input = || {
             input::<Vec<_>>(n)
                 .iter()
-                .map(|x| x.parse::<usize>().unwrap())
+                .map(|x| x.parse::<usize>().expect("is-ok"))
                 .collect::<Vec<_>>()
         };
 
@@ -48,7 +48,7 @@ fn min_max_empty(n: &[usize], nt: &[usize], chunk: &[usize]) {
 fn min_max_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = || input::<Vec<_>>(n);
-        let map = |x: String| x.parse::<usize>().unwrap();
+        let map = |x: String| x.parse::<usize>().expect("is-ok");
 
         let par = || {
             input()
@@ -82,7 +82,7 @@ fn min_max_xap_flat_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let input = || input::<Vec<_>>(n);
         let flat_map = |x: String| {
             let n = x.len();
-            let a = x.parse::<usize>().unwrap();
+            let a = x.parse::<usize>().expect("is-ok");
             (0..n).map(|i| a + i).collect::<Vec<_>>()
         };
 
@@ -122,7 +122,10 @@ fn min_max_xap_flat_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
 fn min_max_xap_filter_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = || input::<Vec<_>>(n);
-        let filter_map = |x: String| x.starts_with('3').then(|| x.parse::<usize>().unwrap());
+        let filter_map = |x: String| {
+            x.starts_with('3')
+                .then(|| x.parse::<usize>().expect("is-ok"))
+        };
 
         let par = || {
             input()
@@ -170,7 +173,7 @@ fn min_max_xap_filter_xap(n: &[usize], nt: &[usize], chunk: &[usize]) {
         let filter = |x: &String| x.ends_with('3');
         let flat_map = |x: String| {
             let n = x.len();
-            let a = x.parse::<usize>().unwrap();
+            let a = x.parse::<usize>().expect("is-ok");
             (0..n).map(|i| a + i).collect::<Vec<_>>()
         };
 

@@ -74,7 +74,7 @@ fn inputs(len: usize) -> Vec<Output> {
 }
 
 fn seq(inputs: &[Output], find: impl Fn(&Output) -> bool) -> Option<&Output> {
-    inputs.into_iter().find(|x| find(x))
+    inputs.iter().find(|x| find(x))
 }
 
 fn rayon(inputs: &[Output], find: impl Fn(&Output) -> bool + Send + Sync) -> Option<&Output> {

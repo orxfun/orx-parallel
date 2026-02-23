@@ -30,7 +30,7 @@ fn main() {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
 
     let data = |idx: usize| idx.to_string();
-    let root = Tree::new(num_nodes, out_degree, data, &mut rng);
+    let root = Tree::new_node(num_nodes, out_degree, data, &mut rng);
 
     println!("\nOne path from root to a leaf as an example");
     let mut next_node = Some(&root);

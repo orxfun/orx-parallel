@@ -74,7 +74,7 @@ fn fallible_result_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[
             .filter(|x| !x.ends_with('9'))
             .flat_map(|x| [format!("{x}?"), x])
             .map(|x| format!("{x}!"))
-            .filter_map(|x| Some(x))
+            .filter_map(Some)
             .collect();
 
         let par = input()
@@ -90,7 +90,7 @@ fn fallible_result_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[
             .filter(make_u_filter(&|x: &String| !x.ends_with('9')))
             .flat_map(make_u_map(|x| [format!("{x}?"), x]))
             .map(make_u_map(|x| format!("{x}!")))
-            .filter_map(make_u_map(|x| Some(x)));
+            .filter_map(make_u_map(Some));
         let output: Result<Vec<_>, MyErr> = par.collect();
 
         assert_eq!(output, Ok(expected));

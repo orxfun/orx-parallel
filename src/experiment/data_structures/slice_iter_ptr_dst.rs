@@ -1,0 +1,111 @@
+use crate::experiment::data_structures::slice_iter_ptr_src::SliceIterPtrSrc;
+use crate::experiment::data_structures::{slice_dst::SliceDst, slice_iter_ptr::SliceIterPtr};
+
+/// Iterator over a slice of data that will be completely filled with values
+/// before the iterator is consumed.
+///
+/// The slice might initially be uninitialized, but will completely be initialized.
+pub struct SliceIterPtrDst<'a, T: 'a>(SliceIterPtr<'a, T>);
+
+impl<T> Default for SliceIterPtrDst<'_, T> {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
+
+impl<'a, T: 'a> SliceIterPtrDst<'a, T> {
+    /// # SAFETY
+    ///
+    /// Since `slice: SliceDst` satisfies that positions of it are not initialized,
+    /// we satisfy the construction condition for this iterator.
+    pub fn new(slice: SliceDst<'a, T>) -> Self {
+        let raw = slice.destruct();
+        // SAFETY: requirement satisfied by `SliceDst`
+        Self(unsafe { SliceIterPtr::new(raw as *const T, raw.len()) })
+    }
+
+    /// Returns true if the end of the slice is reached.
+    #[inline(always)]
+    pub fn is_finished(&self) -> bool {
+        self.0.is_finished()
+    }
+
+    /// Returns the number of remaining positions.
+    #[inline(always)]
+    #[allow(clippy::len_without_is_empty)]
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Pulls the next element from `src`, writes it to next position of `self`.
+    ///
+    /// Progresses both `self` and `src` by one element.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `src` cannot be `is_finished`
+    /// - (ii) `self` cannot be `is_finished`
+    /// - (iii) `src` and `self` cannot be overlapping
+    #[inline(always)]
+    pub unsafe fn write_one_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
+        debug_assert!(!self.is_finished() && !src.is_finished());
+
+        // SAFETY: satisfied by (i)
+        let src = unsafe { src.next_unchecked() };
+
+        // SAFETY: satisfied by (ii)
+        let dst = unsafe { self.0.next_unchecked() } as *mut T;
+
+        // SAFETY: satisfied by (iii)
+        unsafe { dst.copy_from_nonoverlapping(src, 1) };
+    }
+
+    /// Pulls the next `count` elements from `src`, writes them to next `count`
+    /// positions of `self`.
+    ///
+    /// Progresses both `self` and `src` by `count` positions.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `src` must have at least `count` positions.
+    /// - (ii) `self` must have at least `count` positions.
+    /// - (iii) `src` and `self` cannot be overlapping
+    pub unsafe fn write_many_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>, count: usize) {
+        debug_assert!(self.len() >= count && src.len() >= count);
+
+        // SAFETY: satisfied by (i)
+        let src = unsafe { src.next_n_unchecked(count) };
+
+        // SAFETY: satisfied by (ii)
+        let dst = unsafe { self.0.next_n_unchecked(count) } as *mut T;
+
+        // SAFETY: satisfied by (iii)
+        unsafe { dst.copy_from_nonoverlapping(src, count) };
+    }
+
+    /// Pulls all remaining elements from `src`, writes them to remaining
+    /// positions of `self`.
+    ///
+    /// Progresses both `self` and `src` to the end.
+    ///
+    /// # SAFETY
+    ///
+    /// - (i) `src` and `self` mut have equal number of remaining elements
+    /// - (ii) `src` and `self` cannot be overlapping
+    pub unsafe fn write_rest_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
+        debug_assert_eq!(self.len(), src.len());
+
+        if let Some(src) = src.next() {
+            let count = self.len();
+
+            // SAFETY: having same lengths with src by (i), self cannot be finished
+            let dst = unsafe { self.0.next_unchecked() } as *mut T;
+
+            // SAFETY: satisfied by (ii)
+            unsafe { dst.copy_from_nonoverlapping(src, count) };
+        }
+
+        self.0.jump_to_end();
+        src.jump_to_end();
+    }
+}

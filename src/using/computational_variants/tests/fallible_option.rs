@@ -41,7 +41,7 @@ fn fallible_option_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[u
             .using_clone("XyZw".to_string())
             .num_threads(nt)
             .chunk_size(chunk)
-            .map(make_u_map(|x| (x != "50").then(|| x)))
+            .map(make_u_map(|x| (x != "50").then_some(x)))
             .into_fallible_option()
             .filter(make_u_filter(&|x: &String| !x.ends_with('9')))
             .flat_map(make_u_map(|x| [format!("{x}?"), x]))
@@ -63,7 +63,7 @@ fn fallible_option_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[
             .filter(|x| !x.ends_with('9'))
             .flat_map(|x| [format!("{x}?"), x])
             .map(|x| format!("{x}!"))
-            .filter_map(|x| Some(x))
+            .filter_map(Some)
             .collect();
 
         let par = input()
@@ -71,12 +71,12 @@ fn fallible_option_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[
             .using_clone("XyZw".to_string())
             .num_threads(nt)
             .chunk_size(chunk)
-            .map(make_u_map(|x| (x != "xyz").then(|| x)))
+            .map(make_u_map(|x| (x != "xyz").then_some(x)))
             .into_fallible_option()
             .filter(make_u_filter(&|x: &String| !x.ends_with('9')))
             .flat_map(make_u_map(|x| [format!("{x}?"), x]))
             .map(make_u_map(|x| format!("{x}!")))
-            .filter_map(make_u_map(|x| Some(x)));
+            .filter_map(make_u_map(Some));
         let output: Option<Vec<_>> = par.collect();
 
         assert_eq!(output, Some(expected));

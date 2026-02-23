@@ -59,7 +59,7 @@ fn mut_iter(n: usize, nt: usize, chunk: usize) {
     [1, 64])
 ]
 fn mut_slice(n: usize, nt: usize, chunk: usize) {
-    let input: Vec<Data> = (0..n).map(|i| to_output(i)).collect();
+    let input: Vec<Data> = (0..n).map(to_output).collect();
     let mut expected = input.clone();
     expected.iter_mut().filter(filter).for_each(update);
     let expected = expected;

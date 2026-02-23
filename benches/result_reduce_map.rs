@@ -5,7 +5,7 @@ use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 use std::num::ParseIntError;
 
-type ERR = ParseIntError;
+type Err = ParseIntError;
 
 const TEST_LARGE_OUTPUT: bool = false;
 const N: usize = 65_536 * 4;
@@ -59,7 +59,7 @@ fn to_bad_input() -> Input {
     }
 }
 
-fn map_input_to_result(input: &Input) -> Result<String, ERR> {
+fn map_input_to_result(input: &Input) -> Result<String, Err> {
     match input.id.parse::<usize>() {
         Ok(_) => Ok(input.id.clone()),
         Err(e) => Err(e),
@@ -95,10 +95,10 @@ fn inputs(len: usize, idx_error: usize) -> Vec<Input> {
         .collect()
 }
 
-fn seq(inputs: &[Input], map: impl Fn(&Input) -> Result<String, ERR>) -> Result<Option<u32>, ERR> {
+fn seq(inputs: &[Input], map: impl Fn(&Input) -> Result<String, Err>) -> Result<Option<u32>, Err> {
     let mut error = None;
     let sum = inputs
-        .into_iter()
+        .iter()
         .map(map)
         .inspect(|x| {
             if let Err(e) = x {
@@ -117,8 +117,8 @@ fn seq(inputs: &[Input], map: impl Fn(&Input) -> Result<String, ERR>) -> Result<
 
 fn rayon(
     inputs: &[Input],
-    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Send,
-) -> Result<Option<u32>, ERR> {
+    map: impl Fn(&Input) -> Result<String, Err> + Sync + Send,
+) -> Result<Option<u32>, Err> {
     use rayon::iter::*;
     let error = ConcurrentOption::none();
     let sum = inputs
@@ -131,7 +131,7 @@ fn rayon(
         })
         .map(|x| x.ok())
         .while_some()
-        .map(|x| map_to_number(x))
+        .map(map_to_number)
         .reduce_with(|a, b| a + b);
 
     match error.into_option() {
@@ -142,8 +142,8 @@ fn rayon(
 
 fn orx(
     inputs: &[Input],
-    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
-) -> Result<Option<u32>, ERR> {
+    map: impl Fn(&Input) -> Result<String, Err> + Sync + Clone,
+) -> Result<Option<u32>, Err> {
     use orx_parallel::*;
     inputs
         .into_par()
@@ -155,8 +155,8 @@ fn orx(
 
 fn orx_arbitrary(
     inputs: &[Input],
-    map: impl Fn(&Input) -> Result<String, ERR> + Sync + Clone,
-) -> Result<Option<u32>, ERR> {
+    map: impl Fn(&Input) -> Result<String, Err> + Sync + Clone,
+) -> Result<Option<u32>, Err> {
     use orx_parallel::*;
     inputs
         .into_par()

@@ -5,7 +5,7 @@ use std::{collections::HashSet, marker::PhantomData, ops::Range};
 pub struct Tree<T>(PhantomData<T>);
 
 impl<T> Tree<T> {
-    pub fn new(
+    pub fn new_node(
         num_nodes: usize,
         degree: Range<usize>,
         data: fn(usize) -> T,

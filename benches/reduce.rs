@@ -68,7 +68,7 @@ fn inputs(len: usize) -> Vec<Output> {
 }
 
 fn seq(inputs: &[Output]) -> Option<&Output> {
-    inputs.into_iter().reduce(reduce)
+    inputs.iter().reduce(reduce)
 }
 
 fn rayon(inputs: &[Output]) -> Option<&Output> {

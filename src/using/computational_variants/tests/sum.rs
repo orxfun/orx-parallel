@@ -65,7 +65,7 @@ fn sum_xap_flat_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
 fn sum_xap_filter_map(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = input::<Vec<_>>(n);
-        let filter_map = |x: String| x.starts_with('3').then(|| x.len());
+        let filter_map = |x: String| x.starts_with('3').then_some(x.len());
         let expected: usize = input.clone().into_iter().filter_map(&filter_map).sum();
         let par = input
             .into_par()

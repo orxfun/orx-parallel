@@ -65,12 +65,12 @@ where
 
 fn test_mut_ref_unsafe_1() {
     let xap1 = |u: &mut String, x: i32| {
-        u.push_str("1");
+        u.push('1');
         [x, x + 2]
     };
 
     let reduce1 = |u: &mut String, x: i32, y: i32| {
-        u.push_str("2");
+        u.push('2');
         x + y
     };
 
@@ -108,27 +108,25 @@ where
         first.into_iter().map(move |x| map1(u2, x))
     };
 
-    let composed = move |u: &mut U, x: T| {
+    move |u: &mut U, x: T| {
         let values = xap_map(u, x);
         values.reduce(|x, y| reduce1(u, x, y))
-    };
-
-    composed
+    }
 }
 
 fn test_mut_ref_unsafe_2() {
     let map1 = |u: &mut String, x: i32| {
-        u.push_str("0");
+        u.push('0');
         x + 1
     };
 
     let xap1 = |u: &mut String, x: i32| {
-        u.push_str("1");
+        u.push('1');
         [x, x + 2]
     };
 
     let reduce1 = |u: &mut String, x: i32, y: i32| {
-        u.push_str("2");
+        u.push('2');
         x + y
     };
 
@@ -166,27 +164,25 @@ where
         first.into_iter().map(move |x| map1(u2, x))
     };
 
-    let composed = move |u: &UnsafeCell<U>, x: T| {
+    move |u: &UnsafeCell<U>, x: T| {
         let values = xap_map(unsafe { &mut *u.get() }, x);
         values.reduce(|x, y| reduce1(unsafe { &mut *u.get() }, x, y))
-    };
-
-    composed
+    }
 }
 
 fn test_unsafe_cell_on_reduce() {
     let map1 = |u: &mut String, x: i32| {
-        u.push_str("0");
+        u.push('0');
         x + 1
     };
 
     let xap1 = |u: &mut String, x: i32| {
-        u.push_str("1");
+        u.push('1');
         [x, x + 2]
     };
 
     let reduce1 = |u: &mut String, x: i32, y: i32| {
-        u.push_str("2");
+        u.push('2');
         x + y
     };
 
@@ -226,27 +222,25 @@ where
         first.into_iter().map(move |x| map2(u2, x))
     };
 
-    let composed = move |u: &UnsafeCell<U>, x: T| {
+    move |u: &UnsafeCell<U>, x: T| {
         let values = xap_map(u, x);
         values.reduce(|x, y| reduce1(unsafe { &mut *u.get() }, x, y))
-    };
-
-    composed
+    }
 }
 
 fn test_unsafe_cell_on_all() {
     let map1 = |u: &mut String, x: i32| {
-        u.push_str("0");
+        u.push('0');
         x + 1
     };
 
     let xap1 = |u: &mut String, x: i32| {
-        u.push_str("1");
+        u.push('1');
         [x, x + 2]
     };
 
     let reduce1 = |u: &mut String, x: i32, y: i32| {
-        u.push_str("2");
+        u.push('2');
         x + y
     };
 
@@ -278,12 +272,12 @@ where
 
 fn test_clone() {
     let xap1 = |u: &mut String, x: i32| {
-        u.push_str("1");
+        u.push('1');
         [x, x + 2]
     };
 
     let reduce1 = |u: &mut String, x: i32, y: i32| {
-        u.push_str("2");
+        u.push('2');
         x + y
     };
 
@@ -317,27 +311,25 @@ where
         first.into_iter().map(move |x| map2(unsafe { &mut *u }, x))
     };
 
-    let composed = move |u: *mut U, x: T| {
+    move |u: *mut U, x: T| {
         let values = xap_map(u, x);
         values.reduce(|x, y| reduce1(unsafe { &mut *u }, x, y))
-    };
-
-    composed
+    }
 }
 
 fn test_raw_ptr_all() {
     let map1 = |u: &mut String, x: i32| {
-        u.push_str("0");
+        u.push('0');
         x + 1
     };
 
     let xap1 = |u: &mut String, x: i32| {
-        u.push_str("1");
+        u.push('1');
         [x, x + 2]
     };
 
     let reduce1 = |u: &mut String, x: i32, y: i32| {
-        u.push_str("2");
+        u.push('2');
         x + y
     };
 

@@ -8,7 +8,7 @@ use test_case::test_case;
 #[test_case(1024, 4, 1, 3, "84", 840)]
 #[test_case(1024, 2, 0, 2, "5", 50)]
 fn par(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &str, min_len: usize) {
-    let whilst = |x: &String| x.len() != until_num_digits || !x.starts_with(&until_digits);
+    let whilst = |x: &String| x.len() != until_num_digits || !x.starts_with(until_digits);
 
     let input: Vec<_> = (0..n).map(|x| x.to_string()).collect();
     let output: Vec<_> = input
@@ -18,7 +18,7 @@ fn par(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .iteration_order(IterationOrder::Arbitrary)
         .take_while(|x| {
             let _fib = black_box(fibonacci(42));
-            whilst(&x)
+            whilst(x)
         })
         .collect();
 
@@ -32,7 +32,7 @@ fn par(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
 #[test_case(1024, 4, 1, 3, "84", 840)]
 #[test_case(1024, 2, 0, 2, "8", 80)]
 fn map(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &str, min_len: usize) {
-    let whilst = |x: &String| x.len() != until_num_digits || !x.starts_with(&until_digits);
+    let whilst = |x: &String| x.len() != until_num_digits || !x.starts_with(until_digits);
 
     let input = 0..n;
     let output: Vec<_> = input
@@ -43,7 +43,7 @@ fn map(n: usize, nt: usize, c: usize, until_num_digits: usize, until_digits: &st
         .map(|x| x.to_string())
         .take_while(|x| {
             let _fib = black_box(fibonacci(42));
-            whilst(&x)
+            whilst(x)
         })
         .collect();
 
@@ -75,7 +75,7 @@ fn xap_filter(
         .filter(|x| !filter_out.contains(&x.as_str()))
         .take_while(|x| {
             let _fib = black_box(fibonacci(42));
-            whilst(&x)
+            whilst(x)
         })
         .collect();
 
@@ -107,7 +107,7 @@ fn xap_filter_map(
         .filter_map(|x| (!filter_out.contains(&x.as_str())).then_some(x))
         .take_while(|x| {
             let _fib = black_box(fibonacci(42));
-            whilst(&x)
+            whilst(x)
         })
         .collect();
 
@@ -149,7 +149,7 @@ fn xap_flat_map(
         .flat_map(|i| [i.to_string(), format!("{i}!"), format!("{i}?")])
         .take_while(|x| {
             let _fib = black_box(fibonacci(42));
-            whilst(&x)
+            whilst(x)
         })
         .collect();
 

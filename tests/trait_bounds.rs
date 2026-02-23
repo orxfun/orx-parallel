@@ -44,10 +44,13 @@ fn trait_bounds_into_par_iter() {
     fun(SplitVec::<usize>::new());
 
     // ref
-    fun(vec![1, 2, 3].as_slice());
-    fun(&vec![1, 2, 3]);
-    fun(&VecDeque::<String>::new());
-    fun(0..9);
-    fun(&FixedVec::<usize>::new(3));
-    fun(&SplitVec::<usize>::new());
+    #[allow(clippy::needless_borrows_for_generic_args)]
+    {
+        fun(vec![1, 2, 3].as_slice());
+        fun(&vec![1, 2, 3]);
+        fun(&VecDeque::<String>::new());
+        fun(0..9);
+        fun(&FixedVec::<usize>::new(3));
+        fun(&SplitVec::<usize>::new());
+    }
 }
