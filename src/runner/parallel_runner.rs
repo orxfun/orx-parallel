@@ -1,7 +1,7 @@
 use crate::{
     NumThreads, ParallelExecutor, Params,
     generic_values::runner_results::{Fallibility, Infallible, Never},
-    par_thread_pool::{ParThreadPool, ParThreadPoolCompute},
+    par_thread_pool::ParThreadPool,
     runner::{ComputationKind, NumSpawned},
 };
 use alloc::vec::Vec;
@@ -63,43 +63,6 @@ pub trait ParallelRunner {
             }
         });
         num_spawned
-    }
-
-    /// Runs `thread_map` using threads provided by the thread pool.
-    fn map_all_depr<F, I, M, T>(
-        &mut self,
-        params: Params,
-        iter: I,
-        kind: ComputationKind,
-        thread_map: M,
-    ) -> (NumSpawned, Result<Vec<T>, F::Error>)
-    where
-        F: Fallibility,
-        I: ConcurrentIter,
-        M: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, F::Error>
-            + Sync,
-        T: Send,
-        F::Error: Send,
-    {
-        let iter_len = iter.try_get_len();
-        let executor = self.new_executor(kind, params, iter_len);
-        let state = executor.new_shared_state();
-        let do_spawn = |num_spawned| executor.do_spawn_new(num_spawned, &state, &iter);
-        let work = |num_spawned: NumSpawned| {
-            let thread_idx = num_spawned.into_inner();
-            thread_map(
-                num_spawned,
-                &iter,
-                &state,
-                executor.new_thread_executor(thread_idx, &state),
-            )
-        };
-        let max_num_threads = self.max_num_threads_for_computation(params, iter_len);
-        let result =
-            self.thread_pool_mut()
-                .map_in_pool::<F, _, _, _>(do_spawn, work, max_num_threads);
-        executor.complete_task(state);
-        result
     }
 
     /// Runs `thread_map` using threads provided by the thread pool.

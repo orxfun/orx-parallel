@@ -1,7 +1,4 @@
-use crate::{generic_values::runner_results::Fallibility, runner::NumSpawned};
-use alloc::vec::Vec;
 use core::num::NonZeroUsize;
-use orx_concurrent_bag::ConcurrentBag;
 
 /// A thread pool that can be used for parallel computation.
 ///
@@ -115,43 +112,3 @@ pub trait ParThreadPool {
     /// Returns the maximum number of threads available in the pool.
     fn max_num_threads(&self) -> NonZeroUsize;
 }
-
-// derived
-
-pub trait ParThreadPoolCompute: ParThreadPool {
-    fn map_in_pool<F, S, M, T>(
-        &mut self,
-        do_spawn: S,
-        thread_map: M,
-        max_num_threads: NonZeroUsize,
-    ) -> (NumSpawned, Result<Vec<T>, F::Error>)
-    where
-        F: Fallibility,
-        S: Fn(NumSpawned) -> bool + Sync,
-        M: Fn(NumSpawned) -> Result<T, F::Error> + Sync,
-        T: Send,
-        F::Error: Send,
-    {
-        let thread_map = &thread_map;
-        let mut nt = NumSpawned::zero();
-        let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
-        let bag = &thread_results;
-        self.scoped_computation(|s| {
-            while do_spawn(nt) {
-                let num_spawned = nt;
-                nt.increment();
-                let work = move || {
-                    bag.push(thread_map(num_spawned));
-                };
-                Self::run_in_scope(&s, work);
-            }
-        });
-
-        let thread_results: Vec<_> = thread_results.into_inner().into();
-        let result = F::reduce_results(thread_results);
-
-        (nt, result)
-    }
-}
-
-impl<X: ParThreadPool> ParThreadPoolCompute for X {}
