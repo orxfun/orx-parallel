@@ -133,7 +133,7 @@ pub trait ParallelRunner {
                 num_spawned.increment();
                 <Self::ThreadPool as ParThreadPool>::run_in_scope(&s, move || {
                     let executor = executor.new_thread_executor(thread_num.into_inner(), state);
-                    thread_results.push(thread_map(num_spawned, iter, state, executor));
+                    thread_results.push(thread_map(thread_num, iter, state, executor));
                 });
             }
         });
