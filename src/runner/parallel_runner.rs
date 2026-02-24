@@ -69,9 +69,9 @@ pub trait ParallelRunner {
     fn map_all<F, I, M, T>(
         &mut self,
         params: Params,
-        iter: I,
+        iter: &I,
         kind: ComputationKind,
-        thread_map: M,
+        thread_map: &M,
     ) -> (NumSpawned, Result<Vec<T>, F::Error>)
     where
         F: Fallibility,
@@ -81,9 +81,6 @@ pub trait ParallelRunner {
         T: Send,
         F::Error: Send,
     {
-        let iter = &iter;
-        let thread_map = &thread_map;
-
         let executor = &self.new_executor(kind, params, iter.try_get_len());
         let state = &executor.new_shared_state();
         let mut num_spawned = NumSpawned::zero();
@@ -120,7 +117,7 @@ pub trait ParallelRunner {
             + Sync,
         T: Send,
     {
-        self.map_all::<Infallible, _, _, _>(params, iter, kind, thread_map)
+        self.map_all::<Infallible, _, _, _>(params, &iter, kind, &thread_map)
     }
 
     /// Returns the maximum number of threads that can be used for the computation defined by

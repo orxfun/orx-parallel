@@ -57,9 +57,9 @@ where
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
         params,
-        iter,
+        &iter,
         ComputationKind::Collect,
-        thread_map,
+        &thread_map,
     );
     let next = result.map(|results| results.into_iter().flatten().next());
     (num_spawned, next)

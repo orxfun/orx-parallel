@@ -68,9 +68,9 @@ where
         };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
         params,
-        iter,
+        &iter,
         ComputationKind::Collect,
-        thread_map,
+        &thread_map,
     );
     let mut u = using.into_inner();
     let acc = result.map(|results| {
