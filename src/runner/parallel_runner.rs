@@ -6,6 +6,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::num::NonZeroUsize;
+use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Parallel runner defining how the threads must be spawned and job must be distributed.
@@ -50,6 +51,7 @@ pub trait ParallelRunner {
         let executor = &self.new_executor(kind, params, iter.try_get_len());
         let state = &executor.new_shared_state();
         let mut num_spawned = NumSpawned::zero();
+
         self.thread_pool_mut().scoped_computation(|s| {
             while executor.do_spawn_new(num_spawned, state, iter) {
                 let thread_num = num_spawned;
@@ -64,7 +66,7 @@ pub trait ParallelRunner {
     }
 
     /// Runs `thread_map` using threads provided by the thread pool.
-    fn map_all<F, I, M, T>(
+    fn map_all_depr<F, I, M, T>(
         &mut self,
         params: Params,
         iter: I,
@@ -98,6 +100,47 @@ pub trait ParallelRunner {
                 .map_in_pool::<F, _, _, _>(do_spawn, work, max_num_threads);
         executor.complete_task(state);
         result
+    }
+
+    /// Runs `thread_map` using threads provided by the thread pool.
+    fn map_all<F, I, M, T>(
+        &mut self,
+        params: Params,
+        iter: I,
+        kind: ComputationKind,
+        thread_map: M,
+    ) -> (NumSpawned, Result<Vec<T>, F::Error>)
+    where
+        F: Fallibility,
+        I: ConcurrentIter,
+        M: Fn(NumSpawned, &I, &SharedStateOf<Self>, ThreadRunnerOf<Self>) -> Result<T, F::Error>
+            + Sync,
+        T: Send,
+        F::Error: Send,
+    {
+        let iter = &iter;
+        let thread_map = &thread_map;
+
+        let executor = &self.new_executor(kind, params, iter.try_get_len());
+        let state = &executor.new_shared_state();
+        let mut num_spawned = NumSpawned::zero();
+        let max_num_threads = self.max_num_threads_for_computation(params, iter.try_get_len());
+        let thread_results = ConcurrentBag::with_fixed_capacity(max_num_threads.into());
+        self.thread_pool_mut().scoped_computation(|s| {
+            while executor.do_spawn_new(num_spawned, state, iter) {
+                let thread_results = &thread_results;
+                let thread_num = num_spawned;
+                num_spawned.increment();
+                <Self::ThreadPool as ParThreadPool>::run_in_scope(&s, move || {
+                    let executor = executor.new_thread_executor(thread_num.into_inner(), state);
+                    thread_results.push(thread_map(num_spawned, iter, state, executor));
+                });
+            }
+        });
+        let thread_results: Vec<_> = thread_results.into_inner().into();
+        let result = F::reduce_results(thread_results);
+
+        (num_spawned, result)
     }
 
     /// Runs infallible `thread_map` using threads provided by the thread pool.
