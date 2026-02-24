@@ -54,9 +54,9 @@ where
     };
     let (num_spawned, result) = orchestrator.map_all::<Vo::Fallibility, _, _, _>(
         params,
-        iter,
+        &iter,
         ComputationKind::Collect,
-        thread_map,
+        &thread_map,
     );
 
     let result = match result {
