@@ -60,9 +60,60 @@ where
         T: Send,
     {
         let (orchestrator, params, iter) = self.par.destruct();
-        output.x_maybe_collect_into(orchestrator, params, iter, map_self);
-        // let x1 = |i: I::Item| i.into_result();
-        // output.x_try_collect_into(orchestrator, params, iter, x1)
-        None
+        let x1 = |i: I::Item| match i {
+            Some(x) => Ok(x),
+            None => Err(()),
+        };
+        match output.x_try_collect_into(orchestrator, params, iter, x1) {
+            Ok(x) => Some(x),
+            Err(()) => None,
+        }
+    }
+
+    // reduce
+
+    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Option<T>>
+    where
+        T: Send,
+        Reduce: Fn(T, T) -> T + Sync,
+    {
+        let (orchestrator, params, iter) = self.par.destruct();
+        let x1 = |i: I::Item| match i {
+            Some(x) => Ok(x),
+            None => Err(()),
+        };
+        match prc::reduce::x(orchestrator, params, iter, x1, reduce).1 {
+            Ok(x) => Some(x),
+            Err(_) => None,
+        }
+    }
+
+    // early exit
+
+    fn first(self) -> Option<Option<T>>
+    where
+        T: Send,
+    {
+        let (orchestrator, params, iter) = self.par.destruct();
+        let x1 = |i: I::Item| match i {
+            Some(x) => Ok(x),
+            None => Err(()),
+        };
+        match params.iteration_order {
+            IterationOrder::Ordered => {
+                let (_, result) = prc::next::x(orchestrator, params, iter, x1);
+                match result {
+                    Ok(x) => Some(x.map(|y| y.1)),
+                    Err(_) => None,
+                }
+            }
+            IterationOrder::Arbitrary => {
+                let (_, result) = prc::next_any::x(orchestrator, params, iter, x1);
+                match result {
+                    Ok(x) => Some(x),
+                    Err(_) => None,
+                }
+            }
+        }
     }
 }
