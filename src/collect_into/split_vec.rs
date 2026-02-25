@@ -1,6 +1,7 @@
 use super::collect::{map_collect_into, xap_collect_into, xap_try_collect_into};
 use super::par_collect_into::ParCollectIntoCore;
 use crate::Params;
+use crate::collect_into::collect::xap_maybe_collect_into;
 use crate::collect_into::utils::split_vec_reserve;
 use crate::generic_values::runner_results::{Fallibility, Infallible};
 use crate::generic_values::{TransformableValues, Values};
@@ -58,6 +59,24 @@ where
         split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
         let (_num_spawned, pinned_vec) = xap_collect_into(orchestrator, params, iter, xap1, self);
         pinned_vec
+    }
+
+    fn x_maybe_collect_into<R, I, X1>(
+        mut self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Option<Self>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        X1: Fn(I::Item) -> Option<O> + Sync,
+        Self: Sized,
+    {
+        split_vec_reserve(&mut self, params.is_sequential(), iter.try_get_len());
+        let (_num_spawned, result) = xap_maybe_collect_into(orchestrator, params, iter, xap1, self);
+        result
     }
 
     fn x_try_collect_into<R, I, Vo, X1>(

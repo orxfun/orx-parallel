@@ -48,6 +48,24 @@ where
         FixedVec::from(vec.x_collect_into(orchestrator, params, iter, xap1))
     }
 
+    fn x_maybe_collect_into<R, I, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Option<Self>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        X1: Fn(I::Item) -> Option<O> + Sync,
+        Self: Sized,
+    {
+        let vec = Vec::from(self);
+        vec.x_maybe_collect_into(orchestrator, params, iter, xap1)
+            .map(FixedVec::from)
+    }
+
     fn x_try_collect_into<R, I, Vo, X1>(
         self,
         orchestrator: R,

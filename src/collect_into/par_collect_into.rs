@@ -31,6 +31,19 @@ pub trait ParCollectIntoCore<O>: Collection<Item = O> {
         Vo: TransformableValues<Item = O, Fallibility = Infallible>,
         X1: Fn(I::Item) -> Vo + Sync;
 
+    fn x_maybe_collect_into<R, I, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Option<Self>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        X1: Fn(I::Item) -> Option<O> + Sync,
+        Self: Sized;
+
     fn x_try_collect_into<R, I, Vo, X1>(
         self,
         orchestrator: R,

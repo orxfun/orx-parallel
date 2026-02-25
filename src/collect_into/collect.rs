@@ -59,8 +59,8 @@ pub fn xap_collect_into<R, I, Vo, X1, P>(
 where
     R: ParallelRunner,
     I: ConcurrentIter,
-    Vo: Values<Fallibility = Infallible>,
     Vo::Item: Send,
+    Vo: Values<Fallibility = Infallible>,
     X1: Fn(I::Item) -> Vo + Sync,
     P: IntoConcurrentPinnedVec<Vo::Item>,
 {
@@ -110,6 +110,70 @@ where
     }
 
     pinned_vec
+}
+
+pub fn xap_maybe_collect_into<R, I, O, X1, P>(
+    orchestrator: R,
+    params: Params,
+    iter: I,
+    xap1: X1,
+    pinned_vec: P,
+) -> (NumSpawned, Option<P>)
+where
+    R: ParallelRunner,
+    I: ConcurrentIter,
+    O: Send,
+    X1: Fn(I::Item) -> Option<O> + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    match (params.is_sequential(), params.iteration_order) {
+        (true, _) => (
+            NumSpawned::zero(),
+            xap_maybe_collect_into_seq(iter, xap1, pinned_vec),
+        ),
+        (false, IterationOrder::Arbitrary) => {
+            let (nt, result) =
+                prc::collect_arbitrary::x(orchestrator, params, iter, xap1, pinned_vec);
+            let result = match result {
+                ParallelCollectArbitrary::AllOrUntilWhileCollected { pinned_vec } => {
+                    Some(pinned_vec)
+                }
+                ParallelCollectArbitrary::StoppedByError { error: _ } => None,
+            };
+            (nt, result)
+        }
+        (false, IterationOrder::Ordered) => {
+            let (nt, result) =
+                prc::collect_ordered::x(orchestrator, params, iter, xap1, pinned_vec);
+            let result = match result {
+                ParallelCollect::AllCollected { pinned_vec } => Some(pinned_vec),
+                ParallelCollect::StoppedByWhileCondition {
+                    pinned_vec,
+                    stopped_idx: _,
+                } => Some(pinned_vec),
+                ParallelCollect::StoppedByError { error: _ } => None,
+            };
+            (nt, result)
+        }
+        _ => todo!(),
+    }
+}
+
+fn xap_maybe_collect_into_seq<I, O, X1, P>(iter: I, xap1: X1, mut pinned_vec: P) -> Option<P>
+where
+    I: ConcurrentIter,
+    O: Send,
+    X1: Fn(I::Item) -> Option<O> + Sync,
+    P: IntoConcurrentPinnedVec<O>,
+{
+    let iter = iter.into_seq_iter();
+    for i in iter {
+        match xap1(i) {
+            Some(x) => pinned_vec.push(x),
+            None => return None,
+        }
+    }
+    Some(pinned_vec)
 }
 
 pub fn xap_try_collect_into<R, I, Vo, X1, P>(
