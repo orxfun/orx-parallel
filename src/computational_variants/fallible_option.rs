@@ -7,19 +7,19 @@ use core::marker::PhantomData;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.
-pub struct ParOption<F, T, R = DefaultRunner>
+pub struct ParOption<F, R = DefaultRunner>
 where
     R: ParallelRunner,
-    F: ParIterResult<R, Item = T, Err = ()>,
+    F: ParIterResult<R, Err = ()>,
 {
     par: F,
-    phantom: PhantomData<(T, R)>,
+    phantom: PhantomData<R>,
 }
 
-impl<F, T, R> ParOption<F, T, R>
+impl<F, R> ParOption<F, R>
 where
     R: ParallelRunner,
-    F: ParIterResult<R, Item = T, Err = ()>,
+    F: ParIterResult<R, Err = ()>,
 {
     pub(crate) fn new(par: F) -> Self {
         Self {
@@ -29,12 +29,12 @@ where
     }
 }
 
-impl<F, T, R> ParIterOption<R> for ParOption<F, T, R>
+impl<F, R> ParIterOption<R> for ParOption<F, R>
 where
     R: ParallelRunner,
-    F: ParIterResult<R, Item = T, Err = ()>,
+    F: ParIterResult<R, Err = ()>,
 {
-    type Item = T;
+    type Item = F::Item;
 
     // params transformations
 
