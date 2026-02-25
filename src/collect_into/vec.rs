@@ -69,6 +69,24 @@ where
         extend_vec_from_split(self, split_vec)
     }
 
+    fn x_maybe_collect_into<R, I, X1>(
+        self,
+        orchestrator: R,
+        params: Params,
+        iter: I,
+        xap1: X1,
+    ) -> Option<Self>
+    where
+        R: ParallelRunner,
+        I: ConcurrentIter,
+        X1: Fn(I::Item) -> Option<O> + Sync,
+        Self: Sized,
+    {
+        let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
+        let result = split_vec.x_maybe_collect_into(orchestrator, params, iter, xap1);
+        result.map(|split_vec| extend_vec_from_split(self, split_vec))
+    }
+
     fn x_try_collect_into<R, I, Vo, X1>(
         self,
         orchestrator: R,
