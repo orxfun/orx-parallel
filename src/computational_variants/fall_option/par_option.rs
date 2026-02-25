@@ -38,7 +38,7 @@ where
         self.par
     }
 
-    fn from_regular_par(regular_par: Par<I, R>) -> Self {
+    pub fn from_regular_par(regular_par: Par<I, R>) -> Self {
         Self {
             par: regular_par,
             phantom: PhantomData,
@@ -47,14 +47,14 @@ where
 
     // params transformations
 
-    fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> ParOption<I, T, Q> {
+    pub fn with_runner<Q: ParallelRunner>(self, orchestrator: Q) -> ParOption<I, T, Q> {
         let (_, params, iter) = self.par.destruct();
         ParOption::new(Par::new(orchestrator, params, iter))
     }
 
     // collect
 
-    fn collect_into<C>(self, output: C) -> Option<C>
+    pub fn collect_into<C>(self, output: C) -> Option<C>
     where
         C: ParCollectInto<T>,
         T: Send,
@@ -72,7 +72,7 @@ where
 
     // reduce
 
-    fn reduce<Reduce>(self, reduce: Reduce) -> Option<Option<T>>
+    pub fn reduce<Reduce>(self, reduce: Reduce) -> Option<Option<T>>
     where
         T: Send,
         Reduce: Fn(T, T) -> T + Sync,
@@ -90,7 +90,7 @@ where
 
     // early exit
 
-    fn first(self) -> Option<Option<T>>
+    pub fn first(self) -> Option<Option<T>>
     where
         T: Send,
     {
