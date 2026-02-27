@@ -105,12 +105,14 @@ impl<T> Values for WhilstOption<T> {
 }
 
 impl<T> TransformableValues for WhilstOption<T> {
-    fn map<M, O>(
-        self,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    type Map<M, O>
+        = WhilstOption<O>
     where
-        M: Fn(Self::Item) -> O + Clone,
+        M: Fn(Self::Item) -> O;
+
+    fn map<M, O>(self, map: M) -> Self::Map<M, O>
+    where
+        M: Fn(Self::Item) -> O,
     {
         match self {
             Self::ContinueSome(x) => WhilstOption::ContinueSome(map(x)),

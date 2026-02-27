@@ -4,7 +4,7 @@ use crate::generic_values::{
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
-    whilst_iterators::WhilstAtomFlatMapIter,
+    whilst_iterators::{WhilstAtomFlatMapIter, WhilstVectorMapIter},
     whilst_vector_result::WhilstVectorResult,
 };
 use alloc::vec::Vec;
@@ -140,17 +140,16 @@ impl<I, T> TransformableValues for WhilstVector<I, T>
 where
     I: IntoIterator<Item = WhilstAtom<T>>,
 {
-    fn map<M, O>(
-        self,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    type Map<M, O>
+        = WhilstVector<WhilstVectorMapIter<<I as IntoIterator>::IntoIter, T, O, M>, O>
+    where
+        M: Fn(Self::Item) -> O;
+
+    fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
     {
-        let iter = self.0.into_iter().map(move |x| match x {
-            WhilstAtom::Continue(x) => WhilstAtom::Continue(map(x)),
-            WhilstAtom::Stop => WhilstAtom::Stop,
-        });
+        let iter = WhilstVectorMapIter::new(self.0.into_iter(), map);
         WhilstVector(iter)
     }
 

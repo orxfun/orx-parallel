@@ -101,11 +101,13 @@ impl<I> TransformableValues for Vector<I>
 where
     I: IntoIterator,
 {
+    type Map<M, O>
+        = Vector<core::iter::Map<<I as IntoIterator>::IntoIter, M>>
+    where
+        M: Fn(Self::Item) -> O;
+
     #[inline(always)]
-    fn map<M, O>(
-        self,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
     {

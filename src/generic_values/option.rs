@@ -87,11 +87,13 @@ impl<T> Values for Option<T> {
 }
 
 impl<T> TransformableValues for Option<T> {
+    type Map<M, O>
+        = Option<O>
+    where
+        M: Fn(Self::Item) -> O;
+
     #[inline(always)]
-    fn map<M, O>(
-        self,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
     {

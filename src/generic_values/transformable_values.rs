@@ -1,12 +1,13 @@
 use crate::generic_values::{Values, runner_results::Fallible};
 
 pub trait TransformableValues: Values {
-    fn map<M, O>(
-        self,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    type Map<M, O>: TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
-        M: Fn(Self::Item) -> O + Clone;
+        M: Fn(Self::Item) -> O;
+
+    fn map<M, O>(self, map: M) -> Self::Map<M, O>
+    where
+        M: Fn(Self::Item) -> O;
 
     fn filter<F>(
         self,
