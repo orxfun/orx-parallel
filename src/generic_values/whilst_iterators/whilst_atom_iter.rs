@@ -15,17 +15,6 @@ where
         Self { iter }
     }
 
-    pub fn from_atom<T, Fm>(atom: WhilstAtom<T>, flat_map: Fm) -> Self
-    where
-        Fm: Fn(T) -> Vo,
-    {
-        let iter = match atom {
-            WhilstAtom::Continue(x) => WhilstAtom::Continue(flat_map(x).into_iter()),
-            WhilstAtom::Stop => WhilstAtom::Stop,
-        };
-        Self { iter }
-    }
-
     pub fn u_from_atom<U, T, Fm>(u: *mut U, atom: WhilstAtom<T>, flat_map: Fm) -> Self
     where
         Fm: Fn(*mut U, T) -> Vo,
