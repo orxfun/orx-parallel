@@ -91,34 +91,6 @@ impl<T> TransformableValues for Option<T> {
         = Option<O>
     where
         M: Fn(Self::Item) -> O;
-
-    type Filter<F>
-        = Option<T>
-    where
-        F: Fn(&Self::Item) -> bool;
-
-    type FlatMap<Fm, Vo>
-        = Vector<core::iter::FlatMap<core::option::IntoIter<T>, Vo, Fm>>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
-
-    type FilterMap<Fm, O>
-        = Option<O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>;
-
-    type Whilst<W>
-        = WhilstOption<T>
-    where
-        W: Fn(&Self::Item) -> bool;
-
-    type MapWhileOk<Mr, O, E>
-        = OptionResult<O, E>
-    where
-        Mr: Fn(Self::Item) -> Result<O, E>,
-        E: Send;
-
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
@@ -127,6 +99,10 @@ impl<T> TransformableValues for Option<T> {
         self.map(map)
     }
 
+    type Filter<F>
+        = Option<T>
+    where
+        F: Fn(&Self::Item) -> bool;
     #[inline(always)]
     fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
@@ -135,6 +111,11 @@ impl<T> TransformableValues for Option<T> {
         self.filter(filter)
     }
 
+    type FlatMap<Fm, Vo>
+        = Vector<core::iter::FlatMap<core::option::IntoIter<T>, Vo, Fm>>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
     #[inline(always)]
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
@@ -144,6 +125,10 @@ impl<T> TransformableValues for Option<T> {
         Vector(self.into_iter().flat_map(flat_map))
     }
 
+    type FilterMap<Fm, O>
+        = Option<O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
     #[inline(always)]
     fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMap<Fm, O>
     where
@@ -155,6 +140,10 @@ impl<T> TransformableValues for Option<T> {
         }
     }
 
+    type Whilst<W>
+        = WhilstOption<T>
+    where
+        W: Fn(&Self::Item) -> bool;
     fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
     where
         W: Fn(&Self::Item) -> bool,
@@ -168,6 +157,11 @@ impl<T> TransformableValues for Option<T> {
         }
     }
 
+    type MapWhileOk<Mr, O, E>
+        = OptionResult<O, E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send;
     fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> Self::MapWhileOk<Mr, O, E>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
