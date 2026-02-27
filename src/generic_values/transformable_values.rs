@@ -9,6 +9,11 @@ pub trait TransformableValues: Values {
     where
         F: Fn(&Self::Item) -> bool;
 
+    type FlatMap<Fm, Vo>: TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O;
@@ -17,10 +22,7 @@ pub trait TransformableValues: Values {
     where
         F: Fn(&Self::Item) -> bool + Clone;
 
-    fn flat_map<Fm, Vo>(
-        self,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo + Clone;

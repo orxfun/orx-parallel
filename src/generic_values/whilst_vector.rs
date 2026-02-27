@@ -152,6 +152,12 @@ where
     where
         F: Fn(&Self::Item) -> bool;
 
+    type FlatMap<Fm, Vo>
+        = WhilstVector<WhilstVectorFlatMapIter<<I as IntoIterator>::IntoIter, T, Vo, Fm>, Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -168,17 +174,13 @@ where
         WhilstVector(iter)
     }
 
-    fn flat_map<Fm, Vo>(
-        self,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
         let iter = WhilstVectorFlatMapIter::new(self.0.into_iter(), flat_map);
-        let x = WhilstVector(iter);
-        x
+        WhilstVector(iter)
     }
 
     fn filter_map<Fm, O>(

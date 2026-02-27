@@ -97,6 +97,12 @@ impl<T> TransformableValues for Option<T> {
     where
         F: Fn(&Self::Item) -> bool;
 
+    type FlatMap<Fm, Vo>
+        = Vector<core::iter::FlatMap<core::option::IntoIter<T>, Vo, Fm>>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
@@ -114,10 +120,7 @@ impl<T> TransformableValues for Option<T> {
     }
 
     #[inline(always)]
-    fn flat_map<Fm, Vo>(
-        self,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
