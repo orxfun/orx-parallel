@@ -55,7 +55,7 @@ where
 {
     type Item = WhilstAtom<Vo::Item>;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.inner {
             None => self.next_inner(),

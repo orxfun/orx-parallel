@@ -1,6 +1,5 @@
 use crate::generic_values::{
-    TransformableValues, WhilstOption, WhilstVector,
-    transformable::iter::WhilstOptionFlatMapIter,
+    TransformableValues, WhilstOption, WhilstVector, transformable::iter::WhilstOptionIter,
     whilst_option_result::WhilstOptionResult,
 };
 
@@ -39,7 +38,7 @@ impl<T> TransformableValues for WhilstOption<T> {
     }
 
     type FlatMap<Fm, Vo>
-        = WhilstVector<WhilstOptionFlatMapIter<Vo>, Vo::Item>
+        = WhilstVector<WhilstOptionIter<Vo>, Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
@@ -48,7 +47,7 @@ impl<T> TransformableValues for WhilstOption<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
-        let iter = WhilstOptionFlatMapIter::from_option(self, &flat_map);
+        let iter = WhilstOptionIter::from_option(self, &flat_map);
         WhilstVector(iter)
     }
 
@@ -142,7 +141,7 @@ impl<T> TransformableValues for WhilstOption<T> {
     }
 
     type UFlatMap<U, Fm, Vo>
-        = WhilstVector<WhilstOptionFlatMapIter<Vo>, Vo::Item>
+        = WhilstVector<WhilstOptionIter<Vo>, Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo;
@@ -151,7 +150,7 @@ impl<T> TransformableValues for WhilstOption<T> {
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,
     {
-        let iter = WhilstOptionFlatMapIter::u_from_option(u, self, &flat_map);
+        let iter = WhilstOptionIter::u_from_option(u, self, &flat_map);
         WhilstVector(iter)
     }
 

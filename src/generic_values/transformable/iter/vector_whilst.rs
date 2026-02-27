@@ -14,7 +14,7 @@ where
     I: Iterator,
     W: Fn(&I::Item) -> bool,
 {
-    pub(crate) fn new(iter: I, whilst: W) -> Self {
+    pub fn new(iter: I, whilst: W) -> Self {
         Self { iter, whilst }
     }
 }
@@ -26,6 +26,7 @@ where
 {
     type Item = WhilstAtom<I::Item>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|x| match (self.whilst)(&x) {
             true => WhilstAtom::Continue(x),

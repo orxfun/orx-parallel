@@ -16,7 +16,7 @@ where
     Vo: IntoIterator,
     Fm: Fn(*mut U, I::Item) -> Vo,
 {
-    pub(crate) fn new(u: *mut U, outer: I, flat_map: Fm) -> Self {
+    pub fn new(u: *mut U, outer: I, flat_map: Fm) -> Self {
         Self {
             u,
             outer,
