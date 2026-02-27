@@ -134,10 +134,7 @@ impl<T> TransformableValues for Option<T> {
     }
 
     #[inline(always)]
-    fn filter_map<Fm, O>(
-        self,
-        filter_map: Fm,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMap<Fm, O>
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
