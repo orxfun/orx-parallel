@@ -221,11 +221,15 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
+    type UFilter<U, F>
+        = WhilstOption<T>
+    where
+        F: Fn(*mut U, &Self::Item) -> bool;
     fn u_filter<U, F>(
         self,
         u: *mut U,
         filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    ) -> Self::UFilter<U, F>
     where
         F: Fn(*mut U, &Self::Item) -> bool,
     {

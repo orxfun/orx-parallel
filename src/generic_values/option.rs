@@ -183,12 +183,12 @@ impl<T> TransformableValues for Option<T> {
         self.map(|x| map(u, x))
     }
 
+    type UFilter<U, F>
+        = Option<T>
+    where
+        F: Fn(*mut U, &Self::Item) -> bool;
     #[inline(always)]
-    fn u_filter<U, F>(
-        self,
-        u: *mut U,
-        filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn u_filter<U, F>(self, u: *mut U, filter: F) -> Self::UFilter<U, F>
     where
         F: Fn(*mut U, &Self::Item) -> bool,
     {
