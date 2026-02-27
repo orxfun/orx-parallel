@@ -103,6 +103,11 @@ impl<T> TransformableValues for Option<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
+    type FilterMap<Fm, O>
+        = Option<O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
+
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
