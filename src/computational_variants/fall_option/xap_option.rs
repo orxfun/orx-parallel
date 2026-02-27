@@ -64,28 +64,20 @@ where
 
     // computation transformations
 
-    // fn map<Out, Map>(
-    //     self,
-    //     map: Map,
-    // ) -> ParXapOption<
-    //     I,
-    //     Vo,
-    //     impl Fn(
-    //         <I as ConcurrentIter>::Item,
-    //     ) -> Option<
-    //         impl TransformableValues<Item = Out, Fallibility = <Vo as Values>::Fallibility>,
-    //     >,
-    //     R,
-    // >
-    // where
-    //     Map: Fn(Vo::Item) -> Out + Sync + Clone,
-    //     Out: Send,
-    // {
-    //     let (runner, params, iter, xap1) = self.par.destruct();
-    //     let x1 = move |i: I::Item| xap1(i).map(|vo| vo.map(map.clone()));
-    //     let a = ParXapOption::new(ParXap::new(runner, params, iter, x1));
-    //     a
-    // }
+    fn map<Out, Map>(
+        self,
+        map: Map,
+    ) -> ParXapOption<I, Vo::Map<Map, Out>, impl Fn(I::Item) -> Option<Vo::Map<Map, Out>>, R>
+    where
+        Map: Fn(Vo::Item) -> Out + Sync + Clone,
+        Out: Send,
+    {
+        let (runner, params, iter, xap1) = self.par.destruct();
+        let x1 = move |i: I::Item| xap1(i).map(|vo| vo.map(map.clone()));
+        let x = ParXap::new(runner, params, iter, x1);
+        let a = ParXapOption::new(x);
+        a
+    }
 
     // fn filter<Filter>(self, filter: Filter) -> char
     // where
