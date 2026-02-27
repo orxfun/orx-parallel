@@ -1,47 +1,28 @@
 use crate::generic_values::{WhilstAtom, WhilstOption};
 
-pub struct WhilstOptionIter<Vo>
+pub struct WhilstOptionIter<I>
 where
-    Vo: IntoIterator,
+    I: Iterator,
 {
-    iter: WhilstOption<Vo::IntoIter>,
+    iter: WhilstOption<I>,
 }
 
-impl<Vo> WhilstOptionIter<Vo>
+impl<I> WhilstOptionIter<I>
 where
-    Vo: IntoIterator,
+    I: Iterator,
 {
-    pub fn from_option<T, Fm>(atom: WhilstOption<T>, flat_map: Fm) -> Self
-    where
-        Fm: Fn(T) -> Vo,
-    {
-        let iter = match atom {
-            WhilstOption::ContinueSome(x) => WhilstOption::ContinueSome(flat_map(x).into_iter()),
-            WhilstOption::ContinueNone => WhilstOption::ContinueNone,
-            WhilstOption::Stop => WhilstOption::Stop,
-        };
-        Self { iter }
-    }
-
-    pub fn u_from_option<U, T, Fm>(u: *mut U, atom: WhilstOption<T>, flat_map: Fm) -> Self
-    where
-        Fm: Fn(*mut U, T) -> Vo,
-    {
-        let iter = match atom {
-            WhilstOption::ContinueSome(x) => WhilstOption::ContinueSome(flat_map(u, x).into_iter()),
-            WhilstOption::ContinueNone => WhilstOption::ContinueNone,
-            WhilstOption::Stop => WhilstOption::Stop,
-        };
+    pub fn new(iter: WhilstOption<I>) -> Self {
         Self { iter }
     }
 }
 
-impl<Vo> Iterator for WhilstOptionIter<Vo>
+impl<I> Iterator for WhilstOptionIter<I>
 where
-    Vo: IntoIterator,
+    I: Iterator,
 {
-    type Item = WhilstAtom<Vo::Item>;
+    type Item = WhilstAtom<I::Item>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.iter {
             WhilstOption::ContinueSome(x) => x.next().map(WhilstAtom::Continue), // None if iterator is consumed
