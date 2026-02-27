@@ -5,14 +5,15 @@ pub trait TransformableValues: Values {
     where
         M: Fn(Self::Item) -> O;
 
+    type Filter<F>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        F: Fn(&Self::Item) -> bool;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O;
 
-    fn filter<F>(
-        self,
-        filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
         F: Fn(&Self::Item) -> bool + Clone;
 

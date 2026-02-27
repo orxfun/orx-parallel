@@ -106,6 +106,11 @@ where
     where
         M: Fn(Self::Item) -> O;
 
+    type Filter<F>
+        = Vector<core::iter::Filter<<I as IntoIterator>::IntoIter, F>>
+    where
+        F: Fn(&Self::Item) -> bool;
+
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
@@ -115,10 +120,7 @@ where
     }
 
     #[inline(always)]
-    fn filter<F>(
-        self,
-        filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
         F: Fn(&Self::Item) -> bool,
     {

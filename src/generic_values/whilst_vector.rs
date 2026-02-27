@@ -4,7 +4,9 @@ use crate::generic_values::{
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
-    whilst_iterators::{WhilstAtomFlatMapIter, WhilstVectorMapIter},
+    whilst_iterators::{
+        WhilstAtomFlatMapIter, WhilstVectorFilterIter, WhilstVectorFlatMapIter, WhilstVectorMapIter,
+    },
     whilst_vector_result::WhilstVectorResult,
 };
 use alloc::vec::Vec;
@@ -145,6 +147,11 @@ where
     where
         M: Fn(Self::Item) -> O;
 
+    type Filter<F>
+        = WhilstVector<WhilstVectorFilterIter<<I as IntoIterator>::IntoIter, T, F>, T>
+    where
+        F: Fn(&Self::Item) -> bool;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -153,20 +160,11 @@ where
         WhilstVector(iter)
     }
 
-    fn filter<F>(
-        self,
-        filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
         F: Fn(&Self::Item) -> bool + Clone,
     {
-        let iter = self.0.into_iter().filter_map(move |x| match x {
-            WhilstAtom::Continue(x) => match filter(&x) {
-                true => Some(WhilstAtom::Continue(x)),
-                false => None,
-            },
-            WhilstAtom::Stop => Some(WhilstAtom::Stop),
-        });
+        let iter = WhilstVectorFilterIter::new(self.0.into_iter(), filter);
         WhilstVector(iter)
     }
 
@@ -178,11 +176,9 @@ where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
-        let iter = self
-            .0
-            .into_iter()
-            .flat_map(move |atom| WhilstAtomFlatMapIter::from_atom(atom, &flat_map));
-        WhilstVector(iter)
+        let iter = WhilstVectorFlatMapIter::new(self.0.into_iter(), flat_map);
+        let x = WhilstVector(iter);
+        x
     }
 
     fn filter_map<Fm, O>(

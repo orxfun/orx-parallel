@@ -74,9 +74,7 @@ where
     {
         let (runner, params, iter, xap1) = self.par.destruct();
         let x1 = move |i: I::Item| xap1(i).map(|vo| vo.map(map.clone()));
-        let x = ParXap::new(runner, params, iter, x1);
-        let a = ParXapOption::new(x);
-        a
+        ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 
     // fn filter<Filter>(self, filter: Filter) -> char
