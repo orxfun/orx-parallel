@@ -1,26 +1,24 @@
-use crate::generic_values::{WhilstAtom, whilst_iterators::WhilstAtomIter};
+use crate::generic_values::{WhilstAtom, transformable::iter::WhilstAtomIter};
 
-pub struct WhilstVectorUFlatMapIter<U, I, T, Vo, Fm>
+pub struct WhilstVectorFlatMapIter<I, T, Vo, Fm>
 where
     I: Iterator<Item = WhilstAtom<T>>,
-    Fm: Fn(*mut U, T) -> Vo,
+    Fm: Fn(T) -> Vo,
     Vo: IntoIterator,
 {
-    u: *mut U,
     outer: I,
     inner: Option<WhilstAtomIter<Vo>>,
     flat_map: Fm,
 }
 
-impl<U, I, T, Vo, Fm> WhilstVectorUFlatMapIter<U, I, T, Vo, Fm>
+impl<I, T, Vo, Fm> WhilstVectorFlatMapIter<I, T, Vo, Fm>
 where
     I: Iterator<Item = WhilstAtom<T>>,
-    Fm: Fn(*mut U, T) -> Vo,
+    Fm: Fn(T) -> Vo,
     Vo: IntoIterator,
 {
-    pub(crate) fn new(u: *mut U, outer: I, flat_map: Fm) -> Self {
+    pub(crate) fn new(outer: I, flat_map: Fm) -> Self {
         Self {
-            u,
             outer,
             inner: None,
             flat_map,
@@ -33,7 +31,7 @@ where
             Some(x) => {
                 let iter = match x {
                     WhilstAtom::Continue(x) => {
-                        let iter = (self.flat_map)(self.u, x).into_iter();
+                        let iter = (self.flat_map)(x).into_iter();
                         WhilstAtom::Continue(iter)
                     }
                     WhilstAtom::Stop => WhilstAtom::Stop,
@@ -47,10 +45,10 @@ where
     }
 }
 
-impl<U, I, T, Vo, Fm> Iterator for WhilstVectorUFlatMapIter<U, I, T, Vo, Fm>
+impl<I, T, Vo, Fm> Iterator for WhilstVectorFlatMapIter<I, T, Vo, Fm>
 where
     I: Iterator<Item = WhilstAtom<T>>,
-    Fm: Fn(*mut U, T) -> Vo,
+    Fm: Fn(T) -> Vo,
     Vo: IntoIterator,
 {
     type Item = WhilstAtom<Vo::Item>;

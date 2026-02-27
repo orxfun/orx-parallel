@@ -1,6 +1,6 @@
 use crate::generic_values::{
     TransformableValues, WhilstAtom, WhilstOption, WhilstVector,
-    whilst_atom_result::WhilstAtomResult, whilst_iterators::WhilstAtomIter,
+    transformable::iter::WhilstAtomIter, whilst_atom_result::WhilstAtomResult,
 };
 
 impl<T> TransformableValues for WhilstAtom<T> {
