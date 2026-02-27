@@ -177,12 +177,12 @@ impl<T> TransformableValues for WhilstOption<T> {
         }
     }
 
-    fn whilst(
+    fn whilst<W>(
         self,
-        whilst: impl Fn(&Self::Item) -> bool,
+        whilst: W,
     ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
-        Self: Sized,
+        W: Fn(&Self::Item) -> bool,
     {
         match self {
             Self::ContinueSome(x) => match whilst(&x) {
