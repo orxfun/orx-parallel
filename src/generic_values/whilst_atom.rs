@@ -2,7 +2,7 @@ use crate::generic_values::runner_results::{
     ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use crate::generic_values::whilst_atom_result::WhilstAtomResult;
-use crate::generic_values::whilst_iterators::WhilstAtomFlatMapIter;
+use crate::generic_values::whilst_iterators::WhilstAtomIter;
 use crate::generic_values::{TransformableValues, Values, WhilstOption, WhilstVector};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -140,7 +140,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
     }
 
     type FlatMap<Fm, Vo>
-        = WhilstVector<WhilstAtomFlatMapIter<Vo>, Vo::Item>
+        = WhilstVector<WhilstAtomIter<Vo>, Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
@@ -149,7 +149,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
-        let iter = WhilstAtomFlatMapIter::from_atom(self, &flat_map);
+        let iter = WhilstAtomIter::from_atom(self, &flat_map);
         WhilstVector(iter)
     }
 
@@ -238,16 +238,17 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn u_flat_map<U, Fm, Vo>(
-        self,
-        u: *mut U,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    type UFlatMap<U, Fm, Vo>
+        = WhilstVector<WhilstAtomIter<Vo>, Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(*mut U, Self::Item) -> Vo;
+    fn u_flat_map<U, Fm, Vo>(self, u: *mut U, flat_map: Fm) -> Self::UFlatMap<U, Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,
     {
-        let iter = WhilstAtomFlatMapIter::u_from_atom(u, self, &flat_map);
+        let iter = WhilstAtomIter::u_from_atom(u, self, &flat_map);
         WhilstVector(iter)
     }
 

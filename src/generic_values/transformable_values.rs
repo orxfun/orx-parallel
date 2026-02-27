@@ -61,15 +61,11 @@ pub trait TransformableValues: Values {
     where
         F: Fn(*mut U, &Self::Item) -> bool;
 
-    // type UFlatMap<U, Fm, Vo>: TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
-    // where
-    //     Vo: IntoIterator,
-    //     Fm: Fn(*mut U, Self::Item) -> Vo;
-    fn u_flat_map<U, Fm, Vo>(
-        self,
-        u: *mut U,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    type UFlatMap<U, Fm, Vo>: TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(*mut U, Self::Item) -> Vo;
+    fn u_flat_map<U, Fm, Vo>(self, u: *mut U, flat_map: Fm) -> Self::UFlatMap<U, Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo;

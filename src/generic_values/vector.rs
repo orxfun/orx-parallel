@@ -2,7 +2,7 @@ use super::transformable_values::TransformableValues;
 use crate::generic_values::{
     Values, VectorResult, WhilstVector,
     runner_results::{ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush},
-    whilst_iterators::{VectorUFilterIter, VectorUMapIter, VectorWhilstIter},
+    whilst_iterators::{VectorUFilterIter, VectorUFlatMapIter, VectorUMapIter, VectorWhilstIter},
 };
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -200,16 +200,18 @@ where
         Vector(iter)
     }
 
-    fn u_flat_map<U, Fm, Vo>(
-        self,
-        u: *mut U,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    type UFlatMap<U, Fm, Vo>
+        = Vector<VectorUFlatMapIter<I::IntoIter, U, Fm, Vo>>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(*mut U, Self::Item) -> Vo;
+    fn u_flat_map<U, Fm, Vo>(self, u: *mut U, flat_map: Fm) -> Self::UFlatMap<U, Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,
     {
-        Vector(self.0.into_iter().flat_map(move |x| flat_map(u, x)))
+        let iter = VectorUFlatMapIter::new(u, self.0.into_iter(), flat_map);
+        Vector(iter)
     }
 
     fn u_filter_map<U, Fm, O>(

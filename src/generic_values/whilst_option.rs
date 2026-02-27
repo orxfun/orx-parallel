@@ -241,11 +241,12 @@ impl<T> TransformableValues for WhilstOption<T> {
         }
     }
 
-    fn u_flat_map<U, Fm, Vo>(
-        self,
-        u: *mut U,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    type UFlatMap<U, Fm, Vo>
+        = WhilstVector<WhilstOptionFlatMapIter<Vo>, Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(*mut U, Self::Item) -> Vo;
+    fn u_flat_map<U, Fm, Vo>(self, u: *mut U, flat_map: Fm) -> Self::UFlatMap<U, Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,

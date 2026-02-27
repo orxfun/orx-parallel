@@ -3,8 +3,8 @@ use crate::generic_values::{
     Values, WhilstAtom,
     runner_results::{ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush},
     whilst_iterators::{
-        WhilstAtomFlatMapIter, WhilstVectorFilterIter, WhilstVectorFilterMapIter,
-        WhilstVectorFlatMapIter, WhilstVectorMapIter, WhilstVectorUFilterIter,
+        WhilstAtomIter, WhilstVectorFilterIter, WhilstVectorFilterMapIter, WhilstVectorFlatMapIter,
+        WhilstVectorMapIter, WhilstVectorUFilterIter, WhilstVectorUFlatMapIter,
         WhilstVectorUMapIter, WhilstVectorWhilstIter,
     },
     whilst_vector_result::WhilstVectorResult,
@@ -242,19 +242,17 @@ where
         WhilstVector(iter)
     }
 
-    fn u_flat_map<U, Fm, Vo>(
-        self,
-        u: *mut U,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    type UFlatMap<U, Fm, Vo>
+        = WhilstVector<WhilstVectorUFlatMapIter<U, I::IntoIter, T, Vo, Fm>, Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(*mut U, Self::Item) -> Vo;
+    fn u_flat_map<U, Fm, Vo>(self, u: *mut U, flat_map: Fm) -> Self::UFlatMap<U, Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,
     {
-        let iter = self
-            .0
-            .into_iter()
-            .flat_map(move |atom| WhilstAtomFlatMapIter::u_from_atom(u, atom, &flat_map));
+        let iter = WhilstVectorUFlatMapIter::new(u, self.0.into_iter(), flat_map);
         WhilstVector(iter)
     }
 
@@ -270,6 +268,7 @@ where
             WhilstAtom::Continue(x) => filter_map(u, x).map(WhilstAtom::Continue),
             WhilstAtom::Stop => Some(WhilstAtom::Stop),
         });
-        WhilstVector(iter)
+        let x = WhilstVector(iter);
+        x
     }
 }
