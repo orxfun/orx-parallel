@@ -147,34 +147,6 @@ where
         = WhilstVector<WhilstVectorMapIter<I::IntoIter, T, O, M>, O>
     where
         M: Fn(Self::Item) -> O;
-
-    type Filter<F>
-        = WhilstVector<WhilstVectorFilterIter<I::IntoIter, T, F>, T>
-    where
-        F: Fn(&Self::Item) -> bool;
-
-    type FlatMap<Fm, Vo>
-        = WhilstVector<WhilstVectorFlatMapIter<I::IntoIter, T, Vo, Fm>, Vo::Item>
-    where
-        Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo;
-
-    type FilterMap<Fm, O>
-        = WhilstVector<WhilstVectorFilterMapIter<I::IntoIter, T, O, Fm>, O>
-    where
-        Fm: Fn(Self::Item) -> Option<O>;
-
-    type Whilst<W>
-        = WhilstVector<WhilstVectorWhilstIter<<I as IntoIterator>::IntoIter, T, W>, T>
-    where
-        W: Fn(&Self::Item) -> bool;
-
-    type MapWhileOk<Mr, O, E>
-        = WhilstVectorResult<WhilstVectorMapIter<I::IntoIter, T, Result<O, E>, Mr>, O, E>
-    where
-        Mr: Fn(Self::Item) -> Result<O, E>,
-        E: Send;
-
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -183,6 +155,10 @@ where
         WhilstVector(iter)
     }
 
+    type Filter<F>
+        = WhilstVector<WhilstVectorFilterIter<I::IntoIter, T, F>, T>
+    where
+        F: Fn(&Self::Item) -> bool;
     fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
         F: Fn(&Self::Item) -> bool,
@@ -191,6 +167,11 @@ where
         WhilstVector(iter)
     }
 
+    type FlatMap<Fm, Vo>
+        = WhilstVector<WhilstVectorFlatMapIter<I::IntoIter, T, Vo, Fm>, Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
         Vo: IntoIterator,
@@ -200,6 +181,10 @@ where
         WhilstVector(iter)
     }
 
+    type FilterMap<Fm, O>
+        = WhilstVector<WhilstVectorFilterMapIter<I::IntoIter, T, O, Fm>, O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
     fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMap<Fm, O>
     where
         Fm: Fn(Self::Item) -> Option<O>,
@@ -208,6 +193,10 @@ where
         WhilstVector(iter)
     }
 
+    type Whilst<W>
+        = WhilstVector<WhilstVectorWhilstIter<<I as IntoIterator>::IntoIter, T, W>, T>
+    where
+        W: Fn(&Self::Item) -> bool;
     fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
     where
         W: Fn(&Self::Item) -> bool,
@@ -216,6 +205,11 @@ where
         WhilstVector(iter)
     }
 
+    type MapWhileOk<Mr, O, E>
+        = WhilstVectorResult<WhilstVectorMapIter<I::IntoIter, T, Result<O, E>, Mr>, O, E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send;
     fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> Self::MapWhileOk<Mr, O, E>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
