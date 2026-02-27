@@ -103,30 +103,36 @@ where
     I: IntoIterator,
 {
     type Map<M, O>
-        = Vector<core::iter::Map<<I as IntoIterator>::IntoIter, M>>
+        = Vector<core::iter::Map<I::IntoIter, M>>
     where
         M: Fn(Self::Item) -> O;
 
     type Filter<F>
-        = Vector<core::iter::Filter<<I as IntoIterator>::IntoIter, F>>
+        = Vector<core::iter::Filter<I::IntoIter, F>>
     where
         F: Fn(&Self::Item) -> bool;
 
     type FlatMap<Fm, Vo>
-        = Vector<core::iter::FlatMap<<I as IntoIterator>::IntoIter, Vo, Fm>>
+        = Vector<core::iter::FlatMap<I::IntoIter, Vo, Fm>>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
     type FilterMap<Fm, O>
-        = Vector<core::iter::FilterMap<<I as IntoIterator>::IntoIter, Fm>>
+        = Vector<core::iter::FilterMap<I::IntoIter, Fm>>
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
     type Whilst<W>
-        = WhilstVector<VectorWhilstIter<<I as IntoIterator>::IntoIter, W>, Self::Item>
+        = WhilstVector<VectorWhilstIter<I::IntoIter, W>, Self::Item>
     where
         W: Fn(&Self::Item) -> bool;
+
+    type MapWhileOk<Mr, O, E>
+        = VectorResult<core::iter::Map<I::IntoIter, Mr>, O, E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send;
 
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
@@ -169,7 +175,7 @@ where
         WhilstVector(iter)
     }
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallibility = Fallible<E>>
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> Self::MapWhileOk<Mr, O, E>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,

@@ -134,6 +134,12 @@ impl<T> TransformableValues for WhilstAtom<T> {
     where
         W: Fn(&Self::Item) -> bool;
 
+    type MapWhileOk<Mr, O, E>
+        = WhilstAtomResult<O, E>
+    where
+        Mr: Fn(Self::Item) -> Result<O, E>,
+        E: Send;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -192,7 +198,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> impl Values<Item = O, Fallibility = Fallible<E>>
+    fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> Self::MapWhileOk<Mr, O, E>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send,
