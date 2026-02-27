@@ -118,6 +118,12 @@ impl<T> TransformableValues for WhilstAtom<T> {
     where
         F: Fn(&Self::Item) -> bool;
 
+    type FlatMap<Fm, Vo>
+        = WhilstVector<WhilstAtomFlatMapIter<Vo>, Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -141,10 +147,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn flat_map<Fm, Vo>(
-        self,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo + Clone,

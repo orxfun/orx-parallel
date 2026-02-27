@@ -115,6 +115,12 @@ impl<T> TransformableValues for WhilstOption<T> {
     where
         F: Fn(&Self::Item) -> bool;
 
+    type FlatMap<Fm, Vo>
+        = WhilstVector<WhilstOptionFlatMapIter<Vo>, Vo::Item>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(Self::Item) -> Vo;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -140,13 +146,10 @@ impl<T> TransformableValues for WhilstOption<T> {
         }
     }
 
-    fn flat_map<Fm, Vo>(
-        self,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
         Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo + Clone,
+        Fm: Fn(Self::Item) -> Vo,
     {
         let iter = WhilstOptionFlatMapIter::from_option(self, &flat_map);
         WhilstVector(iter)
