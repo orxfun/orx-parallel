@@ -108,12 +108,14 @@ impl<T> Values for WhilstAtom<T> {
 }
 
 impl<T> TransformableValues for WhilstAtom<T> {
-    fn map<M, O>(
-        self,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    type Map<M, O>
+        = WhilstAtom<O>
     where
-        M: Fn(Self::Item) -> O + Clone,
+        M: Fn(Self::Item) -> O;
+
+    fn map<M, O>(self, map: M) -> Self::Map<M, O>
+    where
+        M: Fn(Self::Item) -> O,
     {
         match self {
             Self::Continue(x) => WhilstAtom::Continue(map(x)),
