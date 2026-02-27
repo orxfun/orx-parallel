@@ -5,7 +5,8 @@ use crate::generic_values::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
     whilst_iterators::{
-        WhilstAtomFlatMapIter, WhilstVectorFilterIter, WhilstVectorFlatMapIter, WhilstVectorMapIter,
+        WhilstAtomFlatMapIter, WhilstVectorFilterIter, WhilstVectorFilterMapIter,
+        WhilstVectorFlatMapIter, WhilstVectorMapIter,
     },
     whilst_vector_result::WhilstVectorResult,
 };
@@ -143,20 +144,25 @@ where
     I: IntoIterator<Item = WhilstAtom<T>>,
 {
     type Map<M, O>
-        = WhilstVector<WhilstVectorMapIter<<I as IntoIterator>::IntoIter, T, O, M>, O>
+        = WhilstVector<WhilstVectorMapIter<I::IntoIter, T, O, M>, O>
     where
         M: Fn(Self::Item) -> O;
 
     type Filter<F>
-        = WhilstVector<WhilstVectorFilterIter<<I as IntoIterator>::IntoIter, T, F>, T>
+        = WhilstVector<WhilstVectorFilterIter<I::IntoIter, T, F>, T>
     where
         F: Fn(&Self::Item) -> bool;
 
     type FlatMap<Fm, Vo>
-        = WhilstVector<WhilstVectorFlatMapIter<<I as IntoIterator>::IntoIter, T, Vo, Fm>, Vo::Item>
+        = WhilstVector<WhilstVectorFlatMapIter<I::IntoIter, T, Vo, Fm>, Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
+
+    type FilterMap<Fm, O>
+        = WhilstVector<WhilstVectorFilterMapIter<I::IntoIter, T, O, Fm>, O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
 
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
@@ -190,10 +196,7 @@ where
     where
         Fm: Fn(Self::Item) -> Option<O>,
     {
-        let iter = self.0.into_iter().filter_map(move |x| match x {
-            WhilstAtom::Continue(x) => filter_map(x).map(WhilstAtom::Continue),
-            WhilstAtom::Stop => Some(WhilstAtom::Stop),
-        });
+        let iter = WhilstVectorFilterMapIter::new(self.0.into_iter(), filter_map);
         WhilstVector(iter)
     }
 

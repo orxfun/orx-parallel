@@ -121,6 +121,11 @@ impl<T> TransformableValues for WhilstOption<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
+    type FilterMap<Fm, O>
+        = WhilstOption<O>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,

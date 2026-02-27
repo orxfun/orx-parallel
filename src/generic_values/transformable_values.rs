@@ -14,6 +14,10 @@ pub trait TransformableValues: Values {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
+    type FilterMap<Fm, O>: TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O;

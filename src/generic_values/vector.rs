@@ -117,6 +117,11 @@ where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
 
+    type FilterMap<Fm, O>
+        = Vector<core::iter::FilterMap<<I as IntoIterator>::IntoIter, Fm>>
+    where
+        Fm: Fn(Self::Item) -> Option<O>;
+
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
