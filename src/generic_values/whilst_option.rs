@@ -193,7 +193,6 @@ impl<T> TransformableValues for WhilstOption<T> {
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send;
-
     fn map_while_ok<Mr, O, E>(self, map_res: Mr) -> Self::MapWhileOk<Mr, O, E>
     where
         Mr: Fn(Self::Item) -> Result<O, E>,
@@ -209,6 +208,10 @@ impl<T> TransformableValues for WhilstOption<T> {
         }
     }
 
+    type UMap<U, M, O>
+        = WhilstOption<O>
+    where
+        M: Fn(*mut U, Self::Item) -> O;
     fn u_map<U, M, O>(
         self,
         u: *mut U,

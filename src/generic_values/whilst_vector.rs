@@ -6,7 +6,7 @@ use crate::generic_values::{
     },
     whilst_iterators::{
         WhilstAtomFlatMapIter, WhilstVectorFilterIter, WhilstVectorFilterMapIter,
-        WhilstVectorFlatMapIter, WhilstVectorMapIter, WhilstVectorWhilstIter,
+        WhilstVectorFlatMapIter, WhilstVectorMapIter, WhilstVectorUMapIter, WhilstVectorWhilstIter,
     },
     whilst_vector_result::WhilstVectorResult,
 };
@@ -194,7 +194,7 @@ where
     }
 
     type Whilst<W>
-        = WhilstVector<WhilstVectorWhilstIter<<I as IntoIterator>::IntoIter, T, W>, T>
+        = WhilstVector<WhilstVectorWhilstIter<I::IntoIter, T, W>, T>
     where
         W: Fn(&Self::Item) -> bool;
     fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
@@ -219,6 +219,10 @@ where
         WhilstVectorResult(iter)
     }
 
+    type UMap<U, M, O>
+        = WhilstVector<WhilstVectorUMapIter<U, I::IntoIter, T, O, M>, O>
+    where
+        M: Fn(*mut U, Self::Item) -> O;
     fn u_map<U, M, O>(
         self,
         u: *mut U,
@@ -227,10 +231,7 @@ where
     where
         M: Fn(*mut U, Self::Item) -> O,
     {
-        let iter = self.0.into_iter().map(move |x| match x {
-            WhilstAtom::Continue(x) => WhilstAtom::Continue(map(u, x)),
-            WhilstAtom::Stop => WhilstAtom::Stop,
-        });
+        let iter = WhilstVectorUMapIter::new(u, self.0.into_iter(), map);
         WhilstVector(iter)
     }
 

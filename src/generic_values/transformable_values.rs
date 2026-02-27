@@ -47,6 +47,9 @@ pub trait TransformableValues: Values {
         Mr: Fn(Self::Item) -> Result<O, E>,
         E: Send;
 
+    type UMap<U, M, O>: TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        M: Fn(*mut U, Self::Item) -> O;
     fn u_map<U, M, O>(
         self,
         u: *mut U,
@@ -55,6 +58,9 @@ pub trait TransformableValues: Values {
     where
         M: Fn(*mut U, Self::Item) -> O;
 
+    // type UFilter<U, F>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    // where
+    //     F: Fn(*mut U, &Self::Item) -> bool;
     fn u_filter<U, F>(
         self,
         u: *mut U,
@@ -63,6 +69,10 @@ pub trait TransformableValues: Values {
     where
         F: Fn(*mut U, &Self::Item) -> bool;
 
+    // type UFlatMap<U, Fm, Vo>: TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    // where
+    //     Vo: IntoIterator,
+    //     Fm: Fn(*mut U, Self::Item) -> Vo;
     fn u_flat_map<U, Fm, Vo>(
         self,
         u: *mut U,
@@ -72,6 +82,9 @@ pub trait TransformableValues: Values {
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo;
 
+    // type UFilterMap<U, Fm, O>: TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    // where
+    //     Fm: Fn(*mut U, Self::Item) -> Option<O>;
     fn u_filter_map<U, Fm, O>(
         self,
         u: *mut U,

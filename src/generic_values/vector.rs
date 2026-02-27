@@ -4,7 +4,7 @@ use crate::generic_values::{
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
-    whilst_iterators::VectorWhilstIter,
+    whilst_iterators::{VectorUMapIter, VectorWhilstIter},
 };
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -178,6 +178,10 @@ where
         VectorResult(iter_res)
     }
 
+    type UMap<U, M, O>
+        = Vector<VectorUMapIter<I::IntoIter, U, M, O>>
+    where
+        M: Fn(*mut U, Self::Item) -> O;
     fn u_map<U, M, O>(
         self,
         u: *mut U,
@@ -186,7 +190,8 @@ where
     where
         M: Fn(*mut U, Self::Item) -> O,
     {
-        Vector(self.0.into_iter().map(move |x| map(u, x)))
+        let iter = VectorUMapIter::new(u, self.0.into_iter(), map);
+        Vector(iter)
     }
 
     fn u_filter<U, F>(
