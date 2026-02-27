@@ -30,16 +30,6 @@ where
     type Item = O;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.iter.next() {
-                Some(x) => {
-                    let y = (self.filter_map)(self.u, x);
-                    if y.is_some() {
-                        return y;
-                    }
-                }
-                None => return None,
-            }
-        }
+        self.iter.find_map(|x| (self.filter_map)(self.u, x))
     }
 }
