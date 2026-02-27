@@ -4,8 +4,8 @@ use crate::generic_values::{
     runner_results::{ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush},
     whilst_iterators::{
         WhilstVectorFilterIter, WhilstVectorFilterMapIter, WhilstVectorFlatMapIter,
-        WhilstVectorMapIter, WhilstVectorUFilterIter, WhilstVectorUFlatMapIter,
-        WhilstVectorUMapIter, WhilstVectorWhilstIter,
+        WhilstVectorMapIter, WhilstVectorUFilterIter, WhilstVectorUFilterMapIter,
+        WhilstVectorUFlatMapIter, WhilstVectorUMapIter, WhilstVectorWhilstIter,
     },
     whilst_vector_result::WhilstVectorResult,
 };
@@ -256,19 +256,15 @@ where
         WhilstVector(iter)
     }
 
-    fn u_filter_map<U, Fm, O>(
-        self,
-        u: *mut U,
-        filter_map: Fm,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    type UFilterMap<U, Fm, O>
+        = WhilstVector<WhilstVectorUFilterMapIter<U, I::IntoIter, T, O, Fm>, O>
+    where
+        Fm: Fn(*mut U, Self::Item) -> Option<O>;
+    fn u_filter_map<U, Fm, O>(self, u: *mut U, filter_map: Fm) -> Self::UFilterMap<U, Fm, O>
     where
         Fm: Fn(*mut U, Self::Item) -> Option<O>,
     {
-        let iter = self.0.into_iter().filter_map(move |x| match x {
-            WhilstAtom::Continue(x) => filter_map(u, x).map(WhilstAtom::Continue),
-            WhilstAtom::Stop => Some(WhilstAtom::Stop),
-        });
-        let x = WhilstVector(iter);
-        x
+        let iter = WhilstVectorUFilterMapIter::new(u, self.0.into_iter(), filter_map);
+        WhilstVector(iter)
     }
 }

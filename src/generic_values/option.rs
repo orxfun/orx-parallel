@@ -207,11 +207,11 @@ impl<T> TransformableValues for Option<T> {
         Vector(iter)
     }
 
-    fn u_filter_map<U, Fm, O>(
-        self,
-        u: *mut U,
-        filter_map: Fm,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    type UFilterMap<U, Fm, O>
+        = Option<O>
+    where
+        Fm: Fn(*mut U, Self::Item) -> Option<O>;
+    fn u_filter_map<U, Fm, O>(self, u: *mut U, filter_map: Fm) -> Self::UFilterMap<U, Fm, O>
     where
         Fm: Fn(*mut U, Self::Item) -> Option<O>,
     {

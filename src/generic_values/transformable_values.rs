@@ -70,14 +70,10 @@ pub trait TransformableValues: Values {
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo;
 
-    // type UFilterMap<U, Fm, O>: TransformableValues<Item = O, Fallibility = Self::Fallibility>
-    // where
-    //     Fm: Fn(*mut U, Self::Item) -> Option<O>;
-    fn u_filter_map<U, Fm, O>(
-        self,
-        u: *mut U,
-        filter_map: Fm,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    type UFilterMap<U, Fm, O>: TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    where
+        Fm: Fn(*mut U, Self::Item) -> Option<O>;
+    fn u_filter_map<U, Fm, O>(self, u: *mut U, filter_map: Fm) -> Self::UFilterMap<U, Fm, O>
     where
         Fm: Fn(*mut U, Self::Item) -> Option<O>;
 }
