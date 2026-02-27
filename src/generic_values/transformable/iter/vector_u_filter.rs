@@ -26,14 +26,6 @@ where
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.iter.next() {
-                Some(x) => match (self.filter)(self.u, &x) {
-                    true => return Some(x),
-                    false => continue,
-                },
-                None => return None,
-            }
-        }
+        self.iter.find(|x| (self.filter)(self.u, &x))
     }
 }
