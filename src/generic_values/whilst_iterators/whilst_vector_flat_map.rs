@@ -39,10 +39,19 @@ where
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        todo!()
-        // self.outer.next().map(|x| match x {
-        //     WhilstAtom::Continue(x) => WhilstAtom::Continue((self.flat_map)(x)),
-        //     WhilstAtom::Stop => WhilstAtom::Stop,
-        // })
+        match &mut self.inner {
+            None => todo!(),
+            Some(inner) => match inner.next() {
+                Some(x) => Some(x),
+                None => match self.outer.next() {
+                    Some(x) => {
+                        let inner = WhilstAtomFlatMapIter::from_atom(x, &self.flat_map);
+                        self.inner = Some(inner);
+                        self.next()
+                    }
+                    None => None,
+                },
+            },
+        }
     }
 }
