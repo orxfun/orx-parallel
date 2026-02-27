@@ -54,14 +54,10 @@ pub trait TransformableValues: Values {
     where
         M: Fn(*mut U, Self::Item) -> O;
 
-    // type UFilter<U, F>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
-    // where
-    //     F: Fn(*mut U, &Self::Item) -> bool;
-    fn u_filter<U, F>(
-        self,
-        u: *mut U,
-        filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    type UFilter<U, F>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        F: Fn(*mut U, &Self::Item) -> bool;
+    fn u_filter<U, F>(self, u: *mut U, filter: F) -> Self::UFilter<U, F>
     where
         F: Fn(*mut U, &Self::Item) -> bool;
 

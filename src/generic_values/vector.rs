@@ -4,7 +4,7 @@ use crate::generic_values::{
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
-    whilst_iterators::{VectorUMapIter, VectorWhilstIter},
+    whilst_iterators::{VectorUFilterIter, VectorUMapIter, VectorWhilstIter},
 };
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -190,15 +190,20 @@ where
         Vector(iter)
     }
 
+    type UFilter<U, F>
+        = Vector<VectorUFilterIter<I::IntoIter, U, F>>
+    where
+        F: Fn(*mut U, &Self::Item) -> bool;
     fn u_filter<U, F>(
         self,
         u: *mut U,
         filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    ) ->Self::UFilter<U, F>
     where
         F: Fn(*mut U, &Self::Item) -> bool,
     {
-        Vector(self.0.into_iter().filter(move |x| filter(u, x)))
+        let iter = VectorUFilterIter::new(u, self.0.into_iter(), filter);
+        Vector(iter)
     }
 
     fn u_flat_map<U, Fm, Vo>(

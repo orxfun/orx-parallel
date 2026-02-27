@@ -1,0 +1,39 @@
+pub struct VectorUFilterIter<I, U, F>
+where
+    I: Iterator,
+    F: Fn(*mut U, &I::Item) -> bool,
+{
+    u: *mut U,
+    iter: I,
+    filter: F,
+}
+
+impl<I, U, F> VectorUFilterIter<I, U, F>
+where
+    I: Iterator,
+    F: Fn(*mut U, &I::Item) -> bool,
+{
+    pub(crate) fn new(u: *mut U, iter: I, filter: F) -> Self {
+        Self { u, iter, filter }
+    }
+}
+
+impl<I, U, F> Iterator for VectorUFilterIter<I, U, F>
+where
+    I: Iterator,
+    F: Fn(*mut U, &I::Item) -> bool,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.iter.next() {
+                Some(x) => match (self.filter)(self.u, &x) {
+                    true => return Some(x),
+                    false => continue,
+                },
+                None => return None,
+            }
+        }
+    }
+}

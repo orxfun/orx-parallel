@@ -1,3 +1,4 @@
+mod vector_u_filter;
 mod vector_u_map;
 mod vector_whilst;
 mod whilst_atom_flat_map;
@@ -6,9 +7,11 @@ mod whilst_vector_filter;
 mod whilst_vector_filter_map;
 mod whilst_vector_flat_map;
 mod whilst_vector_map;
+mod whilst_vector_u_filter;
 mod whilst_vector_u_map;
 mod whilst_vector_whilst;
 
+pub use vector_u_filter::VectorUFilterIter;
 pub use vector_u_map::VectorUMapIter;
 pub use vector_whilst::VectorWhilstIter;
 pub use whilst_atom_flat_map::WhilstAtomFlatMapIter;
@@ -17,5 +20,6 @@ pub use whilst_vector_filter::WhilstVectorFilterIter;
 pub use whilst_vector_filter_map::WhilstVectorFilterMapIter;
 pub use whilst_vector_flat_map::WhilstVectorFlatMapIter;
 pub use whilst_vector_map::WhilstVectorMapIter;
+pub use whilst_vector_u_filter::WhilstVectorUFilterIter;
 pub use whilst_vector_u_map::WhilstVectorUMapIter;
 pub use whilst_vector_whilst::WhilstVectorWhilstIter;
