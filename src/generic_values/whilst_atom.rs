@@ -252,7 +252,11 @@ impl<T> TransformableValues for WhilstAtom<T> {
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,
     {
-        let iter = WhilstAtomIter::u_from_atom(u, self, &flat_map);
+        let atom_iter = match self {
+            Self::Continue(x) => WhilstAtom::Continue(flat_map(u, x).into_iter()),
+            Self::Stop => WhilstAtom::Stop,
+        };
+        let iter = WhilstAtomIter::new(atom_iter);
         WhilstVector(iter)
     }
 

@@ -3,7 +3,7 @@ use crate::generic_values::{
     Values, WhilstAtom,
     runner_results::{ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush},
     whilst_iterators::{
-        WhilstAtomIter, WhilstVectorFilterIter, WhilstVectorFilterMapIter, WhilstVectorFlatMapIter,
+        WhilstVectorFilterIter, WhilstVectorFilterMapIter, WhilstVectorFlatMapIter,
         WhilstVectorMapIter, WhilstVectorUFilterIter, WhilstVectorUFlatMapIter,
         WhilstVectorUMapIter, WhilstVectorWhilstIter,
     },
