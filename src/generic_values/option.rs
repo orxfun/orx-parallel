@@ -176,11 +176,7 @@ impl<T> TransformableValues for Option<T> {
     where
         M: Fn(*mut U, Self::Item) -> O;
     #[inline(always)]
-    fn u_map<U, M, O>(
-        self,
-        u: *mut U,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    fn u_map<U, M, O>(self, u: *mut U, map: M) -> Self::UMap<U, M, O>
     where
         M: Fn(*mut U, Self::Item) -> O,
     {

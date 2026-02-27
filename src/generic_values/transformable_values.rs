@@ -50,11 +50,7 @@ pub trait TransformableValues: Values {
     type UMap<U, M, O>: TransformableValues<Item = O, Fallibility = Self::Fallibility>
     where
         M: Fn(*mut U, Self::Item) -> O;
-    fn u_map<U, M, O>(
-        self,
-        u: *mut U,
-        map: M,
-    ) -> impl TransformableValues<Item = O, Fallibility = Self::Fallibility>
+    fn u_map<U, M, O>(self, u: *mut U, map: M) -> Self::UMap<U, M, O>
     where
         M: Fn(*mut U, Self::Item) -> O;
 
