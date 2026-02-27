@@ -18,6 +18,10 @@ pub trait TransformableValues: Values {
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
+    type Whilst<W>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        W: Fn(&Self::Item) -> bool;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O;
@@ -35,10 +39,7 @@ pub trait TransformableValues: Values {
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
-    fn whilst<W>(
-        self,
-        whilst: W,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
     where
         W: Fn(&Self::Item) -> bool;
 
