@@ -38,7 +38,7 @@ impl<T> TransformableValues for WhilstOption<T> {
     }
 
     type FlatMap<Fm, Vo>
-        = WhilstVector<WhilstOptionIter<Vo>, Vo::Item>
+        = WhilstVector<WhilstOptionIter<Vo::IntoIter>, Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo;
@@ -47,7 +47,12 @@ impl<T> TransformableValues for WhilstOption<T> {
         Vo: IntoIterator,
         Fm: Fn(Self::Item) -> Vo,
     {
-        let iter = WhilstOptionIter::from_option(self, &flat_map);
+        let iter = match self {
+            Self::ContinueSome(x) => WhilstOption::ContinueSome(flat_map(x).into_iter()),
+            Self::ContinueNone => WhilstOption::ContinueNone,
+            Self::Stop => WhilstOption::Stop,
+        };
+        let iter = WhilstOptionIter::new(iter);
         WhilstVector(iter)
     }
 
@@ -141,7 +146,7 @@ impl<T> TransformableValues for WhilstOption<T> {
     }
 
     type UFlatMap<U, Fm, Vo>
-        = WhilstVector<WhilstOptionIter<Vo>, Vo::Item>
+        = WhilstVector<WhilstOptionIter<Vo::IntoIter>, Vo::Item>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo;
@@ -150,7 +155,12 @@ impl<T> TransformableValues for WhilstOption<T> {
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,
     {
-        let iter = WhilstOptionIter::u_from_option(u, self, &flat_map);
+        let iter = match self {
+            Self::ContinueSome(x) => WhilstOption::ContinueSome(flat_map(u, x).into_iter()),
+            Self::ContinueNone => WhilstOption::ContinueNone,
+            Self::Stop => WhilstOption::Stop,
+        };
+        let iter = WhilstOptionIter::new(iter);
         WhilstVector(iter)
     }
 
