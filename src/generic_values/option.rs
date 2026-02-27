@@ -2,9 +2,7 @@ use super::{TransformableValues, Vector};
 use crate::generic_values::Values;
 use crate::generic_values::{
     option_result::OptionResult,
-    runner_results::{
-        ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
-    },
+    runner_results::{ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush},
     whilst_option::WhilstOption,
 };
 use alloc::vec::Vec;
