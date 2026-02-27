@@ -1,5 +1,5 @@
 use crate::generic_values::runner_results::{
-    ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
+    ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use crate::generic_values::whilst_atom_result::WhilstAtomResult;
 use crate::generic_values::whilst_iterators::WhilstAtomFlatMapIter;
@@ -225,11 +225,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         = WhilstOption<T>
     where
         F: Fn(*mut U, &Self::Item) -> bool;
-    fn u_filter<U, F>(
-        self,
-        u: *mut U,
-        filter: F,
-    ) -> Self::UFilter<U, F>
+    fn u_filter<U, F>(self, u: *mut U, filter: F) -> Self::UFilter<U, F>
     where
         F: Fn(*mut U, &Self::Item) -> bool,
     {

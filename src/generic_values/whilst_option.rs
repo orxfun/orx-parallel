@@ -1,5 +1,5 @@
 use crate::generic_values::runner_results::{
-    ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
+    ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush,
 };
 use crate::generic_values::whilst_iterators::WhilstOptionFlatMapIter;
 use crate::generic_values::whilst_option_result::WhilstOptionResult;

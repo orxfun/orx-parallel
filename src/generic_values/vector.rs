@@ -1,9 +1,7 @@
 use super::transformable_values::TransformableValues;
 use crate::generic_values::{
     Values, VectorResult, WhilstVector,
-    runner_results::{
-        ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
-    },
+    runner_results::{ArbitraryPush, Infallible, Next, OrderedPush, Reduce, SequentialPush},
     whilst_iterators::{VectorUFilterIter, VectorUMapIter, VectorWhilstIter},
 };
 use alloc::vec::Vec;
@@ -194,11 +192,7 @@ where
         = Vector<VectorUFilterIter<I::IntoIter, U, F>>
     where
         F: Fn(*mut U, &Self::Item) -> bool;
-    fn u_filter<U, F>(
-        self,
-        u: *mut U,
-        filter: F,
-    ) ->Self::UFilter<U, F>
+    fn u_filter<U, F>(self, u: *mut U, filter: F) -> Self::UFilter<U, F>
     where
         F: Fn(*mut U, &Self::Item) -> bool,
     {
