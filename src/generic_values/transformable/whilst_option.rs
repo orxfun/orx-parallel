@@ -1,5 +1,6 @@
 use crate::generic_values::{
-    TransformableValues, WhilstOption, WhilstVector, whilst_iterators::WhilstOptionFlatMapIter,
+    TransformableValues, WhilstOption, WhilstVector,
+    transformable::iter::WhilstOptionFlatMapIter,
     whilst_option_result::WhilstOptionResult,
 };
 

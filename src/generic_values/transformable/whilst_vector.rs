@@ -1,6 +1,6 @@
 use crate::generic_values::{
     TransformableValues, WhilstAtom, WhilstVector,
-    whilst_iterators::{
+    transformable::iter::{
         WhilstVectorFilterIter, WhilstVectorFilterMapIter, WhilstVectorFlatMapIter,
         WhilstVectorMapIter, WhilstVectorUFilterIter, WhilstVectorUFilterMapIter,
         WhilstVectorUFlatMapIter, WhilstVectorUMapIter, WhilstVectorWhilstIter,
