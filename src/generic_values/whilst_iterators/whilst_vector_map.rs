@@ -5,7 +5,7 @@ where
     I: Iterator<Item = WhilstAtom<T>>,
     M: Fn(T) -> O,
 {
-    current_iter: I,
+    iter: I,
     map: M,
 }
 
@@ -14,8 +14,8 @@ where
     I: Iterator<Item = WhilstAtom<T>>,
     M: Fn(T) -> O,
 {
-    pub(crate) fn new(current_iter: I, map: M) -> Self {
-        Self { current_iter, map }
+    pub(crate) fn new(iter: I, map: M) -> Self {
+        Self { iter, map }
     }
 }
 
@@ -28,7 +28,7 @@ where
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        self.current_iter.next().map(|x| match x {
+        self.iter.next().map(|x| match x {
             WhilstAtom::Continue(x) => WhilstAtom::Continue((self.map)(x)),
             WhilstAtom::Stop => WhilstAtom::Stop,
         })

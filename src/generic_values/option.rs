@@ -92,6 +92,11 @@ impl<T> TransformableValues for Option<T> {
     where
         M: Fn(Self::Item) -> O;
 
+    type Filter<F>
+        = Option<T>
+    where
+        F: Fn(&Self::Item) -> bool;
+
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
@@ -101,10 +106,7 @@ impl<T> TransformableValues for Option<T> {
     }
 
     #[inline(always)]
-    fn filter<F>(
-        self,
-        filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
         F: Fn(&Self::Item) -> bool,
     {

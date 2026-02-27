@@ -113,6 +113,11 @@ impl<T> TransformableValues for WhilstAtom<T> {
     where
         M: Fn(Self::Item) -> O;
 
+    type Filter<F>
+        = WhilstOption<T>
+    where
+        F: Fn(&Self::Item) -> bool;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -123,10 +128,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
-    fn filter<F>(
-        self,
-        filter: F,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
         F: Fn(&Self::Item) -> bool + Clone,
     {
