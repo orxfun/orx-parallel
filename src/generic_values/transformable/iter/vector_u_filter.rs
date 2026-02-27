@@ -13,7 +13,7 @@ where
     I: Iterator,
     F: Fn(*mut U, &I::Item) -> bool,
 {
-    pub(crate) fn new(u: *mut U, iter: I, filter: F) -> Self {
+    pub fn new(u: *mut U, iter: I, filter: F) -> Self {
         Self { u, iter, filter }
     }
 }
@@ -25,6 +25,7 @@ where
 {
     type Item = I::Item;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.find(|x| (self.filter)(self.u, &x))
     }

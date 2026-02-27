@@ -1,31 +1,32 @@
 use crate::generic_values::whilst_atom::WhilstAtom;
 
-pub struct WhilstAtomIter<Vo>
+pub struct WhilstAtomIter<I>
 where
-    Vo: IntoIterator,
+    I: IntoIterator,
 {
-    iter: WhilstAtom<Vo::IntoIter>,
+    iter: WhilstAtom<I::IntoIter>,
 }
 
-impl<Vo> WhilstAtomIter<Vo>
+impl<I> WhilstAtomIter<I>
 where
-    Vo: IntoIterator,
+    I: IntoIterator,
 {
-    pub(crate) fn new(iter: WhilstAtom<Vo::IntoIter>) -> Self {
+    pub fn new(iter: WhilstAtom<I::IntoIter>) -> Self {
         Self { iter }
     }
 }
 
-impl<Vo> Iterator for WhilstAtomIter<Vo>
+impl<I> Iterator for WhilstAtomIter<I>
 where
-    Vo: IntoIterator,
+    I: IntoIterator,
 {
-    type Item = WhilstAtom<Vo::Item>;
+    type Item = WhilstAtom<I::Item>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.iter {
-            WhilstAtom::Continue(x) => x.next().map(WhilstAtom::Continue), // None if flat-map iterator is consumed
-            WhilstAtom::Stop => Some(WhilstAtom::Stop),                    // input is Stop
+            WhilstAtom::Continue(x) => x.next().map(WhilstAtom::Continue), // None if iterator is consumed
+            WhilstAtom::Stop => Some(WhilstAtom::Stop), // Stop if input iter is Stop
         }
     }
 }

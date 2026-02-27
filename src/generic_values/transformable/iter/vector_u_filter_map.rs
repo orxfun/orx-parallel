@@ -13,7 +13,7 @@ where
     I: Iterator,
     Fm: Fn(*mut U, I::Item) -> Option<O>,
 {
-    pub(crate) fn new(u: *mut U, iter: I, filter_map: Fm) -> Self {
+    pub fn new(u: *mut U, iter: I, filter_map: Fm) -> Self {
         Self {
             u,
             iter,
@@ -29,6 +29,7 @@ where
 {
     type Item = O;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.find_map(|x| (self.filter_map)(self.u, x))
     }
