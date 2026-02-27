@@ -38,10 +38,12 @@ pub trait TransformableValues: Values {
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
-    fn whilst(
+    fn whilst<W>(
         self,
-        whilst: impl Fn(&Self::Item) -> bool,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>;
+        whilst: W,
+    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        W: Fn(&Self::Item) -> bool;
 
     fn map_while_ok<Mr, O, E>(
         self,

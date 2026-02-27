@@ -158,12 +158,12 @@ where
         Vector(self.0.into_iter().filter_map(filter_map))
     }
 
-    fn whilst(
+    fn whilst<W>(
         self,
-        whilst: impl Fn(&Self::Item) -> bool,
+        whilst: W,
     ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
-        Self: Sized,
+        W: Fn(&Self::Item) -> bool,
     {
         let iter = self.0.into_iter().map(move |x| match whilst(&x) {
             true => WhilstAtom::Continue(x),
