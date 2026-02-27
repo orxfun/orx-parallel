@@ -108,6 +108,11 @@ impl<T> TransformableValues for Option<T> {
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
+    type Whilst<W>
+        = WhilstOption<T>
+    where
+        W: Fn(&Self::Item) -> bool;
+
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
@@ -144,10 +149,7 @@ impl<T> TransformableValues for Option<T> {
         }
     }
 
-    fn whilst<W>(
-        self,
-        whilst: W,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
     where
         W: Fn(&Self::Item) -> bool,
     {

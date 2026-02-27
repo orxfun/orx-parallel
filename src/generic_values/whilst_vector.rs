@@ -6,7 +6,7 @@ use crate::generic_values::{
     },
     whilst_iterators::{
         WhilstAtomFlatMapIter, WhilstVectorFilterIter, WhilstVectorFilterMapIter,
-        WhilstVectorFlatMapIter, WhilstVectorMapIter,
+        WhilstVectorFlatMapIter, WhilstVectorMapIter, WhilstVectorWhilstIter,
     },
     whilst_vector_result::WhilstVectorResult,
 };
@@ -164,6 +164,11 @@ where
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
+    type Whilst<W>
+        = WhilstVector<WhilstVectorWhilstIter<<I as IntoIterator>::IntoIter, T, W>, T>
+    where
+        W: Fn(&Self::Item) -> bool;
+
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
         M: Fn(Self::Item) -> O,
@@ -197,20 +202,11 @@ where
         WhilstVector(iter)
     }
 
-    fn whilst<W>(
-        self,
-        whilst: W,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
     where
         W: Fn(&Self::Item) -> bool,
     {
-        let iter = self.0.into_iter().map(move |x| match x {
-            WhilstAtom::Continue(x) => match whilst(&x) {
-                true => WhilstAtom::Continue(x),
-                false => WhilstAtom::Stop,
-            },
-            WhilstAtom::Stop => WhilstAtom::Stop,
-        });
+        let iter = WhilstVectorWhilstIter::new(self.0.into_iter(), whilst);
         WhilstVector(iter)
     }
 

@@ -4,6 +4,7 @@ use crate::generic_values::{
     runner_results::{
         ArbitraryPush, Fallible, Infallible, Next, OrderedPush, Reduce, SequentialPush,
     },
+    whilst_iterators::VectorWhilstIter,
 };
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -122,6 +123,11 @@ where
     where
         Fm: Fn(Self::Item) -> Option<O>;
 
+    type Whilst<W>
+        = WhilstVector<VectorWhilstIter<<I as IntoIterator>::IntoIter, W>, Self::Item>
+    where
+        W: Fn(&Self::Item) -> bool;
+
     #[inline(always)]
     fn map<M, O>(self, map: M) -> Self::Map<M, O>
     where
@@ -155,17 +161,11 @@ where
         Vector(self.0.into_iter().filter_map(filter_map))
     }
 
-    fn whilst<W>(
-        self,
-        whilst: W,
-    ) -> impl TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
     where
         W: Fn(&Self::Item) -> bool,
     {
-        let iter = self.0.into_iter().map(move |x| match whilst(&x) {
-            true => WhilstAtom::Continue(x),
-            false => WhilstAtom::Stop,
-        });
+        let iter = VectorWhilstIter::new(self.0.into_iter(), whilst);
         WhilstVector(iter)
     }
 
