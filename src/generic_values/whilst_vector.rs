@@ -174,7 +174,7 @@ where
 
     fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
-        F: Fn(&Self::Item) -> bool + Clone,
+        F: Fn(&Self::Item) -> bool,
     {
         let iter = WhilstVectorFilterIter::new(self.0.into_iter(), filter);
         WhilstVector(iter)

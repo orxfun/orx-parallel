@@ -139,7 +139,7 @@ impl<T> TransformableValues for WhilstOption<T> {
 
     fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
-        F: Fn(&Self::Item) -> bool + Clone,
+        F: Fn(&Self::Item) -> bool,
     {
         match self {
             Self::ContinueSome(x) => match filter(&x) {
