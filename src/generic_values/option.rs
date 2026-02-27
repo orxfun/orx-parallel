@@ -193,16 +193,18 @@ impl<T> TransformableValues for Option<T> {
         self.filter(|x| filter(u, x))
     }
 
-    fn u_flat_map<U, Fm, Vo>(
-        self,
-        u: *mut U,
-        flat_map: Fm,
-    ) -> impl TransformableValues<Item = Vo::Item, Fallibility = Self::Fallibility>
+    type UFlatMap<U, Fm, Vo>
+        = Vector<core::iter::Flatten<core::option::IntoIter<Vo>>>
+    where
+        Vo: IntoIterator,
+        Fm: Fn(*mut U, Self::Item) -> Vo;
+    fn u_flat_map<U, Fm, Vo>(self, u: *mut U, flat_map: Fm) -> Self::UFlatMap<U, Fm, Vo>
     where
         Vo: IntoIterator,
         Fm: Fn(*mut U, Self::Item) -> Vo,
     {
-        Vector(self.into_iter().flat_map(move |x| flat_map(u, x)))
+        let iter = self.map(|x| flat_map(u, x)).into_iter().flatten();
+        Vector(iter)
     }
 
     fn u_filter_map<U, Fm, O>(
