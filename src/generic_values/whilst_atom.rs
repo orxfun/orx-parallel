@@ -207,6 +207,10 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
+    type UMap<U, M, O>
+        = WhilstAtom<O>
+    where
+        M: Fn(*mut U, Self::Item) -> O;
     fn u_map<U, M, O>(
         self,
         u: *mut U,

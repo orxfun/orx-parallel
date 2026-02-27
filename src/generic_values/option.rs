@@ -171,6 +171,10 @@ impl<T> TransformableValues for Option<T> {
         OptionResult(opt_res)
     }
 
+    type UMap<U, M, O>
+        = Option<O>
+    where
+        M: Fn(*mut U, Self::Item) -> O;
     #[inline(always)]
     fn u_map<U, M, O>(
         self,
