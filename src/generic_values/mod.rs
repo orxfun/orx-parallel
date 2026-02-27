@@ -3,7 +3,7 @@ mod option;
 mod option_result;
 mod result;
 pub(crate) mod runner_results;
-mod transformable_values;
+mod transformable;
 mod values;
 mod vector;
 mod vector_result;
@@ -15,7 +15,7 @@ mod whilst_option_result;
 mod whilst_vector;
 mod whilst_vector_result;
 
-pub use transformable_values::TransformableValues;
+pub use transformable::TransformableValues;
 pub use values::Values;
 pub use vector::Vector;
 pub use vector_result::VectorResult;
