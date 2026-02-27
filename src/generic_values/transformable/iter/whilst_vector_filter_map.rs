@@ -28,17 +28,12 @@ where
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.iter.next() {
-                Some(x) => match x {
-                    WhilstAtom::Continue(x) => match (self.filter_map)(x) {
-                        Some(y) => return Some(WhilstAtom::Continue(y)),
-                        None => continue,
-                    },
-                    WhilstAtom::Stop => return Some(WhilstAtom::Stop),
-                },
-                None => return None,
-            }
-        }
+        self.iter.find_map(|x| match x {
+            WhilstAtom::Continue(x) => match (self.filter_map)(x) {
+                Some(y) => Some(WhilstAtom::Continue(y)),
+                None => None,
+            },
+            WhilstAtom::Stop => Some(WhilstAtom::Stop),
+        })
     }
 }
