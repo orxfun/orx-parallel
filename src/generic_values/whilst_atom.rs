@@ -141,7 +141,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
 
     fn filter<F>(self, filter: F) -> Self::Filter<F>
     where
-        F: Fn(&Self::Item) -> bool + Clone,
+        F: Fn(&Self::Item) -> bool,
     {
         match self {
             Self::Continue(x) => match filter(&x) {
@@ -155,7 +155,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
     fn flat_map<Fm, Vo>(self, flat_map: Fm) -> Self::FlatMap<Fm, Vo>
     where
         Vo: IntoIterator,
-        Fm: Fn(Self::Item) -> Vo + Clone,
+        Fm: Fn(Self::Item) -> Vo,
     {
         let iter = WhilstAtomFlatMapIter::from_atom(self, &flat_map);
         WhilstVector(iter)
