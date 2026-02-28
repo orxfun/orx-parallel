@@ -16,6 +16,18 @@ where
     phantom: PhantomData<(I, O)>,
 }
 
+impl<I, O, F> FnMapUnit<I, O, F>
+where
+    F: Fn(I) -> O,
+{
+    pub fn new(f: F) -> Self {
+        Self {
+            f,
+            phantom: PhantomData,
+        }
+    }
+}
+
 impl<I, O, F> FnMap for FnMapUnit<I, O, F>
 where
     F: Fn(I) -> O,
@@ -39,6 +51,9 @@ pub trait MapQ: FnMap {
     type PushBack<Elem>: MapQ<I = Self::I, O = Elem::O>
     where
         Elem: FnMap<I = Self::O>;
+    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    where
+        Elem: FnMap<I = Self::O>;
 }
 
 // queue - single
@@ -56,6 +71,15 @@ impl<F: FnMap> MapQ for MapQSingle<F> {
         = MapQPair<F, MapQSingle<Elem>>
     where
         Elem: FnMap<I = Self::O>;
+    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    where
+        Elem: FnMap<I = Self::O>,
+    {
+        MapQPair {
+            f: self.f,
+            b: MapQSingle { f: elem },
+        }
+    }
 }
 
 impl<F: FnMap> FnMap for MapQSingle<F> {
@@ -90,6 +114,15 @@ where
         = MapQPair<F, B::PushBack<Elem>>
     where
         Elem: FnMap<I = Self::O>;
+    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    where
+        Elem: FnMap<I = Self::O>,
+    {
+        MapQPair {
+            f: self.f,
+            b: self.b.push_back(elem),
+        }
+    }
 }
 
 impl<F: FnMap, B: MapQ> FnMap for MapQPair<F, B>
