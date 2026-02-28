@@ -139,11 +139,7 @@ where
         Map: Fn(Self::Item) -> Out + Sync + Clone,
     {
         let (orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |i: I::Item| {
-            let vo = x1(i);
-            vo.map(map.clone())
-        };
-
+        let x1 = move |i: I::Item| x1(i).map(map.clone());
         ParXap::new(orchestrator, params, iter, x1)
     }
 
@@ -152,10 +148,7 @@ where
         Filter: Fn(&Self::Item) -> bool + Sync + Clone,
     {
         let (orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |i: I::Item| {
-            let values = x1(i);
-            values.filter(filter.clone())
-        };
+        let x1 = move |i: I::Item| x1(i).filter(filter.clone());
         ParXap::new(orchestrator, params, iter, x1)
     }
 
@@ -165,10 +158,7 @@ where
         FlatMap: Fn(Self::Item) -> IOut + Sync + Clone,
     {
         let (orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |i: I::Item| {
-            let vo = x1(i);
-            vo.flat_map(flat_map.clone())
-        };
+        let x1 = move |i: I::Item| x1(i).flat_map(flat_map.clone());
         ParXap::new(orchestrator, params, iter, x1)
     }
 
@@ -177,10 +167,7 @@ where
         FilterMap: Fn(Self::Item) -> Option<Out> + Sync + Clone,
     {
         let (orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |i: I::Item| {
-            let vo = x1(i);
-            vo.filter_map(filter_map.clone())
-        };
+        let x1 = move |i: I::Item| x1(i).filter_map(filter_map.clone());
         ParXap::new(orchestrator, params, iter, x1)
     }
 
@@ -189,10 +176,7 @@ where
         While: Fn(&Self::Item) -> bool + Sync + Clone,
     {
         let (orchestrator, params, iter, x1) = self.destruct();
-        let x1 = move |i: I::Item| {
-            let vo = x1(i);
-            vo.whilst(take_while.clone())
-        };
+        let x1 = move |i: I::Item| x1(i).whilst(take_while.clone());
         ParXap::new(orchestrator, params, iter, x1)
     }
 
