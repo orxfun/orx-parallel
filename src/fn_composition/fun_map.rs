@@ -2,97 +2,97 @@ use core::marker::PhantomData;
 
 // trait
 
-pub trait FunMap<A, B> {
-    fn call(&self, input: A) -> B;
+pub trait FunMap<T1, T2> {
+    fn call(&self, input: T1) -> T2;
 }
 
 // unit
 
-pub struct FunMapUnit<A, B, F1>
+pub struct FunMapUnit<T1, T2, F>
 where
-    F1: Fn(A) -> B,
+    F: Fn(T1) -> T2,
 {
-    f1: F1,
-    phantom: PhantomData<(A, B)>,
+    f1: F,
+    phantom: PhantomData<(T1, T2)>,
 }
 
-impl<A, B, F1> FunMap<A, B> for FunMapUnit<A, B, F1>
+impl<T1, T2, F> FunMap<T1, T2> for FunMapUnit<T1, T2, F>
 where
-    F1: Fn(A) -> B,
+    F: Fn(T1) -> T2,
 {
     #[inline(always)]
-    fn call(&self, input: A) -> B {
+    fn call(&self, input: T1) -> T2 {
         (self.f1)(input)
     }
 }
 
 // composition
 
-pub trait Map<A, B>: FunMap<A, B> {
-    type Map<M, X>: Map<A, X>
+pub trait Map<T1, T2>: FunMap<T1, T2> {
+    type Map<T, X>: Map<T1, T>
     where
-        M: Map<B, X>;
+        X: Map<T2, T>;
 }
 
 // single
 
-pub struct MapSingle<A, B, F1>
+pub struct MapSingle<T1, T2, F>
 where
-    F1: FunMap<A, B>,
+    F: FunMap<T1, T2>,
 {
-    f1: F1,
-    phantom: PhantomData<(A, B)>,
+    f1: F,
+    phantom: PhantomData<(T1, T2)>,
 }
 
-impl<A, B, F1> Map<A, B> for MapSingle<A, B, F1>
+impl<T1, T2, F> Map<T1, T2> for MapSingle<T1, T2, F>
 where
-    F1: FunMap<A, B>,
+    F: FunMap<T1, T2>,
 {
-    type Map<M, X>
-        = MapPair<A, B, X, F1, M>
+    type Map<T, X>
+        = MapPair<T1, T2, T, F, X>
     where
-        M: Map<B, X>;
+        X: Map<T2, T>;
 }
 
-impl<A, B, F1> FunMap<A, B> for MapSingle<A, B, F1>
+impl<T1, T2, F> FunMap<T1, T2> for MapSingle<T1, T2, F>
 where
-    F1: FunMap<A, B>,
+    F: FunMap<T1, T2>,
 {
     #[inline(always)]
-    fn call(&self, input: A) -> B {
+    fn call(&self, input: T1) -> T2 {
         self.f1.call(input)
     }
 }
 
 // pair
 
-pub struct MapPair<A, B, C, F1, F2>
+pub struct MapPair<T1, T2, T3, F, B>
 where
-    F1: FunMap<A, B>,
-    F2: Map<B, C>,
+    F: FunMap<T1, T2>,
+    B: Map<T2, T3>,
 {
-    f1: F1,
-    f2: F2,
-    phantom: PhantomData<(A, B, C)>,
+    f1: F,
+    f2: B,
+    phantom: PhantomData<(T1, T2, T3)>,
 }
 
-impl<A, B, C, F1, F2> Map<A, C> for MapPair<A, B, C, F1, F2>
+impl<T1, T2, T3, F, B> Map<T1, T3> for MapPair<T1, T2, T3, F, B>
 where
-    F1: FunMap<A, B>,
-    F2: Map<B, C>,
+    F: FunMap<T1, T2>,
+    B: Map<T2, T3>,
 {
-    type Map<M, X>
-        = MapPair<A, B, X, F1, F2::Map<M, X>>
+    type Map<T, X>
+        = MapPair<T1, T2, T, F, B::Map<T, X>>
     where
-        M: Map<C, X>;
+        X: Map<T3, T>;
 }
 
-impl<A, B, C, F1, F2> FunMap<A, C> for MapPair<A, B, C, F1, F2>
+impl<T1, T2, T3, F, B> FunMap<T1, T3> for MapPair<T1, T2, T3, F, B>
 where
-    F1: FunMap<A, B>,
-    F2: Map<B, C>,
+    F: FunMap<T1, T2>,
+    B: Map<T2, T3>,
 {
-    fn call(&self, input: A) -> C {
+    fn call(&self, input: T1) -> T3 {
         self.f2.call(self.f1.call(input))
     }
 }
