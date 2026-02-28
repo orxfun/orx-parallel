@@ -8,17 +8,17 @@ pub trait FunFilter<T> {
 
 // unit
 
-pub struct FunFilterUnit<T, F1>
+pub struct FunFilterUnit<T, F>
 where
-    F1: Fn(&T) -> bool,
+    F: Fn(&T) -> bool,
 {
-    f1: F1,
+    f1: F,
     phantom: PhantomData<T>,
 }
 
-impl<T, F1> FunFilter<T> for FunFilterUnit<T, F1>
+impl<T, F> FunFilter<T> for FunFilterUnit<T, F>
 where
-    F1: Fn(&T) -> bool,
+    F: Fn(&T) -> bool,
 {
     #[inline(always)]
     fn call(&self, input: &T) -> bool {
