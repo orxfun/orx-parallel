@@ -108,14 +108,24 @@ where
         ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 
-    // fn filter_map<Out, FilterMap>(self, filter_map: FilterMap) -> char
-    // where
-    //     Self: Sized,
-    //     FilterMap: Fn(I::Item) -> Option<Out> + Sync + Clone,
-    //     Out: Send,
-    // {
-    //     todo!()
-    // }
+    fn filter_map<Out, FilterMap>(
+        self,
+        filter_map: FilterMap,
+    ) -> ParXapOption<
+        I,
+        Vo::FilterMap<FilterMap, Out>,
+        impl Fn(I::Item) -> Option<Vo::FilterMap<FilterMap, Out>>,
+        R,
+    >
+    where
+        Self: Sized,
+        FilterMap: Fn(Vo::Item) -> Option<Out> + Sync + Clone,
+        Out: Send,
+    {
+        let (runner, params, iter, xap1) = self.par.destruct();
+        let x1 = move |i: I::Item| xap1(i).map(|vo| vo.filter_map(filter_map.clone()));
+        ParXapOption::new(ParXap::new(runner, params, iter, x1))
+    }
 
     // fn inspect<Operation>(self, operation: Operation) -> char
     // where
