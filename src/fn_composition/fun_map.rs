@@ -1,10 +1,14 @@
 use core::marker::PhantomData;
 
-pub trait FnMap<A, B> {
+// trait
+
+pub trait FunMap<A, B> {
     fn call(&self, input: A) -> B;
 }
 
-pub struct FnMapWrapper<A, B, F1>
+// unit
+
+pub struct FunMapWrapper<A, B, F1>
 where
     F1: Fn(A) -> B,
 {
@@ -12,7 +16,7 @@ where
     phantom: PhantomData<(A, B)>,
 }
 
-impl<A, B, F1> FnMap<A, B> for FnMapWrapper<A, B, F1>
+impl<A, B, F1> FunMap<A, B> for FunMapWrapper<A, B, F1>
 where
     F1: Fn(A) -> B,
 {
@@ -22,7 +26,9 @@ where
     }
 }
 
-pub trait Map<A, B>: FnMap<A, B> {
+// composition
+
+pub trait Map<A, B>: FunMap<A, B> {
     type Map<M, X>: Map<A, X>
     where
         M: Map<B, X>;
@@ -32,7 +38,7 @@ pub trait Map<A, B>: FnMap<A, B> {
 
 pub struct MapSingle<A, B, F1>
 where
-    F1: FnMap<A, B>,
+    F1: FunMap<A, B>,
 {
     f1: F1,
     phantom: PhantomData<(A, B)>,
@@ -40,7 +46,7 @@ where
 
 impl<A, B, F1> Map<A, B> for MapSingle<A, B, F1>
 where
-    F1: FnMap<A, B>,
+    F1: FunMap<A, B>,
 {
     type Map<M, X>
         = MapPair<A, B, X, F1, M>
@@ -48,9 +54,9 @@ where
         M: Map<B, X>;
 }
 
-impl<A, B, F1> FnMap<A, B> for MapSingle<A, B, F1>
+impl<A, B, F1> FunMap<A, B> for MapSingle<A, B, F1>
 where
-    F1: FnMap<A, B>,
+    F1: FunMap<A, B>,
 {
     #[inline(always)]
     fn call(&self, input: A) -> B {
@@ -62,7 +68,7 @@ where
 
 pub struct MapPair<A, B, C, F1, F2>
 where
-    F1: FnMap<A, B>,
+    F1: FunMap<A, B>,
     F2: Map<B, C>,
 {
     f1: F1,
@@ -72,7 +78,7 @@ where
 
 impl<A, B, C, F1, F2> Map<A, C> for MapPair<A, B, C, F1, F2>
 where
-    F1: FnMap<A, B>,
+    F1: FunMap<A, B>,
     F2: Map<B, C>,
 {
     type Map<M, X>
@@ -81,9 +87,9 @@ where
         M: Map<C, X>;
 }
 
-impl<A, B, C, F1, F2> FnMap<A, C> for MapPair<A, B, C, F1, F2>
+impl<A, B, C, F1, F2> FunMap<A, C> for MapPair<A, B, C, F1, F2>
 where
-    F1: FnMap<A, B>,
+    F1: FunMap<A, B>,
     F2: Map<B, C>,
 {
     fn call(&self, input: A) -> C {
