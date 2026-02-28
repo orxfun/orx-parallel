@@ -1,5 +1,5 @@
 use crate::fun_composition::{
-    fn_filter::{FilterQ, FnFilterUnit},
+    fn_filter::{FilterQ, WrFilter},
     fn_map::MapQ,
     xap::fn_xap::Xap,
 };
@@ -44,11 +44,11 @@ where
         }
     }
 
-    pub fn filter<F2>(self, f2: F2) -> MapFilter<I, O, M, F::PushBack<FnFilterUnit<O, F2>>>
+    pub fn filter<F2>(self, f2: F2) -> MapFilter<I, O, M, F::Pb<WrFilter<O, F2>>>
     where
         F2: Fn(&O) -> bool,
     {
-        let f = self.f.push_back(FnFilterUnit::new(f2));
+        let f = self.f.push_back(WrFilter::new(f2));
         MapFilter::new(self.m, f)
     }
 }

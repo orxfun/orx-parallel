@@ -1,6 +1,6 @@
 use crate::fun_composition::{
     fn_filter::FilterQ,
-    fn_map::{FnMapUnit, MapQ},
+    fn_map::{MapQ, WrMap},
     xap::fn_xap::Xap,
 };
 use core::marker::PhantomData;
@@ -43,11 +43,11 @@ where
         }
     }
 
-    pub fn map<M2, O2>(self, m2: M2) -> FilterMap<I, O2, F, M::PushBack<FnMapUnit<O, O2, M2>>>
+    pub fn map<M2, O2>(self, m2: M2) -> FilterMap<I, O2, F, M::Pb<WrMap<O, O2, M2>>>
     where
         M2: Fn(O) -> O2,
     {
-        let m = self.m.push_back(FnMapUnit::new(m2));
+        let m = self.m.push_back(WrMap::new(m2));
         FilterMap::new(self.f, m)
     }
 }

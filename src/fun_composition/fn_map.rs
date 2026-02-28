@@ -8,7 +8,7 @@ pub trait FnMap {
     fn run(&self, i: Self::I) -> Self::O;
 }
 
-pub struct FnMapUnit<I, O, F>
+pub struct WrMap<I, O, F>
 where
     F: Fn(I) -> O,
 {
@@ -16,7 +16,7 @@ where
     phantom: PhantomData<(I, O)>,
 }
 
-impl<I, O, F> FnMapUnit<I, O, F>
+impl<I, O, F> WrMap<I, O, F>
 where
     F: Fn(I) -> O,
 {
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<I, O, F> FnMap for FnMapUnit<I, O, F>
+impl<I, O, F> FnMap for WrMap<I, O, F>
 where
     F: Fn(I) -> O,
 {
@@ -48,10 +48,10 @@ pub trait MapQ: FnMap {
 
     type Back: MapQ;
 
-    type PushBack<Elem>: MapQ<I = Self::I, O = Elem::O>
+    type Pb<Elem>: MapQ<I = Self::I, O = Elem::O>
     where
         Elem: FnMap<I = Self::O>;
-    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnMap<I = Self::O>;
 }
@@ -67,11 +67,11 @@ impl<F: FnMap> MapQ for MapQSingle<F> {
 
     type Back = Self;
 
-    type PushBack<Elem>
+    type Pb<Elem>
         = MapQPair<F, MapQSingle<Elem>>
     where
         Elem: FnMap<I = Self::O>;
-    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnMap<I = Self::O>,
     {
@@ -110,11 +110,11 @@ where
 
     type Back = B;
 
-    type PushBack<Elem>
-        = MapQPair<F, B::PushBack<Elem>>
+    type Pb<Elem>
+        = MapQPair<F, B::Pb<Elem>>
     where
         Elem: FnMap<I = Self::O>;
-    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnMap<I = Self::O>,
     {

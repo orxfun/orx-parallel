@@ -6,7 +6,7 @@ pub trait FnFilter {
     fn run(&self, i: &Self::I) -> bool;
 }
 
-pub struct FnFilterUnit<I, F>
+pub struct WrFilter<I, F>
 where
     F: Fn(&I) -> bool,
 {
@@ -14,7 +14,7 @@ where
     phantom: PhantomData<I>,
 }
 
-impl<I, F> FnFilterUnit<I, F>
+impl<I, F> WrFilter<I, F>
 where
     F: Fn(&I) -> bool,
 {
@@ -26,7 +26,7 @@ where
     }
 }
 
-impl<I, F> FnFilter for FnFilterUnit<I, F>
+impl<I, F> FnFilter for WrFilter<I, F>
 where
     F: Fn(&I) -> bool,
 {
@@ -44,10 +44,10 @@ pub trait FilterQ: FnFilter {
 
     type Back: FilterQ;
 
-    type PushBack<Elem>: FilterQ<I = Self::I>
+    type Pb<Elem>: FilterQ<I = Self::I>
     where
         Elem: FnFilter<I = Self::I>;
-    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnFilter<I = Self::I>;
 }
@@ -63,11 +63,11 @@ impl<F: FnFilter> FilterQ for MapQSingle<F> {
 
     type Back = Self;
 
-    type PushBack<Elem>
+    type Pb<Elem>
         = MapQPair<F, MapQSingle<Elem>>
     where
         Elem: FnFilter<I = Self::I>;
-    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnFilter<I = Self::I>,
     {
@@ -104,11 +104,11 @@ where
 
     type Back = B;
 
-    type PushBack<Elem>
-        = MapQPair<F, B::PushBack<Elem>>
+    type Pb<Elem>
+        = MapQPair<F, B::Pb<Elem>>
     where
         Elem: FnFilter<I = Self::I>;
-    fn push_back<Elem>(self, elem: Elem) -> Self::PushBack<Elem>
+    fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnFilter<I = Self::I>,
     {
