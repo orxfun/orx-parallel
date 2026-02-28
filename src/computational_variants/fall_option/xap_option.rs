@@ -143,4 +143,14 @@ where
         let x1 = move |i: I::Item| xap1(i).map(|vo| vo.inspect(operation.clone()));
         ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
+
+    // pub fn take_while<While>(self, take_while: While) -> char
+    // where
+    //     While: Fn(&Vo::Item) -> bool + Sync + Clone,
+    // {
+    //     let (orchestrator, params, iter, x1) = self.par.destruct();
+    //     let x1 = move |i: I::Item| x1(i).whilst(take_while.clone());
+    //     ParXap::new(orchestrator, params, iter, x1);
+    //     'a'
+    // }
 }
