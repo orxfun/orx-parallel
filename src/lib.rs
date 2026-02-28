@@ -25,6 +25,7 @@ mod enumerate;
 mod env;
 /// Module defining the parallel runner trait and the default parallel runner.
 pub mod executor;
+mod fn_composition;
 mod generic_values;
 mod heap_sort;
 mod into_par_iter;
