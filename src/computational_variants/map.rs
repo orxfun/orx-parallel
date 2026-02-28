@@ -127,7 +127,11 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
+    // type Map<Out, Map>
+    //     = ParMap<I, Out, impl Fn(I::Item) -> Out, R>
+    // where
+    //     Map: Fn(Self::Item) -> Out + Sync + Clone;
+    fn map<Out, Map>(self, map: Map) -> ParMap<I, Out, impl Fn(I::Item) -> Out, R>
     where
         Map: Fn(Self::Item) -> Out + Sync,
     {

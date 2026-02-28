@@ -134,7 +134,14 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(self, map: Map) -> impl ParIter<R, Item = Out>
+    // type Map<Out, Map>
+    //     = ParXap<I, Vo::Map<Map, Out>, impl Fn(I::Item) -> Vo::Map<Map, Out>, R>
+    // where
+    //     Map: Fn(Self::Item) -> Out + Sync + Clone;
+    fn map<Out, Map>(
+        self,
+        map: Map,
+    ) -> ParXap<I, Vo::Map<Map, Out>, impl Fn(I::Item) -> Vo::Map<Map, Out>, R>
     where
         Map: Fn(Self::Item) -> Out + Sync + Clone,
     {

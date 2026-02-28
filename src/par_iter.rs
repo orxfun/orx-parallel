@@ -726,6 +726,9 @@ where
 
     // computation transformations
 
+    // type Map<Out, Map>: ParIter<R, Item = Out>
+    // where
+    //     Map: Fn(Self::Item) -> Out + Sync + Clone;
     /// Takes a closure `map` and creates a parallel iterator which calls that closure on each element.
     ///
     /// # Examples
