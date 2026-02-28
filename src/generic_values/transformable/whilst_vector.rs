@@ -2,8 +2,9 @@ use crate::generic_values::{
     TransformableValues, WhilstAtom, WhilstVector,
     transformable::iter::{
         WhilstVectorFilterIter, WhilstVectorFilterMapIter, WhilstVectorFlatMapIter,
-        WhilstVectorMapIter, WhilstVectorUFilterIter, WhilstVectorUFilterMapIter,
-        WhilstVectorUFlatMapIter, WhilstVectorUMapIter, WhilstVectorWhilstIter,
+        WhilstVectorInspectIter, WhilstVectorMapIter, WhilstVectorUFilterIter,
+        WhilstVectorUFilterMapIter, WhilstVectorUFlatMapIter, WhilstVectorUMapIter,
+        WhilstVectorWhilstIter,
     },
     whilst_vector_result::WhilstVectorResult,
 };
@@ -21,6 +22,18 @@ where
         M: Fn(Self::Item) -> O,
     {
         let iter = WhilstVectorMapIter::new(self.0.into_iter(), map);
+        WhilstVector(iter)
+    }
+
+    type Inspect<F>
+        = WhilstVector<WhilstVectorInspectIter<I::IntoIter, T, F>, T>
+    where
+        F: Fn(&Self::Item);
+    fn inspect<F, O>(self, inspect: F) -> Self::Inspect<F>
+    where
+        F: Fn(&Self::Item),
+    {
+        let iter = WhilstVectorInspectIter::new(self.0.into_iter(), inspect);
         WhilstVector(iter)
     }
 

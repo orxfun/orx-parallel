@@ -19,6 +19,24 @@ impl<T> TransformableValues for WhilstOption<T> {
         }
     }
 
+    type Inspect<F>
+        = Self
+    where
+        F: Fn(&Self::Item);
+    fn inspect<F, O>(self, inspect: F) -> Self::Inspect<F>
+    where
+        F: Fn(&Self::Item),
+    {
+        match self {
+            Self::ContinueSome(x) => {
+                inspect(&x);
+                Self::ContinueSome(x)
+            }
+            Self::ContinueNone => Self::ContinueNone,
+            Self::Stop => Self::Stop,
+        }
+    }
+
     type Filter<F>
         = WhilstOption<T>
     where

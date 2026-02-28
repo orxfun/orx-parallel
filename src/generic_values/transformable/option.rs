@@ -15,6 +15,17 @@ impl<T> TransformableValues for Option<T> {
         self.map(map)
     }
 
+    type Inspect<F>
+        = Self
+    where
+        F: Fn(&Self::Item);
+    fn inspect<F, O>(self, inspect: F) -> Self::Inspect<F>
+    where
+        F: Fn(&Self::Item),
+    {
+        self.inspect(inspect)
+    }
+
     type Filter<F>
         = Option<T>
     where
