@@ -31,7 +31,10 @@ where
 pub trait Map<T1, T2>: FunMap<T1, T2> {
     type Map<T, X>: Map<T1, T>
     where
-        X: Map<T2, T>;
+        X: FunMap<T2, T>;
+    fn map<T, X>(self, x: X) -> Self::Map<T, X>
+    where
+        X: FunMap<T2, T>;
 }
 
 // single
@@ -49,9 +52,22 @@ where
     F: FunMap<T1, T2>,
 {
     type Map<T, X>
-        = MapPair<T1, T2, T, F, X>
+        = MapPair<T1, T2, T, F, MapSingle<T2, T, X>>
     where
-        X: Map<T2, T>;
+        X: FunMap<T2, T>;
+    fn map<T, X>(self, x: X) -> Self::Map<T, X>
+    where
+        X: FunMap<T2, T>,
+    {
+        MapPair {
+            f1: self.f1,
+            f2: MapSingle {
+                f1: x,
+                phantom: PhantomData,
+            },
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<T1, T2, F> FunMap<T1, T2> for MapSingle<T1, T2, F>
@@ -84,7 +100,17 @@ where
     type Map<T, X>
         = MapPair<T1, T2, T, F, B::Map<T, X>>
     where
-        X: Map<T3, T>;
+        X: FunMap<T3, T>;
+    fn map<T, X>(self, x: X) -> Self::Map<T, X>
+    where
+        X: FunMap<T3, T>,
+    {
+        MapPair {
+            f1: self.f1,
+            f2: self.f2.map(x),
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<T1, T2, T3, F, B> FunMap<T1, T3> for MapPair<T1, T2, T3, F, B>
