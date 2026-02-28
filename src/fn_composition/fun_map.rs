@@ -8,7 +8,7 @@ pub trait FunMap<A, B> {
 
 // unit
 
-pub struct FunMapWrapper<A, B, F1>
+pub struct FunMapUnit<A, B, F1>
 where
     F1: Fn(A) -> B,
 {
@@ -16,7 +16,7 @@ where
     phantom: PhantomData<(A, B)>,
 }
 
-impl<A, B, F1> FunMap<A, B> for FunMapWrapper<A, B, F1>
+impl<A, B, F1> FunMap<A, B> for FunMapUnit<A, B, F1>
 where
     F1: Fn(A) -> B,
 {
