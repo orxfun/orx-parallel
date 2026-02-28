@@ -32,6 +32,9 @@ pub trait Filter<T>: FunFilter<T> {
     type Filter<X>: Filter<T>
     where
         X: FunFilter<T>;
+    fn filter<X>(self, x: X) -> Self::Filter<X>
+    where
+        X: FunFilter<T>;
 }
 
 // single
@@ -52,6 +55,19 @@ where
         = FilterPair<T, F, FilterSingle<T, X>>
     where
         X: FunFilter<T>;
+    fn filter<X>(self, x: X) -> Self::Filter<X>
+    where
+        X: FunFilter<T>,
+    {
+        FilterPair {
+            f1: self.f1,
+            f2: FilterSingle {
+                f1: x,
+                phantom: PhantomData,
+            },
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<T, F> FunFilter<T> for FilterSingle<T, F>
@@ -85,6 +101,16 @@ where
         = FilterPair<T, F, B::Filter<X>>
     where
         X: FunFilter<T>;
+    fn filter<X>(self, x: X) -> Self::Filter<X>
+    where
+        X: FunFilter<T>,
+    {
+        FilterPair {
+            f1: self.f1,
+            f2: self.f2.filter(x),
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<T, F, B> FunFilter<T> for FilterPair<T, F, B>
