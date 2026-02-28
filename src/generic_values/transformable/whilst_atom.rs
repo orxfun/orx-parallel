@@ -18,6 +18,23 @@ impl<T> TransformableValues for WhilstAtom<T> {
         }
     }
 
+    type Inspect<F>
+        = Self
+    where
+        F: Fn(&Self::Item);
+    fn inspect<I, O>(self, inspect: I) -> Self::Inspect<I>
+    where
+        I: Fn(&Self::Item),
+    {
+        match self {
+            Self::Continue(x) => {
+                inspect(&x);
+                WhilstAtom::Continue(x)
+            }
+            Self::Stop => WhilstAtom::Stop,
+        }
+    }
+
     type Filter<F>
         = WhilstOption<T>
     where

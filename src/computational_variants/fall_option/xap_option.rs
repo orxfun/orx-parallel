@@ -118,7 +118,6 @@ where
         R,
     >
     where
-        Self: Sized,
         FilterMap: Fn(Vo::Item) -> Option<Out> + Sync + Clone,
         Out: Send,
     {
@@ -127,12 +126,16 @@ where
         ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 
-    // fn inspect<Operation>(self, operation: Operation) -> char
-    // where
-    //     Self: Sized,
-    //     Operation: Fn(&I::Item) + Sync + Clone,
-    //     I::Item: Send,
-    // {
-    //     todo!()
-    // }
+    fn inspect<Operation>(self, operation: Operation) -> char
+    where
+        Operation: Fn(&Vo::Item) + Sync + Clone,
+        Vo::Item: Send,
+    {
+        let map = move |x| {
+            operation(&x);
+            x
+        };
+        let x = self.map(map);
+        todo!()
+    }
 }

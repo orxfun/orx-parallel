@@ -8,6 +8,13 @@ pub trait TransformableValues: Values {
     where
         M: Fn(Self::Item) -> O;
 
+    type Inspect<F>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
+    where
+        F: Fn(&Self::Item);
+    fn inspect<F, O>(self, inspect: F) -> Self::Inspect<F>
+    where
+        F: Fn(&Self::Item);
+
     type Filter<F>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         F: Fn(&Self::Item) -> bool;

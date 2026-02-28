@@ -22,6 +22,17 @@ where
         Vector(self.0.into_iter().map(map))
     }
 
+    type Inspect<F>
+        = Vector<core::iter::Inspect<I::IntoIter, F>>
+    where
+        F: Fn(&Self::Item);
+    fn inspect<F, O>(self, inspect: F) -> Self::Inspect<F>
+    where
+        F: Fn(&Self::Item),
+    {
+        Vector(self.0.into_iter().inspect(inspect))
+    }
+
     type Filter<F>
         = Vector<core::iter::Filter<I::IntoIter, F>>
     where
