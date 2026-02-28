@@ -64,7 +64,7 @@ where
 
     // computation transformations
 
-    fn map<Out, Map>(
+    pub fn map<Out, Map>(
         self,
         map: Map,
     ) -> ParXapOption<I, Vo::Map<Map, Out>, impl Fn(I::Item) -> Option<Vo::Map<Map, Out>>, R>
@@ -77,7 +77,7 @@ where
         ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 
-    fn filter<Filter>(
+    pub fn filter<Filter>(
         self,
         filter: Filter,
     ) -> ParXapOption<I, Vo::Filter<Filter>, impl Fn(I::Item) -> Option<Vo::Filter<Filter>>, R>
@@ -89,7 +89,7 @@ where
         ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 
-    fn flat_map<IOut, FlatMap>(
+    pub fn flat_map<IOut, FlatMap>(
         self,
         flat_map: FlatMap,
     ) -> ParXapOption<
@@ -108,7 +108,7 @@ where
         ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 
-    fn filter_map<Out, FilterMap>(
+    pub fn filter_map<Out, FilterMap>(
         self,
         filter_map: FilterMap,
     ) -> ParXapOption<
@@ -126,16 +126,21 @@ where
         ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 
-    fn inspect<Operation>(self, operation: Operation) -> char
+    pub fn inspect<Operation>(
+        self,
+        operation: Operation,
+    ) -> ParXapOption<
+        I,
+        Vo::Inspect<Operation>,
+        impl Fn(I::Item) -> Option<Vo::Inspect<Operation>>,
+        R,
+    >
     where
         Operation: Fn(&Vo::Item) + Sync + Clone,
         Vo::Item: Send,
     {
-        let map = move |x| {
-            operation(&x);
-            x
-        };
-        let x = self.map(map);
-        todo!()
+        let (runner, params, iter, xap1) = self.par.destruct();
+        let x1 = move |i: I::Item| xap1(i).map(|vo| vo.inspect(operation.clone()));
+        ParXapOption::new(ParXap::new(runner, params, iter, x1))
     }
 }

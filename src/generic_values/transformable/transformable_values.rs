@@ -11,7 +11,7 @@ pub trait TransformableValues: Values {
     type Inspect<F>: TransformableValues<Item = Self::Item, Fallibility = Self::Fallibility>
     where
         F: Fn(&Self::Item);
-    fn inspect<F, O>(self, inspect: F) -> Self::Inspect<F>
+    fn inspect<F>(self, inspect: F) -> Self::Inspect<F>
     where
         F: Fn(&Self::Item);
 

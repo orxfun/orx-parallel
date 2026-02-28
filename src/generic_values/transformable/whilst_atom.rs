@@ -22,7 +22,7 @@ impl<T> TransformableValues for WhilstAtom<T> {
         = Self
     where
         F: Fn(&Self::Item);
-    fn inspect<I, O>(self, inspect: I) -> Self::Inspect<I>
+    fn inspect<I>(self, inspect: I) -> Self::Inspect<I>
     where
         I: Fn(&Self::Item),
     {

@@ -19,7 +19,7 @@ impl<T> TransformableValues for Option<T> {
         = Self
     where
         F: Fn(&Self::Item);
-    fn inspect<F, O>(self, inspect: F) -> Self::Inspect<F>
+    fn inspect<F>(self, inspect: F) -> Self::Inspect<F>
     where
         F: Fn(&Self::Item),
     {
