@@ -18,7 +18,6 @@ extern crate alloc;
 extern crate std;
 
 mod collect_into;
-mod composition;
 /// Module containing variants of parallel iterators.
 pub mod computational_variants;
 mod default_fns;
