@@ -44,3 +44,40 @@ where
         FF::new(self.f, self.b.compose(y))
     }
 }
+
+impl<I, X1, X2> XapFn<I, Option<I>> for FF<I, X1, X2>
+where
+    X1: Fn(&I) -> bool,
+    X2: Filter<I>,
+{
+    #[inline(always)]
+    fn run(&self, i: I) -> Option<I> {
+        match self.filter(&i) {
+            true => Some(i),
+            false => None,
+        }
+    }
+
+    type Map<Y, Q>
+    where
+        Y: Fn(I) -> Q;
+
+    fn map<Y, Q>(self, map: Y) -> Self::Map<Y, Q>
+    where
+        Y: Fn(I) -> Q,
+    {
+        todo!()
+    }
+
+    type Filter<Y>
+        = FF<I, X1, X2::Compose<Y>>
+    where
+        Y: Fn(&I) -> bool;
+
+    fn filter<Y>(self, filter: Y) -> Self::Filter<Y>
+    where
+        Y: Fn(&I) -> bool,
+    {
+        self.compose(filter)
+    }
+}
