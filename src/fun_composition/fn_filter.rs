@@ -54,31 +54,37 @@ pub trait FilterQ: FnFilter {
 
 // queue - single
 
-pub struct MapQSingle<F: FnFilter> {
+pub struct FilterQSingle<F: FnFilter> {
     f: F,
 }
 
-impl<F: FnFilter> FilterQ for MapQSingle<F> {
+impl<F: FnFilter> From<F> for FilterQSingle<F> {
+    fn from(f: F) -> Self {
+        Self { f }
+    }
+}
+
+impl<F: FnFilter> FilterQ for FilterQSingle<F> {
     type Front = F;
 
     type Back = Self;
 
     type Pb<Elem>
-        = MapQPair<F, MapQSingle<Elem>>
+        = FilterQPair<F, FilterQSingle<Elem>>
     where
         Elem: FnFilter<I = Self::I>;
     fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnFilter<I = Self::I>,
     {
-        MapQPair {
+        FilterQPair {
             f: self.f,
-            b: MapQSingle { f: elem },
+            b: FilterQSingle { f: elem },
         }
     }
 }
 
-impl<F: FnFilter> FnFilter for MapQSingle<F> {
+impl<F: FnFilter> FnFilter for FilterQSingle<F> {
     type I = F::I;
 
     fn run(&self, i: &Self::I) -> bool {
@@ -88,7 +94,7 @@ impl<F: FnFilter> FnFilter for MapQSingle<F> {
 
 // queue - pair
 
-pub struct MapQPair<F: FnFilter, B: FilterQ>
+pub struct FilterQPair<F: FnFilter, B: FilterQ>
 where
     B: FnFilter<I = F::I>,
 {
@@ -96,7 +102,7 @@ where
     b: B,
 }
 
-impl<F: FnFilter, B: FilterQ> FilterQ for MapQPair<F, B>
+impl<F: FnFilter, B: FilterQ> FilterQ for FilterQPair<F, B>
 where
     B: FnFilter<I = F::I>,
 {
@@ -105,21 +111,21 @@ where
     type Back = B;
 
     type Pb<Elem>
-        = MapQPair<F, B::Pb<Elem>>
+        = FilterQPair<F, B::Pb<Elem>>
     where
         Elem: FnFilter<I = Self::I>;
     fn push_back<Elem>(self, elem: Elem) -> Self::Pb<Elem>
     where
         Elem: FnFilter<I = Self::I>,
     {
-        MapQPair {
+        FilterQPair {
             f: self.f,
             b: self.b.push_back(elem),
         }
     }
 }
 
-impl<F: FnFilter, B: FilterQ> FnFilter for MapQPair<F, B>
+impl<F: FnFilter, B: FilterQ> FnFilter for FilterQPair<F, B>
 where
     B: FnFilter<I = F::I>,
 {
