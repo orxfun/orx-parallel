@@ -6,17 +6,17 @@ where
 {
     fn run(&self, i: I) -> Vo;
 
-    type Map<M, O>: XapFn<I, Vo::Map<M, O>>
+    type Map<Y, Q>: XapFn<I, Vo::Map<Y, Q>>
     where
-        M: Fn(<Vo as Values>::Item) -> O;
-    fn map<M, O>(self, map: M) -> Self::Map<M, O>
+        Y: Fn(<Vo as Values>::Item) -> Q;
+    fn map<Y, Q>(self, map: Y) -> Self::Map<Y, Q>
     where
-        M: Fn(<Vo as Values>::Item) -> O;
+        Y: Fn(<Vo as Values>::Item) -> Q;
 
-    type Filter<F>: XapFn<I, Vo::Filter<F>>
+    type Filter<Y>: XapFn<I, Vo::Filter<Y>>
     where
-        F: Fn(&<Vo as Values>::Item) -> bool;
-    fn filter<F>(self, filter: F) -> Self::Filter<F>
+        Y: Fn(&<Vo as Values>::Item) -> bool;
+    fn filter<Y>(self, filter: Y) -> Self::Filter<Y>
     where
-        F: Fn(&<Vo as Values>::Item) -> bool;
+        Y: Fn(&<Vo as Values>::Item) -> bool;
 }
