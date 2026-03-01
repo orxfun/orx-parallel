@@ -12,6 +12,16 @@ where
     p: PhantomData<I>,
 }
 
+impl<I, X> F<I, X>
+where
+    X: Fn(&I) -> bool,
+{
+    pub fn new(f: X) -> Self {
+        let p = PhantomData;
+        Self { f, p }
+    }
+}
+
 impl<I, X> Filter<I> for F<I, X>
 where
     X: Fn(&I) -> bool,
@@ -30,20 +40,11 @@ where
     }
 }
 
-// impl<I, X> F<I, X>
-// where
-//     X: Fn(&I) -> bool,
-// {
-//     pub fn new(f: X) -> Self {
-//         let p = PhantomData;
-//         Self { f, p }
-//     }
-// }
-
 // impl<I, X> XapFn<I, Option<I>> for F<I, X>
 // where
 //     X: Fn(&I) -> bool,
 // {
+//     #[inline(always)]
 //     fn run(&self, i: I) -> Option<I> {
 //         match self.filter(&i) {
 //             true => Some(i),
