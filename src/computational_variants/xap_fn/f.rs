@@ -17,7 +17,7 @@ where
     X: Fn(&I) -> bool,
 {
     #[inline(always)]
-    fn run(&self, i: &I) -> bool {
+    fn filter(&self, i: &I) -> bool {
         (self.f)(i)
     }
 
@@ -30,44 +30,47 @@ where
     }
 }
 
-impl<I, X> F<I, X>
-where
-    X: Fn(&I) -> bool,
-{
-    pub fn new(f: X) -> Self {
-        let p = PhantomData;
-        Self { f, p }
-    }
-}
-
-// impl<I, F> XapFn<I, Option<I>> for Fil<I, F>
+// impl<I, X> F<I, X>
 // where
-//     F: Fn(&I) -> bool,
+//     X: Fn(&I) -> bool,
+// {
+//     pub fn new(f: X) -> Self {
+//         let p = PhantomData;
+//         Self { f, p }
+//     }
+// }
+
+// impl<I, X> XapFn<I, Option<I>> for F<I, X>
+// where
+//     X: Fn(&I) -> bool,
 // {
 //     fn run(&self, i: I) -> Option<I> {
-//         todo!()
+//         match self.filter(&i) {
+//             true => Some(i),
+//             false => None,
+//         }
 //     }
 
-//     type Map<X, Q>
+//     type Map<Y, Q>
 //     where
-//         X: Fn(<Option<I> as Values>::Item) -> Q;
+//         Y: Fn(I) -> Q;
 
-//     fn map<X, Q>(self, map: X) -> Self::Map<X, Q>
+//     fn map<Y, Q>(self, map: Y) -> Self::Map<Y, Q>
 //     where
-//         X: Fn(<Option<I> as Values>::Item) -> Q,
+//         Y: Fn(I) -> Q,
 //     {
 //         todo!()
 //     }
 
-//     type Filter<X>
-//         = Self
+//     type Filter<Y>
+//         = FF<I, X, F<I, Y>>
 //     where
-//         X: Fn(&<Option<I> as Values>::Item) -> bool;
+//         Y: Fn(&I) -> bool;
 
-//     fn filter<X>(self, filter: X) -> Self::Filter<X>
+//     fn filter<Y>(self, filter: Y) -> Self::Filter<Y>
 //     where
-//         X: Fn(&<Option<I> as Values>::Item) -> bool,
+//         Y: Fn(&I) -> bool,
 //     {
-//         todo!()
+//         self.compose(filter)
 //     }
 // }

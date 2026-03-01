@@ -1,5 +1,5 @@
 pub trait Filter<I> {
-    fn run(&self, i: &I) -> bool;
+    fn filter(&self, i: &I) -> bool;
 
     type Compose<Y>: Filter<I>
     where

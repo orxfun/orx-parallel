@@ -31,8 +31,8 @@ where
     X2: Filter<I>,
 {
     #[inline(always)]
-    fn run(&self, i: &I) -> bool {
-        (self.f)(i) && self.b.run(i)
+    fn filter(&self, i: &I) -> bool {
+        (self.f)(i) && self.b.filter(i)
     }
 
     type Compose<Y>
