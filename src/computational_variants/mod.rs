@@ -18,6 +18,7 @@ pub mod fall_result;
 mod map;
 mod par;
 mod xap;
+mod xap_fn;
 
 pub use map::ParMap;
 pub use par::Par;
