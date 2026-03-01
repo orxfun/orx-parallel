@@ -1,7 +1,4 @@
-use crate::{
-    computational_variants::xap_fn::{ff::FF, filter::Filter, map::Map, mm::MM, xap::XapFn},
-    generic_values::Values,
-};
+use crate::computational_variants::xap_fn::{map::Map, mm::MM};
 use core::marker::PhantomData;
 
 pub struct M<I, O, X>

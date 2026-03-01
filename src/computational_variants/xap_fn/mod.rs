@@ -3,5 +3,7 @@ mod ff;
 mod filter;
 mod m;
 mod map;
+mod map_filter;
+mod mf;
 mod mm;
 mod xap;
