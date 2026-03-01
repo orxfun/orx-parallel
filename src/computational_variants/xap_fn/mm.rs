@@ -30,8 +30,10 @@ where
     X1: Fn(I) -> O1,
     X2: Map<O1, O2>,
 {
+    #[inline(always)]
     fn map(&self, i: I) -> O2 {
-        todo!()
+        let x = (self.f1)(i);
+        self.f2.map(x)
     }
 
     type Compose<Y, Q>
@@ -43,6 +45,6 @@ where
     where
         Y: Fn(O2) -> Q,
     {
-        todo!()
+        MM::new(self.f1, self.f2.compose(y))
     }
 }
