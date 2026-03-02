@@ -8,5 +8,6 @@ mod map;
 mod map_filter;
 mod mf;
 mod mfmf;
+mod mi0;
 mod mm;
 mod xap;
