@@ -11,4 +11,11 @@ pub trait MapFilter<I, O> {
     where
         M3: Map<O, Q>,
         F3: Filter<Q>;
+
+    type ComposeF<F3>: MapFilter<I, O>
+    where
+        F3: Filter<O>;
+    fn compose_f<F3>(self, f: F3) -> Self::ComposeF<F3>
+    where
+        F3: Filter<O>;
 }
