@@ -29,6 +29,7 @@ where
     M1: Map<I, O1>,
     F1: Filter<O1>,
 {
+    #[inline(always)]
     fn map_filter(&self, i: I) -> Option<O1> {
         let x = self.m.map(i);
         match self.f.filter(&x) {
