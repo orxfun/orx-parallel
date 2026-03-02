@@ -18,10 +18,8 @@ impl<I, Vo: IntoIterator, H: Fn(I) -> Vo> FlatMap for FnFlatMap<I, Vo, H> {
 
     type O = Vo::Item;
 
-    type Vo = Vo;
-
     #[inline(always)]
-    fn flat_map(&self, i: Self::I) -> Self::Vo {
+    fn flat_map(&self, i: Self::I) -> impl IntoIterator<Item = Self::O> {
         (self.h)(i)
     }
 }
