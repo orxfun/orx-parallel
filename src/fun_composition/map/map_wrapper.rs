@@ -1,29 +1,19 @@
+use crate::fun_composition::map::map_trait::Map;
 use core::marker::PhantomData;
 
-use crate::fun_composition::map::map_trait::Map;
-
-pub struct FnMap<I, O, M>
-where
-    M: Fn(I) -> O,
-{
+pub struct FnMap<I, O, M: Fn(I) -> O> {
     m: M,
     p: PhantomData<(I, O)>,
 }
 
-impl<I, O, M> FnMap<I, O, M>
-where
-    M: Fn(I) -> O,
-{
+impl<I, O, M: Fn(I) -> O> FnMap<I, O, M> {
     pub fn new(m: M) -> Self {
         let p = PhantomData;
         Self { m, p }
     }
 }
 
-impl<I, O, M> Map for FnMap<I, O, M>
-where
-    M: Fn(I) -> O,
-{
+impl<I, O, M: Fn(I) -> O> Map for FnMap<I, O, M> {
     type I = I;
 
     type O = O;
