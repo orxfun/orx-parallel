@@ -1,12 +1,14 @@
+use crate::computational_variants::xap_fn::{filter::Filter, map::Map};
+
 pub trait MapFilter<I, O> {
     fn map_filter(&self, i: I) -> Option<O>;
 
-    type Compose<O3, X3, Y3>: MapFilter<I, O3>
+    type Compose<Q, M3, F3>: MapFilter<I, Q>
     where
-        X3: Fn(O) -> O3,
-        Y3: Fn(&O3) -> bool;
-    fn compose<O3, X3, Y3>(self, m: X3, f: Y3) -> Self::Compose<O3, X3, Y3>
+        M3: Map<O, Q>,
+        F3: Filter<Q>;
+    fn compose<Q, M3, F3>(self, m: M3, f: F3) -> Self::Compose<Q, M3, F3>
     where
-        X3: Fn(O) -> O3,
-        Y3: Fn(&O3) -> bool;
+        M3: Map<O, Q>,
+        F3: Filter<Q>;
 }
