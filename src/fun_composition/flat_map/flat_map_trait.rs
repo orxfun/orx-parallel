@@ -3,7 +3,5 @@ pub trait FlatMap {
 
     type O;
 
-    type Vo: IntoIterator<Item = Self::O>;
-
-    fn flat_map(&self, i: Self::I) -> Self::Vo;
+    fn flat_map(&self, i: Self::I) -> impl IntoIterator<Item = Self::O>;
 }
