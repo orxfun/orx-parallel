@@ -14,8 +14,8 @@ pub trait MapFilter<I, O> {
 
     type ComposeF<F3>: MapFilter<I, O>
     where
-        F3: Filter<O>;
+        F3: Fn(&O) -> bool;
     fn compose_f<F3>(self, f: F3) -> Self::ComposeF<F3>
     where
-        F3: Filter<O>;
+        F3: Fn(&O) -> bool;
 }
