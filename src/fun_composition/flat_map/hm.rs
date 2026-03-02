@@ -24,3 +24,17 @@ impl<H1: FlatMap, H2: FlatMapQ<I = H1::O>> FlatMap for Hm<H1, H2> {
             .flat_map(|j| self.h2.flat_map(j))
     }
 }
+
+impl<H1: FlatMap, H2: FlatMapQ<I = H1::O>> FlatMapQ for Hm<H1, H2> {
+    type Compose<X>
+        = Hm<H1, H2::Compose<X>>
+    where
+        X: FlatMap<I = Self::O>;
+
+    fn compose<X>(self, x: X) -> Self::Compose<X>
+    where
+        X: FlatMap<I = Self::O>,
+    {
+        Hm::new(self.h1, self.h2.compose(x))
+    }
+}
