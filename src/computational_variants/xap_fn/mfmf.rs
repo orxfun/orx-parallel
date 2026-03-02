@@ -36,8 +36,13 @@ where
     F1: Filter<O1>,
     Mf2: MapFilter<O1, O2>,
 {
+    #[inline(always)]
     fn map_filter(&self, i: I) -> Option<O2> {
-        todo!()
+        let x = self.m.map(i);
+        match self.f.filter(&x) {
+            true => self.mf2.map_filter(x),
+            false => None,
+        }
     }
 
     type Compose<Q, M3, F3>
