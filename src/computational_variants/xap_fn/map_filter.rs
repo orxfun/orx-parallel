@@ -1,12 +1,12 @@
 pub trait MapFilter<I, O> {
     fn map_filter(&self, i: I) -> Option<O>;
 
-    // type Compose<X3,Y3,Q
-
-    // type Compose<Z, Q>: MapFilter<I, Q>
-    // where
-    //     Z: MapFilter<O, Q>;
-    // fn compose<Z, Q>(self, z: Z) -> Self::Compose<Z, Q>
-    // where
-    //     Z: MapFilter<O, Q>;
+    type Compose<O3, X3, Y3>: MapFilter<I, O3>
+    where
+        X3: Fn(O) -> O3,
+        Y3: Fn(&O3) -> bool;
+    fn compose<O3, X3, Y3>(self, m: X3, f: Y3) -> Self::Compose<O3, X3, Y3>
+    where
+        X3: Fn(O) -> O3,
+        Y3: Fn(&O3) -> bool;
 }

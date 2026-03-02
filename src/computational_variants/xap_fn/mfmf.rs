@@ -40,15 +40,16 @@ where
         }
     }
 
-    // type Compose<Z, Q>
-    //     = MFMF<I, O1, X1, Y1, Q, Mf2::Compose<Z, Q>>
-    // where
-    //     Z: MapFilter<O2, Q>;
-
-    // fn compose<Z, Q>(self, z: Z) -> Self::Compose<Z, Q>
-    // where
-    //     Z: MapFilter<O2, Q>,
-    // {
-    //     MFMF::new(self.m1, self.f1, self.mf2.compose(z))
-    // }
+    type Compose<O3, X3, Y3>
+        = MFMF<I, O1, X1, Y1, O3, Mf2::Compose<O3, X3, Y3>>
+    where
+        X3: Fn(O2) -> O3,
+        Y3: Fn(&O3) -> bool;
+    fn compose<O3, X3, Y3>(self, m: X3, f: Y3) -> Self::Compose<O3, X3, Y3>
+    where
+        X3: Fn(O2) -> O3,
+        Y3: Fn(&O3) -> bool,
+    {
+        MFMF::new(self.m1, self.f1, self.mf2.compose(m, f))
+    }
 }
