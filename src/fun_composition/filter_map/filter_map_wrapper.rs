@@ -1,6 +1,5 @@
-use core::marker::PhantomData;
-
 use crate::fun_composition::filter_map::filter_map_trait::FilterMap;
+use core::marker::PhantomData;
 
 pub struct FnFilterMap<I, O, G: Fn(I) -> Option<O>> {
     g: G,
