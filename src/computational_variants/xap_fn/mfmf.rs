@@ -31,19 +31,24 @@ where
     Y1: Fn(&O1) -> bool,
     Mf2: MapFilter<O1, O2>,
 {
+    #[inline(always)]
     fn map_filter(&self, i: I) -> Option<O2> {
-        todo!()
+        let x1 = (self.m1)(i);
+        match (self.f1)(&x1) {
+            true => self.mf2.map_filter(x1),
+            false => None,
+        }
     }
 
-    type Compose<Y, Q>
-        = MFMF<I, O1, X1, Y1, Q, Mf2::Compose<Y, Q>>
-    where
-        Y: MapFilter<O2, Q>;
+    // type Compose<Z, Q>
+    //     = MFMF<I, O1, X1, Y1, Q, Mf2::Compose<Z, Q>>
+    // where
+    //     Z: MapFilter<O2, Q>;
 
-    fn compose<Y, Q>(self, y: Y) -> Self::Compose<Y, Q>
-    where
-        Y: MapFilter<O2, Q>,
-    {
-        MFMF::new(self.m1, self.f1, self.mf2.compose(y))
-    }
+    // fn compose<Z, Q>(self, z: Z) -> Self::Compose<Z, Q>
+    // where
+    //     Z: MapFilter<O2, Q>,
+    // {
+    //     MFMF::new(self.m1, self.f1, self.mf2.compose(z))
+    // }
 }

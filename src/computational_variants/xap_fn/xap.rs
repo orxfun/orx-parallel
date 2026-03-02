@@ -4,7 +4,7 @@ pub trait XapFn<I, Vo>
 where
     Vo: TransformableValues,
 {
-    fn run(&self, i: I) -> Vo;
+    fn xap(&self, i: I) -> Vo;
 
     type Map<Y, Q>: XapFn<I, Vo::Map<Y, Q>>
     where
