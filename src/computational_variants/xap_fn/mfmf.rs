@@ -1,4 +1,7 @@
-use crate::computational_variants::xap_fn::map_filter::MapFilter;
+use crate::{
+    computational_variants::xap_fn::{map_filter::MapFilter, xap::XapFn},
+    generic_values::Values,
+};
 use core::marker::PhantomData;
 
 pub struct MFMF<I, O1, X1, Y1, O2, Mf2>
@@ -53,3 +56,37 @@ where
         MFMF::new(self.m1, self.f1, self.mf2.compose(m, f))
     }
 }
+
+// impl<I, O1, X1, Y1, O2, Mf2> XapFn<I, Option<O2>> for MFMF<I, O1, X1, Y1, O2, Mf2>
+// where
+//     X1: Fn(I) -> O1,
+//     Y1: Fn(&O1) -> bool,
+//     Mf2: MapFilter<O1, O2>,
+// {
+//     fn xap(&self, i: I) -> Option<O2> {
+//         todo!()
+//     }
+
+//     type Map<Y, Q>
+//     where
+//         Y: Fn(<Option<O2> as Values>::Item) -> Q;
+
+//     fn map<Y, Q>(self, map: Y) -> Self::Map<Y, Q>
+//     where
+//         Y: Fn(<Option<O2> as Values>::Item) -> Q,
+//     {
+//         todo!()
+//     }
+
+//     type Filter<Y>
+//         = Self
+//     where
+//         Y: Fn(&<Option<O2> as Values>::Item) -> bool;
+
+//     fn filter<Y>(self, filter: Y) -> Self::Filter<Y>
+//     where
+//         Y: Fn(&<Option<O2> as Values>::Item) -> bool,
+//     {
+//         todo!()
+//     }
+// }
