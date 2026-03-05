@@ -4,3 +4,10 @@ mod filter_trait;
 mod filter_wrapper;
 mod fm;
 mod fs;
+
+pub use filter_trait::Filter;
+
+
+
+
+
