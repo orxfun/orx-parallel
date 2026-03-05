@@ -55,11 +55,11 @@ impl<I, O> Xap for Joker<I, O> {
         todo!()
     }
 
-    fn next_any(&self, i: Self::I) -> Self::ResOf<Self::O> {
+    fn next_any(&self, i: Self::I) -> Self::ResOf<Option<Self::O>> {
         todo!()
     }
 
-    fn next(&self, i: Self::I) -> Self::ResOf<Self::O> {
+    fn next(&self, i: Self::I) -> Self::ResOf<Option<Self::O>> {
         todo!()
     }
 

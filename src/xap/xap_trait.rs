@@ -44,11 +44,11 @@ pub trait Xap {
         vec: &mut Vec<(usize, Self::O)>,
     ) -> Self::Res;
 
-    fn push_to_pinned_vec<P: PinnedVec<Self::O>>(&self, i: Self::I, vector: &mut P) -> Self::Res;
+    fn push_to_pinned_vec<P: PinnedVec<Self::O>>(&self, i: Self::I, vec: &mut P) -> Self::Res;
 
-    fn next_any(&self, i: Self::I) -> Self::ResOf<Self::O>;
+    fn next_any(&self, i: Self::I) -> Self::ResOf<Option<Self::O>>;
 
-    fn next(&self, i: Self::I) -> Self::ResOf<Self::O>;
+    fn next(&self, i: Self::I) -> Self::ResOf<Option<Self::O>>;
 
     fn reduce<R>(
         &self,
