@@ -47,9 +47,9 @@ rayon = "1.11.0"
 test-case = "3.3.1"
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
-[[bench]]
-name = "find_iter_into_par"
-harness = false
+# [[bench]]
+# name = "find_iter_into_par"
+# harness = false
 
 [package.metadata.docs.rs]
 all-features = true
