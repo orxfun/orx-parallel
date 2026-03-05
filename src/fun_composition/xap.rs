@@ -1,6 +1,6 @@
 use crate::generic_values::{TransformableValues, Values};
 
-type Elem<X> = <<X as Xap>::O as Values>::Item;
+pub type Elem<X> = <<X as Xap>::O as Values>::Item;
 
 pub trait Xap {
     type I;
@@ -11,47 +11,47 @@ pub trait Xap {
 
     // transformations
 
-    type Map<X, Q>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Map<X, Q>>
+    type Map<G, Q>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Map<G, Q>>
     where
-        X: Fn(Elem<Self>) -> Q;
-    fn map<X, Q>(self, map: X) -> Self::Map<X, Q>
+        G: Fn(Elem<Self>) -> Q;
+    fn map<G, Q>(self, map: G) -> Self::Map<G, Q>
     where
-        X: Fn(Elem<Self>) -> Q;
+        G: Fn(Elem<Self>) -> Q;
 
-    type Inspect<X>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Inspect<X>>
+    type Inspect<G>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Inspect<G>>
     where
-        X: Fn(&Elem<Self>);
-    fn inspect<X>(self, inspect: X) -> Self::Inspect<X>
+        G: Fn(&Elem<Self>);
+    fn inspect<G>(self, inspect: G) -> Self::Inspect<G>
     where
-        X: Fn(&Elem<Self>);
+        G: Fn(&Elem<Self>);
 
-    type Filter<X>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Filter<X>>
+    type Filter<G>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Filter<G>>
     where
-        X: Fn(&Elem<Self>) -> bool;
+        G: Fn(&Elem<Self>) -> bool;
     fn filter<X>(self, filter: X) -> Self::Filter<X>
     where
         X: Fn(&Elem<Self>) -> bool;
 
-    type FlatMap<X, Q>: Xap<I = Self::I, O = <Self::O as TransformableValues>::FlatMap<X, Q>>
+    type FlatMap<G, Q>: Xap<I = Self::I, O = <Self::O as TransformableValues>::FlatMap<G, Q>>
     where
         Q: IntoIterator,
-        X: Fn(Elem<Self>) -> Q;
-    fn flat_map<X, Q>(self, flat_map: X) -> Self::FlatMap<X, Q>
+        G: Fn(Elem<Self>) -> Q;
+    fn flat_map<G, Q>(self, flat_map: G) -> Self::FlatMap<G, Q>
     where
         Q: IntoIterator,
-        X: Fn(Elem<Self>) -> Q;
+        G: Fn(Elem<Self>) -> Q;
 
-    type FilterMap<X, Q>: Xap<I = Self::I, O = <Self::O as TransformableValues>::FilterMap<X, Q>>
+    type FilterMap<G, Q>: Xap<I = Self::I, O = <Self::O as TransformableValues>::FilterMap<G, Q>>
     where
-        X: Fn(Elem<Self>) -> Option<Q>;
-    fn filter_map<Fm, O>(self, filter_map: Fm) -> Self::FilterMap<Fm, O>
+        G: Fn(Elem<Self>) -> Option<Q>;
+    fn filter_map<G, Q>(self, filter_map: G) -> Self::FilterMap<G, Q>
     where
-        Fm: Fn(Elem<Self>) -> Option<O>;
+        G: Fn(Elem<Self>) -> Option<Q>;
 
-    type Whilst<X>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Whilst<X>>
+    type Whilst<G>: Xap<I = Self::I, O = <Self::O as TransformableValues>::Whilst<G>>
     where
-        X: Fn(&Elem<Self>) -> bool;
-    fn whilst<W>(self, whilst: W) -> Self::Whilst<W>
+        G: Fn(&Elem<Self>) -> bool;
+    fn whilst<G>(self, whilst: G) -> Self::Whilst<G>
     where
-        W: Fn(&Elem<Self>) -> bool;
+        G: Fn(&Elem<Self>) -> bool;
 }
