@@ -1,30 +1,32 @@
 use crate::xap::faker::Faker;
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::m::M;
-use crate::xap::xap_trait::Xap;
-use core::marker::PhantomData;
+use crate::xap::xap_trait::{IterOf, Xap};
 
-pub struct Id<I>(PhantomData<I>);
+pub struct FilM<X: Xap, O, G: Fn(X::O) -> Option<O>> {
+    x: X,
+    g: G,
+}
 
-impl<I> Id<I> {
-    pub const fn new() -> Self {
-        Self(PhantomData)
+impl<X: Xap, O, G: Fn(X::O) -> Option<O>> FilM<X, O, G> {
+    pub fn new(x: X, g: G) -> Self {
+        Self { x, g }
     }
 }
 
-impl<I> Xap for Id<I> {
-    type I = I;
+impl<X: Xap, O, G: Fn(X::O) -> Option<O>> Xap for FilM<X, O, G> {
+    type I = X::I;
 
-    type O = I;
+    type O = O;
 
     type Values<'i>
-        = [I; 1]
+        = core::iter::FilterMap<IterOf<'i, X>, &'i G>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        [i]
+        self.x.xap(i).into_iter().filter_map(&self.g)
     }
 
     // transformations
