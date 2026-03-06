@@ -22,8 +22,6 @@ impl<I, O, F: Fn(I) -> O> Xap for Ms<I, O, F> {
 
     type S = NeverStop;
 
-    type Elem = O;
-
     type Values = [O; 1];
 
     #[inline(always)]

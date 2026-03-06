@@ -20,9 +20,7 @@ impl<X: Xap, O, F: Fn(X::O) -> O> Xap for Mm<X, O, F> {
 
     type S = X::S;
 
-    type Elem = <X::S as Stopper>::Elem<O>;
-
-    type Values = [Self::Elem; 1];
+    type Values = [Elem<Self>; 1];
 
     fn xap(&self, i: Self::I) -> Self::Values {
         let x = self.x.xap(i);

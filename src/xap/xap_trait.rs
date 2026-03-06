@@ -1,6 +1,6 @@
 use crate::xap::stopper::Stopper;
 
-pub type Elem<X> = Result<<X as Xap>::O, <X as Xap>::S>;
+pub type Elem<X> = <<X as Xap>::S as Stopper>::Elem<<X as Xap>::O>;
 
 pub trait Xap {
     type I;
@@ -9,9 +9,7 @@ pub trait Xap {
 
     type S: Stopper;
 
-    type Elem;
-
-    type Values: IntoIterator<Item = Self::Elem>;
+    type Values: IntoIterator<Item = Elem<Self>>;
 
     fn xap(&self, i: Self::I) -> Self::Values;
 
