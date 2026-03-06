@@ -1,4 +1,4 @@
-use crate::out::Stopper;
+use crate::xap::stopper::Stopper;
 
 pub type Elem<X> = Result<<X as Xap>::O, <X as Xap>::S>;
 
