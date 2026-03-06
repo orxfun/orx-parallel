@@ -1,5 +1,4 @@
 use crate::xap::faker::Faker;
-use crate::xap::stopper::Stopper;
 use crate::xap::xap_trait::{Elem, Xap};
 
 pub struct Mm<X: Xap, O, F: Fn(X::O) -> O> {
