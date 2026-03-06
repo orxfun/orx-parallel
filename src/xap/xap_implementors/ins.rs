@@ -1,28 +1,37 @@
-use crate::xap::xap_trait::Xap;
-use core::marker::PhantomData;
+use crate::xap::faker::Faker;
+use crate::xap::xap_implementors::f::F;
+use crate::xap::xap_implementors::m::M;
+use crate::xap::xap_trait::{IterOf, Xap};
 
-pub struct Faker<I, O> {
-    p: PhantomData<(I, O)>,
+pub struct Ins<X: Xap, G: Fn(&X::O)> {
+    x: X,
+    g: G,
 }
 
-impl<I, O> Xap for Faker<I, O> {
-    type I = I;
+impl<X: Xap, G: Fn(&X::O)> Ins<X, G> {
+    pub fn new(x: X, g: G) -> Self {
+        Self { x, g }
+    }
+}
 
-    type O = O;
+impl<X: Xap, G: Fn(&X::O)> Xap for Ins<X, G> {
+    type I = X::I;
+
+    type O = X::O;
 
     type Values<'i>
-        = [O; 1]
+        = core::iter::Inspect<IterOf<'i, X>, &'i G>
     where
         Self: 'i;
 
-    fn xap(&self, _: Self::I) -> Self::Values<'_> {
-        todo!()
+    fn xap(&self, i: Self::I) -> Self::Values<'_> {
+        self.x.xap(i).into_iter().inspect(&self.g)
     }
 
     // transformations
 
     type Map<Q, H>
-        = Faker<I, Q>
+        = M<Self, Q, H>
     where
         H: Fn(Self::O) -> Q;
 
@@ -30,11 +39,11 @@ impl<I, O> Xap for Faker<I, O> {
     where
         H: Fn(Self::O) -> Q,
     {
-        todo!()
+        M::new(self, h)
     }
 
     type Inspect<H>
-        = Faker<I, O>
+        = Faker<Self::I, Self::O>
     where
         H: Fn(&Self::O);
 
@@ -46,7 +55,7 @@ impl<I, O> Xap for Faker<I, O> {
     }
 
     type Filter<H>
-        = Faker<I, O>
+        = F<Self, H>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -54,11 +63,11 @@ impl<I, O> Xap for Faker<I, O> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        todo!()
+        F::new(self, h)
     }
 
     type FilterMap<Q, H>
-        = Faker<I, Q>
+        = Faker<Self::I, Q>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -70,7 +79,7 @@ impl<I, O> Xap for Faker<I, O> {
     }
 
     type FlatMap<V, H>
-        = Faker<I, V::Item>
+        = Faker<Self::I, V::Item>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V;
