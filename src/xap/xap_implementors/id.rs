@@ -1,5 +1,6 @@
 use crate::xap::faker::Faker;
 use crate::xap::stopper::NeverStop;
+use crate::xap::xap_implementors::ms::Ms;
 use crate::xap::xap_trait::{Elem, Xap};
 use core::marker::PhantomData;
 
@@ -28,7 +29,7 @@ impl<I> Xap for Id<I> {
     // transformations
 
     type Map<Q, G>
-        = Faker<Self::I, Q, Self::S>
+        = Ms<I, Q, G>
     where
         G: Fn(Self::O) -> Q;
 
