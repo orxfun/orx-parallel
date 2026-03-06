@@ -61,7 +61,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        todo!()
+        F::new(self, h)
     }
 
     type FilterMap<Q, H>
