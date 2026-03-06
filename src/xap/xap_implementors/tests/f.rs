@@ -62,5 +62,20 @@ fn film_f() {
     let xap = Id::new().filter_map(film).filter(f);
     let values: Vec<_> = copied.iter().flat_map(|i| xap.xap(i)).collect();
 
-    assert_eq!(expected, inputs);
+    assert_eq!(expected, values);
+}
+
+#[test]
+fn flam_f() {
+    let flam = |x: usize| [x + 3, x + 6];
+    let f = |x: &usize| x.is_multiple_of(2);
+
+    let inputs = inputs(10);
+    let copied = inputs.as_iterable().copied();
+    let expected: Vec<_> = copied.iter().flat_map(flam).filter(f).collect();
+
+    let xap = Id::new().flat_map(flam).filter(f);
+    let values: Vec<_> = copied.iter().flat_map(|i| xap.xap(i)).collect();
+
+    assert_eq!(expected, values);
 }
