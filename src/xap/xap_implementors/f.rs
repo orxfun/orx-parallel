@@ -1,4 +1,6 @@
-use crate::xap::faker::Faker;
+use crate::xap::xap_implementors::fil_m::FilM;
+use crate::xap::xap_implementors::fla_m::FlaM;
+use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_implementors::xap_iters::IterF;
 use crate::xap::xap_trait::{IterOf, Xap};
@@ -44,7 +46,7 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     }
 
     type Inspect<H>
-        = Faker<Self::I, Self::O>
+        = Ins<Self, H>
     where
         H: Fn(&Self::O);
 
@@ -52,7 +54,7 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     where
         H: Fn(&Self::O),
     {
-        todo!()
+        Ins::new(self, h)
     }
 
     type Filter<H>
@@ -68,7 +70,7 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     }
 
     type FilterMap<Q, H>
-        = Faker<Self::I, Q>
+        = FilM<Self, Q, H>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -76,11 +78,11 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     where
         H: Fn(Self::O) -> Option<Q>,
     {
-        todo!()
+        FilM::new(self, h)
     }
 
     type FlatMap<V, H>
-        = Faker<Self::I, V::Item>
+        = FlaM<Self, V, H>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V;
@@ -90,6 +92,6 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V,
     {
-        todo!()
+        FlaM::new(self, h)
     }
 }
