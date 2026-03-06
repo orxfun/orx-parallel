@@ -3,18 +3,22 @@ use crate::xap::stopper::NeverStop;
 use crate::xap::xap_trait::{Elem, Xap};
 use core::marker::PhantomData;
 
-pub struct Id<I>(PhantomData<I>);
+pub struct Ms<I, O, F: Fn(I) -> O> {
+    f: F,
+    p: PhantomData<(I, O)>,
+}
 
-impl<I> Id<I> {
-    pub fn new() -> Self {
-        Self(PhantomData)
+impl<I, O, F: Fn(I) -> O> Ms<I, O, F> {
+    pub fn new(f: F) -> Self {
+        let p = PhantomData;
+        Self { f, p }
     }
 }
 
-impl<I> Xap for Id<I> {
+impl<I, O, F: Fn(I) -> O> Xap for Ms<I, O, F> {
     type I = I;
 
-    type O = I;
+    type O = O;
 
     type S = NeverStop;
 
@@ -22,7 +26,7 @@ impl<I> Xap for Id<I> {
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values {
-        [Ok(i)]
+        [Ok((self.f)(i))]
     }
 
     // transformations
