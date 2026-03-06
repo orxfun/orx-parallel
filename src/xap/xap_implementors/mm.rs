@@ -24,6 +24,9 @@ impl<X: Xap, O, F: Fn(X::O) -> O> Xap for Mm<X, O, F> {
     type Values = [Elem<Self>; 1]; // todo!
 
     fn xap(&self, i: Self::I) -> Self::Values {
+        let x = self.x.xap(i);
+        let mut y = x.into_iter();
+        let z = y.next().unwrap();
         todo!()
     }
 
