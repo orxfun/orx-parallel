@@ -37,7 +37,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q,
     {
-        todo!()
+        M::new(self, h)
     }
 
     type Inspect<H>

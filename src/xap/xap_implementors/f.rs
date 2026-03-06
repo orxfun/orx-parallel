@@ -40,7 +40,7 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        todo!()
+        M::new(self, h)
     }
 
     type Inspect<H>
