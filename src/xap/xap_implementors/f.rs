@@ -64,7 +64,7 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        todo!()
+        F::new(self, h)
     }
 
     type FilterMap<Q, H>
