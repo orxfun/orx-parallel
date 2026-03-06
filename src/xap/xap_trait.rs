@@ -13,24 +13,24 @@ pub trait Xap {
 
     // transformations
 
-    type Map<Q, G>: Xap<I = Self::I, O = Q>
+    type Map<Q, H>: Xap<I = Self::I, O = Q>
     where
-        G: Fn(Self::O) -> Q;
+        H: Fn(Self::O) -> Q;
 
-    type Inspect<G>: Xap<I = Self::I, O = Self::O>
+    type Inspect<H>: Xap<I = Self::I, O = Self::O>
     where
-        G: Fn(&Self::O);
+        H: Fn(&Self::O);
 
-    type Filter<G>: Xap<I = Self::I, O = Self::O>
+    type Filter<H>: Xap<I = Self::I, O = Self::O>
     where
-        G: Fn(&Self::O) -> bool;
+        H: Fn(&Self::O) -> bool;
 
-    type FilterMap<Q, G>: Xap<I = Self::I, O = Q>
+    type FilterMap<Q, H>: Xap<I = Self::I, O = Q>
     where
-        G: Fn(Self::O) -> Option<Q>;
+        H: Fn(Self::O) -> Option<Q>;
 
-    type FlatMap<V, G>: Xap<I = Self::I, O = V::Item>
+    type FlatMap<V, H>: Xap<I = Self::I, O = V::Item>
     where
         V: IntoIterator,
-        G: Fn(Self::O) -> V;
+        H: Fn(Self::O) -> V;
 }
