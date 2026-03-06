@@ -41,7 +41,7 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
         H: Fn(&Self::O);
 
     type Filter<H>
-        = Faker<Self::I, Self::O>
+        = F<Self, H>
     where
         H: Fn(&Self::O) -> bool;
 

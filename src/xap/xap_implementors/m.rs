@@ -1,4 +1,5 @@
 use crate::xap::faker::Faker;
+use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_trait::{IterOf, Xap};
 
 pub struct M<X: Xap, O, G: Fn(X::O) -> O> {
@@ -40,7 +41,7 @@ impl<X: Xap, O, G: Fn(X::O) -> O> Xap for M<X, O, G> {
         H: Fn(&Self::O);
 
     type Filter<H>
-        = Faker<Self::I, Self::O>
+        = F<Self, H>
     where
         H: Fn(&Self::O) -> bool;
 
