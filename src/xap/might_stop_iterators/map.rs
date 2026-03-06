@@ -1,15 +1,15 @@
 use crate::xap::{
     stopper::{MightStop, StoppedBy},
-    xap_trait::Xap,
+    xap_trait::{IterOf, Xap},
 };
 
 pub struct MightStopMap<E, X: Xap<S = MightStop<E>>, O, F: Fn(X::O) -> O> {
-    i: <X::Values as IntoIterator>::IntoIter,
+    i: IterOf<X>,
     f: F,
 }
 
 impl<E, X: Xap<S = MightStop<E>>, O, F: Fn(X::O) -> O> MightStopMap<E, X, O, F> {
-    pub fn new(i: <X::Values as IntoIterator>::IntoIter, f: F) -> Self {
+    pub fn new(i: IterOf<X>, f: F) -> Self {
         Self { i, f }
     }
 }

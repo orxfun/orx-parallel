@@ -2,6 +2,8 @@ use crate::xap::stopper::Stopper;
 
 pub type Elem<X> = <<X as Xap>::S as Stopper>::Elem<<X as Xap>::O>;
 
+pub type IterOf<X> = <<X as Xap>::Values as IntoIterator>::IntoIter;
+
 pub trait Xap {
     type I;
 
