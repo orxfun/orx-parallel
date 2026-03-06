@@ -1,30 +1,31 @@
 use crate::xap::faker::Faker;
+use crate::xap::xap_implementors::xap_iters::IterF;
 use crate::xap::xap_trait::{IterOf, Xap};
 
-pub struct M<X: Xap, O, F: Fn(X::O) -> O> {
+pub struct F<X: Xap, G: Fn(&X::O) -> bool> {
     x: X,
-    f: F,
+    g: G,
 }
 
-impl<X: Xap, O, F: Fn(X::O) -> O> M<X, O, F> {
-    pub fn new(x: X, f: F) -> Self {
-        Self { x, f }
+impl<X: Xap, G: Fn(&X::O) -> bool> F<X, G> {
+    pub fn new(x: X, g: G) -> Self {
+        Self { x, g }
     }
 }
 
-impl<X: Xap, O, F: Fn(X::O) -> O> Xap for M<X, O, F> {
+impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     type I = X::I;
 
-    type O = O;
+    type O = X::O;
 
     type Values<'i>
-        = core::iter::Map<IterOf<'i, X>, &'i F>
+        = IterF<IterOf<'i, X>, &'i G>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        self.x.xap(i).into_iter().map(&self.f)
+        IterF::new(self.x.xap(i).into_iter(), &self.g)
     }
 
     // transformations
