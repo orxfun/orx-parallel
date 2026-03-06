@@ -1,4 +1,5 @@
 use crate::xap::faker::Faker;
+use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_implementors::xap_iters::IterF;
 use crate::xap::xap_trait::{IterOf, Xap};
 
@@ -31,7 +32,7 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     // transformations
 
     type Map<Q, H>
-        = Faker<Self::I, Q>
+        = M<Self, Q, H>
     where
         H: Fn(Self::O) -> Q;
 

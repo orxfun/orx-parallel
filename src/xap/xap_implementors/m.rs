@@ -31,7 +31,7 @@ impl<X: Xap, O, G: Fn(X::O) -> O> Xap for M<X, O, G> {
     // transformations
 
     type Map<Q, H>
-        = Faker<Self::I, Q>
+        = M<Self, Q, H>
     where
         H: Fn(Self::O) -> Q;
 
