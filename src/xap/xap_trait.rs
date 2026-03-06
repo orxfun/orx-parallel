@@ -9,7 +9,9 @@ pub trait Xap {
 
     type S: Stopper;
 
-    type Values: IntoIterator<Item = Elem<Self>>;
+    type Elem;
+
+    type Values: IntoIterator<Item = Self::Elem>;
 
     fn xap(&self, i: Self::I) -> Self::Values;
 
