@@ -19,8 +19,6 @@ impl<I> Xap for Id<I> {
 
     type S = NeverStop;
 
-    type Elem = I;
-
     type Values = [I; 1];
 
     #[inline(always)]

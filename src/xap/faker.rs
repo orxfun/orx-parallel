@@ -13,11 +13,9 @@ impl<I, O, S: Stopper> Xap for Faker<I, O, S> {
 
     type S = S;
 
-    type Elem = I;
+    type Values = [Elem<Self>; 1];
 
-    type Values = [I; 1];
-
-    fn xap(&self, i: Self::I) -> Self::Values {
+    fn xap(&self, _: Self::I) -> Self::Values {
         todo!()
     }
 
