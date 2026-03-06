@@ -1,4 +1,4 @@
-use crate::xap::xap_trait::Xap;
+use crate::xap_zzz::xap_trait::Xap;
 use core::marker::PhantomData;
 
 pub struct Joker<I, O>(PhantomData<(I, O)>);
