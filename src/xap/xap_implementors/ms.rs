@@ -22,11 +22,13 @@ impl<I, O, F: Fn(I) -> O> Xap for Ms<I, O, F> {
 
     type S = NeverStop;
 
-    type Values = [Elem<Self>; 1];
+    type Elem = O;
+
+    type Values = [O; 1];
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values {
-        [Ok((self.f)(i))]
+        [(self.f)(i)]
     }
 
     // transformations

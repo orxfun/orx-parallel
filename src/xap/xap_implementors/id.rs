@@ -1,7 +1,7 @@
 use crate::xap::faker::Faker;
 use crate::xap::stopper::NeverStop;
 use crate::xap::xap_implementors::ms::Ms;
-use crate::xap::xap_trait::{Elem, Xap};
+use crate::xap::xap_trait::Xap;
 use core::marker::PhantomData;
 
 pub struct Id<I>(PhantomData<I>);
@@ -19,11 +19,13 @@ impl<I> Xap for Id<I> {
 
     type S = NeverStop;
 
-    type Values = [Elem<Self>; 1];
+    type Elem = I;
+
+    type Values = [I; 1];
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values {
-        [Ok(i)]
+        [i]
     }
 
     // transformations
