@@ -1,4 +1,5 @@
 use crate::xap::faker::Faker;
+use crate::xap::stopper::Stopper;
 use crate::xap::xap_trait::{Elem, Xap};
 
 pub struct Mm<X: Xap, O, F: Fn(X::O) -> O> {
@@ -12,7 +13,7 @@ impl<X: Xap, O, F: Fn(X::O) -> O> Mm<X, O, F> {
     }
 }
 
-impl<X: Xap, O, F: Fn(X::O) -> O> Xap for Mm<X, O, F> {
+impl<X: Xap, O, F: Fn(X::O) -> O + Clone> Xap for Mm<X, O, F> {
     type I = X::I;
 
     type O = O;
@@ -23,8 +24,9 @@ impl<X: Xap, O, F: Fn(X::O) -> O> Xap for Mm<X, O, F> {
 
     fn xap(&self, i: Self::I) -> Self::Values {
         let x = self.x.xap(i);
-        let mut y = x.into_iter();
-        let z = y.next().unwrap();
+        // let y: <_ as Stopper>::Map<X, _, _> = <X::S as Stopper>::map(x.into_iter(), &self.f);
+        // let mut y = y.into_iter();
+        // let z = y.next().unwrap();
         todo!()
     }
 
