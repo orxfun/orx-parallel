@@ -21,4 +21,4 @@ extern crate std;
 // mod out;
 // mod xap;
 // mod xap_zzz;
-mod xap;
+pub mod xap;
