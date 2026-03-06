@@ -24,6 +24,7 @@ impl<X: Xap, G: Fn(&X::O)> Xap for Ins<X, G> {
     where
         Self: 'i;
 
+    #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
         self.x.xap(i).into_iter().inspect(&self.g)
     }
