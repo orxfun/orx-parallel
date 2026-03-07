@@ -1,0 +1,24 @@
+use crate::xap::{
+    count::{Count, Many, ZeroOne},
+    fun::map::MapQ,
+};
+
+pub struct One;
+
+impl Count for One {
+    type ThenZeroOne = ZeroOne;
+
+    type ThenOne = One;
+
+    type ThenMany = Many;
+
+    // transformations
+
+    type Map<I: IntoIterator, G: MapQ<I = I::Item>> = [G::O; 1];
+
+    #[inline(always)]
+    fn map<I: IntoIterator, G: MapQ<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
+        let x = unsafe { i.into_iter().next().unwrap_unchecked() };
+        [g.map(x)]
+    }
+}
