@@ -14,6 +14,8 @@ impl<I: Iterator, F: Fn(&I::Item) -> bool> Iterator for IterF<I, F> {
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
+        // self.i.find(|x| (self.f)(&x))
+        // self.i.find_map(|x| ((self.f)(&x)).then_some(x))
         loop {
             match self.i.next() {
                 Some(x) => match (self.f)(&x) {
