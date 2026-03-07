@@ -1,5 +1,5 @@
+use crate::xap::fun::filter::{FilWrap, FilterS};
 use crate::xap::fun::map::{MapS, MapWrap};
-use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
@@ -57,7 +57,7 @@ impl<I> Xap for Id<I> {
     }
 
     type Filter<H>
-        = F0<Self::O, H>
+        = F0<FilterS<FilWrap<Self::O, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -65,7 +65,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F0::new(h)
+        F0::new(FilterS::new(FilWrap::new(h)))
     }
 
     type FilterMap<Q, H>

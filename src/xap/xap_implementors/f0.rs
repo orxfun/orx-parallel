@@ -1,36 +1,34 @@
 use crate::xap::F;
+use crate::xap::fun::filter::FilterQ;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::Xap;
-use core::marker::PhantomData;
 
-pub struct F0<I, G: Fn(&I) -> bool> {
+pub struct F0<G: FilterQ> {
     g: G,
-    p: PhantomData<I>,
 }
 
-impl<I, G: Fn(&I) -> bool> F0<I, G> {
+impl<G: FilterQ> F0<G> {
     pub fn new(g: G) -> Self {
-        let p = PhantomData;
-        Self { g, p }
+        Self { g }
     }
 }
 
-impl<I, G: Fn(&I) -> bool> Xap for F0<I, G> {
-    type I = I;
+impl<G: FilterQ> Xap for F0<G> {
+    type I = G::I;
 
-    type O = I;
+    type O = G::I;
 
     type Values<'i>
-        = Option<I>
+        = Option<G::I>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        match (self.g)(&i) {
+        match self.g.filter(&i) {
             true => Some(i),
             false => None,
         }
