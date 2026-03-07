@@ -2,6 +2,7 @@
 mod tests;
 
 mod f;
+mod f0;
 mod fil_m;
 mod fla_m;
 mod id;
@@ -12,6 +13,7 @@ mod mb;
 mod xap_iters;
 
 pub use f::F;
+pub use f0::F0;
 pub use fil_m::FilM;
 pub use fla_m::FlaM;
 pub use id::Id;
