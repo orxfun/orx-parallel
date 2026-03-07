@@ -1,39 +1,45 @@
-use crate::xap::fun::map::{MapS, MapWrap};
-use crate::xap::xap_implementors::f::F;
+use crate::xap::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
-use crate::xap::xap_implementors::{F0, M0};
+use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::Xap;
 use core::marker::PhantomData;
 
-pub struct Id<I>(PhantomData<I>);
+pub struct F0<I, G: Fn(&I) -> bool> {
+    g: G,
+    p: PhantomData<I>,
+}
 
-impl<I> Id<I> {
-    pub const fn new() -> Self {
-        Self(PhantomData)
+impl<I, G: Fn(&I) -> bool> F0<I, G> {
+    pub fn new(g: G) -> Self {
+        let p = PhantomData;
+        Self { g, p }
     }
 }
 
-impl<I> Xap for Id<I> {
+impl<I, G: Fn(&I) -> bool> Xap for F0<I, G> {
     type I = I;
 
     type O = I;
 
     type Values<'i>
-        = [I; 1]
+        = Option<I>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        [i]
+        match (self.g)(&i) {
+            true => Some(i),
+            false => None,
+        }
     }
 
     // transformations
 
     type Map<Q, H>
-        = M0<MapS<MapWrap<Self::O, Q, H>>>
+        = M<Self, Q, H>
     where
         H: Fn(Self::O) -> Q;
 
@@ -41,7 +47,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M0::new(MapS::new(MapWrap::new(h)))
+        M::new(self, h)
     }
 
     type Inspect<H>
@@ -57,7 +63,7 @@ impl<I> Xap for Id<I> {
     }
 
     type Filter<H>
-        = F0<Self::O, H>
+        = F<Self, H>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -65,7 +71,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F0::new(h)
+        F::new(self, h)
     }
 
     type FilterMap<Q, H>
