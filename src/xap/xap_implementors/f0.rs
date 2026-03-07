@@ -48,8 +48,7 @@ impl<G: FilterQ> Xap for F0<G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        let h = MapWrap::new(h);
-        M::new(self, MapS::new(h))
+        M::new(self, MapS::new(MapWrap::new(h)))
     }
 
     type Inspect<H>
