@@ -1,38 +1,41 @@
+use crate::xap::M;
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
-use crate::xap::xap_implementors::m0::M0;
 use crate::xap::xap_trait::Xap;
 use core::marker::PhantomData;
 
-pub struct Id<I>(PhantomData<I>);
+pub struct M0<I, O, G: Fn(I) -> O> {
+    g: G,
+    p: PhantomData<(I, O)>,
+}
 
-impl<I> Id<I> {
-    pub const fn new() -> Self {
-        Self(PhantomData)
+impl<I, O, G: Fn(I) -> O> M0<I, O, G> {
+    pub fn new(g: G) -> Self {
+        let p = PhantomData;
+        Self { g, p }
     }
 }
 
-impl<I> Xap for Id<I> {
+impl<I, O, G: Fn(I) -> O> Xap for M0<I, O, G> {
     type I = I;
 
-    type O = I;
+    type O = O;
 
     type Values<'i>
-        = [I; 1]
+        = [O; 1]
     where
         Self: 'i;
 
-    #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        [i]
+        [(self.g)(i)]
     }
 
     // transformations
 
     type Map<Q, H>
-        = M0<I, Q, H>
+        = M<Self, Q, H>
     where
         H: Fn(Self::O) -> Q;
 
@@ -40,7 +43,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M0::new(h)
+        M::new(self, h)
     }
 
     type Inspect<H>
