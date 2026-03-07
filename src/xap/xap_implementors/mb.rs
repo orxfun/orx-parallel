@@ -1,6 +1,6 @@
 use crate::xap::M;
-use crate::xap::count::One;
-use crate::xap::fun::map::{MapI, MapQ};
+use crate::xap::count::{Count, One};
+use crate::xap::fun::map::{MapI, MapQ, MapWrap};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
@@ -23,21 +23,26 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for Mb<X, G> {
 
     type O = G::O;
 
-    type Count = One;
+    type Count = <X::Count as Count>::ThenOne;
 
     type Values<'i>
-        = MapI<IterOf<'i, X>, &'i G>
+        // = MapI<IterOf<'i, X>, &'i G>
+        = [Self::O; 1]
     where
         Self: 'i;
 
+    #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        MapI::new(self.x.xap(i).into_iter(), &self.g)
+        let x = self.x.xap(i).into_iter().next().unwrap();
+        [self.g.map(x)]
+        // MapI::new(self.x.xap(i).into_iter(), &self.g)
     }
 
     // transformations
 
     type Map<Q, H>
-        = M<Self, Q, H>
+        = Mb<X, G::Then<Q, MapWrap<G::O, Q, H>>>
+    // = M<Self, Q, H>
     where
         H: Fn(Self::O) -> Q;
 
@@ -45,7 +50,9 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for Mb<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, h)
+        // M::new(self, h)
+        let h = MapWrap::new(h);
+        Mb::new(self.x, self.g.then(h))
     }
 
     type Inspect<H>

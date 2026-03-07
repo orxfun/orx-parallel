@@ -1,4 +1,4 @@
-use crate::xap::count::One;
+use crate::xap::count::{Count, One};
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
@@ -22,15 +22,22 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
 
     type O = X::O;
 
-    type Count = One;
+    type Count = <X::Count as Count>::ThenZeroOne;
 
     type Values<'i>
+        // = Option<<X as Xap>::O>
         = IterF<IterOf<'i, X>, &'i G>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
+        // let x = self.x.xap(i).into_iter().next();
+        // let y = match x {
+        //     Some(x) if (self.g)(&x) => Some(x),
+        //     _ => None,
+        // };
+        // y
         IterF::new(self.x.xap(i).into_iter(), &self.g)
     }
 
