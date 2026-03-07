@@ -1,6 +1,6 @@
 use crate::xap::M;
 use crate::xap::count::{Count, One};
-use crate::xap::fun::map::{MapI, MapQ, MapWrap};
+use crate::xap::fun::map::{MapQ, MapWrap};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
