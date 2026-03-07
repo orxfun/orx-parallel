@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod tests;
 
-// mod f;
+mod f;
 mod f0;
-mod fb;
 mod fil_m;
 mod fla_m;
 mod id;
@@ -12,13 +11,11 @@ mod m;
 mod m0;
 mod xap_iters;
 
-// pub use f::F;
+pub use f::F;
 pub use f0::F0;
-pub use fb::Fb;
 pub use fil_m::FilM;
 pub use fla_m::FlaM;
 pub use id::Id;
 pub use ins::Ins;
 pub use m::M;
-pub use m0::M0;
 pub use xap_iters::IterF;

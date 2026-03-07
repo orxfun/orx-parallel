@@ -1,7 +1,7 @@
 use crate::xap::count::One;
 use crate::xap::fun::filter::{FilWrap, FilterS};
 use crate::xap::fun::map::{MapS, MapWrap};
-use crate::xap::xap_implementors::fb::Fb;
+use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
@@ -63,7 +63,7 @@ impl<X: Xap, O, G: Fn(X::O) -> Option<O>> Xap for FilM<X, O, G> {
     }
 
     type Filter<H>
-        = Fb<Self, FilterS<FilWrap<Self::O, H>>>
+        = F<Self, FilterS<FilWrap<Self::O, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -71,7 +71,7 @@ impl<X: Xap, O, G: Fn(X::O) -> Option<O>> Xap for FilM<X, O, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        Fb::new(self, FilterS::new(FilWrap::new(h)))
+        F::new(self, FilterS::new(FilWrap::new(h)))
     }
 
     type FilterMap<Q, H>
