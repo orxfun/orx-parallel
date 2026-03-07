@@ -1,15 +1,15 @@
 use crate::xap::fun::filter::r#fn::FilterFn;
 use core::marker::PhantomData;
 
-pub struct FilWrap<I, F: Fn(&I) -> bool>(F, PhantomData<I>);
+pub struct FWr<I, F: Fn(&I) -> bool>(F, PhantomData<I>);
 
-impl<I, F: Fn(&I) -> bool> FilWrap<I, F> {
+impl<I, F: Fn(&I) -> bool> FWr<I, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<I, F: Fn(&I) -> bool> FilterFn for FilWrap<I, F> {
+impl<I, F: Fn(&I) -> bool> FilterFn for FWr<I, F> {
     type I = I;
 
     #[inline(always)]

@@ -1,9 +1,9 @@
 use crate::xap::count::One;
-use crate::xap::fun::filter::{FilWrap, FilterS};
-use crate::xap::fun::map::{MapS, MapWrap};
+use crate::xap::fun::filter::{FWr, Fs};
+use crate::xap::fun::map::{Ms, MWr};
 use crate::xap::xap_implementors::F;
-use crate::xap::xap_implementors::film::FilM;
-use crate::xap::xap_implementors::flam::FlaM;
+use crate::xap::xap_implementors::fil_map::FilMap;
+use crate::xap::xap_implementors::fla_map::FlaMap;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::Xap;
@@ -37,7 +37,7 @@ impl<I> Xap for Id<I> {
     // transformations
 
     type Map<Q, H>
-        = M<Self, MapS<MapWrap<Self::O, Q, H>>>
+        = M<Self, Ms<MWr<Self::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -45,7 +45,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, MapS::new(MapWrap::new(h)))
+        M::new(self, Ms::new(MWr::new(h)))
     }
 
     type Inspect<H>
@@ -61,7 +61,7 @@ impl<I> Xap for Id<I> {
     }
 
     type Filter<H>
-        = F<Self, FilterS<FilWrap<Self::O, H>>>
+        = F<Self, Fs<FWr<Self::O, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -69,11 +69,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F::new(self, FilterS::new(FilWrap::new(h)))
+        F::new(self, Fs::new(FWr::new(h)))
     }
 
     type FilterMap<Q, H>
-        = FilM<Self, Q, H>
+        = FilMap<Self, Q, H>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -81,11 +81,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Option<Q>,
     {
-        FilM::new(self, h)
+        FilMap::new(self, h)
     }
 
     type FlatMap<V, H>
-        = FlaM<Self, V, H>
+        = FlaMap<Self, V, H>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V;
@@ -95,6 +95,6 @@ impl<I> Xap for Id<I> {
         V: IntoIterator,
         H: Fn(Self::O) -> V,
     {
-        FlaM::new(self, h)
+        FlaMap::new(self, h)
     }
 }

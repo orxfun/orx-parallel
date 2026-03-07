@@ -1,7 +1,7 @@
 use crate::xap::fun::map::r#fn::MapFn;
 
-pub trait MapQ: MapFn {
-    type Then<Q, H>: MapQ<I = Self::I, O = Q>
+pub trait MapQueue: MapFn {
+    type Then<Q, H>: MapQueue<I = Self::I, O = Q>
     where
         H: MapFn<I = Self::O, O = Q>;
 

@@ -1,24 +1,24 @@
 use crate::xap::count::Count;
-use crate::xap::fun::filter::{FilWrap, FilterS};
-use crate::xap::fun::map::{MapQ, MapWrap};
+use crate::xap::fun::filter::{FWr, Fs};
+use crate::xap::fun::map::{MapQueue, MWr};
 use crate::xap::xap_implementors::f::F;
-use crate::xap::xap_implementors::film::FilM;
-use crate::xap::xap_implementors::flam::FlaM;
+use crate::xap::xap_implementors::fil_map::FilMap;
+use crate::xap::xap_implementors::fla_map::FlaMap;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_trait::Xap;
 
-pub struct M<X: Xap, G: MapQ<I = X::O>> {
+pub struct M<X: Xap, G: MapQueue<I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap, G: MapQ<I = X::O>> M<X, G> {
+impl<X: Xap, G: MapQueue<I = X::O>> M<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap, G: MapQ<I = X::O>> Xap for M<X, G> {
+impl<X: Xap, G: MapQueue<I = X::O>> Xap for M<X, G> {
     type I = X::I;
 
     type O = G::O;
@@ -38,7 +38,7 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for M<X, G> {
     // transformations
 
     type Map<Q, H>
-        = M<X, G::Then<Q, MapWrap<G::O, Q, H>>>
+        = M<X, G::Then<Q, MWr<G::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -46,7 +46,7 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for M<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        let h = MapWrap::new(h);
+        let h = MWr::new(h);
         M::new(self.x, self.g.then(h))
     }
 
@@ -63,7 +63,7 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for M<X, G> {
     }
 
     type Filter<H>
-        = F<Self, FilterS<FilWrap<Self::O, H>>>
+        = F<Self, Fs<FWr<Self::O, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -71,11 +71,11 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for M<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F::new(self, FilterS::new(FilWrap::new(h)))
+        F::new(self, Fs::new(FWr::new(h)))
     }
 
     type FilterMap<Q, H>
-        = FilM<Self, Q, H>
+        = FilMap<Self, Q, H>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -83,11 +83,11 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for M<X, G> {
     where
         H: Fn(Self::O) -> Option<Q>,
     {
-        FilM::new(self, h)
+        FilMap::new(self, h)
     }
 
     type FlatMap<V, H>
-        = FlaM<Self, V, H>
+        = FlaMap<Self, V, H>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V;
@@ -97,6 +97,6 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for M<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V,
     {
-        FlaM::new(self, h)
+        FlaMap::new(self, h)
     }
 }
