@@ -1,7 +1,7 @@
 use crate::xap::fun::filter::r#fn::FilterFn;
 
-pub trait FilterQ: FilterFn {
-    type Then<H>: FilterQ<I = Self::I>
+pub trait FilterQueue: FilterFn {
+    type Then<H>: FilterQueue<I = Self::I>
     where
         H: FilterFn<I = Self::I>;
 

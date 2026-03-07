@@ -1,17 +1,17 @@
-use crate::xap::fun::filter::{r#fn::FilterFn, queue::FilterQ};
+use crate::xap::fun::filter::{r#fn::FilterFn, queue::FilterQueue};
 
-pub struct FilterP<F: FilterFn, B: FilterQ<I = F::I>> {
+pub struct Fp<F: FilterFn, B: FilterQueue<I = F::I>> {
     f: F,
     b: B,
 }
 
-impl<F: FilterFn, B: FilterQ<I = F::I>> FilterP<F, B> {
+impl<F: FilterFn, B: FilterQueue<I = F::I>> Fp<F, B> {
     pub fn new(f: F, b: B) -> Self {
         Self { f, b }
     }
 }
 
-impl<F: FilterFn, B: FilterQ<I = F::I>> FilterFn for FilterP<F, B> {
+impl<F: FilterFn, B: FilterQueue<I = F::I>> FilterFn for Fp<F, B> {
     type I = F::I;
 
     #[inline(always)]
@@ -20,9 +20,9 @@ impl<F: FilterFn, B: FilterQ<I = F::I>> FilterFn for FilterP<F, B> {
     }
 }
 
-impl<F: FilterFn, B: FilterQ<I = F::I>> FilterQ for FilterP<F, B> {
+impl<F: FilterFn, B: FilterQueue<I = F::I>> FilterQueue for Fp<F, B> {
     type Then<H>
-        = FilterP<F, B::Then<H>>
+        = Fp<F, B::Then<H>>
     where
         H: FilterFn<I = Self::I>;
 
@@ -30,6 +30,6 @@ impl<F: FilterFn, B: FilterQ<I = F::I>> FilterQ for FilterP<F, B> {
     where
         H: FilterFn<I = Self::I>,
     {
-        FilterP::new(self.f, self.b.then(h))
+        Fp::new(self.f, self.b.then(h))
     }
 }

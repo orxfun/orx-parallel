@@ -5,7 +5,7 @@ mod single;
 mod wrap;
 
 pub use r#fn::MapFn;
-pub use pair::MapP;
-pub use queue::MapQ;
-pub use single::MapS;
-pub use wrap::MapWrap;
+pub use pair::Mp;
+pub use queue::MapQueue;
+pub use single::Ms;
+pub use wrap::MWr;

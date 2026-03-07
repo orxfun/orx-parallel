@@ -1,22 +1,22 @@
 use crate::xap::M;
 use crate::xap::count::Count;
 use crate::xap::faker::Faker;
-use crate::xap::fun::filter::{FilWrap, FilterQ};
-use crate::xap::fun::map::{MapS, MapWrap};
+use crate::xap::fun::filter::{FWr, FilterQueue};
+use crate::xap::fun::map::{Ms, MWr};
 use crate::xap::xap_trait::Xap;
 
-pub struct F<X: Xap, G: FilterQ<I = X::O>> {
+pub struct F<X: Xap, G: FilterQueue<I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap, G: FilterQ<I = X::O>> F<X, G> {
+impl<X: Xap, G: FilterQueue<I = X::O>> F<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
+impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
     type I = X::I;
 
     type O = X::O;
@@ -36,7 +36,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     // transformations
 
     type Map<Q, H>
-        = M<Self, MapS<MapWrap<Self::O, Q, H>>>
+        = M<Self, Ms<MWr<Self::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -44,7 +44,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, MapS::new(MapWrap::new(h)))
+        M::new(self, Ms::new(MWr::new(h)))
     }
 
     type Inspect<H>
@@ -60,7 +60,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     }
 
     type Filter<H>
-        = F<X, G::Then<FilWrap<G::I, H>>>
+        = F<X, G::Then<FWr<G::I, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -68,7 +68,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F::new(self.x, self.g.then(FilWrap::new(h)))
+        F::new(self.x, self.g.then(FWr::new(h)))
     }
 
     type FilterMap<Q, H>

@@ -1,15 +1,15 @@
 use crate::xap::fun::map::r#fn::MapFn;
 use core::marker::PhantomData;
 
-pub struct MapWrap<I, O, F: Fn(I) -> O>(F, PhantomData<(I, O)>);
+pub struct MWr<I, O, F: Fn(I) -> O>(F, PhantomData<(I, O)>);
 
-impl<I, O, F: Fn(I) -> O> MapWrap<I, O, F> {
+impl<I, O, F: Fn(I) -> O> MWr<I, O, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<I, O, F: Fn(I) -> O> MapFn for MapWrap<I, O, F> {
+impl<I, O, F: Fn(I) -> O> MapFn for MWr<I, O, F> {
     type I = I;
 
     type O = O;

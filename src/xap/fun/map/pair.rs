@@ -1,17 +1,17 @@
-use crate::xap::fun::map::{r#fn::MapFn, queue::MapQ};
+use crate::xap::fun::map::{r#fn::MapFn, queue::MapQueue};
 
-pub struct MapP<F: MapFn, B: MapQ<I = F::O>> {
+pub struct Mp<F: MapFn, B: MapQueue<I = F::O>> {
     f: F,
     b: B,
 }
 
-impl<F: MapFn, B: MapQ<I = F::O>> MapP<F, B> {
+impl<F: MapFn, B: MapQueue<I = F::O>> Mp<F, B> {
     pub fn new(f: F, b: B) -> Self {
         Self { f, b }
     }
 }
 
-impl<F: MapFn, B: MapQ<I = F::O>> MapFn for MapP<F, B> {
+impl<F: MapFn, B: MapQueue<I = F::O>> MapFn for Mp<F, B> {
     type I = F::I;
 
     type O = B::O;
@@ -22,9 +22,9 @@ impl<F: MapFn, B: MapQ<I = F::O>> MapFn for MapP<F, B> {
     }
 }
 
-impl<F: MapFn, B: MapQ<I = F::O>> MapQ for MapP<F, B> {
+impl<F: MapFn, B: MapQueue<I = F::O>> MapQueue for Mp<F, B> {
     type Then<Q, H>
-        = MapP<F, B::Then<Q, H>>
+        = Mp<F, B::Then<Q, H>>
     where
         H: MapFn<I = Self::O, O = Q>;
 
@@ -32,6 +32,6 @@ impl<F: MapFn, B: MapQ<I = F::O>> MapQ for MapP<F, B> {
     where
         H: MapFn<I = Self::O, O = Q>,
     {
-        MapP::new(self.f, self.b.then(h))
+        Mp::new(self.f, self.b.then(h))
     }
 }
