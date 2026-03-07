@@ -1,20 +1,20 @@
 use crate::xap::count::Count;
 use crate::xap::faker::Faker;
-use crate::xap::fun::filter::FilterQ;
+use crate::xap::fun::filter::{FilWrap, FilterQ};
 use crate::xap::xap_trait::Xap;
 
-pub struct F<X: Xap, G: FilterQ<I = X::O>> {
+pub struct Fb<X: Xap, G: FilterQ<I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap, G: FilterQ<I = X::O>> F<X, G> {
+impl<X: Xap, G: FilterQ<I = X::O>> Fb<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
+impl<X: Xap, G: FilterQ<I = X::O>> Xap for Fb<X, G> {
     type I = X::I;
 
     type O = X::O;
@@ -58,7 +58,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     }
 
     type Filter<H>
-        = Faker<Self::I, Self::O>
+        = Fb<X, G::Then<FilWrap<G::I, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -66,7 +66,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        todo!()
+        Fb::new(self.x, self.g.then(FilWrap::new(h)))
     }
 
     type FilterMap<Q, H>
