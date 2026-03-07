@@ -1,3 +1,4 @@
+mod count;
 mod faker;
 mod fun;
 mod xap_implementors;
