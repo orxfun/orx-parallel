@@ -1,24 +1,24 @@
 use crate::xap::fun::filter::FilterFn;
 
-pub struct FilterIterMany<I: Iterator, F: FilterFn<I = I::Item>> {
+pub struct FilterIterMany<I: Iterator, G: FilterFn<I = I::Item>> {
     i: I,
-    f: F,
+    g: G,
 }
 
-impl<I: Iterator, F: FilterFn<I = I::Item>> FilterIterMany<I, F> {
-    pub fn new(i: I, f: F) -> Self {
-        Self { i, f }
+impl<I: Iterator, G: FilterFn<I = I::Item>> FilterIterMany<I, G> {
+    pub fn new(i: I, g: G) -> Self {
+        Self { i, g }
     }
 }
 
-impl<I: Iterator, F: FilterFn<I = I::Item>> Iterator for FilterIterMany<I, F> {
+impl<I: Iterator, G: FilterFn<I = I::Item>> Iterator for FilterIterMany<I, G> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         // self.i.find(|x| (self.f)(&x))
         loop {
             match self.i.next() {
-                Some(x) => match self.f.filter(&x) {
+                Some(x) => match self.g.filter(&x) {
                     true => return Some(x),
                     false => {}
                 },
