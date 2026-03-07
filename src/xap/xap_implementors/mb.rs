@@ -1,4 +1,5 @@
 use crate::xap::M;
+use crate::xap::count::One;
 use crate::xap::fun::map::{MapI, MapQ};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
@@ -21,6 +22,8 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for Mb<X, G> {
     type I = X::I;
 
     type O = G::O;
+
+    type Count = One;
 
     type Values<'i>
         = MapI<IterOf<'i, X>, &'i G>

@@ -1,3 +1,4 @@
+use crate::xap::count::One;
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
@@ -19,6 +20,8 @@ impl<X: Xap, O, G: Fn(X::O) -> Option<O>> Xap for FilM<X, O, G> {
     type I = X::I;
 
     type O = O;
+
+    type Count = One;
 
     type Values<'i>
         = core::iter::FilterMap<IterOf<'i, X>, &'i G>

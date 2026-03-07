@@ -1,3 +1,4 @@
+use crate::xap::count::One;
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
@@ -19,6 +20,8 @@ impl<X: Xap, G: Fn(&X::O)> Xap for Ins<X, G> {
     type I = X::I;
 
     type O = X::O;
+
+    type Count = One;
 
     type Values<'i>
         = core::iter::Inspect<IterOf<'i, X>, &'i G>

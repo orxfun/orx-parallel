@@ -1,9 +1,13 @@
+use crate::xap::count::Count;
+
 pub type IterOf<'i, X> = <<X as Xap>::Values<'i> as IntoIterator>::IntoIter;
 
 pub trait Xap {
     type I;
 
     type O;
+
+    type Count: Count;
 
     type Values<'i>: IntoIterator<Item = Self::O>
     where

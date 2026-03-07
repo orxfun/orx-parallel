@@ -1,3 +1,4 @@
+use crate::xap::count::One;
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::ins::Ins;
@@ -19,6 +20,8 @@ impl<X: Xap, O: IntoIterator, G: Fn(X::O) -> O> Xap for FlaM<X, O, G> {
     type I = X::I;
 
     type O = O::Item;
+
+    type Count = One;
 
     type Values<'i>
         = core::iter::FlatMap<IterOf<'i, X>, O, &'i G>

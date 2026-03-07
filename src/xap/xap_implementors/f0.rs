@@ -1,4 +1,5 @@
 use crate::xap::F;
+use crate::xap::count::One;
 use crate::xap::fun::filter::{FilWrap, FilterQ};
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
@@ -20,6 +21,8 @@ impl<G: FilterQ> Xap for F0<G> {
     type I = G::I;
 
     type O = G::I;
+
+    type Count = One;
 
     type Values<'i>
         = Option<G::I>
