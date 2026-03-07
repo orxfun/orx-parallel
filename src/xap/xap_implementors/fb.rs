@@ -1,13 +1,7 @@
 use crate::xap::count::Count;
 use crate::xap::faker::Faker;
 use crate::xap::fun::filter::FilterQ;
-use crate::xap::fun::map::{MapS, MapWrap};
-use crate::xap::xap_implementors::fil_m::FilM;
-use crate::xap::xap_implementors::fla_m::FlaM;
-use crate::xap::xap_implementors::ins::Ins;
-use crate::xap::xap_implementors::m::M;
-use crate::xap::xap_implementors::xap_iters::IterF;
-use crate::xap::xap_trait::{IterOf, Xap};
+use crate::xap::xap_trait::Xap;
 
 pub struct F<X: Xap, G: FilterQ<I = X::O>> {
     x: X,
@@ -23,17 +17,18 @@ impl<X: Xap, G: FilterQ<I = X::O>> F<X, G> {
 impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     type I = X::I;
 
-    type O = X::I;
+    type O = X::O;
 
     type Count = <X::Count as Count>::ThenZeroOne;
 
     type Values<'i>
-        = [Self::O; 1]
+        = <Self::Count as Count>::Filter<X::Values<'i>, &'i G>
     where
         Self: 'i;
 
+    #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        todo!()
+        <Self::Count as Count>::filter(self.x.xap(i), &self.g)
     }
 
     // transformations
