@@ -73,8 +73,7 @@ impl<G: FilterQ> Xap for F0<G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        let h = FilWrap::new(h);
-        F0::new(self.g.then(h))
+        F0::new(self.g.then(FilWrap::new(h)))
     }
 
     type FilterMap<Q, H>
