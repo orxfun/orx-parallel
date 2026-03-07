@@ -1,8 +1,8 @@
 use crate::xap::count::One;
 use crate::xap::fun::filter::{FilWrap, FilterQ};
 use crate::xap::fun::map::{MapS, MapWrap};
-use crate::xap::xap_implementors::fil_m::FilM;
-use crate::xap::xap_implementors::fla_m::FlaM;
+use crate::xap::xap_implementors::film::FilM;
+use crate::xap::xap_implementors::flam::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::Xap;
