@@ -33,7 +33,8 @@ impl<X: Xap, G: MapQ<I = X::O>> Xap for Mb<X, G> {
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        let x = self.x.xap(i).into_iter().next().unwrap();
+        let mut iter = self.x.xap(i).into_iter();
+        let x = iter.next().unwrap();
         [self.g.map(x)]
         // MapI::new(self.x.xap(i).into_iter(), &self.g)
     }
