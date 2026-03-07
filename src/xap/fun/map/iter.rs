@@ -32,4 +32,5 @@ impl<I: ExactSizeIterator, G: MapFn<I = I::Item>> ExactSizeIterator for MapI<I, 
         self.i.len()
     }
 }
+
 impl<I: FusedIterator, G: MapFn<I = I::Item>> FusedIterator for MapI<I, G> {}
