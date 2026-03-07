@@ -3,25 +3,25 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_id/iter/1024        time:   [94.476 ns 95.187 ns 95.894 ns]
-xap_id/xap/1024         time:   [97.750 ns 98.687 ns 99.649 ns]
+xap_map_map/iter/1024   time:   [204.57 ns 206.40 ns 208.30 ns]
+xap_map_map/xap/1024    time:   [203.04 ns 204.81 ns 206.68 ns]
 
-xap_id/iter/32768       time:   [2.7868 µs 2.8128 µs 2.8413 µs]
-xap_id/xap/32768        time:   [2.8619 µs 2.8795 µs 2.8968 µs]
+xap_map_map/iter/32768  time:   [6.0384 µs 6.0882 µs 6.1408 µs]
+xap_map_map/xap/32768   time:   [5.9940 µs 6.0283 µs 6.0655 µs]
 
-xap_id/iter/1048576     time:   [149.47 µs 150.61 µs 151.75 µs]
-xap_id/xap/1048576      time:   [151.68 µs 152.73 µs 153.78 µs]
+xap_map_map/iter/1048576time:   [253.07 µs 255.53 µs 258.01 µs]
+xap_map_map/xap/1048576 time:   [243.62 µs 246.05 µs 248.60 µs]
 
 
 COLLECT:
-xap_id/iter/1024        time:   [102.03 ns 102.91 ns 103.82 ns]
-xap_id/xap/1024         time:   [123.55 ns 124.31 ns 125.09 ns]
+xap_map_map/iter/1024   time:   [196.83 ns 197.76 ns 198.74 ns]
+xap_map_map/xap/1024    time:   [233.82 ns 235.73 ns 237.68 ns]
 
-xap_id/iter/32768       time:   [4.9836 µs 5.0239 µs 5.0704 µs]
-xap_id/xap/32768        time:   [4.9354 µs 4.9677 µs 5.0016 µs]
+xap_map_map/iter/32768  time:   [6.6075 µs 6.6655 µs 6.7219 µs]
+xap_map_map/xap/32768   time:   [6.5634 µs 6.6086 µs 6.6552 µs]
 
-xap_id/iter/1048576     time:   [344.57 µs 348.00 µs 351.63 µs]
-xap_id/xap/1048576      time:   [354.44 µs 357.16 µs 360.05 µs]
+xap_map_map/iter/1048576time:   [411.03 µs 413.90 µs 416.97 µs]
+xap_map_map/xap/1048576 time:   [440.65 µs 442.98 µs 445.44 µs]
 
 */
 
@@ -31,7 +31,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;

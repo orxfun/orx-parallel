@@ -1,9 +1,11 @@
 use crate::xap::M;
+use crate::xap::fun::map::{MapS, MapWrap};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m0::M0;
+use crate::xap::xap_implementors::m0b::M0b;
 use crate::xap::xap_trait::Xap;
 use core::marker::PhantomData;
 
@@ -33,7 +35,7 @@ impl<I> Xap for Id<I> {
     // transformations
 
     type Map<Q, H>
-        = M0<I, Q, H>
+        = M0b<MapS<MapWrap<Self::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -41,7 +43,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M0::new(h)
+        M0b::new(MapS::new(MapWrap::new(h)))
     }
 
     type Inspect<H>
