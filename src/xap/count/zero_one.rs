@@ -5,13 +5,15 @@ use crate::xap::fun::map::MapFn;
 pub struct ZeroOne;
 
 impl Count for ZeroOne {
+    // transformations
+
     type ThenZeroOne = ZeroOne;
 
     type ThenOne = ZeroOne;
 
     type ThenMany = Many;
 
-    // transformations
+    // map
 
     type Map<I: IntoIterator, G: MapFn<I = I::Item>> = Option<G::O>;
 
@@ -19,6 +21,8 @@ impl Count for ZeroOne {
     fn map<I: IntoIterator, G: MapFn<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
         i.into_iter().next().map(|x| g.map(x))
     }
+
+    // filter
 
     type Filter<I: IntoIterator, G: FilterFn<I = I::Item>> = Option<I::Item>;
 

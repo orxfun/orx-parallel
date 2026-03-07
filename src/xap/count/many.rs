@@ -6,13 +6,15 @@ use crate::xap::fun::map::MapFn;
 pub struct Many;
 
 impl Count for Many {
+    // transformations
+
     type ThenZeroOne = Many;
 
     type ThenOne = Many;
 
     type ThenMany = Many;
 
-    // transformations
+    // map
 
     type Map<I: IntoIterator, G: MapFn<I = I::Item>> = MapIterMany<I::IntoIter, G>;
 
@@ -20,6 +22,8 @@ impl Count for Many {
     fn map<I: IntoIterator, G: MapFn<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
         MapIterMany::new(i.into_iter(), g)
     }
+
+    // filter
 
     type Filter<I: IntoIterator, G: FilterFn<I = I::Item>> = FilterIterMany<I::IntoIter, G>;
 
