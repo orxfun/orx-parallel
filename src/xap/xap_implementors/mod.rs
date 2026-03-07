@@ -3,6 +3,7 @@ mod tests;
 
 mod f;
 mod f0;
+mod fb;
 mod fil_m;
 mod fla_m;
 mod id;
