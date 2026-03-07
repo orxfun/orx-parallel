@@ -3,18 +3,18 @@ use crate::xap::faker::Faker;
 use crate::xap::fun::filter::{FilWrap, FilterQ};
 use crate::xap::xap_trait::Xap;
 
-pub struct Fb<X: Xap, G: FilterQ<I = X::O>> {
+pub struct F<X: Xap, G: FilterQ<I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap, G: FilterQ<I = X::O>> Fb<X, G> {
+impl<X: Xap, G: FilterQ<I = X::O>> F<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap, G: FilterQ<I = X::O>> Xap for Fb<X, G> {
+impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     type I = X::I;
 
     type O = X::O;
@@ -58,7 +58,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for Fb<X, G> {
     }
 
     type Filter<H>
-        = Fb<X, G::Then<FilWrap<G::I, H>>>
+        = F<X, G::Then<FilWrap<G::I, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -66,7 +66,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for Fb<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        Fb::new(self.x, self.g.then(FilWrap::new(h)))
+        F::new(self.x, self.g.then(FilWrap::new(h)))
     }
 
     type FilterMap<Q, H>

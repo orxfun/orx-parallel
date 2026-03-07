@@ -5,7 +5,7 @@ use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
-use crate::xap::xap_implementors::{F0, Fb};
+use crate::xap::xap_implementors::{F, F0};
 use crate::xap::xap_trait::Xap;
 use core::marker::PhantomData;
 
@@ -61,7 +61,7 @@ impl<I> Xap for Id<I> {
     }
 
     type Filter<H>
-        = Fb<Self, FilterS<FilWrap<Self::O, H>>>
+        = F<Self, FilterS<FilWrap<Self::O, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -69,7 +69,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        Fb::new(self, FilterS::new(FilWrap::new(h)))
+        F::new(self, FilterS::new(FilWrap::new(h)))
     }
 
     type FilterMap<Q, H>
