@@ -31,7 +31,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Sum;
+type Output = Collect;
 
 trait Exp {
     type Out;
