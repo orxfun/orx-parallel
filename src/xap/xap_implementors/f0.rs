@@ -1,6 +1,6 @@
-use crate::xap::F;
 use crate::xap::count::One;
 use crate::xap::fun::filter::{FilWrap, FilterQ};
+use crate::xap::fun::map::{MapS, MapWrap};
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
@@ -40,7 +40,7 @@ impl<G: FilterQ> Xap for F0<G> {
     // transformations
 
     type Map<Q, H>
-        = M<Self, Q, H>
+        = M<Self, MapS<MapWrap<Self::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -48,7 +48,8 @@ impl<G: FilterQ> Xap for F0<G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, h)
+        let h = MapWrap::new(h);
+        M::new(self, MapS::new(h))
     }
 
     type Inspect<H>

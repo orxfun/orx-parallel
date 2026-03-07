@@ -1,4 +1,5 @@
 use crate::xap::count::One;
+use crate::xap::fun::map::{MapS, MapWrap};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
@@ -36,7 +37,7 @@ impl<X: Xap, G: Fn(&X::O)> Xap for Ins<X, G> {
     // transformations
 
     type Map<Q, H>
-        = M<Self, Q, H>
+        = M<Self, MapS<MapWrap<Self::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -44,7 +45,7 @@ impl<X: Xap, G: Fn(&X::O)> Xap for Ins<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, h)
+        M::new(self, MapS::new(MapWrap::new(h)))
     }
 
     type Inspect<H>
