@@ -9,7 +9,6 @@ mod id;
 mod ins;
 mod m;
 mod m0;
-mod mb;
 mod xap_iters;
 
 pub use f::F;

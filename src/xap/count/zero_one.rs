@@ -1,7 +1,5 @@
-use crate::xap::{
-    count::{Count, Many},
-    fun::map::MapQ,
-};
+use crate::xap::count::{Count, Many};
+use crate::xap::fun::map::MapFn;
 
 pub struct ZeroOne;
 
@@ -14,10 +12,10 @@ impl Count for ZeroOne {
 
     // transformations
 
-    type Map<I: IntoIterator, G: MapQ<I = I::Item>> = Option<G::O>;
+    type Map<I: IntoIterator, G: MapFn<I = I::Item>> = Option<G::O>;
 
     #[inline(always)]
-    fn map<I: IntoIterator, G: MapQ<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
+    fn map<I: IntoIterator, G: MapFn<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
         i.into_iter().next().map(|x| g.map(x))
     }
 }
