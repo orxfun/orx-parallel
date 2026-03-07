@@ -71,7 +71,7 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().filter(f);
-    E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
+    E::out(inputs.iter().copied().filter_map(|x| xap.xap(x)))
 }
 
 fn run(c: &mut Criterion) {
