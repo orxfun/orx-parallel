@@ -1,23 +1,38 @@
-use crate::xap::{count::One, xap_trait::Xap};
-use core::marker::PhantomData;
+use crate::xap::count::Count;
+use crate::xap::faker::Faker;
+use crate::xap::fun::filter::FilterQ;
+use crate::xap::fun::map::{MapS, MapWrap};
+use crate::xap::xap_implementors::fil_m::FilM;
+use crate::xap::xap_implementors::fla_m::FlaM;
+use crate::xap::xap_implementors::ins::Ins;
+use crate::xap::xap_implementors::m::M;
+use crate::xap::xap_implementors::xap_iters::IterF;
+use crate::xap::xap_trait::{IterOf, Xap};
 
-pub struct Faker<I, O> {
-    p: PhantomData<(I, O)>,
+pub struct F<X: Xap, G: FilterQ<I = X::O>> {
+    x: X,
+    g: G,
 }
 
-impl<I, O> Xap for Faker<I, O> {
-    type I = I;
+impl<X: Xap, G: FilterQ<I = X::O>> F<X, G> {
+    pub fn new(x: X, g: G) -> Self {
+        Self { x, g }
+    }
+}
 
-    type O = O;
+impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
+    type I = X::I;
 
-    type Count = One;
+    type O = X::I;
+
+    type Count = <X::Count as Count>::ThenZeroOne;
 
     type Values<'i>
-        = [O; 1]
+        = [Self::O; 1]
     where
         Self: 'i;
 
-    fn xap(&self, _: Self::I) -> Self::Values<'_> {
+    fn xap(&self, i: Self::I) -> Self::Values<'_> {
         todo!()
     }
 
