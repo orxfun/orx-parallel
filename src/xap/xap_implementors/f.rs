@@ -1,3 +1,4 @@
+use crate::xap::count::One;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
@@ -20,6 +21,8 @@ impl<X: Xap, G: Fn(&X::O) -> bool> Xap for F<X, G> {
     type I = X::I;
 
     type O = X::O;
+
+    type Count = One;
 
     type Values<'i>
         = IterF<IterOf<'i, X>, &'i G>

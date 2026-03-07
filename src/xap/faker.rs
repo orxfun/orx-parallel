@@ -1,4 +1,4 @@
-use crate::xap::xap_trait::Xap;
+use crate::xap::{count::One, xap_trait::Xap};
 use core::marker::PhantomData;
 
 pub struct Faker<I, O> {
@@ -9,6 +9,8 @@ impl<I, O> Xap for Faker<I, O> {
     type I = I;
 
     type O = O;
+
+    type Count = One;
 
     type Values<'i>
         = [O; 1]

@@ -1,3 +1,4 @@
+use crate::xap::count::One;
 use crate::xap::fun::filter::{FilWrap, FilterS};
 use crate::xap::fun::map::{MapS, MapWrap};
 use crate::xap::xap_implementors::fil_m::FilM;
@@ -19,6 +20,8 @@ impl<I> Xap for Id<I> {
     type I = I;
 
     type O = I;
+
+    type Count = One;
 
     type Values<'i>
         = [I; 1]

@@ -1,3 +1,4 @@
+use crate::xap::count::One;
 use crate::xap::fun::map::{MapQ, MapWrap};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
@@ -19,6 +20,8 @@ impl<G: MapQ> Xap for M0<G> {
     type I = G::I;
 
     type O = G::O;
+
+    type Count = One;
 
     type Values<'i>
         = [G::O; 1]
