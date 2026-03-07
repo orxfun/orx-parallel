@@ -3,14 +3,14 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_f/iter/1024         time:   [490.72 ns 493.51 ns 496.29 ns]
-xap_f/xap/1024          time:   [496.50 ns 499.57 ns 502.81 ns]
+xap_f_f/iter/1024       time:   [734.74 ns 743.33 ns 752.01 ns]
+xap_f_f/xap/1024        time:   [736.33 ns 744.48 ns 752.67 ns]
 
-xap_f/iter/32768        time:   [19.216 µs 19.914 µs 20.673 µs]
-xap_f/xap/32768         time:   [20.652 µs 21.574 µs 22.585 µs]
+xap_f_f/iter/32768      time:   [61.614 µs 62.236 µs 62.894 µs]
+xap_f_f/xap/32768       time:   [59.614 µs 60.197 µs 60.802 µs]
 
-xap_f/iter/1048576      time:   [2.2176 ms 2.2271 ms 2.2367 ms]
-xap_f/xap/1048576       time:   [2.2115 ms 2.2222 ms 2.2333 ms]
+xap_f_f/iter/1048576    time:   [2.5984 ms 2.6138 ms 2.6295 ms]
+xap_f_f/xap/1048576     time:   [2.4935 ms 2.5057 ms 2.5180 ms]
 
 
 COLLECT:
