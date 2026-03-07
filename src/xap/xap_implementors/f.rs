@@ -2,7 +2,7 @@ use crate::xap::M;
 use crate::xap::count::Count;
 use crate::xap::faker::Faker;
 use crate::xap::fun::filter::{FWr, FilterQueue};
-use crate::xap::fun::map::{Ms, MWr};
+use crate::xap::fun::map::{MWr, Ms};
 use crate::xap::xap_trait::Xap;
 
 pub struct F<X: Xap, G: FilterQueue<I = X::O>> {

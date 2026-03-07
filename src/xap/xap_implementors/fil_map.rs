@@ -1,5 +1,6 @@
 use crate::xap::count::{Count, One};
 use crate::xap::fun::filter::{FWr, Fs};
+use crate::xap::fun::filter_map::{FilMWr, FilterMapFn};
 use crate::xap::fun::map::{MWr, Ms};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fla_map::FlaMap;
@@ -7,32 +8,34 @@ use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::{IterOf, Xap};
 
-pub struct FilMap<X: Xap, O, G: Fn(X::O) -> Option<O>> {
+pub struct FilMap<X: Xap, G: FilterMapFn<I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap, O, G: Fn(X::O) -> Option<O>> FilMap<X, O, G> {
+impl<X: Xap, G: FilterMapFn<I = X::O>> FilMap<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap, O, G: Fn(X::O) -> Option<O>> Xap for FilMap<X, O, G> {
+impl<X: Xap, G: FilterMapFn<I = X::O>> Xap for FilMap<X, G> {
     type I = X::I;
 
-    type O = O;
+    type O = G::O;
 
     type Count = <X::Count as Count>::ThenZeroOne;
 
     type Values<'i>
-        = core::iter::FilterMap<IterOf<'i, X>, &'i G>
+        // = core::iter::FilterMap<IterOf<'i, X>, &'i G>
+        = [Self::O; 1]
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        self.x.xap(i).into_iter().filter_map(&self.g)
+        // self.x.xap(i).into_iter().filter_map(&self.g)
+        todo!()
     }
 
     // transformations
@@ -75,7 +78,7 @@ impl<X: Xap, O, G: Fn(X::O) -> Option<O>> Xap for FilMap<X, O, G> {
     }
 
     type FilterMap<Q, H>
-        = FilMap<Self, Q, H>
+        = FilMap<Self, FilMWr<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -83,7 +86,7 @@ impl<X: Xap, O, G: Fn(X::O) -> Option<O>> Xap for FilMap<X, O, G> {
     where
         H: Fn(Self::O) -> Option<Q>,
     {
-        FilMap::new(self, h)
+        FilMap::new(self, FilMWr::new(h))
     }
 
     type FlatMap<V, H>

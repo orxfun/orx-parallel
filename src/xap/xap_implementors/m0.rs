@@ -1,6 +1,7 @@
 use crate::xap::count::One;
 use crate::xap::fun::filter::{FWr, Fs};
-use crate::xap::fun::map::{MapQueue, MWr};
+use crate::xap::fun::filter_map::FilMWr;
+use crate::xap::fun::map::{MWr, MapQueue};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::fla_map::FlaMap;
@@ -74,7 +75,7 @@ impl<G: MapQueue> Xap for M0<G> {
     }
 
     type FilterMap<Q, H>
-        = FilMap<Self, Q, H>
+        = FilMap<Self, FilMWr<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -82,7 +83,7 @@ impl<G: MapQueue> Xap for M0<G> {
     where
         H: Fn(Self::O) -> Option<Q>,
     {
-        FilMap::new(self, h)
+        FilMap::new(self, FilMWr::new(h))
     }
 
     type FlatMap<V, H>
