@@ -1,4 +1,5 @@
 mod faker;
+mod fun;
 mod xap_implementors;
 mod xap_trait;
 
