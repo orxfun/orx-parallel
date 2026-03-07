@@ -1,42 +1,39 @@
-use crate::xap::M;
+use crate::xap::fun::map::{MapQ, MapWrap};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_trait::Xap;
-use core::marker::PhantomData;
 
-pub struct M0<I, O, G: Fn(I) -> O> {
+pub struct M0<G: MapQ> {
     g: G,
-    p: PhantomData<(I, O)>,
 }
 
-impl<I, O, G: Fn(I) -> O> M0<I, O, G> {
+impl<G: MapQ> M0<G> {
     pub fn new(g: G) -> Self {
-        let p = PhantomData;
-        Self { g, p }
+        Self { g }
     }
 }
 
-impl<I, O, G: Fn(I) -> O> Xap for M0<I, O, G> {
-    type I = I;
+impl<G: MapQ> Xap for M0<G> {
+    type I = G::I;
 
-    type O = O;
+    type O = G::O;
 
     type Values<'i>
-        = [O; 1]
+        = [G::O; 1]
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        [(self.g)(i)]
+        [self.g.map(i)]
     }
 
     // transformations
 
     type Map<Q, H>
-        = M<Self, Q, H>
+        = M0<G::Then<Q, MapWrap<G::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -44,7 +41,8 @@ impl<I, O, G: Fn(I) -> O> Xap for M0<I, O, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, h)
+        let h = MapWrap::new(h);
+        M0::new(self.g.then(h))
     }
 
     type Inspect<H>

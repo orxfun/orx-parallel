@@ -1,39 +1,40 @@
-use crate::xap::fun::map::{MapQ, MapWrap};
+use crate::xap::M;
+use crate::xap::fun::map::{MapI, MapQ};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
-use crate::xap::xap_trait::Xap;
+use crate::xap::xap_trait::{IterOf, Xap};
 
-pub struct M0b<G: MapQ> {
+pub struct Mb<X: Xap, G: MapQ<I = X::O>> {
+    x: X,
     g: G,
 }
 
-impl<G: MapQ> M0b<G> {
-    pub fn new(g: G) -> Self {
-        Self { g }
+impl<X: Xap, G: MapQ<I = X::O>> Mb<X, G> {
+    pub fn new(x: X, g: G) -> Self {
+        Self { x, g }
     }
 }
 
-impl<G: MapQ> Xap for M0b<G> {
-    type I = G::I;
+impl<X: Xap, G: MapQ<I = X::O>> Xap for Mb<X, G> {
+    type I = X::I;
 
     type O = G::O;
 
     type Values<'i>
-        = [G::O; 1]
+        = MapI<IterOf<'i, X>, &'i G>
     where
         Self: 'i;
 
-    #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        [self.g.map(i)]
+        MapI::new(self.x.xap(i).into_iter(), &self.g)
     }
 
     // transformations
 
     type Map<Q, H>
-        = M0b<G::Then<Q, MapWrap<G::O, Q, H>>>
+        = M<Self, Q, H>
     where
         H: Fn(Self::O) -> Q;
 
@@ -41,8 +42,7 @@ impl<G: MapQ> Xap for M0b<G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        let h = MapWrap::new(h);
-        M0b::new(self.g.then(h))
+        M::new(self, h)
     }
 
     type Inspect<H>

@@ -8,7 +8,7 @@ mod id;
 mod ins;
 mod m;
 mod m0;
-mod m0b;
+mod mb;
 mod xap_iters;
 
 pub use f::F;
@@ -17,4 +17,5 @@ pub use fla_m::FlaM;
 pub use id::Id;
 pub use ins::Ins;
 pub use m::M;
+pub use m0::M0;
 pub use xap_iters::IterF;
