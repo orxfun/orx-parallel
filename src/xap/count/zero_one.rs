@@ -1,5 +1,6 @@
 use crate::xap::count::{Count, Many};
 use crate::xap::fun::filter::FilterFn;
+use crate::xap::fun::filter_map::FilterMapFn;
 use crate::xap::fun::map::MapFn;
 
 pub struct ZeroOne;
@@ -30,6 +31,21 @@ impl Count for ZeroOne {
     fn filter<I: IntoIterator, G: FilterFn<I = I::Item>>(i: I, g: G) -> Self::Filter<I, G> {
         match i.into_iter().next() {
             Some(x) if g.filter(&x) => Some(x),
+            _ => None,
+        }
+    }
+
+    // filter_map
+
+    type FilterMap<I: IntoIterator, G: FilterMapFn<I = I::Item>> = Option<G::O>;
+
+    #[inline(always)]
+    fn filter_map<I: IntoIterator, G: FilterMapFn<I = I::Item>>(
+        i: I,
+        g: G,
+    ) -> Self::FilterMap<I, G> {
+        match i.into_iter().next() {
+            Some(x) => g.filter_map(x),
             _ => None,
         }
     }

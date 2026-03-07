@@ -1,4 +1,4 @@
-use crate::xap::fun::{filter::FilterFn, map::MapFn};
+use crate::xap::fun::{filter::FilterFn, filter_map::FilterMapFn, map::MapFn};
 
 pub trait Count {
     // transformations
@@ -22,4 +22,11 @@ pub trait Count {
     fn filter<I: IntoIterator, G: FilterFn<I = I::Item>>(i: I, g: G) -> Self::Filter<I, G>;
 
     // filter_map
+
+    type FilterMap<I: IntoIterator, G: FilterMapFn<I = I::Item>>: IntoIterator<Item = G::O>;
+
+    fn filter_map<I: IntoIterator, G: FilterMapFn<I = I::Item>>(
+        i: I,
+        g: G,
+    ) -> Self::FilterMap<I, G>;
 }
