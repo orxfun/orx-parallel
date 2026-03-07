@@ -3,25 +3,25 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_map/iter/1024       time:   [207.92 ns 210.84 ns 213.72 ns]
-xap_map/xap/1024        time:   [202.03 ns 205.27 ns 208.54 ns]
+xap_id/iter/1024        time:   [94.476 ns 95.187 ns 95.894 ns]
+xap_id/xap/1024         time:   [97.750 ns 98.687 ns 99.649 ns]
 
-xap_map/iter/32768      time:   [6.4050 µs 6.4663 µs 6.5309 µs]
-xap_map/xap/32768       time:   [6.4592 µs 6.5383 µs 6.6250 µs]
+xap_id/iter/32768       time:   [2.7868 µs 2.8128 µs 2.8413 µs]
+xap_id/xap/32768        time:   [2.8619 µs 2.8795 µs 2.8968 µs]
 
-xap_map/iter/1048576    time:   [249.34 µs 252.93 µs 256.45 µs]
-xap_map/xap/1048576     time:   [231.12 µs 233.48 µs 235.76 µs]
+xap_id/iter/1048576     time:   [149.47 µs 150.61 µs 151.75 µs]
+xap_id/xap/1048576      time:   [151.68 µs 152.73 µs 153.78 µs]
 
 
 COLLECT:
-xap_map/iter/1024       time:   [227.21 ns 232.67 ns 238.16 ns]
-xap_map/xap/1024        time:   [247.15 ns 250.31 ns 253.65 ns]
+xap_id/iter/1024        time:   [102.03 ns 102.91 ns 103.82 ns]
+xap_id/xap/1024         time:   [123.55 ns 124.31 ns 125.09 ns]
 
-xap_map/iter/32768      time:   [6.8360 µs 6.8860 µs 6.9357 µs]
-xap_map/xap/32768       time:   [7.2622 µs 7.3775 µs 7.4829 µs]
+xap_id/iter/32768       time:   [4.9836 µs 5.0239 µs 5.0704 µs]
+xap_id/xap/32768        time:   [4.9354 µs 4.9677 µs 5.0016 µs]
 
-xap_map/iter/1048576    time:   [453.18 µs 457.17 µs 461.33 µs]
-xap_map/xap/1048576     time:   [482.77 µs 491.98 µs 502.11 µs]
+xap_id/iter/1048576     time:   [344.57 µs 348.00 µs 351.63 µs]
+xap_id/xap/1048576      time:   [354.44 µs 357.16 µs 360.05 µs]
 
 */
 
@@ -60,23 +60,28 @@ fn inputs(len: usize) -> Vec<u64> {
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f(i: u64) -> u64 {
+fn f1(i: u64) -> u64 {
     2 * i + 1
 }
 
+fn f2(i: u64) -> u64 {
+    i / 2 + 17
+}
+
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
-    E::out(inputs.iter().copied().map(f))
+    let iter = inputs.iter().copied().map(f1).map(f2);
+    E::out(iter)
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().map(f);
+    let xap = Id::new().map(f1).map(f2);
     E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
 }
 
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15, 1 << 20];
 
-    let mut group = c.benchmark_group("xap_map");
+    let mut group = c.benchmark_group("xap_map_map");
 
     for n in len {
         let input = inputs(n);
