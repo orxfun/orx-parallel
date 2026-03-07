@@ -3,25 +3,25 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_f_f/iter/1024       time:   [734.74 ns 743.33 ns 752.01 ns]
-xap_f_f/xap/1024        time:   [736.33 ns 744.48 ns 752.67 ns]
+xap_map_map/iter/1024   time:   [204.57 ns 206.40 ns 208.30 ns]
+xap_map_map/xap/1024    time:   [203.04 ns 204.81 ns 206.68 ns]
 
-xap_f_f/iter/32768      time:   [61.614 µs 62.236 µs 62.894 µs]
-xap_f_f/xap/32768       time:   [59.614 µs 60.197 µs 60.802 µs]
+xap_map_map/iter/32768  time:   [6.0384 µs 6.0882 µs 6.1408 µs]
+xap_map_map/xap/32768   time:   [5.9940 µs 6.0283 µs 6.0655 µs]
 
-xap_f_f/iter/1048576    time:   [2.5984 ms 2.6138 ms 2.6295 ms]
-xap_f_f/xap/1048576     time:   [2.4935 ms 2.5057 ms 2.5180 ms]
+xap_map_map/iter/1048576time:   [253.07 µs 255.53 µs 258.01 µs]
+xap_map_map/xap/1048576 time:   [243.62 µs 246.05 µs 248.60 µs]
 
 
 COLLECT:
-xap_f_f/iter/1024       time:   [824.13 ns 828.24 ns 832.45 ns]
-xap_f_f/xap/1024        time:   [919.75 ns 924.18 ns 928.43 ns]
+xap_map_map/iter/1024   time:   [196.83 ns 197.76 ns 198.74 ns]
+xap_map_map/xap/1024    time:   [233.82 ns 235.73 ns 237.68 ns]
 
-xap_f_f/iter/32768      time:   [60.553 µs 60.890 µs 61.254 µs]
-xap_f_f/xap/32768       time:   [57.590 µs 57.969 µs 58.388 µs]
+xap_map_map/iter/32768  time:   [6.6075 µs 6.6655 µs 6.7219 µs]
+xap_map_map/xap/32768   time:   [6.5634 µs 6.6086 µs 6.6552 µs]
 
-xap_f_f/iter/1048576    time:   [2.5854 ms 2.6053 ms 2.6268 ms]
-xap_f_f/xap/1048576     time:   [2.6348 ms 2.6629 ms 2.6923 ms]
+xap_map_map/iter/1048576time:   [411.03 µs 413.90 µs 416.97 µs]
+xap_map_map/xap/1048576 time:   [440.65 µs 442.98 µs 445.44 µs]
 
 */
 
@@ -31,7 +31,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = CollectInto;
 
 trait Exp {
     type Out;
@@ -54,14 +54,27 @@ impl Exp for Collect {
     }
 }
 
+pub struct CollectInto;
+impl Exp for CollectInto {
+    type Out = Vec<u64>;
+
+    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
+        let mut input = Vec::new();
+        for i in i {
+            input.push(i);
+        }
+        input
+    }
+}
+
 fn inputs(len: usize) -> Vec<u64> {
     const SEED: u64 = 654;
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f1(i: &u64) -> bool {
-    !(2 * i + 1).is_multiple_of(5)
+fn f1(i: u64) -> u64 {
+    2 * i + 1
 }
 
 fn f2(i: &u64) -> bool {
@@ -69,19 +82,19 @@ fn f2(i: &u64) -> bool {
 }
 
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
-    let iter = inputs.iter().copied().filter(f1).filter(f2);
+    let iter = inputs.iter().copied().map(f1).filter(f2);
     E::out(iter)
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().filter(f1).filter(f2);
+    let xap = Id::new().map(f1).filter(f2);
     E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
 }
 
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15, 1 << 20];
 
-    let mut group = c.benchmark_group("xap_f_f");
+    let mut group = c.benchmark_group("xap_m_f");
 
     for n in len {
         let input = inputs(n);
