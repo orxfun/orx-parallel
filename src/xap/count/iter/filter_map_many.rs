@@ -1,18 +1,18 @@
 use crate::xap::fun::filter_map::FilterMapFn;
 use core::iter::FusedIterator;
 
-pub struct MapIterMany<I: Iterator, G: FilterMapFn<I = I::Item>> {
+pub struct FilterMapIterMany<I: Iterator, G: FilterMapFn<I = I::Item>> {
     i: I,
     g: G,
 }
 
-impl<I: Iterator, G: FilterMapFn<I = I::Item>> MapIterMany<I, G> {
+impl<I: Iterator, G: FilterMapFn<I = I::Item>> FilterMapIterMany<I, G> {
     pub fn new(i: I, g: G) -> Self {
         Self { i, g }
     }
 }
 
-impl<I: Iterator, G: FilterMapFn<I = I::Item>> Iterator for MapIterMany<I, G> {
+impl<I: Iterator, G: FilterMapFn<I = I::Item>> Iterator for FilterMapIterMany<I, G> {
     type Item = G::O;
 
     #[inline(always)]
@@ -37,11 +37,13 @@ impl<I: Iterator, G: FilterMapFn<I = I::Item>> Iterator for MapIterMany<I, G> {
     }
 }
 
-impl<I: ExactSizeIterator, G: FilterMapFn<I = I::Item>> ExactSizeIterator for MapIterMany<I, G> {
+impl<I: ExactSizeIterator, G: FilterMapFn<I = I::Item>> ExactSizeIterator
+    for FilterMapIterMany<I, G>
+{
     #[inline(always)]
     fn len(&self) -> usize {
         self.i.len()
     }
 }
 
-impl<I: FusedIterator, G: FilterMapFn<I = I::Item>> FusedIterator for MapIterMany<I, G> {}
+impl<I: FusedIterator, G: FilterMapFn<I = I::Item>> FusedIterator for FilterMapIterMany<I, G> {}
