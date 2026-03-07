@@ -1,5 +1,5 @@
 use crate::xap::F;
-use crate::xap::fun::filter::FilterQ;
+use crate::xap::fun::filter::{FilWrap, FilterQ};
 use crate::xap::xap_implementors::fil_m::FilM;
 use crate::xap::xap_implementors::fla_m::FlaM;
 use crate::xap::xap_implementors::ins::Ins;
@@ -61,7 +61,7 @@ impl<G: FilterQ> Xap for F0<G> {
     }
 
     type Filter<H>
-        = F<Self, H>
+        = F0<G::Then<FilWrap<G::I, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -69,7 +69,8 @@ impl<G: FilterQ> Xap for F0<G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F::new(self, h)
+        let h = FilWrap::new(h);
+        F0::new(self.g.then(h))
     }
 
     type FilterMap<Q, H>

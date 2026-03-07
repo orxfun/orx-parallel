@@ -14,14 +14,14 @@ xap_f/xap/1048576       time:   [2.2115 ms 2.2222 ms 2.2333 ms]
 
 
 COLLECT:
-xap_f/iter/1024         time:   [806.98 ns 814.09 ns 821.95 ns]
-xap_f/xap/1024          time:   [1.2381 µs 1.2449 µs 1.2516 µs]
+xap_f_f/iter/1024       time:   [824.13 ns 828.24 ns 832.45 ns]
+xap_f_f/xap/1024        time:   [919.75 ns 924.18 ns 928.43 ns]
 
-xap_f/iter/32768        time:   [72.516 µs 72.949 µs 73.394 µs]
-xap_f/xap/32768         time:   [74.432 µs 74.778 µs 75.170 µs]
+xap_f_f/iter/32768      time:   [60.553 µs 60.890 µs 61.254 µs]
+xap_f_f/xap/32768       time:   [57.590 µs 57.969 µs 58.388 µs]
 
-xap_f/iter/1048576      time:   [2.8601 ms 2.8767 ms 2.8943 ms]
-xap_f/xap/1048576       time:   [2.9920 ms 3.0104 ms 3.0292 ms]
+xap_f_f/iter/1048576    time:   [2.5854 ms 2.6053 ms 2.6268 ms]
+xap_f_f/xap/1048576     time:   [2.6348 ms 2.6629 ms 2.6923 ms]
 
 */
 
@@ -60,24 +60,28 @@ fn inputs(len: usize) -> Vec<u64> {
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f(i: &u64) -> bool {
+fn f1(i: &u64) -> bool {
     !(2 * i + 1).is_multiple_of(5)
 }
 
+fn f2(i: &u64) -> bool {
+    i.is_multiple_of(7)
+}
+
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
-    let iter = inputs.iter().copied().filter(f);
+    let iter = inputs.iter().copied().filter(f1).filter(f2);
     E::out(iter)
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().filter(f);
+    let xap = Id::new().filter(f1).filter(f2);
     E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
 }
 
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15, 1 << 20];
 
-    let mut group = c.benchmark_group("xap_f");
+    let mut group = c.benchmark_group("xap_f_f");
 
     for n in len {
         let input = inputs(n);
