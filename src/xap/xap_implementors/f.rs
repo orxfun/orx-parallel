@@ -1,6 +1,8 @@
+use crate::xap::M;
 use crate::xap::count::Count;
 use crate::xap::faker::Faker;
 use crate::xap::fun::filter::{FilWrap, FilterQ};
+use crate::xap::fun::map::{MapS, MapWrap};
 use crate::xap::xap_trait::Xap;
 
 pub struct F<X: Xap, G: FilterQ<I = X::O>> {
@@ -34,7 +36,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     // transformations
 
     type Map<Q, H>
-        = Faker<Self::I, Q>
+        = M<Self, MapS<MapWrap<Self::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -42,7 +44,7 @@ impl<X: Xap, G: FilterQ<I = X::O>> Xap for F<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        todo!()
+        M::new(self, MapS::new(MapWrap::new(h)))
     }
 
     type Inspect<H>
