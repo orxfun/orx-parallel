@@ -1,14 +1,14 @@
-pub trait FilterFn {
+pub trait Filter {
     type I;
 
     fn filter(&self, i: &Self::I) -> bool;
 }
 
-impl<'a, X: FilterFn> FilterFn for &'a X {
+impl<'a, X: Filter> Filter for &'a X {
     type I = X::I;
 
     #[inline(always)]
     fn filter(&self, i: &Self::I) -> bool {
-        <X as FilterFn>::filter(self, i)
+        <X as Filter>::filter(self, i)
     }
 }

@@ -1,16 +1,16 @@
-use crate::xap::fun::map::{r#fn::MapFn, pair::Mp, queue::MapQueue};
+use crate::xap::fun::map::{fn_trait::Map, pair::Mp, queue::MapQueue};
 
-pub struct Ms<F: MapFn> {
+pub struct Ms<F: Map> {
     f: F,
 }
 
-impl<F: MapFn> Ms<F> {
+impl<F: Map> Ms<F> {
     pub fn new(f: F) -> Self {
         Self { f }
     }
 }
 
-impl<F: MapFn> MapFn for Ms<F> {
+impl<F: Map> Map for Ms<F> {
     type I = F::I;
 
     type O = F::O;
@@ -21,15 +21,15 @@ impl<F: MapFn> MapFn for Ms<F> {
     }
 }
 
-impl<F: MapFn> MapQueue for Ms<F> {
+impl<F: Map> MapQueue for Ms<F> {
     type Then<Q, H>
         = Mp<F, Ms<H>>
     where
-        H: MapFn<I = Self::O, O = Q>;
+        H: Map<I = Self::O, O = Q>;
 
     fn then<Q, H>(self, h: H) -> Self::Then<Q, H>
     where
-        H: MapFn<I = Self::O, O = Q>,
+        H: Map<I = Self::O, O = Q>,
     {
         Mp::new(self.f, Ms::new(h))
     }

@@ -1,12 +1,12 @@
-use crate::xap::fun::flat_map::FlatMapFn;
+use crate::xap::fun::flat_map::FlatMap;
 
-pub struct FlatMapIterMany<I: Iterator, G: FlatMapFn<I = I::Item>> {
+pub struct FlatMapIterMany<I: Iterator, G: FlatMap<I = I::Item>> {
     i: I,
     g: G,
     inner: Option<<G::O as IntoIterator>::IntoIter>,
 }
 
-impl<I: Iterator, G: FlatMapFn<I = I::Item>> FlatMapIterMany<I, G> {
+impl<I: Iterator, G: FlatMap<I = I::Item>> FlatMapIterMany<I, G> {
     pub fn new(i: I, g: G) -> Self {
         let inner = None;
         Self { i, g, inner }
@@ -21,7 +21,7 @@ impl<I: Iterator, G: FlatMapFn<I = I::Item>> FlatMapIterMany<I, G> {
     }
 }
 
-impl<I: Iterator, G: FlatMapFn<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
+impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
     type Item = <G::O as IntoIterator>::Item;
 
     fn next(&mut self) -> Option<Self::Item> {

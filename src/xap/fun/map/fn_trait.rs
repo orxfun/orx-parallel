@@ -1,4 +1,4 @@
-pub trait MapFn {
+pub trait Map {
     type I;
 
     type O;
@@ -6,13 +6,13 @@ pub trait MapFn {
     fn map(&self, i: Self::I) -> Self::O;
 }
 
-impl<'a, X: MapFn> MapFn for &'a X {
+impl<'a, X: Map> Map for &'a X {
     type I = X::I;
 
     type O = X::O;
 
     #[inline(always)]
     fn map(&self, i: Self::I) -> Self::O {
-        <X as MapFn>::map(self, i)
+        <X as Map>::map(self, i)
     }
 }

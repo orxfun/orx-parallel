@@ -1,11 +1,11 @@
-mod r#fn;
+mod fn_impl;
+mod fn_trait;
 mod pair;
 mod queue;
 mod single;
-mod wrap;
 
-pub use r#fn::MapFn;
+pub use fn_impl::{FnIns, FnMap};
+pub use fn_trait::Map;
 pub use pair::Mp;
 pub use queue::MapQueue;
 pub use single::Ms;
-pub use wrap::{InsWr, MWr};

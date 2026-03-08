@@ -1,18 +1,18 @@
-use crate::xap::fun::filter_map::FilterMapFn;
+use crate::xap::fun::filter_map::FilterMap;
 use core::iter::FusedIterator;
 
-pub struct FilterMapIterMany<I: Iterator, G: FilterMapFn<I = I::Item>> {
+pub struct FilterMapIterMany<I: Iterator, G: FilterMap<I = I::Item>> {
     i: I,
     g: G,
 }
 
-impl<I: Iterator, G: FilterMapFn<I = I::Item>> FilterMapIterMany<I, G> {
+impl<I: Iterator, G: FilterMap<I = I::Item>> FilterMapIterMany<I, G> {
     pub fn new(i: I, g: G) -> Self {
         Self { i, g }
     }
 }
 
-impl<I: Iterator, G: FilterMapFn<I = I::Item>> Iterator for FilterMapIterMany<I, G> {
+impl<I: Iterator, G: FilterMap<I = I::Item>> Iterator for FilterMapIterMany<I, G> {
     type Item = G::O;
 
     #[inline(always)]
@@ -37,7 +37,7 @@ impl<I: Iterator, G: FilterMapFn<I = I::Item>> Iterator for FilterMapIterMany<I,
     }
 }
 
-impl<I: ExactSizeIterator, G: FilterMapFn<I = I::Item>> ExactSizeIterator
+impl<I: ExactSizeIterator, G: FilterMap<I = I::Item>> ExactSizeIterator
     for FilterMapIterMany<I, G>
 {
     #[inline(always)]
@@ -46,4 +46,4 @@ impl<I: ExactSizeIterator, G: FilterMapFn<I = I::Item>> ExactSizeIterator
     }
 }
 
-impl<I: FusedIterator, G: FilterMapFn<I = I::Item>> FusedIterator for FilterMapIterMany<I, G> {}
+impl<I: FusedIterator, G: FilterMap<I = I::Item>> FusedIterator for FilterMapIterMany<I, G> {}
