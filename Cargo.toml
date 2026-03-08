@@ -48,9 +48,9 @@ test-case = "3.3.1"
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
 [[bench]]
-name = "xap_fil_flam"
+name = "mmmm"
 harness = false
-path = "benches/xap/xap_fil_flam.rs"
+path = "benches/xap/mmmm.rs"
 
 [package.metadata.docs.rs]
 all-features = true
