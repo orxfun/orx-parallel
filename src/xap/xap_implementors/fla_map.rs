@@ -1,4 +1,4 @@
-use crate::xap::count::{Count, One};
+use crate::xap::count::Count;
 use crate::xap::fun::filter::{FWr, Fs};
 use crate::xap::fun::filter_map::FilMWr;
 use crate::xap::fun::flat_map::{FlaMWr, FlatMapFn};
@@ -25,16 +25,16 @@ impl<X: Xap, G: FlatMapFn<I = X::O>> Xap for FlaMap<X, G> {
 
     type O = <G::O as IntoIterator>::Item;
 
-    type Count = One;
+    type Count = <X::Count as Count>::ThenMany;
 
     type Values<'i>
-        = <Self::Count as Count>::FlatMap<X::Values<'i>, &'i G>
+        = <X::Count as Count>::FlatMap<X::Values<'i>, &'i G>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        <Self::Count as Count>::flat_map(self.x.xap(i), &self.g)
+        <X::Count as Count>::flat_map(self.x.xap(i), &self.g)
     }
 
     // transformations

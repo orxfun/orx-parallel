@@ -28,13 +28,13 @@ impl<X: Xap, G: MapQueue<I = X::O>> Xap for M<X, G> {
     type Count = <X::Count as Count>::ThenOne;
 
     type Values<'i>
-        = <Self::Count as Count>::Map<X::Values<'i>, &'i G>
+        = <X::Count as Count>::Map<X::Values<'i>, &'i G>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        <Self::Count as Count>::map(self.x.xap(i), &self.g)
+        <X::Count as Count>::map(self.x.xap(i), &self.g)
     }
 
     // transformations
@@ -48,8 +48,7 @@ impl<X: Xap, G: MapQueue<I = X::O>> Xap for M<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        let h = MWr::new(h);
-        M::new(self.x, self.g.then(h))
+        M::new(self.x, self.g.then(MWr::new(h)))
     }
 
     type Inspect<H>

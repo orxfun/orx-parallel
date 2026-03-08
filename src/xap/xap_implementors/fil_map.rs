@@ -28,13 +28,13 @@ impl<X: Xap, G: FilterMapFn<I = X::O>> Xap for FilMap<X, G> {
     type Count = <X::Count as Count>::ThenZeroOne;
 
     type Values<'i>
-        = <Self::Count as Count>::FilterMap<X::Values<'i>, &'i G>
+        = <X::Count as Count>::FilterMap<X::Values<'i>, &'i G>
     where
         Self: 'i;
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        <Self::Count as Count>::filter_map(self.x.xap(i), &self.g)
+        <X::Count as Count>::filter_map(self.x.xap(i), &self.g)
     }
 
     // transformations
