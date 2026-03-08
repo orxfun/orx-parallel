@@ -5,7 +5,6 @@ mod f;
 mod f0;
 mod fil_map;
 mod fla_map;
-mod fla_map0;
 mod id;
 mod ins;
 mod m;

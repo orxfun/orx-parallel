@@ -8,4 +8,4 @@ pub use r#fn::MapFn;
 pub use pair::Mp;
 pub use queue::MapQueue;
 pub use single::Ms;
-pub use wrap::MWr;
+pub use wrap::{InsWr, MWr};
