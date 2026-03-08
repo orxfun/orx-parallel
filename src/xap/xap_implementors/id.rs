@@ -2,7 +2,7 @@ use crate::xap::count::One;
 use crate::xap::fun::filter::{FWr, Fs};
 use crate::xap::fun::filter_map::FilMWr;
 use crate::xap::fun::flat_map::FlaMWr;
-use crate::xap::fun::map::{MWr, Ms};
+use crate::xap::fun::map::{InsWr, MWr, Ms};
 use crate::xap::xap_implementors::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::fla_map::FlaMap;
@@ -51,7 +51,7 @@ impl<I> Xap for Id<I> {
     }
 
     type Inspect<H>
-        = Ins<Self, H>
+        = M<Self, Ms<InsWr<Self::O, H>>>
     where
         H: Fn(&Self::O);
 
@@ -59,7 +59,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O),
     {
-        Ins::new(self, h)
+        M::new(self, Ms::new(InsWr::new(h)))
     }
 
     type Filter<H>

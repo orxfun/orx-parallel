@@ -2,7 +2,7 @@ use crate::xap::M;
 use crate::xap::count::Count;
 use crate::xap::faker::Faker;
 use crate::xap::fun::filter::{FWr, FilterQueue};
-use crate::xap::fun::map::{MWr, Ms};
+use crate::xap::fun::map::{InsWr, MWr, Ms};
 use crate::xap::xap_trait::Xap;
 
 pub struct F<X: Xap, G: FilterQueue<I = X::O>> {
@@ -48,7 +48,7 @@ impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
     }
 
     type Inspect<H>
-        = Faker<Self::I, Self::O>
+        = M<Self, Ms<InsWr<Self::O, H>>>
     where
         H: Fn(&Self::O);
 
@@ -56,7 +56,7 @@ impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
     where
         H: Fn(&Self::O),
     {
-        todo!()
+        M::new(self, Ms::new(InsWr::new(h)))
     }
 
     type Filter<H>
