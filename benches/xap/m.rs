@@ -1,4 +1,5 @@
 /*
+
 The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
@@ -60,27 +61,24 @@ fn inputs(len: usize) -> Vec<u64> {
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f(i: u64) -> Vec<u64> {
-    match i.is_multiple_of(3) {
-        true => (0..5).map(|x| x * i).collect(),
-        false => (0..10).map(|x| i + x).collect(),
-    }
+fn f(i: u64) -> u64 {
+    2 * i + 1
 }
 
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
-    let iter = inputs.iter().copied().flat_map(f);
+    let iter = inputs.iter().copied().map(f);
     E::out(iter)
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().flat_map(f);
+    let xap = Id::new().map(f);
     E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
 }
 
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15, 1 << 20];
 
-    let mut group = c.benchmark_group("xap_flam");
+    let mut group = c.benchmark_group("xap_m");
 
     for n in len {
         let input = inputs(n);
