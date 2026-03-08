@@ -1,4 +1,4 @@
-use crate::xap::fun::{filter::FilterFn, filter_map::FilterMapFn, map::MapFn};
+use crate::xap::fun::{filter::FilterFn, filter_map::FilterMapFn, flat_map::FlatMapFn, map::MapFn};
 
 pub trait Count {
     // transformations
@@ -29,4 +29,12 @@ pub trait Count {
         i: I,
         g: G,
     ) -> Self::FilterMap<I, G>;
+
+    // flat_map
+
+    type FlatMap<I: IntoIterator, G: FlatMapFn<I = I::Item>>: IntoIterator<
+        Item = <G::O as IntoIterator>::Item,
+    >;
+
+    fn flat_map<I: IntoIterator, G: FlatMapFn<I = I::Item>>(i: I, g: G) -> Self::FlatMap<I, G>;
 }
