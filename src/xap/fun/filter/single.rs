@@ -1,16 +1,16 @@
-use crate::xap::fun::filter::{r#fn::FilterFn, pair::Fp, queue::FilterQueue};
+use crate::xap::fun::filter::{fn_trait::Filter, pair::Fp, queue::FilterQueue};
 
-pub struct Fs<F: FilterFn> {
+pub struct Fs<F: Filter> {
     f: F,
 }
 
-impl<F: FilterFn> Fs<F> {
+impl<F: Filter> Fs<F> {
     pub fn new(f: F) -> Self {
         Self { f }
     }
 }
 
-impl<F: FilterFn> FilterFn for Fs<F> {
+impl<F: Filter> Filter for Fs<F> {
     type I = F::I;
 
     #[inline(always)]
@@ -19,15 +19,15 @@ impl<F: FilterFn> FilterFn for Fs<F> {
     }
 }
 
-impl<F: FilterFn> FilterQueue for Fs<F> {
+impl<F: Filter> FilterQueue for Fs<F> {
     type Then<H>
         = Fp<F, Fs<H>>
     where
-        H: FilterFn<I = Self::I>;
+        H: Filter<I = Self::I>;
 
     fn then<H>(self, h: H) -> Self::Then<H>
     where
-        H: FilterFn<I = Self::I>,
+        H: Filter<I = Self::I>,
     {
         Fp::new(self.f, Fs::new(h))
     }

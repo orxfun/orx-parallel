@@ -1,8 +1,8 @@
 use crate::xap::count::One;
-use crate::xap::fun::filter::{FWr, Fs};
-use crate::xap::fun::filter_map::FilMWr;
-use crate::xap::fun::flat_map::FlaMWr;
-use crate::xap::fun::map::{InsWr, MWr, Ms};
+use crate::xap::fun::filter::{FnFil, Fs};
+use crate::xap::fun::filter_map::FnFilMap;
+use crate::xap::fun::flat_map::FnFlatMap;
+use crate::xap::fun::map::{FnIns, FnMap, Ms};
 use crate::xap::xap_implementors::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::fla_map::FlaMap;
@@ -38,7 +38,7 @@ impl<I> Xap for Id<I> {
     // transformations
 
     type Map<Q, H>
-        = M<Self, Ms<MWr<Self::O, Q, H>>>
+        = M<Self, Ms<FnMap<Self::O, Q, H>>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -46,11 +46,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, Ms::new(MWr::new(h)))
+        M::new(self, Ms::new(FnMap::new(h)))
     }
 
     type Inspect<H>
-        = M<Self, Ms<InsWr<Self::O, H>>>
+        = M<Self, Ms<FnIns<Self::O, H>>>
     where
         H: Fn(&Self::O);
 
@@ -58,11 +58,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O),
     {
-        M::new(self, Ms::new(InsWr::new(h)))
+        M::new(self, Ms::new(FnIns::new(h)))
     }
 
     type Filter<H>
-        = F<Self, Fs<FWr<Self::O, H>>>
+        = F<Self, Fs<FnFil<Self::O, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -70,11 +70,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F::new(self, Fs::new(FWr::new(h)))
+        F::new(self, Fs::new(FnFil::new(h)))
     }
 
     type FilterMap<Q, H>
-        = FilMap<Self, FilMWr<Self::O, Q, H>>
+        = FilMap<Self, FnFilMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -82,11 +82,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Option<Q>,
     {
-        FilMap::new(self, FilMWr::new(h))
+        FilMap::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = FlaMap<Self, FlaMWr<Self::O, V, H>>
+        = FlaMap<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V;
@@ -96,6 +96,6 @@ impl<I> Xap for Id<I> {
         V: IntoIterator,
         H: Fn(Self::O) -> V,
     {
-        FlaMap::new(self, FlaMWr::new(h))
+        FlaMap::new(self, FnFlatMap::new(h))
     }
 }

@@ -1,17 +1,17 @@
-use crate::xap::fun::map::r#fn::MapFn;
+use crate::xap::fun::map::fn_trait::Map;
 use core::marker::PhantomData;
 
 // map
 
-pub struct MWr<I, O, F: Fn(I) -> O>(F, PhantomData<(I, O)>);
+pub struct FnMap<I, O, F: Fn(I) -> O>(F, PhantomData<(I, O)>);
 
-impl<I, O, F: Fn(I) -> O> MWr<I, O, F> {
+impl<I, O, F: Fn(I) -> O> FnMap<I, O, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<I, O, F: Fn(I) -> O> MapFn for MWr<I, O, F> {
+impl<I, O, F: Fn(I) -> O> Map for FnMap<I, O, F> {
     type I = I;
 
     type O = O;
@@ -24,15 +24,15 @@ impl<I, O, F: Fn(I) -> O> MapFn for MWr<I, O, F> {
 
 // inspect
 
-pub struct InsWr<I, F: Fn(&I)>(F, PhantomData<I>);
+pub struct FnIns<I, F: Fn(&I)>(F, PhantomData<I>);
 
-impl<I, F: Fn(&I)> InsWr<I, F> {
+impl<I, F: Fn(&I)> FnIns<I, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<I, F: Fn(&I)> MapFn for InsWr<I, F> {
+impl<I, F: Fn(&I)> Map for FnIns<I, F> {
     type I = I;
 
     type O = I;
@@ -46,15 +46,15 @@ impl<I, F: Fn(&I)> MapFn for InsWr<I, F> {
 
 // cloned
 
-pub struct ClonedWr<'a, I: Clone>(PhantomData<&'a I>);
+pub struct FnCloned<'a, I: Clone>(PhantomData<&'a I>);
 
-impl<'a, I: Clone> ClonedWr<'a, I> {
+impl<'a, I: Clone> FnCloned<'a, I> {
     pub fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<'a, I: Clone> MapFn for ClonedWr<'a, I> {
+impl<'a, I: Clone> Map for FnCloned<'a, I> {
     type I = &'a I;
 
     type O = I;
@@ -66,15 +66,15 @@ impl<'a, I: Clone> MapFn for ClonedWr<'a, I> {
 
 // copied
 
-pub struct CopiedWr<'a, I: Copy>(PhantomData<&'a I>);
+pub struct FnCopied<'a, I: Copy>(PhantomData<&'a I>);
 
-impl<'a, I: Copy> CopiedWr<'a, I> {
+impl<'a, I: Copy> FnCopied<'a, I> {
     pub fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<'a, I: Copy> MapFn for CopiedWr<'a, I> {
+impl<'a, I: Copy> Map for FnCopied<'a, I> {
     type I = &'a I;
 
     type O = I;

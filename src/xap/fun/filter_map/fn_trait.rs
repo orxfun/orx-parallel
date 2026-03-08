@@ -1,4 +1,4 @@
-pub trait FilterMapFn {
+pub trait FilterMap {
     type I;
 
     type O;
@@ -6,13 +6,13 @@ pub trait FilterMapFn {
     fn filter_map(&self, i: Self::I) -> Option<Self::O>;
 }
 
-impl<'a, X: FilterMapFn> FilterMapFn for &'a X {
+impl<'a, X: FilterMap> FilterMap for &'a X {
     type I = X::I;
 
     type O = X::O;
 
     #[inline(always)]
     fn filter_map(&self, i: Self::I) -> Option<Self::O> {
-        <X as FilterMapFn>::filter_map(self, i)
+        <X as FilterMap>::filter_map(self, i)
     }
 }

@@ -1,11 +1,11 @@
-use crate::xap::fun::map::r#fn::MapFn;
+use crate::xap::fun::map::fn_trait::Map;
 
-pub trait MapQueue: MapFn {
+pub trait MapQueue: Map {
     type Then<Q, H>: MapQueue<I = Self::I, O = Q>
     where
-        H: MapFn<I = Self::O, O = Q>;
+        H: Map<I = Self::O, O = Q>;
 
     fn then<Q, H>(self, h: H) -> Self::Then<Q, H>
     where
-        H: MapFn<I = Self::O, O = Q>;
+        H: Map<I = Self::O, O = Q>;
 }

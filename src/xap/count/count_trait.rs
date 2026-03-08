@@ -1,4 +1,4 @@
-use crate::xap::fun::{filter::FilterFn, filter_map::FilterMapFn, flat_map::FlatMapFn, map::MapFn};
+use crate::xap::fun::{filter::Filter, filter_map::FilterMap, flat_map::FlatMap, map::Map};
 
 pub trait Count {
     // transformations
@@ -11,30 +11,30 @@ pub trait Count {
 
     // map
 
-    type Map<I: IntoIterator, G: MapFn<I = I::Item>>: IntoIterator<Item = G::O>;
+    type Map<I: IntoIterator, G: Map<I = I::Item>>: IntoIterator<Item = G::O>;
 
-    fn map<I: IntoIterator, G: MapFn<I = I::Item>>(i: I, g: G) -> Self::Map<I, G>;
+    fn map<I: IntoIterator, G: Map<I = I::Item>>(i: I, g: G) -> Self::Map<I, G>;
 
     // filter
 
-    type Filter<I: IntoIterator, G: FilterFn<I = I::Item>>: IntoIterator<Item = I::Item>;
+    type Filter<I: IntoIterator, G: Filter<I = I::Item>>: IntoIterator<Item = I::Item>;
 
-    fn filter<I: IntoIterator, G: FilterFn<I = I::Item>>(i: I, g: G) -> Self::Filter<I, G>;
+    fn filter<I: IntoIterator, G: Filter<I = I::Item>>(i: I, g: G) -> Self::Filter<I, G>;
 
     // filter_map
 
-    type FilterMap<I: IntoIterator, G: FilterMapFn<I = I::Item>>: IntoIterator<Item = G::O>;
+    type FilterMap<I: IntoIterator, G: FilterMap<I = I::Item>>: IntoIterator<Item = G::O>;
 
-    fn filter_map<I: IntoIterator, G: FilterMapFn<I = I::Item>>(
+    fn filter_map<I: IntoIterator, G: FilterMap<I = I::Item>>(
         i: I,
         g: G,
     ) -> Self::FilterMap<I, G>;
 
     // flat_map
 
-    type FlatMap<I: IntoIterator, G: FlatMapFn<I = I::Item>>: IntoIterator<
+    type FlatMap<I: IntoIterator, G: FlatMap<I = I::Item>>: IntoIterator<
         Item = <G::O as IntoIterator>::Item,
     >;
 
-    fn flat_map<I: IntoIterator, G: FlatMapFn<I = I::Item>>(i: I, g: G) -> Self::FlatMap<I, G>;
+    fn flat_map<I: IntoIterator, G: FlatMap<I = I::Item>>(i: I, g: G) -> Self::FlatMap<I, G>;
 }

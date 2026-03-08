@@ -1,17 +1,17 @@
-use crate::xap::fun::filter::FilterFn;
+use crate::xap::fun::filter::Filter;
 
-pub struct FilterIterMany<I: Iterator, G: FilterFn<I = I::Item>> {
+pub struct FilterIterMany<I: Iterator, G: Filter<I = I::Item>> {
     i: I,
     g: G,
 }
 
-impl<I: Iterator, G: FilterFn<I = I::Item>> FilterIterMany<I, G> {
+impl<I: Iterator, G: Filter<I = I::Item>> FilterIterMany<I, G> {
     pub fn new(i: I, g: G) -> Self {
         Self { i, g }
     }
 }
 
-impl<I: Iterator, G: FilterFn<I = I::Item>> Iterator for FilterIterMany<I, G> {
+impl<I: Iterator, G: Filter<I = I::Item>> Iterator for FilterIterMany<I, G> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
