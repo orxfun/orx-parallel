@@ -2,11 +2,10 @@ use crate::xap::count::One;
 use crate::xap::fun::filter::{FWr, Fs};
 use crate::xap::fun::filter_map::FilMWr;
 use crate::xap::fun::flat_map::FlaMWr;
-use crate::xap::fun::map::{MWr, MapQueue};
+use crate::xap::fun::map::{InsWr, MWr, MapQueue};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::fla_map::FlaMap;
-use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_trait::Xap;
 
 pub struct M0<G: MapQueue> {
@@ -52,7 +51,7 @@ impl<G: MapQueue> Xap for M0<G> {
     }
 
     type Inspect<H>
-        = Ins<Self, H>
+        = M0<G::Then<G::O, InsWr<G::O, H>>>
     where
         H: Fn(&Self::O);
 
@@ -60,7 +59,7 @@ impl<G: MapQueue> Xap for M0<G> {
     where
         H: Fn(&Self::O),
     {
-        Ins::new(self, h)
+        M0::new(self.g.then(InsWr::new(h)))
     }
 
     type Filter<H>
