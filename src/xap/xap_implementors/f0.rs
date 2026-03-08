@@ -1,4 +1,4 @@
-use crate::xap::count::One;
+use crate::xap::count::ZeroOne;
 use crate::xap::fun::filter::{FWr, FilterQueue};
 use crate::xap::fun::filter_map::FilMWr;
 use crate::xap::fun::flat_map::FlaMWr;
@@ -24,7 +24,7 @@ impl<G: FilterQueue> Xap for F0<G> {
 
     type O = G::I;
 
-    type Count = One;
+    type Count = ZeroOne;
 
     type Values<'i>
         = Option<G::I>
