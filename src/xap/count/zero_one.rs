@@ -1,6 +1,7 @@
 use crate::xap::count::{Count, Many};
 use crate::xap::fun::filter::FilterFn;
 use crate::xap::fun::filter_map::FilterMapFn;
+use crate::xap::fun::flat_map::FlatMapFn;
 use crate::xap::fun::map::MapFn;
 
 pub struct ZeroOne;
@@ -48,5 +49,21 @@ impl Count for ZeroOne {
             Some(x) => g.filter_map(x),
             _ => None,
         }
+    }
+
+    // flat_map
+
+    type FlatMap<I: IntoIterator, G: FlatMapFn<I = I::Item>> =
+        core::iter::Flatten<core::option::IntoIter<G::O>>;
+
+    #[inline(always)]
+    fn flat_map<I: IntoIterator, G: FlatMapFn<I = I::Item>>(i: I, g: G) -> Self::FlatMap<I, G> {
+        let x = {
+            match i.into_iter().next() {
+                Some(x) => Some(g.flat_map(x)),
+                _ => None,
+            }
+        };
+        x.into_iter().flatten()
     }
 }
