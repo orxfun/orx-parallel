@@ -6,7 +6,6 @@ use crate::xap::fun::map::{InsWr, MWr, Ms};
 use crate::xap::xap_implementors::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::fla_map::FlaMap;
-use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::Xap;
 use core::marker::PhantomData;

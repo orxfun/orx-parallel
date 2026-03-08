@@ -6,7 +6,6 @@ use crate::xap::fun::map::{InsWr, MWr, MapQueue};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::fla_map::FlaMap;
-use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_trait::Xap;
 
 pub struct M<X: Xap, G: MapQueue<I = X::O>> {

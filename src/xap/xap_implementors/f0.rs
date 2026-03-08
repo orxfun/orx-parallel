@@ -5,7 +5,6 @@ use crate::xap::fun::flat_map::FlaMWr;
 use crate::xap::fun::map::{InsWr, MWr, Ms};
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::fla_map::FlaMap;
-use crate::xap::xap_implementors::ins::Ins;
 use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::Xap;
 
