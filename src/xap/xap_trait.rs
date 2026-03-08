@@ -59,3 +59,15 @@ pub trait Xap {
         V: IntoIterator,
         H: Fn(Self::O) -> V;
 }
+
+pub trait XapCloned<'a, O: 'a + Clone>: Xap<O = &'a O> {
+    type Cloned: Xap<I = Self::I, O = O>;
+
+    fn cloned(self) -> Self::Cloned;
+}
+
+pub trait XapCopied<'a, O: 'a + Copy>: Xap<O = &'a O> {
+    type Copied: Xap<I = Self::I, O = O>;
+
+    fn copied(self) -> Self::Copied;
+}

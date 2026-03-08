@@ -2,11 +2,11 @@ use crate::xap::count::Count;
 use crate::xap::fun::filter::{FnFil, Fs};
 use crate::xap::fun::filter_map::FnFilMap;
 use crate::xap::fun::flat_map::FnFlatMap;
-use crate::xap::fun::map::{FnIns, FnMap, MapQueue};
+use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, MapQueue, Ms};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
-use crate::xap::xap_implementors::fla_map::FlaMap;
-use crate::xap::xap_trait::Xap;
+use crate::xap::xap_implementors::flat_map::FlaMap;
+use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 
 pub struct M<X: Xap, G: MapQueue<I = X::O>> {
     x: X,
@@ -98,5 +98,21 @@ impl<X: Xap, G: MapQueue<I = X::O>> Xap for M<X, G> {
         H: Fn(Self::O) -> V,
     {
         FlaMap::new(self, FnFlatMap::new(h))
+    }
+}
+
+impl<'a, I: 'a + Clone, X: Xap, G: MapQueue<I = X::O, O = &'a I>> XapCloned<'a, I> for M<X, G> {
+    type Cloned = M<X, G::Then<I, FnCloned<'a, I>>>;
+
+    fn cloned(self) -> Self::Cloned {
+        M::new(self.x, self.g.then(FnCloned::new()))
+    }
+}
+
+impl<'a, I: 'a + Copy, X: Xap, G: MapQueue<I = X::O, O = &'a I>> XapCopied<'a, I> for M<X, G> {
+    type Copied = M<X, G::Then<I, FnCopied<'a, I>>>;
+
+    fn copied(self) -> Self::Copied {
+        M::new(self.x, self.g.then(FnCopied::new()))
     }
 }

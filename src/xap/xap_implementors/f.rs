@@ -1,9 +1,10 @@
-use crate::xap::M;
 use crate::xap::count::Count;
-use crate::xap::faker::Faker;
-use crate::xap::fun::filter::{FnFil, FilterQueue};
-use crate::xap::fun::map::{FnIns, FnMap, Ms};
-use crate::xap::xap_trait::Xap;
+use crate::xap::fun::filter::{FilterQueue, FnFil};
+use crate::xap::fun::filter_map::FnFilMap;
+use crate::xap::fun::flat_map::FnFlatMap;
+use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, Ms};
+use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
+use crate::xap::{FilMap, FlaMap, M};
 
 pub struct F<X: Xap, G: FilterQueue<I = X::O>> {
     x: X,
@@ -72,7 +73,7 @@ impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
     }
 
     type FilterMap<Q, H>
-        = Faker<Self::I, Q>
+        = FilMap<Self, FnFilMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q>;
 
@@ -80,11 +81,11 @@ impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
     where
         H: Fn(Self::O) -> Option<Q>,
     {
-        todo!()
+        FilMap::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = Faker<Self::I, V::Item>
+        = FlaMap<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V;
@@ -94,6 +95,22 @@ impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V,
     {
-        todo!()
+        FlaMap::new(self, FnFlatMap::new(h))
+    }
+}
+
+impl<'a, I: 'a + Clone, X: Xap<O = &'a I>, G: FilterQueue<I = &'a I>> XapCloned<'a, I> for F<X, G> {
+    type Cloned = M<Self, Ms<FnCloned<'a, I>>>;
+
+    fn cloned(self) -> Self::Cloned {
+        M::new(self, Ms::new(FnCloned::new()))
+    }
+}
+
+impl<'a, I: 'a + Copy, X: Xap<O = &'a I>, G: FilterQueue<I = &'a I>> XapCopied<'a, I> for F<X, G> {
+    type Copied = M<Self, Ms<FnCopied<'a, I>>>;
+
+    fn copied(self) -> Self::Copied {
+        M::new(self, Ms::new(FnCopied::new()))
     }
 }
