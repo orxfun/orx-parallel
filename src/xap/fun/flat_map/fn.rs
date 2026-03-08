@@ -3,7 +3,7 @@ pub trait FlatMapFn {
 
     type O: IntoIterator;
 
-    fn filter_map(&self, i: Self::I) -> Self::O;
+    fn flat_map(&self, i: Self::I) -> Self::O;
 }
 
 impl<'a, X: FlatMapFn> FlatMapFn for &'a X {
@@ -12,7 +12,7 @@ impl<'a, X: FlatMapFn> FlatMapFn for &'a X {
     type O = X::O;
 
     #[inline(always)]
-    fn filter_map(&self, i: Self::I) -> Self::O {
-        <X as FlatMapFn>::filter_map(self, i)
+    fn flat_map(&self, i: Self::I) -> Self::O {
+        <X as FlatMapFn>::flat_map(self, i)
     }
 }
