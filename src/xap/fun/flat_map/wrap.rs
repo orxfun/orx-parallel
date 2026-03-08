@@ -15,7 +15,7 @@ impl<I, O: IntoIterator, F: Fn(I) -> O> FlatMapFn for FlaMWr<I, O, F> {
     type O = O;
 
     #[inline(always)]
-    fn filter_map(&self, i: Self::I) -> Self::O {
+    fn flat_map(&self, i: Self::I) -> Self::O {
         (self.0)(i)
     }
 }
