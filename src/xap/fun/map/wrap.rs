@@ -43,3 +43,43 @@ impl<I, F: Fn(&I)> MapFn for InsWr<I, F> {
         i
     }
 }
+
+// cloned
+
+pub struct ClonedWr<'a, I: Clone>(PhantomData<&'a I>);
+
+impl<'a, I: Clone> ClonedWr<'a, I> {
+    pub fn new() -> Self {
+        Self(PhantomData)
+    }
+}
+
+impl<'a, I: Clone> MapFn for ClonedWr<'a, I> {
+    type I = &'a I;
+
+    type O = I;
+
+    fn map(&self, i: Self::I) -> Self::O {
+        i.clone()
+    }
+}
+
+// copied
+
+pub struct CopiedWr<'a, I: Copy>(PhantomData<&'a I>);
+
+impl<'a, I: Copy> CopiedWr<'a, I> {
+    pub fn new() -> Self {
+        Self(PhantomData)
+    }
+}
+
+impl<'a, I: Copy> MapFn for CopiedWr<'a, I> {
+    type I = &'a I;
+
+    type O = I;
+
+    fn map(&self, i: Self::I) -> Self::O {
+        *i
+    }
+}
