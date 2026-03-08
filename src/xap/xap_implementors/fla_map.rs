@@ -1,7 +1,7 @@
 use crate::xap::count::One;
 use crate::xap::fun::filter::{FWr, Fs};
 use crate::xap::fun::filter_map::FilMWr;
-use crate::xap::fun::flat_map::FlatMapFn;
+use crate::xap::fun::flat_map::{FlaMWr, FlatMapFn};
 use crate::xap::fun::map::{MWr, Ms};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
@@ -90,7 +90,7 @@ impl<X: Xap, G: FlatMapFn<I = X::O>> Xap for FlaMap<X, G> {
     }
 
     type FlatMap<V, H>
-        = FlaMap<Self, V, H>
+        = FlaMap<Self, FlaMWr<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V;
@@ -100,6 +100,6 @@ impl<X: Xap, G: FlatMapFn<I = X::O>> Xap for FlaMap<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V,
     {
-        FlaMap::new(self, h)
+        FlaMap::new(self, FlaMWr::new(h))
     }
 }
