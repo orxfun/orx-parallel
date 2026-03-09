@@ -1,6 +1,6 @@
-mod count;
+pub mod count;
 // mod faker;
-mod fun;
+pub mod fun;
 mod xap_implementors;
 mod xap_trait;
 

@@ -11,29 +11,31 @@ impl<I: Iterator, G: FlatMap<I = I::Item>> FlatMapIterMany<I, G> {
         let inner = None;
         Self { i, g, inner }
     }
-
-    #[inline]
-    pub fn next_from_next_iter(&mut self) -> Option<<G::O as IntoIterator>::Item> {
-        self.i.next().and_then(|i| {
-            self.inner = Some(self.g.flat_map(i).into_iter());
-            self.next()
-        })
-    }
 }
 
 impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
     type Item = <G::O as IntoIterator>::Item;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        match &mut self.inner {
-            Some(x) => {
-                let next = x.next();
-                match next.is_some() {
-                    true => next,
-                    false => self.next_from_next_iter(),
-                }
+        loop {
+            if let elt @ Some(_) = and_then_or_clear(&mut self.inner, Iterator::next) {
+                return elt;
             }
-            None => self.next_from_next_iter(),
+
+            match self.i.next() {
+                Some(i) => self.inner = Some(self.g.flat_map(i).into_iter()),
+                None => return None,
+            }
         }
     }
+}
+
+#[inline(always)]
+fn and_then_or_clear<T, U>(opt: &mut Option<T>, f: impl FnOnce(&mut T) -> Option<U>) -> Option<U> {
+    let x = f(opt.as_mut()?);
+    if x.is_none() {
+        *opt = None;
+    }
+    x
 }

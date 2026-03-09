@@ -1,5 +1,5 @@
 mod count_trait;
-mod iter;
+pub mod iter;
 mod many;
 mod one;
 mod zero_one;
