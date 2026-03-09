@@ -1,6 +1,6 @@
 use crate::xap::count::Count;
 use crate::xap::fun::filter::{FnFil, Fs};
-use crate::xap::fun::filter_map::FnFilMap;
+use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::FnFlatMap;
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, MapQueue, Ms};
 use crate::xap::xap_implementors::f::F;
@@ -33,6 +33,7 @@ impl<X: Xap, G: MapQueue<I = X::O>> Xap for M<X, G> {
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
+        panic!("abc");
         <X::Count as Count>::map(self.x.xap(i), &self.g)
     }
 
@@ -62,8 +63,21 @@ impl<X: Xap, G: MapQueue<I = X::O>> Xap for M<X, G> {
         M::new(self.x, self.g.then(FnIns::new(h)))
     }
 
+    // type Filter<H>
+    //     = F<Self, Fs<FnFil<Self::O, H>>>
+    // where
+    //     H: Fn(&Self::O) -> bool;
+
+    // fn filter<H>(self, h: H) -> Self::Filter<H>
+    // where
+    //     H: Fn(&Self::O) -> bool,
+    // {
+    //     F::new(self, Fs::new(FnFil::new(h)))
+    // }
+
     type Filter<H>
-        = F<Self, Fs<FnFil<Self::O, H>>>
+        = FilMap<Self, FnFil2<Self::O, H>>
+    // = F<Self, Fs<FnFil<Self::O, H>>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -71,7 +85,8 @@ impl<X: Xap, G: MapQueue<I = X::O>> Xap for M<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F::new(self, Fs::new(FnFil::new(h)))
+        // F::new(self, Fs::new(FnFil::new(h)))
+        FilMap::new(self, FnFil2::new(h))
     }
 
     type FilterMap<Q, H>

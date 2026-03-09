@@ -4,25 +4,25 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_ff/iter/1024        time:   [638.83 ns 643.00 ns 647.65 ns]
-xap_ff/xap/1024         time:   [761.30 ns 766.44 ns 771.75 ns]
+xap_ff/iter/1024        time:   [918.37 ns 926.48 ns 935.42 ns]
+xap_ff/xap/1024         time:   [907.83 ns 917.99 ns 928.18 ns]
 
-xap_ff/iter/32768       time:   [108.09 µs 108.76 µs 109.41 µs]
-xap_ff/xap/32768        time:   [103.35 µs 104.29 µs 105.31 µs]
+xap_ff/iter/32768       time:   [114.23 µs 116.92 µs 119.97 µs]
+xap_ff/xap/32768        time:   [120.63 µs 122.23 µs 124.04 µs]
 
-xap_ff/iter/1048576     time:   [4.2004 ms 4.2433 ms 4.2877 ms]
-xap_ff/xap/1048576      time:   [4.3339 ms 4.3972 ms 4.4637 ms]
+xap_ff/iter/1048576     time:   [4.0164 ms 4.0487 ms 4.0829 ms]
+xap_ff/xap/1048576      time:   [4.2115 ms 4.2395 ms 4.2687 ms]
 
 
 COLLECT:
-xap_ff/iter/1024        time:   [1.4958 µs 1.5082 µs 1.5213 µs]
-xap_ff/xap/1024         time:   [1.9230 µs 1.9402 µs 1.9595 µs]
+xap_ff/iter/1024        time:   [1.5479 µs 1.5638 µs 1.5812 µs]
+xap_ff/xap/1024         time:   [2.0939 µs 2.1146 µs 2.1359 µs]
 
-xap_ff/iter/32768       time:   [132.85 µs 134.27 µs 135.80 µs]
-xap_ff/xap/32768        time:   [154.63 µs 156.01 µs 157.51 µs]
+xap_ff/iter/32768       time:   [158.30 µs 159.47 µs 160.76 µs]
+xap_ff/xap/32768        time:   [160.51 µs 162.08 µs 163.78 µs]
 
-xap_ff/iter/1048576     time:   [5.1437 ms 5.1915 ms 5.2418 ms]
-xap_ff/xap/1048576      time:   [5.8194 ms 5.8701 ms 5.9222 ms]
+xap_ff/iter/1048576     time:   [5.7059 ms 5.7404 ms 5.7752 ms]
+xap_ff/xap/1048576      time:   [5.5773 ms 5.6219 ms 5.6686 ms]
 
 */
 
