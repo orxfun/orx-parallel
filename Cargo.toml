@@ -48,9 +48,9 @@ test-case = "3.3.1"
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
 [[bench]]
-name = "cf"
+name = "mfmfmf"
 harness = false
-path = "benches/xap/cf.rs"
+path = "benches/xap/mfmfmf.rs"
 
 [package.metadata.docs.rs]
 all-features = true
