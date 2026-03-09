@@ -1,11 +1,12 @@
 use crate::xap::count::Count;
 use crate::xap::fun::filter::{FnFil, Fs};
-use crate::xap::fun::filter_map::FnFilMap;
+use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::{FlatMap, FnFlatMap};
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, Ms};
 use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::m::M;
+use crate::xap::xap_implementors::m2::M2;
 use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 
 pub struct FlaMap<X: Xap, G: FlatMap<I = X::O>> {
@@ -39,7 +40,7 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     // transformations
 
     type Map<Q, H>
-        = M<Self, Ms<FnMap<Self::O, Q, H>>>
+        = M2<Self, FnMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Q;
 
@@ -47,11 +48,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     where
         H: Fn(Self::O) -> Q,
     {
-        M::new(self, Ms::new(FnMap::new(h)))
+        M2::new(self, FnMap::new(h))
     }
 
     type Inspect<H>
-        = M<Self, Ms<FnIns<Self::O, H>>>
+        = M2<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O);
 
@@ -59,11 +60,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     where
         H: Fn(&Self::O),
     {
-        M::new(self, Ms::new(FnIns::new(h)))
+        M2::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = F<Self, Fs<FnFil<Self::O, H>>>
+        = FilMap<Self, FnFil2<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool;
 
@@ -71,7 +72,7 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
-        F::new(self, Fs::new(FnFil::new(h)))
+        FilMap::new(self, FnFil2::new(h))
     }
 
     type FilterMap<Q, H>
@@ -105,10 +106,10 @@ impl<'a, I: 'a + Clone, X: Xap, G: FlatMap<I = X::O>> XapCloned<'a, I> for FlaMa
 where
     G::O: IntoIterator<Item = &'a I>,
 {
-    type Cloned = M<Self, Ms<FnCloned<'a, I>>>;
+    type Cloned = M2<Self, FnCloned<'a, I>>;
 
     fn cloned(self) -> Self::Cloned {
-        M::new(self, Ms::new(FnCloned::new()))
+        M2::new(self, FnCloned::new())
     }
 }
 
@@ -116,9 +117,9 @@ impl<'a, I: 'a + Copy, X: Xap, G: FlatMap<I = X::O>> XapCopied<'a, I> for FlaMap
 where
     G::O: IntoIterator<Item = &'a I>,
 {
-    type Copied = M<Self, Ms<FnCopied<'a, I>>>;
+    type Copied = M2<Self, FnCopied<'a, I>>;
 
     fn copied(self) -> Self::Copied {
-        M::new(self, Ms::new(FnCopied::new()))
+        M2::new(self, FnCopied::new())
     }
 }

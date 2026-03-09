@@ -1,39 +1,38 @@
-use crate::xap::count::One;
+use crate::xap::count::Count;
 use crate::xap::fun::filter::{FnFil, Fs};
 use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::FnFlatMap;
-use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, Ms};
-use crate::xap::xap_implementors::F;
+use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, Map};
+use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
 use crate::xap::xap_implementors::flat_map::FlaMap;
-use crate::xap::xap_implementors::m::M;
-use crate::xap::xap_implementors::m2::M2;
 use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
-use core::marker::PhantomData;
 
-pub struct Id<I>(PhantomData<I>);
+pub struct M2<X: Xap, G: Map<I = X::O>> {
+    x: X,
+    g: G,
+}
 
-impl<I> Id<I> {
-    pub const fn new() -> Self {
-        Self(PhantomData)
+impl<X: Xap, G: Map<I = X::O>> M2<X, G> {
+    pub fn new(x: X, g: G) -> Self {
+        Self { x, g }
     }
 }
 
-impl<I> Xap for Id<I> {
-    type I = I;
+impl<X: Xap, G: Map<I = X::O>> Xap for M2<X, G> {
+    type I = X::I;
 
-    type O = I;
+    type O = G::O;
 
-    type Count = One;
+    type Count = <X::Count as Count>::ThenOne;
 
     type Values<'i>
-        = [I; 1]
+        = <X::Count as Count>::Map<X::Values<'i>, &'i G>
     where
         Self: 'i;
 
-    #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        [i]
+        <X::Count as Count>::map(self.x.xap(i), &self.g)
     }
 
     // transformations
@@ -101,7 +100,7 @@ impl<I> Xap for Id<I> {
     }
 }
 
-impl<'a, I: 'a + Clone> XapCloned<'a, I> for Id<&'a I> {
+impl<'a, I: 'a + Clone, X: Xap, G: Map<I = X::O, O = &'a I>> XapCloned<'a, I> for M2<X, G> {
     type Cloned = M2<Self, FnCloned<'a, I>>;
 
     fn cloned(self) -> Self::Cloned {
@@ -109,7 +108,7 @@ impl<'a, I: 'a + Clone> XapCloned<'a, I> for Id<&'a I> {
     }
 }
 
-impl<'a, I: 'a + Copy> XapCopied<'a, I> for Id<&'a I> {
+impl<'a, I: 'a + Copy, X: Xap, G: Map<I = X::O, O = &'a I>> XapCopied<'a, I> for M2<X, G> {
     type Copied = M2<Self, FnCopied<'a, I>>;
 
     fn copied(self) -> Self::Copied {

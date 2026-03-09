@@ -31,6 +31,7 @@ impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values<'_> {
+        panic!("abc");
         <X::Count as Count>::filter(self.x.xap(i), &self.g)
     }
 
@@ -69,6 +70,7 @@ impl<X: Xap, G: FilterQueue<I = X::O>> Xap for F<X, G> {
     where
         H: Fn(&Self::O) -> bool,
     {
+        panic!("Abc");
         F::new(self.x, self.g.then(FnFil::new(h)))
     }
 
