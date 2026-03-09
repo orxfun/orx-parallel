@@ -41,10 +41,7 @@ impl Count for ZeroOne {
     type FilterMap<I: IntoIterator, G: FilterMap<I = I::Item>> = Option<G::O>;
 
     #[inline(always)]
-    fn filter_map<I: IntoIterator, G: FilterMap<I = I::Item>>(
-        i: I,
-        g: G,
-    ) -> Self::FilterMap<I, G> {
+    fn filter_map<I: IntoIterator, G: FilterMap<I = I::Item>>(i: I, g: G) -> Self::FilterMap<I, G> {
         match i.into_iter().next() {
             Some(x) => g.filter_map(x),
             _ => None,
