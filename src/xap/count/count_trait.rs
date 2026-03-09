@@ -25,10 +25,7 @@ pub trait Count {
 
     type FilterMap<I: IntoIterator, G: FilterMap<I = I::Item>>: IntoIterator<Item = G::O>;
 
-    fn filter_map<I: IntoIterator, G: FilterMap<I = I::Item>>(
-        i: I,
-        g: G,
-    ) -> Self::FilterMap<I, G>;
+    fn filter_map<I: IntoIterator, G: FilterMap<I = I::Item>>(i: I, g: G) -> Self::FilterMap<I, G>;
 
     // flat_map
 

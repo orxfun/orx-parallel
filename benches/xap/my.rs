@@ -81,21 +81,25 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
         .copied()
         .flat_map(f1)
         .flat_map(f2)
-        .flat_map(f3);
+        .flat_map(f3)
+        // abc
+        ;
     E::out(iter)
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let it1 = FlatMapIterMany::new(inputs.iter().copied(), FnFlatMap::new(f1));
-    let it2 = FlatMapIterMany::new(it1, FnFlatMap::new(f2));
-    let it3 = FlatMapIterMany::new(it2, FnFlatMap::new(f3));
-    return E::out(it3);
-    // let xap = Id::new().flat_map(f1).flat_map(f2);
-    // E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
+    // let it0 = inputs.iter().copied().flat_map(|x| [x]);
+    // let it1 = FlatMapIterMany::new(it0, FnFlatMap::new(f1));
+    // let it2 = FlatMapIterMany::new(it1, FnFlatMap::new(f2));
+    // // return E::out(it2);
+    // let it3 = FlatMapIterMany::new(it2, FnFlatMap::new(f3));
+    // return E::out(it3);
+    let xap = Id::new().flat_map(f1).flat_map(f2).flat_map(f3);
+    E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
 }
 
 fn run(c: &mut Criterion) {
-    let len = [1 << 10, 1 << 15 /*, 1 << 20*/];
+    let len = [1 << 10, 1 << 15, 1 << 20];
 
     let mut group = c.benchmark_group("xap_ll");
 
