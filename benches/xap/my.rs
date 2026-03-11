@@ -47,7 +47,7 @@ fn f1_v(i: u64) -> impl IntoIterator<Item = u64> {
 }
 
 fn f2_v(i: u64) -> impl IntoIterator<Item = u64> {
-    (0..5).map(move |x| i * 7 + x).collect::<Vec<_>>()
+    (0..2).map(move |x| i * 7 + x).collect::<Vec<_>>()
 }
 
 fn f1_i(i: u64) -> impl IntoIterator<Item = u64> {
@@ -55,70 +55,119 @@ fn f1_i(i: u64) -> impl IntoIterator<Item = u64> {
 }
 
 fn f2_i(i: u64) -> impl IntoIterator<Item = u64> {
-    (0..5).map(move |x| i * 7 + x).filter(|x| *x < 1 << 20)
+    (0..2).map(move |x| i * 7 + x).filter(|x| *x < 1 << 20)
 }
 
-fn f1_c(i: u64) -> impl IntoIterator<Item = u64> {
+fn f1_c(i: u64) -> [u64; 2] {
     [i + 1 + 0, i + 1 + 1]
 }
 
-fn f2_c(i: u64) -> impl IntoIterator<Item = u64> {
-    [i * 7 + 0, i * 7 + 1, i * 7 + 2, i * 7 + 3, i * 7 + 4]
+fn f2_c(i: u64) -> [u64; 2] {
+    // [i * 7 + 0, i * 7 + 1, i * 7 + 2, i * 7 + 3, i * 7 + 4]
+    [i * 7 + 0, i * 7 + 1]
 }
 
 fn iter_v(inputs: &[u64]) -> Vec<u64> {
-    let iter = inputs.iter().copied().flat_map(f1_v).flat_map(f2_v);
-    iter.collect()
+    let it = inputs.iter().copied().flat_map(f1_v).flat_map(f2_v);
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn iter_my_v(inputs: &[u64]) -> Vec<u64> {
     let it = inputs.iter().copied().flat_map(|x| [x]);
     let it = FlatMapIterMany::new(it, FnFlatMap::new(f1_v));
     let it = FlatMapIterMany::new(it, FnFlatMap::new(f2_v));
-    it.collect()
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn xap_v(inputs: &[u64]) -> Vec<u64> {
     let xap = Id::new().copied().flat_map(f1_v).flat_map(f2_v);
-    inputs.iter().flat_map(|x| xap.xap(x)).collect()
+    let it = inputs.iter().flat_map(|x| xap.xap(x));
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn iter_i(inputs: &[u64]) -> Vec<u64> {
-    let iter = inputs.iter().copied().flat_map(f1_i).flat_map(f2_i);
-    iter.collect()
+    let it = inputs.iter().copied().flat_map(f1_i).flat_map(f2_i);
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn iter_my_i(inputs: &[u64]) -> Vec<u64> {
     let it = inputs.iter().copied().flat_map(|x| [x]);
     let it = FlatMapIterMany::new(it, FnFlatMap::new(f1_i));
     let it = FlatMapIterMany::new(it, FnFlatMap::new(f2_i));
-    it.collect()
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn xap_i(inputs: &[u64]) -> Vec<u64> {
     let xap = Id::new().copied().flat_map(f1_i).flat_map(f2_i);
-    inputs.iter().flat_map(|x| xap.xap(x)).collect()
+    let it = inputs.iter().flat_map(|x| xap.xap(x));
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn iter_c(inputs: &[u64]) -> Vec<u64> {
-    let iter = inputs.iter().copied().flat_map(f1_c).flat_map(f2_c);
-    iter.collect()
+    let it = inputs.iter().copied().flat_map(f1_c).flat_map(f2_c);
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn iter_my_c(inputs: &[u64]) -> Vec<u64> {
     let it = inputs.iter().copied().flat_map(|x| [x]);
     let it = FlatMapIterMany::new(it, FnFlatMap::new(f1_c));
     let it = FlatMapIterMany::new(it, FnFlatMap::new(f2_c));
-    it.collect()
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn xap_c(inputs: &[u64]) -> Vec<u64> {
     let xap = Id::new().copied().flat_map(f1_c).flat_map(f2_c);
-    inputs.iter().flat_map(|x| xap.xap(x)).collect()
+    let it = inputs.iter().flat_map(|x| xap.xap(x));
+    // return it.collect();
+    let mut v = vec![];
+    for x in it {
+        v.push(x);
+    }
+    v
 }
 
 fn run(c: &mut Criterion) {
-    let len = [1 << 12 /*1 << 15, 1 << 17*/];
+    let len = [1 << 12, 1 << 15, 1 << 17];
 
     let mut group = c.benchmark_group("my");
 

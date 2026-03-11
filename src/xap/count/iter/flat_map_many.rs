@@ -29,6 +29,14 @@ impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
             }
         }
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match &self.inner {
+            Some(inner) => (inner.size_hint().0, None),
+            None => (0, None),
+        }
+    }
 }
 
 #[inline(always)]
