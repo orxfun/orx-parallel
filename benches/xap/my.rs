@@ -29,33 +29,12 @@ xap_ll/xap/1048576      time:   [95.022 ms 96.462 ms 98.320 ms]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap, count::iter::FlatMapIterMany, fun::flat_map::FnFlatMap};
+use orx_parallel::xap::{
+    Id, Xap, XapCopied, count::iter::FlatMapIterMany, fun::flat_map::FnFlatMap,
+};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
-
-type Output = Collect;
-
-trait Exp {
-    type Out;
-    fn out(i: impl Iterator<Item = u64>) -> Self::Out;
-}
-
-pub struct Sum;
-impl Exp for Sum {
-    type Out = u64;
-    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
-        i.sum()
-    }
-}
-
-pub struct Collect;
-impl Exp for Collect {
-    type Out = Vec<u64>;
-    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
-        i.collect()
-    }
-}
 
 fn inputs(len: usize) -> Vec<u64> {
     const SEED: u64 = 654;
@@ -63,58 +42,133 @@ fn inputs(len: usize) -> Vec<u64> {
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f1(i: u64) -> Vec<u64> {
-    vec![i + 1, i * 2, i + 5, i + 4, i, i.saturating_sub(3), 7 * i]
+fn f1_v(i: u64) -> impl IntoIterator<Item = u64> {
+    (0..2).map(move |x| x + i + 1).collect::<Vec<_>>()
 }
 
-fn f2(i: u64) -> Vec<u64> {
-    vec![i * 2 + 1, i, i.saturating_sub(7)]
+fn f2_v(i: u64) -> impl IntoIterator<Item = u64> {
+    (0..5).map(move |x| i * 7 + x).collect::<Vec<_>>()
 }
 
-fn f3(i: u64) -> Vec<u64> {
-    vec![i / 3, i + 7, i.saturating_sub(4), i / 4, i]
+fn f1_i(i: u64) -> impl IntoIterator<Item = u64> {
+    (0..2).map(move |x| x + i + 1).filter(|x| *x < 1 << 20)
 }
 
-fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
-    let iter = inputs
-        .iter()
-        .copied()
-        .flat_map(f1)
-        .flat_map(f2)
-        .flat_map(f3)
-        // abc
-        ;
-    E::out(iter)
+fn f2_i(i: u64) -> impl IntoIterator<Item = u64> {
+    (0..5).map(move |x| i * 7 + x).filter(|x| *x < 1 << 20)
 }
 
-fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    // let it0 = inputs.iter().copied().flat_map(|x| [x]);
-    // let it1 = FlatMapIterMany::new(it0, FnFlatMap::new(f1));
-    // let it2 = FlatMapIterMany::new(it1, FnFlatMap::new(f2));
-    // // return E::out(it2);
-    // let it3 = FlatMapIterMany::new(it2, FnFlatMap::new(f3));
-    // return E::out(it3);
-    let xap = Id::new().flat_map(f1).flat_map(f2).flat_map(f3);
-    E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
+fn f1_c(i: u64) -> impl IntoIterator<Item = u64> {
+    [i + 1 + 0, i + 1 + 1]
+}
+
+fn f2_c(i: u64) -> impl IntoIterator<Item = u64> {
+    [i * 7 + 0, i * 7 + 1, i * 7 + 2, i * 7 + 3, i * 7 + 4]
+}
+
+fn iter_v(inputs: &[u64]) -> Vec<u64> {
+    let iter = inputs.iter().copied().flat_map(f1_v).flat_map(f2_v);
+    iter.collect()
+}
+
+fn iter_my_v(inputs: &[u64]) -> Vec<u64> {
+    let it = inputs.iter().copied().flat_map(|x| [x]);
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f1_v));
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f2_v));
+    it.collect()
+}
+
+fn xap_v(inputs: &[u64]) -> Vec<u64> {
+    let xap = Id::new().copied().flat_map(f1_v).flat_map(f2_v);
+    inputs.iter().flat_map(|x| xap.xap(x)).collect()
+}
+
+fn iter_i(inputs: &[u64]) -> Vec<u64> {
+    let iter = inputs.iter().copied().flat_map(f1_i).flat_map(f2_i);
+    iter.collect()
+}
+
+fn iter_my_i(inputs: &[u64]) -> Vec<u64> {
+    let it = inputs.iter().copied().flat_map(|x| [x]);
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f1_i));
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f2_i));
+    it.collect()
+}
+
+fn xap_i(inputs: &[u64]) -> Vec<u64> {
+    let xap = Id::new().copied().flat_map(f1_i).flat_map(f2_i);
+    inputs.iter().flat_map(|x| xap.xap(x)).collect()
+}
+
+fn iter_c(inputs: &[u64]) -> Vec<u64> {
+    let iter = inputs.iter().copied().flat_map(f1_c).flat_map(f2_c);
+    iter.collect()
+}
+
+fn iter_my_c(inputs: &[u64]) -> Vec<u64> {
+    let it = inputs.iter().copied().flat_map(|x| [x]);
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f1_c));
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f2_c));
+    it.collect()
+}
+
+fn xap_c(inputs: &[u64]) -> Vec<u64> {
+    let xap = Id::new().copied().flat_map(f1_c).flat_map(f2_c);
+    inputs.iter().flat_map(|x| xap.xap(x)).collect()
 }
 
 fn run(c: &mut Criterion) {
-    let len = [1 << 10, 1 << 15, 1 << 20];
+    let len = [1 << 12 /*1 << 15, 1 << 17*/];
 
-    let mut group = c.benchmark_group("xap_ll");
+    let mut group = c.benchmark_group("my");
 
     for n in len {
         let input = inputs(n);
-        let expected = iter::<Output>(&input);
+        let expected = iter_v(&input);
 
-        group.bench_with_input(BenchmarkId::new("iter", n), &n, |b, _| {
-            assert_eq!(&expected, &iter::<Output>(&input));
-            b.iter(|| iter::<Output>(black_box(&input)))
+        group.bench_with_input(BenchmarkId::new("iter_v", n), &n, |b, _| {
+            assert_eq!(&expected, &iter_v(&input));
+            b.iter(|| iter_v(black_box(&input)))
         });
 
-        group.bench_with_input(BenchmarkId::new("xap", n), &n, |b, _| {
-            assert_eq!(&expected, &xap::<Output>(&input));
-            b.iter(|| xap::<Output>(black_box(&input)))
+        group.bench_with_input(BenchmarkId::new("iter_my_v", n), &n, |b, _| {
+            assert_eq!(&expected, &iter_my_v(&input));
+            b.iter(|| iter_my_v(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("xap_v", n), &n, |b, _| {
+            assert_eq!(&expected, &xap_v(&input));
+            b.iter(|| xap_v(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("iter_i", n), &n, |b, _| {
+            assert_eq!(&expected, &iter_i(&input));
+            b.iter(|| iter_i(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("iter_my_i", n), &n, |b, _| {
+            assert_eq!(&expected, &iter_my_i(&input));
+            b.iter(|| iter_my_i(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("xap_i", n), &n, |b, _| {
+            assert_eq!(&expected, &xap_i(&input));
+            b.iter(|| xap_i(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("iter_c", n), &n, |b, _| {
+            assert_eq!(&expected, &iter_c(&input));
+            b.iter(|| iter_c(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("iter_my_c", n), &n, |b, _| {
+            assert_eq!(&expected, &iter_my_c(&input));
+            b.iter(|| iter_my_c(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("xap_c", n), &n, |b, _| {
+            assert_eq!(&expected, &xap_c(&input));
+            b.iter(|| xap_c(black_box(&input)))
         });
     }
 
