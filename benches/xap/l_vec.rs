@@ -4,25 +4,33 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_l/iter/1024         time:   [570.24 ns 574.28 ns 578.70 ns]
-xap_l/xap/1024          time:   [577.08 ns 580.14 ns 583.27 ns]
+xap_l_vec/iter/1024     time:   [665.94 ns 673.66 ns 681.57 ns]
+xap_l_vec/xap/1024      time:   [710.17 ns 717.87 ns 725.97 ns]
 
-xap_l/iter/32768        time:   [18.828 µs 18.919 µs 19.012 µs]
-xap_l/xap/32768         time:   [18.891 µs 19.036 µs 19.201 µs]
+xap_l_vec/iter/32768    time:   [24.389 µs 24.839 µs 25.319 µs]
+xap_l_vec/xap/32768     time:   [26.424 µs 26.995 µs 27.637 µs]
 
-xap_l/iter/1048576      time:   [616.97 µs 620.40 µs 623.79 µs]
-xap_l/xap/1048576       time:   [618.28 µs 622.01 µs 625.71 µs]
+SUM BY LOOP:
+xap_l_vec/iter/1024     time:   [10.157 µs 10.457 µs 10.775 µs]
+xap_l_vec/xap/1024      time:   [8.7531 µs 8.8391 µs 8.9233 µs]
+
+xap_l_vec/iter/32768    time:   [279.71 µs 287.67 µs 295.63 µs]
+xap_l_vec/xap/32768     time:   [272.73 µs 275.83 µs 278.85 µs]
 
 
 COLLECT:
-xap_l/iter/1024         time:   [1.6761 µs 1.7021 µs 1.7317 µs]
-xap_l/xap/1024          time:   [1.5494 µs 1.5671 µs 1.5866 µs]
+xap_l_vec/iter/1024     time:   [1.8171 µs 1.8577 µs 1.8990 µs]
+xap_l_vec/xap/1024      time:   [2.4894 µs 2.5683 µs 2.6432 µs]
 
-xap_l/iter/32768        time:   [51.823 µs 52.238 µs 52.681 µs]
-xap_l/xap/32768         time:   [53.788 µs 54.402 µs 54.991 µs]
+xap_l_vec/iter/32768    time:   [68.815 µs 70.039 µs 71.282 µs]
+xap_l_vec/xap/32768     time:   [101.06 µs 105.06 µs 108.96 µs]
 
-xap_l/iter/1048576      time:   [20.811 ms 21.039 ms 21.289 ms]
-xap_l/xap/1048576       time:   [21.004 ms 21.165 ms 21.344 ms]
+COLLECT BY LOOP:
+xap_l_vec/iter/1024     time:   [27.841 µs 28.122 µs 28.432 µs]
+xap_l_vec/xap/1024      time:   [28.073 µs 28.453 µs 28.844 µs]
+
+xap_l_vec/iter/32768    time:   [929.14 µs 939.05 µs 949.36 µs]
+xap_l_vec/xap/32768     time:   [916.93 µs 925.00 µs 933.50 µs]
 
 */
 
@@ -32,7 +40,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;
@@ -47,11 +55,35 @@ impl Exp for Sum {
     }
 }
 
+pub struct SumByLoop;
+impl Exp for SumByLoop {
+    type Out = u64;
+    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
+        let mut v = 0;
+        for x in i {
+            v += x;
+        }
+        v
+    }
+}
+
 pub struct Collect;
 impl Exp for Collect {
     type Out = Vec<u64>;
     fn out(i: impl Iterator<Item = u64>) -> Self::Out {
         i.collect()
+    }
+}
+
+pub struct CollectByLoop;
+impl Exp for CollectByLoop {
+    type Out = Vec<u64>;
+    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
+        let mut v = Vec::new();
+        for x in i {
+            v.push(x);
+        }
+        v
     }
 }
 
@@ -76,9 +108,9 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
 }
 
 fn run(c: &mut Criterion) {
-    let len = [1 << 10, 1 << 15, 1 << 20];
+    let len = [1 << 10, 1 << 15];
 
-    let mut group = c.benchmark_group("xap_l");
+    let mut group = c.benchmark_group("xap_l_vec");
 
     for n in len {
         let input = inputs(n);

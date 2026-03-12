@@ -4,7 +4,6 @@ use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::FnFlatMap;
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap};
 use crate::xap::xap_implementors::fil_map::FilMap;
-use crate::xap::xap_implementors::flat_map0::FlaMap0;
 use crate::xap::xap_implementors::m2::M2;
 use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 use core::marker::PhantomData;
