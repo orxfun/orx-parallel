@@ -5,35 +5,16 @@ Operations after iteration are kept to be as simple as possible to observe the o
 
 SUM:
 xap_lll_iter/iter/1024  time:   [10.484 µs 10.667 µs 10.858 µs]
-                        change: [−85.929% −85.402% −84.905%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 3 outliers among 100 measurements (3.00%)
-  2 (2.00%) high mild
-  1 (1.00%) high severe
 xap_lll_iter/xap/1024   time:   [10.269 µs 10.482 µs 10.705 µs]
-                        change: [−85.738% −85.338% −84.941%] (p = 0.00 < 0.05)
-                        Performance has improved.
+
 xap_lll_iter/iter/32768 time:   [337.67 µs 343.98 µs 350.83 µs]
-                        change: [−84.748% −84.438% −84.115%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 4 outliers among 100 measurements (4.00%)
-  4 (4.00%) high mild
 xap_lll_iter/xap/32768  time:   [345.16 µs 351.74 µs 358.69 µs]
 
 SUM BY LOOP:
 xap_lll_iter/iter/1024  time:   [65.246 µs 66.115 µs 67.028 µs]
-                        change: [+502.86% +516.83% +531.18%] (p = 0.00 < 0.05)
-                        Performance has regressed.
 xap_lll_iter/xap/1024   time:   [60.884 µs 61.581 µs 62.313 µs]
-                        change: [+459.62% +470.66% +482.11%] (p = 0.00 < 0.05)
-                        Performance has regressed.
+
 xap_lll_iter/iter/32768 time:   [1.9315 ms 1.9506 ms 1.9704 ms]
-                        change: [+440.46% +451.48% +462.73%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 1 outliers among 100 measurements (1.00%)
-  1 (1.00%) high mild
-Benchmarking xap_lll_iter/xap/32768: Warming up for 3.0000 s
-Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 9.9s, enable flat sampling, or reduce sample count to 40.
 xap_lll_iter/xap/32768  time:   [1.8352 ms 1.8525 ms 1.8707 ms]
 
 

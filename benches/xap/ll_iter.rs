@@ -27,11 +27,11 @@ xap_ll_iter/xap/32768   time:   [242.87 µs 246.47 µs 250.64 µs]
 
 
 COLLECT:
-xap_ll_iter/iter/1024   time:   [36.164 µs 36.963 µs 37.791 µs]
-xap_ll_iter/xap/1024    time:   [41.310 µs 42.143 µs 42.892 µs]
+xap_ll_iter/iter/1024   time:   [13.782 µs 13.884 µs 13.992 µs]
+xap_ll_iter/xap/1024    time:   [17.477 µs 17.667 µs 17.858 µs]
 
-xap_ll_iter/iter/32768  time:   [846.29 µs 859.80 µs 875.81 µs]
-xap_ll_iter/xap/32768   time:   [1.0330 ms 1.0439 ms 1.0564 ms]
+xap_ll_iter/iter/32768  time:   [716.90 µs 727.29 µs 739.28 µs]
+xap_ll_iter/xap/32768   time:   [851.75 µs 862.98 µs 874.33 µs]
 
 COLLECT BY LOOP:
 xap_ll_iter/iter/1024   time:   [25.497 µs 26.367 µs 27.209 µs]
@@ -43,12 +43,12 @@ xap_ll_iter/xap/32768   time:   [835.29 µs 842.20 µs 849.16 µs]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::xap::{Id, Xap, count::iter::FlatMapIterMany, fun::flat_map::FnFlatMap};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Reduce;
+type Output = Collect;
 
 trait Exp {
     type Out;
@@ -128,11 +128,43 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1).flat_map(f2);
-    E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
+    let inputs = inputs.iter().copied();
+    let flat_map = inputs.flat_map(|x| xap.xap(x));
+    E::out(flat_map)
+
+    /*
+
+    FlatMap<
+        I=>     Copied<Iter<'_, u64>>,
+        U=>     FlatMapIterMany<
+                    ::IntoIter,
+                    &FnFlatMap<u64, impl IntoIterator<Item = u64>, f2>
+                >,
+        F=>     impl FnMut(u64) -> FlatMapIterMany<::IntoIter, &FnFlatMap<u64, impl IntoIterator<Item = u64>, f2>>
+    >
+
+     */
+}
+
+fn xap_c<E: Exp>(inputs: &[u64]) -> E::Out {
+    let it = inputs.iter().copied();
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f1));
+    let it = FlatMapIterMany::new(it, FnFlatMap::new(f2));
+
+    /*
+
+    FlatMapIterMany<
+        FlatMapIterMany<
+            Copied<Iter<'_, u64>>, FnFlatMap<u64, impl IntoIterator<Item = u64>, fn f1(u64) -> impl IntoIterator<Item = u64>>>,
+            FnFlatMap<u64, impl IntoIterator<Item = u64>, fn f2(u64) -> impl IntoIterator<Item = u64>>>
+
+    */
+    E::out(it)
 }
 
 fn run(c: &mut Criterion) {
-    let len = [1 << 10, 1 << 15];
+    // let len = [1 << 10, 1 << 15, 1 << 18];
+    let len = [1 << 15];
 
     let mut group = c.benchmark_group("xap_ll_iter");
 
@@ -148,6 +180,11 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("xap", n), &n, |b, _| {
             assert_eq!(&expected, &xap::<Output>(&input));
             b.iter(|| xap::<Output>(black_box(&input)))
+        });
+
+        group.bench_with_input(BenchmarkId::new("xap_c", n), &n, |b, _| {
+            assert_eq!(&expected, &xap_c::<Output>(&input));
+            b.iter(|| xap_c::<Output>(black_box(&input)))
         });
     }
 
