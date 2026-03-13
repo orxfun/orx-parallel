@@ -16,6 +16,7 @@ impl<I: Iterator, X: Xap<I = I::Item>> XapIter<I, X> {
 impl<I: Iterator, X: Xap<I = I::Item>> Iterator for XapIter<I, X> {
     type Item = X::O;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if let elt @ Some(_) = and_then_or_clear(&mut self.inner, Iterator::next) {
