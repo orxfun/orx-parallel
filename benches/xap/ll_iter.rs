@@ -4,51 +4,53 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_ll_iter/iter/1024   time:   [3.6240 µs 3.6659 µs 3.7091 µs]
-xap_ll_iter/xap/1024    time:   [3.3205 µs 3.3631 µs 3.4080 µs]
+xap_ll_iter/iter/1024   time:   [2.5507 µs 2.5706 µs 2.5915 µs]
+xap_ll_iter/xap/1024    time:   [2.6102 µs 2.6366 µs 2.6630 µs]
 
-xap_ll_iter/iter/32768  time:   [273.92 µs 276.06 µs 278.23 µs]
-xap_ll_iter/xap/32768   time:   [256.85 µs 259.29 µs 261.92 µs]
+xap_ll_iter/iter/32768  time:   [220.88 µs 223.05 µs 225.30 µs]
+xap_ll_iter/xap/32768   time:   [228.26 µs 230.34 µs 232.61 µs]
+
 
 SUM BY LOOP:
-xap_ll_iter/iter/1024   time:   [13.064 µs 13.401 µs 13.831 µs]
-xap_ll_iter/xap/1024    time:   [11.643 µs 11.802 µs 11.973 µs]
+xap_ll_iter/iter/1024   time:   [9.7426 µs 9.8184 µs 9.8999 µs]
+xap_ll_iter/xap/1024    time:   [8.8252 µs 8.8784 µs 8.9353 µs]
 
-xap_ll_iter/iter/32768  time:   [612.47 µs 618.62 µs 625.35 µs]
-xap_ll_iter/xap/32768   time:   [566.48 µs 570.56 µs 575.28 µs]
+xap_ll_iter/iter/32768  time:   [494.22 µs 498.12 µs 502.64 µs]
+xap_ll_iter/xap/32768   time:   [496.70 µs 501.00 µs 505.77 µs]
 
 
 REDUCE:
-xap_ll_iter/iter/1024   time:   [2.5962 µs 2.6270 µs 2.6575 µs]
-xap_ll_iter/xap/1024    time:   [2.5394 µs 2.5640 µs 2.5903 µs]
+xap_ll_iter/iter/1024   time:   [2.0172 µs 2.0307 µs 2.0449 µs]
+xap_ll_iter/xap/1024    time:   [2.1070 µs 2.1244 µs 2.1438 µs]
 
-xap_ll_iter/iter/32768  time:   [242.95 µs 248.40 µs 253.87 µs]
-xap_ll_iter/xap/32768   time:   [242.87 µs 246.47 µs 250.64 µs]
+xap_ll_iter/iter/32768  time:   [195.30 µs 196.75 µs 198.33 µs]
+xap_ll_iter/xap/32768   time:   [211.48 µs 213.39 µs 215.30 µs]
 
 
 COLLECT:
-xap_ll_iter/iter/1024   time:   [13.782 µs 13.884 µs 13.992 µs]
-xap_ll_iter/xap/1024    time:   [17.477 µs 17.667 µs 17.858 µs]
+xap_ll_iter/iter/1024   time:   [11.599 µs 11.688 µs 11.779 µs]
+xap_ll_iter/xap/1024    time:   [11.995 µs 12.040 µs 12.086 µs]
 
-xap_ll_iter/iter/32768  time:   [716.90 µs 727.29 µs 739.28 µs]
-xap_ll_iter/xap/32768   time:   [851.75 µs 862.98 µs 874.33 µs]
+xap_ll_iter/iter/32768  time:   [599.54 µs 605.78 µs 612.57 µs]
+xap_ll_iter/xap/32768   time:   [604.90 µs 611.03 µs 617.78 µs]
+
 
 COLLECT BY LOOP:
-xap_ll_iter/iter/1024   time:   [25.497 µs 26.367 µs 27.209 µs]
-xap_ll_iter/xap/1024    time:   [25.662 µs 25.930 µs 26.250 µs]
+xap_ll_iter/iter/1024   time:   [10.753 µs 10.817 µs 10.882 µs]
+xap_ll_iter/xap/1024    time:   [10.658 µs 10.755 µs 10.849 µs]
 
-xap_ll_iter/iter/32768  time:   [857.39 µs 866.09 µs 876.15 µs]
-xap_ll_iter/xap/32768   time:   [835.29 µs 842.20 µs 849.16 µs]
+xap_ll_iter/iter/32768  time:   [572.74 µs 576.96 µs 581.35 µs]
+xap_ll_iter/xap/32768   time:   [571.12 µs 576.57 µs 582.13 µs]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap, count::iter::FlatMapIterMany, fun::flat_map::FnFlatMap};
+use orx_parallel::xap::{Id, Xap, xap_iter::XapIter};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = CollectByLoop;
 
 trait Exp {
     type Out;
@@ -129,42 +131,12 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1).flat_map(f2);
     let inputs = inputs.iter().copied();
-    let flat_map = inputs.flat_map(|x| xap.xap(x));
-    E::out(flat_map)
-
-    /*
-
-    FlatMap<
-        I=>     Copied<Iter<'_, u64>>,
-        U=>     FlatMapIterMany<
-                    ::IntoIter,
-                    &FnFlatMap<u64, impl IntoIterator<Item = u64>, f2>
-                >,
-        F=>     impl FnMut(u64) -> FlatMapIterMany<::IntoIter, &FnFlatMap<u64, impl IntoIterator<Item = u64>, f2>>
-    >
-
-     */
-}
-
-fn xap_c<E: Exp>(inputs: &[u64]) -> E::Out {
-    let it = inputs.iter().copied();
-    let it = FlatMapIterMany::new(it, FnFlatMap::new(f1));
-    let it = FlatMapIterMany::new(it, FnFlatMap::new(f2));
-
-    /*
-
-    FlatMapIterMany<
-        FlatMapIterMany<
-            Copied<Iter<'_, u64>>, FnFlatMap<u64, impl IntoIterator<Item = u64>, fn f1(u64) -> impl IntoIterator<Item = u64>>>,
-            FnFlatMap<u64, impl IntoIterator<Item = u64>, fn f2(u64) -> impl IntoIterator<Item = u64>>>
-
-    */
-    E::out(it)
+    let iter = XapIter::new(inputs, xap);
+    E::out(iter)
 }
 
 fn run(c: &mut Criterion) {
-    // let len = [1 << 10, 1 << 15, 1 << 18];
-    let len = [1 << 15];
+    let len = [1 << 10, 1 << 15];
 
     let mut group = c.benchmark_group("xap_ll_iter");
 
@@ -180,11 +152,6 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("xap", n), &n, |b, _| {
             assert_eq!(&expected, &xap::<Output>(&input));
             b.iter(|| xap::<Output>(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("xap_c", n), &n, |b, _| {
-            assert_eq!(&expected, &xap_c::<Output>(&input));
-            b.iter(|| xap_c::<Output>(black_box(&input)))
         });
     }
 

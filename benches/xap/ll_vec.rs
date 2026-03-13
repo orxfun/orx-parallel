@@ -108,7 +108,9 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1).flat_map(f2);
-    E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
+    let inputs = inputs.iter().copied();
+    let iter = XapIter::new(inputs, xap);
+    E::out(iter)
 }
 
 fn run(c: &mut Criterion) {

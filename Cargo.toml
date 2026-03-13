@@ -48,9 +48,9 @@ test-case = "3.3.1"
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
 [[bench]]
-name = "ll_iter"
+name = "l_iter"
 harness = false
-path = "benches/xap/ll_iter.rs"
+path = "benches/xap/l_iter.rs"
 
 [package.metadata.docs.rs]
 all-features = true
