@@ -40,7 +40,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Sum;
 
 trait Exp {
     type Out;
@@ -96,13 +96,13 @@ fn inputs(len: usize) -> Vec<u64> {
 fn f1(i: u64) -> impl IntoIterator<Item = u64> {
     (2..5)
         .map(move |x| i + 2 * x as u64 + 5)
-        .filter(|x| !x.is_multiple_of(999))
+        .filter(|x| !x.is_multiple_of(3))
 }
 
 fn f2(i: u64) -> impl IntoIterator<Item = u64> {
     (6..8)
         .map(move |x| i + 5 * x as u64 + 2)
-        .filter(|x| !x.is_multiple_of(999))
+        .filter(|x| !x.is_multiple_of(3))
 }
 
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {

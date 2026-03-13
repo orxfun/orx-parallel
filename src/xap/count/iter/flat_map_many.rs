@@ -37,6 +37,24 @@ impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
             None => (0, None),
         }
     }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let mut value = match self.inner {
+            Some(inner) => inner.fold(init, &mut f),
+            None => init,
+        };
+
+        for i in self.i {
+            let inner = self.g.flat_map(i);
+            value = inner.into_iter().fold(value, &mut f);
+        }
+
+        value
+    }
 }
 
 #[inline(always)]
