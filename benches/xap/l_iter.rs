@@ -4,18 +4,26 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_l_iter/iter/1024    time:   [1.6813 µs 1.7038 µs 1.7283 µs]
-xap_l_iter/xap/1024     time:   [1.6633 µs 1.6817 µs 1.7013 µs]
+xap_l_iter/iter/1024    time:   [1.4628 µs 1.4806 µs 1.4999 µs]
+xap_l_iter/xap/1024     time:   [1.4639 µs 1.4791 µs 1.4937 µs]
 
-xap_l_iter/iter/32768   time:   [51.707 µs 52.298 µs 52.879 µs]
-xap_l_iter/xap/32768    time:   [51.009 µs 51.629 µs 52.305 µs]
+xap_l_iter/iter/32768   time:   [45.877 µs 46.229 µs 46.608 µs]
+xap_l_iter/xap/32768    time:   [48.273 µs 49.007 µs 49.839 µs]
 
 SUM BY LOOP:
-xap_l_iter/iter/1024    time:   [8.3933 µs 8.6995 µs 9.0369 µs]
-xap_l_iter/xap/1024     time:   [13.020 µs 16.564 µs 21.273 µs]
+xap_l_iter/iter/1024    time:   [4.9615 µs 5.0194 µs 5.0754 µs]
+xap_l_iter/xap/1024     time:   [4.4484 µs 4.4880 µs 4.5345 µs]
 
-xap_l_iter/iter/32768   time:   [194.15 µs 197.77 µs 201.54 µs]
-xap_l_iter/xap/32768    time:   [157.24 µs 159.64 µs 162.60 µs]
+xap_l_iter/iter/32768   time:   [139.09 µs 140.11 µs 141.27 µs]
+xap_l_iter/xap/32768    time:   [137.99 µs 139.06 µs 140.25 µs]
+
+
+REDUCE:
+xap_l_iter/iter/1024    time:   [2.9544 µs 3.0056 µs 3.0604 µs]
+xap_l_iter/xap/1024     time:   [2.9493 µs 3.0105 µs 3.0819 µs]
+
+xap_l_iter/iter/32768   time:   [91.712 µs 93.662 µs 95.900 µs]
+xap_l_iter/xap/32768    time:   [92.291 µs 93.381 µs 94.559 µs]
 
 
 COLLECT:
@@ -40,7 +48,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Reduce;
 
 trait Exp {
     type Out;
@@ -64,6 +72,14 @@ impl Exp for SumByLoop {
             v += x;
         }
         v
+    }
+}
+
+pub struct Reduce;
+impl Exp for Reduce {
+    type Out = Option<u64>;
+    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
+        i.reduce(|x, y| 2 * x + y + 7)
     }
 }
 

@@ -4,18 +4,45 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_lll_iter/iter/1024  time:   [8.8103 µs 8.9234 µs 9.0562 µs]
-xap_lll_iter/xap/1024   time:   [53.149 µs 53.566 µs 54.020 µs]
-
-xap_lll_iter/iter/32768 time:   [271.47 µs 274.28 µs 276.94 µs]
-xap_lll_iter/xap/32768  time:   [1.8339 ms 1.8521 ms 1.8711 ms]
+xap_lll_iter/iter/1024  time:   [10.484 µs 10.667 µs 10.858 µs]
+                        change: [−85.929% −85.402% −84.905%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+xap_lll_iter/xap/1024   time:   [10.269 µs 10.482 µs 10.705 µs]
+                        change: [−85.738% −85.338% −84.941%] (p = 0.00 < 0.05)
+                        Performance has improved.
+xap_lll_iter/iter/32768 time:   [337.67 µs 343.98 µs 350.83 µs]
+                        change: [−84.748% −84.438% −84.115%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) high mild
+xap_lll_iter/xap/32768  time:   [345.16 µs 351.74 µs 358.69 µs]
 
 SUM BY LOOP:
-xap_lll_iter/iter/1024  time:   [52.304 µs 52.837 µs 53.388 µs]
-xap_lll_iter/xap/1024   time:   [51.773 µs 52.451 µs 53.123 µs]
+xap_lll_iter/iter/1024  time:   [65.246 µs 66.115 µs 67.028 µs]
+                        change: [+502.86% +516.83% +531.18%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+xap_lll_iter/xap/1024   time:   [60.884 µs 61.581 µs 62.313 µs]
+                        change: [+459.62% +470.66% +482.11%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+xap_lll_iter/iter/32768 time:   [1.9315 ms 1.9506 ms 1.9704 ms]
+                        change: [+440.46% +451.48% +462.73%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking xap_lll_iter/xap/32768: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 9.9s, enable flat sampling, or reduce sample count to 40.
+xap_lll_iter/xap/32768  time:   [1.8352 ms 1.8525 ms 1.8707 ms]
 
-xap_lll_iter/iter/32768 time:   [1.6673 ms 1.6863 ms 1.7072 ms]
-xap_lll_iter/xap/32768  time:   [1.6089 ms 1.6216 ms 1.6353 ms]
+
+REDUCE:
+xap_lll_iter/iter/1024  time:   [29.775 µs 30.122 µs 30.525 µs]
+xap_lll_iter/xap/1024   time:   [29.617 µs 29.897 µs 30.193 µs]
+
+xap_lll_iter/iter/32768 time:   [945.33 µs 957.35 µs 970.59 µs]
+xap_lll_iter/xap/32768  time:   [956.26 µs 964.57 µs 973.59 µs]
 
 
 COLLECT:
@@ -40,7 +67,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Reduce;
 
 trait Exp {
     type Out;
@@ -64,6 +91,14 @@ impl Exp for SumByLoop {
             v += x;
         }
         v
+    }
+}
+
+pub struct Reduce;
+impl Exp for Reduce {
+    type Out = Option<u64>;
+    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
+        i.reduce(|x, y| 2 * x + y + 7)
     }
 }
 
