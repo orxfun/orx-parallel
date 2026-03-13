@@ -4,43 +4,43 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_lll_iter/iter/1024  time:   [3.5231 µs 3.5465 µs 3.5713 µs]
-xap_lll_iter/xap/1024   time:   [3.4614 µs 3.4829 µs 3.5053 µs]
+xap_lll_cons/iter/1024  time:   [42.997 µs 43.594 µs 44.276 µs]
+xap_lll_cons/xap/1024   time:   [24.837 µs 25.160 µs 25.526 µs]
 
-xap_lll_iter/iter/32768 time:   [286.74 µs 291.74 µs 296.92 µs]
-xap_lll_iter/xap/32768  time:   [292.21 µs 294.84 µs 297.84 µs]
+xap_lll_cons/iter/32768 time:   [1.3582 ms 1.3830 ms 1.4111 ms]
+xap_lll_cons/xap/32768  time:   [836.88 µs 847.12 µs 856.96 µs]
 
 
 SUM BY LOOP:
-xap_lll_iter/iter/1024  time:   [19.139 µs 19.294 µs 19.458 µs]
-xap_lll_iter/xap/1024   time:   [18.689 µs 18.846 µs 19.007 µs]
+xap_lll_cons/iter/1024  time:   [80.073 µs 80.897 µs 81.752 µs]
+xap_lll_cons/xap/1024   time:   [137.53 µs 138.60 µs 139.79 µs]
 
-xap_lll_iter/iter/32768 time:   [859.88 µs 871.83 µs 884.87 µs]
-xap_lll_iter/xap/32768  time:   [807.08 µs 813.74 µs 821.26 µs]
+xap_lll_cons/iter/32768 time:   [2.6051 ms 2.6338 ms 2.6633 ms]
+xap_lll_cons/xap/32768  time:   [4.6230 ms 4.6913 ms 4.7674 ms]
 
 
 REDUCE:
-xap_lll_iter/iter/1024  time:   [22.493 µs 22.821 µs 23.157 µs]
-xap_lll_iter/xap/1024   time:   [24.253 µs 24.452 µs 24.662 µs]
+xap_lll_cons/iter/1024  time:   [107.20 ns 108.08 ns 109.07 ns]
+xap_lll_cons/xap/1024   time:   [92.274 ns 92.790 ns 93.350 ns]
 
-xap_lll_iter/iter/32768 time:   [791.58 µs 796.33 µs 801.31 µs]
-xap_lll_iter/xap/32768  time:   [792.81 µs 799.48 µs 806.52 µs]
+xap_lll_cons/iter/32768 time:   [766.08 ns 790.75 ns 817.13 ns]
+xap_lll_cons/xap/32768  time:   [819.38 ns 843.67 ns 867.46 ns]
 
 
 COLLECT:
-xap_lll_iter/iter/1024  time:   [30.074 µs 30.571 µs 31.137 µs]
-xap_lll_iter/xap/1024   time:   [29.526 µs 30.033 µs 30.603 µs]
+xap_lll_cons/iter/1024  time:   [31.272 µs 31.636 µs 31.972 µs]
+xap_lll_cons/xap/1024   time:   [278.54 µs 281.08 µs 283.74 µs]
 
-xap_lll_iter/iter/32768 time:   [957.74 µs 964.16 µs 971.09 µs]
-xap_lll_iter/xap/32768  time:   [1.0266 ms 1.0331 ms 1.0403 ms]
+xap_lll_cons/iter/32768 time:   [1.4843 ms 1.5635 ms 1.6465 ms]
+xap_lll_cons/xap/32768  time:   [22.806 ms 23.104 ms 23.414 ms]
 
 
 COLLECT BY LOOP:
-xap_lll_iter/iter/1024  time:   [25.912 µs 26.305 µs 26.714 µs]
-xap_lll_iter/xap/1024   time:   [26.214 µs 26.558 µs 26.905 µs]
+xap_lll_cons/iter/1024  time:   [214.34 µs 217.80 µs 221.47 µs]
+xap_lll_cons/xap/1024   time:   [231.35 µs 235.54 µs 239.76 µs]
 
-xap_lll_iter/iter/32768 time:   [1.0124 ms 1.0270 ms 1.0411 ms]
-xap_lll_iter/xap/32768  time:   [963.01 µs 974.94 µs 988.67 µs]
+xap_lll_cons/iter/32768 time:   [19.276 ms 19.543 ms 19.841 ms]
+xap_lll_cons/xap/32768  time:   [17.030 ms 17.171 ms 17.317 ms]
 
 */
 
@@ -111,22 +111,16 @@ fn inputs(len: usize) -> Vec<u64> {
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f1(i: u64) -> impl IntoIterator<Item = u64> {
-    (2..5)
-        .map(move |x| i + 2 * x as u64 + 5)
-        .filter(|x| !x.is_multiple_of(3))
+fn f1(i: u64) -> [u64; 7] {
+    [i + 1, i * 2, i + 5, i + 4, i, i.saturating_sub(3), 7 * i]
 }
 
-fn f2(i: u64) -> impl IntoIterator<Item = u64> {
-    (6..8)
-        .map(move |x| i + 5 * x as u64 + 2)
-        .filter(|x| !x.is_multiple_of(3))
+fn f2(i: u64) -> [u64; 3] {
+    [i * 2 + 1, i, i.saturating_sub(7)]
 }
 
-fn f3(i: u64) -> impl IntoIterator<Item = u64> {
-    (9..12)
-        .map(move |x| i + 3 * x as u64 + 7)
-        .filter(|x| !x.is_multiple_of(3))
+fn f3(i: u64) -> [u64; 5] {
+    [i / 3, i + 7, i.saturating_sub(4), i / 4, i]
 }
 
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
@@ -149,7 +143,7 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15];
 
-    let mut group = c.benchmark_group("xap_lll_iter");
+    let mut group = c.benchmark_group("xap_lll_cons");
 
     for n in len {
         let input = inputs(n);

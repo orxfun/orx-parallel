@@ -4,33 +4,43 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_ll_vec/iter/1024    time:   [23.115 µs 23.344 µs 23.618 µs]
-xap_ll_vec/xap/1024     time:   [128.41 µs 131.24 µs 134.09 µs]
+xap_ll_vec/iter/1024    time:   [30.407 µs 30.899 µs 31.416 µs]
+xap_ll_vec/xap/1024     time:   [29.957 µs 30.381 µs 30.856 µs]
 
-xap_ll_vec/iter/32768   time:   [853.54 µs 872.33 µs 892.96 µs]
-xap_ll_vec/xap/32768    time:   [4.9680 ms 5.0549 ms 5.1430 ms]
+xap_ll_vec/iter/32768   time:   [1.0112 ms 1.0296 ms 1.0467 ms]
+xap_ll_vec/xap/32768    time:   [926.67 µs 942.16 µs 957.44 µs]
+
 
 SUM BY LOOP:
-xap_ll_vec/iter/1024    time:   [128.43 µs 129.85 µs 131.39 µs]
-xap_ll_vec/xap/1024     time:   [142.45 µs 146.24 µs 149.91 µs]
+xap_ll_vec/iter/1024    time:   [153.17 µs 155.77 µs 158.58 µs]
+xap_ll_vec/xap/1024     time:   [172.95 µs 175.48 µs 178.04 µs]
 
-xap_ll_vec/iter/32768   time:   [5.1991 ms 5.2810 ms 5.3641 ms]
-xap_ll_vec/xap/32768    time:   [5.3174 ms 5.4091 ms 5.5007 ms]
+xap_ll_vec/iter/32768   time:   [4.9478 ms 5.0152 ms 5.0842 ms]
+xap_ll_vec/xap/32768    time:   [5.2498 ms 5.3198 ms 5.3901 ms]
+
+
+REDUCE:
+xap_ll_vec/iter/1024    time:   [29.497 µs 29.971 µs 30.473 µs]
+xap_ll_vec/xap/1024     time:   [27.997 µs 28.417 µs 28.873 µs]
+
+xap_ll_vec/iter/32768   time:   [994.83 µs 1.0099 ms 1.0257 ms]
+xap_ll_vec/xap/32768    time:   [986.25 µs 1.0010 ms 1.0155 ms]
 
 
 COLLECT:
-xap_ll_vec/iter/1024    time:   [159.55 µs 161.51 µs 163.92 µs]
-xap_ll_vec/xap/1024     time:   [209.25 µs 213.36 µs 218.10 µs]
+xap_ll_vec/iter/1024    time:   [207.57 µs 210.79 µs 213.92 µs]
+xap_ll_vec/xap/1024     time:   [244.40 µs 248.10 µs 251.87 µs]
 
-xap_ll_vec/iter/32768   time:   [5.0556 ms 5.1402 ms 5.2353 ms]
-xap_ll_vec/xap/32768    time:   [7.2486 ms 7.3191 ms 7.3962 ms]
+xap_ll_vec/iter/32768   time:   [6.1079 ms 6.1712 ms 6.2375 ms]
+xap_ll_vec/xap/32768    time:   [8.1850 ms 8.2954 ms 8.4080 ms]
+
 
 COLLECT BY LOOP:
-xap_ll_vec/iter/1024    time:   [190.11 µs 193.02 µs 195.89 µs]
-xap_ll_vec/xap/1024     time:   [180.79 µs 183.32 µs 186.20 µs]
+xap_ll_vec/iter/1024    time:   [156.17 µs 158.33 µs 160.57 µs]
+xap_ll_vec/xap/1024     time:   [144.44 µs 146.65 µs 148.89 µs]
 
-xap_ll_vec/iter/32768   time:   [4.8297 ms 4.8923 ms 4.9568 ms]
-xap_ll_vec/xap/32768    time:   [4.5771 ms 4.6155 ms 4.6560 ms]
+xap_ll_vec/iter/32768   time:   [5.2283 ms 5.3042 ms 5.3841 ms]
+xap_ll_vec/xap/32768    time:   [4.2370 ms 4.2973 ms 4.3604 ms]
 
 */
 
@@ -64,6 +74,14 @@ impl Exp for SumByLoop {
             v += x;
         }
         v
+    }
+}
+
+pub struct Reduce;
+impl Exp for Reduce {
+    type Out = Option<u64>;
+    fn out(i: impl Iterator<Item = u64>) -> Self::Out {
+        i.reduce(|x, y| 2 * x + y + 7)
     }
 }
 
@@ -109,7 +127,7 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1).flat_map(f2);
     let inputs = inputs.iter().copied();
-    let iter = XapIter::new(inputs, xap);
+    let iter = inputs.flat_map(|x| xap.xap(x));
     E::out(iter)
 }
 
