@@ -48,14 +48,6 @@ impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        todo!();
-        let (flo, fhi) = self
-            .inner
-            .as_ref()
-            .map_or((0, Some(0)), <G::O as IntoIterator>::IntoIter::size_hint);
-
-        // (flo, None)
-
         match &self.inner {
             Some(inner) => (inner.size_hint().0, None),
             None => (0, None),
@@ -68,6 +60,7 @@ impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
         Self: Sized,
         F: FnMut(B, Self::Item) -> B,
     {
+        todo!();
         let acc = match self.inner {
             Some(inner) => inner.fold(init, &mut f),
             None => init,
@@ -83,28 +76,15 @@ impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
     where
         Self: Sized,
     {
-        let mut acc = match self.inner {
+        let count = match self.inner {
             Some(inner) => inner.count(),
             None => 0,
         };
 
-        for i in self.i {
-            let inner = self.g.flat_map(i);
-            acc += inner.into_iter().count();
-        }
-
-        acc
+        self.i.fold(count, |count, i| {
+            count + self.g.flat_map(i).into_iter().count()
+        })
     }
-
-    // fn flatten(self) -> core::iter::Flatten<Self>
-    // where
-    //     Self: Sized,
-    //     Self::Item: IntoIterator,
-    // {
-    //     let mut abc = [1, 2, 3].into_iter().map(|x| [x, x + 1]);
-    //     let def = abc.flatten();
-    //     todo!()
-    // }
 }
 
 #[inline(always)]
