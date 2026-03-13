@@ -7,31 +7,35 @@ use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
 fn inputs(len: usize) -> Vec<u64> {
+    return (0..len as u64).collect();
     const SEED: u64 = 654;
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f1_v(i: u64) -> impl IntoIterator<Item = u64> {
-    (0..2).map(move |x| x + i + 1).collect::<Vec<_>>()
+fn f1(i: u64) -> impl IntoIterator<Item = u64> {
+    (2u64..5)
+        // .map(move |x| i + 2 * x as u64 + 5)
+        .map(move |x| i + x - 2)
+        .filter(|x| !x.is_multiple_of(3))
 }
 
-fn f2_v(i: u64) -> impl IntoIterator<Item = u64> {
-    (0..8).map(move |x| i * 7 + x).collect::<Vec<_>>()
+fn f2(i: u64) -> impl IntoIterator<Item = u64> {
+    (6u64..7)
+        .map(move |x| 5 * (i + x - 6))
+        .filter(|x| !x.is_multiple_of(3))
 }
 
 fn main() {
-    let n = 10;
+    let n = 2;
     let inputs = inputs(n);
 
-    let mut it = inputs.iter().copied().flat_map(f1_v).flat_map(f2_v);
-    // let (a, b) = it.size_hint();
-    // let x = it.next();
-    // let (a, b) = it.size_hint();
-    let v = Vec::from_iter(it);
+    // let iter = inputs.iter().copied().flat_map(f1).flat_map(f2);
+    // let v = Iterator::sum::<u64>(iter);
 
-    let xap = Id::new().copied().flat_map(f1_v).flat_map(f2_v);
-    let it = inputs.iter().flat_map(|x| xap.xap(x));
-    let v = Vec::from_iter(it);
+    let iter = FlatMapIterMany::new(inputs.iter().copied(), FnFlatMap::new(f1));
+    let iter = FlatMapIterMany::new(iter, FnFlatMap::new(f2));
+    let v: u64 = iter.sum();
+
     println!("{v:?}");
 }
