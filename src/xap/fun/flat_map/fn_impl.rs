@@ -1,15 +1,23 @@
 use crate::xap::fun::flat_map::fn_trait::FlatMap;
 use core::marker::PhantomData;
 
-pub struct FnFlatMap<I, O: IntoIterator, F: Fn(I) -> O>(F, PhantomData<(I, O)>);
+pub struct FnFlatMap<I, O: IntoIterator, F: Fn(I) -> O + Copy>(F, PhantomData<(I, O)>);
 
-impl<I, O: IntoIterator, F: Fn(I) -> O> FnFlatMap<I, O, F> {
+impl<I, O: IntoIterator, F: Fn(I) -> O + Copy> Clone for FnFlatMap<I, O, F> {
+    fn clone(&self) -> Self {
+        Self::new(self.0)
+    }
+}
+
+impl<I, O: IntoIterator, F: Fn(I) -> O + Copy> Copy for FnFlatMap<I, O, F> {}
+
+impl<I, O: IntoIterator, F: Fn(I) -> O + Copy> FnFlatMap<I, O, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<I, O: IntoIterator, F: Fn(I) -> O> FlatMap for FnFlatMap<I, O, F> {
+impl<I, O: IntoIterator, F: Fn(I) -> O + Copy> FlatMap for FnFlatMap<I, O, F> {
     type I = I;
 
     type O = O;

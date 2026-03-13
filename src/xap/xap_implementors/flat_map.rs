@@ -3,9 +3,7 @@ use crate::xap::fun::filter::{FnFil, Fs};
 use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::{FlatMap, FnFlatMap};
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, Ms};
-use crate::xap::xap_implementors::f::F;
 use crate::xap::xap_implementors::fil_map::FilMap;
-use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_implementors::m2::M2;
 use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 
@@ -27,14 +25,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
 
     type Count = <X::Count as Count>::ThenMany;
 
-    type Values<'i>
-        = <X::Count as Count>::FlatMap<X::Values<'i>, &'i G>
-    where
-        Self: 'i;
+    type Values = <X::Count as Count>::FlatMap<X::Values, G>;
 
     #[inline(always)]
-    fn xap(&self, i: Self::I) -> Self::Values<'_> {
-        <X::Count as Count>::flat_map(self.x.xap(i), &self.g)
+    fn xap(&self, i: Self::I) -> Self::Values {
+        <X::Count as Count>::flat_map(self.x.xap(i), self.g)
     }
 
     // transformations
@@ -42,11 +37,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     type Map<Q, H>
         = M2<Self, FnMap<Self::O, Q, H>>
     where
-        H: Fn(Self::O) -> Q;
+        H: Fn(Self::O) -> Q + Copy;
 
     fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
     where
-        H: Fn(Self::O) -> Q,
+        H: Fn(Self::O) -> Q + Copy,
     {
         M2::new(self, FnMap::new(h))
     }
@@ -54,11 +49,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     type Inspect<H>
         = M2<Self, FnIns<Self::O, H>>
     where
-        H: Fn(&Self::O);
+        H: Fn(&Self::O) + Copy;
 
     fn inspect<H>(self, h: H) -> Self::Inspect<H>
     where
-        H: Fn(&Self::O),
+        H: Fn(&Self::O) + Copy,
     {
         M2::new(self, FnIns::new(h))
     }
@@ -66,11 +61,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     type Filter<H>
         = FilMap<Self, FnFil2<Self::O, H>>
     where
-        H: Fn(&Self::O) -> bool;
+        H: Fn(&Self::O) -> bool + Copy;
 
     fn filter<H>(self, h: H) -> Self::Filter<H>
     where
-        H: Fn(&Self::O) -> bool,
+        H: Fn(&Self::O) -> bool + Copy,
     {
         FilMap::new(self, FnFil2::new(h))
     }
@@ -78,11 +73,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     type FilterMap<Q, H>
         = FilMap<Self, FnFilMap<Self::O, Q, H>>
     where
-        H: Fn(Self::O) -> Option<Q>;
+        H: Fn(Self::O) -> Option<Q> + Copy;
 
     fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
     where
-        H: Fn(Self::O) -> Option<Q>,
+        H: Fn(Self::O) -> Option<Q> + Copy,
     {
         FilMap::new(self, FnFilMap::new(h))
     }
@@ -91,12 +86,12 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
         = FlaMap<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V;
+        H: Fn(Self::O) -> V + Copy;
 
     fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V,
+        H: Fn(Self::O) -> V + Copy,
     {
         FlaMap::new(self, FnFlatMap::new(h))
     }

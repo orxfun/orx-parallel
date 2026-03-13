@@ -1,5 +1,6 @@
 use crate::xap::fun::map::{fn_trait::Map, queue::MapQueue};
 
+#[derive(Clone, Copy)]
 pub struct Mp<F: Map, B: MapQueue<I = F::O>> {
     f: F,
     b: B,

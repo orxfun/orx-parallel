@@ -4,51 +4,53 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_l_iter/iter/1024    time:   [1.4628 µs 1.4806 µs 1.4999 µs]
-xap_l_iter/xap/1024     time:   [1.4639 µs 1.4791 µs 1.4937 µs]
+xap_l_iter/iter/1024    time:   [1.1321 µs 1.1379 µs 1.1438 µs]
+xap_l_iter/xap/1024     time:   [1.1099 µs 1.1149 µs 1.1200 µs]
 
-xap_l_iter/iter/32768   time:   [45.877 µs 46.229 µs 46.608 µs]
-xap_l_iter/xap/32768    time:   [48.273 µs 49.007 µs 49.839 µs]
+xap_l_iter/iter/32768   time:   [37.220 µs 37.489 µs 37.786 µs]
+xap_l_iter/xap/32768    time:   [39.664 µs 40.230 µs 40.849 µs]
+
 
 SUM BY LOOP:
-xap_l_iter/iter/1024    time:   [4.9615 µs 5.0194 µs 5.0754 µs]
-xap_l_iter/xap/1024     time:   [4.4484 µs 4.4880 µs 4.5345 µs]
+xap_l_iter/iter/1024    time:   [4.1800 µs 4.2219 µs 4.2652 µs]
+xap_l_iter/xap/1024     time:   [4.4514 µs 4.5136 µs 4.5841 µs]
 
-xap_l_iter/iter/32768   time:   [139.09 µs 140.11 µs 141.27 µs]
-xap_l_iter/xap/32768    time:   [137.99 µs 139.06 µs 140.25 µs]
+xap_l_iter/iter/32768   time:   [139.69 µs 140.84 µs 142.04 µs]
+xap_l_iter/xap/32768    time:   [146.05 µs 148.90 µs 151.97 µs]
 
 
 REDUCE:
-xap_l_iter/iter/1024    time:   [2.9544 µs 3.0056 µs 3.0604 µs]
-xap_l_iter/xap/1024     time:   [2.9493 µs 3.0105 µs 3.0819 µs]
+xap_l_iter/iter/1024    time:   [2.6005 µs 2.6286 µs 2.6612 µs]
+xap_l_iter/xap/1024     time:   [2.5418 µs 2.5556 µs 2.5714 µs]
 
-xap_l_iter/iter/32768   time:   [91.712 µs 93.662 µs 95.900 µs]
-xap_l_iter/xap/32768    time:   [92.291 µs 93.381 µs 94.559 µs]
+xap_l_iter/iter/32768   time:   [87.100 µs 88.114 µs 89.183 µs]
+xap_l_iter/xap/32768    time:   [89.318 µs 90.511 µs 91.801 µs]
 
 
 COLLECT:
-xap_l_iter/iter/1024    time:   [9.3365 µs 9.4599 µs 9.5919 µs]
-xap_l_iter/xap/1024     time:   [10.686 µs 10.898 µs 11.099 µs]
+xap_l_iter/iter/1024    time:   [7.7716 µs 7.8381 µs 7.9201 µs]
+xap_l_iter/xap/1024     time:   [8.2068 µs 8.2536 µs 8.3002 µs]
 
-xap_l_iter/iter/32768   time:   [306.29 µs 310.32 µs 314.71 µs]
-xap_l_iter/xap/32768    time:   [301.43 µs 305.28 µs 309.17 µs]
+xap_l_iter/iter/32768   time:   [249.41 µs 250.99 µs 252.61 µs]
+xap_l_iter/xap/32768    time:   [258.36 µs 260.98 µs 263.97 µs]
+
 
 COLLECT BY LOOP:
-xap_l_iter/iter/1024    time:   [8.8989 µs 9.0173 µs 9.1317 µs]
-xap_l_iter/xap/1024     time:   [9.3978 µs 9.6033 µs 9.8269 µs]
+xap_l_iter/iter/1024    time:   [7.9477 µs 8.0279 µs 8.1125 µs]
+xap_l_iter/xap/1024     time:   [8.5372 µs 8.6432 µs 8.7612 µs]
 
-xap_l_iter/iter/32768   time:   [316.53 µs 323.41 µs 330.95 µs]
-xap_l_iter/xap/32768    time:   [322.93 µs 331.48 µs 339.96 µs]
+xap_l_iter/iter/32768   time:   [270.55 µs 275.73 µs 280.87 µs]
+xap_l_iter/xap/32768    time:   [262.64 µs 266.44 µs 270.39 µs]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::xap::{Id, Xap, xap_iter::XapIter};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = CollectByLoop;
 
 trait Exp {
     type Out;
@@ -122,7 +124,9 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1);
-    E::out(inputs.iter().copied().flat_map(|x| xap.xap(x)))
+    let inputs = inputs.iter().copied();
+    let iter = XapIter::new(inputs, xap);
+    E::out(iter)
 }
 
 fn run(c: &mut Criterion) {

@@ -3,15 +3,23 @@ use core::marker::PhantomData;
 
 // filter_map
 
-pub struct FnFilMap<I, O, F: Fn(I) -> Option<O>>(F, PhantomData<(I, O)>);
+pub struct FnFilMap<I, O, F: Fn(I) -> Option<O> + Copy>(F, PhantomData<(I, O)>);
 
-impl<I, O, F: Fn(I) -> Option<O>> FnFilMap<I, O, F> {
+impl<I, O, F: Fn(I) -> Option<O> + Copy> Clone for FnFilMap<I, O, F> {
+    fn clone(&self) -> Self {
+        Self::new(self.0)
+    }
+}
+
+impl<I, O, F: Fn(I) -> Option<O> + Copy> Copy for FnFilMap<I, O, F> {}
+
+impl<I, O, F: Fn(I) -> Option<O> + Copy> FnFilMap<I, O, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<I, O, F: Fn(I) -> Option<O>> FilterMap for FnFilMap<I, O, F> {
+impl<I, O, F: Fn(I) -> Option<O> + Copy> FilterMap for FnFilMap<I, O, F> {
     type I = I;
 
     type O = O;
@@ -24,15 +32,23 @@ impl<I, O, F: Fn(I) -> Option<O>> FilterMap for FnFilMap<I, O, F> {
 
 // filter
 
-pub struct FnFil2<I, F: Fn(&I) -> bool>(F, PhantomData<I>);
+pub struct FnFil2<I, F: Fn(&I) -> bool + Copy>(F, PhantomData<I>);
 
-impl<I, F: Fn(&I) -> bool> FnFil2<I, F> {
+impl<I, F: Fn(&I) -> bool + Copy> Clone for FnFil2<I, F> {
+    fn clone(&self) -> Self {
+        Self::new(self.0)
+    }
+}
+
+impl<I, F: Fn(&I) -> bool + Copy> Copy for FnFil2<I, F> {}
+
+impl<I, F: Fn(&I) -> bool + Copy> FnFil2<I, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<I, F: Fn(&I) -> bool> FilterMap for FnFil2<I, F> {
+impl<I, F: Fn(&I) -> bool + Copy> FilterMap for FnFil2<I, F> {
     type I = I;
 
     type O = I;

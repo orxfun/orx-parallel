@@ -60,7 +60,6 @@ impl<I: Iterator, G: FlatMap<I = I::Item>> Iterator for FlatMapIterMany<I, G> {
         Self: Sized,
         F: FnMut(B, Self::Item) -> B,
     {
-        todo!();
         let acc = match self.inner {
             Some(inner) => inner.fold(init, &mut f),
             None => init,

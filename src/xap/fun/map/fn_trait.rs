@@ -1,4 +1,4 @@
-pub trait Map {
+pub trait Map: Copy {
     type I;
 
     type O;
