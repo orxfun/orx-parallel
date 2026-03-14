@@ -16,7 +16,7 @@ impl<F: FlatMap> FlatMap for FMs<F> {
 
     type O = F::O;
 
-    #[inline(always)]
+    #[inline]
     fn flat_map(&self, i: Self::I) -> Self::O {
         self.f.flat_map(i)
     }
