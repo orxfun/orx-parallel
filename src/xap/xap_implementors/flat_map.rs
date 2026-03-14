@@ -1,4 +1,5 @@
 use crate::xap::count::Count;
+use crate::xap::count::iter::FlatMapIterMany;
 use crate::xap::fun::filter::{FnFil, Fs};
 use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::{FlatMap, FnFlatMap};
@@ -30,6 +31,11 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values {
         <X::Count as Count>::flat_map(self.x.xap(i), self.g)
+    }
+
+    #[inline(always)]
+    fn into_iter_over(self, inputs: impl IntoIterator<Item = Self::I>) -> impl Iterator<Item = Self::O> {
+        inputs.into_iter().flat_map(move |x| self.xap(x))
     }
 
     // transformations

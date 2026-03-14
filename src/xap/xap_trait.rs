@@ -13,6 +13,11 @@ pub trait Xap {
 
     fn xap(&self, i: Self::I) -> Self::Values;
 
+    fn into_iter_over(
+        self,
+        inputs: impl IntoIterator<Item = Self::I>,
+    ) -> impl Iterator<Item = Self::O>;
+
     // transformations
 
     type Map<Q, H>: Xap<I = Self::I, O = Q>

@@ -30,6 +30,14 @@ impl<I> Xap for Id<I> {
         [i]
     }
 
+    #[inline(always)]
+    fn into_iter_over(
+        self,
+        inputs: impl IntoIterator<Item = Self::I>,
+    ) -> impl Iterator<Item = Self::O> {
+        inputs.into_iter()
+    }
+
     // transformations
 
     type Map<Q, H>

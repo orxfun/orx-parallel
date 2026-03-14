@@ -32,6 +32,11 @@ impl<X: Xap, G: FilterMap<I = X::O>> Xap for FilMap<X, G> {
         <X::Count as Count>::filter_map(self.x.xap(i), self.g)
     }
 
+    #[inline(always)]
+    fn into_iter_over(self, inputs: impl IntoIterator<Item = Self::I>) -> impl Iterator<Item = Self::O> {
+        inputs.into_iter().flat_map(move |x| self.xap(x))
+    }
+
     // transformations
 
     type Map<Q, H>
