@@ -127,9 +127,7 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1).flat_map(f2);
     let iter = inputs.iter().copied();
-    let iter = xap.into_iter_over(iter).into_iter();
-    // let inputs = inputs.iter().copied();
-    // let iter = inputs.flat_map(|x| xap.xap(x));
+    let iter = iter.flat_map(|x| xap.xap(x));
     E::out(iter)
 }
 
