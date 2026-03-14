@@ -31,6 +31,11 @@ impl<X: Xap, G: Map<I = X::O>> Xap for M2<X, G> {
         <X::Count as Count>::map(self.x.xap(i), self.g)
     }
 
+    #[inline(always)]
+    fn into_iter_over(self, inputs: impl IntoIterator<Item = Self::I>) -> impl Iterator<Item = Self::O> {
+        inputs.into_iter().flat_map(move |x| self.xap(x))
+    }
+
     // transformations
 
     type Map<Q, H>
