@@ -18,6 +18,7 @@ impl<F: FlatMap, B: FlatMapQueue<I = <F::O as IntoIterator>::Item>> FlatMap for 
 
     type O = FlatMapIterMany<<F::O as IntoIterator>::IntoIter, B>;
 
+    #[inline]
     fn flat_map(&self, i: Self::I) -> Self::O {
         let iter = self.f.flat_map(i).into_iter();
         FlatMapIterMany::new(iter, self.b)

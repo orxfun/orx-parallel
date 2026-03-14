@@ -6,3 +6,6 @@ mod single;
 
 pub use fn_impl::FnFlatMap;
 pub use fn_trait::FlatMap;
+pub use pair::FMp;
+pub use queue::FlatMapQueue;
+pub use single::FMs;
