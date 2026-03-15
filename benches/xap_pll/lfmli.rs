@@ -4,43 +4,43 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_p_iii_vec/iter/1024 time:   [826.34 ns 834.16 ns 842.89 ns]
-xap_p_iii_vec/xap/1024  time:   [913.46 ns 921.93 ns 931.05 ns]
+xap_p_lfmli/iter/1024   time:   [10.919 µs 11.121 µs 11.309 µs]
+xap_p_lfmli/xap/1024    time:   [23.799 µs 23.918 µs 24.037 µs]
 
-xap_p_iii_vec/iter/32768time:   [116.70 µs 117.97 µs 119.36 µs]
-xap_p_iii_vec/xap/32768 time:   [90.196 µs 91.484 µs 92.901 µs]
+xap_p_lfmli/iter/32768  time:   [483.98 µs 487.34 µs 490.91 µs]
+xap_p_lfmli/xap/32768   time:   [1.0730 ms 1.0789 ms 1.0854 ms]
 
 
 SUM BY LOOP:
-xap_p_iii_vec/iter/1024 time:   [818.29 ns 825.08 ns 832.62 ns]
-xap_p_iii_vec/xap/1024  time:   [634.45 ns 638.10 ns 642.18 ns]
+xap_p_lfmli/iter/1024   time:   [16.689 µs 16.790 µs 16.896 µs]
+xap_p_lfmli/xap/1024    time:   [20.651 µs 20.784 µs 20.925 µs]
 
-xap_p_iii_vec/iter/32768time:   [90.792 µs 92.157 µs 93.507 µs]
-xap_p_iii_vec/xap/32768 time:   [117.22 µs 118.06 µs 118.91 µs]
+xap_p_lfmli/iter/32768  time:   [878.30 µs 883.20 µs 887.90 µs]
+xap_p_lfmli/xap/32768   time:   [967.01 µs 972.85 µs 979.23 µs]
 
 
 REDUCE:
-xap_p_iii_vec/iter/1024 time:   [1.0085 µs 1.0176 µs 1.0269 µs]
-xap_p_iii_vec/xap/1024  time:   [889.05 ns 894.62 ns 900.84 ns]
+xap_p_lfmli/iter/1024   time:   [10.296 µs 10.378 µs 10.456 µs]
+xap_p_lfmli/xap/1024    time:   [33.074 µs 33.370 µs 33.700 µs]
 
-xap_p_iii_vec/iter/32768time:   [105.35 µs 106.13 µs 106.91 µs]
-xap_p_iii_vec/xap/32768 time:   [111.24 µs 112.62 µs 114.08 µs]
+xap_p_lfmli/iter/32768  time:   [490.38 µs 492.98 µs 495.58 µs]
+xap_p_lfmli/xap/32768   time:   [1.4418 ms 1.4486 ms 1.4565 ms]
 
 
 COLLECT:
-xap_p_iii_vec/iter/1024 time:   [1.2201 µs 1.2288 µs 1.2380 µs]
-xap_p_iii_vec/xap/1024  time:   [1.1967 µs 1.2032 µs 1.2106 µs]
+xap_p_lfmli/iter/1024   time:   [24.962 µs 25.118 µs 25.279 µs]
+xap_p_lfmli/xap/1024    time:   [27.604 µs 27.945 µs 28.305 µs]
 
-xap_p_iii_vec/iter/32768time:   [117.04 µs 118.78 µs 120.54 µs]
-xap_p_iii_vec/xap/32768 time:   [96.255 µs 97.259 µs 98.315 µs]
+xap_p_lfmli/iter/32768  time:   [1.2495 ms 1.2625 ms 1.2778 ms]
+xap_p_lfmli/xap/32768   time:   [1.3253 ms 1.3328 ms 1.3407 ms]
 
 
 COLLECT BY LOOP:
-xap_p_iii_vec/iter/1024 time:   [1.3477 µs 1.3536 µs 1.3598 µs]
-xap_p_iii_vec/xap/1024  time:   [1.3993 µs 1.4077 µs 1.4164 µs]
+xap_p_lfmli/iter/1024   time:   [25.290 µs 25.500 µs 25.727 µs]
+xap_p_lfmli/xap/1024    time:   [32.855 µs 33.404 µs 34.004 µs]
 
-xap_p_iii_vec/iter/32768time:   [118.10 µs 119.39 µs 120.70 µs]
-xap_p_iii_vec/xap/32768 time:   [108.28 µs 109.69 µs 111.21 µs]
+xap_p_lfmli/iter/32768  time:   [1.1489 ms 1.1560 ms 1.1633 ms]
+xap_p_lfmli/xap/32768   time:   [1.3652 ms 1.3759 ms 1.3876 ms]
 
 */
 
@@ -50,7 +50,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Sum;
+type Output = CollectByLoop;
 
 trait Exp {
     type Out;
@@ -166,21 +166,23 @@ fn inputs(len: usize) -> Vec<u64> {
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-fn f1(i: u64) -> Option<u64> {
-    match i.is_multiple_of(7) {
-        true => None,
-        false => Some(i + 3),
-    }
+fn f1(i: u64) -> impl Iterator<Item = u64> {
+    (1..7).map(move |x| 3 * x + i + 7)
 }
 
-fn f2(i: u64) -> Option<u64> {
-    match i.is_multiple_of(3) {
-        true => None,
-        false => Some(2 * i),
-    }
+fn f2(i: &u64) -> bool {
+    !(i + 7).is_multiple_of(11)
 }
 
-fn f3(i: u64) -> Option<u64> {
+fn f3(i: u64) -> u64 {
+    i * 3 + 5
+}
+
+fn f4(i: u64) -> impl IntoIterator<Item = u64> {
+    [3 * i + 2, 2 * i + 5, i + 75]
+}
+
+fn f5(i: u64) -> Option<u64> {
     match (i + 5).is_multiple_of(4) {
         true => None,
         false => Some(3 * i + 1),
@@ -189,11 +191,23 @@ fn f3(i: u64) -> Option<u64> {
 
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
     let iter = inputs.iter().copied();
-    E::out(iter, |i| f1(i).into_iter().filter_map(f2).filter_map(f3))
+    E::out(iter, |i| {
+        f1(i)
+            .into_iter()
+            .filter(f2)
+            .map(f3)
+            .flat_map(f4)
+            .filter_map(f5)
+    })
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().filter_map(f1).filter_map(f2).filter_map(f3);
+    let xap = Id::new()
+        .flat_map(f1)
+        .filter(f2)
+        .map(f3)
+        .flat_map(f4)
+        .filter_map(f5);
     let iter = inputs.iter().copied();
     E::out(iter, |i| xap.xap(i))
 }
@@ -201,7 +215,7 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15];
 
-    let mut group = c.benchmark_group("xap_p_iii_vec");
+    let mut group = c.benchmark_group("xap_p_lfmli");
 
     for n in len {
         let input = inputs(n);
