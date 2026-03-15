@@ -192,7 +192,7 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15];
 
-    let mut group = c.benchmark_group("xap_pll_lll_vec");
+    let mut group = c.benchmark_group("xap_p_lll_vec");
 
     for n in len {
         let input = inputs(n);
