@@ -48,9 +48,9 @@ test-case = "3.3.1"
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
 [[bench]]
-name = "lfmli2"
+name = "lm"
 harness = false
-path = "benches/xap_pll/lfmli2.rs"
+path = "benches/xap/lm.rs"
 
 [package.metadata.docs.rs]
 all-features = true
