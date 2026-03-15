@@ -50,7 +50,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Sum;
+type Output = Reduce;
 
 trait Exp {
     type Out;
@@ -178,36 +178,13 @@ fn f3(i: u64) -> u64 {
     i * 3 + 5
 }
 
-fn f4(i: u64) -> impl Iterator<Item = u64> {
-    (9..12).map(move |x| x + 2 * i + 11)
-}
-
-fn f5(i: u64) -> Option<u64> {
-    match (i + 5).is_multiple_of(4) {
-        true => None,
-        false => Some(3 * i + 1),
-    }
-}
-
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
     let iter = inputs.iter().copied();
-    E::out(iter, |i| {
-        f1(i)
-            .into_iter()
-            .filter(f2)
-            .map(f3)
-            .flat_map(f4)
-            .filter_map(f5)
-    })
+    E::out(iter, |i| f1(i).into_iter().filter(f2))
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new()
-        .flat_map(f1)
-        .filter(f2)
-        .map(f3)
-        .flat_map(f4)
-        .filter_map(f5);
+    let xap = Id::new().flat_map(f1).filter(f2);
     let iter = inputs.iter().copied();
     E::out(iter, |i| xap.xap(i))
 }
