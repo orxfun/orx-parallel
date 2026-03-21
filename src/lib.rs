@@ -17,8 +17,5 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-// mod fun;
-// mod out;
-// mod xap;
-// mod xap_zzz;
+pub mod executor;
 pub mod xap;
