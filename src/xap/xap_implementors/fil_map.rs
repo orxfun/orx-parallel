@@ -1,10 +1,9 @@
-use crate::xap::count::{Count, One};
-use crate::xap::fun::filter::{FnFil, Fs};
+use crate::xap::count::Count;
 use crate::xap::fun::filter_map::{FilterMap, FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::FnFlatMap;
-use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, Ms};
+use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap};
 use crate::xap::xap_implementors::flat_map::FlaMap;
-use crate::xap::xap_implementors::m::M2;
+use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 
 pub struct FilMap<X: Xap, G: FilterMap<I = X::O>> {
@@ -43,7 +42,7 @@ impl<X: Xap, G: FilterMap<I = X::O>> Xap for FilMap<X, G> {
     // transformations
 
     type Map<Q, H>
-        = M2<Self, FnMap<Self::O, Q, H>>
+        = M<Self, FnMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy;
 
@@ -51,11 +50,11 @@ impl<X: Xap, G: FilterMap<I = X::O>> Xap for FilMap<X, G> {
     where
         H: Fn(Self::O) -> Q + Copy,
     {
-        M2::new(self, FnMap::new(h))
+        M::new(self, FnMap::new(h))
     }
 
     type Inspect<H>
-        = M2<Self, FnIns<Self::O, H>>
+        = M<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O) + Copy;
 
@@ -63,7 +62,7 @@ impl<X: Xap, G: FilterMap<I = X::O>> Xap for FilMap<X, G> {
     where
         H: Fn(&Self::O) + Copy,
     {
-        M2::new(self, FnIns::new(h))
+        M::new(self, FnIns::new(h))
     }
 
     type Filter<H>
@@ -108,19 +107,19 @@ impl<X: Xap, G: FilterMap<I = X::O>> Xap for FilMap<X, G> {
 impl<'a, I: 'a + Clone, X: Xap, G: FilterMap<I = X::O, O = &'a I>> XapCloned<'a, I>
     for FilMap<X, G>
 {
-    type Cloned = M2<Self, FnCloned<'a, I>>;
+    type Cloned = M<Self, FnCloned<'a, I>>;
 
     fn cloned(self) -> Self::Cloned {
-        M2::new(self, FnCloned::new())
+        M::new(self, FnCloned::new())
     }
 }
 
 impl<'a, I: 'a + Copy, X: Xap, G: FilterMap<I = X::O, O = &'a I>> XapCopied<'a, I>
     for FilMap<X, G>
 {
-    type Copied = M2<Self, FnCopied<'a, I>>;
+    type Copied = M<Self, FnCopied<'a, I>>;
 
     fn copied(self) -> Self::Copied {
-        M2::new(self, FnCopied::new())
+        M::new(self, FnCopied::new())
     }
 }

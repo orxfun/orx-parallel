@@ -4,7 +4,7 @@ use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::FnFlatMap;
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap};
 use crate::xap::xap_implementors::fil_map::FilMap;
-use crate::xap::xap_implementors::m::M2;
+use crate::xap::xap_implementors::m::M;
 use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 use core::marker::PhantomData;
 
@@ -41,7 +41,7 @@ impl<I> Xap for Id<I> {
     // transformations
 
     type Map<Q, H>
-        = M2<Self, FnMap<Self::O, Q, H>>
+        = M<Self, FnMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy;
 
@@ -49,11 +49,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q + Copy,
     {
-        M2::new(self, FnMap::new(h))
+        M::new(self, FnMap::new(h))
     }
 
     type Inspect<H>
-        = M2<Self, FnIns<Self::O, H>>
+        = M<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O) + Copy;
 
@@ -61,7 +61,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) + Copy,
     {
-        M2::new(self, FnIns::new(h))
+        M::new(self, FnIns::new(h))
     }
 
     type Filter<H>
@@ -104,17 +104,17 @@ impl<I> Xap for Id<I> {
 }
 
 impl<'a, I: 'a + Clone> XapCloned<'a, I> for Id<&'a I> {
-    type Cloned = M2<Self, FnCloned<'a, I>>;
+    type Cloned = M<Self, FnCloned<'a, I>>;
 
     fn cloned(self) -> Self::Cloned {
-        M2::new(self, FnCloned::new())
+        M::new(self, FnCloned::new())
     }
 }
 
 impl<'a, I: 'a + Copy> XapCopied<'a, I> for Id<&'a I> {
-    type Copied = M2<Self, FnCopied<'a, I>>;
+    type Copied = M<Self, FnCopied<'a, I>>;
 
     fn copied(self) -> Self::Copied {
-        M2::new(self, FnCopied::new())
+        M::new(self, FnCopied::new())
     }
 }

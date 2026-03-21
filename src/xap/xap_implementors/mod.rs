@@ -9,3 +9,4 @@ mod m;
 pub use fil_map::FilMap;
 pub use flat_map::FlaMap;
 pub use id::Id;
+pub use m::M;
