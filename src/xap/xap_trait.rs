@@ -1,7 +1,5 @@
 use crate::xap::count::Count;
 
-pub type IterOf<X> = <<X as Xap>::Values as IntoIterator>::IntoIter;
-
 pub trait Xap {
     type I;
 
