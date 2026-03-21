@@ -32,7 +32,10 @@ impl<X: Xap, G: Map<I = X::O>> Xap for M2<X, G> {
     }
 
     #[inline(always)]
-    fn into_iter_over(self, inputs: impl IntoIterator<Item = Self::I>) -> impl Iterator<Item = Self::O> {
+    fn into_iter_over(
+        self,
+        inputs: impl IntoIterator<Item = Self::I>,
+    ) -> impl Iterator<Item = Self::O> {
         inputs.into_iter().flat_map(move |x| self.xap(x))
     }
 

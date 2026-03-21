@@ -4,7 +4,7 @@ mod tests;
 mod fil_map;
 mod flat_map;
 mod id;
-mod m2;
+mod m;
 
 pub use fil_map::FilMap;
 pub use flat_map::FlaMap;
