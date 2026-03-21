@@ -5,7 +5,7 @@ use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
 use crate::xap::fun::flat_map::{FlatMap, FnFlatMap};
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap, Ms};
 use crate::xap::xap_implementors::fil_map::FilMap;
-use crate::xap::xap_implementors::m2::M2;
+use crate::xap::xap_implementors::m::M2;
 use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 
 pub struct FlaMap<X: Xap, G: FlatMap<I = X::O>> {
@@ -34,7 +34,10 @@ impl<X: Xap, G: FlatMap<I = X::O>> Xap for FlaMap<X, G> {
     }
 
     #[inline(always)]
-    fn into_iter_over(self, inputs: impl IntoIterator<Item = Self::I>) -> impl Iterator<Item = Self::O> {
+    fn into_iter_over(
+        self,
+        inputs: impl IntoIterator<Item = Self::I>,
+    ) -> impl Iterator<Item = Self::O> {
         inputs.into_iter().flat_map(move |x| self.xap(x))
     }
 
