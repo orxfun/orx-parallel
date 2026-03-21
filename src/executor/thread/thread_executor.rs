@@ -1,3 +1,4 @@
+use crate::xap::Xap;
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Thread executor responsible for executing sub-tasks sequentially on a single thread.
@@ -23,4 +24,16 @@ pub trait ThreadExecutor: Sized {
     /// The `shared_state` is also provided so that it can be updated to send information to the
     /// parallel executor and other thread executors.
     fn complete_task(&mut self, shared_state: &Self::SharedState);
+
+    // computations
+
+    #[inline]
+    fn reduce<I, X, F>(&mut self, state: &Self::SharedState, iter: &I, x: X, f: F) -> Option<X::O>
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+        F: Fn(X::O, X::O) -> X::O,
+    {
+        super::reduce::reduce(self, state, iter, x, f)
+    }
 }
