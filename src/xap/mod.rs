@@ -1,8 +1,6 @@
-pub mod count;
-// mod faker;
-pub mod fun;
+mod count;
+mod fun;
 mod xap_implementors;
-// pub mod xap_iter;
 mod xap_trait;
 
 pub use xap_implementors::{FilMap, FlaMap, Id, M};
