@@ -1,6 +1,5 @@
-use crate::xap::count::iter::{FilterIterMany, FilterMapIterMany, FlatMapIterMany};
+use crate::xap::count::iter::{FilterMapIterMany, FlatMapIterMany};
 use crate::xap::count::{Count, iter::MapIterMany};
-use crate::xap::fun::filter::Filter;
 use crate::xap::fun::filter_map::FilterMap;
 use crate::xap::fun::flat_map::FlatMap;
 use crate::xap::fun::map::Map;
@@ -23,15 +22,6 @@ impl Count for Many {
     #[inline(always)]
     fn map<I: IntoIterator, G: Map<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
         MapIterMany::new(i.into_iter(), g)
-    }
-
-    // filter
-
-    type Filter<I: IntoIterator, G: Filter<I = I::Item>> = FilterIterMany<I::IntoIter, G>;
-
-    #[inline(always)]
-    fn filter<I: IntoIterator, G: Filter<I = I::Item>>(i: I, g: G) -> Self::Filter<I, G> {
-        FilterIterMany::new(i.into_iter(), g)
     }
 
     // filter_map

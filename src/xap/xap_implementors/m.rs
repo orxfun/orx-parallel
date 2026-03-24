@@ -51,11 +51,11 @@ impl<X: Xap, G: Map<I = X::O>> Xap for M<X, G> {
     type Map<Q, H>
         = M<Self, FnMap<Self::O, Q, H>>
     where
-        H: Fn(Self::O) -> Q + Copy;
+        H: Fn(Self::O) -> Q + Copy + Send;
 
     fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
     where
-        H: Fn(Self::O) -> Q + Copy,
+        H: Fn(Self::O) -> Q + Copy + Send,
     {
         M::new(self, FnMap::new(h))
     }
@@ -63,11 +63,11 @@ impl<X: Xap, G: Map<I = X::O>> Xap for M<X, G> {
     type Inspect<H>
         = M<Self, FnIns<Self::O, H>>
     where
-        H: Fn(&Self::O) + Copy;
+        H: Fn(&Self::O) + Copy + Send;
 
     fn inspect<H>(self, h: H) -> Self::Inspect<H>
     where
-        H: Fn(&Self::O) + Copy,
+        H: Fn(&Self::O) + Copy + Send,
     {
         M::new(self, FnIns::new(h))
     }
@@ -75,11 +75,11 @@ impl<X: Xap, G: Map<I = X::O>> Xap for M<X, G> {
     type Filter<H>
         = FilMap<Self, FnFil<Self::O, H>>
     where
-        H: Fn(&Self::O) -> bool + Copy;
+        H: Fn(&Self::O) -> bool + Copy + Send;
 
     fn filter<H>(self, h: H) -> Self::Filter<H>
     where
-        H: Fn(&Self::O) -> bool + Copy,
+        H: Fn(&Self::O) -> bool + Copy + Send,
     {
         FilMap::new(self, FnFil::new(h))
     }
@@ -87,11 +87,11 @@ impl<X: Xap, G: Map<I = X::O>> Xap for M<X, G> {
     type FilterMap<Q, H>
         = FilMap<Self, FnFilMap<Self::O, Q, H>>
     where
-        H: Fn(Self::O) -> Option<Q> + Copy;
+        H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
     fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
     where
-        H: Fn(Self::O) -> Option<Q> + Copy,
+        H: Fn(Self::O) -> Option<Q> + Copy + Send,
     {
         FilMap::new(self, FnFilMap::new(h))
     }
@@ -100,12 +100,12 @@ impl<X: Xap, G: Map<I = X::O>> Xap for M<X, G> {
         = FlaMap<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy;
+        H: Fn(Self::O) -> V + Copy + Send;
 
     fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy,
+        H: Fn(Self::O) -> V + Copy + Send,
     {
         FlaMap::new(self, FnFlatMap::new(h))
     }
