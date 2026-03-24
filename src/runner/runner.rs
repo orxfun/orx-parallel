@@ -49,7 +49,7 @@ pub trait Runner: Sized + Sync {
 
     // provided
 
-    fn next<I, X>(&mut self, params: Params, iter: I, x: &X)
+    fn next<I, X>(&mut self, params: Params, iter: I, x: X)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
