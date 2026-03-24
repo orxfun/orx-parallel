@@ -18,6 +18,8 @@ impl<I> Clone for Id<I> {
 
 impl<I> Copy for Id<I> {}
 
+unsafe impl<I> Send for Id<I> {}
+
 impl<I> Id<I> {
     pub const fn new() -> Self {
         Self(PhantomData)
