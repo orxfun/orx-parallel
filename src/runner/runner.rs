@@ -57,21 +57,20 @@ pub trait Runner: Sized + Sync {
     {
         let state = self.new_state();
         let mut spawned = Spawned::zero();
-        let results = self.thread_results(params, iter.try_get_len());
+        // let results = self.thread_results(params, iter.try_get_len());
 
-        {
-            let (iter, state, results) = (&iter, &state, &results);
-            self.pool_mut().scoped_computation(|s| {
-                while Self::do_spawn_new(spawned, state) {
-                    let th_idx = spawned;
-                    spawned.increment();
-                    <Self::Pool as ParThreadPool>::run_in_scope(&s, || {
-                        results.push(th::next::<Self, _, _>(state, iter, x));
-                    });
-                }
-            });
-        }
-        // let results = unsafe { results.into_vec() };
+        // {
+        //     let (iter, state, results) = (&iter, &state, &results);
+        //     self.pool_mut().scoped_computation(|s| {
+        //         while Self::do_spawn_new(spawned, state) {
+        //             let th_idx = spawned;
+        //             spawned.increment();
+        //             <Self::Pool as ParThreadPool>::run_in_scope(&s, || {
+        //                 results.push(th::next::<Self, _, _>(state, iter, x));
+        //             });
+        //         }
+        //     });
+        // }
     }
 
     // provided - pool
