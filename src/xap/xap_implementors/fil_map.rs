@@ -1,5 +1,5 @@
 use crate::xap::count::Count;
-use crate::xap::fun::filter_map::{FilterMap, FnFil2, FnFilMap};
+use crate::xap::fun::filter_map::{FilterMap, FnFil, FnFilMap};
 use crate::xap::fun::flat_map::FnFlatMap;
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap};
 use crate::xap::xap_implementors::flat_map::FlaMap;
@@ -10,6 +10,14 @@ pub struct FilMap<X: Xap, G: FilterMap<I = X::O>> {
     x: X,
     g: G,
 }
+
+impl<X: Xap, G: FilterMap<I = X::O>> Clone for FilMap<X, G> {
+    fn clone(&self) -> Self {
+        Self::new(self.x, self.g)
+    }
+}
+
+impl<X: Xap, G: FilterMap<I = X::O>> Copy for FilMap<X, G> {}
 
 impl<X: Xap, G: FilterMap<I = X::O>> FilMap<X, G> {
     pub fn new(x: X, g: G) -> Self {
@@ -66,7 +74,7 @@ impl<X: Xap, G: FilterMap<I = X::O>> Xap for FilMap<X, G> {
     }
 
     type Filter<H>
-        = FilMap<Self, FnFil2<Self::O, H>>
+        = FilMap<Self, FnFil<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool + Copy;
 
@@ -74,7 +82,7 @@ impl<X: Xap, G: FilterMap<I = X::O>> Xap for FilMap<X, G> {
     where
         H: Fn(&Self::O) -> bool + Copy,
     {
-        FilMap::new(self, FnFil2::new(h))
+        FilMap::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>

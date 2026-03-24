@@ -1,6 +1,6 @@
 use crate::xap::FlaMap;
 use crate::xap::count::One;
-use crate::xap::fun::filter_map::{FnFil2, FnFilMap};
+use crate::xap::fun::filter_map::{FnFil, FnFilMap};
 use crate::xap::fun::flat_map::FnFlatMap;
 use crate::xap::fun::map::{FnCloned, FnCopied, FnIns, FnMap};
 use crate::xap::xap_implementors::fil_map::FilMap;
@@ -9,6 +9,14 @@ use crate::xap::xap_trait::{Xap, XapCloned, XapCopied};
 use core::marker::PhantomData;
 
 pub struct Id<I>(PhantomData<I>);
+
+impl<I> Clone for Id<I> {
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
+impl<I> Copy for Id<I> {}
 
 impl<I> Id<I> {
     pub const fn new() -> Self {
@@ -65,7 +73,7 @@ impl<I> Xap for Id<I> {
     }
 
     type Filter<H>
-        = FilMap<Self, FnFil2<Self::O, H>>
+        = FilMap<Self, FnFil<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool + Copy;
 
@@ -73,7 +81,7 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool + Copy,
     {
-        FilMap::new(self, FnFil2::new(h))
+        FilMap::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
