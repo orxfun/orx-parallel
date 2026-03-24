@@ -19,4 +19,6 @@ extern crate std;
 
 pub mod computation;
 mod parameters;
+mod pool;
+mod runner;
 pub mod xap;
