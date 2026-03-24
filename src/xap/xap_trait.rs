@@ -20,45 +20,45 @@ pub trait Xap: Copy + Send {
 
     type Map<Q, H>: Xap<I = Self::I, O = Q>
     where
-        H: Fn(Self::O) -> Q + Copy;
+        H: Fn(Self::O) -> Q + Copy + Send;
 
     fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
     where
-        H: Fn(Self::O) -> Q + Copy;
+        H: Fn(Self::O) -> Q + Copy + Send;
 
     type Inspect<H>: Xap<I = Self::I, O = Self::O>
     where
-        H: Fn(&Self::O) + Copy;
+        H: Fn(&Self::O) + Copy + Send;
 
     fn inspect<H>(self, h: H) -> Self::Inspect<H>
     where
-        H: Fn(&Self::O) + Copy;
+        H: Fn(&Self::O) + Copy + Send;
 
     type Filter<H>: Xap<I = Self::I, O = Self::O>
     where
-        H: Fn(&Self::O) -> bool + Copy;
+        H: Fn(&Self::O) -> bool + Copy + Send;
 
     fn filter<H>(self, h: H) -> Self::Filter<H>
     where
-        H: Fn(&Self::O) -> bool + Copy;
+        H: Fn(&Self::O) -> bool + Copy + Send;
 
     type FilterMap<Q, H>: Xap<I = Self::I, O = Q>
     where
-        H: Fn(Self::O) -> Option<Q> + Copy;
+        H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
     fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
     where
-        H: Fn(Self::O) -> Option<Q> + Copy;
+        H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
     type FlatMap<V, H>: Xap<I = Self::I, O = V::Item>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy;
+        H: Fn(Self::O) -> V + Copy + Send;
 
     fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy;
+        H: Fn(Self::O) -> V + Copy + Send;
 }
 
 pub trait XapCloned<'a, O: 'a + Clone>: Xap<O = &'a O> {

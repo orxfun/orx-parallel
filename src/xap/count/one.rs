@@ -1,5 +1,4 @@
 use crate::xap::count::{Count, Many, ZeroOne};
-use crate::xap::fun::filter::Filter;
 use crate::xap::fun::filter_map::FilterMap;
 use crate::xap::fun::flat_map::FlatMap;
 use crate::xap::fun::map::Map;
@@ -23,19 +22,6 @@ impl Count for One {
     fn map<I: IntoIterator, G: Map<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
         let x = unsafe { i.into_iter().next().unwrap_unchecked() };
         [g.map(x)]
-    }
-
-    // filter
-
-    type Filter<I: IntoIterator, G: Filter<I = I::Item>> = Option<I::Item>;
-
-    #[inline(always)]
-    fn filter<I: IntoIterator, G: Filter<I = I::Item>>(i: I, g: G) -> Self::Filter<I, G> {
-        let x = unsafe { i.into_iter().next().unwrap_unchecked() };
-        match g.filter(&x) {
-            true => Some(x),
-            false => None,
-        }
     }
 
     // filter_map
