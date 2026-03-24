@@ -56,7 +56,12 @@ pub trait Runner: Sync {
         let max_num_threads = self.max_num_threads_for_computation(params, iter.try_get_len());
         self.pool_mut().scoped_computation(|s| {
             while Self::do_spawn_new(spawned, &state) {
+                let th_idx = spawned;
                 spawned.increment();
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    //
+                    todo!()
+                });
             }
             // while executor.do_spawn_new(num_spawned, state, iter) {
             //     let thread_results = &thread_results;
