@@ -1,6 +1,8 @@
-use crate::executor::thread::ThreadExecutor;
+use crate::executor::{
+    computation_kind::ComputationKind, num_spawned::NumSpawned, thread::ThreadExecutor,
+};
+use crate::parameters::Params;
 use core::num::NonZeroUsize;
-use orx_concurrent_iter::ConcurrentIter;
 
 /// A parallel executor which is responsible for taking a computation defined as a composition
 /// of iterator methods, spawns threads, shares tasks and returns the result of the parallel
@@ -13,11 +15,11 @@ pub trait ParallelExecutor: Sized + Sync + 'static + Clone {
     type ThreadExecutor: ThreadExecutor<SharedState = Self::SharedState> + Send;
 
     /// Creates a new parallel executor for the given computation `kind`, parallelization `params`
-    /// and `initial_input_len`.
+    /// and `initial_len`.
     fn new(
         kind: ComputationKind,
         params: Params,
-        initial_input_len: Option<usize>,
+        initial_len: Option<usize>,
         max_num_threads: NonZeroUsize,
     ) -> Self;
 
@@ -28,14 +30,12 @@ pub trait ParallelExecutor: Sized + Sync + 'static + Clone {
     ///
     /// * `num_spawned` threads are already been spawned, and
     /// * `shared_state` is the current parallel execution state.
-    fn do_spawn_new<I>(
+    fn do_spawn_new(
         &self,
         num_spawned: NumSpawned,
         shared_state: &Self::SharedState,
-        iter: &I,
-    ) -> bool
-    where
-        I: ConcurrentIter;
+        remaining_len: Option<usize>,
+    ) -> bool;
 
     /// Creates a new thread executor provided that the current parallel execution state is
     /// `shared_state`.
