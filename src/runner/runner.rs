@@ -1,6 +1,10 @@
-use crate::{pool::ParThreadPool, runner::spawned::Spawned};
+use crate::parameters::{NumThreads, Params};
+use crate::runner::spawned::Spawned;
+use crate::{pool::ParThreadPool, xap::Xap};
+use core::num::NonZeroUsize;
+use orx_concurrent_iter::ConcurrentIter;
 
-pub trait Runner {
+pub trait Runner: Sync {
     /// Underlying thread pool.
     type Pool: ParThreadPool;
 
@@ -23,26 +27,69 @@ pub trait Runner {
     ///
     /// * `spawned` threads are already been spawned, and
     /// * `state` is the current parallel execution state.
-    fn do_spawn_new(&self, spawned: Spawned, shared_state: &Self::State) -> bool;
+    fn do_spawn_new(spawned: Spawned, state: &Self::State) -> bool;
 
     /// Returns the next chunk size to be pulled from the input with `remaining` length
-    /// for the current `shared_state`.
-    fn next_chunk_size(&self, state: &Self::State, remaining: Option<usize>) -> usize;
+    /// for the current `state`.
+    fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize;
 
     // required - state updates
 
     /// Creates an initial state for a new parallel computation.
-    fn new_state(&self) -> Self::State;
+    fn new_state(&mut self) -> Self::State;
 
-    fn begin_chunk(&self, chunk_size: usize) -> Self::ChunkState;
+    fn begin_chunk(chunk_size: usize) -> Self::ChunkState;
 
-    fn complete_chunk(&self, state: &Self::State, chunk_state: Self::ChunkState);
+    fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState);
 
-    fn complete_computation(&self, shared_state: Self::State);
+    fn complete_computation(state: Self::State);
 
     // provided
 
-    fn next() {
-        //
+    fn next<I, X>(&mut self, params: Params, iter: I, x: X)
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+    {
+        let state = self.new_state();
+        let mut spawned = Spawned::zero();
+        let max_num_threads = self.max_num_threads_for_computation(params, iter.try_get_len());
+        self.pool_mut().scoped_computation(|s| {
+            while Self::do_spawn_new(spawned, &state) {
+                spawned.increment();
+            }
+            // while executor.do_spawn_new(num_spawned, state, iter) {
+            //     let thread_results = &thread_results;
+            //     let thread_num = num_spawned;
+            //     num_spawned.increment();
+            //     <Self::ThreadPool as ParThreadPool>::run_in_scope(&s, move || {
+            //         let executor = executor.new_thread_executor(thread_num.into_inner(), state);
+            //         thread_results.push(thread_map(thread_num, iter, state, executor));
+            //     });
+            // }
+        });
+    }
+
+    // provided - pool
+
+    /// Returns the maximum number of threads that can be used for the computation defined by
+    /// the `params` and input `iter_len`.
+    fn max_num_threads_for_computation(
+        &self,
+        params: Params,
+        iter_len: Option<usize>,
+    ) -> NonZeroUsize {
+        let pool = self.pool().max_num_threads();
+
+        let env = crate::pool::max_num_threads_by_env_variable().unwrap_or(NonZeroUsize::MAX);
+
+        let req = match (iter_len, params.num_threads) {
+            (Some(len), NumThreads::Auto) => NonZeroUsize::new(len.max(1)).expect(">0"),
+            (Some(len), NumThreads::Max(nt)) => NonZeroUsize::new(len.max(1)).expect(">0").min(nt),
+            (None, NumThreads::Auto) => NonZeroUsize::MAX,
+            (None, NumThreads::Max(nt)) => nt,
+        };
+
+        req.min(pool.min(env))
     }
 }
