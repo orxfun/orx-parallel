@@ -14,6 +14,7 @@ impl Spawned {
     }
 
     /// Converts into usize.
+    #[inline]
     pub fn into_inner(self) -> usize {
         self.0
     }
