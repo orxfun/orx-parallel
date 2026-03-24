@@ -1,11 +1,11 @@
-use crate::{executor::val_and_idx::ValIdx, xap::Xap};
+use crate::{computation::val_and_idx::ValIdx, xap::Xap};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-/// Thread executor responsible for executing sub-tasks sequentially on a single thread.
-pub trait ThreadExecutor: Sized {
+/// Computation assigned to a single thread.
+pub trait ThreadComp: Sized {
     /// Type of the shared state among threads.
     type SharedState;
 

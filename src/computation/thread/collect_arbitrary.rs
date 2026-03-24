@@ -1,4 +1,4 @@
-use crate::executor::thread::thread_executor::ThreadExecutor;
+use crate::computation::thread::thread_comp::ThreadComp;
 use crate::xap::Xap;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
@@ -11,7 +11,7 @@ pub fn collect_arbitrary<Q, I, X, P>(
     x: X,
     bag: &ConcurrentBag<X::O, P>,
 ) where
-    Q: ThreadExecutor,
+    Q: ThreadComp,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
     P: IntoConcurrentPinnedVec<X::O>,

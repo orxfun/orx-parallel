@@ -1,4 +1,4 @@
-use crate::executor::{thread::thread_executor::ThreadExecutor, val_and_idx::ValIdx};
+use crate::computation::{thread::thread_comp::ThreadComp, val_and_idx::ValIdx};
 use crate::xap::Xap;
 use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
@@ -10,7 +10,7 @@ pub fn collect_ordered<Q, I, X>(
     x: X,
 ) -> Vec<ValIdx<X::O>>
 where
-    Q: ThreadExecutor,
+    Q: ThreadComp,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
 {
