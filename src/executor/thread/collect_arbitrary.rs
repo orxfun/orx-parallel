@@ -1,16 +1,24 @@
 use crate::executor::thread::thread_executor::ThreadExecutor;
-use crate::executor::val_and_idx::ValIdx;
 use crate::xap::Xap;
+use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub fn next<Q, I, X>(exe: &mut Q, state: &Q::SharedState, iter: &I, x: X) -> Option<ValIdx<X::O>>
-where
+pub fn collect_ordered<Q, I, X, P>(
+    exe: &mut Q,
+    state: &Q::SharedState,
+    iter: &I,
+    x: X,
+    bag: &ConcurrentBag<X::O, P>,
+) where
     Q: ThreadExecutor,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
+    P: IntoConcurrentPinnedVec<X::O>,
+    X::O: Send,
 {
     let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller_with_idx();
+    let mut item_puller = iter.item_puller();
 
     loop {
         let chunk_size = exe.next_chunk_size(state, iter);
@@ -18,10 +26,10 @@ where
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some((idx, i)) => {
-                    if let Some(val) = x.xap(i).into_iter().next() {
-                        found(exe, state, iter, chunk_size);
-                        return Some(ValIdx { val, idx });
+                Some(i) => {
+                    // TODO: bag.extend when we know exact size
+                    for val in x.xap(i) {
+                        bag.push(val);
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -32,11 +40,10 @@ where
                     chunk_puller = iter.chunk_puller(c);
                 }
 
-                match chunk_puller.pull_with_idx() {
-                    Some((idx, chunk)) => {
-                        if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
-                            found(exe, state, iter, chunk_size);
-                            return Some(ValIdx { val, idx });
+                match chunk_puller.pull() {
+                    Some(chunk) => {
+                        for val in chunk.flat_map(|i| x.xap(i)) {
+                            bag.push(val);
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
@@ -47,16 +54,5 @@ where
         exe.complete_chunk(state, chunk_size);
     }
 
-    exe.complete_task(state);
-    None
-}
-
-fn found<I, Q>(exe: &mut Q, state: &Q::SharedState, iter: &I, chunk_size: usize)
-where
-    Q: ThreadExecutor,
-    I: ConcurrentIter,
-{
-    iter.skip_to_end();
-    exe.complete_chunk(state, chunk_size);
     exe.complete_task(state);
 }
