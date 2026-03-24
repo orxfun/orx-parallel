@@ -34,13 +34,15 @@ pub trait Runner {
     /// Creates an initial state for a new parallel computation.
     fn new_state(&self) -> Self::State;
 
-    fn new_chunk_state(&self, chunk_size: usize) -> Self::ChunkState;
+    fn begin_chunk(&self, chunk_size: usize) -> Self::ChunkState;
 
-    fn begin_chunk(&self, chunk_state: &mut Self::ChunkState);
-
-    fn complete_chunk(&self, chunk_state: &mut Self::ChunkState);
-
-    fn update_state(&self, shared_state: &Self::State, chunk_state: Self::ChunkState);
+    fn complete_chunk(&self, state: &Self::State, chunk_state: Self::ChunkState);
 
     fn complete_computation(&self, shared_state: Self::State);
+
+    // provided
+
+    fn next() {
+        //
+    }
 }
