@@ -1,5 +1,8 @@
-use crate::xap::Xap;
+use crate::{executor::val_and_idx::ValIdx, xap::Xap};
+use alloc::vec::Vec;
+use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 
 /// Thread executor responsible for executing sub-tasks sequentially on a single thread.
 pub trait ThreadExecutor: Sized {
@@ -27,7 +30,50 @@ pub trait ThreadExecutor: Sized {
 
     // computations
 
-    #[inline]
+    fn collect_arbitrary<I, X, P>(
+        &mut self,
+        state: &Self::SharedState,
+        iter: &I,
+        x: X,
+        bag: &ConcurrentBag<X::O, P>,
+    ) where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+        P: IntoConcurrentPinnedVec<X::O>,
+        X::O: Send,
+    {
+        super::collect_arbitrary::collect_arbitrary(self, state, iter, x, bag)
+    }
+
+    fn collect_ordered<I, X>(
+        &mut self,
+        state: &Self::SharedState,
+        iter: &I,
+        x: X,
+    ) -> Vec<ValIdx<X::O>>
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+    {
+        super::collect_ordered::collect_ordered(self, state, iter, x)
+    }
+
+    fn next<I, X>(&mut self, state: &Self::SharedState, iter: &I, x: X) -> Option<ValIdx<X::O>>
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+    {
+        super::next::next(self, state, iter, x)
+    }
+
+    fn next_any<I, X>(&mut self, state: &Self::SharedState, iter: &I, x: X) -> Option<X::O>
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+    {
+        super::next_any::next_any(self, state, iter, x)
+    }
+
     fn reduce<I, X, F>(&mut self, state: &Self::SharedState, iter: &I, x: X, f: F) -> Option<X::O>
     where
         I: ConcurrentIter,
