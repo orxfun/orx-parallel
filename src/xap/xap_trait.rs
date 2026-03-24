@@ -1,6 +1,6 @@
 use crate::xap::count::Count;
 
-pub trait Xap {
+pub trait Xap: Copy {
     type I;
 
     type O;
