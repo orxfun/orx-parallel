@@ -15,12 +15,27 @@ impl<T> ThreadResults<T> {
         Self { p, len, must_drop }
     }
 
-    pub unsafe fn into_vec(self) -> Vec<T> {
+    /// # SAFETY
+    ///
+    /// The following must be satisfied to call this method safely:
+    ///
+    /// - (i) `write` must be called with all indices between `0..self.len` beforehand.
+    pub unsafe fn into_vec(mut self) -> Vec<T> {
+        self.must_drop = false;
+
+        // SAFETY: by (i) all elements of the vector are initialized
         unsafe { Vec::from_raw_parts(self.p, self.len, self.len) }
     }
 
+    /// # SAFETY:
+    ///
+    /// - (i) `th_idx` must be a valid index; i.e., `th_idx < self.len`
+    /// - (ii) This method must be called exactly once by one of the threads used in parallel
+    ///   computation.
     pub fn write(&self, th_idx: usize, value: T) {
+        // SAFETY: by (i), `p` is in bounds
         let p = unsafe { self.p.add(th_idx) };
+        // SAFETY: by (ii), there exists no race condition
         unsafe { p.write(value) };
     }
 }
