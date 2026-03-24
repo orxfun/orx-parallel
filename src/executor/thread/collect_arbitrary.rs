@@ -4,7 +4,7 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub fn collect_ordered<Q, I, X, P>(
+pub fn collect_arbitrary<Q, I, X, P>(
     exe: &mut Q,
     state: &Q::SharedState,
     iter: &I,
