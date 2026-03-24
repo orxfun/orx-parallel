@@ -2,7 +2,7 @@ use crate::runner::{runner::Runner, val_idx::ValIdx};
 use crate::xap::Xap;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next<Q, I, X>(exe: &mut Q, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
+pub fn next<Q, I, X>(state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
 where
     Q: Runner,
     I: ConcurrentIter,
@@ -12,14 +12,14 @@ where
     let mut item_puller = iter.item_puller_with_idx();
 
     loop {
-        let chunk_size = exe.next_chunk_size(state, iter.try_get_len());
-        let chunk_state = exe.begin_chunk(chunk_size);
+        let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
+        let chunk_state = Q::begin_chunk(chunk_size);
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     if let Some(val) = x.xap(i).into_iter().next() {
-                        found(exe, state, iter, chunk_state);
+                        found::<_, Q>(state, iter, chunk_state);
                         return Some(ValIdx { val, idx });
                     }
                 }
@@ -34,7 +34,7 @@ where
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
                         if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
-                            found(exe, state, iter, chunk_state);
+                            found::<_, Q>(state, iter, chunk_state);
                             return Some(ValIdx { val, idx });
                         }
                     }
@@ -44,17 +44,17 @@ where
             }
         }
 
-        exe.complete_chunk(state, chunk_state);
+        Q::complete_chunk(state, chunk_state);
     }
 
     None
 }
 
-fn found<I, Q>(exe: &mut Q, state: &Q::State, iter: &I, chunk_state: Q::ChunkState)
+fn found<I, Q>(state: &Q::State, iter: &I, chunk_state: Q::ChunkState)
 where
     Q: Runner,
     I: ConcurrentIter,
 {
     iter.skip_to_end();
-    exe.complete_chunk(state, chunk_state);
+    Q::complete_chunk(state, chunk_state);
 }
