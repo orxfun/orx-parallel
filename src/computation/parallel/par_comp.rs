@@ -1,18 +1,16 @@
-use crate::executor::{
-    computation_kind::ComputationKind, num_spawned::NumSpawned, thread::ThreadExecutor,
+use crate::computation::{
+    computation_kind::ComputationKind, num_spawned::NumSpawned, thread::ThreadComp,
 };
 use crate::parameters::Params;
 use core::num::NonZeroUsize;
 
-/// A parallel executor which is responsible for taking a computation defined as a composition
-/// of iterator methods, spawns threads, shares tasks and returns the result of the parallel
-/// execution.
-pub trait ParallelExecutor: Sized + Sync + 'static + Clone {
+/// A parallel computation.
+pub trait ParComp: Sized + Sync + 'static + Clone {
     /// Data shared to the thread executors.
     type SharedState: Send + Sync;
 
     /// Thread executor that is responsible for executing the tasks allocated to a thread.
-    type ThreadExecutor: ThreadExecutor<SharedState = Self::SharedState> + Send;
+    type ThreadExecutor: ThreadComp<SharedState = Self::SharedState> + Send;
 
     /// Creates a new parallel executor for the given computation `kind`, parallelization `params`
     /// and `initial_len`.

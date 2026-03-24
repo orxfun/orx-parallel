@@ -3,6 +3,6 @@ mod collect_ordered;
 mod next;
 mod next_any;
 mod reduce;
-mod thread_executor;
+mod thread_comp;
 
-pub use thread_executor::ThreadExecutor;
+pub use thread_comp::ThreadComp;
