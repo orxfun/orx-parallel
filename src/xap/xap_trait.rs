@@ -1,6 +1,6 @@
 use crate::xap::count::Count;
 
-pub trait Xap {
+pub trait Xap: Sync {
     type I;
 
     type O;

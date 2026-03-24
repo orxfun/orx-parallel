@@ -1,10 +1,13 @@
 use crate::parameters::{NumThreads, Params};
 use crate::runner::spawned::Spawned;
+use crate::runner::thread_computations as th;
 use crate::{pool::ParThreadPool, xap::Xap};
 use core::num::NonZeroUsize;
+use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
+use orx_fixed_vec::FixedVec;
 
-pub trait Runner: Sync {
+pub trait Runner: Sized + Sync {
     /// Underlying thread pool.
     type Pool: ParThreadPool;
 
@@ -46,44 +49,36 @@ pub trait Runner: Sync {
 
     // provided
 
-    fn next<I, X>(&mut self, params: Params, iter: I, x: X)
+    fn next<I, X>(&mut self, params: Params, iter: I, x: &X)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
+        X::O: Send,
     {
         let state = self.new_state();
         let mut spawned = Spawned::zero();
-        let max_num_threads = self.max_num_threads_for_computation(params, iter.try_get_len());
-        self.pool_mut().scoped_computation(|s| {
-            while Self::do_spawn_new(spawned, &state) {
-                let th_idx = spawned;
-                spawned.increment();
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    //
-                    todo!()
-                });
-            }
-            // while executor.do_spawn_new(num_spawned, state, iter) {
-            //     let thread_results = &thread_results;
-            //     let thread_num = num_spawned;
-            //     num_spawned.increment();
-            //     <Self::ThreadPool as ParThreadPool>::run_in_scope(&s, move || {
-            //         let executor = executor.new_thread_executor(thread_num.into_inner(), state);
-            //         thread_results.push(thread_map(thread_num, iter, state, executor));
-            //     });
-            // }
-        });
+        let results = self.thread_results(params, iter.try_get_len());
+
+        {
+            let (iter, state, results) = (&iter, &state, &results);
+            self.pool_mut().scoped_computation(|s| {
+                while Self::do_spawn_new(spawned, state) {
+                    let th_idx = spawned;
+                    spawned.increment();
+                    <Self::Pool as ParThreadPool>::run_in_scope(&s, || {
+                        results.push(th::next::<Self, _, _>(state, iter, x));
+                    });
+                }
+            });
+        }
+        // let results = unsafe { results.into_vec() };
     }
 
     // provided - pool
 
     /// Returns the maximum number of threads that can be used for the computation defined by
     /// the `params` and input `iter_len`.
-    fn max_num_threads_for_computation(
-        &self,
-        params: Params,
-        iter_len: Option<usize>,
-    ) -> NonZeroUsize {
+    fn max_num_threads(&self, params: Params, iter_len: Option<usize>) -> usize {
         let pool = self.pool().max_num_threads();
 
         let env = crate::pool::max_num_threads_by_env_variable().unwrap_or(NonZeroUsize::MAX);
@@ -95,6 +90,14 @@ pub trait Runner: Sync {
             (None, NumThreads::Max(nt)) => nt,
         };
 
-        req.min(pool.min(env))
+        req.min(pool.min(env)).into()
+    }
+
+    fn thread_results<T>(
+        &self,
+        params: Params,
+        iter_len: Option<usize>,
+    ) -> ConcurrentBag<T, FixedVec<T>> {
+        ConcurrentBag::with_fixed_capacity(self.max_num_threads(params, iter_len))
     }
 }
