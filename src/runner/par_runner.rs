@@ -1,5 +1,6 @@
 use crate::parameters::{NumThreads, Params};
 use crate::runner::thread_computations as th;
+use crate::runner::val_idx::ValIdx;
 use crate::{pool::ParThreadPool, xap::Xap};
 use core::num::NonZeroUsize;
 use orx_concurrent_bag::ConcurrentBag;
@@ -49,17 +50,17 @@ pub trait ParRunner: Sized + Sync {
 
     // provided
 
-    fn next<I, X>(&mut self, params: Params, iter: I, x: X)
+    fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
     {
-        let state = self.new_state();
         let mut spawned = 0;
-        let results = self.thread_results(params, iter.try_get_len());
+        let state = self.new_state();
+        let results_bag = self.thread_results(params, iter.try_get_len());
 
-        let (iter, state, results, x) = (&iter, &state, &results, x);
+        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
         self.pool_mut().scoped_computation(move |s| {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
@@ -69,6 +70,8 @@ pub trait ParRunner: Sized + Sync {
                 });
             }
         });
+
+        ValIdx::find_next(results_bag.into_inner().into_inner())
     }
 
     // provided - pool
