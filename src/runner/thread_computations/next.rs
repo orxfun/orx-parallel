@@ -1,9 +1,8 @@
-use crate::runner::spawned::Spawned;
 use crate::runner::{runner::Runner, val_idx::ValIdx};
 use crate::xap::Xap;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next<Q, I, X>(th_idx: Spawned, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
+pub fn next<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
 where
     Q: Runner,
     I: ConcurrentIter,
