@@ -18,6 +18,7 @@ extern crate alloc;
 extern crate std;
 
 pub mod computation;
+mod par_iter;
 mod parameters;
 mod pool;
 mod runner;
