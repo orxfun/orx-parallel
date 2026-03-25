@@ -1,3 +1,4 @@
+use crate::parameters::{NumThreads, Params};
 use core::num::NonZeroUsize;
 
 /// A thread pool that can be used for parallel computation.
@@ -111,4 +112,23 @@ pub trait ParThreadPool {
 
     /// Returns the maximum number of threads available in the pool.
     fn max_num_threads(&self) -> NonZeroUsize;
+
+    // provided
+
+    /// Returns the maximum number of threads that can be used for the computation defined by
+    /// the `params` and input `iter_len`.
+    fn max_num_threads_for_computation(&self, params: Params, iter_len: Option<usize>) -> usize {
+        let pool = self.max_num_threads();
+
+        let env = crate::pool::max_num_threads_by_env_variable().unwrap_or(NonZeroUsize::MAX);
+
+        let req = match (iter_len, params.num_threads) {
+            (Some(len), NumThreads::Auto) => NonZeroUsize::new(len.max(1)).expect(">0"),
+            (Some(len), NumThreads::Max(nt)) => NonZeroUsize::new(len.max(1)).expect(">0").min(nt),
+            (None, NumThreads::Auto) => NonZeroUsize::MAX,
+            (None, NumThreads::Max(nt)) => nt,
+        };
+
+        req.min(pool.min(env)).into()
+    }
 }
