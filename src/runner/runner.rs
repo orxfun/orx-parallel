@@ -26,11 +26,12 @@ pub trait Runner: Sized + Sync {
 
     // required - orchestration
 
-    /// Returns true if it is beneficial to spawn a new thread provided that:
+    /// Returns Some of the index of the new thread if it is beneficial to spawn a new thread
+    /// for the remaining computation; it returns None otherwise.
     ///
-    /// * `spawned` threads are already been spawned, and
-    /// * `state` is the current parallel execution state.
-    fn do_spawn_new(spawned: Spawned, state: &Self::State) -> bool;
+    /// Since this method is called sequentially, returned value will always be `Some(spawned)` if
+    /// it returns some.
+    fn do_spawn_new(spawned: Spawned, state: &Self::State) -> Option<usize>;
 
     /// Returns the next chunk size to be pulled from the input with `remaining` length
     /// for the current `state`.
@@ -62,8 +63,7 @@ pub trait Runner: Sized + Sync {
         {
             let (iter, state, results, x) = (&iter, &state, &results, x);
             self.pool_mut().scoped_computation(move |s| {
-                while Self::do_spawn_new(spawned, state) {
-                    let th_idx = spawned;
+                while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                     spawned.increment();
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                         let value = th::next::<Self, _, _>(th_idx, state, iter, x);
