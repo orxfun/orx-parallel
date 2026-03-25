@@ -42,7 +42,7 @@ pub trait Runner: Sized + Sync {
     /// Creates an initial state for a new parallel computation.
     fn new_state(&mut self) -> Self::State;
 
-    fn begin_chunk(chunk_size: usize) -> Self::ChunkState;
+    fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState;
 
     fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState);
 

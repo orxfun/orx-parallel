@@ -13,7 +13,7 @@ where
 
     loop {
         let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
-        let chunk_state = Q::begin_chunk(chunk_size);
+        let chunk_state = Q::begin_chunk(th_idx, chunk_size);
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
