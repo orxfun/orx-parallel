@@ -66,7 +66,8 @@ pub trait Runner: Sized + Sync {
                     let th_idx = spawned;
                     spawned.increment();
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                        results.push(th::next::<Self, _, _>(state, iter, x));
+                        let value = th::next::<Self, _, _>(th_idx, state, iter, x);
+                        results.push(value);
                     });
                 }
             });
