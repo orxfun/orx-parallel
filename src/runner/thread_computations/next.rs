@@ -1,10 +1,10 @@
-use crate::runner::{runner::Runner, val_idx::ValIdx};
+use crate::runner::{par_runner::ParRunner, val_idx::ValIdx};
 use crate::xap::Xap;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
 where
-    Q: Runner,
+    Q: ParRunner,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
 {
@@ -52,7 +52,7 @@ where
 
 fn found<I, Q>(state: &Q::State, iter: &I, chunk_state: Q::ChunkState)
 where
-    Q: Runner,
+    Q: ParRunner,
     I: ConcurrentIter,
 {
     iter.skip_to_end();

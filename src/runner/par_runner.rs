@@ -1,5 +1,4 @@
 use crate::parameters::{NumThreads, Params};
-use crate::runner::spawned::Spawned;
 use crate::runner::thread_computations as th;
 use crate::{pool::ParThreadPool, xap::Xap};
 use core::num::NonZeroUsize;
@@ -7,7 +6,7 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
-pub trait Runner: Sized + Sync {
+pub trait ParRunner: Sized + Sync {
     /// Underlying thread pool.
     type Pool: ParThreadPool;
 
@@ -31,7 +30,7 @@ pub trait Runner: Sized + Sync {
     ///
     /// Since this method is called sequentially, returned value will always be `Some(spawned)` if
     /// it returns some.
-    fn do_spawn_new(spawned: Spawned, state: &Self::State) -> Option<usize>;
+    fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize>;
 
     /// Returns the next chunk size to be pulled from the input with `remaining` length
     /// for the current `state`.
@@ -57,21 +56,19 @@ pub trait Runner: Sized + Sync {
         X::O: Send,
     {
         let state = self.new_state();
-        let mut spawned = Spawned::zero();
+        let mut spawned = 0;
         let results = self.thread_results(params, iter.try_get_len());
 
-        {
-            let (iter, state, results, x) = (&iter, &state, &results, x);
-            self.pool_mut().scoped_computation(move |s| {
-                while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
-                    spawned.increment();
-                    <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                        let value = th::next::<Self, _, _>(th_idx, state, iter, x);
-                        results.push(value);
-                    });
-                }
-            });
-        }
+        let (iter, state, results, x) = (&iter, &state, &results, x);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    let value = th::next::<Self, _, _>(th_idx, state, iter, x);
+                    results.push(value);
+                });
+            }
+        });
     }
 
     // provided - pool
