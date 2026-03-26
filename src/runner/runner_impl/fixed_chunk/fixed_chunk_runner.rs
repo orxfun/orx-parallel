@@ -1,4 +1,8 @@
-use crate::{pool::ParThreadPool, runner::par_runner::ParRunner};
+use crate::{
+    parameters::Params,
+    pool::ParThreadPool,
+    runner::{par_runner::ParRunner, runner_impl::fixed_chunk::heuristic},
+};
 use core::sync::atomic::AtomicUsize;
 
 pub struct FixedChunkRunner<P: ParThreadPool> {
@@ -36,8 +40,19 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
         todo!()
     }
 
-    fn new_state(&mut self) -> Self::State {
-        todo!()
+    fn new_state(
+        &mut self,
+        params: Params,
+        max_num_threads: usize,
+        initial_len: Option<usize>,
+    ) -> Self::State {
+        let chunk_size =
+            heuristic::compute_chunk_size(params.chunk_size, initial_len, max_num_threads).into();
+        State {
+            max_num_threads,
+            initial_len,
+            chunk_size,
+        }
     }
 
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState {

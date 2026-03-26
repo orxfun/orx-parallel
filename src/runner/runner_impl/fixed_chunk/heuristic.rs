@@ -1,12 +1,11 @@
 use crate::parameters::ChunkSize;
-use core::num::NonZeroUsize;
 
 const DESIRED_MIN_CHUNK_SIZE: usize = 64;
 
 pub fn compute_chunk_size(
     chunk_size: ChunkSize,
     initial_len: Option<usize>,
-    max_num_threads: NonZeroUsize,
+    max_num_threads: usize,
 ) -> usize {
     match chunk_size {
         ChunkSize::Auto => auto_chunk_size(initial_len, max_num_threads),
@@ -15,7 +14,7 @@ pub fn compute_chunk_size(
     }
 }
 
-fn auto_chunk_size(initial_len: Option<usize>, max_num_threads: NonZeroUsize) -> usize {
+fn auto_chunk_size(initial_len: Option<usize>, max_num_threads: usize) -> usize {
     const DESIRED_CHUNK_SIZE: usize = 1024;
 
     match initial_len {
@@ -47,10 +46,6 @@ fn auto_chunk_size(initial_len: Option<usize>, max_num_threads: NonZeroUsize) ->
     }
 }
 
-fn min_chunk_size(
-    initial_len: Option<usize>,
-    max_num_threads: NonZeroUsize,
-    min_chunk: usize,
-) -> usize {
+fn min_chunk_size(initial_len: Option<usize>, max_num_threads: usize, min_chunk: usize) -> usize {
     core::cmp::max(min_chunk, auto_chunk_size(initial_len, max_num_threads))
 }
