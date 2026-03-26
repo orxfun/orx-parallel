@@ -1,15 +1,17 @@
 /*
-first_f/seq/e20_early   time:   [104.15 ns 105.23 ns 106.41 ns]
-first_f/rayon/e20_early time:   [2.7674 ms 2.8771 ms 2.9895 ms]
-first_f/orx/e20_early   time:   [1.9042 ms 1.9447 ms 1.9878 ms]
 
-first_f/seq/e20_mid     time:   [213.48 µs 218.52 µs 223.92 µs]
-first_f/rayon/e20_mid   time:   [20.742 ms 24.835 ms 30.378 ms]
-first_f/orx/e20_mid     time:   [2.6632 ms 2.7669 ms 2.8750 ms]
+first_ff/seq/e20_early  time:   [166.39 ns 168.56 ns 170.79 ns]
+first_ff/rayon/e20_earlytime:   [2.4113 ms 2.4959 ms 2.5849 ms]
+first_ff/orx/e20_early  time:   [1.3151 ms 1.3346 ms 1.3564 ms]
 
-first_f/seq/e20_late    time:   [440.82 µs 447.87 µs 455.68 µs]
-first_f/rayon/e20_late  time:   [21.300 ms 22.282 ms 23.321 ms]
-first_f/orx/e20_late    time:   [2.1220 ms 2.1562 ms 2.1959 ms]
+first_ff/seq/e20_mid    time:   [243.25 µs 245.68 µs 248.09 µs]
+first_ff/rayon/e20_mid  time:   [15.726 ms 16.167 ms 16.614 ms]
+first_ff/orx/e20_mid    time:   [2.0945 ms 2.1235 ms 2.1544 ms]
+
+first_ff/seq/e20_late   time:   [514.54 µs 522.25 µs 530.53 µs]
+first_ff/rayon/e20_late time:   [17.518 ms 18.162 ms 18.783 ms]
+first_ff/orx/e20_late   time:   [2.1841 ms 2.2082 ms 2.2344 ms]
+
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
@@ -29,17 +31,27 @@ fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
 }
 
 fn seq(input: &[u64], value: u64) -> Option<u64> {
-    input.iter().filter(|x| **x == value).next().copied()
+    input
+        .iter()
+        .filter(|x| x.is_multiple_of(9))
+        .filter(|x| **x == value)
+        .next()
+        .copied()
 }
 
 fn orx(input: &[u64], value: u64) -> Option<u64> {
     let iter = input.into_con_iter();
-    par(iter).filter(|x| **x == value).first().copied()
+    par(iter)
+        .filter(|x| x.is_multiple_of(9))
+        .filter(|x| **x == value)
+        .first()
+        .copied()
 }
 
 fn rayon(input: &[u64], value: u64) -> Option<u64> {
     input
         .into_par_iter()
+        .filter(|x| x.is_multiple_of(9))
         .filter(|x| **x == value)
         .find_first(|_| true)
         .copied()
@@ -74,7 +86,7 @@ fn run(c: &mut Criterion) {
         },
     ];
 
-    let mut group = c.benchmark_group("first_f");
+    let mut group = c.benchmark_group("first_ff");
 
     for t in treatments {
         let input = inputs(t.len, t.pos, t.val);
