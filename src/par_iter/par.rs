@@ -99,9 +99,8 @@ where
     {
         let (iter, x, mut exe, params) = self.destruct();
         match params.iteration_order {
-            IterationOrder::Ordered => exe.next(params, iter, x),
-            IterationOrder::Arbitrary => todo!(),
+            IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.val),
+            IterationOrder::Arbitrary => exe.next_any(params, iter, x),
         }
-        .map(|x| x.val)
     }
 }
