@@ -3,7 +3,7 @@ use core::num::NonZeroUsize;
 
 const DESIRED_MIN_CHUNK_SIZE: usize = 64;
 
-pub fn resolve_chunk_size(
+pub fn compute_chunk_size(
     chunk_size: ChunkSize,
     initial_len: Option<usize>,
     max_num_threads: NonZeroUsize,
