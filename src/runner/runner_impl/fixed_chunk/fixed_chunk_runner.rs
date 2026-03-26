@@ -1,4 +1,5 @@
 use crate::{pool::ParThreadPool, runner::par_runner::ParRunner};
+use core::sync::atomic::AtomicUsize;
 
 pub struct FixedChunkRunner<P: ParThreadPool> {
     pool: P,
@@ -50,4 +51,10 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     fn complete_computation(state: Self::State) {
         todo!()
     }
+}
+
+struct State {
+    max_num_threads: usize,
+    initial_len: Option<usize>,
+    chunk_size: AtomicUsize,
 }
