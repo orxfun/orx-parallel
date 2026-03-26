@@ -75,6 +75,30 @@ pub trait ParRunner: Sized + Sync {
         ValIdx::find_next(results_bag.into_inner().into_inner())
     }
 
+    fn next_any<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+        X::O: Send,
+    {
+        let mut spawned = 0;
+        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    let value = th::next::<Self, _, _>(th_idx, state, iter, x);
+                    results.push(value);
+                });
+            }
+        });
+
+        None
+    }
+
     // provided - helpers
 
     fn nt_state(&mut self, params: Params, len: Option<usize>) -> (usize, Self::State) {

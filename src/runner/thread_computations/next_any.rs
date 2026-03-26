@@ -1,16 +1,15 @@
-use crate::runner::thread_computations::sync::broadcast_stop;
-use crate::runner::{par_runner::ParRunner, val_idx::ValIdx};
+use crate::runner::{ParRunner, thread_computations::sync::broadcast_stop};
 use crate::xap::Xap;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
+pub fn next_any<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<X::O>
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller_with_idx();
+    let mut item_puller = iter.item_puller();
 
     loop {
         let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
@@ -18,10 +17,10 @@ where
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some((idx, i)) => {
+                Some(i) => {
                     if let Some(val) = x.xap(i).into_iter().next() {
                         broadcast_stop::<_, Q>(iter, state, chunk_state);
-                        return Some(ValIdx { val, idx });
+                        return Some(val);
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -32,11 +31,11 @@ where
                     chunk_puller = iter.chunk_puller(c);
                 }
 
-                match chunk_puller.pull_with_idx() {
-                    Some((idx, chunk)) => {
+                match chunk_puller.pull() {
+                    Some(chunk) => {
                         if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
                             broadcast_stop::<_, Q>(iter, state, chunk_state);
-                            return Some(ValIdx { val, idx });
+                            return Some(val);
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
@@ -44,7 +43,6 @@ where
                 }
             }
         }
-
         Q::complete_chunk(state, chunk_state);
     }
 
