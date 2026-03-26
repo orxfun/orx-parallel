@@ -16,7 +16,7 @@ impl<P: ParThreadPool> FixedChunkRunner<P> {
 impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     type Pool = P;
 
-    type State = ();
+    type State = State;
 
     type ChunkState = ();
 
@@ -29,7 +29,7 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     }
 
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
-        todo!()
+        (spawned < state.max_num_threads).then_some(spawned + 1)
     }
 
     fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize {
@@ -53,7 +53,7 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     }
 }
 
-struct State {
+pub struct State {
     max_num_threads: usize,
     initial_len: Option<usize>,
     chunk_size: AtomicUsize,
