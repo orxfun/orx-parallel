@@ -40,7 +40,12 @@ pub trait ParRunner: Sized + Sync {
     // required - state updates
 
     /// Creates an initial state for a new parallel computation.
-    fn new_state(&mut self) -> Self::State;
+    fn new_state(
+        &mut self,
+        params: Params,
+        max_num_threads: usize,
+        initial_len: Option<usize>,
+    ) -> Self::State;
 
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState;
 
@@ -57,8 +62,8 @@ pub trait ParRunner: Sized + Sync {
         X::O: Send,
     {
         let mut spawned = 0;
-        let state = self.new_state();
-        let results_bag = self.thread_results(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, state, results, x) = (&iter, &state, &results_bag, x);
         self.pool_mut().scoped_computation(move |s| {
@@ -76,14 +81,9 @@ pub trait ParRunner: Sized + Sync {
 
     // provided - helpers
 
-    fn thread_results<T>(
-        &self,
-        params: Params,
-        iter_len: Option<usize>,
-    ) -> ConcurrentBag<T, FixedVec<T>> {
-        let nt = self
-            .pool()
-            .max_num_threads_for_computation(params, iter_len);
-        ConcurrentBag::with_fixed_capacity(nt)
+    fn nt_state(&mut self, params: Params, len: Option<usize>) -> (usize, Self::State) {
+        let max_nt = self.pool().max_num_threads_for_computation(params, len);
+        let state = self.new_state(params, max_nt, len);
+        (max_nt, state)
     }
 }
