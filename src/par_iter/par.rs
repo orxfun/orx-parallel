@@ -1,4 +1,4 @@
-use crate::parameters::{IterationOrder, Params};
+use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, default_runner};
 use crate::xap::{Id, Xap};
 use orx_concurrent_iter::ConcurrentIter;
@@ -46,6 +46,23 @@ where
 
     fn destruct(self) -> (I, X, R, Params) {
         (self.iter, self.xap, self.exe, self.params)
+    }
+
+    // params
+
+    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+        self.params = self.params.with_num_threads(num_threads);
+        self
+    }
+
+    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+        self.params = self.params.with_chunk_size(chunk_size);
+        self
+    }
+
+    fn iteration_order(mut self, collect: IterationOrder) -> Self {
+        self.params = self.params.with_collect_ordering(collect);
+        self
     }
 
     // transformations
