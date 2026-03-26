@@ -23,3 +23,5 @@ mod parameters;
 mod pool;
 mod runner;
 pub mod xap;
+
+pub use par_iter::{Par, par};
