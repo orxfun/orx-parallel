@@ -1,11 +1,9 @@
-use crate::parameters::{NumThreads, Params};
+use crate::parameters::Params;
 use crate::runner::thread_computations as th;
 use crate::runner::val_idx::ValIdx;
 use crate::{pool::ParThreadPool, xap::Xap};
-use core::num::NonZeroUsize;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_fixed_vec::FixedVec;
 
 pub trait ParRunner: Sized + Sync {
     /// Underlying thread pool.
