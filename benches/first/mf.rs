@@ -1,15 +1,27 @@
 /*
-first_f/seq/e20_early   time:   [104.15 ns 105.23 ns 106.41 ns]
-first_f/rayon/e20_early time:   [2.7674 ms 2.8771 ms 2.9895 ms]
-first_f/orx/e20_early   time:   [1.9042 ms 1.9447 ms 1.9878 ms]
+first_mf/seq/e20_light_Beg      time:   [171.06 ns 173.19 ns 175.39 ns]
+first_mf/rayon/e20_light_Beg    time:   [2.2812 ms 2.3469 ms 2.4142 ms]
+first_mf/orx/e20_light_Beg      time:   [1.2468 ms 1.2645 ms 1.2865 ms]
 
-first_f/seq/e20_mid     time:   [213.48 µs 218.52 µs 223.92 µs]
-first_f/rayon/e20_mid   time:   [20.742 ms 24.835 ms 30.378 ms]
-first_f/orx/e20_mid     time:   [2.6632 ms 2.7669 ms 2.8750 ms]
+first_mf/seq/e20_light_Mid      time:   [301.88 µs 305.15 µs 309.10 µs]
+first_mf/rayon/e20_light_Mid    time:   [9.9078 ms 10.808 ms 11.729 ms]
+first_mf/orx/e20_light_Mid      time:   [1.9223 ms 1.9422 ms 1.9634 ms]
 
-first_f/seq/e20_late    time:   [440.82 µs 447.87 µs 455.68 µs]
-first_f/rayon/e20_late  time:   [21.300 ms 22.282 ms 23.321 ms]
-first_f/orx/e20_late    time:   [2.1220 ms 2.1562 ms 2.1959 ms]
+first_mf/seq/e20_light_End      time:   [668.61 µs 677.45 µs 686.99 µs]
+first_mf/rayon/e20_light_End    time:   [6.3642 ms 7.0027 ms 7.6539 ms]
+first_mf/orx/e20_light_End      time:   [2.0640 ms 2.0950 ms 2.1280 ms]
+
+first_mf/seq/e20_heavy_Beg      time:   [3.6742 µs 3.7150 µs 3.7565 µs]
+first_mf/rayon/e20_heavy_Beg    time:   [2.7295 ms 2.8394 ms 2.9540 ms]
+first_mf/orx/e20_heavy_Beg      time:   [1.3055 ms 1.3238 ms 1.3429 ms]
+
+first_mf/seq/e20_heavy_Mid      time:   [14.159 ms 14.323 ms 14.493 ms]
+first_mf/rayon/e20_heavy_Mid    time:   [7.0266 ms 7.6778 ms 8.3855 ms]
+first_mf/orx/e20_heavy_Mid      time:   [4.4036 ms 4.5913 ms 4.7954 ms]
+
+first_mf/seq/e20_heavy_End      time:   [27.862 ms 28.244 ms 28.635 ms]
+first_mf/rayon/e20_heavy_End    time:   [7.8138 ms 8.2524 ms 8.7118 ms]
+first_mf/orx/e20_heavy_End      time:   [6.2293 ms 6.3524 ms 6.4783 ms]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
