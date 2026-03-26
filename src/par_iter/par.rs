@@ -2,6 +2,15 @@ use crate::runner::{DefaultRunner, ParRunner, default_runner};
 use crate::xap::{Id, Xap};
 use orx_concurrent_iter::ConcurrentIter;
 
+// TODO: this will be replaced later by IntoPar trait.
+pub fn par<I: ConcurrentIter>(iter: I) -> Par<I, Id<I::Item>, DefaultRunner> {
+    Par {
+        iter,
+        xap: Id::new(),
+        exe: default_runner(),
+    }
+}
+
 pub struct Par<I, X, R = DefaultRunner>
 where
     I: ConcurrentIter,
@@ -13,11 +22,23 @@ where
     exe: R,
 }
 
-// TODO: this will be replaced later by IntoPar trait.
-pub fn par<I: ConcurrentIter>(iter: I) -> Par<I, Id<I::Item>, DefaultRunner> {
-    Par {
-        iter,
-        xap: Id::new(),
-        exe: default_runner(),
+impl<I, X, R> Par<I, X, R>
+where
+    I: ConcurrentIter,
+    X: Xap<I = I::Item>,
+    R: ParRunner,
+{
+    fn new(iter: I, xap: X, exe: R) -> Self {
+        Self { iter, xap, exe }
+    }
+
+    // transformations
+
+    pub fn map<Q, H>(self, h: H) -> Par<I, X::Map<Q, H>, R>
+    where
+        H: Fn(X::O) -> Q + Copy + Send,
+    {
+        let xap = self.xap.map(h);
+        Par::new(self.iter, xap, self.exe)
     }
 }
