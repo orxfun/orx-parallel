@@ -36,10 +36,6 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
         (spawned < state.max_num_threads).then_some(spawned + 1)
     }
 
-    fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize {
-        todo!()
-    }
-
     fn new_state(
         &mut self,
         params: Params,
@@ -47,7 +43,7 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
         initial_len: Option<usize>,
     ) -> Self::State {
         let chunk_size =
-            heuristic::compute_chunk_size(params.chunk_size, initial_len, max_num_threads).into();
+            heuristic::compute_chunk_size(params.chunk_size, initial_len, max_num_threads);
         State {
             max_num_threads,
             initial_len,
@@ -55,21 +51,19 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
         }
     }
 
-    fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState {
-        todo!()
+    fn next_chunk_size(state: &Self::State, _: Option<usize>) -> usize {
+        state.chunk_size
     }
 
-    fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState) {
-        todo!()
-    }
+    fn begin_chunk(_: usize, _: usize) -> Self::ChunkState {}
 
-    fn complete_computation(state: Self::State) {
-        todo!()
-    }
+    fn complete_chunk(_: &Self::State, _: Self::ChunkState) {}
+
+    fn complete_computation(_: Self::State) {}
 }
 
 pub struct State {
     max_num_threads: usize,
     initial_len: Option<usize>,
-    chunk_size: AtomicUsize,
+    chunk_size: usize,
 }

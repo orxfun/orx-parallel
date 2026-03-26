@@ -33,12 +33,6 @@ pub trait ParRunner: Sized + Sync {
     /// it returns some.
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize>;
 
-    /// Returns the next chunk size to be pulled from the input with `remaining` length
-    /// for the current `state`.
-    fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize;
-
-    // required - state updates
-
     /// Creates an initial state for a new parallel computation.
     fn new_state(
         &mut self,
@@ -46,6 +40,10 @@ pub trait ParRunner: Sized + Sync {
         max_num_threads: usize,
         initial_len: Option<usize>,
     ) -> Self::State;
+
+    /// Returns the next chunk size to be pulled from the input with `remaining` length
+    /// for the current `state`.
+    fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize;
 
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState;
 
