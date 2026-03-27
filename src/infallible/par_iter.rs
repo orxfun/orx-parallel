@@ -1,3 +1,4 @@
+use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::Id;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
