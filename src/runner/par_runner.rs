@@ -49,105 +49,105 @@ pub trait ParRunner: Sized + Sync {
 
     fn complete_computation(state: Self::State);
 
-    // provided
+    // // provided
 
-    fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item>,
-        X::O: Send,
-    {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+    // fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
+    // where
+    //     I: ConcurrentIter,
+    //     X: Xap<I = I::Item>,
+    //     X::O: Send,
+    // {
+    //     let mut spawned = 0;
+    //     let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+    //     let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next::<Self, _, _>(th_idx, state, iter, x);
-                    results.push(value);
-                });
-            }
-        });
+    //     let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+    //     self.pool_mut().scoped_computation(move |s| {
+    //         while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+    //             spawned += 1;
+    //             <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+    //                 let value = th::next::<Self, _, _>(th_idx, state, iter, x);
+    //                 results.push(value);
+    //             });
+    //         }
+    //     });
 
-        ValIdx::first_of(results_bag.into_inner().into_inner())
-    }
+    //     ValIdx::first_of(results_bag.into_inner().into_inner())
+    // }
 
-    fn next_any<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<X::O>
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item>,
-        X::O: Send,
-    {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+    // fn next_any<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<X::O>
+    // where
+    //     I: ConcurrentIter,
+    //     X: Xap<I = I::Item>,
+    //     X::O: Send,
+    // {
+    //     let mut spawned = 0;
+    //     let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+    //     let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next_any::<Self, _, _>(th_idx, state, iter, x);
-                    results.push(value);
-                });
-            }
-        });
+    //     let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+    //     self.pool_mut().scoped_computation(move |s| {
+    //         while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+    //             spawned += 1;
+    //             <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+    //                 let value = th::next_any::<Self, _, _>(th_idx, state, iter, x);
+    //                 results.push(value);
+    //             });
+    //         }
+    //     });
 
-        results_bag.into_inner().into_iter().flatten().next()
-    }
+    //     results_bag.into_inner().into_iter().flatten().next()
+    // }
 
-    // provided - option
+    // // provided - option
 
-    fn option_next<I, X, O>(&mut self, params: Params, iter: I, x: X) -> Option<OptIdx<O>>
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = Option<O>>,
-        O: Send,
-    {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+    // fn option_next<I, X, O>(&mut self, params: Params, iter: I, x: X) -> Option<OptIdx<O>>
+    // where
+    //     I: ConcurrentIter,
+    //     X: Xap<I = I::Item, O = Option<O>>,
+    //     O: Send,
+    // {
+    //     let mut spawned = 0;
+    //     let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+    //     let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::option_next::<Self, _, _, _>(th_idx, state, iter, x);
-                    results.push(value);
-                });
-            }
-        });
+    //     let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+    //     self.pool_mut().scoped_computation(move |s| {
+    //         while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+    //             spawned += 1;
+    //             <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+    //                 let value = th::option_next::<Self, _, _, _>(th_idx, state, iter, x);
+    //                 results.push(value);
+    //             });
+    //         }
+    //     });
 
-        OptIdx::first_of(results_bag.into_inner().into_inner())
-    }
+    //     OptIdx::first_of(results_bag.into_inner().into_inner())
+    // }
 
-    fn option_next_any<I, X, O>(&mut self, params: Params, iter: I, x: X) -> Option<Opt<O>>
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = Option<O>>,
-        O: Send,
-    {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+    // fn option_next_any<I, X, O>(&mut self, params: Params, iter: I, x: X) -> Option<Opt<O>>
+    // where
+    //     I: ConcurrentIter,
+    //     X: Xap<I = I::Item, O = Option<O>>,
+    //     O: Send,
+    // {
+    //     let mut spawned = 0;
+    //     let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+    //     let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::option_next_any::<Self, _, _, _>(th_idx, state, iter, x);
-                    results.push(value);
-                });
-            }
-        });
+    //     let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+    //     self.pool_mut().scoped_computation(move |s| {
+    //         while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+    //             spawned += 1;
+    //             <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+    //                 let value = th::option_next_any::<Self, _, _, _>(th_idx, state, iter, x);
+    //                 results.push(value);
+    //             });
+    //         }
+    //     });
 
-        Opt::any_of(results_bag.into_inner().into_inner())
-    }
+    //     Opt::any_of(results_bag.into_inner().into_inner())
+    // }
 
     // provided - helpers
 
