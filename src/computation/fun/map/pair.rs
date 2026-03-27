@@ -1,3 +1,5 @@
+use crate::computation::fun::map::{Map, MapQueue};
+
 #[derive(Clone, Copy)]
 pub struct Mp<F: Map, B: MapQueue<I = F::O>> {
     f: F,
