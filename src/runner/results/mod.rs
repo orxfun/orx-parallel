@@ -1,3 +1,4 @@
+mod opt;
 mod opt_idx;
 mod val_idx;
 
