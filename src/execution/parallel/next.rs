@@ -1,4 +1,4 @@
-use crate::computation::{parallel::par_comp::ParComp, val_and_idx::ValIdx};
+use crate::execution::{parallel::par_comp::ParComp, val_and_idx::ValIdx};
 use crate::parameters::Params;
 use crate::xap::Xap;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};

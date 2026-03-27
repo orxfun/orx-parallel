@@ -1,23 +1,24 @@
-use crate::computation::{thread::thread_comp::ThreadComp, val_and_idx::ValIdx};
+use crate::execution::thread::thread_comp::ThreadComp;
 use crate::xap::Xap;
-use alloc::vec::Vec;
+use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub fn collect_ordered<Q, I, X>(
+pub fn collect_arbitrary<Q, I, X, P>(
     exe: &mut Q,
     state: &Q::SharedState,
     iter: &I,
     x: X,
-) -> Vec<ValIdx<X::O>>
-where
+    bag: &ConcurrentBag<X::O, P>,
+) where
     Q: ThreadComp,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
+    P: IntoConcurrentPinnedVec<X::O>,
+    X::O: Send,
 {
-    let mut collected = Vec::new();
-
     let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller_with_idx();
+    let mut item_puller = iter.item_puller();
 
     loop {
         let chunk_size = exe.next_chunk_size(state, iter);
@@ -25,9 +26,11 @@ where
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some((idx, i)) => {
-                    let values = x.xap(i).into_iter().map(|val| ValIdx::new(val, idx));
-                    collected.extend(values)
+                Some(i) => {
+                    // TODO: bag.extend when we know exact size
+                    for val in x.xap(i) {
+                        bag.push(val);
+                    }
                 }
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
@@ -37,11 +40,11 @@ where
                     chunk_puller = iter.chunk_puller(c);
                 }
 
-                match chunk_puller.pull_with_idx() {
-                    Some((idx, chunk)) => {
-                        let values = chunk
-                            .flat_map(|i| x.xap(i).into_iter().map(|val| ValIdx::new(val, idx)));
-                        collected.extend(values)
+                match chunk_puller.pull() {
+                    Some(chunk) => {
+                        for val in chunk.flat_map(|i| x.xap(i)) {
+                            bag.push(val);
+                        }
                     }
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
@@ -52,6 +55,4 @@ where
     }
 
     exe.complete_task(state);
-
-    collected
 }

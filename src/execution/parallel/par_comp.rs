@@ -1,4 +1,4 @@
-use crate::computation::{
+use crate::execution::{
     computation_kind::ComputationKind, num_spawned::NumSpawned, thread::ThreadComp,
 };
 use crate::parameters::Params;

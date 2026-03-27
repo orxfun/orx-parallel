@@ -1,21 +1,12 @@
-use crate::computation::thread::thread_comp::ThreadComp;
+use crate::execution::thread::thread_comp::ThreadComp;
 use crate::xap::Xap;
-use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
-use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub fn collect_arbitrary<Q, I, X, P>(
-    exe: &mut Q,
-    state: &Q::SharedState,
-    iter: &I,
-    x: X,
-    bag: &ConcurrentBag<X::O, P>,
-) where
+pub fn next_any<Q, I, X>(exe: &mut Q, state: &Q::SharedState, iter: &I, x: X) -> Option<X::O>
+where
     Q: ThreadComp,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
-    P: IntoConcurrentPinnedVec<X::O>,
-    X::O: Send,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
@@ -27,9 +18,9 @@ pub fn collect_arbitrary<Q, I, X, P>(
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    // TODO: bag.extend when we know exact size
-                    for val in x.xap(i) {
-                        bag.push(val);
+                    if let Some(val) = x.xap(i).into_iter().next() {
+                        found(exe, state, iter, chunk_size);
+                        return Some(val);
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -42,8 +33,9 @@ pub fn collect_arbitrary<Q, I, X, P>(
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for val in chunk.flat_map(|i| x.xap(i)) {
-                            bag.push(val);
+                        if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
+                            found(exe, state, iter, chunk_size);
+                            return Some(val);
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
@@ -54,5 +46,16 @@ pub fn collect_arbitrary<Q, I, X, P>(
         exe.complete_chunk(state, chunk_size);
     }
 
+    exe.complete_task(state);
+    None
+}
+
+fn found<I, Q>(exe: &mut Q, state: &Q::SharedState, iter: &I, chunk_size: usize)
+where
+    Q: ThreadComp,
+    I: ConcurrentIter,
+{
+    iter.skip_to_end();
+    exe.complete_chunk(state, chunk_size);
     exe.complete_task(state);
 }
