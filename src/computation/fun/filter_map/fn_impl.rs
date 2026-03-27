@@ -1,4 +1,4 @@
-use crate::xap::fun::filter_map::fn_trait::FilterMap;
+use crate::computation::fun::filter_map::FilterMap;
 use core::marker::PhantomData;
 
 // filter_map
