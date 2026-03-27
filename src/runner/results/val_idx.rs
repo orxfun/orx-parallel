@@ -13,7 +13,7 @@ impl<T> ValIdx<T> {
     }
 
     /// Find and returns the value & index pair from the `results` which has the minimum index.
-    pub fn find_next(results: Vec<Option<ValIdx<T>>>) -> Option<ValIdx<T>> {
+    pub fn first_of(results: Vec<Option<Self>>) -> Option<Self> {
         let mut min_idx = usize::MAX;
         let mut value = None;
 
