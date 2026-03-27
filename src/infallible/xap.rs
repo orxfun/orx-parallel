@@ -1,4 +1,4 @@
-use crate::computation::infallible::count::Count;
+use crate::infallible::count::Count;
 
 pub trait Xap: Copy + Send {
     type I;

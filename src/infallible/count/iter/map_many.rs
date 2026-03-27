@@ -1,4 +1,4 @@
-use crate::computation::infallible::fun::map::Map;
+use crate::infallible::fun::map::Map;
 use core::iter::FusedIterator;
 
 pub struct MapIterMany<I: Iterator, G: Map<I = I::Item>> {
