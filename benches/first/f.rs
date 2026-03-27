@@ -1,4 +1,7 @@
 /*
+
+* beg & mid & end show where the element to be found is located
+
 first_f/seq/e20_early   time:   [104.15 ns 105.23 ns 106.41 ns]
 first_f/rayon/e20_early time:   [2.7674 ms 2.8771 ms 2.9895 ms]
 first_f/orx/e20_early   time:   [1.9042 ms 1.9447 ms 1.9878 ms]
