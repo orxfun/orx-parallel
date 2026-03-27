@@ -17,6 +17,8 @@ impl<T> Opt<T> {
         }
     }
 
+    /// Returns any of the Success values within the `results`.
+    /// Returns Fail if any of the elements is a failure.
     pub fn any_of(results: Vec<Option<Self>>) -> Option<Self> {
         let mut result = None;
 
