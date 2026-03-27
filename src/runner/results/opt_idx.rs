@@ -14,6 +14,7 @@ impl<T> OptIdx<T> {
     ///
     /// * returns Success variant with the value and index if `maybe.is_some()`,
     /// * returns Fail with the cached index otherwise.
+    #[inline]
     pub fn from_maybe(maybe: Option<T>, idx: usize) -> Self {
         match maybe {
             Some(val) => Self::Success(ValIdx::new(val, idx)),

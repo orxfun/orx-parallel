@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 
+/// Value and index of an element.
 pub struct ValIdx<T> {
     pub val: T,
     pub idx: usize,
@@ -11,6 +12,7 @@ impl<T> ValIdx<T> {
         Self { val, idx }
     }
 
+    /// Find and returns the value & index pair from the `results` which has the minimum index.
     pub fn find_next(results: Vec<Option<ValIdx<T>>>) -> Option<ValIdx<T>> {
         let mut min_idx = usize::MAX;
         let mut value = None;
