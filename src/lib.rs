@@ -17,6 +17,9 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+/// Composable computation definitions.
+pub mod computation;
+/// Execution of parallel computations.
 pub mod execution;
 mod par_iter;
 mod parameters;
