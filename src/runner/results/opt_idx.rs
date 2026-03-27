@@ -24,8 +24,7 @@ impl<T> OptIdx<T> {
     }
 
     /// Find and returns the value & index pair from the `results` which has the minimum index.
-    /// If at least one of the elements is a failure, this method will also return the failure
-    /// with the minimum index.
+    /// If at least one of the elements is a failure, it returns the failure with the minimum index.
     pub fn first_of(results: Vec<Option<Self>>) -> Option<Self> {
         let mut success = (usize::MAX, None);
         let mut failure = (usize::MAX, None);

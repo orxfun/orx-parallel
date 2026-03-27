@@ -1,5 +1,5 @@
 use crate::parameters::Params;
-use crate::runner::results::{OptIdx, ValIdx};
+use crate::runner::results::{Opt, OptIdx, ValIdx};
 use crate::runner::thread_computations as th;
 use crate::{pool::ParThreadPool, xap::Xap};
 use orx_concurrent_bag::ConcurrentBag;
@@ -122,8 +122,31 @@ pub trait ParRunner: Sized + Sync {
             }
         });
 
-        // ValIdx::find_next(results_bag.into_inner().into_inner())
-        None
+        OptIdx::first_of(results_bag.into_inner().into_inner())
+    }
+
+    fn option_next_any<I, X, O>(&mut self, params: Params, iter: I, x: X) -> Option<Opt<O>>
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = Option<O>>,
+        O: Send,
+    {
+        let mut spawned = 0;
+        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    let value = th::option_next_any::<Self, _, _, _>(th_idx, state, iter, x);
+                    results.push(value);
+                });
+            }
+        });
+
+        Opt::any_of(results_bag.into_inner().into_inner())
     }
 
     // provided - helpers
