@@ -1,5 +1,6 @@
+use crate::runner::results::OptIdx;
 use crate::runner::thread_computations::sync::broadcast_stop;
-use crate::runner::{par_runner::ParRunner, val_idx::ValIdx};
+use crate::runner::{par_runner::ParRunner, results::ValIdx};
 use crate::xap::Xap;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -21,7 +22,7 @@ where
                 Some((idx, i)) => {
                     if let Some(val) = x.xap(i).into_iter().next() {
                         broadcast_stop::<_, Q>(iter, state, chunk_state);
-                        return Some(ValIdx { val, idx });
+                        return Some(ValIdx::new(val, idx));
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -36,7 +37,7 @@ where
                     Some((idx, chunk)) => {
                         if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
                             broadcast_stop::<_, Q>(iter, state, chunk_state);
-                            return Some(ValIdx { val, idx });
+                            return Some(ValIdx::new(val, idx));
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
@@ -51,7 +52,7 @@ where
     None
 }
 
-pub fn option_next<Q, I, X, O>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<O>>
+pub fn option_next<Q, I, X, O>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<OptIdx<O>>
 where
     Q: ParRunner,
     I: ConcurrentIter,
@@ -67,10 +68,9 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
-                    if let Some(val) = x.xap(i).into_iter().next() {
+                    if let Some(maybe) = x.xap(i).into_iter().next() {
                         broadcast_stop::<_, Q>(iter, state, chunk_state);
-                        // return Some(ValIdx { val, idx });
-                        todo!()
+                        return Some(OptIdx::from_maybe(maybe, idx));
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -83,10 +83,9 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
-                        if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
+                        if let Some(maybe) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
                             broadcast_stop::<_, Q>(iter, state, chunk_state);
-                            // return Some(ValIdx { val, idx });
-                            todo!()
+                            return Some(OptIdx::from_maybe(maybe, idx));
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,

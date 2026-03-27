@@ -1,8 +1,8 @@
 mod computation_kind;
 mod par_runner;
+mod results;
 mod runner_impl;
 mod thread_computations;
-mod val_idx;
 
 pub use par_runner::ParRunner;
 
