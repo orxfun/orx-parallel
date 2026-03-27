@@ -1,6 +1,5 @@
 use crate::parameters::Params;
 use crate::runner::results::{Opt, OptIdx, ValIdx};
-use crate::runner::thread_computations as th;
 use crate::{pool::ParThreadPool, xap::Xap};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;

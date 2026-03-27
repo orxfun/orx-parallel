@@ -1,5 +1,5 @@
 use crate::runner::par_runner::ParRunner;
-use crate::runner::runner_impl::fixed_chunk::{heuristic, state::State};
+use crate::runner::runner_variants::fixed_chunk::{heuristic, state::State};
 use crate::{parameters::Params, pool::ParThreadPool};
 
 pub struct FixedChunkRunner<P: ParThreadPool> {
