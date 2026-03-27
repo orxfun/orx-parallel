@@ -30,7 +30,7 @@ first_mf/orx/e20_heavy_End      time:   [6.2293 ms 6.3524 ms 6.4783 ms]
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_concurrent_iter::IntoConcurrentIter;
-use orx_parallel::par;
+use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};

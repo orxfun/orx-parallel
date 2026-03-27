@@ -18,7 +18,7 @@ first_fff/orx/e20_late   time:   [2.3913 ms 2.4260 ms 2.4619 ms]
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_concurrent_iter::IntoConcurrentIter;
-use orx_parallel::par;
+use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
