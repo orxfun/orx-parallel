@@ -1,14 +1,21 @@
-use crate::computation::thread::thread_comp::ThreadComp;
-use crate::computation::val_and_idx::ValIdx;
+use crate::execution::{thread::thread_comp::ThreadComp, val_and_idx::ValIdx};
 use crate::xap::Xap;
+use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next<Q, I, X>(exe: &mut Q, state: &Q::SharedState, iter: &I, x: X) -> Option<ValIdx<X::O>>
+pub fn collect_ordered<Q, I, X>(
+    exe: &mut Q,
+    state: &Q::SharedState,
+    iter: &I,
+    x: X,
+) -> Vec<ValIdx<X::O>>
 where
     Q: ThreadComp,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
 {
+    let mut collected = Vec::new();
+
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller_with_idx();
 
@@ -19,10 +26,8 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
-                    if let Some(val) = x.xap(i).into_iter().next() {
-                        found(exe, state, iter, chunk_size);
-                        return Some(ValIdx { val, idx });
-                    }
+                    let values = x.xap(i).into_iter().map(|val| ValIdx::new(val, idx));
+                    collected.extend(values)
                 }
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
@@ -34,10 +39,9 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
-                        if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
-                            found(exe, state, iter, chunk_size);
-                            return Some(ValIdx { val, idx });
-                        }
+                        let values = chunk
+                            .flat_map(|i| x.xap(i).into_iter().map(|val| ValIdx::new(val, idx)));
+                        collected.extend(values)
                     }
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
@@ -48,15 +52,6 @@ where
     }
 
     exe.complete_task(state);
-    None
-}
 
-fn found<I, Q>(exe: &mut Q, state: &Q::SharedState, iter: &I, chunk_size: usize)
-where
-    Q: ThreadComp,
-    I: ConcurrentIter,
-{
-    iter.skip_to_end();
-    exe.complete_chunk(state, chunk_size);
-    exe.complete_task(state);
+    collected
 }

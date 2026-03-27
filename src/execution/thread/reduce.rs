@@ -1,4 +1,4 @@
-use crate::{computation::thread::thread_comp::ThreadComp, xap::Xap};
+use crate::{execution::thread::thread_comp::ThreadComp, xap::Xap};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn reduce<Q, I, X, F>(exe: &mut Q, state: &Q::SharedState, iter: &I, x: X, f: F) -> Option<X::O>
