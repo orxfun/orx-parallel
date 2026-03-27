@@ -1,5 +1,4 @@
-use crate::xap::count::iter::FlatMapIterMany;
-use crate::xap::fun::flat_map::{FlatMap, queue::FlatMapQueue};
+use crate::computation::infallible::fun::flat_map::{FlatMap, FlatMapQueue};
 
 #[derive(Clone, Copy)]
 pub struct FMp<F: FlatMap, B: FlatMapQueue<I = <F::O as IntoIterator>::Item>> {
