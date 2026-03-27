@@ -1,5 +1,7 @@
 /*
 
+* light & heavy show the intensity of computation
+
 first_fff/seq/e20_early  time:   [120.17 ns 121.15 ns 122.19 ns]
 first_fff/rayon/e20_earlytime:   [2.7752 ms 2.8812 ms 2.9894 ms]
 first_fff/orx/e20_early  time:   [1.4441 ms 1.5078 ms 1.5780 ms]

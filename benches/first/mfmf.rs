@@ -1,31 +1,31 @@
 /*
-
 * light & heavy show the intensity of computation
 * beg & mid & end show where the element to be found is located
 
-first_mf/seq/e20_light_Beg      time:   [171.06 ns 173.19 ns 175.39 ns]
-first_mf/rayon/e20_light_Beg    time:   [2.2812 ms 2.3469 ms 2.4142 ms]
-first_mf/orx/e20_light_Beg      time:   [1.2468 ms 1.2645 ms 1.2865 ms]
+first_mfmf/seq/e20_light_Beg        time:   [108.07 ns 108.73 ns 109.43 ns]
+first_mfmf/rayon/e20_light_Beg      time:   [1.6181 ms 1.6573 ms 1.6950 ms]
+first_mfmf/orx/e20_light_Beg        time:   [1.1030 ms 1.1082 ms 1.1141 ms]
 
-first_mf/seq/e20_light_Mid      time:   [301.88 µs 305.15 µs 309.10 µs]
-first_mf/rayon/e20_light_Mid    time:   [9.9078 ms 10.808 ms 11.729 ms]
-first_mf/orx/e20_light_Mid      time:   [1.9223 ms 1.9422 ms 1.9634 ms]
+first_mfmf/seq/e20_light_Mid        time:   [245.06 µs 247.52 µs 250.03 µs]
+first_mfmf/rayon/e20_light_Mid      time:   [11.598 ms 11.873 ms 12.087 ms]
+first_mfmf/orx/e20_light_Mid        time:   [1.6074 ms 1.6190 ms 1.6311 ms]
 
-first_mf/seq/e20_light_End      time:   [668.61 µs 677.45 µs 686.99 µs]
-first_mf/rayon/e20_light_End    time:   [6.3642 ms 7.0027 ms 7.6539 ms]
-first_mf/orx/e20_light_End      time:   [2.0640 ms 2.0950 ms 2.1280 ms]
+first_mfmf/seq/e20_light_End        time:   [542.25 µs 548.52 µs 555.04 µs]
+first_mfmf/rayon/e20_light_End      time:   [5.2982 ms 6.2473 ms 7.2232 ms]
+first_mfmf/orx/e20_light_End        time:   [3.0353 ms 3.0902 ms 3.1476 ms]
 
-first_mf/seq/e20_heavy_Beg      time:   [3.6742 µs 3.7150 µs 3.7565 µs]
-first_mf/rayon/e20_heavy_Beg    time:   [2.7295 ms 2.8394 ms 2.9540 ms]
-first_mf/orx/e20_heavy_Beg      time:   [1.3055 ms 1.3238 ms 1.3429 ms]
+first_mfmf/seq/e20_heavy_Beg        time:   [4.0804 µs 4.1668 µs 4.2704 µs]
+first_mfmf/rayon/e20_heavy_Beg      time:   [2.1754 ms 2.2630 ms 2.3504 ms]
+first_mfmf/orx/e20_heavy_Beg        time:   [1.5279 ms 1.5552 ms 1.5887 ms]
 
-first_mf/seq/e20_heavy_Mid      time:   [14.159 ms 14.323 ms 14.493 ms]
-first_mf/rayon/e20_heavy_Mid    time:   [7.0266 ms 7.6778 ms 8.3855 ms]
-first_mf/orx/e20_heavy_Mid      time:   [4.4036 ms 4.5913 ms 4.7954 ms]
+first_mfmf/seq/e20_heavy_Mid        time:   [12.893 ms 13.051 ms 13.219 ms]
+first_mfmf/rayon/e20_heavy_Mid      time:   [7.1754 ms 7.5743 ms 7.9822 ms]
+first_mfmf/orx/e20_heavy_Mid        time:   [3.7309 ms 3.7878 ms 3.8508 ms]
 
-first_mf/seq/e20_heavy_End      time:   [27.862 ms 28.244 ms 28.635 ms]
-first_mf/rayon/e20_heavy_End    time:   [7.8138 ms 8.2524 ms 8.7118 ms]
-first_mf/orx/e20_heavy_End      time:   [6.2293 ms 6.3524 ms 6.4783 ms]
+first_mfmf/seq/e20_heavy_End        time:   [23.796 ms 23.948 ms 24.103 ms]
+first_mfmf/rayon/e20_heavy_End      time:   [7.1390 ms 7.3982 ms 7.6639 ms]
+first_mfmf/orx/e20_heavy_End        time:   [5.2596 ms 5.3274 ms 5.3958 ms]
+
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
@@ -74,24 +74,54 @@ fn l_m(x: &u64) -> u64 {
 fn seq(input: &[u64], h: bool, value: u64) -> Option<u64> {
     let iter = input.iter();
     match h {
-        false => iter.map(l_m).filter(|x| *x == value).next(),
-        true => iter.map(h_m).filter(|x| *x == value).next(),
+        false => iter
+            .map(l_m)
+            .filter(|x| *x == value)
+            .map(|x| l_m(&x))
+            .filter(|x| x.is_multiple_of(999))
+            .next(),
+        true => iter
+            .map(h_m)
+            .filter(|x| *x == value)
+            .map(|x| h_m(&x))
+            .filter(|x| x.is_multiple_of(999))
+            .next(),
     }
 }
 
 fn orx(input: &[u64], h: bool, value: u64) -> Option<u64> {
     let iter = par(input.into_con_iter());
     match h {
-        false => iter.map(l_m).filter(|x| *x == value).first(),
-        true => iter.map(h_m).filter(|x| *x == value).first(),
+        false => iter
+            .map(l_m)
+            .filter(|x| *x == value)
+            .map(|x| l_m(&x))
+            .filter(|x| x.is_multiple_of(999))
+            .first(),
+        true => iter
+            .map(h_m)
+            .filter(|x| *x == value)
+            .map(|x| h_m(&x))
+            .filter(|x| x.is_multiple_of(999))
+            .first(),
     }
 }
 
 fn rayon(input: &[u64], h: bool, value: u64) -> Option<u64> {
     let iter = input.into_par_iter();
     match h {
-        false => iter.map(l_m).filter(|x| *x == value).find_first(|_| true),
-        true => iter.map(h_m).filter(|x| *x == value).find_first(|_| true),
+        false => iter
+            .map(l_m)
+            .filter(|x| *x == value)
+            .map(|x| l_m(&x))
+            .filter(|x| x.is_multiple_of(999))
+            .find_first(|_| true),
+        true => iter
+            .map(h_m)
+            .filter(|x| *x == value)
+            .map(|x| h_m(&x))
+            .filter(|x| x.is_multiple_of(999))
+            .find_first(|_| true),
     }
 }
 
@@ -156,7 +186,7 @@ fn run(c: &mut Criterion) {
         },
     ];
 
-    let mut group = c.benchmark_group("first_mf");
+    let mut group = c.benchmark_group("first_mfmf");
 
     for t in treatments {
         let name = format!(
