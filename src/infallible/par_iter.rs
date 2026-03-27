@@ -110,7 +110,7 @@ where
         self.with_xap(xap)
     }
 
-    // compute - early exit
+    // compute
 
     pub fn first(self) -> Option<X::O>
     where
@@ -121,5 +121,14 @@ where
             IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.val),
             IterationOrder::Arbitrary => exe.next_any(params, iter, x),
         }
+    }
+
+    pub fn reduce<F>(self, f: F) -> Option<X::O>
+    where
+        F: Fn(X::O, X::O) -> X::O + Send + Copy,
+        X::O: Send,
+    {
+        let (iter, x, mut exe, params) = self.destruct();
+        exe.reduce(params, iter, x, f)
     }
 }
