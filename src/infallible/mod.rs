@@ -1,6 +1,7 @@
 mod count;
 mod fun;
-// mod par_iter;
+mod par_iter;
+mod par_runner;
 mod thread_execution;
 mod val_idx;
 mod xap;

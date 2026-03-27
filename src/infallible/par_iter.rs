@@ -1,3 +1,5 @@
+use crate::infallible::xap::Xap;
+use crate::infallible::xap_variants::Id;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, default_runner};
 use orx_concurrent_iter::ConcurrentIter;
