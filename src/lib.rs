@@ -19,12 +19,9 @@ extern crate std;
 
 /// Execution of parallel computations.
 pub mod execution;
-mod par_iter;
 mod parameters;
 mod pool;
 mod runner;
 pub mod xap;
 
 pub mod infallible;
-
-pub use par_iter::{Par, par};
