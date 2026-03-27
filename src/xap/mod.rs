@@ -1,4 +1,5 @@
 mod count;
+pub mod fallible;
 mod fun;
 mod xap_implementors;
 mod xap_trait;
