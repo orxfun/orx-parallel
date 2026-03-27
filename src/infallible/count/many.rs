@@ -1,6 +1,6 @@
-use crate::computation::infallible::count::iter::{FilterMapIterMany, FlatMapIterMany};
-use crate::computation::infallible::count::{Count, iter::MapIterMany};
-use crate::computation::infallible::fun::{filter_map::FilterMap, flat_map::FlatMap, map::Map};
+use crate::infallible::count::iter::{FilterMapIterMany, FlatMapIterMany};
+use crate::infallible::count::{Count, iter::MapIterMany};
+use crate::infallible::fun::{filter_map::FilterMap, flat_map::FlatMap, map::Map};
 
 pub struct Many;
 

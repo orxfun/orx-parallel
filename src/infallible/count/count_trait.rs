@@ -1,4 +1,4 @@
-use crate::computation::infallible::fun::{filter_map::FilterMap, flat_map::FlatMap, map::Map};
+use crate::infallible::fun::{filter_map::FilterMap, flat_map::FlatMap, map::Map};
 
 pub trait Count {
     // transformations

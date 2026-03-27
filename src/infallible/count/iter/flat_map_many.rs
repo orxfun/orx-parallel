@@ -1,4 +1,4 @@
-use crate::computation::infallible::fun::flat_map::FlatMap;
+use crate::infallible::fun::flat_map::FlatMap;
 use core::ops::Add;
 
 pub struct FlatMapIterMany<I: Iterator, G: FlatMap<I = I::Item>> {

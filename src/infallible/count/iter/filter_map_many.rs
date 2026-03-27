@@ -1,4 +1,4 @@
-use crate::computation::infallible::fun::filter_map::FilterMap;
+use crate::infallible::fun::filter_map::FilterMap;
 use core::iter::FusedIterator;
 
 pub struct FilterMapIterMany<I: Iterator, G: FilterMap<I = I::Item>> {

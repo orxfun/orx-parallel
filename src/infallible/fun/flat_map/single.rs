@@ -1,4 +1,4 @@
-use crate::computation::infallible::fun::flat_map::{FMp, FlatMap, FlatMapQueue};
+use crate::infallible::fun::flat_map::{FMp, FlatMap, FlatMapQueue};
 
 #[derive(Clone, Copy)]
 pub struct FMs<F: FlatMap> {

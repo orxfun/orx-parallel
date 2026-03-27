@@ -1,4 +1,4 @@
-use crate::computation::infallible::fun::flat_map::FlatMap;
+use crate::infallible::fun::flat_map::FlatMap;
 
 pub trait FlatMapQueue: FlatMap {
     type Then<Q, H>: FlatMapQueue<I = Self::I>
