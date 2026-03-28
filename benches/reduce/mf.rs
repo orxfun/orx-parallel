@@ -3,30 +3,30 @@
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
 
-reduce_f/seq/e15_light      time:   [14.887 µs 15.058 µs 15.276 µs]
-reduce_f/rayon1/e15_light   time:   [7.1111 ms 7.2717 ms 7.4388 ms]
-reduce_f/rayon2/e15_light   time:   [7.7323 ms 7.8990 ms 8.0599 ms]
-reduce_f/orx/e15_light      time:   [1.1689 ms 1.2255 ms 1.2860 ms]
+reduce_m/seq/e15_light      time:   [11.074 µs 11.161 µs 11.247 µs]
+reduce_m/rayon1/e15_light   time:   [7.0328 ms 7.1301 ms 7.2289 ms]
+reduce_m/rayon2/e15_light   time:   [2.9261 ms 3.5955 ms 4.2788 ms]
+reduce_m/orx/e15_light      time:   [1.1085 ms 1.1392 ms 1.1707 ms]
 
-reduce_f/seq/e20_light      time:   [1.4557 ms 1.4683 ms 1.4823 ms]
-reduce_f/rayon1/e20_light   time:   [14.024 ms 14.414 ms 14.810 ms]
-reduce_f/rayon2/e20_light   time:   [14.393 ms 14.676 ms 14.966 ms]
-reduce_f/orx/e20_light      time:   [1.9327 ms 1.9459 ms 1.9597 ms]
+reduce_m/seq/e20_light      time:   [495.38 µs 502.32 µs 509.44 µs]
+reduce_m/rayon1/e20_light   time:   [13.399 ms 13.979 ms 14.505 ms]
+reduce_m/rayon2/e20_light   time:   [13.502 ms 14.247 ms 14.951 ms]
+reduce_m/orx/e20_light      time:   [1.8877 ms 1.9350 ms 1.9825 ms]
 
-reduce_f/seq/e15_heavy      time:   [1.2003 ms 1.2072 ms 1.2140 ms]
-reduce_f/rayon1/e15_heavy   time:   [8.5729 ms 8.6828 ms 8.7937 ms]
-reduce_f/rayon2/e15_heavy   time:   [8.6698 ms 8.9390 ms 9.1847 ms]
-reduce_f/orx/e15_heavy      time:   [1.9063 ms 1.9459 ms 1.9925 ms]
+reduce_m/seq/e15_heavy      time:   [1.2836 ms 1.2937 ms 1.3049 ms]
+reduce_m/rayon1/e15_heavy   time:   [7.8716 ms 8.0846 ms 8.2734 ms]
+reduce_m/rayon2/e15_heavy   time:   [8.9437 ms 9.1293 ms 9.3129 ms]
+reduce_m/orx/e15_heavy      time:   [1.8329 ms 1.8510 ms 1.8711 ms]
 
-reduce_f/seq/e20_heavy      time:   [41.409 ms 42.306 ms 43.228 ms]
-reduce_f/rayon1/e20_heavy   time:   [6.1379 ms 6.5981 ms 7.0835 ms]
-reduce_f/rayon2/e20_heavy   time:   [6.1447 ms 6.5389 ms 6.9523 ms]
-reduce_f/orx/e20_heavy      time:   [5.6169 ms 5.6605 ms 5.7049 ms]
+reduce_m/seq/e20_heavy      time:   [40.288 ms 40.537 ms 40.796 ms]
+reduce_m/rayon1/e20_heavy   time:   [7.5214 ms 8.0231 ms 8.5305 ms]
+reduce_m/rayon2/e20_heavy   time:   [7.5114 ms 7.9549 ms 8.4085 ms]
+reduce_m/orx/e20_heavy      time:   [5.9074 ms 5.9774 ms 6.0528 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::IntoConcurrentIter;
 use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -62,35 +62,42 @@ fn h_r(a: u64, b: u64) -> u64 {
     g + b - f
 }
 
-fn f(a: &u64) -> bool {
+fn m(x: &u64) -> u64 {
+    match *x {
+        999 => 999,
+        n => 7 * n + 1000,
+    }
+}
+
+fn f(a: u64) -> bool {
     !(a + 7).is_multiple_of(11)
 }
 
 fn seq(input: &[u64], h: bool) -> Option<u64> {
     match h {
-        true => input.iter().copied().filter(f).reduce(h_r),
-        false => input.iter().copied().filter(f).reduce(l_r),
+        true => input.iter().map(m).filter(f).reduce(h_r),
+        false => input.iter().map(m).filter(f).reduce(l_r),
     }
 }
 
 fn orx(input: &[u64], h: bool) -> Option<u64> {
     match h {
-        true => par(input.into_con_iter().copied()).filter(f).reduce(h_r),
-        false => par(input.into_con_iter().copied()).filter(f).reduce(l_r),
+        true => par(input.into_con_iter()).map(m).filter(f).reduce(h_r),
+        false => par(input.into_con_iter()).map(m).filter(f).reduce(l_r),
     }
 }
 
 fn rayon1(input: &[u64], h: bool) -> Option<u64> {
     match h {
-        true => input.into_par_iter().copied().filter(f).reduce_with(h_r),
-        false => input.into_par_iter().copied().filter(f).reduce_with(l_r),
+        true => input.into_par_iter().map(m).filter(f).reduce_with(h_r),
+        false => input.into_par_iter().map(m).filter(f).reduce_with(l_r),
     }
 }
 
 fn rayon2(input: &[u64], h: bool) -> Option<u64> {
     match h {
-        true => Some(input.into_par_iter().copied().filter(f).reduce(|| 0, h_r)),
-        false => Some(input.into_par_iter().copied().filter(f).reduce(|| 0, l_r)),
+        true => Some(input.into_par_iter().map(m).filter(f).reduce(|| 0, h_r)),
+        false => Some(input.into_par_iter().map(m).filter(f).reduce(|| 0, l_r)),
     }
 }
 
@@ -119,7 +126,7 @@ fn run(c: &mut Criterion) {
         },
     ];
 
-    let mut group = c.benchmark_group("reduce_f");
+    let mut group = c.benchmark_group("reduce_mf");
 
     for t in treatments {
         let name = format!(
