@@ -87,10 +87,26 @@ fn l_m2(x: u64) -> u64 {
     }
 }
 
+fn f2(a: &u64) -> bool {
+    !(2 * a + 11).is_multiple_of(7)
+}
+
 fn seq(input: &[u64], h: bool) -> Option<u64> {
     match h {
-        true => input.iter().map(m).filter(f).map(h_m2).reduce(h_r),
-        false => input.iter().map(m).filter(f).map(l_m2).reduce(l_r),
+        true => input
+            .iter()
+            .map(m)
+            .filter(f)
+            .map(h_m2)
+            .filter(f2)
+            .reduce(h_r),
+        false => input
+            .iter()
+            .map(m)
+            .filter(f)
+            .map(l_m2)
+            .filter(f2)
+            .reduce(l_r),
     }
 }
 
@@ -100,11 +116,13 @@ fn orx(input: &[u64], h: bool) -> Option<u64> {
             .map(m)
             .filter(f)
             .map(h_m2)
+            .filter(f2)
             .reduce(h_r),
         false => par(input.into_con_iter())
             .map(m)
             .filter(f)
             .map(l_m2)
+            .filter(f2)
             .reduce(l_r),
     }
 }
@@ -116,12 +134,14 @@ fn rayon1(input: &[u64], h: bool) -> Option<u64> {
             .map(m)
             .filter(f)
             .map(h_m2)
+            .filter(f2)
             .reduce_with(h_r),
         false => input
             .into_par_iter()
             .map(m)
             .filter(f)
             .map(l_m2)
+            .filter(f2)
             .reduce_with(l_r),
     }
 }
@@ -134,6 +154,7 @@ fn rayon2(input: &[u64], h: bool) -> Option<u64> {
                 .map(m)
                 .filter(f)
                 .map(h_m2)
+                .filter(f2)
                 .reduce(|| 0, h_r),
         ),
         false => Some(
@@ -142,6 +163,7 @@ fn rayon2(input: &[u64], h: bool) -> Option<u64> {
                 .map(m)
                 .filter(f)
                 .map(l_m2)
+                .filter(f2)
                 .reduce(|| 0, l_r),
         ),
     }
@@ -172,7 +194,7 @@ fn run(c: &mut Criterion) {
         },
     ];
 
-    let mut group = c.benchmark_group("reduce_mfm");
+    let mut group = c.benchmark_group("reduce_mfmf");
 
     for t in treatments {
         let name = format!(
