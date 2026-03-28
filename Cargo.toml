@@ -50,7 +50,7 @@ orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 [[bench]]
 name = "lm"
 harness = false
-path = "benches/reduce/id.rs"
+path = "benches/reduce/m.rs"
 
 [package.metadata.docs.rs]
 all-features = true
