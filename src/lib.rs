@@ -20,6 +20,5 @@ extern crate std;
 mod parameters;
 mod pool;
 mod runner;
-pub mod xap;
 
 pub mod infallible;
