@@ -36,8 +36,6 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-const FIB_UPPER_BOUND: u64 = 201;
-
 fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     const SEED: u64 = 654;
     let mut rng = ChaCha8Rng::seed_from_u64(SEED);
@@ -46,6 +44,8 @@ fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     vec.insert(pos, val);
     vec
 }
+
+const FIB_UPPER_BOUND: u64 = 201;
 
 fn fibonacci(n: u64) -> u64 {
     let mut a = 0;
