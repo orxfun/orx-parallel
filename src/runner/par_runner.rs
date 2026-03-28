@@ -1,8 +1,5 @@
 use crate::parameters::Params;
-use crate::runner::results::{Opt, OptIdx, ValIdx};
-use crate::{pool::ParThreadPool, xap::Xap};
-use orx_concurrent_bag::ConcurrentBag;
-use orx_concurrent_iter::ConcurrentIter;
+use crate::pool::ParThreadPool;
 
 pub trait ParRunner: Sized + Sync {
     /// Underlying thread pool.
