@@ -1,6 +1,5 @@
 mod computation_kind;
 mod par_runner;
-mod results;
 mod runner_variants;
 
 pub use par_runner::ParRunner;
