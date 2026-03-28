@@ -17,8 +17,6 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-/// Execution of parallel computations.
-pub mod execution;
 mod parameters;
 mod pool;
 mod runner;
