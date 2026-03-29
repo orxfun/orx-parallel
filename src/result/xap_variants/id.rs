@@ -11,3 +11,7 @@ impl<I, E, X: Xap<O = Result<I, E>>> Clone for IdRes<I, E, X> {
 impl<I, E, X: Xap<O = Result<I, E>>> Copy for IdRes<I, E, X> {}
 
 unsafe impl<I, E, X: Xap<O = Result<I, E>>> Send for IdRes<I, E, X> {}
+
+impl<I, E, X: Xap<O = Result<I, E>>> IdRes<I, E, X> {
+    //
+}
