@@ -13,7 +13,7 @@ pub trait XapRes {
     /// Second part of the computation that operates on the success type `M`.
     type X2: Xap<I = Self::M>;
 
-    type SuccessValues;
+    type Values: IntoIterator<Item = <Self::X2 as Xap>::O>;
 
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::SuccessValues, Self::E>;
+    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E>;
 }
