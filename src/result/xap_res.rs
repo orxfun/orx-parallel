@@ -1,5 +1,7 @@
 use crate::infallible::Xap;
 
+pub type ResOf<X> = Result<<<X as XapRes>::X2 as Xap>::O, <X as XapRes>::E>;
+
 pub trait XapRes {
     /// Type of the intermediate success value bridging between `X1` and `X2`.
     type M;
@@ -13,7 +15,7 @@ pub trait XapRes {
     /// Second part of the computation that operates on the success type `M`.
     type X2: Xap<I = Self::M>;
 
-    type Results: IntoIterator<Item = Result<<Self::X2 as Xap>::O, Self::E>>;
+    type Results: IntoIterator<Item = ResOf<Self>>;
 
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results;
 }
