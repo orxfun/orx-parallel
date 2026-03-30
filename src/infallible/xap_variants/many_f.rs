@@ -1,7 +1,9 @@
-use crate::infallible::fun::map::FnMap;
+use crate::infallible::fun::filter_map::{FilterMap, FnFil, FnFilMap};
+use crate::infallible::fun::flat_map::FnFlatMap;
+use crate::infallible::fun::map::{FnIns, FnMap, Map};
+use crate::infallible::size::Many;
 use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::many_m::ManyM;
-use crate::infallible::{fun::filter_map::FilterMap, size::Many};
 
 pub struct ManyF<X: Xap<Size = Many>, G: FilterMap<I = X::O>> {
     x: X,

@@ -1,6 +1,8 @@
-use crate::infallible::fun::map::FnMap;
+use crate::infallible::fun::filter_map::{FnFil, FnFilMap};
+use crate::infallible::fun::flat_map::FnFlatMap;
+use crate::infallible::fun::map::{FnIns, FnMap, Map};
+use crate::infallible::size::Bin;
 use crate::infallible::xap::{Xap, XapBin};
-use crate::infallible::{fun::map::Map, size::Bin};
 
 pub struct BinM<X: Xap<Size = Bin>, G: Map<I = X::O>> {
     x: X,
