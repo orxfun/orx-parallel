@@ -44,4 +44,12 @@ pub trait XapRes {
     fn filter<H>(self, h: H) -> Self::Filter<H>
     where
         H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send;
+
+    type FilterMap<Q, H>: XapRes<M = Self::M, E = Self::E, X1 = Self::X1, X2 = <Self::X2 as Xap>::FilterMap<Q, H>>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send;
+
+    fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send;
 }
