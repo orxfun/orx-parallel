@@ -1,5 +1,5 @@
 use crate::infallible::{One, Xap, ZeroOne};
-use crate::result::xap_res::XapRes;
+use crate::result::xap_res::{ResOf, XapRes};
 
 pub struct XapResBinOne<M, E, X1, X2>
 where
@@ -33,15 +33,11 @@ where
 
     type X2 = X2;
 
-    type Values = Option<<X2 as Xap>::O>;
+    type Results = Option<ResOf<Self>>;
 
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
-        match self.x1.xap(i).into_iter().next() {
-            Some(Ok(a)) => Ok(Some(unsafe {
-                self.x2.xap(a).into_iter().next().unwrap_unchecked()
-            })),
-            Some(Err(e)) => Err(e),
-            None => Ok(None),
-        }
+    #[inline(always)]
+    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+        let a = self.x1.xap(i).into_iter().next();
+        a.map(|a| a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }))
     }
 }

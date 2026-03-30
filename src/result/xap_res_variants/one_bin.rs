@@ -35,6 +35,7 @@ where
 
     type Results = Option<ResOf<Self>>;
 
+    #[inline(always)]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
         match unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() } {
             Ok(a) => self.x2.xap(a).into_iter().next().map(Ok),
