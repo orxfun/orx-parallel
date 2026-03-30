@@ -5,8 +5,8 @@ use crate::infallible::xap_variants::*;
 use crate::result::XapRes;
 use crate::result::xap_res_variants::*;
 
-pub trait IntoXapRes {
-    type XapRes: XapRes;
+pub trait IntoXapRes: Xap {
+    type XapRes: XapRes<I = Self::I>;
 
     fn into_xap_res(self) -> Self::XapRes;
 }
