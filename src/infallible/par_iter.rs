@@ -1,3 +1,4 @@
+use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::Id;
@@ -46,7 +47,7 @@ where
         Par::new(self.iter, xap, self.exe, self.params)
     }
 
-    pub(super) fn destruct(self) -> (I, X, R, Params) {
+    pub(crate) fn destruct(self) -> (I, X, R, Params) {
         (self.iter, self.xap, self.exe, self.params)
     }
 
@@ -130,5 +131,31 @@ where
     {
         let (iter, x, mut exe, params) = self.destruct();
         exe.reduce(params, iter, x, f)
+    }
+}
+
+// transformations
+
+impl<'a, O: Copy + 'a, I, X, R> Par<I, X, R>
+where
+    I: ConcurrentIter,
+    X: Xap<I = I::Item, O = &'a O>,
+    R: ParRunner,
+{
+    pub fn copied(self) -> Par<I, X::Mapped<FnCopied<'a, O>>, R> {
+        let (iter, xap, exe, params) = self.destruct();
+        Par::new(iter, xap.mapped(FnCopied::new()), exe, params)
+    }
+}
+
+impl<'a, O: Clone + 'a, I, X, R> Par<I, X, R>
+where
+    I: ConcurrentIter,
+    X: Xap<I = I::Item, O = &'a O>,
+    R: ParRunner,
+{
+    pub fn cloned(self) -> Par<I, X::Mapped<FnCloned<'a, O>>, R> {
+        let (iter, xap, exe, params) = self.destruct();
+        Par::new(iter, xap.mapped(FnCloned::new()), exe, params)
     }
 }
