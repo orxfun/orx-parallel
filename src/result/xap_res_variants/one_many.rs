@@ -1,5 +1,5 @@
 use crate::infallible::{Many, One, Xap};
-use crate::result::xap_res::{ResOf, XapRes};
+use crate::result::xap_res::XapRes;
 
 pub struct XapResOneMany<M, E, X1, X2>
 where
@@ -33,25 +33,15 @@ where
 
     type X2 = X2;
 
-    type Results = core::iter::Empty<ResOf<Self>>;
+    type Results = IterResOneMany<<<X2 as Xap>::Values as IntoIterator>::IntoIter, E>;
 
+    #[inline]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
-        let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
-        // let b = a.map(|a| self.x2.xap(a));
-        // let c = match b {
-        //     Ok(b) => b.into_iter().map(Ok),
-        //     Err(e) => todo!(),
-        // };
-        todo!()
+        match unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() } {
+            Ok(a) => IterResOneMany::ok(self.x2.xap(a).into_iter()),
+            Err(e) => IterResOneMany::err(e),
+        }
     }
-
-    // type Values = <X2 as Xap>::Values;
-
-    // #[inline(always)]
-    // fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
-    //     let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
-    //     a.map(|a| self.x2.xap(a))
-    // }
 }
 
 // iter
@@ -59,6 +49,16 @@ where
 pub enum IterResOneMany<I: Iterator, E> {
     Ok(I),
     Err(Option<E>),
+}
+
+impl<I: Iterator, E> IterResOneMany<I, E> {
+    pub fn ok(i: I) -> Self {
+        Self::Ok(i)
+    }
+
+    pub fn err(e: E) -> Self {
+        Self::Err(Some(e))
+    }
 }
 
 impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
