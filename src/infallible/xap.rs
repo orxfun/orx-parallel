@@ -1,4 +1,4 @@
-use crate::infallible::size::{One, Size};
+use crate::infallible::size::{One, Size, ZeroOne};
 
 pub trait Xap: Copy + Send {
     type I;
@@ -23,3 +23,15 @@ pub trait XapOne: Xap<Size = One> {
 }
 
 impl<X: Xap<Size = One>> XapOne for X {}
+
+// bin
+
+pub trait XapBin: Xap<Size = ZeroOne> {
+    #[inline(always)]
+    fn opt_value(&self, i: Self::I) -> Option<Self::O> {
+        // SAFETY: by definition the result has exactly zero or one element
+        self.xap(i).into_iter().next()
+    }
+}
+
+impl<X: Xap<Size = ZeroOne>> XapBin for X {}

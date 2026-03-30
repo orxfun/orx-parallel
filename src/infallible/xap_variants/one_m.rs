@@ -1,26 +1,26 @@
 use crate::infallible::xap::{Xap, XapOne};
 use crate::infallible::{fun::map::Map, size::One};
 
-pub struct M<X: Xap<Size = One>, G: Map<I = X::O>> {
+pub struct OneM<X: Xap<Size = One>, G: Map<I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = One>, G: Map<I = X::O>> Clone for M<X, G> {
+impl<X: Xap<Size = One>, G: Map<I = X::O>> Clone for OneM<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = One>, G: Map<I = X::O>> Copy for M<X, G> {}
+impl<X: Xap<Size = One>, G: Map<I = X::O>> Copy for OneM<X, G> {}
 
-impl<X: Xap<Size = One>, G: Map<I = X::O>> M<X, G> {
+impl<X: Xap<Size = One>, G: Map<I = X::O>> OneM<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for M<X, G> {
+impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     type I = X::I;
 
     type O = G::O;
@@ -31,6 +31,6 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for M<X, G> {
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values {
-        [self.one_value(i)]
+        [self.g.map(self.x.one_value(i))]
     }
 }
