@@ -1,5 +1,7 @@
 use crate::infallible::{Many, Xap, ZeroOne};
 use crate::result::xap_res::XapRes;
+use core::iter::Flatten;
+use core::option::IntoIter;
 
 pub struct XapResBinMany<M, E, X1, X2>
 where
@@ -33,29 +35,14 @@ where
 
     type X2 = X2;
 
-    type Values = <X2 as Xap>::Values;
+    type Values = Flatten<IntoIter<<X2 as Xap>::Values>>;
 
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
-        let y = match self.x1.xap(i).into_iter().next() {
-            Some(a) => {
-                let b = a.map(|a| self.x2.xap(a));
-                todo!()
-                // match a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }) {
-                //     Ok(b) => Ok(Some(b)),
-                //     Err(e) => Err(e),
-                // }
-            }
+        let res = match self.x1.xap(i).into_iter().next() {
+            Some(Ok(a)) => Ok(Some(self.x2.xap(a))),
+            Some(Err(e)) => Err(e),
             None => Ok(None),
         };
-        todo!()
-        // match self.x1.xap(i).into_iter().next() {
-        //     Some(a) => {
-        //         match a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }) {
-        //             Ok(b) => Ok(Some(b)),
-        //             Err(e) => Err(e),
-        //         }
-        //     }
-        //     None => Ok(None),
-        // }
+        res.map(|z| z.into_iter().flatten())
     }
 }
