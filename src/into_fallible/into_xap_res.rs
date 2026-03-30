@@ -1,3 +1,6 @@
+use crate::infallible::fun::*;
+use crate::infallible::size::{Bin, Many, One, Size};
+use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::*;
 use crate::result::xap_res::XapRes;
 use crate::result::xap_res_variants::*;
@@ -10,10 +13,46 @@ pub trait IntoXapRes {
 
 // bin_f
 
-// pub struct BinF<X: Xap<Size = Bin>, G: FilterMap<I = X::O>> {
-//     x: X,
-//     g: G,
-// }
+impl<T, E, X, G> IntoXapRes for BinF<X, G>
+where
+    X: Xap<Size = Bin>,
+    G: FilterMap<I = X::O, O = Result<T, E>>,
+{
+    type XapRes = XapResBinOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResBinOne::new(self, Id::new())
+    }
+}
+
+// bin_m
+
+impl<T, E, X, G> IntoXapRes for BinM<X, G>
+where
+    X: Xap<Size = Bin>,
+    G: Map<I = X::O, O = Result<T, E>>,
+{
+    type XapRes = XapResBinOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResBinOne::new(self, Id::new())
+    }
+}
+
+// bin_x
+
+impl<T, E, X, G> IntoXapRes for BinX<X, G>
+where
+    X: Xap<Size = Bin>,
+    G: FlatMap<I = X::O>,
+    G::O: IntoIterator<Item = Result<T, E>>,
+{
+    type XapRes = XapResManyOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResManyOne::new(self, Id::new())
+    }
+}
 
 // id
 
