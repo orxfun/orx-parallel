@@ -1,5 +1,5 @@
 use crate::infallible::xap::Xap;
-use crate::{infallible::thread_execution::sync::broadcast_stop, runner::ParRunner};
+use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next_any<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<X::O>
@@ -19,7 +19,7 @@ where
             0 | 1 => match item_puller.next() {
                 Some(i) => {
                     if let Some(val) = x.xap(i).into_iter().next() {
-                        broadcast_stop::<_, Q>(iter, state, chunk_state);
+                        Q::broadcast_stop(iter, state, chunk_state);
                         return Some(val);
                     }
                 }
@@ -34,7 +34,7 @@ where
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
-                            broadcast_stop::<_, Q>(iter, state, chunk_state);
+                            Q::broadcast_stop(iter, state, chunk_state);
                             return Some(val);
                         }
                     }
