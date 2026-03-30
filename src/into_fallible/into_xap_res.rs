@@ -106,3 +106,46 @@ where
         XapResManyOne::new(self, Id::new())
     }
 }
+
+// one_f
+
+impl<T, E, X, G> IntoXapRes for OneF<X, G>
+where
+    X: Xap<Size = One>,
+    G: FilterMap<I = X::O, O = Result<T, E>>,
+{
+    type XapRes = XapResBinOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResBinOne::new(self, Id::new())
+    }
+}
+
+// one_m
+
+impl<T, E, X, G> IntoXapRes for OneM<X, G>
+where
+    X: Xap<Size = One>,
+    G: Map<I = X::O, O = Result<T, E>>,
+{
+    type XapRes = XapResOneOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResOneOne::new(self, Id::new())
+    }
+}
+
+// one_x
+
+impl<T, E, X, G> IntoXapRes for OneX<X, G>
+where
+    X: Xap<Size = One>,
+    G: FlatMap<I = X::O>,
+    G::O: IntoIterator<Item = Result<T, E>>,
+{
+    type XapRes = XapResManyOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResManyOne::new(self, Id::new())
+    }
+}
