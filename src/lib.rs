@@ -22,4 +22,4 @@ mod pool;
 mod runner;
 
 pub mod infallible;
-pub mod result;
+pub mod result_arch;

@@ -1,4 +1,4 @@
-use crate::result::count::Count;
+use crate::result_arch::count::Count;
 // use crate::result::fun::{filter_map::FilterMap, flat_map::FlatMap, map::Map};
 
 pub struct Many;
