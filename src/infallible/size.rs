@@ -1,3 +1,5 @@
+use crate::infallible::xap::Xap;
+
 pub trait Size {}
 
 pub struct One;
