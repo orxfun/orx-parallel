@@ -1,4 +1,4 @@
-use crate::infallible::xap::Xap;
+use crate::infallible::{fun::Map, xap::Xap};
 
 pub type ResOf<X> = Result<<<X as XapRes>::X2 as Xap>::O, <X as XapRes>::E>;
 
@@ -52,4 +52,24 @@ pub trait XapRes {
     fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
     where
         H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send;
+
+    type FlatMap<V, H>: XapRes<M = Self::M, E = Self::E, X1 = Self::X1, X2 = <Self::X2 as Xap>::FlatMap<V, H>>
+    where
+        V: IntoIterator,
+        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send;
+
+    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
+    where
+        V: IntoIterator,
+        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send;
+
+    // transformations - helper
+
+    type Mapped<H>: XapRes<M = Self::M, E = Self::E, X1 = Self::X1, X2 = <Self::X2 as Xap>::Mapped<H>>
+    where
+        H: Map<I = <Self::X2 as Xap>::O>;
+
+    fn mapped<M>(self, h: M) -> Self::Mapped<M>
+    where
+        M: Map<I = <Self::X2 as Xap>::O>;
 }

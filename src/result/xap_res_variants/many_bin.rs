@@ -1,6 +1,8 @@
+use crate::infallible::fun::Map;
 use crate::infallible::size::{Bin, Many};
 use crate::infallible::xap::{Xap, XapBin};
 use crate::result::xap_res::XapRes;
+use crate::result::xap_res_variants::XapResManyMany;
 
 pub struct XapResManyBin<M, E, X1, X2>
 where
@@ -89,6 +91,34 @@ where
         H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send,
     {
         XapResManyBin::new(self.x1, self.x2.filter_map(h))
+    }
+
+    type FlatMap<V, H>
+        = XapResManyMany<M, E, X1, X2::FlatMap<V, H>>
+    where
+        V: IntoIterator,
+        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send;
+
+    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
+    where
+        V: IntoIterator,
+        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send,
+    {
+        XapResManyMany::new(self.x1, self.x2.flat_map(h))
+    }
+
+    // transformations - helper
+
+    type Mapped<H>
+        = XapResManyBin<M, E, X1, X2::Mapped<H>>
+    where
+        H: Map<I = <Self::X2 as Xap>::O>;
+
+    fn mapped<H>(self, h: H) -> Self::Mapped<H>
+    where
+        H: Map<I = <Self::X2 as Xap>::O>,
+    {
+        XapResManyBin::new(self.x1, self.x2.mapped(h))
     }
 }
 

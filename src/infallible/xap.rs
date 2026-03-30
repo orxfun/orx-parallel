@@ -1,5 +1,5 @@
 use crate::infallible::fun::Map;
-use crate::infallible::size::{Bin, One, Size};
+use crate::infallible::size::{Bin, Many, One, Size};
 
 pub trait Xap: Copy + Send {
     type I;
@@ -46,7 +46,7 @@ pub trait Xap: Copy + Send {
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
-    type FlatMap<V, H>: Xap<I = Self::I, O = V::Item>
+    type FlatMap<V, H>: Xap<I = Self::I, O = V::Item, Size = Many>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send;
@@ -58,7 +58,7 @@ pub trait Xap: Copy + Send {
 
     // transformations - helper
 
-    type Mapped<M>: Xap<I = Self::I, O = M::O>
+    type Mapped<M>: Xap<I = Self::I, O = M::O, Size = Self::Size>
     where
         M: Map<I = Self::O>;
 
