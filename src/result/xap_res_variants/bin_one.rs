@@ -37,12 +37,10 @@ where
 
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
         match self.x1.xap(i).into_iter().next() {
-            Some(a) => {
-                match a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }) {
-                    Ok(b) => Ok(Some(b)),
-                    Err(e) => Err(e),
-                }
-            }
+            Some(Ok(a)) => Ok(Some(unsafe {
+                self.x2.xap(a).into_iter().next().unwrap_unchecked()
+            })),
+            Some(Err(e)) => Err(e),
             None => Ok(None),
         }
     }
