@@ -55,4 +55,16 @@ where
     {
         XapResOneOne::new(self.x1, self.x2.map(h))
     }
+
+    type Inspect<H>
+        = XapResOneOne<M, E, X1, X2::Inspect<H>>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) + Copy + Send;
+
+    fn inspect<H>(self, h: H) -> Self::Inspect<H>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) + Copy + Send,
+    {
+        XapResOneOne::new(self.x1, self.x2.inspect(h))
+    }
 }

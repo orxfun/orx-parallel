@@ -28,4 +28,12 @@ pub trait XapRes {
     fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
     where
         H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
+
+    type Inspect<H>: XapRes<M = Self::M, E = Self::E, X1 = Self::X1, X2 = <Self::X2 as Xap>::Inspect<H>>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) + Copy + Send;
+
+    fn inspect<H>(self, h: H) -> Self::Inspect<H>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) + Copy + Send;
 }
