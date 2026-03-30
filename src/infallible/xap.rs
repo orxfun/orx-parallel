@@ -38,7 +38,7 @@ pub trait Xap: Copy + Send {
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
-    type FilterMap<Q, H>: Xap<I = Self::I, O = Q>
+    type FilterMap<Q, H>: Xap<I = Self::I, O = Q, Size = <Self::Size as Size>::ThenBin>
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send;
 

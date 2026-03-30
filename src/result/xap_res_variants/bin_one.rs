@@ -80,4 +80,16 @@ where
     {
         XapResBinBin::new(self.x1, self.x2.filter(h))
     }
+
+    type FilterMap<Q, H>
+        = XapResBinBin<M, E, X1, X2::FilterMap<Q, H>>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send;
+
+    fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send,
+    {
+        XapResBinBin::new(self.x1, self.x2.filter_map(h))
+    }
 }
