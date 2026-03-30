@@ -76,7 +76,7 @@ pub trait ParRunnerInfallible: ParRunner {
             }
         });
 
-        results_bag.into_inner().into_iter().flatten().reduce(f)
+        Val::reduce(results_bag.into_inner().into_inner(), f)
     }
 }
 
