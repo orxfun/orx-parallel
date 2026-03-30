@@ -22,7 +22,7 @@ pub trait Xap: Copy + Send {
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 
-    type Inspect<H>: Xap<I = Self::I, O = Self::O>
+    type Inspect<H>: Xap<I = Self::I, O = Self::O, Size = Self::Size>
     where
         H: Fn(&Self::O) + Copy + Send;
 
