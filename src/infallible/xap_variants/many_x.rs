@@ -1,4 +1,6 @@
+use crate::infallible::fun::map::FnMap;
 use crate::infallible::xap::Xap;
+use crate::infallible::xap_variants::many_m::ManyM;
 use crate::infallible::{fun::flat_map::FlatMap, size::Many};
 
 pub struct ManyX<X: Xap<Size = Many>, G: FlatMap<I = X::O>> {
@@ -39,7 +41,7 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
     // transformations
 
     type Map<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = ManyM<Self, FnMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 
@@ -47,7 +49,7 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(Self::O) -> Q + Copy + Send,
     {
-        todo!()
+        ManyM::new(self, FnMap::new(h))
     }
 }
 
