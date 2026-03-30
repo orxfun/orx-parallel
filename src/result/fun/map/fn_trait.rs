@@ -5,5 +5,5 @@ pub trait MapRes: Copy + Send {
 
     type E;
 
-    fn map(&self, i: Self::I) -> Result<Self::O, Self::E>;
+    fn map_res(&self, i: Self::I) -> Result<Self::O, Self::E>;
 }
