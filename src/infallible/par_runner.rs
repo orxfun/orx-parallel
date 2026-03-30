@@ -27,7 +27,7 @@ pub trait ParRunnerInfallible: ParRunner {
             }
         });
 
-        ValIdx::first_of(results_bag.into_inner().into_inner())
+        ValIdx::first_of_val(results_bag.into_inner().into_inner())
     }
 
     fn next_any<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<X::O>
