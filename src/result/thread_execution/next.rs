@@ -1,7 +1,12 @@
-use crate::{result::xap_res::XapRes, runner::ParRunner};
+use crate::{result::xap_res::XapRes, results::ValIdx, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
+pub fn next<Q, I, X>(
+    th_idx: usize,
+    state: &Q::State,
+    iter: &I,
+    x: X,
+) -> Result<Option<ValIdx<X::O>>, X::E>
 where
     Q: ParRunner,
     I: ConcurrentIter,
@@ -17,9 +22,12 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
-                    if let Some(val) = x.xap(i).into_iter().next() {
+                    for a in x.xap_res(i) {
                         Q::broadcast_stop(iter, state, chunk_state);
-                        return Some(ValIdx::new(val, idx));
+                        match a {
+                            Ok(a) => return Ok(Some(ValIdx::new(a, idx))),
+                            Err(e) => return Err(e),
+                        }
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -32,9 +40,12 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
-                        *if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
+                        for a in chunk.flat_map(|i| x.xap_res(i)) {
                             Q::broadcast_stop(iter, state, chunk_state);
-                            return Some(ValIdx::new(val, idx));
+                            match a {
+                                Ok(a) => return Ok(Some(ValIdx::new(a, idx))),
+                                Err(e) => return Err(e),
+                            }
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
@@ -46,5 +57,5 @@ where
         Q::complete_chunk(state, chunk_state);
     }
 
-    None
+    Ok(None)
 }
