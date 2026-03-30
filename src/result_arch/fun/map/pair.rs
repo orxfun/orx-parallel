@@ -1,4 +1,4 @@
-use crate::infallible::fun::map::Map;
+use crate::infallible_arch::fun::map::Map;
 use crate::result_arch::fun::map::{fn_trait::MapRes, queue::MapResQueue};
 
 #[derive(Clone, Copy)]
