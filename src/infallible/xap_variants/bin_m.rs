@@ -33,4 +33,18 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
     fn xap(&self, i: Self::I) -> Self::Values {
         self.x.bin_value(i).map(|x| self.g.map(x))
     }
+
+    // transformations
+
+    type Map<Q, H>
+        = crate::infallible::xap::Fake<Self::I, Q>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send;
+
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send,
+    {
+        todo!()
+    }
 }

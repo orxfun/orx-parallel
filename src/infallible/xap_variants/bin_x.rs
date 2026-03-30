@@ -35,6 +35,20 @@ impl<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> Xap for BinX<X, G> {
         let i = self.x.bin_value(i).map(|x| self.g.flat_map(x).into_iter());
         IterBinX { i }
     }
+
+    // transformations
+
+    type Map<Q, H>
+        = crate::infallible::xap::Fake<Self::I, Q>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send;
+
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send,
+    {
+        todo!()
+    }
 }
 
 // iter
