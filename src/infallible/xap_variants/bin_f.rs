@@ -31,6 +31,6 @@ impl<X: Xap<Size = Bin>, G: FilterMap<I = X::O>> Xap for BinF<X, G> {
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values {
-        self.x.opt_value(i).and_then(|x| self.g.filter_map(x))
+        self.x.bin_value(i).and_then(|x| self.g.filter_map(x))
     }
 }

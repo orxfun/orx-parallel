@@ -1,5 +1,6 @@
+use crate::infallible::fun::flat_map::FlatMap;
+use crate::infallible::size::{Many, One};
 use crate::infallible::xap::{Xap, XapOne};
-use crate::infallible::{fun::flat_map::FlatMap, size::One};
 
 pub struct OneX<X: Xap<Size = One>, G: FlatMap<I = X::O>> {
     x: X,
@@ -25,7 +26,7 @@ impl<X: Xap<Size = One>, G: FlatMap<I = X::O>> Xap for OneX<X, G> {
 
     type O = <G::O as IntoIterator>::Item;
 
-    type Size = One;
+    type Size = Many;
 
     type Values = G::O;
 

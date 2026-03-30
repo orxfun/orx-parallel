@@ -31,6 +31,6 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
 
     #[inline(always)]
     fn xap(&self, i: Self::I) -> Self::Values {
-        self.x.opt_value(i).map(|x| self.g.map(x))
+        self.x.bin_value(i).map(|x| self.g.map(x))
     }
 }
