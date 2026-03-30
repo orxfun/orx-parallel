@@ -1,7 +1,7 @@
 mod fun;
 mod par_iter;
 mod par_runner;
-mod size;
+pub mod size;
 mod thread_execution;
 mod val_idx;
 pub mod xap;
