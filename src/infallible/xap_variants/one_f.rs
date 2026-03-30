@@ -1,9 +1,11 @@
 use crate::infallible::fun::filter_map::{FilterMap, FnFil, FnFilMap};
 use crate::infallible::fun::flat_map::FnFlatMap;
-use crate::infallible::fun::map::{FnIns, FnMap, Map};
+use crate::infallible::fun::map::{FnIns, FnMap};
 use crate::infallible::size::{Bin, One};
 use crate::infallible::xap::{Xap, XapOne};
+use crate::infallible::xap_variants::bin_f::BinF;
 use crate::infallible::xap_variants::bin_m::BinM;
+use crate::infallible::xap_variants::bin_x::BinX;
 
 pub struct OneF<X: Xap<Size = One>, G: FilterMap<I = X::O>> {
     x: X,
@@ -53,7 +55,7 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
     }
 
     type Inspect<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = BinM<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O) + Copy + Send;
 
@@ -61,11 +63,11 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&Self::O) + Copy + Send,
     {
-        todo!()
+        BinM::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = BinF<Self, FnFil<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
@@ -73,11 +75,11 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&Self::O) -> bool + Copy + Send,
     {
-        todo!()
+        BinF::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = BinF<Self, FnFilMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
@@ -85,11 +87,11 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send,
     {
-        todo!()
+        BinF::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = crate::infallible::xap::Fake<Self::I, <V as IntoIterator>::Item>
+        = BinX<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send;
@@ -99,6 +101,6 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send,
     {
-        todo!()
+        BinX::new(self, FnFlatMap::new(h))
     }
 }
