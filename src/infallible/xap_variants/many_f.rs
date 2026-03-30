@@ -54,7 +54,7 @@ where
 {
     type Item = G::O;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.i.next() {
