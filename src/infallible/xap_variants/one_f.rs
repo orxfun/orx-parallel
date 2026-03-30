@@ -1,5 +1,8 @@
+use crate::infallible::fun::filter_map::FilterMap;
+use crate::infallible::fun::map::FnMap;
+use crate::infallible::size::{Bin, One};
 use crate::infallible::xap::{Xap, XapOne};
-use crate::infallible::{fun::filter_map::FilterMap, size::One};
+use crate::infallible::xap_variants::bin_m::BinM;
 
 pub struct OneF<X: Xap<Size = One>, G: FilterMap<I = X::O>> {
     x: X,
@@ -25,7 +28,7 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
 
     type O = G::O;
 
-    type Size = One;
+    type Size = Bin;
 
     type Values = Option<G::O>;
 
@@ -37,7 +40,7 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
     // transformations
 
     type Map<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = BinM<Self, FnMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 
@@ -45,6 +48,6 @@ impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(Self::O) -> Q + Copy + Send,
     {
-        todo!()
+        BinM::new(self, FnMap::new(h))
     }
 }
