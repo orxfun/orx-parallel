@@ -1,5 +1,6 @@
 use crate::infallible::thread_execution as th;
-use crate::infallible::{val_idx::ValIdx, xap::Xap};
+use crate::infallible::xap::Xap;
+use crate::results::ValIdx;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;

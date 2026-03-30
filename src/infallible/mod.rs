@@ -3,7 +3,6 @@ mod par_iter;
 mod par_runner;
 pub mod size;
 mod thread_execution;
-mod val_idx;
 pub mod xap;
 mod xap_cloned;
 mod xap_copied;
