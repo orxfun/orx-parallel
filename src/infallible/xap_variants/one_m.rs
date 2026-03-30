@@ -1,5 +1,9 @@
-use crate::infallible::fun::map::FnMap;
+use crate::infallible::fun::filter_map::{FnFil, FnFilMap};
+use crate::infallible::fun::flat_map::FnFlatMap;
+use crate::infallible::fun::map::{FnIns, FnMap};
 use crate::infallible::xap::{Xap, XapOne};
+use crate::infallible::xap_variants::one_f::OneF;
+use crate::infallible::xap_variants::one_x::OneX;
 use crate::infallible::{fun::map::Map, size::One};
 
 pub struct OneM<X: Xap<Size = One>, G: Map<I = X::O>> {
@@ -50,7 +54,7 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     }
 
     type Inspect<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = OneM<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O) + Copy + Send;
 
@@ -58,11 +62,11 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     where
         H: Fn(&Self::O) + Copy + Send,
     {
-        todo!()
+        OneM::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = OneF<Self, FnFil<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
@@ -70,11 +74,11 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     where
         H: Fn(&Self::O) -> bool + Copy + Send,
     {
-        todo!()
+        OneF::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = OneF<Self, FnFilMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
@@ -82,11 +86,11 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send,
     {
-        todo!()
+        OneF::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = crate::infallible::xap::Fake<Self::I, <V as IntoIterator>::Item>
+        = OneX<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send;
@@ -96,6 +100,6 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send,
     {
-        todo!()
+        OneX::new(self, FnFlatMap::new(h))
     }
 }
