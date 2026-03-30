@@ -38,7 +38,7 @@ pub trait Xap: Copy + Send {
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
-    fn filter<H>(self, h: H) -> Self::Filter<H>*
+    fn filter<H>(self, h: H) -> Self::Filter<H>
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
