@@ -13,7 +13,7 @@ impl<T> ValIdx<T> {
     }
 
     /// Find and returns the value & index pair from the `results` which has the minimum index.
-    pub fn first_of_val(results: Vec<Option<Self>>) -> Option<Self> {
+    pub fn first(results: Vec<Option<Self>>) -> Option<Self> {
         let mut min_idx = usize::MAX;
         let mut value = None;
 
@@ -29,7 +29,7 @@ impl<T> ValIdx<T> {
         value
     }
 
-    pub fn first_of_res<E>(results: Vec<Result<Option<Self>, E>>) -> Result<Option<Self>, E> {
+    pub fn first_res<E>(results: Vec<Result<Option<Self>, E>>) -> Result<Option<Self>, E> {
         let mut min_idx = usize::MAX;
         let mut value = None;
 
