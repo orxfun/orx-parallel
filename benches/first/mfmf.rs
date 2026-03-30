@@ -57,6 +57,16 @@ fn fibonacci(n: u64) -> u64 {
     a
 }
 
+fn l_r(a: u64, b: u64) -> u64 {
+    a + b
+}
+
+fn h_r(a: u64, b: u64) -> u64 {
+    let f = black_box(fibonacci(a % FIB_UPPER_BOUND));
+    let g = black_box(a + f);
+    g + b - f
+}
+
 fn h_m(x: &u64) -> u64 {
     match *x {
         999 => 999,
