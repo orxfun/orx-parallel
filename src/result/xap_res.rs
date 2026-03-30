@@ -21,7 +21,7 @@ pub trait XapRes {
 
     // transformations
 
-    // type Map<Q, H>: XapRes<M = Self::M, E = Self::E, X1 = Self::X1, X2 = <Self::X2 as Xap>::Map<Q, H>>
-    // where
-    //     H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
+    type Map<Q, H>: XapRes<M = Self::M, E = Self::E, X1 = Self::X1, X2 = <Self::X2 as Xap>::Map<Q, H>>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
 }
