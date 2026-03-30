@@ -50,6 +50,56 @@ impl<X: Xap<Size = Many>, G: FilterMap<I = X::O>> Xap for ManyF<X, G> {
     {
         ManyM::new(self, FnMap::new(h))
     }
+
+    type Inspect<H>
+        = crate::infallible::xap::Fake<Self::I, Self::O>
+    where
+        H: Fn(&Self::O) + Copy + Send;
+
+    fn inspect<H>(self, h: H) -> Self::Inspect<H>
+    where
+        H: Fn(&Self::O) + Copy + Send,
+    {
+        todo!()
+    }
+
+    type Filter<H>
+        = crate::infallible::xap::Fake<Self::I, Self::O>
+    where
+        H: Fn(&Self::O) -> bool + Copy + Send;
+
+    fn filter<H>(self, h: H) -> Self::Filter<H>
+    where
+        H: Fn(&Self::O) -> bool + Copy + Send,
+    {
+        todo!()
+    }
+
+    type FilterMap<Q, H>
+        = crate::infallible::xap::Fake<Self::I, Q>
+    where
+        H: Fn(Self::O) -> Option<Q> + Copy + Send;
+
+    fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
+    where
+        H: Fn(Self::O) -> Option<Q> + Copy + Send,
+    {
+        todo!()
+    }
+
+    type FlatMap<V, H>
+        = crate::infallible::xap::Fake<Self::I, <V as IntoIterator>::Item>
+    where
+        V: IntoIterator,
+        H: Fn(Self::O) -> V + Copy + Send;
+
+    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
+    where
+        V: IntoIterator,
+        H: Fn(Self::O) -> V + Copy + Send,
+    {
+        todo!()
+    }
 }
 
 // iter
