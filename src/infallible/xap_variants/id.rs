@@ -3,7 +3,9 @@ use crate::infallible::fun::flat_map::FnFlatMap;
 use crate::infallible::fun::map::{FnIns, FnMap, Map};
 use crate::infallible::size::One;
 use crate::infallible::xap::Xap;
+use crate::infallible::xap_variants::one_f::OneF;
 use crate::infallible::xap_variants::one_m::OneM;
+use crate::infallible::xap_variants::one_x::OneX;
 use core::marker::PhantomData;
 
 pub struct Id<I>(PhantomData<I>);
@@ -52,7 +54,7 @@ impl<I> Xap for Id<I> {
     }
 
     type Inspect<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = OneM<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O) + Copy + Send;
 
@@ -60,11 +62,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) + Copy + Send,
     {
-        todo!()
+        OneM::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = OneF<Self, FnFil<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
@@ -72,11 +74,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(&Self::O) -> bool + Copy + Send,
     {
-        todo!()
+        OneF::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = OneF<Self, FnFilMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
@@ -84,11 +86,11 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send,
     {
-        todo!()
+        OneF::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = crate::infallible::xap::Fake<Self::I, <V as IntoIterator>::Item>
+        = OneX<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send;
@@ -98,7 +100,7 @@ impl<I> Xap for Id<I> {
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send,
     {
-        todo!()
+        OneX::new(self, FnFlatMap::new(h))
     }
 
     // transformations - helper
