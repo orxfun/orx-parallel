@@ -1,4 +1,4 @@
-use crate::infallible_arch::fun::map::{Map, MapQueue, Mp};
+use crate::infallible::fun::map::{Map, MapQueue, Mp};
 
 #[derive(Clone, Copy)]
 pub struct Ms<F: Map> {
