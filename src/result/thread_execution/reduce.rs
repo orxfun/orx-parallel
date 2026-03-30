@@ -29,7 +29,7 @@ where
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
-                        for a in x.xap_res(i).into_iter() {
+                        for a in x.xap_res(i) {
                             acc = match (a, acc.is_some()) {
                                 (Ok(a), true) => acc.map(|agg| f(agg, a)),
                                 (Ok(a), false) => Some(a),
@@ -87,7 +87,7 @@ where
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
-                                for a in x.xap_res(i).into_iter() {
+                                for a in x.xap_res(i) {
                                     acc = match a {
                                         Ok(a) => f(acc, a),
                                         Err(e) => {
