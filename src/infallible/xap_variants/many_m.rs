@@ -1,6 +1,6 @@
-use crate::infallible::fun::filter_map::{FnFil, FnFilMap};
-use crate::infallible::fun::flat_map::FnFlatMap;
-use crate::infallible::fun::map::{FnIns, FnMap, Map};
+use crate::infallible::fun::FnFlatMap;
+use crate::infallible::fun::{FnFil, FnFilMap};
+use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::Many;
 use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::many_f::ManyF;
