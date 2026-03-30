@@ -12,6 +12,31 @@ where
     x2: X2,
 }
 
+impl<M, E, X1, X2> Clone for XapResOneMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Size = One>,
+    X2: Xap<I = M, Size = Many>,
+{
+    fn clone(&self) -> Self {
+        let (x1, x2) = (self.x1, self.x2);
+        Self { x1, x2 }
+    }
+}
+
+impl<M, E, X1, X2> Copy for XapResOneMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Size = One>,
+    X2: Xap<I = M, Size = Many>,
+{
+}
+
+unsafe impl<M, E, X1, X2> Send for XapResOneMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Size = One>,
+    X2: Xap<I = M, Size = Many>,
+{
+}
+
 impl<M, E, X1, X2> XapResOneMany<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = One>,
