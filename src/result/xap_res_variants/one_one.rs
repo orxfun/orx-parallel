@@ -1,7 +1,8 @@
+use crate::infallible::fun::Map;
 use crate::infallible::size::One;
 use crate::infallible::xap::{Xap, XapOne};
 use crate::result::xap_res::{ResOf, XapRes};
-use crate::result::xap_res_variants::XapResOneBin;
+use crate::result::xap_res_variants::{XapResOneBin, XapResOneMany};
 
 pub struct XapResOneOne<M, E, X1, X2>
 where
@@ -91,5 +92,33 @@ where
         H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send,
     {
         XapResOneBin::new(self.x1, self.x2.filter_map(h))
+    }
+
+    type FlatMap<V, H>
+        = XapResOneMany<M, E, X1, X2::FlatMap<V, H>>
+    where
+        V: IntoIterator,
+        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send;
+
+    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
+    where
+        V: IntoIterator,
+        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send,
+    {
+        XapResOneMany::new(self.x1, self.x2.flat_map(h))
+    }
+
+    // transformations - helper
+
+    type Mapped<H>
+        = XapResOneOne<M, E, X1, X2::Mapped<H>>
+    where
+        H: Map<I = <Self::X2 as Xap>::O>;
+
+    fn mapped<H>(self, h: H) -> Self::Mapped<H>
+    where
+        H: Map<I = <Self::X2 as Xap>::O>,
+    {
+        XapResOneOne::new(self.x1, self.x2.mapped(h))
     }
 }
