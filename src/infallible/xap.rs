@@ -80,7 +80,7 @@ pub trait XapBin: Xap<Size = Bin> {
 
 impl<X: Xap<Size = Bin>> XapBin for X {}
 
-// temporary
+// TODO: remove faker
 
 pub struct Fake<I, O>(core::marker::PhantomData<(I, O)>);
 
