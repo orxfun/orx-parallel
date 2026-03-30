@@ -1,4 +1,7 @@
-use crate::infallible::{size::One, xap::Xap};
+use crate::infallible::fun::map::FnMap;
+use crate::infallible::size::One;
+use crate::infallible::xap::Xap;
+use crate::infallible::xap_variants::one_m::OneM;
 use core::marker::PhantomData;
 
 pub struct Id<I>(PhantomData<I>);
@@ -35,7 +38,7 @@ impl<I> Xap for Id<I> {
     // transformations
 
     type Map<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = OneM<Self, FnMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 
@@ -43,6 +46,6 @@ impl<I> Xap for Id<I> {
     where
         H: Fn(Self::O) -> Q + Copy + Send,
     {
-        todo!()
+        OneM::new(self, FnMap::new(h))
     }
 }

@@ -1,4 +1,4 @@
-use crate::infallible_arch::fun::map::Map;
+use crate::infallible::fun::map::Map;
 
 pub trait MapQueue: Map {
     type Then<Q, H>: MapQueue<I = Self::I, O = Q>
