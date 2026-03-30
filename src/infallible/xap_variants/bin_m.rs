@@ -3,6 +3,8 @@ use crate::infallible::fun::flat_map::FnFlatMap;
 use crate::infallible::fun::map::{FnIns, FnMap, Map};
 use crate::infallible::size::Bin;
 use crate::infallible::xap::{Xap, XapBin};
+use crate::infallible::xap_variants::bin_f::BinF;
+use crate::infallible::xap_variants::bin_x::BinX;
 
 pub struct BinM<X: Xap<Size = Bin>, G: Map<I = X::O>> {
     x: X,
@@ -52,7 +54,7 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
     }
 
     type Inspect<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = BinM<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O) + Copy + Send;
 
@@ -60,11 +62,11 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
     where
         H: Fn(&Self::O) + Copy + Send,
     {
-        todo!()
+        BinM::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = BinF<Self, FnFil<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
@@ -72,11 +74,11 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
     where
         H: Fn(&Self::O) -> bool + Copy + Send,
     {
-        todo!()
+        BinF::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = BinF<Self, FnFilMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
@@ -84,11 +86,11 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send,
     {
-        todo!()
+        BinF::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = crate::infallible::xap::Fake<Self::I, <V as IntoIterator>::Item>
+        = BinX<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send;
@@ -98,6 +100,6 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send,
     {
-        todo!()
+        BinX::new(self, FnFlatMap::new(h))
     }
 }
