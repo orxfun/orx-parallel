@@ -1,6 +1,6 @@
 use crate::infallible::fun::filter_map::{FilterMap, FnFil, FnFilMap};
 use crate::infallible::fun::flat_map::FnFlatMap;
-use crate::infallible::fun::map::{FnIns, FnMap};
+use crate::infallible::fun::map::{FnIns, FnMap, Map};
 use crate::infallible::size::Bin;
 use crate::infallible::xap::{Xap, XapBin};
 use crate::infallible::xap_variants::bin_m::BinM;
@@ -101,5 +101,19 @@ impl<X: Xap<Size = Bin>, G: FilterMap<I = X::O>> Xap for BinF<X, G> {
         H: Fn(Self::O) -> V + Copy + Send,
     {
         BinX::new(self, FnFlatMap::new(h))
+    }
+
+    // transformations - helper
+
+    type Mapped<M>
+        = BinM<Self, M>
+    where
+        M: Map<I = Self::O>;
+
+    fn mapped<M>(self, m: M) -> Self::Mapped<M>
+    where
+        M: Map<I = Self::O>,
+    {
+        BinM::new(self, m)
     }
 }

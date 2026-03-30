@@ -103,6 +103,20 @@ impl<X: Xap<Size = Many>, G: Map<I = X::O>> Xap for ManyM<X, G> {
     {
         ManyX::new(self, FnFlatMap::new(h))
     }
+
+    // transformations - helper
+
+    type Mapped<M>
+        = ManyM<Self, M>
+    where
+        M: Map<I = Self::O>;
+
+    fn mapped<M>(self, m: M) -> Self::Mapped<M>
+    where
+        M: Map<I = Self::O>,
+    {
+        ManyM::new(self, m)
+    }
 }
 
 // iter

@@ -102,4 +102,18 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Xap for BinM<X, G> {
     {
         BinX::new(self, FnFlatMap::new(h))
     }
+
+    // transformations - helper
+
+    type Mapped<M>
+        = BinM<Self, M>
+    where
+        M: Map<I = Self::O>;
+
+    fn mapped<M>(self, m: M) -> Self::Mapped<M>
+    where
+        M: Map<I = Self::O>,
+    {
+        BinM::new(self, m)
+    }
 }

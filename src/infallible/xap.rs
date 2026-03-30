@@ -1,3 +1,4 @@
+use crate::infallible::fun::map::Map;
 use crate::infallible::size::{Bin, One, Size};
 
 pub trait Xap: Copy + Send {
@@ -54,6 +55,16 @@ pub trait Xap: Copy + Send {
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send;
+
+    // transformations - helper
+
+    type Mapped<M>: Xap<I = Self::I, O = M::O>
+    where
+        M: Map<I = Self::O>;
+
+    fn mapped<M>(self, m: M) -> Self::Mapped<M>
+    where
+        M: Map<I = Self::O>;
 }
 
 // one
@@ -167,6 +178,20 @@ impl<I, O> Xap for Fake<I, O> {
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send,
+    {
+        todo!()
+    }
+
+    // transformations - helper
+
+    type Mapped<M>
+        = Fake<Self::I, M::O>
+    where
+        M: Map<I = Self::O>;
+
+    fn mapped<M>(self, m: M) -> Self::Mapped<M>
+    where
+        M: Map<I = Self::O>,
     {
         todo!()
     }
