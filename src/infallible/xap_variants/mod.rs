@@ -1,3 +1,4 @@
+mod bin_f;
 mod bin_m;
 mod id;
 mod many_m;

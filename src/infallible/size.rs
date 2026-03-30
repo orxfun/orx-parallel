@@ -6,9 +6,9 @@ pub struct One;
 
 impl Size for One {}
 
-pub struct ZeroOne;
+pub struct Bin;
 
-impl Size for ZeroOne {}
+impl Size for Bin {}
 
 pub struct Many;
 
