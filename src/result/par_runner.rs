@@ -6,7 +6,7 @@ use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParRunnerResult: ParRunner {
-    fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
+    fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Result<Option<ValIdx<X::O>>, X::E>
     where
         I: ConcurrentIter,
         X: XapRes<I = I::Item>,
@@ -28,8 +28,7 @@ pub trait ParRunnerResult: ParRunner {
             }
         });
 
-        // ValIdx::first_of(results_bag.into_inner().into_inner())
-        todo!()
+        ValIdx::first_of_res(results_bag.into_inner().into_inner())
     }
 
     //     fn next_any<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<X::O>
