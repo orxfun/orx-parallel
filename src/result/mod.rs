@@ -6,6 +6,7 @@ mod xap_res_cloned;
 mod xap_res_copied;
 pub mod xap_res_variants;
 
+pub use par_res_iter::ParRes;
 pub use xap_res::XapRes;
 pub use xap_res_cloned::XapResCloned;
 pub use xap_res_copied::XapResCopied;
