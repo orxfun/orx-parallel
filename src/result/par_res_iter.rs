@@ -1,3 +1,4 @@
+use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par_runner::ParRunnerResult;
 use crate::result::xap_res::XapRes;
@@ -121,5 +122,31 @@ where
     {
         let (iter, x, mut exe, params) = self.destruct();
         exe.reduce(params, iter, x, f)
+    }
+}
+
+// transformations
+
+impl<'a, O: Copy + 'a, I, X, R> ParRes<I, X, R>
+where
+    I: ConcurrentIter,
+    X: XapRes<I = I::Item, O = &'a O>,
+    R: ParRunner,
+{
+    pub fn copied(self) -> ParRes<I, X::Mapped<FnCopied<'a, O>>, R> {
+        let (iter, xap, exe, params) = self.destruct();
+        ParRes::new(iter, xap.mapped(FnCopied::new()), exe, params)
+    }
+}
+
+impl<'a, O: Clone + 'a, I, X, R> ParRes<I, X, R>
+where
+    I: ConcurrentIter,
+    X: XapRes<I = I::Item, O = &'a O>,
+    R: ParRunner,
+{
+    pub fn cloned(self) -> ParRes<I, X::Mapped<FnCloned<'a, O>>, R> {
+        let (iter, xap, exe, params) = self.destruct();
+        ParRes::new(iter, xap.mapped(FnCloned::new()), exe, params)
     }
 }
