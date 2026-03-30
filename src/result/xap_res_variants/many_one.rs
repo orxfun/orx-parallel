@@ -1,7 +1,6 @@
-use core::marker::PhantomData;
-
 use crate::infallible::{Many, One, Xap};
 use crate::result::xap_res::XapRes;
+use core::marker::PhantomData;
 
 pub struct XapResManyOne<M, E, X1, X2>
 where
@@ -50,25 +49,28 @@ where
 //     }
 // }
 
-// // iter
+// iter
 
-// pub struct IterResManyOne<'a, M, E, I, X2>
-// where
-//     I: Iterator<Item = Result<M, E>>,
-//     X2: Xap<I = M, Count = One>,
-// {
-//     iter: I,
-//     x2: &'a X2,
-// }
+pub struct IterResManyOne<'a, M, E, I, X2>
+where
+    I: Iterator<Item = Result<M, E>>,
+    X2: Xap<I = M, Count = One>,
+{
+    iter: I,
+    x2: &'a X2,
+}
 
-// impl<'a, M, E, I, X2> Iterator for IterResManyOne<'a, M, E, I, X2>
-// where
-//     I: Iterator<Item = Result<M, E>>,
-//     X2: Xap<I = M, Count = One>,
-// {
-//     type Item = usize;
+impl<'a, M, E, I, X2> Iterator for IterResManyOne<'a, M, E, I, X2>
+where
+    I: Iterator<Item = Result<M, E>>,
+    X2: Xap<I = M, Count = One>,
+{
+    type Item = Result<X2::O, E>;
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         todo!()
-//     }
-// }
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .next()
+            .map(|a| a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }))
+    }
+}
