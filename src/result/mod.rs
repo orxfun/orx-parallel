@@ -1,2 +1,2 @@
-mod xap_res;
-mod xap_res_variants;
+pub mod xap_res;
+pub mod xap_res_variants;
