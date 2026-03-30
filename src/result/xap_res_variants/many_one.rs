@@ -1,6 +1,7 @@
 use crate::infallible::size::{Many, One};
 use crate::infallible::xap::{Xap, XapOne};
 use crate::result::xap_res::XapRes;
+use crate::result::xap_res_variants::XapResManyBin;
 
 pub struct XapResManyOne<M, E, X1, X2>
 where
@@ -65,6 +66,18 @@ where
         H: Fn(&<Self::X2 as Xap>::O) + Copy + Send,
     {
         XapResManyOne::new(self.x1, self.x2.inspect(h))
+    }
+
+    type Filter<H>
+        = XapResManyBin<M, E, X1, X2::Filter<H>>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send;
+
+    fn filter<H>(self, h: H) -> Self::Filter<H>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send,
+    {
+        XapResManyBin::new(self.x1, self.x2.filter(h))
     }
 }
 

@@ -69,6 +69,18 @@ where
     {
         XapResBinMany::new(self.x1, self.x2.inspect(h))
     }
+
+    type Filter<H>
+        = XapResBinMany<M, E, X1, X2::Filter<H>>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send;
+
+    fn filter<H>(self, h: H) -> Self::Filter<H>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send,
+    {
+        XapResBinMany::new(self.x1, self.x2.filter(h))
+    }
 }
 
 // iter

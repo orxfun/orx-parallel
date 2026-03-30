@@ -1,6 +1,7 @@
 use crate::infallible::size::{Bin, One};
 use crate::infallible::xap::{Xap, XapBin, XapOne};
 use crate::result::xap_res::{ResOf, XapRes};
+use crate::result::xap_res_variants::XapResBinBin;
 
 pub struct XapResBinOne<M, E, X1, X2>
 where
@@ -66,5 +67,17 @@ where
         H: Fn(&<Self::X2 as Xap>::O) + Copy + Send,
     {
         XapResBinOne::new(self.x1, self.x2.inspect(h))
+    }
+
+    type Filter<H>
+        = XapResBinBin<M, E, X1, X2::Filter<H>>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send;
+
+    fn filter<H>(self, h: H) -> Self::Filter<H>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send,
+    {
+        XapResBinBin::new(self.x1, self.x2.filter(h))
     }
 }
