@@ -12,6 +12,17 @@ impl Val {
         None
     }
 
+    pub fn first_res<T, E>(results: Vec<Result<Option<T>, E>>) -> Result<Option<T>, E> {
+        for x in results {
+            match x {
+                Ok(Some(x)) => return Ok(Some(x)),
+                Ok(None) => {}
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(None)
+    }
+
     pub fn reduce<T, F>(results: Vec<Option<T>>, f: F) -> Option<T>
     where
         F: Fn(T, T) -> T,
