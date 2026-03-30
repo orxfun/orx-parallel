@@ -1,11 +1,7 @@
-use crate::infallible::XapCopied;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_iter::Par;
-use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::Xap;
-use crate::infallible::xap_variants::Id;
-use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner, default_runner};
+use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<'a, O: Copy + 'a, I, X, R> Par<I, X, R>
