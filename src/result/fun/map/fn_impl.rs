@@ -28,6 +28,8 @@ impl<I, O, E, F: Fn(I) -> Result<O, E> + Copy + Send> MapRes for FnMapToRes<I, O
     }
 }
 
+// within fallible
+
 pub struct FnMapInRes<I, O, E, F: Fn(I) -> O + Copy + Send>(F, PhantomData<(I, E)>);
 
 impl<I, O, E, F: Fn(I) -> O + Copy + Send> Clone for FnMapInRes<I, O, E, F> {
