@@ -1,5 +1,5 @@
 use crate::infallible::{One, Xap, ZeroOne};
-use crate::result::xap_res::XapRes;
+use crate::result::xap_res::{ResOf, XapRes};
 
 pub struct XapResOneBin<M, E, X1, X2>
 where
@@ -33,11 +33,12 @@ where
 
     type X2 = X2;
 
-    type Values = Option<<X2 as Xap>::O>;
+    type Results = Option<ResOf<Self>>;
 
-    #[inline(always)]
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
-        let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
-        a.map(|a| self.x2.xap(a).into_iter().next())
+    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+        match unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() } {
+            Ok(a) => self.x2.xap(a).into_iter().next().map(Ok),
+            Err(e) => Some(Err(e)),
+        }
     }
 }
