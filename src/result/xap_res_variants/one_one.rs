@@ -1,7 +1,5 @@
-use crate::{
-    infallible::{One, Xap},
-    result::xap_res::XapRes,
-};
+use crate::infallible::{One, Xap};
+use crate::result::xap_res::XapRes;
 
 pub struct XapResOneOne<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = One>> {
     x1: X1,
@@ -27,9 +25,11 @@ impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = One>> 
 
     type X2 = X2;
 
-    type Values = core::iter::Empty<<X2 as Xap>::O>;
+    type Values = [<X2 as Xap>::O; 1];
 
+    #[inline(always)]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
-        todo!()
+        let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
+        a.map(|x| [unsafe { self.x2.xap(x).into_iter().next().unwrap_unchecked() }])
     }
 }
