@@ -1,5 +1,5 @@
 mod count;
-mod fun;
+pub mod fun;
 mod par_iter;
 mod par_runner;
 mod thread_execution;
