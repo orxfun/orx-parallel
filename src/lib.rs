@@ -21,7 +21,7 @@ mod parameters;
 mod pool;
 mod runner;
 
-pub mod infallible_arch;
-// pub mod result;
 pub mod infallible;
-pub mod result_arch;
+pub mod infallible_arch;
+pub mod result;
+// pub mod result_arch;
