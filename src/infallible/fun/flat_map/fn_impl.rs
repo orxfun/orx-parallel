@@ -1,6 +1,5 @@
+use crate::infallible::fun::flat_map::FlatMap;
 use core::marker::PhantomData;
-
-use crate::infallible_arch::fun::flat_map::FlatMap;
 
 pub struct FnFlatMap<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send>(F, PhantomData<(I, O)>);
 
