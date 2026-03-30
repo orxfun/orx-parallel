@@ -27,7 +27,7 @@ reduce_l/orx/e20_heavy      time:   [76.860 ms 77.978 ms 79.163 ms]
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_concurrent_iter::IntoConcurrentIter;
-use orx_parallel::infallible::par;
+use orx_parallel::infallible_arch::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};

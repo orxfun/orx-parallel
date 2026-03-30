@@ -1,4 +1,4 @@
-use crate::infallible::Xap;
+use crate::infallible_arch::Xap;
 
 pub struct IdRes<I, E, X: Xap<O = Result<I, E>>>(X);
 

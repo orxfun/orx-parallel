@@ -1,4 +1,4 @@
-use crate::{infallible::Xap, result_arch::count::Count};
+use crate::{infallible_arch::Xap, result_arch::count::Count};
 
 pub struct XapRes<X: Xap>(X);
 
