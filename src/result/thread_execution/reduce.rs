@@ -2,16 +2,21 @@ use crate::result::xap_res::XapRes;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn reduce<Q, I, X, F>(th_idx: usize, state: &Q::State, iter: &I, x: X, f: F)
-//-> Option<X::O>
+pub fn reduce<Q, I, X, F>(
+    th_idx: usize,
+    state: &Q::State,
+    iter: &I,
+    x: X,
+    f: F,
+) -> Result<Option<X::O>, X::E>
 where
     Q: ParRunner,
     I: ConcurrentIter,
-    // X: XapRes<I = I::Item>,
-    // F: Fn(X::O, X::O) -> X::O,
+    X: XapRes<I = I::Item>,
+    F: Fn(X::O, X::O) -> X::O,
 {
-    // let mut chunk_puller = iter.chunk_puller(0);
-    // let mut item_puller = iter.item_puller();
+    let mut chunk_puller = iter.chunk_puller(0);
+    let mut item_puller = iter.item_puller();
 
     // let mut acc = None;
 
@@ -24,6 +29,7 @@ where
     //         0 | 1 => {
     //             match item_puller.next() {
     //                 Some(i) => {
+    //                     let a = x.xap_res(i).into_iter();
     //                     let result = x.xap(i).into_iter().reduce(&f);
     //                     if result.is_some() {
     //                         acc = result;
