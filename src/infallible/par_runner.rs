@@ -1,6 +1,6 @@
 use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
-use crate::results::ValIdx;
+use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -27,7 +27,7 @@ pub trait ParRunnerInfallible: ParRunner {
             }
         });
 
-        ValIdx::first_of_val(results_bag.into_inner().into_inner())
+        ValIdx::first(results_bag.into_inner().into_inner())
     }
 
     fn next_any<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<X::O>
@@ -51,7 +51,7 @@ pub trait ParRunnerInfallible: ParRunner {
             }
         });
 
-        results_bag.into_inner().into_iter().flatten().next()
+        Val::first(results_bag.into_inner().into_inner())
     }
 
     fn reduce<I, X, F>(&mut self, params: Params, iter: I, x: X, f: F) -> Option<X::O>
