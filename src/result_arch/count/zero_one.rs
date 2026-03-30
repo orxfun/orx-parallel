@@ -1,25 +1,24 @@
-use crate::result::count::{Count, Many, ZeroOne};
+use crate::result_arch::count::{Count, Many};
 // use crate::result::fun::{filter_map::FilterMap, flat_map::FlatMap, map::Map};
 
-pub struct One;
+pub struct ZeroOne;
 
-impl Count for One {
+impl Count for ZeroOne {
     // transformations
 
     type ThenZeroOne = ZeroOne;
 
-    type ThenOne = One;
+    type ThenOne = ZeroOne;
 
     type ThenMany = Many;
 
     // // map
 
-    // type Map<I: IntoIterator, G: Map<I = I::Item>> = [G::O; 1];
+    // type Map<I: IntoIterator, G: Map<I = I::Item>> = Option<G::O>;
 
     // #[inline(always)]
     // fn map<I: IntoIterator, G: Map<I = I::Item>>(i: I, g: G) -> Self::Map<I, G> {
-    //     let x = unsafe { i.into_iter().next().unwrap_unchecked() };
-    //     [g.map(x)]
+    //     i.into_iter().next().map(|x| g.map(x))
     // }
 
     // // filter_map
@@ -28,17 +27,25 @@ impl Count for One {
 
     // #[inline(always)]
     // fn filter_map<I: IntoIterator, G: FilterMap<I = I::Item>>(i: I, g: G) -> Self::FilterMap<I, G> {
-    //     let x = unsafe { i.into_iter().next().unwrap_unchecked() };
-    //     g.filter_map(x)
+    //     match i.into_iter().next() {
+    //         Some(x) => g.filter_map(x),
+    //         _ => None,
+    //     }
     // }
 
     // // flat_map
 
-    // type FlatMap<I: IntoIterator, G: FlatMap<I = I::Item>> = G::O;
+    // type FlatMap<I: IntoIterator, G: FlatMap<I = I::Item>> =
+    //     core::iter::Flatten<core::option::IntoIter<G::O>>;
 
     // #[inline(always)]
     // fn flat_map<I: IntoIterator, G: FlatMap<I = I::Item>>(i: I, g: G) -> Self::FlatMap<I, G> {
-    //     let x = unsafe { i.into_iter().next().unwrap_unchecked() };
-    //     g.flat_map(x)
+    //     let x = {
+    //         match i.into_iter().next() {
+    //             Some(x) => Some(g.flat_map(x)),
+    //             _ => None,
+    //         }
+    //     };
+    //     x.into_iter().flatten()
     // }
 }

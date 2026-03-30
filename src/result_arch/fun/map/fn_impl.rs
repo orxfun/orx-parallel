@@ -1,4 +1,4 @@
-use crate::result::fun::map::fn_trait::MapRes;
+use crate::result_arch::fun::map::fn_trait::MapRes;
 use core::marker::PhantomData;
 
 // map

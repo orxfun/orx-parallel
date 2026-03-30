@@ -1,4 +1,4 @@
-use crate::{infallible::fun::map::Map, result::fun::map::fn_trait::MapRes};
+use crate::{infallible::fun::map::Map, result_arch::fun::map::fn_trait::MapRes};
 
 pub trait MapResQueue: MapRes {
     type Then<Q, H>: MapResQueue<E = Self::E, I = Self::I, O = Q>
