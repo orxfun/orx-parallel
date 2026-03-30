@@ -1,22 +1,29 @@
 use crate::infallible::{Many, One, Xap};
-use crate::result::xap_res::XapRes;
+use crate::result::xap_res::{ResOf, XapRes};
 
-pub struct XapResOneMany<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = Many>>
+pub struct XapResOneMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = One>,
+    X2: Xap<I = M, Count = Many>,
 {
     x1: X1,
     x2: X2,
 }
 
-impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = Many>>
-    XapResOneMany<M, E, X1, X2>
+impl<M, E, X1, X2> XapResOneMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = One>,
+    X2: Xap<I = M, Count = Many>,
 {
     pub fn new(x1: X1, x2: X2) -> Self {
         Self { x1, x2 }
     }
 }
 
-impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = Many>> XapRes
-    for XapResOneMany<M, E, X1, X2>
+impl<M, E, X1, X2> XapRes for XapResOneMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = One>,
+    X2: Xap<I = M, Count = Many>,
 {
     type M = M;
 
@@ -26,11 +33,48 @@ impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = Many>>
 
     type X2 = X2;
 
-    type Values = <X2 as Xap>::Values;
+    type Results = core::iter::Empty<ResOf<Self>>;
 
-    #[inline(always)]
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
+    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
         let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
-        a.map(|a| self.x2.xap(a))
+        // let b = a.map(|a| self.x2.xap(a));
+        // let c = match b {
+        //     Ok(b) => b.into_iter().map(Ok),
+        //     Err(e) => todo!(),
+        // };
+        todo!()
+    }
+
+    // type Values = <X2 as Xap>::Values;
+
+    // #[inline(always)]
+    // fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
+    //     let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
+    //     a.map(|a| self.x2.xap(a))
+    // }
+}
+
+// iter
+
+pub enum IterResOneMany<I: Iterator, E> {
+    Ok(I),
+    Err(Option<E>),
+}
+
+impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
+    type Item = Result<I::Item, E>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Ok(iter) => iter.next().map(Ok),
+            Self::Err(e) => match e.is_some() {
+                true => {
+                    // SAFETY: error can be taken out only once; and on construction
+                    // the error variant must be created with Some of an error
+                    Some(Err(unsafe { e.take().unwrap_unchecked() }))
+                }
+                false => None, // the error is already taken and returned
+            },
+        }
     }
 }
