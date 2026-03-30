@@ -1,10 +1,11 @@
-use crate::infallible::{One, Xap, ZeroOne};
+use crate::infallible::size::{Bin, One};
+use crate::infallible::xap::Xap;
 use crate::result::xap_res::{ResOf, XapRes};
 
 pub struct XapResOneBin<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Count = One>,
-    X2: Xap<I = M>,
+    X1: Xap<O = Result<M, E>, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
     x1: X1,
     x2: X2,
@@ -12,8 +13,8 @@ where
 
 impl<M, E, X1, X2> XapResOneBin<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Count = One>,
-    X2: Xap<I = M, Count = ZeroOne>,
+    X1: Xap<O = Result<M, E>, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
     pub fn new(x1: X1, x2: X2) -> Self {
         Self { x1, x2 }
@@ -22,8 +23,8 @@ where
 
 impl<M, E, X1, X2> XapRes for XapResOneBin<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Count = One>,
-    X2: Xap<I = M>,
+    X1: Xap<O = Result<M, E>, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
     type M = M;
 
@@ -37,7 +38,7 @@ where
 
     #[inline(always)]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
-        // SAFETY: X1::Count = One by the trait bound
+        // SAFETY: X1::Size= One by the trait bound
         match unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() } {
             Ok(a) => self.x2.xap(a).into_iter().next().map(Ok),
             Err(e) => Some(Err(e)),
@@ -50,4 +51,11 @@ where
         = XapResOneBin<M, E, X1, X2::Map<Q, H>>
     where
         H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
+
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send,
+    {
+        XapResOneBin::new(self.x1, self.x2.map(h))
+    }
 }
