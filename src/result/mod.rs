@@ -1,3 +1,4 @@
+mod par_res_iter;
 mod par_runner;
 mod thread_execution;
 mod xap_res;
