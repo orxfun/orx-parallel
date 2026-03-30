@@ -1,3 +1,4 @@
+use crate::infallible::fun::map::FnMap;
 use crate::infallible::xap::{Xap, XapOne};
 use crate::infallible::{fun::map::Map, size::One};
 
@@ -37,7 +38,7 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     // transformations
 
     type Map<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = OneM<Self, FnMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 
@@ -45,6 +46,6 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     where
         H: Fn(Self::O) -> Q + Copy + Send,
     {
-        todo!()
+        OneM::new(self, FnMap::new(h))
     }
 }
