@@ -1,5 +1,5 @@
-use crate::infallible::size::{Bin, Many, One};
-use crate::infallible::xap::Xap;
+use crate::infallible::size::{Many, One};
+use crate::infallible::xap::{Xap, XapOne};
 use crate::result::xap_res::XapRes;
 
 pub struct XapResOneMany<M, E, X1, X2>
@@ -38,7 +38,7 @@ where
 
     #[inline]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
-        match unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() } {
+        match self.x1.one_value(i) {
             Ok(a) => IterResOneMany::ok(self.x2.xap(a).into_iter()),
             Err(e) => IterResOneMany::err(e),
         }

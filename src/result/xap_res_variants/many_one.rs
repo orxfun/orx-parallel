@@ -1,5 +1,5 @@
 use crate::infallible::size::{Many, One};
-use crate::infallible::xap::Xap;
+use crate::infallible::xap::{Xap, XapOne};
 use crate::result::xap_res::XapRes;
 
 pub struct XapResManyOne<M, E, X1, X2>
@@ -76,8 +76,6 @@ where
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter
-            .next()
-            .map(|a| a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }))
+        self.iter.next().map(|a| a.map(|a| self.x2.one_value(a)))
     }
 }
