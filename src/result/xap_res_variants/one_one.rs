@@ -30,6 +30,6 @@ impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = One>> 
     #[inline(always)]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
         let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
-        a.map(|x| [unsafe { self.x2.xap(x).into_iter().next().unwrap_unchecked() }])
+        a.map(|a| [unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }])
     }
 }
