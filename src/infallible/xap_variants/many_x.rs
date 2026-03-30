@@ -35,6 +35,20 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
         let (g, inner) = (self.g, None);
         IterManyX { i, g: g, inner }
     }
+
+    // transformations
+
+    type Map<Q, H>
+        = crate::infallible::xap::Fake<Self::I, Q>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send;
+
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send,
+    {
+        todo!()
+    }
 }
 
 // iter

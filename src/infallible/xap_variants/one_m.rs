@@ -33,4 +33,18 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
     fn xap(&self, i: Self::I) -> Self::Values {
         [self.g.map(self.x.one_value(i))]
     }
+
+    // transformations
+
+    type Map<Q, H>
+        = crate::infallible::xap::Fake<Self::I, Q>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send;
+
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(Self::O) -> Q + Copy + Send,
+    {
+        todo!()
+    }
 }
