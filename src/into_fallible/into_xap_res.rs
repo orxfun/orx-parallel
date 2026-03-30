@@ -2,7 +2,7 @@ use crate::infallible::Xap;
 use crate::infallible::fun::*;
 use crate::infallible::size::{Bin, Many, One};
 use crate::infallible::xap_variants::*;
-use crate::result::xap_res::XapRes;
+use crate::result::XapRes;
 use crate::result::xap_res_variants::*;
 
 pub trait IntoXapRes {
