@@ -19,6 +19,7 @@ extern crate std;
 
 mod parameters;
 mod pool;
+mod results;
 mod runner;
 
 pub mod infallible;
