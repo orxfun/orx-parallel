@@ -1,4 +1,5 @@
 mod fun;
+mod par_iter;
 mod par_runner;
 mod size;
 mod thread_execution;
