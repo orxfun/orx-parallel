@@ -1,4 +1,4 @@
-// mod bin_many;
+mod bin_many;
 mod bin_one;
 // mod many_one;
 mod bin_bin;
