@@ -36,7 +36,7 @@ where
     type Results = [ResOf<Self>; 1];
 
     #[inline(always)]
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+    fn xap_res(&self, i: Self::I) -> Self::Results {
         // SAFETY: X1::Count = One by the trait bound
         let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
 

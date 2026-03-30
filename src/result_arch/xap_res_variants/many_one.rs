@@ -35,7 +35,7 @@ where
 
     type Results = IterResManyOne<M, E, <<X1 as Xap>::Values as IntoIterator>::IntoIter, X2>;
 
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+    fn xap_res(&self, i: Self::I) -> Self::Results {
         let iter = self.x1.xap(i).into_iter();
         IterResManyOne { iter, x2: self.x2 }
     }

@@ -36,7 +36,7 @@ where
     type Results = Option<ResOf<Self>>;
 
     #[inline(always)]
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+    fn xap_res(&self, i: Self::I) -> Self::Results {
         let a = self.x1.xap(i).into_iter().next();
         a.and_then(|a| match a {
             Ok(a) => self.x2.xap(a).into_iter().next().map(Ok),

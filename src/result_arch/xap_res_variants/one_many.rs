@@ -36,7 +36,7 @@ where
     type Results = IterResOneMany<<<X2 as Xap>::Values as IntoIterator>::IntoIter, E>;
 
     #[inline]
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+    fn xap_res(&self, i: Self::I) -> Self::Results {
         match unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() } {
             Ok(a) => IterResOneMany::ok(self.x2.xap(a).into_iter()),
             Err(e) => IterResOneMany::err(e),

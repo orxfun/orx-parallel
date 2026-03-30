@@ -37,7 +37,7 @@ where
 
     type Results = IterResBinMany<<<X2 as Xap>::Values as IntoIterator>::IntoIter, E>;
 
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+    fn xap_res(&self, i: Self::I) -> Self::Results {
         match self.x1.xap(i).into_iter().next() {
             Some(Ok(a)) => IterResBinMany::ok(Some(self.x2.xap(a).into_iter())),
             Some(Err(e)) => IterResBinMany::err(e),
