@@ -1,5 +1,6 @@
 pub mod fun;
 mod par_iter;
+mod par_iter_transform;
 mod par_runner;
 pub mod size;
 mod thread_execution;

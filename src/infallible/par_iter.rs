@@ -33,7 +33,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
 {
-    fn new(iter: I, xap: X, exe: R, params: Params) -> Self {
+    pub(super) fn new(iter: I, xap: X, exe: R, params: Params) -> Self {
         Self {
             iter,
             xap,
@@ -42,27 +42,27 @@ where
         }
     }
 
-    fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> Par<I, Y, R> {
+    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> Par<I, Y, R> {
         Par::new(self.iter, xap, self.exe, self.params)
     }
 
-    fn destruct(self) -> (I, X, R, Params) {
+    pub(super) fn destruct(self) -> (I, X, R, Params) {
         (self.iter, self.xap, self.exe, self.params)
     }
 
     // params
 
-    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+    pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
     }
 
-    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+    pub fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
         self
     }
 
-    fn iteration_order(mut self, collect: IterationOrder) -> Self {
+    pub fn iteration_order(mut self, collect: IterationOrder) -> Self {
         self.params = self.params.with_collect_ordering(collect);
         self
     }
