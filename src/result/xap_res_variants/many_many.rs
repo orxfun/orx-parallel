@@ -1,6 +1,47 @@
 use crate::infallible::{Many, Xap};
 use crate::result::xap_res::XapRes;
 
+pub struct XapResManyMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = Many>,
+    X2: Xap<I = M, Count = Many>,
+{
+    x1: X1,
+    x2: X2,
+}
+
+impl<M, E, X1, X2> XapResManyMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = Many>,
+    X2: Xap<I = M, Count = Many>,
+{
+    pub fn new(x1: X1, x2: X2) -> Self {
+        Self { x1, x2 }
+    }
+}
+
+impl<M, E, X1, X2> XapRes for XapResManyMany<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = Many>,
+    X2: Xap<I = M, Count = Many>,
+{
+    type M = M;
+
+    type E = E;
+
+    type X1 = X1;
+
+    type X2 = X2;
+
+    type Results = IterResManyMany<M, E, <<X1 as Xap>::Values as IntoIterator>::IntoIter, X2>;
+
+    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+        let iter = self.x1.xap(i).into_iter();
+        let (x2, inner) = (self.x2, None);
+        IterResManyMany { iter, x2, inner }
+    }
+}
+
 // iter
 
 pub struct IterResManyMany<M, E, I, X2>
