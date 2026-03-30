@@ -1,4 +1,5 @@
 mod fun;
+mod par_runner;
 mod size;
 mod thread_execution;
 mod val_idx;
