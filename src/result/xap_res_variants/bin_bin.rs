@@ -44,4 +44,18 @@ where
             Err(e) => Some(Err(e)),
         })
     }
+
+    // transformations
+
+    type Map<Q, H>
+        = XapResBinBin<M, E, X1, X2::Map<Q, H>>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
+
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send,
+    {
+        XapResBinBin::new(self.x1, self.x2.map(h))
+    }
 }

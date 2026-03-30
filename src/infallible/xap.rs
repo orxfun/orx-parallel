@@ -14,7 +14,7 @@ pub trait Xap: Copy + Send {
 
     // transformations
 
-    type Map<Q, H>: Xap<I = Self::I, O = Q>
+    type Map<Q, H>: Xap<I = Self::I, O = Q, Size = Self::Size>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 
