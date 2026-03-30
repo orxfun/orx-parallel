@@ -39,4 +39,22 @@ impl Val {
 
         acc
     }
+
+    pub fn reduce_res<T, E, F>(results: Vec<Result<Option<T>, E>>, f: F) -> Result<Option<T>, E>
+    where
+        F: Fn(T, T) -> T,
+    {
+        let mut acc = None;
+
+        for x in results {
+            match (acc.is_some(), x) {
+                (true, Ok(Some(x))) => acc = acc.map(|y| f(y, x)),
+                (false, Ok(Some(x))) => acc = Some(x),
+                (_, Ok(None)) => {}
+                (_, Err(e)) => return Err(e),
+            }
+        }
+
+        Ok(acc)
+    }
 }
