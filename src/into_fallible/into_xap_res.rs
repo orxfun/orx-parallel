@@ -63,3 +63,46 @@ impl<T, E> IntoXapRes for Id<Result<T, E>> {
         XapResOneOne::new(self, Id::new())
     }
 }
+
+// many_f
+
+impl<T, E, X, G> IntoXapRes for ManyF<X, G>
+where
+    X: Xap<Size = Many>,
+    G: FilterMap<I = X::O, O = Result<T, E>>,
+{
+    type XapRes = XapResManyOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResManyOne::new(self, Id::new())
+    }
+}
+
+// many_m
+
+impl<T, E, X, G> IntoXapRes for ManyM<X, G>
+where
+    X: Xap<Size = Many>,
+    G: Map<I = X::O, O = Result<T, E>>,
+{
+    type XapRes = XapResManyOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResManyOne::new(self, Id::new())
+    }
+}
+
+// many_x
+
+impl<T, E, X, G> IntoXapRes for ManyX<X, G>
+where
+    X: Xap<Size = Many>,
+    G: FlatMap<I = X::O>,
+    G::O: IntoIterator<Item = Result<T, E>>,
+{
+    type XapRes = XapResManyOne<T, E, Self, Id<T>>;
+
+    fn into_xap_res(self) -> Self::XapRes {
+        XapResManyOne::new(self, Id::new())
+    }
+}
