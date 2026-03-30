@@ -1,6 +1,5 @@
 use crate::infallible::{Many, One, Xap};
 use crate::result::xap_res::XapRes;
-use core::marker::PhantomData;
 
 pub struct XapResManyOne<M, E, X1, X2>
 where
@@ -21,46 +20,39 @@ where
     }
 }
 
-// impl<M, E, X1, X2> XapRes for XapResManyOne<M, E, X1, X2>
-// where
-//     X1: Xap<O = Result<M, E>, Count = Many>,
-//     X2: Xap<I = M, Count = One>,
-// {
-//     type M = M;
+impl<M, E, X1, X2> XapRes for XapResManyOne<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = Many>,
+    X2: Xap<I = M, Count = One>,
+{
+    type M = M;
 
-//     type E = E;
+    type E = E;
 
-//     type X1 = X1;
+    type X1 = X1;
 
-//     type X2 = X2;
+    type X2 = X2;
 
-//     type Values = <X2 as Xap>::Values;
+    type Results = IterResManyOne<M, E, <<X1 as Xap>::Values as IntoIterator>::IntoIter, X2>;
 
-//     #[inline(always)]
-//     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Result<Self::Values, Self::E> {
-//         let a = self.x1.xap(i);
-//         let b = a
-//             .into_iter()
-//             .map(|a| a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() }));
-
-//         //  Result<<X2 as Xap>::O, E>
-//         // Map<X1::Values::IntoIter, impl FnMut(Result<M, E>) -> Result<<X2 as Xap>::O, E>>
-//         todo!()
-//     }
-// }
+    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+        let iter = self.x1.xap(i).into_iter();
+        IterResManyOne { iter, x2: self.x2 }
+    }
+}
 
 // iter
 
-pub struct IterResManyOne<'a, M, E, I, X2>
+pub struct IterResManyOne<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
     X2: Xap<I = M, Count = One>,
 {
     iter: I,
-    x2: &'a X2,
+    x2: X2,
 }
 
-impl<'a, M, E, I, X2> Iterator for IterResManyOne<'a, M, E, I, X2>
+impl<M, E, I, X2> Iterator for IterResManyOne<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
     X2: Xap<I = M, Count = One>,
