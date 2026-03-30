@@ -100,4 +100,18 @@ impl<I> Xap for Id<I> {
     {
         todo!()
     }
+
+    // transformations - helper
+
+    type Mapped<M>
+        = OneM<Self, M>
+    where
+        M: Map<I = Self::O>;
+
+    fn mapped<M>(self, m: M) -> Self::Mapped<M>
+    where
+        M: Map<I = Self::O>,
+    {
+        OneM::new(self, m)
+    }
 }
