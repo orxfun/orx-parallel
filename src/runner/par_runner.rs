@@ -1,5 +1,6 @@
 use crate::parameters::Params;
 use crate::pool::ParThreadPool;
+use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParRunner: Sized + Sync {
     /// Underlying thread pool.
@@ -151,5 +152,14 @@ pub trait ParRunner: Sized + Sync {
         let max_nt = self.pool().max_num_threads_for_computation(params, len);
         let state = self.new_state(params, max_nt, len);
         (max_nt, state)
+    }
+
+    fn broadcast_stop<I: ConcurrentIter>(
+        iter: &I,
+        state: &Self::State,
+        chunk_state: Self::ChunkState,
+    ) {
+        iter.skip_to_end();
+        Self::complete_chunk(state, chunk_state);
     }
 }

@@ -1,6 +1,6 @@
 use crate::infallible::val_idx::ValIdx;
 use crate::infallible::xap::Xap;
-use crate::{infallible::thread_execution::sync::broadcast_stop, runner::ParRunner};
+use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<ValIdx<X::O>>
@@ -20,7 +20,7 @@ where
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
                     if let Some(val) = x.xap(i).into_iter().next() {
-                        broadcast_stop::<_, Q>(iter, state, chunk_state);
+                        Q::broadcast_stop(iter, state, chunk_state);
                         return Some(ValIdx::new(val, idx));
                     }
                 }
@@ -35,7 +35,7 @@ where
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
                         if let Some(val) = chunk.flat_map(|i| x.xap(i).into_iter()).next() {
-                            broadcast_stop::<_, Q>(iter, state, chunk_state);
+                            Q::broadcast_stop(iter, state, chunk_state);
                             return Some(ValIdx::new(val, idx));
                         }
                     }
