@@ -1,8 +1,6 @@
 use crate::infallible::size::{Bin, Many};
 use crate::infallible::xap::Xap;
-use crate::result::xap_res::{ResOf, XapRes};
-use core::iter::Flatten;
-use core::option::IntoIter;
+use crate::result::xap_res::XapRes;
 
 pub struct XapResBinMany<M, E, X1, X2>
 where
