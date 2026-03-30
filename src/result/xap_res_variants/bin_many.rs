@@ -1,5 +1,5 @@
 use crate::infallible::size::{Bin, Many};
-use crate::infallible::xap::Xap;
+use crate::infallible::xap::{Xap, XapBin};
 use crate::result::xap_res::XapRes;
 
 pub struct XapResBinMany<M, E, X1, X2>
@@ -37,7 +37,7 @@ where
     type Results = IterResBinMany<<<X2 as Xap>::Values as IntoIterator>::IntoIter, E>;
 
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
-        match self.x1.xap(i).into_iter().next() {
+        match self.x1.bin_value(i) {
             Some(Ok(a)) => IterResBinMany::ok(Some(self.x2.xap(a).into_iter())),
             Some(Err(e)) => IterResBinMany::err(e),
             None => IterResBinMany::ok(None),

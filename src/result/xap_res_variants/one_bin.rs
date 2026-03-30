@@ -1,5 +1,5 @@
 use crate::infallible::size::{Bin, One};
-use crate::infallible::xap::Xap;
+use crate::infallible::xap::{Xap, XapBin, XapOne};
 use crate::result::xap_res::{ResOf, XapRes};
 
 pub struct XapResOneBin<M, E, X1, X2>
@@ -38,9 +38,8 @@ where
 
     #[inline(always)]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
-        // SAFETY: X1::Size= One by the trait bound
-        match unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() } {
-            Ok(a) => self.x2.xap(a).into_iter().next().map(Ok),
+        match self.x1.one_value(i) {
+            Ok(a) => self.x2.bin_value(a).map(Ok),
             Err(e) => Some(Err(e)),
         }
     }

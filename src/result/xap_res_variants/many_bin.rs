@@ -1,5 +1,5 @@
 use crate::infallible::size::{Bin, Many};
-use crate::infallible::xap::Xap;
+use crate::infallible::xap::{Xap, XapBin};
 use crate::result::xap_res::XapRes;
 
 pub struct XapResManyBin<M, E, X1, X2>
@@ -79,7 +79,7 @@ where
         loop {
             match self.iter.next() {
                 Some(Ok(a)) => {
-                    let b = self.x2.xap(a).into_iter().next();
+                    let b = self.x2.bin_value(a);
                     if b.is_some() {
                         return b.map(Ok);
                     }

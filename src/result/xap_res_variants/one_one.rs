@@ -1,5 +1,5 @@
 use crate::infallible::size::One;
-use crate::infallible::xap::Xap;
+use crate::infallible::xap::{Xap, XapOne};
 use crate::result::xap_res::{ResOf, XapRes};
 
 pub struct XapResOneOne<M, E, X1, X2>
@@ -38,11 +38,8 @@ where
 
     #[inline(always)]
     fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
-        // SAFETY: X1::Size= One by the trait bound
-        let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
-
-        // SAFETY: X2::Size= One is satisfied by the only public constructor
-        [a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() })]
+        let a = self.x1.one_value(i);
+        [a.map(|a| self.x2.one_value(a))]
     }
 
     // transformations
