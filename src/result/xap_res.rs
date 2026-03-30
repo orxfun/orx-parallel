@@ -12,3 +12,15 @@ pub struct XapRes<O, E, X1: Xap<O = Result<O, E>>, X2: Xap<I = O>> {
     x1: X1,
     x2: X2,
 }
+
+impl<O, E, X1: Xap<O = Result<O, E>>, X2: Xap<I = O>> XapRes<O, E, X1, X2> {
+    pub fn new(x1: X1, x2: X2) -> Self {
+        Self { x1, x2 }
+    }
+
+    // compute
+
+    fn xap_res(&self, i: X1::I) {
+        todo!()
+    }
+}
