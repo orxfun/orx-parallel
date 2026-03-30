@@ -1,7 +1,8 @@
 use crate::infallible::fun::filter_map::{FnFil, FnFilMap};
 use crate::infallible::fun::flat_map::FnFlatMap;
-use crate::infallible::fun::map::{FnIns, FnMap, Map};
+use crate::infallible::fun::map::{FnIns, FnMap};
 use crate::infallible::xap::Xap;
+use crate::infallible::xap_variants::many_f::ManyF;
 use crate::infallible::xap_variants::many_m::ManyM;
 use crate::infallible::{fun::flat_map::FlatMap, size::Many};
 
@@ -55,7 +56,7 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
     }
 
     type Inspect<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = ManyM<Self, FnIns<Self::O, H>>
     where
         H: Fn(&Self::O) + Copy + Send;
 
@@ -63,11 +64,11 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(&Self::O) + Copy + Send,
     {
-        todo!()
+        ManyM::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = crate::infallible::xap::Fake<Self::I, Self::O>
+        = ManyF<Self, FnFil<Self::O, H>>
     where
         H: Fn(&Self::O) -> bool + Copy + Send;
 
@@ -75,11 +76,11 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(&Self::O) -> bool + Copy + Send,
     {
-        todo!()
+        ManyF::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
-        = crate::infallible::xap::Fake<Self::I, Q>
+        = ManyF<Self, FnFilMap<Self::O, Q, H>>
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
@@ -87,11 +88,11 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(Self::O) -> Option<Q> + Copy + Send,
     {
-        todo!()
+        ManyF::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = crate::infallible::xap::Fake<Self::I, <V as IntoIterator>::Item>
+        = ManyX<Self, FnFlatMap<Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send;
@@ -101,7 +102,7 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
         V: IntoIterator,
         H: Fn(Self::O) -> V + Copy + Send,
     {
-        todo!()
+        ManyX::new(self, FnFlatMap::new(h))
     }
 }
 
