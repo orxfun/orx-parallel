@@ -37,4 +37,8 @@ pub trait XapRes {
 
     /// Second part of the computation that operates on the success type `M`.
     type X2: Xap<I = Self::M>;
+
+    type SuccessValues;
+
+    fn xap_res(&self, i: I) -> Result<Self::SuccessValues, E>;
 }
