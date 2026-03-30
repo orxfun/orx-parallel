@@ -1,4 +1,4 @@
-mod fun;
+pub mod fun;
 mod par_iter;
 mod par_runner;
 pub mod size;
