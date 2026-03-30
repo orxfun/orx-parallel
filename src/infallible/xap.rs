@@ -1,4 +1,4 @@
-use crate::infallible::fun::map::Map;
+use crate::infallible::fun::Map;
 use crate::infallible::size::{Bin, One, Size};
 
 pub trait Xap: Copy + Send {

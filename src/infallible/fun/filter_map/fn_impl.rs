@@ -1,4 +1,4 @@
-use crate::infallible::fun::filter_map::FilterMap;
+use crate::infallible::fun::FilterMap;
 use core::marker::PhantomData;
 
 // filter_map

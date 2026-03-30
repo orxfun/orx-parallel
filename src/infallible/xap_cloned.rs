@@ -1,4 +1,4 @@
-use crate::infallible::{fun::map::FnCloned, xap::Xap};
+use crate::infallible::{fun::FnCloned, xap::Xap};
 
 pub trait XapCloned<'a, O: 'a + Clone>: Xap<O = &'a O> {
     fn cloned(self) -> Self::Mapped<FnCloned<'a, O>>;
