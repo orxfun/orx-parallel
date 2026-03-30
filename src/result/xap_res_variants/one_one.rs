@@ -28,18 +28,18 @@ where
     X1: Xap<O = Result<M, E>, Size = One>,
     X2: Xap<I = M, Size = One>,
 {
+    type I = X1::I;
+
     type M = M;
 
     type E = E;
 
-    type X1 = X1;
-
-    type X2 = X2;
+    type O = X2::O;
 
     type Results = [ResOf<Self>; 1];
 
     #[inline(always)]
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results {
+    fn xap_res(&self, i: Self::I) -> Self::Results {
         let a = self.x1.one_value(i);
         [a.map(|a| self.x2.one_value(a))]
     }
@@ -49,11 +49,11 @@ where
     type Map<Q, H>
         = XapResOneOne<M, E, X1, X2::Map<Q, H>>
     where
-        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
+        H: Fn(Self::O) -> Q + Copy + Send;
 
     fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
     where
-        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send,
+        H: Fn(Self::O) -> Q + Copy + Send,
     {
         XapResOneOne::new(self.x1, self.x2.map(h))
     }
@@ -61,11 +61,11 @@ where
     type Inspect<H>
         = XapResOneOne<M, E, X1, X2::Inspect<H>>
     where
-        H: Fn(&<Self::X2 as Xap>::O) + Copy + Send;
+        H: Fn(&Self::O) + Copy + Send;
 
     fn inspect<H>(self, h: H) -> Self::Inspect<H>
     where
-        H: Fn(&<Self::X2 as Xap>::O) + Copy + Send,
+        H: Fn(&Self::O) + Copy + Send,
     {
         XapResOneOne::new(self.x1, self.x2.inspect(h))
     }
@@ -73,11 +73,11 @@ where
     type Filter<H>
         = XapResOneBin<M, E, X1, X2::Filter<H>>
     where
-        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send;
+        H: Fn(&Self::O) -> bool + Copy + Send;
 
     fn filter<H>(self, h: H) -> Self::Filter<H>
     where
-        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send,
+        H: Fn(&Self::O) -> bool + Copy + Send,
     {
         XapResOneBin::new(self.x1, self.x2.filter(h))
     }
@@ -85,11 +85,11 @@ where
     type FilterMap<Q, H>
         = XapResOneBin<M, E, X1, X2::FilterMap<Q, H>>
     where
-        H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send;
+        H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
     fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
     where
-        H: Fn(<Self::X2 as Xap>::O) -> Option<Q> + Copy + Send,
+        H: Fn(Self::O) -> Option<Q> + Copy + Send,
     {
         XapResOneBin::new(self.x1, self.x2.filter_map(h))
     }
@@ -98,12 +98,12 @@ where
         = XapResOneMany<M, E, X1, X2::FlatMap<V, H>>
     where
         V: IntoIterator,
-        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send;
+        H: Fn(Self::O) -> V + Copy + Send;
 
     fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
     where
         V: IntoIterator,
-        H: Fn(<Self::X2 as Xap>::O) -> V + Copy + Send,
+        H: Fn(Self::O) -> V + Copy + Send,
     {
         XapResOneMany::new(self.x1, self.x2.flat_map(h))
     }
@@ -113,11 +113,11 @@ where
     type Mapped<H>
         = XapResOneOne<M, E, X1, X2::Mapped<H>>
     where
-        H: Map<I = <Self::X2 as Xap>::O>;
+        H: Map<I = Self::O>;
 
     fn mapped<H>(self, h: H) -> Self::Mapped<H>
     where
-        H: Map<I = <Self::X2 as Xap>::O>,
+        H: Map<I = Self::O>,
     {
         XapResOneOne::new(self.x1, self.x2.mapped(h))
     }

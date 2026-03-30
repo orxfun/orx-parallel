@@ -17,7 +17,7 @@ pub trait XapRes {
 
     type Results: IntoIterator<Item = ResOf<Self>>;
 
-    fn xap_res(&self, i: <Self::X1 as Xap>::I) -> Self::Results;
+    fn xap_res(&self, i: Self::I) -> Self::Results;
 
     // transformations
 
