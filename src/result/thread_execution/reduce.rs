@@ -18,49 +18,58 @@ where
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
 
-    // let mut acc = None;
+    let mut acc = None;
 
-    // // discover first aggregate
-    // loop {
-    //     let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
-    //     let chunk_state = Q::begin_chunk(th_idx, chunk_size);
+    // discover first aggregate
+    loop {
+        let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
+        let chunk_state = Q::begin_chunk(th_idx, chunk_size);
 
-    //     match chunk_size {
-    //         0 | 1 => {
-    //             match item_puller.next() {
-    //                 Some(i) => {
-    //                     let a = x.xap_res(i).into_iter();
-    //                     let result = x.xap(i).into_iter().reduce(&f);
-    //                     if result.is_some() {
-    //                         acc = result;
-    //                         break;
-    //                     }
-    //                 }
-    //                 // TODO: a good back-off strategy might be used, needs benchmark with ConcurrentQueue
-    //                 None if iter.is_completed_when_none_returned() => break,
-    //                 None => {}
-    //             }
-    //         }
-    //         c => {
-    //             if c > chunk_puller.chunk_size() {
-    //                 chunk_puller = iter.chunk_puller(c);
-    //             }
+        match chunk_size {
+            0 | 1 => {
+                match item_puller.next() {
+                    Some(i) => {
+                        for a in x.xap_res(i).into_iter() {
+                            acc = match (a, acc.is_some()) {
+                                (Ok(a), true) => acc.map(|agg| f(agg, a)),
+                                (Ok(a), false) => Some(a),
+                                (Err(e), _) => {
+                                    Q::broadcast_stop(iter, state, chunk_state);
+                                    return Err(e);
+                                }
+                            };
+                        }
+                    }
+                    // TODO: a good back-off strategy might be used, needs benchmark with ConcurrentQueue
+                    None if iter.is_completed_when_none_returned() => break,
+                    None => {}
+                }
+            }
+            c => {
+                if c > chunk_puller.chunk_size() {
+                    chunk_puller = iter.chunk_puller(c);
+                }
 
-    //             match chunk_puller.pull() {
-    //                 Some(chunk) => {
-    //                     let result = chunk.flat_map(|i| x.xap(i).into_iter()).reduce(&f);
-    //                     if result.is_some() {
-    //                         acc = result;
-    //                         break;
-    //                     }
-    //                 }
-    //                 None if iter.is_completed_when_none_returned() => break,
-    //                 None => {}
-    //             }
-    //         }
-    //     }
-    //     Q::complete_chunk(state, chunk_state);
-    // }
+                match chunk_puller.pull() {
+                    Some(chunk) => {
+                        for a in chunk.flat_map(|i| x.xap_res(i)) {
+                            acc = match (a, acc.is_some()) {
+                                (Ok(a), true) => acc.map(|agg| f(agg, a)),
+                                (Ok(a), false) => Some(a),
+                                (Err(e), _) => {
+                                    Q::broadcast_stop(iter, state, chunk_state);
+                                    return Err(e);
+                                }
+                            };
+                        }
+                    }
+                    None if iter.is_completed_when_none_returned() => break,
+                    None => {}
+                }
+            }
+        }
+        Q::complete_chunk(state, chunk_state);
+    }
 
     // // fold over the aggregate
     // let result = match acc {
