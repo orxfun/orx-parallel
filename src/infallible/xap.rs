@@ -28,7 +28,7 @@ impl<X: Xap<Size = One>> XapOne for X {}
 
 pub trait XapBin: Xap<Size = Bin> {
     #[inline(always)]
-    fn opt_value(&self, i: Self::I) -> Option<Self::O> {
+    fn bin_value(&self, i: Self::I) -> Option<Self::O> {
         // SAFETY: by definition the result has exactly zero or one element
         self.xap(i).into_iter().next()
     }
