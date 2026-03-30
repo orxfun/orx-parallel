@@ -7,5 +7,6 @@ mod val_idx;
 mod xap;
 mod xap_variants;
 
+pub use count::{Count, Many, One, ZeroOne};
 pub use par_iter::{Par, par};
 pub use xap::Xap;
