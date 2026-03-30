@@ -36,4 +36,12 @@ pub trait XapRes {
     fn inspect<H>(self, h: H) -> Self::Inspect<H>
     where
         H: Fn(&<Self::X2 as Xap>::O) + Copy + Send;
+
+    type Filter<H>: XapRes<M = Self::M, E = Self::E, X1 = Self::X1, X2 = <Self::X2 as Xap>::Filter<H>>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send;
+
+    fn filter<H>(self, h: H) -> Self::Filter<H>
+    where
+        H: Fn(&<Self::X2 as Xap>::O) -> bool + Copy + Send;
 }
