@@ -79,8 +79,7 @@ pub trait ParRunnerResult: ParRunner {
             }
         });
 
-        // results_bag.into_inner().into_iter().flatten().reduce(f)
-        todo!()
+        Val::reduce_res(results_bag.into_inner().into_inner(), f)
     }
 }
 
