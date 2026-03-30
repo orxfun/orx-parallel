@@ -1,21 +1,29 @@
 use crate::infallible::{One, Xap};
 use crate::result::xap_res::{ResOf, XapRes};
 
-pub struct XapResOneOne<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = One>> {
+pub struct XapResOneOne<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = One>,
+    X2: Xap<I = M, Count = One>,
+{
     x1: X1,
     x2: X2,
 }
 
-impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = One>>
-    XapResOneOne<M, E, X1, X2>
+impl<M, E, X1, X2> XapResOneOne<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = One>,
+    X2: Xap<I = M, Count = One>,
 {
     pub fn new(x1: X1, x2: X2) -> Self {
         Self { x1, x2 }
     }
 }
 
-impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = One>> XapRes
-    for XapResOneOne<M, E, X1, X2>
+impl<M, E, X1, X2> XapRes for XapResOneOne<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Count = One>,
+    X2: Xap<I = M, Count = One>,
 {
     type M = M;
 
@@ -32,4 +40,11 @@ impl<M, E, X1: Xap<O = Result<M, E>, Count = One>, X2: Xap<I = M, Count = One>> 
         let a = unsafe { self.x1.xap(i).into_iter().next().unwrap_unchecked() };
         [a.map(|a| unsafe { self.x2.xap(a).into_iter().next().unwrap_unchecked() })]
     }
+
+    // transformations
+
+    // type Map<Q, H>
+    //     = XapResOneOne<M, E, X1, X2::Map<Q, H>>
+    // where
+    //     H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
 }
