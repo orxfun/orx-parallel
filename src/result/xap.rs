@@ -1,15 +1,7 @@
-use crate::result::count::Count;
+use crate::{infallible::Xap, result::count::Count};
 
-pub trait XapRes: Copy + Send {
-    type I;
+pub struct XapRes<X: Xap>(X);
 
-    type O;
-
-    type E;
-
-    type Count: Count;
-
-    type Values: IntoIterator<Item = Result<Self::O, Self::E>>;
-
-    fn xap(&self, i: Self::I) -> Self::Values;
+impl<X: Xap> XapRes<X> {
+    //
 }
