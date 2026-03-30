@@ -7,4 +7,4 @@ mod val_idx;
 pub mod xap;
 mod xap_cloned;
 mod xap_copied;
-mod xap_variants;
+pub mod xap_variants;
