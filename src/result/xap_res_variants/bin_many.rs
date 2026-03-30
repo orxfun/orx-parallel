@@ -1,12 +1,13 @@
-use crate::infallible::{Many, Xap, ZeroOne};
+use crate::infallible::size::{Bin, Many};
+use crate::infallible::xap::Xap;
 use crate::result::xap_res::{ResOf, XapRes};
 use core::iter::Flatten;
 use core::option::IntoIter;
 
 pub struct XapResBinMany<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Count = ZeroOne>,
-    X2: Xap<I = M, Count = Many>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = Many>,
 {
     x1: X1,
     x2: X2,
@@ -14,8 +15,8 @@ where
 
 impl<M, E, X1, X2> XapResBinMany<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Count = ZeroOne>,
-    X2: Xap<I = M, Count = Many>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = Many>,
 {
     pub fn new(x1: X1, x2: X2) -> Self {
         Self { x1, x2 }
@@ -24,8 +25,8 @@ where
 
 impl<M, E, X1, X2> XapRes for XapResBinMany<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Count = ZeroOne>,
-    X2: Xap<I = M, Count = Many>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = Many>,
 {
     type M = M;
 
@@ -43,6 +44,20 @@ where
             Some(Err(e)) => IterResBinMany::err(e),
             None => IterResBinMany::ok(None),
         }
+    }
+
+    // transformations
+
+    type Map<Q, H>
+        = XapResBinMany<M, E, X1, X2::Map<Q, H>>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send;
+
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(<Self::X2 as Xap>::O) -> Q + Copy + Send,
+    {
+        XapResBinMany::new(self.x1, self.x2.map(h))
     }
 }
 
