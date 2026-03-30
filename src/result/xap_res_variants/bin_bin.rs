@@ -13,6 +13,31 @@ where
     x2: X2,
 }
 
+impl<M, E, X1, X2> Clone for XapResBinBin<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = Bin>,
+{
+    fn clone(&self) -> Self {
+        let (x1, x2) = (self.x1, self.x2);
+        Self { x1, x2 }
+    }
+}
+
+impl<M, E, X1, X2> Copy for XapResBinBin<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = Bin>,
+{
+}
+
+unsafe impl<M, E, X1, X2> Send for XapResBinBin<M, E, X1, X2>
+where
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = Bin>,
+{
+}
+
 impl<M, E, X1, X2> XapResBinBin<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = Bin>,

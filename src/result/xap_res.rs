@@ -2,7 +2,7 @@ use crate::infallible::fun::Map;
 
 pub type ResOf<X> = Result<<X as XapRes>::O, <X as XapRes>::E>;
 
-pub trait XapRes {
+pub trait XapRes: Copy + Send {
     // Type of the input elements.
     type I;
 
