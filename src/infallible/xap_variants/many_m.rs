@@ -1,12 +1,12 @@
-use core::iter::FusedIterator;
-
-use crate::infallible::fun::FnFlatMap;
+use crate::infallible::XapEnumerable;
 use crate::infallible::fun::{FnFil, FnFilMap};
+use crate::infallible::fun::{FnFlatMap, MapEnum};
 use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::Many;
 use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::many_f::ManyF;
 use crate::infallible::xap_variants::many_x::ManyX;
+use core::iter::FusedIterator;
 
 pub struct ManyM<X: Xap<Size = Many>, G: Map<I = X::O>> {
     x: X,
@@ -24,6 +24,16 @@ impl<X: Xap<Size = Many>, G: Map<I = X::O>> Copy for ManyM<X, G> {}
 impl<X: Xap<Size = Many>, G: Map<I = X::O>> ManyM<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
+    }
+}
+
+impl<X: XapEnumerable<Size = Many>, G: Map<I = X::O>> XapEnumerable for ManyM<X, G> {
+    type Enumerated = ManyM<X::Enumerated, MapEnum<G>>;
+
+    fn enumerate(self) -> Self::Enumerated {
+        let g = MapEnum::new(self.g);
+        let x = self.x.enumerate();
+        ManyM::new(x, g)
     }
 }
 
