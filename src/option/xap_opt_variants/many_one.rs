@@ -59,11 +59,11 @@ where
 
     type O = X2::O;
 
-    type Results = IterResManyOne<M, <<X1 as Xap>::Values as IntoIterator>::IntoIter, X2>;
+    type Results = IterOptManyOne<M, <<X1 as Xap>::Values as IntoIterator>::IntoIter, X2>;
 
     fn xap_res(&self, i: Self::I) -> Self::Results {
         let iter = self.x1.xap(i).into_iter();
-        IterResManyOne { iter, x2: self.x2 }
+        IterOptManyOne { iter, x2: self.x2 }
     }
 
     // transformations
@@ -147,7 +147,7 @@ where
 
 // iter
 
-pub struct IterResManyOne<M, I, X2>
+pub struct IterOptManyOne<M, I, X2>
 where
     I: Iterator<Item = Option<M>>,
     X2: Xap<I = M, Size = One>,
@@ -156,7 +156,7 @@ where
     x2: X2,
 }
 
-impl<M, I, X2> Iterator for IterResManyOne<M, I, X2>
+impl<M, I, X2> Iterator for IterOptManyOne<M, I, X2>
 where
     I: Iterator<Item = Option<M>>,
     X2: Xap<I = M, Size = One>,

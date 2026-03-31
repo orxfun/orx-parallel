@@ -42,6 +42,8 @@ xap_lll_cons/xap/1024   time:   [231.35 µs 235.54 µs 239.76 µs]
 xap_lll_cons/iter/32768 time:   [19.276 ms 19.543 ms 19.841 ms]
 xap_lll_cons/xap/32768  time:   [17.030 ms 17.171 ms 17.317 ms]
 
+TODO: room for performance improvement with Collect
+
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
@@ -50,7 +52,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Reduce;
 
 trait Exp {
     type Out;
