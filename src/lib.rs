@@ -29,4 +29,6 @@ pub mod into_fallible;
 pub mod option;
 pub mod result;
 
-pub use into_parallel::{IntoParIter, ParCol, ParColMut, ParDrain, Parallelizable};
+pub use into_parallel::{
+    IntoParIter, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
+};
