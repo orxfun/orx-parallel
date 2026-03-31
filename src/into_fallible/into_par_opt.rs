@@ -1,19 +1,19 @@
 use crate::infallible::Par;
 use crate::infallible::Xap;
-use crate::into_fallible::IntoXapRes;
-use crate::result::ParRes;
+use crate::into_fallible::IntoXapOpt;
+use crate::option::ParOpt;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<O, E, I, X, R> Par<I, X, R>
+impl<O, I, X, R> Par<I, X, R>
 where
     I: ConcurrentIter,
-    X: Xap<I = I::Item, O = Result<O, E>> + IntoXapRes,
+    X: Xap<I = I::Item, O = Option<O>> + IntoXapOpt,
     R: ParRunner,
 {
-    pub fn fallible_result(self) -> ParRes<I, X::XapRes, R> {
+    pub fn fallible_option(self) -> ParOpt<I, X::XapOpt, R> {
         let (iter, xap, exe, params) = self.destruct();
         let xap = xap.into_xap_res();
-        ParRes::new(iter, xap, exe, params)
+        ParOpt::new(iter, xap, exe, params)
     }
 }
