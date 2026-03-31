@@ -133,6 +133,15 @@ where
         let (iter, x, mut exe, params) = self.destruct();
         exe.reduce(params, iter, x, f)
     }
+
+    // compute - derived
+
+    pub fn for_each<F>(self, f: F)
+    where
+        F: Fn(X::O) + Send + Copy,
+    {
+        let _ = self.map(f).reduce(|_, _| {});
+    }
 }
 
 // transformations
