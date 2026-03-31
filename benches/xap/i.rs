@@ -4,35 +4,35 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_i/iter/1024         time:   [492.96 ns 502.37 ns 510.84 ns]
-xap_i/xap/1024          time:   [506.02 ns 511.53 ns 517.32 ns]
+xap_i/iter/1024         time:   [552.98 ns 558.96 ns 565.85 ns]
+xap_i/xap/1024          time:   [533.92 ns 538.51 ns 543.12 ns]
 
-xap_i/iter/32768        time:   [17.248 µs 17.578 µs 17.938 µs]
-xap_i/xap/32768         time:   [16.838 µs 17.134 µs 17.463 µs]
+xap_i/iter/32768        time:   [20.175 µs 20.519 µs 20.886 µs]
+xap_i/xap/32768         time:   [20.981 µs 21.413 µs 21.854 µs]
 
-xap_i/iter/1048576      time:   [1.7246 ms 1.7401 ms 1.7579 ms]
-xap_i/xap/1048576       time:   [1.7432 ms 1.7598 ms 1.7785 ms]
+xap_i/iter/1048576      time:   [2.0699 ms 2.0949 ms 2.1214 ms]
+xap_i/xap/1048576       time:   [2.0866 ms 2.1192 ms 2.1541 ms]
 
 
 COLLECT:
-xap_i/iter/1024         time:   [1.0152 µs 1.0232 µs 1.0315 µs]
-xap_i/xap/1024          time:   [1.1702 µs 1.1786 µs 1.1875 µs]
+xap_i/iter/1024         time:   [1.1623 µs 1.1722 µs 1.1829 µs]
+xap_i/xap/1024          time:   [1.2733 µs 1.2837 µs 1.2941 µs]
 
-xap_i/iter/32768        time:   [64.285 µs 64.678 µs 65.104 µs]
-xap_i/xap/32768         time:   [69.470 µs 69.988 µs 70.547 µs]
+xap_i/iter/32768        time:   [71.434 µs 72.159 µs 72.903 µs]
+xap_i/xap/32768         time:   [74.546 µs 75.423 µs 76.370 µs]
 
-xap_i/iter/1048576      time:   [2.4129 ms 2.4319 ms 2.4527 ms]
-xap_i/xap/1048576       time:   [2.5399 ms 2.5614 ms 2.5839 ms]
+xap_i/iter/1048576      time:   [2.7622 ms 2.7922 ms 2.8242 ms]
+xap_i/xap/1048576       time:   [2.8856 ms 2.9066 ms 2.9278 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;

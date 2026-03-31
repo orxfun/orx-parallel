@@ -4,37 +4,37 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_iii/iter/1024       time:   [780.92 ns 785.57 ns 790.86 ns]
-xap_iii/xap/1024        time:   [796.96 ns 802.17 ns 807.29 ns]
+xap_iii/iter/1024       time:   [1.0427 µs 1.0517 µs 1.0614 µs]
+xap_iii/xap/1024        time:   [1.5707 µs 1.5984 µs 1.6280 µs]
 
-xap_iii/iter/32768      time:   [46.491 µs 46.968 µs 47.432 µs]
-xap_iii/xap/32768       time:   [96.832 µs 97.809 µs 98.837 µs]
+xap_iii/iter/32768      time:   [72.918 µs 74.710 µs 76.277 µs]
+xap_iii/xap/32768       time:   [78.941 µs 79.989 µs 81.193 µs]
 
-xap_iii/iter/1048576    time:   [2.1013 ms 2.1204 ms 2.1395 ms]
-xap_iii/xap/1048576     time:   [4.3454 ms 4.3667 ms 4.3881 ms]
+xap_iii/iter/1048576    time:   [2.5374 ms 2.5682 ms 2.6006 ms]
+xap_iii/xap/1048576     time:   [3.1935 ms 3.2185 ms 3.2435 ms]
 
 
 COLLECT:
-xap_iii/iter/1024       time:   [1.5568 µs 1.5674 µs 1.5787 µs]
-xap_iii/xap/1024        time:   [1.5886 µs 1.6002 µs 1.6118 µs]
+xap_iii/iter/1024       time:   [1.9682 µs 2.0051 µs 2.0412 µs]
+xap_iii/xap/1024        time:   [2.7314 µs 2.7785 µs 2.8304 µs]
 
-xap_iii/iter/32768      time:   [153.17 µs 154.37 µs 155.61 µs]
-xap_iii/xap/32768       time:   [127.73 µs 128.83 µs 130.01 µs]
+xap_iii/iter/32768      time:   [187.48 µs 190.12 µs 193.27 µs]
+xap_iii/xap/32768       time:   [189.11 µs 192.10 µs 195.28 µs]
 
-xap_iii/iter/1048576    time:   [5.8130 ms 5.8440 ms 5.8766 ms]
-xap_iii/xap/1048576     time:   [5.2404 ms 5.2918 ms 5.3447 ms]
+xap_iii/iter/1048576    time:   [7.2220 ms 7.2930 ms 7.3674 ms]
+xap_iii/xap/1048576     time:   [7.6169 ms 7.7408 ms 7.8721 ms]
 
-(!) SUM has a significant difference
+TODO: room for performance improvement
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;

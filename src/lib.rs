@@ -25,4 +25,5 @@ mod runner;
 pub mod infallible;
 pub mod infallible_arch;
 pub mod into_fallible;
+pub mod option;
 pub mod result;

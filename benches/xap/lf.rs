@@ -36,21 +36,21 @@ xap_lf/xap/32768        time:   [434.55 µs 437.39 µs 440.32 µs]
 
 
 COLLECT BY LOOP:
-xap_lf/iter/1024        time:   [9.3649 µs 9.4237 µs 9.4871 µs]
-xap_lf/xap/1024         time:   [9.8198 µs 9.8712 µs 9.9219 µs]
+xap_lf/iter/1024        time:   [14.146 µs 14.282 µs 14.428 µs]
+xap_lf/xap/1024         time:   [10.072 µs 10.154 µs 10.249 µs]
 
-xap_lf/iter/32768       time:   [446.33 µs 449.03 µs 451.92 µs]
-xap_lf/xap/32768        time:   [495.96 µs 500.37 µs 505.15 µs]
+xap_lf/iter/32768       time:   [625.70 µs 629.32 µs 633.11 µs]
+xap_lf/xap/32768        time:   [549.41 µs 553.74 µs 558.66 µs]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = SumByLoop;
 
 trait Exp {
     type Out;
@@ -127,8 +127,7 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1).filter(f2);
     let inputs = inputs.iter().copied();
-    let iter = xap.into_iter_over(inputs);
-    // let iter = inputs.flat_map(|x| xap.xap(x));
+    let iter = inputs.flat_map(|x| xap.xap(x));
     E::out(iter)
 }
 

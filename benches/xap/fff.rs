@@ -4,35 +4,37 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_fff/iter/1024       time:   [927.21 ns 932.75 ns 938.79 ns]
-xap_fff/xap/1024        time:   [966.51 ns 972.05 ns 977.30 ns]
+xap_fff/iter/1024       time:   [986.59 ns 993.25 ns 1.0003 µs]
+xap_fff/xap/1024        time:   [1.1239 µs 1.1449 µs 1.1642 µs]
 
-xap_fff/iter/32768      time:   [104.29 µs 105.05 µs 105.87 µs]
-xap_fff/xap/32768       time:   [120.87 µs 122.11 µs 123.43 µs]
+xap_fff/iter/32768      time:   [135.40 µs 137.48 µs 139.83 µs]
+xap_fff/xap/32768       time:   [109.90 µs 111.62 µs 113.68 µs]
 
-xap_fff/iter/1048576    time:   [4.5616 ms 4.5930 ms 4.6254 ms]
-xap_fff/xap/1048576     time:   [4.6073 ms 4.6371 ms 4.6702 ms]
+xap_fff/iter/1048576    time:   [4.8968 ms 4.9689 ms 5.0483 ms]
+xap_fff/xap/1048576     time:   [5.8498 ms 6.0038 ms 6.1642 ms]
 
 
 COLLECT:
-xap_fff/iter/1024       time:   [1.9584 µs 1.9880 µs 2.0157 µs]
-xap_fff/xap/1024        time:   [2.1655 µs 2.1788 µs 2.1928 µs]
+xap_fff/iter/1024       time:   [1.8100 µs 1.8242 µs 1.8386 µs]
+xap_fff/xap/1024        time:   [2.0857 µs 2.1124 µs 2.1407 µs]
 
-xap_fff/iter/32768      time:   [177.27 µs 178.56 µs 179.94 µs]
-xap_fff/xap/32768       time:   [174.28 µs 176.04 µs 178.13 µs]
+xap_fff/iter/32768      time:   [192.00 µs 194.67 µs 197.49 µs]
+xap_fff/xap/32768       time:   [188.43 µs 190.74 µs 193.02 µs]
 
-xap_fff/iter/1048576    time:   [6.6468 ms 6.7011 ms 6.7569 ms]
-xap_fff/xap/1048576     time:   [6.8094 ms 6.8647 ms 6.9212 ms]
+xap_fff/iter/1048576    time:   [7.1527 ms 7.2340 ms 7.3226 ms]
+xap_fff/xap/1048576     time:   [8.4760 ms 8.6209 ms 8.7720 ms]
+
+TODO: room for performance improvement
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;

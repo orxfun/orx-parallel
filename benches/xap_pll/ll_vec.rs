@@ -45,7 +45,7 @@ xap_pll_ll_vec/xap/32768    time:   [4.8304 ms 4.8935 ms 4.9600 ms]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
