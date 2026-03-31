@@ -1,4 +1,4 @@
-use crate::infallible::XapEnumerable;
+use crate::infallible::XapEnumByInput;
 use crate::infallible::fun::FnFlatMap;
 use crate::infallible::fun::{FnFil, FnFilMap};
 use crate::infallible::fun::{FnIns, FnMap, Map};
@@ -27,7 +27,7 @@ impl<I> Id<I> {
     }
 }
 
-impl<I> XapEnumerable for Id<I> {
+impl<I> XapEnumByInput for Id<I> {
     type Enumerated = Id<(usize, I)>;
 
     fn enumerate(self) -> Self::Enumerated {
