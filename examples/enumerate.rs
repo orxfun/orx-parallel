@@ -3,11 +3,12 @@ pub use orx_parallel::*;
 fn start_by_enumerate() {
     let inputs: Vec<i32> = (7..4242).collect();
     let expected_sum_indices: usize = (0..inputs.len()).sum();
-    let expected_sum_values: i32 = inputs.iter().sum();
+    let expected_sum_values = inputs.iter().sum::<i32>() + 100 * inputs.len() as i32;
 
     let (sum_indices, sum_values) = inputs
         .into_par()
         .enumerate()
+        .map(|(idx, val)| (idx, val + 100))
         .reduce(|agg, (idx, value)| (agg.0 + idx, agg.1 + value))
         .unwrap_or((0, 0));
 
