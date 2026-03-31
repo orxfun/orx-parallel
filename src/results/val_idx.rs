@@ -48,4 +48,29 @@ impl<T> ValIdx<T> {
 
         Ok(value)
     }
+
+    /// Returns either of the following:
+    ///
+    /// * Some(Some(found)): no failure, found an element
+    /// * Some(None): no failure but no element to find
+    /// * None: a failure (None) is observed
+    pub fn first_opt(results: Vec<Option<Option<Self>>>) -> Option<Option<Self>> {
+        let mut min_idx = usize::MAX;
+        let mut value = None;
+
+        for x in results {
+            match x {
+                Some(Some(y)) => {
+                    if y.idx < min_idx {
+                        min_idx = y.idx;
+                        value = Some(y);
+                    }
+                }
+                Some(None) => {}
+                None => return None,
+            }
+        }
+
+        Some(value)
+    }
 }
