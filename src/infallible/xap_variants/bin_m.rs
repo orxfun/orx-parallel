@@ -1,5 +1,6 @@
-use crate::infallible::fun::FnFlatMap;
+use crate::infallible::XapEnumByInput;
 use crate::infallible::fun::{FnFil, FnFilMap};
+use crate::infallible::fun::{FnFlatMap, MapEnum};
 use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::Bin;
 use crate::infallible::xap::{Xap, XapBin};
@@ -22,6 +23,16 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Copy for BinM<X, G> {}
 impl<X: Xap<Size = Bin>, G: Map<I = X::O>> BinM<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
+    }
+}
+
+impl<X: XapEnumByInput<Size = Bin>, G: Map<I = X::O>> XapEnumByInput for BinM<X, G> {
+    type Enumerated = BinM<X::Enumerated, MapEnum<G>>;
+
+    fn enumerate(self) -> Self::Enumerated {
+        let g = MapEnum::new(self.g);
+        let x = self.x.enumerate();
+        BinM::new(x, g)
     }
 }
 

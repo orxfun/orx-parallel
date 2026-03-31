@@ -1,4 +1,4 @@
-use crate::infallible::XapEnumerable;
+use crate::infallible::XapEnumByInput;
 use crate::infallible::fun::{FnFil, FnFilMap};
 use crate::infallible::fun::{FnFlatMap, MapEnum};
 use crate::infallible::fun::{FnIns, FnMap, Map};
@@ -26,7 +26,7 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> OneM<X, G> {
     }
 }
 
-impl<X: XapEnumerable<Size = One>, G: Map<I = X::O>> XapEnumerable for OneM<X, G> {
+impl<X: XapEnumByInput<Size = One>, G: Map<I = X::O>> XapEnumByInput for OneM<X, G> {
     type Enumerated = OneM<X::Enumerated, MapEnum<G>>;
 
     fn enumerate(self) -> Self::Enumerated {
