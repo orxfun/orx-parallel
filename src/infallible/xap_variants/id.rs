@@ -1,5 +1,6 @@
-use crate::infallible::fun::{FnFil, FnFilMap};
+use crate::infallible::XapEnumerable;
 use crate::infallible::fun::FnFlatMap;
+use crate::infallible::fun::{FnFil, FnFilMap};
 use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::One;
 use crate::infallible::xap::Xap;
@@ -25,6 +26,8 @@ impl<I> Id<I> {
         Self(PhantomData)
     }
 }
+
+impl<I> XapEnumerable for Id<I> {}
 
 impl<I> Xap for Id<I> {
     type I = I;
