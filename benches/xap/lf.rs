@@ -4,11 +4,11 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_lf/iter/1024        time:   [2.0018 µs 2.0122 µs 2.0230 µs]
-xap_lf/xap/1024         time:   [3.6111 µs 3.6376 µs 3.6651 µs]
+xap_lf/iter/1024        time:   [2.4254 µs 2.4484 µs 2.4733 µs]
+xap_lf/xap/1024         time:   [2.5140 µs 2.5719 µs 2.6408 µs]
 
-xap_lf/iter/32768       time:   [173.85 µs 175.40 µs 176.86 µs]
-xap_lf/xap/32768        time:   [287.54 µs 289.24 µs 290.98 µs]
+xap_lf/iter/32768       time:   [213.78 µs 216.08 µs 218.51 µs]
+xap_lf/xap/32768        time:   [218.37 µs 220.99 µs 223.80 µs]
 
 
 SUM BY LOOP:
@@ -50,7 +50,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = SumByLoop;
+type Output = Sum;
 
 trait Exp {
     type Out;
