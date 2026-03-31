@@ -35,7 +35,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
 {
-    pub(super) fn new(iter: I, xap: X, exe: R, params: Params) -> Self {
+    pub(crate) fn new(iter: I, xap: X, exe: R, params: Params) -> Self {
         Self {
             iter,
             xap,

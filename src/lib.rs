@@ -17,6 +17,7 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+mod into_parallel;
 mod parameters;
 mod pool;
 mod results;
