@@ -50,7 +50,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Collect;
 
 trait Exp {
     type Out;
@@ -127,8 +127,7 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     let xap = Id::new().flat_map(f1).map(f2);
     let inputs = inputs.iter().copied();
-    let iter = xap.into_iter_over(inputs);
-    // let iter = inputs.flat_map(|x| xap.xap(x));
+    let iter = inputs.flat_map(|x| xap.xap(x));
     E::out(iter)
 }
 

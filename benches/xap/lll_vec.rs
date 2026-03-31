@@ -42,6 +42,8 @@ xap_lll_vec/xap/1024    time:   [604.21 µs 609.78 µs 615.32 µs]
 xap_lll_vec/iter/32768  time:   [23.533 ms 23.791 ms 24.068 ms]
 xap_lll_vec/xap/32768   time:   [31.880 ms 32.212 ms 32.551 ms]
 
+TODO: room for performance improvement
+
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
