@@ -15,24 +15,24 @@ xap_f/xap/1048576       time:   [3.3664 ms 3.3969 ms 3.4298 ms]
 
 
 COLLECT:
-xap_f/iter/1024         time:   [1.0567 µs 1.0647 µs 1.0725 µs]
-xap_f/xap/1024          time:   [1.4865 µs 1.4936 µs 1.5017 µs]
+xap_f/iter/1024         time:   [1.3871 µs 1.4086 µs 1.4337 µs]
+xap_f/xap/1024          time:   [1.8211 µs 1.8405 µs 1.8619 µs]
 
-xap_f/iter/32768        time:   [110.64 µs 111.35 µs 112.09 µs]
-xap_f/xap/32768         time:   [102.99 µs 103.64 µs 104.34 µs]
+xap_f/iter/32768        time:   [162.65 µs 164.15 µs 165.61 µs]
+xap_f/xap/32768         time:   [166.84 µs 168.93 µs 170.91 µs]
 
-xap_f/iter/1048576      time:   [4.4457 ms 4.4845 ms 4.5262 ms]
-xap_f/xap/1048576       time:   [3.7234 ms 3.7447 ms 3.7660 ms]
+xap_f/iter/1048576      time:   [6.5626 ms 6.6888 ms 6.8133 ms]
+xap_f/xap/1048576       time:   [5.1423 ms 5.2626 ms 5.3816 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;

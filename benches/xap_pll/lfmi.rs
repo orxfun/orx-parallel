@@ -45,7 +45,7 @@ xap_p_lfmi/xap/32768    time:   [503.52 µs 508.85 µs 515.34 µs]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;

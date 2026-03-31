@@ -4,44 +4,27 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_cmmmm/iter/1024     time:   [969.98 ns 980.59 ns 991.56 ns]
-xap_cmmmm/xap/1024      time:   [964.62 ns 971.19 ns 978.13 ns]
+xap_cmmmm/iter/1024     time:   [1.0900 µs 1.0998 µs 1.1101 µs]
+xap_cmmmm/xap/1024      time:   [1.2612 µs 1.2733 µs 1.2869 µs]
 
-xap_cmmmm/iter/32768    time:   [30.970 µs 31.162 µs 31.371 µs]
-xap_cmmmm/xap/32768     time:   [30.383 µs 30.544 µs 30.718 µs]
+xap_cmmmm/iter/32768    time:   [34.260 µs 34.711 µs 35.204 µs]
+xap_cmmmm/xap/32768     time:   [43.144 µs 43.696 µs 44.280 µs]
 
-xap_cmmmm/iter/1048576  time:   [1.0237 ms 1.0314 ms 1.0394 ms]
-xap_cmmmm/xap/1048576   time:   [1.0076 ms 1.0147 ms 1.0229 ms]
+xap_cmmmm/iter/1048576  time:   [1.1400 ms 1.1596 ms 1.1787 ms]
+xap_cmmmm/xap/1048576   time:   [1.2939 ms 1.3046 ms 1.3165 ms]
 
 
 COLLECT:
-xap_cmmmm/iter/1024     time:   [1.1191 µs 1.1308 µs 1.1432 µs]
-                        change: [+11.658% +13.097% +14.536%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-xap_cmmmm/xap/1024      time:   [1.1809 µs 1.1943 µs 1.2078 µs]
-                        change: [+16.501% +17.924% +19.401%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 3 outliers among 100 measurements (3.00%)
-  2 (2.00%) high mild
-  1 (1.00%) high severe
-xap_cmmmm/iter/32768    time:   [40.355 µs 40.658 µs 40.950 µs]
-                        change: [+22.438% +24.327% +26.131%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-xap_cmmmm/xap/32768     time:   [39.122 µs 39.747 µs 40.496 µs]
-                        change: [+24.019% +25.827% +27.684%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 2 outliers among 100 measurements (2.00%)
-  2 (2.00%) high mild
-Benchmarking xap_cmmmm/iter/1048576: Warming up for 3.0000 s
-Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.0s, enable flat sampling, or reduce sample count to 50.
-xap_cmmmm/iter/1048576  time:   [1.2935 ms 1.3100 ms 1.3287 ms]
-                        change: [+20.266% +22.315% +24.433%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 1 outliers among 100 measurements (1.00%)
-  1 (1.00%) high mild
-Benchmarking xap_cmmmm/xap/1048576: Warming up for 3.0000 s
-Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 6.6s, enable flat sampling, or reduce sample count to 60.
-xap_cmmmm/xap/1048576   time:   [1.3466 ms 1.3697 ms 1.3930 ms]
+xap_cmmmm/iter/1024     time:   [1.1141 µs 1.1260 µs 1.1386 µs]
+xap_cmmmm/xap/1024      time:   [1.1362 µs 1.1486 µs 1.1609 µs]
+
+xap_cmmmm/iter/32768    time:   [33.317 µs 33.575 µs 33.834 µs]
+xap_cmmmm/xap/32768     time:   [45.480 µs 46.127 µs 46.875 µs]
+
+xap_cmmmm/iter/1048576  time:   [1.3304 ms 1.3442 ms 1.3596 ms]
+xap_cmmmm/xap/1048576   time:   [1.3939 ms 1.4210 ms 1.4464 ms]
+
+TODO: room for performance improvement
 
 */
 
@@ -51,7 +34,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Sum;
+type Output = Collect;
 
 trait Exp {
     type Out;

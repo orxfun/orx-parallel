@@ -4,35 +4,32 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_ffff/iter/1024      time:   [967.37 ns 973.22 ns 978.99 ns]
-xap_ffff/xap/1024       time:   [1.1445 µs 1.1518 µs 1.1595 µs]
+xap_ffff/iter/1024      time:   [1.0321 µs 1.0382 µs 1.0450 µs]
+xap_ffff/xap/1024       time:   [1.0657 µs 1.0759 µs 1.0872 µs]
 
-xap_ffff/iter/32768     time:   [147.99 µs 150.05 µs 152.11 µs]
-xap_ffff/xap/32768      time:   [144.58 µs 145.96 µs 147.46 µs]
+xap_ffff/iter/32768     time:   [158.13 µs 160.05 µs 161.98 µs]
+xap_ffff/xap/32768      time:   [150.55 µs 152.95 µs 155.53 µs]
 
-xap_ffff/iter/1048576   time:   [5.9751 ms 6.0199 ms 6.0662 ms]
-xap_ffff/xap/1048576    time:   [5.8569 ms 5.9003 ms 5.9452 ms]
+xap_ffff/iter/1048576   time:   [6.1624 ms 6.2109 ms 6.2607 ms]
+xap_ffff/xap/1048576    time:   [6.3584 ms 6.4559 ms 6.5559 ms]
 
 
 COLLECT:
-xap_ffff/iter/1024      time:   [1.9289 µs 1.9418 µs 1.9553 µs]
-xap_ffff/xap/1024       time:   [2.0802 µs 2.0959 µs 2.1116 µs]
+xap_ffff/iter/32768     time:   [224.71 µs 226.76 µs 228.85 µs]
+xap_ffff/xap/32768      time:   [229.07 µs 232.36 µs 236.27 µs]
 
-xap_ffff/iter/32768     time:   [209.18 µs 210.54 µs 211.96 µs]
-xap_ffff/xap/32768      time:   [224.69 µs 229.12 µs 233.41 µs]
-
-xap_ffff/iter/1048576   time:   [8.1323 ms 8.1972 ms 8.2652 ms]
-xap_ffff/xap/1048576    time:   [8.1111 ms 8.1863 ms 8.2649 ms]
+xap_ffff/iter/1048576   time:   [9.1548 ms 9.2322 ms 9.3118 ms]
+xap_ffff/xap/1048576    time:   [9.0765 ms 9.2011 ms 9.3281 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;

@@ -20,19 +20,19 @@ xap_l_vec/iter/32768    time:   [302.26 µs 305.50 µs 308.84 µs]
 
 
 REDUCE:
-xap_l_vec/xap/1024      time:   [1.9825 µs 2.0055 µs 2.0287 µs]
-xap_l_vec/iter/1024     time:   [1.9883 µs 2.0086 µs 2.0299 µs]
+xap_l_vec/xap/1024      time:   [1.6870 µs 1.7055 µs 1.7265 µs]
+xap_l_vec/iter/1024     time:   [1.7315 µs 1.7523 µs 1.7749 µs]
 
-xap_l_vec/xap/32768     time:   [56.707 µs 57.055 µs 57.439 µs]
-xap_l_vec/iter/32768    time:   [66.996 µs 69.205 µs 71.633 µs]
+xap_l_vec/xap/32768     time:   [54.476 µs 54.802 µs 55.139 µs]
+xap_l_vec/iter/32768    time:   [56.800 µs 57.313 µs 57.854 µs]
 
 
 COLLECT:
-xap_l_vec/xap/1024      time:   [1.7788 µs 1.8124 µs 1.8465 µs]
-xap_l_vec/iter/1024     time:   [1.8456 µs 1.8623 µs 1.8801 µs]
+xap_l_vec/xap/1024      time:   [1.8954 µs 1.9203 µs 1.9459 µs]
+xap_l_vec/iter/1024     time:   [1.8579 µs 1.8764 µs 1.8959 µs]
 
-xap_l_vec/xap/32768     time:   [65.929 µs 66.925 µs 67.970 µs]
-xap_l_vec/iter/32768    time:   [63.919 µs 64.767 µs 65.723 µs]
+xap_l_vec/xap/32768     time:   [62.968 µs 63.561 µs 64.199 µs]
+xap_l_vec/iter/32768    time:   [63.696 µs 64.313 µs 64.933 µs]
 
 
 COLLECT BY LOOP:
@@ -45,12 +45,12 @@ xap_l_vec/iter/32768    time:   [943.80 µs 955.13 µs 968.01 µs]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Reduce;
+type Output = Collect;
 
 trait Exp {
     type Out;

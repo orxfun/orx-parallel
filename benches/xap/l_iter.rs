@@ -45,12 +45,12 @@ xap_l_iter/xap/32768    time:   [239.74 µs 241.23 µs 242.77 µs]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = SumByLoop;
+type Output = Reduce;
 
 trait Exp {
     type Out;
