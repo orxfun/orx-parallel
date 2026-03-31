@@ -37,7 +37,7 @@ pub enum NumThreads {
     Max(NonZeroUsize),
 }
 
-const ONE: NonZeroUsize = NonZeroUsize::new(1).expect("seq=1 is positive");
+const ONE: NonZeroUsize = NonZeroUsize::new(1).expect("1>0");
 
 impl From<usize> for NumThreads {
     /// Converts the nonnegative integer to number of threads as follows:
