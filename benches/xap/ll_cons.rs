@@ -28,11 +28,11 @@ xap_ll_cons/xap/32768   time:   [137.70 µs 139.25 µs 140.94 µs]
 
 
 COLLECT:
-xap_ll_cons/iter/1024   time:   [4.7522 µs 4.7991 µs 4.8534 µs]
-xap_ll_cons/xap/1024    time:   [64.427 µs 65.302 µs 66.342 µs]
+xap_ll_cons/iter/1024   time:   [4.7470 µs 4.8190 µs 4.9029 µs]
+xap_ll_cons/xap/1024    time:   [58.646 µs 59.042 µs 59.457 µs]
 
-xap_ll_cons/iter/32768  time:   [272.44 µs 279.67 µs 286.18 µs]
-xap_ll_cons/xap/32768   time:   [1.8456 ms 1.8660 ms 1.8875 ms]
+xap_ll_cons/iter/32768  time:   [206.59 µs 208.08 µs 209.51 µs]
+xap_ll_cons/xap/32768   time:   [1.6651 ms 1.6875 ms 1.7101 ms]
 
 
 COLLECT BY LOOP:
@@ -42,6 +42,8 @@ xap_ll_cons/xap/1024    time:   [32.275 µs 32.879 µs 33.603 µs]
 xap_ll_cons/iter/32768  time:   [1.3377 ms 1.3528 ms 1.3704 ms]
 xap_ll_cons/xap/32768   time:   [1.0510 ms 1.0838 ms 1.1164 ms]
 
+TODO: room for performance improvement with Collect and SumByLoop
+
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
@@ -50,7 +52,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Sum;
 
 trait Exp {
     type Out;
