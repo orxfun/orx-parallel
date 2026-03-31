@@ -6,6 +6,7 @@ use crate::infallible::xap::{Xap, XapBin};
 use crate::infallible::xap_variants::many_f::ManyF;
 use crate::infallible::xap_variants::many_m::ManyM;
 use crate::infallible::xap_variants::many_x::ManyX;
+use core::iter::FusedIterator;
 
 pub struct BinX<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> {
     x: X,
@@ -132,5 +133,55 @@ impl<I: Iterator> Iterator for IterBinX<I> {
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         self.i.as_mut().and_then(|x| x.next())
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match &self.i {
+            Some(i) => i.size_hint(),
+            None => (0, Some(0)),
+        }
+    }
+
+    #[inline(always)]
+    fn fold<B, F>(self, init: B, f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        match self.i {
+            Some(i) => i.fold(init, f),
+            None => init,
+        }
+    }
+
+    #[inline(always)]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        match self.i {
+            Some(i) => i.count(),
+            None => 0,
+        }
+    }
+}
+
+impl<I: ExactSizeIterator> ExactSizeIterator for IterBinX<I> {
+    #[inline(always)]
+    fn len(&self) -> usize {
+        match &self.i {
+            Some(i) => i.len(),
+            None => 0,
+        }
+    }
+}
+
+impl<I: FusedIterator> FusedIterator for IterBinX<I> {}
+
+impl<I: DoubleEndedIterator> DoubleEndedIterator for IterBinX<I> {
+    #[inline(always)]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.i.as_mut().and_then(|x| x.next_back())
     }
 }

@@ -4,35 +4,35 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_cf/iter/1024        time:   [594.17 ns 597.77 ns 601.29 ns]
-xap_cf/xap/1024         time:   [610.77 ns 614.16 ns 617.46 ns]
+xap_cf/iter/1024        time:   [638.02 ns 642.61 ns 647.44 ns]
+xap_cf/xap/1024         time:   [694.96 ns 706.95 ns 719.65 ns]
 
-xap_cf/iter/32768       time:   [60.599 µs 61.370 µs 62.151 µs]
-xap_cf/xap/32768        time:   [57.854 µs 58.594 µs 59.344 µs]
+xap_cf/iter/32768       time:   [63.537 µs 64.597 µs 65.679 µs]
+xap_cf/xap/32768        time:   [63.717 µs 64.404 µs 65.106 µs]
 
-xap_cf/iter/1048576     time:   [3.5042 ms 3.5362 ms 3.5694 ms]
-xap_cf/xap/1048576      time:   [3.4321 ms 3.4527 ms 3.4741 ms]
+xap_cf/iter/1048576     time:   [3.3602 ms 3.3812 ms 3.4022 ms]
+xap_cf/xap/1048576      time:   [3.4023 ms 3.4355 ms 3.4717 ms]
 
 
 COLLECT:
-xap_cf/iter/1024        time:   [1.2009 µs 1.2096 µs 1.2191 µs]
-xap_cf/xap/1024         time:   [1.2655 µs 1.2749 µs 1.2841 µs]
+xap_cf/iter/1024        time:   [1.0456 µs 1.0519 µs 1.0581 µs]
+xap_cf/xap/1024         time:   [1.1446 µs 1.1504 µs 1.1561 µs]
 
-xap_cf/iter/32768       time:   [124.33 µs 125.64 µs 127.15 µs]
-xap_cf/xap/32768        time:   [137.45 µs 139.17 µs 141.10 µs]
+xap_cf/iter/32768       time:   [116.61 µs 117.38 µs 118.20 µs]
+xap_cf/xap/32768        time:   [120.35 µs 120.95 µs 121.59 µs]
 
-xap_cf/iter/1048576     time:   [5.0014 ms 5.0401 ms 5.0804 ms]
-xap_cf/xap/1048576      time:   [4.7660 ms 4.8089 ms 4.8548 ms]
+xap_cf/iter/1048576     time:   [4.3939 ms 4.4169 ms 4.4403 ms]
+xap_cf/xap/1048576      time:   [4.2362 ms 4.2640 ms 4.2931 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap, XapCopied};
+use orx_parallel::infallible::{Xap, fun::FnCopied, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;
@@ -71,7 +71,7 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().copied().filter(f1);
+    let xap = Id::new().mapped(FnCopied::new()).filter(f1);
     E::out(inputs.iter().flat_map(|x| xap.xap(x)))
 }
 
