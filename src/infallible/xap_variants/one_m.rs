@@ -26,7 +26,7 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> OneM<X, G> {
     }
 }
 
-impl<X: Xap<Size = One>, G: Map<I = X::O>> XapEnumerable for OneM<X, G> {
+impl<X: XapEnumerable<Size = One>, G: Map<I = X::O>> XapEnumerable for OneM<X, G> {
     type Enumerated = usize;
 
     fn enumerate(self) -> Self::Enumerated {
