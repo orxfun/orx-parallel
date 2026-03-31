@@ -152,6 +152,45 @@ where
             }
         }
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match &self.inner {
+            Some(inner) => (inner.size_hint().0, None),
+            None => (0, None),
+        }
+    }
+
+    #[inline]
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let acc = match self.inner {
+            Some(inner) => inner.fold(init, &mut f),
+            None => init,
+        };
+
+        self.i.fold(acc, |acc, i| {
+            self.g.flat_map(i).into_iter().fold(acc, &mut f)
+        })
+    }
+
+    #[inline]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        let count = match self.inner {
+            Some(inner) => inner.count(),
+            None => 0,
+        };
+
+        self.i.fold(count, |count, i| {
+            count + self.g.flat_map(i).into_iter().count()
+        })
+    }
 }
 
 #[inline(always)]
