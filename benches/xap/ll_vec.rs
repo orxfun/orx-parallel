@@ -45,7 +45,7 @@ xap_ll_vec/xap/32768    time:   [4.2370 ms 4.2973 ms 4.3604 ms]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap, count::iter::FlatMapIterMany, fun::flat_map::FnFlatMap};
+use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
@@ -131,13 +131,6 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     E::out(iter)
 }
 
-fn xap_solo<E: Exp>(inputs: &[u64]) -> E::Out {
-    let iter = inputs.iter().copied();
-    let iter = FlatMapIterMany::new(iter, FnFlatMap::new(f1));
-    let iter = FlatMapIterMany::new(iter, FnFlatMap::new(f2));
-    E::out(iter)
-}
-
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15];
 
@@ -155,11 +148,6 @@ fn run(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("xap", n), &n, |b, _| {
             assert_eq!(&expected, &xap::<Output>(&input));
             b.iter(|| xap::<Output>(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("xap_solo", n), &n, |b, _| {
-            assert_eq!(&expected, &xap_solo::<Output>(&input));
-            b.iter(|| xap_solo::<Output>(black_box(&input)))
         });
     }
 
