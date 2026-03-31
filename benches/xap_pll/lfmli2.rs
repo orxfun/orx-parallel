@@ -4,43 +4,28 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_p_lfmli2/iter/1024  time:   [8.3859 µs 8.4390 µs 8.4985 µs]
-xap_p_lfmli2/xap/1024   time:   [29.862 µs 30.046 µs 30.230 µs]
+xap_p_lfmli2/iter/1024  time:   [10.430 µs 10.570 µs 10.709 µs]
+xap_p_lfmli2/xap/1024   time:   [8.7429 µs 8.8293 µs 8.9148 µs]
 
-xap_p_lfmli2/iter/32768 time:   [399.88 µs 402.18 µs 404.62 µs]
-xap_p_lfmli2/xap/32768  time:   [1.0680 ms 1.0761 ms 1.0848 ms
-
-
-SUM BY LOOP:
-xap_p_lfmli2/iter/1024  time:   [18.442 µs 18.567 µs 18.696 µs]
-xap_p_lfmli2/xap/1024   time:   [21.340 µs 21.481 µs 21.630 µs]
-
-xap_p_lfmli2/iter/32768 time:   [879.68 µs 883.55 µs 887.94 µs]
-xap_p_lfmli2/xap/32768  time:   [889.73 µs 899.58 µs 909.90 µs]
+xap_p_lfmli2/iter/32768 time:   [468.58 µs 472.54 µs 476.60 µs]
+xap_p_lfmli2/xap/32768  time:   [446.32 µs 449.27 µs 452.27 µs]
 
 
 REDUCE:
-xap_p_lfmli2/iter/1024  time:   [7.7593 µs 7.8340 µs 7.9127 µs]
-xap_p_lfmli2/xap/1024   time:   [25.231 µs 25.495 µs 25.767 µs]
+xap_p_lfmli2/iter/1024  time:   [7.9578 µs 8.0405 µs 8.1255 µs]
+xap_p_lfmli2/xap/1024   time:   [10.212 µs 10.286 µs 10.360 µs]
 
-xap_p_lfmli2/iter/32768 time:   [370.46 µs 372.34 µs 374.35 µs]
-xap_p_lfmli2/xap/32768  time:   [899.34 µs 904.19 µs 909.55 µs]
+xap_p_lfmli2/iter/32768 time:   [379.99 µs 381.90 µs 383.93 µs]
+xap_p_lfmli2/xap/32768  time:   [463.77 µs 466.08 µs 468.50 µs]
 
 
 COLLECT:
-xap_p_lfmli2/iter/1024  time:   [36.430 µs 36.801 µs 37.174 µs]
-xap_p_lfmli2/xap/1024   time:   [46.999 µs 47.428 µs 47.874 µs]
+xap_p_lfmli2/iter/1024  time:   [37.105 µs 37.415 µs 37.718 µs]
+xap_p_lfmli2/xap/1024   time:   [41.655 µs 42.289 µs 42.858 µs]
 
-xap_p_lfmli2/iter/32768 time:   [1.3517 ms 1.3609 ms 1.3705 ms]
-xap_p_lfmli2/xap/32768  time:   [1.5928 ms 1.6018 ms 1.6113 ms]
+xap_p_lfmli2/iter/32768 time:   [1.4662 ms 1.4818 ms 1.4963 ms]
+xap_p_lfmli2/xap/32768  time:   [1.4064 ms 1.4189 ms 1.4323 ms]
 
-
-COLLECT BY LOOP:
-xap_p_lfmli2/iter/1024  time:   [26.253 µs 26.500 µs 26.777 µs]
-xap_p_lfmli2/xap/1024   time:   [26.930 µs 27.151 µs 27.370 µs]
-
-xap_p_lfmli2/iter/32768 time:   [1.1327 ms 1.1429 ms 1.1529 ms]
-xap_p_lfmli2/xap/32768  time:   [1.0614 ms 1.0670 ms 1.0732 ms]
 
 */
 

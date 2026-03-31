@@ -3,30 +3,30 @@
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
 
-reduce_f/seq/e15_light      time:   [14.887 µs 15.058 µs 15.276 µs]
-reduce_f/rayon1/e15_light   time:   [7.1111 ms 7.2717 ms 7.4388 ms]
-reduce_f/rayon2/e15_light   time:   [7.7323 ms 7.8990 ms 8.0599 ms]
-reduce_f/orx/e15_light      time:   [1.1689 ms 1.2255 ms 1.2860 ms]
+reduce_f/seq/e15_light      time:   [16.344 µs 16.637 µs 16.960 µs]
+reduce_f/rayon1/e15_light   time:   [8.9277 ms 9.2255 ms 9.5327 ms]
+reduce_f/rayon2/e15_light   time:   [9.6452 ms 10.078 ms 10.513 ms]
+reduce_f/orx/e15_light      time:   [1.5431 ms 1.5777 ms 1.6177 ms]
 
-reduce_f/seq/e20_light      time:   [1.4557 ms 1.4683 ms 1.4823 ms]
-reduce_f/rayon1/e20_light   time:   [14.024 ms 14.414 ms 14.810 ms]
-reduce_f/rayon2/e20_light   time:   [14.393 ms 14.676 ms 14.966 ms]
-reduce_f/orx/e20_light      time:   [1.9327 ms 1.9459 ms 1.9597 ms]
+reduce_f/seq/e20_light      time:   [1.6849 ms 1.7096 ms 1.7364 ms]
+reduce_f/rayon1/e20_light   time:   [14.893 ms 15.653 ms 16.369 ms]
+reduce_f/rayon2/e20_light   time:   [17.352 ms 18.113 ms 18.831 ms]
+reduce_f/orx/e20_light      time:   [2.2661 ms 2.2848 ms 2.3039 ms]
 
-reduce_f/seq/e15_heavy      time:   [1.2003 ms 1.2072 ms 1.2140 ms]
-reduce_f/rayon1/e15_heavy   time:   [8.5729 ms 8.6828 ms 8.7937 ms]
-reduce_f/rayon2/e15_heavy   time:   [8.6698 ms 8.9390 ms 9.1847 ms]
-reduce_f/orx/e15_heavy      time:   [1.9063 ms 1.9459 ms 1.9925 ms]
+reduce_f/seq/e15_heavy      time:   [1.4048 ms 1.4240 ms 1.4458 ms]
+reduce_f/rayon1/e15_heavy   time:   [10.024 ms 10.289 ms 10.541 ms]
+reduce_f/rayon2/e15_heavy   time:   [9.5188 ms 10.053 ms 10.583 ms]
+reduce_f/orx/e15_heavy      time:   [2.1792 ms 2.1978 ms 2.2179 ms]
 
-reduce_f/seq/e20_heavy      time:   [41.409 ms 42.306 ms 43.228 ms]
-reduce_f/rayon1/e20_heavy   time:   [6.1379 ms 6.5981 ms 7.0835 ms]
-reduce_f/rayon2/e20_heavy   time:   [6.1447 ms 6.5389 ms 6.9523 ms]
-reduce_f/orx/e20_heavy      time:   [5.6169 ms 5.6605 ms 5.7049 ms]
+reduce_f/seq/e20_heavy      time:   [46.712 ms 47.308 ms 47.936 ms]
+reduce_f/rayon1/e20_heavy   time:   [13.850 ms 14.328 ms 14.816 ms]
+reduce_f/rayon2/e20_heavy   time:   [12.358 ms 12.991 ms 13.655 ms]
+reduce_f/orx/e20_heavy      time:   [8.4021 ms 8.5381 ms 8.6858 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_concurrent_iter::{ConcurrentIter, IntoConcurrentIter};
+use orx_concurrent_iter::IntoConcurrentIter;
 use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -59,7 +59,7 @@ fn l_r(a: u64, b: u64) -> u64 {
 fn h_r(a: u64, b: u64) -> u64 {
     let f = black_box(fibonacci(a % FIB_UPPER_BOUND));
     let g = black_box(a + f);
-    g + b - f
+    black_box(g + b - f)
 }
 
 fn f(a: &u64) -> bool {
@@ -75,8 +75,8 @@ fn seq(input: &[u64], h: bool) -> Option<u64> {
 
 fn orx(input: &[u64], h: bool) -> Option<u64> {
     match h {
-        true => par(input.into_con_iter().copied()).filter(f).reduce(h_r),
-        false => par(input.into_con_iter().copied()).filter(f).reduce(l_r),
+        true => par(input.into_con_iter()).copied().filter(f).reduce(h_r),
+        false => par(input.into_con_iter()).copied().filter(f).reduce(l_r),
     }
 }
 

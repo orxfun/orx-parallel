@@ -11,36 +11,20 @@ xap_pll_ll_vec/iter/32768   time:   [981.13 µs 997.79 µs 1.0156 ms]
 xap_pll_ll_vec/xap/32768    time:   [1.0089 ms 1.0251 ms 1.0425 ms]
 
 
-SUM BY LOOP:
-xap_pll_ll_vec/iter/1024    time:   [137.95 µs 139.87 µs 142.12 µs]
-xap_pll_ll_vec/xap/1024     time:   [144.95 µs 146.21 µs 147.60 µs]
-
-xap_pll_ll_vec/iter/32768   time:   [4.3268 ms 4.3639 ms 4.4006 ms]
-xap_pll_ll_vec/xap/32768    time:   [4.3839 ms 4.4354 ms 4.4883 ms]
-
-
 REDUCE:
-xap_pll_ll_vec/iter/1024    time:   [25.079 µs 25.319 µs 25.580 µs]
-xap_pll_ll_vec/xap/1024     time:   [26.129 µs 26.352 µs 26.594 µs]
+xap_p_ll_vec/iter/1024  time:   [22.464 µs 22.707 µs 22.969 µs]
+xap_p_ll_vec/xap/1024   time:   [22.607 µs 22.826 µs 23.058 µs]
 
-xap_pll_ll_vec/iter/32768   time:   [765.44 µs 772.82 µs 780.56 µs]
-xap_pll_ll_vec/xap/32768    time:   [857.76 µs 865.93 µs 875.05 µs]
+xap_p_ll_vec/iter/32768 time:   [716.02 µs 722.96 µs 730.27 µs]
+xap_p_ll_vec/xap/32768  time:   [717.53 µs 722.33 µs 727.48 µs]
 
 
 COLLECT:
-xap_pll_ll_vec/iter/1024    time:   [157.36 µs 159.06 µs 160.85 µs]
-xap_pll_ll_vec/xap/1024     time:   [161.07 µs 162.78 µs 164.62 µs]
+xap_p_ll_vec/iter/1024  time:   [131.11 µs 132.05 µs 133.10 µs]
+xap_p_ll_vec/xap/1024   time:   [132.48 µs 133.47 µs 134.50 µs]
 
-xap_pll_ll_vec/iter/32768   time:   [4.8489 ms 4.8843 ms 4.9217 ms]
-xap_pll_ll_vec/xap/32768    time:   [5.2631 ms 5.3293 ms 5.3985 ms]
-
-
-COLLECT BY LOOP:
-xap_pll_ll_vec/iter/1024    time:   [136.55 µs 138.26 µs 140.04 µs]
-xap_pll_ll_vec/xap/1024     time:   [139.45 µs 140.70 µs 142.06 µs]
-
-xap_pll_ll_vec/iter/32768   time:   [4.2495 ms 4.2900 ms 4.3320 ms]
-xap_pll_ll_vec/xap/32768    time:   [4.8304 ms 4.8935 ms 4.9600 ms]
+xap_p_ll_vec/iter/32768 time:   [4.0433 ms 4.0707 ms 4.0989 ms]
+xap_p_ll_vec/xap/32768  time:   [4.2363 ms 4.2694 ms 4.3029 ms]
 
 */
 
@@ -50,7 +34,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Sum;
 
 trait Exp {
     type Out;

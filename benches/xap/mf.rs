@@ -27,7 +27,7 @@ xap_mf/xap/1048576      time:   [4.4280 ms 4.4606 ms 4.4947 ms
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap, XapCopied};
+use orx_parallel::infallible::{Xap, fun::FnCopied, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
@@ -75,7 +75,7 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().copied().map(f1).filter(f2);
+    let xap = Id::new().mapped(FnCopied::new()).map(f1).filter(f2);
     E::out(inputs.iter().flat_map(|x| xap.xap(x)))
 }
 
