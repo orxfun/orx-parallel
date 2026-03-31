@@ -1,6 +1,6 @@
 use crate::infallible::XapEnumerable;
-use crate::infallible::fun::FnFlatMap;
 use crate::infallible::fun::{FnFil, FnFilMap};
+use crate::infallible::fun::{FnFlatMap, MapEnum};
 use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::One;
 use crate::infallible::xap::{Xap, XapOne};
@@ -27,10 +27,12 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> OneM<X, G> {
 }
 
 impl<X: XapEnumerable<Size = One>, G: Map<I = X::O>> XapEnumerable for OneM<X, G> {
-    type Enumerated = usize;
+    type Enumerated = OneM<X::Enumerated, MapEnum<G>>;
 
     fn enumerate(self) -> Self::Enumerated {
-        todo!()
+        let g = MapEnum::new(self.g);
+        let x = self.x.enumerate();
+        OneM::new(x, g)
     }
 }
 
