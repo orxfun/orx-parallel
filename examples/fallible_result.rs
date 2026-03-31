@@ -22,5 +22,5 @@ fn main() {
         .map(|x| x.parse::<usize>())
         .fallible_result()
         .reduce(|a, b| a + b);
-    assert!(result.is_err());
+    assert!(result.is_err()); // computation failed
 }
