@@ -16,4 +16,4 @@ pub use many_many::XapOptManyMany;
 pub use many_one::XapOptManyOne;
 pub use one_bin::XapOptOneBin;
 pub use one_many::XapOptOneMany;
-// pub use one_one::XapResOneOne;
+pub use one_one::XapOptOneOne;
