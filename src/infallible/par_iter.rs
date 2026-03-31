@@ -5,6 +5,7 @@ use crate::infallible::{Xap, XapEnumerable};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, default_runner};
 use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::enumerate::Enumerate;
 
 // TODO: this will be replaced later by IntoPar trait.
 pub fn par<I: ConcurrentIter>(iter: I) -> Par<I, Id<I::Item>, DefaultRunner> {
@@ -163,14 +164,13 @@ where
 impl<I, X, R> Par<I, X, R>
 where
     I: ConcurrentIter,
-    X: Xap<I = I::Item> + XapEnumerable,
+    X: XapEnumerable<I = I::Item>,
     R: ParRunner,
 {
-    pub fn enumerate(self) {
+    pub fn enumerate(self) -> Par<Enumerate<I>, X::Enumerated, R> {
         let (iter, xap, exe, params) = self.destruct();
         let iter = iter.enumerate();
-        // let xap = xap.map(h);
-        // let p = Par::new(iter, xap, exe, params);
-        //
+        let xap = xap.enumerate();
+        Par::new(iter, xap, exe, params)
     }
 }
