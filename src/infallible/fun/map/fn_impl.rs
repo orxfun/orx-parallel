@@ -123,34 +123,3 @@ impl<'a, I: Copy> Map for FnCopied<'a, I> {
         *i
     }
 }
-
-// enumerate
-
-pub struct FnEnum<I, O, F: Fn(I) -> O + Copy + Send>(F, PhantomData<I>);
-
-impl<I, O, F: Fn(I) -> O + Copy + Send> Clone for FnEnum<I, O, F> {
-    fn clone(&self) -> Self {
-        Self::new(self.0)
-    }
-}
-
-impl<I, O, F: Fn(I) -> O + Copy + Send> Copy for FnEnum<I, O, F> {}
-
-unsafe impl<I, O, F: Fn(I) -> O + Copy + Send> Send for FnEnum<I, O, F> {}
-
-impl<I, O, F: Fn(I) -> O + Copy + Send> FnEnum<I, O, F> {
-    pub fn new(f: F) -> Self {
-        Self(f, PhantomData)
-    }
-}
-
-impl<I, O, F: Fn(I) -> O + Copy + Send> Map for FnEnum<I, O, F> {
-    type I = (usize, I);
-
-    type O = (usize, O);
-
-    #[inline(always)]
-    fn map(&self, (idx, value): Self::I) -> Self::O {
-        (idx, (self.0)(value))
-    }
-}
