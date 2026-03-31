@@ -169,7 +169,7 @@ where
     pub fn enumerate(self) {
         let (iter, xap, exe, params) = self.destruct();
         let iter = iter.enumerate();
-        // let xap = xap.map(h)
+        // let xap = xap.map(h);
         // let p = Par::new(iter, xap, exe, params);
         //
     }

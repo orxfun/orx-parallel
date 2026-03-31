@@ -1,5 +1,6 @@
-use crate::infallible::fun::{FnFil, FnFilMap};
+use crate::infallible::XapEnumerable;
 use crate::infallible::fun::FnFlatMap;
+use crate::infallible::fun::{FnFil, FnFilMap};
 use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::One;
 use crate::infallible::xap::{Xap, XapOne};
@@ -22,6 +23,14 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Copy for OneM<X, G> {}
 impl<X: Xap<Size = One>, G: Map<I = X::O>> OneM<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
+    }
+}
+
+impl<X: Xap<Size = One>, G: Map<I = X::O>> XapEnumerable for OneM<X, G> {
+    type Enumerated = usize;
+
+    fn enumerate(self) -> Self::Enumerated {
+        todo!()
     }
 }
 
