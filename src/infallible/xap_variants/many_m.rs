@@ -1,3 +1,5 @@
+use core::iter::FusedIterator;
+
 use crate::infallible::fun::FnFlatMap;
 use crate::infallible::fun::{FnFil, FnFilMap};
 use crate::infallible::fun::{FnIns, FnMap, Map};
@@ -140,5 +142,55 @@ where
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         self.i.next().map(|x| self.g.map(x))
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.i.size_hint()
+    }
+
+    #[inline]
+    fn fold<B, F>(self, init: B, f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        self.i.map(|x| self.g.map(x)).fold(init, f)
+    }
+
+    #[inline]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.i.count()
+    }
+}
+
+impl<I, G> ExactSizeIterator for IterManyM<I, G>
+where
+    I: ExactSizeIterator,
+    G: Map<I = I::Item>,
+{
+    #[inline(always)]
+    fn len(&self) -> usize {
+        self.i.len()
+    }
+}
+
+impl<I, G> FusedIterator for IterManyM<I, G>
+where
+    I: FusedIterator,
+    G: Map<I = I::Item>,
+{
+}
+
+impl<I, G> DoubleEndedIterator for IterManyM<I, G>
+where
+    I: DoubleEndedIterator,
+    G: Map<I = I::Item>,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.i.next_back().map(|x| self.g.map(x))
     }
 }
