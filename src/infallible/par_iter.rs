@@ -1,7 +1,7 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_runner::ParRunnerInfallible;
-use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::Id;
+use crate::infallible::{Xap, XapEnumerable};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, default_runner};
 use orx_concurrent_iter::ConcurrentIter;
@@ -157,5 +157,20 @@ where
     pub fn cloned(self) -> Par<I, X::Mapped<FnCloned<'a, O>>, R> {
         let (iter, xap, exe, params) = self.destruct();
         Par::new(iter, xap.mapped(FnCloned::new()), exe, params)
+    }
+}
+
+impl<I, X, R> Par<I, X, R>
+where
+    I: ConcurrentIter,
+    X: Xap<I = I::Item> + XapEnumerable,
+    R: ParRunner,
+{
+    pub fn enumerate(self) {
+        let (iter, xap, exe, params) = self.destruct();
+        let iter = iter.enumerate();
+        // let xap = xap.map(h)
+        // let p = Par::new(iter, xap, exe, params);
+        //
     }
 }

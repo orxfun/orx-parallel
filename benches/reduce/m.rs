@@ -3,25 +3,25 @@
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
 
-reduce_m/seq/e15_light      time:   [11.074 µs 11.161 µs 11.247 µs]
-reduce_m/rayon1/e15_light   time:   [7.0328 ms 7.1301 ms 7.2289 ms]
-reduce_m/rayon2/e15_light   time:   [2.9261 ms 3.5955 ms 4.2788 ms]
-reduce_m/orx/e15_light      time:   [1.1085 ms 1.1392 ms 1.1707 ms]
+reduce_m/seq/e15_light      time:   [14.223 µs 14.358 µs 14.497 µs]
+reduce_m/rayon1/e15_light   time:   [8.7471 ms 8.8833 ms 9.0200 ms]
+reduce_m/rayon2/e15_light   time:   [9.9737 ms 10.162 ms 10.351 ms]
+reduce_m/orx/e15_light      time:   [1.4237 ms 1.4667 ms 1.5136 ms]
 
-reduce_m/seq/e20_light      time:   [495.38 µs 502.32 µs 509.44 µs]
-reduce_m/rayon1/e20_light   time:   [13.399 ms 13.979 ms 14.505 ms]
-reduce_m/rayon2/e20_light   time:   [13.502 ms 14.247 ms 14.951 ms]
-reduce_m/orx/e20_light      time:   [1.8877 ms 1.9350 ms 1.9825 ms]
+reduce_m/seq/e20_light      time:   [638.87 µs 657.68 µs 683.73 µs]
+reduce_m/rayon1/e20_light   time:   [19.552 ms 20.340 ms 21.125 ms]
+reduce_m/rayon2/e20_light   time:   [19.648 ms 20.201 ms 20.775 ms]
+reduce_m/orx/e20_light      time:   [2.3489 ms 2.4457 ms 2.5619 ms]
 
-reduce_m/seq/e15_heavy      time:   [1.2836 ms 1.2937 ms 1.3049 ms]
-reduce_m/rayon1/e15_heavy   time:   [7.8716 ms 8.0846 ms 8.2734 ms]
-reduce_m/rayon2/e15_heavy   time:   [8.9437 ms 9.1293 ms 9.3129 ms]
-reduce_m/orx/e15_heavy      time:   [1.8329 ms 1.8510 ms 1.8711 ms]
+reduce_m/seq/e15_heavy      time:   [1.7356 ms 1.7860 ms 1.8412 ms]
+reduce_m/rayon1/e15_heavy   time:   [10.757 ms 11.075 ms 11.379 ms]
+reduce_m/rayon2/e15_heavy   time:   [10.851 ms 11.165 ms 11.467 ms]
+reduce_m/orx/e15_heavy      time:   [2.2275 ms 2.2514 ms 2.2761 ms]
 
-reduce_m/seq/e20_heavy      time:   [40.288 ms 40.537 ms 40.796 ms]
-reduce_m/rayon1/e20_heavy   time:   [7.5214 ms 8.0231 ms 8.5305 ms]
-reduce_m/rayon2/e20_heavy   time:   [7.5114 ms 7.9549 ms 8.4085 ms]
-reduce_m/orx/e20_heavy      time:   [5.9074 ms 5.9774 ms 6.0528 ms]
+reduce_m/seq/e20_heavy      time:   [50.382 ms 51.004 ms 51.678 ms]
+reduce_m/rayon1/e20_heavy   time:   [10.160 ms 10.875 ms 11.679 ms]
+reduce_m/rayon2/e20_heavy   time:   [9.9150 ms 10.458 ms 11.015 ms]
+reduce_m/orx/e20_heavy      time:   [7.7945 ms 7.9175 ms 8.0515 ms]
 
 */
 
