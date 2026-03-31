@@ -1,5 +1,7 @@
-use crate::infallible::fun::{FilterMap, FnFil, FnFilMap};
+use core::iter::FusedIterator;
+
 use crate::infallible::fun::FnFlatMap;
+use crate::infallible::fun::{FilterMap, FnFil, FnFilMap};
 use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::Many;
 use crate::infallible::xap::Xap;
@@ -142,8 +144,56 @@ where
         loop {
             match self.i.next() {
                 Some(i) => {
-                    let y = self.g.filter_map(i);
-                    if y.is_some() {
+                    if let y @ Some(_) = self.g.filter_map(i) {
+                        return y;
+                    }
+                }
+                None => return None,
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // lb cannot be guaranteed, all might be filtered out
+        (0, self.i.size_hint().1)
+    }
+
+    #[inline]
+    fn fold<B, F>(self, init: B, f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        self.i.filter_map(|x| self.g.filter_map(x)).fold(init, f)
+    }
+
+    #[inline]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.i.filter_map(|x| self.g.filter_map(x)).count()
+    }
+}
+
+impl<I, G> FusedIterator for IterManyF<I, G>
+where
+    I: FusedIterator,
+    G: FilterMap<I = I::Item>,
+{
+}
+
+impl<I, G> DoubleEndedIterator for IterManyF<I, G>
+where
+    I: DoubleEndedIterator,
+    G: FilterMap<I = I::Item>,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.i.next_back() {
+                Some(i) => {
+                    if let y @ Some(_) = self.g.filter_map(i) {
                         return y;
                     }
                 }
