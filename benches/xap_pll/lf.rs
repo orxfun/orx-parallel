@@ -4,43 +4,26 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_p_lfmli2/iter/1024  time:   [8.3859 µs 8.4390 µs 8.4985 µs]
-xap_p_lfmli2/xap/1024   time:   [29.862 µs 30.046 µs 30.230 µs]
+xap_p_lf/iter/1024      time:   [2.0020 µs 2.0100 µs 2.0179 µs]
+xap_p_lf/xap/1024       time:   [2.0557 µs 2.0654 µs 2.0747 µs]
 
-xap_p_lfmli2/iter/32768 time:   [399.88 µs 402.18 µs 404.62 µs]
-xap_p_lfmli2/xap/32768  time:   [1.0680 ms 1.0761 ms 1.0848 ms
-
-
-SUM BY LOOP:
-xap_p_lfmli2/iter/1024  time:   [18.442 µs 18.567 µs 18.696 µs]
-xap_p_lfmli2/xap/1024   time:   [21.340 µs 21.481 µs 21.630 µs]
-
-xap_p_lfmli2/iter/32768 time:   [879.68 µs 883.55 µs 887.94 µs]
-xap_p_lfmli2/xap/32768  time:   [889.73 µs 899.58 µs 909.90 µs]
-
+xap_p_lf/iter/32768     time:   [174.70 µs 175.79 µs 176.89 µs]
+xap_p_lf/xap/32768      time:   [179.30 µs 180.63 µs 182.11 µs]
 
 REDUCE:
-xap_p_lfmli2/iter/1024  time:   [7.7593 µs 7.8340 µs 7.9127 µs]
-xap_p_lfmli2/xap/1024   time:   [25.231 µs 25.495 µs 25.767 µs]
+xap_p_lf/iter/1024  time:   [3.3685 µs 3.3886 µs 3.4085 µs]
+xap_p_lf/xap/1024   time:   [3.4032 µs 3.4224 µs 3.4425 µs]
 
-xap_p_lfmli2/iter/32768 time:   [370.46 µs 372.34 µs 374.35 µs]
-xap_p_lfmli2/xap/32768  time:   [899.34 µs 904.19 µs 909.55 µs]
+xap_p_lf/iter/32768 time:   [127.38 µs 128.06 µs 128.82 µs]
+xap_p_lf/xap/32768  time:   [128.42 µs 129.19 µs 129.97 µs]
 
 
 COLLECT:
-xap_p_lfmli2/iter/1024  time:   [36.430 µs 36.801 µs 37.174 µs]
-xap_p_lfmli2/xap/1024   time:   [46.999 µs 47.428 µs 47.874 µs]
+xap_p_lf/iter/1024      time:   [11.551 µs 11.713 µs 11.873 µs]
+xap_p_lf/xap/1024       time:   [11.200 µs 11.274 µs 11.355 µs]
 
-xap_p_lfmli2/iter/32768 time:   [1.3517 ms 1.3609 ms 1.3705 ms]
-xap_p_lfmli2/xap/32768  time:   [1.5928 ms 1.6018 ms 1.6113 ms]
-
-
-COLLECT BY LOOP:
-xap_p_lfmli2/iter/1024  time:   [26.253 µs 26.500 µs 26.777 µs]
-xap_p_lfmli2/xap/1024   time:   [26.930 µs 27.151 µs 27.370 µs]
-
-xap_p_lfmli2/iter/32768 time:   [1.1327 ms 1.1429 ms 1.1529 ms]
-xap_p_lfmli2/xap/32768  time:   [1.0614 ms 1.0670 ms 1.0732 ms]
+xap_p_lf/iter/32768     time:   [523.77 µs 529.19 µs 535.50 µs]
+xap_p_lf/xap/32768      time:   [514.21 µs 517.57 µs 520.85 µs]
 
 */
 
@@ -50,7 +33,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Reduce;
+type Output = Sum;
 
 trait Exp {
     type Out;
@@ -174,10 +157,6 @@ fn f2(i: &u64) -> bool {
     !(i + 7).is_multiple_of(11)
 }
 
-fn f3(i: u64) -> u64 {
-    i * 3 + 5
-}
-
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
     let iter = inputs.iter().copied();
     E::out(iter, |i| f1(i).into_iter().filter(f2))
@@ -192,7 +171,7 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
 fn run(c: &mut Criterion) {
     let len = [1 << 10, 1 << 15];
 
-    let mut group = c.benchmark_group("xap_p_lfmli2");
+    let mut group = c.benchmark_group("xap_p_lf");
 
     for n in len {
         let input = inputs(n);

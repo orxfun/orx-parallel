@@ -4,27 +4,19 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_p_lfmli/iter/1024   time:   [10.919 µs 11.121 µs 11.309 µs]
-xap_p_lfmli/xap/1024    time:   [23.799 µs 23.918 µs 24.037 µs]
+xap_p_lfmli/iter/1024   time:   [9.9113 µs 10.017 µs 10.119 µs]
+xap_p_lfmli/xap/1024    time:   [11.318 µs 11.629 µs 11.935 µs]
 
-xap_p_lfmli/iter/32768  time:   [483.98 µs 487.34 µs 490.91 µs]
-xap_p_lfmli/xap/32768   time:   [1.0730 ms 1.0789 ms 1.0854 ms]
-
-
-SUM BY LOOP:
-xap_p_lfmli/iter/1024   time:   [16.689 µs 16.790 µs 16.896 µs]
-xap_p_lfmli/xap/1024    time:   [20.651 µs 20.784 µs 20.925 µs]
-
-xap_p_lfmli/iter/32768  time:   [878.30 µs 883.20 µs 887.90 µs]
-xap_p_lfmli/xap/32768   time:   [967.01 µs 972.85 µs 979.23 µs]
+xap_p_lfmli/iter/32768  time:   [573.72 µs 582.08 µs 590.22 µs]
+xap_p_lfmli/xap/32768   time:   [528.77 µs 532.48 µs 536.56 µs]
 
 
 REDUCE:
-xap_p_lfmli/iter/1024   time:   [10.296 µs 10.378 µs 10.456 µs]
-xap_p_lfmli/xap/1024    time:   [33.074 µs 33.370 µs 33.700 µs]
+xap_p_lfmli/iter/1024   time:   [8.9010 µs 8.9514 µs 9.0039 µs]
+xap_p_lfmli/xap/1024    time:   [19.067 µs 19.142 µs 19.222 µs]
 
-xap_p_lfmli/iter/32768  time:   [490.38 µs 492.98 µs 495.58 µs]
-xap_p_lfmli/xap/32768   time:   [1.4418 ms 1.4486 ms 1.4565 ms]
+xap_p_lfmli/iter/32768  time:   [450.58 µs 452.39 µs 454.21 µs]
+xap_p_lfmli/xap/32768   time:   [660.56 µs 663.90 µs 667.14 µs]
 
 
 COLLECT:
@@ -34,13 +26,7 @@ xap_p_lfmli/xap/1024    time:   [27.604 µs 27.945 µs 28.305 µs]
 xap_p_lfmli/iter/32768  time:   [1.2495 ms 1.2625 ms 1.2778 ms]
 xap_p_lfmli/xap/32768   time:   [1.3253 ms 1.3328 ms 1.3407 ms]
 
-
-COLLECT BY LOOP:
-xap_p_lfmli/iter/1024   time:   [25.290 µs 25.500 µs 25.727 µs]
-xap_p_lfmli/xap/1024    time:   [32.855 µs 33.404 µs 34.004 µs]
-
-xap_p_lfmli/iter/32768  time:   [1.1489 ms 1.1560 ms 1.1633 ms]
-xap_p_lfmli/xap/32768   time:   [1.3652 ms 1.3759 ms 1.3876 ms]
+TODO: room for performance improvement
 
 */
 
@@ -50,7 +36,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Sum;
 
 trait Exp {
     type Out;

@@ -4,43 +4,68 @@ The goal of this benchmark is to measure the overhead of Xap abstraction.
 Operations after iteration are kept to be as simple as possible to observe the overhead.
 
 SUM:
-xap_p_lfmi/iter/1024    time:   [3.9065 µs 3.9385 µs 3.9744 µs]
-xap_p_lfmi/xap/1024     time:   [5.8216 µs 5.8783 µs 5.9402 µs]
-
-xap_p_lfmi/iter/32768   time:   [381.70 µs 384.56 µs 387.92 µs]
-xap_p_lfmi/xap/32768    time:   [503.21 µs 508.23 µs 513.72 µs]
-
-
-SUM BY LOOP:
-xap_p_lfmi/iter/1024    time:   [5.8653 µs 5.9048 µs 5.9465 µs]
-xap_p_lfmi/xap/1024     time:   [5.0922 µs 5.1234 µs 5.1554 µs]
-
-xap_p_lfmi/iter/32768   time:   [493.89 µs 496.24 µs 498.50 µs]
-xap_p_lfmi/xap/32768    time:   [487.27 µs 491.77 µs 496.54 µs]
+xap_p_lfmi/iter/1024    time:   [5.4200 µs 5.4449 µs 5.4688 µs]
+                        change: [+8.8708% +9.9878% +11.098%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+xap_p_lfmi/xap/1024     time:   [3.2825 µs 3.3011 µs 3.3196 µs]
+                        change: [−43.883% −43.175% −42.464%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+xap_p_lfmi/iter/32768   time:   [304.97 µs 306.64 µs 308.23 µs]
+                        change: [−16.209% −15.248% −14.261%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+xap_p_lfmi/xap/32768    time:   [347.39 µs 348.80 µs 350.19 µs]
 
 
 REDUCE:
-xap_p_lfmi/iter/1024    time:   [4.8923 µs 4.9419 µs 4.9943 µs]
-xap_p_lfmi/xap/1024     time:   [5.7552 µs 5.8084 µs 5.8617 µs]
-
-xap_p_lfmi/iter/32768   time:   [356.46 µs 360.64 µs 365.15 µs]
-xap_p_lfmi/xap/32768    time:   [518.51 µs 525.08 µs 532.60 µs]
+xap_p_lfmi/iter/1024    time:   [4.3136 µs 4.3327 µs 4.3515 µs]
+                        change: [−20.851% −20.163% −19.480%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) low mild
+  2 (2.00%) high severe
+xap_p_lfmi/xap/1024     time:   [5.0219 µs 5.0437 µs 5.0655 µs]
+                        change: [+51.854% +53.064% +54.331%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) low mild
+xap_p_lfmi/iter/32768   time:   [322.09 µs 323.38 µs 324.76 µs]
+                        change: [+5.7655% +6.5122% +7.2742%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+xap_p_lfmi/xap/32768    time:   [358.46 µs 359.86 µs 361.24 µs]
 
 
 COLLECT:
-xap_p_lfmi/iter/1024    time:   [7.3950 µs 7.4889 µs 7.5896 µs]
-xap_p_lfmi/xap/1024     time:   [7.1151 µs 7.1778 µs 7.2418 µs]
-
-xap_p_lfmi/iter/32768   time:   [643.43 µs 648.93 µs 655.21 µs]
-xap_p_lfmi/xap/32768    time:   [572.61 µs 575.07 µs 577.94 µs]
-
-
-COLLECT BY LOOP:
-xap_p_lfmi/iter/1024    time:   [7.1747 µs 7.2488 µs 7.3220 µs]
-xap_p_lfmi/xap/1024     time:   [8.8062 µs 8.8584 µs 8.9139 µs]
-
-xap_p_lfmi/iter/32768   time:   [564.79 µs 570.79 µs 577.25 µs]
-xap_p_lfmi/xap/32768    time:   [503.52 µs 508.85 µs 515.34 µs]
+xap_p_lfmi/iter/1024    time:   [7.5991 µs 7.6388 µs 7.6799 µs]
+                        change: [+74.360% +76.170% +78.036%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) low mild
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+xap_p_lfmi/xap/1024     time:   [7.6930 µs 7.7451 µs 7.7992 µs]
+                        change: [+51.839% +53.073% +54.317%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) low mild
+xap_p_lfmi/iter/32768   time:   [684.20 µs 686.98 µs 689.92 µs]
+                        change: [+111.46% +112.89% +114.36%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) low severe
+  3 (3.00%) high mild
+xap_p_lfmi/xap/32768    time:   [651.77 µs 655.10 µs 658.61 µs]
 
 */
 
@@ -50,7 +75,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Sum;
+type Output = Collect;
 
 trait Exp {
     type Out;

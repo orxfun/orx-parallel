@@ -11,14 +11,6 @@ xap_p_mmm/iter/32768    time:   [23.214 µs 23.347 µs 23.491 µs]
 xap_p_mmm/xap/32768     time:   [23.265 µs 23.431 µs 23.621 µs]
 
 
-SUM BY LOOP:
-xap_p_mmm/iter/1024     time:   [793.04 ns 799.34 ns 806.06 ns]
-xap_p_mmm/xap/1024      time:   [829.07 ns 834.56 ns 839.90 ns]
-
-xap_p_mmm/iter/32768    time:   [26.337 µs 26.493 µs 26.671 µs]
-xap_p_mmm/xap/32768     time:   [26.602 µs 26.826 µs 27.082 µs]
-
-
 REDUCE:
 xap_p_mmm/iter/1024     time:   [668.77 ns 673.83 ns 678.76 ns]
 xap_p_mmm/xap/1024      time:   [684.81 ns 690.92 ns 696.84 ns]
@@ -34,14 +26,6 @@ xap_p_mmm/xap/1024      time:   [1.2049 µs 1.2116 µs 1.2186 µs]
 xap_p_mmm/iter/32768    time:   [33.629 µs 34.380 µs 35.160 µs]
 xap_p_mmm/xap/32768     time:   [32.820 µs 33.508 µs 34.212 µs]
 
-
-COLLECT BY LOOP:
-xap_p_mmm/iter/1024     time:   [1.0957 µs 1.1011 µs 1.1067 µs]
-xap_p_mmm/xap/1024      time:   [1.4515 µs 1.4630 µs 1.4742 µs]
-
-xap_p_mmm/iter/32768    time:   [48.216 µs 48.749 µs 49.238 µs]
-xap_p_mmm/xap/32768     time:   [47.378 µs 47.938 µs 48.577 µs]
-
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
@@ -50,7 +34,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = CollectByLoop;
+type Output = Reduce;
 
 trait Exp {
     type Out;
