@@ -15,24 +15,43 @@ xap_cmmmm/xap/1048576   time:   [1.0076 ms 1.0147 ms 1.0229 ms]
 
 
 COLLECT:
-xap_cmmmm/iter/1024     time:   [1.0112 µs 1.0229 µs 1.0346 µs]
-xap_cmmmm/xap/1024      time:   [1.0183 µs 1.0267 µs 1.0357 µs]
-
-xap_cmmmm/iter/32768    time:   [31.933 µs 32.417 µs 32.890 µs]
-xap_cmmmm/xap/32768     time:   [31.985 µs 32.238 µs 32.488 µs]
-
-xap_cmmmm/iter/1048576  time:   [1.0766 ms 1.0845 ms 1.0930 ms]
-xap_cmmmm/xap/1048576   time:   [1.0820 ms 1.0906 ms 1.1000 ms]
+xap_cmmmm/iter/1024     time:   [1.1191 µs 1.1308 µs 1.1432 µs]
+                        change: [+11.658% +13.097% +14.536%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+xap_cmmmm/xap/1024      time:   [1.1809 µs 1.1943 µs 1.2078 µs]
+                        change: [+16.501% +17.924% +19.401%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+xap_cmmmm/iter/32768    time:   [40.355 µs 40.658 µs 40.950 µs]
+                        change: [+22.438% +24.327% +26.131%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+xap_cmmmm/xap/32768     time:   [39.122 µs 39.747 µs 40.496 µs]
+                        change: [+24.019% +25.827% +27.684%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking xap_cmmmm/iter/1048576: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.0s, enable flat sampling, or reduce sample count to 50.
+xap_cmmmm/iter/1048576  time:   [1.2935 ms 1.3100 ms 1.3287 ms]
+                        change: [+20.266% +22.315% +24.433%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking xap_cmmmm/xap/1048576: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 6.6s, enable flat sampling, or reduce sample count to 60.
+xap_cmmmm/xap/1048576   time:   [1.3466 ms 1.3697 ms 1.3930 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_parallel::xap::{Id, Xap, XapCopied};
+use orx_parallel::infallible::{Xap, fun::FnCopied, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;
@@ -87,7 +106,12 @@ fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
-    let xap = Id::new().copied().map(f1).map(f2).map(f3).map(f4);
+    let xap = Id::new()
+        .mapped(FnCopied::new())
+        .map(f1)
+        .map(f2)
+        .map(f3)
+        .map(f4);
     E::out(inputs.iter().flat_map(|x| xap.xap(x)))
 }
 
