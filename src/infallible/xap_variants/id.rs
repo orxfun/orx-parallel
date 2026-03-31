@@ -27,13 +27,13 @@ impl<I> Id<I> {
     }
 }
 
-impl<I> XapEnumerable for Id<I> {
-    type Enumerated = Id<(usize, I)>;
+// impl<I> XapEnumerable for Id<I> {
+//     type Enumerated = Id<(usize, I)>;
 
-    fn enumerate(self) -> Self::Enumerated {
-        Id::new()
-    }
-}
+//     fn enumerate(self) -> Self::Enumerated {
+//         Id::new()
+//     }
+// }
 
 impl<I> Xap for Id<I> {
     type I = I;
