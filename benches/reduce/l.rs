@@ -23,6 +23,27 @@ reduce_l/rayon1/e20_heavy   time:   [82.763 ms 84.442 ms 86.147 ms]
 reduce_l/rayon2/e20_heavy   time:   [97.017 ms 100.36 ms 104.11 ms]
 reduce_l/orx/e20_heavy      time:   [76.860 ms 77.978 ms 79.163 ms]
 
+
+reduce_l/seq/e15_light      time:   [3.2407 ms 3.2770 ms 3.3170 ms]
+reduce_l/rayon1/e15_light   time:   [10.063 ms 10.239 ms 10.414 ms]
+reduce_l/rayon2/e15_light   time:   [11.104 ms 11.349 ms 11.589 ms]
+reduce_l/orx/e15_light      time:   [2.8054 ms 2.8736 ms 2.9444 ms]
+
+reduce_l/seq/e20_light      time:   [119.21 ms 122.20 ms 125.72 ms]
+reduce_l/rayon1/e20_light   time:   [19.271 ms 19.931 ms 20.606 ms]
+reduce_l/rayon2/e20_light   time:   [24.032 ms 25.386 ms 26.871 ms]
+reduce_l/orx/e20_light      time:   [18.195 ms 18.805 ms 19.523 ms]
+
+reduce_l/seq/e15_heavy      time:   [10.685 ms 10.773 ms 10.866 ms]
+reduce_l/rayon1/e15_heavy   time:   [5.6738 ms 6.3265 ms 7.0368 ms]
+reduce_l/rayon2/e15_heavy   time:   [4.2011 ms 4.6651 ms 5.1503 ms]
+reduce_l/orx/e15_heavy      time:   [3.5605 ms 3.6242 ms 3.6911 ms]
+
+reduce_l/seq/e20_heavy      time:   [326.97 ms 331.60 ms 336.92 ms]
+reduce_l/rayon1/e20_heavy   time:   [34.614 ms 35.333 ms 36.052 ms]
+reduce_l/rayon2/e20_heavy   time:   [44.882 ms 46.087 ms 47.285 ms]
+reduce_l/orx/e20_heavy      time:   [42.330 ms 43.862 ms 45.625 ms]
+
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
