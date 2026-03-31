@@ -1,4 +1,5 @@
 mod into_par_iter;
+mod iter_into_par_iter;
 mod par_collection;
 mod par_collection_mut;
 mod par_drain;
