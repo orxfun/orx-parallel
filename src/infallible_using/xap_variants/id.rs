@@ -1,34 +1,39 @@
-use crate::{
-    infallible::size::{Many, Size},
-    infallible_using::{fun::MapU, xap::Xap},
-};
+use super::fake::Fake;
+use crate::infallible::size::{Many, One, Size};
+use crate::infallible_using::{fun::MapU, xap::Xap};
 use core::marker::PhantomData;
 
-pub struct Fake<I, O, U, S: Size>(PhantomData<(I, O, U, S)>);
+pub struct Id<U, I>(PhantomData<(U, I)>);
 
-impl<I, O, U, S: Size> Clone for Fake<I, O, U, S> {
+impl<U, I> Clone for Id<U, I> {
     fn clone(&self) -> Self {
-        Self(self.0.clone())
+        Self::new()
     }
 }
 
-impl<I, O, U, S: Size> Copy for Fake<I, O, U, S> {}
+impl<U, I> Copy for Id<U, I> {}
 
-unsafe impl<I, O, U, S: Size> Send for Fake<I, O, U, S> {}
+unsafe impl<U, I> Send for Id<U, I> {}
 
-impl<I, O, U, S: Size> Xap for Fake<I, O, U, S> {
+impl<U, I> Id<U, I> {
+    pub const fn new() -> Self {
+        Self(PhantomData)
+    }
+}
+
+impl<U, I> Xap for Id<U, I> {
     type I = I;
 
-    type O = O;
+    type O = I;
 
     type U = U;
 
-    type Size = S;
+    type Size = One;
 
-    type Values = core::iter::Empty<O>;
+    type Values = [I; 1];
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
-        todo!()
+    fn xap(&self, _: &mut Self::U, i: Self::I) -> Self::Values {
+        [i]
     }
 
     // transformations
