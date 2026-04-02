@@ -29,14 +29,13 @@ first_f/rayon/e20_late_heavy    time:   [18.846 ms 19.785 ms 20.808 ms]
 first_f/orx/e20_late_heavy      time:   [11.166 ms 11.519 ms 11.883 ms]
 */
 
-use std::hint::black_box;
-
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::hint::black_box;
 
 fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     const SEED: u64 = 654;
