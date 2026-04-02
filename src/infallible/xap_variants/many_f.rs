@@ -1,5 +1,3 @@
-use core::iter::FusedIterator;
-
 use crate::infallible::fun::FnFlatMap;
 use crate::infallible::fun::{FilterMap, FnFil, FnFilMap};
 use crate::infallible::fun::{FnIns, FnMap, Map};
@@ -7,6 +5,7 @@ use crate::infallible::size::Many;
 use crate::infallible::xap::Xap;
 use crate::infallible::xap_variants::many_m::ManyM;
 use crate::infallible::xap_variants::many_x::ManyX;
+use core::iter::FusedIterator;
 
 pub struct ManyF<X: Xap<Size = Many>, G: FilterMap<I = X::O>> {
     x: X,
