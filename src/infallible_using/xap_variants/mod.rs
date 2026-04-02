@@ -4,7 +4,7 @@ mod bin_x;
 mod id;
 mod many_f;
 mod many_m;
-// mod many_x;
+mod many_x;
 mod one_f;
 mod one_m;
 mod one_x;
