@@ -1,3 +1,19 @@
+/*
+
+first_id/seq/1024       time:   [459.73 ps 465.10 ps 470.46 ps]
+first_id/rayon/1024     time:   [2.4319 ms 2.4850 ms 2.5387 ms]
+first_id/orx/1024       time:   [1.8087 ms 1.8554 ms 1.9051 ms]
+
+first_id/seq/32768      time:   [501.31 ps 515.28 ps 531.02 ps]
+first_id/rayon/32768    time:   [3.0993 ms 3.2035 ms 3.3115 ms]
+first_id/orx/32768      time:   [3.2926 ms 3.4211 ms 3.5529 ms]
+
+first_id/seq/1048576    time:   [551.79 ps 566.80 ps 580.32 ps]
+first_id/rayon/1048576  time:   [2.6398 ms 2.7137 ms 2.7881 ms]
+first_id/orx/1048576    time:   [1.8319 ms 1.8669 ms 1.9032 ms]
+
+*/
+
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_concurrent_iter::IntoConcurrentIter;
 use orx_parallel::infallible::par;
