@@ -48,9 +48,9 @@ test-case = "3.3.1"
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 
 [[bench]]
-name = "reduce"
+name = "first"
 harness = false
-path = "benches/reduce/mfmf.rs"
+path = "benches/first/f.rs"
 
 [package.metadata.docs.rs]
 all-features = true
