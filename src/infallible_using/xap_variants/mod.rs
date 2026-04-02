@@ -1,7 +1,7 @@
 // mod bin_f;
 // mod bin_m;
 // mod bin_x;
-// mod id;
+mod id;
 // mod many_f;
 // mod many_m;
 // mod many_x;
@@ -12,7 +12,7 @@
 // pub use bin_f::BinF;
 // pub use bin_m::BinM;
 // pub use bin_x::BinX;
-// pub use id::Id;
+pub use id::Id;
 // pub use many_f::ManyF;
 // pub use many_m::ManyM;
 // pub use many_x::ManyX;
