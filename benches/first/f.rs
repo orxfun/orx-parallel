@@ -4,17 +4,29 @@
 * eN means an input of size 2^N is used
 * beg & mid & end show where the element to be found is located
 
-first_f/seq/e20_early   time:   [141.21 ns 142.09 ns 143.01 ns]
-first_f/rayon/e20_early time:   [3.5811 ms 3.7413 ms 3.9083 ms]
-first_f/orx/e20_early   time:   [1.6906 ms 1.7142 ms 1.7387 ms]
+first_f/seq/e20_early_light     time:   [134.43 ns 135.65 ns 137.10 ns]
+first_f/rayon/e20_early_light   time:   [3.0049 ms 3.1196 ms 3.2361 ms]
+first_f/orx/e20_early_light     time:   [2.3006 ms 2.8179 ms 3.5227 ms]
 
-first_f/seq/e20_mid     time:   [282.47 µs 291.11 µs 302.48 µs]
-first_f/rayon/e20_mid   time:   [21.074 ms 22.538 ms 24.097 ms]
-first_f/orx/e20_mid     time:   [3.0550 ms 3.1318 ms 3.2164 ms]
+first_f/seq/e20_mid_light       time:   [254.82 µs 256.43 µs 258.11 µs]
+first_f/rayon/e20_mid_light     time:   [16.069 ms 16.768 ms 17.485 ms]
+first_f/orx/e20_mid_light       time:   [2.5330 ms 2.5800 ms 2.6287 ms]
 
-first_f/seq/e20_late    time:   [623.79 µs 642.33 µs 665.24 µs]
-first_f/rayon/e20_late  time:   [21.120 ms 22.075 ms 23.059 ms]
-first_f/orx/e20_late    time:   [3.1072 ms 3.2949 ms 3.5124 ms]
+first_f/seq/e20_late_light      time:   [549.48 µs 553.65 µs 557.91 µs]
+first_f/rayon/e20_late_light    time:   [18.432 ms 19.354 ms 20.327 ms]
+first_f/orx/e20_late_light      time:   [2.6065 ms 2.6594 ms 2.7185 ms]
+
+first_f/seq/e20_early_heavy     time:   [9.1386 µs 9.1968 µs 9.2558 µs]
+first_f/rayon/e20_early_heavy   time:   [3.3045 ms 3.5344 ms 3.7845 ms]
+first_f/orx/e20_early_heavy     time:   [2.3561 ms 2.4414 ms 2.5357 ms]
+
+first_f/seq/e20_mid_heavy       time:   [29.245 ms 29.492 ms 29.754 ms]
+first_f/rayon/e20_mid_heavy     time:   [16.331 ms 17.904 ms 19.619 ms]
+first_f/orx/e20_mid_heavy       time:   [6.8600 ms 7.0786 ms 7.3210 ms]
+
+first_f/seq/e20_late_heavy      time:   [62.792 ms 64.373 ms 66.394 ms]
+first_f/rayon/e20_late_heavy    time:   [18.846 ms 19.785 ms 20.808 ms]
+first_f/orx/e20_late_heavy      time:   [11.166 ms 11.519 ms 11.883 ms]
 */
 
 use std::hint::black_box;
