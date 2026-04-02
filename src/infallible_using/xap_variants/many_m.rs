@@ -1,11 +1,10 @@
-use core::iter::FusedIterator;
-
 use super::fake::Fake;
 use crate::infallible::size::{Bin, Many, One, Size};
 use crate::infallible_using::fun::MapUEnum;
 use crate::infallible_using::xap::{XapBin, XapOne};
 use crate::infallible_using::xap_enum::XapEnumByInput;
 use crate::infallible_using::{fun::MapU, xap::Xap};
+use core::iter::FusedIterator;
 
 pub struct ManyM<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> {
     x: X,
@@ -26,15 +25,15 @@ impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> ManyM<X, G> {
     }
 }
 
-// impl<X: XapEnumByInput<Size = Many>, G: MapU<U = X::U, I = X::O>> XapEnumByInput for ManyM<X, G> {
-//     type Enumerated = ManyM<X::Enumerated, MapUEnum<G>>;
+impl<X: XapEnumByInput<Size = Many>, G: MapU<U = X::U, I = X::O>> XapEnumByInput for ManyM<X, G> {
+    type Enumerated = ManyM<X::Enumerated, MapUEnum<G>>;
 
-//     fn enumerate(self) -> Self::Enumerated {
-//         let g = MapUEnum::new(self.g);
-//         let x = self.x.enumerate();
-//         ManyM::new(x, g)
-//     }
-// }
+    fn enumerate(self) -> Self::Enumerated {
+        let g = MapUEnum::new(self.g);
+        let x = self.x.enumerate();
+        ManyM::new(x, g)
+    }
+}
 
 impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> Xap for ManyM<X, G> {
     type I = X::I;
@@ -44,7 +43,7 @@ impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> Xap for ManyM<X, G> {
     type Size = Many;
 
     type Values<'a>
-        = IterManyM<'a, <X::Values<'a> as IntoIterator>::IntoIter, G>
+        = IterManyM<<X::Values<'a> as IntoIterator>::IntoIter, G>
     where
         Self: 'a;
 
@@ -54,9 +53,15 @@ impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> Xap for ManyM<X, G> {
     where
         Self: 'a,
     {
+        // SAFETY: u is either used by i.next or g.map which can never
+        // occur at the same time; hence, there exists no race condition
+        let u_ptr = u as *mut Self::U;
         let i = self.x.xap(u, i).into_iter();
-        // IterManyM { u, i, g: self.g };
-        todo!()
+        IterManyM {
+            u: u_ptr,
+            i,
+            g: self.g,
+        }
     }
 
     // transformations
@@ -138,17 +143,17 @@ impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> Xap for ManyM<X, G> {
 
 // iter
 
-pub struct IterManyM<'a, I, G>
+pub struct IterManyM<I, G>
 where
     I: Iterator,
     G: MapU<I = I::Item>,
 {
-    u: &'a mut G::U,
+    u: *mut G::U,
     i: I,
     g: G,
 }
 
-impl<'a, I, G> Iterator for IterManyM<'a, I, G>
+impl<I, G> Iterator for IterManyM<I, G>
 where
     I: Iterator,
     G: MapU<I = I::Item>,
@@ -157,7 +162,11 @@ where
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        self.i.next().map(|x| self.g.map(self.u, x))
+        // SAFETY: u is either used by i.next or g.map which can never
+        // occur at the same time; hence, there exists no race condition
+        self.i
+            .next()
+            .map(|x| self.g.map(unsafe { &mut *self.u }, x))
     }
 
     #[inline(always)]
@@ -171,7 +180,11 @@ where
         Self: Sized,
         F: FnMut(B, Self::Item) -> B,
     {
-        self.i.map(|x| self.g.map(self.u, x)).fold(init, f)
+        // SAFETY: u is either used by i.next or g.map which can never
+        // occur at the same time; hence, there exists no race condition
+        self.i
+            .map(|x| self.g.map(unsafe { &mut *self.u }, x))
+            .fold(init, f)
     }
 
     #[inline]
@@ -183,7 +196,7 @@ where
     }
 }
 
-impl<I, G> ExactSizeIterator for IterManyM<'_, I, G>
+impl<I, G> ExactSizeIterator for IterManyM<I, G>
 where
     I: ExactSizeIterator,
     G: MapU<I = I::Item>,
@@ -194,19 +207,23 @@ where
     }
 }
 
-impl<I, G> FusedIterator for IterManyM<'_, I, G>
+impl<I, G> FusedIterator for IterManyM<I, G>
 where
     I: FusedIterator,
     G: MapU<I = I::Item>,
 {
 }
 
-impl<I, G> DoubleEndedIterator for IterManyM<'_, I, G>
+impl<I, G> DoubleEndedIterator for IterManyM<I, G>
 where
     I: DoubleEndedIterator,
     G: MapU<I = I::Item>,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.i.next_back().map(|x| self.g.map(self.u, x))
+        // SAFETY: u is either used by i.next or g.map which can never
+        // occur at the same time; hence, there exists no race condition
+        self.i
+            .next_back()
+            .map(|x| self.g.map(unsafe { &mut *self.u }, x))
     }
 }
