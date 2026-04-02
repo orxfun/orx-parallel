@@ -7,7 +7,7 @@ mod id;
 // mod many_x;
 mod one_f;
 mod one_m;
-// mod one_x;
+mod one_x;
 
 // pub use bin_f::BinF;
 // pub use bin_m::BinM;
@@ -18,6 +18,6 @@ pub use id::Id;
 // pub use many_x::ManyX;
 pub use one_f::OneF;
 pub use one_m::OneM;
-// pub use one_x::OneX;
+pub use one_x::OneX;
 
 mod fake;
