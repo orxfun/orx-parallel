@@ -1,5 +1,5 @@
-mod fn_impl;
+mod basic;
 mod fn_trait;
 
-pub use fn_impl::FnFlatMap;
+pub use basic::FnFlatMap;
 pub use fn_trait::FlatMap;
