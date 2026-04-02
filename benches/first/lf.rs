@@ -28,7 +28,7 @@ use orx_concurrent_iter::IntoConcurrentIter;
 use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-// use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 const FIB_UPPER_BOUND: u64 = 201;
 
@@ -82,25 +82,19 @@ fn orx(input: &[u64], h: bool, value: u64) -> Option<u64> {
     }
 }
 
-/*
-flat_map is not available on rayon with the provided iterator:
-`ParallelIterator` is not implemented for `impl IntoIterator<Item = u64>`
-
-To be uncommented to add to benchmark if the implementation will be available later.
- */
-// fn rayon(input: &[u64], h: bool, value: u64) -> Option<u64> {
-//     let iter = input.into_par_iter();
-//     match h {
-//         false => iter
-//             .flat_map(l_l)
-//             .filter(|x| *x == value)
-//             .find_first(|_| true),
-//         true => iter
-//             .flat_map(h_l)
-//             .filter(|x| *x == value)
-//             .find_first(|_| true),
-//     }
-// }
+fn rayon(input: &[u64], h: bool, value: u64) -> Option<u64> {
+    let iter = input.into_par_iter();
+    match h {
+        false => iter
+            .flat_map_iter(l_l)
+            .filter(|x| *x == value)
+            .find_first(|_| true),
+        true => iter
+            .flat_map_iter(h_l)
+            .filter(|x| *x == value)
+            .find_first(|_| true),
+    }
+}
 
 #[derive(Debug)]
 enum Pos {
@@ -183,10 +177,10 @@ fn run(c: &mut Criterion) {
             b.iter(|| seq(&input, t.heavy_compute, t.val))
         });
 
-        // group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-        //     assert_eq!(&expected, &rayon(&input, t.heavy_compute, t.val));
-        //     b.iter(|| rayon(&input, t.heavy_compute, t.val))
-        // });
+        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+            assert_eq!(&expected, &rayon(&input, t.heavy_compute, t.val));
+            b.iter(|| rayon(&input, t.heavy_compute, t.val))
+        });
 
         group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
             assert_eq!(&expected, &orx(&input, t.heavy_compute, t.val));
