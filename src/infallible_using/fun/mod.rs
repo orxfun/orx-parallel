@@ -3,4 +3,5 @@ mod flat_map;
 mod map;
 
 pub use filter_map::{FilterMapU, FnFilMapU, FnFilU};
+pub use flat_map::{FlatMapU, FnFlatMapU};
 pub use map::{FnClonedU, FnCopiedU, FnInsU, FnMapU, MapU, MapUEnum};
