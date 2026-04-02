@@ -1,6 +1,8 @@
 /*
 
 * light & heavy show the intensity of computation
+* eN means an input of size 2^N is used
+* beg & mid & end show where the element to be found is located
 
 first_fff/seq/e20_early  time:   [120.17 ns 121.15 ns 122.19 ns]
 first_fff/rayon/e20_earlytime:   [2.7752 ms 2.8812 ms 2.9894 ms]
@@ -22,6 +24,7 @@ use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::hint::black_box;
 
 fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     const SEED: u64 = 654;
@@ -32,34 +35,83 @@ fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     vec
 }
 
-fn seq(input: &[u64], value: u64) -> Option<u64> {
-    input
-        .iter()
-        .filter(|x| x.is_multiple_of(9))
-        .filter(|x| *x + 1 > 900)
-        .filter(|x| **x == value)
-        .next()
-        .copied()
+const FIB_UPPER_BOUND: u64 = 201;
+
+fn fibonacci(n: u64) -> u64 {
+    let mut a = 0;
+    let mut b = 1;
+    for _ in 0..n {
+        let c = a + b;
+        a = b;
+        b = c;
+    }
+    a
 }
 
-fn orx(input: &[u64], value: u64) -> Option<u64> {
+fn l_f(x: u64, value: u64) -> bool {
+    x == value
+}
+
+fn h_f(x: u64, value: u64) -> bool {
+    let a = black_box(fibonacci(x % FIB_UPPER_BOUND));
+    let b = black_box(fibonacci(x % FIB_UPPER_BOUND));
+    a - b + x == value
+}
+
+fn seq(input: &[u64], value: u64, h: bool) -> Option<u64> {
+    match h {
+        true => input
+            .iter()
+            .filter(|x| h_f(**x, value))
+            .filter(|x| *x + 1 > 900)
+            .filter(|x| x.is_multiple_of(9))
+            .next()
+            .copied(),
+        false => input
+            .iter()
+            .filter(|x| l_f(**x, value))
+            .filter(|x| *x + 1 > 900)
+            .filter(|x| x.is_multiple_of(9))
+            .next()
+            .copied(),
+    }
+}
+
+fn orx(input: &[u64], value: u64, h: bool) -> Option<u64> {
     let iter = input.into_con_iter();
-    par(iter)
-        .filter(|x| x.is_multiple_of(9))
-        .filter(|x| *x + 1 > 900)
-        .filter(|x| **x == value)
-        .first()
-        .copied()
+    match h {
+        true => par(iter)
+            .filter(|x| h_f(**x, value))
+            .filter(|x| *x + 1 > 900)
+            .filter(|x| x.is_multiple_of(9))
+            .first()
+            .copied(),
+        false => par(iter)
+            .filter(|x| l_f(**x, value))
+            .filter(|x| *x + 1 > 900)
+            .filter(|x| x.is_multiple_of(9))
+            .first()
+            .copied(),
+    }
 }
 
-fn rayon(input: &[u64], value: u64) -> Option<u64> {
-    input
-        .into_par_iter()
-        .filter(|x| x.is_multiple_of(9))
-        .filter(|x| *x + 1 > 900)
-        .filter(|x| **x == value)
-        .find_first(|_| true)
-        .copied()
+fn rayon(input: &[u64], value: u64, h: bool) -> Option<u64> {
+    match h {
+        true => input
+            .into_par_iter()
+            .filter(|x| h_f(**x, value))
+            .filter(|x| *x + 1 > 900)
+            .filter(|x| x.is_multiple_of(9))
+            .find_first(|_| true)
+            .copied(),
+        false => input
+            .into_par_iter()
+            .filter(|x| l_f(**x, value))
+            .filter(|x| *x + 1 > 900)
+            .filter(|x| x.is_multiple_of(9))
+            .find_first(|_| true)
+            .copied(),
+    }
 }
 
 struct Treat {
@@ -67,6 +119,7 @@ struct Treat {
     pos: usize,
     val: u64,
     name: String,
+    heavy_compute: bool,
 }
 
 fn run(c: &mut Criterion) {
@@ -74,20 +127,44 @@ fn run(c: &mut Criterion) {
         Treat {
             len: 1 << 20,
             pos: 1 << 8,
-            name: format!("e{}_early", 20),
+            name: format!("e{}_early_light", 20),
             val: 999,
+            heavy_compute: false,
         },
         Treat {
             len: 1 << 20,
             pos: (1 << 19) + 7,
-            name: format!("e{}_mid", 20),
+            name: format!("e{}_mid_light", 20),
             val: 999,
+            heavy_compute: false,
         },
         Treat {
             len: 1 << 20,
             pos: (1 << 20) - 27,
-            name: format!("e{}_late", 20),
+            name: format!("e{}_late_light", 20),
             val: 999,
+            heavy_compute: false,
+        },
+        Treat {
+            len: 1 << 20,
+            pos: 1 << 8,
+            name: format!("e{}_early_heavy", 20),
+            val: 999,
+            heavy_compute: true,
+        },
+        Treat {
+            len: 1 << 20,
+            pos: (1 << 19) + 7,
+            name: format!("e{}_mid_heavy", 20),
+            val: 999,
+            heavy_compute: true,
+        },
+        Treat {
+            len: 1 << 20,
+            pos: (1 << 20) - 27,
+            name: format!("e{}_late_heavy", 20),
+            val: 999,
+            heavy_compute: true,
         },
     ];
 
@@ -95,21 +172,21 @@ fn run(c: &mut Criterion) {
 
     for t in treatments {
         let input = inputs(t.len, t.pos, t.val);
-        let expected = seq(&input, t.val);
+        let expected = seq(&input, t.val, t.heavy_compute);
 
         group.bench_with_input(BenchmarkId::new("seq", &t.name), &t.name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.val));
-            b.iter(|| seq(&input, t.val))
+            assert_eq!(&expected, &seq(&input, t.val, t.heavy_compute));
+            b.iter(|| seq(&input, t.val, t.heavy_compute))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", &t.name), &t.name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.val));
-            b.iter(|| rayon(&input, t.val))
+            assert_eq!(&expected, &rayon(&input, t.val, t.heavy_compute));
+            b.iter(|| rayon(&input, t.val, t.heavy_compute))
         });
 
         group.bench_with_input(BenchmarkId::new("orx", &t.name), &t.name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.val));
-            b.iter(|| orx(&input, t.val))
+            assert_eq!(&expected, &orx(&input, t.val, t.heavy_compute));
+            b.iter(|| orx(&input, t.val, t.heavy_compute))
         });
     }
 
