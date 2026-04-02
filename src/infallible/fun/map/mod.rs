@@ -1,7 +1,11 @@
+mod basic;
+mod cloned_copied;
 mod r#enum;
-mod fn_impl;
 mod fn_trait;
+mod inspect;
 
+pub use basic::FnMap;
+pub use cloned_copied::{FnCloned, FnCopied};
 pub use r#enum::MapEnum;
-pub use fn_impl::{FnCloned, FnCopied, FnIns, FnMap};
 pub use fn_trait::Map;
+pub use inspect::FnIns;
