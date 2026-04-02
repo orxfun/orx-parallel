@@ -16,57 +16,57 @@ pub trait Xap: Copy + Send {
 
     // transformations
 
-    type Map<Q, H>: Xap<I = Self::I, O = Q, Size = Self::Size>
+    type Map<Q, H>: Xap<U = Self::U, I = Self::I, O = Q, Size = Self::Size>
     where
-        H: Fn(Self::O) -> Q + Copy + Send;
+        H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send;
 
     fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
     where
-        H: Fn(Self::O) -> Q + Copy + Send;
+        H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send;
 
-    type Inspect<H>: Xap<I = Self::I, O = Self::O, Size = Self::Size>
+    type Inspect<H>: Xap<U = Self::U, I = Self::I, O = Self::O, Size = Self::Size>
     where
-        H: Fn(&Self::O) + Copy + Send;
+        H: Fn(&mut Self::U, &Self::O) + Copy + Send;
 
     fn inspect<H>(self, h: H) -> Self::Inspect<H>
     where
-        H: Fn(&Self::O) + Copy + Send;
+        H: Fn(&mut Self::U, &Self::O) + Copy + Send;
 
-    type Filter<H>: Xap<I = Self::I, O = Self::O, Size = <Self::Size as Size>::ThenBin>
+    type Filter<H>: Xap<U = Self::U, I = Self::I, O = Self::O, Size = <Self::Size as Size>::ThenBin>
     where
-        H: Fn(&Self::O) -> bool + Copy + Send;
+        H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send;
 
     fn filter<H>(self, h: H) -> Self::Filter<H>
     where
-        H: Fn(&Self::O) -> bool + Copy + Send;
+        H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send;
 
-    type FilterMap<Q, H>: Xap<I = Self::I, O = Q, Size = <Self::Size as Size>::ThenBin>
+    type FilterMap<Q, H>: Xap<U = Self::U, I = Self::I, O = Q, Size = <Self::Size as Size>::ThenBin>
     where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send;
+        H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send;
 
     fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
     where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send;
+        H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send;
 
-    type FlatMap<V, H>: Xap<I = Self::I, O = V::Item, Size = Many>
+    type FlatMap<V, H>: Xap<U = Self::U, I = Self::I, O = V::Item, Size = Many>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send;
+        H: Fn(&mut Self::U, Self::O) -> V + Copy + Send;
 
     fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send;
+        H: Fn(&mut Self::U, Self::O) -> V + Copy + Send;
 
     // transformations - helper
 
-    type Mapped<M>: Xap<I = Self::I, O = M::O, Size = Self::Size>
+    type Mapped<M>: Xap<U = Self::U, I = Self::I, O = M::O, Size = Self::Size>
     where
-        M: MapU<I = Self::O>;
+        M: MapU<U = Self::U, I = Self::O>;
 
     fn mapped<M>(self, m: M) -> Self::Mapped<M>
     where
-        M: MapU<I = Self::O>;
+        M: MapU<U = Self::U, I = Self::O>;
 }
 
 // one
