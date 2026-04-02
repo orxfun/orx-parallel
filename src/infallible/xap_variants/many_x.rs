@@ -38,7 +38,7 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
     fn xap(&self, i: Self::I) -> Self::Values {
         let i = self.x.xap(i).into_iter();
         let (g, inner) = (self.g, None);
-        IterManyX { i, g: g, inner }
+        IterManyX { i, g, inner }
     }
 
     // transformations
