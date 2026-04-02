@@ -10,9 +10,13 @@ pub trait Xap: Copy + Send {
 
     type Size: Size;
 
-    type Values: IntoIterator<Item = Self::O>;
+    type Values<'a>: IntoIterator<Item = Self::O>
+    where
+        Self: 'a;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values;
+    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
+    where
+        Self: 'a;
 
     // transformations
 

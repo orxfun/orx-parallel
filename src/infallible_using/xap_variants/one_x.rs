@@ -30,11 +30,17 @@ impl<X: Xap<Size = One>, G: FlatMapU<U = X::U, I = X::O>> Xap for OneX<X, G> {
 
     type Size = Many;
 
-    type Values = G::O;
+    type Values<'a>
+        = G::O
+    where
+        Self: 'a;
 
     type U = X::U;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
+    where
+        Self: 'a,
+    {
         let a = self.x.one_value(u, i);
         self.g.flat_map(u, a)
     }

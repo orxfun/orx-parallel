@@ -31,11 +31,17 @@ impl<X: Xap<Size = Bin>, G: FilterMapU<U = X::U, I = X::O>> Xap for BinF<X, G> {
 
     type Size = Bin;
 
-    type Values = Option<G::O>;
+    type Values<'a>
+        = Option<G::O>
+    where
+        Self: 'a;
 
     type U = X::U;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
+    where
+        Self: 'a,
+    {
         self.x.bin_value(u, i).and_then(|x| self.g.filter_map(u, x))
     }
 
