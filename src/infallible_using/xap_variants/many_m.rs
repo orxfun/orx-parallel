@@ -227,3 +227,38 @@ where
             .map(|x| self.g.map(unsafe { &mut *self.u }, x))
     }
 }
+
+#[cfg(test)]
+mod tst {
+    use std::println;
+
+    use super::*;
+    use crate::infallible_using::{
+        fun::{FnFlatMapU, FnMapU},
+        xap_variants::{Id, OneM, OneX},
+    };
+    use alloc::vec::Vec;
+
+    #[test]
+    fn abc() {
+        let f = |u: &mut usize, x: u32| {
+            *u += 1;
+            [x, x + 1]
+        };
+        let g = FnFlatMapU::new(f);
+        let ox = OneX::new(Id::new(), g);
+
+        let f = |u: &mut usize, x: u32| {
+            *u += 1;
+            x * 2
+        };
+        let g = FnMapU::new(f);
+        let mm = ManyM::new(ox, g);
+
+        let mut u = 0;
+        let result: Vec<_> = mm.xap(&mut u, 4).into_iter().collect();
+
+        println!("{result:?}");
+        // assert_eq!(result.len(), 33);
+    }
+}
