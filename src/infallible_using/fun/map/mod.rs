@@ -1,2 +1,2 @@
-mod fn_impl;
+mod basic;
 mod fn_trait;
