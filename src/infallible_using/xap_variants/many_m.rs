@@ -36,97 +36,105 @@ impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> ManyM<X, G> {
 //     }
 // }
 
-// impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> Xap for ManyM<X, G> {
-//     type I = X::I;
+impl<X: Xap<Size = Many>, G: MapU<U = X::U, I = X::O>> Xap for ManyM<X, G> {
+    type I = X::I;
 
-//     type O = G::O;
+    type O = G::O;
 
-//     type Size = Many;
+    type Size = Many;
 
-//     type Values = IterManyM<<X::Values as IntoIterator>::IntoIter, G>;
+    type Values<'a>
+        = IterManyM<'a, <X::Values<'a> as IntoIterator>::IntoIter, G>
+    where
+        Self: 'a;
 
-//     type U = X::U;
+    type U = X::U;
 
-//     fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
-//         todo!()
-//     }
+    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
+    where
+        Self: 'a,
+    {
+        let i = self.x.xap(u, i).into_iter();
+        // IterManyM { u, i, g: self.g };
+        todo!()
+    }
 
-//     // transformations
+    // transformations
 
-//     type Map<Q, H>
-//         = Fake<Self::I, Q, Self::U, Self::Size>
-//     where
-//         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send;
+    type Map<Q, H>
+        = Fake<Self::I, Q, Self::U, Self::Size>
+    where
+        H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send;
 
-//     fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
-//     where
-//         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    where
+        H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send,
+    {
+        todo!()
+    }
 
-//     type Inspect<H>
-//         = Fake<Self::I, Self::O, Self::U, Self::Size>
-//     where
-//         H: Fn(&mut Self::U, &Self::O) + Copy + Send;
+    type Inspect<H>
+        = Fake<Self::I, Self::O, Self::U, Self::Size>
+    where
+        H: Fn(&mut Self::U, &Self::O) + Copy + Send;
 
-//     fn inspect<H>(self, h: H) -> Self::Inspect<H>
-//     where
-//         H: Fn(&mut Self::U, &Self::O) + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn inspect<H>(self, h: H) -> Self::Inspect<H>
+    where
+        H: Fn(&mut Self::U, &Self::O) + Copy + Send,
+    {
+        todo!()
+    }
 
-//     type Filter<H>
-//         = Fake<Self::I, Self::O, Self::U, <Self::Size as Size>::ThenBin>
-//     where
-//         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send;
+    type Filter<H>
+        = Fake<Self::I, Self::O, Self::U, <Self::Size as Size>::ThenBin>
+    where
+        H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send;
 
-//     fn filter<H>(self, h: H) -> Self::Filter<H>
-//     where
-//         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn filter<H>(self, h: H) -> Self::Filter<H>
+    where
+        H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send,
+    {
+        todo!()
+    }
 
-//     type FilterMap<Q, H>
-//         = Fake<Self::I, Q, Self::U, <Self::Size as Size>::ThenBin>
-//     where
-//         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send;
+    type FilterMap<Q, H>
+        = Fake<Self::I, Q, Self::U, <Self::Size as Size>::ThenBin>
+    where
+        H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send;
 
-//     fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
-//     where
-//         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
+    where
+        H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send,
+    {
+        todo!()
+    }
 
-//     type FlatMap<V, H>
-//         = Fake<Self::I, V::Item, Self::U, Many>
-//     where
-//         V: IntoIterator,
-//         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send;
+    type FlatMap<V, H>
+        = Fake<Self::I, V::Item, Self::U, Many>
+    where
+        V: IntoIterator,
+        H: Fn(&mut Self::U, Self::O) -> V + Copy + Send;
 
-//     fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
-//     where
-//         V: IntoIterator,
-//         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
+    where
+        V: IntoIterator,
+        H: Fn(&mut Self::U, Self::O) -> V + Copy + Send,
+    {
+        todo!()
+    }
 
-//     type Mapped<M>
-//         = Fake<Self::I, M::O, Self::U, Self::Size>
-//     where
-//         M: MapU<U = Self::U, I = Self::O>;
+    type Mapped<M>
+        = Fake<Self::I, M::O, Self::U, Self::Size>
+    where
+        M: MapU<U = Self::U, I = Self::O>;
 
-//     fn mapped<M>(self, m: M) -> Self::Mapped<M>
-//     where
-//         M: MapU<U = Self::U, I = Self::O>,
-//     {
-//         todo!()
-//     }
-// }
+    fn mapped<M>(self, m: M) -> Self::Mapped<M>
+    where
+        M: MapU<U = Self::U, I = Self::O>,
+    {
+        todo!()
+    }
+}
 
 // iter
 

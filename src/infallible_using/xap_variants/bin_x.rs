@@ -32,11 +32,17 @@ impl<X: Xap<Size = Bin>, G: FlatMapU<U = X::U, I = X::O>> Xap for BinX<X, G> {
 
     type Size = Many;
 
-    type Values = IterBinX<<G::O as IntoIterator>::IntoIter>;
+    type Values<'a>
+        = IterBinX<<G::O as IntoIterator>::IntoIter>
+    where
+        Self: 'a;
 
     type U = X::U;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
+    where
+        Self: 'a,
+    {
         let i = self
             .x
             .bin_value(u, i)

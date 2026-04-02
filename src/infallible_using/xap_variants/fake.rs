@@ -25,9 +25,15 @@ impl<I, O, U, S: Size> Xap for Fake<I, O, U, S> {
 
     type Size = S;
 
-    type Values = core::iter::Empty<O>;
+    type Values<'a>
+        = core::iter::Empty<O>
+    where
+        Self: 'a;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'_>
+    where
+        Self: 'a,
+    {
         todo!()
     }
 

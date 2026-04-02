@@ -43,9 +43,15 @@ impl<X: Xap<Size = One>, G: MapU<U = X::U, I = X::O>> Xap for OneM<X, G> {
 
     type Size = One;
 
-    type Values = [G::O; 1];
+    type Values<'a>
+        = [G::O; 1]
+    where
+        Self: 'a;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
+    where
+        Self: 'a,
+    {
         let a = self.x.one_value(u, i);
         [self.g.map(u, a)]
     }
