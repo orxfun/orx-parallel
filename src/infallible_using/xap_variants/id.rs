@@ -1,7 +1,7 @@
 use crate::infallible::size::One;
-use crate::infallible_using::fun::{FnFilMapU, FnFilU, FnFlatMapU, FnInsU, FnMapU};
+use crate::infallible_using::fun::{FnFilMapU, FnFilU, FnFlatMapU, FnInsU, FnMapU, MapU};
+use crate::infallible_using::xap::Xap;
 use crate::infallible_using::xap_variants::{OneF, OneM, OneX};
-use crate::infallible_using::{fun::MapU, xap::Xap};
 use core::marker::PhantomData;
 
 pub struct Id<U, I>(PhantomData<(U, I)>);
