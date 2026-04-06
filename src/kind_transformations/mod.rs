@@ -1,3 +1,4 @@
+mod into_infallible_using;
 mod into_par_opt;
 mod into_par_res;
 mod into_xap_opt;

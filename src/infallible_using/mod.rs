@@ -10,5 +10,6 @@ mod xap;
 mod xap_enum;
 pub mod xap_variants;
 
+pub use par_iter::ParUsing;
 pub use xap::Xap;
 pub use xap_enum::XapEnumByInput;
