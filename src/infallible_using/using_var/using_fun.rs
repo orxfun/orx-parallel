@@ -2,6 +2,12 @@ use crate::infallible_using::using_var::using::Using;
 
 pub struct UsingFun<T, F: Fn(usize) -> T + Sync>(F);
 
+impl<T, F: Fn(usize) -> T + Sync> UsingFun<T, F> {
+    pub fn new(f: F) -> Self {
+        Self(f)
+    }
+}
+
 impl<T, F: Fn(usize) -> T + Sync> Using for UsingFun<T, F> {
     type Item = T;
 
