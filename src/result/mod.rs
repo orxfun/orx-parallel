@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 mod par_res_iter;
 mod par_runner;
 mod thread_execution;
