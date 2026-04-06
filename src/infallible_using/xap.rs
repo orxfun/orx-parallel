@@ -1,5 +1,5 @@
 use crate::infallible::size::{Bin, Many, One, Size};
-use crate::infallible_using::fun::MapU;
+use crate::infallible_using::fun::Map;
 
 pub trait Xap: Copy + Send {
     type I;
@@ -62,11 +62,11 @@ pub trait Xap: Copy + Send {
 
     type Mapped<M>: Xap<U = Self::U, I = Self::I, O = M::O, Size = Self::Size>
     where
-        M: MapU<U = Self::U, I = Self::O>;
+        M: Map<U = Self::U, I = Self::O>;
 
     fn mapped<M>(self, m: M) -> Self::Mapped<M>
     where
-        M: MapU<U = Self::U, I = Self::O>;
+        M: Map<U = Self::U, I = Self::O>;
 }
 
 // one

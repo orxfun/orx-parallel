@@ -1,25 +1,25 @@
-use crate::infallible_using::fun::filter_map::fn_trait::FilterMapU;
+use crate::infallible_using::fun::filter_map::fn_trait::FilterMap;
 use core::marker::PhantomData;
 
-pub struct FnFilU<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send>(F, PhantomData<(I, U)>);
+pub struct FnFil<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send>(F, PhantomData<(I, U)>);
 
-impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> Clone for FnFilU<U, I, F> {
+impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> Clone for FnFil<U, I, F> {
     fn clone(&self) -> Self {
         Self::new(self.0)
     }
 }
 
-impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> Copy for FnFilU<U, I, F> {}
+impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> Copy for FnFil<U, I, F> {}
 
-unsafe impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> Send for FnFilU<U, I, F> {}
+unsafe impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> Send for FnFil<U, I, F> {}
 
-impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> FnFilU<U, I, F> {
+impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> FnFil<U, I, F> {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
 }
 
-impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> FilterMapU for FnFilU<U, I, F> {
+impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> FilterMap for FnFil<U, I, F> {
     type I = I;
 
     type O = I;

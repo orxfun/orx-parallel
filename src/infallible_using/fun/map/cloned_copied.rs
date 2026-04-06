@@ -1,27 +1,27 @@
-use crate::infallible_using::fun::map::fn_trait::MapU;
+use crate::infallible_using::fun::map::fn_trait::Map;
 use core::marker::PhantomData;
 
 // cloned
 
-pub struct FnClonedU<'a, U, I: Clone>(PhantomData<&'a (I, U)>);
+pub struct FnCloned<'a, U, I: Clone>(PhantomData<&'a (I, U)>);
 
-impl<'a, U, I: Clone> Clone for FnClonedU<'a, U, I> {
+impl<'a, U, I: Clone> Clone for FnCloned<'a, U, I> {
     fn clone(&self) -> Self {
         Self::new()
     }
 }
 
-impl<'a, U, I: Clone> Copy for FnClonedU<'a, U, I> {}
+impl<'a, U, I: Clone> Copy for FnCloned<'a, U, I> {}
 
-unsafe impl<'a, U, I: Clone> Send for FnClonedU<'a, U, I> {}
+unsafe impl<'a, U, I: Clone> Send for FnCloned<'a, U, I> {}
 
-impl<'a, U, I: Clone> FnClonedU<'a, U, I> {
+impl<'a, U, I: Clone> FnCloned<'a, U, I> {
     pub fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<'a, U, I: Clone> MapU for FnClonedU<'a, U, I> {
+impl<'a, U, I: Clone> Map for FnCloned<'a, U, I> {
     type I = &'a I;
 
     type O = I;
@@ -36,25 +36,25 @@ impl<'a, U, I: Clone> MapU for FnClonedU<'a, U, I> {
 
 // copied
 
-pub struct FnCopiedU<'a, U, I: Copy>(PhantomData<&'a (I, U)>);
+pub struct FnCopied<'a, U, I: Copy>(PhantomData<&'a (I, U)>);
 
-impl<'a, U, I: Copy> Clone for FnCopiedU<'a, U, I> {
+impl<'a, U, I: Copy> Clone for FnCopied<'a, U, I> {
     fn clone(&self) -> Self {
         Self::new()
     }
 }
 
-impl<'a, U, I: Copy> Copy for FnCopiedU<'a, U, I> {}
+impl<'a, U, I: Copy> Copy for FnCopied<'a, U, I> {}
 
-unsafe impl<'a, U, I: Copy> Send for FnCopiedU<'a, U, I> {}
+unsafe impl<'a, U, I: Copy> Send for FnCopied<'a, U, I> {}
 
-impl<'a, U, I: Copy> FnCopiedU<'a, U, I> {
+impl<'a, U, I: Copy> FnCopied<'a, U, I> {
     pub fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<'a, U, I: Copy> MapU for FnCopiedU<'a, U, I> {
+impl<'a, U, I: Copy> Map for FnCopied<'a, U, I> {
     type I = &'a I;
 
     type O = I;

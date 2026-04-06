@@ -1,28 +1,28 @@
 use crate::infallible::size::Many;
-use crate::infallible_using::fun::{FlatMapU, FnFilMapU, FnFilU, FnFlatMapU, FnInsU, FnMapU, MapU};
+use crate::infallible_using::fun::{FlatMap, FnFil, FnFilMap, FnFlatMap, FnIns, FnMap, Map};
 use crate::infallible_using::xap::Xap;
 use crate::infallible_using::xap_variants::{ManyF, ManyM};
 
-pub struct ManyX<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> {
+pub struct ManyX<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Clone for ManyX<X, G> {
+impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Clone for ManyX<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Copy for ManyX<X, G> {}
+impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Copy for ManyX<X, G> {}
 
-impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> ManyX<X, G> {
+impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> ManyX<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
+impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Xap for ManyX<X, G> {
     type I = X::I;
 
     type O = <G::O as IntoIterator>::Item;
@@ -45,7 +45,7 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
     // transformations
 
     type Map<Q, H>
-        = ManyM<Self, FnMapU<Self::U, Self::O, Q, H>>
+        = ManyM<Self, FnMap<Self::U, Self::O, Q, H>>
     where
         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send;
 
@@ -53,11 +53,11 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send,
     {
-        ManyM::new(self, FnMapU::new(h))
+        ManyM::new(self, FnMap::new(h))
     }
 
     type Inspect<H>
-        = ManyM<Self, FnInsU<Self::U, Self::O, H>>
+        = ManyM<Self, FnIns<Self::U, Self::O, H>>
     where
         H: Fn(&mut Self::U, &Self::O) + Copy + Send;
 
@@ -65,11 +65,11 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(&mut Self::U, &Self::O) + Copy + Send,
     {
-        ManyM::new(self, FnInsU::new(h))
+        ManyM::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = ManyF<Self, FnFilU<Self::U, Self::O, H>>
+        = ManyF<Self, FnFil<Self::U, Self::O, H>>
     where
         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send;
 
@@ -77,11 +77,11 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send,
     {
-        ManyF::new(self, FnFilU::new(h))
+        ManyF::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
-        = ManyF<Self, FnFilMapU<Self::U, Self::O, Q, H>>
+        = ManyF<Self, FnFilMap<Self::U, Self::O, Q, H>>
     where
         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send;
 
@@ -89,11 +89,11 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
     where
         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send,
     {
-        ManyF::new(self, FnFilMapU::new(h))
+        ManyF::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = ManyX<Self, FnFlatMapU<Self::U, Self::O, V, H>>
+        = ManyX<Self, FnFlatMap<Self::U, Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send;
@@ -103,7 +103,7 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
         V: IntoIterator,
         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send,
     {
-        ManyX::new(self, FnFlatMapU::new(h))
+        ManyX::new(self, FnFlatMap::new(h))
     }
 
     // transformations - helper
@@ -111,11 +111,11 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
     type Mapped<M>
         = ManyM<Self, M>
     where
-        M: MapU<U = Self::U, I = Self::O>;
+        M: Map<U = Self::U, I = Self::O>;
 
     fn mapped<M>(self, m: M) -> Self::Mapped<M>
     where
-        M: MapU<U = Self::U, I = Self::O>,
+        M: Map<U = Self::U, I = Self::O>,
     {
         ManyM::new(self, m)
     }
@@ -126,7 +126,7 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
 pub struct IterManyX<I, G>
 where
     I: Iterator,
-    G: FlatMapU<I = I::Item>,
+    G: FlatMap<I = I::Item>,
 {
     u: *mut G::U,
     i: I,
@@ -137,7 +137,7 @@ where
 impl<I, G> Iterator for IterManyX<I, G>
 where
     I: Iterator,
-    G: FlatMapU<I = I::Item>,
+    G: FlatMap<I = I::Item>,
 {
     type Item = <G::O as IntoIterator>::Item;
 

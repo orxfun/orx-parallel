@@ -4,8 +4,8 @@ mod r#enum;
 mod fn_trait;
 mod inspect;
 
-pub use basic::FnMapU;
-pub use cloned_copied::{FnClonedU, FnCopiedU};
-pub use r#enum::MapUEnum;
-pub use fn_trait::MapU;
-pub use inspect::FnInsU;
+pub use basic::FnMap;
+pub use cloned_copied::{FnCloned, FnCopied};
+pub use r#enum::MapEnum;
+pub use fn_trait::Map;
+pub use inspect::FnIns;

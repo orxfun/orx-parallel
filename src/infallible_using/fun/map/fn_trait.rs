@@ -1,4 +1,4 @@
-pub trait MapU: Copy + Send {
+pub trait Map: Copy + Send {
     type I;
 
     type O;
