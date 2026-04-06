@@ -1,8 +1,9 @@
-use super::fake::Fake;
-use crate::infallible::size::{Bin, Many, One, Size};
-use crate::infallible_using::fun::FilterMapU;
-use crate::infallible_using::xap::XapOne;
-use crate::infallible_using::{fun::MapU, xap::Xap};
+use crate::infallible::size::{Bin, One};
+use crate::infallible_using::fun::{
+    FilterMapU, FnFilMapU, FnFilU, FnFlatMapU, FnInsU, FnMapU, MapU,
+};
+use crate::infallible_using::xap::{Xap, XapOne};
+use crate::infallible_using::xap_variants::{BinF, BinM, BinX};
 
 pub struct OneF<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> {
     x: X,
@@ -48,7 +49,7 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     // transformations
 
     type Map<Q, H>
-        = Fake<Self::I, Q, Self::U, Self::Size>
+        = BinM<Self, FnMapU<Self::U, Self::O, Q, H>>
     where
         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send;
 
@@ -56,11 +57,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send,
     {
-        todo!()
+        BinM::new(self, FnMapU::new(h))
     }
 
     type Inspect<H>
-        = Fake<Self::I, Self::O, Self::U, Self::Size>
+        = BinM<Self, FnInsU<Self::U, Self::O, H>>
     where
         H: Fn(&mut Self::U, &Self::O) + Copy + Send;
 
@@ -68,11 +69,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, &Self::O) + Copy + Send,
     {
-        todo!()
+        BinM::new(self, FnInsU::new(h))
     }
 
     type Filter<H>
-        = Fake<Self::I, Self::O, Self::U, <Self::Size as Size>::ThenBin>
+        = BinF<Self, FnFilU<Self::U, Self::O, H>>
     where
         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send;
 
@@ -80,11 +81,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send,
     {
-        todo!()
+        BinF::new(self, FnFilU::new(h))
     }
 
     type FilterMap<Q, H>
-        = Fake<Self::I, Q, Self::U, <Self::Size as Size>::ThenBin>
+        = BinF<Self, FnFilMapU<Self::U, Self::O, Q, H>>
     where
         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send;
 
@@ -92,11 +93,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send,
     {
-        todo!()
+        BinF::new(self, FnFilMapU::new(h))
     }
 
     type FlatMap<V, H>
-        = Fake<Self::I, V::Item, Self::U, Many>
+        = BinX<Self, FnFlatMapU<Self::U, Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send;
@@ -106,11 +107,13 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
         V: IntoIterator,
         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send,
     {
-        todo!()
+        BinX::new(self, FnFlatMapU::new(h))
     }
 
+    // transformations - helper
+
     type Mapped<M>
-        = Fake<Self::I, M::O, Self::U, Self::Size>
+        = BinM<Self, M>
     where
         M: MapU<U = Self::U, I = Self::O>;
 
@@ -118,6 +121,6 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         M: MapU<U = Self::U, I = Self::O>,
     {
-        todo!()
+        BinM::new(self, m)
     }
 }
