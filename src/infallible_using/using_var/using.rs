@@ -1,4 +1,4 @@
-pub trait Using {
+pub trait Using: Sync {
     type Item;
 
     fn create(&self, thread_idx: usize) -> Self::Item;
