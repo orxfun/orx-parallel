@@ -29,17 +29,11 @@ impl<X: Xap<Size = Many>, G: FlatMapU<U = X::U, I = X::O>> Xap for ManyX<X, G> {
 
     type Size = Many;
 
-    type Values<'a>
-        = IterManyX<<X::Values<'a> as IntoIterator>::IntoIter, G>
-    where
-        Self: 'a;
+    type Values = IterManyX<<X::Values as IntoIterator>::IntoIter, G>;
 
     type U = X::U;
 
-    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
-    where
-        Self: 'a,
-    {
+    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
         // SAFETY: u is either used by i.next or g.flat_map which can never
         // occur at the same time; hence, there exists no race condition
         let u_ptr = u as *mut Self::U;

@@ -32,17 +32,11 @@ impl<X: Xap<Size = Many>, G: FilterMapU<U = X::U, I = X::O>> Xap for ManyF<X, G>
 
     type Size = Many;
 
-    type Values<'a>
-        = IterManyF<<X::Values<'a> as IntoIterator>::IntoIter, G>
-    where
-        Self: 'a;
+    type Values = IterManyF<<X::Values as IntoIterator>::IntoIter, G>;
 
     type U = X::U;
 
-    fn xap<'a>(&self, u: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
-    where
-        Self: 'a,
-    {
+    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
         // SAFETY: u is either used by i.next or g.map which can never
         // occur at the same time; hence, there exists no race condition
         let u_ptr = u as *mut Self::U;

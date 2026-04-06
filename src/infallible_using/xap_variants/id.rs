@@ -31,15 +31,9 @@ impl<U, I> Xap for Id<U, I> {
 
     type Size = One;
 
-    type Values<'a>
-        = [I; 1]
-    where
-        Self: 'a;
+    type Values = [I; 1];
 
-    fn xap<'a>(&self, _: &'a mut Self::U, i: Self::I) -> Self::Values<'a>
-    where
-        Self: 'a,
-    {
+    fn xap(&self, _: &mut Self::U, i: Self::I) -> Self::Values {
         [i]
     }
 
