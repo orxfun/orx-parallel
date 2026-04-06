@@ -15,3 +15,7 @@ impl<T: Clone + Send> Using for UsingClone<T> {
         self.0
     }
 }
+
+/// SAFETY: Since T is Send, it is safe to share `UsingClone` with
+/// another thread and `create` a clone of `T` on this thread.
+unsafe impl<T: Clone + Send> Sync for UsingClone<T> {}
