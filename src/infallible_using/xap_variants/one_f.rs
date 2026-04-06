@@ -1,30 +1,28 @@
 use crate::infallible::size::{Bin, One};
-use crate::infallible_using::fun::{
-    FilterMapU, FnFilMapU, FnFilU, FnFlatMapU, FnInsU, FnMapU, MapU,
-};
+use crate::infallible_using::fun::{FilterMap, FnFil, FnFilMap, FnFlatMap, FnIns, FnMap, Map};
 use crate::infallible_using::xap::{Xap, XapOne};
 use crate::infallible_using::xap_variants::{BinF, BinM, BinX};
 
-pub struct OneF<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> {
+pub struct OneF<X: Xap<Size = One>, G: FilterMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Clone for OneF<X, G> {
+impl<X: Xap<Size = One>, G: FilterMap<U = X::U, I = X::O>> Clone for OneF<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Copy for OneF<X, G> {}
+impl<X: Xap<Size = One>, G: FilterMap<U = X::U, I = X::O>> Copy for OneF<X, G> {}
 
-impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> OneF<X, G> {
+impl<X: Xap<Size = One>, G: FilterMap<U = X::U, I = X::O>> OneF<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
+impl<X: Xap<Size = One>, G: FilterMap<U = X::U, I = X::O>> Xap for OneF<X, G> {
     type I = X::I;
 
     type O = G::O;
@@ -43,7 +41,7 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     // transformations
 
     type Map<Q, H>
-        = BinM<Self, FnMapU<Self::U, Self::O, Q, H>>
+        = BinM<Self, FnMap<Self::U, Self::O, Q, H>>
     where
         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send;
 
@@ -51,11 +49,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send,
     {
-        BinM::new(self, FnMapU::new(h))
+        BinM::new(self, FnMap::new(h))
     }
 
     type Inspect<H>
-        = BinM<Self, FnInsU<Self::U, Self::O, H>>
+        = BinM<Self, FnIns<Self::U, Self::O, H>>
     where
         H: Fn(&mut Self::U, &Self::O) + Copy + Send;
 
@@ -63,11 +61,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, &Self::O) + Copy + Send,
     {
-        BinM::new(self, FnInsU::new(h))
+        BinM::new(self, FnIns::new(h))
     }
 
     type Filter<H>
-        = BinF<Self, FnFilU<Self::U, Self::O, H>>
+        = BinF<Self, FnFil<Self::U, Self::O, H>>
     where
         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send;
 
@@ -75,11 +73,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send,
     {
-        BinF::new(self, FnFilU::new(h))
+        BinF::new(self, FnFil::new(h))
     }
 
     type FilterMap<Q, H>
-        = BinF<Self, FnFilMapU<Self::U, Self::O, Q, H>>
+        = BinF<Self, FnFilMap<Self::U, Self::O, Q, H>>
     where
         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send;
 
@@ -87,11 +85,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     where
         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send,
     {
-        BinF::new(self, FnFilMapU::new(h))
+        BinF::new(self, FnFilMap::new(h))
     }
 
     type FlatMap<V, H>
-        = BinX<Self, FnFlatMapU<Self::U, Self::O, V, H>>
+        = BinX<Self, FnFlatMap<Self::U, Self::O, V, H>>
     where
         V: IntoIterator,
         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send;
@@ -101,7 +99,7 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
         V: IntoIterator,
         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send,
     {
-        BinX::new(self, FnFlatMapU::new(h))
+        BinX::new(self, FnFlatMap::new(h))
     }
 
     // transformations - helper
@@ -109,11 +107,11 @@ impl<X: Xap<Size = One>, G: FilterMapU<U = X::U, I = X::O>> Xap for OneF<X, G> {
     type Mapped<M>
         = BinM<Self, M>
     where
-        M: MapU<U = Self::U, I = Self::O>;
+        M: Map<U = Self::U, I = Self::O>;
 
     fn mapped<M>(self, m: M) -> Self::Mapped<M>
     where
-        M: MapU<U = Self::U, I = Self::O>,
+        M: Map<U = Self::U, I = Self::O>,
     {
         BinM::new(self, m)
     }

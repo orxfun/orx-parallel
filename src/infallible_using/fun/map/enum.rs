@@ -1,15 +1,15 @@
-use crate::infallible_using::fun::map::fn_trait::MapU;
+use crate::infallible_using::fun::map::fn_trait::Map;
 
 #[derive(Clone, Copy)]
-pub struct MapUEnum<M: MapU>(M);
+pub struct MapEnum<M: Map>(M);
 
-impl<M: MapU> MapUEnum<M> {
+impl<M: Map> MapEnum<M> {
     pub fn new(m: M) -> Self {
         Self(m)
     }
 }
 
-impl<M: MapU> MapU for MapUEnum<M> {
+impl<M: Map> Map for MapEnum<M> {
     type I = (usize, M::I);
 
     type O = (usize, M::O);
