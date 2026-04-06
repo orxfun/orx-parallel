@@ -1,3 +1,6 @@
+// #[cfg(test)]
+// mod tests;
+
 pub mod fun;
 mod xap;
 mod xap_enum;
