@@ -3,7 +3,6 @@ use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap}
 use crate::result::size_pairs::SizePair;
 use core::marker::PhantomData;
 
-#[derive(Clone, Copy)]
 pub struct XapRes<M, E, X1, X2, S>
 where
     X1: Xap<O = Result<M, E>>,
@@ -13,6 +12,29 @@ where
     x1: X1,
     x2: X2,
     s: PhantomData<S>,
+}
+
+impl<M, E, X1, X2, S> Clone for XapRes<M, E, X1, X2, S>
+where
+    X1: Xap<O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            x1: self.x1,
+            x2: self.x2,
+            s: self.s,
+        }
+    }
+}
+
+impl<M, E, X1, X2, S> Copy for XapRes<M, E, X1, X2, S>
+where
+    X1: Xap<O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+{
 }
 
 impl<M, E, X1, X2, S> XapRes<M, E, X1, X2, S>
