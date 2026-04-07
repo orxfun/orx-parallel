@@ -1,6 +1,6 @@
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::One;
-use crate::infallible::{Xap, XapOne};
+use crate::infallible::{MapOf, Xap, XapOne};
 use crate::option::xap_opt::XapOpt;
 use crate::option::xap_opt_variants::{XapOptOneBin, XapOptOneMany};
 
@@ -70,7 +70,7 @@ where
     // transformations
 
     type Map<Q, H>
-        = XapOptOneOne<M, X1, X2::Map<Q, H>>
+        = XapOptOneOne<M, X1, MapOf<X2, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 

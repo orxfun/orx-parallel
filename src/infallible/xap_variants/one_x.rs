@@ -42,18 +42,6 @@ impl<X: Xap<Size = One>, G: FlatMap<I = X::O>> Xap for OneX<X, G> {
 
     // transformations
 
-    type Map<Q, H>
-        = ManyM<Self, FnMap<Self::O, Q, H>>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send;
-
-    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send,
-    {
-        ManyM::new(self, FnMap::new(h))
-    }
-
     type Inspect<H>
         = ManyM<Self, FnIns<Self::O, H>>
     where

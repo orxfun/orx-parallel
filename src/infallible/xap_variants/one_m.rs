@@ -52,18 +52,6 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Xap for OneM<X, G> {
 
     // transformations
 
-    type Map<Q, H>
-        = OneM<Self, FnMap<Self::O, Q, H>>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send;
-
-    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send,
-    {
-        OneM::new(self, FnMap::new(h))
-    }
-
     type Inspect<H>
         = OneM<Self, FnIns<Self::O, H>>
     where

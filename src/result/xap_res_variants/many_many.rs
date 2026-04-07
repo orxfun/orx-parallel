@@ -1,6 +1,6 @@
-use crate::infallible::Xap;
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::Many;
+use crate::infallible::{MapOf, Xap};
 use crate::result::xap_res::XapRes;
 
 pub struct XapResManyMany<M, E, X1, X2>
@@ -71,7 +71,7 @@ where
     // transformations
 
     type Map<Q, H>
-        = XapResManyMany<M, E, X1, X2::Map<Q, H>>
+        = XapResManyMany<M, E, X1, MapOf<X2, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 
