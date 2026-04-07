@@ -25,7 +25,7 @@ where
 impl<I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
 where
     I: ConcurrentIter,
-    X1: Xap<O = Result<M, E>>,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
@@ -92,5 +92,39 @@ where
     {
         let xap = self.xap.flat_map(h);
         self.with_xap(xap)
+    }
+
+    // compute
+
+    pub fn first(self) -> Result<Option<X2::O>, E>
+    where
+        X2::O: Send,
+        E: Send,
+    {
+        let (iter, x, mut exe, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.map(|x| x.val)),
+            IterationOrder::Arbitrary => exe.next_any(params, iter, x),
+        }
+    }
+
+    pub fn reduce<F>(self, f: F) -> Result<Option<X2::O>, E>
+    where
+        F: Fn(X2::O, X2::O) -> X2::O + Send + Copy,
+        X2::O: Send,
+        E: Send,
+    {
+        let (iter, x, mut exe, params) = self.destruct();
+        exe.reduce(params, iter, x, f)
+    }
+
+    // compute - derived
+
+    pub fn for_each<F>(self, f: F)
+    where
+        F: Fn(X2::O) + Send + Copy,
+        E: Send,
+    {
+        let _ = self.map(f).reduce(|_, _| {});
     }
 }
