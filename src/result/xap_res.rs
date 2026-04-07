@@ -1,4 +1,5 @@
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Xap};
+use crate::infallible::fun::Map;
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
 use crate::result::size_pairs::SizePair;
 use core::marker::PhantomData;
 
@@ -65,5 +66,14 @@ where
         H: Fn(X2::O) -> V + Copy + Send,
     {
         XapRes::new(self.x1, self.x2.flat_map(h))
+    }
+
+    // transformations - helper
+
+    fn mapped<H>(self, h: H) -> XapRes<M, E, X1, MappedOf<X2, H>, S>
+    where
+        H: Map<I = X2::O>,
+    {
+        XapRes::new(self.x1, self.x2.mapped(h))
     }
 }
