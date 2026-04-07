@@ -1,6 +1,6 @@
 use crate::infallible::Xap;
 use crate::infallible::fun::Map;
-use crate::infallible::size::Many;
+use crate::infallible::sizes::Many;
 use crate::result::xap_res::XapRes;
 
 pub struct XapResManyMany<M, E, X1, X2>

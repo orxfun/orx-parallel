@@ -4,7 +4,7 @@ mod tests;
 pub mod fun;
 mod par_iter;
 mod par_runner;
-pub mod size;
+pub mod sizes;
 mod thread_execution;
 mod xap;
 mod xap_enum;

@@ -1,5 +1,5 @@
-use crate::infallible::size::Bin;
-use crate::infallible_using::fun::{FnFilMap, FnFil, FnFlatMap, FnIns, FnMap, Map, MapEnum};
+use crate::infallible::sizes::Bin;
+use crate::infallible_using::fun::{FnFil, FnFilMap, FnFlatMap, FnIns, FnMap, Map, MapEnum};
 use crate::infallible_using::xap::{Xap, XapBin};
 use crate::infallible_using::xap_enum::XapEnumByInput;
 use crate::infallible_using::xap_variants::{BinF, BinX};

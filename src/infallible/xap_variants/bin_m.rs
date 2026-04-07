@@ -2,7 +2,7 @@ use crate::infallible::XapEnumByInput;
 use crate::infallible::fun::{FnFil, FnFilMap};
 use crate::infallible::fun::{FnFlatMap, MapEnum};
 use crate::infallible::fun::{FnIns, FnMap, Map};
-use crate::infallible::size::Bin;
+use crate::infallible::sizes::Bin;
 use crate::infallible::xap::{Xap, XapBin};
 use crate::infallible::xap_variants::bin_f::BinF;
 use crate::infallible::xap_variants::bin_x::BinX;
