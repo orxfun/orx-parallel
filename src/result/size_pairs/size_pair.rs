@@ -1,4 +1,5 @@
-use crate::infallible::{Xap, sizes::Size};
+use crate::infallible::Xap;
+use crate::infallible::sizes::{Many, Size};
 
 pub trait SizePair {
     type S1: Size;
@@ -6,6 +7,8 @@ pub trait SizePair {
     type S2: Size;
 
     type ThenBin: SizePair<S1 = Self::S1, S2 = <Self::S2 as Size>::ThenBin>;
+
+    type ThenMany: SizePair<S1 = Self::S1, S2 = Many>;
 
     type Results<M, E, X1, X2>: IntoIterator<Item = Result<X2::O, E>>
     where

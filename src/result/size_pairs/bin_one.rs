@@ -1,6 +1,6 @@
 use crate::infallible::sizes::{Bin, One};
 use crate::infallible::{Xap, XapBin, XapOne};
-use crate::result::size_pairs::{BinBin, SizePair};
+use crate::result::size_pairs::{BinBin, BinMany, SizePair};
 
 pub struct BinOne;
 
@@ -10,6 +10,8 @@ impl SizePair for BinOne {
     type S2 = One;
 
     type ThenBin = BinBin;
+
+    type ThenMany = BinMany;
 
     type Results<M, E, X1, X2>
         = Option<Result<X2::O, E>>

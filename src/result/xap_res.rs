@@ -1,4 +1,4 @@
-use crate::infallible::{FilMapOf, FilOf, InsOf, MapOf, Xap};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Xap};
 use crate::result::size_pairs::SizePair;
 use core::marker::PhantomData;
 
@@ -57,5 +57,13 @@ where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
     {
         XapRes::new(self.x1, self.x2.filter_map(h))
+    }
+
+    fn flat_map<V, H>(self, h: H) -> XapRes<M, E, X1, FlatMapOf<X2, V, H>, S>
+    where
+        V: IntoIterator,
+        H: Fn(X2::O) -> V + Copy + Send,
+    {
+        todo!()
     }
 }

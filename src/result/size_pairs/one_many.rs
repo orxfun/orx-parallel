@@ -11,6 +11,8 @@ impl SizePair for OneMany {
 
     type ThenBin = OneMany;
 
+    type ThenMany = OneMany;
+
     type Results<M, E, X1, X2>
         = IterResOneMany<<X2::Values as IntoIterator>::IntoIter, E>
     where

@@ -11,6 +11,8 @@ impl SizePair for ManyMany {
 
     type ThenBin = ManyMany;
 
+    type ThenMany = ManyMany;
+
     type Results<M, E, X1, X2>
         = IterResManyMany<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
     where
