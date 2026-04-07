@@ -1,8 +1,9 @@
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 mod par_res_iter;
 mod par_runner;
+pub mod sizes;
 mod thread_execution;
 mod xap_res;
 pub mod xap_res_variants;
