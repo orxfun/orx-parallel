@@ -27,7 +27,7 @@ where
     }
 
     #[inline(always)]
-    fn xap_res(&self, i: X1::I) -> S::Results<M, E, X1, X2> {
+    pub fn xap_res(&self, i: X1::I) -> S::Results<M, E, X1, X2> {
         S::xap_res(self.x1, self.x2, i)
     }
 
