@@ -59,11 +59,11 @@ where
         XapRes::new(self.x1, self.x2.filter_map(h))
     }
 
-    fn flat_map<V, H>(self, h: H) -> XapRes<M, E, X1, FlatMapOf<X2, V, H>, S>
+    fn flat_map<V, H>(self, h: H) -> XapRes<M, E, X1, FlatMapOf<X2, V, H>, S::ThenMany>
     where
         V: IntoIterator,
         H: Fn(X2::O) -> V + Copy + Send,
     {
-        todo!()
+        XapRes::new(self.x1, self.x2.flat_map(h))
     }
 }
