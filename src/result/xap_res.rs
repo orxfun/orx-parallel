@@ -24,8 +24,9 @@ where
         Self { x1, x2, s }
     }
 
-    fn xap_res(&self, i: X1::I) {
-        todo!()
+    #[inline(always)]
+    fn xap_res(&self, i: X1::I) -> S::Results<M, E, X1, X2> {
+        S::xap_res(self.x1, self.x2, i)
     }
 
     // transformations
