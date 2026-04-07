@@ -1,6 +1,6 @@
 use crate::infallible::sizes::{Many, One};
 use crate::infallible::{Xap, XapOne};
-use crate::result::size_pairs::SizePair;
+use crate::result::size_pairs::{ManyBin, SizePair};
 
 pub struct ManyOne;
 
@@ -8,6 +8,8 @@ impl SizePair for ManyOne {
     type S1 = Many;
 
     type S2 = One;
+
+    type ThenBin = ManyBin;
 
     type Results<M, E, X1, X2>
         = IterResManyOne<M, E, <X1::Values as IntoIterator>::IntoIter, X2>

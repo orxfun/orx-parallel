@@ -5,6 +5,8 @@ pub trait SizePair {
 
     type S2: Size;
 
+    type ThenBin: SizePair<S1 = Self::S1, S2 = <Self::S2 as Size>::ThenBin>;
+
     type Results<M, E, X1, X2>: IntoIterator<Item = Result<X2::O, E>>
     where
         X1: Xap<O = Result<M, E>, Size = Self::S1>,

@@ -9,6 +9,8 @@ impl SizePair for OneMany {
 
     type S2 = Many;
 
+    type ThenBin = OneMany;
+
     type Results<M, E, X1, X2>
         = IterResOneMany<<X2::Values as IntoIterator>::IntoIter, E>
     where

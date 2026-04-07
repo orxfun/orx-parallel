@@ -9,6 +9,8 @@ impl SizePair for BinMany {
 
     type S2 = Many;
 
+    type ThenBin = BinMany;
+
     type Results<M, E, X1, X2>
         = IterResBinMany<<X2::Values as IntoIterator>::IntoIter, E>
     where

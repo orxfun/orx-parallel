@@ -1,4 +1,4 @@
-use crate::infallible::{InsOf, MapOf, Xap};
+use crate::infallible::{FilOf, InsOf, MapOf, Xap};
 use crate::result::size_pairs::SizePair;
 use core::marker::PhantomData;
 
@@ -44,4 +44,11 @@ where
     {
         XapRes::new(self.x1, self.x2.inspect(h))
     }
+
+    // fn filter<H>(self, h: H) -> XapRes<M, E, X1, FilOf<X2, H>, S>
+    // where
+    //     H: Fn(&X2::O) -> bool + Copy + Send,
+    // {
+    //     todo!()
+    // }
 }
