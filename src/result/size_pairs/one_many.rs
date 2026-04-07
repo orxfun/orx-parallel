@@ -1,5 +1,5 @@
-use crate::infallible::Xap;
 use crate::infallible::sizes::{Many, One};
+use crate::infallible::{Xap, XapOne};
 use crate::result::size_pairs::SizePair;
 
 pub struct OneMany;
@@ -14,6 +14,18 @@ impl SizePair for OneMany {
     where
         X1: Xap<O = Result<M, E>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>;
+
+    #[inline(always)]
+    fn xap_res<M, E, X1, X2>(&self, x1: X1, x2: X2, i: X1::I) -> Self::Results<M, E, X1, X2>
+    where
+        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>,
+    {
+        match x1.one_value(i) {
+            Ok(a) => IterResOneMany::ok(x2.xap(a).into_iter()),
+            Err(e) => IterResOneMany::err(e),
+        }
+    }
 }
 
 // iter
