@@ -3,6 +3,7 @@ use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap}
 use crate::result::size_pairs::SizePair;
 use core::marker::PhantomData;
 
+#[derive(Clone, Copy)]
 pub struct XapRes<M, E, X1, X2, S>
 where
     X1: Xap<O = Result<M, E>>,

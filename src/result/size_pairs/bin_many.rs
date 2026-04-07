@@ -2,6 +2,7 @@ use crate::infallible::sizes::{Bin, Many};
 use crate::infallible::{Xap, XapBin};
 use crate::result::size_pairs::SizePair;
 
+#[derive(Clone, Copy)]
 pub struct BinMany;
 
 impl SizePair for BinMany {

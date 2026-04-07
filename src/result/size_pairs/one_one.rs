@@ -2,6 +2,7 @@ use crate::infallible::sizes::One;
 use crate::infallible::{Xap, XapOne};
 use crate::result::size_pairs::{OneBin, OneMany, SizePair};
 
+#[derive(Clone, Copy)]
 pub struct OneOne;
 
 impl SizePair for OneOne {
