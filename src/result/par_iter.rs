@@ -1,7 +1,6 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::sizes::Size;
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Xap};
-use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
+use crate::parameters::{IterationOrder, Params};
 use crate::result::par_runner::ParRunnerResult;
 use crate::result::size_pairs::SizePair;
 use crate::result::xap_res::XapRes;
@@ -11,7 +10,7 @@ use orx_concurrent_iter::ConcurrentIter;
 pub struct ParRes<I, M, E, X1, X2, S, R = DefaultRunner>
 where
     I: ConcurrentIter,
-    X1: Xap<O = Result<M, E>>,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
@@ -126,5 +125,37 @@ where
         E: Send,
     {
         let _ = self.map(f).reduce(|_, _| {});
+    }
+}
+
+// transformations
+
+impl<'a, O, I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
+where
+    O: 'a + Copy,
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M, O = &'a O>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    pub fn copied(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
+        let (iter, xap, exe, params) = self.destruct();
+        ParRes::new(iter, xap.mapped(FnCopied::new()), exe, params)
+    }
+}
+
+impl<'a, O, I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
+where
+    O: 'a + Clone,
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M, O = &'a O>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    pub fn cloned(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {
+        let (iter, xap, exe, params) = self.destruct();
+        ParRes::new(iter, xap.mapped(FnCloned::new()), exe, params)
     }
 }
