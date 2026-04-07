@@ -1,5 +1,5 @@
-use crate::infallible::fun::{FilterMap, FnFil, FnFilMap};
 use crate::infallible::fun::FnFlatMap;
+use crate::infallible::fun::{FilterMap, FnFil, FnFilMap};
 use crate::infallible::fun::{FnIns, FnMap, Map};
 use crate::infallible::size::{Bin, One};
 use crate::infallible::xap::{Xap, XapOne};
