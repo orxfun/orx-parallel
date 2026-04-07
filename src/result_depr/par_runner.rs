@@ -1,5 +1,5 @@
-use crate::result::thread_execution as th;
-use crate::result::xap_res::XapRes;
+use crate::result_depr::thread_execution as th;
+use crate::result_depr::xap_res::XapRes;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;

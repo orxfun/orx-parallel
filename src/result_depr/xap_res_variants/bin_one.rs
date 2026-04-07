@@ -1,22 +1,22 @@
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::{Bin, One};
 use crate::infallible::{MapOf, Xap, XapBin, XapOne};
-use crate::result::xap_res::{InOf, ResOf, XapRes};
-use crate::result::xap_res_variants::XapResOneMany;
+use crate::result_depr::xap_res::{InOf, ResOf, XapRes};
+use crate::result_depr::xap_res_variants::{XapResBinBin, XapResBinMany};
 
-pub struct XapResOneBin<M, E, X1, X2>
+pub struct XapResBinOne<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = Bin>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = One>,
 {
     x1: X1,
     x2: X2,
 }
 
-impl<M, E, X1, X2> Clone for XapResOneBin<M, E, X1, X2>
+impl<M, E, X1, X2> Clone for XapResBinOne<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = Bin>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = One>,
 {
     fn clone(&self) -> Self {
         let (x1, x2) = (self.x1, self.x2);
@@ -24,34 +24,34 @@ where
     }
 }
 
-impl<M, E, X1, X2> Copy for XapResOneBin<M, E, X1, X2>
+impl<M, E, X1, X2> Copy for XapResBinOne<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = Bin>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = One>,
 {
 }
 
-unsafe impl<M, E, X1, X2> Send for XapResOneBin<M, E, X1, X2>
+unsafe impl<M, E, X1, X2> Send for XapResBinOne<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = Bin>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = One>,
 {
 }
 
-impl<M, E, X1, X2> XapResOneBin<M, E, X1, X2>
+impl<M, E, X1, X2> XapResBinOne<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = Bin>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = One>,
 {
     pub fn new(x1: X1, x2: X2) -> Self {
         Self { x1, x2 }
     }
 }
 
-impl<M, E, X1, X2> XapRes for XapResOneBin<M, E, X1, X2>
+impl<M, E, X1, X2> XapRes for XapResBinOne<M, E, X1, X2>
 where
-    X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = Bin>,
+    X1: Xap<O = Result<M, E>, Size = Bin>,
+    X2: Xap<I = M, Size = One>,
 {
     type M = M;
 
@@ -67,16 +67,14 @@ where
 
     #[inline(always)]
     fn xap_res(&self, i: InOf<Self>) -> Self::Results {
-        match self.x1.one_value(i) {
-            Ok(a) => self.x2.bin_value(a).map(Ok),
-            Err(e) => Some(Err(e)),
-        }
+        let a = self.x1.bin_value(i);
+        a.map(|a| a.map(|a| self.x2.one_value(a)))
     }
 
     // // transformations
 
     // type Map<Q, H>
-    //     = XapResOneBin<M, E, X1, MapOf<X2, Q, H>>
+    //     = XapResBinOne<M, E, X1, MapOf<X2, Q, H>>
     // where
     //     H: Fn(Self::O) -> Q + Copy + Send;
 
@@ -84,11 +82,11 @@ where
     // where
     //     H: Fn(Self::O) -> Q + Copy + Send,
     // {
-    //     XapResOneBin::new(self.x1, self.x2.map(h))
+    //     XapResBinOne::new(self.x1, self.x2.map(h))
     // }
 
     // type Inspect<H>
-    //     = XapResOneBin<M, E, X1, X2::Inspect<H>>
+    //     = XapResBinOne<M, E, X1, X2::Inspect<H>>
     // where
     //     H: Fn(&Self::O) + Copy + Send;
 
@@ -96,11 +94,11 @@ where
     // where
     //     H: Fn(&Self::O) + Copy + Send,
     // {
-    //     XapResOneBin::new(self.x1, self.x2.inspect(h))
+    //     XapResBinOne::new(self.x1, self.x2.inspect(h))
     // }
 
     // type Filter<H>
-    //     = XapResOneBin<M, E, X1, X2::Filter<H>>
+    //     = XapResBinBin<M, E, X1, X2::Filter<H>>
     // where
     //     H: Fn(&Self::O) -> bool + Copy + Send;
 
@@ -108,11 +106,11 @@ where
     // where
     //     H: Fn(&Self::O) -> bool + Copy + Send,
     // {
-    //     XapResOneBin::new(self.x1, self.x2.filter(h))
+    //     XapResBinBin::new(self.x1, self.x2.filter(h))
     // }
 
     // type FilterMap<Q, H>
-    //     = XapResOneBin<M, E, X1, X2::FilterMap<Q, H>>
+    //     = XapResBinBin<M, E, X1, X2::FilterMap<Q, H>>
     // where
     //     H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
@@ -120,11 +118,11 @@ where
     // where
     //     H: Fn(Self::O) -> Option<Q> + Copy + Send,
     // {
-    //     XapResOneBin::new(self.x1, self.x2.filter_map(h))
+    //     XapResBinBin::new(self.x1, self.x2.filter_map(h))
     // }
 
     // type FlatMap<V, H>
-    //     = XapResOneMany<M, E, X1, X2::FlatMap<V, H>>
+    //     = XapResBinMany<M, E, X1, X2::FlatMap<V, H>>
     // where
     //     V: IntoIterator,
     //     H: Fn(Self::O) -> V + Copy + Send;
@@ -134,13 +132,13 @@ where
     //     V: IntoIterator,
     //     H: Fn(Self::O) -> V + Copy + Send,
     // {
-    //     XapResOneMany::new(self.x1, self.x2.flat_map(h))
+    //     XapResBinMany::new(self.x1, self.x2.flat_map(h))
     // }
 
     // // transformations - helper
 
     // type Mapped<H>
-    //     = XapResOneBin<M, E, X1, X2::Mapped<H>>
+    //     = XapResBinOne<M, E, X1, X2::Mapped<H>>
     // where
     //     H: Map<I = Self::O>;
 
@@ -148,6 +146,6 @@ where
     // where
     //     H: Map<I = Self::O>,
     // {
-    //     XapResOneBin::new(self.x1, self.x2.mapped(h))
+    //     XapResBinOne::new(self.x1, self.x2.mapped(h))
     // }
 }

@@ -1,22 +1,21 @@
 use crate::infallible::fun::Map;
-use crate::infallible::sizes::{Many, One};
-use crate::infallible::{MapOf, Xap, XapOne};
-use crate::result::xap_res::{InOf, XapRes};
-use crate::result::xap_res_variants::{XapResManyBin, XapResManyMany};
+use crate::infallible::sizes::Many;
+use crate::infallible::{MapOf, Xap};
+use crate::result_depr::xap_res::{InOf, XapRes};
 
-pub struct XapResManyOne<M, E, X1, X2>
+pub struct XapResManyMany<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = Many>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
     x1: X1,
     x2: X2,
 }
 
-impl<M, E, X1, X2> Clone for XapResManyOne<M, E, X1, X2>
+impl<M, E, X1, X2> Clone for XapResManyMany<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = Many>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
     fn clone(&self) -> Self {
         let (x1, x2) = (self.x1, self.x2);
@@ -24,34 +23,34 @@ where
     }
 }
 
-impl<M, E, X1, X2> Copy for XapResManyOne<M, E, X1, X2>
+impl<M, E, X1, X2> Copy for XapResManyMany<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = Many>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
 }
 
-unsafe impl<M, E, X1, X2> Send for XapResManyOne<M, E, X1, X2>
+unsafe impl<M, E, X1, X2> Send for XapResManyMany<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = Many>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
 }
 
-impl<M, E, X1, X2> XapResManyOne<M, E, X1, X2>
+impl<M, E, X1, X2> XapResManyMany<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = Many>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
     pub fn new(x1: X1, x2: X2) -> Self {
         Self { x1, x2 }
     }
 }
 
-impl<M, E, X1, X2> XapRes for XapResManyOne<M, E, X1, X2>
+impl<M, E, X1, X2> XapRes for XapResManyMany<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = Many>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
     type M = M;
 
@@ -63,17 +62,18 @@ where
 
     type Size = Many;
 
-    type Results = IterResManyOne<M, E, <<X1 as Xap>::Values as IntoIterator>::IntoIter, X2>;
+    type Results = IterResManyMany<M, E, <<X1 as Xap>::Values as IntoIterator>::IntoIter, X2>;
 
     fn xap_res(&self, i: InOf<Self>) -> Self::Results {
         let iter = self.x1.xap(i).into_iter();
-        IterResManyOne { iter, x2: self.x2 }
+        let (x2, inner) = (self.x2, None);
+        IterResManyMany { iter, x2, inner }
     }
 
     // // transformations
 
     // type Map<Q, H>
-    //     = XapResManyOne<M, E, X1, MapOf<X2, Q, H>>
+    //     = XapResManyMany<M, E, X1, MapOf<X2, Q, H>>
     // where
     //     H: Fn(Self::O) -> Q + Copy + Send;
 
@@ -81,11 +81,11 @@ where
     // where
     //     H: Fn(Self::O) -> Q + Copy + Send,
     // {
-    //     XapResManyOne::new(self.x1, self.x2.map(h))
+    //     XapResManyMany::new(self.x1, self.x2.map(h))
     // }
 
     // type Inspect<H>
-    //     = XapResManyOne<M, E, X1, X2::Inspect<H>>
+    //     = XapResManyMany<M, E, X1, X2::Inspect<H>>
     // where
     //     H: Fn(&Self::O) + Copy + Send;
 
@@ -93,11 +93,11 @@ where
     // where
     //     H: Fn(&Self::O) + Copy + Send,
     // {
-    //     XapResManyOne::new(self.x1, self.x2.inspect(h))
+    //     XapResManyMany::new(self.x1, self.x2.inspect(h))
     // }
 
     // type Filter<H>
-    //     = XapResManyBin<M, E, X1, X2::Filter<H>>
+    //     = XapResManyMany<M, E, X1, X2::Filter<H>>
     // where
     //     H: Fn(&Self::O) -> bool + Copy + Send;
 
@@ -105,11 +105,11 @@ where
     // where
     //     H: Fn(&Self::O) -> bool + Copy + Send,
     // {
-    //     XapResManyBin::new(self.x1, self.x2.filter(h))
+    //     XapResManyMany::new(self.x1, self.x2.filter(h))
     // }
 
     // type FilterMap<Q, H>
-    //     = XapResManyBin<M, E, X1, X2::FilterMap<Q, H>>
+    //     = XapResManyMany<M, E, X1, X2::FilterMap<Q, H>>
     // where
     //     H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
@@ -117,7 +117,7 @@ where
     // where
     //     H: Fn(Self::O) -> Option<Q> + Copy + Send,
     // {
-    //     XapResManyBin::new(self.x1, self.x2.filter_map(h))
+    //     XapResManyMany::new(self.x1, self.x2.filter_map(h))
     // }
 
     // type FlatMap<V, H>
@@ -137,7 +137,7 @@ where
     // // transformations - helper
 
     // type Mapped<H>
-    //     = XapResManyOne<M, E, X1, X2::Mapped<H>>
+    //     = XapResManyMany<M, E, X1, X2::Mapped<H>>
     // where
     //     H: Map<I = Self::O>;
 
@@ -145,30 +145,50 @@ where
     // where
     //     H: Map<I = Self::O>,
     // {
-    //     XapResManyOne::new(self.x1, self.x2.mapped(h))
+    //     XapResManyMany::new(self.x1, self.x2.mapped(h))
     // }
 }
 
 // iter
 
-pub struct IterResManyOne<M, E, I, X2>
+pub struct IterResManyMany<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
     iter: I,
     x2: X2,
+    inner: Option<<X2::Values as IntoIterator>::IntoIter>,
 }
 
-impl<M, E, I, X2> Iterator for IterResManyOne<M, E, I, X2>
+impl<M, E, I, X2> Iterator for IterResManyMany<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Many>,
 {
     type Item = Result<X2::O, E>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|a| a.map(|a| self.x2.one_value(a)))
+        loop {
+            if let elt @ Some(_) = and_then_or_clear(&mut self.inner, Iterator::next) {
+                return elt.map(Ok);
+            }
+
+            match self.iter.next() {
+                Some(Ok(i)) => self.inner = Some(self.x2.xap(i).into_iter()),
+                Some(Err(e)) => return Some(Err(e)),
+                None => return None,
+            }
+        }
     }
+}
+
+#[inline(always)]
+fn and_then_or_clear<T, U>(opt: &mut Option<T>, f: impl FnOnce(&mut T) -> Option<U>) -> Option<U> {
+    let x = f(opt.as_mut()?);
+    if x.is_none() {
+        *opt = None;
+    }
+    x
 }
