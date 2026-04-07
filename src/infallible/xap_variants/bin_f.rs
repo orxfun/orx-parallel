@@ -41,18 +41,6 @@ impl<X: Xap<Size = Bin>, G: FilterMap<I = X::O>> Xap for BinF<X, G> {
 
     // transformations
 
-    type Map<Q, H>
-        = BinM<Self, FnMap<Self::O, Q, H>>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send;
-
-    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send,
-    {
-        BinM::new(self, FnMap::new(h))
-    }
-
     type Inspect<H>
         = BinM<Self, FnIns<Self::O, H>>
     where

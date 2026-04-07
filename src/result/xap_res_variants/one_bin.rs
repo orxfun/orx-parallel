@@ -1,6 +1,6 @@
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::{Bin, One};
-use crate::infallible::{Xap, XapBin, XapOne};
+use crate::infallible::{MapOf, Xap, XapBin, XapOne};
 use crate::result::xap_res::{ResOf, XapRes};
 use crate::result::xap_res_variants::XapResOneMany;
 
@@ -74,7 +74,7 @@ where
     // transformations
 
     type Map<Q, H>
-        = XapResOneBin<M, E, X1, X2::Map<Q, H>>
+        = XapResOneBin<M, E, X1, MapOf<X2, Q, H>>
     where
         H: Fn(Self::O) -> Q + Copy + Send;
 

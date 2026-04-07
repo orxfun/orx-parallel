@@ -14,13 +14,12 @@ pub trait Xap: Copy + Send {
 
     // transformations
 
-    type Map<Q, H>: Xap<I = Self::I, O = Q, Size = Self::Size>
+    fn map<Q, H>(self, h: H) -> <Self::Size as Size>::Map<Self, Q, H>
     where
-        H: Fn(Self::O) -> Q + Copy + Send;
-
-    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send;
+        H: Fn(Self::O) -> Q + Copy + Send,
+    {
+        <Self::Size as Size>::map(self, h)
+    }
 
     type Inspect<H>: Xap<I = Self::I, O = Self::O, Size = Self::Size>
     where
@@ -90,3 +89,7 @@ pub trait XapBin: Xap<Size = Bin> {
 }
 
 impl<X: Xap<Size = Bin>> XapBin for X {}
+
+// helper types
+
+pub type MapOf<X, Q, H> = <<X as Xap>::Size as Size>::Map<X, Q, H>;
