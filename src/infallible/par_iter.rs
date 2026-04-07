@@ -1,6 +1,6 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_runner::ParRunnerInfallible;
-use crate::infallible::xap::MapOf;
+use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible::xap_variants::Id;
 use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -80,7 +80,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn inspect<H>(self, h: H) -> Par<I, X::Inspect<H>, R>
+    pub fn inspect<H>(self, h: H) -> Par<I, InsOf<X, H>, R>
     where
         H: Fn(&X::O) + Copy + Send,
     {
@@ -88,7 +88,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter<H>(self, h: H) -> Par<I, X::Filter<H>, R>
+    pub fn filter<H>(self, h: H) -> Par<I, FilOf<X, H>, R>
     where
         H: Fn(&X::O) -> bool + Copy + Send,
     {
@@ -96,7 +96,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter_map<Q, H>(self, h: H) -> Par<I, X::FilterMap<Q, H>, R>
+    pub fn filter_map<Q, H>(self, h: H) -> Par<I, FilMapOf<X, Q, H>, R>
     where
         H: Fn(X::O) -> Option<Q> + Copy + Send,
     {
@@ -104,7 +104,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn flat_map<V, H>(self, h: H) -> Par<I, X::FlatMap<V, H>, R>
+    pub fn flat_map<V, H>(self, h: H) -> Par<I, FlatMapOf<X, V, H>, R>
     where
         V: IntoIterator,
         H: Fn(X::O) -> V + Copy + Send,
@@ -153,7 +153,7 @@ where
     X: Xap<I = I::Item, O = &'a O>,
     R: ParRunner,
 {
-    pub fn copied(self) -> Par<I, X::Mapped<FnCopied<'a, O>>, R> {
+    pub fn copied(self) -> Par<I, MappedOf<X, FnCopied<'a, O>>, R> {
         let (iter, xap, exe, params) = self.destruct();
         Par::new(iter, xap.mapped(FnCopied::new()), exe, params)
     }
@@ -165,7 +165,7 @@ where
     X: Xap<I = I::Item, O = &'a O>,
     R: ParRunner,
 {
-    pub fn cloned(self) -> Par<I, X::Mapped<FnCloned<'a, O>>, R> {
+    pub fn cloned(self) -> Par<I, MappedOf<X, FnCloned<'a, O>>, R> {
         let (iter, xap, exe, params) = self.destruct();
         Par::new(iter, xap.mapped(FnCloned::new()), exe, params)
     }
