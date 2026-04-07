@@ -61,6 +61,8 @@ where
 
     type O = X2::O;
 
+    type Size = Bin;
+
     type Results = Option<ResOf<Self>>;
 
     #[inline(always)]
@@ -71,81 +73,81 @@ where
         }
     }
 
-    // transformations
+    // // transformations
 
-    type Map<Q, H>
-        = XapResOneBin<M, E, X1, MapOf<X2, Q, H>>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send;
+    // type Map<Q, H>
+    //     = XapResOneBin<M, E, X1, MapOf<X2, Q, H>>
+    // where
+    //     H: Fn(Self::O) -> Q + Copy + Send;
 
-    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
-    where
-        H: Fn(Self::O) -> Q + Copy + Send,
-    {
-        XapResOneBin::new(self.x1, self.x2.map(h))
-    }
+    // fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    // where
+    //     H: Fn(Self::O) -> Q + Copy + Send,
+    // {
+    //     XapResOneBin::new(self.x1, self.x2.map(h))
+    // }
 
-    type Inspect<H>
-        = XapResOneBin<M, E, X1, X2::Inspect<H>>
-    where
-        H: Fn(&Self::O) + Copy + Send;
+    // type Inspect<H>
+    //     = XapResOneBin<M, E, X1, X2::Inspect<H>>
+    // where
+    //     H: Fn(&Self::O) + Copy + Send;
 
-    fn inspect<H>(self, h: H) -> Self::Inspect<H>
-    where
-        H: Fn(&Self::O) + Copy + Send,
-    {
-        XapResOneBin::new(self.x1, self.x2.inspect(h))
-    }
+    // fn inspect<H>(self, h: H) -> Self::Inspect<H>
+    // where
+    //     H: Fn(&Self::O) + Copy + Send,
+    // {
+    //     XapResOneBin::new(self.x1, self.x2.inspect(h))
+    // }
 
-    type Filter<H>
-        = XapResOneBin<M, E, X1, X2::Filter<H>>
-    where
-        H: Fn(&Self::O) -> bool + Copy + Send;
+    // type Filter<H>
+    //     = XapResOneBin<M, E, X1, X2::Filter<H>>
+    // where
+    //     H: Fn(&Self::O) -> bool + Copy + Send;
 
-    fn filter<H>(self, h: H) -> Self::Filter<H>
-    where
-        H: Fn(&Self::O) -> bool + Copy + Send,
-    {
-        XapResOneBin::new(self.x1, self.x2.filter(h))
-    }
+    // fn filter<H>(self, h: H) -> Self::Filter<H>
+    // where
+    //     H: Fn(&Self::O) -> bool + Copy + Send,
+    // {
+    //     XapResOneBin::new(self.x1, self.x2.filter(h))
+    // }
 
-    type FilterMap<Q, H>
-        = XapResOneBin<M, E, X1, X2::FilterMap<Q, H>>
-    where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send;
+    // type FilterMap<Q, H>
+    //     = XapResOneBin<M, E, X1, X2::FilterMap<Q, H>>
+    // where
+    //     H: Fn(Self::O) -> Option<Q> + Copy + Send;
 
-    fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
-    where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send,
-    {
-        XapResOneBin::new(self.x1, self.x2.filter_map(h))
-    }
+    // fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
+    // where
+    //     H: Fn(Self::O) -> Option<Q> + Copy + Send,
+    // {
+    //     XapResOneBin::new(self.x1, self.x2.filter_map(h))
+    // }
 
-    type FlatMap<V, H>
-        = XapResOneMany<M, E, X1, X2::FlatMap<V, H>>
-    where
-        V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send;
+    // type FlatMap<V, H>
+    //     = XapResOneMany<M, E, X1, X2::FlatMap<V, H>>
+    // where
+    //     V: IntoIterator,
+    //     H: Fn(Self::O) -> V + Copy + Send;
 
-    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
-    where
-        V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send,
-    {
-        XapResOneMany::new(self.x1, self.x2.flat_map(h))
-    }
+    // fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
+    // where
+    //     V: IntoIterator,
+    //     H: Fn(Self::O) -> V + Copy + Send,
+    // {
+    //     XapResOneMany::new(self.x1, self.x2.flat_map(h))
+    // }
 
-    // transformations - helper
+    // // transformations - helper
 
-    type Mapped<H>
-        = XapResOneBin<M, E, X1, X2::Mapped<H>>
-    where
-        H: Map<I = Self::O>;
+    // type Mapped<H>
+    //     = XapResOneBin<M, E, X1, X2::Mapped<H>>
+    // where
+    //     H: Map<I = Self::O>;
 
-    fn mapped<H>(self, h: H) -> Self::Mapped<H>
-    where
-        H: Map<I = Self::O>,
-    {
-        XapResOneBin::new(self.x1, self.x2.mapped(h))
-    }
+    // fn mapped<H>(self, h: H) -> Self::Mapped<H>
+    // where
+    //     H: Map<I = Self::O>,
+    // {
+    //     XapResOneBin::new(self.x1, self.x2.mapped(h))
+    // }
 }

@@ -57,106 +57,106 @@ where
         self
     }
 
-    // transformations
+    // // transformations
 
-    pub fn map<Q, H>(self, h: H) -> ParRes<I, X::Map<Q, H>, R>
-    where
-        H: Fn(X::O) -> Q + Copy + Send,
-    {
-        let xap = self.xap.map(h);
-        self.with_xap(xap)
-    }
+    // pub fn map<Q, H>(self, h: H) -> ParRes<I, X::Map<Q, H>, R>
+    // where
+    //     H: Fn(X::O) -> Q + Copy + Send,
+    // {
+    //     let xap = self.xap.map(h);
+    //     self.with_xap(xap)
+    // }
 
-    pub fn inspect<H>(self, h: H) -> ParRes<I, X::Inspect<H>, R>
-    where
-        H: Fn(&X::O) + Copy + Send,
-    {
-        let xap = self.xap.inspect(h);
-        self.with_xap(xap)
-    }
+    // pub fn inspect<H>(self, h: H) -> ParRes<I, X::Inspect<H>, R>
+    // where
+    //     H: Fn(&X::O) + Copy + Send,
+    // {
+    //     let xap = self.xap.inspect(h);
+    //     self.with_xap(xap)
+    // }
 
-    pub fn filter<H>(self, h: H) -> ParRes<I, X::Filter<H>, R>
-    where
-        H: Fn(&X::O) -> bool + Copy + Send,
-    {
-        let xap = self.xap.filter(h);
-        self.with_xap(xap)
-    }
+    // pub fn filter<H>(self, h: H) -> ParRes<I, X::Filter<H>, R>
+    // where
+    //     H: Fn(&X::O) -> bool + Copy + Send,
+    // {
+    //     let xap = self.xap.filter(h);
+    //     self.with_xap(xap)
+    // }
 
-    pub fn filter_map<Q, H>(self, h: H) -> ParRes<I, X::FilterMap<Q, H>, R>
-    where
-        H: Fn(X::O) -> Option<Q> + Copy + Send,
-    {
-        let xap = self.xap.filter_map(h);
-        self.with_xap(xap)
-    }
+    // pub fn filter_map<Q, H>(self, h: H) -> ParRes<I, X::FilterMap<Q, H>, R>
+    // where
+    //     H: Fn(X::O) -> Option<Q> + Copy + Send,
+    // {
+    //     let xap = self.xap.filter_map(h);
+    //     self.with_xap(xap)
+    // }
 
-    pub fn flat_map<V, H>(self, h: H) -> ParRes<I, X::FlatMap<V, H>, R>
-    where
-        V: IntoIterator,
-        H: Fn(X::O) -> V + Copy + Send,
-    {
-        let xap = self.xap.flat_map(h);
-        self.with_xap(xap)
-    }
+    // pub fn flat_map<V, H>(self, h: H) -> ParRes<I, X::FlatMap<V, H>, R>
+    // where
+    //     V: IntoIterator,
+    //     H: Fn(X::O) -> V + Copy + Send,
+    // {
+    //     let xap = self.xap.flat_map(h);
+    //     self.with_xap(xap)
+    // }
 
-    // compute
+    // // compute
 
-    pub fn first(self) -> Result<Option<X::O>, X::E>
-    where
-        X::O: Send,
-        X::E: Send,
-    {
-        let (iter, x, mut exe, params) = self.destruct();
-        match params.iteration_order {
-            IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.map(|x| x.val)),
-            IterationOrder::Arbitrary => exe.next_any(params, iter, x),
-        }
-    }
+    // pub fn first(self) -> Result<Option<X::O>, X::E>
+    // where
+    //     X::O: Send,
+    //     X::E: Send,
+    // {
+    //     let (iter, x, mut exe, params) = self.destruct();
+    //     match params.iteration_order {
+    //         IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.map(|x| x.val)),
+    //         IterationOrder::Arbitrary => exe.next_any(params, iter, x),
+    //     }
+    // }
 
-    pub fn reduce<F>(self, f: F) -> Result<Option<X::O>, X::E>
-    where
-        F: Fn(X::O, X::O) -> X::O + Send + Copy,
-        X::O: Send,
-        X::E: Send,
-    {
-        let (iter, x, mut exe, params) = self.destruct();
-        exe.reduce(params, iter, x, f)
-    }
+    // pub fn reduce<F>(self, f: F) -> Result<Option<X::O>, X::E>
+    // where
+    //     F: Fn(X::O, X::O) -> X::O + Send + Copy,
+    //     X::O: Send,
+    //     X::E: Send,
+    // {
+    //     let (iter, x, mut exe, params) = self.destruct();
+    //     exe.reduce(params, iter, x, f)
+    // }
 
-    // compute - derived
+    // // compute - derived
 
-    pub fn for_each<F>(self, f: F)
-    where
-        F: Fn(X::O) + Send + Copy,
-        X::E: Send,
-    {
-        let _ = self.map(f).reduce(|_, _| {});
-    }
+    // pub fn for_each<F>(self, f: F)
+    // where
+    //     F: Fn(X::O) + Send + Copy,
+    //     X::E: Send,
+    // {
+    //     let _ = self.map(f).reduce(|_, _| {});
+    // }
 }
 
-// transformations
+// // transformations
 
-impl<'a, O: Copy + 'a, I, X, R> ParRes<I, X, R>
-where
-    I: ConcurrentIter,
-    X: XapRes<I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn copied(self) -> ParRes<I, X::Mapped<FnCopied<'a, O>>, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParRes::new(iter, xap.mapped(FnCopied::new()), exe, params)
-    }
-}
+// impl<'a, O: Copy + 'a, I, X, R> ParRes<I, X, R>
+// where
+//     I: ConcurrentIter,
+//     X: XapRes<I = I::Item, O = &'a O>,
+//     R: ParRunner,
+// {
+//     pub fn copied(self) -> ParRes<I, X::Mapped<FnCopied<'a, O>>, R> {
+//         let (iter, xap, exe, params) = self.destruct();
+//         ParRes::new(iter, xap.mapped(FnCopied::new()), exe, params)
+//     }
+// }
 
-impl<'a, O: Clone + 'a, I, X, R> ParRes<I, X, R>
-where
-    I: ConcurrentIter,
-    X: XapRes<I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn cloned(self) -> ParRes<I, X::Mapped<FnCloned<'a, O>>, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParRes::new(iter, xap.mapped(FnCloned::new()), exe, params)
-    }
-}
+// impl<'a, O: Clone + 'a, I, X, R> ParRes<I, X, R>
+// where
+//     I: ConcurrentIter,
+//     X: XapRes<I = I::Item, O = &'a O>,
+//     R: ParRunner,
+// {
+//     pub fn cloned(self) -> ParRes<I, X::Mapped<FnCloned<'a, O>>, R> {
+//         let (iter, xap, exe, params) = self.destruct();
+//         ParRes::new(iter, xap.mapped(FnCloned::new()), exe, params)
+//     }
+// }
