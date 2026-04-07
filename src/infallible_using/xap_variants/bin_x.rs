@@ -1,4 +1,4 @@
-use crate::infallible::size::{Bin, Many};
+use crate::infallible::sizes::{Bin, Many};
 use crate::infallible_using::fun::{FlatMap, FnFilMap, FnFil, FnFlatMap, FnIns, FnMap, Map};
 use crate::infallible_using::xap::{Xap, XapBin};
 use crate::infallible_using::xap_variants::{ManyF, ManyM, ManyX};

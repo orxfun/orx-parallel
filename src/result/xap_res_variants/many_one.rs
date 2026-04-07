@@ -1,5 +1,5 @@
 use crate::infallible::fun::Map;
-use crate::infallible::size::{Many, One};
+use crate::infallible::sizes::{Many, One};
 use crate::infallible::{Xap, XapOne};
 use crate::result::xap_res::XapRes;
 use crate::result::xap_res_variants::{XapResManyBin, XapResManyMany};

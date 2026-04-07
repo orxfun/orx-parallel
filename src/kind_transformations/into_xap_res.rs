@@ -1,6 +1,6 @@
 use crate::infallible::Xap;
 use crate::infallible::fun::*;
-use crate::infallible::size::{Bin, Many, One};
+use crate::infallible::sizes::{Bin, Many, One};
 use crate::infallible::xap_variants::*;
 use crate::result::XapRes;
 use crate::result::xap_res_variants::*;

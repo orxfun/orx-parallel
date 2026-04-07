@@ -1,5 +1,5 @@
-use crate::infallible::size::{Many, One};
-use crate::infallible_using::fun::{FlatMap, FnFilMap, FnFil, FnFlatMap, FnIns, FnMap, Map};
+use crate::infallible::sizes::{Many, One};
+use crate::infallible_using::fun::{FlatMap, FnFil, FnFilMap, FnFlatMap, FnIns, FnMap, Map};
 use crate::infallible_using::xap::{Xap, XapOne};
 use crate::infallible_using::xap_variants::{ManyF, ManyM, ManyX};
 

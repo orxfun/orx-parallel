@@ -1,4 +1,4 @@
-use crate::infallible::size::One;
+use crate::infallible::sizes::One;
 use crate::infallible_using::fun::{FnFil, FnFilMap, FnFlatMap, FnIns, FnMap, Map};
 use crate::infallible_using::xap::Xap;
 use crate::infallible_using::xap_variants::{OneF, OneM, OneX};
