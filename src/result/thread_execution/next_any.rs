@@ -1,18 +1,19 @@
-use crate::result_depr::xap_res::{OutOf, XapRes};
+use crate::result::{size_pairs::SizePair, xap_res::XapRes};
 use crate::{infallible::Xap, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next_any<Q, I, X>(
+pub fn next_any<Q, I, M, E, X1, X2, S>(
     th_idx: usize,
     state: &Q::State,
     iter: &I,
-    x: X,
-) -> Result<Option<OutOf<X>>, X::E>
+    x: XapRes<M, E, X1, X2, S>,
+) -> Result<Option<X2::O>, E>
 where
     Q: ParRunner,
     I: ConcurrentIter,
-    X: XapRes,
-    X::X1: Xap<I = I::Item>,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
