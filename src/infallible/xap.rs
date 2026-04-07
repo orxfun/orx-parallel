@@ -93,3 +93,13 @@ impl<X: Xap<Size = Bin>> XapBin for X {}
 // helper types
 
 pub type MapOf<X, Q, H> = <<X as Xap>::Size as Size>::Map<X, Q, H>;
+
+pub type InsOf<X, H> = <<X as Xap>::Size as Size>::Inspect<X, H>;
+
+pub type FilOf<X, H> = <<X as Xap>::Size as Size>::Filter<X, H>;
+
+pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as Size>::FilterMap<X, Q, H>;
+
+pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as Size>::FlatMap<X, V, H>;
+
+pub type MappedOf<X, M> = <<X as Xap>::Size as Size>::Mapped<X, M>;
