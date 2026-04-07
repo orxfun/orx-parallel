@@ -1,40 +1,41 @@
 use crate::infallible::size::One;
-use crate::infallible_using::fun::{FnFilMap, FnFil, FnFlatMap, FnIns, FnMap, Map};
+use crate::infallible_using::fun::{FnFil, FnFilMap, FnFlatMap, FnIns, FnMap, Map};
 use crate::infallible_using::xap::Xap;
 use crate::infallible_using::xap_variants::{OneF, OneM, OneX};
 use core::marker::PhantomData;
 
-pub struct Id<U, I>(PhantomData<(U, I)>);
+pub struct OneId<U, X: crate::infallible::Xap<Size = One>>(X, PhantomData<U>);
 
-impl<U, I> Clone for Id<U, I> {
+impl<U, X: crate::infallible::Xap<Size = One>> Clone for OneId<U, X> {
     fn clone(&self) -> Self {
-        Self::new()
+        Self::new(self.0)
     }
 }
 
-impl<U, I> Copy for Id<U, I> {}
+impl<U, X: crate::infallible::Xap<Size = One>> Copy for OneId<U, X> {}
 
-unsafe impl<U, I> Send for Id<U, I> {}
+unsafe impl<U, X: crate::infallible::Xap<Size = One>> Send for OneId<U, X> {}
 
-impl<U, I> Id<U, I> {
-    pub const fn new() -> Self {
-        Self(PhantomData)
+impl<U, X: crate::infallible::Xap<Size = One>> OneId<U, X> {
+    pub const fn new(xap: X) -> Self {
+        Self(xap, PhantomData)
     }
 }
 
-impl<U, I> Xap for Id<U, I> {
-    type I = I;
+impl<U, X: crate::infallible::Xap<Size = One>> Xap for OneId<U, X> {
+    type I = X::I;
 
-    type O = I;
+    type O = X::O;
 
     type U = U;
 
-    type Size = One;
+    type Size = X::Size;
 
-    type Values = [I; 1];
+    type Values = X::Values;
 
+    #[inline(always)]
     fn xap(&self, _: &mut Self::U, i: Self::I) -> Self::Values {
-        [i]
+        self.0.xap(i)
     }
 
     // transformations
