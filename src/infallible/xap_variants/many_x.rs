@@ -1,10 +1,6 @@
-use crate::infallible::fun::{FlatMap, FnFlatMap};
-use crate::infallible::fun::{FnFil, FnFilMap};
-use crate::infallible::fun::{FnIns, FnMap, Map};
+use crate::infallible::fun::FlatMap;
 use crate::infallible::sizes::Many;
 use crate::infallible::xap::Xap;
-use crate::infallible::xap_variants::many_f::ManyF;
-use crate::infallible::xap_variants::many_m::ManyM;
 
 pub struct ManyX<X: Xap<Size = Many>, G: FlatMap<I = X::O>> {
     x: X,
@@ -39,72 +35,6 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
         let i = self.x.xap(i).into_iter();
         let (g, inner) = (self.g, None);
         IterManyX { i, g, inner }
-    }
-
-    // transformations
-
-    type Inspect<H>
-        = ManyM<Self, FnIns<Self::O, H>>
-    where
-        H: Fn(&Self::O) + Copy + Send;
-
-    fn inspect<H>(self, h: H) -> Self::Inspect<H>
-    where
-        H: Fn(&Self::O) + Copy + Send,
-    {
-        ManyM::new(self, FnIns::new(h))
-    }
-
-    type Filter<H>
-        = ManyF<Self, FnFil<Self::O, H>>
-    where
-        H: Fn(&Self::O) -> bool + Copy + Send;
-
-    fn filter<H>(self, h: H) -> Self::Filter<H>
-    where
-        H: Fn(&Self::O) -> bool + Copy + Send,
-    {
-        ManyF::new(self, FnFil::new(h))
-    }
-
-    type FilterMap<Q, H>
-        = ManyF<Self, FnFilMap<Self::O, Q, H>>
-    where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send;
-
-    fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
-    where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send,
-    {
-        ManyF::new(self, FnFilMap::new(h))
-    }
-
-    type FlatMap<V, H>
-        = ManyX<Self, FnFlatMap<Self::O, V, H>>
-    where
-        V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send;
-
-    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
-    where
-        V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send,
-    {
-        ManyX::new(self, FnFlatMap::new(h))
-    }
-
-    // transformations - helper
-
-    type Mapped<M>
-        = ManyM<Self, M>
-    where
-        M: Map<I = Self::O>;
-
-    fn mapped<M>(self, m: M) -> Self::Mapped<M>
-    where
-        M: Map<I = Self::O>,
-    {
-        ManyM::new(self, m)
     }
 }
 
