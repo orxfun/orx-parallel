@@ -9,4 +9,13 @@ mod one_many;
 mod one_one;
 mod size_pair;
 
+pub use bin_bin::BinBin;
+pub use bin_many::BinMany;
+pub use bin_one::BinOne;
+pub use many_bin::ManyBin;
+pub use many_many::ManyMany;
+pub use many_one::ManyOne;
+pub use one_bin::OneBin;
+pub use one_many::OneMany;
+pub use one_one::OneOne;
 pub use size_pair::SizePair;
