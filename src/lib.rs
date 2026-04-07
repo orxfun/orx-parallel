@@ -26,9 +26,9 @@ mod runner;
 pub mod infallible;
 pub mod infallible_arch;
 pub mod infallible_using;
-pub mod kind_transformations;
-pub mod option;
-pub mod result;
+// pub mod kind_transformations;
+// pub mod option;
+// pub mod result;
 
 pub use into_parallel::{
     IntoParIter, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
