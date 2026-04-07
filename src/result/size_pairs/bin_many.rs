@@ -1,3 +1,4 @@
+use crate::infallible::Xap;
 use crate::infallible::sizes::{Bin, Many};
 use crate::result::size_pairs::SizePair;
 
@@ -7,4 +8,46 @@ impl SizePair for BinMany {
     type S1 = Bin;
 
     type S2 = Many;
+
+    type Results<M, E, X1, X2>
+        = IterResBinMany<<X2::Values as IntoIterator>::IntoIter, E>
+    where
+        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>;
+}
+
+// iter
+
+pub enum IterResBinMany<I: Iterator, E> {
+    Success(Option<I>),
+    Fail(Option<E>),
+}
+
+impl<I: Iterator, E> IterResBinMany<I, E> {
+    pub fn success(i: Option<I>) -> Self {
+        Self::Success(i)
+    }
+
+    pub fn fail(e: E) -> Self {
+        Self::Fail(Some(e))
+    }
+}
+
+impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
+    type Item = Result<I::Item, E>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Success(Some(iter)) => iter.next().map(Ok),
+            Self::Success(None) => None,
+            Self::Fail(e) => match e.is_some() {
+                true => {
+                    // SAFETY: error can be taken out only once; and on construction
+                    // the error variant must be created with Some of an error
+                    Some(Err(unsafe { e.take().unwrap_unchecked() }))
+                }
+                false => None, // the error is already taken and returned
+            },
+        }
+    }
 }

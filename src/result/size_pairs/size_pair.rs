@@ -1,7 +1,12 @@
-use crate::infallible::sizes::Size;
+use crate::infallible::{Xap, sizes::Size};
 
 pub trait SizePair {
     type S1: Size;
 
     type S2: Size;
+
+    type Results<M, E, X1, X2>: IntoIterator<Item = Result<X2::O, E>>
+    where
+        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>;
 }
