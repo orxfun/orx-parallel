@@ -9,6 +9,8 @@ impl SizePair for ManyBin {
 
     type S2 = Bin;
 
+    type ThenBin = ManyBin;
+
     type Results<M, E, X1, X2>
         = IterResManyBin<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
     where

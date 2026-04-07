@@ -9,6 +9,8 @@ impl SizePair for OneBin {
 
     type S2 = Bin;
 
+    type ThenBin = OneBin;
+
     type Results<M, E, X1, X2>
         = Option<Result<X2::O, E>>
     where
