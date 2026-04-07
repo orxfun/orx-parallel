@@ -1,25 +1,27 @@
-use crate::infallible::{fun::Map, sizes::Size};
+use crate::infallible::{Xap, sizes::Size};
 
-pub type ResOf<X> = Result<<X as XapRes>::O, <X as XapRes>::E>;
+pub type InOf<X> = <<X as XapRes>::X1 as Xap>::I;
+
+pub type OutOf<X> = <<X as XapRes>::X2 as Xap>::O;
+
+pub type ResOf<X> = Result<OutOf<X>, <X as XapRes>::E>;
 
 pub trait XapRes: Copy + Send {
-    // Type of the input elements.
-    type I;
-
     /// Type of the intermediate success value bridging between `X1` and `X2`.
     type M;
 
     /// Error type.
     type E;
 
-    /// Final success value.
-    type O;
+    type X1: Xap<O = Result<Self::M, Self::E>>;
+
+    type X2: Xap<I = Self::M>;
 
     type Size: Size;
 
     type Results: IntoIterator<Item = ResOf<Self>>;
 
-    fn xap_res(&self, i: Self::I) -> Self::Results;
+    fn xap_res(&self, i: InOf<Self>) -> Self::Results;
 
     // // transformations
 

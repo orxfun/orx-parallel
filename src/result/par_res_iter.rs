@@ -1,6 +1,7 @@
+use crate::infallible::Xap;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::result::par_runner::ParRunnerResult;
+// use crate::result::par_runner::ParRunnerResult;
 use crate::result::xap_res::XapRes;
 use crate::runner::{DefaultRunner, ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
@@ -8,7 +9,8 @@ use orx_concurrent_iter::ConcurrentIter;
 pub struct ParRes<I, X, R = DefaultRunner>
 where
     I: ConcurrentIter,
-    X: XapRes<I = I::Item>,
+    X: XapRes,
+    X::X1: Xap<I = I::Item>,
     R: ParRunner,
 {
     iter: I,
@@ -20,7 +22,8 @@ where
 impl<I, X, R> ParRes<I, X, R>
 where
     I: ConcurrentIter,
-    X: XapRes<I = I::Item>,
+    X: XapRes,
+    X::X1: Xap<I = I::Item>,
     R: ParRunner,
 {
     pub(crate) fn new(iter: I, xap: X, exe: R, params: Params) -> Self {
@@ -32,7 +35,11 @@ where
         }
     }
 
-    fn with_xap<Y: XapRes<I = I::Item>>(self, xap: Y) -> ParRes<I, Y, R> {
+    fn with_xap<Y>(self, xap: Y) -> ParRes<I, Y, R>
+    where
+        Y: XapRes,
+        Y::X1: Xap<I = I::Item>,
+    {
         ParRes::new(self.iter, xap, self.exe, self.params)
     }
 
