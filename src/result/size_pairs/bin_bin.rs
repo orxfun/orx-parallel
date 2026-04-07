@@ -1,4 +1,5 @@
-use crate::{infallible::sizes::Bin, result::size_pairs::SizePair};
+use crate::infallible::{Xap, sizes::Bin};
+use crate::result::size_pairs::SizePair;
 
 pub struct BinBin;
 
@@ -6,4 +7,10 @@ impl SizePair for BinBin {
     type S1 = Bin;
 
     type S2 = Bin;
+
+    type Results<M, E, X1, X2>
+        = Option<Result<X2::O, E>>
+    where
+        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>;
 }
