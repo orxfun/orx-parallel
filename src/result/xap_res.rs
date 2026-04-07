@@ -55,35 +55,35 @@ where
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> XapRes<M, E, X1, MapOf<X2, Q, H>, S>
+    pub fn map<Q, H>(self, h: H) -> XapRes<M, E, X1, MapOf<X2, Q, H>, S>
     where
         H: Fn(X2::O) -> Q + Copy + Send,
     {
         XapRes::new(self.x1, self.x2.map(h))
     }
 
-    fn inspect<H>(self, h: H) -> XapRes<M, E, X1, InsOf<X2, H>, S>
+    pub fn inspect<H>(self, h: H) -> XapRes<M, E, X1, InsOf<X2, H>, S>
     where
         H: Fn(&X2::O) + Copy + Send,
     {
         XapRes::new(self.x1, self.x2.inspect(h))
     }
 
-    fn filter<H>(self, h: H) -> XapRes<M, E, X1, FilOf<X2, H>, S::ThenBin>
+    pub fn filter<H>(self, h: H) -> XapRes<M, E, X1, FilOf<X2, H>, S::ThenBin>
     where
         H: Fn(&X2::O) -> bool + Copy + Send,
     {
         XapRes::new(self.x1, self.x2.filter(h))
     }
 
-    fn filter_map<Q, H>(self, h: H) -> XapRes<M, E, X1, FilMapOf<X2, Q, H>, S::ThenBin>
+    pub fn filter_map<Q, H>(self, h: H) -> XapRes<M, E, X1, FilMapOf<X2, Q, H>, S::ThenBin>
     where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
     {
         XapRes::new(self.x1, self.x2.filter_map(h))
     }
 
-    fn flat_map<V, H>(self, h: H) -> XapRes<M, E, X1, FlatMapOf<X2, V, H>, S::ThenMany>
+    pub fn flat_map<V, H>(self, h: H) -> XapRes<M, E, X1, FlatMapOf<X2, V, H>, S::ThenMany>
     where
         V: IntoIterator,
         H: Fn(X2::O) -> V + Copy + Send,
@@ -93,7 +93,7 @@ where
 
     // transformations - helper
 
-    fn mapped<H>(self, h: H) -> XapRes<M, E, X1, MappedOf<X2, H>, S>
+    pub fn mapped<H>(self, h: H) -> XapRes<M, E, X1, MappedOf<X2, H>, S>
     where
         H: Map<I = X2::O>,
     {
