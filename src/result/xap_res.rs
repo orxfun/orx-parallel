@@ -45,10 +45,10 @@ where
         XapRes::new(self.x1, self.x2.inspect(h))
     }
 
-    // fn filter<H>(self, h: H) -> XapRes<M, E, X1, FilOf<X2, H>, S>
-    // where
-    //     H: Fn(&X2::O) -> bool + Copy + Send,
-    // {
-    //     todo!()
-    // }
+    fn filter<H>(self, h: H) -> XapRes<M, E, X1, FilOf<X2, H>, S::ThenBin>
+    where
+        H: Fn(&X2::O) -> bool + Copy + Send,
+    {
+        XapRes::new(self.x1, self.x2.filter(h))
+    }
 }
