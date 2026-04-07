@@ -1,21 +1,22 @@
 use crate::infallible::Xap;
-use crate::result_depr::xap_res::{OutOf, XapRes};
+use crate::result::{size_pairs::SizePair, xap_res::XapRes};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn reduce<Q, I, X, F>(
+pub fn reduce<Q, I, M, E, X1, X2, S, F>(
     th_idx: usize,
     state: &Q::State,
     iter: &I,
-    x: X,
+    x: XapRes<M, E, X1, X2, S>,
     f: F,
-) -> Result<Option<OutOf<X>>, X::E>
+) -> Result<Option<X2::O>, E>
 where
     Q: ParRunner,
     I: ConcurrentIter,
-    X: XapRes,
-    X::X1: Xap<I = I::Item>,
-    F: Fn(OutOf<X>, OutOf<X>) -> OutOf<X>,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    F: Fn(X2::O, X2::O) -> X2::O,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
