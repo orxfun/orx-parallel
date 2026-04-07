@@ -1,6 +1,6 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
-use crate::parameters::{IterationOrder, Params};
+use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par_runner::ParRunnerResult;
 use crate::result::size_pairs::SizePair;
 use crate::result::xap_res::XapRes;
@@ -48,6 +48,22 @@ where
 
     fn destruct(self) -> (I, XapRes<M, E, X1, X2, S>, R, Params) {
         (self.iter, self.xap, self.exe, self.params)
+    }
+    // params
+
+    pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+        self.params = self.params.with_num_threads(num_threads);
+        self
+    }
+
+    pub fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+        self.params = self.params.with_chunk_size(chunk_size);
+        self
+    }
+
+    pub fn iteration_order(mut self, collect: IterationOrder) -> Self {
+        self.params = self.params.with_collect_ordering(collect);
+        self
     }
 
     // transformations
