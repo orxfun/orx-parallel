@@ -2,7 +2,7 @@ use crate::infallible::Xap;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 // use crate::result::par_runner::ParRunnerResult;
-use crate::result::xap_res::XapRes;
+use crate::result_depr::xap_res::XapRes;
 use crate::runner::{DefaultRunner, ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 

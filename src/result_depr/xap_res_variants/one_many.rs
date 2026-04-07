@@ -1,7 +1,7 @@
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::{Many, One};
 use crate::infallible::{MapOf, Xap, XapOne};
-use crate::result::xap_res::{InOf, XapRes};
+use crate::result_depr::xap_res::{InOf, XapRes};
 
 pub struct XapResOneMany<M, E, X1, X2>
 where

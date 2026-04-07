@@ -1,13 +1,13 @@
-use crate::result::xap_res::{OutOf, XapRes};
-use crate::{infallible::Xap, runner::ParRunner};
+use crate::result_depr::xap_res::{OutOf, XapRes};
+use crate::{infallible::Xap, results::ValIdx, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next_any<Q, I, X>(
+pub fn next<Q, I, X>(
     th_idx: usize,
     state: &Q::State,
     iter: &I,
     x: X,
-) -> Result<Option<OutOf<X>>, X::E>
+) -> Result<Option<ValIdx<OutOf<X>>>, X::E>
 where
     Q: ParRunner,
     I: ConcurrentIter,
@@ -15,7 +15,7 @@ where
     X::X1: Xap<I = I::Item>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller();
+    let mut item_puller = iter.item_puller_with_idx();
 
     loop {
         let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
@@ -23,11 +23,11 @@ where
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some(i) => {
+                Some((idx, i)) => {
                     for a in x.xap_res(i) {
                         Q::broadcast_stop(iter, state, chunk_state);
                         match a {
-                            Ok(a) => return Ok(Some(a)),
+                            Ok(a) => return Ok(Some(ValIdx::new(a, idx))),
                             Err(e) => return Err(e),
                         }
                     }
@@ -40,12 +40,12 @@ where
                     chunk_puller = iter.chunk_puller(c);
                 }
 
-                match chunk_puller.pull() {
-                    Some(chunk) => {
+                match chunk_puller.pull_with_idx() {
+                    Some((idx, chunk)) => {
                         for a in chunk.flat_map(|i| x.xap_res(i)) {
                             Q::broadcast_stop(iter, state, chunk_state);
                             match a {
-                                Ok(a) => return Ok(Some(a)),
+                                Ok(a) => return Ok(Some(ValIdx::new(a, idx))),
                                 Err(e) => return Err(e),
                             }
                         }
@@ -55,6 +55,7 @@ where
                 }
             }
         }
+
         Q::complete_chunk(state, chunk_state);
     }
 

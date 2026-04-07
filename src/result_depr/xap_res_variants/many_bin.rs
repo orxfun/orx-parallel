@@ -1,8 +1,8 @@
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::{Bin, Many};
 use crate::infallible::{MapOf, Xap, XapBin};
-use crate::result::xap_res::{InOf, XapRes};
-use crate::result::xap_res_variants::XapResManyMany;
+use crate::result_depr::xap_res::{InOf, XapRes};
+use crate::result_depr::xap_res_variants::XapResManyMany;
 
 pub struct XapResManyBin<M, E, X1, X2>
 where

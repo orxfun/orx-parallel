@@ -1,5 +1,5 @@
 use crate::infallible::Xap;
-use crate::result::xap_res::{OutOf, XapRes};
+use crate::result_depr::xap_res::{OutOf, XapRes};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 

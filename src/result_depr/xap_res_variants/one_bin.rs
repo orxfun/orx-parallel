@@ -1,22 +1,22 @@
 use crate::infallible::fun::Map;
-use crate::infallible::sizes::One;
-use crate::infallible::{MapOf, Xap, XapOne};
-use crate::result::xap_res::{InOf, ResOf, XapRes};
-use crate::result::xap_res_variants::{XapResOneBin, XapResOneMany};
+use crate::infallible::sizes::{Bin, One};
+use crate::infallible::{MapOf, Xap, XapBin, XapOne};
+use crate::result_depr::xap_res::{InOf, ResOf, XapRes};
+use crate::result_depr::xap_res_variants::XapResOneMany;
 
-pub struct XapResOneOne<M, E, X1, X2>
+pub struct XapResOneBin<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
     x1: X1,
     x2: X2,
 }
 
-impl<M, E, X1, X2> Clone for XapResOneOne<M, E, X1, X2>
+impl<M, E, X1, X2> Clone for XapResOneBin<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
     fn clone(&self) -> Self {
         let (x1, x2) = (self.x1, self.x2);
@@ -24,34 +24,34 @@ where
     }
 }
 
-impl<M, E, X1, X2> Copy for XapResOneOne<M, E, X1, X2>
+impl<M, E, X1, X2> Copy for XapResOneBin<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
 }
 
-unsafe impl<M, E, X1, X2> Send for XapResOneOne<M, E, X1, X2>
+unsafe impl<M, E, X1, X2> Send for XapResOneBin<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
 }
 
-impl<M, E, X1, X2> XapResOneOne<M, E, X1, X2>
+impl<M, E, X1, X2> XapResOneBin<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
     pub fn new(x1: X1, x2: X2) -> Self {
         Self { x1, x2 }
     }
 }
 
-impl<M, E, X1, X2> XapRes for XapResOneOne<M, E, X1, X2>
+impl<M, E, X1, X2> XapRes for XapResOneBin<M, E, X1, X2>
 where
     X1: Xap<O = Result<M, E>, Size = One>,
-    X2: Xap<I = M, Size = One>,
+    X2: Xap<I = M, Size = Bin>,
 {
     type M = M;
 
@@ -61,20 +61,22 @@ where
 
     type X2 = X2;
 
-    type Size = One;
+    type Size = Bin;
 
-    type Results = [ResOf<Self>; 1];
+    type Results = Option<ResOf<Self>>;
 
     #[inline(always)]
     fn xap_res(&self, i: InOf<Self>) -> Self::Results {
-        let a = self.x1.one_value(i);
-        [a.map(|a| self.x2.one_value(a))]
+        match self.x1.one_value(i) {
+            Ok(a) => self.x2.bin_value(a).map(Ok),
+            Err(e) => Some(Err(e)),
+        }
     }
 
     // // transformations
 
     // type Map<Q, H>
-    //     = XapResOneOne<M, E, X1, MapOf<X2, Q, H>>
+    //     = XapResOneBin<M, E, X1, MapOf<X2, Q, H>>
     // where
     //     H: Fn(Self::O) -> Q + Copy + Send;
 
@@ -82,11 +84,11 @@ where
     // where
     //     H: Fn(Self::O) -> Q + Copy + Send,
     // {
-    //     XapResOneOne::new(self.x1, self.x2.map(h))
+    //     XapResOneBin::new(self.x1, self.x2.map(h))
     // }
 
     // type Inspect<H>
-    //     = XapResOneOne<M, E, X1, X2::Inspect<H>>
+    //     = XapResOneBin<M, E, X1, X2::Inspect<H>>
     // where
     //     H: Fn(&Self::O) + Copy + Send;
 
@@ -94,7 +96,7 @@ where
     // where
     //     H: Fn(&Self::O) + Copy + Send,
     // {
-    //     XapResOneOne::new(self.x1, self.x2.inspect(h))
+    //     XapResOneBin::new(self.x1, self.x2.inspect(h))
     // }
 
     // type Filter<H>
@@ -138,7 +140,7 @@ where
     // // transformations - helper
 
     // type Mapped<H>
-    //     = XapResOneOne<M, E, X1, X2::Mapped<H>>
+    //     = XapResOneBin<M, E, X1, X2::Mapped<H>>
     // where
     //     H: Map<I = Self::O>;
 
@@ -146,6 +148,6 @@ where
     // where
     //     H: Map<I = Self::O>,
     // {
-    //     XapResOneOne::new(self.x1, self.x2.mapped(h))
+    //     XapResOneBin::new(self.x1, self.x2.mapped(h))
     // }
 }
