@@ -1,7 +1,7 @@
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::Bin;
 use crate::infallible::{MapOf, Xap, XapBin};
-use crate::result::xap_res::{ResOf, XapRes};
+use crate::result::xap_res::{InOf, ResOf, XapRes};
 use crate::result::xap_res_variants::XapResBinMany;
 
 pub struct XapResBinBin<M, E, X1, X2>
@@ -53,20 +53,20 @@ where
     X1: Xap<O = Result<M, E>, Size = Bin>,
     X2: Xap<I = M, Size = Bin>,
 {
-    type I = X1::I;
-
     type M = M;
 
     type E = E;
 
-    type O = X2::O;
+    type X1 = X1;
+
+    type X2 = X2;
 
     type Size = Bin;
 
     type Results = Option<ResOf<Self>>;
 
     #[inline(always)]
-    fn xap_res(&self, i: Self::I) -> Self::Results {
+    fn xap_res(&self, i: InOf<Self>) -> Self::Results {
         self.x1.bin_value(i).and_then(|a| match a {
             Ok(a) => self.x2.bin_value(a).map(Ok),
             Err(e) => Some(Err(e)),

@@ -1,7 +1,7 @@
 use crate::infallible::fun::Map;
 use crate::infallible::sizes::{Many, One};
 use crate::infallible::{MapOf, Xap, XapOne};
-use crate::result::xap_res::XapRes;
+use crate::result::xap_res::{InOf, XapRes};
 
 pub struct XapResOneMany<M, E, X1, X2>
 where
@@ -52,20 +52,20 @@ where
     X1: Xap<O = Result<M, E>, Size = One>,
     X2: Xap<I = M, Size = Many>,
 {
-    type I = X1::I;
-
     type M = M;
 
     type E = E;
 
-    type O = X2::O;
+    type X1 = X1;
+
+    type X2 = X2;
 
     type Size = Many;
 
     type Results = IterResOneMany<<<X2 as Xap>::Values as IntoIterator>::IntoIter, E>;
 
     #[inline]
-    fn xap_res(&self, i: Self::I) -> Self::Results {
+    fn xap_res(&self, i: InOf<Self>) -> Self::Results {
         match self.x1.one_value(i) {
             Ok(a) => IterResOneMany::ok(self.x2.xap(a).into_iter()),
             Err(e) => IterResOneMany::err(e),
