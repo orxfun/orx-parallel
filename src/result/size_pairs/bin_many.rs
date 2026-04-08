@@ -66,6 +66,27 @@ impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
             Self::Fail(_taken) => (1, Some(1)), // we will return only one element, the error
         }
     }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        match self {
+            Self::Success(Some(i)) => i.map(Ok).fold(init, f),
+            Self::Success(None) => init,
+            Self::Fail(Some(e)) => f(init, Err(e)),
+            Self::Fail(None) => init,
+        }
+    }
+
+    fn count(self) -> usize {
+        match self {
+            Self::Success(Some(i)) => i.count(),
+            Self::Success(None) => 0,
+            Self::Fail(_taken) => 1, // we will return only one element, the error
+        }
+    }
 }
 
 impl<I: FusedIterator, E> FusedIterator for IterResBinMany<I, E> {}
