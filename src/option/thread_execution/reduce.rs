@@ -1,9 +1,9 @@
 use crate::infallible::Xap;
-use crate::result::size_pairs::SizePairRes;
+use crate::option::size_pairs::SizePairOpt;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn reduce<Q, I, M, E, X1, X2, S, F>(
+pub fn reduce<Q, I, M, X1, X2, S, F>(
     _: S,
     th_idx: usize,
     state: &Q::State,
@@ -11,13 +11,13 @@ pub fn reduce<Q, I, M, E, X1, X2, S, F>(
     x1: X1,
     x2: X2,
     f: F,
-) -> Result<Option<X2::O>, E>
+) -> Option<Option<X2::O>>
 where
     Q: ParRunner,
     I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
-    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
     F: Fn(X2::O, X2::O) -> X2::O,
 {
     let mut chunk_puller = iter.chunk_puller(0);
@@ -34,13 +34,13 @@ where
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
-                        for a in S::xap_res(x1, x2, i) {
+                        for a in S::xap_opt(x1, x2, i) {
                             acc = match (a, acc.is_some()) {
-                                (Ok(a), true) => acc.map(|agg| f(agg, a)),
-                                (Ok(a), false) => Some(a),
-                                (Err(e), _) => {
+                                (Some(a), true) => acc.map(|agg| f(agg, a)),
+                                (Some(a), false) => Some(a),
+                                (None, _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
-                                    return Err(e);
+                                    return None;
                                 }
                             };
                         }
@@ -57,13 +57,13 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| S::xap_res(x1, x2, i)) {
+                        for a in chunk.flat_map(|i| S::xap_opt(x1, x2, i)) {
                             acc = match (a, acc.is_some()) {
-                                (Ok(a), true) => acc.map(|agg| f(agg, a)),
-                                (Ok(a), false) => Some(a),
-                                (Err(e), _) => {
+                                (Some(a), true) => acc.map(|agg| f(agg, a)),
+                                (Some(a), false) => Some(a),
+                                (None, _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
-                                    return Err(e);
+                                    return None;
                                 }
                             };
                         }
@@ -92,12 +92,12 @@ where
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
-                                for a in S::xap_res(x1, x2, i) {
+                                for a in S::xap_opt(x1, x2, i) {
                                     acc = match a {
-                                        Ok(a) => f(acc, a),
-                                        Err(e) => {
+                                        Some(a) => f(acc, a),
+                                        None => {
                                             Q::broadcast_stop(iter, state, chunk_state);
-                                            return Err(e);
+                                            return None;
                                         }
                                     };
                                 }
@@ -114,12 +114,12 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
-                                for a in chunk.flat_map(|i| S::xap_res(x1, x2, i)) {
+                                for a in chunk.flat_map(|i| S::xap_opt(x1, x2, i)) {
                                     acc = match a {
-                                        Ok(a) => f(acc, a),
-                                        Err(e) => {
+                                        Some(a) => f(acc, a),
+                                        None => {
                                             Q::broadcast_stop(iter, state, chunk_state);
-                                            return Err(e);
+                                            return None;
                                         }
                                     };
                                 }
@@ -137,5 +137,5 @@ where
         }
     };
 
-    Ok(result)
+    Some(result)
 }
