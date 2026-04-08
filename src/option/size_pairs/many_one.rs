@@ -42,6 +42,44 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|a| a.map(|a| self.x2.one_value(a)))
     }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let mut agg = init;
+
+        for i in self.iter {
+            match i {
+                Some(i) => agg = f(agg, Some(self.x2.one_value(i))),
+                None => return f(agg, None),
+            }
+        }
+
+        agg
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        let mut count = 0;
+
+        for i in self.iter {
+            match i {
+                Some(_) => count += 1,
+                None => return count,
+            }
+        }
+
+        count
+    }
 }
 
 impl<M, I, X2> FusedIterator for IterOptManyOne<M, I, X2>
