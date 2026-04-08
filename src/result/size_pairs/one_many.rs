@@ -25,17 +25,17 @@ impl SizePairRes for OneMany {
 // iter
 
 pub enum IterResOneMany<I: Iterator, E> {
-    Ok(I),
-    Err(Option<E>),
+    Success(I),
+    Fail(Option<E>),
 }
 
 impl<I: Iterator, E> IterResOneMany<I, E> {
     pub fn ok(i: I) -> Self {
-        Self::Ok(i)
+        Self::Success(i)
     }
 
     pub fn err(e: E) -> Self {
-        Self::Err(Some(e))
+        Self::Fail(Some(e))
     }
 }
 
@@ -44,8 +44,8 @@ impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::Ok(iter) => iter.next().map(Ok),
-            Self::Err(e) => match e.is_some() {
+            Self::Success(iter) => iter.next().map(Ok),
+            Self::Fail(e) => match e.is_some() {
                 true => {
                     // SAFETY: error can be taken out only once; and on construction
                     // the error variant must be created with Some of an error
