@@ -1,5 +1,5 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs_id;
+use crate::result::tests::utils::inputs_res;
 use crate::*;
 use std::format;
 use std::string::{String, ToString};
@@ -9,7 +9,7 @@ const N: usize = 157;
 
 #[test]
 fn many_x_find_ok() {
-    let inputs = inputs_id(N, None);
+    let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
         .fallible_result()
@@ -24,7 +24,7 @@ fn many_x_find_ok() {
 
 #[test]
 fn many_x_find_any_ok() {
-    let inputs = inputs_id(N, None);
+    let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
         .fallible_result()
@@ -40,7 +40,7 @@ fn many_x_find_any_ok() {
 
 #[test]
 fn many_x_reduce_ok() {
-    let inputs = inputs_id(N, None);
+    let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
         .fallible_result()
@@ -58,7 +58,7 @@ fn many_x_reduce_ok() {
 
 #[test]
 fn many_x_reduce_err() {
-    let inputs = inputs_id(N, Some(42));
+    let inputs = inputs_res(N, Some(42));
     let result = inputs
         .into_par()
         .fallible_result()

@@ -1,4 +1,4 @@
-use crate::option::tests::utils::inputs;
+use crate::option::tests::utils::inputs_opt;
 use crate::parameters::IterationOrder;
 use crate::*;
 
@@ -6,7 +6,7 @@ const N: usize = 157;
 
 #[test]
 fn bin_x_find_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
         .fallible_option()
@@ -21,7 +21,7 @@ fn bin_x_find_ok() {
 
 #[test]
 fn bin_x_find_any_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
         .fallible_option()
@@ -37,7 +37,7 @@ fn bin_x_find_any_ok() {
 
 #[test]
 fn bin_x_reduce_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
         .fallible_option()
@@ -55,7 +55,7 @@ fn bin_x_reduce_ok() {
 
 #[test]
 fn bin_x_reduce_err() {
-    let inputs = inputs(N, Some(42));
+    let inputs = inputs_opt(N, Some(42));
     let result = inputs
         .into_par()
         .fallible_option()

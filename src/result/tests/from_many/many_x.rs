@@ -1,5 +1,5 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs_map;
+use crate::result::tests::utils::inputs;
 use crate::*;
 use std::format;
 use std::string::{String, ToString};
@@ -10,7 +10,7 @@ const N: usize = 157;
 
 #[test]
 fn many_x_find_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
@@ -26,7 +26,7 @@ fn many_x_find_ok() {
 
 #[test]
 fn many_x_find_any_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
@@ -43,7 +43,7 @@ fn many_x_find_any_ok() {
 
 #[test]
 fn many_x_reduce_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
@@ -62,7 +62,7 @@ fn many_x_reduce_ok() {
 
 #[test]
 fn many_x_reduce_err() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .flat_map(|x| match x.as_str() == "42" {

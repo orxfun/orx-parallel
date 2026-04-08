@@ -1,5 +1,5 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs_map;
+use crate::result::tests::utils::inputs;
 use crate::*;
 use std::string::String;
 use std::vec;
@@ -9,7 +9,7 @@ const N: usize = 157;
 
 #[test]
 fn bin_f_find_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
@@ -22,7 +22,7 @@ fn bin_f_find_ok() {
 
 #[test]
 fn bin_f_find_any_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
@@ -36,7 +36,7 @@ fn bin_f_find_any_ok() {
 
 #[test]
 fn bin_f_reduce_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
@@ -52,7 +52,7 @@ fn bin_f_reduce_ok() {
 
 #[test]
 fn bin_f_reduce_err() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .map(|x| match x.as_str() == "42" {

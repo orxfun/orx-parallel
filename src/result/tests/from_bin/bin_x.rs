@@ -1,5 +1,5 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs_map;
+use crate::result::tests::utils::inputs;
 use crate::*;
 use std::vec;
 use std::vec::Vec;
@@ -8,7 +8,7 @@ const N: usize = 157;
 
 #[test]
 fn bin_x_find_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
@@ -27,7 +27,7 @@ fn bin_x_find_ok() {
 
 #[test]
 fn bin_x_find_any_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
@@ -47,7 +47,7 @@ fn bin_x_find_any_ok() {
 
 #[test]
 fn bin_x_reduce_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
@@ -69,7 +69,7 @@ fn bin_x_reduce_ok() {
 
 #[test]
 fn bin_x_reduce_err() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {

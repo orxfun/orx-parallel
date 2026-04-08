@@ -1,5 +1,5 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs_map;
+use crate::result::tests::utils::inputs;
 use crate::*;
 use std::string::String;
 use std::vec;
@@ -9,7 +9,7 @@ const N: usize = 157;
 
 #[test]
 fn id_find_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
@@ -23,7 +23,7 @@ fn id_find_ok() {
 
 #[test]
 fn id_find_any_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
@@ -38,7 +38,7 @@ fn id_find_any_ok() {
 
 #[test]
 fn id_reduce_ok() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
@@ -55,7 +55,7 @@ fn id_reduce_ok() {
 
 #[test]
 fn id_reduce_ok_err() {
-    let inputs = inputs_map(N);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
         .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
