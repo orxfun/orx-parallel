@@ -6,9 +6,13 @@ const N: usize = 157;
 
 #[test]
 fn bin_m_find_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Some(x)),
+        })
         .fallible_option()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
@@ -18,9 +22,13 @@ fn bin_m_find_ok() {
 
 #[test]
 fn bin_m_find_any_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Some(x)),
+        })
         .fallible_option()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
@@ -31,9 +39,13 @@ fn bin_m_find_any_ok() {
 
 #[test]
 fn bin_m_reduce_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Some(x)),
+        })
         .fallible_option()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
@@ -46,9 +58,16 @@ fn bin_m_reduce_ok() {
 
 #[test]
 fn bin_m_reduce_err() {
-    let inputs = inputs(N, Some(42));
+    let inputs = inputs(N);
     let result = inputs
         .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(match x.as_str() == "42" {
+                true => Some(x),
+                false => None,
+            }),
+        })
         .fallible_option()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
