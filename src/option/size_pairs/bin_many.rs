@@ -1,8 +1,8 @@
 use crate::infallible::{Xap, XapBin};
-use crate::result::size_pairs::SizePairRes;
+use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::BinMany;
 
-impl SizePairRes for BinMany {
+impl SizePairOpt for BinMany {
     type XapResResult<M, E, X1, X2>
         = IterResBinMany<<X2::Values as IntoIterator>::IntoIter, E>
     where
