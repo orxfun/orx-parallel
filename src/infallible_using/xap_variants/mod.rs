@@ -2,7 +2,7 @@
 // mod bin_m;
 // mod bin_x;
 // mod id;
-// mod many_f;
+mod many_f;
 // mod many_m;
 mod many_x;
 // mod one_f;
