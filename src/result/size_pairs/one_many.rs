@@ -43,6 +43,7 @@ impl<I: Iterator, E> IterResOneMany<I, E> {
 impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
     type Item = Result<I::Item, E>;
 
+    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Success(iter) => iter.next().map(Ok),
@@ -54,6 +55,40 @@ impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
                 }
                 false => None, // the error is already taken and returned
             },
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Success(iter) => iter.size_hint(),
+            Self::Fail(Some(_)) => (1, Some(1)),
+            Self::Fail(None) => (0, Some(0)),
+        }
+    }
+
+    #[inline]
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        match self {
+            Self::Success(iter) => iter.map(Ok).fold(init, f),
+            Self::Fail(Some(e)) => f(init, Err(e)),
+            Self::Fail(None) => init,
+        }
+    }
+
+    #[inline]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Success(iter) => iter.count(),
+            Self::Fail(Some(_)) => 1,
+            Self::Fail(None) => 0,
         }
     }
 }
