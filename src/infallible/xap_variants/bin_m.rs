@@ -1,8 +1,8 @@
 use crate::infallible::XapEnumByInput;
 use crate::infallible::fun::Map;
 use crate::infallible::fun::MapEnum;
-use crate::infallible::sizes::Bin;
 use crate::infallible::xap::{Xap, XapBin};
+use crate::sizes::Bin;
 
 pub struct BinM<X: Xap<Size = Bin>, G: Map<I = X::O>> {
     x: X,

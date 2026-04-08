@@ -1,10 +1,9 @@
 use crate::infallible::Xap;
 use crate::infallible::fun::*;
-use crate::infallible::sizes::Many;
+use crate::sizes::Many;
+use crate::sizes::Size;
 
-pub trait Size {
-    type ThenBin: Size;
-
+pub trait SizeInf: Size {
     // transformations
 
     type Map<X, Q, H>: Xap<I = X::I, O = Q, Size = Self>

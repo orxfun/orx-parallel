@@ -1,6 +1,6 @@
 use crate::infallible::fun::FlatMap;
-use crate::infallible::sizes::{Bin, Many};
 use crate::infallible::xap::{Xap, XapBin};
+use crate::sizes::{Bin, Many};
 use core::iter::FusedIterator;
 
 pub struct BinX<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> {

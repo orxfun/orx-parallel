@@ -1,6 +1,6 @@
 use crate::infallible::XapEnumByInput;
-use crate::infallible::sizes::One;
 use crate::infallible::xap::Xap;
+use crate::sizes::One;
 use core::marker::PhantomData;
 
 pub struct Id<I>(PhantomData<I>);

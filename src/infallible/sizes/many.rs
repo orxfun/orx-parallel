@@ -1,13 +1,10 @@
 use crate::infallible::Xap;
 use crate::infallible::fun::*;
-use crate::infallible::sizes::size::Size;
+use crate::infallible::sizes::size_inf::SizeInf;
 use crate::infallible::xap_variants::*;
+use crate::sizes::Many;
 
-pub struct Many;
-
-impl Size for Many {
-    type ThenBin = Many;
-
+impl SizeInf for Many {
     // transformations
 
     type Map<X, Q, H>

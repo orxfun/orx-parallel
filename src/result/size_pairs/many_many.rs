@@ -1,6 +1,6 @@
 use crate::infallible::Xap;
-use crate::infallible::sizes::Many;
 use crate::result::size_pairs::SizePair;
+use crate::sizes::Many;
 
 #[derive(Clone, Copy, Default)]
 pub struct ManyMany;
