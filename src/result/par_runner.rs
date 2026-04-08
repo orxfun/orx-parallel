@@ -31,7 +31,7 @@ pub trait ParRunnerResult: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next::<Self, _, _, _, _, _, _>(th_idx, state, iter, x1, x2);
+                    let value = th::next::<Self, _, _, _, _, _, S>(th_idx, state, iter, x1, x2);
                     results.push(value);
                 });
             }
@@ -64,7 +64,7 @@ pub trait ParRunnerResult: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next_any::<Self, _, _, _, _, _, _>(th_idx, state, iter, x1, x2);
+                    let value = th::next_any::<Self, _, _, _, _, _, S>(th_idx, state, iter, x1, x2);
                     results.push(value);
                 });
             }
@@ -100,7 +100,7 @@ pub trait ParRunnerResult: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     let value =
-                        th::reduce::<Self, _, _, _, _, _, _, _>(th_idx, state, iter, x1, x2, f);
+                        th::reduce::<Self, _, _, _, _, _, S, _>(th_idx, state, iter, x1, x2, f);
                     results.push(value);
                 });
             }
