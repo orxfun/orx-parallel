@@ -1,6 +1,7 @@
 use crate::infallible::{Xap, XapBin};
 use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::BinMany;
+use core::iter::FusedIterator;
 
 impl SizePairOpt for BinMany {
     type XapOptResult<M, X1, X2>
@@ -58,3 +59,5 @@ impl<I: Iterator> Iterator for IterOptBinMany<I> {
         }
     }
 }
+
+impl<I: FusedIterator> FusedIterator for IterOptBinMany<I> {}

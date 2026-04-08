@@ -1,3 +1,5 @@
+use core::iter::FusedIterator;
+
 use crate::infallible::{Xap, XapBin};
 use crate::result::size_pairs::SizePairRes;
 use crate::sizes::BinMany;
@@ -58,3 +60,5 @@ impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
         }
     }
 }
+
+impl<I: FusedIterator, E> FusedIterator for IterResBinMany<I, E> {}
