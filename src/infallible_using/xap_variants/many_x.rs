@@ -32,11 +32,13 @@ impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Xap for ManyX<X, G> {
 
     type Values = IterManyX<<X::Values as IntoIterator>::IntoIter, G>;
 
-    #[inline(always)]
-    fn xap(&self, i: Self::I) -> Self::Values {
-        let i = self.x.xap(i).into_iter();
-        let (g, inner) = (self.g, None);
-        IterManyX { i, g, inner }
+    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+        // SAFETY: u is either used by i.next or g.flat_map which can never
+        // occur at the same time; hence, there exists no race condition
+        let u_ptr = u as *mut Self::U;
+        let i = self.x.xap(u, i).into_iter();
+        let (g, inner, u) = (self.g, None, u_ptr);
+        IterManyX { u, i, g, inner }
     }
 }
 
@@ -47,6 +49,7 @@ where
     I: Iterator,
     G: FlatMap<I = I::Item>,
 {
+    u: *mut G::U,
     i: I,
     g: G,
     inner: Option<<G::O as IntoIterator>::IntoIter>,
@@ -66,8 +69,12 @@ where
                 return elt;
             }
 
+            // SAFETY: u is either used by i.next or g.flat_map which can never
+            // occur at the same time; hence, there exists no race condition
             match self.i.next() {
-                Some(i) => self.inner = Some(self.g.flat_map(i).into_iter()),
+                Some(i) => {
+                    self.inner = Some(self.g.flat_map(unsafe { &mut *self.u }, i).into_iter())
+                }
                 None => return None,
             }
         }
@@ -92,8 +99,13 @@ where
             None => init,
         };
 
+        // SAFETY: u is either used by i.next or g.flat_map which can never
+        // occur at the same time; hence, there exists no race condition
         self.i.fold(acc, |acc, i| {
-            self.g.flat_map(i).into_iter().fold(acc, &mut f)
+            self.g
+                .flat_map(unsafe { &mut *self.u }, i)
+                .into_iter()
+                .fold(acc, &mut f)
         })
     }
 
@@ -107,8 +119,15 @@ where
             None => 0,
         };
 
+        // SAFETY: u is either used by i.next or g.flat_map which can never
+        // occur at the same time; hence, there exists no race condition
         self.i.fold(count, |count, i| {
-            count + self.g.flat_map(i).into_iter().count()
+            count
+                + self
+                    .g
+                    .flat_map(unsafe { &mut *self.u }, i)
+                    .into_iter()
+                    .count()
         })
     }
 }
