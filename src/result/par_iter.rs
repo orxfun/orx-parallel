@@ -2,7 +2,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par_runner::ParRunnerResult;
-use crate::result::size_pairs::SizePair;
+use crate::result::size_pairs::SizePairRes;
 use crate::runner::{DefaultRunner, ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -11,7 +11,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     iter: I,
@@ -27,7 +27,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     pub(crate) fn new(iter: I, x1: X1, x2: X2, exe: R, params: Params) -> Self {
@@ -44,7 +44,7 @@ where
     fn with_xap2<Y2, T>(self, x2: Y2) -> ParRes<I, M, E, X1, Y2, T, R>
     where
         Y2: Xap<I = M>,
-        T: SizePair<S1 = X1::Size, S2 = Y2::Size>,
+        T: SizePairRes<S1 = X1::Size, S2 = Y2::Size>,
     {
         ParRes::new(self.iter, self.x1, x2, self.exe, self.params)
     }
@@ -155,7 +155,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     pub fn copied(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
@@ -170,7 +170,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     pub fn cloned(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {

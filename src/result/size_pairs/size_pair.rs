@@ -1,14 +1,14 @@
 use crate::infallible::Xap;
 use crate::sizes::{Many, Size};
 
-pub trait SizePair: Clone + Copy + Send + Default {
+pub trait SizePairRes: Clone + Copy + Send + Default {
     type S1: Size;
 
     type S2: Size;
 
-    type ThenBin: SizePair<S1 = Self::S1, S2 = <Self::S2 as Size>::ThenBin>;
+    type ThenBin: SizePairRes<S1 = Self::S1, S2 = <Self::S2 as Size>::ThenBin>;
 
-    type ThenMany: SizePair<S1 = Self::S1, S2 = Many>;
+    type ThenMany: SizePairRes<S1 = Self::S1, S2 = Many>;
 
     type XapResResult<M, E, X1, X2>: IntoIterator<Item = Result<X2::O, E>>
     where
