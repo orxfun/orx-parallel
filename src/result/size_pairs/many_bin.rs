@@ -1,8 +1,8 @@
 use crate::infallible::sizes::{Bin, Many};
 use crate::infallible::{Xap, XapBin};
-use crate::result_depr2::size_pairs::{ManyMany, SizePair};
+use crate::result::size_pairs::{ManyMany, SizePair};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ManyBin;
 
 impl SizePair for ManyBin {

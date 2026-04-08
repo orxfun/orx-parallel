@@ -1,8 +1,9 @@
-use crate::result_depr2::size_pairs::SizePair;
+use crate::result::size_pairs::SizePair;
 use crate::{infallible::Xap, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next_any<Q, I, M, E, X1, X2, S>(
+    _: S,
     th_idx: usize,
     state: &Q::State,
     iter: &I,

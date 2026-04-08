@@ -1,9 +1,10 @@
 use crate::infallible::Xap;
-use crate::result_depr2::size_pairs::SizePair;
+use crate::result::size_pairs::SizePair;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn reduce<Q, I, M, E, X1, X2, S, F>(
+    _: S,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
