@@ -63,7 +63,7 @@ pub trait SizeInf: Size {
     type Mapped<X, M>: Xap<I = X::I, O = M::O, Size = Self>
     where
         X: Xap<Size = Self>,
-        M: Map<I = X::O>;
+        M: Map<U = X::U, I = X::O>;
 
     fn mapped<X, M>(x: X, m: M) -> Self::Mapped<X, M>
     where
