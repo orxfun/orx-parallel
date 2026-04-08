@@ -43,7 +43,7 @@ impl<I: Iterator, E> IterResOneMany<I, E> {
 impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
     type Item = Result<I::Item, E>;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Success(iter) => iter.next().map(Ok),

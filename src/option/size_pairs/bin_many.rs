@@ -43,6 +43,7 @@ impl<I: Iterator> IterOptBinMany<I> {
 impl<I: Iterator> Iterator for IterOptBinMany<I> {
     type Item = Option<I::Item>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Success(Some(iter)) => iter.next().map(Some),
