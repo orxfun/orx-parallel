@@ -1,6 +1,7 @@
 use crate::infallible::{Xap, XapBin};
 use crate::result::size_pairs::SizePairRes;
 use crate::sizes::{Bin, ManyBin};
+use core::iter::FusedIterator;
 
 impl SizePairRes for ManyBin {
     type XapResResult<M, E, X1, X2>
@@ -53,4 +54,11 @@ where
             }
         }
     }
+}
+
+impl<M, E, I, X2> FusedIterator for IterResManyBin<M, E, I, X2>
+where
+    I: FusedIterator<Item = Result<M, E>>,
+    X2: Xap<I = M, Size = Bin>,
+{
 }

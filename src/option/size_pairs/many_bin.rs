@@ -1,6 +1,7 @@
 use crate::infallible::{Xap, XapBin};
 use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::{Bin, ManyBin};
+use core::iter::FusedIterator;
 
 impl SizePairOpt for ManyBin {
     type XapOptResult<M, X1, X2>
@@ -52,4 +53,11 @@ where
             }
         }
     }
+}
+
+impl<M, I, X2> FusedIterator for IterOptManyBin<M, I, X2>
+where
+    I: FusedIterator<Item = Option<M>>,
+    X2: Xap<I = M, Size = Bin>,
+{
 }
