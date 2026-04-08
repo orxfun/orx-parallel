@@ -56,6 +56,50 @@ impl<I: Iterator> Iterator for IterOptOneMany<I> {
             },
         }
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Success(iter) => iter.size_hint(),
+            Self::Fail(false) => (1, Some(1)),
+            Self::Fail(true) => (0, Some(0)),
+        }
+    }
+
+    #[inline]
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        match self {
+            Self::Success(iter) => iter.map(Some).fold(init, f),
+            Self::Fail(false) => f(init, None),
+            Self::Fail(true) => init,
+        }
+    }
+
+    #[inline]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Success(iter) => iter.count(),
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
+        }
+    }
 }
 
 impl<I: FusedIterator> FusedIterator for IterOptOneMany<I> {}
+
+impl<I: ExactSizeIterator> ExactSizeIterator for IterOptOneMany<I> {
+    fn len(&self) -> usize {
+        match self {
+            Self::Success(iter) => iter.len(),
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
+        }
+    }
+}
