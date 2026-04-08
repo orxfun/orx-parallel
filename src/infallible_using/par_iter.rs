@@ -139,33 +139,33 @@ where
     }
 }
 
-// // transformations
+// transformations
 
-// impl<'a, U, O: Copy + 'a, I, X, R> ParUsing<U, I, X, R>
-// where
-//     U: Using,
-//     I: ConcurrentIter,
-//     X: Xap<U = U::Item, I = I::Item, O = &'a O>,
-//     R: ParRunner,
-// {
-//     pub fn copied(self) -> ParUsing<U, I, X::Mapped<FnCopied<'a, U::Item, O>>, R> {
-//         let (u, iter, xap, exe, params) = self.destruct();
-//         ParUsing::new(u, iter, xap.mapped(FnCopied::new()), exe, params)
-//     }
-// }
+impl<'a, U, O: Copy + 'a, I, X, R> ParUsing<U, I, X, R>
+where
+    U: Using,
+    I: ConcurrentIter,
+    X: Xap<U = U::Item, I = I::Item, O = &'a O>,
+    R: ParRunner,
+{
+    pub fn copied(self) -> ParUsing<U, I, MappedOf<X, FnCopied<'a, U::Item, O>>, R> {
+        let (u, iter, xap, exe, params) = self.destruct();
+        ParUsing::new(u, iter, xap.mapped(FnCopied::new()), exe, params)
+    }
+}
 
-// impl<'a, U, O: Clone + 'a, I, X, R> ParUsing<U, I, X, R>
-// where
-//     U: Using,
-//     I: ConcurrentIter,
-//     X: Xap<U = U::Item, I = I::Item, O = &'a O>,
-//     R: ParRunner,
-// {
-//     pub fn cloned(self) -> ParUsing<U, I, X::Mapped<FnCloned<'a, U::Item, O>>, R> {
-//         let (u, iter, xap, exe, params) = self.destruct();
-//         ParUsing::new(u, iter, xap.mapped(FnCloned::new()), exe, params)
-//     }
-// }
+impl<'a, U, O: Clone + 'a, I, X, R> ParUsing<U, I, X, R>
+where
+    U: Using,
+    I: ConcurrentIter,
+    X: Xap<U = U::Item, I = I::Item, O = &'a O>,
+    R: ParRunner,
+{
+    pub fn cloned(self) -> ParUsing<U, I, MappedOf<X, FnCloned<'a, U::Item, O>>, R> {
+        let (u, iter, xap, exe, params) = self.destruct();
+        ParUsing::new(u, iter, xap.mapped(FnCloned::new()), exe, params)
+    }
+}
 
 // impl<U, I, X, R> ParUsing<U, I, X, R>
 // where
