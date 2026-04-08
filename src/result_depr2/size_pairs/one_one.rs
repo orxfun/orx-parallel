@@ -1,21 +1,21 @@
-use crate::infallible::sizes::{Bin, One};
-use crate::infallible::{Xap, XapBin, XapOne};
-use crate::result::size_pairs::{BinBin, BinMany, SizePair};
+use crate::infallible::sizes::One;
+use crate::infallible::{Xap, XapOne};
+use crate::result_depr2::size_pairs::{OneBin, OneMany, SizePair};
 
 #[derive(Clone, Copy)]
-pub struct BinOne;
+pub struct OneOne;
 
-impl SizePair for BinOne {
-    type S1 = Bin;
+impl SizePair for OneOne {
+    type S1 = One;
 
     type S2 = One;
 
-    type ThenBin = BinBin;
+    type ThenBin = OneBin;
 
-    type ThenMany = BinMany;
+    type ThenMany = OneMany;
 
     type Results<M, E, X1, X2>
-        = Option<Result<X2::O, E>>
+        = [Result<X2::O, E>; 1]
     where
         X1: Xap<O = Result<M, E>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>;
@@ -26,7 +26,7 @@ impl SizePair for BinOne {
         X1: Xap<O = Result<M, E>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>,
     {
-        let a = x1.bin_value(i);
-        a.map(|a| a.map(|a| x2.one_value(a)))
+        let a = x1.one_value(i);
+        [a.map(|a| x2.one_value(a))]
     }
 }

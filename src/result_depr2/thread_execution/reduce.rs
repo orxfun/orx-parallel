@@ -1,5 +1,5 @@
 use crate::infallible::Xap;
-use crate::result::size_pairs::SizePair;
+use crate::result_depr2::size_pairs::SizePair;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 

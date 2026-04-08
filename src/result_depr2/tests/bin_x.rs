@@ -1,16 +1,17 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs;
+use crate::result_depr2::tests::utils::inputs;
 use crate::*;
 use std::vec;
 
 const N: usize = 157;
 
 #[test]
-fn one_x_find_ok() {
+fn bin_x_find_ok() {
     let inputs = inputs(N, None);
     let result = inputs
         .into_par()
         .fallible_result()
+        .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)
@@ -20,11 +21,12 @@ fn one_x_find_ok() {
 }
 
 #[test]
-fn one_x_find_any_ok() {
+fn bin_x_find_any_ok() {
     let inputs = inputs(N, None);
     let result = inputs
         .into_par()
         .fallible_result()
+        .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)
@@ -35,11 +37,12 @@ fn one_x_find_any_ok() {
 }
 
 #[test]
-fn one_x_reduce_ok() {
+fn bin_x_reduce_ok() {
     let inputs = inputs(N, None);
     let result = inputs
         .into_par()
         .fallible_result()
+        .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)
@@ -52,11 +55,12 @@ fn one_x_reduce_ok() {
 }
 
 #[test]
-fn one_x_reduce_err() {
+fn bin_x_reduce_err() {
     let inputs = inputs(N, Some(42));
     let result = inputs
         .into_par()
         .fallible_result()
+        .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)

@@ -1,5 +1,5 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs;
+use crate::result_depr2::tests::utils::inputs;
 use crate::*;
 use std::format;
 use std::string::{String, ToString};

@@ -1,6 +1,6 @@
 use crate::infallible::sizes::{Bin, One};
 use crate::infallible::{Xap, XapBin, XapOne};
-use crate::result::size_pairs::{OneMany, SizePair};
+use crate::result_depr2::size_pairs::{OneMany, SizePair};
 
 #[derive(Clone, Copy)]
 pub struct OneBin;

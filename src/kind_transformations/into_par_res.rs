@@ -1,8 +1,8 @@
 use crate::infallible::Par;
 use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
-use crate::result::ParRes;
-use crate::result::size_pairs::IntoSizePair;
+use crate::result_depr2::ParRes;
+use crate::result_depr2::size_pairs::IntoSizePair;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
