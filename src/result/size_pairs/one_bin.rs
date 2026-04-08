@@ -1,19 +1,8 @@
 use crate::infallible::{Xap, XapBin, XapOne};
-use crate::result::size_pairs::{OneMany, SizePairRes};
-use crate::sizes::{Bin, One};
-
-#[derive(Clone, Copy, Default)]
-pub struct OneBin;
+use crate::result::size_pairs::SizePairRes;
+use crate::sizes::OneBin;
 
 impl SizePairRes for OneBin {
-    type S1 = One;
-
-    type S2 = Bin;
-
-    type ThenBin = OneBin;
-
-    type ThenMany = OneMany;
-
     type XapResResult<M, E, X1, X2>
         = Option<Result<X2::O, E>>
     where
