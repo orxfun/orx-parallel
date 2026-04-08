@@ -63,29 +63,29 @@ pub trait Xap: Copy + Send {
     }
 }
 
-// // one
+// one
 
-// pub trait XapOne: Xap<Size = One> {
-//     #[inline(always)]
-//     fn one_value(&self, i: Self::I) -> Self::O {
-//         // SAFETY: by definition the result has exactly one element
-//         unsafe { self.xap(i).into_iter().next().unwrap_unchecked() }
-//     }
-// }
+pub trait XapOne: Xap<Size = One> {
+    #[inline(always)]
+    fn one_value(&self, u: &mut Self::U, i: Self::I) -> Self::O {
+        // SAFETY: by definition the result has exactly one element
+        unsafe { self.xap(u, i).into_iter().next().unwrap_unchecked() }
+    }
+}
 
-// impl<X: Xap<Size = One>> XapOne for X {}
+impl<X: Xap<Size = One>> XapOne for X {}
 
-// // bin
+// bin
 
-// pub trait XapBin: Xap<Size = Bin> {
-//     #[inline(always)]
-//     fn bin_value(&self, i: Self::I) -> Option<Self::O> {
-//         // SAFETY: by definition the result has exactly zero or one element
-//         self.xap(i).into_iter().next()
-//     }
-// }
+pub trait XapBin: Xap<Size = Bin> {
+    #[inline(always)]
+    fn bin_value(&self, u: &mut Self::U, i: Self::I) -> Option<Self::O> {
+        // SAFETY: by definition the result has exactly zero or one element
+        self.xap(u, i).into_iter().next()
+    }
+}
 
-// impl<X: Xap<Size = Bin>> XapBin for X {}
+impl<X: Xap<Size = Bin>> XapBin for X {}
 
 // helper types
 
