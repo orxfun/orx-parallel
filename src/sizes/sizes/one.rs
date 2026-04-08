@@ -1,4 +1,4 @@
-use crate::sizes::{Bin, Size};
+use crate::sizes::{Size, sizes::Bin};
 
 pub struct One;
 
