@@ -1,6 +1,7 @@
 use crate::infallible_using::fun::{FnCloned, FnCopied};
 use crate::infallible_using::par_runner::ParRunnerInfallibleUsing;
 use crate::infallible_using::using_var::Using;
+use crate::infallible_using::xap_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible_using::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
@@ -63,48 +64,48 @@ where
         self
     }
 
-    // // transformations
+    // transformations
 
-    // pub fn map<Q, H>(self, h: H) -> ParUsing<U, I, X::Map<Q, H>, R>
-    // where
-    //     H: Fn(&mut U::Item, X::O) -> Q + Copy + Send,
-    // {
-    //     let xap = self.xap.map(h);
-    //     self.with_xap(xap)
-    // }
+    pub fn map<Q, H>(self, h: H) -> ParUsing<U, I, MapOf<X, Q, H>, R>
+    where
+        H: Fn(&mut U::Item, X::O) -> Q + Copy + Send,
+    {
+        let xap = self.xap.map(h);
+        self.with_xap(xap)
+    }
 
-    // pub fn inspect<H>(self, h: H) -> ParUsing<U, I, X::Inspect<H>, R>
-    // where
-    //     H: Fn(&mut U::Item, &X::O) + Copy + Send,
-    // {
-    //     let xap = self.xap.inspect(h);
-    //     self.with_xap(xap)
-    // }
+    pub fn inspect<H>(self, h: H) -> ParUsing<U, I, InsOf<X, H>, R>
+    where
+        H: Fn(&mut U::Item, &X::O) + Copy + Send,
+    {
+        let xap = self.xap.inspect(h);
+        self.with_xap(xap)
+    }
 
-    // pub fn filter<H>(self, h: H) -> ParUsing<U, I, X::Filter<H>, R>
-    // where
-    //     H: Fn(&mut U::Item, &X::O) -> bool + Copy + Send,
-    // {
-    //     let xap = self.xap.filter(h);
-    //     self.with_xap(xap)
-    // }
+    pub fn filter<H>(self, h: H) -> ParUsing<U, I, FilOf<X, H>, R>
+    where
+        H: Fn(&mut U::Item, &X::O) -> bool + Copy + Send,
+    {
+        let xap = self.xap.filter(h);
+        self.with_xap(xap)
+    }
 
-    // pub fn filter_map<Q, H>(self, h: H) -> ParUsing<U, I, X::FilterMap<Q, H>, R>
-    // where
-    //     H: Fn(&mut U::Item, X::O) -> Option<Q> + Copy + Send,
-    // {
-    //     let xap = self.xap.filter_map(h);
-    //     self.with_xap(xap)
-    // }
+    pub fn filter_map<Q, H>(self, h: H) -> ParUsing<U, I, FilMapOf<X, Q, H>, R>
+    where
+        H: Fn(&mut U::Item, X::O) -> Option<Q> + Copy + Send,
+    {
+        let xap = self.xap.filter_map(h);
+        self.with_xap(xap)
+    }
 
-    // pub fn flat_map<V, H>(self, h: H) -> ParUsing<U, I, X::FlatMap<V, H>, R>
-    // where
-    //     V: IntoIterator,
-    //     H: Fn(&mut U::Item, X::O) -> V + Copy + Send,
-    // {
-    //     let xap = self.xap.flat_map(h);
-    //     self.with_xap(xap)
-    // }
+    pub fn flat_map<V, H>(self, h: H) -> ParUsing<U, I, FlatMapOf<X, V, H>, R>
+    where
+        V: IntoIterator,
+        H: Fn(&mut U::Item, X::O) -> V + Copy + Send,
+    {
+        let xap = self.xap.flat_map(h);
+        self.with_xap(xap)
+    }
 
     // // compute
 
