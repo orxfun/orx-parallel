@@ -1,27 +1,27 @@
-use crate::infallible_using::Xap;
+use crate::infallible_using::XapUse;
 use crate::infallible_using::fun::FlatMap;
 use crate::sizes::Many;
 
-pub struct ManyX<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> {
+pub struct ManyX<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Clone for ManyX<X, G> {
+impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Clone for ManyX<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Copy for ManyX<X, G> {}
+impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Copy for ManyX<X, G> {}
 
-impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> ManyX<X, G> {
+impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> ManyX<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Xap for ManyX<X, G> {
+impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> XapUse for ManyX<X, G> {
     type U = X::U;
 
     type I = X::I;

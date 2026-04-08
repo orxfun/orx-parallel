@@ -2,7 +2,7 @@ use crate::infallible_using::fun::Map;
 use crate::infallible_using::sizes::SizeInf;
 use crate::sizes::{Bin, One};
 
-pub trait Xap: Copy + Send {
+pub trait XapUse: Copy + Send {
     type U;
 
     type I;
@@ -65,7 +65,7 @@ pub trait Xap: Copy + Send {
 
 // one
 
-pub trait XapOne: Xap<Size = One> {
+pub trait XapOne: XapUse<Size = One> {
     #[inline(always)]
     fn one_value(&self, u: &mut Self::U, i: Self::I) -> Self::O {
         // SAFETY: by definition the result has exactly one element
@@ -73,11 +73,11 @@ pub trait XapOne: Xap<Size = One> {
     }
 }
 
-impl<X: Xap<Size = One>> XapOne for X {}
+impl<X: XapUse<Size = One>> XapOne for X {}
 
 // bin
 
-pub trait XapBin: Xap<Size = Bin> {
+pub trait XapBin: XapUse<Size = Bin> {
     #[inline(always)]
     fn bin_value(&self, u: &mut Self::U, i: Self::I) -> Option<Self::O> {
         // SAFETY: by definition the result has exactly zero or one element
@@ -85,18 +85,18 @@ pub trait XapBin: Xap<Size = Bin> {
     }
 }
 
-impl<X: Xap<Size = Bin>> XapBin for X {}
+impl<X: XapUse<Size = Bin>> XapBin for X {}
 
 // // helper types
 
-pub type MapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::Map<X, Q, H>;
+pub type MapOf<X, Q, H> = <<X as XapUse>::Size as SizeInf>::Map<X, Q, H>;
 
-pub type InsOf<X, H> = <<X as Xap>::Size as SizeInf>::Inspect<X, H>;
+pub type InsOf<X, H> = <<X as XapUse>::Size as SizeInf>::Inspect<X, H>;
 
-pub type FilOf<X, H> = <<X as Xap>::Size as SizeInf>::Filter<X, H>;
+pub type FilOf<X, H> = <<X as XapUse>::Size as SizeInf>::Filter<X, H>;
 
-pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::FilterMap<X, Q, H>;
+pub type FilMapOf<X, Q, H> = <<X as XapUse>::Size as SizeInf>::FilterMap<X, Q, H>;
 
-pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as SizeInf>::FlatMap<X, V, H>;
+pub type FlatMapOf<X, V, H> = <<X as XapUse>::Size as SizeInf>::FlatMap<X, V, H>;
 
-pub type MappedOf<X, M> = <<X as Xap>::Size as SizeInf>::Mapped<X, M>;
+pub type MappedOf<X, M> = <<X as XapUse>::Size as SizeInf>::Mapped<X, M>;

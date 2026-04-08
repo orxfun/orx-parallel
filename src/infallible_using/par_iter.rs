@@ -2,7 +2,7 @@ use crate::infallible_using::fun::{FnCloned, FnCopied};
 use crate::infallible_using::par_runner::ParRunnerInfallibleUsing;
 use crate::infallible_using::using_var::Using;
 use crate::infallible_using::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
-use crate::infallible_using::{Xap, XapEnumByInput};
+use crate::infallible_using::{XapUse, XapUseEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
@@ -12,7 +12,7 @@ pub struct ParUse<U, I, X, R = DefaultRunner>
 where
     U: Using,
     I: ConcurrentIter,
-    X: Xap<U = U::Item, I = I::Item>,
+    X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
 {
     using: U,
@@ -26,7 +26,7 @@ impl<U, I, X, R> ParUse<U, I, X, R>
 where
     U: Using,
     I: ConcurrentIter,
-    X: Xap<U = U::Item, I = I::Item>,
+    X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
 {
     pub(crate) fn new(using: U, iter: I, xap: X, exe: R, params: Params) -> Self {
@@ -39,7 +39,10 @@ where
         }
     }
 
-    pub(super) fn with_xap<Y: Xap<U = U::Item, I = I::Item>>(self, xap: Y) -> ParUse<U, I, Y, R> {
+    pub(super) fn with_xap<Y: XapUse<U = U::Item, I = I::Item>>(
+        self,
+        xap: Y,
+    ) -> ParUse<U, I, Y, R> {
         ParUse::new(self.using, self.iter, xap, self.exe, self.params)
     }
 
@@ -145,7 +148,7 @@ impl<'a, U, O: Copy + 'a, I, X, R> ParUse<U, I, X, R>
 where
     U: Using,
     I: ConcurrentIter,
-    X: Xap<U = U::Item, I = I::Item, O = &'a O>,
+    X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
     R: ParRunner,
 {
     pub fn copied(self) -> ParUse<U, I, MappedOf<X, FnCopied<'a, U::Item, O>>, R> {
@@ -158,7 +161,7 @@ impl<'a, U, O: Clone + 'a, I, X, R> ParUse<U, I, X, R>
 where
     U: Using,
     I: ConcurrentIter,
-    X: Xap<U = U::Item, I = I::Item, O = &'a O>,
+    X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
     R: ParRunner,
 {
     pub fn cloned(self) -> ParUse<U, I, MappedOf<X, FnCloned<'a, U::Item, O>>, R> {
@@ -171,7 +174,7 @@ impl<U, I, X, R> ParUse<U, I, X, R>
 where
     U: Using,
     I: ConcurrentIter,
-    X: XapEnumByInput<U = U::Item, I = I::Item>,
+    X: XapUseEnumByInput<U = U::Item, I = I::Item>,
     R: ParRunner,
 {
     pub fn enumerate(self) -> ParUse<U, Enumerate<I>, X::Enumerated, R> {

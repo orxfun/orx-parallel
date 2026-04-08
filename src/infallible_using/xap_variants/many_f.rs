@@ -1,28 +1,28 @@
-use crate::infallible_using::Xap;
+use crate::infallible_using::XapUse;
 use crate::infallible_using::fun::FilterMap;
 use crate::sizes::Many;
 use core::iter::FusedIterator;
 
-pub struct ManyF<X: Xap<Size = Many>, G: FilterMap<U = X::U, I = X::O>> {
+pub struct ManyF<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = Many>, G: FilterMap<U = X::U, I = X::O>> Clone for ManyF<X, G> {
+impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> Clone for ManyF<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = Many>, G: FilterMap<U = X::U, I = X::O>> Copy for ManyF<X, G> {}
+impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> Copy for ManyF<X, G> {}
 
-impl<X: Xap<Size = Many>, G: FilterMap<U = X::U, I = X::O>> ManyF<X, G> {
+impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> ManyF<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap<Size = Many>, G: FilterMap<U = X::U, I = X::O>> Xap for ManyF<X, G> {
+impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> XapUse for ManyF<X, G> {
     type I = X::I;
 
     type O = G::O;

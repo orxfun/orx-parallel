@@ -1,27 +1,27 @@
 use crate::infallible_using::fun::{Map, MapEnum};
-use crate::infallible_using::{Xap, XapEnumByInput, XapOne};
+use crate::infallible_using::{XapUse, XapUseEnumByInput, XapOne};
 use crate::sizes::One;
 
-pub struct OneM<X: Xap<Size = One>, G: Map<U = X::U, I = X::O>> {
+pub struct OneM<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = One>, G: Map<U = X::U, I = X::O>> Clone for OneM<X, G> {
+impl<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> Clone for OneM<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = One>, G: Map<U = X::U, I = X::O>> Copy for OneM<X, G> {}
+impl<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> Copy for OneM<X, G> {}
 
-impl<X: Xap<Size = One>, G: Map<U = X::U, I = X::O>> OneM<X, G> {
+impl<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> OneM<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: XapEnumByInput<Size = One>, G: Map<U = X::U, I = X::O>> XapEnumByInput for OneM<X, G> {
+impl<X: XapUseEnumByInput<Size = One>, G: Map<U = X::U, I = X::O>> XapUseEnumByInput for OneM<X, G> {
     type Enumerated = OneM<X::Enumerated, MapEnum<G>>;
 
     fn enumerate(self) -> Self::Enumerated {
@@ -31,7 +31,7 @@ impl<X: XapEnumByInput<Size = One>, G: Map<U = X::U, I = X::O>> XapEnumByInput f
     }
 }
 
-impl<X: Xap<Size = One>, G: Map<U = X::U, I = X::O>> Xap for OneM<X, G> {
+impl<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> XapUse for OneM<X, G> {
     type I = X::I;
 
     type O = G::O;
