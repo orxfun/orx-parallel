@@ -4,7 +4,7 @@ use crate::sizes::BinMany;
 
 impl SizePairOpt for BinMany {
     type XapOptResult<M, X1, X2>
-        = IterResBinMany<<X2::Values as IntoIterator>::IntoIter>
+        = IterOptBinMany<<X2::Values as IntoIterator>::IntoIter>
     where
         X1: Xap<O = Option<M>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>;
@@ -15,21 +15,21 @@ impl SizePairOpt for BinMany {
         X2: Xap<I = M, Size = Self::S2>,
     {
         match x1.bin_value(i) {
-            Some(Some(a)) => IterResBinMany::success(Some(x2.xap(a).into_iter())),
-            Some(None) => IterResBinMany::fail(),
-            None => IterResBinMany::success(None),
+            Some(Some(a)) => IterOptBinMany::success(Some(x2.xap(a).into_iter())),
+            Some(None) => IterOptBinMany::fail(),
+            None => IterOptBinMany::success(None),
         }
     }
 }
 
 // iter
 
-pub enum IterResBinMany<I: Iterator> {
+pub enum IterOptBinMany<I: Iterator> {
     Success(Option<I>),
     Fail(bool),
 }
 
-impl<I: Iterator> IterResBinMany<I> {
+impl<I: Iterator> IterOptBinMany<I> {
     pub fn success(i: Option<I>) -> Self {
         Self::Success(i)
     }
@@ -39,7 +39,7 @@ impl<I: Iterator> IterResBinMany<I> {
     }
 }
 
-impl<I: Iterator> Iterator for IterResBinMany<I> {
+impl<I: Iterator> Iterator for IterOptBinMany<I> {
     type Item = Option<I::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
