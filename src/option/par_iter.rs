@@ -1,17 +1,17 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
+use crate::option::par_runner::ParRunnerOpt;
+use crate::option::size_pairs::SizePairOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::result::par_runner::ParRunnerRes;
-use crate::result::size_pairs::SizePairRes;
 use crate::runner::{DefaultRunner, ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct ParRes<I, M, E, X1, X2, S, R = DefaultRunner>
+pub struct ParOpt<I, M, X1, X2, S, R = DefaultRunner>
 where
     I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
-    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     iter: I,
@@ -22,12 +22,12 @@ where
     s: S,
 }
 
-impl<I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
+impl<I, M, X1, X2, S, R> ParOpt<I, M, X1, X2, S, R>
 where
     I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
-    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     pub(crate) fn new(iter: I, x1: X1, x2: X2, exe: R, params: Params) -> Self {
@@ -41,12 +41,12 @@ where
         }
     }
 
-    fn with_xap2<Y2, T>(self, x2: Y2) -> ParRes<I, M, E, X1, Y2, T, R>
+    fn with_xap2<Y2, T>(self, x2: Y2) -> ParOpt<I, M, X1, Y2, T, R>
     where
         Y2: Xap<I = M>,
-        T: SizePairRes<S1 = X1::Size, S2 = Y2::Size>,
+        T: SizePairOpt<S1 = X1::Size, S2 = Y2::Size>,
     {
-        ParRes::new(self.iter, self.x1, x2, self.exe, self.params)
+        ParOpt::new(self.iter, self.x1, x2, self.exe, self.params)
     }
 
     fn destruct(self) -> (I, X1, X2, R, S, Params) {
@@ -71,7 +71,7 @@ where
 
     // transformations
 
-    pub fn map<Q, H>(self, h: H) -> ParRes<I, M, E, X1, MapOf<X2, Q, H>, S, R>
+    pub fn map<Q, H>(self, h: H) -> ParOpt<I, M, X1, MapOf<X2, Q, H>, S, R>
     where
         H: Fn(X2::O) -> Q + Copy + Send,
     {
@@ -79,7 +79,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn inspect<H>(self, h: H) -> ParRes<I, M, E, X1, InsOf<X2, H>, S, R>
+    pub fn inspect<H>(self, h: H) -> ParOpt<I, M, X1, InsOf<X2, H>, S, R>
     where
         H: Fn(&X2::O) + Copy + Send,
     {
@@ -87,29 +87,29 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn filter<H>(self, h: H) -> ParRes<I, M, E, X1, FilOf<X2, H>, S::ThenBin, R>
+    pub fn filter<H>(self, h: H) -> ParOpt<I, M, X1, FilOf<X2, H>, S::ThenBin, R>
     where
         H: Fn(&X2::O) -> bool + Copy + Send,
-        S::ThenBin: SizePairRes,
+        S::ThenBin: SizePairOpt,
     {
         let x2 = self.x2.filter(h);
         self.with_xap2(x2)
     }
 
-    pub fn filter_map<Q, H>(self, h: H) -> ParRes<I, M, E, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
+    pub fn filter_map<Q, H>(self, h: H) -> ParOpt<I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
     where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
-        S::ThenBin: SizePairRes,
+        S::ThenBin: SizePairOpt,
     {
         let x2 = self.x2.filter_map(h);
         self.with_xap2(x2)
     }
 
-    pub fn flat_map<V, H>(self, h: H) -> ParRes<I, M, E, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
+    pub fn flat_map<V, H>(self, h: H) -> ParOpt<I, M, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
     where
         V: IntoIterator,
         H: Fn(X2::O) -> V + Copy + Send,
-        S::ThenMany: SizePairRes,
+        S::ThenMany: SizePairOpt,
     {
         let x2 = self.x2.flat_map(h);
         self.with_xap2(x2)
@@ -117,10 +117,9 @@ where
 
     // compute
 
-    pub fn first(self) -> Result<Option<X2::O>, E>
+    pub fn first(self) -> Option<Option<X2::O>>
     where
         X2::O: Send,
-        E: Send,
     {
         let (iter, x1, x2, mut exe, s, params) = self.destruct();
         match params.iteration_order {
@@ -129,11 +128,10 @@ where
         }
     }
 
-    pub fn reduce<F>(self, f: F) -> Result<Option<X2::O>, E>
+    pub fn reduce<F>(self, f: F) -> Option<Option<X2::O>>
     where
         F: Fn(X2::O, X2::O) -> X2::O + Send + Copy,
         X2::O: Send,
-        E: Send,
     {
         let (iter, x1, x2, mut exe, s, params) = self.destruct();
         exe.reduce(s, params, iter, x1, x2, f)
@@ -144,7 +142,6 @@ where
     pub fn for_each<F>(self, f: F)
     where
         F: Fn(X2::O) + Send + Copy,
-        E: Send,
     {
         let _ = self.map(f).reduce(|_, _| {});
     }
@@ -152,32 +149,32 @@ where
 
 // transformations
 
-impl<'a, O, I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
+impl<'a, O, I, M, X1, X2, S, R> ParOpt<I, M, X1, X2, S, R>
 where
     O: 'a + Copy,
     I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M, O = &'a O>,
-    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    pub fn copied(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
+    pub fn copied(self) -> ParOpt<I, M, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
         let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParRes::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
+        ParOpt::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
     }
 }
 
-impl<'a, O, I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
+impl<'a, O, I, M, X1, X2, S, R> ParOpt<I, M, X1, X2, S, R>
 where
     O: 'a + Clone,
     I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M, O = &'a O>,
-    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    pub fn cloned(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {
+    pub fn cloned(self) -> ParOpt<I, M, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {
         let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParRes::new(iter, x1, x2.mapped(FnCloned::new()), exe, params)
+        ParOpt::new(iter, x1, x2.mapped(FnCloned::new()), exe, params)
     }
 }
