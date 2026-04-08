@@ -46,15 +46,17 @@ impl<I: Iterator> Iterator for IterOptOneMany<I> {
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Success(iter) => iter.next().map(Some),
-            Self::Fail(taken) => match taken {
-                true => {
-                    // SAFETY: error can be taken out only once; and on construction
-                    // the error is not taken
-                    *taken = true;
-                    Some(None)
+            Self::Fail(taken) => {
+                match taken {
+                    false => {
+                        // SAFETY: error can be taken out only once; and on construction
+                        // the error is not taken
+                        *taken = true;
+                        Some(None)
+                    }
+                    true => None, // the error is already taken and returned
                 }
-                false => None, // the error is already taken and returned
-            },
+            }
         }
     }
 
