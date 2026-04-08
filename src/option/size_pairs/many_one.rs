@@ -1,6 +1,7 @@
 use crate::infallible::{Xap, XapOne};
 use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::{ManyOne, One};
+use core::iter::FusedIterator;
 
 impl SizePairOpt for ManyOne {
     type XapOptResult<M, X1, X2>
@@ -41,4 +42,11 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|a| a.map(|a| self.x2.one_value(a)))
     }
+}
+
+impl<M, I, X2> FusedIterator for IterOptManyOne<M, I, X2>
+where
+    I: FusedIterator<Item = Option<M>>,
+    X2: Xap<I = M, Size = One>,
+{
 }
