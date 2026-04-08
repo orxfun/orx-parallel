@@ -1,6 +1,6 @@
 use crate::infallible::Xap;
-use crate::result::size_pairs::SizePair;
-use crate::result::thread_execution as th;
+use crate::result_depr2::size_pairs::SizePair;
+use crate::result_depr2::thread_execution as th;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;

@@ -1,5 +1,5 @@
 use crate::infallible::sizes::{Bin, Many, One, Size};
-use crate::result::size_pairs::{BinOne, ManyOne, OneOne, SizePair};
+use crate::result_depr2::size_pairs::{BinOne, ManyOne, OneOne, SizePair};
 
 pub trait IntoSizePair: Size {
     type ThenOne: SizePair<S1 = Self, S2 = One>;

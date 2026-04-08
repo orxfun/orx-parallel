@@ -1,8 +1,8 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::result::par_runner::ParRunnerResult;
-use crate::result::size_pairs::SizePair;
+use crate::result_depr2::par_runner::ParRunnerResult;
+use crate::result_depr2::size_pairs::SizePair;
 use crate::runner::{DefaultRunner, ParRunner};
 use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
