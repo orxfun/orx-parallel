@@ -6,7 +6,7 @@ use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParRunnerResult: ParRunner {
+pub trait ParRunnerRes: ParRunner {
     fn next<I, M, E, X1, X2, S>(
         &mut self,
         sizes: S,
@@ -116,4 +116,4 @@ pub trait ParRunnerResult: ParRunner {
     }
 }
 
-impl<R: ParRunner> ParRunnerResult for R {}
+impl<R: ParRunner> ParRunnerRes for R {}
