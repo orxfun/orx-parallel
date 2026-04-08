@@ -1,27 +1,27 @@
 use crate::infallible_using::fun::FlatMap;
-use crate::infallible_using::{Xap, XapOne};
+use crate::infallible_using::{XapUse, XapOne};
 use crate::sizes::{Many, One};
 
-pub struct OneX<X: Xap<Size = One>, G: FlatMap<U = X::U, I = X::O>> {
+pub struct OneX<X: XapUse<Size = One>, G: FlatMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = One>, G: FlatMap<U = X::U, I = X::O>> Clone for OneX<X, G> {
+impl<X: XapUse<Size = One>, G: FlatMap<U = X::U, I = X::O>> Clone for OneX<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = One>, G: FlatMap<U = X::U, I = X::O>> Copy for OneX<X, G> {}
+impl<X: XapUse<Size = One>, G: FlatMap<U = X::U, I = X::O>> Copy for OneX<X, G> {}
 
-impl<X: Xap<Size = One>, G: FlatMap<U = X::U, I = X::O>> OneX<X, G> {
+impl<X: XapUse<Size = One>, G: FlatMap<U = X::U, I = X::O>> OneX<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: Xap<Size = One>, G: FlatMap<U = X::U, I = X::O>> Xap for OneX<X, G> {
+impl<X: XapUse<Size = One>, G: FlatMap<U = X::U, I = X::O>> XapUse for OneX<X, G> {
     type I = X::I;
 
     type O = <G::O as IntoIterator>::Item;

@@ -1,4 +1,4 @@
-use crate::infallible_using::{Xap, using_var::Using};
+use crate::infallible_using::{XapUse, using_var::Using};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -7,7 +7,7 @@ where
     Q: ParRunner,
     U: Using,
     I: ConcurrentIter,
-    X: Xap<U = U::Item, I = I::Item>,
+    X: XapUse<U = U::Item, I = I::Item>,
 {
     let u = &mut u.create(th_idx);
     let mut chunk_puller = iter.chunk_puller(0);

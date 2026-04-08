@@ -1,28 +1,28 @@
 use crate::infallible_using::fun::{Map, MapEnum};
-use crate::infallible_using::{Xap, XapEnumByInput};
+use crate::infallible_using::{XapUse, XapUseEnumByInput};
 use crate::sizes::Many;
 use core::iter::FusedIterator;
 
-pub struct ManyM<X: Xap<Size = Many>, G: Map<U = X::U, I = X::O>> {
+pub struct ManyM<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: Xap<Size = Many>, G: Map<U = X::U, I = X::O>> Clone for ManyM<X, G> {
+impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> Clone for ManyM<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: Xap<Size = Many>, G: Map<U = X::U, I = X::O>> Copy for ManyM<X, G> {}
+impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> Copy for ManyM<X, G> {}
 
-impl<X: Xap<Size = Many>, G: Map<U = X::U, I = X::O>> ManyM<X, G> {
+impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> ManyM<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: XapEnumByInput<Size = Many>, G: Map<U = X::U, I = X::O>> XapEnumByInput for ManyM<X, G> {
+impl<X: XapUseEnumByInput<Size = Many>, G: Map<U = X::U, I = X::O>> XapUseEnumByInput for ManyM<X, G> {
     type Enumerated = ManyM<X::Enumerated, MapEnum<G>>;
 
     fn enumerate(self) -> Self::Enumerated {
@@ -32,7 +32,7 @@ impl<X: XapEnumByInput<Size = Many>, G: Map<U = X::U, I = X::O>> XapEnumByInput 
     }
 }
 
-impl<X: Xap<Size = Many>, G: Map<U = X::U, I = X::O>> Xap for ManyM<X, G> {
+impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> XapUse for ManyM<X, G> {
     type I = X::I;
 
     type O = G::O;

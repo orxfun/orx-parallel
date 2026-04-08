@@ -1,4 +1,4 @@
-use crate::infallible_using::Xap;
+use crate::infallible_using::XapUse;
 use crate::infallible_using::thread_execution as th;
 use crate::infallible_using::using_var::Using;
 use crate::results::{Val, ValIdx};
@@ -11,7 +11,7 @@ pub trait ParRunnerInfallibleUsing: ParRunner {
     where
         U: Using,
         I: ConcurrentIter,
-        X: Xap<U = U::Item, I = I::Item>,
+        X: XapUse<U = U::Item, I = I::Item>,
         X::O: Send,
     {
         let mut spawned = 0;
@@ -36,7 +36,7 @@ pub trait ParRunnerInfallibleUsing: ParRunner {
     where
         U: Using,
         I: ConcurrentIter,
-        X: Xap<U = U::Item, I = I::Item>,
+        X: XapUse<U = U::Item, I = I::Item>,
         X::O: Send,
     {
         let mut spawned = 0;
@@ -61,7 +61,7 @@ pub trait ParRunnerInfallibleUsing: ParRunner {
     where
         U: Using,
         I: ConcurrentIter,
-        X: Xap<U = U::Item, I = I::Item>,
+        X: XapUse<U = U::Item, I = I::Item>,
         F: Fn(X::O, X::O) -> X::O + Send + Copy,
         X::O: Send,
     {
