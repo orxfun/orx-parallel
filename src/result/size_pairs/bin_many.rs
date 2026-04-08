@@ -44,6 +44,7 @@ impl<I: Iterator, E> IterResBinMany<I, E> {
 impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
     type Item = Result<I::Item, E>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Success(Some(iter)) => iter.next().map(Ok),
