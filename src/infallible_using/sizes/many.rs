@@ -8,7 +8,7 @@ impl SizeInf for Many {
     // // transformations
 
     // type Map<X, Q, H>
-    //     = ManyM<X, FnMap<X::O, Q, H>>
+    //     = ManyM<X, FnMap<X::U, X::O, Q, H>>
     // where
     //     X: Xap<Size = Self>,
     //     H: Fn(X::O) -> Q + Copy + Send;
