@@ -1,6 +1,7 @@
 use crate::infallible::{Xap, XapOne};
 use crate::result::size_pairs::SizePairRes;
 use crate::sizes::OneMany;
+use core::iter::FusedIterator;
 
 impl SizePairRes for OneMany {
     type XapResResult<M, E, X1, X2>
@@ -56,3 +57,5 @@ impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
         }
     }
 }
+
+impl<I: FusedIterator, E> FusedIterator for IterResOneMany<I, E> {}
