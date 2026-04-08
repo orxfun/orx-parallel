@@ -66,6 +66,29 @@ impl<I: Iterator> Iterator for IterOptBinMany<I> {
             Self::Fail(_taken) => (1, Some(1)), // we will return only one element, the error
         }
     }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        match self {
+            Self::Success(Some(i)) => i.map(Some).fold(init, f),
+            Self::Success(None) => init,
+            Self::Fail(_taken) => f(init, None),
+        }
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Success(Some(i)) => i.count(),
+            Self::Success(None) => 0,
+            Self::Fail(_taken) => 1, // we will return only one element, the error
+        }
+    }
 }
 
 impl<I: FusedIterator> FusedIterator for IterOptBinMany<I> {}
