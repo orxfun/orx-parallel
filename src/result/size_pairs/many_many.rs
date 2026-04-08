@@ -1,6 +1,7 @@
 use crate::infallible::Xap;
 use crate::result::size_pairs::SizePairRes;
 use crate::sizes::{Many, ManyMany};
+use core::iter::FusedIterator;
 
 impl SizePairRes for ManyMany {
     type XapResResult<M, E, X1, X2>
@@ -63,4 +64,12 @@ fn and_then_or_clear<T, U>(opt: &mut Option<T>, f: impl FnOnce(&mut T) -> Option
         *opt = None;
     }
     x
+}
+
+impl<M, E, I, X2> FusedIterator for IterResManyMany<M, E, I, X2>
+where
+    I: FusedIterator<Item = Result<M, E>>,
+    X2: Xap<I = M, Size = Many>,
+    X2::Values: FusedIterator,
+{
 }

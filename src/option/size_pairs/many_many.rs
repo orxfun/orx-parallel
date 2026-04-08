@@ -1,6 +1,7 @@
 use crate::infallible::Xap;
 use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::{Many, ManyMany};
+use core::iter::FusedIterator;
 
 impl SizePairOpt for ManyMany {
     type XapOptResult<M, X1, X2>
@@ -62,4 +63,12 @@ fn and_then_or_clear<T, U>(opt: &mut Option<T>, f: impl FnOnce(&mut T) -> Option
         *opt = None;
     }
     x
+}
+
+impl<M, I, X2> FusedIterator for IterOptManyMany<M, I, X2>
+where
+    I: FusedIterator<Item = Option<M>>,
+    X2: Xap<I = M, Size = Many>,
+    X2::Values: FusedIterator,
+{
 }
