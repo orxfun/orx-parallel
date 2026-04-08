@@ -1,4 +1,5 @@
 pub mod fun;
+mod par_runner;
 mod sizes;
 mod thread_execution;
 mod using_var;
