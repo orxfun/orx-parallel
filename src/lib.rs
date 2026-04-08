@@ -27,7 +27,7 @@ pub mod infallible;
 pub mod infallible_arch;
 pub mod infallible_using;
 pub mod kind_transformations;
-// pub mod option;
+pub mod option;
 pub mod result;
 pub mod result_depr;
 
