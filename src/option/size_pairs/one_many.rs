@@ -3,53 +3,53 @@ use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::OneMany;
 
 impl SizePairOpt for OneMany {
-    type XapResResult<M, E, X1, X2>
-        = IterResOneMany<<X2::Values as IntoIterator>::IntoIter, E>
+    type XapOptResult<M, X1, X2>
+        = IterOptOneMany<<X2::Values as IntoIterator>::IntoIter>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X1: Xap<O = Option<M>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>;
 
-    #[inline(always)]
-    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    fn xap_opt<M, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapOptResult<M, X1, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X1: Xap<O = Option<M>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>,
     {
         match x1.one_value(i) {
-            Ok(a) => IterResOneMany::ok(x2.xap(a).into_iter()),
-            Err(e) => IterResOneMany::err(e),
+            Some(a) => IterOptOneMany::ok(x2.xap(a).into_iter()),
+            None => IterOptOneMany::err(),
         }
     }
 }
 
 // iter
 
-pub enum IterResOneMany<I: Iterator, E> {
-    Ok(I),
-    Err(Option<E>),
+pub enum IterOptOneMany<I: Iterator> {
+    Success(I),
+    Fail(bool),
 }
 
-impl<I: Iterator, E> IterResOneMany<I, E> {
+impl<I: Iterator> IterOptOneMany<I> {
     pub fn ok(i: I) -> Self {
-        Self::Ok(i)
+        Self::Success(i)
     }
 
-    pub fn err(e: E) -> Self {
-        Self::Err(Some(e))
+    pub fn err() -> Self {
+        Self::Fail(false)
     }
 }
 
-impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
-    type Item = Result<I::Item, E>;
+impl<I: Iterator> Iterator for IterOptOneMany<I> {
+    type Item = Option<I::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::Ok(iter) => iter.next().map(Ok),
-            Self::Err(e) => match e.is_some() {
+            Self::Success(iter) => iter.next().map(Some),
+            Self::Fail(taken) => match taken {
                 true => {
                     // SAFETY: error can be taken out only once; and on construction
-                    // the error variant must be created with Some of an error
-                    Some(Err(unsafe { e.take().unwrap_unchecked() }))
+                    // the error is not taken
+                    *taken = true;
+                    Some(None)
                 }
                 false => None, // the error is already taken and returned
             },
