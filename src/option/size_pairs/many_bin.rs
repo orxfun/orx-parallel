@@ -53,6 +53,44 @@ where
             }
         }
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        // all bin choices may fail (lb=0)
+        // but we can't have more than the source (ub=iter.ub)
+        let (_, ub) = self.iter.size_hint();
+        (0, ub)
+    }
+
+    #[inline]
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let (iter, x2) = (self.iter, self.x2);
+        let mut agg = init;
+        for i in iter {
+            match i {
+                Some(i) => {
+                    let i = x2.bin_value(i);
+                    if i.is_some() {
+                        agg = f(agg, i)
+                    }
+                }
+                None => return f(agg, None),
+            }
+        }
+        agg
+    }
+
+    #[inline]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.iter.take_while(|x| x.is_some()).count()
+    }
 }
 
 impl<M, I, X2> FusedIterator for IterOptManyBin<M, I, X2>
