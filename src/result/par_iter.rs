@@ -90,6 +90,7 @@ where
     pub fn filter<H>(self, h: H) -> ParRes<I, M, E, X1, FilOf<X2, H>, S::ThenBin, R>
     where
         H: Fn(&X2::O) -> bool + Copy + Send,
+        S::ThenBin: SizePairRes,
     {
         let x2 = self.x2.filter(h);
         self.with_xap2(x2)
@@ -98,6 +99,7 @@ where
     pub fn filter_map<Q, H>(self, h: H) -> ParRes<I, M, E, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
     where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
+        S::ThenBin: SizePairRes,
     {
         let x2 = self.x2.filter_map(h);
         self.with_xap2(x2)
@@ -107,6 +109,7 @@ where
     where
         V: IntoIterator,
         H: Fn(X2::O) -> V + Copy + Send,
+        S::ThenMany: SizePairRes,
     {
         let x2 = self.x2.flat_map(h);
         self.with_xap2(x2)

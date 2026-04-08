@@ -1,19 +1,8 @@
 use crate::infallible::{Xap, XapOne};
 use crate::result::size_pairs::SizePairRes;
-use crate::sizes::{Many, One};
-
-#[derive(Clone, Copy, Default)]
-pub struct OneMany;
+use crate::sizes::OneMany;
 
 impl SizePairRes for OneMany {
-    type S1 = One;
-
-    type S2 = Many;
-
-    type ThenBin = OneMany;
-
-    type ThenMany = OneMany;
-
     type XapResResult<M, E, X1, X2>
         = IterResOneMany<<X2::Values as IntoIterator>::IntoIter, E>
     where

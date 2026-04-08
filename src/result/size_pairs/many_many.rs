@@ -1,19 +1,8 @@
 use crate::infallible::Xap;
 use crate::result::size_pairs::SizePairRes;
-use crate::sizes::Many;
-
-#[derive(Clone, Copy, Default)]
-pub struct ManyMany;
+use crate::sizes::{Many, ManyMany};
 
 impl SizePairRes for ManyMany {
-    type S1 = Many;
-
-    type S2 = Many;
-
-    type ThenBin = ManyMany;
-
-    type ThenMany = ManyMany;
-
     type XapResResult<M, E, X1, X2>
         = IterResManyMany<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
     where
