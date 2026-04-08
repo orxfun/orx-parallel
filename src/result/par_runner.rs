@@ -1,6 +1,6 @@
 use crate::infallible::Xap;
-use crate::result_depr2::size_pairs::SizePair;
-use crate::result_depr2::thread_execution as th;
+use crate::result::size_pairs::SizePair;
+use crate::result::thread_execution as th;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
@@ -9,6 +9,7 @@ use orx_concurrent_iter::ConcurrentIter;
 pub trait ParRunnerResult: ParRunner {
     fn next<I, M, E, X1, X2, S>(
         &mut self,
+        sizes: S,
         params: Params,
         iter: I,
         x1: X1,
@@ -31,7 +32,8 @@ pub trait ParRunnerResult: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next::<Self, _, _, _, _, _, S>(th_idx, state, iter, x1, x2);
+                    let value =
+                        th::next::<Self, _, _, _, _, _, _>(sizes, th_idx, state, iter, x1, x2);
                     results.push(value);
                 });
             }
@@ -42,6 +44,7 @@ pub trait ParRunnerResult: ParRunner {
 
     fn next_any<I, M, E, X1, X2, S>(
         &mut self,
+        sizes: S,
         params: Params,
         iter: I,
         x1: X1,
@@ -64,7 +67,8 @@ pub trait ParRunnerResult: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next_any::<Self, _, _, _, _, _, S>(th_idx, state, iter, x1, x2);
+                    let value =
+                        th::next_any::<Self, _, _, _, _, _, _>(sizes, th_idx, state, iter, x1, x2);
                     results.push(value);
                 });
             }
@@ -75,6 +79,7 @@ pub trait ParRunnerResult: ParRunner {
 
     fn reduce<I, M, E, X1, X2, S, F>(
         &mut self,
+        sizes: S,
         params: Params,
         iter: I,
         x1: X1,
@@ -99,8 +104,9 @@ pub trait ParRunnerResult: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value =
-                        th::reduce::<Self, _, _, _, _, _, S, _>(th_idx, state, iter, x1, x2, f);
+                    let value = th::reduce::<Self, _, _, _, _, _, _, _>(
+                        sizes, th_idx, state, iter, x1, x2, f,
+                    );
                     results.push(value);
                 });
             }

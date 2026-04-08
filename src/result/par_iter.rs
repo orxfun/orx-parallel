@@ -1,10 +1,9 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::result_depr2::par_runner::ParRunnerResult;
-use crate::result_depr2::size_pairs::SizePair;
+use crate::result::par_runner::ParRunnerResult;
+use crate::result::size_pairs::SizePair;
 use crate::runner::{DefaultRunner, ParRunner};
-use core::marker::PhantomData;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParRes<I, M, E, X1, X2, S, R = DefaultRunner>
@@ -20,7 +19,7 @@ where
     x2: X2,
     exe: R,
     params: Params,
-    s: PhantomData<S>,
+    s: S,
 }
 
 impl<I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
@@ -38,7 +37,7 @@ where
             x2,
             exe,
             params,
-            s: PhantomData,
+            s: Default::default(),
         }
     }
 
@@ -50,8 +49,8 @@ where
         ParRes::new(self.iter, self.x1, x2, self.exe, self.params)
     }
 
-    fn destruct(self) -> (I, X1, X2, R, Params) {
-        (self.iter, self.x1, self.x2, self.exe, self.params)
+    fn destruct(self) -> (I, X1, X2, R, S, Params) {
+        (self.iter, self.x1, self.x2, self.exe, self.s, self.params)
     }
     // params
 
@@ -120,12 +119,10 @@ where
         X2::O: Send,
         E: Send,
     {
-        let (iter, x1, x2, mut exe, params) = self.destruct();
+        let (iter, x1, x2, mut exe, s, params) = self.destruct();
         match params.iteration_order {
-            IterationOrder::Ordered => exe
-                .next::<_, _, _, _, _, S>(params, iter, x1, x2)
-                .map(|x| x.map(|x| x.val)),
-            IterationOrder::Arbitrary => exe.next_any::<_, _, _, _, _, S>(params, iter, x1, x2),
+            IterationOrder::Ordered => exe.next(s, params, iter, x1, x2).map(|x| x.map(|x| x.val)),
+            IterationOrder::Arbitrary => exe.next_any(s, params, iter, x1, x2),
         }
     }
 
@@ -135,8 +132,8 @@ where
         X2::O: Send,
         E: Send,
     {
-        let (iter, x1, x2, mut exe, params) = self.destruct();
-        exe.reduce::<_, _, _, _, _, S, _>(params, iter, x1, x2, f)
+        let (iter, x1, x2, mut exe, s, params) = self.destruct();
+        exe.reduce(s, params, iter, x1, x2, f)
     }
 
     // compute - derived
@@ -162,7 +159,7 @@ where
     R: ParRunner,
 {
     pub fn copied(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, params) = self.destruct();
+        let (iter, x1, x2, exe, _, params) = self.destruct();
         ParRes::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
     }
 }
@@ -177,7 +174,7 @@ where
     R: ParRunner,
 {
     pub fn cloned(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, params) = self.destruct();
+        let (iter, x1, x2, exe, _, params) = self.destruct();
         ParRes::new(iter, x1, x2.mapped(FnCloned::new()), exe, params)
     }
 }
