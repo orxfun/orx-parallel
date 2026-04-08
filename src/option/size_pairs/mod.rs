@@ -1,7 +1,7 @@
 mod bin_bin;
 mod bin_many;
 mod bin_one;
-// mod many_bin;
+mod many_bin;
 // mod many_many;
 // mod many_one;
 // mod one_bin;

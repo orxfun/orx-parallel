@@ -3,52 +3,51 @@ use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::{Bin, ManyBin};
 
 impl SizePairOpt for ManyBin {
-    type XapResResult<M, E, X1, X2>
-        = IterResManyBin<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
+    type XapOptResult<M, X1, X2>
+        = IterOptManyBin<M, <X1::Values as IntoIterator>::IntoIter, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X1: Xap<O = Option<M>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>;
 
-    #[inline(always)]
-    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    fn xap_opt<M, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapOptResult<M, X1, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X1: Xap<O = Option<M>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>,
     {
         let iter = x1.xap(i).into_iter();
-        IterResManyBin { iter, x2 }
+        IterOptManyBin { iter, x2 }
     }
 }
 
 // iter
 
-pub struct IterResManyBin<M, E, I, X2>
+pub struct IterOptManyBin<M, I, X2>
 where
-    I: Iterator<Item = Result<M, E>>,
+    I: Iterator<Item = Option<M>>,
     X2: Xap<I = M, Size = Bin>,
 {
     iter: I,
     x2: X2,
 }
 
-impl<M, E, I, X2> Iterator for IterResManyBin<M, E, I, X2>
+impl<M, I, X2> Iterator for IterOptManyBin<M, I, X2>
 where
-    I: Iterator<Item = Result<M, E>>,
+    I: Iterator<Item = Option<M>>,
     X2: Xap<I = M, Size = Bin>,
 {
-    type Item = Result<X2::O, E>;
+    type Item = Option<X2::O>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.iter.next() {
-                Some(Ok(a)) => {
+                Some(Some(a)) => {
                     let b = self.x2.bin_value(a);
                     if b.is_some() {
-                        return b.map(Ok);
+                        return b.map(Some);
                     }
                 }
-                Some(Err(e)) => return Some(Err(e)),
+                Some(None) => return Some(None),
                 None => return None,
             }
         }
