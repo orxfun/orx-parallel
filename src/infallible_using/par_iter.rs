@@ -167,17 +167,17 @@ where
     }
 }
 
-// impl<U, I, X, R> ParUsing<U, I, X, R>
-// where
-//     U: Using,
-//     I: ConcurrentIter,
-//     X: XapEnumByInput<U = U::Item, I = I::Item>,
-//     R: ParRunner,
-// {
-//     pub fn enumerate(self) -> ParUsing<U, Enumerate<I>, X::Enumerated, R> {
-//         let (u, iter, xap, exe, params) = self.destruct();
-//         let iter = iter.enumerate();
-//         let xap = xap.enumerate();
-//         ParUsing::new(u, iter, xap, exe, params)
-//     }
-// }
+impl<U, I, X, R> ParUsing<U, I, X, R>
+where
+    U: Using,
+    I: ConcurrentIter,
+    X: XapEnumByInput<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
+    pub fn enumerate(self) -> ParUsing<U, Enumerate<I>, X::Enumerated, R> {
+        let (u, iter, xap, exe, params) = self.destruct();
+        let iter = iter.enumerate();
+        let xap = xap.enumerate();
+        ParUsing::new(u, iter, xap, exe, params)
+    }
+}
