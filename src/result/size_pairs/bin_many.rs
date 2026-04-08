@@ -1,8 +1,7 @@
-use core::iter::FusedIterator;
-
 use crate::infallible::{Xap, XapBin};
 use crate::result::size_pairs::SizePairRes;
 use crate::sizes::BinMany;
+use core::iter::FusedIterator;
 
 impl SizePairRes for BinMany {
     type XapResResult<M, E, X1, X2>
@@ -59,6 +58,24 @@ impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
             },
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Success(Some(i)) => i.size_hint(),
+            Self::Success(None) => (0, Some(0)),
+            Self::Fail(_taken) => (1, Some(1)), // we will return only one element, the error
+        }
+    }
 }
 
 impl<I: FusedIterator, E> FusedIterator for IterResBinMany<I, E> {}
+
+impl<I: ExactSizeIterator, E> ExactSizeIterator for IterResBinMany<I, E> {
+    fn len(&self) -> usize {
+        match self {
+            Self::Success(Some(i)) => i.len(),
+            Self::Success(None) => 0,
+            Self::Fail(_taken) => 1, // we will return only one element, the error
+        }
+    }
+}

@@ -58,6 +58,24 @@ impl<I: Iterator> Iterator for IterOptBinMany<I> {
             },
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Success(Some(i)) => i.size_hint(),
+            Self::Success(None) => (0, Some(0)),
+            Self::Fail(_taken) => (1, Some(1)), // we will return only one element, the error
+        }
+    }
 }
 
 impl<I: FusedIterator> FusedIterator for IterOptBinMany<I> {}
+
+impl<I: ExactSizeIterator> ExactSizeIterator for IterOptBinMany<I> {
+    fn len(&self) -> usize {
+        match self {
+            Self::Success(Some(i)) => i.len(),
+            Self::Success(None) => 0,
+            Self::Fail(_taken) => 1, // we will return only one element, the error
+        }
+    }
+}
