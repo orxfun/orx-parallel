@@ -54,6 +54,55 @@ where
             }
         }
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match &self.inner {
+            Some(inner) => (inner.size_hint().0, None),
+            None => (0, None),
+        }
+    }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let mut agg = init;
+
+        if let Some(iter) = self.inner {
+            agg = iter.map(Some).fold(agg, &mut f);
+        }
+
+        for i in self.iter {
+            match i {
+                Some(i) => agg = self.x2.xap(i).into_iter().map(Some).fold(agg, &mut f),
+                None => return f(agg, None),
+            }
+        }
+
+        agg
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        let mut count = 0;
+
+        if let Some(iter) = self.inner {
+            count += iter.count();
+        }
+
+        for i in self.iter {
+            match i {
+                Some(i) => count += self.x2.xap(i).into_iter().count(),
+                None => return count,
+            }
+        }
+
+        count
+    }
 }
 
 #[inline(always)]
