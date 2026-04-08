@@ -1,8 +1,8 @@
-use crate::result::size_pairs::{BinOne, ManyOne, OneOne, SizePair};
+use crate::result::size_pairs::{BinOne, ManyOne, OneOne, SizePairRes};
 use crate::sizes::{Bin, Many, One, Size};
 
 pub trait IntoSizePair: Size {
-    type ThenOne: SizePair<S1 = Self, S2 = One>;
+    type ThenOne: SizePairRes<S1 = Self, S2 = One>;
 }
 
 impl IntoSizePair for One {

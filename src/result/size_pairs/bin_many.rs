@@ -1,11 +1,11 @@
 use crate::infallible::{Xap, XapBin};
-use crate::result::size_pairs::SizePair;
+use crate::result::size_pairs::SizePairRes;
 use crate::sizes::{Bin, Many};
 
 #[derive(Clone, Copy, Default)]
 pub struct BinMany;
 
-impl SizePair for BinMany {
+impl SizePairRes for BinMany {
     type S1 = Bin;
 
     type S2 = Many;
