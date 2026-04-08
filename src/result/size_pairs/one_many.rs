@@ -94,3 +94,13 @@ impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
 }
 
 impl<I: FusedIterator, E> FusedIterator for IterResOneMany<I, E> {}
+
+impl<I: ExactSizeIterator, E> ExactSizeIterator for IterResOneMany<I, E> {
+    fn len(&self) -> usize {
+        match self {
+            Self::Success(iter) => iter.len(),
+            Self::Fail(Some(_)) => 1,
+            Self::Fail(None) => 0,
+        }
+    }
+}
