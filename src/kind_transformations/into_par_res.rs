@@ -2,7 +2,6 @@ use crate::infallible::Par;
 use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
 use crate::result::ParRes;
-use crate::result::XapRes;
 use crate::result::size_pairs::IntoSizePair;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
@@ -18,7 +17,6 @@ where
         self,
     ) -> ParRes<I, O, E, X, Id<O>, <X::Size as IntoSizePair>::ThenOne, R> {
         let (iter, xap, exe, params) = self.destruct();
-        let xap = XapRes::new(xap, Id::new());
-        ParRes::new(iter, xap, exe, params)
+        ParRes::new(iter, xap, Id::new(), exe, params)
     }
 }
