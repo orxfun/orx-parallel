@@ -1,8 +1,8 @@
 use crate::infallible::{Xap, XapOne};
-use crate::result::size_pairs::SizePairRes;
+use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::{ManyOne, One};
 
-impl SizePairRes for ManyOne {
+impl SizePairOpt for ManyOne {
     type XapResResult<M, E, X1, X2>
         = IterResManyOne<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
     where

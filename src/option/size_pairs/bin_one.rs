@@ -1,8 +1,8 @@
 use crate::infallible::{Xap, XapBin, XapOne};
-use crate::result::size_pairs::SizePairRes;
+use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::BinOne;
 
-impl SizePairRes for BinOne {
+impl SizePairOpt for BinOne {
     type XapResResult<M, E, X1, X2>
         = Option<Result<X2::O, E>>
     where
