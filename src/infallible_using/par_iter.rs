@@ -107,36 +107,36 @@ where
         self.with_xap(xap)
     }
 
-    // // compute
+    // compute
 
-    // pub fn first(self) -> Option<X::O>
-    // where
-    //     X::O: Send,
-    // {
-    //     let (u, iter, x, mut exe, params) = self.destruct();
-    //     match params.iteration_order {
-    //         IterationOrder::Ordered => exe.next(params, u, iter, x).map(|x| x.val),
-    //         IterationOrder::Arbitrary => exe.next_any(params, u, iter, x),
-    //     }
-    // }
+    pub fn first(self) -> Option<X::O>
+    where
+        X::O: Send,
+    {
+        let (u, iter, x, mut exe, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.next(params, u, iter, x).map(|x| x.val),
+            IterationOrder::Arbitrary => exe.next_any(params, u, iter, x),
+        }
+    }
 
-    // pub fn reduce<F>(self, f: F) -> Option<X::O>
-    // where
-    //     F: Fn(X::O, X::O) -> X::O + Send + Copy,
-    //     X::O: Send,
-    // {
-    //     let (u, iter, x, mut exe, params) = self.destruct();
-    //     exe.reduce(params, u, iter, x, f)
-    // }
+    pub fn reduce<F>(self, f: F) -> Option<X::O>
+    where
+        F: Fn(X::O, X::O) -> X::O + Send + Copy,
+        X::O: Send,
+    {
+        let (u, iter, x, mut exe, params) = self.destruct();
+        exe.reduce(params, u, iter, x, f)
+    }
 
-    // // compute - derived
+    // compute - derived
 
-    // pub fn for_each<F>(self, f: F)
-    // where
-    //     F: Fn(&mut U::Item, X::O) + Send + Copy,
-    // {
-    //     let _ = self.map(f).reduce(|_, _| {});
-    // }
+    pub fn for_each<F>(self, f: F)
+    where
+        F: Fn(&mut U::Item, X::O) + Send + Copy,
+    {
+        let _ = self.map(f).reduce(|_, _| {});
+    }
 }
 
 // // transformations
