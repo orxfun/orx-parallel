@@ -1,17 +1,22 @@
 use crate::parameters::IterationOrder;
-use crate::result::tests::utils::inputs;
+use crate::result::tests::utils::inputs_map;
 use crate::*;
 use std::format;
 use std::string::{String, ToString};
 use std::vec;
+use std::vec::Vec;
 
 const N: usize = 157;
 
 #[test]
 fn many_x_find_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs_map(N);
     let result = inputs
         .into_par()
+        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Ok(x)),
+        })
         .fallible_result()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -24,9 +29,13 @@ fn many_x_find_ok() {
 
 #[test]
 fn many_x_find_any_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs_map(N);
     let result = inputs
         .into_par()
+        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Ok(x)),
+        })
         .fallible_result()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -40,9 +49,13 @@ fn many_x_find_any_ok() {
 
 #[test]
 fn many_x_reduce_ok() {
-    let inputs = inputs(N, None);
+    let inputs = inputs_map(N);
     let result = inputs
         .into_par()
+        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Ok(x)),
+        })
         .fallible_result()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -58,9 +71,16 @@ fn many_x_reduce_ok() {
 
 #[test]
 fn many_x_reduce_err() {
-    let inputs = inputs(N, Some(42));
+    let inputs = inputs_map(N);
     let result = inputs
         .into_par()
+        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(match x.as_str() == "42" {
+                true => Ok(x),
+                false => Err(vec!['a']),
+            }),
+        })
         .fallible_result()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
