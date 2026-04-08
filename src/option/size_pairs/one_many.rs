@@ -1,6 +1,7 @@
 use crate::infallible::{Xap, XapOne};
 use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::OneMany;
+use core::iter::FusedIterator;
 
 impl SizePairOpt for OneMany {
     type XapOptResult<M, X1, X2>
@@ -56,3 +57,5 @@ impl<I: Iterator> Iterator for IterOptOneMany<I> {
         }
     }
 }
+
+impl<I: FusedIterator> FusedIterator for IterOptOneMany<I> {}
