@@ -49,13 +49,13 @@ impl<I: Iterator> Iterator for IterOptBinMany<I> {
             Self::Success(Some(iter)) => iter.next().map(Some),
             Self::Success(None) => None,
             Self::Fail(taken) => match taken {
-                true => {
+                false => {
                     // SAFETY: error can be taken out only once; and on construction
                     // the error is not taken
                     *taken = true;
                     Some(None)
                 }
-                false => None, // the error is already taken and returned
+                true => None, // the error is already taken and returned
             },
         }
     }
