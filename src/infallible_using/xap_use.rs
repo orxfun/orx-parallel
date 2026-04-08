@@ -89,14 +89,14 @@ impl<X: Xap<Size = Bin>> XapBin for X {}
 
 // // helper types
 
-// pub type MapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::Map<<X as Xap>::U, X, Q, H>;
+pub type MapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::Map<X, Q, H>;
 
-// pub type InsOf<X, H> = <<X as Xap>::Size as SizeInf>::Inspect<<X as Xap>::U, X, H>;
+pub type InsOf<X, H> = <<X as Xap>::Size as SizeInf>::Inspect<X, H>;
 
-// pub type FilOf<X, H> = <<X as Xap>::Size as SizeInf>::Filter<<X as Xap>::U, X, H>;
+pub type FilOf<X, H> = <<X as Xap>::Size as SizeInf>::Filter<X, H>;
 
-// pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::FilterMap<<X as Xap>::U, X, Q, H>;
+pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::FilterMap<X, Q, H>;
 
-// pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as SizeInf>::FlatMap<<X as Xap>::U, X, V, H>;
+pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as SizeInf>::FlatMap<X, V, H>;
 
-// pub type MappedOf<X, M> = <<X as Xap>::Size as SizeInf>::Mapped<<X as Xap>::U, X, M>;
+pub type MappedOf<X, M> = <<X as Xap>::Size as SizeInf>::Mapped<X, M>;
