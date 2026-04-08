@@ -24,43 +24,43 @@ pub trait Xap: Copy + Send {
         <Self::Size as SizeInf>::map(self, h)
     }
 
-    // fn inspect<H>(self, h: H) -> InsOf<Self, H>
-    // where
-    //     H: Fn(&Self::O) + Copy + Send,
-    // {
-    //     <Self::Size as SizeInf>::inspect(self, h)
-    // }
+    fn inspect<H>(self, h: H) -> InsOf<Self, H>
+    where
+        H: Fn(&mut Self::U, &Self::O) + Copy + Send,
+    {
+        <Self::Size as SizeInf>::inspect(self, h)
+    }
 
-    // fn filter<H>(self, h: H) -> FilOf<Self, H>
-    // where
-    //     H: Fn(&Self::O) -> bool + Copy + Send,
-    // {
-    //     <Self::Size as SizeInf>::filter(self, h)
-    // }
+    fn filter<H>(self, h: H) -> FilOf<Self, H>
+    where
+        H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send,
+    {
+        <Self::Size as SizeInf>::filter(self, h)
+    }
 
-    // fn filter_map<Q, H>(self, h: H) -> FilMapOf<Self, Q, H>
-    // where
-    //     H: Fn(Self::O) -> Option<Q> + Copy + Send,
-    // {
-    //     <Self::Size as SizeInf>::filter_map(self, h)
-    // }
+    fn filter_map<Q, H>(self, h: H) -> FilMapOf<Self, Q, H>
+    where
+        H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send,
+    {
+        <Self::Size as SizeInf>::filter_map(self, h)
+    }
 
-    // fn flat_map<V, H>(self, h: H) -> FlatMapOf<Self, V, H>
-    // where
-    //     V: IntoIterator,
-    //     H: Fn(Self::O) -> V + Copy + Send,
-    // {
-    //     <Self::Size as SizeInf>::flat_map(self, h)
-    // }
+    fn flat_map<V, H>(self, h: H) -> FlatMapOf<Self, V, H>
+    where
+        V: IntoIterator,
+        H: Fn(&mut Self::U, Self::O) -> V + Copy + Send,
+    {
+        <Self::Size as SizeInf>::flat_map(self, h)
+    }
 
-    // // transformations - helper
+    // transformations - helper
 
-    // fn mapped<M>(self, m: M) -> MappedOf<Self, M>
-    // where
-    //     M: Map<I = Self::O>,
-    // {
-    //     <Self::Size as SizeInf>::mapped(self, m)
-    // }
+    fn mapped<M>(self, m: M) -> MappedOf<Self, M>
+    where
+        M: Map<U = Self::U, I = Self::O>,
+    {
+        <Self::Size as SizeInf>::mapped(self, m)
+    }
 }
 
 // // one
@@ -89,14 +89,14 @@ pub trait Xap: Copy + Send {
 
 // helper types
 
-pub type MapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::Map<X, Q, H>;
+pub type MapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::Map<<X as Xap>::U, X, Q, H>;
 
-pub type InsOf<X, H> = <<X as Xap>::Size as SizeInf>::Inspect<X, H>;
+pub type InsOf<X, H> = <<X as Xap>::Size as SizeInf>::Inspect<<X as Xap>::U, X, H>;
 
-pub type FilOf<X, H> = <<X as Xap>::Size as SizeInf>::Filter<X, H>;
+pub type FilOf<X, H> = <<X as Xap>::Size as SizeInf>::Filter<<X as Xap>::U, X, H>;
 
-pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::FilterMap<X, Q, H>;
+pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::FilterMap<<X as Xap>::U, X, Q, H>;
 
-pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as SizeInf>::FlatMap<X, V, H>;
+pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as SizeInf>::FlatMap<<X as Xap>::U, X, V, H>;
 
-pub type MappedOf<X, M> = <<X as Xap>::Size as SizeInf>::Mapped<X, M>;
+pub type MappedOf<X, M> = <<X as Xap>::Size as SizeInf>::Mapped<<X as Xap>::U, X, M>;
