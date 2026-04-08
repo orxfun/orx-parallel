@@ -1,9 +1,9 @@
-mod bin;
-mod many;
-mod one;
+mod into_size_pair;
 mod size;
+mod size_pair;
+mod size_pairs;
+mod sizes;
 
-pub use bin::Bin;
-pub use many::Many;
-pub use one::One;
+pub use into_size_pair::IntoSizePair;
 pub use size::Size;
+pub use sizes::{Bin, Many, One};
