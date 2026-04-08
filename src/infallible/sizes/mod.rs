@@ -1,9 +1,6 @@
 mod bin;
 mod many;
 mod one;
-mod size;
+mod size_inf;
 
-pub use bin::Bin;
-pub use many::Many;
-pub use one::One;
-pub use size::Size;
+pub use size_inf::SizeInf;

@@ -1,6 +1,6 @@
 use crate::infallible::fun::FilterMap;
-use crate::infallible::sizes::Bin;
 use crate::infallible::xap::{Xap, XapBin};
+use crate::sizes::Bin;
 
 pub struct BinF<X: Xap<Size = Bin>, G: FilterMap<I = X::O>> {
     x: X,

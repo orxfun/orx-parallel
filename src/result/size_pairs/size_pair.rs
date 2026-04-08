@@ -1,5 +1,5 @@
 use crate::infallible::Xap;
-use crate::infallible::sizes::{Many, Size};
+use crate::sizes::{Many, Size};
 
 pub trait SizePair: Clone + Copy + Send + Default {
     type S1: Size;

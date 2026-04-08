@@ -1,14 +1,10 @@
 use crate::infallible::Xap;
 use crate::infallible::fun::*;
-use crate::infallible::sizes::Bin;
-use crate::infallible::sizes::size::Size;
+use crate::infallible::sizes::size_inf::SizeInf;
 use crate::infallible::xap_variants::*;
+use crate::sizes::One;
 
-pub struct One;
-
-impl Size for One {
-    type ThenBin = Bin;
-
+impl SizeInf for One {
     // transformations
 
     type Map<X, Q, H>

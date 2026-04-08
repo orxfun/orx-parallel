@@ -1,6 +1,6 @@
 use crate::infallible::fun::FlatMap;
-use crate::infallible::sizes::{Many, One};
 use crate::infallible::xap::{Xap, XapOne};
+use crate::sizes::{Many, One};
 
 pub struct OneX<X: Xap<Size = One>, G: FlatMap<I = X::O>> {
     x: X,

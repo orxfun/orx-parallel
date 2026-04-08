@@ -1,6 +1,6 @@
 use crate::infallible::fun::FilterMap;
-use crate::infallible::sizes::Many;
 use crate::infallible::xap::Xap;
+use crate::sizes::Many;
 use core::iter::FusedIterator;
 
 pub struct ManyF<X: Xap<Size = Many>, G: FilterMap<I = X::O>> {

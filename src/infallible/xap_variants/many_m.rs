@@ -1,8 +1,8 @@
 use crate::infallible::XapEnumByInput;
 use crate::infallible::fun::Map;
 use crate::infallible::fun::MapEnum;
-use crate::infallible::sizes::Many;
 use crate::infallible::xap::Xap;
+use crate::sizes::Many;
 use core::iter::FusedIterator;
 
 pub struct ManyM<X: Xap<Size = Many>, G: Map<I = X::O>> {
