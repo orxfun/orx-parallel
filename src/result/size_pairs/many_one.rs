@@ -1,6 +1,7 @@
 use crate::infallible::{Xap, XapOne};
 use crate::result::size_pairs::SizePairRes;
 use crate::sizes::{ManyOne, One};
+use core::iter::FusedIterator;
 
 impl SizePairRes for ManyOne {
     type XapResResult<M, E, X1, X2>
@@ -42,4 +43,11 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|a| a.map(|a| self.x2.one_value(a)))
     }
+}
+
+impl<M, E, I, X2> FusedIterator for IterResManyOne<M, E, I, X2>
+where
+    I: FusedIterator<Item = Result<M, E>>,
+    X2: Xap<I = M, Size = One>,
+{
 }
