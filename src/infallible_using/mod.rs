@@ -1,6 +1,7 @@
 pub mod fun;
 mod sizes;
-// mod thread_execution;
+mod thread_execution;
+mod using_var;
 mod xap_use;
 mod xap_use_enum;
 pub mod xap_variants;

@@ -1,4 +1,4 @@
-use crate::infallible_using::{using_var::Using, xap::Xap};
+use crate::infallible_using::{Xap, using_var::Using};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
