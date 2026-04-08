@@ -6,7 +6,7 @@ use crate::sizes::Size;
 pub trait SizeInf: Size {
     // transformations
 
-    type Map<X, Q, H>: Xap<I = X::I, O = Q, Size = Self>
+    type Map<X, Q, H>: Xap<U = X::U, I = X::I, O = Q, Size = Self>
     where
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Q + Copy + Send;
@@ -16,7 +16,7 @@ pub trait SizeInf: Size {
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Q + Copy + Send;
 
-    type Inspect<X, H>: Xap<I = X::I, O = X::O, Size = Self>
+    type Inspect<X, H>: Xap<U = X::U, I = X::I, O = X::O, Size = Self>
     where
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, &X::O) + Copy + Send;
@@ -26,7 +26,7 @@ pub trait SizeInf: Size {
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, &X::O) + Copy + Send;
 
-    type Filter<X, H>: Xap<I = X::I, O = X::O, Size = Self::ThenBin>
+    type Filter<X, H>: Xap<U = X::U, I = X::I, O = X::O, Size = Self::ThenBin>
     where
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, &X::O) -> bool + Copy + Send;
@@ -36,7 +36,7 @@ pub trait SizeInf: Size {
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, &X::O) -> bool + Copy + Send;
 
-    type FilterMap<X, Q, H>: Xap<I = X::I, O = Q, Size = Self::ThenBin>
+    type FilterMap<X, Q, H>: Xap<U = X::U, I = X::I, O = Q, Size = Self::ThenBin>
     where
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Option<Q> + Copy + Send;
@@ -46,7 +46,7 @@ pub trait SizeInf: Size {
         X: Xap<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Option<Q> + Copy + Send;
 
-    type FlatMap<X, V, H>: Xap<I = X::I, O = V::Item, Size = Many>
+    type FlatMap<X, V, H>: Xap<U = X::U, I = X::I, O = V::Item, Size = Many>
     where
         X: Xap<Size = Self>,
         V: IntoIterator,
@@ -60,7 +60,7 @@ pub trait SizeInf: Size {
 
     // transformations - helper
 
-    type Mapped<X, M>: Xap<I = X::I, O = M::O, Size = Self>
+    type Mapped<X, M>: Xap<U = X::U, I = X::I, O = M::O, Size = Self>
     where
         X: Xap<Size = Self>,
         M: Map<U = X::U, I = X::O>;
