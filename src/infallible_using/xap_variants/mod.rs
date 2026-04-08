@@ -1,4 +1,4 @@
-// mod bin_f;
+mod bin_f;
 // mod bin_m;
 mod bin_x;
 // mod id;
