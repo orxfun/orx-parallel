@@ -3,29 +3,28 @@ use crate::option::size_pairs::SizePairOpt;
 use crate::sizes::{Many, ManyMany};
 
 impl SizePairOpt for ManyMany {
-    type XapResResult<M, E, X1, X2>
-        = IterResManyMany<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
+    type XapOptResult<M, X1, X2>
+        = IterOptManyMany<M, <X1::Values as IntoIterator>::IntoIter, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X1: Xap<O = Option<M>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>;
 
-    #[inline(always)]
-    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    fn xap_opt<M, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapOptResult<M, X1, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X1: Xap<O = Option<M>, Size = Self::S1>,
         X2: Xap<I = M, Size = Self::S2>,
     {
         let iter = x1.xap(i).into_iter();
         let (x2, inner) = (x2, None);
-        IterResManyMany { iter, x2, inner }
+        IterOptManyMany { iter, x2, inner }
     }
 }
 
 // iter
 
-pub struct IterResManyMany<M, E, I, X2>
+pub struct IterOptManyMany<M, I, X2>
 where
-    I: Iterator<Item = Result<M, E>>,
+    I: Iterator<Item = Option<M>>,
     X2: Xap<I = M, Size = Many>,
 {
     iter: I,
@@ -33,23 +32,23 @@ where
     inner: Option<<X2::Values as IntoIterator>::IntoIter>,
 }
 
-impl<M, E, I, X2> Iterator for IterResManyMany<M, E, I, X2>
+impl<M, I, X2> Iterator for IterOptManyMany<M, I, X2>
 where
-    I: Iterator<Item = Result<M, E>>,
+    I: Iterator<Item = Option<M>>,
     X2: Xap<I = M, Size = Many>,
 {
-    type Item = Result<X2::O, E>;
+    type Item = Option<X2::O>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if let elt @ Some(_) = and_then_or_clear(&mut self.inner, Iterator::next) {
-                return elt.map(Ok);
+                return elt.map(Some);
             }
 
             match self.iter.next() {
-                Some(Ok(i)) => self.inner = Some(self.x2.xap(i).into_iter()),
-                Some(Err(e)) => return Some(Err(e)),
+                Some(Some(i)) => self.inner = Some(self.x2.xap(i).into_iter()),
+                Some(None) => return Some(None),
                 None => return None,
             }
         }
