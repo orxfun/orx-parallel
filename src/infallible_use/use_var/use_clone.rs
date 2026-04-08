@@ -1,8 +1,8 @@
-use crate::infallible_use::using_var::using::Using;
+use crate::infallible_use::use_var::r#use::Use;
 
-pub struct UsingClone<T: Clone + Send>(T);
+pub struct UseClone<T: Clone + Send>(T);
 
-impl<T: Clone + Send> Using for UsingClone<T> {
+impl<T: Clone + Send> Use for UseClone<T> {
     type Item = T;
 
     #[inline]
@@ -18,4 +18,4 @@ impl<T: Clone + Send> Using for UsingClone<T> {
 
 /// SAFETY: Since T is Send, it is safe to share `UsingClone` with
 /// another thread and `create` a clone of `T` on this thread.
-unsafe impl<T: Clone + Send> Sync for UsingClone<T> {}
+unsafe impl<T: Clone + Send> Sync for UseClone<T> {}

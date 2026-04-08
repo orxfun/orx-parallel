@@ -1,11 +1,11 @@
-use crate::infallible_use::{XapUse, using_var::Using};
+use crate::infallible_use::{XapUse, use_var::Use};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next_any<Q, U, I, X>(u: &U, th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<X::O>
 where
     Q: ParRunner,
-    U: Using,
+    U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
 {

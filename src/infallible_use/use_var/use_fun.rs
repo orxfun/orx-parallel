@@ -1,14 +1,14 @@
-use crate::infallible_use::using_var::using::Using;
+use crate::infallible_use::use_var::r#use::Use;
 
-pub struct UsingFun<T, F: Fn(usize) -> T + Sync>(F);
+pub struct UseFun<T, F: Fn(usize) -> T + Sync>(F);
 
-impl<T, F: Fn(usize) -> T + Sync> UsingFun<T, F> {
+impl<T, F: Fn(usize) -> T + Sync> UseFun<T, F> {
     pub fn new(f: F) -> Self {
         Self(f)
     }
 }
 
-impl<T, F: Fn(usize) -> T + Sync> Using for UsingFun<T, F> {
+impl<T, F: Fn(usize) -> T + Sync> Use for UseFun<T, F> {
     type Item = T;
 
     #[inline]

@@ -1,6 +1,6 @@
 use crate::infallible_use::fun::{FnCloned, FnCopied};
 use crate::infallible_use::par_runner::ParRunnerInfallibleUsing;
-use crate::infallible_use::using_var::Using;
+use crate::infallible_use::use_var::Use;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible_use::{XapUse, XapUseEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -10,7 +10,7 @@ use orx_concurrent_iter::enumerate::Enumerate;
 
 pub struct ParUse<U, I, X, R = DefaultRunner>
 where
-    U: Using,
+    U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
@@ -24,7 +24,7 @@ where
 
 impl<U, I, X, R> ParUse<U, I, X, R>
 where
-    U: Using,
+    U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
@@ -146,7 +146,7 @@ where
 
 impl<'a, U, O: Copy + 'a, I, X, R> ParUse<U, I, X, R>
 where
-    U: Using,
+    U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
     R: ParRunner,
@@ -159,7 +159,7 @@ where
 
 impl<'a, U, O: Clone + 'a, I, X, R> ParUse<U, I, X, R>
 where
-    U: Using,
+    U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
     R: ParRunner,
@@ -172,7 +172,7 @@ where
 
 impl<U, I, X, R> ParUse<U, I, X, R>
 where
-    U: Using,
+    U: Use,
     I: ConcurrentIter,
     X: XapUseEnumByInput<U = U::Item, I = I::Item>,
     R: ParRunner,
