@@ -1,5 +1,5 @@
 use crate::infallible::Xap;
-use crate::result::{size_pairs::SizePair, xap_res::XapRes};
+use crate::result::size_pairs::SizePair;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -7,7 +7,8 @@ pub fn reduce<Q, I, M, E, X1, X2, S, F>(
     th_idx: usize,
     state: &Q::State,
     iter: &I,
-    x: XapRes<M, E, X1, X2, S>,
+    x1: X1,
+    x2: X2,
     f: F,
 ) -> Result<Option<X2::O>, E>
 where
@@ -32,7 +33,7 @@ where
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
-                        for a in x.xap_res(i) {
+                        for a in S::xap_res(x1, x2, i) {
                             acc = match (a, acc.is_some()) {
                                 (Ok(a), true) => acc.map(|agg| f(agg, a)),
                                 (Ok(a), false) => Some(a),
@@ -55,7 +56,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| x.xap_res(i)) {
+                        for a in chunk.flat_map(|i| S::xap_res(x1, x2, i)) {
                             acc = match (a, acc.is_some()) {
                                 (Ok(a), true) => acc.map(|agg| f(agg, a)),
                                 (Ok(a), false) => Some(a),
@@ -90,7 +91,7 @@ where
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
-                                for a in x.xap_res(i) {
+                                for a in S::xap_res(x1, x2, i) {
                                     acc = match a {
                                         Ok(a) => f(acc, a),
                                         Err(e) => {
@@ -112,7 +113,7 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
-                                for a in chunk.flat_map(|i| x.xap_res(i)) {
+                                for a in chunk.flat_map(|i| S::xap_res(x1, x2, i)) {
                                     acc = match a {
                                         Ok(a) => f(acc, a),
                                         Err(e) => {
