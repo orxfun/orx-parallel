@@ -1,6 +1,6 @@
 use crate::infallible_use::fun::{FnCloned, FnCopied};
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Use, XapUse};
-use crate::option_use::par_runner::ParRunnerUseRes;
+use crate::option_use::par_runner::ParRunnerUseOpt;
 use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
