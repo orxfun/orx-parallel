@@ -16,7 +16,7 @@ impl UseValue {
     pub fn new(th_idx: usize) -> Self {
         Self {
             a: 0,
-            b: "42".to_string(),
+            b: th_idx.to_string(),
         }
     }
 
