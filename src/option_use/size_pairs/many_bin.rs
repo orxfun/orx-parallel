@@ -4,20 +4,20 @@ use crate::sizes::{Bin, ManyBin};
 use core::iter::FusedIterator;
 
 impl SizePairUseRes for ManyBin {
-    type XapUseResResult<M, E, X1, X2>
-        = IterResManyBin<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
+    type XapUseResResult<M, X1, X2>
+        = IterResManyBin<M, <X1::Values as IntoIterator>::IntoIter, X2>
     where
-        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
-    fn xap_use_res<M, E, X1, X2>(
+    fn xap_use_res<M, X1, X2>(
         u: *mut X1::U,
         x1: X1,
         x2: X2,
         i: X1::I,
-    ) -> Self::XapUseResResult<M, E, X1, X2>
+    ) -> Self::XapUseResResult<M, X1, X2>
     where
-        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
     {
         let iter = x1.xap_use(u, i).into_iter();
@@ -27,9 +27,9 @@ impl SizePairUseRes for ManyBin {
 
 // iter
 
-pub struct IterResManyBin<M, E, I, X2>
+pub struct IterResManyBin<M, I, X2>
 where
-    I: Iterator<Item = Result<M, E>>,
+    I: Iterator<Item = Option<M>>,
     X2: XapUse<I = M, Size = Bin>,
 {
     u: *mut <X2 as XapUse>::U,
@@ -37,24 +37,24 @@ where
     x2: X2,
 }
 
-impl<M, E, I, X2> Iterator for IterResManyBin<M, E, I, X2>
+impl<M, I, X2> Iterator for IterResManyBin<M, I, X2>
 where
-    I: Iterator<Item = Result<M, E>>,
+    I: Iterator<Item = Option<M>>,
     X2: XapUse<I = M, Size = Bin>,
 {
-    type Item = Result<X2::O, E>;
+    type Item = Option<X2::O>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.iter.next() {
-                Some(Ok(a)) => {
+                Some(Some(a)) => {
                     let b = self.x2.bin_value(self.u, a);
                     if b.is_some() {
-                        return b.map(Ok);
+                        return b.map(Some);
                     }
                 }
-                Some(Err(e)) => return Some(Err(e)),
+                Some(None) => return Some(None),
                 None => return None,
             }
         }
@@ -78,13 +78,13 @@ where
         let mut agg = init;
         for i in iter {
             match i {
-                Ok(i) => {
+                Some(i) => {
                     let i = x2.bin_value(self.u, i);
                     if let Some(i) = i {
-                        agg = f(agg, Ok(i))
+                        agg = f(agg, Some(i))
                     }
                 }
-                Err(e) => return f(agg, Err(e)),
+                None => return f(agg, None),
             }
         }
         agg
@@ -95,13 +95,13 @@ where
     where
         Self: Sized,
     {
-        self.iter.take_while(|x| x.is_ok()).count()
+        self.iter.take_while(|x| x.is_some()).count()
     }
 }
 
-impl<M, E, I, X2> FusedIterator for IterResManyBin<M, E, I, X2>
+impl<M, I, X2> FusedIterator for IterResManyBin<M, I, X2>
 where
-    I: FusedIterator<Item = Result<M, E>>,
+    I: FusedIterator<Item = Option<M>>,
     X2: XapUse<I = M, Size = Bin>,
 {
 }

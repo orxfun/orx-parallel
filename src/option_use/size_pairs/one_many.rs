@@ -4,61 +4,62 @@ use crate::sizes::OneMany;
 use core::iter::FusedIterator;
 
 impl SizePairUseRes for OneMany {
-    type XapUseResResult<M, E, X1, X2>
-        = IterResOneMany<<X2::Values as IntoIterator>::IntoIter, E>
+    type XapUseResResult<M, X1, X2>
+        = IterResOneMany<<X2::Values as IntoIterator>::IntoIter>
     where
-        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
     #[inline]
-    fn xap_use_res<M, E, X1, X2>(
+    fn xap_use_res<M, X1, X2>(
         u: *mut X1::U,
         x1: X1,
         x2: X2,
         i: X1::I,
-    ) -> Self::XapUseResResult<M, E, X1, X2>
+    ) -> Self::XapUseResResult<M, X1, X2>
     where
-        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
     {
         match x1.one_value(u, i) {
-            Ok(a) => IterResOneMany::ok(x2.xap_use(u, a).into_iter()),
-            Err(e) => IterResOneMany::err(e),
+            Some(a) => IterResOneMany::ok(x2.xap_use(u, a).into_iter()),
+            None => IterResOneMany::err(),
         }
     }
 }
 
 // iter
 
-pub enum IterResOneMany<I: Iterator, E> {
+pub enum IterResOneMany<I: Iterator> {
     Success(I),
-    Fail(Option<E>),
+    Fail(bool),
 }
 
-impl<I: Iterator, E> IterResOneMany<I, E> {
+impl<I: Iterator> IterResOneMany<I> {
     pub fn ok(i: I) -> Self {
         Self::Success(i)
     }
 
-    pub fn err(e: E) -> Self {
-        Self::Fail(Some(e))
+    pub fn err() -> Self {
+        Self::Fail(false)
     }
 }
 
-impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
-    type Item = Result<I::Item, E>;
+impl<I: Iterator> Iterator for IterResOneMany<I> {
+    type Item = Option<I::Item>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::Success(iter) => iter.next().map(Ok),
-            Self::Fail(e) => match e.is_some() {
-                true => {
+            Self::Success(iter) => iter.next().map(Some),
+            Self::Fail(taken) => match taken {
+                false => {
                     // SAFETY: error can be taken out only once; and on construction
                     // the error variant must be created with Some of an error
-                    Some(Err(unsafe { e.take().unwrap_unchecked() }))
+                    *taken = true;
+                    Some(None)
                 }
-                false => None, // the error is already taken and returned
+                true => None, // the error is already taken and returned
             },
         }
     }
@@ -67,8 +68,8 @@ impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self {
             Self::Success(iter) => iter.size_hint(),
-            Self::Fail(Some(_)) => (1, Some(1)),
-            Self::Fail(None) => (0, Some(0)),
+            Self::Fail(false) => (1, Some(1)),
+            Self::Fail(true) => (0, Some(0)),
         }
     }
 
@@ -79,9 +80,9 @@ impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
         F: FnMut(B, Self::Item) -> B,
     {
         match self {
-            Self::Success(iter) => iter.map(Ok).fold(init, f),
-            Self::Fail(Some(e)) => f(init, Err(e)),
-            Self::Fail(None) => init,
+            Self::Success(iter) => iter.map(Some).fold(init, f),
+            Self::Fail(false) => f(init, None),
+            Self::Fail(true) => init,
         }
     }
 
@@ -92,20 +93,20 @@ impl<I: Iterator, E> Iterator for IterResOneMany<I, E> {
     {
         match self {
             Self::Success(iter) => iter.count(),
-            Self::Fail(Some(_)) => 1,
-            Self::Fail(None) => 0,
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
         }
     }
 }
 
-impl<I: FusedIterator, E> FusedIterator for IterResOneMany<I, E> {}
+impl<I: FusedIterator> FusedIterator for IterResOneMany<I> {}
 
-impl<I: ExactSizeIterator, E> ExactSizeIterator for IterResOneMany<I, E> {
+impl<I: ExactSizeIterator> ExactSizeIterator for IterResOneMany<I> {
     fn len(&self) -> usize {
         match self {
             Self::Success(iter) => iter.len(),
-            Self::Fail(Some(_)) => 1,
-            Self::Fail(None) => 0,
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
         }
     }
 }
