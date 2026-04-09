@@ -60,7 +60,7 @@ fn bin_x_reduce() {
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)]
 )]
-fn bin_x_collect_into<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
+fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
     let iter = || {
         inputs(N).into_iter().filter(|x| x.len() < 4).flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
