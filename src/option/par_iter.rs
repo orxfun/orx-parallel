@@ -49,7 +49,7 @@ where
         ParOpt::new(self.iter, self.x1, x2, self.exe, self.params)
     }
 
-    fn destruct(self) -> (I, X1, X2, R, S, Params) {
+    pub(crate) fn destruct(self) -> (I, X1, X2, R, S, Params) {
         (self.iter, self.x1, self.x2, self.exe, self.s, self.params)
     }
     // params
