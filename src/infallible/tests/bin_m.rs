@@ -56,8 +56,8 @@ fn bin_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
     let iter = || {
         inputs(N)
             .into_iter()
-            .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
+            .map(|x| format!("{}0", x))
     };
 
     let expected = C::expected(mode, |i| i.to_string(), iter());
