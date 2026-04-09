@@ -1,24 +1,25 @@
-use crate::infallible_use::{XapUse, use_var::Use};
+use crate::infallible::Xap;
+use crate::result::size_pairs::SizePairRes;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn reduce<Q, U, I, X, F>(
-    u: &U,
+pub fn reduce<Q, I, M, E, X1, X2, S, F>(
+    _: S,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
-    x: X,
+    x1: X1,
+    x2: X2,
     f: F,
-) -> Option<X::O>
+) -> Result<Option<X2::O>, E>
 where
     Q: ParRunner,
-    U: Use,
     I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
-    F: Fn(&mut X::U, X::O, X::O) -> X::O,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+    F: Fn(X2::O, X2::O) -> X2::O,
 {
-    let mut u = u.create(th_idx);
-    let u = &mut u as *mut U::Item;
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
 
@@ -33,13 +34,15 @@ where
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
-                        let result = x
-                            .xap_use(u, i)
-                            .into_iter()
-                            .reduce(|a, b| f(unsafe { &mut *u }, a, b));
-                        if result.is_some() {
-                            acc = result;
-                            break;
+                        for a in S::xap_res(x1, x2, i) {
+                            acc = match (a, acc.is_some()) {
+                                (Ok(a), true) => acc.map(|agg| f(agg, a)),
+                                (Ok(a), false) => Some(a),
+                                (Err(e), _) => {
+                                    Q::broadcast_stop(iter, state, chunk_state);
+                                    return Err(e);
+                                }
+                            };
                         }
                     }
                     // TODO: a good back-off strategy might be used, needs benchmark with ConcurrentQueue
@@ -54,12 +57,15 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        let result = chunk
-                            .flat_map(|i| x.xap_use(u, i).into_iter())
-                            .reduce(|a, b| f(unsafe { &mut *u }, a, b));
-                        if result.is_some() {
-                            acc = result;
-                            break;
+                        for a in chunk.flat_map(|i| S::xap_res(x1, x2, i)) {
+                            acc = match (a, acc.is_some()) {
+                                (Ok(a), true) => acc.map(|agg| f(agg, a)),
+                                (Ok(a), false) => Some(a),
+                                (Err(e), _) => {
+                                    Q::broadcast_stop(iter, state, chunk_state);
+                                    return Err(e);
+                                }
+                            };
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
@@ -68,6 +74,10 @@ where
             }
         }
         Q::complete_chunk(state, chunk_state);
+
+        if acc.is_some() {
+            break;
+        }
     }
 
     // fold over the aggregate
@@ -82,12 +92,14 @@ where
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
-                                let result = x
-                                    .xap_use(u, i)
-                                    .into_iter()
-                                    .reduce(|a, b| f(unsafe { &mut *u }, a, b));
-                                if let Some(y) = result {
-                                    acc = f(unsafe { &mut *u }, acc, y);
+                                for a in S::xap_res(x1, x2, i) {
+                                    acc = match a {
+                                        Ok(a) => f(acc, a),
+                                        Err(e) => {
+                                            Q::broadcast_stop(iter, state, chunk_state);
+                                            return Err(e);
+                                        }
+                                    };
                                 }
                             }
                             // TODO: a good back-off strategy might be used, needs benchmark with ConcurrentQueue
@@ -102,11 +114,14 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
-                                let result = chunk
-                                    .flat_map(|i| x.xap_use(u, i).into_iter())
-                                    .reduce(|a, b| f(unsafe { &mut *u }, a, b));
-                                if let Some(y) = result {
-                                    acc = f(unsafe { &mut *u }, acc, y);
+                                for a in chunk.flat_map(|i| S::xap_res(x1, x2, i)) {
+                                    acc = match a {
+                                        Ok(a) => f(acc, a),
+                                        Err(e) => {
+                                            Q::broadcast_stop(iter, state, chunk_state);
+                                            return Err(e);
+                                        }
+                                    };
                                 }
                             }
                             None if iter.is_completed_when_none_returned() => break,
@@ -122,5 +137,5 @@ where
         }
     };
 
-    result
+    Ok(result)
 }
