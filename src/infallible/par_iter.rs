@@ -134,10 +134,7 @@ where
         match self.params.iteration_order {
             IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
             IterationOrder::Arbitrary => {
-                let exact_len = match (self.iter.try_get_len(), <X::Size as Size>::size()) {
-                    (Some(input_len), Some(elem_len)) => Some(input_len * elem_len),
-                    _ => None,
-                };
+                let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
                 C::inf_arb_col_into(Some(dst), self, exact_len)
             }
         }
@@ -151,10 +148,7 @@ where
         match self.params.iteration_order {
             IterationOrder::Ordered => C::inf_col_into(None, self),
             IterationOrder::Arbitrary => {
-                let exact_len = match (self.iter.try_get_len(), <X::Size as Size>::size()) {
-                    (Some(input_len), Some(elem_len)) => Some(input_len * elem_len),
-                    _ => None,
-                };
+                let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
                 C::inf_arb_col_into(None, self, exact_len)
             }
         }
