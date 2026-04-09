@@ -1,16 +1,18 @@
-use crate::ParCollectInto;
+use crate::{ParCollectInto, parameters::IterationOrder};
 use alloc::vec::Vec;
 use core::fmt::Debug;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{Doubling, Linear, PseudoDefault, SplitVec};
 
-pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug>:
+pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug + Ord>:
     ParCollectInto<T> + Clone + PartialEq + Debug + Sized
 {
     fn empty() -> Self;
 
     fn push_back(&mut self, value: T);
+
+    fn sort_vec(&mut self);
 
     fn init_result(mode: ColIntoMode, val: impl Fn(usize) -> T) -> Option<Self> {
         match mode {
@@ -45,9 +47,17 @@ pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug>:
 
         vec
     }
+
+    fn assert_eq(mut result: Self, mut expected: Self, order: IterationOrder) {
+        if let IterationOrder::Arbitrary = order {
+            result.sort_vec();
+            expected.sort_vec();
+        }
+        assert_eq!(result, expected);
+    }
 }
 
-impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for FixedVec<T> {
+impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for FixedVec<T> {
     fn empty() -> Self {
         Self::new(12345)
     }
@@ -55,9 +65,13 @@ impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for FixedVec<T> {
     fn push_back(&mut self, value: T) {
         self.push(value);
     }
+
+    fn sort_vec(&mut self) {
+        self.sort();
+    }
 }
 
-impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for SplitVec<T, Doubling> {
+impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for SplitVec<T, Doubling> {
     fn empty() -> Self {
         Self::with_doubling_growth()
     }
@@ -65,9 +79,13 @@ impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for SplitVec<T, Doublin
     fn push_back(&mut self, value: T) {
         self.push(value);
     }
+
+    fn sort_vec(&mut self) {
+        self.sort();
+    }
 }
 
-impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for SplitVec<T, Linear> {
+impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for SplitVec<T, Linear> {
     fn empty() -> Self {
         Self::with_linear_growth(6)
     }
@@ -75,15 +93,23 @@ impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for SplitVec<T, Linear>
     fn push_back(&mut self, value: T) {
         self.push(value);
     }
+
+    fn sort_vec(&mut self) {
+        self.sort();
+    }
 }
 
-impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for Vec<T> {
+impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for Vec<T> {
     fn empty() -> Self {
         PseudoDefault::pseudo_default()
     }
 
     fn push_back(&mut self, value: T) {
         self.push(value);
+    }
+
+    fn sort_vec(&mut self) {
+        self.sort();
     }
 }
 
