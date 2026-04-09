@@ -4,7 +4,7 @@ use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::PinnedVec;
+use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
 
 pub trait ParRunnerInfallible: ParRunner {
     fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
@@ -80,7 +80,7 @@ pub trait ParRunnerInfallible: ParRunner {
         Val::reduce(results_bag.into_inner().into_inner(), f)
     }
 
-    fn collect<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: &mut P)
+    fn collect<I, X, P>(&mut self, params: Params, iter: I, x: X, mut pinned_vec: P) -> P
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
@@ -102,7 +102,39 @@ pub trait ParRunnerInfallible: ParRunner {
             }
         });
 
-        ValIdx::collect_into(results_bag.into_inner().into_inner(), pinned_vec);
+        ValIdx::collect_into(results_bag.into_inner().into_inner(), &mut pinned_vec);
+        pinned_vec
+    }
+
+    fn collect_arbitrary<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+        X::O: Send,
+        P: IntoConcurrentPinnedVec<X::O>,
+    {
+        let capacity_bound = pinned_vec.capacity_bound();
+        let offset = pinned_vec.len();
+        let mut results_bag: ConcurrentBag<X::O, P> = pinned_vec.into();
+        match iter.try_get_len() {
+            Some(iter_len) => results_bag.reserve_maximum_capacity(offset + iter_len),
+            None => results_bag.reserve_maximum_capacity(capacity_bound),
+        };
+
+        let mut spawned = 0;
+        let (_, state) = self.nt_state(params, iter.try_get_len());
+
+        let (iter, state, x, bag) = (&iter, &state, x, &results_bag);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    th::collect_arbitrary::<Self, _, _, _>(th_idx, state, iter, x, bag);
+                });
+            }
+        });
+
+        results_bag.into_inner()
     }
 }
 
