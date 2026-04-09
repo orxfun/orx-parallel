@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+pub mod collectables;
 pub mod fun;
 mod par_iter;
 mod par_runner;
