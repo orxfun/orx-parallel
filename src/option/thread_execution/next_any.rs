@@ -1,16 +1,21 @@
-use crate::{option::xap_opt::XapOpt, runner::ParRunner};
+use crate::option::size_pairs::SizePairOpt;
+use crate::{infallible::Xap, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-/// Returns either of the following:
-///
-/// * Some(Some(found)): no failure, found an element
-/// * Some(None): no failure but no element to find
-/// * None: a failure (None) is observed
-pub fn next_any<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Option<Option<X::O>>
+pub fn next_any<Q, I, M, X1, X2, S>(
+    _: S,
+    th_idx: usize,
+    state: &Q::State,
+    iter: &I,
+    x1: X1,
+    x2: X2,
+) -> Option<Option<X2::O>>
 where
     Q: ParRunner,
     I: ConcurrentIter,
-    X: XapOpt<I = I::Item>,
+    X1: Xap<I = I::Item, O = Option<M>>,
+    X2: Xap<I = M>,
+    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
@@ -22,7 +27,7 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    for a in x.xap_res(i) {
+                    for a in S::xap_opt(x1, x2, i) {
                         Q::broadcast_stop(iter, state, chunk_state);
                         match a {
                             Some(a) => return Some(Some(a)),
@@ -40,7 +45,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| x.xap_res(i)) {
+                        for a in chunk.flat_map(|i| S::xap_opt(x1, x2, i)) {
                             Q::broadcast_stop(iter, state, chunk_state);
                             match a {
                                 Some(a) => return Some(Some(a)),

@@ -1,8 +1,9 @@
-mod par_iter_opt;
-mod par_runner;
-mod thread_execution;
-mod xap_opt;
-pub mod xap_opt_variants;
+#[cfg(test)]
+mod tests;
 
-pub use par_iter_opt::ParOpt;
-pub use xap_opt::XapOpt;
+mod par_iter;
+mod par_runner;
+pub mod size_pairs;
+mod thread_execution;
+
+pub use par_iter::ParOpt;

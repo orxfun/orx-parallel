@@ -2,29 +2,29 @@
 * light & heavy show the intensity of computation
 * beg & mid & end show where the element to be found is located
 
-first_mfmf/seq/e20_light_Beg        time:   [108.07 ns 108.73 ns 109.43 ns]
-first_mfmf/rayon/e20_light_Beg      time:   [1.6181 ms 1.6573 ms 1.6950 ms]
-first_mfmf/orx/e20_light_Beg        time:   [1.1030 ms 1.1082 ms 1.1141 ms]
+first_mfmf/seq/e20_light_Beg    time:   [250.65 ns 252.57 ns 254.53 ns]
+first_mfmf/rayon/e20_light_Beg  time:   [3.0536 ms 3.2758 ms 3.5572 ms]
+first_mfmf/orx/e20_light_Beg    time:   [2.2740 ms 2.4014 ms 2.5433 ms]
 
-first_mfmf/seq/e20_light_Mid        time:   [245.06 µs 247.52 µs 250.03 µs]
-first_mfmf/rayon/e20_light_Mid      time:   [11.598 ms 11.873 ms 12.087 ms]
-first_mfmf/orx/e20_light_Mid        time:   [1.6074 ms 1.6190 ms 1.6311 ms]
+first_mfmf/seq/e20_light_Mid    time:   [462.15 µs 471.12 µs 481.03 µs]
+first_mfmf/rayon/e20_light_Mid  time:   [14.305 ms 15.129 ms 15.990 ms]
+first_mfmf/orx/e20_light_Mid    time:   [2.7644 ms 2.8488 ms 2.9420 ms]
 
-first_mfmf/seq/e20_light_End        time:   [542.25 µs 548.52 µs 555.04 µs]
-first_mfmf/rayon/e20_light_End      time:   [5.2982 ms 6.2473 ms 7.2232 ms]
-first_mfmf/orx/e20_light_End        time:   [3.0353 ms 3.0902 ms 3.1476 ms]
+first_mfmf/seq/e20_light_End    time:   [984.30 µs 1.0179 ms 1.0623 ms]
+first_mfmf/rayon/e20_light_End  time:   [16.129 ms 17.313 ms 18.574 ms]
+first_mfmf/orx/e20_light_End    time:   [2.8953 ms 3.0124 ms 3.1485 ms]
 
-first_mfmf/seq/e20_heavy_Beg        time:   [4.0804 µs 4.1668 µs 4.2704 µs]
-first_mfmf/rayon/e20_heavy_Beg      time:   [2.1754 ms 2.2630 ms 2.3504 ms]
-first_mfmf/orx/e20_heavy_Beg        time:   [1.5279 ms 1.5552 ms 1.5887 ms]
+first_mfmf/seq/e20_heavy_Beg    time:   [5.8278 µs 5.9379 µs 6.0362 µs]
+first_mfmf/rayon/e20_heavy_Beg  time:   [3.9701 ms 4.1765 ms 4.3917 ms]
+first_mfmf/orx/e20_heavy_Beg    time:   [3.4825 ms 3.9064 ms 4.3782 ms]
 
-first_mfmf/seq/e20_heavy_Mid        time:   [12.893 ms 13.051 ms 13.219 ms]
-first_mfmf/rayon/e20_heavy_Mid      time:   [7.1754 ms 7.5743 ms 7.9822 ms]
-first_mfmf/orx/e20_heavy_Mid        time:   [3.7309 ms 3.7878 ms 3.8508 ms]
+first_mfmf/seq/e20_heavy_Mid    time:   [19.943 ms 20.514 ms 21.183 ms]
+first_mfmf/rayon/e20_heavy_Mid  time:   [21.469 ms 24.537 ms 28.335 ms]
+first_mfmf/orx/e20_heavy_Mid    time:   [7.2474 ms 8.3068 ms 9.8094 ms]
 
-first_mfmf/seq/e20_heavy_End        time:   [23.796 ms 23.948 ms 24.103 ms]
-first_mfmf/rayon/e20_heavy_End      time:   [7.1390 ms 7.3982 ms 7.6639 ms]
-first_mfmf/orx/e20_heavy_End        time:   [5.2596 ms 5.3274 ms 5.3958 ms]
+first_mfmf/seq/e20_heavy_End    time:   [39.174 ms 39.907 ms 40.649 ms]
+first_mfmf/rayon/e20_heavy_End  time:   [15.983 ms 17.149 ms 18.407 ms]
+first_mfmf/orx/e20_heavy_End    time:   [7.3283 ms 7.6612 ms 8.0215 ms]
 
 */
 
@@ -55,16 +55,6 @@ fn fibonacci(n: u64) -> u64 {
         b = c;
     }
     a
-}
-
-fn l_r(a: u64, b: u64) -> u64 {
-    a + b
-}
-
-fn h_r(a: u64, b: u64) -> u64 {
-    let f = black_box(fibonacci(a % FIB_UPPER_BOUND));
-    let g = black_box(a + f);
-    g + b - f
 }
 
 fn h_m(x: &u64) -> u64 {

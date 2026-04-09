@@ -3,29 +3,29 @@
 * light & heavy show the intensity of computation
 * beg & mid & end show where the element to be found is located
 
-first_mi/seq/e20_light_Beg      time:   [178.76 ns 180.16 ns 181.62 ns]
-first_mi/rayon/e20_light_Beg    time:   [1.7342 ms 1.7676 ms 1.7994 ms]
-first_mi/orx/e20_light_Beg      time:   [1.2874 ms 1.3069 ms 1.3282 ms]
+first_mi/seq/e20_light_Beg      time:   [317.27 ns 319.94 ns 322.67 ns]
+first_mi/rayon/e20_light_Beg    time:   [2.8722 ms 2.9784 ms 3.0857 ms]
+first_mi/orx/e20_light_Beg      time:   [1.8422 ms 1.8976 ms 1.9586 ms]
 
-first_mi/seq/e20_light_Mid      time:   [405.30 µs 409.87 µs 414.72 µs]
-first_mi/rayon/e20_light_Mid    time:   [6.9570 ms 8.0187 ms 9.0736 ms]
-first_mi/orx/e20_light_Mid      time:   [1.7888 ms 1.8207 ms 1.8581 ms]
+first_mi/seq/e20_light_Mid      time:   [640.63 µs 654.69 µs 671.80 µs]
+first_mi/rayon/e20_light_Mid    time:   [14.004 ms 15.077 ms 16.226 ms]
+first_mi/orx/e20_light_Mid      time:   [2.5569 ms 2.6079 ms 2.6605 ms]
 
-first_mi/seq/e20_light_End      time:   [841.01 µs 853.36 µs 866.24 µs]
-first_mi/rayon/e20_light_End    time:   [9.0571 ms 10.049 ms 11.036 ms]
-first_mi/orx/e20_light_End      time:   [2.1431 ms 2.1779 ms 2.2143 ms]
+first_mi/seq/e20_light_End      time:   [1.3228 ms 1.3405 ms 1.3575 ms]
+first_mi/rayon/e20_light_End    time:   [11.463 ms 12.034 ms 12.614 ms]
+first_mi/orx/e20_light_End      time:   [2.9951 ms 3.1095 ms 3.2314 ms]
 
-first_mi/seq/e20_heavy_Beg      time:   [8.6038 µs 8.6946 µs 8.7987 µs]
-first_mi/rayon/e20_heavy_Beg    time:   [1.7731 ms 1.9509 ms 2.1225 ms]
-first_mi/orx/e20_heavy_Beg      time:   [1.4664 ms 1.4949 ms 1.5273 ms]
+first_mi/seq/e20_heavy_Beg      time:   [13.345 µs 13.473 µs 13.615 µs]
+first_mi/rayon/e20_heavy_Beg    time:   [3.1574 ms 3.2652 ms 3.3770 ms]
+first_mi/orx/e20_heavy_Beg      time:   [2.2114 ms 2.2876 ms 2.3719 ms]
 
-first_mi/seq/e20_heavy_Mid      time:   [24.281 ms 24.639 ms 25.038 ms]
-first_mi/rayon/e20_heavy_Mid    time:   [4.1897 ms 4.5078 ms 4.8444 ms]
-first_mi/orx/e20_heavy_Mid      time:   [4.9047 ms 4.9633 ms 5.0233 ms]
+first_mi/seq/e20_heavy_Mid      time:   [35.848 ms 36.455 ms 37.066 ms]
+first_mi/rayon/e20_heavy_Mid    time:   [14.092 ms 14.748 ms 15.445 ms]
+first_mi/orx/e20_heavy_Mid      time:   [7.3540 ms 8.2391 ms 9.5637 ms]
 
-first_mi/seq/e20_heavy_End      time:   [48.971 ms 49.385 ms 49.839 ms]
-first_mi/rayon/e20_heavy_End    time:   [7.8892 ms 8.3022 ms 8.7384 ms]
-first_mi/orx/e20_heavy_End      time:   [7.5770 ms 7.6832 ms 7.7992 ms]
+first_mi/seq/e20_heavy_End      time:   [71.276 ms 72.874 ms 74.532 ms]
+first_mi/rayon/e20_heavy_End    time:   [21.677 ms 22.804 ms 23.995 ms]
+first_mi/orx/e20_heavy_End      time:   [10.026 ms 10.209 ms 10.395 ms]
 
 */
 

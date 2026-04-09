@@ -3,23 +3,29 @@
 * light & heavy show the intensity of computation
 * beg & mid & end show where the element to be found is located
 
-first_lf/seq/e20_light_Beg      time:   [700.77 ns 707.53 ns 714.67 ns]
-first_lf/orx/e20_light_Beg      time:   [1.1349 ms 1.1545 ms 1.1765 ms]
+first_lf/seq/e20_light_Beg      time:   [1.2625 µs 1.2729 µs 1.2838 µs]
+first_lf/rayon/e20_light_Beg    time:   [4.0181 ms 4.4393 ms 4.9073 ms]
+first_lf/orx/e20_light_Beg      time:   [2.2935 ms 2.3699 ms 2.4485 ms]
 
-first_lf/seq/e20_light_Mid      time:   [1.4683 ms 1.4819 ms 1.4977 ms]
-first_lf/orx/e20_light_Mid      time:   [1.9964 ms 2.0345 ms 2.0765 ms]
+first_lf/seq/e20_light_Mid      time:   [3.0526 ms 3.1017 ms 3.1592 ms]
+first_lf/rayon/e20_light_Mid    time:   [15.849 ms 16.580 ms 17.370 ms]
+first_lf/orx/e20_light_Mid      time:   [5.0026 ms 5.3335 ms 5.7252 ms]
 
-first_lf/seq/e20_light_End      time:   [3.3449 ms 3.3785 ms 3.4136 ms]
-first_lf/orx/e20_light_End      time:   [2.7844 ms 2.8358 ms 2.8903 ms]
+first_lf/seq/e20_light_End      time:   [5.4910 ms 5.5630 ms 5.6358 ms]
+first_lf/rayon/e20_light_End    time:   [27.774 ms 28.863 ms 29.966 ms]
+first_lf/orx/e20_light_End      time:   [6.9977 ms 7.2638 ms 7.5496 ms]
 
-first_lf/seq/e20_heavy_Beg      time:   [26.922 µs 27.143 µs 27.393 µs]
-first_lf/orx/e20_heavy_Beg      time:   [1.2524 ms 1.2692 ms 1.2898 ms]
+first_lf/seq/e20_heavy_Beg      time:   [46.651 µs 47.222 µs 47.898 µs]
+first_lf/rayon/e20_heavy_Beg    time:   [3.0950 ms 3.1916 ms 3.2945 ms]
+first_lf/orx/e20_heavy_Beg      time:   [2.4598 ms 2.5285 ms 2.6012 ms]
 
-first_lf/seq/e20_heavy_Mid      time:   [64.136 ms 64.587 ms 65.066 ms]
-first_lf/orx/e20_heavy_Mid      time:   [8.9581 ms 9.0380 ms 9.1222 ms]
+first_lf/seq/e20_heavy_Mid      time:   [119.25 ms 122.21 ms 125.56 ms]
+first_lf/rayon/e20_heavy_Mid    time:   [32.517 ms 34.125 ms 35.941 ms]
+first_lf/orx/e20_heavy_Mid      time:   [17.983 ms 18.292 ms 18.632 ms]
 
-first_lf/seq/e20_heavy_End      time:   [126.39 ms 127.02 ms 127.68 ms]
-first_lf/orx/e20_heavy_End      time:   [16.485 ms 16.676 ms 16.878 ms]
+first_lf/seq/e20_heavy_End      time:   [224.94 ms 228.13 ms 231.39 ms]
+first_lf/rayon/e20_heavy_End    time:   [45.713 ms 46.771 ms 47.851 ms]
+first_lf/orx/e20_heavy_End      time:   [35.471 ms 37.344 ms 39.499 ms]
 
 */
 
@@ -28,7 +34,7 @@ use orx_concurrent_iter::IntoConcurrentIter;
 use orx_parallel::infallible::par;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-// use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 const FIB_UPPER_BOUND: u64 = 201;
 
@@ -82,25 +88,19 @@ fn orx(input: &[u64], h: bool, value: u64) -> Option<u64> {
     }
 }
 
-/*
-flat_map is not available on rayon with the provided iterator:
-`ParallelIterator` is not implemented for `impl IntoIterator<Item = u64>`
-
-To be uncommented to add to benchmark if the implementation will be available later.
- */
-// fn rayon(input: &[u64], h: bool, value: u64) -> Option<u64> {
-//     let iter = input.into_par_iter();
-//     match h {
-//         false => iter
-//             .flat_map(l_l)
-//             .filter(|x| *x == value)
-//             .find_first(|_| true),
-//         true => iter
-//             .flat_map(h_l)
-//             .filter(|x| *x == value)
-//             .find_first(|_| true),
-//     }
-// }
+fn rayon(input: &[u64], h: bool, value: u64) -> Option<u64> {
+    let iter = input.into_par_iter();
+    match h {
+        false => iter
+            .flat_map_iter(l_l)
+            .filter(|x| *x == value)
+            .find_first(|_| true),
+        true => iter
+            .flat_map_iter(h_l)
+            .filter(|x| *x == value)
+            .find_first(|_| true),
+    }
+}
 
 #[derive(Debug)]
 enum Pos {
@@ -183,10 +183,10 @@ fn run(c: &mut Criterion) {
             b.iter(|| seq(&input, t.heavy_compute, t.val))
         });
 
-        // group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-        //     assert_eq!(&expected, &rayon(&input, t.heavy_compute, t.val));
-        //     b.iter(|| rayon(&input, t.heavy_compute, t.val))
-        // });
+        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+            assert_eq!(&expected, &rayon(&input, t.heavy_compute, t.val));
+            b.iter(|| rayon(&input, t.heavy_compute, t.val))
+        });
 
         group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
             assert_eq!(&expected, &orx(&input, t.heavy_compute, t.val));

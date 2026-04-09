@@ -1,8 +1,9 @@
-mod par_res_iter;
-mod par_runner;
-mod thread_execution;
-mod xap_res;
-pub mod xap_res_variants;
+#[cfg(test)]
+mod tests;
 
-pub use par_res_iter::ParRes;
-pub use xap_res::XapRes;
+mod par_iter;
+mod par_runner;
+pub mod size_pairs;
+mod thread_execution;
+
+pub use par_iter::ParRes;

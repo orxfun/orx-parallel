@@ -1,12 +1,13 @@
 use crate::infallible::fun::Map;
-use crate::infallible::size::{Bin, Many, One, Size};
+use crate::infallible::sizes::SizeInf;
+use crate::sizes::{Bin, One};
 
 pub trait Xap: Copy + Send {
     type I;
 
     type O;
 
-    type Size: Size;
+    type Size: SizeInf;
 
     type Values: IntoIterator<Item = Self::O>;
 
@@ -14,57 +15,50 @@ pub trait Xap: Copy + Send {
 
     // transformations
 
-    type Map<Q, H>: Xap<I = Self::I, O = Q, Size = Self::Size>
+    fn map<Q, H>(self, h: H) -> MapOf<Self, Q, H>
     where
-        H: Fn(Self::O) -> Q + Copy + Send;
+        H: Fn(Self::O) -> Q + Copy + Send,
+    {
+        <Self::Size as SizeInf>::map(self, h)
+    }
 
-    fn map<Q, H>(self, h: H) -> Self::Map<Q, H>
+    fn inspect<H>(self, h: H) -> InsOf<Self, H>
     where
-        H: Fn(Self::O) -> Q + Copy + Send;
+        H: Fn(&Self::O) + Copy + Send,
+    {
+        <Self::Size as SizeInf>::inspect(self, h)
+    }
 
-    type Inspect<H>: Xap<I = Self::I, O = Self::O, Size = Self::Size>
+    fn filter<H>(self, h: H) -> FilOf<Self, H>
     where
-        H: Fn(&Self::O) + Copy + Send;
+        H: Fn(&Self::O) -> bool + Copy + Send,
+    {
+        <Self::Size as SizeInf>::filter(self, h)
+    }
 
-    fn inspect<H>(self, h: H) -> Self::Inspect<H>
+    fn filter_map<Q, H>(self, h: H) -> FilMapOf<Self, Q, H>
     where
-        H: Fn(&Self::O) + Copy + Send;
+        H: Fn(Self::O) -> Option<Q> + Copy + Send,
+    {
+        <Self::Size as SizeInf>::filter_map(self, h)
+    }
 
-    type Filter<H>: Xap<I = Self::I, O = Self::O, Size = <Self::Size as Size>::ThenBin>
-    where
-        H: Fn(&Self::O) -> bool + Copy + Send;
-
-    fn filter<H>(self, h: H) -> Self::Filter<H>
-    where
-        H: Fn(&Self::O) -> bool + Copy + Send;
-
-    type FilterMap<Q, H>: Xap<I = Self::I, O = Q, Size = <Self::Size as Size>::ThenBin>
-    where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send;
-
-    fn filter_map<Q, H>(self, h: H) -> Self::FilterMap<Q, H>
-    where
-        H: Fn(Self::O) -> Option<Q> + Copy + Send;
-
-    type FlatMap<V, H>: Xap<I = Self::I, O = V::Item, Size = Many>
+    fn flat_map<V, H>(self, h: H) -> FlatMapOf<Self, V, H>
     where
         V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send;
-
-    fn flat_map<V, H>(self, h: H) -> Self::FlatMap<V, H>
-    where
-        V: IntoIterator,
-        H: Fn(Self::O) -> V + Copy + Send;
+        H: Fn(Self::O) -> V + Copy + Send,
+    {
+        <Self::Size as SizeInf>::flat_map(self, h)
+    }
 
     // transformations - helper
 
-    type Mapped<M>: Xap<I = Self::I, O = M::O, Size = Self::Size>
+    fn mapped<M>(self, m: M) -> MappedOf<Self, M>
     where
-        M: Map<I = Self::O>;
-
-    fn mapped<M>(self, m: M) -> Self::Mapped<M>
-    where
-        M: Map<I = Self::O>;
+        M: Map<I = Self::O>,
+    {
+        <Self::Size as SizeInf>::mapped(self, m)
+    }
 }
 
 // one
@@ -90,3 +84,17 @@ pub trait XapBin: Xap<Size = Bin> {
 }
 
 impl<X: Xap<Size = Bin>> XapBin for X {}
+
+// helper types
+
+pub type MapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::Map<X, Q, H>;
+
+pub type InsOf<X, H> = <<X as Xap>::Size as SizeInf>::Inspect<X, H>;
+
+pub type FilOf<X, H> = <<X as Xap>::Size as SizeInf>::Filter<X, H>;
+
+pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as SizeInf>::FilterMap<X, Q, H>;
+
+pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as SizeInf>::FlatMap<X, V, H>;
+
+pub type MappedOf<X, M> = <<X as Xap>::Size as SizeInf>::Mapped<X, M>;
