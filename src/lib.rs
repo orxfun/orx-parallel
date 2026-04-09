@@ -24,8 +24,6 @@ mod results;
 mod runner;
 
 pub mod infallible;
-pub mod infallible_arch;
-// pub mod infallible_using;
 pub mod infallible_use;
 pub mod kind_transformations;
 pub mod option;
