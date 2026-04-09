@@ -3,25 +3,15 @@
 * eN means an input of size 2^N is used
 * _ord means results are collected in order consistent to input; _arb means order might be arbitrary
 
-reduce_f/seq/e15_light      time:   [16.344 µs 16.637 µs 16.960 µs]
-reduce_f/rayon1/e15_light   time:   [8.9277 ms 9.2255 ms 9.5327 ms]
-reduce_f/rayon2/e15_light   time:   [9.6452 ms 10.078 ms 10.513 ms]
-reduce_f/orx/e15_light      time:   [1.5431 ms 1.5777 ms 1.6177 ms]
+col_f/seq/e15           time:   [73.176 µs 74.413 µs 75.712 µs]
+col_f/rayon/e15         time:   [14.387 ms 14.810 ms 15.240 ms]
+col_f/orx_ord/e15       time:   [2.2811 ms 2.3480 ms 2.4199 ms]
+col_f/orx_arb/e15       time:   [2.3316 ms 2.4264 ms 2.5335 ms]
 
-reduce_f/seq/e20_light      time:   [1.6849 ms 1.7096 ms 1.7364 ms]
-reduce_f/rayon1/e20_light   time:   [14.893 ms 15.653 ms 16.369 ms]
-reduce_f/rayon2/e20_light   time:   [17.352 ms 18.113 ms 18.831 ms]
-reduce_f/orx/e20_light      time:   [2.2661 ms 2.2848 ms 2.3039 ms]
-
-reduce_f/seq/e15_heavy      time:   [1.4048 ms 1.4240 ms 1.4458 ms]
-reduce_f/rayon1/e15_heavy   time:   [10.024 ms 10.289 ms 10.541 ms]
-reduce_f/rayon2/e15_heavy   time:   [9.5188 ms 10.053 ms 10.583 ms]
-reduce_f/orx/e15_heavy      time:   [2.1792 ms 2.1978 ms 2.2179 ms]
-
-reduce_f/seq/e20_heavy      time:   [46.712 ms 47.308 ms 47.936 ms]
-reduce_f/rayon1/e20_heavy   time:   [13.850 ms 14.328 ms 14.816 ms]
-reduce_f/rayon2/e20_heavy   time:   [12.358 ms 12.991 ms 13.655 ms]
-reduce_f/orx/e20_heavy      time:   [8.4021 ms 8.5381 ms 8.6858 ms]
+col_f/seq/e20           time:   [3.4547 ms 3.5284 ms 3.6010 ms]
+col_f/rayon/e20         time:   [31.111 ms 32.851 ms 34.651 ms]
+col_f/orx_ord/e20       time:   [8.7023 ms 8.9343 ms 9.1709 ms]
+col_f/orx_arb/e20       time:   [8.9478 ms 9.2851 ms 9.6430 ms]
 
 */
 
