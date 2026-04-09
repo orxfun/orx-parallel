@@ -56,9 +56,9 @@ impl Val {
         acc
     }
 
-    pub fn reduce_res<T, E, F>(results: Vec<Result<Option<T>, E>>, f: F) -> Result<Option<T>, E>
+    pub fn reduce_res<T, E, F>(results: Vec<Result<Option<T>, E>>, mut f: F) -> Result<Option<T>, E>
     where
-        F: Fn(T, T) -> T,
+        F: FnMut(T, T) -> T,
     {
         let mut acc = None;
 
