@@ -2,7 +2,11 @@ use crate::collectables::par_col_into_test::ParCollectIntoTest;
 use crate::infallible::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
-use std::string::String;
+use alloc::vec::Vec;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
+use std::string::{String, ToString};
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -43,17 +47,28 @@ fn bin_f_reduce() {
     assert_eq!(result, Some(String::from("99")));
 }
 
-fn bin_f_collect(c: impl ParCollectIntoTest<String>) {
-    let inputs = inputs(N);
-    let offset = 12;
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [false, true]
+)]
+fn bin_f_collect<C: ParCollectIntoTest<String>>(mut c: C, pre_fill: bool) {
+    if pre_fill {
+        for i in 0..(N / 5) {
+            c.push_back((1000 + i).to_string());
+        }
+    }
 
-    let result = inputs
+    let expected = c.expected(
+        inputs(N)
+            .into_iter()
+            .filter(|x| x.len() > 1)
+            .filter(|x| x.len() < 4),
+    );
+
+    let result = inputs(N)
         .into_par()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
-        });
-    assert_eq!(result, Some(String::from("99")));
+        .collect_into(c);
+    assert_eq!(result, expected);
 }
