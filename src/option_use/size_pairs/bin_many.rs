@@ -1,28 +1,28 @@
 use crate::infallible_use::{XapUse, XapUseBin};
-use crate::option_use::size_pairs::size_pair_use_opt::SizePairUseRes;
+use crate::option_use::size_pairs::SizePairUseRes;
 use crate::sizes::BinMany;
 use core::iter::FusedIterator;
 
 impl SizePairUseRes for BinMany {
-    type XapUseResResult<M, E, X1, X2>
-        = IterResBinMany<<X2::Values as IntoIterator>::IntoIter, E>
+    type XapUseResResult<M, X1, X2>
+        = IterResBinMany<<X2::Values as IntoIterator>::IntoIter>
     where
-        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
-    fn xap_use_res<M, E, X1, X2>(
+    fn xap_use_res<M, X1, X2>(
         u: *mut X1::U,
         x1: X1,
         x2: X2,
         i: X1::I,
-    ) -> Self::XapUseResResult<M, E, X1, X2>
+    ) -> Self::XapUseResResult<M, X1, X2>
     where
-        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
     {
         match x1.bin_value(u, i) {
-            Some(Ok(a)) => IterResBinMany::success(Some(x2.xap_use(u, a).into_iter())),
-            Some(Err(e)) => IterResBinMany::fail(e),
+            Some(Some(a)) => IterResBinMany::success(Some(x2.xap_use(u, a).into_iter())),
+            Some(None) => IterResBinMany::fail(),
             None => IterResBinMany::success(None),
         }
     }
@@ -30,36 +30,37 @@ impl SizePairUseRes for BinMany {
 
 // iter
 
-pub enum IterResBinMany<I: Iterator, E> {
+pub enum IterResBinMany<I: Iterator> {
     Success(Option<I>),
-    Fail(Option<E>),
+    Fail(bool),
 }
 
-impl<I: Iterator, E> IterResBinMany<I, E> {
+impl<I: Iterator> IterResBinMany<I> {
     pub fn success(i: Option<I>) -> Self {
         Self::Success(i)
     }
 
-    pub fn fail(e: E) -> Self {
-        Self::Fail(Some(e))
+    pub fn fail() -> Self {
+        Self::Fail(false)
     }
 }
 
-impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
-    type Item = Result<I::Item, E>;
+impl<I: Iterator> Iterator for IterResBinMany<I> {
+    type Item = Option<I::Item>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Self::Success(Some(iter)) => iter.next().map(Ok),
+            Self::Success(Some(iter)) => iter.next().map(Some),
             Self::Success(None) => None,
-            Self::Fail(e) => match e.is_some() {
-                true => {
+            Self::Fail(taken) => match taken {
+                false => {
                     // SAFETY: error can be taken out only once; and on construction
                     // the error variant must be created with Some of an error
-                    Some(Err(unsafe { e.take().unwrap_unchecked() }))
+                    *taken = true;
+                    Some(None)
                 }
-                false => None, // the error is already taken and returned
+                true => None, // the error is already taken and returned
             },
         }
     }
@@ -68,7 +69,8 @@ impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
         match self {
             Self::Success(Some(i)) => i.size_hint(),
             Self::Success(None) => (0, Some(0)),
-            Self::Fail(_taken) => (1, Some(1)), // we will return only one element, the error
+            Self::Fail(false) => (1, Some(1)),
+            Self::Fail(true) => (0, Some(0)),
         }
     }
 
@@ -78,10 +80,10 @@ impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
         F: FnMut(B, Self::Item) -> B,
     {
         match self {
-            Self::Success(Some(i)) => i.map(Ok).fold(init, f),
+            Self::Success(Some(i)) => i.map(Some).fold(init, f),
             Self::Success(None) => init,
-            Self::Fail(Some(e)) => f(init, Err(e)),
-            Self::Fail(None) => init,
+            Self::Fail(false) => f(init, None),
+            Self::Fail(true) => init,
         }
     }
 
@@ -89,19 +91,21 @@ impl<I: Iterator, E> Iterator for IterResBinMany<I, E> {
         match self {
             Self::Success(Some(i)) => i.count(),
             Self::Success(None) => 0,
-            Self::Fail(_taken) => 1, // we will return only one element, the error
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
         }
     }
 }
 
-impl<I: FusedIterator, E> FusedIterator for IterResBinMany<I, E> {}
+impl<I: FusedIterator> FusedIterator for IterResBinMany<I> {}
 
-impl<I: ExactSizeIterator, E> ExactSizeIterator for IterResBinMany<I, E> {
+impl<I: ExactSizeIterator> ExactSizeIterator for IterResBinMany<I> {
     fn len(&self) -> usize {
         match self {
             Self::Success(Some(i)) => i.len(),
             Self::Success(None) => 0,
-            Self::Fail(_taken) => 1, // we will return only one element, the error
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
         }
     }
 }
