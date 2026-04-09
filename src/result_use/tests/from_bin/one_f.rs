@@ -17,7 +17,11 @@ fn one_f_find_ok() {
             false => Some(Ok(x)),
         })
         .fallible_result()
-        .filter(|x| x.len() > 1)
+        .using_clone(UseValue::new(42))
+        .filter(|u, x| {
+            u.mutate();
+            x.len() > 1
+        })
         .first();
     assert_eq!(result, Ok(Some(String::from("10"))));
 }
@@ -32,7 +36,11 @@ fn one_f_find_any_ok() {
             false => Some(Ok(x)),
         })
         .fallible_result()
-        .filter(|x| x.len() > 1)
+        .using_clone(UseValue::new(42))
+        .filter(|u, x| {
+            u.mutate();
+            x.len() > 1
+        })
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_ok());
@@ -43,15 +51,25 @@ fn one_f_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-            true => None,
-            false => Some(Ok(x)),
+        .using(|th_idx| UseValue::new(th_idx))
+        .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
+                true => None,
+                false => Some(Ok(x)),
+            }
         })
         .fallible_result()
-        .filter(|x| x.len() > 1)
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .filter(|u, x| {
+            u.mutate();
+            x.len() > 1
+        })
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Ok(Some(String::from("99"))));
 }
@@ -61,18 +79,28 @@ fn one_f_reduce_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-            true => None,
-            false => Some(match x.as_str() == "42" {
-                true => Ok(x),
-                false => Err(vec!['a']),
-            }),
+        .using(|th_idx| UseValue::new(th_idx))
+        .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
+                true => None,
+                false => Some(match x.as_str() == "42" {
+                    true => Ok(x),
+                    false => Err(vec!['a']),
+                }),
+            }
         })
         .fallible_result()
-        .filter(|x| x.len() > 1)
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .filter(|u, x| {
+            u.mutate();
+            x.len() > 1
+        })
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Err(vec!['a']));
 }
