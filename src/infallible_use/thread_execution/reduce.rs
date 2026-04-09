@@ -32,7 +32,7 @@ where
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
-                        let result = x.xap(u, i).into_iter().reduce(&f);
+                        let result = x.xap_use(u, i).into_iter().reduce(&f);
                         if result.is_some() {
                             acc = result;
                             break;
@@ -50,7 +50,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        let result = chunk.flat_map(|i| x.xap(u, i).into_iter()).reduce(&f);
+                        let result = chunk.flat_map(|i| x.xap_use(u, i).into_iter()).reduce(&f);
                         if result.is_some() {
                             acc = result;
                             break;
@@ -76,7 +76,7 @@ where
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
-                                let result = x.xap(u, i).into_iter().reduce(&f);
+                                let result = x.xap_use(u, i).into_iter().reduce(&f);
                                 if let Some(y) = result {
                                     acc = f(acc, y);
                                 }
@@ -93,7 +93,7 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
-                                let result = chunk.flat_map(|i| x.xap(u, i).into_iter()).reduce(&f);
+                                let result = chunk.flat_map(|i| x.xap_use(u, i).into_iter()).reduce(&f);
                                 if let Some(y) = result {
                                     acc = f(acc, y);
                                 }

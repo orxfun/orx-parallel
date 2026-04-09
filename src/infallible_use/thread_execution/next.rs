@@ -27,7 +27,7 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
-                    if let Some(val) = x.xap(u, i).into_iter().next() {
+                    if let Some(val) = x.xap_use(u, i).into_iter().next() {
                         Q::broadcast_stop(iter, state, chunk_state);
                         return Some(ValIdx::new(val, idx));
                     }
@@ -42,7 +42,7 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
-                        if let Some(val) = chunk.flat_map(|i| x.xap(u, i).into_iter()).next() {
+                        if let Some(val) = chunk.flat_map(|i| x.xap_use(u, i).into_iter()).next() {
                             Q::broadcast_stop(iter, state, chunk_state);
                             return Some(ValIdx::new(val, idx));
                         }
