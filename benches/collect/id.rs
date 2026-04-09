@@ -1,6 +1,6 @@
 /*
 
-* light & heavy show the intensity of computation
+* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
 * eN means an input of size 2^N is used
 
 reduce_id/seq/e15_light     time:   [4.7806 µs 4.8926 µs 4.9974 µs]
@@ -30,7 +30,6 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::hint::black_box;
 
 fn inputs(len: usize) -> Vec<u64> {
     const SEED: u64 = 654;
@@ -38,114 +37,54 @@ fn inputs(len: usize) -> Vec<u64> {
     (0..len).map(|_| rng.random_range(0..150)).collect()
 }
 
-const FIB_UPPER_BOUND: u64 = 301;
-
-fn fibonacci(n: u64) -> u64 {
-    let mut a = 0;
-    let mut b = 1;
-    for _ in 0..n {
-        let c = a + b;
-        a = b;
-        b = c;
-    }
-    a
+fn seq(input: &[u64]) -> Vec<u64> {
+    input.iter().copied().collect()
 }
 
-fn l_r(a: u64, b: u64) -> u64 {
-    a + b
+fn orx(input: &[u64], order: IterationOrder) -> Vec<u64> {
+    input.into_par().iteration_order(order).copied().collect()
 }
 
-fn h_r(a: u64, b: u64) -> u64 {
-    let f = black_box(fibonacci(a % FIB_UPPER_BOUND));
-    let g = black_box(a + f);
-    g + b - f
-}
-
-fn seq(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input.iter().copied().reduce(h_r),
-        false => input.iter().copied().reduce(l_r),
-    }
-}
-
-fn orx(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input.into_par().copied().reduce(h_r),
-        false => input.into_par().copied().reduce(l_r),
-    }
-}
-
-fn rayon1(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input.into_par_iter().copied().reduce_with(h_r),
-        false => input.into_par_iter().copied().reduce_with(l_r),
-    }
-}
-
-fn rayon2(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => Some(input.into_par_iter().copied().reduce(|| 0, h_r)),
-        false => Some(input.into_par_iter().copied().reduce(|| 0, l_r)),
-    }
+fn rayon(input: &[u64]) -> Vec<u64> {
+    input.into_par_iter().copied().collect()
 }
 
 struct Treat {
     len: usize,
-    heavy_compute: bool,
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [
-        Treat {
-            len: 1 << 15,
-            heavy_compute: false,
-        },
-        Treat {
-            len: 1 << 20,
-            heavy_compute: false,
-        },
-        Treat {
-            len: 1 << 15,
-            heavy_compute: true,
-        },
-        Treat {
-            len: 1 << 20,
-            heavy_compute: true,
-        },
-    ];
+    let treatments = [Treat { len: 1 << 15 }, Treat { len: 1 << 20 }];
 
-    let mut group = c.benchmark_group("reduce_id");
+    let mut group = c.benchmark_group("col_id");
 
     for t in treatments {
-        let name = format!(
-            "e{}_{}",
-            t.len.ilog2(),
-            match t.heavy_compute {
-                true => "heavy",
-                false => "light",
-            },
-        );
+        let name = format!("e{}", t.len.ilog2(),);
         let input = inputs(t.len);
-        let expected = seq(&input, t.heavy_compute);
+        let expected = seq(&input);
+        let mut expected_sorted = expected.clone();
+        expected_sorted.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy_compute));
-            b.iter(|| seq(&input, t.heavy_compute))
+            assert_eq!(&expected, &seq(&input));
+            b.iter(|| seq(&input))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon1", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon1(&input, t.heavy_compute));
-            b.iter(|| rayon1(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+            assert_eq!(&expected, &rayon(&input));
+            b.iter(|| rayon(&input))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon2", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon2(&input, t.heavy_compute));
-            b.iter(|| rayon2(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
+            assert_eq!(&expected, &orx(&input, IterationOrder::Ordered));
+            b.iter(|| orx(&input, IterationOrder::Ordered))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy_compute));
-            b.iter(|| orx(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
+            let mut result = orx(&input, IterationOrder::Arbitrary);
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx(&input, IterationOrder::Ordered))
         });
     }
 
