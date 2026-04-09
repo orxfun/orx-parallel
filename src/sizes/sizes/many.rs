@@ -5,4 +5,8 @@ pub struct Many;
 
 impl Size for Many {
     type ThenBin = Many;
+
+    fn size() -> Option<usize> {
+        None
+    }
 }
