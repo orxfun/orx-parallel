@@ -1,4 +1,4 @@
-use crate::infallible_use::{XapBin, XapUse};
+use crate::infallible_use::{XapUseBin, XapUse};
 use crate::result_use::size_pairs::size_pair_use_res::SizePairUseRes;
 use crate::sizes::{Bin, ManyBin};
 use core::iter::FusedIterator;

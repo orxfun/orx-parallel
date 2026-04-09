@@ -1,4 +1,4 @@
-use crate::infallible_use::{XapBin, XapOne, XapUse};
+use crate::infallible_use::{XapUseBin, XapUseOne, XapUse};
 use crate::result_use::size_pairs::size_pair_use_res::SizePairUseRes;
 use crate::sizes::OneBin;
 

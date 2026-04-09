@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::FlatMap;
-use crate::infallible_use::{XapOne, XapUse};
+use crate::infallible_use::{XapUseOne, XapUse};
 use crate::sizes::{Many, One};
 
 pub struct OneX<X: XapUse<Size = One>, G: FlatMap<U = X::U, I = X::O>> {

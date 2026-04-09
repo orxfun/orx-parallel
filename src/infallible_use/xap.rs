@@ -65,7 +65,7 @@ pub trait XapUse: Copy + Send {
 
 // one
 
-pub trait XapOne: XapUse<Size = One> {
+pub trait XapUseOne: XapUse<Size = One> {
     #[inline(always)]
     fn one_value(&self, u: *mut Self::U, i: Self::I) -> Self::O {
         // SAFETY: by definition the result has exactly one element
@@ -73,11 +73,11 @@ pub trait XapOne: XapUse<Size = One> {
     }
 }
 
-impl<X: XapUse<Size = One>> XapOne for X {}
+impl<X: XapUse<Size = One>> XapUseOne for X {}
 
 // bin
 
-pub trait XapBin: XapUse<Size = Bin> {
+pub trait XapUseBin: XapUse<Size = Bin> {
     #[inline(always)]
     fn bin_value(&self, u: *mut Self::U, i: Self::I) -> Option<Self::O> {
         // SAFETY: by definition the result has exactly zero or one element
@@ -85,7 +85,7 @@ pub trait XapBin: XapUse<Size = Bin> {
     }
 }
 
-impl<X: XapUse<Size = Bin>> XapBin for X {}
+impl<X: XapUse<Size = Bin>> XapUseBin for X {}
 
 // // helper types
 
