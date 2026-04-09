@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::FlatMap;
-use crate::infallible_use::{XapUse, XapBin};
+use crate::infallible_use::{XapUseBin, XapUse};
 use crate::sizes::{Bin, Many};
 use core::iter::FusedIterator;
 
@@ -33,7 +33,8 @@ impl<X: XapUse<Size = Bin>, G: FlatMap<U = X::U, I = X::O>> XapUse for BinX<X, G
 
     type U = X::U;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
+        let u = unsafe { &mut *u };
         let i = self
             .x
             .bin_value(u, i)

@@ -16,7 +16,8 @@ where
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
 {
-    let u = &mut u.create(th_idx);
+    let mut u = u.create(th_idx);
+    let u = &mut u as *mut U::Item;
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller_with_idx();
 

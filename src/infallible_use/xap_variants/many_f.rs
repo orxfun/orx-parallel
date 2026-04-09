@@ -33,16 +33,9 @@ impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> XapUse for ManyF<
 
     type U = X::U;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
-        // SAFETY: u is either used by i.next or g.map which can never
-        // occur at the same time; hence, there exists no race condition
-        let u_ptr = u as *mut Self::U;
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
         let i = self.x.xap_use(u, i).into_iter();
-        IterManyF {
-            u: u_ptr,
-            i,
-            g: self.g,
-        }
+        IterManyF { u, i, g: self.g }
     }
 }
 
@@ -67,8 +60,6 @@ where
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        // SAFETY: u is either used by i.next or g.filter_map which can never
-        // occur at the same time; hence, there exists no race condition
         loop {
             match self.i.next() {
                 Some(i) => {
@@ -93,8 +84,6 @@ where
         Self: Sized,
         F: FnMut(B, Self::Item) -> B,
     {
-        // SAFETY: u is either used by i.next or g.filter_map which can never
-        // occur at the same time; hence, there exists no race condition
         self.i
             .filter_map(|x| self.g.filter_map(unsafe { &mut *self.u }, x))
             .fold(init, f)
@@ -105,8 +94,6 @@ where
     where
         Self: Sized,
     {
-        // SAFETY: u is either used by i.next or g.filter_map which can never
-        // occur at the same time; hence, there exists no race condition
         self.i
             .filter_map(|x| self.g.filter_map(unsafe { &mut *self.u }, x))
             .count()
@@ -126,8 +113,6 @@ where
     G: FilterMap<I = I::Item>,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        // SAFETY: u is either used by i.next or g.filter_map which can never
-        // occur at the same time; hence, there exists no race condition
         loop {
             match self.i.next_back() {
                 Some(i) => {

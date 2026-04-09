@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::FilterMap;
-use crate::infallible_use::{XapBin, XapUse};
+use crate::infallible_use::{XapUseBin, XapUse};
 use crate::sizes::Bin;
 
 pub struct BinF<X: XapUse<Size = Bin>, G: FilterMap<U = X::U, I = X::O>> {
@@ -32,7 +32,8 @@ impl<X: XapUse<Size = Bin>, G: FilterMap<U = X::U, I = X::O>> XapUse for BinF<X,
 
     type U = X::U;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
+        let u = unsafe { &mut *u };
         self.x.bin_value(u, i).and_then(|x| self.g.filter_map(u, x))
     }
 }

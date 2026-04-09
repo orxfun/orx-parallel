@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::{Map, MapEnum};
-use crate::infallible_use::{XapBin, XapUse, XapUseEnumByInput};
+use crate::infallible_use::{XapUseBin, XapUse, XapUseEnumByInput};
 use crate::sizes::Bin;
 
 pub struct BinM<X: XapUse<Size = Bin>, G: Map<U = X::U, I = X::O>> {
@@ -44,7 +44,8 @@ impl<X: XapUse<Size = Bin>, G: Map<U = X::U, I = X::O>> XapUse for BinM<X, G> {
 
     type U = X::U;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
+        let u = unsafe { &mut *u };
         self.x.bin_value(u, i).map(|x| self.g.map(u, x))
     }
 }

@@ -39,9 +39,9 @@ impl Val {
         Some(None)
     }
 
-    pub fn reduce<T, F>(results: Vec<Option<T>>, f: F) -> Option<T>
+    pub fn reduce<T, F>(results: Vec<Option<T>>, mut f: F) -> Option<T>
     where
-        F: Fn(T, T) -> T,
+        F: FnMut(T, T) -> T,
     {
         let mut acc = None;
 
@@ -56,9 +56,9 @@ impl Val {
         acc
     }
 
-    pub fn reduce_res<T, E, F>(results: Vec<Result<Option<T>, E>>, f: F) -> Result<Option<T>, E>
+    pub fn reduce_res<T, E, F>(results: Vec<Result<Option<T>, E>>, mut f: F) -> Result<Option<T>, E>
     where
-        F: Fn(T, T) -> T,
+        F: FnMut(T, T) -> T,
     {
         let mut acc = None;
 
