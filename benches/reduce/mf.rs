@@ -26,8 +26,7 @@ reduce_mf/orx/e20_heavy     time:   [7.6426 ms 7.8071 ms 7.9760 ms]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_concurrent_iter::IntoConcurrentIter;
-use orx_parallel::infallible::par;
+use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -82,8 +81,8 @@ fn seq(input: &[u64], h: bool) -> Option<u64> {
 
 fn orx(input: &[u64], h: bool) -> Option<u64> {
     match h {
-        true => par(input.into_con_iter()).map(m).filter(f).reduce(h_r),
-        false => par(input.into_con_iter()).map(m).filter(f).reduce(l_r),
+        true => input.into_par().map(m).filter(f).reduce(h_r),
+        false => input.into_par().map(m).filter(f).reduce(l_r),
     }
 }
 

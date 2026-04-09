@@ -23,11 +23,11 @@ mod pool;
 mod results;
 mod runner;
 
-pub mod infallible;
-pub mod infallible_use;
+pub mod infallible; // TODO: pub only for benchmarks, can we prevent this?
+mod infallible_use;
 pub mod kind_transformations;
-pub mod option;
-pub mod result;
+mod option;
+mod result;
 mod result_use;
 mod sizes;
 
