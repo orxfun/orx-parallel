@@ -3,21 +3,25 @@ use crate::result_use::size_pairs::size_pair_use_res::SizePairUseRes;
 use crate::sizes::OneMany;
 use core::iter::FusedIterator;
 
-impl SizePairRes for OneMany {
-    type XapResResult<M, E, X1, X2>
+impl SizePairUseRes for OneMany {
+    type XapUseResResult<M, E, X1, X2>
         = IterResOneMany<<X2::Values as IntoIterator>::IntoIter, E>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>;
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
-    #[inline(always)]
-    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    fn xap_use_res<M, E, X1, X2>(
+        u: *mut X1::U,
+        x1: X1,
+        x2: X2,
+        i: X1::I,
+    ) -> Self::XapUseResResult<M, E, X1, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>,
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
     {
-        match x1.one_value(i) {
-            Ok(a) => IterResOneMany::ok(x2.xap(a).into_iter()),
+        match x1.one_value(u, i) {
+            Ok(a) => IterResOneMany::ok(x2.xap_use(u, a).into_iter()),
             Err(e) => IterResOneMany::err(e),
         }
     }
