@@ -61,7 +61,7 @@ fn many_m_reduce() {
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)]
 )]
-fn many_m_collect_into<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
+fn many_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
     let iter = || {
         inputs(N)
             .into_iter()
