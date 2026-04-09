@@ -1,23 +1,27 @@
-use crate::infallible::{Xap, XapBin};
-use crate::result::size_pairs::SizePairRes;
+use crate::infallible_use::{XapBin, XapUse};
+use crate::result_use::size_pairs::size_pair_use_res::SizePairUseRes;
 use crate::sizes::BinMany;
 use core::iter::FusedIterator;
 
-impl SizePairRes for BinMany {
-    type XapResResult<M, E, X1, X2>
+impl SizePairUseRes for BinMany {
+    type XapUseResResult<M, E, X1, X2>
         = IterResBinMany<<X2::Values as IntoIterator>::IntoIter, E>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>;
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
-    #[inline(always)]
-    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    fn xap_use_res<M, E, X1, X2>(
+        u: *mut X1::U,
+        x1: X1,
+        x2: X2,
+        i: X1::I,
+    ) -> Self::XapUseResResult<M, E, X1, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>,
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
     {
-        match x1.bin_value(i) {
-            Some(Ok(a)) => IterResBinMany::success(Some(x2.xap(a).into_iter())),
+        match x1.bin_value(u, i) {
+            Some(Ok(a)) => IterResBinMany::success(Some(x2.xap_use(u, a).into_iter())),
             Some(Err(e)) => IterResBinMany::fail(e),
             None => IterResBinMany::success(None),
         }

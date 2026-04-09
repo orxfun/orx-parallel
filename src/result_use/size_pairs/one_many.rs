@@ -1,5 +1,5 @@
-use crate::infallible::{Xap, XapOne};
-use crate::result::size_pairs::SizePairRes;
+use crate::infallible_use::{XapOne, XapUse};
+use crate::result_use::size_pairs::size_pair_use_res::SizePairUseRes;
 use crate::sizes::OneMany;
 use core::iter::FusedIterator;
 
