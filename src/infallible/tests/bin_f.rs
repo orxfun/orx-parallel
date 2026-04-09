@@ -51,12 +51,8 @@ fn bin_f_reduce() {
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [false, true]
 )]
-fn bin_f_collect<C: ParCollectIntoTest<String>>(mut c: C, pre_fill: bool) {
-    if pre_fill {
-        for i in 0..(N / 5) {
-            c.push_back((1000 + i).to_string());
-        }
-    }
+fn bin_f_collect_into<C: ParCollectIntoTest<String>>(c: C, pre_fill: bool) {
+    let c = c.prepare(pre_fill, N / 5, |i| (1000 + i).to_string());
 
     let expected = c.expected(
         inputs(N)
@@ -70,5 +66,6 @@ fn bin_f_collect<C: ParCollectIntoTest<String>>(mut c: C, pre_fill: bool) {
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .collect_into(c);
+
     assert_eq!(result, expected);
 }
