@@ -1,4 +1,4 @@
-use crate::collectables::par_col_into_test::ParCollectIntoTest;
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::infallible::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
@@ -50,23 +50,30 @@ fn bin_m_reduce() {
 
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [false, true]
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)]
 )]
-fn bin_m_collect_into<C: ParCollectIntoTest<String>>(c: C, pre_fill: bool) {
-    let c = c.prepare(pre_fill, N / 5, |i| (1000 + i).to_string());
-
-    let expected = c.expected(
+fn bin_m_collect_into<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
+    let iter = || {
         inputs(N)
             .into_iter()
+            .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
-            .map(|x| format!("{}0", x)),
-    );
+    };
 
-    let result = inputs(N)
-        .into_par()
-        .filter(|x| x.len() < 4)
-        .map(|x| format!("{}0", x))
-        .collect_into(c);
+    let expected = C::expected(mode, |i| i.to_string(), iter());
+
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs(N)
+            .into_par()
+            .filter(|x| x.len() < 4)
+            .map(|x| format!("{}0", x))
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .filter(|x| x.len() < 4)
+            .map(|x| format!("{}0", x))
+            .collect(),
+    };
 
     assert_eq!(result, expected);
 }

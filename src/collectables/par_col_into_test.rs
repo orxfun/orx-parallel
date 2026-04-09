@@ -3,30 +3,53 @@ use alloc::vec::Vec;
 use core::fmt::Debug;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
-use orx_split_vec::{GrowthWithConstantTimeAccess, SplitVec};
+use orx_split_vec::{Doubling, Linear, PseudoDefault, SplitVec};
 
 pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug>:
     ParCollectInto<T> + Clone + PartialEq + Debug + Sized
 {
-    fn expected(&self, iter: impl IntoIterator<Item = T>) -> Self;
+    fn empty() -> Self;
 
     fn push_back(&mut self, value: T);
 
-    fn prepare(mut self, pre_fill: bool, n: usize, val: impl Fn(usize) -> T) -> Self {
-        if pre_fill {
-            for i in 0..n {
-                self.push_back(val(i));
+    fn init_result(mode: ColIntoMode, val: impl Fn(usize) -> T) -> Option<Self> {
+        match mode {
+            ColIntoMode::Col => None,
+            ColIntoMode::ColIntoEmpty => Some(Self::empty()),
+            ColIntoMode::ColIntoFilled(n) => {
+                let mut vec = Self::empty();
+                for i in 0..n {
+                    vec.push_back(val(i));
+                }
+                Some(vec)
             }
         }
-        self
+    }
+
+    fn expected(
+        mode: ColIntoMode,
+        val: impl Fn(usize) -> T,
+        iter: impl IntoIterator<Item = T>,
+    ) -> Self {
+        let mut vec = Self::empty();
+
+        if let ColIntoMode::ColIntoFilled(n) = mode {
+            for i in 0..n {
+                vec.push_back(val(i));
+            }
+        }
+
+        for i in iter {
+            vec.push_back(i);
+        }
+
+        vec
     }
 }
 
 impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for FixedVec<T> {
-    fn expected(&self, iter: impl IntoIterator<Item = T>) -> Self {
-        let mut vec = self.clone().into_inner();
-        vec.extend(iter);
-        vec.into()
+    fn empty() -> Self {
+        Self::new(1234)
     }
 
     fn push_back(&mut self, value: T) {
@@ -34,13 +57,19 @@ impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for FixedVec<T> {
     }
 }
 
-impl<T: Clone + PartialEq + Debug, G: GrowthWithConstantTimeAccess> ParCollectIntoTest<T>
-    for SplitVec<T, G>
-{
-    fn expected(&self, iter: impl IntoIterator<Item = T>) -> Self {
-        let mut vec = self.clone();
-        vec.extend(iter);
-        vec
+impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for SplitVec<T, Doubling> {
+    fn empty() -> Self {
+        Self::with_doubling_growth()
+    }
+
+    fn push_back(&mut self, value: T) {
+        self.push(value);
+    }
+}
+
+impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for SplitVec<T, Linear> {
+    fn empty() -> Self {
+        Self::with_linear_growth(6)
     }
 
     fn push_back(&mut self, value: T) {
@@ -49,13 +78,18 @@ impl<T: Clone + PartialEq + Debug, G: GrowthWithConstantTimeAccess> ParCollectIn
 }
 
 impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for Vec<T> {
-    fn expected(&self, iter: impl IntoIterator<Item = T>) -> Self {
-        let mut vec = self.clone();
-        vec.extend(iter);
-        vec
+    fn empty() -> Self {
+        PseudoDefault::pseudo_default()
     }
 
     fn push_back(&mut self, value: T) {
         self.push(value);
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ColIntoMode {
+    Col,
+    ColIntoEmpty,
+    ColIntoFilled(usize),
 }
