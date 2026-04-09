@@ -1,4 +1,4 @@
-use crate::infallible_use::tests::utils::inputs;
+use crate::infallible_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
 use std::format;
@@ -11,11 +11,16 @@ fn many_x_find() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .flat_map(|x| {
+        .using_clone(UseValue::new(42))
+        .flat_map(|u, x| {
+            u.mutate();
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .flat_map(|x| [format!("{x}!"), x])
+        .flat_map(|u, x| {
+            u.mutate();
+            [format!("{x}!"), x]
+        })
         .first();
     assert_eq!(result, Some(String::from("0!")));
 }
@@ -25,11 +30,16 @@ fn many_x_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .flat_map(|x| {
+        .using(|th_idx| UseValue::new(th_idx))
+        .flat_map(|u, x| {
+            u.mutate();
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .flat_map(|x| [format!("{x}!"), x])
+        .flat_map(|u, x| {
+            u.mutate();
+            [format!("{x}!"), x]
+        })
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_some());
@@ -40,14 +50,22 @@ fn many_x_reduce() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .flat_map(|x| {
+        .using_clone(UseValue::new(42))
+        .flat_map(|u, x| {
+            u.mutate();
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .flat_map(|x| [format!("{x}!"), x])
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .flat_map(|u, x| {
+            u.mutate();
+            [format!("{x}!"), x]
+        })
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Some(String::from("99!")));
 }

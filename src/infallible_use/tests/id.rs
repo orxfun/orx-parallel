@@ -1,4 +1,4 @@
-use crate::infallible_use::tests::utils::inputs;
+use crate::infallible_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
 use std::string::String;
