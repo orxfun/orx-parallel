@@ -6,7 +6,7 @@ mod many_many;
 mod many_one;
 mod one_bin;
 mod one_many;
-// mod one_one;
+mod one_one;
 mod size_pair_use_res;
 
 // pub use size_pair::SizePairRes;
