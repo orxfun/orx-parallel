@@ -1,4 +1,4 @@
-use crate::infallible_use::tests::utils::inputs;
+use crate::infallible_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
 use std::string::String;
@@ -10,13 +10,13 @@ fn bin_f_find() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(42)
+        .using_clone(UseValue::new(42))
         .filter(|u, x| {
-            *u += 1;
+            u.mutate();
             x.len() > 1
         })
         .filter(|u, x| {
-            *u += 2;
+            u.mutate();
             x.len() < 4
         })
         .first();
@@ -28,13 +28,13 @@ fn bin_f_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(42)
+        .using(|th_idx| UseValue::new(th_idx))
         .filter(|u, x| {
-            *u += 1;
+            u.mutate();
             x.len() > 1
         })
         .filter(|u, x| {
-            *u += 2;
+            u.mutate();
             x.len() < 4
         })
         .iteration_order(IterationOrder::Arbitrary)
@@ -43,21 +43,21 @@ fn bin_f_find_any() {
 }
 
 #[test]
-fn bin_f_reduce() {
+fn xyz() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(42)
+        .using_clone(UseValue::new(42))
         .filter(|u, x| {
-            *u += 1;
+            u.mutate();
             x.len() > 1
         })
         .filter(|u, x| {
-            *u += 2;
+            u.mutate();
             x.len() < 4
         })
         .reduce(|u, a, b| {
-            *u += 7;
+            u.mutate();
             match a < b {
                 true => b,
                 false => a,
