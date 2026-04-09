@@ -79,9 +79,9 @@ impl Val {
     /// * Some(Some(aggregate)): no failure, returns the aggregate
     /// * Some(None): no failure but also no element to reduce
     /// * None: a failure (None) is observed
-    pub fn reduce_opt<T, F>(results: Vec<Option<Option<T>>>, f: F) -> Option<Option<T>>
+    pub fn reduce_opt<T, F>(results: Vec<Option<Option<T>>>, mut f: F) -> Option<Option<T>>
     where
-        F: Fn(T, T) -> T,
+        F: FnMut(T, T) -> T,
     {
         let mut acc = None;
 
