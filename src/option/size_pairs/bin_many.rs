@@ -64,7 +64,8 @@ impl<I: Iterator> Iterator for IterOptBinMany<I> {
         match self {
             Self::Success(Some(i)) => i.size_hint(),
             Self::Success(None) => (0, Some(0)),
-            Self::Fail(_taken) => (1, Some(1)), // we will return only one element, the error
+            Self::Fail(false) => (1, Some(1)),
+            Self::Fail(true) => (0, Some(0)),
         }
     }
 
@@ -76,7 +77,8 @@ impl<I: Iterator> Iterator for IterOptBinMany<I> {
         match self {
             Self::Success(Some(i)) => i.map(Some).fold(init, f),
             Self::Success(None) => init,
-            Self::Fail(_taken) => f(init, None),
+            Self::Fail(false) => f(init, None),
+            Self::Fail(true) => init,
         }
     }
 
@@ -87,7 +89,8 @@ impl<I: Iterator> Iterator for IterOptBinMany<I> {
         match self {
             Self::Success(Some(i)) => i.count(),
             Self::Success(None) => 0,
-            Self::Fail(_taken) => 1, // we will return only one element, the error
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
         }
     }
 }
@@ -99,7 +102,8 @@ impl<I: ExactSizeIterator> ExactSizeIterator for IterOptBinMany<I> {
         match self {
             Self::Success(Some(i)) => i.len(),
             Self::Success(None) => 0,
-            Self::Fail(_taken) => 1, // we will return only one element, the error
+            Self::Fail(false) => 1,
+            Self::Fail(true) => 0,
         }
     }
 }

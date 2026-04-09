@@ -31,8 +31,7 @@ first_ff/orx/e20_late_heavy         time:   [4.2351 ms 4.5642 ms 4.9639 ms]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_concurrent_iter::IntoConcurrentIter;
-use orx_parallel::infallible::par;
+use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -88,14 +87,15 @@ fn seq(input: &[u64], value: u64, h: bool) -> Option<u64> {
 }
 
 fn orx(input: &[u64], value: u64, h: bool) -> Option<u64> {
-    let iter = input.into_con_iter();
     match h {
-        true => par(iter)
+        true => input
+            .into_par()
             .filter(|x| x.is_multiple_of(9))
             .filter(|x| h_f(**x, value))
             .first()
             .copied(),
-        false => par(iter)
+        false => input
+            .into_par()
             .filter(|x| x.is_multiple_of(9))
             .filter(|x| l_f(**x, value))
             .first()

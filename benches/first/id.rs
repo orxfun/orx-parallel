@@ -15,8 +15,7 @@ first_id/orx/1048576    time:   [1.8319 ms 1.8669 ms 1.9032 ms]
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use orx_concurrent_iter::IntoConcurrentIter;
-use orx_parallel::infallible::par;
+use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -32,7 +31,7 @@ fn seq(input: &[u64]) -> Option<u64> {
 }
 
 fn orx(input: &[u64]) -> Option<u64> {
-    par(input.into_con_iter()).first().copied()
+    input.into_par().first().copied()
 }
 
 fn rayon(input: &[u64]) -> Option<u64> {

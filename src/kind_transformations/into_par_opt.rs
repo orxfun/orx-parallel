@@ -2,7 +2,7 @@ use crate::infallible::Par;
 use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
 use crate::option::ParOpt;
-use crate::option::size_pairs::SizePairOpt;
+use crate::option::SizePairOpt;
 use crate::runner::ParRunner;
 use crate::sizes::IntoSizePair;
 use orx_concurrent_iter::ConcurrentIter;
