@@ -14,5 +14,5 @@ pub mod xap_variants;
 pub use par_iter::ParUse;
 pub use sizes::SizeInfUse;
 pub use use_var::{Use, UseClone, UseFun};
-pub use xap::{XapBin, XapOne, XapUse};
+pub use xap::{XapUse, XapUseBin, XapUseOne};
 pub use xap_enum::XapUseEnumByInput;
