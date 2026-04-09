@@ -23,7 +23,7 @@ impl<T> ColIntoInf<T> for Vec<T> {
 
         let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
         dst.reserve(len);
-        merge_collected_into(results, dst)
+        merge_collected_into(results, FixedVec::from(dst)).into()
     }
 
     fn collect_arbitrary_into<I, X, R>(

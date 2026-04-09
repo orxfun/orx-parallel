@@ -32,10 +32,15 @@ pub fn split_vec_reserve<T, G: Growth>(split_vec: &mut SplitVec<T, G>, iter_len:
     };
 }
 
-pub fn merge_collected_into<T>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: Vec<T>) -> Vec<T> {
+pub fn merge_collected_into<T, P>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: P) -> P
+where
+    P: PinnedVec<T>,
+{
     if results.len() == 1 {
         let results = results.into_iter().next().expect("results.len()==1");
-        dst.extend(results.into_iter().map(|x| x.val));
+        for v in results {
+            dst.push(v.val);
+        }
         return dst;
     }
 
