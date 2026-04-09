@@ -12,7 +12,7 @@ fn bin_x_find() {
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
-            x.len() > 1
+            x.len() < 4
         })
         .flat_map(|u, x| {
             u.mutate();
@@ -31,7 +31,7 @@ fn bin_x_find_any() {
         .using(|th_idx| UseValue::new(th_idx))
         .filter(|u, x| {
             u.mutate();
-            x.len() > 1
+            x.len() < 4
         })
         .flat_map(|u, x| {
             u.mutate();
@@ -51,7 +51,7 @@ fn bin_x_reduce() {
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
-            x.len() > 1
+            x.len() < 4
         })
         .flat_map(|u, x| {
             u.mutate();
