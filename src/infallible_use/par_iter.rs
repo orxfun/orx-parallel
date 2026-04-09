@@ -125,7 +125,7 @@ where
 
     pub fn reduce<F>(self, f: F) -> Option<X::O>
     where
-        F: Fn(X::O, X::O) -> X::O + Send + Copy,
+        F: Fn(&mut X::U, X::O, X::O) -> X::O + Send + Copy,
         X::O: Send,
     {
         let (u, iter, x, mut exe, params) = self.destruct();
@@ -138,7 +138,7 @@ where
     where
         F: Fn(&mut U::Item, X::O) + Send + Copy,
     {
-        let _ = self.map(f).reduce(|_, _| {});
+        let _ = self.map(f).reduce(|_, _, _| {});
     }
 }
 

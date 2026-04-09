@@ -16,7 +16,7 @@ fn bin_f_find() {
             x.len() > 1
         })
         .filter(|u, x| {
-            *u *= 2;
+            *u += 2;
             x.len() < 4
         })
         .first();
@@ -34,7 +34,7 @@ fn bin_f_find_any() {
             x.len() > 1
         })
         .filter(|u, x| {
-            *u *= 2;
+            *u += 2;
             x.len() < 4
         })
         .iteration_order(IterationOrder::Arbitrary)
@@ -53,12 +53,15 @@ fn bin_f_reduce() {
             x.len() > 1
         })
         .filter(|u, x| {
-            *u *= 2;
+            *u += 2;
             x.len() < 4
         })
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .reduce(|u, a, b| {
+            *u += 7;
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Some(String::from("99")));
 }

@@ -62,25 +62,30 @@ pub trait ParRunnerInfallibleUsing: ParRunner {
         U: Use,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item>,
-        F: Fn(X::O, X::O) -> X::O + Send + Copy,
+        F: Fn(&mut X::U, X::O, X::O) -> X::O + Send + Copy,
         X::O: Send,
     {
         let mut spawned = 0;
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x, u) = (&iter, &state, &results_bag, x, &u);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::reduce::<Self, _, _, _, _>(u, th_idx, state, iter, x, f);
-                    results.push(value);
-                });
-            }
-        });
+        {
+            let (iter, state, results, x, u) = (&iter, &state, &results_bag, x, &u);
+            self.pool_mut().scoped_computation(move |s| {
+                while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                    spawned += 1;
+                    <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        let value = th::reduce::<Self, _, _, _, _>(u, th_idx, state, iter, x, f);
+                        results.push(value);
+                    });
+                }
+            });
+        }
 
-        Val::reduce(results_bag.into_inner().into_inner(), f)
+        let mut u = u.into_inner();
+        Val::reduce(results_bag.into_inner().into_inner(), |a, b| {
+            f(&mut u, a, b)
+        })
     }
 }
 
