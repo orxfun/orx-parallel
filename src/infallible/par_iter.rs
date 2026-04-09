@@ -1,9 +1,11 @@
+use crate::ParCollectInto;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
+use crate::sizes::Size;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
 
@@ -122,6 +124,34 @@ where
     {
         let (iter, x, mut exe, params) = self.destruct();
         exe.reduce(params, iter, x, f)
+    }
+
+    pub fn collect_into<C>(self, dst: C) -> C
+    where
+        C: ParCollectInto<X::O>,
+        X::O: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
+            IterationOrder::Arbitrary => {
+                let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
+                C::inf_arb_col_into(Some(dst), self, exact_len)
+            }
+        }
+    }
+
+    pub fn collect<C>(self) -> C
+    where
+        C: ParCollectInto<X::O>,
+        X::O: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::inf_col_into(None, self),
+            IterationOrder::Arbitrary => {
+                let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
+                C::inf_arb_col_into(None, self, exact_len)
+            }
+        }
     }
 
     // compute - derived

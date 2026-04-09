@@ -50,7 +50,7 @@ orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 [[bench]]
 name = "first"
 harness = false
-path = "benches/first/mi.rs"
+path = "benches/collect/mfmf.rs"
 
 [package.metadata.docs.rs]
 all-features = true
