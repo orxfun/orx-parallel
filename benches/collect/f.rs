@@ -1,6 +1,7 @@
 /*
 
 * eN means an input of size 2^N is used
+* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
 
 reduce_f/seq/e15_light      time:   [16.344 µs 16.637 µs 16.960 µs]
 reduce_f/rayon1/e15_light   time:   [8.9277 ms 9.2255 ms 9.5327 ms]
@@ -44,8 +45,13 @@ fn seq(input: &[u64]) -> Vec<u64> {
     input.iter().copied().filter(f).collect()
 }
 
-fn orx(input: &[u64]) -> Vec<u64> {
-    input.into_par().copied().filter(f).collect()
+fn orx(input: &[u64], order: IterationOrder) -> Vec<u64> {
+    input
+        .into_par()
+        .iteration_order(order)
+        .copied()
+        .filter(f)
+        .collect()
 }
 
 fn rayon(input: &[u64]) -> Vec<u64> {
@@ -65,6 +71,8 @@ fn run(c: &mut Criterion) {
         let name = format!("e{}", t.len.ilog2(),);
         let input = inputs(t.len);
         let expected = seq(&input);
+        let mut expected_sorted = expected.clone();
+        expected_sorted.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
             assert_eq!(&expected, &seq(&input));
@@ -76,9 +84,16 @@ fn run(c: &mut Criterion) {
             b.iter(|| rayon(&input))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input));
-            b.iter(|| orx(&input))
+        group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
+            assert_eq!(&expected, &orx(&input, IterationOrder::Ordered));
+            b.iter(|| orx(&input, IterationOrder::Ordered))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
+            let mut result = orx(&input, IterationOrder::Arbitrary);
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx(&input, IterationOrder::Ordered))
         });
     }
 
