@@ -143,6 +143,23 @@ where
         }
     }
 
+    pub fn collect<C>(self) -> C
+    where
+        C: ParCollectInto<X::O>,
+        X::O: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::inf_col_into(None, self),
+            IterationOrder::Arbitrary => {
+                let exact_len = match (self.iter.try_get_len(), <X::Size as Size>::size()) {
+                    (Some(input_len), Some(elem_len)) => Some(input_len * elem_len),
+                    _ => None,
+                };
+                C::inf_arb_col_into(None, self, exact_len)
+            }
+        }
+    }
+
     // compute - derived
 
     pub fn for_each<F>(self, f: F)
