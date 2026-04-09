@@ -7,6 +7,6 @@ mod many_one;
 mod one_bin;
 mod one_many;
 mod one_one;
-mod size_pair;
+mod size_pair_opt;
 
-pub use size_pair::SizePairOpt;
+pub use size_pair_opt::SizePairOpt;
