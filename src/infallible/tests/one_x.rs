@@ -1,4 +1,4 @@
-use crate::collectables::par_col_into_test::ParCollectIntoTest;
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::infallible::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
@@ -55,23 +55,34 @@ fn one_x_reduce() {
 
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [false, true]
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)]
 )]
-fn one_x_collect_into<C: ParCollectIntoTest<String>>(c: C, pre_fill: bool) {
-    let c = c.prepare(pre_fill, N / 5, |i| (1000 + i).to_string());
-
-    let expected = c.expected(inputs(N).into_iter().flat_map(|x| {
-        let a = x.parse::<u64>().unwrap();
-        (0..5).map(move |i| (a + i).to_string())
-    }));
-
-    let result = inputs(N)
-        .into_par()
-        .flat_map(|x| {
+fn one_x_collect_into<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
+    let iter = || {
+        inputs(N).into_iter().flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .collect_into(c);
+    };
+
+    let expected = C::expected(mode, |i| i.to_string(), iter());
+
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs(N)
+            .into_par()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .collect(),
+    };
 
     assert_eq!(result, expected);
 }
