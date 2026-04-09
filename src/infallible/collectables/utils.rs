@@ -22,15 +22,20 @@ where
     }
 }
 
-pub fn merge_collected_into<T, P>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: P) -> P
-where
-    P: PinnedVec<T>,
-{
+pub fn split_vec_reserve<T, G: Growth>(split_vec: &mut SplitVec<T, G>, iter_len: Option<usize>) {
+    match iter_len {
+        None => {
+            let capacity_bound = split_vec.capacity_bound();
+            split_vec.reserve_maximum_concurrent_capacity(capacity_bound)
+        }
+        Some(len) => split_vec.reserve_maximum_concurrent_capacity(split_vec.len() + len),
+    };
+}
+
+pub fn merge_collected_into<T>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: Vec<T>) -> Vec<T> {
     if results.len() == 1 {
         let results = results.into_iter().next().expect("results.len()==1");
-        for v in results {
-            dst.push(v.val);
-        }
+        dst.extend(results.into_iter().map(|x| x.val));
         return dst;
     }
 
