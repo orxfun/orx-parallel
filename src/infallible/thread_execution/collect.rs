@@ -1,23 +1,18 @@
-use crate::infallible_use::{XapUse, use_var::Use};
+use crate::infallible::xap::Xap;
 use crate::results::ValIdx;
 use crate::runner::ParRunner;
+use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next<Q, U, I, X>(
-    u: &U,
-    th_idx: usize,
-    state: &Q::State,
-    iter: &I,
-    x: X,
-) -> Option<ValIdx<X::O>>
+pub fn collect<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Vec<ValIdx<X::O>>
 where
     Q: ParRunner,
-    U: Use,
     I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
+    X: Xap<I = I::Item>,
 {
-    let mut u = u.create(th_idx);
-    let u = &mut u as *mut U::Item;
+    let mut collected = Vec::new();
+    let vec = &mut collected;
+
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller_with_idx();
 
@@ -27,12 +22,7 @@ where
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some((idx, i)) => {
-                    if let Some(val) = x.xap_use(u, i).into_iter().next() {
-                        Q::broadcast_stop(iter, state, chunk_state);
-                        return Some(ValIdx::new(val, idx));
-                    }
-                }
+                Some((idx, i)) => vec.extend(x.xap(i).into_iter().map(|i| ValIdx::new(i, idx))),
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
             },
@@ -42,12 +32,9 @@ where
                 }
 
                 match chunk_puller.pull_with_idx() {
-                    Some((idx, chunk)) => {
-                        if let Some(val) = chunk.flat_map(|i| x.xap_use(u, i)).next() {
-                            Q::broadcast_stop(iter, state, chunk_state);
-                            return Some(ValIdx::new(val, idx));
-                        }
-                    }
+                    Some((idx, chunk)) => vec.extend(
+                        chunk.flat_map(|i| x.xap(i).into_iter().map(|i| ValIdx::new(i, idx))),
+                    ),
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
                 }
@@ -57,5 +44,5 @@ where
         Q::complete_chunk(state, chunk_state);
     }
 
-    None
+    collected
 }
