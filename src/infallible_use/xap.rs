@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::Map;
-use crate::infallible_use::sizes::SizeInf;
+use crate::infallible_use::sizes::SizeInfUse;
 use crate::sizes::{Bin, One};
 
 pub trait XapUse: Copy + Send {
@@ -9,7 +9,7 @@ pub trait XapUse: Copy + Send {
 
     type O;
 
-    type Size: SizeInf;
+    type Size: SizeInfUse;
 
     type Values: IntoIterator<Item = Self::O>;
 
@@ -21,28 +21,28 @@ pub trait XapUse: Copy + Send {
     where
         H: Fn(&mut Self::U, Self::O) -> Q + Copy + Send,
     {
-        <Self::Size as SizeInf>::map(self, h)
+        <Self::Size as SizeInfUse>::map(self, h)
     }
 
     fn inspect<H>(self, h: H) -> InsOf<Self, H>
     where
         H: Fn(&mut Self::U, &Self::O) + Copy + Send,
     {
-        <Self::Size as SizeInf>::inspect(self, h)
+        <Self::Size as SizeInfUse>::inspect(self, h)
     }
 
     fn filter<H>(self, h: H) -> FilOf<Self, H>
     where
         H: Fn(&mut Self::U, &Self::O) -> bool + Copy + Send,
     {
-        <Self::Size as SizeInf>::filter(self, h)
+        <Self::Size as SizeInfUse>::filter(self, h)
     }
 
     fn filter_map<Q, H>(self, h: H) -> FilMapOf<Self, Q, H>
     where
         H: Fn(&mut Self::U, Self::O) -> Option<Q> + Copy + Send,
     {
-        <Self::Size as SizeInf>::filter_map(self, h)
+        <Self::Size as SizeInfUse>::filter_map(self, h)
     }
 
     fn flat_map<V, H>(self, h: H) -> FlatMapOf<Self, V, H>
@@ -50,7 +50,7 @@ pub trait XapUse: Copy + Send {
         V: IntoIterator,
         H: Fn(&mut Self::U, Self::O) -> V + Copy + Send,
     {
-        <Self::Size as SizeInf>::flat_map(self, h)
+        <Self::Size as SizeInfUse>::flat_map(self, h)
     }
 
     // transformations - helper
@@ -59,7 +59,7 @@ pub trait XapUse: Copy + Send {
     where
         M: Map<U = Self::U, I = Self::O>,
     {
-        <Self::Size as SizeInf>::mapped(self, m)
+        <Self::Size as SizeInfUse>::mapped(self, m)
     }
 }
 
@@ -89,14 +89,14 @@ impl<X: XapUse<Size = Bin>> XapBin for X {}
 
 // // helper types
 
-pub type MapOf<X, Q, H> = <<X as XapUse>::Size as SizeInf>::Map<X, Q, H>;
+pub type MapOf<X, Q, H> = <<X as XapUse>::Size as SizeInfUse>::Map<X, Q, H>;
 
-pub type InsOf<X, H> = <<X as XapUse>::Size as SizeInf>::Inspect<X, H>;
+pub type InsOf<X, H> = <<X as XapUse>::Size as SizeInfUse>::Inspect<X, H>;
 
-pub type FilOf<X, H> = <<X as XapUse>::Size as SizeInf>::Filter<X, H>;
+pub type FilOf<X, H> = <<X as XapUse>::Size as SizeInfUse>::Filter<X, H>;
 
-pub type FilMapOf<X, Q, H> = <<X as XapUse>::Size as SizeInf>::FilterMap<X, Q, H>;
+pub type FilMapOf<X, Q, H> = <<X as XapUse>::Size as SizeInfUse>::FilterMap<X, Q, H>;
 
-pub type FlatMapOf<X, V, H> = <<X as XapUse>::Size as SizeInf>::FlatMap<X, V, H>;
+pub type FlatMapOf<X, V, H> = <<X as XapUse>::Size as SizeInfUse>::FlatMap<X, V, H>;
 
-pub type MappedOf<X, M> = <<X as XapUse>::Size as SizeInf>::Mapped<X, M>;
+pub type MappedOf<X, M> = <<X as XapUse>::Size as SizeInfUse>::Mapped<X, M>;

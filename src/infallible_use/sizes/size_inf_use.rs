@@ -3,7 +3,7 @@ use crate::infallible_use::fun::*;
 use crate::sizes::Many;
 use crate::sizes::Size;
 
-pub trait SizeInf: Size {
+pub trait SizeInfUse: Size {
     // transformations
 
     type Map<X, Q, H>: XapUse<U = X::U, I = X::I, O = Q, Size = Self>

@@ -1,10 +1,10 @@
 use crate::infallible_use::XapUse;
 use crate::infallible_use::fun::*;
-use crate::infallible_use::sizes::SizeInf;
+use crate::infallible_use::sizes::SizeInfUse;
 use crate::infallible_use::xap_variants::*;
 use crate::sizes::Bin;
 
-impl SizeInf for Bin {
+impl SizeInfUse for Bin {
     // transformations
 
     type Map<X, Q, H>
