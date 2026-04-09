@@ -1,6 +1,6 @@
-use crate::infallible::collectables::col_into::ColIntoInf;
-use crate::infallible::collectables::utils::merge_collected_into;
-use crate::infallible::par_runner::ParRunnerInfallible;
+use crate::collectables::col_into::ColIntoInf;
+use crate::collectables::utils::merge_collected_into;
+use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;

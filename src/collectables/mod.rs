@@ -4,3 +4,5 @@ mod split_vec;
 mod vec;
 
 mod utils;
+
+pub use col_into::ColIntoInf;

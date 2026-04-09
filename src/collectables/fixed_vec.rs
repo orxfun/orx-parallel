@@ -1,4 +1,4 @@
-use crate::infallible::collectables::col_into::ColIntoInf;
+use crate::collectables::col_into::ColIntoInf;
 use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
 use alloc::vec::Vec;
