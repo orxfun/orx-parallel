@@ -1,6 +1,12 @@
+use crate::collectables::par_col_into_test::ParCollectIntoTest;
 use crate::infallible::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
+use alloc::vec::Vec;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
+use std::string::{String, ToString};
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -45,4 +51,27 @@ fn one_x_reduce() {
             false => a,
         });
     assert_eq!(result, Some(160));
+}
+
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [false, true]
+)]
+fn one_x_collect_into<C: ParCollectIntoTest<String>>(c: C, pre_fill: bool) {
+    let c = c.prepare(pre_fill, N / 5, |i| (1000 + i).to_string());
+
+    let expected = c.expected(inputs(N).into_iter().flat_map(|x| {
+        let a = x.parse::<u64>().unwrap();
+        (0..5).map(move |i| (a + i).to_string())
+    }));
+
+    let result = inputs(N)
+        .into_par()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .collect_into(c);
+
+    assert_eq!(result, expected);
 }
