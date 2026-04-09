@@ -14,6 +14,7 @@ fn id_find_ok() {
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
         .fallible_result()
+        .using_clone(UseValue::new(42))
         .first();
     assert_eq!(result, Ok(Some(String::from("0"))));
 }
@@ -25,6 +26,7 @@ fn id_find_any_ok() {
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
         .fallible_result()
+        .using_clone(UseValue::new(42))
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_ok());
@@ -35,11 +37,18 @@ fn id_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+        .using(|th_idx| UseValue::new(th_idx))
+        .map::<Result<_, Vec<char>>, _>(|u, x| {
+            u.mutate();
+            Ok(x)
+        })
         .fallible_result()
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Ok(Some(String::from("99"))));
 }
@@ -49,14 +58,21 @@ fn id_reduce_ok_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map(|x| match x.as_str() == "42" {
-            true => Ok(x),
-            false => Err(vec!['a']),
+        .using(|th_idx| UseValue::new(th_idx))
+        .map(|u, x| {
+            u.mutate();
+            match x.as_str() == "42" {
+                true => Ok(x),
+                false => Err(vec!['a']),
+            }
         })
         .fallible_result()
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Err(vec!['a']));
 }
