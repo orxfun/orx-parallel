@@ -1,22 +1,11 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
-use crate::infallible::xap_variants::Id;
 use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner, default_runner};
+use crate::runner::{DefaultRunner, ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
-
-// TODO: this will be replaced later by IntoPar trait.
-pub fn par<I: ConcurrentIter>(iter: I) -> Par<I, Id<I::Item>, DefaultRunner> {
-    Par {
-        iter,
-        xap: Id::new(),
-        exe: default_runner(),
-        params: Default::default(),
-    }
-}
 
 pub struct Par<I, X, R = DefaultRunner>
 where
