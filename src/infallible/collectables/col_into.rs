@@ -3,7 +3,7 @@ use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoInf<T> {
-    fn empty(iter_len: Option<usize>) -> Self;
+    fn empty(exact_len: Option<usize>) -> Self;
 
     fn collect_into<I, X, R>(self, par: Par<I, X, R>) -> Self
     where
