@@ -58,9 +58,10 @@ fn bin_x_reduce() {
 
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)]
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
-fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
+fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {
         inputs(N).into_iter().filter(|x| x.len() < 4).flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -73,6 +74,7 @@ fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(c) => inputs(N)
             .into_par()
+            .iteration_order(order)
             .filter(|x| x.len() < 4)
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -81,6 +83,7 @@ fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
             .collect_into(c),
         None => inputs(N)
             .into_par()
+            .iteration_order(order)
             .filter(|x| x.len() < 4)
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -89,5 +92,5 @@ fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode) {
             .collect(),
     };
 
-    assert_eq!(result, expected);
+    C::assert_eq(result, expected, order);
 }
