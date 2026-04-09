@@ -8,10 +8,10 @@ use crate::infallible_use::xap_variants::Id;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<O, E, I, X, R> Par<I, X, R>
+impl<I, X, R> Par<I, X, R>
 where
     I: ConcurrentIter,
-    X: Xap<I = I::Item, O = Result<O, E>>,
+    X: Xap<I = I::Item>,
     R: ParRunner,
     X::Size: SizeInfUse,
 {
