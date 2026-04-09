@@ -9,6 +9,7 @@ impl SizePairUseRes for BinOne {
         X1: XapUse<O = Result<M, E>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
+    #[inline(always)]
     fn xap_use_res<M, E, X1, X2>(
         u: *mut X1::U,
         x1: X1,
