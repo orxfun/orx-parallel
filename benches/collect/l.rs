@@ -2,6 +2,7 @@
 
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
+* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
 
 reduce_l/seq/e15_light      time:   [20.289 ms 20.503 ms 20.717 ms]
 reduce_l/rayon1/e15_light   time:   [26.610 ms 27.316 ms 28.066 ms]
@@ -72,16 +73,6 @@ fn fibonacci(n: u64) -> u64 {
     a
 }
 
-fn l_r(a: u64, b: u64) -> u64 {
-    a + b
-}
-
-fn h_r(a: u64, b: u64) -> u64 {
-    let f = black_box(fibonacci(a % FIB_UPPER_BOUND));
-    let g = black_box(a + f);
-    g + b - f
-}
-
 fn l_l(a: &u64) -> impl IntoIterator<Item = u64> {
     (0..7).map(move |x| 2 * x + a)
 }
@@ -90,31 +81,32 @@ fn h_l(a: &u64) -> impl IntoIterator<Item = u64> {
     (0..7).map(move |x| fibonacci((x + a) % FIB_UPPER_BOUND))
 }
 
-fn seq(input: &[u64], h: bool) -> Option<u64> {
+fn seq(input: &[u64], h: bool) -> Vec<u64> {
     match h {
-        true => input.iter().flat_map(l_l).reduce(h_r),
-        false => input.iter().flat_map(h_l).reduce(l_r),
+        true => input.iter().flat_map(l_l).collect(),
+        false => input.iter().flat_map(h_l).collect(),
     }
 }
 
-fn orx(input: &[u64], h: bool) -> Option<u64> {
+fn orx(input: &[u64], h: bool, order: IterationOrder) -> Vec<u64> {
     match h {
-        true => input.into_par().flat_map(l_l).reduce(h_r),
-        false => input.into_par().flat_map(h_l).reduce(l_r),
+        true => input
+            .into_par()
+            .iteration_order(order)
+            .flat_map(l_l)
+            .collect(),
+        false => input
+            .into_par()
+            .iteration_order(order)
+            .flat_map(h_l)
+            .collect(),
     }
 }
 
-fn rayon1(input: &[u64], h: bool) -> Option<u64> {
+fn rayon(input: &[u64], h: bool) -> Vec<u64> {
     match h {
-        true => input.into_par_iter().flat_map_iter(l_l).reduce_with(h_r),
-        false => input.into_par_iter().flat_map_iter(h_l).reduce_with(l_r),
-    }
-}
-
-fn rayon2(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => Some(input.into_par_iter().flat_map_iter(l_l).reduce(|| 0, h_r)),
-        false => Some(input.into_par_iter().flat_map_iter(h_l).reduce(|| 0, l_r)),
+        true => input.into_par_iter().flat_map_iter(l_l).collect(),
+        false => input.into_par_iter().flat_map_iter(h_l).collect(),
     }
 }
 
@@ -156,25 +148,32 @@ fn run(c: &mut Criterion) {
         );
         let input = inputs(t.len);
         let expected = seq(&input, t.heavy_compute);
+        let mut expected_sorted = expected.clone();
+        expected_sorted.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
             assert_eq!(&expected, &seq(&input, t.heavy_compute));
             b.iter(|| seq(&input, t.heavy_compute))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon1", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon1(&input, t.heavy_compute));
-            b.iter(|| rayon1(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+            assert_eq!(&expected, &rayon(&input, t.heavy_compute));
+            b.iter(|| rayon(&input, t.heavy_compute))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon2", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon2(&input, t.heavy_compute));
-            b.iter(|| rayon2(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
+            assert_eq!(
+                &expected,
+                &orx(&input, t.heavy_compute, IterationOrder::Ordered)
+            );
+            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Ordered))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy_compute));
-            b.iter(|| orx(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
+            let mut result = orx(&input, t.heavy_compute, IterationOrder::Arbitrary);
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Arbitrary))
         });
     }
 
