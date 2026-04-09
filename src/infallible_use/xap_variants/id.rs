@@ -4,7 +4,7 @@ use crate::infallible_use::{XapUse, XapUseEnumByInput};
 use crate::sizes::One;
 use core::marker::PhantomData;
 
-pub struct Id<X: Xap, U>
+pub struct IdUse<X: Xap, U>
 where
     X::Size: SizeInfUse,
 {
@@ -12,7 +12,7 @@ where
     p: PhantomData<U>,
 }
 
-impl<X: Xap, U> Clone for Id<X, U>
+impl<X: Xap, U> Clone for IdUse<X, U>
 where
     X::Size: SizeInfUse,
 {
@@ -24,11 +24,11 @@ where
     }
 }
 
-impl<X: Xap, U> Copy for Id<X, U> where X::Size: SizeInfUse {}
+impl<X: Xap, U> Copy for IdUse<X, U> where X::Size: SizeInfUse {}
 
-unsafe impl<X: Xap, U> Send for Id<X, U> where X::Size: SizeInfUse {}
+unsafe impl<X: Xap, U> Send for IdUse<X, U> where X::Size: SizeInfUse {}
 
-impl<X: Xap, U> Id<X, U>
+impl<X: Xap, U> IdUse<X, U>
 where
     X::Size: SizeInfUse,
 {
@@ -38,7 +38,7 @@ where
     }
 }
 
-impl<X: Xap, U> XapUse for Id<X, U>
+impl<X: Xap, U> XapUse for IdUse<X, U>
 where
     X::Size: SizeInfUse,
 {
@@ -58,14 +58,14 @@ where
     }
 }
 
-impl<X: XapEnumByInput<Size = One>, U> XapUseEnumByInput for Id<X, U>
+impl<X: XapEnumByInput<Size = One>, U> XapUseEnumByInput for IdUse<X, U>
 where
     X::Size: SizeInfUse,
 {
-    type Enumerated = Id<X::Enumerated, U>;
+    type Enumerated = IdUse<X::Enumerated, U>;
 
     fn enumerate(self) -> Self::Enumerated {
         let x = self.x.enumerate();
-        Id::new(x)
+        IdUse::new(x)
     }
 }
