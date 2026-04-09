@@ -49,7 +49,7 @@ pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug>:
 
 impl<T: Clone + PartialEq + Debug> ParCollectIntoTest<T> for FixedVec<T> {
     fn empty() -> Self {
-        Self::new(1234)
+        Self::new(12345)
     }
 
     fn push_back(&mut self, value: T) {
