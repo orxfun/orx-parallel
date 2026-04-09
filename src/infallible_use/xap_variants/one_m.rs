@@ -21,18 +21,6 @@ impl<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> OneM<X, G> {
     }
 }
 
-impl<X: XapUseEnumByInput<Size = One>, G: Map<U = X::U, I = X::O>> XapUseEnumByInput
-    for OneM<X, G>
-{
-    type Enumerated = OneM<X::Enumerated, MapEnum<G>>;
-
-    fn enumerate(self) -> Self::Enumerated {
-        let g = MapEnum::new(self.g);
-        let x = self.x.enumerate();
-        OneM::new(x, g)
-    }
-}
-
 impl<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> XapUse for OneM<X, G> {
     type I = X::I;
 
@@ -47,5 +35,17 @@ impl<X: XapUse<Size = One>, G: Map<U = X::U, I = X::O>> XapUse for OneM<X, G> {
     fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
         let a = self.x.one_value(u, i);
         [self.g.map(u, a)]
+    }
+}
+
+impl<X: XapUseEnumByInput<Size = One>, G: Map<U = X::U, I = X::O>> XapUseEnumByInput
+    for OneM<X, G>
+{
+    type Enumerated = OneM<X::Enumerated, MapEnum<G>>;
+
+    fn enumerate(self) -> Self::Enumerated {
+        let g = MapEnum::new(self.g);
+        let x = self.x.enumerate();
+        OneM::new(x, g)
     }
 }

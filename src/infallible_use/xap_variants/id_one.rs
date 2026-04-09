@@ -1,4 +1,4 @@
-use crate::infallible::Xap;
+use crate::infallible::{Xap, XapEnumByInput};
 use crate::infallible_use::fun::{Map, MapEnum};
 use crate::infallible_use::{XapOne, XapUse, XapUseEnumByInput};
 use crate::sizes::One;
@@ -43,5 +43,14 @@ impl<X: Xap<Size = One>, U> XapUse for IdOne<X, U> {
     #[inline(always)]
     fn xap_use(&self, _: &mut Self::U, i: Self::I) -> Self::Values {
         self.x.xap(i)
+    }
+}
+
+impl<X: XapEnumByInput<Size = One>, U> XapUseEnumByInput for IdOne<X, U> {
+    type Enumerated = IdOne<X::Enumerated, U>;
+
+    fn enumerate(self) -> Self::Enumerated {
+        let x = self.x.enumerate();
+        IdOne::new(x)
     }
 }
