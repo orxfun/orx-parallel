@@ -17,7 +17,7 @@ impl SizePairRes for ManyOne {
         X2: Xap<I = M, Size = Self::S2>,
     {
         let iter = x1.xap(i).into_iter();
-        IterResManyOne { iter, x2: x2 }
+        IterResManyOne { iter, x2 }
     }
 }
 
