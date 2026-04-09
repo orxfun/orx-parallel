@@ -13,7 +13,7 @@ use orx_split_vec::SplitVec;
 impl<T> ParCollectInto<T> for Vec<T> {}
 
 impl<T> ColIntoInf<T> for Vec<T> {
-    fn inf_collect_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    fn inf_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -29,7 +29,7 @@ impl<T> ColIntoInf<T> for Vec<T> {
         merge_collected_into(results, FixedVec::from(dst)).into()
     }
 
-    fn inf_collect_arbitrary_into<I, X, R>(
+    fn inf_arb_col_into<I, X, R>(
         dst: Option<Self>,
         par: Par<I, X, R>,
         exact_len: Option<usize>,

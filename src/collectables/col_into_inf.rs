@@ -5,14 +5,14 @@ use orx_concurrent_iter::ConcurrentIter;
 pub trait ColIntoInf<T>: Sized {
     // fn empty(exact_len: Option<usize>) -> Self;
 
-    fn inf_collect_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    fn inf_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
         R: ParRunner,
         T: Send;
 
-    fn inf_collect_arbitrary_into<I, X, R>(
+    fn inf_arb_col_into<I, X, R>(
         dst: Option<Self>,
         par: Par<I, X, R>,
         exact_len: Option<usize>,

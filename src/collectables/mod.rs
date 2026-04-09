@@ -6,4 +6,5 @@ mod vec;
 
 mod utils;
 
+pub use col_into_inf::ColIntoInf;
 pub use par_col_into::ParCollectInto;
