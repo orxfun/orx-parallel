@@ -32,7 +32,8 @@ impl<X: XapUse<Size = One>, G: FlatMap<U = X::U, I = X::O>> XapUse for OneX<X, G
 
     type U = X::U;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
+        let u = unsafe { &mut *u };
         let a = self.x.one_value(u, i);
         self.g.flat_map(u, a)
     }

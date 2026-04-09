@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::FilterMap;
-use crate::infallible_use::{XapUse, XapOne};
+use crate::infallible_use::{XapOne, XapUse};
 use crate::sizes::{Bin, One};
 
 pub struct OneF<X: XapUse<Size = One>, G: FilterMap<U = X::U, I = X::O>> {
@@ -32,7 +32,8 @@ impl<X: XapUse<Size = One>, G: FilterMap<U = X::U, I = X::O>> XapUse for OneF<X,
 
     type U = X::U;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
+        let u = unsafe { &mut *u };
         let a = self.x.one_value(u, i);
         self.g.filter_map(u, a)
     }
