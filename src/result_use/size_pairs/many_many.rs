@@ -1,24 +1,28 @@
-use crate::infallible_use::{XapBin, XapUse};
+use crate::infallible_use::XapUse;
 use crate::result_use::size_pairs::size_pair_use_res::SizePairUseRes;
 use crate::sizes::{Many, ManyMany};
 use core::iter::FusedIterator;
 
-impl SizePairRes for ManyMany {
-    type XapResResult<M, E, X1, X2>
+impl SizePairUseRes for ManyMany {
+    type XapUseResResult<M, E, X1, X2>
         = IterResManyMany<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>;
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
-    #[inline(always)]
-    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    fn xap_use_res<M, E, X1, X2>(
+        u: *mut X1::U,
+        x1: X1,
+        x2: X2,
+        i: X1::I,
+    ) -> Self::XapUseResResult<M, E, X1, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>,
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
     {
-        let iter = x1.xap(i).into_iter();
+        let iter = x1.xap_use(u, i).into_iter();
         let (x2, inner) = (x2, None);
-        IterResManyMany { iter, x2, inner }
+        IterResManyMany { u, iter, x2, inner }
     }
 }
 
@@ -27,8 +31,9 @@ impl SizePairRes for ManyMany {
 pub struct IterResManyMany<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = Many>,
+    X2: XapUse<I = M, Size = Many>,
 {
+    u: *mut X2::U,
     iter: I,
     x2: X2,
     inner: Option<<X2::Values as IntoIterator>::IntoIter>,
@@ -37,7 +42,7 @@ where
 impl<M, E, I, X2> Iterator for IterResManyMany<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = Many>,
+    X2: XapUse<I = M, Size = Many>,
 {
     type Item = Result<X2::O, E>;
 
@@ -49,7 +54,7 @@ where
             }
 
             match self.iter.next() {
-                Some(Ok(i)) => self.inner = Some(self.x2.xap(i).into_iter()),
+                Some(Ok(i)) => self.inner = Some(self.x2.xap_use(self.u, i).into_iter()),
                 Some(Err(e)) => return Some(Err(e)),
                 None => return None,
             }
@@ -77,7 +82,14 @@ where
 
         for i in self.iter {
             match i {
-                Ok(i) => agg = self.x2.xap(i).into_iter().map(Ok).fold(agg, &mut f),
+                Ok(i) => {
+                    agg = self
+                        .x2
+                        .xap_use(self.u, i)
+                        .into_iter()
+                        .map(Ok)
+                        .fold(agg, &mut f)
+                }
                 Err(e) => return f(agg, Err(e)),
             }
         }
@@ -97,7 +109,7 @@ where
 
         for i in self.iter {
             match i {
-                Ok(i) => count += self.x2.xap(i).into_iter().count(),
+                Ok(i) => count += self.x2.xap_use(self.u, i).into_iter().count(),
                 Err(_) => return count,
             }
         }
@@ -118,7 +130,7 @@ fn and_then_or_clear<T, U>(opt: &mut Option<T>, f: impl FnOnce(&mut T) -> Option
 impl<M, E, I, X2> FusedIterator for IterResManyMany<M, E, I, X2>
 where
     I: FusedIterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = Many>,
+    X2: XapUse<I = M, Size = Many>,
     X2::Values: FusedIterator,
 {
 }
