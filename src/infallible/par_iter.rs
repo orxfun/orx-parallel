@@ -4,6 +4,7 @@ use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf}
 use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
+use crate::{ParCollectInto, collectables::ColIntoInf};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
 
@@ -124,7 +125,16 @@ where
         exe.reduce(params, iter, x, f)
     }
 
-    // pub fn collect_into<C>
+    pub fn collect_into<C>(self, dst: C) -> C
+    where
+        C: ParCollectInto<X::O>,
+        X::O: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
+            IterationOrder::Arbitrary => C::inf_arb_col_into(Some(dst), self, None),
+        }
+    }
 
     // compute - derived
 

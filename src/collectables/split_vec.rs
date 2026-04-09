@@ -11,7 +11,7 @@ use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 impl<T, G: GrowthWithConstantTimeAccess> ParCollectInto<T> for SplitVec<T, G> {}
 
 impl<T, G: GrowthWithConstantTimeAccess> ColIntoInf<T> for SplitVec<T, G> {
-    fn inf_collect_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    fn inf_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -25,7 +25,7 @@ impl<T, G: GrowthWithConstantTimeAccess> ColIntoInf<T> for SplitVec<T, G> {
         merge_collected_into(results, dst)
     }
 
-    fn inf_collect_arbitrary_into<I, X, R>(
+    fn inf_arb_col_into<I, X, R>(
         dst: Option<Self>,
         par: Par<I, X, R>,
         exact_len: Option<usize>,
