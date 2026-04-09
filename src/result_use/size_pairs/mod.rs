@@ -9,4 +9,4 @@ mod one_many;
 mod one_one;
 mod size_pair_use_res;
 
-// pub use size_pair::SizePairRes;
+pub use size_pair_use_res::SizePairUseRes;

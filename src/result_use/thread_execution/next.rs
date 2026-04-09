@@ -1,23 +1,28 @@
-use crate::infallible_use::{XapUse, use_var::Use};
-use crate::results::ValIdx;
-use crate::runner::ParRunner;
+use crate::infallible_use::{Use, XapUse};
+use crate::result_use::size_pairs::SizePairUseRes;
+use crate::{results::ValIdx, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next<Q, U, I, X>(
+pub fn next<Q, U, I, M, E, X1, X2, S>(
+    _: S,
     u: &U,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
-    x: X,
-) -> Option<ValIdx<X::O>>
+    x1: X1,
+    x2: X2,
+) -> Result<Option<ValIdx<X2::O>>, E>
 where
     Q: ParRunner,
     U: Use,
     I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
+    X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
+
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller_with_idx();
 
@@ -28,9 +33,12 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
-                    if let Some(val) = x.xap_use(u, i).into_iter().next() {
+                    for a in S::xap_use_res(u, x1, x2, i) {
                         Q::broadcast_stop(iter, state, chunk_state);
-                        return Some(ValIdx::new(val, idx));
+                        match a {
+                            Ok(a) => return Ok(Some(ValIdx::new(a, idx))),
+                            Err(e) => return Err(e),
+                        }
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -43,9 +51,12 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
-                        if let Some(val) = chunk.flat_map(|i| x.xap_use(u, i).into_iter()).next() {
+                        for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
                             Q::broadcast_stop(iter, state, chunk_state);
-                            return Some(ValIdx::new(val, idx));
+                            match a {
+                                Ok(a) => return Ok(Some(ValIdx::new(a, idx))),
+                                Err(e) => return Err(e),
+                            }
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
@@ -57,5 +68,5 @@ where
         Q::complete_chunk(state, chunk_state);
     }
 
-    None
+    Ok(None)
 }
