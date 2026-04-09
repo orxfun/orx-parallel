@@ -41,7 +41,7 @@ fn one_x_find_any_ok() {
 
 #[test]
 fn one_x_reduce_ok() {
-    let inputs = inputs_res(N, Some(42));
+    let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
         .using(|th_idx| UseValue::new(th_idx))
