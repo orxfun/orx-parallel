@@ -1,3 +1,4 @@
+use crate::collectables::par_col_into_test::ParCollectIntoTest;
 use crate::infallible::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
@@ -31,6 +32,21 @@ fn bin_f_find_any() {
 #[test]
 fn bin_f_reduce() {
     let inputs = inputs(N);
+    let result = inputs
+        .into_par()
+        .filter(|x| x.len() > 1)
+        .filter(|x| x.len() < 4)
+        .reduce(|a, b| match a < b {
+            true => b,
+            false => a,
+        });
+    assert_eq!(result, Some(String::from("99")));
+}
+
+fn bin_f_collect(c: impl ParCollectIntoTest<String>) {
+    let inputs = inputs(N);
+    let offset = 12;
+
     let result = inputs
         .into_par()
         .filter(|x| x.len() > 1)
