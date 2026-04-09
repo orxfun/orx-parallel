@@ -2,26 +2,27 @@
 
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
+* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
 
-reduce_m/seq/e15_light      time:   [14.223 µs 14.358 µs 14.497 µs]
-reduce_m/rayon1/e15_light   time:   [8.7471 ms 8.8833 ms 9.0200 ms]
-reduce_m/rayon2/e15_light   time:   [9.9737 ms 10.162 ms 10.351 ms]
-reduce_m/orx/e15_light      time:   [1.4237 ms 1.4667 ms 1.5136 ms]
+col_m/seq/e15_light     time:   [18.924 µs 19.104 µs 19.296 µs]
+col_m/rayon/e15_light   time:   [12.222 ms 13.502 ms 15.522 ms]
+col_m/orx_ord/e15_light time:   [1.8075 ms 1.8505 ms 1.8980 ms]
+col_m/orx_arb/e15_light time:   [4.8928 ms 5.0619 ms 5.2402 ms]
 
-reduce_m/seq/e20_light      time:   [638.87 µs 657.68 µs 683.73 µs]
-reduce_m/rayon1/e20_light   time:   [19.552 ms 20.340 ms 21.125 ms]
-reduce_m/rayon2/e20_light   time:   [19.648 ms 20.201 ms 20.775 ms]
-reduce_m/orx/e20_light      time:   [2.3489 ms 2.4457 ms 2.5619 ms]
+col_m/seq/e20_light     time:   [808.84 µs 819.39 µs 830.30 µs]
+col_m/rayon/e20_light   time:   [29.515 ms 32.127 ms 35.009 ms]
+col_m/orx_ord/e20_light time:   [7.8373 ms 8.0218 ms 8.2136 ms]
+col_m/orx_arb/e20_light time:   [135.55 ms 151.97 ms 173.12 ms]
 
-reduce_m/seq/e15_heavy      time:   [1.7356 ms 1.7860 ms 1.8412 ms]
-reduce_m/rayon1/e15_heavy   time:   [10.757 ms 11.075 ms 11.379 ms]
-reduce_m/rayon2/e15_heavy   time:   [10.851 ms 11.165 ms 11.467 ms]
-reduce_m/orx/e15_heavy      time:   [2.2275 ms 2.2514 ms 2.2761 ms]
+col_m/seq/e15_heavy     time:   [1.0235 ms 1.0460 ms 1.0701 ms]
+col_m/rayon/e15_heavy   time:   [15.338 ms 16.081 ms 16.870 ms]
+col_m/orx_ord/e15_heavy time:   [3.0646 ms 3.1532 ms 3.2492 ms]
+col_m/orx_arb/e15_heavy time:   [7.2354 ms 8.4175 ms 9.9316 ms]
 
-reduce_m/seq/e20_heavy      time:   [50.382 ms 51.004 ms 51.678 ms]
-reduce_m/rayon1/e20_heavy   time:   [10.160 ms 10.875 ms 11.679 ms]
-reduce_m/rayon2/e20_heavy   time:   [9.9150 ms 10.458 ms 11.015 ms]
-reduce_m/orx/e20_heavy      time:   [7.7945 ms 7.9175 ms 8.0515 ms]
+col_m/seq/e20_heavy     time:   [33.794 ms 34.232 ms 34.690 ms]
+col_m/rayon/e20_heavy   time:   [16.382 ms 19.215 ms 22.916 ms]
+col_m/orx_ord/e20_heavy time:   [12.410 ms 13.334 ms 14.361 ms]
+col_m/orx_arb/e20_heavy time:   [137.07 ms 150.09 ms 165.88 ms]
 
 */
 
@@ -51,48 +52,40 @@ fn fibonacci(n: u64) -> u64 {
     a
 }
 
-fn l_r(a: u64, b: u64) -> u64 {
-    a + b
-}
-
-fn h_r(a: u64, b: u64) -> u64 {
-    let f = black_box(fibonacci(a % FIB_UPPER_BOUND));
-    let g = black_box(a + f);
-    g + b - f
-}
-
-fn m(x: &u64) -> u64 {
+fn l_m(x: &u64) -> u64 {
     match *x {
         999 => 999,
         n => 7 * n + 1000,
     }
 }
 
-fn seq(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input.iter().map(m).reduce(h_r),
-        false => input.iter().map(m).reduce(l_r),
+fn h_m(x: &u64) -> u64 {
+    let f = black_box(fibonacci(*x % FIB_UPPER_BOUND));
+    let g = black_box(*x + f);
+    match *x {
+        999 => g - f,
+        n => 7 * n + 1000,
     }
 }
 
-fn orx(input: &[u64], h: bool) -> Option<u64> {
+fn seq(input: &[u64], h: bool) -> Vec<u64> {
     match h {
-        true => input.into_par().map(m).reduce(h_r),
-        false => input.into_par().map(m).reduce(l_r),
+        true => input.iter().map(h_m).collect(),
+        false => input.iter().map(l_m).collect(),
     }
 }
 
-fn rayon1(input: &[u64], h: bool) -> Option<u64> {
+fn orx(input: &[u64], h: bool, order: IterationOrder) -> Vec<u64> {
     match h {
-        true => input.into_par_iter().map(m).reduce_with(h_r),
-        false => input.into_par_iter().map(m).reduce_with(l_r),
+        true => input.into_par().iteration_order(order).map(h_m).collect(),
+        false => input.into_par().iteration_order(order).map(l_m).collect(),
     }
 }
 
-fn rayon2(input: &[u64], h: bool) -> Option<u64> {
+fn rayon(input: &[u64], h: bool) -> Vec<u64> {
     match h {
-        true => Some(input.into_par_iter().map(m).reduce(|| 0, h_r)),
-        false => Some(input.into_par_iter().map(m).reduce(|| 0, l_r)),
+        true => input.into_par_iter().map(h_m).collect(),
+        false => input.into_par_iter().map(l_m).collect(),
     }
 }
 
@@ -121,7 +114,7 @@ fn run(c: &mut Criterion) {
         },
     ];
 
-    let mut group = c.benchmark_group("reduce_m");
+    let mut group = c.benchmark_group("col_m");
 
     for t in treatments {
         let name = format!(
@@ -134,25 +127,32 @@ fn run(c: &mut Criterion) {
         );
         let input = inputs(t.len);
         let expected = seq(&input, t.heavy_compute);
+        let mut expected_sorted = expected.clone();
+        expected_sorted.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
             assert_eq!(&expected, &seq(&input, t.heavy_compute));
             b.iter(|| seq(&input, t.heavy_compute))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon1", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon1(&input, t.heavy_compute));
-            b.iter(|| rayon1(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+            assert_eq!(&expected, &rayon(&input, t.heavy_compute));
+            b.iter(|| rayon(&input, t.heavy_compute))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon2", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon2(&input, t.heavy_compute));
-            b.iter(|| rayon2(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
+            assert_eq!(
+                &expected,
+                &orx(&input, t.heavy_compute, IterationOrder::Ordered)
+            );
+            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Ordered))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy_compute));
-            b.iter(|| orx(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
+            let mut result = orx(&input, t.heavy_compute, IterationOrder::Arbitrary);
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Arbitrary))
         });
     }
 

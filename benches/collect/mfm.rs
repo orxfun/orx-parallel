@@ -2,26 +2,23 @@
 
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
+* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
 
-reduce_mfm/seq/e15_light    time:   [46.793 µs 47.343 µs 47.885 µs]
-reduce_mfm/rayon1/e15_light time:   [7.5122 ms 7.9451 ms 8.3244 ms]
-reduce_mfm/rayon2/e15_light time:   [9.1598 ms 9.2558 ms 9.3536 ms]
-reduce_mfm/orx/e15_light    time:   [1.2662 ms 1.2887 ms 1.3183 ms]
+col_mfm/seq/e15_light       time:   [99.763 µs 100.72 µs 101.80 µs]
+col_mfm/rayon/e15_light     time:   [18.987 ms 19.995 ms 21.084 ms]
+col_mfm/orx_ord/e15_light   time:   [2.6493 ms 2.7415 ms 2.8361 ms]
 
-reduce_mfm/seq/e20_light    time:   [2.3262 ms 2.3455 ms 2.3663 ms]
-reduce_mfm/rayon1/e20_light time:   [16.413 ms 16.736 ms 17.069 ms]
-reduce_mfm/rayon2/e20_light time:   [16.353 ms 16.869 ms 17.387 ms]
-reduce_mfm/orx/e20_light    time:   [2.1666 ms 2.1964 ms 2.2374 ms]
+col_mfm/seq/e20_light       time:   [3.8361 ms 3.9048 ms 3.9747 ms]
+col_mfm/rayon/e20_light     time:   [31.905 ms 34.226 ms 36.717 ms]
+col_mfm/orx_ord/e20_light   time:   [8.2977 ms 9.0430 ms 9.8910 ms]
 
-reduce_mfm/seq/e15_heavy    time:   [2.2362 ms 2.2499 ms 2.2647 ms]
-reduce_mfm/rayon1/e15_heavy time:   [10.136 ms 10.261 ms 10.388 ms]
-reduce_mfm/rayon2/e15_heavy time:   [10.403 ms 10.609 ms 10.819 ms]
-reduce_mfm/orx/e15_heavy    time:   [2.1472 ms 2.1612 ms 2.1755 ms]
+col_mfm/seq/e15_heavy       time:   [1.4120 ms 1.4247 ms 1.4381 ms]
+col_mfm/rayon/e15_heavy     time:   [16.218 ms 16.849 ms 17.504 ms]
+col_mfm/orx_ord/e15_heavy   time:   [3.1397 ms 3.2166 ms 3.2947 ms]
 
-reduce_mfm/seq/e20_heavy    time:   [70.467 ms 70.860 ms 71.267 ms]
-reduce_mfm/rayon1/e20_heavy time:   [10.125 ms 10.531 ms 10.939 ms]
-reduce_mfm/rayon2/e20_heavy time:   [10.316 ms 10.746 ms 11.199 ms]
-reduce_mfm/orx/e20_heavy    time:   [10.295 ms 10.376 ms 10.458 ms]
+col_mfm/seq/e20_heavy       time:   [49.292 ms 50.898 ms 52.593 ms]
+col_mfm/rayon/e20_heavy     time:   [40.710 ms 48.117 ms 57.391 ms]
+col_mfm/orx_ord/e20_heavy   time:   [14.721 ms 15.794 ms 17.023 ms]
 
 */
 
@@ -30,7 +27,6 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::hint::black_box;
 
 fn inputs(len: usize) -> Vec<u64> {
     const SEED: u64 = 654;
@@ -49,16 +45,6 @@ fn fibonacci(n: u64) -> u64 {
         b = c;
     }
     a
-}
-
-fn l_r(a: u64, b: u64) -> u64 {
-    a + b
-}
-
-fn h_r(a: u64, b: u64) -> u64 {
-    let f = black_box(fibonacci(a % FIB_UPPER_BOUND));
-    let g = black_box(a + f);
-    g + b - f
 }
 
 fn m(x: &u64) -> u64 {
@@ -86,55 +72,36 @@ fn l_m2(x: u64) -> u64 {
     }
 }
 
-fn seq(input: &[u64], h: bool) -> Option<u64> {
+fn seq(input: &[u64], h: bool) -> Vec<u64> {
     match h {
-        true => input.iter().map(m).filter(f).map(h_m2).reduce(h_r),
-        false => input.iter().map(m).filter(f).map(l_m2).reduce(l_r),
+        true => input.iter().map(m).filter(f).map(h_m2).collect(),
+        false => input.iter().map(m).filter(f).map(l_m2).collect(),
     }
 }
 
-fn orx(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input.into_par().map(m).filter(f).map(h_m2).reduce(h_r),
-        false => input.into_par().map(m).filter(f).map(l_m2).reduce(l_r),
-    }
-}
-
-fn rayon1(input: &[u64], h: bool) -> Option<u64> {
+fn orx(input: &[u64], h: bool, order: IterationOrder) -> Vec<u64> {
     match h {
         true => input
-            .into_par_iter()
+            .into_par()
+            .iteration_order(order)
             .map(m)
             .filter(f)
             .map(h_m2)
-            .reduce_with(h_r),
+            .collect(),
         false => input
-            .into_par_iter()
+            .into_par()
+            .iteration_order(order)
             .map(m)
             .filter(f)
             .map(l_m2)
-            .reduce_with(l_r),
+            .collect(),
     }
 }
 
-fn rayon2(input: &[u64], h: bool) -> Option<u64> {
+fn rayon(input: &[u64], h: bool) -> Vec<u64> {
     match h {
-        true => Some(
-            input
-                .into_par_iter()
-                .map(m)
-                .filter(f)
-                .map(h_m2)
-                .reduce(|| 0, h_r),
-        ),
-        false => Some(
-            input
-                .into_par_iter()
-                .map(m)
-                .filter(f)
-                .map(l_m2)
-                .reduce(|| 0, l_r),
-        ),
+        true => input.into_par_iter().map(m).filter(f).map(h_m2).collect(),
+        false => input.into_par_iter().map(m).filter(f).map(l_m2).collect(),
     }
 }
 
@@ -163,7 +130,7 @@ fn run(c: &mut Criterion) {
         },
     ];
 
-    let mut group = c.benchmark_group("reduce_mfm");
+    let mut group = c.benchmark_group("col_mfm");
 
     for t in treatments {
         let name = format!(
@@ -176,26 +143,33 @@ fn run(c: &mut Criterion) {
         );
         let input = inputs(t.len);
         let expected = seq(&input, t.heavy_compute);
+        // let mut expected_sorted = expected.clone();
+        // expected_sorted.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
             assert_eq!(&expected, &seq(&input, t.heavy_compute));
             b.iter(|| seq(&input, t.heavy_compute))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon1", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon1(&input, t.heavy_compute));
-            b.iter(|| rayon1(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+            assert_eq!(&expected, &rayon(&input, t.heavy_compute));
+            b.iter(|| rayon(&input, t.heavy_compute))
         });
 
-        group.bench_with_input(BenchmarkId::new("rayon2", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon2(&input, t.heavy_compute));
-            b.iter(|| rayon2(&input, t.heavy_compute))
+        group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
+            assert_eq!(
+                &expected,
+                &orx(&input, t.heavy_compute, IterationOrder::Ordered)
+            );
+            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Ordered))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy_compute));
-            b.iter(|| orx(&input, t.heavy_compute))
-        });
+        // group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
+        //     let mut result = orx(&input, t.heavy_compute, IterationOrder::Arbitrary);
+        //     result.sort();
+        //     assert_eq!(&expected_sorted, &result);
+        //     b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Arbitrary))
+        // });
     }
 
     group.finish();
