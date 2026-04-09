@@ -36,7 +36,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        if let Some(val) = chunk.flat_map(|i| x.xap_use(u, i).into_iter()).next() {
+                        if let Some(val) = chunk.flat_map(|i| x.xap_use(u, i)).next() {
                             Q::broadcast_stop(iter, state, chunk_state);
                             return Some(val);
                         }
