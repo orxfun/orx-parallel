@@ -1,9 +1,9 @@
 use crate::infallible_use::{XapUse, XapUseBin, XapUseOne};
-use crate::option_use::size_pairs::size_pair_use_opt::SizePairUseRes;
+use crate::option_use::size_pairs::size_pair_use_opt::SizePairUseOpt;
 use crate::sizes::BinOne;
 
-impl SizePairUseRes for BinOne {
-    type XapUseResResult<M, X1, X2>
+impl SizePairUseOpt for BinOne {
+    type XapUseOptResult<M, X1, X2>
         = Option<Option<X2::O>>
     where
         X1: XapUse<O = Option<M>, Size = Self::S1>,
@@ -15,7 +15,7 @@ impl SizePairUseRes for BinOne {
         x1: X1,
         x2: X2,
         i: X1::I,
-    ) -> Self::XapUseResResult<M, X1, X2>
+    ) -> Self::XapUseOptResult<M, X1, X2>
     where
         X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>,

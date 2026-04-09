@@ -1,10 +1,10 @@
 use crate::infallible_use::{XapUse, XapUseBin};
-use crate::option_use::size_pairs::SizePairUseRes;
+use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::sizes::BinMany;
 use core::iter::FusedIterator;
 
-impl SizePairUseRes for BinMany {
-    type XapUseResResult<M, X1, X2>
+impl SizePairUseOpt for BinMany {
+    type XapUseOptResult<M, X1, X2>
         = IterResBinMany<<X2::Values as IntoIterator>::IntoIter>
     where
         X1: XapUse<O = Option<M>, Size = Self::S1>,
@@ -15,7 +15,7 @@ impl SizePairUseRes for BinMany {
         x1: X1,
         x2: X2,
         i: X1::I,
-    ) -> Self::XapUseResResult<M, X1, X2>
+    ) -> Self::XapUseOptResult<M, X1, X2>
     where
         X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>,

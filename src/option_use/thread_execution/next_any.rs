@@ -1,5 +1,5 @@
 use crate::infallible_use::{Use, XapUse};
-use crate::option_use::size_pairs::SizePairUseRes;
+use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -18,7 +18,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
