@@ -1,4 +1,5 @@
 use crate::collectables::col_into_inf::ColIntoInf;
+use crate::collectables::par_col_into::ParCollectInto;
 use crate::collectables::utils::{extend_vec_from_split, merge_collected_into};
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
@@ -8,6 +9,8 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
+
+impl<T> ParCollectInto<T> for Vec<T> {}
 
 impl<T> ColIntoInf<T> for Vec<T> {
     fn inf_collect_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
