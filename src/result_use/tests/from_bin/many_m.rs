@@ -17,11 +17,16 @@ fn many_m_find_ok() {
             false => Some(Ok(x)),
         })
         .fallible_result()
-        .flat_map(|x| {
+        .using_clone(UseValue::new(42))
+        .flat_map(|u, x| {
+            u.mutate();
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .map(|x| x.parse::<u64>().unwrap())
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
         .first();
     assert_eq!(result, Ok(Some(0)));
 }
@@ -36,11 +41,16 @@ fn many_m_find_any_ok() {
             false => Some(Ok(x)),
         })
         .fallible_result()
-        .flat_map(|x| {
+        .using_clone(UseValue::new(42))
+        .flat_map(|u, x| {
+            u.mutate();
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .map(|x| x.parse::<u64>().unwrap())
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_ok());
@@ -51,19 +61,30 @@ fn many_m_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-            true => None,
-            false => Some(Ok(x)),
+        .using(|th_idx| UseValue::new(th_idx))
+        .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
+                true => None,
+                false => Some(Ok(x)),
+            }
         })
         .fallible_result()
-        .flat_map(|x| {
+        .flat_map(|u, x| {
+            u.mutate();
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .map(|x| x.parse::<u64>().unwrap())
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Ok(Some(160)));
 }
@@ -73,22 +94,33 @@ fn many_m_reduce_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-            true => None,
-            false => Some(match x.as_str() == "42" {
-                true => Ok(x),
-                false => Err(vec!['a']),
-            }),
+        .using(|th_idx| UseValue::new(th_idx))
+        .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
+                true => None,
+                false => Some(match x.as_str() == "42" {
+                    true => Ok(x),
+                    false => Err(vec!['a']),
+                }),
+            }
         })
         .fallible_result()
-        .flat_map(|x| {
+        .flat_map(|u, x| {
+            u.mutate();
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
         })
-        .map(|x| x.parse::<u64>().unwrap())
-        .reduce(|a, b| match a < b {
-            true => b,
-            false => a,
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
         });
     assert_eq!(result, Err(vec!['a']));
 }
