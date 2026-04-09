@@ -33,7 +33,7 @@ where
                 match item_puller.next() {
                     Some(i) => {
                         let result = x
-                            .xap_use(unsafe { &mut *u }, i)
+                            .xap_use(u, i)
                             .into_iter()
                             .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                         if result.is_some() {
@@ -54,7 +54,7 @@ where
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         let result = chunk
-                            .flat_map(|i| x.xap_use(unsafe { &mut *u }, i).into_iter())
+                            .flat_map(|i| x.xap_use(u, i).into_iter())
                             .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                         if result.is_some() {
                             acc = result;
@@ -82,7 +82,7 @@ where
                         match item_puller.next() {
                             Some(i) => {
                                 let result = x
-                                    .xap_use(unsafe { &mut *u }, i)
+                                    .xap_use(u, i)
                                     .into_iter()
                                     .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                                 if let Some(y) = result {
@@ -102,7 +102,7 @@ where
                         match chunk_puller.pull() {
                             Some(chunk) => {
                                 let result = chunk
-                                    .flat_map(|i| x.xap_use(unsafe { &mut *u }, i).into_iter())
+                                    .flat_map(|i| x.xap_use(u, i).into_iter())
                                     .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                                 if let Some(y) = result {
                                     acc = f(unsafe { &mut *u }, acc, y);

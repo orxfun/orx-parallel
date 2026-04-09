@@ -22,7 +22,9 @@ impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> ManyM<X, G> {
     }
 }
 
-impl<X: XapUseEnumByInput<Size = Many>, G: Map<U = X::U, I = X::O>> XapUseEnumByInput for ManyM<X, G> {
+impl<X: XapUseEnumByInput<Size = Many>, G: Map<U = X::U, I = X::O>> XapUseEnumByInput
+    for ManyM<X, G>
+{
     type Enumerated = ManyM<X::Enumerated, MapEnum<G>>;
 
     fn enumerate(self) -> Self::Enumerated {
@@ -43,16 +45,9 @@ impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> XapUse for ManyM<X, G> 
 
     type U = X::U;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
-        // SAFETY: u is either used by i.next or g.map which can never
-        // occur at the same time; hence, there exists no race condition
-        let u_ptr = u as *mut Self::U;
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
         let i = self.x.xap_use(u, i).into_iter();
-        IterManyM {
-            u: u_ptr,
-            i,
-            g: self.g,
-        }
+        IterManyM { u, i, g: self.g }
     }
 }
 
@@ -77,8 +72,6 @@ where
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        // SAFETY: u is either used by i.next or g.map which can never
-        // occur at the same time; hence, there exists no race condition
         self.i
             .next()
             .map(|x| self.g.map(unsafe { &mut *self.u }, x))
@@ -95,8 +88,6 @@ where
         Self: Sized,
         F: FnMut(B, Self::Item) -> B,
     {
-        // SAFETY: u is either used by i.next or g.map which can never
-        // occur at the same time; hence, there exists no race condition
         self.i
             .map(|x| self.g.map(unsafe { &mut *self.u }, x))
             .fold(init, f)
@@ -135,8 +126,6 @@ where
     G: Map<I = I::Item>,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        // SAFETY: u is either used by i.next or g.map which can never
-        // occur at the same time; hence, there exists no race condition
         self.i
             .next_back()
             .map(|x| self.g.map(unsafe { &mut *self.u }, x))

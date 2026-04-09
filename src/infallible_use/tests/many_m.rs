@@ -68,28 +68,3 @@ fn many_m_reduce() {
         });
     assert_eq!(result, Some(160));
 }
-
-#[test]
-fn ccc() {
-    let inputs = inputs(N);
-    let result = inputs
-        .into_par()
-        .using_clone(UseValue::new(42))
-        .flat_map(|u, x| {
-            u.mutate();
-            let a = x.parse::<u64>().unwrap();
-            (0..5).map(move |i| (a + i).to_string())
-        })
-        .map(|u, x| {
-            u.mutate();
-            x.parse::<u64>().unwrap()
-        })
-        .reduce(|u, a, b| {
-            u.mutate();
-            match a < b {
-                true => b,
-                false => a,
-            }
-        });
-    assert_eq!(result, Some(160));
-}

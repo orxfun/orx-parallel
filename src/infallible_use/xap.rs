@@ -13,7 +13,7 @@ pub trait XapUse: Copy + Send {
 
     type Values: IntoIterator<Item = Self::O>;
 
-    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values;
+    fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values;
 
     // transformations
 

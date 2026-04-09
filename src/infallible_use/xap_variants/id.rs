@@ -53,7 +53,7 @@ where
     type Values = X::Values;
 
     #[inline(always)]
-    fn xap_use(&self, _: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, _: *mut Self::U, i: Self::I) -> Self::Values {
         self.x.xap(i)
     }
 }
