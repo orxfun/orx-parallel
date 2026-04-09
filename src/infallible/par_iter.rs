@@ -124,6 +124,8 @@ where
         exe.reduce(params, iter, x, f)
     }
 
+    // pub fn collect_into<C>
+
     // compute - derived
 
     pub fn for_each<F>(self, f: F)
