@@ -3,21 +3,25 @@ use crate::result_use::size_pairs::size_pair_use_res::SizePairUseRes;
 use crate::sizes::{Bin, ManyBin};
 use core::iter::FusedIterator;
 
-impl SizePairRes for ManyBin {
-    type XapResResult<M, E, X1, X2>
+impl SizePairUseRes for ManyBin {
+    type XapUseResResult<M, E, X1, X2>
         = IterResManyBin<M, E, <X1::Values as IntoIterator>::IntoIter, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>;
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
-    #[inline(always)]
-    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    fn xap_use_res<M, E, X1, X2>(
+        u: *mut X1::U,
+        x1: X1,
+        x2: X2,
+        i: X1::I,
+    ) -> Self::XapUseResResult<M, E, X1, X2>
     where
-        X1: Xap<O = Result<M, E>, Size = Self::S1>,
-        X2: Xap<I = M, Size = Self::S2>,
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
     {
-        let iter = x1.xap(i).into_iter();
-        IterResManyBin { iter, x2 }
+        let iter = x1.xap_use(u, i).into_iter();
+        IterResManyBin { u, iter, x2 }
     }
 }
 
@@ -26,8 +30,9 @@ impl SizePairRes for ManyBin {
 pub struct IterResManyBin<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = Bin>,
+    X2: XapUse<I = M, Size = Bin>,
 {
+    u: *mut <X2 as XapUse>::U,
     iter: I,
     x2: X2,
 }
@@ -35,7 +40,7 @@ where
 impl<M, E, I, X2> Iterator for IterResManyBin<M, E, I, X2>
 where
     I: Iterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = Bin>,
+    X2: XapUse<I = M, Size = Bin>,
 {
     type Item = Result<X2::O, E>;
 
@@ -44,7 +49,7 @@ where
         loop {
             match self.iter.next() {
                 Some(Ok(a)) => {
-                    let b = self.x2.bin_value(a);
+                    let b = self.x2.bin_value(self.u, a);
                     if b.is_some() {
                         return b.map(Ok);
                     }
@@ -74,7 +79,7 @@ where
         for i in iter {
             match i {
                 Ok(i) => {
-                    let i = x2.bin_value(i);
+                    let i = x2.bin_value(self.u, i);
                     if let Some(i) = i {
                         agg = f(agg, Ok(i))
                     }
@@ -97,6 +102,6 @@ where
 impl<M, E, I, X2> FusedIterator for IterResManyBin<M, E, I, X2>
 where
     I: FusedIterator<Item = Result<M, E>>,
-    X2: Xap<I = M, Size = Bin>,
+    X2: XapUse<I = M, Size = Bin>,
 {
 }
