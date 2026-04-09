@@ -1,6 +1,5 @@
 use crate::infallible::{Xap, XapEnumByInput};
-use crate::infallible_use::fun::{Map, MapEnum};
-use crate::infallible_use::{XapOne, XapUse, XapUseEnumByInput};
+use crate::infallible_use::{XapUse, XapUseEnumByInput};
 use crate::sizes::One;
 use core::marker::PhantomData;
 
