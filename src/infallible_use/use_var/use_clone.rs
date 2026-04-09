@@ -19,3 +19,9 @@ impl<T: Clone + Send> Use for UseClone<T> {
 /// SAFETY: Since T is Send, it is safe to share `UsingClone` with
 /// another thread and `create` a clone of `T` on this thread.
 unsafe impl<T: Clone + Send> Sync for UseClone<T> {}
+
+impl<T: Clone + Send> UseClone<T> {
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+}
