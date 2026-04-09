@@ -9,4 +9,4 @@ mod one_many;
 mod one_one;
 mod size_pair_use_opt;
 
-pub use size_pair_use_opt::SizePairUseRes;
+pub use size_pair_use_opt::SizePairUseOpt;

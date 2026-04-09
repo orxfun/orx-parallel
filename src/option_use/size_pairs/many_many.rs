@@ -1,10 +1,10 @@
 use crate::infallible_use::XapUse;
-use crate::option_use::size_pairs::size_pair_use_opt::SizePairUseRes;
+use crate::option_use::size_pairs::size_pair_use_opt::SizePairUseOpt;
 use crate::sizes::{Many, ManyMany};
 use core::iter::FusedIterator;
 
-impl SizePairUseRes for ManyMany {
-    type XapUseResResult<M, X1, X2>
+impl SizePairUseOpt for ManyMany {
+    type XapUseOptResult<M, X1, X2>
         = IterResManyMany<M, <X1::Values as IntoIterator>::IntoIter, X2>
     where
         X1: XapUse<O = Option<M>, Size = Self::S1>,
@@ -15,7 +15,7 @@ impl SizePairUseRes for ManyMany {
         x1: X1,
         x2: X2,
         i: X1::I,
-    ) -> Self::XapUseResResult<M, X1, X2>
+    ) -> Self::XapUseOptResult<M, X1, X2>
     where
         X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>,

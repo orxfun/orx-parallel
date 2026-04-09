@@ -1,5 +1,5 @@
 use crate::infallible_use::{Use, XapUse};
-use crate::option_use::size_pairs::SizePairUseRes;
+use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::option_use::thread_execution as th;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
@@ -21,7 +21,7 @@ pub trait ParRunnerUseRes: ParRunner {
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,
-        S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
     {
         let mut spawned = 0;
@@ -57,7 +57,7 @@ pub trait ParRunnerUseRes: ParRunner {
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,
-        S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
     {
         let mut spawned = 0;
@@ -95,7 +95,7 @@ pub trait ParRunnerUseRes: ParRunner {
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,
-        S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
         F: Fn(&mut U::Item, X2::O, X2::O) -> X2::O + Send + Copy,
         X2::O: Send,
     {
