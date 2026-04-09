@@ -1,4 +1,5 @@
 mod collect;
+mod collect_arbitrary;
 mod next;
 mod next_any;
 mod reduce;
