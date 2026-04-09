@@ -6,17 +6,11 @@ use crate::runner::ParRunner;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
+use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 
 impl<T> ColIntoInf<T> for Vec<T> {
-    fn empty(exact_len: Option<usize>) -> Self {
-        match exact_len {
-            Some(len) => Vec::with_capacity(len),
-            None => Vec::new(),
-        }
-    }
-
-    fn collect_into<I, X, R>(mut self, par: Par<I, X, R>) -> Self
+    fn collect_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -27,12 +21,13 @@ impl<T> ColIntoInf<T> for Vec<T> {
         let results = exe.collect(params, iter, x);
         let len: usize = results.iter().map(|x| x.len()).sum();
 
-        self.reserve(len);
-        merge_collected_into(results, FixedVec::from(self)).into_inner()
+        let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
+        dst.reserve(len);
+        merge_collected_into(results, dst)
     }
 
     fn collect_arbitrary_into<I, X, R>(
-        mut self,
+        dst: Option<Self>,
         par: Par<I, X, R>,
         exact_len: Option<usize>,
     ) -> Self
@@ -46,15 +41,17 @@ impl<T> ColIntoInf<T> for Vec<T> {
 
         match exact_len {
             Some(len) => {
-                self.reserve(len);
-                exe.collect_arbitrary(params, iter, x, FixedVec::from(self))
+                let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
+                dst.reserve(len);
+                exe.collect_arbitrary(params, iter, x, FixedVec::from(dst))
                     .into_inner()
             }
             None => {
                 // TODO: collect_into might be faster
                 let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
                 let split_vec = exe.collect_arbitrary(params, iter, x, split_vec);
-                extend_vec_from_split(self, split_vec)
+                let dst = dst.unwrap_or_else(|| Vec::with_capacity(split_vec.len()));
+                extend_vec_from_split(dst, split_vec)
             }
         }
     }
