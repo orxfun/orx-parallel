@@ -4,6 +4,7 @@ use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
+use orx_pinned_vec::PinnedVec;
 
 pub trait ParRunnerInfallible: ParRunner {
     fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
@@ -79,11 +80,12 @@ pub trait ParRunnerInfallible: ParRunner {
         Val::reduce(results_bag.into_inner().into_inner(), f)
     }
 
-    fn collect<I, X>(&mut self, params: Params, iter: I, x: X)
+    fn collect<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: &mut P)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
+        P: PinnedVec<X::O>,
     {
         let mut spawned = 0;
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
@@ -100,7 +102,7 @@ pub trait ParRunnerInfallible: ParRunner {
             }
         });
 
-        // ValIdx::first(results_bag.into_inner().into_inner())
+        ValIdx::collect_into(results_bag.into_inner().into_inner(), pinned_vec);
     }
 }
 
