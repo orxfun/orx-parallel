@@ -9,6 +9,19 @@ pub struct IdOne<X: Xap<Size = One>, U> {
     p: PhantomData<U>,
 }
 
+impl<X: Xap<Size = One>, U> Clone for IdOne<X, U> {
+    fn clone(&self) -> Self {
+        Self {
+            x: self.x,
+            p: PhantomData,
+        }
+    }
+}
+
+impl<X: Xap<Size = One>, U> Copy for IdOne<X, U> {}
+
+unsafe impl<X: Xap<Size = One>, U> Send for IdOne<X, U> {}
+
 impl<X: Xap<Size = One>, U> IdOne<X, U> {
     pub fn new(x: X) -> Self {
         let p = PhantomData;
@@ -16,18 +29,19 @@ impl<X: Xap<Size = One>, U> IdOne<X, U> {
     }
 }
 
-// impl<X: Xap<Size = One>, U> XapUse for IdOne<X, U> {
-//     type U = U;
+impl<X: Xap<Size = One>, U> XapUse for IdOne<X, U> {
+    type U = U;
 
-//     type I = X::I;
+    type I = X::I;
 
-//     type O = X::O;
+    type O = X::O;
 
-//     type Size = One;
+    type Size = One;
 
-//     type Values = X::Values;
+    type Values = X::Values;
 
-//     fn xap(&self, _: &mut Self::U, i: Self::I) -> Self::Values {
-//         todo!()
-//     }
-// }
+    #[inline(always)]
+    fn xap_use(&self, _: &mut Self::U, i: Self::I) -> Self::Values {
+        self.x.xap(i)
+    }
+}
