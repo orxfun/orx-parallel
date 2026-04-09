@@ -1,4 +1,4 @@
-use crate::collectables::col_into::ColIntoInf;
+use crate::collectables::col_into_inf::ColIntoInf;
 use crate::collectables::utils::merge_collected_into;
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
@@ -8,7 +8,7 @@ use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
 impl<T, G: GrowthWithConstantTimeAccess> ColIntoInf<T> for SplitVec<T, G> {
-    fn collect_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    fn inf_collect_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -22,7 +22,7 @@ impl<T, G: GrowthWithConstantTimeAccess> ColIntoInf<T> for SplitVec<T, G> {
         merge_collected_into(results, dst)
     }
 
-    fn collect_arbitrary_into<I, X, R>(
+    fn inf_collect_arbitrary_into<I, X, R>(
         dst: Option<Self>,
         par: Par<I, X, R>,
         exact_len: Option<usize>,
