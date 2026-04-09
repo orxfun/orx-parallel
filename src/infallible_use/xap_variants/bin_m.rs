@@ -44,7 +44,7 @@ impl<X: XapUse<Size = Bin>, G: Map<U = X::U, I = X::O>> XapUse for BinM<X, G> {
 
     type U = X::U;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
         self.x.bin_value(u, i).map(|x| self.g.map(u, x))
     }
 }

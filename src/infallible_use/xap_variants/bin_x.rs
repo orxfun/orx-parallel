@@ -33,7 +33,7 @@ impl<X: XapUse<Size = Bin>, G: FlatMap<U = X::U, I = X::O>> XapUse for BinX<X, G
 
     type U = X::U;
 
-    fn xap(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
+    fn xap_use(&self, u: &mut Self::U, i: Self::I) -> Self::Values {
         let i = self
             .x
             .bin_value(u, i)
