@@ -93,7 +93,8 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
-                                let result = chunk.flat_map(|i| x.xap_use(u, i).into_iter()).reduce(&f);
+                                let result =
+                                    chunk.flat_map(|i| x.xap_use(u, i).into_iter()).reduce(&f);
                                 if let Some(y) = result {
                                     acc = f(acc, y);
                                 }
