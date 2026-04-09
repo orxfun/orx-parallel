@@ -20,7 +20,7 @@ where
     X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,
     S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
-    F: Fn(*mut U::Item, X2::O, X2::O) -> X2::O,
+    F: Fn(&mut U::Item, X2::O, X2::O) -> X2::O,
 {
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
@@ -41,7 +41,7 @@ where
                     Some(i) => {
                         for a in S::xap_use_res(u, x1, x2, i) {
                             acc = match (a, acc.is_some()) {
-                                (Ok(a), true) => acc.map(|agg| f(u, agg, a)),
+                                (Ok(a), true) => acc.map(|agg| f(unsafe { &mut *u }, agg, a)),
                                 (Ok(a), false) => Some(a),
                                 (Err(e), _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
@@ -64,7 +64,7 @@ where
                     Some(chunk) => {
                         for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
                             acc = match (a, acc.is_some()) {
-                                (Ok(a), true) => acc.map(|agg| f(u, agg, a)),
+                                (Ok(a), true) => acc.map(|agg| f(unsafe { &mut *u }, agg, a)),
                                 (Ok(a), false) => Some(a),
                                 (Err(e), _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
@@ -99,7 +99,7 @@ where
                             Some(i) => {
                                 for a in S::xap_use_res(u, x1, x2, i) {
                                     acc = match a {
-                                        Ok(a) => f(u, acc, a),
+                                        Ok(a) => f(unsafe { &mut *u }, acc, a),
                                         Err(e) => {
                                             Q::broadcast_stop(iter, state, chunk_state);
                                             return Err(e);
@@ -119,9 +119,10 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
+                                let u2 = u;
                                 for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
                                     acc = match a {
-                                        Ok(a) => f(u, acc, a),
+                                        Ok(a) => f(unsafe { &mut *u2 }, acc, a),
                                         Err(e) => {
                                             Q::broadcast_stop(iter, state, chunk_state);
                                             return Err(e);
