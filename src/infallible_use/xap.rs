@@ -67,7 +67,7 @@ pub trait XapUse: Copy + Send {
 
 pub trait XapOne: XapUse<Size = One> {
     #[inline(always)]
-    fn one_value(&self, u: &mut Self::U, i: Self::I) -> Self::O {
+    fn one_value(&self, u: *mut Self::U, i: Self::I) -> Self::O {
         // SAFETY: by definition the result has exactly one element
         unsafe { self.xap_use(u, i).into_iter().next().unwrap_unchecked() }
     }
@@ -79,7 +79,7 @@ impl<X: XapUse<Size = One>> XapOne for X {}
 
 pub trait XapBin: XapUse<Size = Bin> {
     #[inline(always)]
-    fn bin_value(&self, u: &mut Self::U, i: Self::I) -> Option<Self::O> {
+    fn bin_value(&self, u: *mut Self::U, i: Self::I) -> Option<Self::O> {
         // SAFETY: by definition the result has exactly zero or one element
         self.xap_use(u, i).into_iter().next()
     }
