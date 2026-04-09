@@ -6,7 +6,7 @@ use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub struct ParUseRes<U, I, M, X1, X2, S, R = DefaultRunner>
+pub struct ParUseOpt<U, I, M, X1, X2, S, R = DefaultRunner>
 where
     U: Use,
     I: ConcurrentIter,
@@ -24,7 +24,7 @@ where
     s: S,
 }
 
-impl<U, I, M, X1, X2, S, R> ParUseRes<U, I, M, X1, X2, S, R>
+impl<U, I, M, X1, X2, S, R> ParUseOpt<U, I, M, X1, X2, S, R>
 where
     U: Use,
     I: ConcurrentIter,
@@ -45,12 +45,12 @@ where
         }
     }
 
-    fn with_xap2<Y2, T>(self, x2: Y2) -> ParUseRes<U, I, M, X1, Y2, T, R>
+    fn with_xap2<Y2, T>(self, x2: Y2) -> ParUseOpt<U, I, M, X1, Y2, T, R>
     where
         Y2: XapUse<U = X1::U, I = M>,
         T: SizePairUseOpt<S1 = X1::Size, S2 = Y2::Size>,
     {
-        ParUseRes::new(self.using, self.iter, self.x1, x2, self.exe, self.params)
+        ParUseOpt::new(self.using, self.iter, self.x1, x2, self.exe, self.params)
     }
 
     fn destruct(self) -> (U, I, X1, X2, R, S, Params) {
@@ -83,7 +83,7 @@ where
 
     // transformations
 
-    pub fn map<Q, H>(self, h: H) -> ParUseRes<U, I, M, X1, MapOf<X2, Q, H>, S, R>
+    pub fn map<Q, H>(self, h: H) -> ParUseOpt<U, I, M, X1, MapOf<X2, Q, H>, S, R>
     where
         H: Fn(&mut X1::U, X2::O) -> Q + Copy + Send,
     {
@@ -91,7 +91,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn inspect<H>(self, h: H) -> ParUseRes<U, I, M, X1, InsOf<X2, H>, S, R>
+    pub fn inspect<H>(self, h: H) -> ParUseOpt<U, I, M, X1, InsOf<X2, H>, S, R>
     where
         H: Fn(&mut X1::U, &X2::O) + Copy + Send,
     {
@@ -99,7 +99,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn filter<H>(self, h: H) -> ParUseRes<U, I, M, X1, FilOf<X2, H>, S::ThenBin, R>
+    pub fn filter<H>(self, h: H) -> ParUseOpt<U, I, M, X1, FilOf<X2, H>, S::ThenBin, R>
     where
         H: Fn(&mut X1::U, &X2::O) -> bool + Copy + Send,
         S::ThenBin: SizePairUseOpt,
@@ -108,7 +108,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn filter_map<Q, H>(self, h: H) -> ParUseRes<U, I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
+    pub fn filter_map<Q, H>(self, h: H) -> ParUseOpt<U, I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
     where
         H: Fn(&mut X1::U, X2::O) -> Option<Q> + Copy + Send,
         S::ThenBin: SizePairUseOpt,
@@ -117,7 +117,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn flat_map<V, H>(self, h: H) -> ParUseRes<U, I, M, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
+    pub fn flat_map<V, H>(self, h: H) -> ParUseOpt<U, I, M, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
     where
         V: IntoIterator,
         H: Fn(&mut X1::U, X2::O) -> V + Copy + Send,
@@ -163,7 +163,7 @@ where
 
 // transformations
 
-impl<'a, U, O, I, M, X1, X2, S, R> ParUseRes<U, I, M, X1, X2, S, R>
+impl<'a, U, O, I, M, X1, X2, S, R> ParUseOpt<U, I, M, X1, X2, S, R>
 where
     U: Use,
     O: 'a + Copy,
@@ -173,13 +173,13 @@ where
     S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    pub fn copied(self) -> ParUseRes<U, I, M, X1, MappedOf<X2, FnCopied<'a, U::Item, O>>, S, R> {
+    pub fn copied(self) -> ParUseOpt<U, I, M, X1, MappedOf<X2, FnCopied<'a, U::Item, O>>, S, R> {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
-        ParUseRes::new(u, iter, x1, x2.mapped(FnCopied::new()), exe, params)
+        ParUseOpt::new(u, iter, x1, x2.mapped(FnCopied::new()), exe, params)
     }
 }
 
-impl<'a, U, O, I, M, X1, X2, S, R> ParUseRes<U, I, M, X1, X2, S, R>
+impl<'a, U, O, I, M, X1, X2, S, R> ParUseOpt<U, I, M, X1, X2, S, R>
 where
     U: Use,
     O: 'a + Clone,
@@ -189,8 +189,8 @@ where
     S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    pub fn cloned(self) -> ParUseRes<U, I, M, X1, MappedOf<X2, FnCloned<'a, U::Item, O>>, S, R> {
+    pub fn cloned(self) -> ParUseOpt<U, I, M, X1, MappedOf<X2, FnCloned<'a, U::Item, O>>, S, R> {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
-        ParUseRes::new(u, iter, x1, x2.mapped(FnCloned::new()), exe, params)
+        ParUseOpt::new(u, iter, x1, x2.mapped(FnCloned::new()), exe, params)
     }
 }
