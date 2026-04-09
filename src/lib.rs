@@ -36,3 +36,4 @@ pub use collectables::ParCollectInto;
 pub use into_parallel::{
     IntoParIter, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
+pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
