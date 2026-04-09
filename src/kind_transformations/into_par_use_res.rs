@@ -4,6 +4,7 @@ use crate::infallible_use::ParUse;
 use crate::infallible_use::SizeInfUse;
 use crate::infallible_use::Use;
 use crate::infallible_use::UseClone;
+use crate::infallible_use::UseFun;
 use crate::infallible_use::XapUse;
 use crate::infallible_use::xap_variants::IdUse;
 use crate::result::ParRes;
@@ -46,6 +47,20 @@ where
     X1::Size: SizeInfUse,
     X2::Size: SizeInfUse,
 {
+    pub fn using<U, F>(
+        self,
+        f: F,
+    ) -> ParUseRes<UseFun<U, F>, I, M, E, IdUse<X1, U>, IdUse<X2, U>, S, R>
+    where
+        F: Fn(usize) -> U + Sync,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseFun::new(f);
+        ParUseRes::new(u, iter, x1, x2, exe, params)
+    }
+
     pub fn using_clone<U>(
         self,
         u: U,
