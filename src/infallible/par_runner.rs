@@ -2,9 +2,10 @@ use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
+use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::{IntoConcurrentPinnedVec, PinnedVec};
+use orx_pinned_vec::IntoConcurrentPinnedVec;
 
 pub trait ParRunnerInfallible: ParRunner {
     fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
@@ -80,12 +81,11 @@ pub trait ParRunnerInfallible: ParRunner {
         Val::reduce(results_bag.into_inner().into_inner(), f)
     }
 
-    fn collect<I, X, P>(&mut self, params: Params, iter: I, x: X, mut pinned_vec: P) -> P
+    fn collect<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<Vec<ValIdx<X::O>>>
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
-        P: PinnedVec<X::O>,
     {
         let mut spawned = 0;
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
@@ -102,8 +102,7 @@ pub trait ParRunnerInfallible: ParRunner {
             }
         });
 
-        ValIdx::collect_into(results_bag.into_inner().into_inner(), &mut pinned_vec);
-        pinned_vec
+        results_bag.into_inner().into_inner()
     }
 
     fn collect_arbitrary<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
