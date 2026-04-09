@@ -1,12 +1,12 @@
 use crate::infallible::{Xap, XapEnumByInput};
-use crate::infallible_use::sizes::SizeInf;
+use crate::infallible_use::sizes::SizeInfUse;
 use crate::infallible_use::{XapUse, XapUseEnumByInput};
 use crate::sizes::One;
 use core::marker::PhantomData;
 
 pub struct Id<X: Xap, U>
 where
-    X::Size: SizeInf,
+    X::Size: SizeInfUse,
 {
     x: X,
     p: PhantomData<U>,
@@ -14,7 +14,7 @@ where
 
 impl<X: Xap, U> Clone for Id<X, U>
 where
-    X::Size: SizeInf,
+    X::Size: SizeInfUse,
 {
     fn clone(&self) -> Self {
         Self {
@@ -24,13 +24,13 @@ where
     }
 }
 
-impl<X: Xap, U> Copy for Id<X, U> where X::Size: SizeInf {}
+impl<X: Xap, U> Copy for Id<X, U> where X::Size: SizeInfUse {}
 
-unsafe impl<X: Xap, U> Send for Id<X, U> where X::Size: SizeInf {}
+unsafe impl<X: Xap, U> Send for Id<X, U> where X::Size: SizeInfUse {}
 
 impl<X: Xap, U> Id<X, U>
 where
-    X::Size: SizeInf,
+    X::Size: SizeInfUse,
 {
     pub fn new(x: X) -> Self {
         let p = PhantomData;
@@ -40,7 +40,7 @@ where
 
 impl<X: Xap, U> XapUse for Id<X, U>
 where
-    X::Size: SizeInf,
+    X::Size: SizeInfUse,
 {
     type U = U;
 
@@ -60,7 +60,7 @@ where
 
 impl<X: XapEnumByInput<Size = One>, U> XapUseEnumByInput for Id<X, U>
 where
-    X::Size: SizeInf,
+    X::Size: SizeInfUse,
 {
     type Enumerated = Id<X::Enumerated, U>;
 
