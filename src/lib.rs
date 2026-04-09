@@ -30,7 +30,6 @@ pub mod infallible_use;
 pub mod kind_transformations;
 pub mod option;
 pub mod result;
-// pub mod result_depr;
 mod sizes;
 
 pub use into_parallel::{
