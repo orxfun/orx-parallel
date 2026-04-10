@@ -94,3 +94,13 @@ pub fn merge_arb_into_vec<T>(results: Vec<Vec<T>>, mut dst: Vec<T>) -> Vec<T> {
     }
     dst
 }
+
+pub fn merge_arb_into_split_vec<T, G: Growth>(
+    results: Vec<Vec<T>>,
+    mut dst: SplitVec<T, G>,
+) -> SplitVec<T, G> {
+    for vec in results {
+        dst.extend(vec);
+    }
+    dst
+}

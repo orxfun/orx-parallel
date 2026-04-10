@@ -3,9 +3,9 @@ use crate::collectables::utils::merge_ord_into;
 use crate::infallible::Xap;
 use crate::result::{ParRes, ParRunnerRes, SizePairRes};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
+use orx_split_vec::{Linear, SplitVec};
 
-impl<T, G: GrowthWithConstantTimeAccess> ColIntoRes<T> for SplitVec<T, G> {
+impl<T> ColIntoRes<T> for SplitVec<T, Linear> {
     fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
         par: ParRes<I, M, E, X1, X2, S, R>,
@@ -23,7 +23,7 @@ impl<T, G: GrowthWithConstantTimeAccess> ColIntoRes<T> for SplitVec<T, G> {
         let results = exe.collect(s, params, iter, x1, x2);
 
         results.map(|results| {
-            let dst = dst.unwrap_or_else(|| SplitVec::pseudo_default());
+            let dst = dst.unwrap_or_else(|| SplitVec::with_linear_growth(10));
             merge_ord_into(results, dst)
         })
     }
