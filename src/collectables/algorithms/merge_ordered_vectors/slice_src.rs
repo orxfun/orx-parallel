@@ -1,3 +1,4 @@
+use super::slice_iter_ptr_src::SliceIterPtrSrc;
 use crate::results::ValIdx;
 use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
@@ -34,6 +35,10 @@ impl<'a, T> SliceSrc<'a, T> {
 
     pub fn destruct(self) -> *const [ValIdx<T>] {
         self.raw
+    }
+
+    pub fn into_ptr_iter(self) -> SliceIterPtrSrc<'a, T> {
+        SliceIterPtrSrc::new(self)
     }
 
     #[inline(always)]
