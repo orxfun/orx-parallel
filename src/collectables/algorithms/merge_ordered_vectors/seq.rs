@@ -1,9 +1,9 @@
-use super::slice_iter_ptr_dst::SliceIterPtrDst;
+use super::iter_ptr_dst::IterPtrDst;
 use super::slice_src::SliceSrc;
 
 pub fn seq_merge<'a, T: 'a, D>(left: SliceSrc<'a, T>, right: SliceSrc<'a, T>, mut dst: D)
 where
-    D: SliceIterPtrDst<'a, T>,
+    D: IterPtrDst<'a, T>,
 {
     let mut left = left.into_ptr_iter();
     let mut right = right.into_ptr_iter();
