@@ -10,25 +10,33 @@
   * _vv means, results are collected into a Vec<Vec<_>>
   * _ll means, results are collected into a LinkedList<Vec<_>>
 
-col_m/seq/e15_light     time:   [18.924 µs 19.104 µs 19.296 µs]
-col_m/rayon/e15_light   time:   [12.222 ms 13.502 ms 15.522 ms]
-col_m/orx_ord/e15_light time:   [1.8075 ms 1.8505 ms 1.8980 ms]
-col_m/orx_arb/e15_light time:   [4.8928 ms 5.0619 ms 5.2402 ms]
+col_m/seq/e15_light         time:   [22.825 µs 23.202 µs 23.589 µs]
+col_m/rayon/e15_light       time:   [16.141 ms 16.897 ms 17.698 ms]
+col_m/rayon_ll/e15_light    time:   [14.953 ms 17.651 ms 21.332 ms]
+col_m/orx_ord/e15_light     time:   [2.3073 ms 2.3842 ms 2.4637 ms]
+col_m/orx_arb/e15_light     time:   [2.8894 ms 3.5439 ms 4.4601 ms]
+col_m/orx_arb_vv/e15_light  time:   [2.7929 ms 3.0373 ms 3.3083 ms]
 
-col_m/seq/e20_light     time:   [808.84 µs 819.39 µs 830.30 µs]
-col_m/rayon/e20_light   time:   [29.515 ms 32.127 ms 35.009 ms]
-col_m/orx_ord/e20_light time:   [7.8373 ms 8.0218 ms 8.2136 ms]
-col_m/orx_arb/e20_light time:   [135.55 ms 151.97 ms 173.12 ms]
+col_m/seq/e20_light         time:   [978.74 µs 990.66 µs 1.0023 ms]
+col_m/rayon/e20_light       time:   [26.087 ms 27.974 ms 30.075 ms]
+col_m/rayon_ll/e20_light    time:   [22.957 ms 25.167 ms 27.745 ms]
+col_m/orx_ord/e20_light     time:   [11.161 ms 11.473 ms 11.786 ms]
+col_m/orx_arb/e20_light     time:   [6.8536 ms 7.7292 ms 8.9571 ms]
+col_m/orx_arb_vv/e20_light  time:   [3.6359 ms 3.7836 ms 3.9417 ms]
 
-col_m/seq/e15_heavy     time:   [1.0235 ms 1.0460 ms 1.0701 ms]
-col_m/rayon/e15_heavy   time:   [15.338 ms 16.081 ms 16.870 ms]
-col_m/orx_ord/e15_heavy time:   [3.0646 ms 3.1532 ms 3.2492 ms]
-col_m/orx_arb/e15_heavy time:   [7.2354 ms 8.4175 ms 9.9316 ms]
+col_m/seq/e15_heavy         time:   [1.2543 ms 1.2913 ms 1.3275 ms]
+col_m/rayon/e15_heavy       time:   [16.049 ms 17.155 ms 18.497 ms]
+col_m/rayon_ll/e15_heavy    time:   [17.484 ms 20.037 ms 23.373 ms]
+col_m/orx_ord/e15_heavy     time:   [4.1418 ms 4.3987 ms 4.6662 ms]
+col_m/orx_arb/e15_heavy     time:   [3.4482 ms 3.6250 ms 3.8053 ms]
+col_m/orx_arb_vv/e15_heavy  time:   [3.4609 ms 3.5844 ms 3.7261 ms]
 
-col_m/seq/e20_heavy     time:   [33.794 ms 34.232 ms 34.690 ms]
-col_m/rayon/e20_heavy   time:   [16.382 ms 19.215 ms 22.916 ms]
-col_m/orx_ord/e20_heavy time:   [12.410 ms 13.334 ms 14.361 ms]
-col_m/orx_arb/e20_heavy time:   [137.07 ms 150.09 ms 165.88 ms]
+col_m/seq/e20_heavy         time:   [42.535 ms 43.081 ms 43.614 ms]
+col_m/rayon/e20_heavy       time:   [20.826 ms 23.846 ms 27.151 ms]
+col_m/rayon_ll/e20_heavy    time:   [21.314 ms 24.467 ms 28.319 ms]
+col_m/orx_ord/e20_heavy     time:   [11.838 ms 13.506 ms 15.831 ms]
+col_m/orx_arb/e20_heavy     time:   [8.5316 ms 9.3846 ms 10.459 ms]
+col_m/orx_arb_vv/e20_heavy  time:   [8.8921 ms 9.6499 ms 10.708 ms]
 
 */
 
