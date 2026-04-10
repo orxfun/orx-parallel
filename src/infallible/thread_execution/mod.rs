@@ -11,5 +11,8 @@ pub use next_any::next_any;
 pub use reduce::reduce;
 
 // Experimental
+
+#[cfg(feature = "experimental")]
 mod collect_arb_over_bag;
+#[cfg(feature = "experimental")]
 pub use collect_arb_over_bag::collect_arb_over_bag;
