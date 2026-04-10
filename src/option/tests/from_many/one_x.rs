@@ -73,3 +73,36 @@ fn one_x_reduce_err() {
         });
     assert_eq!(result, None);
 }
+
+#[test]
+fn one_x_collect_ok() {
+    let inputs = inputs(N);
+    let result: Option<std::vec::Vec<u64>> = inputs
+        .into_par()
+        .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
+        .fallible_option()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .collect::<std::vec::Vec<_>>();
+    assert!(result.is_some());
+}
+
+#[test]
+fn one_x_collect_err() {
+    let inputs = inputs(N);
+    let result: Option<std::vec::Vec<u64>> = inputs
+        .into_par()
+        .flat_map(|x| match x.as_str() == "42" {
+            true => [x.clone(), x.clone(), x].map(Some),
+            false => [None, None, None],
+        })
+        .fallible_option()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .collect::<std::vec::Vec<_>>();
+    assert_eq!(result, None);
+}

@@ -55,3 +55,25 @@ fn one_f_reduce_err() {
         });
     assert_eq!(result, None);
 }
+
+#[test]
+fn one_f_collect_ok() {
+    let inputs = inputs_opt(N, None);
+    let result: Option<std::vec::Vec<std::string::String>> = inputs
+        .into_par()
+        .fallible_option()
+        .filter(|x| x.len() > 1)
+        .collect::<std::vec::Vec<_>>();
+    assert!(result.is_some());
+}
+
+#[test]
+fn one_f_collect_err() {
+    let inputs = inputs_opt(N, Some(42));
+    let result: Option<std::vec::Vec<std::string::String>> = inputs
+        .into_par()
+        .fallible_option()
+        .filter(|x| x.len() > 1)
+        .collect::<std::vec::Vec<_>>();
+    assert_eq!(result, None);
+}

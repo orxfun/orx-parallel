@@ -90,3 +90,44 @@ fn many_m_reduce_err() {
         });
     assert_eq!(result, None);
 }
+
+#[test]
+fn many_m_collect_ok() {
+    let inputs = inputs(N);
+    let result: Option<std::vec::Vec<u64>> = inputs
+        .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Some(x)),
+        })
+        .fallible_option()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<std::vec::Vec<_>>();
+    assert!(result.is_some());
+}
+
+#[test]
+fn many_m_collect_err() {
+    let inputs = inputs(N);
+    let result: Option<std::vec::Vec<u64>> = inputs
+        .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(match x.as_str() == "42" {
+                true => Some(x),
+                false => None,
+            }),
+        })
+        .fallible_option()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<std::vec::Vec<_>>();
+    assert_eq!(result, None);
+}

@@ -71,3 +71,33 @@ fn many_m_reduce_err() {
         });
     assert_eq!(result, None);
 }
+
+#[test]
+fn many_m_collect_ok() {
+    let inputs = inputs_opt(N, None);
+    let result: Option<std::vec::Vec<u64>> = inputs
+        .into_par()
+        .fallible_option()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<std::vec::Vec<_>>();
+    assert!(result.is_some());
+}
+
+#[test]
+fn many_m_collect_err() {
+    let inputs = inputs_opt(N, Some(42));
+    let result: Option<std::vec::Vec<u64>> = inputs
+        .into_par()
+        .fallible_option()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<std::vec::Vec<_>>();
+    assert_eq!(result, None);
+}
