@@ -4,7 +4,7 @@ use crate::*;
 use std::vec;
 use std::vec::Vec;
 
-#[cfg(not(miri))]const N: usize = 157;#[cfg(miri)]const N: usize = 57;
+#[cfg(not(miri))]const N: usize = 257;#[cfg(miri)]const N: usize = 57;
 
 #[test]
 fn one_x_find_ok() {
