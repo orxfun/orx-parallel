@@ -81,14 +81,12 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
         mode,
         |i| i as u64,
         inputs(N)
-            .into_par()
+            .into_iter()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-            .fallible_option()
+            .map(|x| x.unwrap())
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect::<std::vec::Vec<_>>()
-            .unwrap(),
+            .collect::<std::vec::Vec<_>>(),
     );
 
     let result = match C::init_result(mode, |i| i as u64) {
@@ -114,9 +112,9 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
 }
 
 #[test_matrix(
-[Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-[ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-[IterationOrder::Ordered, IterationOrder::Arbitrary]
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i as u64) {

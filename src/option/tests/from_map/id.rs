@@ -70,12 +70,10 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         mode,
         |i| i.to_string(),
         inputs(N)
-            .into_par()
+            .into_iter()
             .map(Some)
-            .fallible_option()
-            .iteration_order(order)
-            .collect::<std::vec::Vec<_>>()
-            .unwrap(),
+            .map(|x| x.unwrap())
+            .collect::<std::vec::Vec<_>>(),
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
@@ -97,9 +95,9 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
 }
 
 #[test_matrix(
-[Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-[ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-[IterationOrder::Ordered, IterationOrder::Arbitrary]
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i.to_string()) {

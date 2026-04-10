@@ -99,17 +99,15 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
         mode,
         |i| i.to_string(),
         inputs(N)
-            .into_par()
+            .into_iter()
             .map(Some)
-            .fallible_option()
+            .map(|x| x.unwrap())
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
             })
             .flat_map(|x| [format!("{x}!"), x])
-            .iteration_order(order)
-            .collect::<std::vec::Vec<_>>()
-            .unwrap(),
+            .collect::<std::vec::Vec<_>>(),
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
@@ -141,9 +139,9 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
 }
 
 #[test_matrix(
-[Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-[ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-[IterationOrder::Ordered, IterationOrder::Arbitrary]
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn many_x_collect_err<C: ParCollectIntoTest<String>>(
     _: C,
