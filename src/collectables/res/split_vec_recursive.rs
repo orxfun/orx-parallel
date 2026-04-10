@@ -41,6 +41,14 @@ impl<T> ColIntoRes<T> for SplitVec<T, Recursive> {
         T: Send,
         E: Send,
     {
-        todo!()
+        let (iter, x1, x2, mut exe, s, params) = par.destruct();
+        let results = exe.collect_arb(s, params, iter, x1, x2);
+        let mut dst = dst.unwrap_or_else(|| Self::with_recursive_growth());
+        results.map(|results| {
+            for vec in results {
+                dst.append(vec);
+            }
+            dst
+        })
     }
 }
