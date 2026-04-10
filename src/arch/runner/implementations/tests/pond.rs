@@ -16,7 +16,7 @@ const N: [usize; 2] = [1025, 4735];
     [0, 1, N[0], N[1]],
     [1, 4],
     [1, 64],
-    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/])
+    [IterationOrder::Ordered, IterationOrder::Arbitrary])
 ]
 fn pool_pond_map(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let mut pool = PondPool::new_threads_unbounded(nt);

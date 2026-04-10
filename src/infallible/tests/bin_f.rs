@@ -53,7 +53,7 @@ fn bin_f_reduce() {
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/]
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn bin_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {
