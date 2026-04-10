@@ -1,7 +1,6 @@
-use super::slice_iter_ptr::SliceIterPtr;
 use super::slice_src::SliceSrc;
 use crate::results::ValIdx;
-use core::slice::from_raw_parts;
+use core::marker::PhantomData;
 
 /// Iterator over a slice of data that will be completely copied to another slice
 /// before the iterator is consumed.
@@ -10,23 +9,42 @@ use core::slice::from_raw_parts;
 ///
 /// While constructing this iterator, we must guarantee that all elements of it
 /// are initialized since it will be used as source of values.
-pub struct SliceIterPtrSrc<'a, T: 'a>(SliceIterPtr<'a, T>);
+pub struct SliceIterPtrSrc<'a, T: 'a> {
+    data: *const ValIdx<T>,
+    exclusive_end: *const ValIdx<T>,
+    phantom: PhantomData<&'a ()>,
+}
 
 impl<T> Default for SliceIterPtrSrc<'_, T> {
     fn default() -> Self {
-        Self(Default::default())
+        Self {
+            data: core::ptr::null(),
+            exclusive_end: core::ptr::null(),
+            phantom: PhantomData,
+        }
     }
 }
 
 impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     pub fn new(slice: SliceSrc<'a, T>) -> Self {
         let raw = slice.destruct();
-        // SAFETY: requirement satisfied by `SliceSrc`
-        Self(unsafe { SliceIterPtr::new(raw as *const ValIdx<T>, raw.len()) })
+        let n = raw.len();
+        let ptr = raw as *const ValIdx<T>;
+        let exclusive_end = unsafe { ptr.add(n) };
+        Self {
+            data: ptr,
+            exclusive_end,
+            phantom: PhantomData,
+        }
     }
 
     #[inline(always)]
     pub fn is_finished(&self) -> bool {
-        self.0.is_finished()
+        self.data == self.exclusive_end
+    }
+
+    #[inline(always)]
+    fn remaining(&self) -> usize {
+        unsafe { self.exclusive_end.offset_from(self.data) as usize }
     }
 }

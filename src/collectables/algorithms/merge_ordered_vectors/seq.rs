@@ -1,3 +1,5 @@
+use super::slice_src::SliceSrc;
+
 /// Determines the streak search.
 ///
 /// Assume at an intermediate step of the algorithm, current value of left slice is
@@ -27,4 +29,8 @@ pub struct ParamsSeqMergeSortedSlices {
     /// When true, the algorithm always puts the larger slice to the left;
     /// otherwise to the right.
     pub put_large_to_left: bool,
+}
+
+fn seq_merge_streak_none<'a, T: 'a>(mut left: SliceSrc<'a, T>, mut right: SliceSrc<'a, T>) {
+    //
 }
