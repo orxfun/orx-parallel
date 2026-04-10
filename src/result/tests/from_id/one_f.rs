@@ -72,12 +72,10 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
         mode,
         |i| i.to_string(),
         inputs_res(N, None)
-            .into_par()
-            .fallible_result()
+            .into_iter()
+            .map(|x| x.unwrap())
             .filter(|x| x.len() > 1)
-            .iteration_order(order)
-            .collect::<std::vec::Vec<_>>()
-            .unwrap(),
+            .collect::<std::vec::Vec<_>>(),
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
@@ -99,9 +97,9 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
 }
 
 #[test_matrix(
-[Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-[ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-[IterationOrder::Ordered, IterationOrder::Arbitrary]
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn one_f_collect_err<C: ParCollectIntoTest<String>>(
     _: C,
