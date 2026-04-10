@@ -118,7 +118,7 @@ pub trait ParRunnerOpt: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Vec<Option<Vec<ValIdx<X2::O>>>>
+    ) -> Option<Vec<Vec<ValIdx<X2::O>>>>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
@@ -142,7 +142,7 @@ pub trait ParRunnerOpt: ParRunner {
             }
         });
 
-        results_bag.into_inner().into_inner()
+        results_bag.into_inner().into_inner().into_iter().collect()
     }
 }
 
