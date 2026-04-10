@@ -3,18 +3,18 @@ use super::slice_iter_ptr_src::SliceIterPtrSrc;
 pub trait SliceIterPtrDst<'a, T: 'a> {
     fn len(&self) -> usize;
 
-    unsafe fn write_rest_from(&mut self, src: &mut SliceIterPtrSrc<'a, T>) {
-        if let Some(src) = src.next() {
-            let count = self.len();
+    unsafe fn next_unchecked(&mut self) -> *mut T;
 
-            // SAFETY: having same lengths with src by (i), self cannot be finished
-            let dst = unsafe { self.0.next_unchecked() } as *mut T;
+    unsafe fn write_rest_from(&mut self, src: SliceIterPtrSrc<'a, T>) {
+        debug_assert_eq!(self.len(), src.len());
 
-            // SAFETY: satisfied by (ii)
-            unsafe { dst.copy_from_nonoverlapping(src, count) };
+        for src_ptr in src {
+            // SAFETY: having same lengths with src, self cannot be finished
+            let dst_ptr = unsafe { self.next_unchecked() };
+
+            unsafe { dst_ptr.copy_from_nonoverlapping(src_ptr, 1) };
         }
 
-        self.0.jump_to_end();
-        src.jump_to_end();
+        debug_assert_eq!(self.len(), 0);
     }
 }

@@ -36,7 +36,7 @@ pub struct ParamsSeqMergeSortedSlices {
 fn seq_merge_streak_none<'a, T: 'a, D>(
     mut left: SliceSrc<'a, T>,
     mut right: SliceSrc<'a, T>,
-    target: D,
+    mut dst: D,
     put_large_to_left: bool,
 ) where
     D: SliceIterPtrDst<'a, T>,
@@ -84,7 +84,7 @@ fn seq_merge_streak_none<'a, T: 'a, D>(
         (None, None) => {}
         (None, _) => {
             // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
-            unsafe { dst.write_rest_from(&mut right) };
+            unsafe { dst.write_rest_from(right) };
         }
         // (_, None) => {
         //     // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
