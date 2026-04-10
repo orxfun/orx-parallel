@@ -1,22 +1,17 @@
 use crate::infallible::xap::Xap;
 use crate::runner::ParRunner;
-use orx_concurrent_bag::ConcurrentBag;
+use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
-use orx_pinned_vec::IntoConcurrentPinnedVec;
 
-pub fn collect_arbitrary<Q, I, X, P>(
-    th_idx: usize,
-    state: &Q::State,
-    iter: &I,
-    x: X,
-    bag: &ConcurrentBag<X::O, P>,
-) where
+pub fn collect_arb<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Vec<X::O>
+where
     Q: ParRunner,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
-    P: IntoConcurrentPinnedVec<X::O>,
-    X::O: Send,
 {
+    let mut collected = Vec::new();
+    let vec = &mut collected;
+
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller();
 
@@ -26,12 +21,7 @@ pub fn collect_arbitrary<Q, I, X, P>(
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some(i) => {
-                    // TODO: possible to try to get len and bag.extend(values_vt.values()) when available, same holds for chunk below
-                    for i in x.xap(i).into_iter() {
-                        _ = bag.push(i);
-                    }
-                }
+                Some(i) => vec.extend(x.xap(i)),
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
             },
@@ -41,11 +31,7 @@ pub fn collect_arbitrary<Q, I, X, P>(
                 }
 
                 match chunk_puller.pull() {
-                    Some(chunk) => {
-                        for i in chunk.flat_map(|i| x.xap(i)) {
-                            _ = bag.push(i);
-                        }
-                    }
+                    Some(chunk) => vec.extend(chunk.flat_map(|i| x.xap(i))),
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
                 }
@@ -54,4 +40,6 @@ pub fn collect_arbitrary<Q, I, X, P>(
 
         Q::complete_chunk(state, chunk_state);
     }
+
+    collected
 }

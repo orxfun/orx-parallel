@@ -128,7 +128,7 @@ pub trait ParRunnerInfallible: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    th::collect_arbitrary::<Self, _, _, _>(th_idx, state, iter, x, bag);
+                    th::collect_arb_over_bag::<Self, _, _, _>(th_idx, state, iter, x, bag);
                 });
             }
         });
