@@ -2,7 +2,13 @@
 
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
-* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
+* order:
+  * _ord means results are collected in order leading to same result as sequential
+  * _arb means results are collected in arbitrary order
+* container:
+  * _vec means, results are collected into a Vec
+  * _vv means, results are collected into a Vec<Vec<_>>
+  * _ll means, results are collected into a LinkedList<Vec<_>>
 
 col_l/seq/e15_light     time:   [322.55 µs 329.72 µs 337.38 µs]
 col_l/rayon/e15_light   time:   [18.230 ms 20.710 ms 23.896 ms]
@@ -27,6 +33,8 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::collections::LinkedList;
+use std::collections::LinkedList;
 
 fn inputs(len: usize) -> Vec<u64> {
     const SEED: u64 = 654;
@@ -62,7 +70,7 @@ fn seq(input: &[u64], h: bool) -> Vec<u64> {
     }
 }
 
-fn orx(input: &[u64], h: bool, order: IterationOrder) -> Vec<u64> {
+fn orx<C: ParCollectInto<u64>>(input: &[u64], h: bool, order: IterationOrder) -> C {
     match h {
         true => input
             .into_par()
@@ -81,6 +89,13 @@ fn rayon(input: &[u64], h: bool) -> Vec<u64> {
     match h {
         true => input.into_par_iter().flat_map_iter(h_l).collect(),
         false => input.into_par_iter().flat_map_iter(l_l).collect(),
+    }
+}
+
+fn rayon_ll(input: &[u64]) -> LinkedList<Vec<u64>> {
+    match h {
+        true => input.into_par_iter().flat_map_iter(h_l).collect_vec_list(),
+        false => input.into_par_iter().flat_map_iter(l_l).collect_vec_list(),
     }
 }
 
@@ -122,33 +137,50 @@ fn run(c: &mut Criterion) {
         );
         let input = inputs(t.len);
         let expected = seq(&input, t.heavy_compute);
-        // let mut expected_sorted = expected.clone();
-        // expected_sorted.sort();
+        let mut expected_sorted = expected.clone();
+        expected_sorted.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy_compute));
-            b.iter(|| seq(&input, t.heavy_compute))
+            assert_eq!(&expected, &seq(&input));
+            b.iter(|| seq(&input))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.heavy_compute));
-            b.iter(|| rayon(&input, t.heavy_compute))
+            assert_eq!(&expected, &rayon(&input));
+            b.iter(|| rayon(&input))
+        });
+
+        group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
+            let mut result: Vec<u64> = rayon_ll(&input)
+                .into_iter()
+                .flat_map(|x| Vec::from(x).into_iter())
+                .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| rayon_ll(&input))
         });
 
         group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
-            assert_eq!(
-                &expected,
-                &orx(&input, t.heavy_compute, IterationOrder::Ordered)
-            );
-            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Ordered))
+            assert_eq!(&expected, &orx::<Vec<u64>>(&input, IterationOrder::Ordered));
+            b.iter(|| orx::<Vec<u64>>(&input, IterationOrder::Ordered))
         });
 
-        // group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
-        //     let mut result = orx(&input, t.heavy_compute, IterationOrder::Arbitrary);
-        //     result.sort();
-        //     assert_eq!(&expected_sorted, &result);
-        //     b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Arbitrary))
-        // });
+        group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
+            let mut result: Vec<u64> = orx(&input, IterationOrder::Arbitrary);
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx::<Vec<u64>>(&input, IterationOrder::Arbitrary))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
+            let mut result: Vec<u64> = orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary)
+                .into_iter()
+                .flatten()
+                .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary))
+        });
     }
 
     group.finish();

@@ -27,4 +27,20 @@ impl<T> ColIntoRes<T> for SplitVec<T, Doubling> {
             merge_ord_into(results, dst)
         })
     }
+
+    fn res_arb_col_into<I, M, E, X1, X2, S, R>(
+        dst: Option<Self>,
+        par: ParRes<I, M, E, X1, X2, S, R>,
+    ) -> Result<Self, E>
+    where
+        I: ConcurrentIter,
+        X1: Xap<I = I::Item, O = Result<M, E>>,
+        X2: Xap<I = M, O = T>,
+        S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+        R: ParRunnerRes,
+        T: Send,
+        E: Send,
+    {
+        todo!()
+    }
 }
