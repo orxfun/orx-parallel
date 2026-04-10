@@ -2,8 +2,6 @@ use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::parameters::IterationOrder;
 use crate::result_use::tests::utils::{UseValue, inputs};
 use crate::*;
-use orx_fixed_vec::FixedVec;
-use orx_split_vec::SplitVec;
 use std::format;
 use std::string::{String, ToString};
 use std::vec;
