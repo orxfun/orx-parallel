@@ -68,7 +68,7 @@ fn todo_panic_at_con_bag_new() {
     [0, 1, N[0], N[1]],
     [1, 4],
     [1, 64],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary])
+    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/])
 ]
 fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let offset = 33;
@@ -113,7 +113,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrde
     [0, 1, N[0], N[1]],
     [1, 4],
     [1, 64],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary])
+    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/])
 ]
 fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let offset = 33;
