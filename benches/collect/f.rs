@@ -6,8 +6,7 @@
   * _arb means results are collected in arbitrary order
 * container:
   * _vec means, results are collected into a Vec
-  * _rec means, results are collected into a SplitVec<_, Recursive>,
-    which can be transformed into Vec<Vec<_>>
+  * _vv means, results are collected into a Vec<Vec<_>>
   * _ll means, results are collected into a LinkedList<Vec<_>>
 
 col_f/seq/e15           time:   [66.363 µs 67.266 µs 68.192 µs]
@@ -114,15 +113,13 @@ fn run(c: &mut Criterion) {
             b.iter(|| orx::<Vec<_>>(&input, IterationOrder::Arbitrary))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx_arb_rec", &name), &name, |b, _| {
-            let mut result: Vec<u64> =
-                orx::<SplitVec<_, Recursive>>(&input, IterationOrder::Arbitrary)
-                    .into_fragments()
-                    .flat_map(|x| Vec::from(x).into_iter())
-                    .collect();
+        group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
+            let mut result: Vec<u64> = orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary)
+                .flat_map(|x| x.into_iter())
+                .collect();
             result.sort();
             assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx::<SplitVec<_, Recursive>>(&input, IterationOrder::Arbitrary))
+            b.iter(|| orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary))
         });
     }
 

@@ -20,16 +20,16 @@ impl<T> ColIntoInf<T> for Vec<Vec<T>> {
         let results = exe.collect(params, iter, x);
         let len: usize = results.iter().map(|x| x.len()).sum();
 
-        let mut result = Vec::new();
-        result.reserve(len);
-        let result = merge_ord_into(results, FixedVec::from(result)).into();
+        let mut ordered = Vec::new();
+        ordered.reserve(len);
+        let ordered = merge_ord_into(results, FixedVec::from(ordered)).into();
 
         match dst {
             Some(mut lst) => {
-                lst.push(result);
+                lst.push(ordered);
                 lst
             }
-            None => vec![result],
+            None => vec![ordered],
         }
     }
 
@@ -42,10 +42,12 @@ impl<T> ColIntoInf<T> for Vec<Vec<T>> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect_arb(params, iter, x);
-        let mut dst = dst.unwrap_or_else(|| Self::new());
-        for vec in results {
-            dst.push(vec);
+        match dst {
+            Some(mut lst) => {
+                lst.extend(results);
+                lst
+            }
+            None => results,
         }
-        dst
     }
 }
