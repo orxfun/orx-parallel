@@ -22,6 +22,8 @@ where
     }
 }
 
+// ordered
+
 pub fn merge_ord_into<T, P>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: P) -> P
 where
     P: PinnedVec<T>,
@@ -66,6 +68,8 @@ where
     dst
 }
 
+// arbitrary
+
 pub fn merge_arb_into_first_vec<T>(results: Vec<Vec<T>>) -> Vec<T> {
     let total_len: usize = results.iter().map(|x| x.len()).sum();
     let mut results = results.into_iter();
@@ -80,4 +84,13 @@ pub fn merge_arb_into_first_vec<T>(results: Vec<Vec<T>>) -> Vec<T> {
             result
         }
     }
+}
+
+pub fn merge_arb_into_vec<T>(results: Vec<Vec<T>>, mut dst: Vec<T>) -> Vec<T> {
+    let total_len: usize = results.iter().map(|x| x.len()).sum();
+    dst.reserve(total_len);
+    for vec in results {
+        dst.extend(vec);
+    }
+    dst
 }
