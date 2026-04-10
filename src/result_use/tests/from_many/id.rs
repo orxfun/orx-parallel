@@ -5,9 +5,6 @@ use std::string::String;
 use std::vec;
 use std::vec::Vec;
 
-
-
-
 const N: usize = 157;
 
 #[test]
