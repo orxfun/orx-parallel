@@ -1,5 +1,5 @@
 use crate::collectables::res::ColIntoRes;
-use crate::collectables::utils::merge_ord_into;
+use crate::collectables::utils::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
 use crate::infallible::Xap;
 use crate::result::{ParRes, ParRunnerRes, SizePairRes};
 use alloc::vec::Vec;
@@ -45,13 +45,11 @@ impl<T> ColIntoRes<T> for Vec<T> {
         E: Send,
     {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
-        // let results = exe.collect_arb(params, iter, x);
+        let results = exe.collect_arb(s, params, iter, x1, x2);
 
-        // match dst {
-        //     Some(dst) => merge_arb_into_vec(results, dst),
-        //     None => merge_arb_into_first_vec(results),
-        // };
-
-        todo!()
+        results.map(|results| match dst {
+            Some(dst) => merge_arb_into_vec(results, dst),
+            None => merge_arb_into_first_vec(results),
+        })
     }
 }

@@ -36,6 +36,7 @@ impl<T> ColIntoRes<T> for FixedVec<T> {
         T: Send,
         E: Send,
     {
-        todo!()
+        let dst = dst.map(|x| x.into_inner());
+        <Vec<T> as ColIntoRes<T>>::res_arb_col_into(dst, par).map(|v| v.into())
     }
 }
