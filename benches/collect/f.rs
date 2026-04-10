@@ -1,7 +1,10 @@
 /*
 
 * eN means an input of size 2^N is used
-* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
+* _ord means results are collected in order consistent to input
+* _arb means order might be arbitrary
+* _arb_rec means the results are collected in arbitrary order into a SplitVec<_, Recursive>,
+  which can be converted into Vec<Vec<_>>
 
 col_f/seq/e15           time:   [73.176 µs 74.413 µs 75.712 µs]
 col_f/rayon/e15         time:   [14.387 ms 14.810 ms 15.240 ms]
@@ -17,6 +20,7 @@ col_f/orx_arb/e20       time:   [8.9478 ms 9.2851 ms 9.6430 ms]
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_parallel::*;
+use orx_split_vec::{IntoFragments, Recursive, SplitVec};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -42,6 +46,10 @@ fn orx(input: &[u64], order: IterationOrder) -> Vec<u64> {
         .copied()
         .filter(f)
         .collect()
+}
+
+fn orx_arb_rec(input: &[u64]) -> SplitVec<u64, Recursive> {
+    input.into_par().copied().filter(f).collect()
 }
 
 fn rayon(input: &[u64]) -> Vec<u64> {
@@ -83,7 +91,17 @@ fn run(c: &mut Criterion) {
             let mut result = orx(&input, IterationOrder::Arbitrary);
             result.sort();
             assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx(&input, IterationOrder::Ordered))
+            b.iter(|| orx(&input, IterationOrder::Arbitrary))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx_arb_rec", &name), &name, |b, _| {
+            let mut result: Vec<u64> = orx_arb_rec(&input)
+                .into_fragments()
+                .flat_map(|x| Vec::from(x).into_iter())
+                .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx_arb_rec(&input))
         });
     }
 

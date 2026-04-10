@@ -5,7 +5,6 @@ use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::IntoConcurrentPinnedVec;
 
 pub trait ParRunnerInfallible: ParRunner {
     fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
@@ -129,12 +128,13 @@ pub trait ParRunnerInfallible: ParRunner {
         results_bag.into_inner().into_inner()
     }
 
+    #[cfg(feature = "experimental")]
     fn collect_arb_over_bag<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
-        P: IntoConcurrentPinnedVec<X::O>,
+        P: orx_pinned_vec::IntoConcurrentPinnedVec<X::O>,
     {
         let capacity_bound = pinned_vec.capacity_bound();
         let offset = pinned_vec.len();
