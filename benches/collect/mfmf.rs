@@ -90,7 +90,7 @@ fn seq(input: &[u64], h: bool) -> Vec<u64> {
     }
 }
 
-fn orx(input: &[u64], h: bool, order: IterationOrder) -> Vec<u64> {
+fn orx<C: ParCollectInto<u64>>(input: &[u64], h: bool, order: IterationOrder) -> C {
     match h {
         true => input
             .into_par()
