@@ -39,7 +39,7 @@ where
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
-                        for a in S::xap_use_res(u, x1, x2, i) {
+                        for a in S::xap_use_opt(u, x1, x2, i) {
                             acc = match (a, acc.is_some()) {
                                 (Some(a), true) => acc.map(|agg| f(unsafe { &mut *u }, agg, a)),
                                 (Some(a), false) => Some(a),
@@ -62,7 +62,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
+                        for a in chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i)) {
                             acc = match (a, acc.is_some()) {
                                 (Some(a), true) => acc.map(|agg| f(unsafe { &mut *u }, agg, a)),
                                 (Some(a), false) => Some(a),
@@ -97,7 +97,7 @@ where
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
-                                for a in S::xap_use_res(u, x1, x2, i) {
+                                for a in S::xap_use_opt(u, x1, x2, i) {
                                     acc = match a {
                                         Some(a) => f(unsafe { &mut *u }, acc, a),
                                         None => {
@@ -120,7 +120,7 @@ where
                         match chunk_puller.pull() {
                             Some(chunk) => {
                                 let u2 = u;
-                                for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
+                                for a in chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i)) {
                                     acc = match a {
                                         Some(a) => f(unsafe { &mut *u2 }, acc, a),
                                         None => {

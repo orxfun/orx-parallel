@@ -1,9 +1,10 @@
-use crate::infallible_use::{Use, XapUse};
-use crate::option_use::size_pairs::SizePairUseOpt;
+use crate::infallible_use::Use;
 use crate::runner::ParRunner;
+use crate::{infallible_use::XapUse, result_use::SizePairUseRes};
+use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn next_any<Q, U, I, M, X1, X2, S>(
+pub fn collect_arb<Q, U, I, M, E, X1, X2, S>(
     _: S,
     u: &U,
     th_idx: usize,
@@ -11,15 +12,18 @@ pub fn next_any<Q, U, I, M, X1, X2, S>(
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Option<Option<X2::O>>
+) -> Result<Vec<X2::O>, E>
 where
     Q: ParRunner,
     U: Use,
     I: ConcurrentIter,
-    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
+    X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
 {
+    let mut collected = Vec::new();
+    let vec = &mut collected;
+
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
 
@@ -33,11 +37,13 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    for a in S::xap_use_opt(u, x1, x2, i) {
-                        Q::broadcast_stop(iter, state, chunk_state);
+                    for a in S::xap_use_res(u, x1, x2, i) {
                         match a {
-                            Some(a) => return Some(Some(a)),
-                            None => return None,
+                            Ok(a) => vec.push(a),
+                            Err(e) => {
+                                Q::broadcast_stop(iter, state, chunk_state);
+                                return Err(e);
+                            }
                         }
                     }
                 }
@@ -51,11 +57,13 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i)) {
-                            Q::broadcast_stop(iter, state, chunk_state);
+                        for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
                             match a {
-                                Some(a) => return Some(Some(a)),
-                                None => return None,
+                                Ok(a) => vec.push(a),
+                                Err(e) => {
+                                    Q::broadcast_stop(iter, state, chunk_state);
+                                    return Err(e);
+                                }
                             }
                         }
                     }
@@ -64,8 +72,9 @@ where
                 }
             }
         }
+
         Q::complete_chunk(state, chunk_state);
     }
 
-    Some(None)
+    Ok(collected)
 }
