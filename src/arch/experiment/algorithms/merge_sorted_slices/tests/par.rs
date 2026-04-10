@@ -85,7 +85,7 @@ fn merge_sorted_slices_par_single_thread((left_len, total_len): (usize, usize)) 
     run((left_len, total_len), SortKind::Mixed, params);
 }
 
-#[cfg(not(miri))]
+
 #[test_matrix(
     [1<<15],
     [0, 1, 64],

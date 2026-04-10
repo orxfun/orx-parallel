@@ -525,7 +525,7 @@ let sum = inputs.par().sum();
     assert_eq!(sum, sum2);
 }
 
-#[cfg(not(miri))]
+
 #[cfg(feature = "scoped_threadpool")]
 {
     let mut pool = scoped_threadpool::Pool::new(8);
@@ -534,7 +534,7 @@ let sum = inputs.par().sum();
     assert_eq!(sum, sum2);
 }
 
-#[cfg(not(miri))]
+
 #[cfg(feature = "rayon-core")]
 {
     let pool = rayon_core::ThreadPoolBuilder::new()
@@ -546,7 +546,7 @@ let sum = inputs.par().sum();
     assert_eq!(sum, sum2);
 }
 
-#[cfg(not(miri))]
+
 #[cfg(feature = "yastl")]
 {
     let pool = YastlPool::new(8);

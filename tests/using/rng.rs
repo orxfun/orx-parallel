@@ -46,7 +46,7 @@ fn using_rng_xap() {
     let _ = final_positions.iter().sum::<i64>();
 }
 
-#[cfg(not(miri))]
+
 #[test]
 fn using_rng_xap_long() {
     let positions = input_positions();
