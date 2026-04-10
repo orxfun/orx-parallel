@@ -3,7 +3,10 @@ use crate::result::tests::utils::inputs_res;
 use crate::*;
 use std::vec;
 
-const N: usize = 157;
+#[cfg(not(miri))]
+const N: usize = 257;
+#[cfg(miri)]
+const N: usize = 57;
 
 #[test]
 fn one_m_find_ok() {

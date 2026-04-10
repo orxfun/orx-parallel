@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::{Map, MapEnum};
-use crate::infallible_use::{XapUseBin, XapUse, XapUseEnumByInput};
+use crate::infallible_use::{XapUse, XapUseBin, XapUseEnumByInput};
 use crate::sizes::Bin;
 
 pub struct BinM<X: XapUse<Size = Bin>, G: Map<U = X::U, I = X::O>> {

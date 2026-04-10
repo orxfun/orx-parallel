@@ -1,3 +1,4 @@
+use crate::ParCollectInto;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -137,6 +138,22 @@ where
     {
         let (iter, x1, x2, mut exe, s, params) = self.destruct();
         exe.reduce(s, params, iter, x1, x2, f)
+    }
+
+    pub fn collect<C>(self) -> Result<C, E>
+    where
+        C: ParCollectInto<X2::O>,
+        X2::O: Send,
+        E: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::res_col_into(None, self),
+            IterationOrder::Arbitrary => {
+                // let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
+                // C::inf_arb_col_into(None, self, exact_len)
+                todo!()
+            }
+        }
     }
 
     // compute - derived

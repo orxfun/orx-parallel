@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::FlatMap;
-use crate::infallible_use::{XapUseBin, XapUse};
+use crate::infallible_use::{XapUse, XapUseBin};
 use crate::sizes::{Bin, Many};
 use core::iter::FusedIterator;
 

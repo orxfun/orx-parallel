@@ -2,7 +2,10 @@ use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
 
-const N: usize = 157;
+#[cfg(not(miri))]
+const N: usize = 257;
+#[cfg(miri)]
+const N: usize = 57;
 
 #[test]
 fn bin_x_find_ok() {
