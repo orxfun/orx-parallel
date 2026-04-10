@@ -5,7 +5,7 @@ use std::format;
 use std::string::{String, ToString};
 use std::vec;
 
-const N: usize = 157;
+#[cfg(not(miri))]const N: usize = 157;#[cfg(miri)]const N: usize = 57;
 
 #[test]
 fn many_x_find_ok() {

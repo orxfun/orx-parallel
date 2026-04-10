@@ -4,7 +4,7 @@ use crate::*;
 use std::string::String;
 use std::vec;
 
-const N: usize = 157;
+#[cfg(not(miri))]const N: usize = 157;#[cfg(miri)]const N: usize = 57;
 
 #[test]
 fn id_find_ok() {

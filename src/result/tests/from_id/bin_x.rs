@@ -3,7 +3,7 @@ use crate::result::tests::utils::inputs_res;
 use crate::*;
 use std::vec;
 
-const N: usize = 157;
+#[cfg(not(miri))]const N: usize = 157;#[cfg(miri)]const N: usize = 57;
 
 #[test]
 fn bin_x_find_ok() {

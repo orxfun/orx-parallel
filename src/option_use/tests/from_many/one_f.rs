@@ -3,7 +3,7 @@ use crate::parameters::IterationOrder;
 use crate::*;
 use std::string::String;
 
-const N: usize = 157;
+#[cfg(not(miri))]const N: usize = 157;#[cfg(miri)]const N: usize = 57;
 
 #[test]
 fn one_f_find_ok() {
