@@ -1,5 +1,5 @@
 use crate::collectables::opt::ColIntoOpt;
-use crate::collectables::utils::merge_collected_into;
+use crate::collectables::utils::merge_ord_into;
 use crate::infallible::Xap;
 use crate::option::{ParOpt, ParRunnerOpt, SizePairOpt};
 use orx_concurrent_iter::ConcurrentIter;
@@ -23,7 +23,7 @@ impl<T, G: GrowthWithConstantTimeAccess> ColIntoOpt<T> for SplitVec<T, G> {
 
         results.map(|results| {
             let dst = dst.unwrap_or_else(|| SplitVec::pseudo_default());
-            merge_collected_into(results, dst)
+            merge_ord_into(results, dst)
         })
     }
 }

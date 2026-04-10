@@ -1,5 +1,5 @@
 use crate::collectables::opt::ColIntoOpt;
-use crate::collectables::utils::merge_collected_into;
+use crate::collectables::utils::merge_ord_into;
 use crate::infallible::Xap;
 use crate::option::{ParOpt, ParRunnerOpt, SizePairOpt};
 use alloc::vec::Vec;
@@ -26,7 +26,7 @@ impl<T> ColIntoOpt<T> for Vec<T> {
             let len: usize = results.iter().map(|x| x.len()).sum();
             let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
             dst.reserve(len);
-            merge_collected_into(results, FixedVec::from(dst)).into()
+            merge_ord_into(results, FixedVec::from(dst)).into()
         })
     }
 }

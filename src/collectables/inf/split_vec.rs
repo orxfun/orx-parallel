@@ -1,5 +1,5 @@
 use crate::collectables::inf::ColIntoInf;
-use crate::collectables::utils::merge_collected_into;
+use crate::collectables::utils::merge_ord_into;
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
@@ -19,7 +19,7 @@ impl<T, G: GrowthWithConstantTimeAccess> ColIntoInf<T> for SplitVec<T, G> {
         let results = exe.collect(params, iter, x);
 
         let dst = dst.unwrap_or_else(|| SplitVec::pseudo_default());
-        merge_collected_into(results, dst)
+        merge_ord_into(results, dst)
     }
 
     fn inf_arb_col_into<I, X, R>(
