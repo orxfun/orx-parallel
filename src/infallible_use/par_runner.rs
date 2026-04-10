@@ -6,7 +6,7 @@ use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParRunnerInfallibleUsing: ParRunner {
+pub trait ParRunnerInfallibleUse: ParRunner {
     fn next<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Option<ValIdx<X::O>>
     where
         U: Use,
@@ -89,4 +89,4 @@ pub trait ParRunnerInfallibleUsing: ParRunner {
     }
 }
 
-impl<R: ParRunner> ParRunnerInfallibleUsing for R {}
+impl<R: ParRunner> ParRunnerInfallibleUse for R {}
