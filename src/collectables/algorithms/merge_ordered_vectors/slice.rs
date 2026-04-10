@@ -23,11 +23,14 @@ impl<'a, T: 'a> From<&[ValIdx<T>]> for Slice<'a, T> {
 }
 
 impl<'a, T: 'a> Slice<'a, T> {
-    /// Creates a new raw slice.
     #[inline(always)]
     pub fn new(data: *const ValIdx<T>, len: usize) -> Self {
         let raw = slice_from_raw_parts(data, len);
         let phantom = PhantomData;
         Self { raw, phantom }
+    }
+
+    pub fn destruct(self) -> *const [ValIdx<T>] {
+        self.raw
     }
 }
