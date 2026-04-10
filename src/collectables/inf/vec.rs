@@ -1,5 +1,5 @@
 use crate::collectables::inf::ColIntoInf;
-use crate::collectables::utils::{extend_vec_from_split, merge_collected_into};
+use crate::collectables::utils::{extend_vec_from_split, merge_ord_into};
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
@@ -23,7 +23,7 @@ impl<T> ColIntoInf<T> for Vec<T> {
 
         let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
         dst.reserve(len);
-        merge_collected_into(results, FixedVec::from(dst)).into()
+        merge_ord_into(results, FixedVec::from(dst)).into()
     }
 
     fn inf_arb_col_into<I, X, R>(
@@ -43,8 +43,10 @@ impl<T> ColIntoInf<T> for Vec<T> {
             Some(len) => {
                 let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
                 dst.reserve(len);
-                exe.collect_arb_over_bag(params, iter, x, FixedVec::from(dst))
-                    .into_inner()
+                let results = exe.collect_arb(params, iter, x);
+                todo!()
+                // exe.collect_arb_over_bag(params, iter, x, FixedVec::from(dst))
+                //     .into_inner()
             }
             None => {
                 // TODO: collect_into might be faster
