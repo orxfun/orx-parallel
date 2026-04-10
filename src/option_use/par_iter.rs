@@ -1,3 +1,4 @@
+use crate::ParCollectInto;
 use crate::infallible_use::fun::{FnCloned, FnCopied};
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Use, XapUse};
 use crate::option_use::par_runner::ParRunnerUseOpt;
@@ -149,6 +150,28 @@ where
     {
         let (u, iter, x1, x2, mut exe, s, params) = self.destruct();
         exe.reduce(s, params, u, iter, x1, x2, f)
+    }
+
+    pub fn collect_into<C>(self, dst: C) -> Option<C>
+    where
+        C: ParCollectInto<X2::O>,
+        X2::O: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::opt_use_col_into(Some(dst), self),
+            IterationOrder::Arbitrary => C::opt_use_arb_col_into(Some(dst), self),
+        }
+    }
+
+    pub fn collect<C>(self) -> Option<C>
+    where
+        C: ParCollectInto<X2::O>,
+        X2::O: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::opt_use_col_into(None, self),
+            IterationOrder::Arbitrary => C::opt_use_arb_col_into(None, self),
+        }
     }
 
     // compute - derived
