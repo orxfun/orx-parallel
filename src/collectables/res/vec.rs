@@ -6,8 +6,8 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
-impl<T, E> ColIntoRes<T, E> for Vec<T> {
-    fn inf_col_into<I, M, X1, X2, S, R>(
+impl<T> ColIntoRes<T> for Vec<T> {
+    fn inf_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
         par: ParRes<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
