@@ -55,5 +55,14 @@ impl<T> ColIntoRes<T> for Vec<Vec<T>> {
         E: Send,
     {
         todo!()
+        // let (iter, x, mut exe, params) = par.destruct();
+        // let results = exe.collect_arb(params, iter, x);
+        // match dst {
+        //     Some(mut lst) => {
+        //         lst.extend(results);
+        //         lst
+        //     }
+        //     None => results,
+        // }
     }
 }
