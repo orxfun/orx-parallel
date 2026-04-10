@@ -1,11 +1,11 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::option_use::tests::utils::{UseValue, inputs_opt};
 use crate::parameters::IterationOrder;
 use crate::*;
-use std::string::ToString;
-use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use alloc::vec::Vec;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
+use std::string::ToString;
 use test_case::test_matrix;
 
 const N: usize = 157;
@@ -111,7 +111,6 @@ fn many_m_reduce_err() {
     assert_eq!(result, None);
 }
 
-
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
@@ -121,8 +120,8 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
     let expected = C::expected(
         mode,
         |i| i as u64,
-            inputs_opt(N, None)
-                .into_iter()
+        inputs_opt(N, None)
+            .into_iter()
             .map(|x| x.unwrap())
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -133,13 +132,13 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
     );
 
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) =>             inputs_opt(N, None)
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .filter_map(|u, x| {
-                    u.mutate();
-                    Some(x)
-                })
+        Some(c) => inputs_opt(N, None)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
@@ -152,13 +151,13 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
             })
             .iteration_order(order)
             .collect_into(c),
-        None =>             inputs_opt(N, None)
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .filter_map(|u, x| {
-                    u.mutate();
-                    Some(x)
-                })
+        None => inputs_opt(N, None)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
@@ -176,7 +175,6 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
     C::assert_eq(result.unwrap(), expected, order);
 }
 
-
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
@@ -184,13 +182,13 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
 )]
 fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) =>             inputs_opt(N, Some(42))
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .filter_map(|u, x| {
-                    u.mutate();
-                    Some(x)
-                })
+        Some(c) => inputs_opt(N, Some(42))
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
@@ -203,13 +201,13 @@ fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order
             })
             .iteration_order(order)
             .collect_into(c),
-        None =>             inputs_opt(N, Some(42))
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .filter_map(|u, x| {
-                    u.mutate();
-                    Some(x)
-                })
+        None => inputs_opt(N, Some(42))
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
