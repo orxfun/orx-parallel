@@ -7,6 +7,17 @@ use orx_split_vec::{Growth, SplitVec};
 
 // ordered
 
+/// `results` contain `n` vectors collected by `n` threads.
+/// Each vector contains (value, index) pairs represented by the `ValIdx` struct.
+/// Each vector is ordered within itself; i.e., the indices are in non-decreasing order.
+///
+/// This method takes all elements from all the result vectors and pushes them into the `dst`
+/// vector such that all elements in the destinations are in non-decreasing order of indices.
+/// However, indices are not pushed to the destination, they are only used for ordering.
+///
+/// Ties can only happen within a result vector from a particular thread.
+/// In this case, ties are broken in an order consistent with the ordering within the thread
+/// result vector.
 pub fn merge_ord_into<T, P>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: P) -> P
 where
     P: PinnedVec<T>,
