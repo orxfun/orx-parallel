@@ -1,6 +1,7 @@
 #[cfg(test)]
 pub mod par_col_into_test;
 
+mod algorithms;
 mod inf;
 mod inf_use;
 mod opt;
