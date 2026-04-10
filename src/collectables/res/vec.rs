@@ -22,16 +22,12 @@ impl<T, E> ColIntoRes<T, E> for Vec<T> {
     {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect(s, params, iter, x1, x2);
-        let results: Result<Vec<Vec<_>>, E> = results.into_iter().collect();
 
-        match results {
-            Err(e) => Err(e),
-            Ok(results) => {
-                let len: usize = results.iter().map(|x| x.len()).sum();
-                let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
-                dst.reserve(len);
-                Ok(merge_collected_into(results, FixedVec::from(dst)).into())
-            }
-        }
+        results.map(|results| {
+            let len: usize = results.iter().map(|x| x.len()).sum();
+            let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
+            dst.reserve(len);
+            merge_collected_into(results, FixedVec::from(dst)).into()
+        })
     }
 }

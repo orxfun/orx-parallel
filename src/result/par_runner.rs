@@ -123,7 +123,7 @@ pub trait ParRunnerRes: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Vec<Result<Vec<ValIdx<X2::O>>, E>>
+    ) -> Result<Vec<Vec<ValIdx<X2::O>>>, E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
@@ -148,7 +148,7 @@ pub trait ParRunnerRes: ParRunner {
             }
         });
 
-        results_bag.into_inner().into_inner()
+        results_bag.into_inner().into_inner().into_iter().collect()
     }
 }
 
