@@ -91,7 +91,7 @@ pub trait ParRunnerInfallible: ParRunner {
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+        let (iter, state, results) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
@@ -123,7 +123,7 @@ pub trait ParRunnerInfallible: ParRunner {
         let mut spawned = 0;
         let (_, state) = self.nt_state(params, iter.try_get_len());
 
-        let (iter, state, x, bag) = (&iter, &state, x, &results_bag);
+        let (iter, state, bag) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
