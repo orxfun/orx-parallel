@@ -56,27 +56,27 @@ fn seq_merge_streak_none<'a, T: 'a, D>(
                     true => {
                         // SAFETY: left still has at least one elem, so must `dst`
                         unsafe { dst.write_one_from(&mut left) };
-                        match left.current() {
+                        match left.current_idx() {
                             Some(x) => idx_l = x,
                             None => {
                                 // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
-                                unsafe { dst.write_rest_from(&mut right) };
+                                unsafe { dst.write_rest_from(right) };
                                 break;
                             }
                         }
                     }
                     false => {
-                        // // SAFETY: right still has at least one elem `r`, so must `dst`
-                        // unsafe { dst.write_one_from(&mut right) };
+                        // SAFETY: right still has at least one elem `r`, so must `dst`
+                        unsafe { dst.write_one_from(&mut right) };
 
-                        // match right.current() {
-                        //     Some(x) => idx_r = x,
-                        //     None => {
-                        //         // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
-                        //         unsafe { dst.write_rest_from(&mut left) };
-                        //         break;
-                        //     }
-                        // }
+                        match right.current_idx() {
+                            Some(x) => idx_r = x,
+                            None => {
+                                // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+                                unsafe { dst.write_rest_from(left) };
+                                break;
+                            }
+                        }
                     }
                 }
             }
