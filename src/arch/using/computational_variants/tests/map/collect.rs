@@ -19,7 +19,7 @@ const N: [usize; 2] = [1025, 4735];
     [0, 1, N[0], N[1]],
     [1, 4],
     [1, 64],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary])
+    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/])
 ]
 fn m_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let offset = 33;

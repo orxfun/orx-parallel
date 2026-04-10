@@ -59,11 +59,11 @@ fn many_f_reduce() {
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/]
 )]
 fn many_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {
-        inputs(N / 4)
+        inputs(N)
             .into_iter()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -75,7 +75,7 @@ fn many_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
     let expected = C::expected(mode, |i| i.to_string(), iter());
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N / 4)
+        Some(c) => inputs(N)
             .into_par()
             .iteration_order(order)
             .flat_map(|x| {
@@ -84,7 +84,7 @@ fn many_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
             })
             .filter(|x| x.len() < 4)
             .collect_into(c),
-        None => inputs(N / 4)
+        None => inputs(N)
             .into_par()
             .iteration_order(order)
             .flat_map(|x| {

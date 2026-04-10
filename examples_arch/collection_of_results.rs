@@ -3,7 +3,7 @@
 
 // const N: usize = 10_000;
 // const IDX_BAD_INPUT: [usize; 4] = [1900, 4156, 6777, 5663];
-// const ITERATION_ORDERS: [IterationOrder; 2] = [IterationOrder::Ordered, IterationOrder::Arbitrary];
+// const ITERATION_ORDERS: [IterationOrder; 2] = [IterationOrder::Ordered/* IterationOrder::Arbitrary*/];
 
 // fn good_input() -> Vec<String> {
 //     (0..N).map(|x| x.to_string()).collect()
