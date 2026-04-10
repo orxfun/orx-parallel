@@ -1,7 +1,7 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
-use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use alloc::vec::Vec;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::SplitVec;
@@ -99,7 +99,6 @@ fn one_x_reduce_err() {
     assert_eq!(result, None);
 }
 
-
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
@@ -109,9 +108,9 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     let expected = C::expected(
         mode,
         |i| i as u64,
-            inputs(N)
-                .into_iter()
-                .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
+        inputs(N)
+            .into_iter()
+            .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
             .map(|x| x.unwrap())
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -121,13 +120,13 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     );
 
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) =>             inputs(N)
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .flat_map(|u, x| {
-                    u.mutate();
-                    [x.clone(), x.clone(), x].map(Some)
-                })
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                [x.clone(), x.clone(), x].map(Some)
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
@@ -136,13 +135,13 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
             })
             .iteration_order(order)
             .collect_into(c),
-        None =>             inputs(N)
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .flat_map(|u, x| {
-                    u.mutate();
-                    [x.clone(), x.clone(), x].map(Some)
-                })
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                [x.clone(), x.clone(), x].map(Some)
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
@@ -156,7 +155,6 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     C::assert_eq(result.unwrap(), expected, order);
 }
 
-
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
@@ -164,16 +162,16 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
 )]
 fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) =>             inputs(N)
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .flat_map(|u, x| {
-                    u.mutate();
-                    match x.as_str() == "42" {
-                        true => [x.clone(), x.clone(), x].map(Some),
-                        false => [None, None, None],
-                    }
-                })
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                match x.as_str() == "42" {
+                    true => [x.clone(), x.clone(), x].map(Some),
+                    false => [None, None, None],
+                }
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
@@ -182,16 +180,16 @@ fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
             })
             .iteration_order(order)
             .collect_into(c),
-        None =>             inputs(N)
-                .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
-                .flat_map(|u, x| {
-                    u.mutate();
-                    match x.as_str() == "42" {
-                        true => [x.clone(), x.clone(), x].map(Some),
-                        false => [None, None, None],
-                    }
-                })
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                match x.as_str() == "42" {
+                    true => [x.clone(), x.clone(), x].map(Some),
+                    false => [None, None, None],
+                }
+            })
             .fallible_option()
             .flat_map(|u, x| {
                 u.mutate();
