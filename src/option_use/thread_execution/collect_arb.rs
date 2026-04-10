@@ -1,10 +1,10 @@
 use crate::infallible_use::Use;
 use crate::runner::ParRunner;
-use crate::{infallible_use::XapUse, result_use::SizePairUseRes};
+use crate::{infallible_use::XapUse, option_use::SizePairUseOpt};
 use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_arb<Q, U, I, M, E, X1, X2, S>(
+pub fn collect_arb<Q, U, I, M, X1, X2, S>(
     _: S,
     u: &U,
     th_idx: usize,
@@ -12,14 +12,14 @@ pub fn collect_arb<Q, U, I, M, E, X1, X2, S>(
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Result<Vec<X2::O>, E>
+) -> Option<Vec<X2::O>>
 where
     Q: ParRunner,
     U: Use,
     I: ConcurrentIter,
-    X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut collected = Vec::new();
     let vec = &mut collected;
@@ -37,12 +37,12 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    for a in S::xap_use_res(u, x1, x2, i) {
+                    for a in S::xap_use_opt(u, x1, x2, i) {
                         match a {
-                            Ok(a) => vec.push(a),
-                            Err(e) => {
+                            Some(a) => vec.push(a),
+                            None => {
                                 Q::broadcast_stop(iter, state, chunk_state);
-                                return Err(e);
+                                return None;
                             }
                         }
                     }
@@ -57,12 +57,12 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
+                        for a in chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i)) {
                             match a {
-                                Ok(a) => vec.push(a),
-                                Err(e) => {
+                                Some(a) => vec.push(a),
+                                None => {
                                     Q::broadcast_stop(iter, state, chunk_state);
-                                    return Err(e);
+                                    return None;
                                 }
                             }
                         }
@@ -76,5 +76,5 @@ where
         Q::complete_chunk(state, chunk_state);
     }
 
-    Ok(collected)
+    Some(collected)
 }
