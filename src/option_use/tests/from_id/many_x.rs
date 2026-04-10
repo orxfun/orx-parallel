@@ -3,8 +3,6 @@ use crate::option_use::tests::utils::{UseValue, inputs_opt};
 use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
-use orx_fixed_vec::FixedVec;
-use orx_split_vec::SplitVec;
 use std::format;
 use std::string::{String, ToString};
 use test_case::test_matrix;
