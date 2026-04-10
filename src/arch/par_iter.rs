@@ -286,7 +286,7 @@ where
     ///     assert_eq!(sum, sum2);
     /// }
     ///
-    /// #[cfg(not(miri))]
+    /// 
     /// #[cfg(feature = "scoped_threadpool")]
     /// {
     ///     let mut pool = scoped_threadpool::Pool::new(8);
@@ -296,7 +296,7 @@ where
     ///     assert_eq!(sum, sum2);
     /// }
     ///
-    /// #[cfg(not(miri))]
+    /// 
     /// #[cfg(feature = "rayon-core")]
     /// {
     ///     let pool = rayon_core::ThreadPoolBuilder::new()
@@ -356,7 +356,7 @@ where
     ///     assert_eq!(sum, sum2);
     /// }
     ///
-    /// #[cfg(not(miri))]
+    /// 
     /// #[cfg(feature = "scoped_threadpool")]
     /// {
     ///     let mut pool = scoped_threadpool::Pool::new(8);
@@ -366,7 +366,7 @@ where
     ///     assert_eq!(sum, sum2);
     /// }
     ///
-    /// #[cfg(not(miri))]
+    /// 
     /// #[cfg(feature = "rayon-core")]
     /// {
     ///     let pool = rayon_core::ThreadPoolBuilder::new()
