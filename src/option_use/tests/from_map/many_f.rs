@@ -2,6 +2,11 @@ use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
 use std::string::{String, ToString};
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
+use alloc::vec::Vec;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -108,5 +113,128 @@ fn many_f_reduce_err() {
                 false => a,
             }
         });
+    assert_eq!(result, None);
+}
+
+
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
+fn many_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let expected = C::expected(
+        mode,
+        |i| i.to_string(),
+            inputs(N)
+                .into_iter()
+                .map(|x| Some(x))
+            .map(|x| x.unwrap())
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .filter(|x| x.len() < 4)
+            .collect::<std::vec::Vec<_>>(),
+    );
+
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) =>             inputs(N)
+                .into_par()
+                .using(|th_idx| UseValue::new(th_idx))
+                .map(|u, x| {
+                    u.mutate();
+                    Some(x)
+                })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None =>             inputs(N)
+                .into_par()
+                .using(|th_idx| UseValue::new(th_idx))
+                .map(|u, x| {
+                    u.mutate();
+                    Some(x)
+                })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
+    C::assert_eq(result.unwrap(), expected, order);
+}
+
+
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
+fn many_f_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) =>             inputs(N)
+                .into_par()
+                .using(|th_idx| UseValue::new(th_idx))
+                .map(|u, x| {
+                    u.mutate();
+                    match x.as_str() == "42" {
+                        true => Some(x),
+                        false => None,
+                    }
+                })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None =>             inputs(N)
+                .into_par()
+                .using(|th_idx| UseValue::new(th_idx))
+                .map(|u, x| {
+                    u.mutate();
+                    match x.as_str() == "42" {
+                        true => Some(x),
+                        false => None,
+                    }
+                })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
     assert_eq!(result, None);
 }
