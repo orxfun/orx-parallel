@@ -6,7 +6,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
 impl<T> ColIntoRes<T> for FixedVec<T> {
-    fn inf_col_into<I, M, E, X1, X2, S, R>(
+    fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
         par: ParRes<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
@@ -20,6 +20,6 @@ impl<T> ColIntoRes<T> for FixedVec<T> {
         E: Send,
     {
         let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoRes<T>>::inf_col_into(dst, par).map(|v| v.into())
+        <Vec<T> as ColIntoRes<T>>::res_col_into(dst, par).map(|v| v.into())
     }
 }

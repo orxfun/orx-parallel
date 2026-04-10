@@ -4,7 +4,7 @@ use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoRes<T>: Sized {
-    fn inf_col_into<I, M, E, X1, X2, S, R>(
+    fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
         par: ParRes<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
