@@ -87,32 +87,24 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     C::assert_eq(result.unwrap(), expected, order);
 }
 
-mod id_collect_err_matrix {
-    use super::*;
-
-    #[test_matrix(
-    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+#[test_matrix(
+[Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+[ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+[IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
-    fn id_collect_err<C: ParCollectIntoTest<String>>(
-        _: C,
-        mode: ColIntoMode,
-        order: IterationOrder,
-    ) {
-        let result = match C::init_result(mode, |i| i.to_string()) {
-            Some(c) => inputs_opt(N, Some(42))
-                .into_par()
-                .fallible_option()
-                .iteration_order(order)
-                .collect_into(c),
-            None => inputs_opt(N, Some(42))
-                .into_par()
-                .fallible_option()
-                .iteration_order(order)
-                .collect(),
-        };
+fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs_opt(N, Some(42))
+            .into_par()
+            .fallible_option()
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs_opt(N, Some(42))
+            .into_par()
+            .fallible_option()
+            .iteration_order(order)
+            .collect(),
+    };
 
-        assert_eq!(result, None);
-    }
+    assert_eq!(result, None);
 }

@@ -139,50 +139,46 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
     C::assert_eq(result.unwrap(), expected, order);
 }
 
-mod many_f_collect_err_matrix {
-    use super::*;
-
-    #[test_matrix(
-    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+#[test_matrix(
+[Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+[ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+[IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
-    fn many_f_collect_err<C: ParCollectIntoTest<String>>(
-        _: C,
-        mode: ColIntoMode,
-        order: IterationOrder,
-    ) {
-        let result = match C::init_result(mode, |i| i.to_string()) {
-            Some(c) => inputs(N)
-                .into_par()
-                .map(|x| match x.as_str() == "42" {
-                    true => Some(x),
-                    false => None,
-                })
-                .fallible_option()
-                .flat_map(|x| {
-                    let a = x.parse::<u64>().unwrap();
-                    (0..5).map(move |i| (a + i).to_string())
-                })
-                .filter(|x| x.len() < 4)
-                .iteration_order(order)
-                .collect_into(c),
-            None => inputs(N)
-                .into_par()
-                .map(|x| match x.as_str() == "42" {
-                    true => Some(x),
-                    false => None,
-                })
-                .fallible_option()
-                .flat_map(|x| {
-                    let a = x.parse::<u64>().unwrap();
-                    (0..5).map(move |i| (a + i).to_string())
-                })
-                .filter(|x| x.len() < 4)
-                .iteration_order(order)
-                .collect(),
-        };
+fn many_f_collect_err<C: ParCollectIntoTest<String>>(
+    _: C,
+    mode: ColIntoMode,
+    order: IterationOrder,
+) {
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs(N)
+            .into_par()
+            .map(|x| match x.as_str() == "42" {
+                true => Some(x),
+                false => None,
+            })
+            .fallible_option()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .filter(|x| x.len() < 4)
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .map(|x| match x.as_str() == "42" {
+                true => Some(x),
+                false => None,
+            })
+            .fallible_option()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .filter(|x| x.len() < 4)
+            .iteration_order(order)
+            .collect(),
+    };
 
-        assert_eq!(result, None);
-    }
+    assert_eq!(result, None);
 }
