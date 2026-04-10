@@ -14,3 +14,5 @@ impl<T> ParCollectInto<T> for SplitVec<T, Linear> {}
 impl<T> ParCollectInto<T> for SplitVec<T, Recursive> {}
 
 impl<T> ParCollectInto<T> for Vec<T> {}
+
+impl<T> ParCollectInto<T> for Vec<Vec<T>> {}
