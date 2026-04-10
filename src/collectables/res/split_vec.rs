@@ -5,8 +5,8 @@ use crate::result::{ParRes, ParRunnerRes, SizePairRes};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{GrowthWithConstantTimeAccess, PseudoDefault, SplitVec};
 
-impl<T, E, G: GrowthWithConstantTimeAccess> ColIntoRes<T, E> for SplitVec<T, G> {
-    fn inf_col_into<I, M, X1, X2, S, R>(
+impl<T, G: GrowthWithConstantTimeAccess> ColIntoRes<T> for SplitVec<T, G> {
+    fn inf_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
         par: ParRes<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>

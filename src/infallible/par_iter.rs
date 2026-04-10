@@ -126,19 +126,19 @@ where
         exe.reduce(params, iter, x, f)
     }
 
-    pub fn collect_into<C>(self, dst: C) -> C
-    where
-        C: ParCollectInto<X::O>,
-        X::O: Send,
-    {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
-            IterationOrder::Arbitrary => {
-                let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
-                C::inf_arb_col_into(Some(dst), self, exact_len)
-            }
-        }
-    }
+    // pub fn collect_into<C>(self, dst: C) -> C
+    // where
+    //     C: ParCollectInto<X::O>,
+    //     X::O: Send,
+    // {
+    //     match self.params.iteration_order {
+    //         IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
+    //         IterationOrder::Arbitrary => {
+    //             let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
+    //             C::inf_arb_col_into(Some(dst), self, exact_len)
+    //         }
+    //     }
+    // }
 
     pub fn collect<C>(self) -> C
     where

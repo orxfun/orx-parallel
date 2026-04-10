@@ -1,9 +1,9 @@
-use crate::collectables::inf::ColIntoInf;
+use crate::collectables::{inf::ColIntoInf, res::ColIntoRes};
 use alloc::vec::Vec;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::{GrowthWithConstantTimeAccess, SplitVec};
 
-pub trait ParCollectInto<T>: ColIntoInf<T> {}
+pub trait ParCollectInto<T>: ColIntoInf<T> + ColIntoRes<T> {}
 
 impl<T> ParCollectInto<T> for FixedVec<T> {}
 
