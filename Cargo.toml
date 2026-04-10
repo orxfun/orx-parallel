@@ -58,8 +58,7 @@ all-features = true
 [features]
 default = ["std"]
 std = []
-generic_iterator = ["rayon"]
-experiment = []
+experimental = []
 
 [lib]
 doctest = false
