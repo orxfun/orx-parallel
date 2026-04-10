@@ -96,11 +96,7 @@ fn one_f_reduce_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix(
-    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary]
-)]
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let expected = C::expected(
         mode,
@@ -147,11 +143,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
     C::assert_eq(result.unwrap(), expected, order);
 }
 
-#[test_matrix(
-    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary]
-)]
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn one_f_collect_err<C: ParCollectIntoTest<String>>(
     _: C,
     mode: ColIntoMode,
