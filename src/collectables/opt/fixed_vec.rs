@@ -35,6 +35,6 @@ impl<T> ColIntoOpt<T> for FixedVec<T> {
         T: Send,
     {
         let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoOpt<T>>::res_arb_col_into(dst, par).map(|v| v.into())
+        <Vec<T> as ColIntoOpt<T>>::opt_arb_col_into(dst, par).map(|v| v.into())
     }
 }
