@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::{FnCloned, FnCopied};
-use crate::infallible_use::par_runner::ParRunnerInfallibleUsing;
+use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible_use::{XapUse, XapUseEnumByInput};
