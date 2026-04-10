@@ -1,3 +1,5 @@
+use crate::collectables::algorithms::merge_ordered_vectors::slice_iter_ptr_dst::SliceIterPtrDst;
+
 use super::slice_src::SliceSrc;
 
 /// Determines the streak search.
@@ -31,6 +33,16 @@ pub struct ParamsSeqMergeSortedSlices {
     pub put_large_to_left: bool,
 }
 
-fn seq_merge_streak_none<'a, T: 'a>(mut left: SliceSrc<'a, T>, mut right: SliceSrc<'a, T>) {
-    //
+fn seq_merge_streak_none<'a, T: 'a, D>(
+    mut left: SliceSrc<'a, T>,
+    mut right: SliceSrc<'a, T>,
+    target: D,
+    put_large_to_left: bool,
+) where
+    D: SliceIterPtrDst<'a, T>,
+{
+    // let is_large_on_left = left.len() >= right.len();
+    // if is_large_on_left != put_large_to_left {
+    //     (left, right) = (right, left);
+    // }
 }

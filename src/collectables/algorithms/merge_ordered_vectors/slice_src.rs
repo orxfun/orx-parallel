@@ -1,5 +1,5 @@
-use super::slice::Slice;
 use crate::results::ValIdx;
+use core::{marker::PhantomData, ptr::slice_from_raw_parts};
 
 /// A raw slice of contiguous data with initialized values.
 ///
@@ -10,20 +10,34 @@ use crate::results::ValIdx;
 ///
 /// This is a read-only slice.
 /// The caller must make sure that there is no concurrent write to this slice.
-pub struct SliceSrc<'a, T>(Slice<'a, T>);
+pub struct SliceSrc<'a, T> {
+    raw: *const [ValIdx<T>],
+    phantom: PhantomData<&'a ()>,
+}
 
 impl<'a, T> Clone for SliceSrc<'a, T> {
     fn clone(&self) -> Self {
-        Self(self.0.clone())
+        Self {
+            raw: self.raw,
+            phantom: PhantomData,
+        }
     }
 }
 
 impl<'a, T> SliceSrc<'a, T> {
-    pub fn destruct(self) -> *const [ValIdx<T>] {
-        self.0.destruct()
+    pub fn from_slice(slice: &'a [ValIdx<T>]) -> Self {
+        let (data, len) = (slice.as_ptr(), slice.len());
+        let raw = slice_from_raw_parts(data, len);
+        let phantom = PhantomData;
+        Self { raw, phantom }
     }
 
-    pub fn from_slice(slice: &'a [ValIdx<T>]) -> Self {
-        Self(Slice::new(slice.as_ptr(), slice.len()))
+    pub fn destruct(self) -> *const [ValIdx<T>] {
+        self.raw
+    }
+
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.raw.len()
     }
 }
