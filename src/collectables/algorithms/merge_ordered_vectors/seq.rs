@@ -1,5 +1,4 @@
-use crate::collectables::algorithms::merge_ordered_vectors::slice_iter_ptr_dst::SliceIterPtrDst;
-
+use super::slice_iter_ptr_dst::SliceIterPtrDst;
 use super::slice_src::SliceSrc;
 
 /// Determines the streak search.
@@ -90,6 +89,5 @@ fn seq_merge_streak_none<'a, T: 'a, D>(
             // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
             unsafe { dst.write_rest_from(left) };
         }
-        _ => todo!(),
     }
 }
