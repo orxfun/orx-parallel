@@ -98,26 +98,26 @@ fn rayon2(input: &[u64], h: bool) -> Option<u64> {
 
 struct Treat {
     len: usize,
-    heavy_compute: bool,
+    heavy: bool,
 }
 
 fn run(c: &mut Criterion) {
     let treatments = [
         Treat {
             len: 1 << 15,
-            heavy_compute: false,
+            heavy: false,
         },
         Treat {
             len: 1 << 20,
-            heavy_compute: false,
+            heavy: false,
         },
         Treat {
             len: 1 << 15,
-            heavy_compute: true,
+            heavy: true,
         },
         Treat {
             len: 1 << 20,
-            heavy_compute: true,
+            heavy: true,
         },
     ];
 
@@ -127,32 +127,32 @@ fn run(c: &mut Criterion) {
         let name = format!(
             "e{}_{}",
             t.len.ilog2(),
-            match t.heavy_compute {
+            match t.heavy {
                 true => "heavy",
                 false => "light",
             },
         );
         let input = inputs(t.len);
-        let expected = seq(&input, t.heavy_compute);
+        let expected = seq(&input, t.heavy);
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy_compute));
-            b.iter(|| seq(&input, t.heavy_compute))
+            assert_eq!(&expected, &seq(&input, t.heavy));
+            b.iter(|| seq(&input, t.heavy))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon1", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon1(&input, t.heavy_compute));
-            b.iter(|| rayon1(&input, t.heavy_compute))
+            assert_eq!(&expected, &rayon1(&input, t.heavy));
+            b.iter(|| rayon1(&input, t.heavy))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon2", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon2(&input, t.heavy_compute));
-            b.iter(|| rayon2(&input, t.heavy_compute))
+            assert_eq!(&expected, &rayon2(&input, t.heavy));
+            b.iter(|| rayon2(&input, t.heavy))
         });
 
         group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy_compute));
-            b.iter(|| orx(&input, t.heavy_compute))
+            assert_eq!(&expected, &orx(&input, t.heavy));
+            b.iter(|| orx(&input, t.heavy))
         });
     }
 
