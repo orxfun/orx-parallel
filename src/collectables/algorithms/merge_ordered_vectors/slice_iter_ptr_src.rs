@@ -50,6 +50,10 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
 
     #[inline(always)]
     pub fn current_idx(&self) -> Option<usize> {
-        todo!()
+        match !self.is_finished() {
+            // SAFETY: the value is initialized.
+            true => Some(unsafe { &*self.data }.idx),
+            false => None,
+        }
     }
 }
