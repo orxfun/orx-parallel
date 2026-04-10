@@ -8,7 +8,10 @@ use orx_split_vec::SplitVec;
 use std::string::{String, ToString};
 use test_case::test_matrix;
 
+#[cfg(not(miri))]
 const N: usize = 157;
+#[cfg(miri)]
+const N: usize = 57;
 
 #[test]
 fn bin_f_find() {

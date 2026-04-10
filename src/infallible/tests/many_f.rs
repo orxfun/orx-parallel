@@ -8,7 +8,7 @@ use orx_split_vec::SplitVec;
 use std::string::{String, ToString};
 use test_case::test_matrix;
 
-const N: usize = 157;
+#[cfg(not(miri))]const N: usize = 157;#[cfg(miri)]const N: usize = 57;
 
 #[test]
 fn many_f_find() {

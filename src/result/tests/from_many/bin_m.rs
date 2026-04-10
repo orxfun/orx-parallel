@@ -4,7 +4,7 @@ use crate::*;
 use std::vec;
 use std::vec::Vec;
 
-const N: usize = 157;
+#[cfg(not(miri))]const N: usize = 157;#[cfg(miri)]const N: usize = 57;
 
 #[test]
 fn bin_m_find_ok() {
