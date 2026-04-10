@@ -6,8 +6,7 @@
   * _arb means results are collected in arbitrary order
 * container:
   * _vec means, results are collected into a Vec
-  * _rec means, results are collected into a SplitVec<_, Recursive>,
-    which can be transformed into Vec<Vec<_>>
+  * _vv means, results are collected into a Vec<Vec<_>>
   * _ll means, results are collected into a LinkedList<Vec<_>>
 
 col_id/seq/e15          time:   [5.7705 µs 5.8086 µs 5.8482 µs]
@@ -27,7 +26,6 @@ col_id/orx_arb_rec/e20  time:   [2.1775 ms 2.2251 ms 2.2845 ms]
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_parallel::*;
-use orx_split_vec::{IntoFragments, Recursive, SplitVec};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -92,26 +90,25 @@ fn run(c: &mut Criterion) {
         });
 
         group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx::<Vec<_>>(&input, IterationOrder::Ordered));
-            b.iter(|| orx::<Vec<_>>(&input, IterationOrder::Ordered))
+            assert_eq!(&expected, &orx::<Vec<u64>>(&input, IterationOrder::Ordered));
+            b.iter(|| orx::<Vec<u64>>(&input, IterationOrder::Ordered))
         });
 
         group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
-            let mut result: Vec<_> = orx(&input, IterationOrder::Arbitrary);
+            let mut result: Vec<u64> = orx(&input, IterationOrder::Arbitrary);
             result.sort();
             assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx::<Vec<_>>(&input, IterationOrder::Arbitrary))
+            b.iter(|| orx::<Vec<u64>>(&input, IterationOrder::Arbitrary))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx_arb_rec", &name), &name, |b, _| {
-            let mut result: Vec<u64> =
-                orx::<SplitVec<_, Recursive>>(&input, IterationOrder::Arbitrary)
-                    .into_fragments()
-                    .flat_map(|x| Vec::from(x).into_iter())
-                    .collect();
+        group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
+            let mut result: Vec<u64> = orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary)
+                .into_iter()
+                .flatten()
+                .collect();
             result.sort();
             assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx::<SplitVec<_, Recursive>>(&input, IterationOrder::Arbitrary))
+            b.iter(|| orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary))
         });
     }
 

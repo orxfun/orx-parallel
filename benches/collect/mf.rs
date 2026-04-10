@@ -2,7 +2,13 @@
 
 * light & heavy show the intensity of computation
 * eN means an input of size 2^N is used
-* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
+* order:
+  * _ord means results are collected in order leading to same result as sequential
+  * _arb means results are collected in arbitrary order
+* container:
+  * _vec means, results are collected into a Vec
+  * _vv means, results are collected into a Vec<Vec<_>>
+  * _ll means, results are collected into a LinkedList<Vec<_>>
 
 col_mf/seq/e15_light        time:   [99.285 µs 100.95 µs 102.72 µs]
 col_mf/rayon/e15_light      time:   [20.741 ms 21.963 ms 23.304 ms]
@@ -31,6 +37,7 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::collections::LinkedList;
 use std::hint::black_box;
 
 fn inputs(len: usize) -> Vec<u64> {
@@ -103,6 +110,13 @@ fn rayon(input: &[u64], h: bool) -> Vec<u64> {
     }
 }
 
+fn rayon_ll(input: &[u64], h: bool) -> LinkedList<Vec<u64>> {
+    match h {
+        true => input.into_par_iter().map(h_m).filter(f).collect_vec_list(),
+        false => input.into_par_iter().map(l_m).filter(f).collect_vec_list(),
+    }
+}
+
 struct Treat {
     len: usize,
     heavy_compute: bool,
@@ -145,28 +159,45 @@ fn run(c: &mut Criterion) {
         expected_sorted.sort();
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy_compute));
-            b.iter(|| seq(&input, t.heavy_compute))
+            assert_eq!(&expected, &seq(&input));
+            b.iter(|| seq(&input))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.heavy_compute));
-            b.iter(|| rayon(&input, t.heavy_compute))
+            assert_eq!(&expected, &rayon(&input));
+            b.iter(|| rayon(&input))
+        });
+
+        group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
+            let mut result: Vec<u64> = rayon_ll(&input)
+                .into_iter()
+                .flat_map(|x| Vec::from(x).into_iter())
+                .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| rayon_ll(&input))
         });
 
         group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
-            assert_eq!(
-                &expected,
-                &orx(&input, t.heavy_compute, IterationOrder::Ordered)
-            );
-            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Ordered))
+            assert_eq!(&expected, &orx::<Vec<u64>>(&input, IterationOrder::Ordered));
+            b.iter(|| orx::<Vec<u64>>(&input, IterationOrder::Ordered))
         });
 
         group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
-            let mut result = orx(&input, t.heavy_compute, IterationOrder::Arbitrary);
+            let mut result: Vec<u64> = orx(&input, IterationOrder::Arbitrary);
             result.sort();
             assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx(&input, t.heavy_compute, IterationOrder::Arbitrary))
+            b.iter(|| orx::<Vec<u64>>(&input, IterationOrder::Arbitrary))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
+            let mut result: Vec<u64> = orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary)
+                .into_iter()
+                .flatten()
+                .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx::<Vec<Vec<_>>>(&input, IterationOrder::Arbitrary))
         });
     }
 
