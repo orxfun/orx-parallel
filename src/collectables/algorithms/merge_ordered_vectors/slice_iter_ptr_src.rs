@@ -44,11 +44,6 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     }
 
     #[inline(always)]
-    fn remaining(&self) -> usize {
-        unsafe { self.exclusive_end.offset_from(self.data) as usize }
-    }
-
-    #[inline(always)]
     pub fn current_idx(&self) -> Option<usize> {
         match !self.is_finished() {
             // SAFETY: the value is initialized.
@@ -63,10 +58,6 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
         let value = unsafe { &(*self.data).val } as *const T;
         self.data = unsafe { self.data.add(1) };
         value
-    }
-
-    pub fn jump_to_end(&mut self) {
-        self.data = self.exclusive_end
     }
 }
 
@@ -83,13 +74,14 @@ impl<'a, T: 'a> Iterator for SliceIterPtrSrc<'a, T> {
 
     #[inline(always)]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.remaining(), Some(self.remaining()))
+        let len = unsafe { self.exclusive_end.offset_from(self.data) as usize };
+        (len, Some(len))
     }
 }
 
 impl<'a, T: 'a> ExactSizeIterator for SliceIterPtrSrc<'a, T> {
     #[inline(always)]
     fn len(&self) -> usize {
-        self.remaining()
+        unsafe { self.exclusive_end.offset_from(self.data) as usize }
     }
 }

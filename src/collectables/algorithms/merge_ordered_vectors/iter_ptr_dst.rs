@@ -1,6 +1,6 @@
 use super::slice_iter_ptr_src::SliceIterPtrSrc;
 
-pub trait SliceIterPtrDst<'a, T: 'a> {
+pub trait IterPtrDst<'a, T: 'a> {
     fn len(&self) -> usize;
 
     unsafe fn next_unchecked(&mut self) -> *mut T;
