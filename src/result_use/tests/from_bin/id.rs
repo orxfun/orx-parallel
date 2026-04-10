@@ -1,12 +1,13 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::parameters::IterationOrder;
 use crate::result_use::tests::utils::{UseValue, inputs};
 use crate::*;
-use std::string::String;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
+use std::string::{String, ToString};
 use std::vec;
 use std::vec::Vec;
-
-
-
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -89,5 +90,92 @@ fn id_reduce_ok_err() {
                 false => a,
             }
         });
+    assert_eq!(result, Err(vec!['a']));
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let expected = C::expected(
+        mode,
+        |i| i.to_string(),
+        inputs(N)
+            .into_iter()
+            .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+                true => None,
+                false => Some(Ok(x)),
+            })
+            .map(|x| x.unwrap())
+            .collect::<std::vec::Vec<_>>(),
+    );
+
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+                u.mutate();
+                match x.as_str() == "7" {
+                    true => None,
+                    false => Some(Ok(x)),
+                }
+            })
+            .fallible_result()
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+                u.mutate();
+                match x.as_str() == "7" {
+                    true => None,
+                    false => Some(Ok(x)),
+                }
+            })
+            .fallible_result()
+            .iteration_order(order)
+            .collect(),
+    };
+
+    C::assert_eq(result.unwrap(), expected, order);
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+                u.mutate();
+                match x.as_str() == "7" {
+                    true => None,
+                    false => Some(match x.as_str() == "42" {
+                        true => Ok(x),
+                        false => Err(vec!['a']),
+                    }),
+                }
+            })
+            .fallible_result()
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+                u.mutate();
+                match x.as_str() == "7" {
+                    true => None,
+                    false => Some(match x.as_str() == "42" {
+                        true => Ok(x),
+                        false => Err(vec!['a']),
+                    }),
+                }
+            })
+            .fallible_result()
+            .iteration_order(order)
+            .collect(),
+    };
+
     assert_eq!(result, Err(vec!['a']));
 }

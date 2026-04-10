@@ -1,8 +1,12 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::parameters::IterationOrder;
 use crate::result_use::tests::utils::{UseValue, inputs};
 use crate::*;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
 use std::vec;
 use std::vec::Vec;
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -105,5 +109,111 @@ fn bin_m_reduce_err() {
                 false => a,
             }
         });
+    assert_eq!(result, Err(vec!['a']));
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let expected = C::expected(
+        mode,
+        |i| i as u64,
+        inputs(N)
+            .into_iter()
+            .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
+            .map(|x| x.unwrap())
+            .filter(|x| x.len() < 4)
+            .map(|x| x.parse::<u64>().unwrap())
+            .collect::<std::vec::Vec<_>>(),
+    );
+
+    let result = match C::init_result(mode, |i| i as u64) {
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
+            })
+            .fallible_result()
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
+            })
+            .fallible_result()
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
+    C::assert_eq(result.unwrap(), expected, order);
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let result = match C::init_result(mode, |i| i as u64) {
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                match x.as_str() == "42" {
+                    true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
+                    false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
+                }
+            })
+            .fallible_result()
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .flat_map(|u, x| {
+                u.mutate();
+                match x.as_str() == "42" {
+                    true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
+                    false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
+                }
+            })
+            .fallible_result()
+            .filter(|u, x| {
+                u.mutate();
+                x.len() < 4
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
     assert_eq!(result, Err(vec!['a']));
 }

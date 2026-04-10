@@ -1,3 +1,4 @@
+use crate::ParCollectInto;
 use crate::infallible_use::fun::{FnCloned, FnCopied};
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Use, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -53,7 +54,7 @@ where
         ParUseRes::new(self.using, self.iter, self.x1, x2, self.exe, self.params)
     }
 
-    fn destruct(self) -> (U, I, X1, X2, R, S, Params) {
+    pub(crate) fn destruct(self) -> (U, I, X1, X2, R, S, Params) {
         (
             self.using,
             self.iter,
@@ -157,6 +158,30 @@ where
     {
         let (u, iter, x1, x2, mut exe, s, params) = self.destruct();
         exe.reduce(s, params, u, iter, x1, x2, f)
+    }
+
+    pub fn collect_into<C>(self, dst: C) -> Result<C, E>
+    where
+        C: ParCollectInto<X2::O>,
+        X2::O: Send,
+        E: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::res_use_col_into(Some(dst), self),
+            IterationOrder::Arbitrary => C::res_use_arb_col_into(Some(dst), self),
+        }
+    }
+
+    pub fn collect<C>(self) -> Result<C, E>
+    where
+        C: ParCollectInto<X2::O>,
+        X2::O: Send,
+        E: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::res_use_col_into(None, self),
+            IterationOrder::Arbitrary => C::res_use_arb_col_into(None, self),
+        }
     }
 
     // compute - derived

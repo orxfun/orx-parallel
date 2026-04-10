@@ -3,9 +3,9 @@
 // use std::hint::black_box;
 // use test_case::test_matrix;
 
-// 
+//
 // const N: [usize; 2] = [37, 125];
-// 
+//
 // const N: [usize; 2] = [1025, 4735];
 
 // #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]

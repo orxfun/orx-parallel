@@ -33,7 +33,7 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some(i) => {
-                    for a in S::xap_use_res(u, x1, x2, i) {
+                    for a in S::xap_use_opt(u, x1, x2, i) {
                         Q::broadcast_stop(iter, state, chunk_state);
                         match a {
                             Some(a) => return Some(Some(a)),
@@ -51,7 +51,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
+                        for a in chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i)) {
                             Q::broadcast_stop(iter, state, chunk_state);
                             match a {
                                 Some(a) => return Some(Some(a)),

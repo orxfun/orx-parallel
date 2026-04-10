@@ -1,11 +1,13 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::option_use::tests::utils::{UseValue, inputs_opt};
 use crate::parameters::IterationOrder;
 use crate::*;
+use alloc::vec::Vec;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
 use std::format;
 use std::string::{String, ToString};
-
-
-
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -107,5 +109,119 @@ fn many_x_reduce_err() {
                 false => a,
             }
         });
+    assert_eq!(result, None);
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
+    _: C,
+    mode: ColIntoMode,
+    order: IterationOrder,
+) {
+    let expected = C::expected(
+        mode,
+        |i| i.to_string(),
+        inputs_opt(N, None)
+            .into_iter()
+            .map(|x| x.unwrap())
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|x| [format!("{x}!"), x])
+            .collect::<std::vec::Vec<_>>(),
+    );
+
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs_opt(N, None)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|u, x| {
+                u.mutate();
+                [format!("{x}!"), x]
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs_opt(N, None)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|u, x| {
+                u.mutate();
+                [format!("{x}!"), x]
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
+    C::assert_eq(result.unwrap(), expected, order);
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn many_x_collect_err<C: ParCollectIntoTest<String>>(
+    _: C,
+    mode: ColIntoMode,
+    order: IterationOrder,
+) {
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs_opt(N, Some(42))
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|u, x| {
+                u.mutate();
+                [format!("{x}!"), x]
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs_opt(N, Some(42))
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .filter_map(|u, x| {
+                u.mutate();
+                Some(x)
+            })
+            .fallible_option()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|u, x| {
+                u.mutate();
+                [format!("{x}!"), x]
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
     assert_eq!(result, None);
 }

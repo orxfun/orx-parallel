@@ -3,10 +3,11 @@ use crate::infallible_use::thread_execution as th;
 use crate::infallible_use::use_var::Use;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
+use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParRunnerInfallibleUsing: ParRunner {
+pub trait ParRunnerInfallibleUse: ParRunner {
     fn next<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Option<ValIdx<X::O>>
     where
         U: Use,
@@ -87,6 +88,56 @@ pub trait ParRunnerInfallibleUsing: ParRunner {
             f(&mut u, a, b)
         })
     }
+
+    fn collect<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<Vec<ValIdx<X::O>>>
+    where
+        U: Use,
+        I: ConcurrentIter,
+        X: XapUse<U = U::Item, I = I::Item>,
+        X::O: Send,
+    {
+        let mut spawned = 0;
+        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+        let (iter, state, results, u) = (&iter, &state, &results_bag, &u);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    let vec = th::collect::<Self, _, _, _>(u, th_idx, state, iter, x);
+                    results.push(vec);
+                });
+            }
+        });
+
+        results_bag.into_inner().into_inner()
+    }
+
+    fn collect_arb<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<Vec<X::O>>
+    where
+        U: Use,
+        I: ConcurrentIter,
+        X: XapUse<U = U::Item, I = I::Item>,
+        X::O: Send,
+    {
+        let mut spawned = 0;
+        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+        let (iter, state, results, u) = (&iter, &state, &results_bag, &u);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    let vec = th::collect_arb::<Self, _, _, _>(u, th_idx, state, iter, x);
+                    results.push(vec);
+                });
+            }
+        });
+
+        results_bag.into_inner().into_inner()
+    }
 }
 
-impl<R: ParRunner> ParRunnerInfallibleUsing for R {}
+impl<R: ParRunner> ParRunnerInfallibleUse for R {}

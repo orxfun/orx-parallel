@@ -11,7 +11,7 @@ impl SizePairUseOpt for ManyOne {
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 
     #[inline]
-    fn xap_use_res<M, X1, X2>(
+    fn xap_use_opt<M, X1, X2>(
         u: *mut X1::U,
         x1: X1,
         x2: X2,

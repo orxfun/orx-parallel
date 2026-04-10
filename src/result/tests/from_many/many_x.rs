@@ -1,13 +1,14 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::parameters::IterationOrder;
 use crate::result::tests::utils::inputs;
 use crate::*;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
 use std::format;
 use std::string::{String, ToString};
 use std::vec;
 use std::vec::Vec;
-
-
-
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -82,5 +83,102 @@ fn many_x_reduce_err() {
             true => b,
             false => a,
         });
+    assert_eq!(result, Err(vec!['a']));
+}
+
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
+fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
+    _: C,
+    mode: ColIntoMode,
+    order: IterationOrder,
+) {
+    let expected = C::expected(
+        mode,
+        |i| i.to_string(),
+        inputs(N)
+            .into_iter()
+            .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
+            .map(|x| x.unwrap())
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|x| [format!("{x}!"), x])
+            .collect::<std::vec::Vec<_>>(),
+    );
+
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs(N)
+            .into_par()
+            .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
+            .fallible_result()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|x| [format!("{x}!"), x])
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
+            .fallible_result()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|x| [format!("{x}!"), x])
+            .iteration_order(order)
+            .collect(),
+    };
+
+    C::assert_eq(result.unwrap(), expected, order);
+}
+
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
+fn many_x_collect_err<C: ParCollectIntoTest<String>>(
+    _: C,
+    mode: ColIntoMode,
+    order: IterationOrder,
+) {
+    let result = match C::init_result(mode, |i| i.to_string()) {
+        Some(c) => inputs(N)
+            .into_par()
+            .flat_map(|x| match x.as_str() == "42" {
+                true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
+                false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
+            })
+            .fallible_result()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|x| [format!("{x}!"), x])
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .flat_map(|x| match x.as_str() == "42" {
+                true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
+                false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
+            })
+            .fallible_result()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .flat_map(|x| [format!("{x}!"), x])
+            .iteration_order(order)
+            .collect(),
+    };
+
     assert_eq!(result, Err(vec!['a']));
 }

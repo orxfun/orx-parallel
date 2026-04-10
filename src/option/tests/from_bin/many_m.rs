@@ -1,7 +1,10 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::option::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
+use alloc::vec::Vec;
 use std::string::ToString;
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -88,5 +91,101 @@ fn many_m_reduce_err() {
             true => b,
             false => a,
         });
+    assert_eq!(result, None);
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let expected = C::expected(
+        mode,
+        |i| i as u64,
+        inputs(N)
+            .into_iter()
+            .filter_map(|x| match x.as_str() == "7" {
+                true => None,
+                false => Some(Some(x)),
+            })
+            .map(|x| x.unwrap())
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|x| x.parse::<u64>().unwrap())
+            .collect::<std::vec::Vec<_>>(),
+    );
+
+    let result = match C::init_result(mode, |i| i as u64) {
+        Some(c) => inputs(N)
+            .into_par()
+            .filter_map(|x| match x.as_str() == "7" {
+                true => None,
+                false => Some(Some(x)),
+            })
+            .fallible_option()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|x| x.parse::<u64>().unwrap())
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .filter_map(|x| match x.as_str() == "7" {
+                true => None,
+                false => Some(Some(x)),
+            })
+            .fallible_option()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|x| x.parse::<u64>().unwrap())
+            .iteration_order(order)
+            .collect(),
+    };
+
+    C::assert_eq(result.unwrap(), expected, order);
+}
+
+#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
+fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let result = match C::init_result(mode, |i| i as u64) {
+        Some(c) => inputs(N)
+            .into_par()
+            .filter_map(|x| match x.as_str() == "7" {
+                true => None,
+                false => Some(match x.as_str() == "42" {
+                    true => Some(x),
+                    false => None,
+                }),
+            })
+            .fallible_option()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|x| x.parse::<u64>().unwrap())
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .filter_map(|x| match x.as_str() == "7" {
+                true => None,
+                false => Some(match x.as_str() == "42" {
+                    true => Some(x),
+                    false => None,
+                }),
+            })
+            .fallible_option()
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|x| x.parse::<u64>().unwrap())
+            .iteration_order(order)
+            .collect(),
+    };
+
     assert_eq!(result, None);
 }
