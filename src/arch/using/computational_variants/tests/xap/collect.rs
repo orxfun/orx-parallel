@@ -13,9 +13,9 @@ use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 use test_case::test_matrix;
 
-#[cfg(miri)]
+
 const N: [usize; 2] = [37, 125];
-#[cfg(not(miri))]
+
 const N: [usize; 2] = [1025, 4735];
 
 #[test]
@@ -68,7 +68,7 @@ fn todo_panic_at_con_bag_new() {
     [0, 1, N[0], N[1]],
     [1, 4],
     [1, 64],
-    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/])
+    [IterationOrder::Ordered, IterationOrder::Arbitrary])
 ]
 fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let offset = 33;
@@ -113,7 +113,7 @@ fn x_flat_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrde
     [0, 1, N[0], N[1]],
     [1, 4],
     [1, 64],
-    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/])
+    [IterationOrder::Ordered, IterationOrder::Arbitrary])
 ]
 fn x_filter_map_collect(n: usize, nt: usize, chunk: usize, ordering: IterationOrder) {
     let offset = 33;

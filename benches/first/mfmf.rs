@@ -136,7 +136,7 @@ struct Treat {
     len: usize,
     pos: usize,
     val: u64,
-    heavy_compute: bool,
+    heavy: bool,
     position: Pos,
 }
 
@@ -147,42 +147,42 @@ fn run(c: &mut Criterion) {
             pos: 1 << 8,
             position: Pos::Beg,
             val: 999,
-            heavy_compute: false,
+            heavy: false,
         },
         Treat {
             len: 1 << 20,
             pos: (1 << 19) + 7,
             position: Pos::Mid,
             val: 999,
-            heavy_compute: false,
+            heavy: false,
         },
         Treat {
             len: 1 << 20,
             pos: (1 << 20) - 27,
             position: Pos::End,
             val: 999,
-            heavy_compute: false,
+            heavy: false,
         },
         Treat {
             len: 1 << 20,
             pos: 1 << 8,
             position: Pos::Beg,
             val: 999,
-            heavy_compute: true,
+            heavy: true,
         },
         Treat {
             len: 1 << 20,
             pos: (1 << 19) + 7,
             position: Pos::Mid,
             val: 999,
-            heavy_compute: true,
+            heavy: true,
         },
         Treat {
             len: 1 << 20,
             pos: (1 << 20) - 27,
             position: Pos::End,
             val: 999,
-            heavy_compute: true,
+            heavy: true,
         },
     ];
 
@@ -192,28 +192,28 @@ fn run(c: &mut Criterion) {
         let name = format!(
             "e{}_{}_{:?}",
             t.len.ilog2(),
-            match t.heavy_compute {
+            match t.heavy {
                 true => "heavy",
                 false => "light",
             },
             t.position,
         );
         let input = inputs(t.len, t.pos, t.val);
-        let expected = seq(&input, t.heavy_compute, t.val);
+        let expected = seq(&input, t.heavy, t.val);
 
         group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy_compute, t.val));
-            b.iter(|| seq(&input, t.heavy_compute, t.val))
+            assert_eq!(&expected, &seq(&input, t.heavy, t.val));
+            b.iter(|| seq(&input, t.heavy, t.val))
         });
 
         group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.heavy_compute, t.val));
-            b.iter(|| rayon(&input, t.heavy_compute, t.val))
+            assert_eq!(&expected, &rayon(&input, t.heavy, t.val));
+            b.iter(|| rayon(&input, t.heavy, t.val))
         });
 
         group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy_compute, t.val));
-            b.iter(|| orx(&input, t.heavy_compute, t.val))
+            assert_eq!(&expected, &orx(&input, t.heavy, t.val));
+            b.iter(|| orx(&input, t.heavy, t.val))
         });
     }
 

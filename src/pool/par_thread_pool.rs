@@ -38,7 +38,7 @@ use core::num::NonZeroUsize;
 /// ```
 /// use orx_parallel::*;
 ///
-/// #[cfg(not(miri))]
+///
 /// #[cfg(feature = "rayon-core")]
 /// {
 ///     let pool = rayon::ThreadPoolBuilder::new()
@@ -71,7 +71,7 @@ use core::num::NonZeroUsize;
 /// ```
 /// use orx_parallel::*;
 ///
-/// #[cfg(not(miri))]
+///
 /// #[cfg(feature = "scoped_threadpool")]
 /// {
 ///     // creating a runner for the computation

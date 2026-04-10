@@ -8,10 +8,10 @@ use orx_split_vec::SplitVec;
 use std::string::{String, ToString};
 use test_case::test_matrix;
 
-#[cfg(not(miri))]
-const N: usize = 257;
-#[cfg(miri)]
-const N: usize = 57;
+
+
+
+const N: usize = 157;
 
 #[test]
 fn one_f_find() {
@@ -47,7 +47,7 @@ fn one_f_reduce() {
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered/* IterationOrder::Arbitrary*/]
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn one_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || inputs(N).into_iter().filter(|x| x.len() > 1);

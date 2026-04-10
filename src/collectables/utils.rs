@@ -5,24 +5,9 @@ use orx_pinned_vec::PinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 use orx_split_vec::{Growth, SplitVec};
 
-pub fn extend_vec_from_split<T, G>(
-    mut initial_vec: Vec<T>,
-    collected_split_vec: SplitVec<T, G>,
-) -> Vec<T>
-where
-    G: Growth,
-{
-    match initial_vec.len() {
-        0 => collected_split_vec.to_vec(),
-        _ => {
-            initial_vec.reserve(collected_split_vec.len());
-            initial_vec.extend(collected_split_vec);
-            initial_vec
-        }
-    }
-}
+// ordered
 
-pub fn merge_collected_into<T, P>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: P) -> P
+pub fn merge_ord_into<T, P>(mut results: Vec<Vec<ValIdx<T>>>, mut dst: P) -> P
 where
     P: PinnedVec<T>,
 {
@@ -63,5 +48,42 @@ where
         unsafe { vec.set_len(0) };
     }
 
+    dst
+}
+
+// arbitrary
+
+pub fn merge_arb_into_first_vec<T>(results: Vec<Vec<T>>) -> Vec<T> {
+    let total_len: usize = results.iter().map(|x| x.len()).sum();
+    let mut results = results.into_iter();
+    match results.next() {
+        None => Default::default(),
+        Some(mut result) => {
+            let additional = total_len - result.len();
+            result.reserve(additional);
+            for vec in results {
+                result.extend(vec);
+            }
+            result
+        }
+    }
+}
+
+pub fn merge_arb_into_vec<T>(results: Vec<Vec<T>>, mut dst: Vec<T>) -> Vec<T> {
+    let total_len: usize = results.iter().map(|x| x.len()).sum();
+    dst.reserve(total_len);
+    for vec in results {
+        dst.extend(vec);
+    }
+    dst
+}
+
+pub fn merge_arb_into_split_vec<T, G: Growth>(
+    results: Vec<Vec<T>>,
+    mut dst: SplitVec<T, G>,
+) -> SplitVec<T, G> {
+    for vec in results {
+        dst.extend(vec);
+    }
     dst
 }

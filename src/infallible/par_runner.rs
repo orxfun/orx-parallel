@@ -5,7 +5,6 @@ use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_pinned_vec::IntoConcurrentPinnedVec;
 
 pub trait ParRunnerInfallible: ParRunner {
     fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
@@ -105,12 +104,37 @@ pub trait ParRunnerInfallible: ParRunner {
         results_bag.into_inner().into_inner()
     }
 
-    fn collect_arbitrary<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
+    fn collect_arb<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<Vec<X::O>>
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
-        P: IntoConcurrentPinnedVec<X::O>,
+    {
+        let mut spawned = 0;
+        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+        let (iter, state, results) = (&iter, &state, &results_bag);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    let vec = th::collect_arb::<Self, _, _>(th_idx, state, iter, x);
+                    results.push(vec);
+                });
+            }
+        });
+
+        results_bag.into_inner().into_inner()
+    }
+
+    #[cfg(feature = "experimental")]
+    fn collect_arb_over_bag<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item>,
+        X::O: Send,
+        P: orx_pinned_vec::IntoConcurrentPinnedVec<X::O>,
     {
         let capacity_bound = pinned_vec.capacity_bound();
         let offset = pinned_vec.len();
@@ -128,7 +152,7 @@ pub trait ParRunnerInfallible: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    th::collect_arbitrary::<Self, _, _, _>(th_idx, state, iter, x, bag);
+                    th::collect_arb_over_bag::<Self, _, _, _>(th_idx, state, iter, x, bag);
                 });
             }
         });

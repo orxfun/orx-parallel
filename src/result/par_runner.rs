@@ -150,6 +150,42 @@ pub trait ParRunnerRes: ParRunner {
 
         results_bag.into_inner().into_inner().into_iter().collect()
     }
+
+    fn collect_arb<I, M, E, X1, X2, S>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        iter: I,
+        x1: X1,
+        x2: X2,
+    ) -> Result<Vec<Vec<X2::O>>, E>
+    where
+        I: ConcurrentIter,
+        X1: Xap<I = I::Item, O = Result<M, E>>,
+        X2: Xap<I = M>,
+        S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+        X2::O: Send,
+        E: Send,
+    {
+        let mut spawned = 0;
+        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+        let (iter, state, results) = (&iter, &state, &results_bag);
+        self.pool_mut().scoped_computation(move |s| {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+                spawned += 1;
+                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    let vec = th::collect_arb::<Self, _, _, _, _, _, _>(
+                        sizes, th_idx, state, iter, x1, x2,
+                    );
+                    results.push(vec);
+                });
+            }
+        });
+
+        results_bag.into_inner().into_inner().into_iter().collect()
+    }
 }
 
 impl<R: ParRunner> ParRunnerRes for R {}

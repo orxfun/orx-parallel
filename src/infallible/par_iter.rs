@@ -5,7 +5,6 @@ use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf}
 use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::sizes::Size;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
 
@@ -133,10 +132,7 @@ where
     {
         match self.params.iteration_order {
             IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
-            IterationOrder::Arbitrary => {
-                let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
-                C::inf_arb_col_into(Some(dst), self, exact_len)
-            }
+            IterationOrder::Arbitrary => C::inf_arb_col_into(Some(dst), self),
         }
     }
 
@@ -147,10 +143,7 @@ where
     {
         match self.params.iteration_order {
             IterationOrder::Ordered => C::inf_col_into(None, self),
-            IterationOrder::Arbitrary => {
-                let exact_len = <X::Size as Size>::output_len(self.iter.try_get_len());
-                C::inf_arb_col_into(None, self, exact_len)
-            }
+            IterationOrder::Arbitrary => C::inf_arb_col_into(None, self),
         }
     }
 
