@@ -53,7 +53,7 @@ where
         ParUseOpt::new(self.using, self.iter, self.x1, x2, self.exe, self.params)
     }
 
-    fn destruct(self) -> (U, I, X1, X2, R, S, Params) {
+    pub(crate) fn destruct(self) -> (U, I, X1, X2, R, S, Params) {
         (
             self.using,
             self.iter,
