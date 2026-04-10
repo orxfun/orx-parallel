@@ -1,7 +1,7 @@
 use crate::collectables::inf_use::ColIntoInfUse;
 use crate::collectables::utils::merge_ord_into;
 use crate::infallible::ParRunnerInfallible;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUse, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUse, Use, XapUse};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
