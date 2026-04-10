@@ -41,3 +41,27 @@ fn bin_f_find_any() {
         .first();
     assert!(result.is_some());
 }
+
+#[test]
+fn bin_f_reduce() {
+    let inputs = inputs(N);
+    let result = inputs
+        .into_par()
+        .using_clone(UseValue::new(42))
+        .filter(|u, x| {
+            u.mutate();
+            x.len() > 1
+        })
+        .filter(|u, x| {
+            u.mutate();
+            x.len() < 4
+        })
+        .reduce(|u, a, b| {
+            u.mutate();
+            match a < b {
+                true => b,
+                false => a,
+            }
+        });
+    assert_eq!(result, Some(String::from("99")));
+}
