@@ -56,4 +56,25 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
             false => None,
         }
     }
+
+    #[inline(always)]
+    pub unsafe fn next_unchecked(&mut self) -> *const ValIdx<T> {
+        debug_assert!(!self.is_finished());
+        let value = self.data;
+        self.data = unsafe { self.data.add(1) };
+        value
+    }
+
+    #[inline(always)]
+    pub fn next(&mut self) -> Option<*const ValIdx<T>> {
+        match !self.is_finished() {
+            // SAFETY: iterator is not finished
+            true => Some(unsafe { self.next_unchecked() }),
+            false => None,
+        }
+    }
+
+    pub fn jump_to_end(&mut self) {
+        self.data = self.exclusive_end
+    }
 }
