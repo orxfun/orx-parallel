@@ -3,10 +3,10 @@ use crate::parameters::IterationOrder;
 use crate::*;
 use std::format;
 use std::string::{String, ToString};
-#[cfg(not(miri))]
-const N: usize = 257;
-#[cfg(miri)]
-const N: usize = 57;
+
+
+
+const N: usize = 157;
 
 #[test]
 fn many_x_find_ok() {

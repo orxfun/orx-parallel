@@ -11,9 +11,9 @@ use orx_pinned_vec::PinnedVec;
 use orx_split_vec::SplitVec;
 use test_case::test_matrix;
 
-#[cfg(miri)]
+
 const N: [usize; 2] = [37, 125];
-#[cfg(not(miri))]
+
 const N: [usize; 2] = [1025, 4735];
 
 #[test]
