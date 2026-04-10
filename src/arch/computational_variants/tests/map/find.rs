@@ -5,9 +5,9 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::IntoConcurrentIter;
 use test_case::test_matrix;
 
-#[cfg(miri)]
+
 const N: [usize; 2] = [37, 125];
-#[cfg(not(miri))]
+
 const N: [usize; 2] = [1025, 4735];
 
 #[test_matrix(

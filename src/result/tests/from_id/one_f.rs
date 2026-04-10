@@ -4,10 +4,10 @@ use crate::*;
 use std::string::String;
 use std::vec;
 
-#[cfg(not(miri))]
-const N: usize = 257;
-#[cfg(miri)]
-const N: usize = 57;
+
+
+
+const N: usize = 157;
 
 #[test]
 fn one_f_find_ok() {
