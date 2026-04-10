@@ -1,5 +1,5 @@
 use crate::collectables::res::ColIntoRes;
-use crate::collectables::utils::merge_ord_into;
+use crate::collectables::utils::{merge_arb_into_split_vec, merge_ord_into};
 use crate::infallible::Xap;
 use crate::result::{ParRes, ParRunnerRes, SizePairRes};
 use orx_concurrent_iter::ConcurrentIter;
@@ -41,6 +41,10 @@ impl<T> ColIntoRes<T> for SplitVec<T, Doubling> {
         T: Send,
         E: Send,
     {
-        todo!()
+        let (iter, x1, x2, mut exe, s, params) = par.destruct();
+        let results = exe.collect_arb(s, params, iter, x1, x2);
+        results.map(|results| {
+            merge_arb_into_split_vec(results, dst.unwrap_or_else(|| Self::with_doubling_growth()))
+        })
     }
 }
