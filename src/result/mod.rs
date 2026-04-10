@@ -7,4 +7,5 @@ mod size_pairs;
 mod thread_execution;
 
 pub use par_iter::ParRes;
+pub use par_runner::ParRunnerRes;
 pub use size_pairs::SizePairRes;
