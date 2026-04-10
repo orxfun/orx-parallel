@@ -3,8 +3,6 @@ use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
-use orx_fixed_vec::FixedVec;
-use orx_split_vec::SplitVec;
 use test_case::test_matrix;
 
 const N: usize = 157;
