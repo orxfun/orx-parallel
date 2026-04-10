@@ -1,7 +1,7 @@
 use super::slice_iter_ptr_dst::SliceIterPtrDst;
 use super::slice_src::SliceSrc;
 
-fn seq_merge<'a, T: 'a, D>(left: SliceSrc<'a, T>, right: SliceSrc<'a, T>, mut dst: D)
+pub fn seq_merge<'a, T: 'a, D>(left: SliceSrc<'a, T>, right: SliceSrc<'a, T>, mut dst: D)
 where
     D: SliceIterPtrDst<'a, T>,
 {
