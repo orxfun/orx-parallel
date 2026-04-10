@@ -1,13 +1,11 @@
 use crate::collectables::inf::ColIntoInf;
-use crate::collectables::utils::{extend_vec_from_split, merge_ord_into};
+use crate::collectables::utils::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
-use orx_pinned_vec::PinnedVec;
-use orx_split_vec::SplitVec;
 
 impl<T> ColIntoInf<T> for Vec<T> {
     fn inf_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
@@ -26,11 +24,7 @@ impl<T> ColIntoInf<T> for Vec<T> {
         merge_ord_into(results, FixedVec::from(dst)).into()
     }
 
-    fn inf_arb_col_into<I, X, R>(
-        dst: Option<Self>,
-        par: Par<I, X, R>,
-        exact_len: Option<usize>,
-    ) -> Self
+    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -38,23 +32,11 @@ impl<T> ColIntoInf<T> for Vec<T> {
         T: Send,
     {
         let (iter, x, mut exe, params) = par.destruct();
+        let results = exe.collect_arb(params, iter, x);
 
-        match exact_len {
-            Some(len) => {
-                let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
-                dst.reserve(len);
-                let results = exe.collect_arb(params, iter, x);
-                todo!()
-                // exe.collect_arb_over_bag(params, iter, x, FixedVec::from(dst))
-                //     .into_inner()
-            }
-            None => {
-                // TODO: collect_into might be faster
-                let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-                let split_vec = exe.collect_arb_over_bag(params, iter, x, split_vec);
-                let dst = dst.unwrap_or_else(|| Vec::with_capacity(split_vec.len()));
-                extend_vec_from_split(dst, split_vec)
-            }
+        match dst {
+            Some(dst) => merge_arb_into_vec(results, dst),
+            None => merge_arb_into_first_vec(results),
         }
     }
 }
