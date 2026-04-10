@@ -21,4 +21,20 @@ impl<T> ColIntoOpt<T> for FixedVec<T> {
         let dst = dst.map(|x| x.into_inner());
         <Vec<T> as ColIntoOpt<T>>::opt_col_into(dst, par).map(|v| v.into())
     }
+
+    fn opt_arb_col_into<I, M, X1, X2, S, R>(
+        dst: Option<Self>,
+        par: ParOpt<I, M, X1, X2, S, R>,
+    ) -> Option<Self>
+    where
+        I: ConcurrentIter,
+        X1: Xap<I = I::Item, O = Option<M>>,
+        X2: Xap<I = M, O = T>,
+        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        R: ParRunnerOpt,
+        T: Send,
+    {
+        let dst = dst.map(|x| x.into_inner());
+        <Vec<T> as ColIntoOpt<T>>::res_arb_col_into(dst, par).map(|v| v.into())
+    }
 }
