@@ -10,21 +10,7 @@
   * _vv means, results are collected into a Vec<Vec<_>>
   * _ll means, results are collected into a LinkedList<Vec<_>>
 
-col_mfmf/seq/e15_light      time:   [115.11 µs 117.39 µs 120.03 µs]
-col_mfmf/rayon/e15_light    time:   [18.764 ms 20.453 ms 22.636 ms]
-col_mfmf/orx_ord/e15_light  time:   [2.9880 ms 3.1119 ms 3.2395 ms]
-
-col_mfmf/seq/e20_light      time:   [3.9800 ms 4.0413 ms 4.1042 ms]
-col_mfmf/rayon/e20_light    time:   [32.316 ms 35.726 ms 39.692 ms]
-col_mfmf/orx_ord/e20_light  time:   [9.4034 ms 11.075 ms 13.259 ms]
-
-col_mfmf/seq/e15_heavy      time:   [1.5410 ms 1.5594 ms 1.5790 ms]
-col_mfmf/rayon/e15_heavy    time:   [17.344 ms 19.394 ms 22.305 ms]
-col_mfmf/orx_ord/e15_heavy  time:   [2.6420 ms 2.6847 ms 2.7292 ms]
-
-col_mfmf/seq/e20_heavy      time:   [47.811 ms 48.294 ms 48.792 ms]
-col_mfmf/rayon/e20_heavy    time:   [22.756 ms 26.370 ms 30.848 ms]
-col_mfmf/orx_ord/e20_heavy  time:   [13.971 ms 15.924 ms 18.270 ms]
+placeholder
 
 */
 
