@@ -58,15 +58,22 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     }
 
     #[inline(always)]
-    pub unsafe fn next_unchecked(&mut self) -> *const ValIdx<T> {
+    pub unsafe fn next_unchecked(&mut self) -> *const T {
         debug_assert!(!self.is_finished());
-        let value = self.data;
+        let value = unsafe { &(*self.data).val } as *const T;
         self.data = unsafe { self.data.add(1) };
         value
     }
 
-    #[inline(always)]
-    pub fn next(&mut self) -> Option<*const ValIdx<T>> {
+    pub fn jump_to_end(&mut self) {
+        self.data = self.exclusive_end
+    }
+}
+
+impl<'a, T: 'a> Iterator for SliceIterPtrSrc<'a, T> {
+    type Item = *const T;
+
+    fn next(&mut self) -> Option<Self::Item> {
         match !self.is_finished() {
             // SAFETY: iterator is not finished
             true => Some(unsafe { self.next_unchecked() }),
@@ -74,7 +81,15 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
         }
     }
 
-    pub fn jump_to_end(&mut self) {
-        self.data = self.exclusive_end
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.remaining(), Some(self.remaining()))
+    }
+}
+
+impl<'a, T: 'a> ExactSizeIterator for SliceIterPtrSrc<'a, T> {
+    #[inline(always)]
+    fn len(&self) -> usize {
+        self.remaining()
     }
 }
