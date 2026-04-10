@@ -26,4 +26,27 @@ impl<T> ColIntoOpt<T> for SplitVec<T, Recursive> {
             merge_ord_into(results, dst)
         })
     }
+
+    fn opt_arb_col_into<I, M, X1, X2, S, R>(
+        dst: Option<Self>,
+        par: ParOpt<I, M, X1, X2, S, R>,
+    ) -> Option<Self>
+    where
+        I: ConcurrentIter,
+        X1: Xap<I = I::Item, O = Option<M>>,
+        X2: Xap<I = M, O = T>,
+        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        R: ParRunnerOpt,
+        T: Send,
+    {
+        let (iter, x1, x2, mut exe, s, params) = par.destruct();
+        let results = exe.collect_arb(s, params, iter, x1, x2);
+        let mut dst = dst.unwrap_or_else(|| Self::with_recursive_growth());
+        results.map(|results| {
+            for vec in results {
+                dst.append(vec);
+            }
+            dst
+        })
+    }
 }
