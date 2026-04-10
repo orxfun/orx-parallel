@@ -1,9 +1,13 @@
+use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::parameters::IterationOrder;
 use crate::result_use::tests::utils::{UseValue, inputs};
 use crate::*;
+use orx_fixed_vec::FixedVec;
+use orx_split_vec::SplitVec;
 use std::string::ToString;
 use std::vec;
 use std::vec::Vec;
+use test_case::test_matrix;
 
 const N: usize = 157;
 
@@ -110,5 +114,126 @@ fn many_m_reduce_err() {
                 false => a,
             }
         });
+    assert_eq!(result, Err(vec!['a']));
+}
+
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
+fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let expected = C::expected(
+        mode,
+        |i| i as u64,
+        inputs(N)
+            .into_iter()
+            .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+            .map(|x| x.unwrap())
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|x| x.parse::<u64>().unwrap())
+            .collect::<std::vec::Vec<_>>(),
+    );
+
+    let result = match C::init_result(mode, |i| i as u64) {
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .map::<Result<_, Vec<char>>, _>(|u, x| {
+                u.mutate();
+                Ok(x)
+            })
+            .fallible_result()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .map::<Result<_, Vec<char>>, _>(|u, x| {
+                u.mutate();
+                Ok(x)
+            })
+            .fallible_result()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
+    C::assert_eq(result.unwrap(), expected, order);
+}
+
+#[test_matrix(
+    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
+    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
+fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+    let result = match C::init_result(mode, |i| i as u64) {
+        Some(c) => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .map(|u, x| {
+                u.mutate();
+                match x.as_str() == "42" {
+                    true => Ok(x),
+                    false => Err(vec!['a']),
+                }
+            })
+            .fallible_result()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N)
+            .into_par()
+            .using(|th_idx| UseValue::new(th_idx))
+            .map(|u, x| {
+                u.mutate();
+                match x.as_str() == "42" {
+                    true => Ok(x),
+                    false => Err(vec!['a']),
+                }
+            })
+            .fallible_result()
+            .flat_map(|u, x| {
+                u.mutate();
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
+            .map(|u, x| {
+                u.mutate();
+                x.parse::<u64>().unwrap()
+            })
+            .iteration_order(order)
+            .collect(),
+    };
+
     assert_eq!(result, Err(vec!['a']));
 }
