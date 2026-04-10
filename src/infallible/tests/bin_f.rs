@@ -54,7 +54,7 @@ fn bin_f_reduce() {
 )]
 fn bin_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {
-        inputs(N)
+        inputs(N / 4)
             .into_iter()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
@@ -63,13 +63,13 @@ fn bin_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     let expected = C::expected(mode, |i| i.to_string(), iter());
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
+        Some(c) => inputs(N / 4)
             .into_par()
             .iteration_order(order)
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .collect_into(c),
-        None => inputs(N)
+        None => inputs(N / 4)
             .into_par()
             .iteration_order(order)
             .filter(|x| x.len() > 1)

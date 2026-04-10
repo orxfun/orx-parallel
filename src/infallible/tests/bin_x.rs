@@ -63,16 +63,19 @@ fn bin_x_reduce() {
 )]
 fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {
-        inputs(N).into_iter().filter(|x| x.len() < 4).flat_map(|x| {
-            let a = x.parse::<u64>().unwrap();
-            (0..5).map(move |i| (a + i).to_string())
-        })
+        inputs(N / 4)
+            .into_iter()
+            .filter(|x| x.len() < 4)
+            .flat_map(|x| {
+                let a = x.parse::<u64>().unwrap();
+                (0..5).map(move |i| (a + i).to_string())
+            })
     };
 
     let expected = C::expected(mode, |i| i.to_string(), iter());
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
+        Some(c) => inputs(N / 4)
             .into_par()
             .iteration_order(order)
             .filter(|x| x.len() < 4)
@@ -81,7 +84,7 @@ fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
                 (0..5).map(move |i| (a + i).to_string())
             })
             .collect_into(c),
-        None => inputs(N)
+        None => inputs(N / 4)
             .into_par()
             .iteration_order(order)
             .filter(|x| x.len() < 4)

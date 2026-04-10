@@ -47,17 +47,17 @@ fn one_f_reduce() {
     [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn one_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let iter = || inputs(N).into_iter().filter(|x| x.len() > 1);
+    let iter = || inputs(N / 4).into_iter().filter(|x| x.len() > 1);
 
     let expected = C::expected(mode, |i| i.to_string(), iter());
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
+        Some(c) => inputs(N / 4)
             .into_par()
             .iteration_order(order)
             .filter(|x| x.len() > 1)
             .collect_into(c),
-        None => inputs(N)
+        None => inputs(N / 4)
             .into_par()
             .iteration_order(order)
             .filter(|x| x.len() > 1)

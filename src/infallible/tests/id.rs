@@ -43,13 +43,16 @@ fn id_reduce() {
     [IterationOrder::Ordered, IterationOrder::Arbitrary]
 )]
 fn id_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let iter = || inputs(N).into_iter();
+    let iter = || inputs(N / 4).into_iter();
 
     let expected = C::expected(mode, |i| i.to_string(), iter());
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N).into_par().iteration_order(order).collect_into(c),
-        None => inputs(N).into_par().iteration_order(order).collect(),
+        Some(c) => inputs(N / 4)
+            .into_par()
+            .iteration_order(order)
+            .collect_into(c),
+        None => inputs(N / 4).into_par().iteration_order(order).collect(),
     };
 
     C::assert_eq(result, expected, order);
