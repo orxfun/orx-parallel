@@ -40,6 +40,28 @@ col_l/orx_arb_vv/e20_heavy  time:   [18.355 ms 19.550 ms 20.954 ms]
 
 // TODO: great room for improvement in ordering
 
+
+
+-> merge_ord_into1
+col_l/orx_ord/e20_light time:   [66.089 ms 66.850 ms 67.638 ms]
+col_l/orx_arb/e20_light time:   [51.682 ms 52.492 ms 53.323 ms]
+
+-> merge_ord_into2
+col_l/orx_ord/e20_light time:   [251.86 ms 262.88 ms 275.03 ms]
+col_l/orx_arb/e20_light time:   [45.270 ms 45.891 ms 46.546 ms]
+
+-> merge_ord_into3
+col_l/orx_ord/e20_light time:   [278.18 ms 282.93 ms 287.73 ms]
+col_l/orx_arb/e20_light time:   [42.429 ms 42.814 ms 43.222 ms]
+
+-> merge_ord_into4
+col_l/orx_ord/e20_light time:   [495.96 ms 503.77 ms 511.77 ms]
+col_l/orx_arb/e20_light time:   [46.768 ms 47.367 ms 48.001 ms]
+
+-> merge_ord_into5
+col_l/orx_ord/e20_light time:   [381.38 ms 387.99 ms 394.68 ms]
+col_l/orx_arb/e20_light time:   [50.448 ms 51.741 ms 53.124 ms]
+
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
@@ -119,22 +141,22 @@ struct Treat {
 
 fn run(c: &mut Criterion) {
     let treatments = [
-        Treat {
-            len: 1 << 15,
-            heavy: false,
-        },
-        Treat {
-            len: 1 << 20,
-            heavy: false,
-        },
-        Treat {
-            len: 1 << 15,
-            heavy: true,
-        },
+        // Treat {
+        //     len: 1 << 15,
+        //     heavy: false,
+        // },
         Treat {
             len: 1 << 20,
-            heavy: true,
+            heavy: false,
         },
+        // Treat {
+        //     len: 1 << 15,
+        //     heavy: true,
+        // },
+        // Treat {
+        //     len: 1 << 20,
+        //     heavy: true,
+        // },
     ];
 
     let mut group = c.benchmark_group("col_l");
@@ -153,25 +175,25 @@ fn run(c: &mut Criterion) {
         let mut expected_sorted = expected.clone();
         expected_sorted.sort();
 
-        group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy));
-            b.iter(|| seq(&input, t.heavy))
-        });
+        // group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
+        //     assert_eq!(&expected, &seq(&input, t.heavy));
+        //     b.iter(|| seq(&input, t.heavy))
+        // });
 
-        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.heavy));
-            b.iter(|| rayon(&input, t.heavy))
-        });
+        // group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+        //     assert_eq!(&expected, &rayon(&input, t.heavy));
+        //     b.iter(|| rayon(&input, t.heavy))
+        // });
 
-        group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
-            let mut result: Vec<u64> = rayon_ll(&input, t.heavy)
-                .into_iter()
-                .flat_map(|x| Vec::from(x).into_iter())
-                .collect();
-            result.sort();
-            assert_eq!(&expected_sorted, &result);
-            b.iter(|| rayon_ll(&input, t.heavy))
-        });
+        // group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
+        //     let mut result: Vec<u64> = rayon_ll(&input, t.heavy)
+        //         .into_iter()
+        //         .flat_map(|x| Vec::from(x).into_iter())
+        //         .collect();
+        //     result.sort();
+        //     assert_eq!(&expected_sorted, &result);
+        //     b.iter(|| rayon_ll(&input, t.heavy))
+        // });
 
         group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
             assert_eq!(
@@ -188,16 +210,16 @@ fn run(c: &mut Criterion) {
             b.iter(|| orx::<Vec<u64>>(&input, t.heavy, IterationOrder::Arbitrary))
         });
 
-        group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
-            let mut result: Vec<u64> =
-                orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary)
-                    .into_iter()
-                    .flatten()
-                    .collect();
-            result.sort();
-            assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary))
-        });
+        // group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
+        //     let mut result: Vec<u64> =
+        //         orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary)
+        //             .into_iter()
+        //             .flatten()
+        //             .collect();
+        //     result.sort();
+        //     assert_eq!(&expected_sorted, &result);
+        //     b.iter(|| orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary))
+        // });
     }
 
     group.finish();
