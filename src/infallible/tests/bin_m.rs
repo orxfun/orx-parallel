@@ -10,7 +10,7 @@ use std::string::{String, ToString};
 use test_case::test_matrix;
 
 #[cfg(not(miri))]
-const N: usize = 157;
+const N: usize = 257;
 #[cfg(miri)]
 const N: usize = 57;
 

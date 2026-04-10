@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::FilterMap;
-use crate::infallible_use::{XapUseBin, XapUse};
+use crate::infallible_use::{XapUse, XapUseBin};
 use crate::sizes::Bin;
 
 pub struct BinF<X: XapUse<Size = Bin>, G: FilterMap<U = X::U, I = X::O>> {
