@@ -81,11 +81,11 @@ fn seq_merge_streak_none<'a, T: 'a, D>(
         //         }
         //     }
         // }
-        // (None, None) => {}
-        // (None, _) => {
-        //     // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
-        //     unsafe { dst.write_rest_from(&mut right) };
-        // }
+        (None, None) => {}
+        (None, _) => {
+            // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
+            unsafe { dst.write_rest_from(&mut right) };
+        }
         // (_, None) => {
         //     // SAFETY: target (i) and (ii) are satisfied by conditions (i) and (ii)
         //     unsafe { dst.write_rest_from(&mut left) };
