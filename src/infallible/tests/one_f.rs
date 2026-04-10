@@ -8,9 +8,6 @@ use orx_split_vec::SplitVec;
 use std::string::{String, ToString};
 use test_case::test_matrix;
 
-
-
-
 const N: usize = 157;
 
 #[test]

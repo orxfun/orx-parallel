@@ -3,9 +3,6 @@ use crate::parameters::IterationOrder;
 use crate::*;
 use std::string::{String, ToString};
 
-
-
-
 const N: usize = 157;
 
 #[test]

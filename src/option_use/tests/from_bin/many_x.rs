@@ -4,9 +4,6 @@ use crate::*;
 use std::format;
 use std::string::{String, ToString};
 
-
-
-
 const N: usize = 157;
 
 #[test]
