@@ -1,25 +1,37 @@
 /*
 
-* _ord means results are collected in order consistent to input; _arb means order might be arbitrary
 * eN means an input of size 2^N is used
+* order:
+  * _ord means results are collected in order leading to same result as sequential
+  * _arb means results are collected in arbitrary order
+* container:
+  * _vec means, results are collected into a Vec
+  * _rec means, results are collected into a SplitVec<_, Recursive>,
+    which can be transformed into Vec<Vec<_>>
+  * _ll means, results are collected into a LinkedList<Vec<_>>
 
-col_id/seq/e15          time:   [8.2720 µs 8.3850 µs 8.4962 µs]
-col_id/rayon/e15        time:   [11.827 ms 12.035 ms 12.247 ms]
-col_id/orx_ord/e15      time:   [2.0194 ms 2.0907 ms 2.1727 ms]
-col_id/orx_arb/e15      time:   [2.2263 ms 2.2872 ms 2.3505 ms]
+col_id/seq/e15          time:   [5.7705 µs 5.8086 µs 5.8482 µs]
+col_id/rayon/e15        time:   [8.7273 ms 8.8628 ms 9.0011 ms]
+col_id/orx_ord/e15      time:   [1.4803 ms 1.4959 ms 1.5123 ms]
+col_id/orx_arb/e15      time:   [1.3693 ms 1.3904 ms 1.4176 ms]
+col_id/orx_arb_rec/e15  time:   [1.3363 ms 1.3526 ms 1.3682 ms]
 
-col_id/seq/e20          time:   [569.69 µs 583.63 µs 601.98 µs]
-col_id/rayon/e20        time:   [27.704 ms 28.970 ms 30.265 ms]
-col_id/orx_ord/e20      time:   [8.6181 ms 8.9216 ms 9.2580 ms]
-col_id/orx_arb/e20      time:   [12.039 ms 13.382 ms 15.112 ms]
+col_id/seq/e20          time:   [474.26 µs 478.54 µs 483.29 µs]
+col_id/rayon/e20        time:   [19.510 ms 20.099 ms 20.690 ms]
+col_id/rayon_ll/e20     time:   [15.786 ms 16.274 ms 16.774 ms]
+col_id/orx_ord/e20      time:   [6.1986 ms 6.2556 ms 6.3130 ms]
+col_id/orx_arb/e20      time:   [3.2533 ms 3.3114 ms 3.3746 ms]
+col_id/orx_arb_rec/e20  time:   [2.1775 ms 2.2251 ms 2.2845 ms]
 
 */
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use orx_parallel::*;
+use orx_split_vec::{IntoFragments, Recursive, SplitVec};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::collections::LinkedList;
 
 fn inputs(len: usize) -> Vec<u64> {
     const SEED: u64 = 654;
@@ -31,12 +43,16 @@ fn seq(input: &[u64]) -> Vec<u64> {
     input.iter().copied().collect()
 }
 
-fn orx(input: &[u64], order: IterationOrder) -> Vec<u64> {
+fn orx<C: ParCollectInto<u64>>(input: &[u64], order: IterationOrder) -> C {
     input.into_par().iteration_order(order).copied().collect()
 }
 
 fn rayon(input: &[u64]) -> Vec<u64> {
     input.into_par_iter().copied().collect()
+}
+
+fn rayon_ll(input: &[u64]) -> LinkedList<Vec<u64>> {
+    input.into_par_iter().copied().collect_vec_list()
 }
 
 struct Treat {
@@ -65,16 +81,37 @@ fn run(c: &mut Criterion) {
             b.iter(|| rayon(&input))
         });
 
+        group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
+            let mut result: Vec<u64> = rayon_ll(&input)
+                .into_iter()
+                .flat_map(|x| Vec::from(x).into_iter())
+                .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| rayon_ll(&input))
+        });
+
         group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, IterationOrder::Ordered));
-            b.iter(|| orx(&input, IterationOrder::Ordered))
+            assert_eq!(&expected, &orx::<Vec<_>>(&input, IterationOrder::Ordered));
+            b.iter(|| orx::<Vec<_>>(&input, IterationOrder::Ordered))
         });
 
         group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
-            let mut result = orx(&input, IterationOrder::Arbitrary);
+            let mut result: Vec<_> = orx(&input, IterationOrder::Arbitrary);
             result.sort();
             assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx(&input, IterationOrder::Ordered))
+            b.iter(|| orx::<Vec<_>>(&input, IterationOrder::Arbitrary))
+        });
+
+        group.bench_with_input(BenchmarkId::new("orx_arb_rec", &name), &name, |b, _| {
+            let mut result: Vec<u64> =
+                orx::<SplitVec<_, Recursive>>(&input, IterationOrder::Arbitrary)
+                    .into_fragments()
+                    .flat_map(|x| Vec::from(x).into_iter())
+                    .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx::<SplitVec<_, Recursive>>(&input, IterationOrder::Arbitrary))
         });
     }
 
