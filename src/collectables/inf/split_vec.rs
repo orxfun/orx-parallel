@@ -46,6 +46,6 @@ impl<T, G: GrowthWithConstantTimeAccess> ColIntoInf<T> for SplitVec<T, G> {
                 dst.reserve_maximum_concurrent_capacity(capacity_bound);
             }
         }
-        exe.collect_arbitrary(params, iter, x, dst)
+        exe.collect_arb_over_bag(params, iter, x, dst)
     }
 }

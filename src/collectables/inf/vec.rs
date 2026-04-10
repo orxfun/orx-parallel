@@ -43,13 +43,13 @@ impl<T> ColIntoInf<T> for Vec<T> {
             Some(len) => {
                 let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
                 dst.reserve(len);
-                exe.collect_arbitrary(params, iter, x, FixedVec::from(dst))
+                exe.collect_arb_over_bag(params, iter, x, FixedVec::from(dst))
                     .into_inner()
             }
             None => {
                 // TODO: collect_into might be faster
                 let split_vec = SplitVec::with_doubling_growth_and_max_concurrent_capacity();
-                let split_vec = exe.collect_arbitrary(params, iter, x, split_vec);
+                let split_vec = exe.collect_arb_over_bag(params, iter, x, split_vec);
                 let dst = dst.unwrap_or_else(|| Vec::with_capacity(split_vec.len()));
                 extend_vec_from_split(dst, split_vec)
             }
