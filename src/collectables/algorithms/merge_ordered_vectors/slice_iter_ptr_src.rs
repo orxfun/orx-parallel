@@ -47,4 +47,9 @@ impl<'a, T: 'a> SliceIterPtrSrc<'a, T> {
     fn remaining(&self) -> usize {
         unsafe { self.exclusive_end.offset_from(self.data) as usize }
     }
+
+    #[inline(always)]
+    pub fn current_idx(&self) -> Option<usize> {
+        todo!()
+    }
 }
