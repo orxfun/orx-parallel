@@ -54,3 +54,28 @@ fn id_reduce_ok_err() {
         });
     assert_eq!(result, None);
 }
+
+#[test]
+fn id_collect_ok() {
+    let inputs = inputs(N);
+    let result: Option<std::vec::Vec<std::string::String>> = inputs
+        .into_par()
+        .map(Some)
+        .fallible_option()
+        .collect::<std::vec::Vec<_>>();
+    assert!(result.is_some());
+}
+
+#[test]
+fn id_collect_err() {
+    let inputs = inputs(N);
+    let result: Option<std::vec::Vec<std::string::String>> = inputs
+        .into_par()
+        .map(|x| match x.as_str() == "42" {
+            true => Some(x),
+            false => None,
+        })
+        .fallible_option()
+        .collect::<std::vec::Vec<_>>();
+    assert_eq!(result, None);
+}
