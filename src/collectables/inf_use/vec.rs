@@ -15,7 +15,7 @@ impl<T> ColIntoInfUse<T> for Vec<T> {
         T: Send,
     {
         let (u, iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect(params, iter, x);
+        let results = exe.collect(params, u, iter, x);
         let len: usize = results.iter().map(|x| x.len()).sum();
 
         let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
@@ -32,7 +32,7 @@ impl<T> ColIntoInfUse<T> for Vec<T> {
         T: Send,
     {
         let (u, iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb(params, iter, x);
+        let results = exe.collect_arb(params, u, iter, x);
 
         match dst {
             Some(dst) => merge_arb_into_vec(results, dst),
