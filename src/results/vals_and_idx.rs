@@ -20,6 +20,7 @@ impl<T> ValsAndIdx<T> {
         }
     }
 
+    #[inline]
     pub fn extend(&mut self, idx: usize, values: impl IntoIterator<Item = T>) {
         let len_begin = self.values.len();
         self.values.extend(values);
