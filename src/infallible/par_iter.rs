@@ -147,6 +147,17 @@ where
         }
     }
 
+    pub fn collect_new<C>(self) -> C
+    where
+        C: ParCollectInto<X::O>,
+        X::O: Send,
+    {
+        match self.params.iteration_order {
+            IterationOrder::Ordered => C::inf_col_into_new(None, self),
+            IterationOrder::Arbitrary => C::inf_arb_col_into(None, self),
+        }
+    }
+
     // compute - derived
 
     pub fn for_each<F>(self, f: F)
