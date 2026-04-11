@@ -34,7 +34,7 @@ impl<'a, T: 'a> IterPtrDst<'a, T> for SliceIterPtrDst<'a, T> {
     }
 }
 
-impl<'a, T: 'a> IntoIterPtrDst<'a, T> for &'a Vec<T> {
+impl<'a, T: 'a> IntoIterPtrDst<'a, T> for &'a [T] {
     type Iter = SliceIterPtrDst<'a, T>;
 
     fn into_iter_ptr_dst(self) -> Self::Iter {
