@@ -50,12 +50,14 @@ impl<T> ColIntoInf<T> for Vec<T> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect_new(params, iter, x);
-        let len: usize = results.iter().map(|x| x.values.len()).sum();
+        merge_ord_into_new(results, dst)
 
-        let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
-        dst.reserve(len);
+        // let len: usize = results.iter().map(|x| x.values.len()).sum();
 
-        todo!()
+        // let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
+        // dst.reserve(len);
+
+        // todo!()
     }
 }
 
