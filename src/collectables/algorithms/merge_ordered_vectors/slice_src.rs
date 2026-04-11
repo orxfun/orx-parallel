@@ -25,6 +25,8 @@ impl<'a, T> Clone for SliceSrc<'a, T> {
     }
 }
 
+impl<'a, T> Copy for SliceSrc<'a, T> {}
+
 impl<'a, T> SliceSrc<'a, T> {
     pub fn from_slice(slice: &'a [ValIdx<T>]) -> Self {
         let (data, len) = (slice.as_ptr(), slice.len());
