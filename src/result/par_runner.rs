@@ -1,7 +1,7 @@
 use crate::infallible::Xap;
 use crate::result::size_pairs::SizePairRes;
 use crate::result::thread_execution as th;
-use crate::results::{Val, ValIdx};
+use crate::results::{Val, ValIdx, ValsAndIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -123,7 +123,7 @@ pub trait ParRunnerRes: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Result<Vec<Vec<ValIdx<X2::O>>>, E>
+    ) -> Result<Vec<ValsAndIdx<X2::O>>, E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,

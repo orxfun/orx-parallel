@@ -1,7 +1,7 @@
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::option_use::thread_execution as th;
-use crate::results::{Val, ValIdx};
+use crate::results::{Val, ValIdx, ValsAndIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -133,7 +133,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Option<Vec<Vec<ValIdx<X2::O>>>>
+    ) -> Option<Vec<ValsAndIdx<X2::O>>>
     where
         U: Use,
         I: ConcurrentIter,
