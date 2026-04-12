@@ -28,10 +28,7 @@ pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>
     let initial_len = dst.len();
     let total_len = initial_len + collected_len;
 
-    if results.len() == 1 {
-        let results = results.into_iter().next().expect("results.len()==1");
-        return results.values;
-    }
+    std::dbg!(initial_len, collected_len, total_len);
 
     let mut queue = BinaryHeap::with_capacity(results.len());
     let mut pos_indices = vec![0; results.len()];
@@ -42,7 +39,7 @@ pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>
         }
     }
     let mut curr_v = queue.pop_node();
-    let mut ptr_dst = dst.as_mut_ptr();
+    let mut ptr_dst = unsafe { dst.as_mut_ptr().add(initial_len) };
 
     while let Some(VecPos { v, beg, len }) = curr_v {
         let ptr_src = unsafe { results[v].values.as_ptr().add(beg) };
