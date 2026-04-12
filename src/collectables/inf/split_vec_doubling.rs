@@ -32,4 +32,14 @@ impl<T> ColIntoInf<T> for SplitVec<T, Doubling> {
         let results = exe.collect_arb(params, iter, x);
         merge_arb_into_split_vec(results, dst.unwrap_or_else(|| Self::with_doubling_growth()))
     }
+
+    fn inf_col_into_new<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+        todo!()
+    }
 }

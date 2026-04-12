@@ -22,8 +22,5 @@ pub trait ColIntoInf<T>: Sized {
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
         R: ParRunner,
-        T: Send,
-    {
-        dst.unwrap()
-    }
+        T: Send;
 }
