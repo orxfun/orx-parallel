@@ -1,5 +1,5 @@
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::collectables::utils::merge_ord_into;
+use crate::collectables::merge_collected::merge_ord_into;
 use crate::infallible_use::{ParRunnerInfallibleUse, ParUse, Use, XapUse};
 use alloc::vec;
 use alloc::vec::Vec;

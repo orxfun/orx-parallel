@@ -1,5 +1,5 @@
 use crate::collectables::res::ColIntoRes;
-use crate::collectables::utils::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
+use crate::collectables::merge_collected::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
 use crate::infallible::Xap;
 use crate::result::{ParRes, ParRunnerRes, SizePairRes};
 use alloc::vec::Vec;
