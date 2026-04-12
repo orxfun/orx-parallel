@@ -120,21 +120,6 @@ fn orx<C: ParCollectInto<u64>>(input: &[u64], h: bool, order: IterationOrder) ->
     }
 }
 
-fn orx_new<C: ParCollectInto<u64>>(input: &[u64], h: bool, order: IterationOrder) -> C {
-    match h {
-        true => input
-            .into_par()
-            .iteration_order(order)
-            .flat_map(h_l)
-            .collect_new(),
-        false => input
-            .into_par()
-            .iteration_order(order)
-            .flat_map(l_l)
-            .collect_new(),
-    }
-}
-
 fn rayon(input: &[u64], h: bool) -> Vec<u64> {
     match h {
         true => input.into_par_iter().flat_map_iter(h_l).collect(),
@@ -216,14 +201,6 @@ fn run(c: &mut Criterion) {
                 &orx::<Vec<u64>>(&input, t.heavy, IterationOrder::Ordered)
             );
             b.iter(|| orx::<Vec<u64>>(&input, t.heavy, IterationOrder::Ordered))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx_ord_new", &name), &name, |b, _| {
-            assert_eq!(
-                &expected,
-                &orx_new::<Vec<u64>>(&input, t.heavy, IterationOrder::Ordered)
-            );
-            b.iter(|| orx_new::<Vec<u64>>(&input, t.heavy, IterationOrder::Ordered))
         });
 
         group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
