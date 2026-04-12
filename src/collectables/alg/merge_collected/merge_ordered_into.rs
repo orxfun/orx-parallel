@@ -1,20 +1,9 @@
-use core::slice::from_raw_parts;
-
-use crate::results::{ValIdx, ValsAndIdx};
+use crate::results::ValsAndIdx;
 use alloc::vec;
 use alloc::vec::Vec;
 use orx_pinned_vec::PinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 use orx_split_vec::{Growth, PseudoDefault, SplitVec};
-
-pub fn merge_ord_into<T, P>(results: Vec<Vec<ValIdx<T>>>, dst: P) -> P
-where
-    P: PinnedVec<T>,
-    T: Send,
-{
-    // merge_ord_into1(results, dst)
-    todo!()
-}
 
 #[derive(Clone)]
 struct VecPos {
@@ -32,7 +21,7 @@ impl VecPos {
 
 // vec
 
-fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>>) -> Vec<T> {
+pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>>) -> Vec<T> {
     let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
     let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(collected_len));
     dst.reserve(collected_len);
@@ -82,7 +71,9 @@ fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>>) -
     dst
 }
 
-fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
+// splitvec
+
+pub fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
     mut results: Vec<ValsAndIdx<T>>,
     dst: Option<SplitVec<T, G>>,
 ) -> SplitVec<T, G> {
