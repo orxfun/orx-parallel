@@ -1,5 +1,7 @@
 use crate::parameters::Params;
 use crate::pool::ParThreadPool;
+#[cfg(feature = "std")]
+use crate::runner::runner_variants::RunnerWithDiagnostics;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParRunner: Sized + Sync {
@@ -45,6 +47,13 @@ pub trait ParRunner: Sized + Sync {
     fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState);
 
     fn complete_computation(state: Self::State);
+
+    // provided
+
+    #[cfg(feature = "std")]
+    fn with_diagnostics(self) -> RunnerWithDiagnostics<Self> {
+        RunnerWithDiagnostics::new(self)
+    }
 
     // provided - helpers
 

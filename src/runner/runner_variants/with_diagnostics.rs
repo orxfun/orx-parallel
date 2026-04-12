@@ -4,6 +4,12 @@ use std::println;
 
 pub struct RunnerWithDiagnostics<R: ParRunner>(R);
 
+impl<R: ParRunner> RunnerWithDiagnostics<R> {
+    pub fn new(inner: R) -> Self {
+        Self(inner)
+    }
+}
+
 impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     type Pool = R::Pool;
 
