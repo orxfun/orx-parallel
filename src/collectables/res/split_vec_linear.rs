@@ -1,4 +1,6 @@
-use crate::collectables::alg::merge_collected::{merge_arb_into_split_vec, merge_ord_into};
+use crate::collectables::alg::merge_collected::{
+    merge_arb_into_split_vec, merge_ord_into_split_vec,
+};
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
 use crate::result::{ParRes, ParRunnerRes, SizePairRes};
@@ -22,10 +24,7 @@ impl<T> ColIntoRes<T> for SplitVec<T, Linear> {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect(s, params, iter, x1, x2);
 
-        results.map(|results| {
-            let dst = dst.unwrap_or_else(|| SplitVec::with_linear_growth(10));
-            merge_ord_into(results, dst)
-        })
+        results.map(|results| merge_ord_into_split_vec(results, dst))
     }
 
     fn res_arb_col_into<I, M, E, X1, X2, S, R>(
