@@ -9,7 +9,7 @@
   * _vec means, results are collected into a Vec
   * _vv means, results are collected into a Vec<Vec<_>>
   * _ll means, results are collected into a LinkedList<Vec<_>>
-  * Note that _vv and _ll are comparable jagged results in rayon and orx
+  * Note that _ll and _vv 2-dim jagged results in rayon and orx, respectively
 
 col_m/seq/e15_light         time:   [22.825 µs 23.202 µs 23.589 µs]
 col_m/rayon/e15_light       time:   [16.141 ms 16.897 ms 17.698 ms]
