@@ -50,4 +50,14 @@ impl<T> ColIntoInf<T> for Vec<Vec<T>> {
             None => results,
         }
     }
+
+    fn inf_col_into_new<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+        todo!()
+    }
 }

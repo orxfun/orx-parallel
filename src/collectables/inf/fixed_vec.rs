@@ -27,4 +27,14 @@ impl<T> ColIntoInf<T> for FixedVec<T> {
         let dst = dst.map(|x| x.into_inner());
         <Vec<T> as ColIntoInf<T>>::inf_arb_col_into(dst, par).into()
     }
+
+    fn inf_col_into_new<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+        todo!()
+    }
 }
