@@ -1,4 +1,6 @@
 use crate::{Params, runner::ParRunner};
+use alloc::vec::Vec;
+use orx_concurrent_bag::ConcurrentBag;
 
 pub struct RunnerWithDiagnostics<R: ParRunner>(R);
 
@@ -45,4 +47,13 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     fn complete_computation(state: Self::State) {
         todo!()
     }
+}
+
+pub struct StateWithDiagnostics<S> {
+    inner: S,
+    task_counts: ConcurrentBag<(usize, Vec<usize>)>, // (thread_idx, chunk sizes)
+}
+
+impl<S> StateWithDiagnostics<S> {
+    //
 }
