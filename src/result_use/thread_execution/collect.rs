@@ -12,7 +12,7 @@ pub fn collect<Q, U, I, M, E, X1, X2, S>(
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Result<ValsAndIdx<X::O>, E>
+) -> Result<ValsAndIdx<X2::O>, E>
 where
     Q: ParRunner,
     U: Use,
