@@ -1,5 +1,5 @@
 use crate::collectables::opt::ColIntoOpt;
-use crate::collectables::merge_collected::merge_ord_into;
+use crate::collectables::alg::merge_collected::merge_ord_into;
 use crate::infallible::Xap;
 use crate::option::{ParOpt, ParRunnerOpt, SizePairOpt};
 use alloc::vec;

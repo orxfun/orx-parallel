@@ -1,10 +1,9 @@
 #[cfg(test)]
 pub mod par_col_into_test;
 
-mod algorithms;
+pub mod alg;
 mod inf;
 mod inf_use;
-mod merge_collected;
 mod opt;
 mod opt_use;
 mod par_col_into;

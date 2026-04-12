@@ -1,5 +1,5 @@
 use crate::collectables::opt_use::ColIntoOptUse;
-use crate::collectables::merge_collected::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
+use crate::collectables::alg::merge_collected::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOpt, SizePairUseOpt};
 use alloc::vec::Vec;
