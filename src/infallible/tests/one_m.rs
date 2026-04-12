@@ -61,20 +61,3 @@ fn one_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
 
     C::assert_eq(result, expected, order);
 }
-
-#[test]
-fn xyz() {
-    let mode = ColIntoMode::Col;
-    let order = IterationOrder::Ordered;
-
-    let iter = || inputs(36).into_iter(); //.map(|x| format!("{}0", x));
-
-    let expected = Vec::expected(mode, |i| i.to_string(), iter());
-
-    let result = inputs(36)
-        .into_par()
-        // .map(|x| format!("{}0", x))
-        .collect_new();
-
-    Vec::assert_eq(result, expected, order);
-}
