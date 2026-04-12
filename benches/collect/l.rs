@@ -156,22 +156,22 @@ struct Treat {
 
 fn run(c: &mut Criterion) {
     let treatments = [
-        // Treat {
-        //     len: 1 << 15,
-        //     heavy: false,
-        // },
+        Treat {
+            len: 1 << 15,
+            heavy: false,
+        },
         Treat {
             len: 1 << 20,
             heavy: false,
         },
-        // Treat {
-        //     len: 1 << 15,
-        //     heavy: true,
-        // },
-        // Treat {
-        //     len: 1 << 20,
-        //     heavy: true,
-        // },
+        Treat {
+            len: 1 << 15,
+            heavy: true,
+        },
+        Treat {
+            len: 1 << 20,
+            heavy: true,
+        },
     ];
 
     let mut group = c.benchmark_group("col_l");
@@ -190,25 +190,25 @@ fn run(c: &mut Criterion) {
         let mut expected_sorted = expected.clone();
         expected_sorted.sort();
 
-        // group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-        //     assert_eq!(&expected, &seq(&input, t.heavy));
-        //     b.iter(|| seq(&input, t.heavy))
-        // });
+        group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
+            assert_eq!(&expected, &seq(&input, t.heavy));
+            b.iter(|| seq(&input, t.heavy))
+        });
 
-        // group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-        //     assert_eq!(&expected, &rayon(&input, t.heavy));
-        //     b.iter(|| rayon(&input, t.heavy))
-        // });
+        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
+            assert_eq!(&expected, &rayon(&input, t.heavy));
+            b.iter(|| rayon(&input, t.heavy))
+        });
 
-        // group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
-        //     let mut result: Vec<u64> = rayon_ll(&input, t.heavy)
-        //         .into_iter()
-        //         .flat_map(|x| Vec::from(x).into_iter())
-        //         .collect();
-        //     result.sort();
-        //     assert_eq!(&expected_sorted, &result);
-        //     b.iter(|| rayon_ll(&input, t.heavy))
-        // });
+        group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
+            let mut result: Vec<u64> = rayon_ll(&input, t.heavy)
+                .into_iter()
+                .flat_map(|x| Vec::from(x).into_iter())
+                .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| rayon_ll(&input, t.heavy))
+        });
 
         group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
             assert_eq!(
@@ -233,16 +233,16 @@ fn run(c: &mut Criterion) {
             b.iter(|| orx::<Vec<u64>>(&input, t.heavy, IterationOrder::Arbitrary))
         });
 
-        // group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
-        //     let mut result: Vec<u64> =
-        //         orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary)
-        //             .into_iter()
-        //             .flatten()
-        //             .collect();
-        //     result.sort();
-        //     assert_eq!(&expected_sorted, &result);
-        //     b.iter(|| orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary))
-        // });
+        group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
+            let mut result: Vec<u64> =
+                orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary)
+                    .into_iter()
+                    .flatten()
+                    .collect();
+            result.sort();
+            assert_eq!(&expected_sorted, &result);
+            b.iter(|| orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary))
+        });
     }
 
     group.finish();
