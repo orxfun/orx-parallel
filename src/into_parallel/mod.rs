@@ -7,6 +7,7 @@ mod par_drain;
 mod parallelizable;
 
 pub use into_par_iter::IntoParIter;
+pub use into_rec_par_iter::IntoRecParIter;
 pub use iter_into_par_iter::IterIntoParIter;
 pub use par_collection::ParCol;
 pub use par_collection_mut::ParColMut;
