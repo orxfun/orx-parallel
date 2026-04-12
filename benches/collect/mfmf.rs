@@ -9,6 +9,7 @@
   * _vec means, results are collected into a Vec
   * _vv means, results are collected into a Vec<Vec<_>>
   * _ll means, results are collected into a LinkedList<Vec<_>>
+  * Note that _vv and _ll are corresponding jagged results in rayon and orx
 
 placeholder
 
