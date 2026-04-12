@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoInf<T> for Vec<T> {
-    fn inf_col_into_new<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    fn inf_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -17,7 +17,7 @@ impl<T> ColIntoInf<T> for Vec<T> {
         T: Send,
     {
         let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_new(params, iter, x);
+        let results = exe.collect(params, iter, x);
         merge_ord_into_vec(results, dst)
     }
 
