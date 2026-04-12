@@ -1,7 +1,5 @@
 use crate::parameters::ChunkSize;
 
-const DESIRED_MIN_CHUNK_SIZE: usize = 64;
-
 pub fn compute_chunk_size(
     chunk_size: ChunkSize,
     initial_len: Option<usize>,

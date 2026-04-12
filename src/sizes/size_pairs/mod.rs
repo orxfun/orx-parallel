@@ -18,4 +18,3 @@ pub use many_one::ManyOne;
 pub use one_bin::OneBin;
 pub use one_many::OneMany;
 pub use one_one::OneOne;
-pub use size_pair::SizePair;
