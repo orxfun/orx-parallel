@@ -1,5 +1,5 @@
 use crate::collectables::res_use::ColIntoResUse;
-use crate::collectables::utils::{merge_arb_into_split_vec, merge_ord_into};
+use crate::collectables::merge_collected::{merge_arb_into_split_vec, merge_ord_into};
 use crate::infallible_use::{Use, XapUse};
 use crate::result_use::{ParRunnerUseRes, ParUseRes, SizePairUseRes};
 use orx_concurrent_iter::ConcurrentIter;

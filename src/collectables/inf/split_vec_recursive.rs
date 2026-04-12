@@ -1,5 +1,5 @@
 use crate::collectables::inf::ColIntoInf;
-use crate::collectables::utils::merge_ord_into;
+use crate::collectables::merge_collected::merge_ord_into;
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
