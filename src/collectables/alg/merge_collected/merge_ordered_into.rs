@@ -86,16 +86,7 @@ fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
     mut results: Vec<ValsAndIdx<T>>,
     dst: Option<SplitVec<T, G>>,
 ) -> SplitVec<T, G> {
-    let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
     let mut dst = dst.unwrap_or_else(|| PseudoDefault::pseudo_default());
-    let initial_len = dst.len();
-    let total_len = initial_len + collected_len;
-
-    if results.len() == 1 {
-        let results = results.into_iter().next().expect("results.len()==1");
-        // return results.values;
-        todo!()
-    }
 
     let mut queue = BinaryHeap::with_capacity(results.len());
     let mut pos_indices = vec![0; results.len()];
@@ -106,12 +97,10 @@ fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
         }
     }
     let mut curr_v = queue.pop_node();
-    let mut idx_dst = initial_len;
 
     while let Some(VecPos { v, beg, len }) = curr_v {
         let ptr_src = unsafe { results[v].values.as_ptr().add(beg) };
-        let slice_src = unsafe { from_raw_parts(ptr_src, len) };
-        // dst.extend_from_slice(slice_src);
+        unsafe { dst.extend_from_nonoverlapping(ptr_src, len) };
 
         pos_indices[v] += 1;
         curr_v = match results[v].positions.get(pos_indices[v]) {
@@ -121,8 +110,6 @@ fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
             }
             None => queue.pop_node(),
         };
-
-        idx_dst += len;
     }
 
     for vec in results.iter_mut() {
@@ -130,8 +117,6 @@ fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
         // allocation within vec.capacity() will still be reclaimed; however, as uninitialized memory
         unsafe { vec.values.set_len(0) };
     }
-
-    unsafe { dst.set_len(total_len) };
 
     dst
 }
