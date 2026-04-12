@@ -1,5 +1,7 @@
+use crate::collectables::alg::merge_collected::{
+    merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into,
+};
 use crate::collectables::inf::ColIntoInf;
-use crate::collectables::alg::merge_collected::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::results::ValsAndIdx;
@@ -51,13 +53,6 @@ impl<T> ColIntoInf<T> for Vec<T> {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect_new(params, iter, x);
         merge_ord_into_new(results, dst)
-
-        // let len: usize = results.iter().map(|x| x.values.len()).sum();
-
-        // let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
-        // dst.reserve(len);
-
-        // todo!()
     }
 }
 
