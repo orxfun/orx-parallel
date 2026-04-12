@@ -7,20 +7,20 @@ pub struct RunnerWithDiagnostics<R: ParRunner>(R);
 impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     type Pool = R::Pool;
 
-    type State = R::State;
+    type State = StateWithDiagnostics<R::State>;
 
     type ChunkState = R::ChunkState;
 
     fn pool(&self) -> &Self::Pool {
-        todo!()
+        self.0.pool()
     }
 
     fn pool_mut(&mut self) -> &mut Self::Pool {
-        todo!()
+        self.0.pool_mut()
     }
 
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
-        todo!()
+        R::do_spawn_new(spawned, &state.inner)
     }
 
     fn new_state(
@@ -29,23 +29,24 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
         max_num_threads: usize,
         initial_len: Option<usize>,
     ) -> Self::State {
-        todo!()
+        let inner = self.0.new_state(params, max_num_threads, initial_len);
+        StateWithDiagnostics::new(inner)
     }
 
     fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize {
-        todo!()
+        R::next_chunk_size(&state.inner, remaining)
     }
 
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState {
-        todo!()
+        R::begin_chunk(th_idx, chunk_size)
     }
 
     fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState) {
-        todo!()
+        R::complete_chunk(&state.inner, chunk_state);
     }
 
     fn complete_computation(state: Self::State) {
-        todo!()
+        R::complete_computation(state.inner);
     }
 }
 
@@ -55,5 +56,8 @@ pub struct StateWithDiagnostics<S> {
 }
 
 impl<S> StateWithDiagnostics<S> {
-    //
+    pub fn new(inner: S) -> Self {
+        let task_counts = ConcurrentBag::new();
+        Self { inner, task_counts }
+    }
 }
