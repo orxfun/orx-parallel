@@ -28,8 +28,6 @@ pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>
     let initial_len = dst.len();
     let total_len = initial_len + collected_len;
 
-    std::dbg!(initial_len, collected_len, total_len);
-
     let mut queue = BinaryHeap::with_capacity(results.len());
     let mut pos_indices = vec![0; results.len()];
 
