@@ -1,8 +1,7 @@
 use crate::infallible_use::Use;
 use crate::result_use::SizePairUseRes;
 use crate::results::ValsAndIdx;
-use crate::{infallible_use::XapUse, results::ValIdx, runner::ParRunner};
-use alloc::vec::Vec;
+use crate::{infallible_use::XapUse, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn collect<Q, U, I, M, E, X1, X2, S>(
@@ -38,14 +37,10 @@ where
         match chunk_size {
             0 | 1 => match item_puller.next() {
                 Some((idx, i)) => {
-                    for a in S::xap_use_res(u, x1, x2, i) {
-                        match a {
-                            Ok(a) => out.push(ValIdx::new(a, idx)),
-                            Err(e) => {
-                                Q::broadcast_stop(iter, state, chunk_state);
-                                return Err(e);
-                            }
-                        }
+                    let result = out.extend_res(idx, S::xap_use_res(u, x1, x2, i));
+                    if let Some(e) = result {
+                        Q::broadcast_stop(iter, state, chunk_state);
+                        return Err(e);
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -58,14 +53,11 @@ where
 
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
-                        for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
-                            match a {
-                                Ok(a) => out.push(ValIdx::new(a, idx)),
-                                Err(e) => {
-                                    Q::broadcast_stop(iter, state, chunk_state);
-                                    return Err(e);
-                                }
-                            }
+                        let values = chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i));
+                        let result = out.extend_res(idx, values);
+                        if let Some(e) = result {
+                            Q::broadcast_stop(iter, state, chunk_state);
+                            return Err(e);
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
