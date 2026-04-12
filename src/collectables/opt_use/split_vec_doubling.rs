@@ -1,5 +1,7 @@
+use crate::collectables::alg::merge_collected::{
+    merge_arb_into_split_vec, merge_ord_into_split_vec,
+};
 use crate::collectables::opt_use::ColIntoOptUse;
-use crate::collectables::alg::merge_collected::{merge_arb_into_split_vec, merge_ord_into};
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOpt, SizePairUseOpt};
 use orx_concurrent_iter::ConcurrentIter;
@@ -22,10 +24,7 @@ impl<T> ColIntoOptUse<T> for SplitVec<T, Doubling> {
         let (u, iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect(s, params, u, iter, x1, x2);
 
-        results.map(|results| {
-            let dst = dst.unwrap_or_else(|| Self::with_doubling_growth());
-            merge_ord_into(results, dst)
-        })
+        results.map(|results| merge_ord_into_split_vec(results, dst))
     }
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(
