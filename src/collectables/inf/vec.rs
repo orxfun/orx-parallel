@@ -1,5 +1,5 @@
 use crate::collectables::inf::ColIntoInf;
-use crate::collectables::merge_collected::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
+use crate::collectables::alg::merge_collected::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::results::ValsAndIdx;
