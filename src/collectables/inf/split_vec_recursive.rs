@@ -1,5 +1,5 @@
+use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
 use crate::collectables::inf::ColIntoInf;
-use crate::collectables::utils::merge_ord_into;
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
@@ -16,9 +16,7 @@ impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect(params, iter, x);
-
-        let dst = dst.unwrap_or_else(|| Self::with_recursive_growth());
-        merge_ord_into(results, dst)
+        merge_ord_into_split_vec(results, dst)
     }
 
     fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self

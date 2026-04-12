@@ -11,9 +11,12 @@ keywords = ["parallel", "concurrency", "performance", "thread", "iterator"]
 categories = ["concurrency", "algorithms"]
 
 [dependencies]
-orx-pinned-vec = { version = "3.21.0", default-features = false }
-orx-fixed-vec = { version = "3.22.0", default-features = false }
-orx-split-vec = { version = "3.22.0", default-features = false }
+# orx-pinned-vec = { version = "3.23.0", default-features = false }
+# orx-fixed-vec = { version = "3.23.0", default-features = false }
+# orx-split-vec = { version = "3.23.0", default-features = false }
+orx-pinned-vec = { path = "../orx-pinned-vec" }
+orx-fixed-vec = { path = "../orx-fixed-vec" }
+orx-split-vec = { path = "../orx-split-vec" }
 orx-concurrent-iter = { version = "3.3.0", default-features = false }
 orx-concurrent-bag = { version = "3.4.0", default-features = false }
 orx-concurrent-ordered-bag = { version = "3.4.0", default-features = false }
@@ -50,7 +53,7 @@ orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 [[bench]]
 name = "first"
 harness = false
-path = "benches/collect/l.rs"
+path = "benches/collect/mf.rs"
 
 [package.metadata.docs.rs]
 all-features = true

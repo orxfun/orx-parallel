@@ -1,10 +1,11 @@
+use crate::collectables::alg::merge_collected::{
+    merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into_vec,
+};
 use crate::collectables::opt_use::ColIntoOptUse;
-use crate::collectables::utils::{merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into};
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOpt, SizePairUseOpt};
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
-use orx_fixed_vec::FixedVec;
 
 impl<T> ColIntoOptUse<T> for Vec<T> {
     fn opt_use_col_into<U, I, M, X1, X2, S, R>(
@@ -23,12 +24,7 @@ impl<T> ColIntoOptUse<T> for Vec<T> {
         let (u, iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect(s, params, u, iter, x1, x2);
 
-        results.map(|results| {
-            let len: usize = results.iter().map(|x| x.len()).sum();
-            let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(len));
-            dst.reserve(len);
-            merge_ord_into(results, FixedVec::from(dst)).into()
-        })
+        results.map(|results| merge_ord_into_vec(results, dst))
     }
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(

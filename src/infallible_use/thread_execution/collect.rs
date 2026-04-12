@@ -1,7 +1,6 @@
 use crate::infallible_use::{Use, xap::XapUse};
-use crate::results::ValIdx;
+use crate::results::ValsAndIdx;
 use crate::runner::ParRunner;
-use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn collect<Q, U, I, X>(
@@ -10,15 +9,15 @@ pub fn collect<Q, U, I, X>(
     state: &Q::State,
     iter: &I,
     x: X,
-) -> Vec<ValIdx<X::O>>
+) -> ValsAndIdx<X::O>
 where
     Q: ParRunner,
     U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
 {
-    let mut collected = Vec::new();
-    let vec = &mut collected;
+    let mut collected = ValsAndIdx::new();
+    let out = &mut collected;
 
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
@@ -32,9 +31,7 @@ where
 
         match chunk_size {
             0 | 1 => match item_puller.next() {
-                Some((idx, i)) => {
-                    vec.extend(x.xap_use(u, i).into_iter().map(|i| ValIdx::new(i, idx)))
-                }
+                Some((idx, i)) => out.extend(idx, x.xap_use(u, i)),
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
             },
@@ -44,10 +41,7 @@ where
                 }
 
                 match chunk_puller.pull_with_idx() {
-                    Some((idx, chunk)) => vec
-                        .extend(chunk.flat_map(|i| {
-                            x.xap_use(u, i).into_iter().map(|i| ValIdx::new(i, idx))
-                        })),
+                    Some((idx, chunk)) => out.extend(idx, chunk.flat_map(|i| x.xap_use(u, i))),
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
                 }

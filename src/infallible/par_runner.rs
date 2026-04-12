@@ -1,6 +1,6 @@
 use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
-use crate::results::{Val, ValIdx};
+use crate::results::{Val, ValIdx, ValsAndIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -80,7 +80,7 @@ pub trait ParRunnerInfallible: ParRunner {
         Val::reduce(results_bag.into_inner().into_inner(), f)
     }
 
-    fn collect<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<Vec<ValIdx<X::O>>>
+    fn collect<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<ValsAndIdx<X::O>>
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,

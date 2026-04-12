@@ -1,7 +1,7 @@
 use crate::infallible_use::{Use, XapUse};
 use crate::result_use::size_pairs::SizePairUseRes;
 use crate::result_use::thread_execution as th;
-use crate::results::{Val, ValIdx};
+use crate::results::{Val, ValIdx, ValsAndIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -137,7 +137,7 @@ pub trait ParRunnerUseRes: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Result<Vec<Vec<ValIdx<X2::O>>>, E>
+    ) -> Result<Vec<ValsAndIdx<X2::O>>, E>
     where
         U: Use,
         I: ConcurrentIter,

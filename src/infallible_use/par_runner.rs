@@ -1,6 +1,7 @@
 use crate::infallible_use::XapUse;
 use crate::infallible_use::thread_execution as th;
 use crate::infallible_use::use_var::Use;
+use crate::results::ValsAndIdx;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
@@ -89,7 +90,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         })
     }
 
-    fn collect<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<Vec<ValIdx<X::O>>>
+    fn collect<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<ValsAndIdx<X::O>>
     where
         U: Use,
         I: ConcurrentIter,
