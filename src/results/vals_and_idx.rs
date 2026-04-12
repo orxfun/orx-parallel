@@ -25,10 +25,53 @@ impl<T> ValsAndIdx<T> {
         let len_begin = self.values.len();
         self.values.extend(values);
 
-        let len_added = self.values.len() - len_begin;
-        self.positions.push(IdxLen {
-            idx,
-            len: len_added,
-        });
+        let len = self.values.len() - len_begin;
+        self.positions.push(IdxLen { idx, len });
+    }
+
+    /// Returns the first observed error if any; returns None if all succeeds.
+    #[inline]
+    pub fn extend_res<E>(
+        &mut self,
+        idx: usize,
+        values: impl IntoIterator<Item = Result<T, E>>,
+    ) -> Option<E> {
+        let len_begin = self.values.len();
+        for x in values {
+            match x {
+                Ok(x) => self.values.push(x),
+                Err(e) => {
+                    let len = self.values.len() - len_begin;
+                    self.positions.push(IdxLen { idx, len });
+                    return Some(e);
+                }
+            }
+        }
+
+        let len = self.values.len() - len_begin;
+        self.positions.push(IdxLen { idx, len });
+
+        None
+    }
+
+    /// Returns `true` if at least one element is None; returns `false` if all are Some variant.
+    #[inline]
+    pub fn extend_opt(&mut self, idx: usize, values: impl IntoIterator<Item = Option<T>>) -> bool {
+        let len_begin = self.values.len();
+        for x in values {
+            match x {
+                Some(x) => self.values.push(x),
+                None => {
+                    let len = self.values.len() - len_begin;
+                    self.positions.push(IdxLen { idx, len });
+                    return true;
+                }
+            }
+        }
+
+        let len = self.values.len() - len_begin;
+        self.positions.push(IdxLen { idx, len });
+
+        false
     }
 }

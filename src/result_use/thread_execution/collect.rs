@@ -1,5 +1,6 @@
 use crate::infallible_use::Use;
 use crate::result_use::SizePairUseRes;
+use crate::results::ValsAndIdx;
 use crate::{infallible_use::XapUse, results::ValIdx, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
@@ -12,7 +13,7 @@ pub fn collect<Q, U, I, M, E, X1, X2, S>(
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Result<Vec<ValIdx<X2::O>>, E>
+) -> Result<ValsAndIdx<X::O>, E>
 where
     Q: ParRunner,
     U: Use,
@@ -21,8 +22,8 @@ where
     X2: XapUse<U = U::Item, I = M>,
     S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
 {
-    let mut collected = Vec::new();
-    let vec = &mut collected;
+    let mut collected = ValsAndIdx::new();
+    let out = &mut collected;
 
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
@@ -39,7 +40,7 @@ where
                 Some((idx, i)) => {
                     for a in S::xap_use_res(u, x1, x2, i) {
                         match a {
-                            Ok(a) => vec.push(ValIdx::new(a, idx)),
+                            Ok(a) => out.push(ValIdx::new(a, idx)),
                             Err(e) => {
                                 Q::broadcast_stop(iter, state, chunk_state);
                                 return Err(e);
@@ -59,7 +60,7 @@ where
                     Some((idx, chunk)) => {
                         for a in chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i)) {
                             match a {
-                                Ok(a) => vec.push(ValIdx::new(a, idx)),
+                                Ok(a) => out.push(ValIdx::new(a, idx)),
                                 Err(e) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
                                     return Err(e);
