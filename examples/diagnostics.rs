@@ -15,6 +15,7 @@ fn main() {
 
     let sum = (1..1000)
         .par()
+        .runner_with_diagnostics()
         .map(|i| 2 * i)
         .flat_map(|i| match i.is_multiple_of(2) {
             true => [i, i + 1, i + 2, i + 3, i + 4],

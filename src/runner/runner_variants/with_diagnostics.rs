@@ -60,6 +60,7 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     }
 
     fn complete_computation(state: Self::State) {
+        core::panic!("abc");
         R::complete_computation(state.inner);
         state.task_counts.display();
     }
