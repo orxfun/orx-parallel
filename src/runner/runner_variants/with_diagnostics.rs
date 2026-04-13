@@ -102,7 +102,7 @@ impl TaskCounts {
                 let first_chunks: Vec<_> = task_counts.iter().copied().take(10).collect();
 
                 println!(
-                    "  - [{thread_idx}]: {num_calls}, {total}, {avg_chunk_size}, {first_chunks:?}",
+                    "  - [{thread_idx}]: {num_calls}, {total}, {avg_chunk_size},\t{first_chunks:?}",
                 );
             }
         }
