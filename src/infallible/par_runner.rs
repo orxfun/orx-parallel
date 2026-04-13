@@ -17,17 +17,18 @@ pub trait ParRunnerInfallible: ParRunner {
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+        let (iter, st, results, x) = (&iter, &state, &results_bag, x);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next::<Self, _, _>(th_idx, state, iter, x);
+                    let value = th::next::<Self, _, _>(th_idx, st, iter, x);
                     results.push(value);
                 });
             }
         });
 
+        Self::complete_computation(state);
         ValIdx::first(results_bag.into_inner().into_inner())
     }
 
@@ -41,17 +42,18 @@ pub trait ParRunnerInfallible: ParRunner {
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+        let (iter, st, results, x) = (&iter, &state, &results_bag, x);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::next_any::<Self, _, _>(th_idx, state, iter, x);
+                    let value = th::next_any::<Self, _, _>(th_idx, st, iter, x);
                     results.push(value);
                 });
             }
         });
 
+        Self::complete_computation(state);
         Val::first(results_bag.into_inner().into_inner())
     }
 
@@ -66,17 +68,18 @@ pub trait ParRunnerInfallible: ParRunner {
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results, x) = (&iter, &state, &results_bag, x);
+        let (iter, st, results, x) = (&iter, &state, &results_bag, x);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let value = th::reduce::<Self, _, _, _>(th_idx, state, iter, x, f);
+                    let value = th::reduce::<Self, _, _, _>(th_idx, st, iter, x, f);
                     results.push(value);
                 });
             }
         });
 
+        Self::complete_computation(state);
         Val::reduce(results_bag.into_inner().into_inner(), f)
     }
 
@@ -90,17 +93,18 @@ pub trait ParRunnerInfallible: ParRunner {
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results) = (&iter, &state, &results_bag);
+        let (iter, st, results) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let vec = th::collect::<Self, _, _>(th_idx, state, iter, x);
+                    let vec = th::collect::<Self, _, _>(th_idx, st, iter, x);
                     results.push(vec);
                 });
             }
         });
 
+        Self::complete_computation(state);
         results_bag.into_inner().into_inner()
     }
 
@@ -114,17 +118,18 @@ pub trait ParRunnerInfallible: ParRunner {
         let (max_nt, state) = self.nt_state(params, iter.try_get_len());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, state, results) = (&iter, &state, &results_bag);
+        let (iter, st, results) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let vec = th::collect_arb::<Self, _, _>(th_idx, state, iter, x);
+                    let vec = th::collect_arb::<Self, _, _>(th_idx, st, iter, x);
                     results.push(vec);
                 });
             }
         });
 
+        Self::complete_computation(state);
         results_bag.into_inner().into_inner()
     }
 
@@ -147,16 +152,17 @@ pub trait ParRunnerInfallible: ParRunner {
         let mut spawned = 0;
         let (_, state) = self.nt_state(params, iter.try_get_len());
 
-        let (iter, state, bag) = (&iter, &state, &results_bag);
+        let (iter, st, bag) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, state) {
+            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    th::collect_arb_over_bag::<Self, _, _, _>(th_idx, state, iter, x, bag);
+                    th::collect_arb_over_bag::<Self, _, _, _>(th_idx, st, iter, x, bag);
                 });
             }
         });
 
+        Self::complete_computation(state);
         results_bag.into_inner()
     }
 }
