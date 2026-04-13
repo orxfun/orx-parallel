@@ -15,7 +15,7 @@ fn main() {
         .unwrap();
     println!("sum with default runner = {sum}");
 
-    let sum = (1..n)
+    let sum = (0..n)
         .par()
         .runner_with_diagnostics()
         .map(|i| 2 * i)
