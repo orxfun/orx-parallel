@@ -1,5 +1,7 @@
 use crate::{Params, runner::ParRunner};
 use alloc::vec::Vec;
+use orx_concurrent_bag::{ConcurrentBag, PinnedVec};
+use orx_iterable::Iterable;
 use std::println;
 
 pub struct RunnerWithDiagnostics<R: ParRunner>(R);
@@ -65,45 +67,44 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     }
 }
 
-struct TaskCounts(Vec<Vec<usize>>);
+struct TaskCounts(Vec<ConcurrentBag<usize>>);
 
 impl TaskCounts {
     fn new(max_num_threads: usize) -> Self {
-        Self((0..max_num_threads).map(|_| Vec::new()).collect())
+        Self((0..max_num_threads).map(|_| ConcurrentBag::new()).collect())
     }
 
     fn push(&self, th_idx: usize, chunk_size: usize) {
-        let th_counts = unsafe { &mut *(self.0.as_ptr().add(th_idx) as *mut Vec<usize>) };
-        th_counts.push(chunk_size);
+        self.0[th_idx].push(chunk_size);
     }
 
     fn display(self) {
-        let max_th_idx = self
-            .0
+        let counts: Vec<_> = self.0.into_iter().map(|x| x.into_inner()).collect();
+        let used_threads = counts
             .iter()
-            .enumerate()
-            .filter(|x| x.1.iter().sum::<usize>() > 0)
-            .map(|x| x.0)
-            .max()
-            .unwrap_or(0);
+            .filter(|x| x.iter().sum::<usize>() > 0)
+            .count();
 
         println!("\n# Parallel Executor Diagnostics");
-        println!("\n- Number of threads used = {}", max_th_idx);
+        println!("- Number of available threads = {}", counts.len());
+        println!("- Number of actually used threads = {}", used_threads);
 
-        println!("\n- [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes");
+        println!("- [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes");
 
-        for (thread_idx, task_counts) in self.0.iter().take(max_th_idx).enumerate() {
+        for (thread_idx, task_counts) in counts.iter().enumerate() {
             let total: usize = task_counts.iter().sum();
-            let num_calls = task_counts.len();
-            let avg_chunk_size = match num_calls {
-                0 => 0,
-                n => total / n,
-            };
-            let first_chunks: Vec<_> = task_counts.iter().copied().take(10).collect();
+            if total > 0 {
+                let num_calls = task_counts.len();
+                let avg_chunk_size = match num_calls {
+                    0 => 0,
+                    n => total / n,
+                };
+                let first_chunks: Vec<_> = task_counts.iter().copied().take(10).collect();
 
-            println!(
-                "  - [{thread_idx}]: {num_calls}, {total}, {avg_chunk_size}, {first_chunks:?}",
-            );
+                println!(
+                    "  - [{thread_idx}]: {num_calls}, {total}, {avg_chunk_size}, {first_chunks:?}",
+                );
+            }
         }
     }
 }
