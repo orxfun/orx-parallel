@@ -67,6 +67,7 @@ where
         }
     }
 
+    #[cfg(feature = "std")]
     pub fn runner_with_diagnostics(self) -> ParOpt<I, M, X1, X2, S, RunnerWithDiagnostics<R>> {
         let (iter, x1, x2, exe, s, params) = self.destruct();
         ParOpt {
