@@ -80,6 +80,7 @@ where
         }
     }
 
+    #[cfg(feature = "std")]
     pub fn runner_with_diagnostics(
         self,
     ) -> ParUseOpt<U, I, M, X1, X2, S, RunnerWithDiagnostics<R>> {
