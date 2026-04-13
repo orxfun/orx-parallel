@@ -4,7 +4,7 @@ use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap}
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par_runner::ParRunnerRes;
 use crate::result::size_pairs::SizePairRes;
-use crate::runner::{DefaultRunner, ParRunner};
+use crate::runner::{DefaultRunner, ParRunner, RunnerWithDiagnostics};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParRes<I, M, E, X1, X2, S, R = DefaultRunner>
@@ -54,6 +54,30 @@ where
         (self.iter, self.x1, self.x2, self.exe, self.s, self.params)
     }
     // params
+
+    pub fn runner<Q: ParRunner>(self, runner: Q) -> ParRes<I, M, E, X1, X2, S, Q> {
+        let (iter, x1, x2, _, s, params) = self.destruct();
+        ParRes {
+            iter,
+            x1,
+            x2,
+            exe: runner,
+            s,
+            params,
+        }
+    }
+
+    pub fn runner_with_diagnostics(self) -> ParRes<I, M, E, X1, X2, S, RunnerWithDiagnostics<R>> {
+        let (iter, x1, x2, exe, s, params) = self.destruct();
+        ParRes {
+            iter,
+            x1,
+            x2,
+            exe: exe.with_diagnostics(),
+            s,
+            params,
+        }
+    }
 
     pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
