@@ -45,6 +45,16 @@ where
 
     // params
 
+    pub fn runner<Q: ParRunner>(self, runner: Q) -> Par<I, X, Q> {
+        let (iter, xap, _, params) = self.destruct();
+        Par {
+            iter,
+            xap,
+            exe: runner,
+            params,
+        }
+    }
+
     pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
