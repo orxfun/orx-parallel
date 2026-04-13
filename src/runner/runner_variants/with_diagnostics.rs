@@ -1,6 +1,5 @@
 use crate::{Params, runner::ParRunner};
 use alloc::vec::Vec;
-use orx_concurrent_bag::{ConcurrentBag, PinnedVec};
 use orx_iterable::Iterable;
 use std::println;
 
@@ -67,19 +66,20 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     }
 }
 
-struct TaskCounts(Vec<ConcurrentBag<usize>>);
+struct TaskCounts(Vec<Vec<usize>>);
 
 impl TaskCounts {
     fn new(max_num_threads: usize) -> Self {
-        Self((0..max_num_threads).map(|_| ConcurrentBag::new()).collect())
+        Self((0..max_num_threads).map(|_| Vec::new()).collect())
     }
 
     fn push(&self, th_idx: usize, chunk_size: usize) {
-        self.0[th_idx].push(chunk_size);
+        let vec = unsafe { &mut *(self.0.as_ptr().add(th_idx) as *mut Vec<usize>) };
+        vec.push(chunk_size);
     }
 
     fn display(self) {
-        let counts: Vec<_> = self.0.into_iter().map(|x| x.into_inner()).collect();
+        let counts: Vec<_> = self.0;
         let used_threads = counts
             .iter()
             .filter(|x| x.iter().sum::<usize>() > 0)
