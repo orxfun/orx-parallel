@@ -15,7 +15,7 @@ mod node;
 mod node_storage;
 mod utils;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 struct Args {
     /// Amount of work (num times Fibonacci will be repeated).
     #[arg(long, default_value_t = 1)]
@@ -185,49 +185,6 @@ fn orx_extended(storage: &NodesStorage, roots: &[&Node], args: &Args, exact: boo
     (sum, status.num_processed())
 }
 
-fn main() {
-    let args = Args::parse();
-    let seed = 42;
-
-    let log = |(sum, count): &(u64, usize)| println!("  count = {count}\n  sum = {sum}");
-
-    let mut rng = ChaCha8Rng::seed_from_u64(seed);
-
-    let storage = NodesStorage::new(10_000, &mut rng);
-    let roots = storage.get_roots(20, &mut rng);
-
-    match args.diagnostics {
-        true => {
-            _ = run(
-                "orx_diagnostics",
-                || orx_diagnostics(&storage, &roots, &args, true),
-                log,
-            );
-        }
-        false => {
-            _ = run("seq", || seq(&storage, &roots, &args), log);
-            _ = run("rayon", || rayon(&storage, &roots, &args), log);
-            _ = run("orx_rec", || orx_rec(&storage, &roots, &args, false), log);
-            _ = run(
-                "orx_rec_exact",
-                || orx_rec(&storage, &roots, &args, true),
-                log,
-            );
-            _ = run(
-                "orx_extended",
-                || orx_extended(&storage, &roots, &args, false),
-                log,
-            );
-            _ = run(
-                "orx_extended_exact",
-                || orx_extended(&storage, &roots, &args, true),
-                log,
-            );
-        }
-    }
-}
-
-#[allow(dead_code)]
 fn orx_diagnostics(
     storage: &NodesStorage,
     roots: &[&Node],
@@ -278,4 +235,47 @@ fn orx_diagnostics(
     };
 
     (sum, status.num_processed())
+}
+
+fn main() {
+    let seed = 42;
+    let args = Args::parse();
+    println!("\n{args:?}\n\n");
+
+    let log = |(sum, count): &(u64, usize)| println!("  count = {count}\n  sum = {sum}");
+
+    let mut rng = ChaCha8Rng::seed_from_u64(seed);
+
+    let storage = NodesStorage::new(10_000, &mut rng);
+    let roots = storage.get_roots(20, &mut rng);
+
+    match args.diagnostics {
+        true => {
+            _ = run(
+                "orx_diagnostics",
+                || orx_diagnostics(&storage, &roots, &args, true),
+                log,
+            );
+        }
+        false => {
+            _ = run("seq", || seq(&storage, &roots, &args), log);
+            _ = run("rayon", || rayon(&storage, &roots, &args), log);
+            _ = run("orx_rec", || orx_rec(&storage, &roots, &args, false), log);
+            _ = run(
+                "orx_rec_exact",
+                || orx_rec(&storage, &roots, &args, true),
+                log,
+            );
+            _ = run(
+                "orx_extended",
+                || orx_extended(&storage, &roots, &args, false),
+                log,
+            );
+            _ = run(
+                "orx_extended_exact",
+                || orx_extended(&storage, &roots, &args, true),
+                log,
+            );
+        }
+    }
 }
