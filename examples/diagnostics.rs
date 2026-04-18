@@ -2,6 +2,7 @@ use orx_parallel::*;
 
 fn main() {
     let n = 1_000_000;
+    let n = 100;
 
     let sum = (0..n)
         .par()
