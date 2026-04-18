@@ -157,9 +157,7 @@ impl<S> StateWithDiagnostics<S> {
         println!("| - Number of actually used threads = {}", used_threads);
 
         println!("|\n|\n| ## Table");
-        println!(
-            "| [Thread idx]: num_calls, num_tasks, up_time_ns, avg_chunk_size, first_chunk_sizes"
-        );
+        println!("| [Thread idx]: num_calls, num_tasks, avg_chunk_size");
 
         for (t, task_counts) in counts.iter().enumerate() {
             let total: usize = task_counts.iter().sum();
@@ -169,16 +167,12 @@ impl<S> StateWithDiagnostics<S> {
                     0 => 0,
                     n => total / n,
                 };
-                let first_chunks: Vec<_> = task_counts.iter().copied().take(10).collect();
-                let up_time_ns = up_times[t];
 
-                println!(
-                    "| [{t}]: {num_calls}, {total}, {up_time_ns}, {avg_chunk_size},\t{first_chunks:?}",
-                );
+                println!("| [{t}]:\t{num_calls}\t{total}\t{avg_chunk_size}",);
             }
         }
 
-        println!("|\n|\n| ## Thread");
+        println!("|\n|\n| ## Thread Active Timeline");
         struct ThreadLife {
             beg: Instant,
             end: Instant,
