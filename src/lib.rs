@@ -34,6 +34,6 @@ mod sizes;
 
 pub use collectables::ParCollectInto;
 pub use into_parallel::{
-    IntoParIter, IntoRecParIter, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
+    IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};

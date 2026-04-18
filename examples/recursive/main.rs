@@ -131,7 +131,7 @@ pub fn orx(
     let sum = roots
         .iter()
         .copied()
-        .into_rec_par(extend, exact_len)
+        .into_par_recursive(extend, exact_len)
         .map(|x| x.compute(amount_of_work))
         .reduce(|a, b| a + b)
         .unwrap();
@@ -150,16 +150,16 @@ fn main() {
     let storage = NodesStorage::new(10_000, &mut rng);
     let roots = storage.get_roots(20, &mut rng);
 
-    // _ = run("seq", || seq(&storage, &roots, work), log);
-    // _ = run("orx", || orx(&storage, &roots, work, false), log);
-    // _ = run("rayon", || rayon(&storage, &roots, work), log);
-    // _ = run("orx_exact", || orx(&storage, &roots, work, true), log);
+    _ = run("seq", || seq(&storage, &roots, work), log);
+    _ = run("orx", || orx(&storage, &roots, work, false), log);
+    _ = run("rayon", || rayon(&storage, &roots, work), log);
+    _ = run("orx_exact", || orx(&storage, &roots, work, true), log);
 
-    _ = run(
-        "orx_diagnostics",
-        || orx_diagnostics(&storage, &roots, work, true),
-        log,
-    );
+    // _ = run(
+    //     "orx_diagnostics",
+    //     || orx_diagnostics(&storage, &roots, work, true),
+    //     log,
+    // );
 }
 
 #[allow(dead_code)]
@@ -195,7 +195,7 @@ fn orx_diagnostics(
     let sum = roots
         .iter()
         .copied()
-        .into_rec_par(extend, exact_len)
+        .into_par_recursive(extend, exact_len)
         .num_threads(4)
         .map(|x| x.compute(amount_of_work))
         .runner_with_diagnostics()
