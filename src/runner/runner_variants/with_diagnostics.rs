@@ -1,7 +1,7 @@
 use crate::{Params, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_iterable::Iterable;
-use std::println;
+use std::{println, time::Instant};
 
 pub struct RunnerWithDiagnostics<R: ParRunner>(R);
 
@@ -109,15 +109,41 @@ impl TaskCounts {
     }
 }
 
+struct ThreadLifetimes {
+    begin: Vec<Option<Instant>>,
+    end: Vec<Option<Instant>>,
+}
+
+impl ThreadLifetimes {
+    fn new(max_num_threads: usize) -> Self {
+        Self {
+            begin: (0..max_num_threads).map(|_| None).collect(),
+            end: (0..max_num_threads).map(|_| None).collect(),
+        }
+    }
+
+    fn begin(&mut self, th_idx: usize) {
+        self.begin[th_idx] = Some(Instant::now());
+    }
+
+    fn end(&mut self, th_idx: usize) {
+        self.end[th_idx] = Some(Instant::now());
+    }
+}
+
 pub struct StateWithDiagnostics<S> {
     inner: S,
     task_counts: TaskCounts,
+    thread_lifetimes: ThreadLifetimes,
 }
 
 impl<S> StateWithDiagnostics<S> {
     pub fn new(max_num_threads: usize, inner: S) -> Self {
-        let task_counts = TaskCounts::new(max_num_threads);
-        Self { inner, task_counts }
+        Self {
+            inner,
+            task_counts: TaskCounts::new(max_num_threads),
+            thread_lifetimes: ThreadLifetimes::new(max_num_threads),
+        }
     }
 }
 
