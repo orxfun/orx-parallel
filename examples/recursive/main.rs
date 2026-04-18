@@ -157,7 +157,7 @@ fn main() {
 
     _ = run(
         "orx_diagnostics",
-        || orx_diagnostics(&storage, &roots, work, false),
+        || orx_diagnostics(&storage, &roots, work, true),
         log,
     );
 }
@@ -196,6 +196,7 @@ fn orx_diagnostics(
         .iter()
         .copied()
         .into_rec_par(extend, exact_len)
+        .num_threads(4)
         .map(|x| x.compute(amount_of_work))
         .runner_with_diagnostics()
         .reduce(|a, b| a + b)
