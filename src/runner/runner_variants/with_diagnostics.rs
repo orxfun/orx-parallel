@@ -1,7 +1,12 @@
 use crate::{Params, runner::ParRunner};
 use alloc::vec::Vec;
+use core::{ops::Sub, time::Duration};
 use orx_iterable::Iterable;
-use std::{println, time::Instant};
+use std::{
+    collections::{BTreeMap, HashMap},
+    println,
+    time::Instant,
+};
 
 pub struct RunnerWithDiagnostics<R: ParRunner>(R);
 
@@ -71,8 +76,8 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     }
 
     fn complete_computation(state: Self::State) {
+        state.display();
         R::complete_computation(state.inner);
-        state.task_counts.display();
     }
 }
 
@@ -86,36 +91,6 @@ impl TaskCounts {
     fn push(&self, th_idx: usize, chunk_size: usize) {
         let vec = unsafe { &mut *(self.0.as_ptr().add(th_idx) as *mut Vec<usize>) };
         vec.push(chunk_size);
-    }
-
-    fn display(self) {
-        let counts: Vec<_> = self.0;
-        let used_threads = counts
-            .iter()
-            .filter(|x| x.iter().sum::<usize>() > 0)
-            .count();
-
-        println!("\n# Parallel Executor Diagnostics");
-        println!("- Number of available threads = {}", counts.len());
-        println!("- Number of actually used threads = {}", used_threads);
-
-        println!("- [Thread idx]: num_calls, num_tasks, avg_chunk_size, first_chunk_sizes");
-
-        for (thread_idx, task_counts) in counts.iter().enumerate() {
-            let total: usize = task_counts.iter().sum();
-            if total > 0 {
-                let num_calls = task_counts.len();
-                let avg_chunk_size = match num_calls {
-                    0 => 0,
-                    n => total / n,
-                };
-                let first_chunks: Vec<_> = task_counts.iter().copied().take(10).collect();
-
-                println!(
-                    "  - [{thread_idx}]: {num_calls}, {total}, {avg_chunk_size},\t{first_chunks:?}",
-                );
-            }
-        }
     }
 }
 
@@ -156,6 +131,96 @@ impl<S> StateWithDiagnostics<S> {
             task_counts: TaskCounts::new(max_num_threads),
             thread_lifetimes: ThreadLifetimes::new(max_num_threads),
         }
+    }
+
+    fn display(&self) {
+        let begin = &self.thread_lifetimes.begin;
+        let end = &self.thread_lifetimes.end;
+        let up_times: Vec<_> = begin
+            .iter()
+            .zip(end)
+            .map(|(begin, end)| match (begin, end) {
+                (Some(beg), Some(end)) => (*end - *beg).as_nanos(),
+                _ => 0,
+            })
+            .collect();
+
+        let counts = &self.task_counts.0;
+        let used_threads = counts
+            .iter()
+            .filter(|x| x.iter().sum::<usize>() > 0)
+            .count();
+
+        println!("\n# Parallel Executor Diagnostics");
+        println!("|\n|");
+        println!("| - Number of available threads = {}", counts.len());
+        println!("| - Number of actually used threads = {}", used_threads);
+
+        println!("|\n|\n| ## Table");
+        println!(
+            "| [Thread idx]: num_calls, num_tasks, up_time_ns, avg_chunk_size, first_chunk_sizes"
+        );
+
+        for (t, task_counts) in counts.iter().enumerate() {
+            let total: usize = task_counts.iter().sum();
+            if total > 0 {
+                let num_calls = task_counts.len();
+                let avg_chunk_size = match num_calls {
+                    0 => 0,
+                    n => total / n,
+                };
+                let first_chunks: Vec<_> = task_counts.iter().copied().take(10).collect();
+                let up_time_ns = up_times[t];
+
+                println!(
+                    "| [{t}]: {num_calls}, {total}, {up_time_ns}, {avg_chunk_size},\t{first_chunks:?}",
+                );
+            }
+        }
+
+        println!("|\n|\n| ## Thread");
+        struct ThreadLife {
+            beg: Instant,
+            end: Instant,
+            beg_ns: u128,
+        }
+        const NUM_BLOCKS: usize = 100;
+
+        impl ThreadLife {
+            fn up_time_ns(&self) -> u128 {
+                (self.end - self.beg).as_nanos()
+            }
+        }
+
+        let mut threads = BTreeMap::new();
+        for (t, (beg, end)) in begin.iter().copied().zip(end.iter().copied()).enumerate() {
+            if !counts[t].is_empty()
+                && let (Some(beg), Some(end)) = (beg, end)
+            {
+                let beg_ns = 0;
+                threads.insert(t, ThreadLife { beg, end, beg_ns });
+            }
+        }
+        let max_up_time_ns = threads
+            .values()
+            .map(|x| x.up_time_ns())
+            .max()
+            .unwrap_or_default();
+        let block_len = std::cmp::max(1, max_up_time_ns / NUM_BLOCKS as u128);
+
+        if let Some(min_beg) = threads.values().map(|x| x.beg).min() {
+            for x in threads.values_mut() {
+                x.beg_ns = (x.beg - min_beg).as_nanos();
+            }
+        }
+
+        for (t, life) in threads.iter() {
+            let beg = (life.beg_ns / block_len) as usize;
+            let busy = (life.up_time_ns() / block_len) as usize;
+            println!("| [{t}]:\t{}{}", "".repeat(beg), "*".repeat(busy));
+        }
+
+        println!();
     }
 }
 
