@@ -1,8 +1,7 @@
 use orx_parallel::*;
 
 fn main() {
-    let n = 1_000_000;
-    let n = 1000000;
+    let n = 10_000_000;
 
     let sum = (0..n)
         .par()
