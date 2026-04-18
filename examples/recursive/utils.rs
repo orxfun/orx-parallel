@@ -18,6 +18,6 @@ where
     println!("  elapsed = {elapsed:?}");
     log(&result);
     println!();
-    sleep(Duration::from_millis(100));
+    sleep(Duration::from_secs(1));
     result
 }

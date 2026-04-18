@@ -113,7 +113,7 @@ fn rayon(storage: &NodesStorage, roots: &[&Node], args: &Args) -> (u64, usize) {
     (sum.load(Ordering::Relaxed), status.num_processed())
 }
 
-fn orx_rec(storage: &NodesStorage, roots: &[&Node], args: &Args, exact: bool) -> (u64, usize) {
+fn orx_rec(storage: &NodesStorage, roots: &[&Node], args: &Args) -> (u64, usize) {
     fn get_extend<'x, 'b>(
         storage: &'x NodesStorage,
         status: &'x NodeStatusPar,
@@ -136,12 +136,10 @@ fn orx_rec(storage: &NodesStorage, roots: &[&Node], args: &Args, exact: bool) ->
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
     let extend = get_extend(storage, &status);
 
-    let exact_len = exact.then_some(storage.all_nodes.len());
-
     let sum = roots
         .iter()
         .copied()
-        .into_par_recursive(extend, exact_len)
+        .into_par_recursive(extend)
         .map(|x| x.compute(args.work))
         .reduce(|a, b| a + b)
         .unwrap();
@@ -149,7 +147,7 @@ fn orx_rec(storage: &NodesStorage, roots: &[&Node], args: &Args, exact: bool) ->
     (sum, status.num_processed())
 }
 
-fn orx_extended(storage: &NodesStorage, roots: &[&Node], args: &Args, exact: bool) -> (u64, usize) {
+fn orx_extended(storage: &NodesStorage, roots: &[&Node], args: &Args) -> (u64, usize) {
     fn get_extend<'x, 'b>(
         storage: &'x NodesStorage,
         status: &'x NodeStatusPar,
@@ -172,12 +170,10 @@ fn orx_extended(storage: &NodesStorage, roots: &[&Node], args: &Args, exact: boo
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
     let extend = get_extend(storage, &status);
 
-    let exact_len = exact.then_some(storage.all_nodes.len());
-
     let sum = roots
         .iter()
         .copied()
-        .extend_into_par(extend, exact_len)
+        .extend_into_par(extend)
         .map(|x| x.compute(args.work))
         .reduce(|a, b| a + b)
         .unwrap();
@@ -185,12 +181,7 @@ fn orx_extended(storage: &NodesStorage, roots: &[&Node], args: &Args, exact: boo
     (sum, status.num_processed())
 }
 
-fn orx_diagnostics(
-    storage: &NodesStorage,
-    roots: &[&Node],
-    args: &Args,
-    exact: bool,
-) -> (u64, usize) {
+fn orx_diagnostics(storage: &NodesStorage, roots: &[&Node], args: &Args) -> (u64, usize) {
     fn get_extend<'x, 'b>(
         storage: &'x NodesStorage,
         status: &'x NodeStatusPar,
@@ -213,11 +204,10 @@ fn orx_diagnostics(
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
     let extend = get_extend(storage, &status);
 
-    let exact_len = exact.then_some(storage.all_nodes.len());
     let input = roots.iter().copied();
     let sum = match args.extended {
         true => input
-            .extend_into_par(extend, exact_len)
+            .extend_into_par(extend)
             .num_threads(args.num_threads)
             .chunk_size(args.chunk_size)
             .map(|x| x.compute(args.work))
@@ -225,7 +215,7 @@ fn orx_diagnostics(
             .reduce(|a, b| a + b)
             .unwrap(),
         false => input
-            .into_par_recursive(extend, exact_len)
+            .into_par_recursive(extend)
             .num_threads(args.num_threads)
             .chunk_size(args.chunk_size)
             .map(|x| x.compute(args.work))
@@ -253,29 +243,19 @@ fn main() {
         true => {
             _ = run(
                 "orx_diagnostics",
-                || orx_diagnostics(&storage, &roots, &args, true),
+                || orx_diagnostics(&storage, &roots, &args),
                 log,
             );
         }
         false => {
             _ = run("seq", || seq(&storage, &roots, &args), log);
-            _ = run("orx_rec", || orx_rec(&storage, &roots, &args, false), log);
-            _ = run(
-                "orx_rec_exact",
-                || orx_rec(&storage, &roots, &args, true),
-                log,
-            );
+            _ = run("orx_rec", || orx_rec(&storage, &roots, &args), log);
             _ = run(
                 "orx_extended",
-                || orx_extended(&storage, &roots, &args, false),
+                || orx_extended(&storage, &roots, &args),
                 log,
             );
             _ = run("rayon", || rayon(&storage, &roots, &args), log);
-            _ = run(
-                "orx_extended_exact",
-                || orx_extended(&storage, &roots, &args, true),
-                log,
-            );
         }
     }
 }

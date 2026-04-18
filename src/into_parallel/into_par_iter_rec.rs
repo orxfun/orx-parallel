@@ -13,16 +13,11 @@ where
     fn into_par_recursive<F>(
         self,
         extend: F,
-        exact_len: Option<usize>,
     ) -> Par<ConcurrentRecursiveIter<Self::Item, F>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync;
 
-    fn extend_into_par<F>(
-        self,
-        extend: F,
-        exact_len: Option<usize>,
-    ) -> Par<ConIterVec<Self::Item>, Id<Self::Item>>
+    fn extend_into_par<F>(self, extend: F) -> Par<ConIterVec<Self::Item>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync;
 }
@@ -35,27 +30,19 @@ where
     fn into_par_recursive<F>(
         self,
         extend: F,
-        exact_len: Option<usize>,
     ) -> Par<ConcurrentRecursiveIter<Self::Item, F>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync,
     {
-        let iter = match exact_len {
-            Some(exact_len) => ConcurrentRecursiveIter::new_exact(self, extend, exact_len),
-            None => ConcurrentRecursiveIter::new(self, extend),
-        };
+        let iter = ConcurrentRecursiveIter::new(self, extend);
         Par::new(iter, Id::new(), default_runner(), Default::default())
     }
 
-    fn extend_into_par<F>(
-        self,
-        extend: F,
-        exact_len: Option<usize>,
-    ) -> Par<ConIterVec<Self::Item>, Id<Self::Item>>
+    fn extend_into_par<F>(self, extend: F) -> Par<ConIterVec<Self::Item>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync,
     {
-        self.into_par_recursive(extend, exact_len)
+        self.into_par_recursive(extend)
             .collect::<Vec<_>>()
             .into_par()
     }
