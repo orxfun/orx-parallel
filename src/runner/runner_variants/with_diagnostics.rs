@@ -130,6 +130,10 @@ impl<S> StateWithDiagnostics<S> {
     }
 
     fn display(&self) {
+        const NUM_BLOCKS: usize = 70;
+        const LINE: &'static str = "│";
+        const BLOCK: &'static str = "▇";
+
         let begin = &self.thread_lifetimes.begin;
         let end = &self.thread_lifetimes.end;
 
@@ -142,15 +146,15 @@ impl<S> StateWithDiagnostics<S> {
             .collect();
 
         println!("\n# Parallel Executor Diagnostics");
-        println!("|\n|");
-        println!("| - Number of available threads = {}", counts.len());
+        println!("{LINE}\n{LINE}");
+        println!("{LINE} - Number of available threads = {}", counts.len());
         println!(
-            "| - Number of actually used threads = {}",
+            "{LINE} - Number of actually used threads = {}",
             used_threads.len()
         );
 
-        println!("|\n|\n| ## Summary Table");
-        println!("| [Thread idx]: num_calls, num_tasks, avg_chunk_size");
+        println!("{LINE}\n{LINE}\n{LINE} ## Summary Table");
+        println!("{LINE} [Thread idx]: num_calls, num_tasks, avg_chunk_size");
 
         for (t, task_counts) in counts.iter().enumerate() {
             if used_threads.contains(&t) {
@@ -161,17 +165,16 @@ impl<S> StateWithDiagnostics<S> {
                     n => total / n,
                 };
 
-                println!("| [{t}]:\t{num_calls}\t{total}\t{avg_chunk_size}",);
+                println!("{LINE} [{t}]:\t{num_calls}\t{total}\t{avg_chunk_size}",);
             }
         }
 
-        println!("|\n|\n| ## Thread Active Timeline");
+        println!("{LINE}\n{LINE}\n{LINE} ## Thread Active Timeline");
         struct ThreadLife {
             beg: Instant,
             end: Instant,
             beg_ns: u128,
         }
-        const NUM_BLOCKS: usize = 70;
 
         impl ThreadLife {
             fn up_time_ns(&self) -> u128 {
@@ -204,26 +207,26 @@ impl<S> StateWithDiagnostics<S> {
         for (t, life) in threads.iter() {
             let beg = (life.beg_ns / block_len) as usize;
             let busy = (life.up_time_ns() / block_len) as usize;
-            println!("| [{t}]:\t{}{}", "".repeat(beg), "*".repeat(busy));
+            println!("{LINE} [{t}]:\t{}{}", "".repeat(beg), BLOCK.repeat(busy));
         }
 
-        println!("|\n|\n| ## Thread Task Counts");
+        println!("{LINE}\n{LINE}\n{LINE} ## Thread Task Counts");
 
-        let min_num_tasks = counts
+        let max_num_tasks = counts
             .iter()
             .enumerate()
             .filter(|(t, _)| used_threads.contains(&t))
             .map(|(_, x)| x.iter().sum::<usize>())
-            .min()
+            .max()
             .unwrap_or(0);
-        let block_len = std::cmp::max(1, min_num_tasks / NUM_BLOCKS);
+        let block_len = std::cmp::max(1, max_num_tasks / NUM_BLOCKS);
         for (t, counts) in counts
             .iter()
             .enumerate()
             .filter(|(t, _)| used_threads.contains(&t))
         {
             let num_tasks = counts.iter().sum::<usize>() / block_len;
-            println!("| [{t}]:\t{}", "*".repeat(num_tasks));
+            println!("{LINE} [{t}]:\t{}", BLOCK.repeat(num_tasks));
         }
 
         println!();
