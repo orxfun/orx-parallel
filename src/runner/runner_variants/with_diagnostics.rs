@@ -40,6 +40,10 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
         StateWithDiagnostics::new(max_num_threads, inner)
     }
 
+    fn begin_thread(state: &Self::State, th_idx: usize) {
+        R::begin_thread(&state.inner, th_idx);
+    }
+
     fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize {
         R::next_chunk_size(&state.inner, remaining)
     }
@@ -58,6 +62,10 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
             .task_counts
             .push(chunk_state.th_idx, chunk_state.chunk_size);
         R::complete_chunk(&state.inner, chunk_state.inner);
+    }
+
+    fn complete_thread(state: &Self::State, th_idx: usize) {
+        R::complete_thread(&state.inner, th_idx);
     }
 
     fn complete_computation(state: Self::State) {
