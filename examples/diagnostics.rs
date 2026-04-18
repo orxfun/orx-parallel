@@ -9,10 +9,10 @@ struct Args {
     /// Magnitude of work per input element
     #[arg(long, default_value_t = 10)]
     work: usize,
-    /// Number of threads
+    /// Number of threads (0 = auto)
     #[arg(long, default_value_t = 0)]
     num_threads: usize,
-    /// Chunk size
+    /// Chunk size (0 = auto)
     #[arg(long, default_value_t = 0)]
     chunk_size: usize,
 }
