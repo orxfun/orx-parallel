@@ -1,12 +1,8 @@
 use crate::{Params, runner::ParRunner};
 use alloc::vec::Vec;
-use core::{ops::Sub, time::Duration};
 use orx_iterable::Iterable;
-use std::{
-    collections::{BTreeMap, HashMap},
-    println,
-    time::Instant,
-};
+use std::collections::{BTreeMap, BTreeSet};
+use std::{println, time::Instant};
 
 pub struct RunnerWithDiagnostics<R: ParRunner>(R);
 
@@ -136,32 +132,29 @@ impl<S> StateWithDiagnostics<S> {
     fn display(&self) {
         let begin = &self.thread_lifetimes.begin;
         let end = &self.thread_lifetimes.end;
-        let up_times: Vec<_> = begin
-            .iter()
-            .zip(end)
-            .map(|(begin, end)| match (begin, end) {
-                (Some(beg), Some(end)) => (*end - *beg).as_nanos(),
-                _ => 0,
-            })
-            .collect();
 
         let counts = &self.task_counts.0;
-        let used_threads = counts
+        let used_threads: BTreeSet<_> = counts
             .iter()
-            .filter(|x| x.iter().sum::<usize>() > 0)
-            .count();
+            .enumerate()
+            .filter(|(_, x)| x.iter().sum::<usize>() > 0)
+            .map(|(t, _)| t)
+            .collect();
 
         println!("\n# Parallel Executor Diagnostics");
         println!("|\n|");
         println!("| - Number of available threads = {}", counts.len());
-        println!("| - Number of actually used threads = {}", used_threads);
+        println!(
+            "| - Number of actually used threads = {}",
+            used_threads.len()
+        );
 
-        println!("|\n|\n| ## Table");
+        println!("|\n|\n| ## Summary Table");
         println!("| [Thread idx]: num_calls, num_tasks, avg_chunk_size");
 
         for (t, task_counts) in counts.iter().enumerate() {
-            let total: usize = task_counts.iter().sum();
-            if total > 0 {
+            if used_threads.contains(&t) {
+                let total: usize = task_counts.iter().sum();
                 let num_calls = task_counts.len();
                 let avg_chunk_size = match num_calls {
                     0 => 0,
@@ -178,7 +171,7 @@ impl<S> StateWithDiagnostics<S> {
             end: Instant,
             beg_ns: u128,
         }
-        const NUM_BLOCKS: usize = 100;
+        const NUM_BLOCKS: usize = 70;
 
         impl ThreadLife {
             fn up_time_ns(&self) -> u128 {
@@ -188,7 +181,7 @@ impl<S> StateWithDiagnostics<S> {
 
         let mut threads = BTreeMap::new();
         for (t, (beg, end)) in begin.iter().copied().zip(end.iter().copied()).enumerate() {
-            if !counts[t].is_empty()
+            if used_threads.contains(&t)
                 && let (Some(beg), Some(end)) = (beg, end)
             {
                 let beg_ns = 0;
@@ -212,6 +205,25 @@ impl<S> StateWithDiagnostics<S> {
             let beg = (life.beg_ns / block_len) as usize;
             let busy = (life.up_time_ns() / block_len) as usize;
             println!("| [{t}]:\t{}{}", "".repeat(beg), "*".repeat(busy));
+        }
+
+        println!("|\n|\n| ## Thread Task Counts");
+
+        let min_num_tasks = counts
+            .iter()
+            .enumerate()
+            .filter(|(t, _)| used_threads.contains(&t))
+            .map(|(_, x)| x.iter().sum::<usize>())
+            .min()
+            .unwrap_or(0);
+        let block_len = std::cmp::max(1, min_num_tasks / NUM_BLOCKS);
+        for (t, counts) in counts
+            .iter()
+            .enumerate()
+            .filter(|(t, _)| used_threads.contains(&t))
+        {
+            let num_tasks = counts.iter().sum::<usize>() / block_len;
+            println!("| [{t}]:\t{}", "*".repeat(num_tasks));
         }
 
         println!();
