@@ -1,4 +1,7 @@
-use std::time::Instant;
+use std::{
+    thread::sleep,
+    time::{Duration, Instant},
+};
 
 pub fn run<F, L, T>(name: &'static str, fun: F, log: L) -> T
 where
@@ -15,5 +18,6 @@ where
     println!("  elapsed = {elapsed:?}");
     log(&result);
     println!();
+    sleep(Duration::from_millis(100));
     result
 }

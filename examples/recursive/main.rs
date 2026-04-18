@@ -18,7 +18,7 @@ mod utils;
 #[derive(Parser, Debug)]
 struct Args {
     /// Amount of work (num times Fibonacci will be repeated).
-    #[arg(long, default_value_t = 1)]
+    #[arg(long, default_value_t = 1_000_000)]
     work: usize,
     /// (only for orx) Number of threads (0 = auto)
     #[arg(long, default_value_t = 0)]
@@ -259,7 +259,6 @@ fn main() {
         }
         false => {
             _ = run("seq", || seq(&storage, &roots, &args), log);
-            _ = run("rayon", || rayon(&storage, &roots, &args), log);
             _ = run("orx_rec", || orx_rec(&storage, &roots, &args, false), log);
             _ = run(
                 "orx_rec_exact",
@@ -271,6 +270,7 @@ fn main() {
                 || orx_extended(&storage, &roots, &args, false),
                 log,
             );
+            _ = run("rayon", || rayon(&storage, &roots, &args), log);
             _ = run(
                 "orx_extended_exact",
                 || orx_extended(&storage, &roots, &args, true),
