@@ -10,19 +10,19 @@
   * _ll means, results are collected into a LinkedList<Vec<_>>
   * Note that _ll and _vv 2-dim jagged results in rayon and orx, respectively
 
-col_id/seq/e15          time:   [6.8940 µs 6.9559 µs 7.0233 µs]
-col_id/rayon/e15        time:   [11.482 ms 11.940 ms 12.399 ms]
-col_id/rayon_ll/e15     time:   [13.386 ms 14.483 ms 15.816 ms]
-col_id/orx_ord/e15      time:   [2.2033 ms 2.3224 ms 2.4529 ms]
-col_id/orx_arb/e15      time:   [2.6000 ms 2.7021 ms 2.8091 ms]
-col_id/orx_arb_vv/e15   time:   [2.0926 ms 2.2088 ms 2.3356 ms]
+col_id/seq/e15          time:   [5.7329 µs 5.7723 µs 5.8135 µs]
+col_id/rayon/e15        time:   [8.2352 ms 8.3596 ms 8.4850 ms]
+col_id/rayon_ll/e15     time:   [9.3046 ms 9.4592 ms 9.6156 ms]
+col_id/orx_ord/e15      time:   [1.3669 ms 1.3814 ms 1.3970 ms]
+col_id/orx_arb/e15      time:   [1.3063 ms 1.3221 ms 1.3374 ms]
+col_id/orx_arb_vv/e15   time:   [1.3427 ms 1.3621 ms 1.3818 ms]
 
-col_id/seq/e20          time:   [687.07 µs 715.43 µs 741.66 µs]
-col_id/rayon/e20        time:   [27.934 ms 31.761 ms 37.343 ms]
-col_id/rayon_ll/e20     time:   [21.114 ms 22.364 ms 23.707 ms]
-col_id/orx_ord/e20      time:   [10.583 ms 11.717 ms 13.284 ms]
-col_id/orx_arb/e20      time:   [5.2519 ms 5.7780 ms 6.5096 ms]
-col_id/orx_arb_vv/e20   time:   [2.9987 ms 3.0896 ms 3.1825 ms]
+col_id/seq/e20          time:   [537.64 µs 543.36 µs 549.48 µs]
+col_id/rayon/e20        time:   [18.018 ms 18.475 ms 18.938 ms]
+col_id/rayon_ll/e20     time:   [17.159 ms 17.708 ms 18.269 ms]
+col_id/orx_ord/e20      time:   [3.4113 ms 3.4772 ms 3.5469 ms]
+col_id/orx_arb/e20      time:   [4.1789 ms 4.2580 ms 4.3391 ms]
+col_id/orx_arb_vv/e20   time:   [2.7635 ms 2.8331 ms 2.9044 ms]
 
 // TODO: the difference between orx_ord and orx_arb is due to post-ordering, which can be improved
 

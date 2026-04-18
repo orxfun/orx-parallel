@@ -30,7 +30,7 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     }
 
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
-        (spawned < state.max_num_threads).then_some(spawned + 1)
+        (spawned < state.max_num_threads).then_some(spawned)
     }
 
     fn new_state(
@@ -49,6 +49,9 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     }
 
     #[inline(always)]
+    fn begin_thread(_: &Self::State, _: usize) {}
+
+    #[inline(always)]
     fn next_chunk_size(state: &Self::State, _: Option<usize>) -> usize {
         state.chunk_size
     }
@@ -58,6 +61,9 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
 
     #[inline(always)]
     fn complete_chunk(_: &Self::State, _: Self::ChunkState) {}
+
+    #[inline(always)]
+    fn complete_thread(_: &Self::State, _: usize) {}
 
     #[inline(always)]
     fn complete_computation(_: Self::State) {}

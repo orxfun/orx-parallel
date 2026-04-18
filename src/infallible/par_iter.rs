@@ -4,7 +4,7 @@ use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner};
+use crate::runner::{DefaultRunner, ParRunner, RunnerWithDiagnostics};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
 
@@ -44,6 +44,27 @@ where
     }
 
     // params
+
+    pub fn runner<Q: ParRunner>(self, runner: Q) -> Par<I, X, Q> {
+        let (iter, xap, _, params) = self.destruct();
+        Par {
+            iter,
+            xap,
+            exe: runner,
+            params,
+        }
+    }
+
+    #[cfg(feature = "std")]
+    pub fn runner_with_diagnostics(self) -> Par<I, X, RunnerWithDiagnostics<R>> {
+        let (iter, xap, exe, params) = self.destruct();
+        Par {
+            iter,
+            xap,
+            exe: exe.with_diagnostics(),
+            params,
+        }
+    }
 
     pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
