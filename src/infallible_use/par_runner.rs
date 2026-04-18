@@ -25,8 +25,10 @@ pub trait ParRunnerInfallibleUse: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    Self::begin_thread(st, th_idx);
                     let value = th::next::<Self, _, _, _>(u, th_idx, st, iter, x);
                     results.push(value);
+                    Self::complete_thread(st, th_idx);
                 });
             }
         });
@@ -51,8 +53,10 @@ pub trait ParRunnerInfallibleUse: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                    Self::begin_thread(st, th_idx);
                     let value = th::next_any::<Self, _, _, _>(u, th_idx, st, iter, x);
                     results.push(value);
+                    Self::complete_thread(st, th_idx);
                 });
             }
         });
@@ -79,8 +83,10 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                     spawned += 1;
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        Self::begin_thread(st, th_idx);
                         let value = th::reduce::<Self, _, _, _, _>(u, th_idx, st, iter, x, f);
                         results.push(value);
+                        Self::complete_thread(st, th_idx);
                     });
                 }
             });
@@ -109,8 +115,10 @@ pub trait ParRunnerInfallibleUse: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let vec = th::collect::<Self, _, _, _>(u, th_idx, st, iter, x);
-                    results.push(vec);
+                    Self::begin_thread(st, th_idx);
+                    let value = th::collect::<Self, _, _, _>(u, th_idx, st, iter, x);
+                    results.push(value);
+                    Self::complete_thread(st, th_idx);
                 });
             }
         });
@@ -135,8 +143,10 @@ pub trait ParRunnerInfallibleUse: ParRunner {
             while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    let vec = th::collect_arb::<Self, _, _, _>(u, th_idx, st, iter, x);
-                    results.push(vec);
+                    Self::begin_thread(st, th_idx);
+                    let value = th::collect_arb::<Self, _, _, _>(u, th_idx, st, iter, x);
+                    results.push(value);
+                    Self::complete_thread(st, th_idx);
                 });
             }
         });
