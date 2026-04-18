@@ -2,12 +2,12 @@ use crate::infallible::{Par, xap_variants::Id};
 use crate::runner::default_runner;
 use orx_concurrent_recursive_iter::{ConcurrentRecursiveIter, Queue};
 
-pub trait IntoRecParIter
+pub trait IntoParIterRecursive
 where
     Self: IntoIterator,
     Self::Item: Send,
 {
-    fn into_rec_par<F>(
+    fn into_par_recursive<F>(
         self,
         extend: F,
         exact_len: Option<usize>,
@@ -16,12 +16,12 @@ where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync;
 }
 
-impl<X> IntoRecParIter for X
+impl<X> IntoParIterRecursive for X
 where
     X: IntoIterator,
     X::Item: Send,
 {
-    fn into_rec_par<F>(
+    fn into_par_recursive<F>(
         self,
         extend: F,
         exact_len: Option<usize>,
