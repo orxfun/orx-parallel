@@ -41,6 +41,7 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     }
 
     fn begin_thread(state: &Self::State, th_idx: usize) {
+        state.thread_lifetimes.begin(th_idx);
         R::begin_thread(&state.inner, th_idx);
     }
 
@@ -65,6 +66,7 @@ impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
     }
 
     fn complete_thread(state: &Self::State, th_idx: usize) {
+        state.thread_lifetimes.end(th_idx);
         R::complete_thread(&state.inner, th_idx);
     }
 
@@ -130,12 +132,14 @@ impl ThreadLifetimes {
         }
     }
 
-    fn begin(&mut self, th_idx: usize) {
-        self.begin[th_idx] = Some(Instant::now());
+    fn begin(&self, th_idx: usize) {
+        let elem = unsafe { &mut *(self.begin.as_ptr().add(th_idx) as *mut Option<Instant>) };
+        *elem = Some(Instant::now());
     }
 
-    fn end(&mut self, th_idx: usize) {
-        self.end[th_idx] = Some(Instant::now());
+    fn end(&self, th_idx: usize) {
+        let elem = unsafe { &mut *(self.end.as_ptr().add(th_idx) as *mut Option<Instant>) };
+        *elem = Some(Instant::now());
     }
 }
 
