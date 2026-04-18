@@ -150,12 +150,12 @@ fn main() {
     let storage = NodesStorage::new(10_000, &mut rng);
     let roots = storage.get_roots(20, &mut rng);
 
-    _ = run("seq", || seq(&storage, &roots, work), log);
-    _ = run("orx", || orx(&storage, &roots, work, false), log);
-    _ = run("rayon", || rayon(&storage, &roots, work), log);
-    _ = run("orx_exact", || orx(&storage, &roots, work, true), log);
+    // _ = run("seq", || seq(&storage, &roots, work), log);
+    // _ = run("orx", || orx(&storage, &roots, work, false), log);
+    // _ = run("rayon", || rayon(&storage, &roots, work), log);
+    // _ = run("orx_exact", || orx(&storage, &roots, work, true), log);
 
-    // _ = run("try_orx", || try_orx(&storage, &roots, work, true), log);
+    _ = run("try_orx", || try_orx(&storage, &roots, work, true), log);
 }
 
 fn try_orx(
