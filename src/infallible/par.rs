@@ -1,10 +1,12 @@
-use crate::ParCollectInto;
+#![allow(refining_impl_trait)]
+
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
+use crate::{ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
 
@@ -42,10 +44,21 @@ where
     pub(crate) fn destruct(self) -> (I, X, R, Params) {
         (self.iter, self.xap, self.exe, self.params)
     }
+}
+
+impl<I, X, R> ParIter for Par<I, X, R>
+where
+    I: ConcurrentIter,
+    X: Xap<I = I::Item>,
+    R: ParRunner,
+{
+    type Runner = R;
+
+    type Item = X::O;
 
     // configuration
 
-    pub fn runner<Q: ParRunner>(self, runner: Q) -> Par<I, X, Q> {
+    fn runner<Q: ParRunner>(self, runner: Q) -> Par<I, X, Q> {
         let (iter, xap, _, params) = self.destruct();
         Par {
             iter,
@@ -55,8 +68,7 @@ where
         }
     }
 
-    #[cfg(feature = "std")]
-    pub fn runner_with_diagnostics(self) -> Par<I, X, WithDiagnostics<R>> {
+    fn runner_with_diagnostics(self) -> Par<I, X, WithDiagnostics<R>> {
         let (iter, xap, exe, params) = self.destruct();
         Par {
             iter,
@@ -66,24 +78,24 @@ where
         }
     }
 
-    pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
     }
 
-    pub fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
         self
     }
 
-    pub fn iteration_order(mut self, collect: IterationOrder) -> Self {
+    fn iteration_order(mut self, collect: IterationOrder) -> Self {
         self.params = self.params.with_collect_ordering(collect);
         self
     }
 
     // transformations
 
-    pub fn map<Q, H>(self, h: H) -> Par<I, MapOf<X, Q, H>, R>
+    fn map<Q, H>(self, h: H) -> Par<I, MapOf<X, Q, H>, R>
     where
         H: Fn(X::O) -> Q + Copy + Send,
     {
@@ -91,7 +103,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn inspect<H>(self, h: H) -> Par<I, InsOf<X, H>, R>
+    fn inspect<H>(self, h: H) -> Par<I, InsOf<X, H>, R>
     where
         H: Fn(&X::O) + Copy + Send,
     {
@@ -99,7 +111,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter<H>(self, h: H) -> Par<I, FilOf<X, H>, R>
+    fn filter<H>(self, h: H) -> Par<I, FilOf<X, H>, R>
     where
         H: Fn(&X::O) -> bool + Copy + Send,
     {
@@ -107,7 +119,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter_map<Q, H>(self, h: H) -> Par<I, FilMapOf<X, Q, H>, R>
+    fn filter_map<Q, H>(self, h: H) -> Par<I, FilMapOf<X, Q, H>, R>
     where
         H: Fn(X::O) -> Option<Q> + Copy + Send,
     {
@@ -115,7 +127,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn flat_map<V, H>(self, h: H) -> Par<I, FlatMapOf<X, V, H>, R>
+    fn flat_map<V, H>(self, h: H) -> Par<I, FlatMapOf<X, V, H>, R>
     where
         V: IntoIterator,
         H: Fn(X::O) -> V + Copy + Send,
@@ -126,7 +138,7 @@ where
 
     // compute
 
-    pub fn first(self) -> Option<X::O>
+    fn first(self) -> Option<X::O>
     where
         X::O: Send,
     {
@@ -137,7 +149,7 @@ where
         }
     }
 
-    pub fn reduce<F>(self, f: F) -> Option<X::O>
+    fn reduce<F>(self, f: F) -> Option<X::O>
     where
         F: Fn(X::O, X::O) -> X::O + Send + Copy,
         X::O: Send,
@@ -146,7 +158,7 @@ where
         exe.reduce(params, iter, x, f)
     }
 
-    pub fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: C) -> C
     where
         C: ParCollectInto<X::O>,
         X::O: Send,
@@ -157,7 +169,7 @@ where
         }
     }
 
-    pub fn collect<C>(self) -> C
+    fn collect<C>(self) -> C
     where
         C: ParCollectInto<X::O>,
         X::O: Send,
@@ -166,15 +178,6 @@ where
             IterationOrder::Ordered => C::inf_col_into(None, self),
             IterationOrder::Arbitrary => C::inf_arb_col_into(None, self),
         }
-    }
-
-    // compute - derived
-
-    pub fn for_each<F>(self, f: F)
-    where
-        F: Fn(X::O) + Send + Copy,
-    {
-        let _ = self.map(f).reduce(|_, _| {});
     }
 }
 

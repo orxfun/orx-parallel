@@ -1,6 +1,6 @@
-use crate::IntoParIter;
 use crate::infallible::{Par, xap_variants::Id};
 use crate::runner::default_runner;
+use crate::{IntoParIter, ParIter};
 use alloc::vec::Vec;
 use orx_concurrent_iter::implementations::ConIterVec;
 use orx_concurrent_recursive_iter::{ConcurrentRecursiveIter, Queue};

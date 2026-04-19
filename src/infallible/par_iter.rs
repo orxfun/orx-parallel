@@ -2,7 +2,7 @@
 use crate::runner::WithDiagnostics;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, runner::ParRunner};
 
-pub trait ParIter {
+pub trait ParIter: Sized {
     type Runner: ParRunner;
 
     type Item;
@@ -65,4 +65,13 @@ pub trait ParIter {
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send;
+
+    // compute - derived
+
+    fn for_each<F>(self, f: F)
+    where
+        F: Fn(Self::Item) + Send + Copy,
+    {
+        let _ = self.map(f).reduce(|_, _| {});
+    }
 }
