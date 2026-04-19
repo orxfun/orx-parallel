@@ -41,3 +41,4 @@ pub use into_parallel::{
 pub use option::ParOptIter;
 pub use option_use::ParUseOptIter;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+pub use result::ParResIter;
