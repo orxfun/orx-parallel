@@ -3,7 +3,8 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::opt::ColIntoOpt;
 use crate::infallible::Xap;
-use crate::option::{ParOpt, ParRunnerOpt, SizePairOpt};
+use crate::option::{ParOpt, ParRunnerOpt};
+use crate::sizes::SizePair;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -16,7 +17,7 @@ impl<T> ColIntoOpt<T> for Vec<T> {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M, O = T>,
-        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerOpt,
         T: Send,
     {
@@ -34,7 +35,7 @@ impl<T> ColIntoOpt<T> for Vec<T> {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M, O = T>,
-        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerOpt,
         T: Send,
     {

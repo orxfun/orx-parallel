@@ -1,13 +1,13 @@
+use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
-use crate::{option::SizePairOpt, runner::ParRunner};
 
 pub trait ParOptIter: Sized {
     type Runner: ParRunner;
 
-    type Size: SizePairOpt;
+    type Size: SizePair;
 
     type Item;
 
@@ -51,16 +51,14 @@ pub trait ParOptIter: Sized {
         Item = Self::Item,
     >
     where
-        H: Fn(&Self::Item) -> bool + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePairOpt;
+        H: Fn(&Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
         h: H,
     ) -> impl ParOptIter<Runner = Self::Runner, Size = <Self::Size as SizePair>::ThenBin, Item = Q>
     where
-        H: Fn(Self::Item) -> Option<Q> + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePairOpt;
+        H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
@@ -68,8 +66,7 @@ pub trait ParOptIter: Sized {
     ) -> impl ParOptIter<Runner = Self::Runner, Size = <Self::Size as SizePair>::ThenMany, Item = V::Item>
     where
         V: IntoIterator,
-        H: Fn(Self::Item) -> V + Copy + Send,
-        <Self::Size as SizePair>::ThenMany: SizePairOpt;
+        H: Fn(Self::Item) -> V + Copy + Send;
 
     // compute
 

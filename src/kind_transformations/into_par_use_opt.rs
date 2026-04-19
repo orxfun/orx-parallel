@@ -8,10 +8,10 @@ use crate::infallible_use::UseFun;
 use crate::infallible_use::XapUse;
 use crate::infallible_use::xap_variants::IdUse;
 use crate::option::ParOpt;
-use crate::option::SizePairOpt;
 use crate::option_use::{ParUseOpt, SizePairUseOpt};
 use crate::runner::ParRunner;
 use crate::sizes::Size;
+use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
 // ParUse -> ParUseOpt
@@ -39,7 +39,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
-    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size> + SizePairUseOpt,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size> + SizePairUseOpt,
     R: ParRunner,
     X1::Size: SizeInfUse,
     X2::Size: SizeInfUse,

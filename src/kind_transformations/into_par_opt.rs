@@ -1,7 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::infallible::{Par, Xap, xap_variants::Id};
-use crate::option::{ParOpt, SizePairOpt};
+use crate::option::ParOpt;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::{ParIter, ParOptIter};
@@ -23,7 +23,6 @@ impl<O, I, X, R> IntoParOptIter for Par<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item, O = Option<O>>,
-    <X::Size as Size>::IntoPair: SizePairOpt,
     R: ParRunner,
 {
     type Success = O;
@@ -44,5 +43,5 @@ fn abc() {
 
     // let par = (0..10).par().map(|x| x + 1).map(Some);
     let par = get_par(10);
-    // let par = par.fallible_option();
+    let par = par.fallible_option();
 }
