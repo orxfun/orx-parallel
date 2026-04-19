@@ -42,3 +42,4 @@ pub use option::ParOptIter;
 pub use option_use::ParUseOptIter;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use result::ParResIter;
+pub use result_use::ParUseResIter;
