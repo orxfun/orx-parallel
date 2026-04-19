@@ -3,7 +3,7 @@
 use crate::infallible::{Par, Xap, xap_variants::Id};
 use crate::option::{ParOpt, SizePairOpt};
 use crate::runner::ParRunner;
-use crate::sizes::IntoSizePair;
+use crate::sizes::Size;
 use crate::{ParIter, ParOptIter};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -12,29 +12,19 @@ pub trait IntoParOptIter: ParIter<Item = Option<Self::Success>> {
 
     fn fallible_option(
         self,
-    ) -> impl ParOptIter<
-        Runner = Self::Runner,
-        Size = <Self::Size as IntoSizePair>::ThenOne,
-        Item = Self::Success,
-    >
-    where
-        Self::Size: IntoSizePair;
+    ) -> impl ParOptIter<Runner = Self::Runner, Size = <Self::Size as Size>::ThenOne, Item = Self::Success>;
 }
 
 impl<O, I, X, R> IntoParOptIter for Par<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item, O = Option<O>>,
-    X::Size: IntoSizePair,
-    <X::Size as IntoSizePair>::ThenOne: SizePairOpt,
+    <X::Size as Size>::ThenOne: SizePairOpt,
     R: ParRunner,
 {
     type Success = O;
 
-    fn fallible_option(self) -> ParOpt<I, O, X, Id<O>, <X::Size as IntoSizePair>::ThenOne, R>
-    where
-        Self::Size: IntoSizePair,
-    {
+    fn fallible_option(self) -> ParOpt<I, O, X, Id<O>, <X::Size as Size>::ThenOne, R> {
         let (iter, xap, exe, params) = self.destruct();
         ParOpt::new(iter, xap, Id::new(), exe, params)
     }

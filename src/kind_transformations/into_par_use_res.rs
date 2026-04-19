@@ -12,7 +12,7 @@ use crate::result::SizePairRes;
 use crate::result_use::ParUseRes;
 use crate::result_use::SizePairUseRes;
 use crate::runner::ParRunner;
-use crate::sizes::IntoSizePair;
+use crate::sizes::Size;
 use orx_concurrent_iter::ConcurrentIter;
 
 // ParUse -> ParUseRes
@@ -22,14 +22,12 @@ where
     U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item, O = Result<O, E>>,
-    X::Size: IntoSizePair,
-    <X::Size as IntoSizePair>::ThenOne: SizePairUseRes,
+    <X::Size as Size>::ThenOne: SizePairUseRes,
     R: ParRunner,
 {
     pub fn fallible_result(
         self,
-    ) -> ParUseRes<U, I, O, E, X, IdUse<Id<O>, U::Item>, <X::Size as IntoSizePair>::ThenOne, R>
-    {
+    ) -> ParUseRes<U, I, O, E, X, IdUse<Id<O>, U::Item>, <X::Size as Size>::ThenOne, R> {
         let (u, iter, xap, exe, params) = self.destruct();
         ParUseRes::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
     }
