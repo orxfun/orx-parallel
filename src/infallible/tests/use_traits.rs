@@ -33,6 +33,8 @@ fn find(par: impl ParIter<Item = String>) -> Option<String> {
         .first()
 }
 
+// fn to_option(par: impl ParIter<Item = Option<String>>) -> impl ParOptIter<Item = String> {}
+
 #[test]
 fn use_traits_collect() {
     let par = par(42);
@@ -55,4 +57,10 @@ fn use_traits_first() {
     let par = map(par);
     let result = find(par);
     assert!(result.is_some());
+}
+
+#[test]
+fn use_traits_into_option() {
+    let par = par(42).map(Some);
+    // let par = par.o
 }
