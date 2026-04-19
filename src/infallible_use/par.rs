@@ -1,11 +1,14 @@
-use crate::ParCollectInto;
+#![allow(refining_impl_trait)]
+
 use crate::infallible_use::fun::{FnCloned, FnCopied};
+use crate::infallible_use::par_iter::ParUseIter;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible_use::{XapUse, XapUseEnumByInput};
-use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
+use crate::parameters::{IterationOrder, Params};
+use crate::runner::{DefaultRunner, ParRunner};
+use crate::{ChunkSize, NumThreads, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
 
@@ -50,10 +53,24 @@ where
     pub(crate) fn destruct(self) -> (U, I, X, R, Params) {
         (self.using, self.iter, self.xap, self.exe, self.params)
     }
+}
 
-    // params
+impl<U, I, X, R> ParUseIter for ParUse<U, I, X, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
+    type Runner = R;
 
-    pub fn runner<Q: ParRunner>(self, runner: Q) -> ParUse<U, I, X, Q> {
+    type Item = X::O;
+
+    type Use = U;
+
+    // configuration
+
+    fn runner<Q: ParRunner>(self, runner: Q) -> ParUse<U, I, X, Q> {
         let (using, iter, xap, _, params) = self.destruct();
         ParUse {
             using,
@@ -65,7 +82,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    pub fn runner_with_diagnostics(self) -> ParUse<U, I, X, WithDiagnostics<R>> {
+    fn runner_with_diagnostics(self) -> ParUse<U, I, X, crate::runner::WithDiagnostics<R>> {
         let (using, iter, xap, exe, params) = self.destruct();
         ParUse {
             using,
@@ -76,24 +93,24 @@ where
         }
     }
 
-    pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
     }
 
-    pub fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
         self
     }
 
-    pub fn iteration_order(mut self, collect: IterationOrder) -> Self {
+    fn iteration_order(mut self, collect: IterationOrder) -> Self {
         self.params = self.params.with_collect_ordering(collect);
         self
     }
 
     // transformations
 
-    pub fn map<Q, H>(self, h: H) -> ParUse<U, I, MapOf<X, Q, H>, R>
+    fn map<Q, H>(self, h: H) -> ParUse<U, I, MapOf<X, Q, H>, R>
     where
         H: Fn(&mut U::Item, X::O) -> Q + Copy + Send,
     {
@@ -101,7 +118,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn inspect<H>(self, h: H) -> ParUse<U, I, InsOf<X, H>, R>
+    fn inspect<H>(self, h: H) -> ParUse<U, I, InsOf<X, H>, R>
     where
         H: Fn(&mut U::Item, &X::O) + Copy + Send,
     {
@@ -109,7 +126,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter<H>(self, h: H) -> ParUse<U, I, FilOf<X, H>, R>
+    fn filter<H>(self, h: H) -> ParUse<U, I, FilOf<X, H>, R>
     where
         H: Fn(&mut U::Item, &X::O) -> bool + Copy + Send,
     {
@@ -117,7 +134,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter_map<Q, H>(self, h: H) -> ParUse<U, I, FilMapOf<X, Q, H>, R>
+    fn filter_map<Q, H>(self, h: H) -> ParUse<U, I, FilMapOf<X, Q, H>, R>
     where
         H: Fn(&mut U::Item, X::O) -> Option<Q> + Copy + Send,
     {
@@ -125,7 +142,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn flat_map<V, H>(self, h: H) -> ParUse<U, I, FlatMapOf<X, V, H>, R>
+    fn flat_map<V, H>(self, h: H) -> ParUse<U, I, FlatMapOf<X, V, H>, R>
     where
         V: IntoIterator,
         H: Fn(&mut U::Item, X::O) -> V + Copy + Send,
@@ -136,7 +153,7 @@ where
 
     // compute
 
-    pub fn first(self) -> Option<X::O>
+    fn first(self) -> Option<X::O>
     where
         X::O: Send,
     {
@@ -147,7 +164,7 @@ where
         }
     }
 
-    pub fn reduce<F>(self, f: F) -> Option<X::O>
+    fn reduce<F>(self, f: F) -> Option<X::O>
     where
         F: Fn(&mut X::U, X::O, X::O) -> X::O + Send + Copy,
         X::O: Send,
@@ -156,7 +173,7 @@ where
         exe.reduce(params, u, iter, x, f)
     }
 
-    pub fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: C) -> C
     where
         C: ParCollectInto<X::O>,
         X::O: Send,
@@ -167,7 +184,7 @@ where
         }
     }
 
-    pub fn collect<C>(self) -> C
+    fn collect<C>(self) -> C
     where
         C: ParCollectInto<X::O>,
         X::O: Send,
@@ -176,15 +193,6 @@ where
             IterationOrder::Ordered => C::inf_use_col_into(None, self),
             IterationOrder::Arbitrary => C::inf_use_arb_col_into(None, self),
         }
-    }
-
-    // compute - derived
-
-    pub fn for_each<F>(self, f: F)
-    where
-        F: Fn(&mut U::Item, X::O) + Send + Copy,
-    {
-        let _ = self.map(f).reduce(|_, _, _| {});
     }
 }
 
