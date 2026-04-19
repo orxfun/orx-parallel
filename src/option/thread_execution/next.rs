@@ -1,5 +1,4 @@
-use crate::option::size_pairs::SizePairOpt;
-use crate::{infallible::Xap, results::ValIdx, runner::ParRunner};
+use crate::{infallible::Xap, results::ValIdx, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next<Q, I, M, X1, X2, S>(
@@ -15,7 +14,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
-    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut chunk_puller = iter.chunk_puller(0);
     let mut item_puller = iter.item_puller_with_idx();

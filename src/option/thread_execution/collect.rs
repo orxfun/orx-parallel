@@ -1,5 +1,5 @@
-use crate::option::size_pairs::SizePairOpt;
 use crate::results::ValsAndIdx;
+use crate::sizes::SizePair;
 use crate::{infallible::Xap, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -16,7 +16,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
-    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut collected = ValsAndIdx::new();
     let out = &mut collected;
