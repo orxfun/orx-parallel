@@ -12,7 +12,7 @@ pub trait IntoParResIter: ParIter<Item = Result<Self::Success, Self::Error>> {
 
     type Error;
 
-    fn fallible_option(
+    fn fallible_result(
         self,
     ) -> impl ParResIter<
         Runner = Self::Runner,
@@ -36,7 +36,7 @@ where
 
     type Error = E;
 
-    fn fallible_option(self) -> ParRes<I, O, E, X, Id<O>, <X::Size as IntoSizePair>::ThenOne, R>
+    fn fallible_result(self) -> ParRes<I, O, E, X, Id<O>, <X::Size as IntoSizePair>::ThenOne, R>
     where
         Self::Size: IntoSizePair,
     {
