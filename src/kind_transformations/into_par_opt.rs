@@ -39,3 +39,16 @@ where
         ParOpt::new(iter, xap, Id::new(), exe, params)
     }
 }
+
+fn abc() {
+    use super::*;
+    use crate::*;
+
+    fn get_par(n: usize) -> impl IntoParOptIter<Success = usize> {
+        (0..n).par().map(|x| x + 1).map(Some)
+    }
+
+    // let par = (0..10).par().map(|x| x + 1).map(Some);
+    let par = get_par(10);
+    // let par = par.fallible_option();
+}
