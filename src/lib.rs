@@ -17,8 +17,8 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-pub(crate) mod collectables;
-pub mod infallible; // TODO: pub only for benchmarks, can we prevent this?
+mod collectables;
+mod infallible;
 mod infallible_use;
 mod into_parallel;
 mod kind_transformations;
