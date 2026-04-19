@@ -4,7 +4,7 @@ use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, 
 use crate::option_use::par_runner::ParRunnerUseOpt;
 use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner, RunnerWithDiagnostics};
+use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseOpt<U, I, M, X1, X2, S, R = DefaultRunner>
@@ -83,7 +83,7 @@ where
     #[cfg(feature = "std")]
     pub fn runner_with_diagnostics(
         self,
-    ) -> ParUseOpt<U, I, M, X1, X2, S, RunnerWithDiagnostics<R>> {
+    ) -> ParUseOpt<U, I, M, X1, X2, S, WithDiagnostics<R>> {
         let (using, iter, x1, x2, exe, s, params) = self.destruct();
         ParUseOpt {
             using,

@@ -1,7 +1,7 @@
 use crate::parameters::Params;
 use crate::pool::ParThreadPool;
 #[cfg(feature = "std")]
-use crate::runner::runner_variants::RunnerWithDiagnostics;
+use crate::runner::runner_variants::WithDiagnostics;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParRunner: Sized + Sync {
@@ -55,8 +55,8 @@ pub trait ParRunner: Sized + Sync {
     // provided
 
     #[cfg(feature = "std")]
-    fn with_diagnostics(self) -> RunnerWithDiagnostics<Self> {
-        RunnerWithDiagnostics::new(self)
+    fn with_diagnostics(self) -> WithDiagnostics<Self> {
+        WithDiagnostics::new(self)
     }
 
     // provided - helpers

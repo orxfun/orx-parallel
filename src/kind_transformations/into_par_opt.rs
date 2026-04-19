@@ -1,4 +1,4 @@
-use crate::infallible::ParIter;
+use crate::infallible::Par;
 use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
 use crate::option::ParOpt;
@@ -7,7 +7,7 @@ use crate::runner::ParRunner;
 use crate::sizes::IntoSizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<O, I, X, R> ParIter<I, X, R>
+impl<O, I, X, R> Par<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item, O = Option<O>>,
