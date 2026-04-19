@@ -3,13 +3,13 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
-use crate::infallible::{ParIter, Xap};
+use crate::infallible::{Par, Xap};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Linear, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
-    fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn inf_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -21,7 +21,7 @@ impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
         merge_ord_into_split_vec(results, dst)
     }
 
-    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,

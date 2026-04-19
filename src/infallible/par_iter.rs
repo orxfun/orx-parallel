@@ -1,219 +1,68 @@
-use crate::ParCollectInto;
-use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::par_runner::ParRunnerInfallible;
-use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
-use crate::infallible::{Xap, XapEnumByInput};
-use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner, RunnerWithDiagnostics};
-use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_iter::enumerate::Enumerate;
+#[cfg(feature = "std")]
+use crate::runner::WithDiagnostics;
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, runner::ParRunner};
 
-pub struct ParIter<I, X, R = DefaultRunner>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item>,
-    R: ParRunner,
-{
-    iter: I,
-    xap: X,
-    exe: R,
-    params: Params,
-}
+pub trait ParIter {
+    type Runner: ParRunner;
 
-impl<I, X, R> ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item>,
-    R: ParRunner,
-{
-    pub(crate) fn new(iter: I, xap: X, exe: R, params: Params) -> Self {
-        Self {
-            iter,
-            xap,
-            exe,
-            params,
-        }
-    }
+    type Item;
 
-    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> ParIter<I, Y, R> {
-        ParIter::new(self.iter, xap, self.exe, self.params)
-    }
+    // configuration
 
-    pub(crate) fn destruct(self) -> (I, X, R, Params) {
-        (self.iter, self.xap, self.exe, self.params)
-    }
-
-    // params
-
-    pub fn runner<Q: ParRunner>(self, runner: Q) -> ParIter<I, X, Q> {
-        let (iter, xap, _, params) = self.destruct();
-        ParIter {
-            iter,
-            xap,
-            exe: runner,
-            params,
-        }
-    }
+    fn runner<Q: ParRunner>(self, runner: Q) -> impl ParIter<Runner = Q, Item = Self::Item>;
 
     #[cfg(feature = "std")]
-    pub fn runner_with_diagnostics(self) -> ParIter<I, X, RunnerWithDiagnostics<R>> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter {
-            iter,
-            xap,
-            exe: exe.with_diagnostics(),
-            params,
-        }
-    }
+    fn runner_with_diagnostics(
+        self,
+    ) -> impl ParIter<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item>;
 
-    pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
-        self.params = self.params.with_num_threads(num_threads);
-        self
-    }
+    fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
-    pub fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
-        self.params = self.params.with_chunk_size(chunk_size);
-        self
-    }
+    fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
-    pub fn iteration_order(mut self, collect: IterationOrder) -> Self {
-        self.params = self.params.with_collect_ordering(collect);
-        self
-    }
+    fn iteration_order(self, collect: IterationOrder) -> Self;
 
     // transformations
 
-    pub fn map<Q, H>(self, h: H) -> ParIter<I, MapOf<X, Q, H>, R>
+    fn map<Q, H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Q>
     where
-        H: Fn(X::O) -> Q + Copy + Send,
-    {
-        let xap = self.xap.map(h);
-        self.with_xap(xap)
-    }
+        H: Fn(Self::Item) -> Q + Copy + Send;
 
-    pub fn inspect<H>(self, h: H) -> ParIter<I, InsOf<X, H>, R>
+    fn inspect<H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Self::Item>
     where
-        H: Fn(&X::O) + Copy + Send,
-    {
-        let xap = self.xap.inspect(h);
-        self.with_xap(xap)
-    }
+        H: Fn(&Self::Item) + Copy + Send;
 
-    pub fn filter<H>(self, h: H) -> ParIter<I, FilOf<X, H>, R>
+    fn filter<H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Self::Item>
     where
-        H: Fn(&X::O) -> bool + Copy + Send,
-    {
-        let xap = self.xap.filter(h);
-        self.with_xap(xap)
-    }
+        H: Fn(&Self::Item) -> bool + Copy + Send;
 
-    pub fn filter_map<Q, H>(self, h: H) -> ParIter<I, FilMapOf<X, Q, H>, R>
+    fn filter_map<Q, H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Q>
     where
-        H: Fn(X::O) -> Option<Q> + Copy + Send,
-    {
-        let xap = self.xap.filter_map(h);
-        self.with_xap(xap)
-    }
+        H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
-    pub fn flat_map<V, H>(self, h: H) -> ParIter<I, FlatMapOf<X, V, H>, R>
+    fn flat_map<V, H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = V::Item>
     where
         V: IntoIterator,
-        H: Fn(X::O) -> V + Copy + Send,
-    {
-        let xap = self.xap.flat_map(h);
-        self.with_xap(xap)
-    }
+        H: Fn(Self::Item) -> V + Copy + Send;
 
     // compute
 
-    pub fn first(self) -> Option<X::O>
+    fn first(self) -> Option<Self::Item>
     where
-        X::O: Send,
-    {
-        let (iter, x, mut exe, params) = self.destruct();
-        match params.iteration_order {
-            IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.val),
-            IterationOrder::Arbitrary => exe.next_any(params, iter, x),
-        }
-    }
+        Self::Item: Send;
 
-    pub fn reduce<F>(self, f: F) -> Option<X::O>
+    fn reduce<F>(self, f: F) -> Option<Self::Item>
     where
-        F: Fn(X::O, X::O) -> X::O + Send + Copy,
-        X::O: Send,
-    {
-        let (iter, x, mut exe, params) = self.destruct();
-        exe.reduce(params, iter, x, f)
-    }
+        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
+        Self::Item: Send;
 
-    pub fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: C) -> C
     where
-        C: ParCollectInto<X::O>,
-        X::O: Send,
-    {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
-            IterationOrder::Arbitrary => C::inf_arb_col_into(Some(dst), self),
-        }
-    }
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send;
 
-    pub fn collect<C>(self) -> C
+    fn collect<C>(self) -> C
     where
-        C: ParCollectInto<X::O>,
-        X::O: Send,
-    {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_col_into(None, self),
-            IterationOrder::Arbitrary => C::inf_arb_col_into(None, self),
-        }
-    }
-
-    // compute - derived
-
-    pub fn for_each<F>(self, f: F)
-    where
-        F: Fn(X::O) + Send + Copy,
-    {
-        let _ = self.map(f).reduce(|_, _| {});
-    }
-}
-
-// transformations
-
-impl<'a, O: Copy + 'a, I, X, R> ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn copied(self) -> ParIter<I, MappedOf<X, FnCopied<'a, O>>, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
-    }
-}
-
-impl<'a, O: Clone + 'a, I, X, R> ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn cloned(self) -> ParIter<I, MappedOf<X, FnCloned<'a, O>>, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap.mapped(FnCloned::new()), exe, params)
-    }
-}
-
-impl<I, X, R> ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: XapEnumByInput<I = I::Item>,
-    R: ParRunner,
-{
-    pub fn enumerate(self) -> ParIter<Enumerate<I>, X::Enumerated, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        let iter = iter.enumerate();
-        let xap = xap.enumerate();
-        ParIter::new(iter, xap, exe, params)
-    }
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send;
 }

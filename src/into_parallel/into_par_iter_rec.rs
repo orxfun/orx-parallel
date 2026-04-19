@@ -1,5 +1,5 @@
 use crate::IntoParIter;
-use crate::infallible::{ParIter, xap_variants::Id};
+use crate::infallible::{Par, xap_variants::Id};
 use crate::runner::default_runner;
 use alloc::vec::Vec;
 use orx_concurrent_iter::implementations::ConIterVec;
@@ -13,11 +13,11 @@ where
     fn into_par_recursive<F>(
         self,
         extend: F,
-    ) -> ParIter<ConcurrentRecursiveIter<Self::Item, F>, Id<Self::Item>>
+    ) -> Par<ConcurrentRecursiveIter<Self::Item, F>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync;
 
-    fn extend_into_par<F>(self, extend: F) -> ParIter<ConIterVec<Self::Item>, Id<Self::Item>>
+    fn extend_into_par<F>(self, extend: F) -> Par<ConIterVec<Self::Item>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync;
 }
@@ -30,15 +30,15 @@ where
     fn into_par_recursive<F>(
         self,
         extend: F,
-    ) -> ParIter<ConcurrentRecursiveIter<Self::Item, F>, Id<Self::Item>>
+    ) -> Par<ConcurrentRecursiveIter<Self::Item, F>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync,
     {
         let iter = ConcurrentRecursiveIter::new(self, extend);
-        ParIter::new(iter, Id::new(), default_runner(), Default::default())
+        Par::new(iter, Id::new(), default_runner(), Default::default())
     }
 
-    fn extend_into_par<F>(self, extend: F) -> ParIter<ConIterVec<Self::Item>, Id<Self::Item>>
+    fn extend_into_par<F>(self, extend: F) -> Par<ConIterVec<Self::Item>, Id<Self::Item>>
     where
         F: Fn(&Self::Item, &Queue<Self::Item>) + Sync,
     {
