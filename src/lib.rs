@@ -38,6 +38,7 @@ pub use infallible_use::ParUseIter;
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
+pub use kind_transformations::{IntoParOptIter, IntoParResIter};
 pub use option::ParOptIter;
 pub use option_use::ParUseOptIter;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
