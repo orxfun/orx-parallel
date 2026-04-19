@@ -34,6 +34,7 @@ mod sizes;
 
 pub use collectables::ParCollectInto;
 pub use infallible::ParIter;
+pub use infallible_use::ParUseIter;
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
