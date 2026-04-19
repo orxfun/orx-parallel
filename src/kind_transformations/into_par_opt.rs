@@ -12,19 +12,23 @@ pub trait IntoParOptIter: ParIter<Item = Option<Self::Success>> {
 
     fn fallible_option(
         self,
-    ) -> impl ParOptIter<Runner = Self::Runner, Size = <Self::Size as Size>::ThenOne, Item = Self::Success>;
+    ) -> impl ParOptIter<
+        Runner = Self::Runner,
+        Size = <Self::Size as Size>::IntoPair,
+        Item = Self::Success,
+    >;
 }
 
 impl<O, I, X, R> IntoParOptIter for Par<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item, O = Option<O>>,
-    <X::Size as Size>::ThenOne: SizePairOpt,
+    <X::Size as Size>::IntoPair: SizePairOpt,
     R: ParRunner,
 {
     type Success = O;
 
-    fn fallible_option(self) -> ParOpt<I, O, X, Id<O>, <X::Size as Size>::ThenOne, R> {
+    fn fallible_option(self) -> ParOpt<I, O, X, Id<O>, <X::Size as Size>::IntoPair, R> {
         let (iter, xap, exe, params) = self.destruct();
         ParOpt::new(iter, xap, Id::new(), exe, params)
     }

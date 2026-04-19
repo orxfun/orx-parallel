@@ -22,12 +22,12 @@ where
     U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item, O = Result<O, E>>,
-    <X::Size as Size>::ThenOne: SizePairUseRes,
+    <X::Size as Size>::IntoPair: SizePairUseRes,
     R: ParRunner,
 {
     pub fn fallible_result(
         self,
-    ) -> ParUseRes<U, I, O, E, X, IdUse<Id<O>, U::Item>, <X::Size as Size>::ThenOne, R> {
+    ) -> ParUseRes<U, I, O, E, X, IdUse<Id<O>, U::Item>, <X::Size as Size>::IntoPair, R> {
         let (u, iter, xap, exe, params) = self.destruct();
         ParUseRes::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
     }

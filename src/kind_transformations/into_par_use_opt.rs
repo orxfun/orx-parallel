@@ -21,12 +21,12 @@ where
     U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item, O = Option<O>>,
-    <X::Size as Size>::ThenOne: SizePairUseOpt,
+    <X::Size as Size>::IntoPair: SizePairUseOpt,
     R: ParRunner,
 {
     pub fn fallible_option(
         self,
-    ) -> ParUseOpt<U, I, O, X, IdUse<Id<O>, U::Item>, <X::Size as Size>::ThenOne, R> {
+    ) -> ParUseOpt<U, I, O, X, IdUse<Id<O>, U::Item>, <X::Size as Size>::IntoPair, R> {
         let (u, iter, xap, exe, params) = self.destruct();
         ParUseOpt::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
     }

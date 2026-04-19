@@ -6,7 +6,7 @@ pub struct Bin;
 impl Size for Bin {
     type ThenBin = Bin;
 
-    type ThenOne = BinOne;
+    type IntoPair = BinOne;
 
     fn elem_len() -> Option<usize> {
         None

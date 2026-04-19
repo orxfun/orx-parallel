@@ -6,7 +6,7 @@ pub struct Many;
 impl Size for Many {
     type ThenBin = Many;
 
-    type ThenOne = ManyOne;
+    type IntoPair = ManyOne;
 
     fn elem_len() -> Option<usize> {
         None
