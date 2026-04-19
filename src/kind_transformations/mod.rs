@@ -5,3 +5,4 @@ mod into_par_use_opt;
 mod into_par_use_res;
 
 pub use into_par_opt::IntoParOptIter;
+pub use into_par_res::IntoParResIter;
