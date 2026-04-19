@@ -1,6 +1,9 @@
+#![allow(refining_impl_trait)]
+
 use crate::ParCollectInto;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
+use crate::option::par_iter::ParOptIter;
 use crate::option::par_runner::ParRunnerOpt;
 use crate::option::size_pairs::SizePairOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -53,9 +56,25 @@ where
     pub(crate) fn destruct(self) -> (I, X1, X2, R, S, Params) {
         (self.iter, self.x1, self.x2, self.exe, self.s, self.params)
     }
-    // params
+}
 
-    pub fn runner<Q: ParRunner>(self, runner: Q) -> ParOpt<I, M, X1, X2, S, Q> {
+impl<I, M, X1, X2, S, R> ParOptIter for ParOpt<I, M, X1, X2, S, R>
+where
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Option<M>>,
+    X2: Xap<I = M>,
+    S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Runner = R;
+
+    type Size = S;
+
+    type Item = X2::O;
+
+    // configuration
+
+    fn runner<Q: ParRunner>(self, runner: Q) -> ParOpt<I, M, X1, X2, S, Q> {
         let (iter, x1, x2, _, s, params) = self.destruct();
         ParOpt {
             iter,
@@ -68,7 +87,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    pub fn runner_with_diagnostics(self) -> ParOpt<I, M, X1, X2, S, WithDiagnostics<R>> {
+    fn runner_with_diagnostics(self) -> ParOpt<I, M, X1, X2, S, WithDiagnostics<R>> {
         let (iter, x1, x2, exe, s, params) = self.destruct();
         ParOpt {
             iter,
@@ -80,24 +99,24 @@ where
         }
     }
 
-    pub fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
     }
 
-    pub fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
         self.params = self.params.with_chunk_size(chunk_size);
         self
     }
 
-    pub fn iteration_order(mut self, collect: IterationOrder) -> Self {
+    fn iteration_order(mut self, collect: IterationOrder) -> Self {
         self.params = self.params.with_collect_ordering(collect);
         self
     }
 
     // transformations
 
-    pub fn map<Q, H>(self, h: H) -> ParOpt<I, M, X1, MapOf<X2, Q, H>, S, R>
+    fn map<Q, H>(self, h: H) -> ParOpt<I, M, X1, MapOf<X2, Q, H>, S, R>
     where
         H: Fn(X2::O) -> Q + Copy + Send,
     {
@@ -105,7 +124,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn inspect<H>(self, h: H) -> ParOpt<I, M, X1, InsOf<X2, H>, S, R>
+    fn inspect<H>(self, h: H) -> ParOpt<I, M, X1, InsOf<X2, H>, S, R>
     where
         H: Fn(&X2::O) + Copy + Send,
     {
@@ -113,7 +132,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn filter<H>(self, h: H) -> ParOpt<I, M, X1, FilOf<X2, H>, S::ThenBin, R>
+    fn filter<H>(self, h: H) -> ParOpt<I, M, X1, FilOf<X2, H>, S::ThenBin, R>
     where
         H: Fn(&X2::O) -> bool + Copy + Send,
         S::ThenBin: SizePairOpt,
@@ -122,7 +141,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn filter_map<Q, H>(self, h: H) -> ParOpt<I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
+    fn filter_map<Q, H>(self, h: H) -> ParOpt<I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
     where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
         S::ThenBin: SizePairOpt,
@@ -131,7 +150,7 @@ where
         self.with_xap2(x2)
     }
 
-    pub fn flat_map<V, H>(self, h: H) -> ParOpt<I, M, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
+    fn flat_map<V, H>(self, h: H) -> ParOpt<I, M, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
     where
         V: IntoIterator,
         H: Fn(X2::O) -> V + Copy + Send,
@@ -143,7 +162,7 @@ where
 
     // compute
 
-    pub fn first(self) -> Option<Option<X2::O>>
+    fn first(self) -> Option<Option<X2::O>>
     where
         X2::O: Send,
     {
@@ -154,7 +173,7 @@ where
         }
     }
 
-    pub fn reduce<F>(self, f: F) -> Option<Option<X2::O>>
+    fn reduce<F>(self, f: F) -> Option<Option<X2::O>>
     where
         F: Fn(X2::O, X2::O) -> X2::O + Send + Copy,
         X2::O: Send,
@@ -163,7 +182,7 @@ where
         exe.reduce(s, params, iter, x1, x2, f)
     }
 
-    pub fn collect_into<C>(self, dst: C) -> Option<C>
+    fn collect_into<C>(self, dst: C) -> Option<C>
     where
         C: ParCollectInto<X2::O>,
         X2::O: Send,
@@ -174,7 +193,7 @@ where
         }
     }
 
-    pub fn collect<C>(self) -> Option<C>
+    fn collect<C>(self) -> Option<C>
     where
         C: ParCollectInto<X2::O>,
         X2::O: Send,
@@ -183,15 +202,6 @@ where
             IterationOrder::Ordered => C::opt_col_into(None, self),
             IterationOrder::Arbitrary => C::opt_arb_col_into(None, self),
         }
-    }
-
-    // compute - derived
-
-    pub fn for_each<F>(self, f: F)
-    where
-        F: Fn(X2::O) + Send + Copy,
-    {
-        let _ = self.map(f).reduce(|_, _| {});
     }
 }
 
