@@ -1,9 +1,12 @@
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, runner::ParRunner};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
+use crate::{runner::ParRunner, sizes::Size};
 
 pub trait ParIter: Sized {
     type Runner: ParRunner;
+
+    type Size: Size;
 
     type Item;
 

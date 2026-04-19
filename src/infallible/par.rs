@@ -54,6 +54,8 @@ where
 {
     type Runner = R;
 
+    type Size = X::Size;
+
     type Item = X::O;
 
     // configuration
