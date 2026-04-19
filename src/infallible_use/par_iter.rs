@@ -6,21 +6,21 @@ use crate::{infallible_use::Use, runner::ParRunner};
 pub trait ParUseIter: Sized {
     type Runner: ParRunner;
 
-    type Item;
-
     type Use: Use;
+
+    type Item;
 
     // configuration
 
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParUseIter<Runner = Q, Item = Self::Item, Use = Self::Use>;
+    ) -> impl ParUseIter<Runner = Q, Use = Self::Use, Item = Self::Item>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParUseIter<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item, Use = Self::Use>;
+    ) -> impl ParUseIter<Runner = WithDiagnostics<Self::Runner>, Use = Self::Use, Item = Self::Item>;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -30,35 +30,35 @@ pub trait ParUseIter: Sized {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl ParUseIter<Runner = Self::Runner, Item = Q, Use = Self::Use>
+    fn map<Q, H>(self, h: H) -> impl ParUseIter<Runner = Self::Runner, Use = Self::Use, Item = Q>
     where
         H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl ParUseIter<Runner = Self::Runner, Item = Self::Item, Use = Self::Use>
+    ) -> impl ParUseIter<Runner = Self::Runner, Use = Self::Use, Item = Self::Item>
     where
         H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) + Copy + Send;
 
     fn filter<H>(
         self,
         h: H,
-    ) -> impl ParUseIter<Runner = Self::Runner, Item = Self::Item, Use = Self::Use>
+    ) -> impl ParUseIter<Runner = Self::Runner, Use = Self::Use, Item = Self::Item>
     where
         H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
         h: H,
-    ) -> impl ParUseIter<Runner = Self::Runner, Item = Q, Use = Self::Use>
+    ) -> impl ParUseIter<Runner = Self::Runner, Use = Self::Use, Item = Q>
     where
         H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
         h: H,
-    ) -> impl ParUseIter<Runner = Self::Runner, Item = V::Item, Use = Self::Use>
+    ) -> impl ParUseIter<Runner = Self::Runner, Use = Self::Use, Item = V::Item>
     where
         V: IntoIterator,
         H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> V + Copy + Send;
