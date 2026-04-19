@@ -3,7 +3,7 @@ use crate::sizes::{One, SizePair};
 pub trait Size: Clone + Copy + Send + Default {
     type ThenBin: Size;
 
-    type ThenOne: SizePair<S1 = Self, S2 = One>;
+    type IntoPair: SizePair<S1 = Self, S2 = One>;
 
     fn elem_len() -> Option<usize>;
 
