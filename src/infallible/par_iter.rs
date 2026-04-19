@@ -8,7 +8,7 @@ use crate::runner::{DefaultRunner, ParRunner, RunnerWithDiagnostics};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_concurrent_iter::enumerate::Enumerate;
 
-pub struct Par<I, X, R = DefaultRunner>
+pub struct ParIter<I, X, R = DefaultRunner>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
@@ -20,7 +20,7 @@ where
     params: Params,
 }
 
-impl<I, X, R> Par<I, X, R>
+impl<I, X, R> ParIter<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
@@ -35,8 +35,8 @@ where
         }
     }
 
-    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> Par<I, Y, R> {
-        Par::new(self.iter, xap, self.exe, self.params)
+    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> ParIter<I, Y, R> {
+        ParIter::new(self.iter, xap, self.exe, self.params)
     }
 
     pub(crate) fn destruct(self) -> (I, X, R, Params) {
@@ -45,9 +45,9 @@ where
 
     // params
 
-    pub fn runner<Q: ParRunner>(self, runner: Q) -> Par<I, X, Q> {
+    pub fn runner<Q: ParRunner>(self, runner: Q) -> ParIter<I, X, Q> {
         let (iter, xap, _, params) = self.destruct();
-        Par {
+        ParIter {
             iter,
             xap,
             exe: runner,
@@ -56,9 +56,9 @@ where
     }
 
     #[cfg(feature = "std")]
-    pub fn runner_with_diagnostics(self) -> Par<I, X, RunnerWithDiagnostics<R>> {
+    pub fn runner_with_diagnostics(self) -> ParIter<I, X, RunnerWithDiagnostics<R>> {
         let (iter, xap, exe, params) = self.destruct();
-        Par {
+        ParIter {
             iter,
             xap,
             exe: exe.with_diagnostics(),
@@ -83,7 +83,7 @@ where
 
     // transformations
 
-    pub fn map<Q, H>(self, h: H) -> Par<I, MapOf<X, Q, H>, R>
+    pub fn map<Q, H>(self, h: H) -> ParIter<I, MapOf<X, Q, H>, R>
     where
         H: Fn(X::O) -> Q + Copy + Send,
     {
@@ -91,7 +91,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn inspect<H>(self, h: H) -> Par<I, InsOf<X, H>, R>
+    pub fn inspect<H>(self, h: H) -> ParIter<I, InsOf<X, H>, R>
     where
         H: Fn(&X::O) + Copy + Send,
     {
@@ -99,7 +99,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter<H>(self, h: H) -> Par<I, FilOf<X, H>, R>
+    pub fn filter<H>(self, h: H) -> ParIter<I, FilOf<X, H>, R>
     where
         H: Fn(&X::O) -> bool + Copy + Send,
     {
@@ -107,7 +107,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn filter_map<Q, H>(self, h: H) -> Par<I, FilMapOf<X, Q, H>, R>
+    pub fn filter_map<Q, H>(self, h: H) -> ParIter<I, FilMapOf<X, Q, H>, R>
     where
         H: Fn(X::O) -> Option<Q> + Copy + Send,
     {
@@ -115,7 +115,7 @@ where
         self.with_xap(xap)
     }
 
-    pub fn flat_map<V, H>(self, h: H) -> Par<I, FlatMapOf<X, V, H>, R>
+    pub fn flat_map<V, H>(self, h: H) -> ParIter<I, FlatMapOf<X, V, H>, R>
     where
         V: IntoIterator,
         H: Fn(X::O) -> V + Copy + Send,
@@ -180,40 +180,40 @@ where
 
 // transformations
 
-impl<'a, O: Copy + 'a, I, X, R> Par<I, X, R>
+impl<'a, O: Copy + 'a, I, X, R> ParIter<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item, O = &'a O>,
     R: ParRunner,
 {
-    pub fn copied(self) -> Par<I, MappedOf<X, FnCopied<'a, O>>, R> {
+    pub fn copied(self) -> ParIter<I, MappedOf<X, FnCopied<'a, O>>, R> {
         let (iter, xap, exe, params) = self.destruct();
-        Par::new(iter, xap.mapped(FnCopied::new()), exe, params)
+        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
     }
 }
 
-impl<'a, O: Clone + 'a, I, X, R> Par<I, X, R>
+impl<'a, O: Clone + 'a, I, X, R> ParIter<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item, O = &'a O>,
     R: ParRunner,
 {
-    pub fn cloned(self) -> Par<I, MappedOf<X, FnCloned<'a, O>>, R> {
+    pub fn cloned(self) -> ParIter<I, MappedOf<X, FnCloned<'a, O>>, R> {
         let (iter, xap, exe, params) = self.destruct();
-        Par::new(iter, xap.mapped(FnCloned::new()), exe, params)
+        ParIter::new(iter, xap.mapped(FnCloned::new()), exe, params)
     }
 }
 
-impl<I, X, R> Par<I, X, R>
+impl<I, X, R> ParIter<I, X, R>
 where
     I: ConcurrentIter,
     X: XapEnumByInput<I = I::Item>,
     R: ParRunner,
 {
-    pub fn enumerate(self) -> Par<Enumerate<I>, X::Enumerated, R> {
+    pub fn enumerate(self) -> ParIter<Enumerate<I>, X::Enumerated, R> {
         let (iter, xap, exe, params) = self.destruct();
         let iter = iter.enumerate();
         let xap = xap.enumerate();
-        Par::new(iter, xap, exe, params)
+        ParIter::new(iter, xap, exe, params)
     }
 }
