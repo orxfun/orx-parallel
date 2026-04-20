@@ -1,10 +1,10 @@
 use crate::infallible_use::Use;
 use crate::option_use::par_iter_core::ParUseOptIterCore;
+use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
-use crate::{option_use::size_pairs::SizePairUseOpt, runner::ParRunner};
 
 pub trait ParUseOptIter: Sized + ParUseOptIterCore {
     // params
@@ -65,8 +65,7 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
         Item = Self::Item,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) -> bool + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePairUseOpt;
+        H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
@@ -78,8 +77,7 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
         Item = Q,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Option<Q> + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePairUseOpt;
+        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
@@ -92,8 +90,7 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
     >
     where
         V: IntoIterator,
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> V + Copy + Send,
-        <Self::Size as SizePair>::ThenMany: SizePairUseOpt;
+        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> V + Copy + Send;
 
     // compute
 

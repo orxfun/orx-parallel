@@ -6,9 +6,9 @@ use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, 
 use crate::option_use::par_iter::ParUseOptIter;
 use crate::option_use::par_iter_core::ParUseOptIterCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
-use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
+use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseOpt<U, I, M, X1, X2, S, R = DefaultRunner>
@@ -17,7 +17,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     using: U,
@@ -35,7 +35,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     pub(crate) fn new(using: U, iter: I, x1: X1, x2: X2, exe: R, params: Params) -> Self {
@@ -53,7 +53,7 @@ where
     fn with_xap2<Y2, T>(self, x2: Y2) -> ParUseOpt<U, I, M, X1, Y2, T, R>
     where
         Y2: XapUse<U = X1::U, I = M>,
-        T: SizePairUseOpt<S1 = X1::Size, S2 = Y2::Size>,
+        T: SizePair<S1 = X1::Size, S2 = Y2::Size>,
     {
         ParUseOpt::new(self.using, self.iter, self.x1, x2, self.exe, self.params)
     }
@@ -65,7 +65,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     type Item = X2::O;
@@ -113,7 +113,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     fn runner<Q: ParRunner>(self, runner: Q) -> ParUseOpt<U, I, M, X1, X2, S, Q> {
@@ -185,7 +185,7 @@ where
     fn filter<H>(self, h: H) -> ParUseOpt<U, I, M, X1, FilOf<X2, H>, S::ThenBin, R>
     where
         H: Fn(&mut X1::U, &X2::O) -> bool + Copy + Send,
-        S::ThenBin: SizePairUseOpt,
+        S::ThenBin: SizePair,
     {
         let x2 = self.x2.filter(h);
         self.with_xap2(x2)
@@ -194,7 +194,7 @@ where
     fn filter_map<Q, H>(self, h: H) -> ParUseOpt<U, I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
     where
         H: Fn(&mut X1::U, X2::O) -> Option<Q> + Copy + Send,
-        S::ThenBin: SizePairUseOpt,
+        S::ThenBin: SizePair,
     {
         let x2 = self.x2.filter_map(h);
         self.with_xap2(x2)
@@ -204,7 +204,7 @@ where
     where
         V: IntoIterator,
         H: Fn(&mut X1::U, X2::O) -> V + Copy + Send,
-        S::ThenMany: SizePairUseOpt,
+        S::ThenMany: SizePair,
     {
         let x2 = self.x2.flat_map(h);
         self.with_xap2(x2)
@@ -266,7 +266,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M, O = &'a O>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     pub fn copied(self) -> ParUseOpt<U, I, M, X1, MappedOf<X2, FnCopied<'a, U::Item, O>>, S, R> {
@@ -282,7 +282,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M, O = &'a O>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
     pub fn cloned(self) -> ParUseOpt<U, I, M, X1, MappedOf<X2, FnCloned<'a, U::Item, O>>, S, R> {
