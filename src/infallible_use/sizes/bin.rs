@@ -7,13 +7,13 @@ use crate::sizes::Bin;
 impl SizeInfUse for Bin {
     // transformations
 
-    type Map<X, Q, H>
+    type UMap<X, Q, H>
         = BinM<X, FnMap<X::U, X::O, Q, H>>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Q + Copy + Send;
 
-    fn map<X, Q, H>(x: X, h: H) -> Self::Map<X, Q, H>
+    fn u_map<X, Q, H>(x: X, h: H) -> Self::UMap<X, Q, H>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Q + Copy + Send,
@@ -21,13 +21,13 @@ impl SizeInfUse for Bin {
         BinM::new(x, FnMap::new(h))
     }
 
-    type Inspect<X, H>
+    type UInspect<X, H>
         = BinM<X, FnIns<X::U, X::O, H>>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, &X::O) + Copy + Send;
 
-    fn inspect<X, H>(x: X, h: H) -> Self::Inspect<X, H>
+    fn u_inspect<X, H>(x: X, h: H) -> Self::UInspect<X, H>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, &X::O) + Copy + Send,
@@ -35,13 +35,13 @@ impl SizeInfUse for Bin {
         BinM::new(x, FnIns::new(h))
     }
 
-    type Filter<X, H>
+    type UFilter<X, H>
         = BinF<X, FnFil<X::U, X::O, H>>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, &X::O) -> bool + Copy + Send;
 
-    fn filter<X, H>(x: X, h: H) -> Self::Filter<X, H>
+    fn u_filter<X, H>(x: X, h: H) -> Self::UFilter<X, H>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, &X::O) -> bool + Copy + Send,
@@ -49,13 +49,13 @@ impl SizeInfUse for Bin {
         BinF::new(x, FnFil::new(h))
     }
 
-    type FilterMap<X, Q, H>
+    type UFilterMap<X, Q, H>
         = BinF<X, FnFilMap<X::U, X::O, Q, H>>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Option<Q> + Copy + Send;
 
-    fn filter_map<X, Q, H>(x: X, h: H) -> Self::FilterMap<X, Q, H>
+    fn u_filter_map<X, Q, H>(x: X, h: H) -> Self::UFilterMap<X, Q, H>
     where
         X: XapUse<Size = Self>,
         H: Fn(&mut X::U, X::O) -> Option<Q> + Copy + Send,
@@ -63,14 +63,14 @@ impl SizeInfUse for Bin {
         BinF::new(x, FnFilMap::new(h))
     }
 
-    type FlatMap<X, V, H>
+    type UFlatMap<X, V, H>
         = BinX<X, FnFlatMap<X::U, X::O, V, H>>
     where
         X: XapUse<Size = Self>,
         V: IntoIterator,
         H: Fn(&mut X::U, X::O) -> V + Copy + Send;
 
-    fn flat_map<X, V, H>(x: X, h: H) -> Self::FlatMap<X, V, H>
+    fn u_flat_map<X, V, H>(x: X, h: H) -> Self::UFlatMap<X, V, H>
     where
         X: XapUse<Size = Self>,
         V: IntoIterator,
@@ -81,13 +81,13 @@ impl SizeInfUse for Bin {
 
     // transformations - helper
 
-    type Mapped<X, M>
+    type UMapped<X, M>
         = BinM<X, M>
     where
         X: XapUse<Size = Self>,
         M: Map<U = X::U, I = X::O>;
 
-    fn mapped<X, M>(x: X, m: M) -> Self::Mapped<X, M>
+    fn u_mapped<X, M>(x: X, m: M) -> Self::UMapped<X, M>
     where
         X: XapUse<Size = Self>,
         M: Map<U = X::U, I = X::O>,

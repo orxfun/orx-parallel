@@ -6,7 +6,6 @@ mod par;
 mod par_iter;
 mod par_iter_core;
 mod par_runner;
-pub mod sizes;
 mod thread_execution;
 mod xap;
 mod xap_enum;
