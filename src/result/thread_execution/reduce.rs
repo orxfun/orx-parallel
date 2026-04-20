@@ -1,6 +1,6 @@
 use crate::infallible::Xap;
-use crate::result::size_pairs::SizePairRes;
 use crate::runner::ParRunner;
+use crate::sizes::SizePair;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn reduce<Q, I, M, E, X1, X2, S, F>(
@@ -17,7 +17,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M>,
-    S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     F: Fn(X2::O, X2::O) -> X2::O,
 {
     let mut chunk_puller = iter.chunk_puller(0);

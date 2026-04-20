@@ -1,13 +1,13 @@
+use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
-use crate::{result::SizePairRes, runner::ParRunner};
 
 pub trait ParResIter: Sized {
     type Runner: ParRunner;
 
-    type Size: SizePairRes;
+    type Size: SizePair;
 
     type Item;
 
@@ -63,7 +63,7 @@ pub trait ParResIter: Sized {
     >
     where
         H: Fn(&Self::Item) -> bool + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePairRes;
+        <Self::Size as SizePair>::ThenBin: SizePair;
 
     fn filter_map<Q, H>(
         self,
@@ -76,7 +76,7 @@ pub trait ParResIter: Sized {
     >
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePairRes;
+        <Self::Size as SizePair>::ThenBin: SizePair;
 
     fn flat_map<V, H>(
         self,
@@ -90,7 +90,7 @@ pub trait ParResIter: Sized {
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send,
-        <Self::Size as SizePair>::ThenMany: SizePairRes;
+        <Self::Size as SizePair>::ThenMany: SizePair;
 
     // compute
 

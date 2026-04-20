@@ -8,11 +8,10 @@ use crate::infallible_use::UseFun;
 use crate::infallible_use::XapUse;
 use crate::infallible_use::xap_variants::IdUse;
 use crate::result::ParRes;
-use crate::result::SizePairRes;
 use crate::result_use::ParUseRes;
 use crate::result_use::SizePairUseRes;
 use crate::runner::ParRunner;
-use crate::sizes::Size;
+use crate::sizes::{Size, SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
 // ParUse -> ParUseRes
@@ -40,7 +39,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M>,
-    S: SizePairRes<S1 = X1::Size, S2 = X2::Size> + SizePairUseRes,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size> + SizePairUseRes,
     R: ParRunner,
     X1::Size: SizeInfUse,
     X2::Size: SizeInfUse,
