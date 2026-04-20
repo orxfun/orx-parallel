@@ -1,6 +1,7 @@
 use crate::collectables::opt_use::ColIntoOptUse;
 use crate::infallible_use::{Use, XapUse};
-use crate::option_use::{ParRunnerUseOpt, ParUseOpt, SizePairUseOpt};
+use crate::option_use::{ParRunnerUseOpt, ParUseOpt};
+use crate::sizes::SizePair;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -15,7 +16,7 @@ impl<T> ColIntoOptUse<T> for FixedVec<T> {
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
-        S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerUseOpt,
         T: Send,
     {
@@ -32,7 +33,7 @@ impl<T> ColIntoOptUse<T> for FixedVec<T> {
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
-        S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerUseOpt,
         T: Send,
     {

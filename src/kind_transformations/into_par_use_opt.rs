@@ -8,7 +8,7 @@ use crate::infallible_use::UseFun;
 use crate::infallible_use::XapUse;
 use crate::infallible_use::xap_variants::IdUse;
 use crate::option::{ParOpt, ParOptIterCore};
-use crate::option_use::{ParUseOpt, SizePairUseOpt};
+use crate::option_use::ParUseOpt;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::sizes::SizePair;
@@ -21,7 +21,6 @@ where
     U: Use,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item, O = Option<O>>,
-    <X::Size as Size>::IntoPair: SizePairUseOpt,
     R: ParRunner,
 {
     pub fn into_optional(
@@ -39,7 +38,7 @@ where
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size> + SizePairUseOpt,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size> + SizePair,
     R: ParRunner,
     X1::Size: SizeInfUse,
     X2::Size: SizeInfUse,

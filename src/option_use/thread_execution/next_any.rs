@@ -1,6 +1,6 @@
 use crate::infallible_use::{Use, XapUse};
-use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::runner::ParRunner;
+use crate::sizes::SizePair;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next_any<Q, U, I, M, X1, X2, S>(
@@ -18,7 +18,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
