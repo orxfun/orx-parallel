@@ -2,7 +2,7 @@ mod copied;
 mod count;
 mod enumerate;
 mod into_optional;
-mod fallible_result;
+mod into_fallible;
 mod flatten;
 mod for_each;
 mod inspect;

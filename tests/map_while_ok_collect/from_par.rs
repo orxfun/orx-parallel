@@ -11,7 +11,7 @@ fn map_while_ok_from_par_when_ok() {
     let result: Result<Vec<_>, _> = input
         .into_par()
         .map(map_res)
-        .into_fallible_result()
+        .into_into_fallible()
         .collect();
     let expected = Ok((0..1024).collect::<Vec<_>>());
 
@@ -31,7 +31,7 @@ fn map_while_ok_from_par_when_error() {
     let result: Result<Vec<_>, _> = input
         .into_par()
         .map(map_res)
-        .into_fallible_result()
+        .into_into_fallible()
         .collect();
 
     let result = result.map_err(|e| {

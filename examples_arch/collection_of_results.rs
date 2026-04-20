@@ -94,7 +94,7 @@
 //     let output: Result<Vec<_>, _> = good_input()
 //         .par()
 //         .map(|x| x.parse::<usize>())
-//         .into_fallible_result()
+//         .into_into_fallible()
 //         .collect();
 //     assert_eq!(
 //         output.map_err(|x| x.to_string()),
@@ -104,7 +104,7 @@
 //     let output: Result<Vec<_>, _> = bad_input()
 //         .par()
 //         .map(|x| x.parse::<usize>())
-//         .into_fallible_result()
+//         .into_into_fallible()
 //         .collect();
 //     assert_eq!(
 //         output.map_err(|x| x.to_string()),

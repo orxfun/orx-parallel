@@ -17,7 +17,7 @@ fn bin_m_find_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .first();
@@ -33,7 +33,7 @@ fn bin_m_find_any_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .iteration_order(IterationOrder::Arbitrary)
@@ -50,7 +50,7 @@ fn bin_m_reduce_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .reduce(|a, b| match a < b {
@@ -72,7 +72,7 @@ fn bin_m_reduce_err() {
                 false => Err(vec!['a']),
             }),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .reduce(|a, b| match a < b {
@@ -106,7 +106,7 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
@@ -117,7 +117,7 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
@@ -139,7 +139,7 @@ fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
@@ -153,7 +153,7 @@ fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)

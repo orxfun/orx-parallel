@@ -15,7 +15,7 @@ fn bin_f_find_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .first();
@@ -28,7 +28,7 @@ fn bin_f_find_any_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .iteration_order(IterationOrder::Arbitrary)
@@ -42,7 +42,7 @@ fn bin_f_reduce_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .reduce(|a, b| match a < b {
@@ -61,7 +61,7 @@ fn bin_f_reduce_err() {
             true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
             false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .reduce(|a, b| match a < b {
@@ -89,7 +89,7 @@ fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
         Some(c) => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
@@ -97,7 +97,7 @@ fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
         None => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
@@ -120,7 +120,7 @@ fn bin_f_collect_err<C: ParCollectIntoTest<String>>(
                 true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
                 false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
@@ -131,7 +131,7 @@ fn bin_f_collect_err<C: ParCollectIntoTest<String>>(
                 true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
                 false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)

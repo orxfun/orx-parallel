@@ -16,7 +16,7 @@ fn many_x_find_ok() {
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
@@ -37,7 +37,7 @@ fn many_x_find_any_ok() {
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
@@ -63,7 +63,7 @@ fn many_x_reduce_ok() {
             u.mutate();
             Ok(x)
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -96,7 +96,7 @@ fn many_x_reduce_err() {
                 false => Err(vec!['a']),
             }
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -145,7 +145,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Ok(x)
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -164,7 +164,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Ok(x)
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -198,7 +198,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -220,7 +220,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();

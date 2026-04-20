@@ -18,7 +18,7 @@ fn one_f_find_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .first();
     assert_eq!(result, Ok(Some(String::from("10"))));
@@ -33,7 +33,7 @@ fn one_f_find_any_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .iteration_order(IterationOrder::Arbitrary)
         .first();
@@ -49,7 +49,7 @@ fn one_f_reduce_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .reduce(|a, b| match a < b {
             true => b,
@@ -70,7 +70,7 @@ fn one_f_reduce_err() {
                 false => Err(vec!['a']),
             }),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .reduce(|a, b| match a < b {
             true => b,
@@ -102,7 +102,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect_into(c),
@@ -112,7 +112,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect(),
@@ -137,7 +137,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect_into(c),
@@ -150,7 +150,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect(),

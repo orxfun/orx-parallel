@@ -5,7 +5,7 @@ use crate::generic_values::Vector;
 use crate::par_iter_result::IntoResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
 use crate::using::ParIterResultUsing;
-use crate::using::computational_variants::u_fallible_result::UParMapResult;
+use crate::using::computational_variants::u_into_fallible::UParMapResult;
 use crate::using::computational_variants::u_xap::UParXap;
 use crate::using::executor::parallel_compute as prc;
 use crate::using::using_variants::Using;
@@ -177,7 +177,7 @@ where
         UParXap::new(using, orchestrator, params, iter, x1)
     }
 
-    fn into_fallible_result<Out, Err>(
+    fn into_into_fallible<Out, Err>(
         self,
     ) -> impl ParIterResultUsing<'using, U, R, Item = Out, Err = Err>
     where

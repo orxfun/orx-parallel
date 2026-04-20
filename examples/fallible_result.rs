@@ -10,7 +10,7 @@
 //     let result = good_input
 //         .par()
 //         .map(|x| x.parse::<usize>())
-//         .fallible_result()
+//         .into_fallible()
 //         .reduce(|a, b| a + b);
 //     assert_eq!(result, Ok(Some(expected)));
 
@@ -20,7 +20,7 @@
 //     let result = bad_input
 //         .par()
 //         .map(|x| x.parse::<usize>())
-//         .fallible_result()
+//         .into_fallible()
 //         .reduce(|a, b| a + b);
 //     assert!(result.is_err()); // computation failed
 // }

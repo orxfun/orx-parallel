@@ -15,7 +15,7 @@ fn id_find_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .first();
     assert_eq!(result, Ok(Some(String::from("0"))));
 }
@@ -26,7 +26,7 @@ fn id_find_any_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_ok());
@@ -38,7 +38,7 @@ fn id_reduce_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .reduce(|a, b| match a < b {
             true => b,
             false => a,
@@ -55,7 +55,7 @@ fn id_reduce_ok_err() {
             true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
             false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
         })
-        .fallible_result()
+        .into_fallible()
         .reduce(|a, b| match a < b {
             true => b,
             false => a,
@@ -79,13 +79,13 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         Some(c) => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect_into(c),
         None => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect(),
     };
@@ -102,7 +102,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                 true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
                 false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
             })
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect_into(c),
         None => inputs(N)
@@ -111,7 +111,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                 true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
                 false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
             })
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect(),
     };

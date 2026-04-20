@@ -15,7 +15,7 @@ fn many_x_find_ok() {
     let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
@@ -35,7 +35,7 @@ fn many_x_find_any_ok() {
     let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
@@ -61,7 +61,7 @@ fn many_x_reduce_ok() {
             u.mutate();
             Some(x)
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -91,7 +91,7 @@ fn many_x_reduce_err() {
             u.mutate();
             Some(x)
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -139,7 +139,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -158,7 +158,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -189,7 +189,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -208,7 +208,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();

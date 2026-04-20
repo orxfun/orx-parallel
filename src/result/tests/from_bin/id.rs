@@ -18,7 +18,7 @@ fn id_find_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .first();
     assert_eq!(result, Ok(Some(String::from("0"))));
 }
@@ -32,7 +32,7 @@ fn id_find_any_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_ok());
@@ -47,7 +47,7 @@ fn id_reduce_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .reduce(|a, b| match a < b {
             true => b,
             false => a,
@@ -67,7 +67,7 @@ fn id_reduce_ok_err() {
                 false => Err(vec!['a']),
             }),
         })
-        .fallible_result()
+        .into_fallible()
         .reduce(|a, b| match a < b {
             true => b,
             false => a,
@@ -97,7 +97,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect_into(c),
         None => inputs(N)
@@ -106,7 +106,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect(),
     };
@@ -126,7 +126,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect_into(c),
         None => inputs(N)
@@ -138,7 +138,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .iteration_order(order)
             .collect(),
     };

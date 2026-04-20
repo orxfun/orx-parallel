@@ -55,7 +55,7 @@ use core::cmp::Ordering;
 ///
 ///     // fallible parallel iterator
 ///     let results = inputs.par().map(|x| x.parse::<u32>());
-///     let result: Result<Vec<_>, ParseIntError> = results.into_fallible_result().collect();
+///     let result: Result<Vec<_>, ParseIntError> = results.into_into_fallible().collect();
 ///     assert_eq!(&expected, &result.map_err(|x| x.kind().clone()));
 /// }
 /// ```
@@ -76,7 +76,7 @@ use core::cmp::Ordering;
 ///
 ///     // sum
 ///     let results = inputs.par().map(|x| x.parse::<u32>());
-///     let result: Result<u32, ParseIntError> = results.into_fallible_result().sum();
+///     let result: Result<u32, ParseIntError> = results.into_into_fallible().sum();
 ///     match will_fail {
 ///         true => assert!(result.is_err()),
 ///         false => assert_eq!(result, Ok(4950)),
@@ -84,7 +84,7 @@ use core::cmp::Ordering;
 ///
 ///     // max
 ///     let results = inputs.par().map(|x| x.parse::<u32>());
-///     let result: Result<Option<u32>, ParseIntError> = results.into_fallible_result().max();
+///     let result: Result<Option<u32>, ParseIntError> = results.into_into_fallible().max();
 ///     match will_fail {
 ///         true => assert!(result.is_err()),
 ///         false => assert_eq!(result, Ok(Some(99))),
@@ -109,7 +109,7 @@ use core::cmp::Ordering;
 ///
 ///     // fallible iter
 ///     let results = inputs.par().map(|x| x.parse::<u32>());
-///     let fallible = results.into_fallible_result();              // Ok: u32, Error: ParseIntError
+///     let fallible = results.into_into_fallible();              // Ok: u32, Error: ParseIntError
 ///
 ///     // transformations
 ///
@@ -240,14 +240,14 @@ where
     ///
     /// // all succeeds
     /// let a: Vec<Result<u32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    /// let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
+    /// let iter = a.into_par().into_into_fallible().map(|x| 2 * x);
     ///
     /// let b: Result<Vec<_>, _> = iter.collect();
     /// assert_eq!(b, Ok(vec![2, 4, 6]));
     ///
     /// // at least one fails
     /// let a = vec![Ok(1), Err('x'), Ok(3)];
-    /// let iter = a.into_par().into_fallible_result().map(|x| 2 * x);
+    /// let iter = a.into_par().into_into_fallible().map(|x| 2 * x);
     ///
     /// let b: Result<Vec<_>, _> = iter.collect();
     /// assert_eq!(b, Err('x'));
@@ -260,7 +260,7 @@ where
     {
         let par = self.into_regular_par();
         let map = par.map(move |x| x.into_result().map(map.clone()));
-        map.into_fallible_result()
+        map.into_into_fallible()
     }
 
     /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
@@ -275,14 +275,14 @@ where
     ///
     /// // all succeeds
     /// let a: Vec<Result<u32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    /// let iter = a.into_par().into_fallible_result().filter(|x| x % 2 == 1);
+    /// let iter = a.into_par().into_into_fallible().filter(|x| x % 2 == 1);
     ///
     /// let b = iter.sum();
     /// assert_eq!(b, Ok(1 + 3));
     ///
     /// // at least one fails
     /// let a = vec![Ok(1), Err('x'), Ok(3)];
-    /// let iter = a.into_par().into_fallible_result().filter(|x| x % 2 == 1);
+    /// let iter = a.into_par().into_into_fallible().filter(|x| x % 2 == 1);
     ///
     /// let b = iter.sum();
     /// assert_eq!(b, Err('x'));
@@ -304,7 +304,7 @@ where
             },
             Err(e) => Some(Err(e)),
         });
-        filter_map.into_fallible_result()
+        filter_map.into_into_fallible()
     }
 
     /// Creates an iterator that works like map, but flattens nested structure.
@@ -322,7 +322,7 @@ where
     ///
     /// let all_chars: Result<Vec<_>, _> = words
     ///     .into_par()
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .flat_map(|s| s.chars()) // chars() returns an iterator
     ///     .collect();
     ///
@@ -334,7 +334,7 @@ where
     ///
     /// let all_chars: Result<Vec<_>, _> = words
     ///     .into_par()
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .flat_map(|s| s.chars()) // chars() returns an iterator
     ///     .collect();
     ///
@@ -356,7 +356,7 @@ where
             Ok(x) => ResultOfIter::ok(flat_map(x).into_iter()),
             Err(e) => ResultOfIter::err(e),
         });
-        map.into_fallible_result()
+        map.into_into_fallible()
     }
 
     /// Creates an iterator that both filters and maps.
@@ -376,7 +376,7 @@ where
     ///
     /// let numbers: Result<Vec<_>, char> = a
     ///     .into_par()
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .filter_map(|s| s.parse::<usize>().ok())
     ///     .collect();
     ///
@@ -387,7 +387,7 @@ where
     ///
     /// let numbers: Result<Vec<_>, char> = a
     ///     .into_par()
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .filter_map(|s| s.parse::<usize>().ok())
     ///     .collect();
     ///
@@ -407,7 +407,7 @@ where
             Ok(x) => filter_map(x).map(|x| Ok(x)),
             Err(e) => Some(Err(e)),
         });
-        filter_map.into_fallible_result()
+        filter_map.into_into_fallible()
     }
 
     /// Does something with each successful element of an iterator, passing the value on, provided that all elements are of Ok variant;
@@ -446,7 +446,7 @@ where
     /// let sum = a
     ///     .par()
     ///     .cloned()
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .inspect(|x| println!("about to filter: {x}"))
     ///     .filter(|x| x % 2 == 0)
     ///     .inspect(|x| {
@@ -474,7 +474,7 @@ where
     /// let sum = a
     ///     .par()
     ///     .cloned()
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .inspect(|x| println!("about to filter: {x}"))
     ///     .filter(|x| x % 2 == 0)
     ///     .inspect(|x| {
@@ -524,7 +524,7 @@ where
     /// let result = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 10)
     ///     .collect_into(vec);
     ///
@@ -537,7 +537,7 @@ where
     /// let result = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 10)
     ///     .collect_into(vec);
     /// assert!(result.is_err());
@@ -568,7 +568,7 @@ where
     /// let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
@@ -579,7 +579,7 @@ where
     /// let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
@@ -621,7 +621,7 @@ where
     /// let reduced: Result<Option<u32>, char> = (1..10)
     ///     .par()
     ///     .map(|x| safe_div(100, x as u32))
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, Ok(Some(281)));
     ///
@@ -629,7 +629,7 @@ where
     /// let reduced: Result<Option<u32>, char> = (1..1)
     ///     .par()
     ///     .map(|x| safe_div(100, x as u32))
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, Ok(None));
     ///
@@ -637,7 +637,7 @@ where
     /// let reduced: Result<Option<u32>, char> = (0..10)
     ///     .par()
     ///     .map(|x| safe_div(100, x as u32))
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, Err('!'));
     /// ```
@@ -674,21 +674,21 @@ where
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .all(|x| *x > 0);
     /// assert_eq!(result, Ok(true));
     ///
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .all(|x| *x > 1);
     /// assert_eq!(result, Ok(false));
     ///
     /// let result = Vec::<&str>::new()
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .all(|x| *x > 1);
     /// assert_eq!(result, Ok(true)); // empty iterator
     ///
@@ -696,7 +696,7 @@ where
     /// let result = vec!["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .all(|x| *x > 0);
     /// assert!(result.is_err());
     /// ```
@@ -739,21 +739,21 @@ where
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .any(|x| *x > 1);
     /// assert_eq!(result, Ok(true));
     ///
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .any(|x| *x > 3);
     /// assert_eq!(result, Ok(false));
     ///
     /// let result = Vec::<&str>::new()
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .any(|x| *x > 1);
     /// assert_eq!(result, Ok(false)); // empty iterator
     ///
@@ -761,7 +761,7 @@ where
     /// let result = vec!["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .any(|x| *x > 5);
     /// assert!(result.is_err());
     /// ```
@@ -787,7 +787,7 @@ where
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .filter(|x| *x >= 2)
     ///     .count();
     /// assert_eq!(result, Ok(2));
@@ -796,7 +796,7 @@ where
     /// let result = vec!["x!", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .filter(|x| *x >= 2)
     ///     .count();
     /// assert!(result.is_err());
@@ -827,7 +827,7 @@ where
     /// let result = vec!["0", "1", "2", "3", "4"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 2 + 1)
     ///     .for_each(move |x| tx.send(x).unwrap());
     ///
@@ -842,7 +842,7 @@ where
     /// let result = vec!["0", "1", "2", "x!", "4"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 2 + 1)
     ///     .for_each(move |x| tx.send(x).unwrap());
     ///
@@ -868,13 +868,13 @@ where
     /// use orx_parallel::*;
     ///
     /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    /// assert_eq!(a.par().copied().into_fallible_result().max(), Ok(Some(3)));
+    /// assert_eq!(a.par().copied().into_into_fallible().max(), Ok(Some(3)));
     ///
     /// let b: Vec<Result<i32, char>> = vec![];
-    /// assert_eq!(b.par().copied().into_fallible_result().max(), Ok(None));
+    /// assert_eq!(b.par().copied().into_into_fallible().max(), Ok(None));
     ///
     /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
-    /// assert_eq!(c.par().copied().into_fallible_result().max(), Err('x'));
+    /// assert_eq!(c.par().copied().into_into_fallible().max(), Err('x'));
     /// ```
     fn max(self) -> Result<Option<Self::Item>, Self::Err>
     where
@@ -896,7 +896,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .max_by(|a, b| a.cmp(b)),
     ///     Ok(Some(3))
     /// );
@@ -905,7 +905,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .max_by(|a, b| a.cmp(b)),
     ///     Ok(None)
     /// );
@@ -914,7 +914,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .max_by(|a, b| a.cmp(b)),
     ///     Err('x')
     /// );
@@ -946,7 +946,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .max_by_key(|x| x.abs()),
     ///     Ok(Some(-3))
     /// );
@@ -955,7 +955,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .max_by_key(|x| x.abs()),
     ///     Ok(None)
     /// );
@@ -964,7 +964,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .max_by_key(|x| x.abs()),
     ///     Err('x')
     /// );
@@ -994,13 +994,13 @@ where
     /// use orx_parallel::*;
     ///
     /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    /// assert_eq!(a.par().copied().into_fallible_result().min(), Ok(Some(1)));
+    /// assert_eq!(a.par().copied().into_into_fallible().min(), Ok(Some(1)));
     ///
     /// let b: Vec<Result<i32, char>> = vec![];
-    /// assert_eq!(b.par().copied().into_fallible_result().min(), Ok(None));
+    /// assert_eq!(b.par().copied().into_into_fallible().min(), Ok(None));
     ///
     /// let c: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Err('x')];
-    /// assert_eq!(c.par().copied().into_fallible_result().min(), Err('x'));
+    /// assert_eq!(c.par().copied().into_into_fallible().min(), Err('x'));
     /// ```
     fn min(self) -> Result<Option<Self::Item>, Self::Err>
     where
@@ -1022,7 +1022,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .min_by(|a, b| a.cmp(b)),
     ///     Ok(Some(1))
     /// );
@@ -1031,7 +1031,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .min_by(|a, b| a.cmp(b)),
     ///     Ok(None)
     /// );
@@ -1040,7 +1040,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .min_by(|a, b| a.cmp(b)),
     ///     Err('x')
     /// );
@@ -1072,7 +1072,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .min_by_key(|x| x.abs()),
     ///     Ok(Some(-1))
     /// );
@@ -1081,7 +1081,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .min_by_key(|x| x.abs()),
     ///     Ok(None)
     /// );
@@ -1090,7 +1090,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_result()
+    ///         .into_into_fallible()
     ///         .min_by_key(|x| x.abs()),
     ///     Err('x')
     /// );
@@ -1131,7 +1131,7 @@ where
     /// let reduced: Result<u32, char> = (1..10)
     ///     .par()
     ///     .map(|x| safe_div(100, x as u32))
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .sum();
     /// assert_eq!(reduced, Ok(281));
     ///
@@ -1139,7 +1139,7 @@ where
     /// let reduced: Result<u32, char> = (1..1)
     ///     .par()
     ///     .map(|x| safe_div(100, x as u32))
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .sum();
     /// assert_eq!(reduced, Ok(0));
     ///
@@ -1147,7 +1147,7 @@ where
     /// let reduced: Result<u32, char> = (0..10)
     ///     .par()
     ///     .map(|x| safe_div(100, x as u32))
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .sum();
     /// assert_eq!(reduced, Err('!'));
     /// ```
@@ -1184,13 +1184,13 @@ where
     /// use orx_parallel::*;
     ///
     /// let a: Vec<Result<i32, char>> = vec![];
-    /// assert_eq!(a.par().copied().into_fallible_result().first(), Ok(None));
+    /// assert_eq!(a.par().copied().into_into_fallible().first(), Ok(None));
     ///
     /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
-    /// assert_eq!(a.par().copied().into_fallible_result().first(), Ok(Some(1)));
+    /// assert_eq!(a.par().copied().into_into_fallible().first(), Ok(Some(1)));
     ///
     /// let a: Vec<Result<i32, char>> = vec![Ok(1), Err('x'), Ok(3)];
-    /// let result = a.par().copied().into_fallible_result().first();
+    /// let result = a.par().copied().into_into_fallible().first();
     /// // depends on whichever is observed first in parallel execution
     /// assert!(result == Ok(Some(1)) || result == Err('x'));
     /// ```
@@ -1219,18 +1219,18 @@ where
     ///
     /// let a: Vec<Result<i32, char>> = vec![];
     /// assert_eq!(
-    ///     a.par().copied().into_fallible_result().find(|x| *x > 2),
+    ///     a.par().copied().into_into_fallible().find(|x| *x > 2),
     ///     Ok(None)
     /// );
     ///
     /// let a: Vec<Result<i32, char>> = vec![Ok(1), Ok(2), Ok(3)];
     /// assert_eq!(
-    ///     a.par().copied().into_fallible_result().find(|x| *x > 2),
+    ///     a.par().copied().into_into_fallible().find(|x| *x > 2),
     ///     Ok(Some(3))
     /// );
     ///
     /// let a: Vec<Result<i32, char>> = vec![Ok(1), Err('x'), Ok(3)];
-    /// let result = a.par().copied().into_fallible_result().find(|x| *x > 2);
+    /// let result = a.par().copied().into_into_fallible().find(|x| *x > 2);
     /// // depends on whichever is observed first in parallel execution
     /// assert!(result == Ok(Some(3)) || result == Err('x'));
     /// ```

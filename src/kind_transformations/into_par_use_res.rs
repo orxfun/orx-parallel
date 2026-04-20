@@ -21,7 +21,7 @@ where
     X: XapUse<U = U::Item, I = I::Item, O = Result<O, E>>,
     R: ParRunner,
 {
-    pub fn fallible_result(
+    pub fn into_fallible(
         self,
     ) -> ParUseRes<U, I, O, E, X, IdUse<Id<O>, U::Item>, <X::Size as Size>::IntoPair, R> {
         let (u, iter, xap, exe, params) = self.destruct();
