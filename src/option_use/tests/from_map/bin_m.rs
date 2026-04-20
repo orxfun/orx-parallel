@@ -13,7 +13,7 @@ fn bin_m_find_ok() {
     let result = inputs
         .into_par()
         .map(|x| Some(x))
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -33,7 +33,7 @@ fn bin_m_find_any_ok() {
     let result = inputs
         .into_par()
         .map(|x| Some(x))
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -58,7 +58,7 @@ fn bin_m_reduce_ok() {
             u.mutate();
             Some(x)
         })
-        .fallible_option()
+        .into_optional()
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -90,7 +90,7 @@ fn bin_m_reduce_err() {
                 false => None,
             }
         })
-        .fallible_option()
+        .into_optional()
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -131,7 +131,7 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4
@@ -149,7 +149,7 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4
@@ -178,7 +178,7 @@ fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4
@@ -199,7 +199,7 @@ fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4

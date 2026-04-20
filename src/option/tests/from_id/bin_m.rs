@@ -12,7 +12,7 @@ fn bin_m_find_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .first();
@@ -24,7 +24,7 @@ fn bin_m_find_any_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .iteration_order(IterationOrder::Arbitrary)
@@ -37,7 +37,7 @@ fn bin_m_reduce_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .reduce(|a, b| match a < b {
@@ -52,7 +52,7 @@ fn bin_m_reduce_err() {
     let inputs = inputs_opt(N, Some(42));
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .map(|x| x.parse::<u64>().unwrap())
         .reduce(|a, b| match a < b {
@@ -78,14 +78,14 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     let result = match C::init_result(mode, |i| i as u64) {
         Some(c) => inputs_opt(N, None)
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
             .collect_into(c),
         None => inputs_opt(N, None)
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
@@ -100,14 +100,14 @@ fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
     let result = match C::init_result(mode, |i| i as u64) {
         Some(c) => inputs_opt(N, Some(42))
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
             .collect_into(c),
         None => inputs_opt(N, Some(42))
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)

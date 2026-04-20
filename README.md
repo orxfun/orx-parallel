@@ -325,7 +325,7 @@ Currently, there exist two fallible parallel iterators [`ParIterResult`](https:/
 | Regular Iterator | Transformation  Method| Fallible Iterator |
 | --- | --- | --- |
 | `ParIter<Item=Result<T, E>>` | `into_fallible_result()` | `ParIterResult<Item=T, Error=E>` |
-| `ParIter<Item=Option<T>>` | `into_fallible_option()` | `ParIterOption<Item=T>` |
+| `ParIter<Item=Option<T>>` | `into_into_optional()` | `ParIterOption<Item=T>` |
 
 After converting into a fallible iterator, each chaining transformation is based on the success item type. Similar to `?` operator, this allows us to focus on the success path while any error case will be handled by early returning from the iterator with the error.
 

@@ -1,4 +1,4 @@
-use crate::computational_variants::fallible_option::ParOption;
+use crate::computational_variants::into_optional::ParOption;
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
@@ -696,7 +696,7 @@ where
     /// let result_doubled: Option<Vec<i32>> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())     // ParIter with Item=Option<i32>
-    ///     .into_fallible_option()             // ParIterOption with Item=i32
+    ///     .into_into_optional()             // ParIterOption with Item=i32
     ///     .map(|x| x * 2)                     // methods focus on the success path with Item=i32
     ///     .collect();                         // methods return Option<T>
     ///                                         // where T depends on the computation
@@ -708,13 +708,13 @@ where
     /// let result_doubled: Option<Vec<i32>> = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
     /// assert_eq!(result_doubled, None);
     /// ```
-    fn into_fallible_option<T>(self) -> impl ParIterOption<R, Item = T>
+    fn into_into_optional<T>(self) -> impl ParIterOption<R, Item = T>
     where
         Self::Item: IntoOption<T>,
     {

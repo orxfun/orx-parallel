@@ -4,7 +4,7 @@ use crate::option::ParOpt;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOptIter};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{infallible::par_iter_core::ParIterCore, runner::ParRunner};
 
 pub trait ParIter: Sized + ParIterCore {
@@ -25,18 +25,23 @@ pub trait ParIter: Sized + ParIterCore {
 
     // kind transformations
 
+    // TODO: return impl ParOptIter
     fn into_optional<T>(
         self,
-    ) -> impl ParOptIter<
-        Runner = Self::Runner,
-        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
-        Item = T,
+    ) -> ParOpt<
+        <Self as ParIterCore>::Input,
+        T,
+        <Self as ParIterCore>::Xap,
+        Id<T>,
+        <<<Self as ParIterCore>::Xap as Xap>::Size as Size>::IntoPair,
+        <Self as ParIterCore>::Runner,
     >
     where
         Self::Xap: Xap<O = Option<T>>,
     {
         let (iter, xap, exe, params) = self.destruct();
-        ParOpt::new(iter, xap, Id::new(), exe, params)
+        let x = ParOpt::new(iter, xap, Id::new(), exe, params);
+        x
     }
 
     // transformations
