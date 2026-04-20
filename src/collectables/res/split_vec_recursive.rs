@@ -1,7 +1,8 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
-use crate::result::{ParRes, ParRunnerRes, SizePairRes};
+use crate::result::{ParRes, ParRunnerRes};
+use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
 
@@ -14,7 +15,7 @@ impl<T> ColIntoRes<T> for SplitVec<T, Recursive> {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
         X2: Xap<I = M, O = T>,
-        S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerRes,
         T: Send,
         E: Send,
@@ -33,7 +34,7 @@ impl<T> ColIntoRes<T> for SplitVec<T, Recursive> {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
         X2: Xap<I = M, O = T>,
-        S: SizePairRes<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerRes,
         T: Send,
         E: Send,
