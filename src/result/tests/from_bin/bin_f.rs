@@ -18,7 +18,7 @@ fn bin_f_find_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .first();
@@ -34,7 +34,7 @@ fn bin_f_find_any_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .iteration_order(IterationOrder::Arbitrary)
@@ -51,7 +51,7 @@ fn bin_f_reduce_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .reduce(|a, b| match a < b {
@@ -73,7 +73,7 @@ fn bin_f_reduce_err() {
                 false => Err(vec!['a']),
             }),
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .reduce(|a, b| match a < b {
@@ -107,7 +107,7 @@ fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
@@ -118,7 +118,7 @@ fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
@@ -144,7 +144,7 @@ fn bin_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
@@ -158,7 +158,7 @@ fn bin_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)

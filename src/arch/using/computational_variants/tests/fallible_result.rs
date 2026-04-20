@@ -19,7 +19,7 @@ impl MyErr {
 }
 
 #[test_matrix(NT, CHUNK)]
-fn fallible_result_collect_empty(nt: &[usize], chunk: &[usize]) {
+fn into_fallible_collect_empty(nt: &[usize], chunk: &[usize]) {
     let test = |_, nt, chunk| {
         let input = || input::<Vec<_>>(0);
 
@@ -31,7 +31,7 @@ fn fallible_result_collect_empty(nt: &[usize], chunk: &[usize]) {
             .using_clone("XyZw".to_string())
             .num_threads(nt)
             .chunk_size(chunk)
-            .into_fallible_result();
+            .into_into_fallible();
         let output: Result<Vec<_>, MyErr> = par.collect();
 
         assert_eq!(output, Ok(Vec::new()));
@@ -40,7 +40,7 @@ fn fallible_result_collect_empty(nt: &[usize], chunk: &[usize]) {
 }
 
 #[test_matrix(N, NT, CHUNK)]
-fn fallible_result_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
+fn into_fallible_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = || input::<Vec<_>>(n);
 
@@ -53,7 +53,7 @@ fn fallible_result_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[u
                 true => Err(MyErr::new()),
                 false => Ok(x),
             }))
-            .into_fallible_result()
+            .into_into_fallible()
             .filter(make_u_filter(&|x: &String| !x.ends_with('9')))
             .flat_map(make_u_map(|x| [format!("{x}?"), x]))
             .map(make_u_map(|x| format!("{x}!")));
@@ -65,7 +65,7 @@ fn fallible_result_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[u
 }
 
 #[test_matrix(N, NT, CHUNK)]
-fn fallible_result_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
+fn into_fallible_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = || input::<Vec<_>>(n);
 
@@ -86,7 +86,7 @@ fn fallible_result_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[
                 true => Err(MyErr::new()),
                 false => Ok(x),
             }))
-            .into_fallible_result()
+            .into_into_fallible()
             .filter(make_u_filter(&|x: &String| !x.ends_with('9')))
             .flat_map(make_u_map(|x| [format!("{x}?"), x]))
             .map(make_u_map(|x| format!("{x}!")))

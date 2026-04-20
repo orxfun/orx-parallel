@@ -17,7 +17,7 @@ fn bin_x_find_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -41,7 +41,7 @@ fn bin_x_find_any_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -70,7 +70,7 @@ fn bin_x_reduce_ok() {
                 false => Some(Ok(x)),
             }
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -106,7 +106,7 @@ fn bin_x_reduce_err() {
                 }),
             }
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -157,7 +157,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                     false => Some(Ok(x)),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4
@@ -179,7 +179,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                     false => Some(Ok(x)),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4
@@ -212,7 +212,7 @@ fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     }),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4
@@ -237,7 +237,7 @@ fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     }),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() < 4

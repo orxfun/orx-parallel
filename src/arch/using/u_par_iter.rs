@@ -5,7 +5,7 @@ use crate::{
     runner::{DefaultRunner, ParallelRunner},
     using::{
         ParIterOptionUsing, ParIterResultUsing,
-        computational_variants::u_fallible_option::UParOption, using_variants::Using,
+        computational_variants::u_into_optional::UParOption, using_variants::Using,
     },
 };
 use crate::{ParThreadPool, default_fns::*};
@@ -104,12 +104,12 @@ where
     ///
     /// See [`ParIterUsing`] for details.
     ///
-    /// Unlike [crate::ParIter::into_fallible_result], the methods of `ParIterResultUsing` give a mutable reference to the used variable.
+    /// Unlike [crate::ParIter::into_into_fallible], the methods of `ParIterResultUsing` give a mutable reference to the used variable.
     ///
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn into_fallible_result<T, E>(self) -> impl ParIterResultUsing<'using, U, R, Item = T, Err = E>
+    fn into_into_fallible<T, E>(self) -> impl ParIterResultUsing<'using, U, R, Item = T, Err = E>
     where
         Self::Item: IntoResult<T, E>;
 
@@ -125,18 +125,18 @@ where
     ///
     /// See [`ParIterOptionUsing`] for details.
     ///
-    /// Unlike [crate::ParIter::into_fallible_option], the methods of `ParIterOptionUsing` give a mutable reference to the used variable.
+    /// Unlike [crate::ParIter::into_into_optional], the methods of `ParIterOptionUsing` give a mutable reference to the used variable.
     ///
     /// Please see [`crate::ParIter::using`] transformation for details and examples.
     ///
     /// Further documentation can be found here: [`using.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/using.md).
-    fn into_fallible_option<T>(self) -> impl ParIterOptionUsing<'using, U, R, Item = T>
+    fn into_into_optional<T>(self) -> impl ParIterOptionUsing<'using, U, R, Item = T>
     where
         Self::Item: IntoOption<T>,
     {
         UParOption::new(
             self.map(|_, x| x.into_result_with_unit_err())
-                .into_fallible_result(),
+                .into_into_fallible(),
         )
     }
 

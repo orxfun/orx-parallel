@@ -53,7 +53,7 @@ use core::cmp::Ordering;
 ///
 ///     // fallible parallel iterator
 ///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
-///     let result: Option<Vec<_>> = results.into_fallible_option().collect();
+///     let result: Option<Vec<_>> = results.into_into_optional().collect();
 ///     assert_eq!(&expected, &result);
 /// }
 /// ```
@@ -73,7 +73,7 @@ use core::cmp::Ordering;
 ///
 ///     // sum
 ///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
-///     let result: Option<u32> = results.into_fallible_option().sum();
+///     let result: Option<u32> = results.into_into_optional().sum();
 ///     match will_fail {
 ///         true => assert_eq!(result, None),
 ///         false => assert_eq!(result, Some(4950)),
@@ -81,7 +81,7 @@ use core::cmp::Ordering;
 ///
 ///     // max
 ///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
-///     let result: Option<Option<u32>> = results.into_fallible_option().max();
+///     let result: Option<Option<u32>> = results.into_into_optional().max();
 ///     match will_fail {
 ///         true => assert_eq!(result, None),
 ///         false => assert_eq!(result, Some(Some(99))),
@@ -103,7 +103,7 @@ use core::cmp::Ordering;
 ///
 ///     // fallible iter
 ///     let results = inputs.par().map(|x| x.parse::<u32>().ok());
-///     let fallible = results.into_fallible_option();
+///     let fallible = results.into_into_optional();
 ///
 ///     // transformations
 ///
@@ -201,14 +201,14 @@ where
     ///
     /// // all succeeds
     /// let a: Vec<Option<u32>> = vec![Some(1), Some(2), Some(3)];
-    /// let iter = a.into_par().into_fallible_option().map(|x| 2 * x);
+    /// let iter = a.into_par().into_into_optional().map(|x| 2 * x);
     ///
     /// let b: Option<Vec<_>> = iter.collect();
     /// assert_eq!(b, Some(vec![2, 4, 6]));
     ///
     /// // at least one fails
     /// let a = vec![Some(1), None, Some(3)];
-    /// let iter = a.into_par().into_fallible_option().map(|x| 2 * x);
+    /// let iter = a.into_par().into_into_optional().map(|x| 2 * x);
     ///
     /// let b: Option<Vec<_>> = iter.collect();
     /// assert_eq!(b, None);
@@ -231,14 +231,14 @@ where
     ///
     /// // all succeeds
     /// let a: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
-    /// let iter = a.into_par().into_fallible_option().filter(|x| x % 2 == 1);
+    /// let iter = a.into_par().into_into_optional().filter(|x| x % 2 == 1);
     ///
     /// let b = iter.sum();
     /// assert_eq!(b, Some(1 + 3));
     ///
     /// // at least one fails
     /// let a = vec![Some(1), None, Some(3)];
-    /// let iter = a.into_par().into_fallible_option().filter(|x| x % 2 == 1);
+    /// let iter = a.into_par().into_into_optional().filter(|x| x % 2 == 1);
     ///
     /// let b = iter.sum();
     /// assert_eq!(b, None);
@@ -264,7 +264,7 @@ where
     ///
     /// let all_chars: Option<Vec<_>> = words
     ///     .into_par()
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .flat_map(|s| s.chars()) // chars() returns an iterator
     ///     .collect();
     ///
@@ -276,7 +276,7 @@ where
     ///
     /// let all_chars: Option<Vec<_>> = words
     ///     .into_par()
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .flat_map(|s| s.chars()) // chars() returns an iterator
     ///     .collect();
     ///
@@ -307,7 +307,7 @@ where
     ///
     /// let numbers: Option<Vec<_>> = a
     ///     .into_par()
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .filter_map(|s| s.parse::<usize>().ok())
     ///     .collect();
     ///
@@ -318,7 +318,7 @@ where
     ///
     /// let numbers: Option<Vec<_>> = a
     ///     .into_par()
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .filter_map(|s| s.parse::<usize>().ok())
     ///     .collect();
     ///
@@ -366,7 +366,7 @@ where
     /// let sum = a
     ///     .par()
     ///     .cloned()
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .inspect(|x| println!("about to filter: {x}"))
     ///     .filter(|x| x % 2 == 0)
     ///     .inspect(|x| {
@@ -394,7 +394,7 @@ where
     /// let sum = a
     ///     .par()
     ///     .cloned()
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .inspect(|x| println!("about to filter: {x}"))
     ///     .filter(|x| x % 2 == 0)
     ///     .inspect(|x| {
@@ -434,7 +434,7 @@ where
     /// let result = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 10)
     ///     .collect_into(vec);
     /// assert_eq!(result, Some(vec![0, 1, 10, 20, 30]));
@@ -446,7 +446,7 @@ where
     /// let result = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 10)
     ///     .collect_into(vec);
     /// assert_eq!(result, None);
@@ -476,7 +476,7 @@ where
     /// let result_doubled: Option<Vec<i32>> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
@@ -487,7 +487,7 @@ where
     /// let result_doubled: Option<Vec<i32>> = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
@@ -516,7 +516,7 @@ where
     /// let reduced: Option<Option<u32>> = (1..10)
     ///     .par()
     ///     .map(|x| 100u32.checked_div(x as u32))
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, Some(Some(281)));
     ///
@@ -524,7 +524,7 @@ where
     /// let reduced: Option<Option<u32>> = (1..1)
     ///     .par()
     ///     .map(|x| 100u32.checked_div(x as u32))
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, Some(None));
     ///
@@ -532,7 +532,7 @@ where
     /// let reduced: Option<Option<u32>> = (0..10)
     ///     .par()
     ///     .map(|x| 100u32.checked_div(x as u32))
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .reduce(|acc, e| acc + e);
     /// assert_eq!(reduced, None);
     /// ```
@@ -568,21 +568,21 @@ where
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .all(|x| *x > 0);
     /// assert_eq!(result, Some(true));
     ///
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .all(|x| *x > 1);
     /// assert_eq!(result, Some(false));
     ///
     /// let result = Vec::<&str>::new()
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .all(|x| *x > 1);
     /// assert_eq!(result, Some(true)); // empty iterator
     ///
@@ -590,7 +590,7 @@ where
     /// let result = vec!["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .all(|x| *x > 0);
     /// assert_eq!(result, None);
     /// ```
@@ -632,21 +632,21 @@ where
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .any(|x| *x > 1);
     /// assert_eq!(result, Some(true));
     ///
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .any(|x| *x > 3);
     /// assert_eq!(result, Some(false));
     ///
     /// let result = Vec::<&str>::new()
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .any(|x| *x > 1);
     /// assert_eq!(result, Some(false)); // empty iterator
     ///
@@ -654,7 +654,7 @@ where
     /// let result = vec!["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .any(|x| *x > 5);
     /// assert_eq!(result, None);
     /// ```
@@ -679,7 +679,7 @@ where
     /// let result = vec!["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .filter(|x| *x >= 2)
     ///     .count();
     /// assert_eq!(result, Some(2));
@@ -688,7 +688,7 @@ where
     /// let result = vec!["x!", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .filter(|x| *x >= 2)
     ///     .count();
     /// assert_eq!(result, None);
@@ -718,7 +718,7 @@ where
     /// let result = vec!["0", "1", "2", "3", "4"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 2 + 1)
     ///     .for_each(move |x| tx.send(x).unwrap());
     ///
@@ -733,7 +733,7 @@ where
     /// let result = vec!["0", "1", "2", "x!", "4"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 2 + 1)
     ///     .for_each(move |x| tx.send(x).unwrap());
     ///
@@ -758,13 +758,13 @@ where
     /// use orx_parallel::*;
     ///
     /// let a = vec![Some(1), Some(2), Some(3)];
-    /// assert_eq!(a.par().copied().into_fallible_option().max(), Some(Some(3)));
+    /// assert_eq!(a.par().copied().into_into_optional().max(), Some(Some(3)));
     ///
     /// let b: Vec<Option<i32>> = vec![];
-    /// assert_eq!(b.par().copied().into_fallible_option().max(), Some(None));
+    /// assert_eq!(b.par().copied().into_into_optional().max(), Some(None));
     ///
     /// let c = vec![Some(1), Some(2), None];
-    /// assert_eq!(c.par().copied().into_fallible_option().max(), None);
+    /// assert_eq!(c.par().copied().into_into_optional().max(), None);
     /// ```
     fn max(self) -> Option<Option<Self::Item>>
     where
@@ -785,7 +785,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .max_by(|a, b| a.cmp(b)),
     ///     Some(Some(3))
     /// );
@@ -794,7 +794,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .max_by(|a, b| a.cmp(b)),
     ///     Some(None)
     /// );
@@ -803,7 +803,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .max_by(|a, b| a.cmp(b)),
     ///     None
     /// );
@@ -834,7 +834,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .max_by_key(|x| x.abs()),
     ///     Some(Some(-3))
     /// );
@@ -843,7 +843,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .max_by_key(|x| x.abs()),
     ///     Some(None)
     /// );
@@ -852,7 +852,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .max_by_key(|x| x.abs()),
     ///     None
     /// );
@@ -881,13 +881,13 @@ where
     /// use orx_parallel::*;
     ///
     /// let a = vec![Some(1), Some(2), Some(3)];
-    /// assert_eq!(a.par().copied().into_fallible_option().min(), Some(Some(1)));
+    /// assert_eq!(a.par().copied().into_into_optional().min(), Some(Some(1)));
     ///
     /// let b: Vec<Option<i32>> = vec![];
-    /// assert_eq!(b.par().copied().into_fallible_option().min(), Some(None));
+    /// assert_eq!(b.par().copied().into_into_optional().min(), Some(None));
     ///
     /// let c = vec![Some(1), Some(2), None];
-    /// assert_eq!(c.par().copied().into_fallible_option().min(), None);
+    /// assert_eq!(c.par().copied().into_into_optional().min(), None);
     /// ```
     fn min(self) -> Option<Option<Self::Item>>
     where
@@ -908,7 +908,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .min_by(|a, b| a.cmp(b)),
     ///     Some(Some(1))
     /// );
@@ -917,7 +917,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .min_by(|a, b| a.cmp(b)),
     ///     Some(None)
     /// );
@@ -926,7 +926,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .min_by(|a, b| a.cmp(b)),
     ///     None
     /// );
@@ -957,7 +957,7 @@ where
     /// assert_eq!(
     ///     a.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .min_by_key(|x| x.abs()),
     ///     Some(Some(-1))
     /// );
@@ -966,7 +966,7 @@ where
     /// assert_eq!(
     ///     b.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .min_by_key(|x| x.abs()),
     ///     Some(None)
     /// );
@@ -975,7 +975,7 @@ where
     /// assert_eq!(
     ///     c.par()
     ///         .copied()
-    ///         .into_fallible_option()
+    ///         .into_into_optional()
     ///         .min_by_key(|x| x.abs()),
     ///     None
     /// );
@@ -1008,7 +1008,7 @@ where
     /// let reduced: Option<u32> = (1..10)
     ///     .par()
     ///     .map(|x| 100u32.checked_div(x as u32))
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .sum();
     /// assert_eq!(reduced, Some(281));
     ///
@@ -1016,7 +1016,7 @@ where
     /// let reduced: Option<u32> = (1..1)
     ///     .par()
     ///     .map(|x| 100u32.checked_div(x as u32))
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .sum();
     /// assert_eq!(reduced, Some(0));
     ///
@@ -1024,7 +1024,7 @@ where
     /// let reduced: Option<u32> = (0..10)
     ///     .par()
     ///     .map(|x| 100u32.checked_div(x as u32))
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .sum();
     /// assert_eq!(reduced, None);
     /// ```
@@ -1060,16 +1060,16 @@ where
     /// use orx_parallel::*;
     ///
     /// let a: Vec<Option<i32>> = vec![];
-    /// assert_eq!(a.par().copied().into_fallible_option().first(), Some(None));
+    /// assert_eq!(a.par().copied().into_into_optional().first(), Some(None));
     ///
     /// let a: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
     /// assert_eq!(
-    ///     a.par().copied().into_fallible_option().first(),
+    ///     a.par().copied().into_into_optional().first(),
     ///     Some(Some(1))
     /// );
     ///
     /// let a: Vec<Option<i32>> = vec![Some(1), None, Some(3)];
-    /// let result = a.par().copied().into_fallible_option().first();
+    /// let result = a.par().copied().into_into_optional().first();
     /// // depends on whichever is observed first in parallel execution
     /// assert!(result == Some(Some(1)) || result == None);
     /// ```
@@ -1097,18 +1097,18 @@ where
     ///
     /// let a: Vec<Option<i32>> = vec![];
     /// assert_eq!(
-    ///     a.par().copied().into_fallible_option().find(|x| *x > 2),
+    ///     a.par().copied().into_into_optional().find(|x| *x > 2),
     ///     Some(None)
     /// );
     ///
     /// let a: Vec<Option<i32>> = vec![Some(1), Some(2), Some(3)];
     /// assert_eq!(
-    ///     a.par().copied().into_fallible_option().find(|x| *x > 2),
+    ///     a.par().copied().into_into_optional().find(|x| *x > 2),
     ///     Some(Some(3))
     /// );
     ///
     /// let a: Vec<Option<i32>> = vec![Some(1), None, Some(3)];
-    /// let result = a.par().copied().into_fallible_option().find(|x| *x > 2);
+    /// let result = a.par().copied().into_into_optional().find(|x| *x > 2);
     /// // depends on whichever is observed first in parallel execution
     /// assert!(result == Some(Some(3)) || result == None);
     /// ```

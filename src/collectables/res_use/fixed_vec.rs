@@ -1,6 +1,7 @@
 use crate::collectables::res_use::ColIntoResUse;
 use crate::infallible_use::{Use, XapUse};
-use crate::result_use::{ParRunnerUseRes, ParUseRes, SizePairUseRes};
+use crate::result_use::{ParRunnerUseRes, ParUseRes};
+use crate::sizes::SizePair;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -15,7 +16,7 @@ impl<T> ColIntoResUse<T> for FixedVec<T> {
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
-        S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerUseRes,
         T: Send,
         E: Send,
@@ -33,7 +34,7 @@ impl<T> ColIntoResUse<T> for FixedVec<T> {
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
-        S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         R: ParRunnerUseRes,
         T: Send,
         E: Send,

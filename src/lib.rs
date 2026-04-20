@@ -17,11 +17,10 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-pub(crate) mod collectables;
-pub mod infallible; // TODO: pub only for benchmarks, can we prevent this?
+mod collectables;
+mod infallible;
 mod infallible_use;
 mod into_parallel;
-mod kind_transformations;
 mod option;
 mod option_use;
 mod parameters;
@@ -33,7 +32,13 @@ mod runner;
 mod sizes;
 
 pub use collectables::ParCollectInto;
+pub use infallible::ParIter;
+pub use infallible_use::ParUseIter;
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
+pub use option::ParOptIter;
+pub use option_use::ParUseOptIter;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+pub use result::ParResIter;
+pub use result_use::ParUseResIter;

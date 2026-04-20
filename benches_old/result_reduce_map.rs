@@ -148,7 +148,7 @@ fn orx(
     inputs
         .into_par()
         .map(map)
-        .into_fallible_result()
+        .into_into_fallible()
         .map(map_to_number)
         .reduce(|a, b| a + b)
 }
@@ -162,7 +162,7 @@ fn orx_arbitrary(
         .into_par()
         .iteration_order(IterationOrder::Arbitrary)
         .map(map)
-        .into_fallible_result()
+        .into_into_fallible()
         .map(map_to_number)
         .reduce(|a, b| a + b)
 }

@@ -15,7 +15,7 @@ fn one_f_find_ok() {
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -31,7 +31,7 @@ fn one_f_find_any_ok() {
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -52,7 +52,7 @@ fn one_f_reduce_ok() {
             u.mutate();
             Ok(x)
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -80,7 +80,7 @@ fn one_f_reduce_err() {
                 false => Err(vec!['a']),
             }
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -116,7 +116,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 Ok(x)
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -130,7 +130,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 Ok(x)
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -159,7 +159,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -176,7 +176,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => Err(vec!['a']),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1

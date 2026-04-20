@@ -15,7 +15,7 @@ fn one_f_find_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -31,7 +31,7 @@ fn one_f_find_any_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -52,7 +52,7 @@ fn one_f_reduce_ok() {
             u.mutate();
             [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -80,7 +80,7 @@ fn one_f_reduce_err() {
                 false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
             }
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -116,7 +116,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -130,7 +130,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -159,7 +159,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -176,7 +176,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => [Err(vec!['a']), Err(vec!['b']), Err(vec!['c'])],
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1

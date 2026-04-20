@@ -14,7 +14,7 @@ fn many_f_find_ok() {
     let result = inputs
         .into_par()
         .map(|x| Some(x))
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
@@ -35,7 +35,7 @@ fn many_f_find_any_ok() {
     let result = inputs
         .into_par()
         .map(|x| Some(x))
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
@@ -61,7 +61,7 @@ fn many_f_reduce_ok() {
             u.mutate();
             Some(x)
         })
-        .fallible_option()
+        .into_optional()
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -94,7 +94,7 @@ fn many_f_reduce_err() {
                 false => None,
             }
         })
-        .fallible_option()
+        .into_optional()
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -143,7 +143,7 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -162,7 +162,7 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -196,7 +196,7 @@ fn many_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => None,
                 }
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();
@@ -218,7 +218,7 @@ fn many_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => None,
                 }
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|u, x| {
                 u.mutate();
                 let a = x.parse::<u64>().unwrap();

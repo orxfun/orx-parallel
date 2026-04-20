@@ -13,7 +13,7 @@ fn id_find_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .first();
     assert_eq!(result, Some(Some(String::from("0"))));
@@ -24,7 +24,7 @@ fn id_find_any_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .iteration_order(IterationOrder::Arbitrary)
         .first();
@@ -41,7 +41,7 @@ fn id_reduce_ok() {
             u.mutate();
             Some(x)
         })
-        .fallible_option()
+        .into_optional()
         .reduce(|u, a, b| {
             u.mutate();
             match a < b {
@@ -62,7 +62,7 @@ fn id_reduce_ok_err() {
             u.mutate();
             Some(x)
         })
-        .fallible_option()
+        .into_optional()
         .reduce(|u, a, b| {
             u.mutate();
             match a < b {
@@ -92,7 +92,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect_into(c),
         None => inputs_opt(N, None)
@@ -102,7 +102,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect(),
     };
@@ -120,7 +120,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect_into(c),
         None => inputs_opt(N, Some(42))
@@ -130,7 +130,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect(),
     };

@@ -3,10 +3,10 @@ mod tests;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.
-pub mod u_fallible_option;
+pub mod u_into_optional;
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub mod u_fallible_result;
+pub mod u_into_fallible;
 
 mod u_map;
 mod u_par;

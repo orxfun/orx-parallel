@@ -17,7 +17,7 @@ fn many_x_find_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -33,7 +33,7 @@ fn many_x_find_any_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -50,7 +50,7 @@ fn many_x_reduce_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -72,7 +72,7 @@ fn many_x_reduce_err() {
             true => [x.clone(), x.clone(), x].map(Some),
             false => [None, None, None],
         })
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -114,7 +114,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
         Some(c) => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -125,7 +125,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
         None => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -155,7 +155,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
                 true => [x.clone(), x.clone(), x].map(Some),
                 false => [None, None, None],
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -169,7 +169,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
                 true => [x.clone(), x.clone(), x].map(Some),
                 false => [None, None, None],
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())

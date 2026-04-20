@@ -15,7 +15,7 @@ fn many_x_find_ok() {
     let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -30,7 +30,7 @@ fn many_x_find_any_ok() {
     let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -46,7 +46,7 @@ fn many_x_reduce_ok() {
     let inputs = inputs_res(N, None);
     let result = inputs
         .into_par()
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -64,7 +64,7 @@ fn many_x_reduce_err() {
     let inputs = inputs_res(N, Some(42));
     let result = inputs
         .into_par()
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -100,7 +100,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(c) => inputs_res(N, None)
             .into_par()
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -110,7 +110,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
             .collect_into(c),
         None => inputs_res(N, None)
             .into_par()
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -132,7 +132,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(c) => inputs_res(N, Some(42))
             .into_par()
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -142,7 +142,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
             .collect_into(c),
         None => inputs_res(N, Some(42))
             .into_par()
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())

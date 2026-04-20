@@ -17,7 +17,7 @@ fn one_f_find_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .first();
     assert_eq!(result, Some(Some(String::from("10"))));
@@ -32,7 +32,7 @@ fn one_f_find_any_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .iteration_order(IterationOrder::Arbitrary)
         .first();
@@ -48,7 +48,7 @@ fn one_f_reduce_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .reduce(|a, b| match a < b {
             true => b,
@@ -69,7 +69,7 @@ fn one_f_reduce_err() {
                 false => None,
             }),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .reduce(|a, b| match a < b {
             true => b,
@@ -101,7 +101,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect_into(c),
@@ -111,7 +111,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect(),
@@ -136,7 +136,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect_into(c),
@@ -149,7 +149,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
             .collect(),

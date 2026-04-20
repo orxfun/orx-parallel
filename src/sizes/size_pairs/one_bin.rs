@@ -1,3 +1,5 @@
+use crate::infallible::{Xap, XapBin, XapOne};
+use crate::infallible_use::{XapUse, XapUseBin, XapUseOne};
 use crate::sizes::{Bin, One, size_pair::SizePair, size_pairs::OneMany};
 
 #[derive(Clone, Copy, Default)]
@@ -11,4 +13,94 @@ impl SizePair for OneBin {
     type ThenBin = OneBin;
 
     type ThenMany = OneMany;
+
+    // option
+
+    type XapOptResult<M, X1, X2>
+        = Option<Option<X2::O>>
+    where
+        X1: Xap<O = Option<M>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>;
+
+    #[inline(always)]
+    fn xap_opt<M, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapOptResult<M, X1, X2>
+    where
+        X1: Xap<O = Option<M>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>,
+    {
+        match x1.one_value(i) {
+            Some(a) => x2.bin_value(a).map(Some),
+            None => Some(None),
+        }
+    }
+
+    // result
+
+    type XapResResult<M, E, X1, X2>
+        = Option<Result<X2::O, E>>
+    where
+        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>;
+
+    #[inline(always)]
+    fn xap_res<M, E, X1, X2>(x1: X1, x2: X2, i: X1::I) -> Self::XapResResult<M, E, X1, X2>
+    where
+        X1: Xap<O = Result<M, E>, Size = Self::S1>,
+        X2: Xap<I = M, Size = Self::S2>,
+    {
+        match x1.one_value(i) {
+            Ok(a) => x2.bin_value(a).map(Ok),
+            Err(e) => Some(Err(e)),
+        }
+    }
+
+    // use - option
+
+    type XapUseOptResult<M, X1, X2>
+        = Option<Option<X2::O>>
+    where
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
+
+    #[inline(always)]
+    fn xap_use_opt<M, X1, X2>(
+        u: *mut X1::U,
+        x1: X1,
+        x2: X2,
+        i: X1::I,
+    ) -> Self::XapUseOptResult<M, X1, X2>
+    where
+        X1: XapUse<O = Option<M>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
+    {
+        match x1.one_value(u, i) {
+            Some(a) => x2.bin_value(u, a).map(Some),
+            None => Some(None),
+        }
+    }
+
+    // use - result
+
+    type XapUseResResult<M, E, X1, X2>
+        = Option<Result<X2::O, E>>
+    where
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
+
+    #[inline(always)]
+    fn xap_use_res<M, E, X1, X2>(
+        u: *mut X1::U,
+        x1: X1,
+        x2: X2,
+        i: X1::I,
+    ) -> Self::XapUseResResult<M, E, X1, X2>
+    where
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>,
+    {
+        match x1.one_value(u, i) {
+            Ok(a) => x2.bin_value(u, a).map(Ok),
+            Err(e) => Some(Err(e)),
+        }
+    }
 }

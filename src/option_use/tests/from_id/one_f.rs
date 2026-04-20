@@ -13,7 +13,7 @@ fn one_f_find_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -28,7 +28,7 @@ fn one_f_find_any_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -49,7 +49,7 @@ fn one_f_reduce_ok() {
             u.mutate();
             Some(x)
         })
-        .fallible_option()
+        .into_optional()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -74,7 +74,7 @@ fn one_f_reduce_err() {
             u.mutate();
             Some(x)
         })
-        .fallible_option()
+        .into_optional()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -109,7 +109,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -123,7 +123,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -149,7 +149,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -163,7 +163,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                 u.mutate();
                 Some(x)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1

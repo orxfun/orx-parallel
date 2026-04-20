@@ -17,7 +17,7 @@ fn id_find_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .first();
     assert_eq!(result, Some(Some(String::from("0"))));
@@ -32,7 +32,7 @@ fn id_find_any_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .iteration_order(IterationOrder::Arbitrary)
         .first();
@@ -52,7 +52,7 @@ fn id_reduce_ok() {
                 false => Some(Some(x)),
             }
         })
-        .fallible_option()
+        .into_optional()
         .reduce(|u, a, b| {
             u.mutate();
             match a < b {
@@ -79,7 +79,7 @@ fn id_reduce_ok_err() {
                 }),
             }
         })
-        .fallible_option()
+        .into_optional()
         .reduce(|u, a, b| {
             u.mutate();
             match a < b {
@@ -116,7 +116,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
                     false => Some(Some(x)),
                 }
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect_into(c),
         None => inputs(N)
@@ -129,7 +129,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
                     false => Some(Some(x)),
                 }
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect(),
     };
@@ -153,7 +153,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                     }),
                 }
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect_into(c),
         None => inputs(N)
@@ -169,7 +169,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
                     }),
                 }
             })
-            .fallible_option()
+            .into_optional()
             .iteration_order(order)
             .collect(),
     };

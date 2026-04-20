@@ -4,15 +4,15 @@ use orx_iterable::Iterable;
 use std::collections::{BTreeMap, BTreeSet};
 use std::{println, time::Instant};
 
-pub struct RunnerWithDiagnostics<R: ParRunner>(R);
+pub struct WithDiagnostics<R: ParRunner>(R);
 
-impl<R: ParRunner> RunnerWithDiagnostics<R> {
+impl<R: ParRunner> WithDiagnostics<R> {
     pub fn new(inner: R) -> Self {
         Self(inner)
     }
 }
 
-impl<R: ParRunner> ParRunner for RunnerWithDiagnostics<R> {
+impl<R: ParRunner> ParRunner for WithDiagnostics<R> {
     type Pool = R::Pool;
 
     type State = StateWithDiagnostics<R::State>;

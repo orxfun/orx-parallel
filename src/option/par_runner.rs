@@ -1,7 +1,7 @@
 use crate::infallible::Xap;
-use crate::option::size_pairs::SizePairOpt;
 use crate::option::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};
+use crate::sizes::SizePair;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -20,7 +20,7 @@ pub trait ParRunnerOpt: ParRunner {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M>,
-        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
     {
         let mut spawned = 0;
@@ -55,7 +55,7 @@ pub trait ParRunnerOpt: ParRunner {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M>,
-        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
     {
         let mut spawned = 0;
@@ -92,7 +92,7 @@ pub trait ParRunnerOpt: ParRunner {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M>,
-        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         F: Fn(X2::O, X2::O) -> X2::O + Send + Copy,
         X2::O: Send,
     {
@@ -129,7 +129,7 @@ pub trait ParRunnerOpt: ParRunner {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M>,
-        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
     {
         let mut spawned = 0;
@@ -165,7 +165,7 @@ pub trait ParRunnerOpt: ParRunner {
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M>,
-        S: SizePairOpt<S1 = X1::Size, S2 = X2::Size>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
     {
         let mut spawned = 0;

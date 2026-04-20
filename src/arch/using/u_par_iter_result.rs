@@ -143,7 +143,7 @@ where
     {
         let par = self.into_regular_par();
         let map = par.map(move |u, x| x.into_result().map(|inner| map.clone()(u, inner)));
-        map.into_fallible_result()
+        map.into_into_fallible()
     }
 
     /// Creates an iterator which uses a closure `filter` to determine if an element should be yielded.
@@ -173,7 +173,7 @@ where
             },
             Err(e) => Some(Err(e)),
         });
-        filter_map.into_fallible_result()
+        filter_map.into_into_fallible()
     }
 
     /// Creates an iterator that works like map, but flattens nested structure.
@@ -201,7 +201,7 @@ where
             Ok(x) => ResultOfIter::ok(flat_map(u, x).into_iter()),
             Err(e) => ResultOfIter::err(e),
         });
-        map.into_fallible_result()
+        map.into_into_fallible()
     }
 
     /// Creates an iterator that both filters and maps.
@@ -230,7 +230,7 @@ where
             Ok(x) => filter_map(u, x).map(|x| Ok(x)),
             Err(e) => Some(Err(e)),
         });
-        filter_map.into_fallible_result()
+        filter_map.into_into_fallible()
     }
 
     /// Does something with each successful element of an iterator, passing the value on, provided that all elements are of Ok variant;

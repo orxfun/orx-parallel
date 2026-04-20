@@ -1,28 +1,28 @@
-use crate::infallible_use::fun::FlatMap;
+use crate::infallible_use::fun::UFlatMap;
 use crate::infallible_use::{XapUse, XapUseBin};
 use crate::sizes::{Bin, Many};
 use core::iter::FusedIterator;
 
-pub struct BinX<X: XapUse<Size = Bin>, G: FlatMap<U = X::U, I = X::O>> {
+pub struct UBinX<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: XapUse<Size = Bin>, G: FlatMap<U = X::U, I = X::O>> Clone for BinX<X, G> {
+impl<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> Clone for UBinX<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: XapUse<Size = Bin>, G: FlatMap<U = X::U, I = X::O>> Copy for BinX<X, G> {}
+impl<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> Copy for UBinX<X, G> {}
 
-impl<X: XapUse<Size = Bin>, G: FlatMap<U = X::U, I = X::O>> BinX<X, G> {
+impl<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> UBinX<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: XapUse<Size = Bin>, G: FlatMap<U = X::U, I = X::O>> XapUse for BinX<X, G> {
+impl<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> XapUse for UBinX<X, G> {
     type I = X::I;
 
     type O = <G::O as IntoIterator>::Item;

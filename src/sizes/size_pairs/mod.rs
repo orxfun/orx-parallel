@@ -7,7 +7,6 @@ mod many_one;
 mod one_bin;
 mod one_many;
 mod one_one;
-mod size_pair;
 
 pub use bin_bin::BinBin;
 pub use bin_many::BinMany;

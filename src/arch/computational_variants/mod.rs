@@ -3,10 +3,10 @@ mod tests;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.
-pub mod fallible_option;
+pub mod into_optional;
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with an error.
-pub mod fallible_result;
+pub mod into_fallible;
 
 /// A parallel iterator for which the computation either completely succeeds,
 /// or fails and **early exits** with None.

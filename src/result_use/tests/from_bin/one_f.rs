@@ -18,7 +18,7 @@ fn one_f_find_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -37,7 +37,7 @@ fn one_f_find_any_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -61,7 +61,7 @@ fn one_f_reduce_ok() {
                 false => Some(Ok(x)),
             }
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -92,7 +92,7 @@ fn one_f_reduce_err() {
                 }),
             }
         })
-        .fallible_result()
+        .into_fallible()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -134,7 +134,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                     false => Some(Ok(x)),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -151,7 +151,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                     false => Some(Ok(x)),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -183,7 +183,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     }),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -203,7 +203,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
                     }),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1

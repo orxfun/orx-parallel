@@ -1,72 +1,72 @@
-use crate::infallible_use::fun::{Map, MapEnum};
+use crate::infallible_use::fun::{UMap, UMapEnum};
 use crate::infallible_use::{XapUse, XapUseEnumByInput};
 use crate::sizes::Many;
 use core::iter::FusedIterator;
 
-pub struct ManyM<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> {
+pub struct UManyM<X: XapUse<Size = Many>, G: UMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> Clone for ManyM<X, G> {
+impl<X: XapUse<Size = Many>, G: UMap<U = X::U, I = X::O>> Clone for UManyM<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> Copy for ManyM<X, G> {}
+impl<X: XapUse<Size = Many>, G: UMap<U = X::U, I = X::O>> Copy for UManyM<X, G> {}
 
-impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> ManyM<X, G> {
+impl<X: XapUse<Size = Many>, G: UMap<U = X::U, I = X::O>> UManyM<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: XapUseEnumByInput<Size = Many>, G: Map<U = X::U, I = X::O>> XapUseEnumByInput
-    for ManyM<X, G>
+impl<X: XapUseEnumByInput<Size = Many>, G: UMap<U = X::U, I = X::O>> XapUseEnumByInput
+    for UManyM<X, G>
 {
-    type Enumerated = ManyM<X::Enumerated, MapEnum<G>>;
+    type Enumerated = UManyM<X::Enumerated, UMapEnum<G>>;
 
     fn enumerate(self) -> Self::Enumerated {
-        let g = MapEnum::new(self.g);
+        let g = UMapEnum::new(self.g);
         let x = self.x.enumerate();
-        ManyM::new(x, g)
+        UManyM::new(x, g)
     }
 }
 
-impl<X: XapUse<Size = Many>, G: Map<U = X::U, I = X::O>> XapUse for ManyM<X, G> {
+impl<X: XapUse<Size = Many>, G: UMap<U = X::U, I = X::O>> XapUse for UManyM<X, G> {
     type I = X::I;
 
     type O = G::O;
 
     type Size = Many;
 
-    type Values = IterManyM<<X::Values as IntoIterator>::IntoIter, G>;
+    type Values = UIterManyM<<X::Values as IntoIterator>::IntoIter, G>;
 
     type U = X::U;
 
     fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
         let i = self.x.xap_use(u, i).into_iter();
-        IterManyM { u, i, g: self.g }
+        UIterManyM { u, i, g: self.g }
     }
 }
 
 // iter
 
-pub struct IterManyM<I, G>
+pub struct UIterManyM<I, G>
 where
     I: Iterator,
-    G: Map<I = I::Item>,
+    G: UMap<I = I::Item>,
 {
     u: *mut G::U,
     i: I,
     g: G,
 }
 
-impl<I, G> Iterator for IterManyM<I, G>
+impl<I, G> Iterator for UIterManyM<I, G>
 where
     I: Iterator,
-    G: Map<I = I::Item>,
+    G: UMap<I = I::Item>,
 {
     type Item = G::O;
 
@@ -102,10 +102,10 @@ where
     }
 }
 
-impl<I, G> ExactSizeIterator for IterManyM<I, G>
+impl<I, G> ExactSizeIterator for UIterManyM<I, G>
 where
     I: ExactSizeIterator,
-    G: Map<I = I::Item>,
+    G: UMap<I = I::Item>,
 {
     #[inline(always)]
     fn len(&self) -> usize {
@@ -113,17 +113,17 @@ where
     }
 }
 
-impl<I, G> FusedIterator for IterManyM<I, G>
+impl<I, G> FusedIterator for UIterManyM<I, G>
 where
     I: FusedIterator,
-    G: Map<I = I::Item>,
+    G: UMap<I = I::Item>,
 {
 }
 
-impl<I, G> DoubleEndedIterator for IterManyM<I, G>
+impl<I, G> DoubleEndedIterator for UIterManyM<I, G>
 where
     I: DoubleEndedIterator,
-    G: Map<I = I::Item>,
+    G: UMap<I = I::Item>,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.i

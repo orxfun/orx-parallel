@@ -13,7 +13,7 @@
 //         .into_par()
 //         .flat_map(flat_map)
 //         .map(map_res)
-//         .into_fallible_result()
+//         .into_into_fallible()
 //         .collect();
 //     let expected = Ok((0..1024).flat_map(flat_map).collect::<Vec<_>>());
 
@@ -35,7 +35,7 @@
 //         .into_par()
 //         .flat_map(flat_map)
 //         .map(map_res)
-//         .into_fallible_result()
+//         .into_into_fallible()
 //         .collect();
 
 //     let result = result.map_err(|e| {
@@ -60,7 +60,7 @@
 //         .flat_map(flat_map)
 //         .take_while(|i| i < &777)
 //         .map(map_res)
-//         .into_fallible_result()
+//         .into_into_fallible()
 //         .collect();
 //     let expected = input
 //         .flat_map(flat_map)
@@ -87,7 +87,7 @@
 //         .flat_map(flat_map)
 //         .take_while(|i| i < &2777)
 //         .map(map_res)
-//         .into_fallible_result()
+//         .into_into_fallible()
 //         .collect();
 
 //     let result = result.map_err(|e| {
@@ -112,7 +112,7 @@
 //         .flat_map(flat_map)
 //         .take_while(|i| i < &777)
 //         .map(map_res)
-//         .into_fallible_result()
+//         .into_into_fallible()
 //         .collect();
 
 //     let expected = Ok((0..1024)

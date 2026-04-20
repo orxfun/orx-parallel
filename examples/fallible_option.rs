@@ -10,7 +10,7 @@
 //     let result = good_input
 //         .par()
 //         .map(|x| x.is_multiple_of(2).then_some(*x))
-//         .fallible_option()
+//         .into_optional()
 //         .reduce(|a, b| a + b);
 //     assert_eq!(result, Some(Some(expected)));
 
@@ -20,7 +20,7 @@
 //     let result = bad_input
 //         .par()
 //         .map(|x| x.is_multiple_of(2).then_some(*x))
-//         .fallible_option()
+//         .into_optional()
 //         .reduce(|a, b| a + b);
 //     assert_eq!(result, None); // computation failed
 // }

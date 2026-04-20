@@ -1,4 +1,4 @@
-use crate::computational_variants::fallible_option::ParOption;
+use crate::computational_variants::into_optional::ParOption;
 use crate::par_iter_option::{IntoOption, ParIterOption};
 use crate::par_iter_result::IntoResult;
 use crate::runner::{DefaultRunner, ParallelRunner};
@@ -652,7 +652,7 @@ where
     /// let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())  // ParIter with Item=Result<i32, ParseIntError>
-    ///     .into_fallible_result()     // ParIterResult with Item=i32 and Err=ParseIntError
+    ///     .into_into_fallible()     // ParIterResult with Item=i32 and Err=ParseIntError
     ///     .map(|x| x * 2)             // methods focus on the success path with Item=i32
     ///     .collect();                 // methods return Result<_, Err>
     ///                                 // where the Ok variant depends on the computation
@@ -664,13 +664,13 @@ where
     /// let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
     /// assert!(result_doubled.is_err());
     /// ```
-    fn into_fallible_result<T, E>(self) -> impl ParIterResult<R, Item = T, Err = E>
+    fn into_into_fallible<T, E>(self) -> impl ParIterResult<R, Item = T, Err = E>
     where
         Self::Item: IntoResult<T, E>;
 
@@ -696,7 +696,7 @@ where
     /// let result_doubled: Option<Vec<i32>> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())     // ParIter with Item=Option<i32>
-    ///     .into_fallible_option()             // ParIterOption with Item=i32
+    ///     .into_into_optional()             // ParIterOption with Item=i32
     ///     .map(|x| x * 2)                     // methods focus on the success path with Item=i32
     ///     .collect();                         // methods return Option<T>
     ///                                         // where T depends on the computation
@@ -708,19 +708,19 @@ where
     /// let result_doubled: Option<Vec<i32>> = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>().ok())
-    ///     .into_fallible_option()
+    ///     .into_into_optional()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
     /// assert_eq!(result_doubled, None);
     /// ```
-    fn into_fallible_option<T>(self) -> impl ParIterOption<R, Item = T>
+    fn into_into_optional<T>(self) -> impl ParIterOption<R, Item = T>
     where
         Self::Item: IntoOption<T>,
     {
         ParOption::new(
             self.map(|x| x.into_result_with_unit_err())
-                .into_fallible_result(),
+                .into_into_fallible(),
         )
     }
 

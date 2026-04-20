@@ -1,6 +1,6 @@
 use crate::infallible_use::Use;
-use crate::result_use::SizePairUseRes;
 use crate::results::ValsAndIdx;
+use crate::sizes::SizePair;
 use crate::{infallible_use::XapUse, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -19,7 +19,7 @@ where
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,
-    S: SizePairUseRes<S1 = X1::Size, S2 = X2::Size>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut collected = ValsAndIdx::new();
     let out = &mut collected;
