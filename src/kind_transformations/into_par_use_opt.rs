@@ -7,7 +7,7 @@ use crate::infallible_use::UseClone;
 use crate::infallible_use::UseFun;
 use crate::infallible_use::XapUse;
 use crate::infallible_use::xap_variants::IdUse;
-use crate::option::ParOpt;
+use crate::option::{ParOpt, ParOptIterCore};
 use crate::option_use::{ParUseOpt, SizePairUseOpt};
 use crate::runner::ParRunner;
 use crate::sizes::Size;

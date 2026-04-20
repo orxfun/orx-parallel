@@ -14,7 +14,7 @@ pub trait ParOptIterCore {
 
     type Xap2: Xap<I = Self::M, O = Self::Item>;
 
-    type SizePair: SizePair<S1 = <Self::Xap1 as Xap>::Size, S2 = <Self::Xap2 as Xap>::Size>;
+    type Size: SizePair<S1 = <Self::Xap1 as Xap>::Size, S2 = <Self::Xap2 as Xap>::Size>;
 
     fn destruct(
         self,
@@ -23,7 +23,7 @@ pub trait ParOptIterCore {
         Self::Xap1,
         Self::Xap2,
         Self::Runner,
-        Self::SizePair,
+        Self::Size,
         Params,
     );
 }
