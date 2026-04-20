@@ -1,6 +1,6 @@
 #![allow(refining_impl_trait)]
 
-use crate::infallible::{Par, Xap, xap_variants::Id};
+use crate::infallible::{Par, ParIterDestruct, Xap, xap_variants::Id};
 use crate::option::ParOpt;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
@@ -14,7 +14,7 @@ pub trait IntoParOptIter: ParIter<Item = Option<Self::Success>> {
         self,
     ) -> impl ParOptIter<
         Runner = Self::Runner,
-        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
+        // Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
         Item = Self::Success,
     >;
 }
@@ -33,13 +33,13 @@ where
     }
 }
 
-fn to_fallible_opt<P: ParIter<Item = Option<usize>>>(
-    par: P,
-) -> impl ParOptIter<Runner = P::Runner, Size = <<P::Xap as Xap>::Size as Size>::IntoPair, Item = usize>
-{
-    let (iter, xap, exe, params) = par.destructor();
-    ParOpt::new(iter, xap, Id::new(), exe, params)
-}
+// fn to_fallible_opt<P: ParIter<Item = Option<usize>>>(
+//     par: P,
+// ) -> impl ParOptIter<Runner = P::Runner, Size = <<P::Xap as Xap>::Size as Size>::IntoPair, Item = usize>
+// {
+//     let (iter, xap, exe, params) = par.destructor();
+//     ParOpt::new(iter, xap, Id::new(), exe, params)
+// }
 
 fn abc() {
     use super::*;
@@ -51,6 +51,6 @@ fn abc() {
 
     // let par = (0..10).par().map(|x| x + 1).map(Some);
     let par = get_par(10);
-    let par = par.fallible_option2();
+    // let par = par.fallible_option2();
     // let par = to_fallible_opt(par);
 }

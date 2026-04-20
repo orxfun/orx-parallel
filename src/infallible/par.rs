@@ -1,6 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::infallible::fun::{FnCloned, FnCopied};
+use crate::infallible::par_iter_dtor::ParIterDestruct;
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible::{Xap, XapEnumByInput};
@@ -40,8 +41,21 @@ where
     pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> Par<I, Y, R> {
         Par::new(self.iter, xap, self.exe, self.params)
     }
+}
 
-    pub(crate) fn destruct(self) -> (I, X, R, Params) {
+impl<I, X, R> ParIterDestruct for Par<I, X, R>
+where
+    I: ConcurrentIter,
+    X: Xap<I = I::Item>,
+    R: ParRunner,
+{
+    type Runner = R;
+
+    type Input = I;
+
+    type Xap = X;
+
+    fn destruct(self) -> (Self::Input, Self::Xap, Self::Runner, Params) {
         (self.iter, self.xap, self.exe, self.params)
     }
 }
@@ -52,17 +66,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
 {
-    type Runner = R;
-
     type Item = X::O;
-
-    type Input = I;
-
-    type Xap = X;
-
-    fn destructor(self) -> (Self::Input, Self::Xap, Self::Runner, crate::Params) {
-        (self.iter, self.xap, self.exe, self.params)
-    }
 
     // configuration
 

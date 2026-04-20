@@ -1,6 +1,6 @@
 #![allow(refining_impl_trait)]
 
-use crate::infallible::{Par, Xap, xap_variants::Id};
+use crate::infallible::{Par, ParIterDestruct, Xap, xap_variants::Id};
 use crate::result::{ParRes, SizePairRes};
 use crate::runner::ParRunner;
 use crate::sizes::Size;
@@ -16,7 +16,7 @@ pub trait IntoParResIter: ParIter<Item = Result<Self::Success, Self::Error>> {
         self,
     ) -> impl ParResIter<
         Runner = Self::Runner,
-        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
+        // Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
         Item = Self::Success,
         Error = Self::Error,
     >;

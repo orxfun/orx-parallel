@@ -1,23 +1,10 @@
-use crate::infallible::xap_variants::Id;
-use crate::option::ParOpt;
-use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
-use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
-use crate::{ParOptIter, infallible::Xap};
-use orx_concurrent_iter::ConcurrentIter;
+use crate::{infallible::par_iter_dtor::ParIterDestruct, runner::ParRunner};
 
-pub trait ParIter: Sized {
-    type Runner: ParRunner;
-
+pub trait ParIter: Sized + ParIterDestruct {
     type Item;
-
-    type Input: ConcurrentIter;
-
-    type Xap: Xap<I = <Self::Input as ConcurrentIter>::Item, O = Self::Item>;
-
-    fn destructor(self) -> (Self::Input, Self::Xap, Self::Runner, crate::Params);
 
     // configuration
 
@@ -85,19 +72,5 @@ pub trait ParIter: Sized {
         F: Fn(Self::Item) + Send + Copy,
     {
         let _ = self.map(f).reduce(|_, _| {});
-    }
-
-    fn fallible_option2<T>(
-        self,
-    ) -> impl ParOptIter<
-        Runner = Self::Runner,
-        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
-        Item = T,
-    >
-    where
-        Self::Xap: Xap<O = Option<T>>,
-    {
-        let (iter, xap, exe, params) = self.destructor();
-        ParOpt::new(iter, xap, Id::new(), exe, params)
     }
 }
