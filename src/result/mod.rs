@@ -3,6 +3,7 @@ mod tests;
 
 mod par;
 mod par_iter;
+mod par_iter_core;
 mod par_runner;
 mod size_pairs;
 mod thread_execution;
