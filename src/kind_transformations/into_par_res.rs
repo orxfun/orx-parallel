@@ -12,7 +12,7 @@ pub trait IntoParResIter: ParIter<Item = Result<Self::Success, Self::Error>> {
 
     type Error;
 
-    fn fallible_result(
+    fn into_fallible(
         self,
     ) -> impl ParResIter<
         Runner = Self::Runner,
@@ -33,7 +33,7 @@ where
 
     type Error = E;
 
-    fn fallible_result(self) -> ParRes<I, O, E, X, Id<O>, <X::Size as Size>::IntoPair, R> {
+    fn into_fallible(self) -> ParRes<I, O, E, X, Id<O>, <X::Size as Size>::IntoPair, R> {
         let (iter, xap, exe, params) = self.destruct();
         ParRes::new(iter, xap, Id::new(), exe, params)
     }

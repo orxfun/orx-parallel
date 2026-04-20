@@ -1,5 +1,7 @@
 use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
+use crate::infallible_use::xap_variants::IdUse;
+use crate::infallible_use::{ParUse, UseClone, UseFun};
 use crate::option::ParOpt;
 use crate::result::ParRes;
 #[cfg(feature = "std")]
@@ -61,6 +63,32 @@ pub trait ParIter: Sized + ParIterCore {
     {
         let (iter, xap, exe, params) = self.destruct();
         ParRes::new(iter, xap, Id::new(), exe, params)
+    }
+
+    fn using<U, F>(
+        self,
+        f: F,
+    ) -> ParUse<UseFun<U, F>, Self::Input, IdUse<Self::Xap, U>, Self::Runner>
+    where
+        F: Fn(usize) -> U + Sync,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        let using = UseFun::new(f);
+        let xap = IdUse::new(xap);
+        ParUse::new(using, iter, xap, exe, params)
+    }
+
+    fn using_clone<U>(
+        self,
+        u: U,
+    ) -> ParUse<UseClone<U>, Self::Input, IdUse<Self::Xap, U>, Self::Runner>
+    where
+        U: Clone + Send,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        let using = UseClone::new(u);
+        let xap = IdUse::new(xap);
+        ParUse::new(using, iter, xap, exe, params)
     }
 
     // transformations
