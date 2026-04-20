@@ -1,8 +1,10 @@
-use crate::option::ParOptIterCore;
+use crate::infallible_use::xap_variants::IdUse;
+use crate::infallible_use::{UseClone, UseFun};
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
+use crate::{option::ParOptIterCore, option_use::ParUseOpt};
 
 pub trait ParOptIter: Sized + ParOptIterCore {
     // configuration
@@ -19,6 +21,52 @@ pub trait ParOptIter: Sized + ParOptIterCore {
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
     fn iteration_order(self, collect: IterationOrder) -> Self;
+
+    // kind transformations
+
+    fn using<U, F>(
+        self,
+        f: F,
+    ) -> ParUseOpt<
+        UseFun<U, F>,
+        Self::Input,
+        Self::M,
+        IdUse<Self::Xap1, U>,
+        IdUse<Self::Xap2, U>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        F: Fn(usize) -> U + Sync,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseFun::new(f);
+        ParUseOpt::new(u, iter, x1, x2, exe, params)
+    }
+
+    fn using_clone<U>(
+        self,
+        u: U,
+    ) -> ParUseOpt<
+        UseClone<U>,
+        Self::Input,
+        Self::M,
+        IdUse<Self::Xap1, U>,
+        IdUse<Self::Xap2, U>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        U: Clone + Send,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseClone::new(u);
+        ParUseOpt::new(u, iter, x1, x2, exe, params)
+    }
 
     // transformations
 
