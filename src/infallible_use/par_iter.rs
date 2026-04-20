@@ -1,6 +1,3 @@
-use orx_concurrent_iter::ConcurrentIter;
-
-use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{ParUseIterCore, XapUse};
@@ -11,6 +8,7 @@ use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{infallible_use::Use, runner::ParRunner};
+use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParUseIter: Sized + ParUseIterCore {
     // configuration

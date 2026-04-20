@@ -64,6 +64,8 @@ where
 
     type Use = U;
 
+    type U = U::Item;
+
     type Input = I;
 
     type Xap = X;

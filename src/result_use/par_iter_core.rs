@@ -13,7 +13,9 @@ pub trait ParUseResIterCore {
 
     type Runner: ParRunner;
 
-    type Use: Use;
+    type U;
+
+    type Use: Use<Item = Self::U>;
 
     type Input: ConcurrentIter;
 
