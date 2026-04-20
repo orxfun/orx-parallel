@@ -74,6 +74,8 @@ where
 
     type Runner = R;
 
+    type U = U::Item;
+
     type Use = U;
 
     type Input = I;
