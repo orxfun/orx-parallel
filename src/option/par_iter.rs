@@ -1,7 +1,9 @@
+use crate::infallible::Xap;
+use crate::option::ParOpt;
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
-use crate::sizes::SizePair;
+use crate::sizes::{Size, SizePair};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 
 pub trait ParOptIter: Sized {
