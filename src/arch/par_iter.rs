@@ -652,7 +652,7 @@ where
     /// let result_doubled: Result<Vec<i32>, _> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())  // ParIter with Item=Result<i32, ParseIntError>
-    ///     .into_fallible_result()     // ParIterResult with Item=i32 and Err=ParseIntError
+    ///     .into_into_fallible()     // ParIterResult with Item=i32 and Err=ParseIntError
     ///     .map(|x| x * 2)             // methods focus on the success path with Item=i32
     ///     .collect();                 // methods return Result<_, Err>
     ///                                 // where the Ok variant depends on the computation
@@ -664,13 +664,13 @@ where
     /// let result_doubled: Result<Vec<i32>, _> = ["1", "x!", "3"]
     ///     .into_par()
     ///     .map(|x| x.parse::<i32>())
-    ///     .into_fallible_result()
+    ///     .into_into_fallible()
     ///     .map(|x| x * 2)
     ///     .collect();
     ///
     /// assert!(result_doubled.is_err());
     /// ```
-    fn into_fallible_result<T, E>(self) -> impl ParIterResult<R, Item = T, Err = E>
+    fn into_into_fallible<T, E>(self) -> impl ParIterResult<R, Item = T, Err = E>
     where
         Self::Item: IntoResult<T, E>;
 
@@ -720,7 +720,7 @@ where
     {
         ParOption::new(
             self.map(|x| x.into_result_with_unit_err())
-                .into_fallible_result(),
+                .into_into_fallible(),
         )
     }
 

@@ -1,6 +1,7 @@
 use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
 use crate::option::ParOpt;
+use crate::result::ParRes;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
@@ -42,6 +43,24 @@ pub trait ParIter: Sized + ParIterCore {
         let (iter, xap, exe, params) = self.destruct();
         let x = ParOpt::new(iter, xap, Id::new(), exe, params);
         x
+    }
+
+    fn into_fallible<T, E>(
+        self,
+    ) -> ParRes<
+        Self::Input,
+        T,
+        E,
+        Self::Xap,
+        Id<T>,
+        <<Self::Xap as Xap>::Size as Size>::IntoPair,
+        Self::Runner,
+    >
+    where
+        Self::Xap: Xap<O = Result<T, E>>,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        ParRes::new(iter, xap, Id::new(), exe, params)
     }
 
     // transformations

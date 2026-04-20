@@ -1,4 +1,4 @@
-use crate::computational_variants::fallible_result::ParXapResult;
+use crate::computational_variants::into_fallible::ParXapResult;
 use crate::executor::parallel_compute as prc;
 use crate::generic_values::TransformableValues;
 use crate::generic_values::runner_results::Infallible;
@@ -187,7 +187,7 @@ where
         ParXap::new(orchestrator, params, iter, x1)
     }
 
-    fn into_fallible_result<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
+    fn into_into_fallible<Out, Err>(self) -> impl ParIterResult<R, Item = Out, Err = Err>
     where
         Self::Item: IntoResult<Out, Err>,
     {

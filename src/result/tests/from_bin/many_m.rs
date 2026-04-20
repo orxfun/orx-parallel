@@ -18,7 +18,7 @@ fn many_m_find_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -37,7 +37,7 @@ fn many_m_find_any_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -57,7 +57,7 @@ fn many_m_reduce_ok() {
             true => None,
             false => Some(Ok(x)),
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -82,7 +82,7 @@ fn many_m_reduce_err() {
                 false => Err(vec!['a']),
             }),
         })
-        .fallible_result()
+        .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| (a + i).to_string())
@@ -122,7 +122,7 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -136,7 +136,7 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                 true => None,
                 false => Some(Ok(x)),
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -161,7 +161,7 @@ fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())
@@ -178,7 +178,7 @@ fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order
                     false => Err(vec!['a']),
                 }),
             })
-            .fallible_result()
+            .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| (a + i).to_string())

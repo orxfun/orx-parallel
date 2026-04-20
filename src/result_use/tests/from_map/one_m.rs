@@ -14,7 +14,7 @@ fn one_m_find_ok() {
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .map(|u, x| {
             u.mutate();
@@ -30,7 +30,7 @@ fn one_m_find_any_ok() {
     let result = inputs
         .into_par()
         .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
-        .fallible_result()
+        .into_fallible()
         .using_clone(UseValue::new(42))
         .map(|u, x| {
             u.mutate();
@@ -51,7 +51,7 @@ fn one_m_reduce_ok() {
             u.mutate();
             Ok(x)
         })
-        .fallible_result()
+        .into_fallible()
         .map(|u, x| {
             u.mutate();
             x.parse::<u64>().unwrap()
@@ -79,7 +79,7 @@ fn one_m_reduce_err() {
                 false => Err(vec!['a']),
             }
         })
-        .fallible_result()
+        .into_fallible()
         .map(|u, x| {
             u.mutate();
             x.parse::<u64>().unwrap()
@@ -115,7 +115,7 @@ fn one_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 u.mutate();
                 Ok(x)
             })
-            .fallible_result()
+            .into_fallible()
             .map(|u, x| {
                 u.mutate();
                 x.parse::<u64>().unwrap()
@@ -129,7 +129,7 @@ fn one_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 u.mutate();
                 Ok(x)
             })
-            .fallible_result()
+            .into_fallible()
             .map(|u, x| {
                 u.mutate();
                 x.parse::<u64>().unwrap()
@@ -154,7 +154,7 @@ fn one_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => Err(vec!['a']),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .map(|u, x| {
                 u.mutate();
                 x.parse::<u64>().unwrap()
@@ -171,7 +171,7 @@ fn one_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => Err(vec!['a']),
                 }
             })
-            .fallible_result()
+            .into_fallible()
             .map(|u, x| {
                 u.mutate();
                 x.parse::<u64>().unwrap()
