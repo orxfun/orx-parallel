@@ -1,5 +1,4 @@
-use crate::infallible::Par;
-use crate::infallible::Xap;
+use crate::infallible::{Par, ParIterDestruct, Xap};
 use crate::infallible_use::ParUse;
 use crate::infallible_use::SizeInfUse;
 use crate::infallible_use::UseClone;

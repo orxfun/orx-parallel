@@ -3,7 +3,7 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
-use crate::infallible::{Par, Xap};
+use crate::infallible::{Par, ParIterDestruct, Xap};
 use crate::runner::ParRunner;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
