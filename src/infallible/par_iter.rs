@@ -1,6 +1,10 @@
+use crate::infallible::Xap;
+use crate::infallible::xap_variants::Id;
+use crate::option::ParOpt;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
+use crate::sizes::Size;
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOptIter};
 use crate::{infallible::par_iter_dtor::ParIterDestruct, runner::ParRunner};
 
 pub trait ParIter: Sized + ParIterDestruct {
@@ -20,6 +24,22 @@ pub trait ParIter: Sized + ParIterDestruct {
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
     fn iteration_order(self, collect: IterationOrder) -> Self;
+
+    // kind transformations
+
+    fn into_optional<T>(
+        self,
+    ) -> impl ParOptIter<
+        Runner = Self::Runner,
+        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
+        Item = T,
+    >
+    where
+        Self::Xap: Xap<O = Option<T>>,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        ParOpt::new(iter, xap, Id::new(), exe, params)
+    }
 
     // transformations
 
