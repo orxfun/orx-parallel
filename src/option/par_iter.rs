@@ -22,23 +22,23 @@ pub trait ParOptIter: Sized + ParOptIterCore {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Q>
+    fn map<Q, H>(self, h: H) -> impl ParOptIter<Item = Q>
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn inspect<H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Self::Item>
+    fn inspect<H>(self, h: H) -> impl ParOptIter<Item = Self::Item>
     where
         H: Fn(&Self::Item) + Copy + Send;
 
-    fn filter<H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Self::Item>
+    fn filter<H>(self, h: H) -> impl ParOptIter<Item = Self::Item>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
-    fn filter_map<Q, H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Q>
+    fn filter_map<Q, H>(self, h: H) -> impl ParOptIter<Item = Q>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
-    fn flat_map<V, H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = V::Item>
+    fn flat_map<V, H>(self, h: H) -> impl ParOptIter<Item = V::Item>
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
