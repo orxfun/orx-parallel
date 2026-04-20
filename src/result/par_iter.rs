@@ -1,4 +1,7 @@
+use crate::infallible_use::xap_variants::IdUse;
+use crate::infallible_use::{UseClone, UseFun};
 use crate::result::par_iter_core::ParResIterCore;
+use crate::result_use::ParUseRes;
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
@@ -23,6 +26,54 @@ pub trait ParResIter: Sized + ParResIterCore {
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
     fn iteration_order(self, collect: IterationOrder) -> Self;
+
+    // kind transformations
+
+    fn using<U, F>(
+        self,
+        f: F,
+    ) -> ParUseRes<
+        UseFun<U, F>,
+        Self::Input,
+        Self::M,
+        Self::Error,
+        IdUse<Self::Xap1, U>,
+        IdUse<Self::Xap2, U>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        F: Fn(usize) -> U + Sync,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseFun::new(f);
+        ParUseRes::new(u, iter, x1, x2, exe, params)
+    }
+
+    fn using_clone<U>(
+        self,
+        u: U,
+    ) -> ParUseRes<
+        UseClone<U>,
+        Self::Input,
+        Self::M,
+        Self::Error,
+        IdUse<Self::Xap1, U>,
+        IdUse<Self::Xap2, U>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        U: Clone + Send,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseClone::new(u);
+        ParUseRes::new(u, iter, x1, x2, exe, params)
+    }
 
     // transformations
 
