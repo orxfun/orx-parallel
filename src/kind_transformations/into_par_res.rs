@@ -16,7 +16,7 @@ pub trait IntoParResIter: ParIter<Item = Result<Self::Success, Self::Error>> {
         self,
     ) -> impl ParResIter<
         Runner = Self::Runner,
-        Size = <Self::Size as Size>::IntoPair,
+        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
         Item = Self::Success,
         Error = Self::Error,
     >;

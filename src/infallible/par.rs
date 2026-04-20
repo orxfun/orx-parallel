@@ -54,9 +54,15 @@ where
 {
     type Runner = R;
 
-    type Size = X::Size;
-
     type Item = X::O;
+
+    type Input = I;
+
+    type Xap = X;
+
+    fn destructor(self) -> (Self::Input, Self::Xap, Self::Runner, crate::Params) {
+        (self.iter, self.xap, self.exe, self.params)
+    }
 
     // configuration
 
