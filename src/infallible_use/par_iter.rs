@@ -1,6 +1,14 @@
-use crate::infallible_use::ParUseIterCore;
+use orx_concurrent_iter::ConcurrentIter;
+
+use crate::infallible::Xap;
+use crate::infallible::xap_variants::Id;
+use crate::infallible_use::xap_variants::IdUse;
+use crate::infallible_use::{ParUseIterCore, XapUse};
+use crate::option_use::ParUseOpt;
+use crate::result_use::ParUseRes;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
+use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{infallible_use::Use, runner::ParRunner};
 
@@ -22,6 +30,53 @@ pub trait ParUseIter: Sized + ParUseIterCore {
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
     fn iteration_order(self, collect: IterationOrder) -> Self;
+
+    // kind transformations
+
+    fn into_optional<T>(
+        self,
+    ) -> ParUseOpt<
+        Self::Use,
+        Self::Input,
+        T,
+        Self::Xap,
+        IdUse<Id<T>, <Self::Use as Use>::Item>,
+        <<Self::Xap as XapUse>::Size as Size>::IntoPair,
+        Self::Runner,
+    >
+    where
+        Self::Xap: XapUse<
+                U = <Self::Use as Use>::Item,
+                I = <Self::Input as ConcurrentIter>::Item,
+                O = Option<T>,
+            >,
+    {
+        let (u, iter, xap, exe, params) = self.destruct();
+        ParUseOpt::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
+    }
+
+    fn into_fallible<T, E>(
+        self,
+    ) -> ParUseRes<
+        Self::Use,
+        Self::Input,
+        T,
+        E,
+        Self::Xap,
+        IdUse<Id<T>, <Self::Use as Use>::Item>,
+        <<Self::Xap as XapUse>::Size as Size>::IntoPair,
+        Self::Runner,
+    >
+    where
+        Self::Xap: XapUse<
+                U = <Self::Use as Use>::Item,
+                I = <Self::Input as ConcurrentIter>::Item,
+                O = Result<T, E>,
+            >,
+    {
+        let (u, iter, xap, exe, params) = self.destruct();
+        ParUseRes::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
+    }
 
     // transformations
 
