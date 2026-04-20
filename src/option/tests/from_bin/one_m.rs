@@ -16,7 +16,7 @@ fn one_m_find_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .map(|x| x.parse::<u64>().unwrap())
         .first();
     assert_eq!(result, Some(Some(0)));
@@ -31,7 +31,7 @@ fn one_m_find_any_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .map(|x| x.parse::<u64>().unwrap())
         .iteration_order(IterationOrder::Arbitrary)
         .first();
@@ -47,7 +47,7 @@ fn one_m_reduce_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .map(|x| x.parse::<u64>().unwrap())
         .reduce(|a, b| match a < b {
             true => b,
@@ -68,7 +68,7 @@ fn one_m_reduce_err() {
                 false => None,
             }),
         })
-        .fallible_option()
+        .into_optional()
         .map(|x| x.parse::<u64>().unwrap())
         .reduce(|a, b| match a < b {
             true => b,
@@ -100,7 +100,7 @@ fn one_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
             .collect_into(c),
@@ -110,7 +110,7 @@ fn one_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
             .collect(),
@@ -131,7 +131,7 @@ fn one_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
             .collect_into(c),
@@ -144,7 +144,7 @@ fn one_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .map(|x| x.parse::<u64>().unwrap())
             .iteration_order(order)
             .collect(),

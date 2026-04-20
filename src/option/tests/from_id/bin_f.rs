@@ -13,7 +13,7 @@ fn bin_f_find_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .first();
@@ -25,7 +25,7 @@ fn bin_f_find_any_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .iteration_order(IterationOrder::Arbitrary)
@@ -38,7 +38,7 @@ fn bin_f_reduce_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .reduce(|a, b| match a < b {
@@ -53,7 +53,7 @@ fn bin_f_reduce_err() {
     let inputs = inputs_opt(N, Some(42));
     let result = inputs
         .into_par()
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() > 1)
         .filter(|x| x.len() < 4)
         .reduce(|a, b| match a < b {
@@ -79,14 +79,14 @@ fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(c) => inputs_opt(N, None)
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
             .collect_into(c),
         None => inputs_opt(N, None)
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
@@ -105,14 +105,14 @@ fn bin_f_collect_err<C: ParCollectIntoTest<String>>(
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(c) => inputs_opt(N, Some(42))
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)
             .collect_into(c),
         None => inputs_opt(N, Some(42))
             .into_par()
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() > 1)
             .filter(|x| x.len() < 4)
             .iteration_order(order)

@@ -10,7 +10,7 @@ fn input<O: FromIterator<String>>(n: usize) -> O {
 }
 
 #[test_matrix(NT, CHUNK)]
-fn fallible_option_collect_empty(nt: &[usize], chunk: &[usize]) {
+fn into_optional_collect_empty(nt: &[usize], chunk: &[usize]) {
     let test = |_, nt, chunk| {
         let input = || input::<Vec<_>>(0);
 
@@ -21,7 +21,7 @@ fn fallible_option_collect_empty(nt: &[usize], chunk: &[usize]) {
             .into_par()
             .num_threads(nt)
             .chunk_size(chunk)
-            .into_fallible_option();
+            .into_into_optional();
         let output: Option<Vec<_>> = par.collect();
 
         assert_eq!(output, Some(Vec::new()));
@@ -30,7 +30,7 @@ fn fallible_option_collect_empty(nt: &[usize], chunk: &[usize]) {
 }
 
 #[test_matrix(N, NT, CHUNK)]
-fn fallible_option_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
+fn into_optional_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = || input::<Vec<_>>(n);
 
@@ -39,7 +39,7 @@ fn fallible_option_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[u
             .num_threads(nt)
             .chunk_size(chunk)
             .map(|x| (x != "50").then_some(x))
-            .into_fallible_option()
+            .into_into_optional()
             .filter(|x| !x.ends_with('9'))
             .flat_map(|x| [format!("{x}?"), x])
             .map(|x| format!("{x}!"));
@@ -51,7 +51,7 @@ fn fallible_option_collect_partial_success(n: &[usize], nt: &[usize], chunk: &[u
 }
 
 #[test_matrix(N, NT, CHUNK)]
-fn fallible_option_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
+fn into_optional_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[usize]) {
     let test = |n, nt, chunk| {
         let input = || input::<Vec<_>>(n);
 
@@ -68,7 +68,7 @@ fn fallible_option_collect_complete_success(n: &[usize], nt: &[usize], chunk: &[
             .num_threads(nt)
             .chunk_size(chunk)
             .map(|x| (x != "xyz").then_some(x))
-            .into_fallible_option()
+            .into_into_optional()
             .filter(|x| !x.ends_with('9'))
             .flat_map(|x| [format!("{x}?"), x])
             .map(|x| format!("{x}!"))

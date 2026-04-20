@@ -16,7 +16,7 @@ fn bin_x_find_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -35,7 +35,7 @@ fn bin_x_find_any_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -55,7 +55,7 @@ fn bin_x_reduce_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -80,7 +80,7 @@ fn bin_x_reduce_err() {
                 false => None,
             }),
         })
-        .fallible_option()
+        .into_optional()
         .filter(|x| x.len() < 4)
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -120,7 +120,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -134,7 +134,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -159,7 +159,7 @@ fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -176,7 +176,7 @@ fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .filter(|x| x.len() < 4)
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();

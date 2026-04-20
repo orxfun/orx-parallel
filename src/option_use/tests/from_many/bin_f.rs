@@ -14,7 +14,7 @@ fn bin_f_find_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -34,7 +34,7 @@ fn bin_f_find_any_ok() {
     let result = inputs
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-        .fallible_option()
+        .into_optional()
         .using_clone(UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
@@ -59,7 +59,7 @@ fn bin_f_reduce_ok() {
             u.mutate();
             [x.clone(), x.clone(), x].map(Some)
         })
-        .fallible_option()
+        .into_optional()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -91,7 +91,7 @@ fn bin_f_reduce_err() {
                 false => [None, None, None],
             }
         })
-        .fallible_option()
+        .into_optional()
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -132,7 +132,7 @@ fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 [x.clone(), x.clone(), x].map(Some)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -150,7 +150,7 @@ fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
                 u.mutate();
                 [x.clone(), x.clone(), x].map(Some)
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -183,7 +183,7 @@ fn bin_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => [None, None, None],
                 }
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1
@@ -204,7 +204,7 @@ fn bin_f_collect_err<C: ParCollectIntoTest<String>>(
                     false => [None, None, None],
                 }
             })
-            .fallible_option()
+            .into_optional()
             .filter(|u, x| {
                 u.mutate();
                 x.len() > 1

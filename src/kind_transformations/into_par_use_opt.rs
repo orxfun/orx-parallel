@@ -24,7 +24,7 @@ where
     <X::Size as Size>::IntoPair: SizePairUseOpt,
     R: ParRunner,
 {
-    pub fn fallible_option(
+    pub fn into_optional(
         self,
     ) -> ParUseOpt<U, I, O, X, IdUse<Id<O>, U::Item>, <X::Size as Size>::IntoPair, R> {
         let (u, iter, xap, exe, params) = self.destruct();

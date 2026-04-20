@@ -16,7 +16,7 @@ fn one_x_find_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)
@@ -34,7 +34,7 @@ fn one_x_find_any_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)
@@ -53,7 +53,7 @@ fn one_x_reduce_ok() {
             true => None,
             false => Some(Some(x)),
         })
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)
@@ -77,7 +77,7 @@ fn one_x_reduce_err() {
                 false => None,
             }),
         })
-        .fallible_option()
+        .into_optional()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
             (0..5).map(move |i| a + i)
@@ -115,7 +115,7 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| a + i)
@@ -128,7 +128,7 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 true => None,
                 false => Some(Some(x)),
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| a + i)
@@ -152,7 +152,7 @@ fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| a + i)
@@ -168,7 +168,7 @@ fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                     false => None,
                 }),
             })
-            .fallible_option()
+            .into_optional()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
                 (0..5).map(move |i| a + i)

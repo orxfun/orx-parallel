@@ -60,8 +60,8 @@ fn use_traits_first() {
 #[test]
 fn use_traits_into_option() {
     let par = (0..10).par().map(|x| x.to_string()).map(Some);
-    let par = par.fallible_option();
+    let par = par.into_optional();
 
     // let par = par(42).map(Some);
-    // let par = par.fallible_option();
+    // let par = par.into_optional();
 }
