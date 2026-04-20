@@ -229,3 +229,12 @@ fn kind_use() {
         assert_eq!(result, 42);
     }
 }
+
+// enumerate
+
+#[test]
+fn kind_enumerate() {
+    let n = 42;
+    let par = (0..n).par().map(|x| x.to_string());
+    let par = par.enumerate();
+}
