@@ -1,18 +1,11 @@
+use crate::result::par_iter_core::ParResIterCore;
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 
-pub trait ParResIter: Sized {
-    type Runner: ParRunner;
-
-    type Size: SizePair;
-
-    type Item;
-
-    type Error;
-
+pub trait ParResIter: Sized + ParResIterCore {
     // configuration
 
     fn runner<Q: ParRunner>(
