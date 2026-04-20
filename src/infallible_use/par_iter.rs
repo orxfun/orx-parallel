@@ -1,15 +1,10 @@
+use crate::infallible_use::ParUseIterCore;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{infallible_use::Use, runner::ParRunner};
 
-pub trait ParUseIter: Sized {
-    type Runner: ParRunner;
-
-    type Use: Use;
-
-    type Item;
-
+pub trait ParUseIter: Sized + ParUseIterCore {
     // configuration
 
     fn runner<Q: ParRunner>(

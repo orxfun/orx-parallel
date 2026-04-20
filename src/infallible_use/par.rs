@@ -5,7 +5,7 @@ use crate::infallible_use::par_iter::ParUseIter;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
-use crate::infallible_use::{XapUse, XapUseEnumByInput};
+use crate::infallible_use::{ParUseIterCore, XapUse, XapUseEnumByInput};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::{ChunkSize, NumThreads, ParCollectInto};
@@ -55,6 +55,28 @@ where
     }
 }
 
+impl<U, I, X, R> ParUseIterCore for ParUse<U, I, X, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
+    type Item = X::O;
+
+    type Runner = R;
+
+    type Use = U;
+
+    type Input = I;
+
+    type Xap = X;
+
+    fn destruct(self) -> (Self::Use, Self::Input, Self::Xap, Self::Runner, Params) {
+        todo!()
+    }
+}
+
 impl<U, I, X, R> ParUseIter for ParUse<U, I, X, R>
 where
     U: Use,
@@ -62,12 +84,6 @@ where
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
 {
-    type Runner = R;
-
-    type Item = X::O;
-
-    type Use = U;
-
     // configuration
 
     fn runner<Q: ParRunner>(self, runner: Q) -> ParUse<U, I, X, Q> {
