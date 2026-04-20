@@ -4,6 +4,7 @@ use crate::ParCollectInto;
 use crate::infallible_use::fun::{FnCloned, FnCopied};
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Use, XapUse};
 use crate::option_use::par_iter::ParUseOptIter;
+use crate::option_use::par_iter_core::ParUseOptIterCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
 use crate::option_use::size_pairs::SizePairUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -56,8 +57,44 @@ where
     {
         ParUseOpt::new(self.using, self.iter, self.x1, x2, self.exe, self.params)
     }
+}
 
-    pub(crate) fn destruct(self) -> (U, I, X1, X2, R, S, Params) {
+impl<U, I, M, X1, X2, S, R> ParUseOptIterCore for ParUseOpt<U, I, M, X1, X2, S, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = X2::O;
+
+    type Runner = R;
+
+    type Use = U;
+
+    type Input = I;
+
+    type M = M;
+
+    type Xap1 = X1;
+
+    type Xap2 = X2;
+
+    type Size = S;
+
+    fn destruct(
+        self,
+    ) -> (
+        Self::Use,
+        Self::Input,
+        Self::Xap1,
+        Self::Xap2,
+        Self::Runner,
+        Self::Size,
+        Params,
+    ) {
         (
             self.using,
             self.iter,
@@ -79,14 +116,6 @@ where
     S: SizePairUseOpt<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    type Runner = R;
-
-    type Size = S;
-
-    type Use = U;
-
-    type Item = X2::O;
-
     fn runner<Q: ParRunner>(self, runner: Q) -> ParUseOpt<U, I, M, X1, X2, S, Q> {
         let (using, iter, x1, x2, _, s, params) = self.destruct();
         ParUseOpt {
