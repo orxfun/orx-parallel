@@ -1,21 +1,12 @@
 use crate::infallible_use::Use;
+use crate::result_use::ParUseResIterCore;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{result_use::SizePairUseRes, runner::ParRunner};
 
-pub trait ParUseResIter: Sized {
-    type Runner: ParRunner;
-
-    type Use: Use;
-
-    type Size: SizePairUseRes;
-
-    type Item;
-
-    type Error;
-
+pub trait ParUseResIter: Sized + ParUseResIterCore {
     // configuration
 
     fn runner<Q: ParRunner>(
