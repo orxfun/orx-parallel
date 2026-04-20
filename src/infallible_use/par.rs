@@ -1,6 +1,6 @@
 #![allow(refining_impl_trait)]
 
-use crate::infallible_use::fun::{FnCloned, FnCopied};
+use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::par_iter::ParUseIter;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
@@ -221,9 +221,9 @@ where
     X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
     R: ParRunner,
 {
-    pub fn copied(self) -> ParUse<U, I, MappedOf<X, FnCopied<'a, U::Item, O>>, R> {
+    pub fn copied(self) -> ParUse<U, I, MappedOf<X, UFnCopied<'a, U::Item, O>>, R> {
         let (u, iter, xap, exe, params) = self.destruct();
-        ParUse::new(u, iter, xap.mapped(FnCopied::new()), exe, params)
+        ParUse::new(u, iter, xap.mapped(UFnCopied::new()), exe, params)
     }
 }
 
@@ -234,9 +234,9 @@ where
     X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
     R: ParRunner,
 {
-    pub fn cloned(self) -> ParUse<U, I, MappedOf<X, FnCloned<'a, U::Item, O>>, R> {
+    pub fn cloned(self) -> ParUse<U, I, MappedOf<X, UFnCloned<'a, U::Item, O>>, R> {
         let (u, iter, xap, exe, params) = self.destruct();
-        ParUse::new(u, iter, xap.mapped(FnCloned::new()), exe, params)
+        ParUse::new(u, iter, xap.mapped(UFnCloned::new()), exe, params)
     }
 }
 

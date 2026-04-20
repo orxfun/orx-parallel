@@ -1,4 +1,4 @@
-pub trait FlatMap: Copy + Send {
+pub trait UFlatMap: Copy + Send {
     type I;
 
     type O: IntoIterator;

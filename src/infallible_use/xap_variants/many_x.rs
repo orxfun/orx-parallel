@@ -1,27 +1,27 @@
 use crate::infallible_use::XapUse;
-use crate::infallible_use::fun::FlatMap;
+use crate::infallible_use::fun::UFlatMap;
 use crate::sizes::Many;
 
-pub struct ManyX<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> {
+pub struct UManyX<X: XapUse<Size = Many>, G: UFlatMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Clone for ManyX<X, G> {
+impl<X: XapUse<Size = Many>, G: UFlatMap<U = X::U, I = X::O>> Clone for UManyX<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> Copy for ManyX<X, G> {}
+impl<X: XapUse<Size = Many>, G: UFlatMap<U = X::U, I = X::O>> Copy for UManyX<X, G> {}
 
-impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> ManyX<X, G> {
+impl<X: XapUse<Size = Many>, G: UFlatMap<U = X::U, I = X::O>> UManyX<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> XapUse for ManyX<X, G> {
+impl<X: XapUse<Size = Many>, G: UFlatMap<U = X::U, I = X::O>> XapUse for UManyX<X, G> {
     type U = X::U;
 
     type I = X::I;
@@ -30,21 +30,21 @@ impl<X: XapUse<Size = Many>, G: FlatMap<U = X::U, I = X::O>> XapUse for ManyX<X,
 
     type Size = Many;
 
-    type Values = IterManyX<<X::Values as IntoIterator>::IntoIter, G>;
+    type Values = UIterManyX<<X::Values as IntoIterator>::IntoIter, G>;
 
     fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
         let i = self.x.xap_use(u, i).into_iter();
         let (g, inner) = (self.g, None);
-        IterManyX { u, i, g, inner }
+        UIterManyX { u, i, g, inner }
     }
 }
 
 // iter
 
-pub struct IterManyX<I, G>
+pub struct UIterManyX<I, G>
 where
     I: Iterator,
-    G: FlatMap<I = I::Item>,
+    G: UFlatMap<I = I::Item>,
 {
     u: *mut G::U,
     i: I,
@@ -52,10 +52,10 @@ where
     inner: Option<<G::O as IntoIterator>::IntoIter>,
 }
 
-impl<I, G> Iterator for IterManyX<I, G>
+impl<I, G> Iterator for UIterManyX<I, G>
 where
     I: Iterator,
-    G: FlatMap<I = I::Item>,
+    G: UFlatMap<I = I::Item>,
 {
     type Item = <G::O as IntoIterator>::Item;
 

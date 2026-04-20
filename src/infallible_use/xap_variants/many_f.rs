@@ -1,60 +1,60 @@
 use crate::infallible_use::XapUse;
-use crate::infallible_use::fun::FilterMap;
+use crate::infallible_use::fun::UFilterMap;
 use crate::sizes::Many;
 use core::iter::FusedIterator;
 
-pub struct ManyF<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> {
+pub struct UManyF<X: XapUse<Size = Many>, G: UFilterMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> Clone for ManyF<X, G> {
+impl<X: XapUse<Size = Many>, G: UFilterMap<U = X::U, I = X::O>> Clone for UManyF<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> Copy for ManyF<X, G> {}
+impl<X: XapUse<Size = Many>, G: UFilterMap<U = X::U, I = X::O>> Copy for UManyF<X, G> {}
 
-impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> ManyF<X, G> {
+impl<X: XapUse<Size = Many>, G: UFilterMap<U = X::U, I = X::O>> UManyF<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: XapUse<Size = Many>, G: FilterMap<U = X::U, I = X::O>> XapUse for ManyF<X, G> {
+impl<X: XapUse<Size = Many>, G: UFilterMap<U = X::U, I = X::O>> XapUse for UManyF<X, G> {
     type I = X::I;
 
     type O = G::O;
 
     type Size = Many;
 
-    type Values = IterManyF<<X::Values as IntoIterator>::IntoIter, G>;
+    type Values = UIterManyF<<X::Values as IntoIterator>::IntoIter, G>;
 
     type U = X::U;
 
     fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
         let i = self.x.xap_use(u, i).into_iter();
-        IterManyF { u, i, g: self.g }
+        UIterManyF { u, i, g: self.g }
     }
 }
 
 // iter
 
-pub struct IterManyF<I, G>
+pub struct UIterManyF<I, G>
 where
     I: Iterator,
-    G: FilterMap<I = I::Item>,
+    G: UFilterMap<I = I::Item>,
 {
     u: *mut G::U,
     i: I,
     g: G,
 }
 
-impl<I, G> Iterator for IterManyF<I, G>
+impl<I, G> Iterator for UIterManyF<I, G>
 where
     I: Iterator,
-    G: FilterMap<I = I::Item>,
+    G: UFilterMap<I = I::Item>,
 {
     type Item = G::O;
 
@@ -100,17 +100,17 @@ where
     }
 }
 
-impl<I, G> FusedIterator for IterManyF<I, G>
+impl<I, G> FusedIterator for UIterManyF<I, G>
 where
     I: FusedIterator,
-    G: FilterMap<I = I::Item>,
+    G: UFilterMap<I = I::Item>,
 {
 }
 
-impl<I, G> DoubleEndedIterator for IterManyF<I, G>
+impl<I, G> DoubleEndedIterator for UIterManyF<I, G>
 where
     I: DoubleEndedIterator,
-    G: FilterMap<I = I::Item>,
+    G: UFilterMap<I = I::Item>,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         loop {

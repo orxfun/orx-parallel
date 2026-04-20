@@ -1,7 +1,6 @@
 use crate::infallible::Xap;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::ParUse;
-use crate::infallible_use::SizeInfUse;
 use crate::infallible_use::Use;
 use crate::infallible_use::UseClone;
 use crate::infallible_use::UseFun;
@@ -39,8 +38,6 @@ where
     X2: Xap<I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
-    X1::Size: SizeInfUse,
-    X2::Size: SizeInfUse,
 {
     pub fn using<U, F>(
         self,

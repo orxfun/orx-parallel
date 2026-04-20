@@ -2,6 +2,6 @@ mod basic;
 mod filter;
 mod fn_trait;
 
-pub use basic::FnFilMap;
-pub use filter::FnFil;
-pub use fn_trait::FilterMap;
+pub use basic::UFnFilMap;
+pub use filter::UFnFil;
+pub use fn_trait::UFilterMap;
