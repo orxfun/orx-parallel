@@ -11,17 +11,12 @@ pub trait ParResIter: Sized + ParResIterCore {
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParResIter<Runner = Q, Size = Self::Size, Item = Self::Item, Error = Self::Error>;
+    ) -> impl ParResIter<Runner = Q, Item = Self::Item, Error = Self::Error>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParResIter<
-        Runner = WithDiagnostics<Self::Runner>,
-        Size = Self::Size,
-        Item = Self::Item,
-        Error = Self::Error,
-    >;
+    ) -> impl ParResIter<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item, Error = Self::Error>;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -31,55 +26,25 @@ pub trait ParResIter: Sized + ParResIterCore {
 
     // transformations
 
-    fn map<Q, H>(
-        self,
-        h: H,
-    ) -> impl ParResIter<Runner = Self::Runner, Size = Self::Size, Item = Q, Error = Self::Error>
+    fn map<Q, H>(self, h: H) -> impl ParResIter<Item = Q, Error = Self::Error>
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn inspect<H>(
-        self,
-        h: H,
-    ) -> impl ParResIter<Runner = Self::Runner, Size = Self::Size, Item = Self::Item, Error = Self::Error>
+    fn inspect<H>(self, h: H) -> impl ParResIter<Item = Self::Item, Error = Self::Error>
     where
         H: Fn(&Self::Item) + Copy + Send;
 
-    fn filter<H>(
-        self,
-        h: H,
-    ) -> impl ParResIter<
-        Runner = Self::Runner,
-        Size = <Self::Size as SizePair>::ThenBin,
-        Item = Self::Item,
-        Error = Self::Error,
-    >
+    fn filter<H>(self, h: H) -> impl ParResIter<Item = Self::Item, Error = Self::Error>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send,
         <Self::Size as SizePair>::ThenBin: SizePair;
 
-    fn filter_map<Q, H>(
-        self,
-        h: H,
-    ) -> impl ParResIter<
-        Runner = Self::Runner,
-        Size = <Self::Size as SizePair>::ThenBin,
-        Item = Q,
-        Error = Self::Error,
-    >
+    fn filter_map<Q, H>(self, h: H) -> impl ParResIter<Item = Q, Error = Self::Error>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send,
         <Self::Size as SizePair>::ThenBin: SizePair;
 
-    fn flat_map<V, H>(
-        self,
-        h: H,
-    ) -> impl ParResIter<
-        Runner = Self::Runner,
-        Size = <Self::Size as SizePair>::ThenMany,
-        Item = V::Item,
-        Error = Self::Error,
-    >
+    fn flat_map<V, H>(self, h: H) -> impl ParResIter<Item = V::Item, Error = Self::Error>
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send,
