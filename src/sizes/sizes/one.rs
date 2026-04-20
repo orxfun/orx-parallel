@@ -1,6 +1,5 @@
-use crate::infallible::Xap;
-use crate::infallible::fun::*;
-use crate::infallible::xap_variants::*;
+use crate::infallible::{Xap, fun::*, xap_variants::*};
+use crate::infallible_use::{XapUse, fun::*, xap_variants::*};
 use crate::sizes::{OneOne, Size, sizes::Bin};
 
 #[derive(Clone, Copy, Default)]
@@ -95,13 +94,99 @@ impl Size for One {
         X: Xap<Size = Self>,
         M: Map<I = X::O>;
 
-    // transformations - helper
-
     fn mapped<X, M>(x: X, m: M) -> Self::Mapped<X, M>
     where
         X: Xap<Size = Self>,
         M: Map<I = X::O>,
     {
         OneM::new(x, m)
+    }
+
+    // use transformations
+
+    type UMap<X, Q, H>
+        = UOneM<X, UFnMap<X::U, X::O, Q, H>>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, X::O) -> Q + Copy + Send;
+
+    fn u_map<X, Q, H>(x: X, h: H) -> Self::UMap<X, Q, H>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, X::O) -> Q + Copy + Send,
+    {
+        UOneM::new(x, UFnMap::new(h))
+    }
+
+    type UInspect<X, H>
+        = UOneM<X, UFnIns<X::U, X::O, H>>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, &X::O) + Copy + Send;
+
+    fn u_inspect<X, H>(x: X, h: H) -> Self::UInspect<X, H>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, &X::O) + Copy + Send,
+    {
+        UOneM::new(x, UFnIns::new(h))
+    }
+
+    type UFilter<X, H>
+        = UOneF<X, UFnFil<X::U, X::O, H>>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, &X::O) -> bool + Copy + Send;
+
+    fn u_filter<X, H>(x: X, h: H) -> Self::UFilter<X, H>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, &X::O) -> bool + Copy + Send,
+    {
+        UOneF::new(x, UFnFil::new(h))
+    }
+
+    type UFilterMap<X, Q, H>
+        = UOneF<X, UFnFilMap<X::U, X::O, Q, H>>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, X::O) -> Option<Q> + Copy + Send;
+
+    fn u_filter_map<X, Q, H>(x: X, h: H) -> Self::UFilterMap<X, Q, H>
+    where
+        X: XapUse<Size = Self>,
+        H: Fn(&mut X::U, X::O) -> Option<Q> + Copy + Send,
+    {
+        UOneF::new(x, UFnFilMap::new(h))
+    }
+
+    type UFlatMap<X, V, H>
+        = UOneX<X, UFnFlatMap<X::U, X::O, V, H>>
+    where
+        X: XapUse<Size = Self>,
+        V: IntoIterator,
+        H: Fn(&mut X::U, X::O) -> V + Copy + Send;
+
+    fn u_flat_map<X, V, H>(x: X, h: H) -> Self::UFlatMap<X, V, H>
+    where
+        X: XapUse<Size = Self>,
+        V: IntoIterator,
+        H: Fn(&mut X::U, X::O) -> V + Copy + Send,
+    {
+        UOneX::new(x, UFnFlatMap::new(h))
+    }
+
+    type UMapped<X, M>
+        = UOneM<X, M>
+    where
+        X: XapUse<Size = Self>,
+        M: UMap<U = X::U, I = X::O>;
+
+    fn u_mapped<X, M>(x: X, m: M) -> Self::UMapped<X, M>
+    where
+        X: XapUse<Size = Self>,
+        M: UMap<U = X::U, I = X::O>,
+    {
+        UOneM::new(x, m)
     }
 }

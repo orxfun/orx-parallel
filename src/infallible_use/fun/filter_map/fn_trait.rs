@@ -1,4 +1,4 @@
-pub trait FilterMap: Copy + Send {
+pub trait UFilterMap: Copy + Send {
     type I;
 
     type O;

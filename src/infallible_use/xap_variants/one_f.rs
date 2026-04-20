@@ -1,27 +1,27 @@
-use crate::infallible_use::fun::FilterMap;
+use crate::infallible_use::fun::UFilterMap;
 use crate::infallible_use::{XapUse, XapUseOne};
 use crate::sizes::{Bin, One};
 
-pub struct OneF<X: XapUse<Size = One>, G: FilterMap<U = X::U, I = X::O>> {
+pub struct UOneF<X: XapUse<Size = One>, G: UFilterMap<U = X::U, I = X::O>> {
     x: X,
     g: G,
 }
 
-impl<X: XapUse<Size = One>, G: FilterMap<U = X::U, I = X::O>> Clone for OneF<X, G> {
+impl<X: XapUse<Size = One>, G: UFilterMap<U = X::U, I = X::O>> Clone for UOneF<X, G> {
     fn clone(&self) -> Self {
         Self::new(self.x, self.g)
     }
 }
 
-impl<X: XapUse<Size = One>, G: FilterMap<U = X::U, I = X::O>> Copy for OneF<X, G> {}
+impl<X: XapUse<Size = One>, G: UFilterMap<U = X::U, I = X::O>> Copy for UOneF<X, G> {}
 
-impl<X: XapUse<Size = One>, G: FilterMap<U = X::U, I = X::O>> OneF<X, G> {
+impl<X: XapUse<Size = One>, G: UFilterMap<U = X::U, I = X::O>> UOneF<X, G> {
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
 }
 
-impl<X: XapUse<Size = One>, G: FilterMap<U = X::U, I = X::O>> XapUse for OneF<X, G> {
+impl<X: XapUse<Size = One>, G: UFilterMap<U = X::U, I = X::O>> XapUse for UOneF<X, G> {
     type I = X::I;
 
     type O = G::O;

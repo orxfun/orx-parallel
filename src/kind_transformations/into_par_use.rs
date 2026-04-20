@@ -1,6 +1,5 @@
 use crate::infallible::{Par, ParIterCore, Xap};
 use crate::infallible_use::ParUse;
-use crate::infallible_use::SizeInfUse;
 use crate::infallible_use::UseClone;
 use crate::infallible_use::UseFun;
 use crate::infallible_use::xap_variants::IdUse;
@@ -12,7 +11,6 @@ where
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
     R: ParRunner,
-    X::Size: SizeInfUse,
 {
     pub fn using<U, F>(self, f: F) -> ParUse<UseFun<U, F>, I, IdUse<X, U>, R>
     where

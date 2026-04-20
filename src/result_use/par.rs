@@ -1,7 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
-use crate::infallible_use::fun::{FnCloned, FnCopied};
+use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Use, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result_use::ParUseResIterCore;
@@ -262,9 +262,11 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    pub fn copied(self) -> ParUseRes<U, I, M, E, X1, MappedOf<X2, FnCopied<'a, U::Item, O>>, S, R> {
+    pub fn copied(
+        self,
+    ) -> ParUseRes<U, I, M, E, X1, MappedOf<X2, UFnCopied<'a, U::Item, O>>, S, R> {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
-        ParUseRes::new(u, iter, x1, x2.mapped(FnCopied::new()), exe, params)
+        ParUseRes::new(u, iter, x1, x2.mapped(UFnCopied::new()), exe, params)
     }
 }
 
@@ -278,8 +280,10 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    pub fn cloned(self) -> ParUseRes<U, I, M, E, X1, MappedOf<X2, FnCloned<'a, U::Item, O>>, S, R> {
+    pub fn cloned(
+        self,
+    ) -> ParUseRes<U, I, M, E, X1, MappedOf<X2, UFnCloned<'a, U::Item, O>>, S, R> {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
-        ParUseRes::new(u, iter, x1, x2.mapped(FnCloned::new()), exe, params)
+        ParUseRes::new(u, iter, x1, x2.mapped(UFnCloned::new()), exe, params)
     }
 }
