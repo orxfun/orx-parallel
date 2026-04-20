@@ -51,4 +51,21 @@ pub trait SizePair: Clone + Copy + Send + Default {
     where
         X1: XapUse<O = Option<M>, Size = Self::S1>,
         X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
+
+    // use - result
+
+    type XapUseResResult<M, E, X1, X2>: IntoIterator<Item = Result<X2::O, E>>
+    where
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
+
+    fn xap_use_res<M, E, X1, X2>(
+        u: *mut X1::U,
+        x1: X1,
+        x2: X2,
+        i: X1::I,
+    ) -> Self::XapUseResResult<M, E, X1, X2>
+    where
+        X1: XapUse<O = Result<M, E>, Size = Self::S1>,
+        X2: XapUse<U = X1::U, I = M, Size = Self::S2>;
 }
