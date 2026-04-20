@@ -7,7 +7,7 @@ use crate::infallible_use::UseClone;
 use crate::infallible_use::UseFun;
 use crate::infallible_use::XapUse;
 use crate::infallible_use::xap_variants::IdUse;
-use crate::result::ParRes;
+use crate::result::{ParRes, ParResIterCore};
 use crate::result_use::ParUseRes;
 use crate::result_use::SizePairUseRes;
 use crate::runner::ParRunner;
