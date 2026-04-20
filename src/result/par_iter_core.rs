@@ -12,7 +12,7 @@ pub trait ParResIterCore {
 
     type M;
 
-    type Xap1: Xap<I = <Self::Input as ConcurrentIter>::Item, O = Option<Self::M>>;
+    type Xap1: Xap<I = <Self::Input as ConcurrentIter>::Item, O = Result<Self::M, Self::Error>>;
 
     type Xap2: Xap<I = Self::M, O = Self::Item>;
 

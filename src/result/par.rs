@@ -5,6 +5,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par_iter::ParResIter;
+use crate::result::par_iter_core::ParResIterCore;
 use crate::result::par_runner::ParRunnerRes;
 use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
 use crate::sizes::SizePair;
@@ -52,8 +53,42 @@ where
     {
         ParRes::new(self.iter, self.x1, x2, self.exe, self.params)
     }
+}
 
-    pub(crate) fn destruct(self) -> (I, X1, X2, R, S, Params) {
+impl<I, M, E, X1, X2, S, R> ParResIterCore for ParRes<I, M, E, X1, X2, S, R>
+where
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = X2::O;
+
+    type Error = E;
+
+    type Runner = R;
+
+    type Input = I;
+
+    type M = M;
+
+    type Xap1 = X1;
+
+    type Xap2 = X2;
+
+    type Size = S;
+
+    fn destruct(
+        self,
+    ) -> (
+        Self::Input,
+        Self::Xap1,
+        Self::Xap2,
+        Self::Runner,
+        Self::Size,
+        Params,
+    ) {
         (self.iter, self.x1, self.x2, self.exe, self.s, self.params)
     }
 }
@@ -66,14 +101,6 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    type Runner = R;
-
-    type Size = S;
-
-    type Item = X2::O;
-
-    type Error = E;
-
     fn runner<Q: ParRunner>(self, runner: Q) -> ParRes<I, M, E, X1, X2, S, Q> {
         let (iter, x1, x2, _, s, params) = self.destruct();
         ParRes {
