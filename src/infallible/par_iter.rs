@@ -46,23 +46,23 @@ pub trait ParIter: Sized + ParIterCore {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Q>
+    fn map<Q, H>(self, h: H) -> impl ParIter<Item = Q>
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn inspect<H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Self::Item>
+    fn inspect<H>(self, h: H) -> impl ParIter<Item = Self::Item>
     where
         H: Fn(&Self::Item) + Copy + Send;
 
-    fn filter<H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Self::Item>
+    fn filter<H>(self, h: H) -> impl ParIter<Item = Self::Item>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
-    fn filter_map<Q, H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = Q>
+    fn filter_map<Q, H>(self, h: H) -> impl ParIter<Item = Q>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
-    fn flat_map<V, H>(self, h: H) -> impl ParIter<Runner = Self::Runner, Item = V::Item>
+    fn flat_map<V, H>(self, h: H) -> impl ParIter<Item = V::Item>
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
