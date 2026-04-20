@@ -5,11 +5,9 @@ use crate::option::ParOpt;
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOptIter};
-use crate::{infallible::par_iter_dtor::ParIterDestruct, runner::ParRunner};
+use crate::{infallible::par_iter_core::ParIterCore, runner::ParRunner};
 
-pub trait ParIter: Sized + ParIterDestruct {
-    type Item;
-
+pub trait ParIter: Sized + ParIterCore {
     // configuration
 
     fn runner<Q: ParRunner>(self, runner: Q) -> impl ParIter<Runner = Q, Item = Self::Item>;

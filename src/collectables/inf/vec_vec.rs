@@ -1,7 +1,7 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_vec;
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
-use crate::infallible::{Par, ParIterDestruct, Xap};
+use crate::infallible::{Par, ParIterCore, Xap};
 use crate::runner::ParRunner;
 use alloc::vec;
 use alloc::vec::Vec;

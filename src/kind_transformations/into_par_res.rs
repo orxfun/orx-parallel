@@ -1,6 +1,6 @@
 #![allow(refining_impl_trait)]
 
-use crate::infallible::{Par, ParIterDestruct, Xap, xap_variants::Id};
+use crate::infallible::{Par, ParIterCore, Xap, xap_variants::Id};
 use crate::result::{ParRes, SizePairRes};
 use crate::runner::ParRunner;
 use crate::sizes::Size;

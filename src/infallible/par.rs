@@ -1,7 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::par_iter_dtor::ParIterDestruct;
+use crate::infallible::par_iter_core::ParIterCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
 use crate::infallible::{Xap, XapEnumByInput};
@@ -43,12 +43,14 @@ where
     }
 }
 
-impl<I, X, R> ParIterDestruct for Par<I, X, R>
+impl<I, X, R> ParIterCore for Par<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
     R: ParRunner,
 {
+    type Item = X::O;
+
     type Runner = R;
 
     type Input = I;
@@ -66,8 +68,6 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
 {
-    type Item = X::O;
-
     // configuration
 
     fn runner<Q: ParRunner>(self, runner: Q) -> Par<I, X, Q> {
