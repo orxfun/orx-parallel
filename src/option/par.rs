@@ -3,6 +3,7 @@
 use crate::ParCollectInto;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
+use crate::option::ParOptIterCore;
 use crate::option::par_iter::ParOptIter;
 use crate::option::par_runner::ParRunnerOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -52,8 +53,40 @@ where
     {
         ParOpt::new(self.iter, self.x1, x2, self.exe, self.params)
     }
+}
 
-    pub(crate) fn destruct(self) -> (I, X1, X2, R, S, Params) {
+impl<I, M, X1, X2, S, R> ParOptIterCore for ParOpt<I, M, X1, X2, S, R>
+where
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Option<M>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = X2::O;
+
+    type Runner = R;
+
+    type Input = I;
+
+    type M = M;
+
+    type Xap1 = X1;
+
+    type Xap2 = X2;
+
+    type Size = S;
+
+    fn destruct(
+        self,
+    ) -> (
+        Self::Input,
+        Self::Xap1,
+        Self::Xap2,
+        Self::Runner,
+        Self::Size,
+        Params,
+    ) {
         (self.iter, self.x1, self.x2, self.exe, self.s, self.params)
     }
 }
@@ -66,12 +99,6 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    type Runner = R;
-
-    type Size = S;
-
-    type Item = X2::O;
-
     // configuration
 
     fn runner<Q: ParRunner>(self, runner: Q) -> ParOpt<I, M, X1, X2, S, Q> {
@@ -135,7 +162,6 @@ where
     fn filter<H>(self, h: H) -> ParOpt<I, M, X1, FilOf<X2, H>, S::ThenBin, R>
     where
         H: Fn(&X2::O) -> bool + Copy + Send,
-        S::ThenBin: SizePair,
     {
         let x2 = self.x2.filter(h);
         self.with_xap2(x2)

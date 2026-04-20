@@ -1,29 +1,18 @@
-use crate::infallible::Xap;
-use crate::option::ParOpt;
+use crate::option::ParOptIterCore;
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
-use crate::sizes::{Size, SizePair};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 
-pub trait ParOptIter: Sized {
-    type Runner: ParRunner;
-
-    type Size: SizePair;
-
-    type Item;
-
+pub trait ParOptIter: Sized + ParOptIterCore {
     // configuration
 
-    fn runner<Q: ParRunner>(
-        self,
-        runner: Q,
-    ) -> impl ParOptIter<Runner = Q, Size = Self::Size, Item = Self::Item>;
+    fn runner<Q: ParRunner>(self, runner: Q) -> impl ParOptIter<Runner = Q, Item = Self::Item>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParOptIter<Runner = WithDiagnostics<Self::Runner>, Size = Self::Size, Item = Self::Item>;
+    ) -> impl ParOptIter<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item>;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -33,39 +22,23 @@ pub trait ParOptIter: Sized {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Size = Self::Size, Item = Q>
+    fn map<Q, H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Q>
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn inspect<H>(
-        self,
-        h: H,
-    ) -> impl ParOptIter<Runner = Self::Runner, Size = Self::Size, Item = Self::Item>
+    fn inspect<H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Self::Item>
     where
         H: Fn(&Self::Item) + Copy + Send;
 
-    fn filter<H>(
-        self,
-        h: H,
-    ) -> impl ParOptIter<
-        Runner = Self::Runner,
-        Size = <Self::Size as SizePair>::ThenBin,
-        Item = Self::Item,
-    >
+    fn filter<H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Self::Item>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
-    fn filter_map<Q, H>(
-        self,
-        h: H,
-    ) -> impl ParOptIter<Runner = Self::Runner, Size = <Self::Size as SizePair>::ThenBin, Item = Q>
+    fn filter_map<Q, H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = Q>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
-    fn flat_map<V, H>(
-        self,
-        h: H,
-    ) -> impl ParOptIter<Runner = Self::Runner, Size = <Self::Size as SizePair>::ThenMany, Item = V::Item>
+    fn flat_map<V, H>(self, h: H) -> impl ParOptIter<Runner = Self::Runner, Item = V::Item>
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
