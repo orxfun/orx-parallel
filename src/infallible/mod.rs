@@ -4,7 +4,7 @@ mod tests;
 pub mod fun;
 mod par;
 mod par_iter;
-mod par_iter_dtor;
+mod par_iter_core;
 mod par_runner;
 pub mod sizes;
 mod thread_execution;
@@ -14,7 +14,7 @@ pub mod xap_variants;
 
 pub use par::Par;
 pub use par_iter::ParIter;
-pub use par_iter_dtor::ParIterDestruct;
+pub use par_iter_core::ParIterCore;
 pub use par_runner::ParRunnerInfallible;
 pub use xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap, XapBin, XapOne};
 pub use xap_enum::XapEnumByInput;
