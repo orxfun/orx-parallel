@@ -1,6 +1,6 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUse, Use, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUse, ParUseIterCore, Use, XapUse};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
 

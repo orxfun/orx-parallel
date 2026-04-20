@@ -21,7 +21,6 @@ mod collectables;
 mod infallible;
 mod infallible_use;
 mod into_parallel;
-mod kind_transformations;
 mod option;
 mod option_use;
 mod parameters;

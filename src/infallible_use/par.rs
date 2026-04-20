@@ -49,10 +49,6 @@ where
     ) -> ParUse<U, I, Y, R> {
         ParUse::new(self.using, self.iter, xap, self.exe, self.params)
     }
-
-    pub(crate) fn destruct(self) -> (U, I, X, R, Params) {
-        (self.using, self.iter, self.xap, self.exe, self.params)
-    }
 }
 
 impl<U, I, X, R> ParUseIterCore for ParUse<U, I, X, R>
@@ -73,7 +69,7 @@ where
     type Xap = X;
 
     fn destruct(self) -> (Self::Use, Self::Input, Self::Xap, Self::Runner, Params) {
-        todo!()
+        (self.using, self.iter, self.xap, self.exe, self.params)
     }
 }
 
