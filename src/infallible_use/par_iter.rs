@@ -1,6 +1,6 @@
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::xap_variants::IdUse;
-use crate::infallible_use::{ParUseIterCore, XapUse};
+use crate::infallible_use::{ParUse, ParUseIterCore, XapUse, XapUseEnumByInput};
 use crate::option_use::ParUseOpt;
 use crate::result_use::ParUseRes;
 #[cfg(feature = "std")]
@@ -9,6 +9,7 @@ use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{infallible_use::Use, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::enumerate::Enumerate;
 
 pub trait ParUseIter: Sized + ParUseIterCore {
     // configuration
@@ -74,6 +75,23 @@ pub trait ParUseIter: Sized + ParUseIterCore {
     {
         let (u, iter, xap, exe, params) = self.destruct();
         ParUseRes::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
+    }
+
+    fn enumerate(
+        self,
+    ) -> ParUse<
+        Self::Use,
+        Enumerate<Self::Input>,
+        <Self::Xap as XapUseEnumByInput>::Enumerated,
+        Self::Runner,
+    >
+    where
+        Self::Xap: XapUseEnumByInput,
+    {
+        let (u, iter, xap, exe, params) = self.destruct();
+        let iter = iter.enumerate();
+        let xap = xap.enumerate();
+        ParUse::new(u, iter, xap, exe, params)
     }
 
     // transformations

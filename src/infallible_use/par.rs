@@ -237,18 +237,3 @@ where
         ParUse::new(u, iter, xap.mapped(UFnCloned::new()), exe, params)
     }
 }
-
-impl<U, I, X, R> ParUse<U, I, X, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X: XapUseEnumByInput<U = U::Item, I = I::Item>,
-    R: ParRunner,
-{
-    pub fn enumerate(self) -> ParUse<U, Enumerate<I>, X::Enumerated, R> {
-        let (u, iter, xap, exe, params) = self.destruct();
-        let iter = iter.enumerate();
-        let xap = xap.enumerate();
-        ParUse::new(u, iter, xap, exe, params)
-    }
-}
