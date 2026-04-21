@@ -14,7 +14,7 @@ pub trait ParUseResIter: Sized + ParUseResIterCore {
         runner: Q,
     ) -> impl ParUseResIter<
         Runner = Q,
-        Use = Self::Use,
+        U = Self::U,
         Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
@@ -25,7 +25,7 @@ pub trait ParUseResIter: Sized + ParUseResIterCore {
         self,
     ) -> impl ParUseResIter<
         Runner = WithDiagnostics<Self::Runner>,
-        Use = Self::Use,
+        U = Self::U,
         Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
@@ -44,7 +44,7 @@ pub trait ParUseResIter: Sized + ParUseResIterCore {
         h: H,
     ) -> impl ParUseResIter<
         Runner = Self::Runner,
-        Use = Self::Use,
+        U = Self::U,
         Size = Self::Size,
         Item = Q,
         Error = Self::Error,
@@ -57,7 +57,7 @@ pub trait ParUseResIter: Sized + ParUseResIterCore {
         h: H,
     ) -> impl ParUseResIter<
         Runner = Self::Runner,
-        Use = Self::Use,
+        U = Self::U,
         Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
@@ -70,7 +70,7 @@ pub trait ParUseResIter: Sized + ParUseResIterCore {
         h: H,
     ) -> impl ParUseResIter<
         Runner = Self::Runner,
-        Use = Self::Use,
+        U = Self::U,
         Size = <Self::Size as SizePair>::ThenBin,
         Item = Self::Item,
         Error = Self::Error,
@@ -83,7 +83,7 @@ pub trait ParUseResIter: Sized + ParUseResIterCore {
         h: H,
     ) -> impl ParUseResIter<
         Runner = Self::Runner,
-        Use = Self::Use,
+        U = Self::U,
         Size = <Self::Size as SizePair>::ThenBin,
         Item = Q,
         Error = Self::Error,
@@ -96,7 +96,7 @@ pub trait ParUseResIter: Sized + ParUseResIterCore {
         h: H,
     ) -> impl ParUseResIter<
         Runner = Self::Runner,
-        Use = Self::Use,
+        U = Self::U,
         Size = <Self::Size as SizePair>::ThenMany,
         Item = V::Item,
         Error = Self::Error,
