@@ -1,6 +1,6 @@
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::xap_variants::IdUse;
-use crate::infallible_use::{ParUse, ParUseIterCore, XapUse, XapUseEnumByInput};
+use crate::infallible_use::{ParUseIterCore, XapUse};
 use crate::option_use::ParUseOpt;
 use crate::result_use::ParUseRes;
 #[cfg(feature = "std")]
@@ -9,7 +9,6 @@ use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{infallible_use::Use, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_iter::enumerate::Enumerate;
 
 pub trait ParUseIter: Sized + ParUseIterCore {
     // configuration
