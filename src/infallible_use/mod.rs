@@ -5,6 +5,7 @@ pub mod fun;
 mod par;
 mod par_iter;
 mod par_iter_core;
+mod par_iter_enum;
 mod par_runner;
 mod thread_execution;
 mod use_var;

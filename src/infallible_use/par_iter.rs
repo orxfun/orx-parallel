@@ -77,23 +77,6 @@ pub trait ParUseIter: Sized + ParUseIterCore {
         ParUseRes::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
     }
 
-    fn enumerate(
-        self,
-    ) -> ParUse<
-        Self::Use,
-        Enumerate<Self::Input>,
-        <Self::Xap as XapUseEnumByInput>::Enumerated,
-        Self::Runner,
-    >
-    where
-        Self::Xap: XapUseEnumByInput,
-    {
-        let (u, iter, xap, exe, params) = self.destruct();
-        let iter = iter.enumerate();
-        let xap = xap.enumerate();
-        ParUse::new(u, iter, xap, exe, params)
-    }
-
     // transformations
 
     fn map<Q, H>(self, h: H) -> impl ParUseIter<Runner = Self::Runner, Use = Self::Use, Item = Q>
