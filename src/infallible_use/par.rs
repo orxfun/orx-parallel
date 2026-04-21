@@ -5,12 +5,11 @@ use crate::infallible_use::par_iter::ParUseIter;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
-use crate::infallible_use::{ParUseIterCore, XapUse, XapUseEnumByInput};
+use crate::infallible_use::{ParUseIterCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::{ChunkSize, NumThreads, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_iter::enumerate::Enumerate;
 
 pub struct ParUse<U, I, X, R = DefaultRunner>
 where
