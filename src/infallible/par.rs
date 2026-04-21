@@ -218,17 +218,3 @@ where
         Par::new(iter, xap.mapped(FnCloned::new()), exe, params)
     }
 }
-
-impl<I, X, R> Par<I, X, R>
-where
-    I: ConcurrentIter,
-    X: XapEnumByInput<I = I::Item>,
-    R: ParRunner,
-{
-    pub fn enumerate(self) -> Par<Enumerate<I>, X::Enumerated, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        let iter = iter.enumerate();
-        let xap = xap.enumerate();
-        Par::new(iter, xap, exe, params)
-    }
-}
