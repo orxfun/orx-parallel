@@ -1,15 +1,14 @@
 #![allow(refining_impl_trait)]
 
+use crate::infallible::Xap;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_iter_core::ParIterCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
-use crate::infallible::{Xap, XapEnumByInput};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
 use crate::{ParCollectInto, ParIter};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_iter::enumerate::Enumerate;
 
 pub struct Par<I, X, R = DefaultRunner>
 where
