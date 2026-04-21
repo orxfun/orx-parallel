@@ -1,5 +1,8 @@
-use crate::infallible::Xap;
+use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::enumerate::Enumerate;
+
 use crate::infallible::xap_variants::Id;
+use crate::infallible::{Par, Xap, XapEnumByInput};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{ParUse, UseClone, UseFun};
 use crate::option::ParOpt;
@@ -89,6 +92,18 @@ pub trait ParIter: Sized + ParIterCore {
         let using = UseClone::new(u);
         let xap = IdUse::new(xap);
         ParUse::new(using, iter, xap, exe, params)
+    }
+
+    fn enumerate(
+        self,
+    ) -> Par<Enumerate<Self::Input>, <Self::Xap as XapEnumByInput>::Enumerated, Self::Runner>
+    where
+        Self::Xap: XapEnumByInput,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        let iter = iter.enumerate();
+        let xap = xap.enumerate();
+        Par::new(iter, xap, exe, params)
     }
 
     // transformations
