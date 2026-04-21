@@ -16,6 +16,7 @@ pub mod xap_variants;
 pub use par::ParUse;
 pub use par_iter::ParUseIter;
 pub use par_iter_core::ParUseIterCore;
+pub use par_iter_enum::ParUseIterEnumarable;
 pub use par_runner::ParRunnerInfallibleUse;
 pub use use_var::{Use, UseClone, UseFun};
 pub use xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, XapUse, XapUseBin, XapUseOne};
