@@ -5,6 +5,10 @@ fn par(n: usize) -> impl ParIter<Item = String> {
     (0..n).par().map(|x| x.to_string())
 }
 
+fn par_enum(n: usize) -> impl ParIterEnumarable<Item = String> {
+    (0..n).par().map(|x| x.to_string())
+}
+
 fn map(par: impl ParIter<Item = String>) -> impl ParIter<Item = String> {
     par.map(|x| format!("{x}!"))
         .num_threads(2)
@@ -234,11 +238,11 @@ fn kind_use() {
 
 #[test]
 fn kind_enumerate() {
-    let par = par(42);
-    // let par = par.enumerate();
-    // let par = par.map(|(_i, x)| x);
-    // let result = count(par);
-    // assert_eq!(result, 42);
+    let par = par_enum(42);
+    let par = par.enumerate();
+    let par = par.map(|(_i, x)| x);
+    let result = count(par);
+    assert_eq!(result, 42);
 }
 
 // #[test]

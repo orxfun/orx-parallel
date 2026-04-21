@@ -4,11 +4,11 @@ use crate::ParIter;
 use crate::infallible::{Par, XapEnumByInput};
 use orx_concurrent_iter::{ConcurrentIter, enumerate::Enumerate};
 
-pub trait ParIterEnum: ParIter {
+pub trait ParIterEnumarable: ParIter {
     fn enumerate(self) -> impl ParIter<Item = (usize, Self::Item)>;
 }
 
-impl<P> ParIterEnum for P
+impl<P> ParIterEnumarable for P
 where
     P: ParIter,
     P::Xap: XapEnumByInput,

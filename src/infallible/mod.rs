@@ -15,7 +15,7 @@ pub mod xap_variants;
 pub use par::Par;
 pub use par_iter::ParIter;
 pub use par_iter_core::ParIterCore;
-pub use par_iter_enum::ParIterEnum;
+pub use par_iter_enum::ParIterEnumarable;
 pub use par_runner::ParRunnerInfallible;
 pub use xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap, XapBin, XapOne};
 pub use xap_enum::XapEnumByInput;
