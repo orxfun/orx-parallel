@@ -5,7 +5,8 @@ use crate::infallible_use::{ParUse, XapUseEnumByInput};
 use orx_concurrent_iter::{ConcurrentIter, enumerate::Enumerate};
 
 pub trait ParUseIterEnumarable: ParUseIter {
-    fn enumerate(self) -> impl ParUseIter<Use = Self::Use, Item = (usize, Self::Item)>;
+    fn enumerate(self)
+    -> impl ParUseIter<Use = Self::Use, U = Self::U, Item = (usize, Self::Item)>;
 }
 
 impl<P> ParUseIterEnumarable for P

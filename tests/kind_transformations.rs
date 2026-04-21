@@ -9,6 +9,13 @@ fn par_enum(n: usize) -> impl ParIterEnumarable<Item = String> {
     (0..n).par().map(|x| x.to_string())
 }
 
+fn par_use_enum(n: usize) -> impl ParUseIterEnumarable<U = String, Item = String> {
+    (0..n)
+        .par()
+        .using_clone("abc".to_string())
+        .map(|_, x| x.to_string())
+}
+
 fn map(par: impl ParIter<Item = String>) -> impl ParIter<Item = String> {
     par.map(|x| format!("{x}!"))
         .num_threads(2)
@@ -245,28 +252,14 @@ fn kind_enumerate() {
     assert_eq!(result, 42);
 }
 
-// #[test]
-// fn kind_use_enumerate() {
-//     {
-//         let u = |x: usize| x.to_string();
-//         let par = par(42);
-//         let par = par.using(u);
-//         let result = count_use(par);
-//         assert_eq!(result, 42);
-//     }
-
-//     {
-//         let u = String::from("42");
-//         let par = par(42);
-//         let par = par.using_clone(u);
-//         let result = count_use(par);
-//         assert_eq!(result, 42);
-//     }
-
-//     let n = 42;
-//     let par = (0..n).par().map(|x| x.to_string());
-//     let par = par.enumerate();
-//     let par = par.map(|(_i, x)| x);
-//     let result = count(par);
-//     assert_eq!(result, 42);
-// }
+#[test]
+fn kind_use_enumerate() {
+    let par = par_use_enum(42);
+    let par = par.enumerate();
+    let par = par.map(|u, (_i, x): (usize, String)| {
+        *u = format!("{u}!");
+        x
+    });
+    let result = count_use(par);
+    assert_eq!(result, 42);
+}
