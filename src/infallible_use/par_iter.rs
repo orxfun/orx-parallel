@@ -16,12 +16,12 @@ pub trait ParUseIter: Sized + ParUseIterCore {
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParUseIter<Runner = Q, Use = Self::Use, Item = Self::Item>;
+    ) -> impl ParUseIter<Runner = Q, U = Self::U, Item = Self::Item>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParUseIter<Runner = WithDiagnostics<Self::Runner>, Use = Self::Use, Item = Self::Item>;
+    ) -> impl ParUseIter<Runner = WithDiagnostics<Self::Runner>, U = Self::U, Item = Self::Item>;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 

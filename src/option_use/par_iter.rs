@@ -12,7 +12,7 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParUseOptIter<Runner = Q, Size = Self::Size, Use = Self::Use, Item = Self::Item>;
+    ) -> impl ParUseOptIter<Runner = Q, Size = Self::Size, U = Self::U, Item = Self::Item>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
@@ -20,38 +20,29 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
     ) -> impl ParUseOptIter<
         Runner = WithDiagnostics<Self::Runner>,
         Size = Self::Size,
-        Use = Self::Use,
+        U = Self::U,
         Item = Self::Item,
     >;
 
-    fn num_threads(
-        self,
-        num_threads: impl Into<NumThreads>,
-    ) -> impl ParUseOptIter<Runner = Self::Runner, Size = Self::Size, Use = Self::Use, Item = Self::Item>;
+    fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
-    fn chunk_size(
-        self,
-        chunk_size: impl Into<ChunkSize>,
-    ) -> impl ParUseOptIter<Runner = Self::Runner, Size = Self::Size, Use = Self::Use, Item = Self::Item>;
+    fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
-    fn iteration_order(
-        self,
-        iteration_order: IterationOrder,
-    ) -> impl ParUseOptIter<Runner = Self::Runner, Size = Self::Size, Use = Self::Use, Item = Self::Item>;
+    fn iteration_order(self, iteration_order: IterationOrder) -> Self;
 
     // transformations
 
     fn map<Q, H>(
         self,
         h: H,
-    ) -> impl ParUseOptIter<Runner = Self::Runner, Size = Self::Size, Use = Self::Use, Item = Q>
+    ) -> impl ParUseOptIter<Runner = Self::Runner, Size = Self::Size, U = Self::U, Item = Q>
     where
         H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl ParUseOptIter<Runner = Self::Runner, Size = Self::Size, Use = Self::Use, Item = Self::Item>
+    ) -> impl ParUseOptIter<Runner = Self::Runner, Size = Self::Size, U = Self::U, Item = Self::Item>
     where
         H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) + Copy + Send;
 
@@ -61,7 +52,7 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
     ) -> impl ParUseOptIter<
         Runner = Self::Runner,
         Size = <Self::Size as SizePair>::ThenBin,
-        Use = Self::Use,
+        U = Self::U,
         Item = Self::Item,
     >
     where
@@ -73,7 +64,7 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
     ) -> impl ParUseOptIter<
         Runner = Self::Runner,
         Size = <Self::Size as SizePair>::ThenBin,
-        Use = Self::Use,
+        U = Self::U,
         Item = Q,
     >
     where
@@ -85,7 +76,7 @@ pub trait ParUseOptIter: Sized + ParUseOptIterCore {
     ) -> impl ParUseOptIter<
         Runner = Self::Runner,
         Size = <Self::Size as SizePair>::ThenMany,
-        Use = Self::Use,
+        U = Self::U,
         Item = V::Item,
     >
     where
