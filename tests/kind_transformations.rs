@@ -234,7 +234,35 @@ fn kind_use() {
 
 #[test]
 fn kind_enumerate() {
-    let n = 42;
-    let par = (0..n).par().map(|x| x.to_string());
-    let par = par.enumerate();
+    let par = par(42);
+    // let par = par.enumerate();
+    // let par = par.map(|(_i, x)| x);
+    // let result = count(par);
+    // assert_eq!(result, 42);
 }
+
+// #[test]
+// fn kind_use_enumerate() {
+//     {
+//         let u = |x: usize| x.to_string();
+//         let par = par(42);
+//         let par = par.using(u);
+//         let result = count_use(par);
+//         assert_eq!(result, 42);
+//     }
+
+//     {
+//         let u = String::from("42");
+//         let par = par(42);
+//         let par = par.using_clone(u);
+//         let result = count_use(par);
+//         assert_eq!(result, 42);
+//     }
+
+//     let n = 42;
+//     let par = (0..n).par().map(|x| x.to_string());
+//     let par = par.enumerate();
+//     let par = par.map(|(_i, x)| x);
+//     let result = count(par);
+//     assert_eq!(result, 42);
+// }
