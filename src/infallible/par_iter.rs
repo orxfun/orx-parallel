@@ -1,4 +1,4 @@
-use crate::infallible::{Par, Xap, XapEnumByInput, xap_variants::Id};
+use crate::infallible::{Xap, xap_variants::Id};
 use crate::infallible_use::{ParUse, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOpt;
 use crate::result::ParRes;
@@ -7,7 +7,6 @@ use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 use crate::{infallible::par_iter_core::ParIterCore, runner::ParRunner};
-use orx_concurrent_iter::{ConcurrentIter, enumerate::Enumerate};
 
 pub trait ParIter: Sized + ParIterCore {
     // configuration
@@ -88,18 +87,6 @@ pub trait ParIter: Sized + ParIterCore {
         let using = UseClone::new(u);
         let xap = IdUse::new(xap);
         ParUse::new(using, iter, xap, exe, params)
-    }
-
-    fn enumerate(
-        self,
-    ) -> Par<Enumerate<Self::Input>, <Self::Xap as XapEnumByInput>::Enumerated, Self::Runner>
-    where
-        Self::Xap: XapEnumByInput,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        let iter = iter.enumerate();
-        let xap = xap.enumerate();
-        Par::new(iter, xap, exe, params)
     }
 
     // transformations
