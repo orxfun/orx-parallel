@@ -1,265 +1,138 @@
-#![allow(refining_impl_trait)]
-
-use crate::ParCollectInto;
-use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
-use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::result::par_iter::ParResIter;
-use crate::result::par_iter_core::ParResIterCore;
-use crate::result::par_runner::ParRunnerRes;
-use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
+use crate::infallible_use::xap_variants::IdUse;
+use crate::infallible_use::{UseClone, UseFun};
+use crate::result::par_core::ParResultCore;
+use crate::result_use::ParUseResultIter;
+use crate::runner::ParRunner;
+#[cfg(feature = "std")]
+use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
-use orx_concurrent_iter::ConcurrentIter;
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 
-pub struct ParRes<I, M, E, X1, X2, S, R = DefaultRunner>
-where
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    iter: I,
-    x1: X1,
-    x2: X2,
-    exe: R,
-    params: Params,
-    s: S,
-}
+pub trait ParResult: Sized + ParResultCore {
+    // configuration
 
-impl<I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
-where
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub(crate) fn new(iter: I, x1: X1, x2: X2, exe: R, params: Params) -> Self {
-        Self {
-            iter,
-            x1,
-            x2,
-            exe,
-            params,
-            s: Default::default(),
-        }
-    }
-
-    fn with_xap2<Y2, T>(self, x2: Y2) -> ParRes<I, M, E, X1, Y2, T, R>
-    where
-        Y2: Xap<I = M>,
-        T: SizePair<S1 = X1::Size, S2 = Y2::Size>,
-    {
-        ParRes::new(self.iter, self.x1, x2, self.exe, self.params)
-    }
-}
-
-impl<I, M, E, X1, X2, S, R> ParResIterCore for ParRes<I, M, E, X1, X2, S, R>
-where
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    type Item = X2::O;
-
-    type Error = E;
-
-    type Runner = R;
-
-    type Input = I;
-
-    type M = M;
-
-    type Xap1 = X1;
-
-    type Xap2 = X2;
-
-    type Size = S;
-
-    fn destruct(
+    fn runner<Q: ParRunner>(
         self,
-    ) -> (
-        Self::Input,
-        Self::Xap1,
-        Self::Xap2,
-        Self::Runner,
-        Self::Size,
-        Params,
-    ) {
-        (self.iter, self.x1, self.x2, self.exe, self.s, self.params)
-    }
-}
-
-impl<I, M, E, X1, X2, S, R> ParResIter for ParRes<I, M, E, X1, X2, S, R>
-where
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    fn runner<Q: ParRunner>(self, runner: Q) -> ParRes<I, M, E, X1, X2, S, Q> {
-        let (iter, x1, x2, _, s, params) = self.destruct();
-        ParRes {
-            iter,
-            x1,
-            x2,
-            exe: runner,
-            s,
-            params,
-        }
-    }
+        runner: Q,
+    ) -> impl ParResult<Runner = Q, Item = Self::Item, Error = Self::Error>;
 
     #[cfg(feature = "std")]
-    fn runner_with_diagnostics(self) -> ParRes<I, M, E, X1, X2, S, WithDiagnostics<R>> {
-        let (iter, x1, x2, exe, s, params) = self.destruct();
-        ParRes {
-            iter,
-            x1,
-            x2,
-            exe: exe.with_diagnostics(),
-            s,
-            params,
-        }
-    }
+    fn runner_with_diagnostics(
+        self,
+    ) -> impl ParResult<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item, Error = Self::Error>;
 
-    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
-        self.params = self.params.with_num_threads(num_threads);
-        self
-    }
+    fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
-    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
-        self.params = self.params.with_chunk_size(chunk_size);
-        self
-    }
+    fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
-    fn iteration_order(mut self, collect: IterationOrder) -> Self {
-        self.params = self.params.with_collect_ordering(collect);
-        self
-    }
+    fn iteration_order(self, collect: IterationOrder) -> Self;
 
-    fn map<Q, H>(self, h: H) -> ParRes<I, M, E, X1, MapOf<X2, Q, H>, S, R>
+    // kind transformations
+
+    fn using<U, F>(
+        self,
+        f: F,
+    ) -> ParUseResultIter<
+        UseFun<U, F>,
+        Self::Input,
+        Self::M,
+        Self::Error,
+        IdUse<Self::Xap1, U>,
+        IdUse<Self::Xap2, U>,
+        Self::Size,
+        Self::Runner,
+    >
     where
-        H: Fn(X2::O) -> Q + Copy + Send,
+        F: Fn(usize) -> U + Sync,
     {
-        let x2 = self.x2.map(h);
-        self.with_xap2(x2)
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseFun::new(f);
+        ParUseResultIter::new(u, iter, x1, x2, exe, params)
     }
 
-    fn inspect<H>(self, h: H) -> ParRes<I, M, E, X1, InsOf<X2, H>, S, R>
+    fn using_clone<U>(
+        self,
+        u: U,
+    ) -> ParUseResultIter<
+        UseClone<U>,
+        Self::Input,
+        Self::M,
+        Self::Error,
+        IdUse<Self::Xap1, U>,
+        IdUse<Self::Xap2, U>,
+        Self::Size,
+        Self::Runner,
+    >
     where
-        H: Fn(&X2::O) + Copy + Send,
+        U: Clone + Send,
     {
-        let x2 = self.x2.inspect(h);
-        self.with_xap2(x2)
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseClone::new(u);
+        ParUseResultIter::new(u, iter, x1, x2, exe, params)
     }
 
-    fn filter<H>(self, h: H) -> ParRes<I, M, E, X1, FilOf<X2, H>, S::ThenBin, R>
+    // transformations
+
+    fn map<Q, H>(self, h: H) -> impl ParResult<Item = Q, Error = Self::Error>
     where
-        H: Fn(&X2::O) -> bool + Copy + Send,
-        S::ThenBin: SizePair,
-    {
-        let x2 = self.x2.filter(h);
-        self.with_xap2(x2)
-    }
+        H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn filter_map<Q, H>(self, h: H) -> ParRes<I, M, E, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
+    fn inspect<H>(self, h: H) -> impl ParResult<Item = Self::Item, Error = Self::Error>
     where
-        H: Fn(X2::O) -> Option<Q> + Copy + Send,
-        S::ThenBin: SizePair,
-    {
-        let x2 = self.x2.filter_map(h);
-        self.with_xap2(x2)
-    }
+        H: Fn(&Self::Item) + Copy + Send;
 
-    fn flat_map<V, H>(self, h: H) -> ParRes<I, M, E, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
+    fn filter<H>(self, h: H) -> impl ParResult<Item = Self::Item, Error = Self::Error>
+    where
+        H: Fn(&Self::Item) -> bool + Copy + Send,
+        <Self::Size as SizePair>::ThenBin: SizePair;
+
+    fn filter_map<Q, H>(self, h: H) -> impl ParResult<Item = Q, Error = Self::Error>
+    where
+        H: Fn(Self::Item) -> Option<Q> + Copy + Send,
+        <Self::Size as SizePair>::ThenBin: SizePair;
+
+    fn flat_map<V, H>(self, h: H) -> impl ParResult<Item = V::Item, Error = Self::Error>
     where
         V: IntoIterator,
-        H: Fn(X2::O) -> V + Copy + Send,
-        S::ThenMany: SizePair,
-    {
-        let x2 = self.x2.flat_map(h);
-        self.with_xap2(x2)
-    }
+        H: Fn(Self::Item) -> V + Copy + Send,
+        <Self::Size as SizePair>::ThenMany: SizePair;
 
-    fn first(self) -> Result<Option<X2::O>, E>
+    // compute
+
+    fn first(self) -> Result<Option<Self::Item>, Self::Error>
     where
-        X2::O: Send,
-        E: Send,
-    {
-        let (iter, x1, x2, mut exe, s, params) = self.destruct();
-        match params.iteration_order {
-            IterationOrder::Ordered => exe.next(s, params, iter, x1, x2).map(|x| x.map(|x| x.val)),
-            IterationOrder::Arbitrary => exe.next_any(s, params, iter, x1, x2),
-        }
-    }
+        Self::Item: Send,
+        Self::Error: Send;
 
-    fn reduce<F>(self, f: F) -> Result<Option<X2::O>, E>
+    fn reduce<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
     where
-        F: Fn(X2::O, X2::O) -> X2::O + Send + Copy,
-        X2::O: Send,
-        E: Send,
-    {
-        let (iter, x1, x2, mut exe, s, params) = self.destruct();
-        exe.reduce(s, params, iter, x1, x2, f)
-    }
+        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
+        Self::Item: Send,
+        Self::Error: Send;
 
-    fn collect_into<C>(self, dst: C) -> Result<C, E>
+    fn collect_into<C>(self, dst: C) -> Result<C, Self::Error>
     where
-        C: ParCollectInto<X2::O>,
-        X2::O: Send,
-        E: Send,
-    {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::res_col_into(Some(dst), self),
-            IterationOrder::Arbitrary => C::res_arb_col_into(Some(dst), self),
-        }
-    }
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+        Self::Error: Send;
 
-    fn collect<C>(self) -> Result<C, E>
+    fn collect<C>(self) -> Result<C, Self::Error>
     where
-        C: ParCollectInto<X2::O>,
-        X2::O: Send,
-        E: Send,
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+        Self::Error: Send;
+
+    // compute - derived
+
+    fn for_each<F>(self, f: F) -> Result<(), Self::Error>
+    where
+        F: Fn(Self::Item) + Send + Copy,
+        Self::Error: Send,
     {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::res_col_into(None, self),
-            IterationOrder::Arbitrary => C::res_arb_col_into(None, self),
-        }
-    }
-}
-
-// transformations
-
-impl<'a, O, I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
-where
-    O: 'a + Copy,
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn copied(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParRes::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
-    }
-}
-
-impl<'a, O, I, M, E, X1, X2, S, R> ParRes<I, M, E, X1, X2, S, R>
-where
-    O: 'a + Clone,
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn cloned(self) -> ParRes<I, M, E, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParRes::new(iter, x1, x2.mapped(FnCloned::new()), exe, params)
+        self.map(f).reduce(|_, _| {}).map(|_| ())
     }
 }

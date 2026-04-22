@@ -1,22 +1,21 @@
 #![allow(refining_impl_trait)]
 
-use crate::ParUseIter;
-use crate::infallible_use::{ParUse, XapUseEnumByInput};
+use crate::ParUse;
+use crate::infallible_use::{ParUseIter, XapUseEnumByInput};
 use orx_concurrent_iter::{ConcurrentIter, enumerate::Enumerate};
 
-pub trait ParUseIterEnumarable: ParUseIter {
-    fn enumerate(self)
-    -> impl ParUseIter<Use = Self::Use, U = Self::U, Item = (usize, Self::Item)>;
+pub trait EnumerateParUse: ParUse {
+    fn enumerate(self) -> impl ParUse<Use = Self::Use, U = Self::U, Item = (usize, Self::Item)>;
 }
 
-impl<P> ParUseIterEnumarable for P
+impl<P> EnumerateParUse for P
 where
-    P: ParUseIter,
+    P: ParUse,
     P::Xap: XapUseEnumByInput,
 {
     fn enumerate(
         self,
-    ) -> ParUse<
+    ) -> ParUseIter<
         Self::Use,
         Enumerate<Self::Input>,
         <Self::Xap as XapUseEnumByInput>::Enumerated,
@@ -28,6 +27,6 @@ where
         let (u, iter, xap, exe, params) = self.destruct();
         let iter = iter.enumerate();
         let xap = xap.enumerate();
-        ParUse::new(u, iter, xap, exe, params)
+        ParUseIter::new(u, iter, xap, exe, params)
     }
 }

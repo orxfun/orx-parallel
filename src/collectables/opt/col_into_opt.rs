@@ -1,12 +1,12 @@
 use crate::infallible::Xap;
-use crate::option::{ParOpt, ParRunnerOpt};
+use crate::option::{ParOptionIter, ParRunnerOpt};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoOpt<T>: Sized {
     fn opt_col_into<I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParOpt<I, M, X1, X2, S, R>,
+        par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         I: ConcurrentIter,
@@ -18,7 +18,7 @@ pub trait ColIntoOpt<T>: Sized {
 
     fn opt_arb_col_into<I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParOpt<I, M, X1, X2, S, R>,
+        par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         I: ConcurrentIter,

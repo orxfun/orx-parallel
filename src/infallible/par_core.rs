@@ -1,7 +1,7 @@
 use crate::{Params, infallible::Xap, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParIterCore {
+pub trait ParCore {
     type Item;
 
     type Runner: ParRunner;

@@ -1,15 +1,9 @@
-use crate::{
-    Params,
-    infallible_use::{Use, XapUse},
-    runner::ParRunner,
-    sizes::SizePair,
-};
+use crate::infallible_use::{Use, XapUse};
+use crate::{Params, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParUseResIterCore {
+pub trait ParUseOptionCore {
     type Item;
-
-    type Error;
 
     type Runner: ParRunner;
 
@@ -24,7 +18,7 @@ pub trait ParUseResIterCore {
     type Xap1: XapUse<
             U = <Self::Use as Use>::Item,
             I = <Self::Input as ConcurrentIter>::Item,
-            O = Result<Self::M, Self::Error>,
+            O = Option<Self::M>,
         >;
 
     type Xap2: XapUse<U = <Self::Use as Use>::Item, I = Self::M, O = Self::Item>;

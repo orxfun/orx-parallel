@@ -1,8 +1,8 @@
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUse, Use, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, Use, XapUse};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoInfUse<T>: Sized {
-    fn inf_use_col_into<U, I, X, R>(dst: Option<Self>, par: ParUse<U, I, X, R>) -> Self
+    fn inf_use_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
     where
         U: Use,
         I: ConcurrentIter,
@@ -10,7 +10,7 @@ pub trait ColIntoInfUse<T>: Sized {
         R: ParRunnerInfallibleUse,
         T: Send;
 
-    fn inf_use_arb_col_into<U, I, X, R>(dst: Option<Self>, par: ParUse<U, I, X, R>) -> Self
+    fn inf_use_arb_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
     where
         U: Use,
         I: ConcurrentIter,

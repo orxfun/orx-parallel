@@ -1,8 +1,10 @@
 use crate::{Params, infallible::Xap, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParOptIterCore {
+pub trait ParResultCore {
     type Item;
+
+    type Error;
 
     type Runner: ParRunner;
 
@@ -10,7 +12,7 @@ pub trait ParOptIterCore {
 
     type M;
 
-    type Xap1: Xap<I = <Self::Input as ConcurrentIter>::Item, O = Option<Self::M>>;
+    type Xap1: Xap<I = <Self::Input as ConcurrentIter>::Item, O = Result<Self::M, Self::Error>>;
 
     type Xap2: Xap<I = Self::M, O = Self::Item>;
 
