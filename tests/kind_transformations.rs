@@ -1,15 +1,11 @@
 use orx_parallel::*;
 use std::string::{String, ToString};
 
-fn par(n: usize) -> impl ParIter<Item = String> {
+fn par(n: usize) -> impl ParIter<Item = String> + ParIterEnumarable {
     (0..n).par().map(|x| x.to_string())
 }
 
-fn par_enum(n: usize) -> impl ParIterEnumarable<Item = String> {
-    (0..n).par().map(|x| x.to_string())
-}
-
-fn par_use_enum(n: usize) -> impl ParUseIterEnumarable<U = String, Item = String> {
+fn par_use(n: usize) -> impl ParUseIter<U = String, Item = String> + ParUseIterEnumarable {
     (0..n)
         .par()
         .using_clone("abc".to_string())
@@ -245,7 +241,7 @@ fn kind_use() {
 
 #[test]
 fn kind_enumerate() {
-    let par = par_enum(42);
+    let par = par(42);
     let par = par.enumerate();
     let par = par.map(|(_i, x)| x);
     let result = count(par);
@@ -254,7 +250,7 @@ fn kind_enumerate() {
 
 #[test]
 fn kind_use_enumerate() {
-    let par = par_use_enum(42);
+    let par = par_use(42);
     let par = par.enumerate();
     let par = par.map(|u, (_i, x): (usize, String)| {
         *u = format!("{u}!");
