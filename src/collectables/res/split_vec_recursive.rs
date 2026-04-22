@@ -1,7 +1,7 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
-use crate::result::{ParRes, ParResIterCore, ParRunnerRes};
+use crate::result::{ParResultCore, ParResultIter, ParRunnerRes};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
@@ -9,7 +9,7 @@ use orx_split_vec::{Recursive, SplitVec};
 impl<T> ColIntoRes<T> for SplitVec<T, Recursive> {
     fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParRes<I, M, E, X1, X2, S, R>,
+        par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         I: ConcurrentIter,
@@ -28,7 +28,7 @@ impl<T> ColIntoRes<T> for SplitVec<T, Recursive> {
 
     fn res_arb_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParRes<I, M, E, X1, X2, S, R>,
+        par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         I: ConcurrentIter,

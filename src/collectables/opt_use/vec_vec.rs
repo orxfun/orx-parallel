@@ -1,7 +1,7 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_vec;
 use crate::collectables::opt_use::ColIntoOptUse;
 use crate::infallible_use::{Use, XapUse};
-use crate::option_use::{ParRunnerUseOpt, ParUseOpt, ParUseOptIterCore};
+use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore, ParUseOptionIter};
 use crate::sizes::SizePair;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -10,7 +10,7 @@ use orx_concurrent_iter::ConcurrentIter;
 impl<T> ColIntoOptUse<T> for Vec<Vec<T>> {
     fn opt_use_col_into<U, I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParUseOpt<U, I, M, X1, X2, S, R>,
+        par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         U: Use,
@@ -38,7 +38,7 @@ impl<T> ColIntoOptUse<T> for Vec<Vec<T>> {
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParUseOpt<U, I, M, X1, X2, S, R>,
+        par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         U: Use,

@@ -1,12 +1,12 @@
 use crate::infallible::Xap;
-use crate::result::{ParRes, ParRunnerRes};
+use crate::result::{ParResultIter, ParRunnerRes};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoRes<T>: Sized {
     fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParRes<I, M, E, X1, X2, S, R>,
+        par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         I: ConcurrentIter,
@@ -19,7 +19,7 @@ pub trait ColIntoRes<T>: Sized {
 
     fn res_arb_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParRes<I, M, E, X1, X2, S, R>,
+        par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         I: ConcurrentIter,

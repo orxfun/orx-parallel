@@ -3,7 +3,7 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
-use crate::result::{ParRes, ParResIterCore, ParRunnerRes};
+use crate::result::{ParResultIter, ParResultCore, ParRunnerRes};
 use crate::sizes::SizePair;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
@@ -11,7 +11,7 @@ use orx_concurrent_iter::ConcurrentIter;
 impl<T> ColIntoRes<T> for Vec<T> {
     fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParRes<I, M, E, X1, X2, S, R>,
+        par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         I: ConcurrentIter,
@@ -30,7 +30,7 @@ impl<T> ColIntoRes<T> for Vec<T> {
 
     fn res_arb_col_into<I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParRes<I, M, E, X1, X2, S, R>,
+        par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         I: ConcurrentIter,

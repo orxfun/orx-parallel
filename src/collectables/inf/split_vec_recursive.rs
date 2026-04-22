@@ -1,13 +1,13 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
-use crate::infallible::{Par, ParIterCore, Xap};
+use crate::infallible::{ParIter, ParCore, Xap};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
-    fn inf_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -19,7 +19,7 @@ impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
         merge_ord_into_split_vec(results, dst)
     }
 
-    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: Par<I, X, R>) -> Self
+    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
