@@ -5,7 +5,7 @@ fn get_par(n: usize) -> impl Par<Item = String> + EnumeratePar {
     (0..n).par().map(|x| x.to_string())
 }
 
-fn get_par_use(n: usize) -> impl ParUse<U = String, Item = String> + EnumerateParUse {
+fn get_par_use(n: usize) -> impl ParUse<Use = String, Item = String> + EnumerateParUse {
     (0..n)
         .par()
         .using_clone("abc".to_string())
@@ -51,7 +51,7 @@ fn count_res(par: impl ParResult<Error = char>) -> Result<usize, char> {
         .map(|x| x.unwrap_or(0))
 }
 
-fn count_use(par: impl ParUse<U = String>) -> usize {
+fn count_use(par: impl ParUse<Use = String>) -> usize {
     par.num_threads(1)
         .chunk_size(7)
         .map(|_use, _| 1)

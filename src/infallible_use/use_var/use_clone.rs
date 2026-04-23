@@ -9,11 +9,6 @@ impl<T: Clone + Send> Use for UseClone<T> {
     fn create(&self, _: usize) -> Self::Item {
         self.0.clone()
     }
-
-    #[inline]
-    fn into_inner(self) -> Self::Item {
-        self.0
-    }
 }
 
 /// SAFETY: Since T is Send, it is safe to share `UsingClone` with
