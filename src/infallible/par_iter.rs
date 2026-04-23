@@ -1,10 +1,9 @@
 #![allow(refining_impl_trait)]
 
 use crate::infallible::Xap;
-use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::par_core::ParCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
-use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
+use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
 use crate::{Par, ParCollectInto};
