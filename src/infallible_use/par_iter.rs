@@ -61,15 +61,15 @@ where
 
     type Runner = R;
 
-    type Use = U;
+    type Using = U;
 
-    type U = U::Item;
+    type Use = U::Item;
 
     type Input = I;
 
     type Xap = X;
 
-    fn destruct(self) -> (Self::Use, Self::Input, Self::Xap, Self::Runner, Params) {
+    fn destruct(self) -> (Self::Using, Self::Input, Self::Xap, Self::Runner, Params) {
         (self.using, self.iter, self.xap, self.exe, self.params)
     }
 }
