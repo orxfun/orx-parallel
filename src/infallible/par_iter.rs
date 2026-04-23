@@ -191,29 +191,3 @@ where
         }
     }
 }
-
-// transformations
-
-impl<'a, O: Copy + 'a, I, X, R> ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn copied(self) -> ParIter<I, MappedOf<X, FnCopied<'a, O>>, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
-    }
-}
-
-impl<'a, O: Clone + 'a, I, X, R> ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn cloned(self) -> ParIter<I, MappedOf<X, FnCloned<'a, O>>, R> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap.mapped(FnCloned::new()), exe, params)
-    }
-}

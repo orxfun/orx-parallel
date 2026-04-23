@@ -1,3 +1,5 @@
+use crate::infallible::fun::{FnCloned, FnCopied};
+use crate::infallible::{MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
@@ -87,6 +89,28 @@ pub trait Par: Sized + ParCore {
         let using = UseClone::new(u);
         let xap = IdUse::new(xap);
         ParUseIter::new(using, iter, xap, exe, params)
+    }
+
+    fn copied<'a, O>(
+        self,
+    ) -> ParIter<Self::Input, MappedOf<Self::Xap, FnCopied<'a, O>>, Self::Runner>
+    where
+        Self: Par<Item = &'a O>,
+        O: Copy,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
+    }
+
+    fn cloned<'a, O>(
+        self,
+    ) -> ParIter<Self::Input, MappedOf<Self::Xap, FnCloned<'a, O>>, Self::Runner>
+    where
+        Self: Par<Item = &'a O>,
+        O: Clone,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        ParIter::new(iter, xap.mapped(FnCloned::new()), exe, params)
     }
 
     // transformations
