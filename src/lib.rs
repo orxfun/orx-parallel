@@ -32,13 +32,13 @@ mod runner;
 mod sizes;
 
 pub use collectables::ParCollectInto;
-pub use infallible::ParIter;
-pub use infallible_use::ParUseIter;
+pub use infallible::{EnumeratePar, Par};
+pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
-pub use option::ParOptIter;
-pub use option_use::ParUseOptIter;
+pub use option::ParOption;
+pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-pub use result::ParResIter;
-pub use result_use::ParUseResIter;
+pub use result::ParResult;
+pub use result_use::ParUseResult;

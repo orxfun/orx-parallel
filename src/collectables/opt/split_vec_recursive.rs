@@ -1,7 +1,7 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
 use crate::collectables::opt::ColIntoOpt;
 use crate::infallible::Xap;
-use crate::option::{ParOpt, ParOptIterCore, ParRunnerOpt};
+use crate::option::{ParOptionIter, ParOptionCore, ParRunnerOpt};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
@@ -9,7 +9,7 @@ use orx_split_vec::{Recursive, SplitVec};
 impl<T> ColIntoOpt<T> for SplitVec<T, Recursive> {
     fn opt_col_into<I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParOpt<I, M, X1, X2, S, R>,
+        par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         I: ConcurrentIter,
@@ -27,7 +27,7 @@ impl<T> ColIntoOpt<T> for SplitVec<T, Recursive> {
 
     fn opt_arb_col_into<I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParOpt<I, M, X1, X2, S, R>,
+        par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         I: ConcurrentIter,

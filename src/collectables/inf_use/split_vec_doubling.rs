@@ -2,12 +2,12 @@ use crate::collectables::alg::merge_collected::{
     merge_arb_into_split_vec, merge_ord_into_split_vec,
 };
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUse, ParUseIterCore, Use, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, ParUseCore, Use, XapUse};
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Doubling, SplitVec};
 
 impl<T> ColIntoInfUse<T> for SplitVec<T, Doubling> {
-    fn inf_use_col_into<U, I, X, R>(dst: Option<Self>, par: ParUse<U, I, X, R>) -> Self
+    fn inf_use_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
     where
         U: Use,
         I: ConcurrentIter,
@@ -20,7 +20,7 @@ impl<T> ColIntoInfUse<T> for SplitVec<T, Doubling> {
         merge_ord_into_split_vec(results, dst)
     }
 
-    fn inf_use_arb_col_into<U, I, X, R>(dst: Option<Self>, par: ParUse<U, I, X, R>) -> Self
+    fn inf_use_arb_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
     where
         U: Use,
         I: ConcurrentIter,

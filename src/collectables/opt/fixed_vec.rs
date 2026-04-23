@@ -1,6 +1,6 @@
 use crate::collectables::opt::ColIntoOpt;
 use crate::infallible::Xap;
-use crate::option::{ParOpt, ParRunnerOpt};
+use crate::option::{ParOptionIter, ParRunnerOpt};
 use crate::sizes::SizePair;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
@@ -9,7 +9,7 @@ use orx_fixed_vec::FixedVec;
 impl<T> ColIntoOpt<T> for FixedVec<T> {
     fn opt_col_into<I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParOpt<I, M, X1, X2, S, R>,
+        par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         I: ConcurrentIter,
@@ -25,7 +25,7 @@ impl<T> ColIntoOpt<T> for FixedVec<T> {
 
     fn opt_arb_col_into<I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParOpt<I, M, X1, X2, S, R>,
+        par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         I: ConcurrentIter,

@@ -1,7 +1,7 @@
 use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
 use crate::collectables::res_use::ColIntoResUse;
 use crate::infallible_use::{Use, XapUse};
-use crate::result_use::{ParRunnerUseRes, ParUseRes, ParUseResIterCore};
+use crate::result_use::{ParRunnerUseRes, ParUseResultCore, ParUseResultIter};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
@@ -9,7 +9,7 @@ use orx_split_vec::{Recursive, SplitVec};
 impl<T> ColIntoResUse<T> for SplitVec<T, Recursive> {
     fn res_use_col_into<U, I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParUseRes<U, I, M, E, X1, X2, S, R>,
+        par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         U: Use,
@@ -29,7 +29,7 @@ impl<T> ColIntoResUse<T> for SplitVec<T, Recursive> {
 
     fn res_use_arb_col_into<U, I, M, E, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParUseRes<U, I, M, E, X1, X2, S, R>,
+        par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<Self, E>
     where
         U: Use,

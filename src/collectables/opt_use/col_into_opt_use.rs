@@ -1,12 +1,12 @@
 use crate::infallible_use::{Use, XapUse};
-use crate::option_use::{ParRunnerUseOpt, ParUseOpt};
+use crate::option_use::{ParRunnerUseOpt, ParUseOptionIter};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoOptUse<T>: Sized {
     fn opt_use_col_into<U, I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParUseOpt<U, I, M, X1, X2, S, R>,
+        par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         U: Use,
@@ -19,7 +19,7 @@ pub trait ColIntoOptUse<T>: Sized {
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(
         dst: Option<Self>,
-        par: ParUseOpt<U, I, M, X1, X2, S, R>,
+        par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<Self>
     where
         U: Use,
