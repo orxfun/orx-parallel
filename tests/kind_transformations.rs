@@ -125,35 +125,50 @@ fn kind_inf_transform_compute() {
 
 #[test]
 fn kind_use_inf_transform_compute() {
-    fn get_par(n: usize) -> impl Par<Item = String> {
-        (0..n).par().map(|x| x.to_string())
+    fn get_par(n: usize, u: char) -> impl ParUse<Use = char, Item = String> {
+        (0..n).par().map(|x| x.to_string()).using_clone(u)
     }
 
-    fn collect(par: impl Par<Item = String>) -> Vec<String> {
+    fn collect(par: impl ParUse<Use = char, Item = String>) -> Vec<String> {
         par.num_threads(3).chunk_size(1).collect()
     }
 
-    fn count(par: impl Par<Item = String>) -> usize {
+    fn count(par: impl ParUse<Use = char, Item = String>) -> usize {
         par.num_threads(1)
             .chunk_size(7)
-            .map(|_| 1)
-            .reduce(|a, b| a + b)
+            .map(|_u, _| 1)
+            .reduce(|_u, a, b| a + b)
             .unwrap_or(0)
     }
 
-    fn find(par: impl Par<Item = String>) -> Option<String> {
-        par.filter(|x| x.len() > 2)
+    fn find(par: impl ParUse<Use = char, Item = String>) -> Option<String> {
+        par.filter(|_u, x| x.len() > 2)
             .num_threads(6)
             .chunk_size(3)
             .first()
     }
 
-    fn map(par: impl Par<Item = String>) -> impl Par<Item = String> {
-        par.map(|x| format!("{x}!"))
+    fn map(par: impl ParUse<Use = char, Item = String>) -> impl ParUse<Use = char, Item = String> {
+        par.map(|_u, x| format!("{x}!"))
             .num_threads(2)
             .chunk_size(0)
             .iteration_order(IterationOrder::Ordered)
     }
+
+    let par = get_par(42, 'x');
+    let par = map(par);
+    let result = collect(par);
+    assert_eq!(result.len(), 42);
+
+    let par = get_par(42, 'x');
+    let par = map(par);
+    let result = count(par);
+    assert_eq!(result, 42);
+
+    let par = get_par(42, 'x');
+    let par = map(par);
+    let result = find(par);
+    assert!(result.is_some());
 }
 
 // #[test]
