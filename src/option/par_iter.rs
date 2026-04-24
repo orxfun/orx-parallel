@@ -1,8 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
-use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Xap};
 use crate::option::ParOptionCore;
 use crate::option::par::ParOption;
 use crate::option::par_runner::ParRunnerOpt;
@@ -228,37 +227,5 @@ where
             IterationOrder::Ordered => C::opt_col_into(None, self),
             IterationOrder::Arbitrary => C::opt_arb_col_into(None, self),
         }
-    }
-}
-
-// transformations
-
-impl<'a, O, I, M, X1, X2, S, R> ParOptionIter<I, M, X1, X2, S, R>
-where
-    O: 'a + Copy,
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Option<M>>,
-    X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn copied(self) -> ParOptionIter<I, M, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParOptionIter::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
-    }
-}
-
-impl<'a, O, I, M, X1, X2, S, R> ParOptionIter<I, M, X1, X2, S, R>
-where
-    O: 'a + Clone,
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Option<M>>,
-    X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn cloned(self) -> ParOptionIter<I, M, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParOptionIter::new(iter, x1, x2.mapped(FnCloned::new()), exe, params)
     }
 }
