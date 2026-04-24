@@ -395,3 +395,79 @@ fn kind_res_transform_compute() {
     let par = map_to_use(get_par(42));
     assert_eq!(par.first(), Ok(Some(String::from("0"))));
 }
+
+#[test]
+fn kind_use_res_transform_compute() {
+    fn get_par(n: usize) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        (0..n)
+            .par()
+            .map(|x| x.to_string())
+            .map(Ok)
+            .into_fallible()
+            .using(|_| 'x')
+    }
+
+    fn collect(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> Result<Vec<String>, char> {
+        par.num_threads(3).chunk_size(1).collect()
+    }
+
+    fn count(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> Result<usize, char> {
+        par.num_threads(1)
+            .chunk_size(7)
+            .map(|_u, _| 1)
+            .reduce(|_u, a, b| a + b)
+            .map(|x| x.unwrap_or(0))
+    }
+
+    fn find(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> Result<Option<String>, char> {
+        par.filter(|_u, x| x.len() > 2)
+            .num_threads(6)
+            .chunk_size(3)
+            .first()
+    }
+
+    fn map(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.map(|_u, x| format!("{x}!"))
+    }
+
+    fn filter(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.filter(|_u, x| x.len() > 0)
+    }
+
+    fn filter_map(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.filter_map(|_u, x| Some(x))
+    }
+
+    fn flat_map(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.flat_map(|_u, x| [x])
+    }
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = collect(par).unwrap();
+    assert_eq!(result.len(), 42);
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = count(par).unwrap();
+    assert_eq!(result, 42);
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par).unwrap();
+    assert!(result.is_some());
+}
