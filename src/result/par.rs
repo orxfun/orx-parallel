@@ -1,5 +1,8 @@
+use crate::infallible::fun::{FnCloned, FnCopied};
+use crate::infallible::{MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{UseClone, UseFun};
+use crate::result::ParResultIter;
 use crate::result::par_core::ParResultCore;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
@@ -73,6 +76,44 @@ pub trait ParResult: Sized + ParResultCore {
         let x2 = IdUse::<_, U>::new(x2);
         let u = UseClone::new(u);
         ParUseResultIter::new(u, iter, x1, x2, exe, params)
+    }
+
+    fn copied<'a, O>(
+        self,
+    ) -> ParResultIter<
+        Self::Input,
+        Self::M,
+        Self::Error,
+        Self::Xap1,
+        MappedOf<Self::Xap2, FnCopied<'a, O>>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        Self: ParResult<Item = &'a O>,
+        O: Copy,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        ParResultIter::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
+    }
+
+    fn cloned<'a, O>(
+        self,
+    ) -> ParResultIter<
+        Self::Input,
+        Self::M,
+        Self::Error,
+        Self::Xap1,
+        MappedOf<Self::Xap2, FnCloned<'a, O>>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        Self: ParResult<Item = &'a O>,
+        O: Clone,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        ParResultIter::new(iter, x1, x2.mapped(FnCloned::new()), exe, params)
     }
 
     // transformations

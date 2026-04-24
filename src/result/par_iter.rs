@@ -1,8 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
-use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par::ParResult;
 use crate::result::par_core::ParResultCore;
@@ -229,37 +228,5 @@ where
             IterationOrder::Ordered => C::res_col_into(None, self),
             IterationOrder::Arbitrary => C::res_arb_col_into(None, self),
         }
-    }
-}
-
-// transformations
-
-impl<'a, O, I, M, E, X1, X2, S, R> ParResultIter<I, M, E, X1, X2, S, R>
-where
-    O: 'a + Copy,
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn copied(self) -> ParResultIter<I, M, E, X1, MappedOf<X2, FnCopied<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParResultIter::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
-    }
-}
-
-impl<'a, O, I, M, E, X1, X2, S, R> ParResultIter<I, M, E, X1, X2, S, R>
-where
-    O: 'a + Clone,
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn cloned(self) -> ParResultIter<I, M, E, X1, MappedOf<X2, FnCloned<'a, O>>, S, R> {
-        let (iter, x1, x2, exe, _, params) = self.destruct();
-        ParResultIter::new(iter, x1, x2.mapped(FnCloned::new()), exe, params)
     }
 }
