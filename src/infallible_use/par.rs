@@ -1,6 +1,7 @@
 use crate::infallible::xap_variants::Id;
+use crate::infallible_use::fun::UFnCopied;
 use crate::infallible_use::xap_variants::IdUse;
-use crate::infallible_use::{ParUseCore, XapUse};
+use crate::infallible_use::{MappedOf, ParUseCore, ParUseIter, XapUse};
 use crate::option_use::ParUseOptionIter;
 use crate::result_use::ParUseResultIter;
 #[cfg(feature = "std")]
@@ -75,6 +76,21 @@ pub trait ParUse: Sized + ParUseCore {
         let (u, iter, xap, exe, params) = self.destruct();
         ParUseResultIter::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
     }
+
+    // fn copied<'a, O>(
+    //     self,
+    // ) -> ParUseIter<
+    //     Self::Use,
+    //     Self::Input,
+    //     MappedOf<Self::Xap, UFnCopied<'a, Self::Use, O>>,
+    //     Self::Runner,
+    // >
+    // where
+    //     O: Copy + Send,
+    // {
+    //     let (u, iter, xap, exe, params) = self.destruct();
+    //     ParUseIter::new(u, iter, xap.mapped(UFnCopied::new()), exe, params)
+    // }
 
     // transformations
 
