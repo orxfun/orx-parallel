@@ -1,4 +1,6 @@
-use crate::infallible_use::Use;
+use crate::infallible_use::fun::{UFnCloned, UFnCopied};
+use crate::infallible_use::{MappedOf, Use, XapUse};
+use crate::option_use::ParUseOptionIter;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
@@ -29,6 +31,46 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
     fn iteration_order(self, iteration_order: IterationOrder) -> Self;
+
+    // kind transformations
+
+    fn copied<'a, O>(
+        self,
+    ) -> ParUseOptionIter<
+        Self::Use,
+        Self::Input,
+        Self::M,
+        Self::Xap1,
+        MappedOf<Self::Xap2, UFnCopied<'a, Self::U, O>>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        Self: ParUseOption<Item = &'a O>,
+        O: Copy,
+    {
+        let (u, iter, x1, x2, exe, _, params) = self.destruct();
+        ParUseOptionIter::new(u, iter, x1, x2.mapped(UFnCopied::new()), exe, params)
+    }
+
+    fn cloned<'a, O>(
+        self,
+    ) -> ParUseOptionIter<
+        Self::Use,
+        Self::Input,
+        Self::M,
+        Self::Xap1,
+        MappedOf<Self::Xap2, UFnCloned<'a, Self::U, O>>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        Self: ParUseOption<Item = &'a O>,
+        O: Clone,
+    {
+        let (u, iter, x1, x2, exe, _, params) = self.destruct();
+        ParUseOptionIter::new(u, iter, x1, x2.mapped(UFnCloned::new()), exe, params)
+    }
 
     // transformations
 
