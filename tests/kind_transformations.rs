@@ -101,6 +101,19 @@ fn kind_inf_transform_compute() {
     let par = map_to_use_res(get_par(42));
     let par = par.into_fallible();
     assert_eq!(par.first(), Ok(Some(String::from("0"))));
+
+    // copied & cloned
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl Par<Item = &T> {
+        values.par()
+    }
+    let vals: Vec<_> = (0..42).collect();
+    let par = get_ref_par(&vals).copied();
+    assert_eq!(par.first().unwrap(), 0);
+    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+    let par = get_ref_par(&vals).cloned();
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par);
+    assert!(result.is_some());
 }
 
 #[test]
@@ -182,6 +195,19 @@ fn kind_use_inf_transform_compute() {
     let par = map_to_res(get_par(42, 'x'));
     let par = par.into_fallible();
     assert_eq!(par.first(), Ok(Some(String::from("0"))));
+
+    // copied & cloned
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUse<Use = char, Item = &T> {
+        values.par().using_clone('x')
+    }
+    let vals: Vec<_> = (0..42).collect();
+    let par = get_ref_par(&vals).copied();
+    assert_eq!(par.first().unwrap(), 0);
+    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+    let par = get_ref_par(&vals).cloned();
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par);
+    assert!(result.is_some());
 }
 
 #[test]
@@ -251,6 +277,19 @@ fn kind_opt_transform_compute() {
     }
     let par = map_to_use(get_par(42));
     assert_eq!(par.first(), Some(Some(String::from("0"))));
+
+    // copied & cloned
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParOption<Item = &T> {
+        values.par().map(Some).into_optional()
+    }
+    let vals: Vec<_> = (0..42).collect();
+    let par = get_ref_par(&vals).copied();
+    assert_eq!(par.first().unwrap(), Some(0));
+    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+    let par = get_ref_par(&vals).cloned();
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par);
+    assert!(result.is_some());
 }
 
 #[test]
@@ -320,6 +359,19 @@ fn kind_use_opt_transform_compute() {
     let par = get_par(42);
     let par = flat_map(filter_map(filter(map(par))));
     let result = find(par).unwrap();
+    assert!(result.is_some());
+
+    // copied & cloned
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUseOption<Use = char, Item = &T> {
+        values.par().map(Some).into_optional().using(|_| 'x')
+    }
+    let vals: Vec<_> = (0..42).collect();
+    let par = get_ref_par(&vals).copied();
+    assert_eq!(par.first().unwrap(), Some(0));
+    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+    let par = get_ref_par(&vals).cloned();
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par);
     assert!(result.is_some());
 }
 
@@ -394,6 +446,19 @@ fn kind_res_transform_compute() {
     }
     let par = map_to_use(get_par(42));
     assert_eq!(par.first(), Ok(Some(String::from("0"))));
+
+    // copied & cloned
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParResult<Item = &T, Error = char> {
+        values.par().map(Ok).into_fallible()
+    }
+    let vals: Vec<_> = (0..42).collect();
+    let par = get_ref_par(&vals).copied();
+    assert_eq!(par.first().unwrap(), Some(0));
+    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+    let par = get_ref_par(&vals).cloned();
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par);
+    assert!(result.is_ok());
 }
 
 #[test]
@@ -470,4 +535,19 @@ fn kind_use_res_transform_compute() {
     let par = flat_map(filter_map(filter(map(par))));
     let result = find(par).unwrap();
     assert!(result.is_some());
+
+    // copied & cloned
+    fn get_ref_par<T: Sync>(
+        values: &[T],
+    ) -> impl ParUseResult<Use = char, Item = &T, Error = char> {
+        values.par().map(Ok).using_clone('x').into_fallible()
+    }
+    let vals: Vec<_> = (0..42).collect();
+    let par = get_ref_par(&vals).copied();
+    assert_eq!(par.first().unwrap(), Some(0));
+    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+    let par = get_ref_par(&vals).cloned();
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par);
+    assert!(result.is_ok());
 }
