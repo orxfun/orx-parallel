@@ -1,8 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
-use crate::infallible_use::fun::{UFnCloned, UFnCopied};
-use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Use, XapUse};
+use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Use, XapUse};
 use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
@@ -72,9 +71,9 @@ where
 
     type Runner = R;
 
-    type U = U::Item;
+    type Use = U::Item;
 
-    type Use = U;
+    type Using = U;
 
     type Input = I;
 
@@ -89,7 +88,7 @@ where
     fn destruct(
         self,
     ) -> (
-        Self::Use,
+        Self::Using,
         Self::Input,
         Self::Xap1,
         Self::Xap2,
@@ -265,43 +264,5 @@ where
             IterationOrder::Ordered => C::opt_use_col_into(None, self),
             IterationOrder::Arbitrary => C::opt_use_arb_col_into(None, self),
         }
-    }
-}
-
-// transformations
-
-impl<'a, U, O, I, M, X1, X2, S, R> ParUseOptionIter<U, I, M, X1, X2, S, R>
-where
-    U: Use,
-    O: 'a + Copy,
-    I: ConcurrentIter,
-    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
-    X2: XapUse<U = U::Item, I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn copied(
-        self,
-    ) -> ParUseOptionIter<U, I, M, X1, MappedOf<X2, UFnCopied<'a, U::Item, O>>, S, R> {
-        let (u, iter, x1, x2, exe, _, params) = self.destruct();
-        ParUseOptionIter::new(u, iter, x1, x2.mapped(UFnCopied::new()), exe, params)
-    }
-}
-
-impl<'a, U, O, I, M, X1, X2, S, R> ParUseOptionIter<U, I, M, X1, X2, S, R>
-where
-    U: Use,
-    O: 'a + Clone,
-    I: ConcurrentIter,
-    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
-    X2: XapUse<U = U::Item, I = M, O = &'a O>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    pub fn cloned(
-        self,
-    ) -> ParUseOptionIter<U, I, M, X1, MappedOf<X2, UFnCloned<'a, U::Item, O>>, S, R> {
-        let (u, iter, x1, x2, exe, _, params) = self.destruct();
-        ParUseOptionIter::new(u, iter, x1, x2.mapped(UFnCloned::new()), exe, params)
     }
 }

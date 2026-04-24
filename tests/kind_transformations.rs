@@ -1,79 +1,12 @@
+/*
+These tests make sure that the api of parallel iterator traits are
+set up properly so that the corresponding transformation and computation
+methods are available on the trait, without requiring the concrete
+iterator type implementing the trait.
+*/
+
 use orx_parallel::*;
 use std::string::{String, ToString};
-
-fn get_par(n: usize) -> impl Par<Item = String> + EnumeratePar {
-    (0..n).par().map(|x| x.to_string())
-}
-
-fn get_par_use(n: usize) -> impl ParUse<Use = String, Item = String> + EnumerateParUse {
-    (0..n)
-        .par()
-        .using_clone("abc".to_string())
-        .map(|_, x| x.to_string())
-}
-
-fn map(par: impl Par<Item = String>) -> impl Par<Item = String> {
-    par.map(|x| format!("{x}!"))
-        .num_threads(2)
-        .chunk_size(0)
-        .iteration_order(IterationOrder::Ordered)
-}
-
-fn map_opt(par: impl Par<Item = String>) -> impl ParOption<Item = String> {
-    par.map(|x| Some(format!("{x}!")))
-        .into_optional()
-        .num_threads(2)
-        .chunk_size(0)
-        .iteration_order(IterationOrder::Ordered)
-}
-
-fn map_res(par: impl Par<Item = String>) -> impl ParResult<Item = String, Error = char> {
-    par.map(|x| Ok(format!("{x}!")))
-        .into_fallible()
-        .num_threads(2)
-        .chunk_size(0)
-        .iteration_order(IterationOrder::Ordered)
-}
-
-fn count_opt(par: impl ParOption) -> Option<usize> {
-    par.num_threads(1)
-        .chunk_size(7)
-        .map(|_| 1)
-        .reduce(|a, b| a + b)
-        .map(|x| x.unwrap_or(0))
-}
-
-fn count_res(par: impl ParResult<Error = char>) -> Result<usize, char> {
-    par.num_threads(1)
-        .chunk_size(7)
-        .map(|_| 1)
-        .reduce(|a, b| a + b)
-        .map(|x| x.unwrap_or(0))
-}
-
-fn count_use(par: impl ParUse<Use = String>) -> usize {
-    par.num_threads(1)
-        .chunk_size(7)
-        .map(|_use, _| 1)
-        .reduce(|_use, a, b| a + b)
-        .unwrap_or(0)
-}
-
-fn count_use_opt(par: impl ParUseOption<U = String>) -> Option<usize> {
-    par.num_threads(1)
-        .chunk_size(7)
-        .map(|_use, _| 1)
-        .reduce(|_use, a, b| a + b)
-        .map(|x| x.unwrap_or(0))
-}
-
-fn count_use_res(par: impl ParUseResult<U = String, Error = char>) -> Result<usize, char> {
-    par.num_threads(1)
-        .chunk_size(7)
-        .map(|_use, _| 1)
-        .reduce(|_use, a, b| a + b)
-        .map(|x| x.unwrap_or(0))
-}
 
 #[test]
 fn kind_inf_transform_compute() {
@@ -102,214 +35,439 @@ fn kind_inf_transform_compute() {
 
     fn map(par: impl Par<Item = String>) -> impl Par<Item = String> {
         par.map(|x| format!("{x}!"))
-            .num_threads(2)
-            .chunk_size(0)
-            .iteration_order(IterationOrder::Ordered)
+    }
+
+    fn filter(par: impl Par<Item = String>) -> impl Par<Item = String> {
+        par.filter(|x| x.len() > 0)
+    }
+
+    fn filter_map(par: impl Par<Item = String>) -> impl Par<Item = String> {
+        par.filter_map(Some)
+    }
+
+    fn flat_map(par: impl Par<Item = String>) -> impl Par<Item = String> {
+        par.flat_map(|x| [x])
     }
 
     let par = get_par(42);
-    let par = map(par);
+    let par = flat_map(filter_map(filter(map(par))));
     let result = collect(par);
     assert_eq!(result.len(), 42);
 
     let par = get_par(42);
-    let par = map(par);
+    let par = flat_map(filter_map(filter(map(par))));
     let result = count(par);
     assert_eq!(result, 42);
 
     let par = get_par(42);
-    let par = map(par);
+    let par = flat_map(filter_map(filter(map(par))));
     let result = find(par);
     assert!(result.is_some());
+
+    fn map_to_opt(par: impl Par<Item = String>) -> impl Par<Item = Option<String>> {
+        par.map(Some)
+    }
+    let par = map_to_opt(get_par(42));
+    let par = par.into_optional();
+    assert_eq!(par.first(), Some(Some(String::from("0"))));
+
+    fn map_to_res(par: impl Par<Item = String>) -> impl Par<Item = Result<String, char>> {
+        par.map(Ok)
+    }
+    let par = map_to_res(get_par(42));
+    let par = par.into_fallible();
+    assert_eq!(par.first(), Ok(Some(String::from("0"))));
+
+    fn map_to_use(par: impl Par<Item = String>) -> impl ParUse<Use = char, Item = String> {
+        par.using_clone('x')
+    }
+    let par = map_to_use(get_par(42));
+    assert_eq!(par.first(), Some(String::from("0")));
+
+    fn map_to_use_opt(
+        par: impl Par<Item = String>,
+    ) -> impl ParUse<Use = char, Item = Option<String>> {
+        par.map(Some).using(|_| 'x')
+    }
+    let par = map_to_use_opt(get_par(42));
+    let par = par.into_optional();
+    assert_eq!(par.first(), Some(Some(String::from("0"))));
+
+    fn map_to_use_res(
+        par: impl Par<Item = String>,
+    ) -> impl ParUse<Use = char, Item = Result<String, char>> {
+        par.map(Ok).using_clone('x')
+    }
+    let par = map_to_use_res(get_par(42));
+    let par = par.into_fallible();
+    assert_eq!(par.first(), Ok(Some(String::from("0"))));
 }
 
 #[test]
 fn kind_use_inf_transform_compute() {
-    fn get_par(n: usize) -> impl Par<Item = String> {
-        (0..n).par().map(|x| x.to_string())
+    fn get_par(n: usize, u: char) -> impl ParUse<Use = char, Item = String> {
+        (0..n).par().map(|x| x.to_string()).using_clone(u)
     }
 
-    fn collect(par: impl Par<Item = String>) -> Vec<String> {
+    fn collect(par: impl ParUse<Use = char, Item = String>) -> Vec<String> {
         par.num_threads(3).chunk_size(1).collect()
     }
 
-    fn count(par: impl Par<Item = String>) -> usize {
+    fn count(par: impl ParUse<Use = char, Item = String>) -> usize {
+        par.num_threads(1)
+            .chunk_size(7)
+            .map(|_u, _| 1)
+            .reduce(|_u, a, b| a + b)
+            .unwrap_or(0)
+    }
+
+    fn find(par: impl ParUse<Use = char, Item = String>) -> Option<String> {
+        par.filter(|_u, x| x.len() > 2)
+            .num_threads(6)
+            .chunk_size(3)
+            .first()
+    }
+
+    fn map(par: impl ParUse<Use = char, Item = String>) -> impl ParUse<Use = char, Item = String> {
+        par.map(|_u, x| format!("{x}!"))
+    }
+
+    fn filter(
+        par: impl ParUse<Use = char, Item = String>,
+    ) -> impl ParUse<Use = char, Item = String> {
+        par.filter(|_u, x| x.len() > 0)
+    }
+
+    fn filter_map(
+        par: impl ParUse<Use = char, Item = String>,
+    ) -> impl ParUse<Use = char, Item = String> {
+        par.filter_map(|_u, x| Some(x))
+    }
+
+    fn flat_map(
+        par: impl ParUse<Use = char, Item = String>,
+    ) -> impl ParUse<Use = char, Item = String> {
+        par.flat_map(|_, x| [x])
+    }
+
+    let par = get_par(42, 'x');
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = collect(par);
+    assert_eq!(result.len(), 42);
+
+    let par = get_par(42, 'x');
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = count(par);
+    assert_eq!(result, 42);
+
+    let par = get_par(42, 'x');
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par);
+    assert!(result.is_some());
+
+    fn map_to_opt(
+        par: impl ParUse<Use = char, Item = String>,
+    ) -> impl ParUse<Use = char, Item = Option<String>> {
+        par.map(|_u, x| Some(x))
+    }
+    let par = map_to_opt(get_par(42, 'x'));
+    let par = par.into_optional();
+    assert_eq!(par.first(), Some(Some(String::from("0"))));
+
+    fn map_to_res(
+        par: impl ParUse<Use = char, Item = String>,
+    ) -> impl ParUse<Use = char, Item = Result<String, char>> {
+        par.map(|_u, x| Ok(x))
+    }
+    let par = map_to_res(get_par(42, 'x'));
+    let par = par.into_fallible();
+    assert_eq!(par.first(), Ok(Some(String::from("0"))));
+}
+
+#[test]
+fn kind_opt_transform_compute() {
+    fn get_par(n: usize) -> impl ParOption<Item = String> {
+        (0..n)
+            .par()
+            .map(|x| x.to_string())
+            .map(Some)
+            .into_optional()
+    }
+
+    fn collect(par: impl ParOption<Item = String>) -> Option<Vec<String>> {
+        par.num_threads(3).chunk_size(1).collect()
+    }
+
+    fn count(par: impl ParOption<Item = String>) -> Option<usize> {
         par.num_threads(1)
             .chunk_size(7)
             .map(|_| 1)
             .reduce(|a, b| a + b)
-            .unwrap_or(0)
+            .map(|x| x.unwrap_or(0))
     }
 
-    fn find(par: impl Par<Item = String>) -> Option<String> {
+    fn find(par: impl ParOption<Item = String>) -> Option<Option<String>> {
         par.filter(|x| x.len() > 2)
             .num_threads(6)
             .chunk_size(3)
             .first()
     }
 
-    fn map(par: impl Par<Item = String>) -> impl Par<Item = String> {
+    fn map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
         par.map(|x| format!("{x}!"))
-            .num_threads(2)
-            .chunk_size(0)
-            .iteration_order(IterationOrder::Ordered)
     }
+
+    fn filter(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+        par.filter(|x| x.len() > 0)
+    }
+
+    fn filter_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+        par.filter_map(Some)
+    }
+
+    fn flat_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+        par.flat_map(|x| [x])
+    }
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = collect(par).unwrap();
+    assert_eq!(result.len(), 42);
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = count(par).unwrap();
+    assert_eq!(result, 42);
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par).unwrap();
+    assert!(result.is_some());
+
+    fn map_to_use(
+        par: impl ParOption<Item = String>,
+    ) -> impl ParUseOption<Use = char, Item = String> {
+        par.using_clone('x')
+    }
+    let par = map_to_use(get_par(42));
+    assert_eq!(par.first(), Some(Some(String::from("0"))));
 }
 
-// #[test]
-// fn kind_into_optional() {
-//     let par = get_par(42).map(Some);
-//     let par = par.into_optional();
-//     let result = count_opt(par);
-//     assert_eq!(result, Some(42));
-// }
+#[test]
+fn kind_use_opt_transform_compute() {
+    fn get_par(n: usize) -> impl ParUseOption<Use = char, Item = String> {
+        (0..n)
+            .par()
+            .map(|x| x.to_string())
+            .map(Some)
+            .into_optional()
+            .using_clone('x')
+    }
 
-// #[test]
-// fn kind_into_optional_use() {
-//     {
-//         let par = get_par(42).map(Some);
-//         let par = par.into_optional();
+    fn collect(par: impl ParUseOption<Use = char, Item = String>) -> Option<Vec<String>> {
+        par.num_threads(3).chunk_size(1).collect()
+    }
 
-//         let u = |x: usize| x.to_string();
-//         let par = par.using(u);
+    fn count(par: impl ParUseOption<Use = char, Item = String>) -> Option<usize> {
+        par.num_threads(1)
+            .chunk_size(7)
+            .map(|_u, _| 1)
+            .reduce(|_u, a, b| a + b)
+            .map(|x| x.unwrap_or(0))
+    }
 
-//         let result = count_use_opt(par);
-//         assert_eq!(result, Some(42));
-//     }
+    fn find(par: impl ParUseOption<Use = char, Item = String>) -> Option<Option<String>> {
+        par.filter(|_u, x| x.len() > 2)
+            .num_threads(6)
+            .chunk_size(3)
+            .first()
+    }
 
-//     {
-//         let par = get_par(42).map(Some);
-//         let par = par.into_optional();
+    fn map(
+        par: impl ParUseOption<Use = char, Item = String>,
+    ) -> impl ParUseOption<Use = char, Item = String> {
+        par.map(|_u, x| format!("{x}!"))
+    }
 
-//         let u = String::from("42");
-//         let par = par.using_clone(u);
+    fn filter(
+        par: impl ParUseOption<Use = char, Item = String>,
+    ) -> impl ParUseOption<Use = char, Item = String> {
+        par.filter(|_u, x| x.len() > 0)
+    }
 
-//         let result = count_use_opt(par);
-//         assert_eq!(result, Some(42));
-//     }
-// }
+    fn filter_map(
+        par: impl ParUseOption<Use = char, Item = String>,
+    ) -> impl ParUseOption<Use = char, Item = String> {
+        par.filter_map(|_u, x| Some(x))
+    }
 
-// #[test]
-// fn kind_into_use_optional() {
-//     {
-//         let u = |x: usize| x.to_string();
-//         let par = get_par(42);
-//         let par = par.using(u);
-//         let par = par.map(|_use, x| Some(x));
-//         let par = par.into_optional();
-//         let result = count_use_opt(par);
-//         assert_eq!(result, Some(42));
-//     }
+    fn flat_map(
+        par: impl ParUseOption<Use = char, Item = String>,
+    ) -> impl ParUseOption<Use = char, Item = String> {
+        par.flat_map(|_u, x| [x])
+    }
 
-//     {
-//         let u = String::from("42");
-//         let par = get_par(42);
-//         let par = par.using_clone(u);
-//         let par = par.map(|_use, x| Some(x));
-//         let par = par.into_optional();
-//         let result = count_use_opt(par);
-//         assert_eq!(result, Some(42));
-//     }
-// }
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = collect(par).unwrap();
+    assert_eq!(result.len(), 42);
 
-// #[test]
-// fn kind_into_fallible() {
-//     let par = get_par(42).map(|x| Result::<_, char>::Ok(x));
-//     let par = par.into_fallible();
-//     let result = count_res(par);
-//     assert_eq!(result, Ok(42));
-// }
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = count(par).unwrap();
+    assert_eq!(result, 42);
 
-// #[test]
-// fn kind_into_fallible_use() {
-//     {
-//         let par = get_par(42).map(|x| Result::<_, char>::Ok(x));
-//         let par = par.into_fallible();
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par).unwrap();
+    assert!(result.is_some());
+}
 
-//         let u = |x: usize| x.to_string();
-//         let par = par.using(u);
+#[test]
+fn kind_res_transform_compute() {
+    fn get_par(n: usize) -> impl ParResult<Item = String, Error = char> {
+        (0..n).par().map(|x| x.to_string()).map(Ok).into_fallible()
+    }
 
-//         let result = count_use_res(par);
-//         assert_eq!(result, Ok(42));
-//     }
+    fn collect(par: impl ParResult<Item = String, Error = char>) -> Result<Vec<String>, char> {
+        par.num_threads(3).chunk_size(1).collect()
+    }
 
-//     {
-//         let par = get_par(42).map(|x| Result::<_, char>::Ok(x));
-//         let par = par.into_fallible();
+    fn count(par: impl ParResult<Item = String, Error = char>) -> Result<usize, char> {
+        par.num_threads(1)
+            .chunk_size(7)
+            .map(|_| 1)
+            .reduce(|a, b| a + b)
+            .map(|x| x.unwrap_or(0))
+    }
 
-//         let u = String::from("42");
-//         let par = par.using_clone(u);
+    fn find(par: impl ParResult<Item = String, Error = char>) -> Result<Option<String>, char> {
+        par.filter(|x| x.len() > 2)
+            .num_threads(6)
+            .chunk_size(3)
+            .first()
+    }
 
-//         let result = count_use_res(par);
-//         assert_eq!(result, Ok(42));
-//     }
-// }
+    fn map(
+        par: impl ParResult<Item = String, Error = char>,
+    ) -> impl ParResult<Item = String, Error = char> {
+        par.map(|x| format!("{x}!"))
+    }
 
-// #[test]
-// fn kind_into_use_fallible() {
-//     {
-//         let u = |x: usize| x.to_string();
-//         let par = get_par(42);
-//         let par = par.using(u);
+    fn filter(
+        par: impl ParResult<Item = String, Error = char>,
+    ) -> impl ParResult<Item = String, Error = char> {
+        par.filter(|x| x.len() > 0)
+    }
 
-//         let par = par.map(|_use, x| Result::<_, char>::Ok(x));
-//         let par = par.into_fallible();
+    fn filter_map(
+        par: impl ParResult<Item = String, Error = char>,
+    ) -> impl ParResult<Item = String, Error = char> {
+        par.filter_map(Some)
+    }
 
-//         let result = count_use_res(par);
-//         assert_eq!(result, Ok(42));
-//     }
+    fn flat_map(
+        par: impl ParResult<Item = String, Error = char>,
+    ) -> impl ParResult<Item = String, Error = char> {
+        par.flat_map(|x| [x])
+    }
 
-//     {
-//         let u = String::from("42");
-//         let par = get_par(42);
-//         let par = par.using_clone(u);
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = collect(par).unwrap();
+    assert_eq!(result.len(), 42);
 
-//         let par = par.map(|_use, x| Result::<_, char>::Ok(x));
-//         let par = par.into_fallible();
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = count(par).unwrap();
+    assert_eq!(result, 42);
 
-//         let result = count_use_res(par);
-//         assert_eq!(result, Ok(42));
-//     }
-// }
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par).unwrap();
+    assert!(result.is_some());
 
-// #[test]
-// fn kind_use() {
-//     {
-//         let u = |x: usize| x.to_string();
-//         let par = get_par(42);
-//         let par = par.using(u);
-//         let result = count_use(par);
-//         assert_eq!(result, 42);
-//     }
+    fn map_to_use(
+        par: impl ParResult<Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.using_clone('x')
+    }
+    let par = map_to_use(get_par(42));
+    assert_eq!(par.first(), Ok(Some(String::from("0"))));
+}
 
-//     {
-//         let u = String::from("42");
-//         let par = get_par(42);
-//         let par = par.using_clone(u);
-//         let result = count_use(par);
-//         assert_eq!(result, 42);
-//     }
-// }
+#[test]
+fn kind_use_res_transform_compute() {
+    fn get_par(n: usize) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        (0..n)
+            .par()
+            .map(|x| x.to_string())
+            .map(Ok)
+            .into_fallible()
+            .using(|_| 'x')
+    }
 
-// // enumerate
+    fn collect(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> Result<Vec<String>, char> {
+        par.num_threads(3).chunk_size(1).collect()
+    }
 
-// #[test]
-// fn kind_enumerate() {
-//     let par = get_par(42);
-//     let par = par.enumerate();
-//     let par = par.map(|(_i, x)| x);
-//     let result = count(par);
-//     assert_eq!(result, 42);
-// }
+    fn count(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> Result<usize, char> {
+        par.num_threads(1)
+            .chunk_size(7)
+            .map(|_u, _| 1)
+            .reduce(|_u, a, b| a + b)
+            .map(|x| x.unwrap_or(0))
+    }
 
-// #[test]
-// fn kind_use_enumerate() {
-//     let par = get_par_use(42);
-//     let par = par.enumerate();
-//     let par = par.map(|u, (_i, x): (usize, String)| {
-//         *u = format!("{u}!");
-//         x
-//     });
-//     let result = count_use(par);
-//     assert_eq!(result, 42);
-// }
+    fn find(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> Result<Option<String>, char> {
+        par.filter(|_u, x| x.len() > 2)
+            .num_threads(6)
+            .chunk_size(3)
+            .first()
+    }
+
+    fn map(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.map(|_u, x| format!("{x}!"))
+    }
+
+    fn filter(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.filter(|_u, x| x.len() > 0)
+    }
+
+    fn filter_map(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.filter_map(|_u, x| Some(x))
+    }
+
+    fn flat_map(
+        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par.flat_map(|_u, x| [x])
+    }
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = collect(par).unwrap();
+    assert_eq!(result.len(), 42);
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = count(par).unwrap();
+    assert_eq!(result, 42);
+
+    let par = get_par(42);
+    let par = flat_map(filter_map(filter(map(par))));
+    let result = find(par).unwrap();
+    assert!(result.is_some());
+}

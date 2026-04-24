@@ -1,5 +1,6 @@
-use crate::infallible_use::Use;
-use crate::result_use::ParUseResultCore;
+use crate::infallible_use::fun::{UFnCloned, UFnCopied};
+use crate::infallible_use::{MappedOf, Use, XapUse};
+use crate::result_use::{ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
@@ -14,7 +15,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         runner: Q,
     ) -> impl ParUseResult<
         Runner = Q,
-        U = Self::U,
+        Use = Self::Use,
         Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
@@ -25,7 +26,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
     ) -> impl ParUseResult<
         Runner = WithDiagnostics<Self::Runner>,
-        U = Self::U,
+        Use = Self::Use,
         Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
@@ -37,6 +38,48 @@ pub trait ParUseResult: Sized + ParUseResultCore {
 
     fn iteration_order(self, collect: IterationOrder) -> Self;
 
+    // kind transformations
+
+    fn copied<'a, O>(
+        self,
+    ) -> ParUseResultIter<
+        Self::Using,
+        Self::Input,
+        Self::M,
+        Self::Error,
+        Self::Xap1,
+        MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        Self: ParUseResult<Item = &'a O>,
+        O: Copy,
+    {
+        let (u, iter, x1, x2, exe, _, params) = self.destruct();
+        ParUseResultIter::new(u, iter, x1, x2.mapped(UFnCopied::new()), exe, params)
+    }
+
+    fn cloned<'a, O>(
+        self,
+    ) -> ParUseResultIter<
+        Self::Using,
+        Self::Input,
+        Self::M,
+        Self::Error,
+        Self::Xap1,
+        MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
+        Self::Size,
+        Self::Runner,
+    >
+    where
+        Self: ParUseResult<Item = &'a O>,
+        O: Clone,
+    {
+        let (u, iter, x1, x2, exe, _, params) = self.destruct();
+        ParUseResultIter::new(u, iter, x1, x2.mapped(UFnCloned::new()), exe, params)
+    }
+
     // transformations
 
     fn map<Q, H>(
@@ -44,66 +87,66 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         h: H,
     ) -> impl ParUseResult<
         Runner = Self::Runner,
-        U = Self::U,
+        Use = Self::Use,
         Size = Self::Size,
         Item = Q,
         Error = Self::Error,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Q + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
         h: H,
     ) -> impl ParUseResult<
         Runner = Self::Runner,
-        U = Self::U,
+        Use = Self::Use,
         Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send;
 
     fn filter<H>(
         self,
         h: H,
     ) -> impl ParUseResult<
         Runner = Self::Runner,
-        U = Self::U,
+        Use = Self::Use,
         Size = <Self::Size as SizePair>::ThenBin,
         Item = Self::Item,
         Error = Self::Error,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) -> bool + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
         h: H,
     ) -> impl ParUseResult<
         Runner = Self::Runner,
-        U = Self::U,
+        Use = Self::Use,
         Size = <Self::Size as SizePair>::ThenBin,
         Item = Q,
         Error = Self::Error,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
         h: H,
     ) -> impl ParUseResult<
         Runner = Self::Runner,
-        U = Self::U,
+        Use = Self::Use,
         Size = <Self::Size as SizePair>::ThenMany,
         Item = V::Item,
         Error = Self::Error,
     >
     where
         V: IntoIterator,
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> V + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
 
     // compute
 
@@ -114,7 +157,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
 
     fn reduce<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
     where
-        F: Fn(&mut <Self::Use as Use>::Item, Self::Item, Self::Item) -> Self::Item + Send + Copy,
+        F: Fn(&mut <Self::Using as Use>::Item, Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send,
         Self::Error: Send;
 
@@ -134,7 +177,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
 
     fn for_each<F>(self, f: F) -> Result<(), Self::Error>
     where
-        F: Fn(&mut <Self::Use as Use>::Item, Self::Item) + Send + Copy,
+        F: Fn(&mut <Self::Using as Use>::Item, Self::Item) + Send + Copy,
         Self::Error: Send,
     {
         self.map(f).reduce(|_, _, _| {}).map(|_| ())
