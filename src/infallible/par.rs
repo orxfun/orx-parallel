@@ -1,5 +1,5 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::{MappedOf, ParIter};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
@@ -13,12 +13,20 @@ use crate::{infallible::par_core::ParCore, runner::ParRunner};
 pub trait Par: Sized + ParCore {
     // configuration
 
-    fn runner<Q: ParRunner>(self, runner: Q) -> impl Par<Runner = Q, Item = Self::Item>;
+    fn runner<Q: ParRunner>(
+        self,
+        runner: Q,
+    ) -> impl Par<Runner = Q, Input = Self::Input, Xap = Self::Xap, Item = Self::Item>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl Par<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item>;
+    ) -> impl Par<
+        Runner = WithDiagnostics<Self::Runner>,
+        Input = Self::Input,
+        Xap = Self::Xap,
+        Item = Self::Item,
+    >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -115,23 +123,43 @@ pub trait Par: Sized + ParCore {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl Par<Item = Q>
+    fn map<Q, H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = MapOf<Self::Xap, Q, H>, Item = Q>
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn inspect<H>(self, h: H) -> impl Par<Item = Self::Item>
+    fn inspect<H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = InsOf<Self::Xap, H>, Item = Self::Item>
     where
         H: Fn(&Self::Item) + Copy + Send;
 
-    fn filter<H>(self, h: H) -> impl Par<Item = Self::Item>
+    fn filter<H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = FilOf<Self::Xap, H>, Item = Self::Item>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
-    fn filter_map<Q, H>(self, h: H) -> impl Par<Item = Q>
+    fn filter_map<Q, H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = FilMapOf<Self::Xap, Q, H>, Item = Q>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
-    fn flat_map<V, H>(self, h: H) -> impl Par<Item = V::Item>
+    fn flat_map<V, H>(
+        self,
+        h: H,
+    ) -> impl Par<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Xap = FlatMapOf<Self::Xap, V, H>,
+        Item = V::Item,
+    >
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
