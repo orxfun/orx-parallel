@@ -1,7 +1,9 @@
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap_variants::IdUse;
-use crate::infallible_use::{MappedOf, ParUseCore, ParUseIter, XapUse};
+use crate::infallible_use::{
+    FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
+};
 use crate::option_use::ParUseOptionIter;
 use crate::result_use::ParUseResultIter;
 #[cfg(feature = "std")]
@@ -17,12 +19,18 @@ pub trait ParUse: Sized + ParUseCore {
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParUse<Runner = Q, Use = Self::Use, Item = Self::Item>;
+    ) -> impl ParUse<Runner = Q, Use = Self::Use, Input = Self::Input, Xap = Self::Xap, Item = Self::Item>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParUse<Runner = WithDiagnostics<Self::Runner>, Use = Self::Use, Item = Self::Item>;
+    ) -> impl ParUse<
+        Runner = WithDiagnostics<Self::Runner>,
+        Use = Self::Use,
+        Input = Self::Input,
+        Xap = Self::Xap,
+        Item = Self::Item,
+    >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -111,35 +119,68 @@ pub trait ParUse: Sized + ParUseCore {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl ParUse<Runner = Self::Runner, Use = Self::Use, Item = Q>
+    fn map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Input = Self::Input,
+        Xap = MapOf<Self::Xap, Q, H>,
+        Item = Q,
+    >
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl ParUse<Runner = Self::Runner, Use = Self::Use, Item = Self::Item>
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Input = Self::Input,
+        Xap = InsOf<Self::Xap, H>,
+        Item = Self::Item,
+    >
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send;
 
     fn filter<H>(
         self,
         h: H,
-    ) -> impl ParUse<Runner = Self::Runner, Use = Self::Use, Item = Self::Item>
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Input = Self::Input,
+        Xap = FilOf<Self::Xap, H>,
+        Item = Self::Item,
+    >
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
         h: H,
-    ) -> impl ParUse<Runner = Self::Runner, Use = Self::Use, Item = Q>
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Input = Self::Input,
+        Xap = FilMapOf<Self::Xap, Q, H>,
+        Item = Q,
+    >
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
         h: H,
-    ) -> impl ParUse<Runner = Self::Runner, Use = Self::Use, Item = V::Item>
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Input = Self::Input,
+        Xap = FlatMapOf<Self::Xap, V, H>,
+        Item = V::Item,
+    >
     where
         V: IntoIterator,
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
