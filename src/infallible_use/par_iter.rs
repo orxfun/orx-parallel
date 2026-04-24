@@ -1,10 +1,9 @@
 #![allow(refining_impl_trait)]
 
-use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
-use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf};
+use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
@@ -206,33 +205,5 @@ where
             IterationOrder::Ordered => C::inf_use_col_into(None, self),
             IterationOrder::Arbitrary => C::inf_use_arb_col_into(None, self),
         }
-    }
-}
-
-// transformations
-
-impl<'a, U, O: Copy + 'a, I, X, R> ParUseIter<U, I, X, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn copied(self) -> ParUseIter<U, I, MappedOf<X, UFnCopied<'a, U::Item, O>>, R> {
-        let (u, iter, xap, exe, params) = self.destruct();
-        ParUseIter::new(u, iter, xap.mapped(UFnCopied::new()), exe, params)
-    }
-}
-
-impl<'a, U, O: Clone + 'a, I, X, R> ParUseIter<U, I, X, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item, O = &'a O>,
-    R: ParRunner,
-{
-    pub fn cloned(self) -> ParUseIter<U, I, MappedOf<X, UFnCloned<'a, U::Item, O>>, R> {
-        let (u, iter, xap, exe, params) = self.destruct();
-        ParUseIter::new(u, iter, xap.mapped(UFnCloned::new()), exe, params)
     }
 }
