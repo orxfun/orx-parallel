@@ -59,7 +59,7 @@ fn count_use(par: impl ParUse<Use = String>) -> usize {
         .unwrap_or(0)
 }
 
-fn count_use_opt(par: impl ParUseOption<U = String>) -> Option<usize> {
+fn count_use_opt(par: impl ParUseOption<Use = String>) -> Option<usize> {
     par.num_threads(1)
         .chunk_size(7)
         .map(|_use, _| 1)
