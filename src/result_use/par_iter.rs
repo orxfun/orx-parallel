@@ -73,9 +73,9 @@ where
 
     type Runner = R;
 
-    type U = U::Item;
+    type Use = U::Item;
 
-    type Use = U;
+    type Using = U;
 
     type Input = I;
 
@@ -90,7 +90,7 @@ where
     fn destruct(
         self,
     ) -> (
-        Self::Use,
+        Self::Using,
         Self::Input,
         Self::Xap1,
         Self::Xap2,
