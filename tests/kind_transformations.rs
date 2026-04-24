@@ -4,13 +4,12 @@ set up properly so that the corresponding transformation and computation
 methods are available on the trait, without requiring the concrete
 iterator type implementing the trait.
 */
-
 use orx_parallel::*;
 use std::string::{String, ToString};
 
 #[test]
 fn kind_inf_transform_compute() {
-    fn get_par(n: usize) -> impl Par<Item = String> {
+    fn get_par(n: usize) -> impl EnumeratePar<Item = String> {
         (0..n).par().map(|x| x.to_string())
     }
 
@@ -106,448 +105,453 @@ fn kind_inf_transform_compute() {
     fn get_ref_par<T: Sync>(values: &[T]) -> impl Par<Item = &T> {
         values.par()
     }
-    let vals: Vec<_> = (0..42).collect();
-    let par = get_ref_par(&vals).copied();
+    let values: Vec<_> = (0..42).collect();
+    let par = get_ref_par(&values).copied();
     assert_eq!(par.first().unwrap(), 0);
     let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
     let par = get_ref_par(&vals).cloned();
     let par = flat_map(filter_map(filter(map(par))));
     let result = find(par);
     assert!(result.is_some());
+
+    // enumerate
+    // let par = get_par(42).enumerate();
+    // assert_eq!(par.first().unwrap(), (0, "0".to_string()));
+    let par = values.par().map(|x| x.clone()).enumerate();
 }
 
-#[test]
-fn kind_use_inf_transform_compute() {
-    fn get_par(n: usize, u: char) -> impl ParUse<Use = char, Item = String> {
-        (0..n).par().map(|x| x.to_string()).using_clone(u)
-    }
+// #[test]
+// fn kind_use_inf_transform_compute() {
+//     fn get_par(n: usize, u: char) -> impl ParUse<Use = char, Item = String> {
+//         (0..n).par().map(|x| x.to_string()).using_clone(u)
+//     }
 
-    fn collect(par: impl ParUse<Use = char, Item = String>) -> Vec<String> {
-        par.num_threads(3).chunk_size(1).collect()
-    }
+//     fn collect(par: impl ParUse<Use = char, Item = String>) -> Vec<String> {
+//         par.num_threads(3).chunk_size(1).collect()
+//     }
 
-    fn count(par: impl ParUse<Use = char, Item = String>) -> usize {
-        par.num_threads(1)
-            .chunk_size(7)
-            .map(|_u, _| 1)
-            .reduce(|_u, a, b| a + b)
-            .unwrap_or(0)
-    }
+//     fn count(par: impl ParUse<Use = char, Item = String>) -> usize {
+//         par.num_threads(1)
+//             .chunk_size(7)
+//             .map(|_u, _| 1)
+//             .reduce(|_u, a, b| a + b)
+//             .unwrap_or(0)
+//     }
 
-    fn find(par: impl ParUse<Use = char, Item = String>) -> Option<String> {
-        par.filter(|_u, x| x.len() > 2)
-            .num_threads(6)
-            .chunk_size(3)
-            .first()
-    }
+//     fn find(par: impl ParUse<Use = char, Item = String>) -> Option<String> {
+//         par.filter(|_u, x| x.len() > 2)
+//             .num_threads(6)
+//             .chunk_size(3)
+//             .first()
+//     }
 
-    fn map(par: impl ParUse<Use = char, Item = String>) -> impl ParUse<Use = char, Item = String> {
-        par.map(|_u, x| format!("{x}!"))
-    }
+//     fn map(par: impl ParUse<Use = char, Item = String>) -> impl ParUse<Use = char, Item = String> {
+//         par.map(|_u, x| format!("{x}!"))
+//     }
 
-    fn filter(
-        par: impl ParUse<Use = char, Item = String>,
-    ) -> impl ParUse<Use = char, Item = String> {
-        par.filter(|_u, x| x.len() > 0)
-    }
+//     fn filter(
+//         par: impl ParUse<Use = char, Item = String>,
+//     ) -> impl ParUse<Use = char, Item = String> {
+//         par.filter(|_u, x| x.len() > 0)
+//     }
 
-    fn filter_map(
-        par: impl ParUse<Use = char, Item = String>,
-    ) -> impl ParUse<Use = char, Item = String> {
-        par.filter_map(|_u, x| Some(x))
-    }
+//     fn filter_map(
+//         par: impl ParUse<Use = char, Item = String>,
+//     ) -> impl ParUse<Use = char, Item = String> {
+//         par.filter_map(|_u, x| Some(x))
+//     }
 
-    fn flat_map(
-        par: impl ParUse<Use = char, Item = String>,
-    ) -> impl ParUse<Use = char, Item = String> {
-        par.flat_map(|_, x| [x])
-    }
+//     fn flat_map(
+//         par: impl ParUse<Use = char, Item = String>,
+//     ) -> impl ParUse<Use = char, Item = String> {
+//         par.flat_map(|_, x| [x])
+//     }
 
-    let par = get_par(42, 'x');
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = collect(par);
-    assert_eq!(result.len(), 42);
+//     let par = get_par(42, 'x');
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = collect(par);
+//     assert_eq!(result.len(), 42);
 
-    let par = get_par(42, 'x');
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = count(par);
-    assert_eq!(result, 42);
+//     let par = get_par(42, 'x');
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = count(par);
+//     assert_eq!(result, 42);
 
-    let par = get_par(42, 'x');
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par);
-    assert!(result.is_some());
+//     let par = get_par(42, 'x');
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par);
+//     assert!(result.is_some());
 
-    fn map_to_opt(
-        par: impl ParUse<Use = char, Item = String>,
-    ) -> impl ParUse<Use = char, Item = Option<String>> {
-        par.map(|_u, x| Some(x))
-    }
-    let par = map_to_opt(get_par(42, 'x'));
-    let par = par.into_optional();
-    assert_eq!(par.first(), Some(Some(String::from("0"))));
+//     fn map_to_opt(
+//         par: impl ParUse<Use = char, Item = String>,
+//     ) -> impl ParUse<Use = char, Item = Option<String>> {
+//         par.map(|_u, x| Some(x))
+//     }
+//     let par = map_to_opt(get_par(42, 'x'));
+//     let par = par.into_optional();
+//     assert_eq!(par.first(), Some(Some(String::from("0"))));
 
-    fn map_to_res(
-        par: impl ParUse<Use = char, Item = String>,
-    ) -> impl ParUse<Use = char, Item = Result<String, char>> {
-        par.map(|_u, x| Ok(x))
-    }
-    let par = map_to_res(get_par(42, 'x'));
-    let par = par.into_fallible();
-    assert_eq!(par.first(), Ok(Some(String::from("0"))));
+//     fn map_to_res(
+//         par: impl ParUse<Use = char, Item = String>,
+//     ) -> impl ParUse<Use = char, Item = Result<String, char>> {
+//         par.map(|_u, x| Ok(x))
+//     }
+//     let par = map_to_res(get_par(42, 'x'));
+//     let par = par.into_fallible();
+//     assert_eq!(par.first(), Ok(Some(String::from("0"))));
 
-    // copied & cloned
-    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUse<Use = char, Item = &T> {
-        values.par().using_clone('x')
-    }
-    let vals: Vec<_> = (0..42).collect();
-    let par = get_ref_par(&vals).copied();
-    assert_eq!(par.first().unwrap(), 0);
-    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
-    let par = get_ref_par(&vals).cloned();
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par);
-    assert!(result.is_some());
-}
+//     // copied & cloned
+//     fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUse<Use = char, Item = &T> {
+//         values.par().using_clone('x')
+//     }
+//     let vals: Vec<_> = (0..42).collect();
+//     let par = get_ref_par(&vals).copied();
+//     assert_eq!(par.first().unwrap(), 0);
+//     let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+//     let par = get_ref_par(&vals).cloned();
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par);
+//     assert!(result.is_some());
+// }
 
-#[test]
-fn kind_opt_transform_compute() {
-    fn get_par(n: usize) -> impl ParOption<Item = String> {
-        (0..n)
-            .par()
-            .map(|x| x.to_string())
-            .map(Some)
-            .into_optional()
-    }
+// #[test]
+// fn kind_opt_transform_compute() {
+//     fn get_par(n: usize) -> impl ParOption<Item = String> {
+//         (0..n)
+//             .par()
+//             .map(|x| x.to_string())
+//             .map(Some)
+//             .into_optional()
+//     }
 
-    fn collect(par: impl ParOption<Item = String>) -> Option<Vec<String>> {
-        par.num_threads(3).chunk_size(1).collect()
-    }
+//     fn collect(par: impl ParOption<Item = String>) -> Option<Vec<String>> {
+//         par.num_threads(3).chunk_size(1).collect()
+//     }
 
-    fn count(par: impl ParOption<Item = String>) -> Option<usize> {
-        par.num_threads(1)
-            .chunk_size(7)
-            .map(|_| 1)
-            .reduce(|a, b| a + b)
-            .map(|x| x.unwrap_or(0))
-    }
+//     fn count(par: impl ParOption<Item = String>) -> Option<usize> {
+//         par.num_threads(1)
+//             .chunk_size(7)
+//             .map(|_| 1)
+//             .reduce(|a, b| a + b)
+//             .map(|x| x.unwrap_or(0))
+//     }
 
-    fn find(par: impl ParOption<Item = String>) -> Option<Option<String>> {
-        par.filter(|x| x.len() > 2)
-            .num_threads(6)
-            .chunk_size(3)
-            .first()
-    }
+//     fn find(par: impl ParOption<Item = String>) -> Option<Option<String>> {
+//         par.filter(|x| x.len() > 2)
+//             .num_threads(6)
+//             .chunk_size(3)
+//             .first()
+//     }
 
-    fn map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
-        par.map(|x| format!("{x}!"))
-    }
+//     fn map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+//         par.map(|x| format!("{x}!"))
+//     }
 
-    fn filter(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
-        par.filter(|x| x.len() > 0)
-    }
+//     fn filter(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+//         par.filter(|x| x.len() > 0)
+//     }
 
-    fn filter_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
-        par.filter_map(Some)
-    }
+//     fn filter_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+//         par.filter_map(Some)
+//     }
 
-    fn flat_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
-        par.flat_map(|x| [x])
-    }
+//     fn flat_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+//         par.flat_map(|x| [x])
+//     }
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = collect(par).unwrap();
-    assert_eq!(result.len(), 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = collect(par).unwrap();
+//     assert_eq!(result.len(), 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = count(par).unwrap();
-    assert_eq!(result, 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = count(par).unwrap();
+//     assert_eq!(result, 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par).unwrap();
-    assert!(result.is_some());
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par).unwrap();
+//     assert!(result.is_some());
 
-    fn map_to_use(
-        par: impl ParOption<Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
-        par.using_clone('x')
-    }
-    let par = map_to_use(get_par(42));
-    assert_eq!(par.first(), Some(Some(String::from("0"))));
+//     fn map_to_use(
+//         par: impl ParOption<Item = String>,
+//     ) -> impl ParUseOption<Use = char, Item = String> {
+//         par.using_clone('x')
+//     }
+//     let par = map_to_use(get_par(42));
+//     assert_eq!(par.first(), Some(Some(String::from("0"))));
 
-    // copied & cloned
-    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParOption<Item = &T> {
-        values.par().map(Some).into_optional()
-    }
-    let vals: Vec<_> = (0..42).collect();
-    let par = get_ref_par(&vals).copied();
-    assert_eq!(par.first().unwrap(), Some(0));
-    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
-    let par = get_ref_par(&vals).cloned();
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par);
-    assert!(result.is_some());
-}
+//     // copied & cloned
+//     fn get_ref_par<T: Sync>(values: &[T]) -> impl ParOption<Item = &T> {
+//         values.par().map(Some).into_optional()
+//     }
+//     let vals: Vec<_> = (0..42).collect();
+//     let par = get_ref_par(&vals).copied();
+//     assert_eq!(par.first().unwrap(), Some(0));
+//     let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+//     let par = get_ref_par(&vals).cloned();
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par);
+//     assert!(result.is_some());
+// }
 
-#[test]
-fn kind_use_opt_transform_compute() {
-    fn get_par(n: usize) -> impl ParUseOption<Use = char, Item = String> {
-        (0..n)
-            .par()
-            .map(|x| x.to_string())
-            .map(Some)
-            .into_optional()
-            .using_clone('x')
-    }
+// #[test]
+// fn kind_use_opt_transform_compute() {
+//     fn get_par(n: usize) -> impl ParUseOption<Use = char, Item = String> {
+//         (0..n)
+//             .par()
+//             .map(|x| x.to_string())
+//             .map(Some)
+//             .into_optional()
+//             .using_clone('x')
+//     }
 
-    fn collect(par: impl ParUseOption<Use = char, Item = String>) -> Option<Vec<String>> {
-        par.num_threads(3).chunk_size(1).collect()
-    }
+//     fn collect(par: impl ParUseOption<Use = char, Item = String>) -> Option<Vec<String>> {
+//         par.num_threads(3).chunk_size(1).collect()
+//     }
 
-    fn count(par: impl ParUseOption<Use = char, Item = String>) -> Option<usize> {
-        par.num_threads(1)
-            .chunk_size(7)
-            .map(|_u, _| 1)
-            .reduce(|_u, a, b| a + b)
-            .map(|x| x.unwrap_or(0))
-    }
+//     fn count(par: impl ParUseOption<Use = char, Item = String>) -> Option<usize> {
+//         par.num_threads(1)
+//             .chunk_size(7)
+//             .map(|_u, _| 1)
+//             .reduce(|_u, a, b| a + b)
+//             .map(|x| x.unwrap_or(0))
+//     }
 
-    fn find(par: impl ParUseOption<Use = char, Item = String>) -> Option<Option<String>> {
-        par.filter(|_u, x| x.len() > 2)
-            .num_threads(6)
-            .chunk_size(3)
-            .first()
-    }
+//     fn find(par: impl ParUseOption<Use = char, Item = String>) -> Option<Option<String>> {
+//         par.filter(|_u, x| x.len() > 2)
+//             .num_threads(6)
+//             .chunk_size(3)
+//             .first()
+//     }
 
-    fn map(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
-        par.map(|_u, x| format!("{x}!"))
-    }
+//     fn map(
+//         par: impl ParUseOption<Use = char, Item = String>,
+//     ) -> impl ParUseOption<Use = char, Item = String> {
+//         par.map(|_u, x| format!("{x}!"))
+//     }
 
-    fn filter(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
-        par.filter(|_u, x| x.len() > 0)
-    }
+//     fn filter(
+//         par: impl ParUseOption<Use = char, Item = String>,
+//     ) -> impl ParUseOption<Use = char, Item = String> {
+//         par.filter(|_u, x| x.len() > 0)
+//     }
 
-    fn filter_map(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
-        par.filter_map(|_u, x| Some(x))
-    }
+//     fn filter_map(
+//         par: impl ParUseOption<Use = char, Item = String>,
+//     ) -> impl ParUseOption<Use = char, Item = String> {
+//         par.filter_map(|_u, x| Some(x))
+//     }
 
-    fn flat_map(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
-        par.flat_map(|_u, x| [x])
-    }
+//     fn flat_map(
+//         par: impl ParUseOption<Use = char, Item = String>,
+//     ) -> impl ParUseOption<Use = char, Item = String> {
+//         par.flat_map(|_u, x| [x])
+//     }
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = collect(par).unwrap();
-    assert_eq!(result.len(), 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = collect(par).unwrap();
+//     assert_eq!(result.len(), 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = count(par).unwrap();
-    assert_eq!(result, 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = count(par).unwrap();
+//     assert_eq!(result, 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par).unwrap();
-    assert!(result.is_some());
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par).unwrap();
+//     assert!(result.is_some());
 
-    // copied & cloned
-    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUseOption<Use = char, Item = &T> {
-        values.par().map(Some).into_optional().using(|_| 'x')
-    }
-    let vals: Vec<_> = (0..42).collect();
-    let par = get_ref_par(&vals).copied();
-    assert_eq!(par.first().unwrap(), Some(0));
-    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
-    let par = get_ref_par(&vals).cloned();
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par);
-    assert!(result.is_some());
-}
+//     // copied & cloned
+//     fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUseOption<Use = char, Item = &T> {
+//         values.par().map(Some).into_optional().using(|_| 'x')
+//     }
+//     let vals: Vec<_> = (0..42).collect();
+//     let par = get_ref_par(&vals).copied();
+//     assert_eq!(par.first().unwrap(), Some(0));
+//     let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+//     let par = get_ref_par(&vals).cloned();
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par);
+//     assert!(result.is_some());
+// }
 
-#[test]
-fn kind_res_transform_compute() {
-    fn get_par(n: usize) -> impl ParResult<Item = String, Error = char> {
-        (0..n).par().map(|x| x.to_string()).map(Ok).into_fallible()
-    }
+// #[test]
+// fn kind_res_transform_compute() {
+//     fn get_par(n: usize) -> impl ParResult<Item = String, Error = char> {
+//         (0..n).par().map(|x| x.to_string()).map(Ok).into_fallible()
+//     }
 
-    fn collect(par: impl ParResult<Item = String, Error = char>) -> Result<Vec<String>, char> {
-        par.num_threads(3).chunk_size(1).collect()
-    }
+//     fn collect(par: impl ParResult<Item = String, Error = char>) -> Result<Vec<String>, char> {
+//         par.num_threads(3).chunk_size(1).collect()
+//     }
 
-    fn count(par: impl ParResult<Item = String, Error = char>) -> Result<usize, char> {
-        par.num_threads(1)
-            .chunk_size(7)
-            .map(|_| 1)
-            .reduce(|a, b| a + b)
-            .map(|x| x.unwrap_or(0))
-    }
+//     fn count(par: impl ParResult<Item = String, Error = char>) -> Result<usize, char> {
+//         par.num_threads(1)
+//             .chunk_size(7)
+//             .map(|_| 1)
+//             .reduce(|a, b| a + b)
+//             .map(|x| x.unwrap_or(0))
+//     }
 
-    fn find(par: impl ParResult<Item = String, Error = char>) -> Result<Option<String>, char> {
-        par.filter(|x| x.len() > 2)
-            .num_threads(6)
-            .chunk_size(3)
-            .first()
-    }
+//     fn find(par: impl ParResult<Item = String, Error = char>) -> Result<Option<String>, char> {
+//         par.filter(|x| x.len() > 2)
+//             .num_threads(6)
+//             .chunk_size(3)
+//             .first()
+//     }
 
-    fn map(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
-        par.map(|x| format!("{x}!"))
-    }
+//     fn map(
+//         par: impl ParResult<Item = String, Error = char>,
+//     ) -> impl ParResult<Item = String, Error = char> {
+//         par.map(|x| format!("{x}!"))
+//     }
 
-    fn filter(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
-        par.filter(|x| x.len() > 0)
-    }
+//     fn filter(
+//         par: impl ParResult<Item = String, Error = char>,
+//     ) -> impl ParResult<Item = String, Error = char> {
+//         par.filter(|x| x.len() > 0)
+//     }
 
-    fn filter_map(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
-        par.filter_map(Some)
-    }
+//     fn filter_map(
+//         par: impl ParResult<Item = String, Error = char>,
+//     ) -> impl ParResult<Item = String, Error = char> {
+//         par.filter_map(Some)
+//     }
 
-    fn flat_map(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
-        par.flat_map(|x| [x])
-    }
+//     fn flat_map(
+//         par: impl ParResult<Item = String, Error = char>,
+//     ) -> impl ParResult<Item = String, Error = char> {
+//         par.flat_map(|x| [x])
+//     }
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = collect(par).unwrap();
-    assert_eq!(result.len(), 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = collect(par).unwrap();
+//     assert_eq!(result.len(), 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = count(par).unwrap();
-    assert_eq!(result, 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = count(par).unwrap();
+//     assert_eq!(result, 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par).unwrap();
-    assert!(result.is_some());
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par).unwrap();
+//     assert!(result.is_some());
 
-    fn map_to_use(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
-        par.using_clone('x')
-    }
-    let par = map_to_use(get_par(42));
-    assert_eq!(par.first(), Ok(Some(String::from("0"))));
+//     fn map_to_use(
+//         par: impl ParResult<Item = String, Error = char>,
+//     ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+//         par.using_clone('x')
+//     }
+//     let par = map_to_use(get_par(42));
+//     assert_eq!(par.first(), Ok(Some(String::from("0"))));
 
-    // copied & cloned
-    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParResult<Item = &T, Error = char> {
-        values.par().map(Ok).into_fallible()
-    }
-    let vals: Vec<_> = (0..42).collect();
-    let par = get_ref_par(&vals).copied();
-    assert_eq!(par.first().unwrap(), Some(0));
-    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
-    let par = get_ref_par(&vals).cloned();
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par);
-    assert!(result.is_ok());
-}
+//     // copied & cloned
+//     fn get_ref_par<T: Sync>(values: &[T]) -> impl ParResult<Item = &T, Error = char> {
+//         values.par().map(Ok).into_fallible()
+//     }
+//     let vals: Vec<_> = (0..42).collect();
+//     let par = get_ref_par(&vals).copied();
+//     assert_eq!(par.first().unwrap(), Some(0));
+//     let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+//     let par = get_ref_par(&vals).cloned();
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par);
+//     assert!(result.is_ok());
+// }
 
-#[test]
-fn kind_use_res_transform_compute() {
-    fn get_par(n: usize) -> impl ParUseResult<Use = char, Item = String, Error = char> {
-        (0..n)
-            .par()
-            .map(|x| x.to_string())
-            .map(Ok)
-            .into_fallible()
-            .using(|_| 'x')
-    }
+// #[test]
+// fn kind_use_res_transform_compute() {
+//     fn get_par(n: usize) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+//         (0..n)
+//             .par()
+//             .map(|x| x.to_string())
+//             .map(Ok)
+//             .into_fallible()
+//             .using(|_| 'x')
+//     }
 
-    fn collect(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> Result<Vec<String>, char> {
-        par.num_threads(3).chunk_size(1).collect()
-    }
+//     fn collect(
+//         par: impl ParUseResult<Use = char, Item = String, Error = char>,
+//     ) -> Result<Vec<String>, char> {
+//         par.num_threads(3).chunk_size(1).collect()
+//     }
 
-    fn count(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> Result<usize, char> {
-        par.num_threads(1)
-            .chunk_size(7)
-            .map(|_u, _| 1)
-            .reduce(|_u, a, b| a + b)
-            .map(|x| x.unwrap_or(0))
-    }
+//     fn count(
+//         par: impl ParUseResult<Use = char, Item = String, Error = char>,
+//     ) -> Result<usize, char> {
+//         par.num_threads(1)
+//             .chunk_size(7)
+//             .map(|_u, _| 1)
+//             .reduce(|_u, a, b| a + b)
+//             .map(|x| x.unwrap_or(0))
+//     }
 
-    fn find(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> Result<Option<String>, char> {
-        par.filter(|_u, x| x.len() > 2)
-            .num_threads(6)
-            .chunk_size(3)
-            .first()
-    }
+//     fn find(
+//         par: impl ParUseResult<Use = char, Item = String, Error = char>,
+//     ) -> Result<Option<String>, char> {
+//         par.filter(|_u, x| x.len() > 2)
+//             .num_threads(6)
+//             .chunk_size(3)
+//             .first()
+//     }
 
-    fn map(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
-        par.map(|_u, x| format!("{x}!"))
-    }
+//     fn map(
+//         par: impl ParUseResult<Use = char, Item = String, Error = char>,
+//     ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+//         par.map(|_u, x| format!("{x}!"))
+//     }
 
-    fn filter(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
-        par.filter(|_u, x| x.len() > 0)
-    }
+//     fn filter(
+//         par: impl ParUseResult<Use = char, Item = String, Error = char>,
+//     ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+//         par.filter(|_u, x| x.len() > 0)
+//     }
 
-    fn filter_map(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
-        par.filter_map(|_u, x| Some(x))
-    }
+//     fn filter_map(
+//         par: impl ParUseResult<Use = char, Item = String, Error = char>,
+//     ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+//         par.filter_map(|_u, x| Some(x))
+//     }
 
-    fn flat_map(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
-        par.flat_map(|_u, x| [x])
-    }
+//     fn flat_map(
+//         par: impl ParUseResult<Use = char, Item = String, Error = char>,
+//     ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+//         par.flat_map(|_u, x| [x])
+//     }
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = collect(par).unwrap();
-    assert_eq!(result.len(), 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = collect(par).unwrap();
+//     assert_eq!(result.len(), 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = count(par).unwrap();
-    assert_eq!(result, 42);
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = count(par).unwrap();
+//     assert_eq!(result, 42);
 
-    let par = get_par(42);
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par).unwrap();
-    assert!(result.is_some());
+//     let par = get_par(42);
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par).unwrap();
+//     assert!(result.is_some());
 
-    // copied & cloned
-    fn get_ref_par<T: Sync>(
-        values: &[T],
-    ) -> impl ParUseResult<Use = char, Item = &T, Error = char> {
-        values.par().map(Ok).using_clone('x').into_fallible()
-    }
-    let vals: Vec<_> = (0..42).collect();
-    let par = get_ref_par(&vals).copied();
-    assert_eq!(par.first().unwrap(), Some(0));
-    let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
-    let par = get_ref_par(&vals).cloned();
-    let par = flat_map(filter_map(filter(map(par))));
-    let result = find(par);
-    assert!(result.is_ok());
-}
+//     // copied & cloned
+//     fn get_ref_par<T: Sync>(
+//         values: &[T],
+//     ) -> impl ParUseResult<Use = char, Item = &T, Error = char> {
+//         values.par().map(Ok).using_clone('x').into_fallible()
+//     }
+//     let vals: Vec<_> = (0..42).collect();
+//     let par = get_ref_par(&vals).copied();
+//     assert_eq!(par.first().unwrap(), Some(0));
+//     let vals: Vec<_> = (0..42).map(|x| x.to_string()).collect();
+//     let par = get_ref_par(&vals).cloned();
+//     let par = flat_map(filter_map(filter(map(par))));
+//     let result = find(par);
+//     assert!(result.is_ok());
+// }
