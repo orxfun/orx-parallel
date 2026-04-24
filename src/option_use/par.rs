@@ -14,7 +14,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParUseOption<Runner = Q, Size = Self::Size, U = Self::U, Item = Self::Item>;
+    ) -> impl ParUseOption<Runner = Q, Size = Self::Size, Use = Self::Use, Item = Self::Item>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
@@ -22,7 +22,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     ) -> impl ParUseOption<
         Runner = WithDiagnostics<Self::Runner>,
         Size = Self::Size,
-        U = Self::U,
+        Use = Self::Use,
         Item = Self::Item,
     >;
 
@@ -37,11 +37,11 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn copied<'a, O>(
         self,
     ) -> ParUseOptionIter<
-        Self::Use,
+        Self::Using,
         Self::Input,
         Self::M,
         Self::Xap1,
-        MappedOf<Self::Xap2, UFnCopied<'a, Self::U, O>>,
+        MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
         Self::Size,
         Self::Runner,
     >
@@ -56,11 +56,11 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn cloned<'a, O>(
         self,
     ) -> ParUseOptionIter<
-        Self::Use,
+        Self::Using,
         Self::Input,
         Self::M,
         Self::Xap1,
-        MappedOf<Self::Xap2, UFnCloned<'a, Self::U, O>>,
+        MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
         Self::Size,
         Self::Runner,
     >
@@ -77,16 +77,16 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn map<Q, H>(
         self,
         h: H,
-    ) -> impl ParUseOption<Runner = Self::Runner, Size = Self::Size, U = Self::U, Item = Q>
+    ) -> impl ParUseOption<Runner = Self::Runner, Size = Self::Size, Use = Self::Use, Item = Q>
     where
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Q + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl ParUseOption<Runner = Self::Runner, Size = Self::Size, U = Self::U, Item = Self::Item>
+    ) -> impl ParUseOption<Runner = Self::Runner, Size = Self::Size, Use = Self::Use, Item = Self::Item>
     where
-        H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send;
 
     fn filter<H>(
         self,
@@ -94,11 +94,11 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     ) -> impl ParUseOption<
         Runner = Self::Runner,
         Size = <Self::Size as SizePair>::ThenBin,
-        U = Self::U,
+        Use = Self::Use,
         Item = Self::Item,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, &Self::Item) -> bool + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
@@ -106,11 +106,11 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     ) -> impl ParUseOption<
         Runner = Self::Runner,
         Size = <Self::Size as SizePair>::ThenBin,
-        U = Self::U,
+        Use = Self::Use,
         Item = Q,
     >
     where
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
@@ -118,12 +118,12 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     ) -> impl ParUseOption<
         Runner = Self::Runner,
         Size = <Self::Size as SizePair>::ThenMany,
-        U = Self::U,
+        Use = Self::Use,
         Item = V::Item,
     >
     where
         V: IntoIterator,
-        H: Fn(&mut <Self::Use as Use>::Item, Self::Item) -> V + Copy + Send;
+        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
 
     // compute
 
@@ -133,7 +133,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
 
     fn reduce<F>(self, f: F) -> Option<Option<Self::Item>>
     where
-        F: Fn(&mut <Self::Use as Use>::Item, Self::Item, Self::Item) -> Self::Item + Send + Copy,
+        F: Fn(&mut <Self::Using as Use>::Item, Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
     fn collect_into<C>(self, dst: C) -> Option<C>
@@ -150,7 +150,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
 
     fn for_each<F>(self, f: F) -> Option<()>
     where
-        F: Fn(&mut <Self::Use as Use>::Item, Self::Item) + Send + Copy,
+        F: Fn(&mut <Self::Using as Use>::Item, Self::Item) + Send + Copy,
     {
         self.map(f).reduce(|_, _, _| {}).map(|_| ())
     }
