@@ -1,5 +1,5 @@
 use crate::infallible::xap_variants::Id;
-use crate::infallible_use::fun::UFnCopied;
+use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{MappedOf, ParUseCore, ParUseIter, XapUse};
 use crate::option_use::ParUseOptionIter;
@@ -7,7 +7,7 @@ use crate::result_use::ParUseResultIter;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption};
 use crate::{infallible_use::Use, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -77,20 +77,37 @@ pub trait ParUse: Sized + ParUseCore {
         ParUseResultIter::new(u, iter, xap, IdUse::new(Id::new()), exe, params)
     }
 
-    // fn copied<'a, O>(
-    //     self,
-    // ) -> ParUseIter<
-    //     Self::Use,
-    //     Self::Input,
-    //     MappedOf<Self::Xap, UFnCopied<'a, Self::Use, O>>,
-    //     Self::Runner,
-    // >
-    // where
-    //     O: Copy + Send,
-    // {
-    //     let (u, iter, xap, exe, params) = self.destruct();
-    //     ParUseIter::new(u, iter, xap.mapped(UFnCopied::new()), exe, params)
-    // }
+    fn copied<'a, O>(
+        self,
+    ) -> ParUseIter<
+        Self::Using,
+        Self::Input,
+        MappedOf<Self::Xap, UFnCopied<'a, Self::Use, O>>,
+        Self::Runner,
+    >
+    where
+        Self: ParUse<Item = &'a O>,
+        O: Copy,
+    {
+        let (u, iter, xap, exe, params) = self.destruct();
+        ParUseIter::new(u, iter, xap.mapped(UFnCopied::new()), exe, params)
+    }
+
+    fn cloned<'a, O>(
+        self,
+    ) -> ParUseIter<
+        Self::Using,
+        Self::Input,
+        MappedOf<Self::Xap, UFnCloned<'a, Self::Use, O>>,
+        Self::Runner,
+    >
+    where
+        Self: ParUse<Item = &'a O>,
+        O: Clone,
+    {
+        let (u, iter, xap, exe, params) = self.destruct();
+        ParUseIter::new(u, iter, xap.mapped(UFnCloned::new()), exe, params)
+    }
 
     // transformations
 
