@@ -7,7 +7,7 @@ use crate::result::ParResultIter;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 
 pub trait Par: Sized + ParCore {
@@ -39,13 +39,14 @@ pub trait Par: Sized + ParCore {
     // TODO: return impl ParOptIter
     fn into_optional<T>(
         self,
-    ) -> ParOptionIter<
-        <Self as ParCore>::Input,
-        T,
-        <Self as ParCore>::Xap,
-        Id<T>,
-        <<<Self as ParCore>::Xap as Xap>::Size as Size>::IntoPair,
-        <Self as ParCore>::Runner,
+    ) -> impl ParOption<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
+        M = T,
+        Xap1 = Self::Xap,
+        Xap2 = Id<T>,
+        Item = T,
     >
     where
         Self::Xap: Xap<O = Option<T>>,
@@ -57,14 +58,15 @@ pub trait Par: Sized + ParCore {
 
     fn into_fallible<T, E>(
         self,
-    ) -> ParResultIter<
-        Self::Input,
-        T,
-        E,
-        Self::Xap,
-        Id<T>,
-        <<Self::Xap as Xap>::Size as Size>::IntoPair,
-        Self::Runner,
+    ) -> impl ParResult<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
+        M = T,
+        Xap1 = Self::Xap,
+        Xap2 = Id<T>,
+        Item = T,
+        Error = E,
     >
     where
         Self::Xap: Xap<O = Result<T, E>>,
