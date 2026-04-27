@@ -101,10 +101,15 @@ pub trait Par: Sized + ParCore {
 
     fn copied<'a, O>(
         self,
-    ) -> ParIter<Self::Input, MappedOf<Self::Xap, FnCopied<'a, O>>, Self::Runner>
+    ) -> impl Par<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Xap = MappedOf<Self::Xap, FnCopied<'a, O>>,
+        Item = O,
+    >
     where
         Self: Par<Item = &'a O>,
-        O: Copy,
+        O: Copy + 'a,
     {
         let (iter, xap, exe, params) = self.destruct();
         ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
@@ -112,10 +117,15 @@ pub trait Par: Sized + ParCore {
 
     fn cloned<'a, O>(
         self,
-    ) -> ParIter<Self::Input, MappedOf<Self::Xap, FnCloned<'a, O>>, Self::Runner>
+    ) -> impl Par<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Xap = MappedOf<Self::Xap, FnCloned<'a, O>>,
+        Item = O,
+    >
     where
         Self: Par<Item = &'a O>,
-        O: Clone,
+        O: Clone + 'a,
     {
         let (iter, xap, exe, params) = self.destruct();
         ParIter::new(iter, xap.mapped(FnCloned::new()), exe, params)
