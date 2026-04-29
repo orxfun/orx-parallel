@@ -17,5 +17,5 @@ pub use par_core::ParCore;
 pub use par_enum::EnumeratePar;
 pub use par_iter::ParIter;
 pub use par_runner::ParRunnerInfallible;
-pub use xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, Xap, XapBin, XapOne};
+pub use xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap, XapBin, XapOne};
 pub use xap_enum::XapEnumByInput;

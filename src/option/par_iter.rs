@@ -1,7 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Xap};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::option::ParOptionCore;
 use crate::option::par::ParOption;
 use crate::option::par_runner::ParRunnerOpt;
@@ -169,7 +169,6 @@ where
     fn filter_map<Q, H>(self, h: H) -> ParOptionIter<I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
     where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
-        S::ThenBin: SizePair,
     {
         let x2 = self.x2.filter_map(h);
         self.with_xap2(x2)
@@ -179,11 +178,29 @@ where
     where
         V: IntoIterator,
         H: Fn(X2::O) -> V + Copy + Send,
-        S::ThenMany: SizePair,
     {
         let x2 = self.x2.flat_map(h);
         self.with_xap2(x2)
     }
+
+    // fn flatten(
+    //     self,
+    // ) -> impl ParOption<
+    //     Runner = Self::Runner,
+    //     Input = Self::Input,
+    //     Size = Self::Size,
+    //     M = Self::M,
+    //     Xap1 = Self::Xap1,
+    //     Xap2 = FlattenOf<Self::Xap2>,
+    //     Item = <Self::Item as IntoIterator>::Item,
+    // >
+    // where
+    //     Self::Item: IntoIterator,
+    //     <Self::Size as SizePair>::ThenMany: SizePair,
+    // {
+    //     let x2 = self.x2.flatten();
+    //     self.with_xap2::<_, _>(x2)
+    // }
 
     // compute
 
