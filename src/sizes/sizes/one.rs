@@ -88,6 +88,20 @@ impl Size for One {
         OneX::new(x, FnFlatMap::new(h))
     }
 
+    type Flatten<X>
+        = OneX<X, FnFlatten<X::O>>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator;
+
+    fn flatten<X>(x: X) -> Self::Flatten<X>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator,
+    {
+        OneX::new(x, FnFlatten::new())
+    }
+
     type Mapped<X, M>
         = OneM<X, M>
     where

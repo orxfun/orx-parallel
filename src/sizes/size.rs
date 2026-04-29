@@ -72,6 +72,16 @@ pub trait Size: Clone + Copy + Send + Default {
         V: IntoIterator,
         H: Fn(X::O) -> V + Copy + Send;
 
+    type Flatten<X>: Xap<I = X::I, O = <X::O as IntoIterator>::Item, Size = Many>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator;
+
+    fn flatten<X>(x: X) -> Self::Flatten<X>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator;
+
     type Mapped<X, M>: Xap<I = X::I, O = M::O, Size = Self>
     where
         X: Xap<Size = Self>,

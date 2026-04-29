@@ -88,6 +88,20 @@ impl Size for Bin {
         BinX::new(x, FnFlatMap::new(h))
     }
 
+    type Flatten<X>
+        = BinX<X, FnFlatten<X::O>>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator;
+
+    fn flatten<X>(x: X) -> Self::Flatten<X>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator,
+    {
+        BinX::new(x, FnFlatten::new())
+    }
+
     type Mapped<X, M>
         = BinM<X, M>
     where
