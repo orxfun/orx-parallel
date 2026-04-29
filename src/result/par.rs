@@ -9,7 +9,7 @@ use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult};
 
 pub trait ParResult: Sized + ParResultCore {
     // configuration
@@ -35,15 +35,17 @@ pub trait ParResult: Sized + ParResultCore {
     fn using<U, F>(
         self,
         f: F,
-    ) -> ParUseResultIter<
-        UseFun<U, F>,
-        Self::Input,
-        Self::M,
-        Self::Error,
-        IdUse<Self::Xap1, U>,
-        IdUse<Self::Xap2, U>,
-        Self::Size,
-        Self::Runner,
+    ) -> impl ParUseResult<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Size = Self::Size,
+        Use = U,
+        Using = UseFun<U, F>,
+        M = Self::M,
+        Xap1 = IdUse<Self::Xap1, U>,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Item = Self::Item,
+        Error = Self::Error,
     >
     where
         F: Fn(usize) -> U + Sync,
@@ -58,15 +60,17 @@ pub trait ParResult: Sized + ParResultCore {
     fn using_clone<U>(
         self,
         u: U,
-    ) -> ParUseResultIter<
-        UseClone<U>,
-        Self::Input,
-        Self::M,
-        Self::Error,
-        IdUse<Self::Xap1, U>,
-        IdUse<Self::Xap2, U>,
-        Self::Size,
-        Self::Runner,
+    ) -> impl ParUseResult<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Size = Self::Size,
+        Use = U,
+        Using = UseClone<U>,
+        M = Self::M,
+        Xap1 = IdUse<Self::Xap1, U>,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Item = Self::Item,
+        Error = Self::Error,
     >
     where
         U: Clone + Send,
