@@ -1,5 +1,5 @@
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 mod par;
 mod par_core;
