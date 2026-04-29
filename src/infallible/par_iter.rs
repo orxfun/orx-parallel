@@ -3,7 +3,7 @@
 use crate::infallible::Xap;
 use crate::infallible::par_core::ParCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
-use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
+use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
 use crate::{Par, ParCollectInto};
@@ -176,11 +176,19 @@ where
         self.with_xap(xap)
     }
 
-    fn flatten(self)
+    fn flatten(
+        self,
+    ) -> impl Par<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Xap = FlattenOf<Self::Xap>,
+        Item = <Self::Item as IntoIterator>::Item,
+    >
     where
         Self::Item: IntoIterator,
     {
-        todo!()
+        let xap = self.xap.flatten();
+        self.with_xap(xap)
     }
 
     // compute
