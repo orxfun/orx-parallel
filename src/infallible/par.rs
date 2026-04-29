@@ -189,6 +189,15 @@ pub trait Par: Sized + ParCore {
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
 
+    // transformations - derived
+
+    fn flatten(self)
+    where
+        Self::Item: IntoIterator,
+    {
+        //
+    }
+
     // compute
 
     fn first(self) -> Option<Self::Item>
