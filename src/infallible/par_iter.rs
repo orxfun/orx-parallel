@@ -176,6 +176,13 @@ where
         self.with_xap(xap)
     }
 
+    fn flatten(self)
+    where
+        Self::Item: IntoIterator,
+    {
+        todo!()
+    }
+
     // compute
 
     fn first(self) -> Option<X::O>

@@ -88,6 +88,20 @@ impl Size for Many {
         ManyX::new(x, FnFlatMap::new(h))
     }
 
+    type Flatten<X>
+        = ManyX<X, FnFlatten<X::O>>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator;
+
+    fn flatten<X>(x: X) -> Self::Flatten<X>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator,
+    {
+        ManyX::new(x, FnFlatten::new())
+    }
+
     type Mapped<X, M>
         = ManyM<X, M>
     where

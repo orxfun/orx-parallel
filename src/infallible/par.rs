@@ -189,12 +189,12 @@ pub trait Par: Sized + ParCore {
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
 
-    // transformations - derived
-
     fn flatten(self)
     where
         Self::Item: IntoIterator,
     {
+        let map = |e: Self::Item| e.into_iter();
+        let x = self.flat_map(map);
         //
     }
 
