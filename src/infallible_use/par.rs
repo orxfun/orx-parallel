@@ -9,7 +9,9 @@ use crate::result_use::ParUseResultIter;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption};
+use crate::{
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParUseOption, ParUseResult,
+};
 use crate::{infallible_use::Use, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -42,14 +44,16 @@ pub trait ParUse: Sized + ParUseCore {
 
     fn into_optional<T>(
         self,
-    ) -> ParUseOptionIter<
-        Self::Using,
-        Self::Input,
-        T,
-        Self::Xap,
-        IdUse<Id<T>, <Self::Using as Use>::Item>,
-        <<Self::Xap as XapUse>::Size as Size>::IntoPair,
-        Self::Runner,
+    ) -> impl ParUseOption<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Using = Self::Using,
+        Use = Self::Use,
+        Size = <<Self::Xap as XapUse>::Size as Size>::IntoPair,
+        M = T,
+        Xap1 = Self::Xap,
+        Xap2 = IdUse<Id<T>, Self::Use>,
+        Item = T,
     >
     where
         Self::Xap: XapUse<
@@ -64,15 +68,17 @@ pub trait ParUse: Sized + ParUseCore {
 
     fn into_fallible<T, E>(
         self,
-    ) -> ParUseResultIter<
-        Self::Using,
-        Self::Input,
-        T,
-        E,
-        Self::Xap,
-        IdUse<Id<T>, <Self::Using as Use>::Item>,
-        <<Self::Xap as XapUse>::Size as Size>::IntoPair,
-        Self::Runner,
+    ) -> impl ParUseResult<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Using = Self::Using,
+        Use = Self::Use,
+        Size = <<Self::Xap as XapUse>::Size as Size>::IntoPair,
+        M = T,
+        Xap1 = Self::Xap,
+        Xap2 = IdUse<Id<T>, Self::Use>,
+        Item = T,
+        Error = E,
     >
     where
         Self::Xap: XapUse<
