@@ -7,7 +7,7 @@ use crate::result::ParResultIter;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 
 pub trait Par: Sized + ParCore {
@@ -36,7 +36,6 @@ pub trait Par: Sized + ParCore {
 
     // kind transformations
 
-    // TODO: return impl ParOptIter
     fn into_optional<T>(
         self,
     ) -> impl ParOption<
@@ -78,7 +77,14 @@ pub trait Par: Sized + ParCore {
     fn using<U, F>(
         self,
         f: F,
-    ) -> ParUseIter<UseFun<U, F>, Self::Input, IdUse<Self::Xap, U>, Self::Runner>
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Use = U,
+        Using = UseFun<U, F>,
+        Xap = IdUse<Self::Xap, U>,
+        Item = Self::Item,
+    >
     where
         F: Fn(usize) -> U + Sync,
     {
@@ -91,7 +97,14 @@ pub trait Par: Sized + ParCore {
     fn using_clone<U>(
         self,
         u: U,
-    ) -> ParUseIter<UseClone<U>, Self::Input, IdUse<Self::Xap, U>, Self::Runner>
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Use = U,
+        Using = UseClone<U>,
+        Xap = IdUse<Self::Xap, U>,
+        Item = Self::Item,
+    >
     where
         U: Clone + Send,
     {
