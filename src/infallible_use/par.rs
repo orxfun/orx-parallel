@@ -9,9 +9,7 @@ use crate::result_use::ParUseResultIter;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
-use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParUseOption, ParUseResult,
-};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult};
 use crate::{infallible_use::Use, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
