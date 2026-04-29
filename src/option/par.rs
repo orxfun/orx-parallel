@@ -1,11 +1,12 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::{MappedOf, Xap};
+use crate::infallible::{FlattenOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{UseClone, UseFun};
 use crate::option::ParOptionIter;
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
 use crate::runner::WithDiagnostics;
+use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption};
 use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
 
@@ -135,6 +136,21 @@ pub trait ParOption: Sized + ParOptionCore {
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
+
+    // fn flatten(
+    //     self,
+    // ) -> impl ParOption<
+    //     Runner = Self::Runner,
+    //     Input = Self::Input,
+    //     Size = Self::Size,
+    //     M = Self::M,
+    //     Xap1 = Self::Xap1,
+    //     Xap2 = FlattenOf<Self::Xap2>,
+    //     Item = <Self::Item as IntoIterator>::Item,
+    // >
+    // where
+    //     Self::Item: IntoIterator,
+    //     <Self::Size as SizePair>::ThenMany: SizePair;
 
     // compute
 
