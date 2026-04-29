@@ -36,6 +36,10 @@ fn kind_inf_transform_compute() {
         par.map(|x| format!("{x}!"))
     }
 
+    fn map_enum(par: impl Par<Item = (usize, String)>) -> impl Par<Item = (usize, String)> {
+        par.map(|(i, x)| (i, format!("{x}!")))
+    }
+
     fn filter(par: impl Par<Item = String>) -> impl Par<Item = String> {
         par.filter(|x| x.len() > 0)
     }
@@ -115,9 +119,9 @@ fn kind_inf_transform_compute() {
     assert!(result.is_some());
 
     // enumerate
-    // let par = get_par(42).enumerate();
-    // assert_eq!(par.first().unwrap(), (0, "0".to_string()));
-    let par = values.par().map(|x| x.clone()).enumerate();
+    let par = get_par(42).enumerate();
+    let par = map_enum(par);
+    assert_eq!(par.first().unwrap(), (0, "0!".to_string()));
 }
 
 // #[test]
