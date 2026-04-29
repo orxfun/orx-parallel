@@ -42,19 +42,22 @@ pub trait ParUseResult: Sized + ParUseResultCore {
 
     fn copied<'a, O>(
         self,
-    ) -> ParUseResultIter<
-        Self::Using,
-        Self::Input,
-        Self::M,
-        Self::Error,
-        Self::Xap1,
-        MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
-        Self::Size,
-        Self::Runner,
+    ) -> impl ParUseResult<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Using = Self::Using,
+        Use = Self::Use,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
+        Item = O,
+        Error = Self::Error,
     >
     where
         Self: ParUseResult<Item = &'a O>,
-        O: Copy,
+        O: Copy + 'a,
+        Self::Use: 'a,
     {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
         ParUseResultIter::new(u, iter, x1, x2.mapped(UFnCopied::new()), exe, params)
@@ -62,19 +65,22 @@ pub trait ParUseResult: Sized + ParUseResultCore {
 
     fn cloned<'a, O>(
         self,
-    ) -> ParUseResultIter<
-        Self::Using,
-        Self::Input,
-        Self::M,
-        Self::Error,
-        Self::Xap1,
-        MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
-        Self::Size,
-        Self::Runner,
+    ) -> impl ParUseResult<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Using = Self::Using,
+        Use = Self::Use,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
+        Item = O,
+        Error = Self::Error,
     >
     where
         Self: ParUseResult<Item = &'a O>,
-        O: Clone,
+        O: Clone + 'a,
+        Self::Use: 'a,
     {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
         ParUseResultIter::new(u, iter, x1, x2.mapped(UFnCloned::new()), exe, params)

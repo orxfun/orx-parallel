@@ -68,7 +68,10 @@ where
 {
     // configuration
 
-    fn runner<Q: ParRunner>(self, runner: Q) -> ParIter<I, X, Q> {
+    fn runner<Q: ParRunner>(
+        self,
+        runner: Q,
+    ) -> impl Par<Runner = Q, Input = Self::Input, Xap = Self::Xap, Item = Self::Item> {
         let (iter, xap, _, params) = self.destruct();
         ParIter {
             iter,
@@ -78,7 +81,14 @@ where
         }
     }
 
-    fn runner_with_diagnostics(self) -> ParIter<I, X, WithDiagnostics<R>> {
+    fn runner_with_diagnostics(
+        self,
+    ) -> impl Par<
+        Runner = WithDiagnostics<Self::Runner>,
+        Input = Self::Input,
+        Xap = Self::Xap,
+        Item = Self::Item,
+    > {
         let (iter, xap, exe, params) = self.destruct();
         ParIter {
             iter,
@@ -105,7 +115,10 @@ where
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> ParIter<I, MapOf<X, Q, H>, R>
+    fn map<Q, H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = MapOf<Self::Xap, Q, H>, Item = Q>
     where
         H: Fn(X::O) -> Q + Copy + Send,
     {
@@ -113,34 +126,51 @@ where
         self.with_xap(xap)
     }
 
-    fn inspect<H>(self, h: H) -> ParIter<I, InsOf<X, H>, R>
+    fn inspect<H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = InsOf<Self::Xap, H>, Item = Self::Item>
     where
-        H: Fn(&X::O) + Copy + Send,
+        H: Fn(&Self::Item) + Copy + Send,
     {
         let xap = self.xap.inspect(h);
         self.with_xap(xap)
     }
 
-    fn filter<H>(self, h: H) -> ParIter<I, FilOf<X, H>, R>
+    fn filter<H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = FilOf<Self::Xap, H>, Item = Self::Item>
     where
-        H: Fn(&X::O) -> bool + Copy + Send,
+        H: Fn(&Self::Item) -> bool + Copy + Send,
     {
         let xap = self.xap.filter(h);
         self.with_xap(xap)
     }
 
-    fn filter_map<Q, H>(self, h: H) -> ParIter<I, FilMapOf<X, Q, H>, R>
+    fn filter_map<Q, H>(
+        self,
+        h: H,
+    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = FilMapOf<Self::Xap, Q, H>, Item = Q>
     where
-        H: Fn(X::O) -> Option<Q> + Copy + Send,
+        H: Fn(Self::Item) -> Option<Q> + Copy + Send,
     {
         let xap = self.xap.filter_map(h);
         self.with_xap(xap)
     }
 
-    fn flat_map<V, H>(self, h: H) -> ParIter<I, FlatMapOf<X, V, H>, R>
+    fn flat_map<V, H>(
+        self,
+        h: H,
+    ) -> impl Par<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Xap = FlatMapOf<Self::Xap, V, H>,
+        Item = V::Item,
+    >
     where
         V: IntoIterator,
-        H: Fn(X::O) -> V + Copy + Send,
+        H: Fn(Self::Item) -> V + Copy + Send,
     {
         let xap = self.xap.flat_map(h);
         self.with_xap(xap)

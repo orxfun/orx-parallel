@@ -36,18 +36,21 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
 
     fn copied<'a, O>(
         self,
-    ) -> ParUseOptionIter<
-        Self::Using,
-        Self::Input,
-        Self::M,
-        Self::Xap1,
-        MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
-        Self::Size,
-        Self::Runner,
+    ) -> impl ParUseOption<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Using = Self::Using,
+        Use = Self::Use,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
+        Item = O,
     >
     where
         Self: ParUseOption<Item = &'a O>,
-        O: Copy,
+        O: Copy + 'a,
+        Self::Use: 'a,
     {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
         ParUseOptionIter::new(u, iter, x1, x2.mapped(UFnCopied::new()), exe, params)
@@ -55,18 +58,21 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
 
     fn cloned<'a, O>(
         self,
-    ) -> ParUseOptionIter<
-        Self::Using,
-        Self::Input,
-        Self::M,
-        Self::Xap1,
-        MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
-        Self::Size,
-        Self::Runner,
+    ) -> impl ParUseOption<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Using = Self::Using,
+        Use = Self::Use,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
+        Item = O,
     >
     where
         Self: ParUseOption<Item = &'a O>,
-        O: Clone,
+        O: Clone + 'a,
+        Self::Use: 'a,
     {
         let (u, iter, x1, x2, exe, _, params) = self.destruct();
         ParUseOptionIter::new(u, iter, x1, x2.mapped(UFnCloned::new()), exe, params)
