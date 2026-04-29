@@ -100,6 +100,8 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
+    // configuration
+
     fn runner<Q: ParRunner>(self, runner: Q) -> ParResultIter<I, M, E, X1, X2, S, Q> {
         let (iter, x1, x2, _, s, params) = self.destruct();
         ParResultIter {
@@ -139,6 +141,8 @@ where
         self.params = self.params.with_collect_ordering(collect);
         self
     }
+
+    // transformations
 
     fn map<Q, H>(self, h: H) -> ParResultIter<I, M, E, X1, MapOf<X2, Q, H>, S, R>
     where
@@ -183,6 +187,8 @@ where
         let x2 = self.x2.flat_map(h);
         self.with_xap2(x2)
     }
+
+    // compute
 
     fn first(self) -> Result<Option<X2::O>, E>
     where
