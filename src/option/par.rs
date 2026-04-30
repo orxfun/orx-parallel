@@ -137,20 +137,19 @@ pub trait ParOption: Sized + ParOptionCore {
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
 
-    // fn flatten(
-    //     self,
-    // ) -> impl ParOption<
-    //     Runner = Self::Runner,
-    //     Input = Self::Input,
-    //     Size = Self::Size,
-    //     M = Self::M,
-    //     Xap1 = Self::Xap1,
-    //     Xap2 = FlattenOf<Self::Xap2>,
-    //     Item = <Self::Item as IntoIterator>::Item,
-    // >
-    // where
-    //     Self::Item: IntoIterator,
-    //     <Self::Size as SizePair>::ThenMany: SizePair;
+    fn flatten(
+        self,
+    ) -> impl ParOption<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Item = <Self::Item as IntoIterator>::Item,
+    >
+    where
+        Self::Item: IntoIterator;
 
     // compute
 

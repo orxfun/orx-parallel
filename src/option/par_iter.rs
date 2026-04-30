@@ -183,24 +183,23 @@ where
         self.with_xap2(x2)
     }
 
-    // fn flatten(
-    //     self,
-    // ) -> impl ParOption<
-    //     Runner = Self::Runner,
-    //     Input = Self::Input,
-    //     Size = Self::Size,
-    //     M = Self::M,
-    //     Xap1 = Self::Xap1,
-    //     Xap2 = FlattenOf<Self::Xap2>,
-    //     Item = <Self::Item as IntoIterator>::Item,
-    // >
-    // where
-    //     Self::Item: IntoIterator,
-    //     <Self::Size as SizePair>::ThenMany: SizePair,
-    // {
-    //     let x2 = self.x2.flatten();
-    //     self.with_xap2::<_, _>(x2)
-    // }
+    fn flatten(
+        self,
+    ) -> impl ParOption<
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Item = <Self::Item as IntoIterator>::Item,
+    >
+    where
+        Self::Item: IntoIterator,
+    {
+        let x2 = self.x2.flatten();
+        self.with_xap2(x2)
+    }
 
     // compute
 
