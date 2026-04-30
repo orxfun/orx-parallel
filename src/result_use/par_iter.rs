@@ -125,14 +125,14 @@ where
         self,
         runner: Q,
     ) -> impl ParUseResult<
-        Use = Self::Use,
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
     > {
         let (using, iter, x1, x2, _, s, params) = self.destruct();
         ParUseResultIter {
@@ -150,14 +150,14 @@ where
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseResult<
-        Use = Self::Use,
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
     > {
         let (using, iter, x1, x2, exe, s, params) = self.destruct();
         ParUseResultIter {
@@ -192,14 +192,14 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Use = Self::Use,
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = MapOf<Self::Xap2, Q, H>,
-        M = Self::M,
         Item = Q,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         H: Fn(&mut X1::U, X2::O) -> Q + Copy + Send,
@@ -212,14 +212,14 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Use = Self::Use,
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = InsOf<Self::Xap2, H>,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = InsOf<Self::Xap2, H>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         H: Fn(&mut X1::U, &X2::O) + Copy + Send,
@@ -232,14 +232,14 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Use = Self::Use,
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenBin,
-        Xap1 = Self::Xap1,
-        Xap2 = FilOf<Self::Xap2, H>,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilOf<Self::Xap2, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
     >
     where
         H: Fn(&mut X1::U, &X2::O) -> bool + Copy + Send,
@@ -252,14 +252,14 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Use = Self::Use,
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenBin,
-        Xap1 = Self::Xap1,
-        Xap2 = FilMapOf<Self::Xap2, Q, H>,
-        M = Self::M,
         Item = Q,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
     >
     where
         H: Fn(&mut X1::U, X2::O) -> Option<Q> + Copy + Send,
@@ -272,14 +272,14 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Use = Self::Use,
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenMany,
-        Xap1 = Self::Xap1,
-        Xap2 = FlatMapOf<Self::Xap2, V, H>,
-        M = Self::M,
         Item = V::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
     >
     where
         V: IntoIterator,
@@ -292,16 +292,14 @@ where
     fn flatten(
         self,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Using = Self::Using,
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenMany,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FlattenOf<Self::Xap2>,
         Item = <Self::Item as IntoIterator>::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
     >
     where
         Self::Item: IntoIterator,
