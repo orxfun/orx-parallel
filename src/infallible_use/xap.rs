@@ -98,4 +98,6 @@ pub type FilMapOf<X, Q, H> = <<X as XapUse>::Size as Size>::UFilterMap<X, Q, H>;
 
 pub type FlatMapOf<X, V, H> = <<X as XapUse>::Size as Size>::UFlatMap<X, V, H>;
 
+pub type FlattenOf<X> = <<X as XapUse>::Size as Size>::UFlatten<X>;
+
 pub type MappedOf<X, M> = <<X as XapUse>::Size as Size>::UMapped<X, M>;

@@ -190,6 +190,20 @@ impl Size for Many {
         UManyX::new(x, UFnFlatMap::new(h))
     }
 
+    type UFlatten<X>
+        = UManyX<X, UFnFlatten<X::U, X::O>>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator;
+
+    fn u_flatten<X>(x: X) -> Self::UFlatten<X>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator,
+    {
+        UManyX::new(x, UFnFlatten::new())
+    }
+
     type UMapped<X, M>
         = UManyM<X, M>
     where
