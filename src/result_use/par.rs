@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
-use crate::infallible_use::{MappedOf, Use, XapUse};
+use crate::infallible_use::{FlattenOf, MappedOf, Use, XapUse};
 use crate::result_use::{ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
 #[cfg(feature = "std")]
@@ -153,6 +153,23 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     where
         V: IntoIterator,
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
+
+    fn flatten(
+        self,
+    ) -> impl ParUseResult<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Using = Self::Using,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Item = <Self::Item as IntoIterator>::Item,
+        Error = Self::Error,
+    >
+    where
+        Self::Item: IntoIterator;
 
     // compute
 

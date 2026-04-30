@@ -1,7 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
-use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Use, XapUse};
+use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Use, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result_use::ParUseResultCore;
 use crate::result_use::par::ParUseResult;
@@ -119,6 +119,8 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
+    // configuration
+
     fn runner<Q: ParRunner>(self, runner: Q) -> ParUseResultIter<U, I, M, E, X1, X2, S, Q> {
         let (using, iter, x1, x2, _, s, params) = self.destruct();
         ParUseResultIter {
@@ -162,6 +164,8 @@ where
         self.params = self.params.with_collect_ordering(collect);
         self
     }
+
+    // transformations
 
     fn map<Q, H>(self, h: H) -> ParUseResultIter<U, I, M, E, X1, MapOf<X2, Q, H>, S, R>
     where
@@ -209,6 +213,29 @@ where
         let x2 = self.x2.flat_map(h);
         self.with_xap2(x2)
     }
+
+    fn flatten(
+        self,
+    ) -> impl ParUseResult<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Using = Self::Using,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Item = <Self::Item as IntoIterator>::Item,
+        Error = Self::Error,
+    >
+    where
+        Self::Item: IntoIterator,
+    {
+        let x2 = self.x2.flatten();
+        self.with_xap2(x2)
+    }
+
+    // compute
 
     fn first(self) -> Result<Option<X2::O>, E>
     where
