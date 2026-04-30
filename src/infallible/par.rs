@@ -1,11 +1,10 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
+use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::result::ParResultIter;
-#[cfg(feature = "std")]
-use crate::runner::WithDiagnostics;
 use crate::sizes::Size;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
@@ -16,17 +15,12 @@ pub trait Par: Sized + ParCore {
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl Par<Runner = Q, Input = Self::Input, Xap = Self::Xap, Item = Self::Item>;
+    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl Par<
-        Runner = WithDiagnostics<Self::Runner>,
-        Input = Self::Input,
-        Xap = Self::Xap,
-        Item = Self::Item,
-    >;
+    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -39,13 +33,12 @@ pub trait Par: Sized + ParCore {
     fn into_optional<T>(
         self,
     ) -> impl ParOption<
-        Runner = Self::Runner,
+        Item = T,
+        Xap1 = Self::Xap,
+        M = T,
+        Xap2 = Id<T>,
         Input = Self::Input,
         Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
-        M = T,
-        Xap1 = Self::Xap,
-        Xap2 = Id<T>,
-        Item = T,
     >
     where
         Self::Xap: Xap<O = Option<T>>,
@@ -58,14 +51,13 @@ pub trait Par: Sized + ParCore {
     fn into_fallible<T, E>(
         self,
     ) -> impl ParResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
-        M = T,
-        Xap1 = Self::Xap,
-        Xap2 = Id<T>,
         Item = T,
         Error = E,
+        Xap1 = Self::Xap,
+        M = T,
+        Xap2 = Id<T>,
+        Input = Self::Input,
+        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
     >
     where
         Self::Xap: Xap<O = Result<T, E>>,
@@ -77,14 +69,7 @@ pub trait Par: Sized + ParCore {
     fn using<U, F>(
         self,
         f: F,
-    ) -> impl ParUse<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Use = U,
-        Using = UseFun<U, F>,
-        Xap = IdUse<Self::Xap, U>,
-        Item = Self::Item,
-    >
+    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
         F: Fn(usize) -> U + Sync,
     {
@@ -97,14 +82,7 @@ pub trait Par: Sized + ParCore {
     fn using_clone<U>(
         self,
         u: U,
-    ) -> impl ParUse<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Use = U,
-        Using = UseClone<U>,
-        Xap = IdUse<Self::Xap, U>,
-        Item = Self::Item,
-    >
+    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
         U: Clone + Send,
     {
@@ -116,12 +94,7 @@ pub trait Par: Sized + ParCore {
 
     fn copied<'a, O>(
         self,
-    ) -> impl Par<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Xap = MappedOf<Self::Xap, FnCopied<'a, O>>,
-        Item = O,
-    >
+    ) -> impl Par<Item = O, Xap = MappedOf<Self::Xap, FnCopied<'a, O>>, Input = Self::Input>
     where
         Self: Par<Item = &'a O>,
         O: Copy + 'a,
@@ -132,12 +105,7 @@ pub trait Par: Sized + ParCore {
 
     fn cloned<'a, O>(
         self,
-    ) -> impl Par<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Xap = MappedOf<Self::Xap, FnCloned<'a, O>>,
-        Item = O,
-    >
+    ) -> impl Par<Item = O, Xap = MappedOf<Self::Xap, FnCloned<'a, O>>, Input = Self::Input>
     where
         Self: Par<Item = &'a O>,
         O: Clone + 'a,
@@ -151,43 +119,48 @@ pub trait Par: Sized + ParCore {
     fn map<Q, H>(
         self,
         h: H,
-    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = MapOf<Self::Xap, Q, H>, Item = Q>
+    ) -> impl Par<Item = Q, Xap = MapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = InsOf<Self::Xap, H>, Item = Self::Item>
+    ) -> impl Par<Item = Self::Item, Xap = InsOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&Self::Item) + Copy + Send;
 
     fn filter<H>(
         self,
         h: H,
-    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = FilOf<Self::Xap, H>, Item = Self::Item>
+    ) -> impl Par<Item = Self::Item, Xap = FilOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
         h: H,
-    ) -> impl Par<Runner = Self::Runner, Input = Self::Input, Xap = FilMapOf<Self::Xap, Q, H>, Item = Q>
+    ) -> impl Par<Item = Q, Xap = FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
         h: H,
-    ) -> impl Par<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Xap = FlatMapOf<Self::Xap, V, H>,
-        Item = V::Item,
-    >
+    ) -> impl Par<Item = V::Item, Xap = FlatMapOf<Self::Xap, V, H>, Input = Self::Input>
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
+
+    fn flatten(
+        self,
+    ) -> impl Par<
+        Item = <Self::Item as IntoIterator>::Item,
+        Xap = FlattenOf<Self::Xap>,
+        Input = Self::Input,
+    >
+    where
+        Self::Item: IntoIterator;
 
     // compute
 

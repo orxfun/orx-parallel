@@ -3,7 +3,7 @@
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
-use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
+use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
@@ -85,8 +85,7 @@ where
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParUse<Runner = Q, Use = Self::Use, Input = Self::Input, Xap = Self::Xap, Item = Self::Item>
-    {
+    ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = Self::Xap, Input = Self::Input> {
         let (using, iter, xap, _, params) = self.destruct();
         ParUseIter {
             using,
@@ -100,13 +99,7 @@ where
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParUse<
-        Runner = crate::runner::WithDiagnostics<Self::Runner>,
-        Use = Self::Use,
-        Input = Self::Input,
-        Xap = Self::Xap,
-        Item = Self::Item,
-    > {
+    ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = Self::Xap, Input = Self::Input> {
         let (using, iter, xap, exe, params) = self.destruct();
         ParUseIter {
             using,
@@ -137,13 +130,7 @@ where
     fn map<Q, H>(
         self,
         h: H,
-    ) -> impl ParUse<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Input = Self::Input,
-        Xap = MapOf<Self::Xap, Q, H>,
-        Item = Q,
-    >
+    ) -> impl ParUse<Item = Q, Use = Self::Use, Xap = MapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send,
     {
@@ -154,13 +141,7 @@ where
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl ParUse<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Input = Self::Input,
-        Xap = InsOf<Self::Xap, H>,
-        Item = Self::Item,
-    >
+    ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = InsOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send,
     {
@@ -171,13 +152,7 @@ where
     fn filter<H>(
         self,
         h: H,
-    ) -> impl ParUse<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Input = Self::Input,
-        Xap = FilOf<Self::Xap, H>,
-        Item = Self::Item,
-    >
+    ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = FilOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send,
     {
@@ -188,13 +163,7 @@ where
     fn filter_map<Q, H>(
         self,
         h: H,
-    ) -> impl ParUse<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Input = Self::Input,
-        Xap = FilMapOf<Self::Xap, Q, H>,
-        Item = Q,
-    >
+    ) -> impl ParUse<Item = Q, Use = Self::Use, Xap = FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send,
     {
@@ -206,17 +175,31 @@ where
         self,
         h: H,
     ) -> impl ParUse<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Input = Self::Input,
-        Xap = FlatMapOf<Self::Xap, V, H>,
         Item = V::Item,
+        Use = Self::Use,
+        Xap = FlatMapOf<Self::Xap, V, H>,
+        Input = Self::Input,
     >
     where
         V: IntoIterator,
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send,
     {
         let xap = self.xap.flat_map(h);
+        self.with_xap(xap)
+    }
+
+    fn flatten(
+        self,
+    ) -> impl ParUse<
+        Item = <Self::Item as IntoIterator>::Item,
+        Use = Self::Use,
+        Xap = FlattenOf<Self::Xap>,
+        Input = Self::Input,
+    >
+    where
+        Self::Item: IntoIterator,
+    {
+        let xap = self.xap.flatten();
         self.with_xap(xap)
     }
 

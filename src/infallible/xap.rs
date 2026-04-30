@@ -51,6 +51,13 @@ pub trait Xap: Copy + Send {
         <Self::Size as Size>::flat_map(self, h)
     }
 
+    fn flatten(self) -> FlattenOf<Self>
+    where
+        Self::O: IntoIterator,
+    {
+        <Self::Size as Size>::flatten(self)
+    }
+
     // transformations - helper
 
     fn mapped<M>(self, m: M) -> MappedOf<Self, M>
@@ -96,5 +103,7 @@ pub type FilOf<X, H> = <<X as Xap>::Size as Size>::Filter<X, H>;
 pub type FilMapOf<X, Q, H> = <<X as Xap>::Size as Size>::FilterMap<X, Q, H>;
 
 pub type FlatMapOf<X, V, H> = <<X as Xap>::Size as Size>::FlatMap<X, V, H>;
+
+pub type FlattenOf<X> = <<X as Xap>::Size as Size>::Flatten<X>;
 
 pub type MappedOf<X, M> = <<X as Xap>::Size as Size>::Mapped<X, M>;

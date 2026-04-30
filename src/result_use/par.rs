@@ -1,9 +1,9 @@
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
-use crate::infallible_use::{MappedOf, Use, XapUse};
+use crate::infallible_use::{
+    FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Use, XapUse,
+};
 use crate::result_use::{ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
-#[cfg(feature = "std")]
-use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 
@@ -14,22 +14,28 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         runner: Q,
     ) -> impl ParUseResult<
-        Runner = Q,
-        Use = Self::Use,
-        Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
     >;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseResult<
-        Runner = WithDiagnostics<Self::Runner>,
-        Use = Self::Use,
-        Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
     >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
@@ -43,16 +49,14 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn copied<'a, O>(
         self,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Using = Self::Using,
-        Use = Self::Use,
-        Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
         Item = O,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         Self: ParUseResult<Item = &'a O>,
@@ -66,16 +70,14 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn cloned<'a, O>(
         self,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Using = Self::Using,
-        Use = Self::Use,
-        Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
         Item = O,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         Self: ParUseResult<Item = &'a O>,
@@ -92,11 +94,14 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Size = Self::Size,
         Item = Q,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send;
@@ -105,11 +110,14 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Size = Self::Size,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = InsOf<Self::Xap2, H>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send;
@@ -118,11 +126,14 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Size = <Self::Size as SizePair>::ThenBin,
         Item = Self::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilOf<Self::Xap2, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send;
@@ -131,11 +142,14 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Size = <Self::Size as SizePair>::ThenBin,
         Item = Q,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
@@ -144,15 +158,33 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Use = Self::Use,
-        Size = <Self::Size as SizePair>::ThenMany,
         Item = V::Item,
         Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
     >
     where
         V: IntoIterator,
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
+
+    fn flatten(
+        self,
+    ) -> impl ParUseResult<
+        Item = <Self::Item as IntoIterator>::Item,
+        Error = Self::Error,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+    >
+    where
+        Self::Item: IntoIterator;
 
     // compute
 

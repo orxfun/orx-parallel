@@ -88,6 +88,20 @@ impl Size for One {
         OneX::new(x, FnFlatMap::new(h))
     }
 
+    type Flatten<X>
+        = OneX<X, FnFlatten<X::O>>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator;
+
+    fn flatten<X>(x: X) -> Self::Flatten<X>
+    where
+        X: Xap<Size = Self>,
+        X::O: IntoIterator,
+    {
+        OneX::new(x, FnFlatten::new())
+    }
+
     type Mapped<X, M>
         = OneM<X, M>
     where
@@ -174,6 +188,20 @@ impl Size for One {
         H: Fn(&mut X::U, X::O) -> V + Copy + Send,
     {
         UOneX::new(x, UFnFlatMap::new(h))
+    }
+
+    type UFlatten<X>
+        = UOneX<X, UFnFlatten<X::U, X::O>>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator;
+
+    fn u_flatten<X>(x: X) -> Self::UFlatten<X>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator,
+    {
+        UOneX::new(x, UFnFlatten::new())
     }
 
     type UMapped<X, M>
