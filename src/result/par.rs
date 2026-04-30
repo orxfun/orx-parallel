@@ -1,13 +1,11 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::{FlattenOf, MappedOf, Xap};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{UseClone, UseFun};
 use crate::result::ParResultIter;
 use crate::result::par_core::ParResultCore;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
-#[cfg(feature = "std")]
-use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult};
 
@@ -17,12 +15,28 @@ pub trait ParResult: Sized + ParResultCore {
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl ParResult<Runner = Q, Item = Self::Item, Error = Self::Error>;
+    ) -> impl ParResult<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
+        Item = Self::Item,
+        Error = Self::Error,
+    >;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParResult<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item, Error = Self::Error>;
+    ) -> impl ParResult<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
+        Item = Self::Item,
+        Error = Self::Error,
+    >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -124,29 +138,81 @@ pub trait ParResult: Sized + ParResultCore {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl ParResult<Item = Q, Error = Self::Error>
+    fn map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParResult<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
+        M = Self::M,
+        Item = Q,
+        Error = Self::Error,
+    >
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn inspect<H>(self, h: H) -> impl ParResult<Item = Self::Item, Error = Self::Error>
+    fn inspect<H>(
+        self,
+        h: H,
+    ) -> impl ParResult<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = InsOf<Self::Xap2, H>,
+        M = Self::M,
+        Item = Self::Item,
+        Error = Self::Error,
+    >
     where
         H: Fn(&Self::Item) + Copy + Send;
 
-    fn filter<H>(self, h: H) -> impl ParResult<Item = Self::Item, Error = Self::Error>
+    fn filter<H>(
+        self,
+        h: H,
+    ) -> impl ParResult<
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
+        Xap1 = Self::Xap1,
+        Xap2 = FilOf<Self::Xap2, H>,
+        M = Self::M,
+        Item = Self::Item,
+        Error = Self::Error,
+    >
     where
-        H: Fn(&Self::Item) -> bool + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePair;
+        H: Fn(&Self::Item) -> bool + Copy + Send;
 
-    fn filter_map<Q, H>(self, h: H) -> impl ParResult<Item = Q, Error = Self::Error>
+    fn filter_map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParResult<
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
+        Xap1 = Self::Xap1,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
+        M = Self::M,
+        Item = Q,
+        Error = Self::Error,
+    >
     where
-        H: Fn(Self::Item) -> Option<Q> + Copy + Send,
-        <Self::Size as SizePair>::ThenBin: SizePair;
+        H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
-    fn flat_map<V, H>(self, h: H) -> impl ParResult<Item = V::Item, Error = Self::Error>
+    fn flat_map<V, H>(
+        self,
+        h: H,
+    ) -> impl ParResult<
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        Xap1 = Self::Xap1,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
+        M = Self::M,
+        Item = V::Item,
+        Error = Self::Error,
+    >
     where
         V: IntoIterator,
-        H: Fn(Self::Item) -> V + Copy + Send,
-        <Self::Size as SizePair>::ThenMany: SizePair;
+        H: Fn(Self::Item) -> V + Copy + Send;
 
     fn flatten(
         self,
