@@ -35,8 +35,8 @@ pub trait Par: Sized + ParCore {
     ) -> impl ParOption<
         Item = T,
         Xap1 = Self::Xap,
-        Xap2 = Id<T>,
         M = T,
+        Xap2 = Id<T>,
         Input = Self::Input,
         Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
     >
@@ -54,8 +54,8 @@ pub trait Par: Sized + ParCore {
         Item = T,
         Error = E,
         Xap1 = Self::Xap,
-        Xap2 = Id<T>,
         M = T,
+        Xap2 = Id<T>,
         Input = Self::Input,
         Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
     >
@@ -69,7 +69,7 @@ pub trait Par: Sized + ParCore {
     fn using<U, F>(
         self,
         f: F,
-    ) -> impl ParUse<Item = Self::Item, Xap = IdUse<Self::Xap, U>, Input = Self::Input, Use = U>
+    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
         F: Fn(usize) -> U + Sync,
     {
@@ -82,7 +82,7 @@ pub trait Par: Sized + ParCore {
     fn using_clone<U>(
         self,
         u: U,
-    ) -> impl ParUse<Item = Self::Item, Xap = IdUse<Self::Xap, U>, Input = Self::Input, Use = U>
+    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
         U: Clone + Send,
     {
