@@ -3,7 +3,7 @@
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
-use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
+use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
@@ -217,6 +217,23 @@ where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send,
     {
         let xap = self.xap.flat_map(h);
+        self.with_xap(xap)
+    }
+
+    fn flatten(
+        self,
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Using = Self::Using,
+        Input = Self::Input,
+        Xap = FlattenOf<Self::Xap>,
+        Item = <Self::Item as IntoIterator>::Item,
+    >
+    where
+        Self::Item: IntoIterator,
+    {
+        let xap = self.xap.flatten();
         self.with_xap(xap)
     }
 

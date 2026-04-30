@@ -52,6 +52,13 @@ pub trait XapUse: Copy + Send {
         <Self::Size as Size>::u_flat_map(self, h)
     }
 
+    fn flatten(self) -> FlattenOf<Self>
+    where
+        Self::O: IntoIterator,
+    {
+        <Self::Size as Size>::u_flatten(self)
+    }
+
     // transformations - helper
 
     fn mapped<M>(self, m: M) -> MappedOf<Self, M>
