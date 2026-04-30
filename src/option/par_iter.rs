@@ -104,12 +104,12 @@ where
         self,
         runner: Q,
     ) -> impl ParOption<
+        Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
-        Item = Self::Item,
     > {
         let (iter, x1, x2, _, s, params) = self.destruct();
         ParOptionIter {
@@ -126,12 +126,12 @@ where
     fn runner_with_diagnostics(
         self,
     ) -> impl ParOption<
+        Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
-        Item = Self::Item,
     > {
         let (iter, x1, x2, exe, s, params) = self.destruct();
         ParOptionIter {
@@ -166,11 +166,11 @@ where
         h: H,
     ) -> impl ParOption<
         Item = Q,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
         Input = Self::Input,
         Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MapOf<Self::Xap2, Q, H>,
     >
     where
         H: Fn(X2::O) -> Q + Copy + Send,
@@ -184,11 +184,11 @@ where
         h: H,
     ) -> impl ParOption<
         Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = InsOf<Self::Xap2, H>,
         Input = Self::Input,
         Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = InsOf<Self::Xap2, H>,
     >
     where
         H: Fn(&X2::O) + Copy + Send,
@@ -202,11 +202,11 @@ where
         h: H,
     ) -> impl ParOption<
         Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilOf<Self::Xap2, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FilOf<Self::Xap2, H>,
     >
     where
         H: Fn(&X2::O) -> bool + Copy + Send,
@@ -220,11 +220,11 @@ where
         h: H,
     ) -> impl ParOption<
         Item = Q,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FilMapOf<Self::Xap2, Q, H>,
     >
     where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
@@ -238,11 +238,11 @@ where
         h: H,
     ) -> impl ParOption<
         Item = V::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenMany,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FlatMapOf<Self::Xap2, V, H>,
     >
     where
         V: IntoIterator,
@@ -255,13 +255,12 @@ where
     fn flatten(
         self,
     ) -> impl ParOption<
-        Runner = Self::Runner,
+        Item = <Self::Item as IntoIterator>::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlattenOf<Self::Xap2>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenMany,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FlattenOf<Self::Xap2>,
-        Item = <Self::Item as IntoIterator>::Item,
     >
     where
         Self::Item: IntoIterator,

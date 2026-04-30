@@ -15,24 +15,24 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         runner: Q,
     ) -> impl ParOption<
+        Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
-        Item = Self::Item,
     >;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
     ) -> impl ParOption<
+        Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
-        Item = Self::Item,
     >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
@@ -47,14 +47,13 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         f: F,
     ) -> impl ParUseOption<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Use = U,
-        Size = Self::Size,
-        Xap1 = IdUse<Self::Xap1, U>,
-        Xap2 = IdUse<Self::Xap2, U>,
-        M = Self::M,
         Item = Self::Item,
+        Use = U,
+        Xap1 = IdUse<Self::Xap1, U>,
+        M = Self::M,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         F: Fn(usize) -> U + Sync,
@@ -70,14 +69,13 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         u: U,
     ) -> impl ParUseOption<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Use = U,
-        Size = Self::Size,
-        Xap1 = IdUse<Self::Xap1, U>,
-        Xap2 = IdUse<Self::Xap2, U>,
-        M = Self::M,
         Item = Self::Item,
+        Use = U,
+        Xap1 = IdUse<Self::Xap1, U>,
+        M = Self::M,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         U: Clone + Send,
@@ -92,13 +90,12 @@ pub trait ParOption: Sized + ParOptionCore {
     fn copied<'a, O>(
         self,
     ) -> impl ParOption<
-        Runner = Self::Runner,
+        Item = O,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, FnCopied<'a, O>>,
         Input = Self::Input,
         Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, FnCopied<'a, O>>,
-        Item = O,
     >
     where
         Self: ParOption<Item = &'a O>,
@@ -111,13 +108,12 @@ pub trait ParOption: Sized + ParOptionCore {
     fn cloned<'a, O>(
         self,
     ) -> impl ParOption<
-        Runner = Self::Runner,
+        Item = O,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, FnCloned<'a, O>>,
         Input = Self::Input,
         Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, FnCloned<'a, O>>,
-        Item = O,
     >
     where
         Self: ParOption<Item = &'a O>,
@@ -134,11 +130,11 @@ pub trait ParOption: Sized + ParOptionCore {
         h: H,
     ) -> impl ParOption<
         Item = Q,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
         Input = Self::Input,
         Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MapOf<Self::Xap2, Q, H>,
     >
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
@@ -148,11 +144,11 @@ pub trait ParOption: Sized + ParOptionCore {
         h: H,
     ) -> impl ParOption<
         Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = InsOf<Self::Xap2, H>,
         Input = Self::Input,
         Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = InsOf<Self::Xap2, H>,
     >
     where
         H: Fn(&Self::Item) + Copy + Send;
@@ -162,11 +158,11 @@ pub trait ParOption: Sized + ParOptionCore {
         h: H,
     ) -> impl ParOption<
         Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilOf<Self::Xap2, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FilOf<Self::Xap2, H>,
     >
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
@@ -176,11 +172,11 @@ pub trait ParOption: Sized + ParOptionCore {
         h: H,
     ) -> impl ParOption<
         Item = Q,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FilMapOf<Self::Xap2, Q, H>,
     >
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
@@ -190,11 +186,11 @@ pub trait ParOption: Sized + ParOptionCore {
         h: H,
     ) -> impl ParOption<
         Item = V::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenMany,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FlatMapOf<Self::Xap2, V, H>,
     >
     where
         V: IntoIterator,
@@ -203,13 +199,12 @@ pub trait ParOption: Sized + ParOptionCore {
     fn flatten(
         self,
     ) -> impl ParOption<
-        Runner = Self::Runner,
+        Item = <Self::Item as IntoIterator>::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlattenOf<Self::Xap2>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenMany,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FlattenOf<Self::Xap2>,
-        Item = <Self::Item as IntoIterator>::Item,
     >
     where
         Self::Item: IntoIterator;
