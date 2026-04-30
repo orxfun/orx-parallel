@@ -1,9 +1,9 @@
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
-use crate::infallible_use::{FlattenOf, MappedOf, Use, XapUse};
+use crate::infallible_use::{
+    FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Use, XapUse,
+};
 use crate::result_use::{ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
-#[cfg(feature = "std")]
-use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto};
 
@@ -14,9 +14,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         runner: Q,
     ) -> impl ParUseResult<
-        Runner = Q,
         Use = Self::Use,
+        Input = Self::Input,
         Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
     >;
@@ -25,9 +28,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseResult<
-        Runner = WithDiagnostics<Self::Runner>,
         Use = Self::Use,
+        Input = Self::Input,
         Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
     >;
@@ -92,9 +98,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
         Use = Self::Use,
+        Input = Self::Input,
         Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
+        M = Self::M,
         Item = Q,
         Error = Self::Error,
     >
@@ -105,9 +114,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
         Use = Self::Use,
+        Input = Self::Input,
         Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = InsOf<Self::Xap2, H>,
+        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
     >
@@ -118,9 +130,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
         Use = Self::Use,
+        Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
+        Xap1 = Self::Xap1,
+        Xap2 = FilOf<Self::Xap2, H>,
+        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
     >
@@ -131,9 +146,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
         Use = Self::Use,
+        Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
+        Xap1 = Self::Xap1,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
+        M = Self::M,
         Item = Q,
         Error = Self::Error,
     >
@@ -144,9 +162,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
         Use = Self::Use,
+        Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenMany,
+        Xap1 = Self::Xap1,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
+        M = Self::M,
         Item = V::Item,
         Error = Self::Error,
     >
