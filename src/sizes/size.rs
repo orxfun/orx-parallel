@@ -146,6 +146,16 @@ pub trait Size: Clone + Copy + Send + Default {
         V: IntoIterator,
         H: Fn(&mut X::U, X::O) -> V + Copy + Send;
 
+    type UFlatten<X>: XapUse<U = X::U, I = X::I, O = <X::O as IntoIterator>::Item, Size = Many>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator;
+
+    fn u_flatten<X>(x: X) -> Self::UFlatten<X>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator;
+
     type UMapped<X, M>: XapUse<U = X::U, I = X::I, O = M::O, Size = Self>
     where
         X: XapUse<Size = Self>,
