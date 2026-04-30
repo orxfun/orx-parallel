@@ -1,11 +1,9 @@
 use crate::infallible::fun::{FnCloned, FnCopied};
-use crate::infallible::{FlattenOf, MappedOf, Xap};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{UseClone, UseFun};
 use crate::option::ParOptionIter;
 use crate::runner::ParRunner;
-#[cfg(feature = "std")]
-use crate::runner::WithDiagnostics;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption};
 use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
@@ -13,12 +11,29 @@ use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
 pub trait ParOption: Sized + ParOptionCore {
     // configuration
 
-    fn runner<Q: ParRunner>(self, runner: Q) -> impl ParOption<Runner = Q, Item = Self::Item>;
+    fn runner<Q: ParRunner>(
+        self,
+        runner: Q,
+    ) -> impl ParOption<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
+        Item = Self::Item,
+    >;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParOption<Runner = WithDiagnostics<Self::Runner>, Item = Self::Item>;
+    ) -> impl ParOption<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
+        Item = Self::Item,
+    >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -35,7 +50,6 @@ pub trait ParOption: Sized + ParOptionCore {
         Runner = Self::Runner,
         Input = Self::Input,
         Use = U,
-        Using = UseFun<U, F>,
         Size = Self::Size,
         Xap1 = IdUse<Self::Xap1, U>,
         Xap2 = IdUse<Self::Xap2, U>,
@@ -59,7 +73,6 @@ pub trait ParOption: Sized + ParOptionCore {
         Runner = Self::Runner,
         Input = Self::Input,
         Use = U,
-        Using = UseClone<U>,
         Size = Self::Size,
         Xap1 = IdUse<Self::Xap1, U>,
         Xap2 = IdUse<Self::Xap2, U>,
@@ -116,23 +129,73 @@ pub trait ParOption: Sized + ParOptionCore {
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> impl ParOption<Item = Q>
+    fn map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Q,
+        Input = Self::Input,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
+    >
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
-    fn inspect<H>(self, h: H) -> impl ParOption<Item = Self::Item>
+    fn inspect<H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Self::Item,
+        Input = Self::Input,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = InsOf<Self::Xap2, H>,
+    >
     where
         H: Fn(&Self::Item) + Copy + Send;
 
-    fn filter<H>(self, h: H) -> impl ParOption<Item = Self::Item>
+    fn filter<H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Self::Item,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FilOf<Self::Xap2, H>,
+    >
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
-    fn filter_map<Q, H>(self, h: H) -> impl ParOption<Item = Q>
+    fn filter_map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Q,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
+    >
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
-    fn flat_map<V, H>(self, h: H) -> impl ParOption<Item = V::Item>
+    fn flat_map<V, H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = V::Item,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
+    >
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;

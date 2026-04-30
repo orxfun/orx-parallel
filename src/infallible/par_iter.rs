@@ -71,7 +71,7 @@ where
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl Par<Input = Self::Input, Xap = Self::Xap, Item = Self::Item> {
+    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
         let (iter, xap, _, params) = self.destruct();
         ParIter {
             iter,
@@ -83,7 +83,7 @@ where
 
     fn runner_with_diagnostics(
         self,
-    ) -> impl Par<Input = Self::Input, Xap = Self::Xap, Item = Self::Item> {
+    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
         let (iter, xap, exe, params) = self.destruct();
         ParIter {
             iter,
@@ -113,7 +113,7 @@ where
     fn map<Q, H>(
         self,
         h: H,
-    ) -> impl Par<Input = Self::Input, Xap = MapOf<Self::Xap, Q, H>, Item = Q>
+    ) -> impl Par<Item = Q, Xap = MapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(X::O) -> Q + Copy + Send,
     {
@@ -124,7 +124,7 @@ where
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl Par<Input = Self::Input, Xap = InsOf<Self::Xap, H>, Item = Self::Item>
+    ) -> impl Par<Item = Self::Item, Xap = InsOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&Self::Item) + Copy + Send,
     {
@@ -135,7 +135,7 @@ where
     fn filter<H>(
         self,
         h: H,
-    ) -> impl Par<Input = Self::Input, Xap = FilOf<Self::Xap, H>, Item = Self::Item>
+    ) -> impl Par<Item = Self::Item, Xap = FilOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send,
     {
@@ -146,7 +146,7 @@ where
     fn filter_map<Q, H>(
         self,
         h: H,
-    ) -> impl Par<Input = Self::Input, Xap = FilMapOf<Self::Xap, Q, H>, Item = Q>
+    ) -> impl Par<Item = Q, Xap = FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send,
     {
@@ -157,7 +157,7 @@ where
     fn flat_map<V, H>(
         self,
         h: H,
-    ) -> impl Par<Input = Self::Input, Xap = FlatMapOf<Self::Xap, V, H>, Item = V::Item>
+    ) -> impl Par<Item = V::Item, Xap = FlatMapOf<Self::Xap, V, H>, Input = Self::Input>
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send,
@@ -169,9 +169,9 @@ where
     fn flatten(
         self,
     ) -> impl Par<
-        Input = Self::Input,
-        Xap = FlattenOf<Self::Xap>,
         Item = <Self::Item as IntoIterator>::Item,
+        Xap = FlattenOf<Self::Xap>,
+        Input = Self::Input,
     >
     where
         Self::Item: IntoIterator,
