@@ -1,5 +1,5 @@
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
-use crate::infallible_use::{MappedOf, Use, XapUse};
+use crate::infallible_use::{FlattenOf, MappedOf, Use, XapUse};
 use crate::option_use::ParUseOptionIter;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::runner::ParRunner;
@@ -130,6 +130,22 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     where
         V: IntoIterator,
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
+
+    fn flatten(
+        self,
+    ) -> impl ParUseOption<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Using = Self::Using,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Item = <Self::Item as IntoIterator>::Item,
+    >
+    where
+        Self::Item: IntoIterator;
 
     // compute
 
