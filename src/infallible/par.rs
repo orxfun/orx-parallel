@@ -199,6 +199,10 @@ pub trait Par: Sized + ParCore {
         self.map(|x| f(&x)).find(|x| *x == true).is_some()
     }
 
+    fn count(self) -> usize {
+        self.map(|_| 1).reduce(|a, b| a + b).unwrap_or(0)
+    }
+
     fn find<F>(self, f: F) -> Option<Self::Item>
     where
         Self::Item: Send,
