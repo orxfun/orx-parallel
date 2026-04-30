@@ -8,7 +8,9 @@ use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse};
+use crate::{
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
+};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 
 pub trait Par: Sized + ParCore {
@@ -282,5 +284,15 @@ pub trait Par: Sized + ParCore {
             Ordering::Greater => y,
         };
         self.reduce(reduce)
+    }
+
+    fn sum<S>(self) -> S
+    where
+        Self::Item: Sum<S>,
+        S: Send,
+    {
+        self.map(Self::Item::owned)
+            .reduce(Self::Item::add)
+            .unwrap_or(Self::Item::zero())
     }
 }
