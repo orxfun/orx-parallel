@@ -1,7 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
-use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, Use, XapUse};
+use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Use, XapUse};
 use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
@@ -217,6 +217,26 @@ where
         S::ThenMany: SizePair,
     {
         let x2 = self.x2.flat_map(h);
+        self.with_xap2(x2)
+    }
+
+    fn flatten(
+        self,
+    ) -> impl ParUseOption<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Using = Self::Using,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Item = <Self::Item as IntoIterator>::Item,
+    >
+    where
+        Self::Item: IntoIterator,
+    {
+        let x2 = self.x2.flatten();
         self.with_xap2(x2)
     }
 
