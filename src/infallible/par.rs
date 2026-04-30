@@ -185,6 +185,28 @@ pub trait Par: Sized + ParCore {
 
     // compute - derived
 
+    fn all<F>(self, f: F) -> bool
+    where
+        F: Fn(&Self::Item) -> bool + Sync,
+    {
+        self.map(|x| f(&x)).find(|x| *x == false).is_none()
+    }
+
+    fn any<F>(self, f: F) -> bool
+    where
+        F: Fn(&Self::Item) -> bool + Sync,
+    {
+        self.map(|x| f(&x)).find(|x| *x == true).is_some()
+    }
+
+    fn find<F>(self, f: F) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item) -> bool + Sync,
+    {
+        self.filter(&f).first()
+    }
+
     fn for_each<F>(self, f: F)
     where
         F: Fn(Self::Item) + Send + Copy,
