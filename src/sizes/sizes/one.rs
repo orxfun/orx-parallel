@@ -190,6 +190,20 @@ impl Size for One {
         UOneX::new(x, UFnFlatMap::new(h))
     }
 
+    type UFlatten<X>
+        = UOneX<X, UFnFlatten<X::U, X::O>>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator;
+
+    fn u_flatten<X>(x: X) -> Self::UFlatten<X>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator,
+    {
+        UOneX::new(x, UFnFlatten::new())
+    }
+
     type UMapped<X, M>
         = UOneM<X, M>
     where

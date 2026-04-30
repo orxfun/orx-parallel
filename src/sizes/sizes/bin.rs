@@ -190,6 +190,20 @@ impl Size for Bin {
         UBinX::new(x, UFnFlatMap::new(h))
     }
 
+    type UFlatten<X>
+        = UBinX<X, UFnFlatten<X::U, X::O>>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator;
+
+    fn u_flatten<X>(x: X) -> Self::UFlatten<X>
+    where
+        X: XapUse<Size = Self>,
+        X::O: IntoIterator,
+    {
+        UBinX::new(x, UFnFlatten::new())
+    }
+
     type UMapped<X, M>
         = UBinM<X, M>
     where
