@@ -1,5 +1,6 @@
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
+use crate::infallible_use::xap::FlattenOf;
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
@@ -194,6 +195,19 @@ pub trait ParUse: Sized + ParUseCore {
     where
         V: IntoIterator,
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
+
+    fn flatten(
+        self,
+    ) -> impl ParUse<
+        Runner = Self::Runner,
+        Use = Self::Use,
+        Using = Self::Using,
+        Input = Self::Input,
+        Xap = FlattenOf<Self::Xap>,
+        Item = <Self::Item as IntoIterator>::Item,
+    >
+    where
+        Self::Item: IntoIterator;
 
     // compute
 
