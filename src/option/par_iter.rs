@@ -6,7 +6,7 @@ use crate::option::ParOptionCore;
 use crate::option::par::ParOption;
 use crate::option::par_runner::ParRunnerOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
+use crate::runner::{DefaultRunner, ParRunner};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -100,7 +100,17 @@ where
 {
     // configuration
 
-    fn runner<Q: ParRunner>(self, runner: Q) -> ParOptionIter<I, M, X1, X2, S, Q> {
+    fn runner<Q: ParRunner>(
+        self,
+        runner: Q,
+    ) -> impl ParOption<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
+        Item = Self::Item,
+    > {
         let (iter, x1, x2, _, s, params) = self.destruct();
         ParOptionIter {
             iter,
@@ -113,7 +123,16 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn runner_with_diagnostics(self) -> ParOptionIter<I, M, X1, X2, S, WithDiagnostics<R>> {
+    fn runner_with_diagnostics(
+        self,
+    ) -> impl ParOption<
+        Input = Self::Input,
+        Size = Self::Size,
+        Xap1 = Self::Xap1,
+        Xap2 = Self::Xap2,
+        M = Self::M,
+        Item = Self::Item,
+    > {
         let (iter, x1, x2, exe, s, params) = self.destruct();
         ParOptionIter {
             iter,
@@ -142,7 +161,17 @@ where
 
     // transformations
 
-    fn map<Q, H>(self, h: H) -> ParOptionIter<I, M, X1, MapOf<X2, Q, H>, S, R>
+    fn map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Q,
+        Input = Self::Input,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
+    >
     where
         H: Fn(X2::O) -> Q + Copy + Send,
     {
@@ -150,7 +179,17 @@ where
         self.with_xap2(x2)
     }
 
-    fn inspect<H>(self, h: H) -> ParOptionIter<I, M, X1, InsOf<X2, H>, S, R>
+    fn inspect<H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Self::Item,
+        Input = Self::Input,
+        Size = Self::Size,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = InsOf<Self::Xap2, H>,
+    >
     where
         H: Fn(&X2::O) + Copy + Send,
     {
@@ -158,7 +197,17 @@ where
         self.with_xap2(x2)
     }
 
-    fn filter<H>(self, h: H) -> ParOptionIter<I, M, X1, FilOf<X2, H>, S::ThenBin, R>
+    fn filter<H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Self::Item,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FilOf<Self::Xap2, H>,
+    >
     where
         H: Fn(&X2::O) -> bool + Copy + Send,
     {
@@ -166,7 +215,17 @@ where
         self.with_xap2(x2)
     }
 
-    fn filter_map<Q, H>(self, h: H) -> ParOptionIter<I, M, X1, FilMapOf<X2, Q, H>, S::ThenBin, R>
+    fn filter_map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = Q,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
+    >
     where
         H: Fn(X2::O) -> Option<Q> + Copy + Send,
     {
@@ -174,7 +233,17 @@ where
         self.with_xap2(x2)
     }
 
-    fn flat_map<V, H>(self, h: H) -> ParOptionIter<I, M, X1, FlatMapOf<X2, V, H>, S::ThenMany, R>
+    fn flat_map<V, H>(
+        self,
+        h: H,
+    ) -> impl ParOption<
+        Item = V::Item,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
+        M = Self::M,
+        Xap1 = Self::Xap1,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
+    >
     where
         V: IntoIterator,
         H: Fn(X2::O) -> V + Copy + Send,
