@@ -1,3 +1,5 @@
+use core::cmp::Ordering;
+
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
@@ -216,5 +218,69 @@ pub trait Par: Sized + ParCore {
         F: Fn(Self::Item) + Send + Copy,
     {
         let _ = self.map(f).reduce(|_, _| {});
+    }
+
+    fn max(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord + Send,
+    {
+        self.reduce(Ord::max)
+    }
+
+    fn max_by<F>(self, f: F) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+    {
+        let reduce = |x, y| match f(&x, &y) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn max_by_key<B, F>(self, f: F) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+        B: Ord,
+        F: Fn(&Self::Item) -> B + Sync,
+    {
+        let reduce = |x, y| match f(&x).cmp(&f(&y)) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn min(self) -> Option<Self::Item>
+    where
+        Self::Item: Ord + Send,
+    {
+        self.reduce(Ord::min)
+    }
+
+    fn min_by<F>(self, f: F) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+    {
+        let reduce = |x, y| match f(&x, &y) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn min_by_key<B, F>(self, f: F) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+        B: Ord,
+        F: Fn(&Self::Item) -> B + Sync,
+    {
+        let reduce = |x, y| match f(&x).cmp(&f(&y)) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
     }
 }
