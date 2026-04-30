@@ -15,26 +15,26 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         self,
         runner: Q,
     ) -> impl ParUseOption<
+        Item = Self::Item,
         Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
-        Item = Self::Item,
     >;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseOption<
+        Item = Self::Item,
         Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
-        Item = Self::Item,
     >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
@@ -48,15 +48,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn copied<'a, O>(
         self,
     ) -> impl ParUseOption<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Using = Self::Using,
-        Use = Self::Use,
-        Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
         Item = O,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, UFnCopied<'a, Self::Use, O>>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         Self: ParUseOption<Item = &'a O>,
@@ -70,15 +68,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn cloned<'a, O>(
         self,
     ) -> impl ParUseOption<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Using = Self::Using,
-        Use = Self::Use,
-        Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
         Item = O,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, UFnCloned<'a, Self::Use, O>>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         Self: ParUseOption<Item = &'a O>,
@@ -95,13 +91,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         self,
         h: H,
     ) -> impl ParUseOption<
+        Item = Q,
         Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = MapOf<Self::Xap2, Q, H>,
-        M = Self::M,
-        Item = Q,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send;
@@ -110,13 +106,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         self,
         h: H,
     ) -> impl ParUseOption<
+        Item = Self::Item,
         Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = InsOf<Self::Xap2, H>,
         Input = Self::Input,
         Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = InsOf<Self::Xap2, H>,
-        M = Self::M,
-        Item = Self::Item,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send;
@@ -125,13 +121,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         self,
         h: H,
     ) -> impl ParUseOption<
+        Item = Self::Item,
         Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilOf<Self::Xap2, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
-        Xap1 = Self::Xap1,
-        Xap2 = FilOf<Self::Xap2, H>,
-        M = Self::M,
-        Item = Self::Item,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send;
@@ -140,13 +136,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         self,
         h: H,
     ) -> impl ParUseOption<
+        Item = Q,
         Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenBin,
-        Xap1 = Self::Xap1,
-        Xap2 = FilMapOf<Self::Xap2, Q, H>,
-        M = Self::M,
-        Item = Q,
     >
     where
         H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
@@ -155,13 +151,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         self,
         h: H,
     ) -> impl ParUseOption<
+        Item = V::Item,
         Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenMany,
-        Xap1 = Self::Xap1,
-        Xap2 = FlatMapOf<Self::Xap2, V, H>,
-        M = Self::M,
-        Item = V::Item,
     >
     where
         V: IntoIterator,
@@ -170,15 +166,13 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn flatten(
         self,
     ) -> impl ParUseOption<
-        Runner = Self::Runner,
+        Item = <Self::Item as IntoIterator>::Item,
         Use = Self::Use,
-        Using = Self::Using,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlattenOf<Self::Xap2>,
         Input = Self::Input,
         Size = <Self::Size as SizePair>::ThenMany,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FlattenOf<Self::Xap2>,
-        Item = <Self::Item as IntoIterator>::Item,
     >
     where
         Self::Item: IntoIterator;
