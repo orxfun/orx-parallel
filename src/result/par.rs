@@ -16,26 +16,26 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         runner: Q,
     ) -> impl ParResult<
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
     >;
 
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
     ) -> impl ParResult<
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = Self::Xap2,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
     >;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
@@ -50,16 +50,14 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         f: F,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Size = Self::Size,
-        Use = U,
-        Using = UseFun<U, F>,
-        M = Self::M,
-        Xap1 = IdUse<Self::Xap1, U>,
-        Xap2 = IdUse<Self::Xap2, U>,
         Item = Self::Item,
         Error = Self::Error,
+        Use = U,
+        Xap1 = IdUse<Self::Xap1, U>,
+        M = Self::M,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         F: Fn(usize) -> U + Sync,
@@ -75,16 +73,14 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         u: U,
     ) -> impl ParUseResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Size = Self::Size,
-        Use = U,
-        Using = UseClone<U>,
-        M = Self::M,
-        Xap1 = IdUse<Self::Xap1, U>,
-        Xap2 = IdUse<Self::Xap2, U>,
         Item = Self::Item,
         Error = Self::Error,
+        Use = U,
+        Xap1 = IdUse<Self::Xap1, U>,
+        M = Self::M,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         U: Clone + Send,
@@ -99,14 +95,13 @@ pub trait ParResult: Sized + ParResultCore {
     fn copied<'a, O>(
         self,
     ) -> impl ParResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, FnCopied<'a, O>>,
         Item = O,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, FnCopied<'a, O>>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         Self: ParResult<Item = &'a O>,
@@ -119,14 +114,13 @@ pub trait ParResult: Sized + ParResultCore {
     fn cloned<'a, O>(
         self,
     ) -> impl ParResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Size = Self::Size,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = MappedOf<Self::Xap2, FnCloned<'a, O>>,
         Item = O,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MappedOf<Self::Xap2, FnCloned<'a, O>>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         Self: ParResult<Item = &'a O>,
@@ -142,13 +136,13 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         h: H,
     ) -> impl ParResult<
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = MapOf<Self::Xap2, Q, H>,
-        M = Self::M,
         Item = Q,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = MapOf<Self::Xap2, Q, H>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
@@ -157,13 +151,13 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         h: H,
     ) -> impl ParResult<
-        Input = Self::Input,
-        Size = Self::Size,
-        Xap1 = Self::Xap1,
-        Xap2 = InsOf<Self::Xap2, H>,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = InsOf<Self::Xap2, H>,
+        Input = Self::Input,
+        Size = Self::Size,
     >
     where
         H: Fn(&Self::Item) + Copy + Send;
@@ -172,13 +166,13 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         h: H,
     ) -> impl ParResult<
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenBin,
-        Xap1 = Self::Xap1,
-        Xap2 = FilOf<Self::Xap2, H>,
-        M = Self::M,
         Item = Self::Item,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilOf<Self::Xap2, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
     >
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
@@ -187,13 +181,13 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         h: H,
     ) -> impl ParResult<
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenBin,
-        Xap1 = Self::Xap1,
-        Xap2 = FilMapOf<Self::Xap2, Q, H>,
-        M = Self::M,
         Item = Q,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FilMapOf<Self::Xap2, Q, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenBin,
     >
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
@@ -202,13 +196,13 @@ pub trait ParResult: Sized + ParResultCore {
         self,
         h: H,
     ) -> impl ParResult<
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenMany,
-        Xap1 = Self::Xap1,
-        Xap2 = FlatMapOf<Self::Xap2, V, H>,
-        M = Self::M,
         Item = V::Item,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlatMapOf<Self::Xap2, V, H>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
     >
     where
         V: IntoIterator,
@@ -217,14 +211,13 @@ pub trait ParResult: Sized + ParResultCore {
     fn flatten(
         self,
     ) -> impl ParResult<
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Size = <Self::Size as SizePair>::ThenMany,
-        M = Self::M,
-        Xap1 = Self::Xap1,
-        Xap2 = FlattenOf<Self::Xap2>,
         Item = <Self::Item as IntoIterator>::Item,
         Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = FlattenOf<Self::Xap2>,
+        Input = Self::Input,
+        Size = <Self::Size as SizePair>::ThenMany,
     >
     where
         Self::Item: IntoIterator;
