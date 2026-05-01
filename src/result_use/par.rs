@@ -106,7 +106,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = Self::Size,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
@@ -122,7 +122,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = Self::Size,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send;
+        H: Fn(&mut Self::Use, &Self::Item) + Copy + Send;
 
     fn filter<H>(
         self,
@@ -138,7 +138,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send;
+        H: Fn(&mut Self::Use, &Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
@@ -154,7 +154,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
@@ -171,7 +171,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     >
     where
         V: IntoIterator,
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Item) -> V + Copy + Send;
 
     fn flatten(
         self,
@@ -197,7 +197,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
 
     fn reduce<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
     where
-        F: Fn(&mut <Self::Using as Use>::Item, Self::Item, Self::Item) -> Self::Item + Send + Copy,
+        F: Fn(&mut Self::Use, Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send,
         Self::Error: Send;
 
@@ -218,7 +218,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn all<F>(self, f: F) -> Result<bool, Self::Error>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
         Self::Error: Send,
     {
         self.map(|u, x| f(u, &x))
@@ -229,7 +229,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn any<F>(self, f: F) -> Result<bool, Self::Error>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
         Self::Error: Send,
     {
         self.map(|u, x| f(u, &x))
@@ -250,7 +250,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn find<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
         Self::Error: Send,
     {
         self.filter(&f).first()
@@ -258,7 +258,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
 
     fn for_each<F>(self, f: F) -> Result<(), Self::Error>
     where
-        F: Fn(&mut <Self::Using as Use>::Item, Self::Item) + Send + Copy,
+        F: Fn(&mut Self::Use, Self::Item) + Send + Copy,
         Self::Error: Send,
     {
         self.map(f).reduce(|_, _, _| {}).map(|_| ())
@@ -275,10 +275,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn max_by<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item, &Self::Item) -> Ordering + Sync,
+        F: Fn(&mut Self::Use, &Self::Item, &Self::Item) -> Ordering + Sync,
         Self::Error: Send,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x, &y) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x, &y) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -289,10 +289,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     where
         Self::Item: Send,
         B: Ord,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> B + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> B + Sync,
         Self::Error: Send,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x).cmp(&f(u, &y)) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x).cmp(&f(u, &y)) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -310,10 +310,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn min_by<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item, &Self::Item) -> Ordering + Sync,
+        F: Fn(&mut Self::Use, &Self::Item, &Self::Item) -> Ordering + Sync,
         Self::Error: Send,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x, &y) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x, &y) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };
@@ -324,10 +324,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     where
         Self::Item: Send,
         B: Ord,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> B + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> B + Sync,
         Self::Error: Send,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x).cmp(&f(u, &y)) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x).cmp(&f(u, &y)) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };

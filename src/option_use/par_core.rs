@@ -15,13 +15,9 @@ pub trait ParUseOptionCore {
 
     type M;
 
-    type Xap1: XapUse<
-            U = <Self::Using as Use>::Item,
-            I = <Self::Input as ConcurrentIter>::Item,
-            O = Option<Self::M>,
-        >;
+    type Xap1: XapUse<U = Self::Use, I = <Self::Input as ConcurrentIter>::Item, O = Option<Self::M>>;
 
-    type Xap2: XapUse<U = <Self::Using as Use>::Item, I = Self::M, O = Self::Item>;
+    type Xap2: XapUse<U = Self::Use, I = Self::M, O = Self::Item>;
 
     type Size: SizePair<S1 = <Self::Xap1 as XapUse>::Size, S2 = <Self::Xap2 as XapUse>::Size>;
 

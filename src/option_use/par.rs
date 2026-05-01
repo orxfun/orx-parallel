@@ -102,7 +102,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         Size = Self::Size,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Item) -> Q + Copy + Send;
 
     fn inspect<H>(
         self,
@@ -117,7 +117,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         Size = Self::Size,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send;
+        H: Fn(&mut Self::Use, &Self::Item) + Copy + Send;
 
     fn filter<H>(
         self,
@@ -132,7 +132,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send;
+        H: Fn(&mut Self::Use, &Self::Item) -> bool + Copy + Send;
 
     fn filter_map<Q, H>(
         self,
@@ -147,7 +147,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Item) -> Option<Q> + Copy + Send;
 
     fn flat_map<V, H>(
         self,
@@ -163,7 +163,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     >
     where
         V: IntoIterator,
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Item) -> V + Copy + Send;
 
     fn flatten(
         self,
@@ -187,7 +187,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
 
     fn reduce<F>(self, f: F) -> Option<Option<Self::Item>>
     where
-        F: Fn(&mut <Self::Using as Use>::Item, Self::Item, Self::Item) -> Self::Item + Send + Copy,
+        F: Fn(&mut Self::Use, Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
     fn collect_into<C>(self, dst: C) -> Option<C>
@@ -205,7 +205,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn all<F>(self, f: F) -> Option<bool>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
         self.map(|u, x| f(u, &x))
             .find(|_, x| *x == false)
@@ -215,7 +215,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn any<F>(self, f: F) -> Option<bool>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
         self.map(|u, x| f(u, &x))
             .find(|_, x| *x == true)
@@ -231,14 +231,14 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn find<F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
         self.filter(&f).first()
     }
 
     fn for_each<F>(self, f: F) -> Option<()>
     where
-        F: Fn(&mut <Self::Using as Use>::Item, Self::Item) + Send + Copy,
+        F: Fn(&mut Self::Use, Self::Item) + Send + Copy,
     {
         self.map(f).reduce(|_, _, _| {}).map(|_| ())
     }
@@ -253,9 +253,9 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn max_by<F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item, &Self::Item) -> Ordering + Sync,
+        F: Fn(&mut Self::Use, &Self::Item, &Self::Item) -> Ordering + Sync,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x, &y) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x, &y) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -266,9 +266,9 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     where
         Self::Item: Send,
         B: Ord,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> B + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> B + Sync,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x).cmp(&f(u, &y)) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x).cmp(&f(u, &y)) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -285,9 +285,9 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     fn min_by<F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item, &Self::Item) -> Ordering + Sync,
+        F: Fn(&mut Self::Use, &Self::Item, &Self::Item) -> Ordering + Sync,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x, &y) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x, &y) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };
@@ -298,9 +298,9 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     where
         Self::Item: Send,
         B: Ord,
-        F: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> B + Sync,
+        F: Fn(&mut Self::Use, &Self::Item) -> B + Sync,
     {
-        let reduce = |u: &mut <Self::Using as Use>::Item, x, y| match f(u, &x).cmp(&f(u, &y)) {
+        let reduce = |u: &mut Self::Use, x, y| match f(u, &x).cmp(&f(u, &y)) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };
