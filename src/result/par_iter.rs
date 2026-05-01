@@ -1,6 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
+use crate::common_par_traits::ParResCommon;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par::ParResult;
@@ -327,5 +328,27 @@ where
             IterationOrder::Arbitrary => C::res_arb_col_into(&mut dst, self),
         }
         .map(|_| dst)
+    }
+}
+
+impl<I, M, E, X1, X2, S, R> ParResCommon for ParResultIter<I, M, E, X1, X2, S, R>
+where
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type CommonItem = <Self as ParResultCore>::Item;
+
+    type CommonError = <Self as ParResultCore>::Error;
+
+    fn common_collect_into<C>(self, dst: &mut C) -> Result<(), Self::CommonError>
+    where
+        C: ParCollectInto<Self::CommonItem>,
+        Self::CommonItem: Send,
+        Self::CommonError: Send,
+    {
+        self.collect_into(dst)
     }
 }

@@ -1,6 +1,7 @@
 #![allow(refining_impl_trait)]
 
 use crate::ParCollectInto;
+use crate::common_par_traits::ParOptCommon;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Use, XapUse};
 use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
@@ -351,5 +352,25 @@ where
             IterationOrder::Arbitrary => C::opt_use_arb_col_into(&mut dst, self),
         }
         .map(|_| dst)
+    }
+}
+
+impl<U, I, M, X1, X2, S, R> ParOptCommon for ParUseOptionIter<U, I, M, X1, X2, S, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type CommonItem = <Self as ParUseOptionCore>::Item;
+
+    fn common_collect_into<C>(self, dst: &mut C) -> Option<()>
+    where
+        C: ParCollectInto<Self::CommonItem>,
+        Self::CommonItem: Send,
+    {
+        self.collect_into(dst)
     }
 }
