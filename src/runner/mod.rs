@@ -2,7 +2,6 @@ mod par_runner;
 mod runner_variants;
 
 pub use par_runner::ParRunner;
-pub use runner_variants::WithDiagnostics;
 
 // default
 

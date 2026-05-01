@@ -1,5 +1,5 @@
 use crate::collectables::alg::merge_collected::{
-    merge_arb_into_split_vec_new, merge_ord_into_split_vec, merge_ord_into_split_vec_new,
+    merge_arb_into_split_vec_new, merge_ord_into_split_vec_new,
 };
 use crate::collectables::res_use::ColIntoResUse;
 use crate::infallible_use::{Use, XapUse};

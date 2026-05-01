@@ -9,11 +9,11 @@ use crate::infallible_use::{
 };
 use crate::option_use::ParUseOptionIter;
 use crate::result_use::ParUseResultIter;
+use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
 };
-use crate::{infallible_use::Use, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParUse: Sized + ParUseCore {
