@@ -62,15 +62,15 @@ impl Input {
 
 impl Factors for Input {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "h"]
+        vec!["n", "task"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
         vec![
-            format!("2^{}", self.n),
+            format!("2e{}", self.n),
             match self.heavy {
-                true => "h",
-                false => "l",
+                true => "heavy",
+                false => "light",
             }
             .to_string(),
         ]
@@ -89,7 +89,7 @@ enum Method {
 
 impl Factors for Method {
     fn factor_names() -> Vec<&'static str> {
-        vec!["m"]
+        vec!["method"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -97,7 +97,7 @@ impl Factors for Method {
             match self {
                 Self::SeqVec => "seq-vec",
                 Self::RayonVec => "rayon-vec",
-                Self::RayonVecList => "rayon-vec-list",
+                Self::RayonVecList => "rayon-veclist",
                 Self::OrxVec => "orx-vec",
                 Self::OrxArbVec => "orx-arb-vec",
                 Self::OrxArbVecVec => "orx-arb-vecvec",
@@ -123,7 +123,7 @@ impl Experiment for Exp {
 
     type Input = (bool, Vec<u64>); // (heavy, input)
 
-    type Output = (bool, Output); // (arbitrary, output)
+    type Output = (bool, Output); // (ordered, output)
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         const SEED: u64 = 654;
@@ -252,35 +252,35 @@ impl Experiment for Exp {
         &self,
         _: &Self::InputFactors,
         (h, input): &Self::Input,
-        (arbitrary, output): &Self::Output,
+        (ordered, output): &Self::Output,
     ) {
         let mut expected: Vec<_> = match h {
             true => input.iter().map(m).filter(f).map(h_m2).filter(f2).collect(),
             false => input.iter().map(m).filter(f).map(l_m2).filter(f2).collect(),
         };
-        if *arbitrary {
+        if !*ordered {
             expected.sort();
         }
 
         match output {
-            Output::Vec(result) => match *arbitrary {
-                true => {
+            Output::Vec(result) => match *ordered {
+                false => {
                     let mut result = result.clone();
                     result.sort();
                     assert_eq!(expected, result)
                 }
-                false => assert_eq!(&expected, result),
+                true => assert_eq!(&expected, result),
             },
             Output::VecList(result) => {
+                assert!(!*ordered);
                 let mut result: Vec<u64> = result.iter().flat_map(|x| x.iter()).copied().collect();
                 result.sort();
-                expected.sort();
                 assert_eq!(expected, result);
             }
             Output::VecVec(result) => {
+                assert!(!*ordered);
                 let mut result: Vec<u64> = result.iter().flat_map(|x| x.iter()).copied().collect();
                 result.sort();
-                expected.sort();
                 assert_eq!(expected, result);
             }
         }
