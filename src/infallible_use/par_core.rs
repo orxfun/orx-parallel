@@ -13,11 +13,7 @@ pub trait ParUseCore {
 
     type Input: ConcurrentIter;
 
-    type Xap: XapUse<
-            U = <Self::Using as Use>::Item,
-            I = <Self::Input as ConcurrentIter>::Item,
-            O = Self::Item,
-        >;
+    type Xap: XapUse<U = Self::Use, I = <Self::Input as ConcurrentIter>::Item, O = Self::Item>;
 
     fn destruct(self) -> (Self::Using, Self::Input, Self::Xap, Self::Runner, Params);
 }

@@ -132,7 +132,7 @@ where
         h: H,
     ) -> impl ParUse<Item = Q, Use = Self::Use, Xap = MapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Q + Copy + Send,
+        H: Fn(&mut Self::Use, Self::Item) -> Q + Copy + Send,
     {
         let xap = self.xap.map(h);
         self.with_xap(xap)
@@ -143,7 +143,7 @@ where
         h: H,
     ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = InsOf<Self::Xap, H>, Input = Self::Input>
     where
-        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) + Copy + Send,
+        H: Fn(&mut Self::Use, &Self::Item) + Copy + Send,
     {
         let xap = self.xap.inspect(h);
         self.with_xap(xap)
@@ -154,7 +154,7 @@ where
         h: H,
     ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = FilOf<Self::Xap, H>, Input = Self::Input>
     where
-        H: Fn(&mut <Self::Using as Use>::Item, &Self::Item) -> bool + Copy + Send,
+        H: Fn(&mut Self::Use, &Self::Item) -> bool + Copy + Send,
     {
         let xap = self.xap.filter(h);
         self.with_xap(xap)
@@ -165,7 +165,7 @@ where
         h: H,
     ) -> impl ParUse<Item = Q, Use = Self::Use, Xap = FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> Option<Q> + Copy + Send,
+        H: Fn(&mut Self::Use, Self::Item) -> Option<Q> + Copy + Send,
     {
         let xap = self.xap.filter_map(h);
         self.with_xap(xap)
@@ -182,7 +182,7 @@ where
     >
     where
         V: IntoIterator,
-        H: Fn(&mut <Self::Using as Use>::Item, Self::Item) -> V + Copy + Send,
+        H: Fn(&mut Self::Use, Self::Item) -> V + Copy + Send,
     {
         let xap = self.xap.flat_map(h);
         self.with_xap(xap)
