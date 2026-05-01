@@ -6,7 +6,7 @@ use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::runner::{DefaultRunner, ParRunner, WithDiagnostics};
+use crate::runner::{DefaultRunner, ParRunner};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 

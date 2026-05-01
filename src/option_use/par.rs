@@ -2,7 +2,7 @@ use core::cmp::Ordering;
 
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{
-    FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Use, XapUse,
+    FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse,
 };
 use crate::option_use::ParUseOptionIter;
 use crate::option_use::par_core::ParUseOptionCore;
