@@ -202,14 +202,14 @@ where
         exe.reduce(params, iter, x, f)
     }
 
-    fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<X::O>,
         X::O: Send,
     {
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_col_into(Some(dst), self),
-            IterationOrder::Arbitrary => C::inf_arb_col_into(Some(dst), self),
+            IterationOrder::Ordered => C::inf_col_into_new(dst, self),
+            IterationOrder::Arbitrary => C::inf_arb_col_into_new(dst, self),
         }
     }
 
@@ -218,9 +218,11 @@ where
         C: ParCollectInto<X::O>,
         X::O: Send,
     {
+        let mut dst = C::new_empty();
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_col_into(None, self),
-            IterationOrder::Arbitrary => C::inf_arb_col_into(None, self),
+            IterationOrder::Ordered => C::inf_col_into_new(&mut dst, self),
+            IterationOrder::Arbitrary => C::inf_arb_col_into_new(&mut dst, self),
         }
+        dst
     }
 }
