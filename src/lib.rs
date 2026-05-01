@@ -40,7 +40,7 @@ pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
-pub use ops::Sum;
+pub use ops::{ParExtend, Sum};
 pub use option::ParOption;
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
