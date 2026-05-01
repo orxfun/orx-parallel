@@ -6,6 +6,10 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
 impl<T> ColIntoInf<T> for FixedVec<T> {
+    fn new_empty() -> Self {
+        Self::new(0)
+    }
+
     fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,

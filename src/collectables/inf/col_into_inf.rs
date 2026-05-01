@@ -3,6 +3,8 @@ use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoInf<T>: Sized {
+    fn new_empty() -> Self;
+
     fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
