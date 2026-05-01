@@ -4,7 +4,7 @@ use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoRes<T>: Sized {
-    fn res_col_into_new<I, M, E, X1, X2, S, R>(
+    fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
@@ -17,7 +17,7 @@ pub trait ColIntoRes<T>: Sized {
         T: Send,
         E: Send;
 
-    fn res_arb_col_into_new<I, M, E, X1, X2, S, R>(
+    fn res_arb_col_into<I, M, E, X1, X2, S, R>(
         dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>

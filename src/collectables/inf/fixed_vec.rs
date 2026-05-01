@@ -10,7 +10,7 @@ impl<T> ColIntoInf<T> for FixedVec<T> {
         Self::new(0)
     }
 
-    fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    fn inf_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -18,10 +18,10 @@ impl<T> ColIntoInf<T> for FixedVec<T> {
         T: Send,
     {
         let dst = dst.as_mut_vec();
-        <Vec<T> as ColIntoInf<T>>::inf_col_into_new(dst, par);
+        <Vec<T> as ColIntoInf<T>>::inf_col_into(dst, par);
     }
 
-    fn inf_arb_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -29,6 +29,6 @@ impl<T> ColIntoInf<T> for FixedVec<T> {
         T: Send,
     {
         let dst = dst.as_mut_vec();
-        <Vec<T> as ColIntoInf<T>>::inf_arb_col_into_new(dst, par);
+        <Vec<T> as ColIntoInf<T>>::inf_arb_col_into(dst, par);
     }
 }

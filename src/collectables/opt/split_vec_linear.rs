@@ -10,7 +10,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Linear, SplitVec};
 
 impl<T> ColIntoOpt<T> for SplitVec<T, Linear> {
-    fn opt_col_into_new<I, M, X1, X2, S, R>(
+    fn opt_col_into<I, M, X1, X2, S, R>(
         dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<()>
@@ -28,7 +28,7 @@ impl<T> ColIntoOpt<T> for SplitVec<T, Linear> {
         results.map(|results| merge_ord_into_split_vec_new(results, dst))
     }
 
-    fn opt_arb_col_into_new<I, M, X1, X2, S, R>(
+    fn opt_arb_col_into<I, M, X1, X2, S, R>(
         dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<()>

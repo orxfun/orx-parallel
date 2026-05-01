@@ -14,7 +14,7 @@ impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
         Self::with_linear_growth(10)
     }
 
-    fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    fn inf_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -26,7 +26,7 @@ impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
         merge_ord_into_split_vec_new(results, dst);
     }
 
-    fn inf_arb_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,

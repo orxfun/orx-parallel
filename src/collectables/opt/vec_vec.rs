@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoOpt<T> for Vec<Vec<T>> {
-    fn opt_col_into_new<I, M, X1, X2, S, R>(
+    fn opt_col_into<I, M, X1, X2, S, R>(
         dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<()>
@@ -30,7 +30,7 @@ impl<T> ColIntoOpt<T> for Vec<Vec<T>> {
         })
     }
 
-    fn opt_arb_col_into_new<I, M, X1, X2, S, R>(
+    fn opt_arb_col_into<I, M, X1, X2, S, R>(
         dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<()>

@@ -7,7 +7,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
 
 impl<T> ColIntoInfUse<T> for SplitVec<T, Recursive> {
-    fn inf_use_col_into_new<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
+    fn inf_use_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
         U: Use,
         I: ConcurrentIter,
@@ -20,7 +20,7 @@ impl<T> ColIntoInfUse<T> for SplitVec<T, Recursive> {
         merge_ord_into_split_vec_new(results, dst);
     }
 
-    fn inf_use_arb_col_into_new<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
+    fn inf_use_arb_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
         U: Use,
         I: ConcurrentIter,
