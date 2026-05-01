@@ -119,29 +119,30 @@ fn opt_collect_into() {
     for n in N {
         let input = inputs(n);
 
-        let result = vec!["x".to_string()];
-        let result = input
+        let mut result = vec!["x".to_string()];
+        let ok = input
             .clone()
             .into_par()
             .map(Some)
             .into_optional()
             .filter(|x| x.len() < 2)
-            .collect_into(result);
+            .collect_into(&mut result);
 
         let mut expected = vec!["x".to_string()];
         expected.extend(input.into_iter().filter(|x| x.len() < 2));
 
-        assert_eq!(result, Some(expected));
+        assert_eq!(ok, Some(()));
+        assert_eq!(result, expected);
 
         let input = inputs(core::cmp::max(100, n));
-        let result = vec!["x".to_string()];
-        let result = input
+        let mut result = vec!["x".to_string()];
+        let err = input
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
             .filter(|x| x.len() < 2)
-            .collect_into(result);
-        assert_eq!(result, None);
+            .collect_into(&mut result);
+        assert_eq!(err, None);
     }
 }
 

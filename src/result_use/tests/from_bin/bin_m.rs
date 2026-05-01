@@ -140,7 +140,7 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     );
 
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
@@ -160,7 +160,8 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 x.parse::<u64>().unwrap()
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
@@ -190,7 +191,7 @@ fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
@@ -213,7 +214,8 @@ fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                 x.parse::<u64>().unwrap()
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))

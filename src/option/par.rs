@@ -221,7 +221,7 @@ pub trait ParOption: Sized + ParOptionCore {
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
-    fn collect_into<C>(self, dst: C) -> Option<C>
+    fn collect_into<C>(self, dst: &mut C) -> Option<()>
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send;

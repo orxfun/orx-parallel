@@ -73,12 +73,13 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs_res(N, None)
+        Some(mut c) => inputs_res(N, None)
             .into_par()
             .into_fallible()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, None)
             .into_par()
             .into_fallible()
@@ -97,12 +98,13 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
     order: IterationOrder,
 ) {
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs_res(N, Some(42))
+        Some(mut c) => inputs_res(N, Some(42))
             .into_par()
             .into_fallible()
             .filter(|x| x.len() > 1)
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, Some(42))
             .into_par()
             .into_fallible()

@@ -236,7 +236,7 @@ pub trait ParResult: Sized + ParResultCore {
         Self::Item: Send,
         Self::Error: Send;
 
-    fn collect_into<C>(self, dst: C) -> Result<C, Self::Error>
+    fn collect_into<C>(self, dst: &mut C) -> Result<(), Self::Error>
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send,

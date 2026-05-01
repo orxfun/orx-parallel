@@ -112,7 +112,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
             .into_fallible()
@@ -122,7 +122,8 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
             })
             .flat_map(|x| [format!("{x}!"), x])
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
@@ -150,7 +151,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
     order: IterationOrder,
 ) {
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .flat_map(|x| match x.as_str() == "42" {
                 true => [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok),
@@ -163,7 +164,8 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
             })
             .flat_map(|x| [format!("{x}!"), x])
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .flat_map(|x| match x.as_str() == "42" {

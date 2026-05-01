@@ -86,7 +86,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs_res(N, None)
+        Some(mut c) => inputs_res(N, None)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
@@ -95,7 +95,8 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
             })
             .into_fallible()
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, None)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
@@ -114,7 +115,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs_res(N, Some(42))
+        Some(mut c) => inputs_res(N, Some(42))
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
@@ -123,7 +124,8 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
             })
             .into_fallible()
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, Some(42))
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))

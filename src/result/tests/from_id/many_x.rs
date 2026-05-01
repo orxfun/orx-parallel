@@ -98,7 +98,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs_res(N, None)
+        Some(mut c) => inputs_res(N, None)
             .into_par()
             .into_fallible()
             .flat_map(|x| {
@@ -107,7 +107,8 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
             })
             .flat_map(|x| [format!("{x}!"), x])
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, None)
             .into_par()
             .into_fallible()
@@ -130,7 +131,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
     order: IterationOrder,
 ) {
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs_res(N, Some(42))
+        Some(mut c) => inputs_res(N, Some(42))
             .into_par()
             .into_fallible()
             .flat_map(|x| {
@@ -139,7 +140,8 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
             })
             .flat_map(|x| [format!("{x}!"), x])
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, Some(42))
             .into_par()
             .into_fallible()

@@ -124,31 +124,32 @@ fn res_use_collect_into() {
     for n in N {
         let input = inputs(n);
 
-        let result = vec!["x".to_string()];
-        let result: Result<Vec<String>, char> = input
+        let mut result = vec!["x".to_string()];
+        let ok: Result<(), char> = input
             .clone()
             .into_par()
             .map(Ok::<_, char>)
             .into_fallible()
             .using_clone(())
             .filter(|_, x| x.len() < 2)
-            .collect_into(result);
+            .collect_into(&mut result);
 
         let mut expected = vec!["x".to_string()];
         expected.extend(input.into_iter().filter(|x| x.len() < 2));
 
-        assert_eq!(result, Ok(expected));
+        assert_eq!(ok, Ok(()));
+        assert_eq!(result, expected);
 
         let input = inputs(core::cmp::max(100, n));
-        let result = vec!["x".to_string()];
-        let result: Result<Vec<String>, char> = input
+        let mut result = vec!["x".to_string()];
+        let err: Result<(), char> = input
             .into_par()
             .map(ok_or_err_at_fifty)
             .into_fallible()
             .using_clone(())
             .filter(|_, x| x.len() < 2)
-            .collect_into(result);
-        assert_eq!(result, Err('x'));
+            .collect_into(&mut result);
+        assert_eq!(err, Err('x'));
     }
 }
 
