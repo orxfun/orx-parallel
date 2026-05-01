@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use std::string::{String, ToString};
 
-const N: [usize; 2] = [2, 157];
+const N: [usize; 2] = [0, 157];
 
 #[test]
 fn inf_first() {
