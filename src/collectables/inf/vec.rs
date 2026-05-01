@@ -37,32 +37,4 @@ impl<T> ColIntoInf<T> for Vec<T> {
         let results = exe.collect_arb(params, iter, x);
         merge_arb_into_vec_new(results, dst);
     }
-
-    fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send,
-    {
-        let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect(params, iter, x);
-        merge_ord_into_vec(results, dst)
-    }
-
-    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send,
-    {
-        let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb(params, iter, x);
-
-        match dst {
-            Some(dst) => merge_arb_into_vec(results, dst),
-            None => merge_arb_into_first_vec(results),
-        }
-    }
 }
