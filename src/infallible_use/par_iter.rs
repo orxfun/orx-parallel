@@ -7,7 +7,7 @@ use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, M
 use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::{ChunkSize, NumThreads, ParCollectInto};
+use crate::{ChunkSize, InfalliblePar, NumThreads, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseIter<U, I, X, R = DefaultRunner>
@@ -247,5 +247,23 @@ where
             IterationOrder::Arbitrary => C::inf_use_arb_col_into(&mut dst, self),
         }
         dst
+    }
+}
+
+impl<U, I, X, R> InfalliblePar for ParUseIter<U, I, X, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
+    type InfItem = <Self as ParUseCore>::Item;
+
+    fn inf_collect_into<C>(self, dst: &mut C)
+    where
+        C: ParCollectInto<Self::InfItem>,
+        Self::InfItem: Send,
+    {
+        self.collect_into(dst);
     }
 }
