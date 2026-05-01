@@ -51,7 +51,7 @@ test-case = "3.3.1"
 [[bench]]
 name = "first"
 harness = false
-path = "benches/collect/mfmf2.rs"
+path = "benches/collect/f2.rs"
 
 [package.metadata.docs.rs]
 all-features = true
