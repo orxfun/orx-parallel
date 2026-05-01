@@ -3,7 +3,7 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::opt::ColIntoOpt;
 use crate::infallible::Xap;
-use crate::option::{ParOptionIter, ParOptionCore, ParRunnerOpt};
+use crate::option::{ParOptionCore, ParOptionIter, ParRunnerOpt};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Linear, SplitVec};

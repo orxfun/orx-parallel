@@ -3,7 +3,7 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
-use crate::result::{ParResultIter, ParResultCore, ParRunnerRes};
+use crate::result::{ParResultCore, ParResultIter, ParRunnerRes};
 use crate::sizes::SizePair;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
