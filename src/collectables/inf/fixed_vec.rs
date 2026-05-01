@@ -13,9 +13,8 @@ impl<T> ColIntoInf<T> for FixedVec<T> {
         R: ParRunner,
         T: Send,
     {
-        // let dst = dst.map(|x| x.into_inner());
-        // <Vec<T> as ColIntoInf<T>>::inf_col_into(dst, par).into();
-        todo!()
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoInf<T>>::inf_col_into_new(dst, par);
     }
 
     fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self

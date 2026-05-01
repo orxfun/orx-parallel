@@ -1,5 +1,5 @@
 use crate::collectables::alg::merge_collected::{
-    merge_arb_into_split_vec, merge_ord_into_split_vec,
+    merge_arb_into_split_vec, merge_ord_into_split_vec, merge_ord_into_split_vec_new,
 };
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
@@ -16,7 +16,9 @@ impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
         R: ParRunner,
         T: Send,
     {
-        todo!()
+        let (iter, x, mut exe, params) = par.destruct();
+        let results = exe.collect(params, iter, x);
+        merge_ord_into_split_vec_new(results, dst);
     }
 
     fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
