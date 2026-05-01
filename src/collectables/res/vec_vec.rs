@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoRes<T> for Vec<Vec<T>> {
-    fn res_col_into_new<I, M, E, X1, X2, S, R>(
+    fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
@@ -31,7 +31,7 @@ impl<T> ColIntoRes<T> for Vec<Vec<T>> {
         })
     }
 
-    fn res_arb_col_into_new<I, M, E, X1, X2, S, R>(
+    fn res_arb_col_into<I, M, E, X1, X2, S, R>(
         dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>

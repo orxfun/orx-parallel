@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoInfUse<T> for Vec<Vec<T>> {
-    fn inf_use_col_into_new<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
+    fn inf_use_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
         U: Use,
         I: ConcurrentIter,
@@ -22,7 +22,7 @@ impl<T> ColIntoInfUse<T> for Vec<Vec<T>> {
         dst.push(ordered);
     }
 
-    fn inf_use_arb_col_into_new<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
+    fn inf_use_arb_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
         U: Use,
         I: ConcurrentIter,

@@ -335,8 +335,8 @@ where
         X2::O: Send,
     {
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::opt_use_col_into_new(dst, self),
-            IterationOrder::Arbitrary => C::opt_use_arb_col_into_new(dst, self),
+            IterationOrder::Ordered => C::opt_use_col_into(dst, self),
+            IterationOrder::Arbitrary => C::opt_use_arb_col_into(dst, self),
         }
     }
 
@@ -347,8 +347,8 @@ where
     {
         let mut dst = C::new_empty();
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::opt_use_col_into_new(&mut dst, self),
-            IterationOrder::Arbitrary => C::opt_use_arb_col_into_new(&mut dst, self),
+            IterationOrder::Ordered => C::opt_use_col_into(&mut dst, self),
+            IterationOrder::Arbitrary => C::opt_use_arb_col_into(&mut dst, self),
         }
         .map(|_| dst)
     }

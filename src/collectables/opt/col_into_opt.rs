@@ -4,7 +4,7 @@ use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoOpt<T>: Sized {
-    fn opt_col_into_new<I, M, X1, X2, S, R>(
+    fn opt_col_into<I, M, X1, X2, S, R>(
         dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<()>
@@ -16,7 +16,7 @@ pub trait ColIntoOpt<T>: Sized {
         R: ParRunnerOpt,
         T: Send;
 
-    fn opt_arb_col_into_new<I, M, X1, X2, S, R>(
+    fn opt_arb_col_into<I, M, X1, X2, S, R>(
         dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
     ) -> Option<()>

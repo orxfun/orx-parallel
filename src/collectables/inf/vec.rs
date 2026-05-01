@@ -14,7 +14,7 @@ impl<T> ColIntoInf<T> for Vec<T> {
         Self::new()
     }
 
-    fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    fn inf_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -26,7 +26,7 @@ impl<T> ColIntoInf<T> for Vec<T> {
         merge_ord_into_vec_new(results, dst);
     }
 
-    fn inf_arb_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,

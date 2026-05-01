@@ -10,7 +10,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Doubling, SplitVec};
 
 impl<T> ColIntoResUse<T> for SplitVec<T, Doubling> {
-    fn res_use_col_into_new<U, I, M, E, X1, X2, S, R>(
+    fn res_use_col_into<U, I, M, E, X1, X2, S, R>(
         dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
@@ -30,7 +30,7 @@ impl<T> ColIntoResUse<T> for SplitVec<T, Doubling> {
         results.map(|results| merge_ord_into_split_vec_new(results, dst))
     }
 
-    fn res_use_arb_col_into_new<U, I, M, E, X1, X2, S, R>(
+    fn res_use_arb_col_into<U, I, M, E, X1, X2, S, R>(
         dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
