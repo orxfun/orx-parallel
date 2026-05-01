@@ -17,7 +17,7 @@ use crate::{
 };
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParUse: Sized + ParUseCore + ParInfCommon<InfItem = Self::Item> {
+pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     // configuration
 
     fn runner<Q: ParRunner>(

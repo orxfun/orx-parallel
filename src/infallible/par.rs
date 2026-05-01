@@ -14,7 +14,7 @@ use crate::{
 };
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 
-pub trait Par: Sized + ParCore + ParInfCommon<InfItem = Self::Item> {
+pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     // configuration
 
     fn runner<Q: ParRunner>(
