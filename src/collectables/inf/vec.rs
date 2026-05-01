@@ -10,6 +10,10 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoInf<T> for Vec<T> {
+    fn new_empty() -> Self {
+        Self::new()
+    }
+
     fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,

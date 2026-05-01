@@ -9,6 +9,10 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
+    fn new_empty() -> Self {
+        Self::with_recursive_growth()
+    }
+
     fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,

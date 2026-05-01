@@ -10,6 +10,10 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Doubling, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Doubling> {
+    fn new_empty() -> Self {
+        Self::with_doubling_growth()
+    }
+
     fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
