@@ -1,5 +1,5 @@
 use crate::collectables::alg::merge_collected::{
-    merge_arb_into_split_vec_new, merge_ord_into_split_vec_new,
+    merge_arb_into_split_vec, merge_ord_into_split_vec,
 };
 use crate::collectables::opt::ColIntoOpt;
 use crate::infallible::Xap;
@@ -24,7 +24,7 @@ impl<T> ColIntoOpt<T> for SplitVec<T, Doubling> {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect(s, params, iter, x1, x2);
 
-        results.map(|results| merge_ord_into_split_vec_new(results, dst))
+        results.map(|results| merge_ord_into_split_vec(results, dst))
     }
 
     fn opt_arb_col_into<I, M, X1, X2, S, R>(
@@ -41,6 +41,6 @@ impl<T> ColIntoOpt<T> for SplitVec<T, Doubling> {
     {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, iter, x1, x2);
-        results.map(|results| merge_arb_into_split_vec_new(results, dst))
+        results.map(|results| merge_arb_into_split_vec(results, dst))
     }
 }

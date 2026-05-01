@@ -1,6 +1,4 @@
-use crate::collectables::alg::merge_collected::{
-    merge_arb_into_vec_new, merge_ord_into_vec_new,
-};
+use crate::collectables::alg::merge_collected::{merge_arb_into_vec, merge_ord_into_vec};
 use crate::collectables::opt_use::ColIntoOptUse;
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore, ParUseOptionIter};
@@ -25,7 +23,7 @@ impl<T> ColIntoOptUse<T> for Vec<T> {
         let (u, iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect(s, params, u, iter, x1, x2);
 
-        results.map(|results| merge_ord_into_vec_new(results, dst))
+        results.map(|results| merge_ord_into_vec(results, dst))
     }
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(
@@ -44,6 +42,6 @@ impl<T> ColIntoOptUse<T> for Vec<T> {
         let (u, iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, u, iter, x1, x2);
 
-        results.map(|results| merge_arb_into_vec_new(results, dst))
+        results.map(|results| merge_arb_into_vec(results, dst))
     }
 }
