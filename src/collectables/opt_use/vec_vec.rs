@@ -1,4 +1,4 @@
-use crate::collectables::alg::merge_collected::{merge_ord_into_vec_new};
+use crate::collectables::alg::merge_collected::merge_ord_into_vec;
 use crate::collectables::opt_use::ColIntoOptUse;
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore, ParUseOptionIter};
@@ -25,7 +25,7 @@ impl<T> ColIntoOptUse<T> for Vec<Vec<T>> {
 
         results.map(|results| {
             let mut ordered = Vec::new();
-            merge_ord_into_vec_new(results, &mut ordered);
+            merge_ord_into_vec(results, &mut ordered);
             dst.push(ordered);
         })
     }
