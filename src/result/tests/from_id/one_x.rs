@@ -87,7 +87,7 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     );
 
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) => inputs_res(N, None)
+        Some(mut c) => inputs_res(N, None)
             .into_par()
             .into_fallible()
             .flat_map(|x| {
@@ -95,7 +95,8 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 (0..5).map(move |i| a + i)
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, None)
             .into_par()
             .into_fallible()
@@ -113,7 +114,7 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) => inputs_res(N, Some(42))
+        Some(mut c) => inputs_res(N, Some(42))
             .into_par()
             .into_fallible()
             .flat_map(|x| {
@@ -121,7 +122,8 @@ fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                 (0..5).map(move |i| a + i)
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs_res(N, Some(42))
             .into_par()
             .into_fallible()

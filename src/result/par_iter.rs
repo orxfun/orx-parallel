@@ -303,15 +303,15 @@ where
         exe.reduce(s, params, iter, x1, x2, f)
     }
 
-    fn collect_into<C>(self, dst: C) -> Result<C, E>
+    fn collect_into<C>(self, dst: &mut C) -> Result<(), E>
     where
         C: ParCollectInto<X2::O>,
         X2::O: Send,
         E: Send,
     {
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::res_col_into(Some(dst), self),
-            IterationOrder::Arbitrary => C::res_arb_col_into(Some(dst), self),
+            IterationOrder::Ordered => C::res_col_into_new(dst, self),
+            IterationOrder::Arbitrary => C::res_arb_col_into_new(dst, self),
         }
     }
 
@@ -321,9 +321,11 @@ where
         X2::O: Send,
         E: Send,
     {
+        let mut dst = C::new_empty();
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::res_col_into(None, self),
-            IterationOrder::Arbitrary => C::res_arb_col_into(None, self),
+            IterationOrder::Ordered => C::res_col_into_new(&mut dst, self),
+            IterationOrder::Arbitrary => C::res_arb_col_into_new(&mut dst, self),
         }
+        .map(|_| dst)
     }
 }
