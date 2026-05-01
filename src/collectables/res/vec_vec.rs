@@ -1,4 +1,4 @@
-use crate::collectables::alg::merge_collected::{merge_ord_into_vec};
+use crate::collectables::alg::merge_collected::merge_ord_into_vec;
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
 use crate::result::{ParResultCore, ParResultIter, ParRunnerRes};
