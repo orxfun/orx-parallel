@@ -1,3 +1,3 @@
 mod inf;
 
-pub use inf::InfalliblePar;
+pub use inf::ParInfCommon;

@@ -6,7 +6,7 @@ use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::{InfalliblePar, Par, ParCollectInto};
+use crate::{ParInfCommon, Par, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParIter<I, X, R = DefaultRunner>
@@ -227,7 +227,7 @@ where
     }
 }
 
-impl<I, X, R> InfalliblePar for ParIter<I, X, R>
+impl<I, X, R> ParInfCommon for ParIter<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item>,

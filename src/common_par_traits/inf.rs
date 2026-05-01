@@ -1,6 +1,6 @@
 use crate::ParCollectInto;
 
-pub trait InfalliblePar {
+pub trait ParInfCommon {
     type InfItem;
 
     fn inf_collect_into<C>(self, dst: &mut C)
