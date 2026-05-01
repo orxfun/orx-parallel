@@ -225,7 +225,7 @@ fn run(c: &mut Criterion) {
 
     let variants: Vec<_> = all::<Method>().collect();
 
-    Exp.bench(c, "col_mfmf", &treatments, &variants);
+    Exp.bench(c, "first_mfmf", &treatments, &variants);
 }
 criterion_group!(benches, run);
 criterion_main!(benches);
