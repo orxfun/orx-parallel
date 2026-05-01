@@ -1,3 +1,4 @@
+use crate::common_par_traits::ParResCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
@@ -10,7 +11,9 @@ use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult, Sum};
 use core::cmp::Ordering;
 
-pub trait ParResult: Sized + ParResultCore {
+pub trait ParResult:
+    Sized + ParResultCore + ParResCommon<CommonItem = Self::Item, CommonError = Self::Error>
+{
     // configuration
 
     fn runner<Q: ParRunner>(
