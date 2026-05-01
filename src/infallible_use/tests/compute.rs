@@ -70,13 +70,13 @@ fn inf_use_collect_into() {
     for n in N {
         let input = inputs(n);
 
-        let result = vec!["x".to_string()];
-        let result = input
+        let mut result = vec!["x".to_string()];
+        input
             .clone()
             .into_par()
             .using_clone(())
             .filter(|_, x| x.len() < 2)
-            .collect_into(result);
+            .collect_into(&mut result);
 
         let mut expected = vec!["x".to_string()];
         expected.extend(input.into_iter().filter(|x| x.len() < 2));
