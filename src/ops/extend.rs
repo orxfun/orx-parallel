@@ -1,11 +1,11 @@
 use crate::{ParCollectInto, ParInfCommon};
 
 pub trait ParExtend<T>: ParCollectInto<T> {
-    fn par_extend(&mut self, iter: impl ParInfCommon<InfItem = T>)
+    fn par_extend(&mut self, iter: impl ParInfCommon<CommonItem = T>)
     where
         T: Send,
     {
-        iter.inf_collect_into(self);
+        iter.common_collect_into(self);
     }
 }
 

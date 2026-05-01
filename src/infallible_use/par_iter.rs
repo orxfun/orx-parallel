@@ -7,7 +7,7 @@ use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, M
 use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::{ChunkSize, ParInfCommon, NumThreads, ParCollectInto};
+use crate::{ChunkSize, NumThreads, ParCollectInto, ParInfCommon};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseIter<U, I, X, R = DefaultRunner>
@@ -257,12 +257,12 @@ where
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
 {
-    type InfItem = <Self as ParUseCore>::Item;
+    type CommonItem = <Self as ParUseCore>::Item;
 
-    fn inf_collect_into<C>(self, dst: &mut C)
+    fn common_collect_into<C>(self, dst: &mut C)
     where
-        C: ParCollectInto<Self::InfItem>,
-        Self::InfItem: Send,
+        C: ParCollectInto<Self::CommonItem>,
+        Self::CommonItem: Send,
     {
         self.collect_into(dst);
     }
