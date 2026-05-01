@@ -177,7 +177,7 @@ pub trait Par: Sized + ParCore {
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
-    fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send;
