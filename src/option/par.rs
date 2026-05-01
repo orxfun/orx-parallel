@@ -1,5 +1,3 @@
-use core::cmp::Ordering;
-
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
@@ -9,6 +7,7 @@ use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, Sum};
 use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
+use core::cmp::Ordering;
 
 pub trait ParOption: Sized + ParOptionCore {
     // configuration
