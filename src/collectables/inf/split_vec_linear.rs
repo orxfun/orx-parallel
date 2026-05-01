@@ -21,6 +21,15 @@ impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
         merge_ord_into_split_vec_new(results, dst);
     }
 
+    fn inf_arb_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+    }
+
     fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
     where
         I: ConcurrentIter,
