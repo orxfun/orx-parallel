@@ -18,6 +18,7 @@ extern crate alloc;
 extern crate std;
 
 mod collectables;
+mod common_par_traits;
 mod infallible;
 mod infallible_use;
 mod into_parallel;
@@ -33,6 +34,7 @@ mod runner;
 mod sizes;
 
 pub use collectables::ParCollectInto;
+pub use common_par_traits::InfalliblePar;
 pub use infallible::{EnumeratePar, Par};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
