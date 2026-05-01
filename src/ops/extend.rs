@@ -1,4 +1,5 @@
-use crate::{ParCollectInto, ParInfCommon};
+use crate::ParCollectInto;
+use crate::common_par_traits::ParInfCommon;
 
 pub trait ParExtend<T>: ParCollectInto<T> {
     fn par_extend(&mut self, iter: impl ParInfCommon<CommonItem = T>)

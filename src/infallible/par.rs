@@ -1,5 +1,6 @@
 use core::cmp::Ordering;
 
+use crate::common_par_traits::ParInfCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
@@ -9,8 +10,7 @@ use crate::option::ParOptionIter;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParInfCommon, ParOption, ParResult,
-    ParUse, Sum,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
 };
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 

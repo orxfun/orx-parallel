@@ -1,5 +1,6 @@
 use core::cmp::Ordering;
 
+use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap::FlattenOf;
@@ -12,8 +13,7 @@ use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParInfCommon, ParUseOption,
-    ParUseResult, Sum,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
 };
 use orx_concurrent_iter::ConcurrentIter;
 
