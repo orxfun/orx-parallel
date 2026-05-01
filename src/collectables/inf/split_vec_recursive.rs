@@ -36,32 +36,4 @@ impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
         let results = exe.collect_arb(params, iter, x);
         merge_arb_into_split_vec_new(results, dst);
     }
-
-    fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send,
-    {
-        let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect(params, iter, x);
-        merge_ord_into_split_vec(results, dst)
-    }
-
-    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send,
-    {
-        let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb(params, iter, x);
-        let mut dst = dst.unwrap_or_else(|| Self::with_recursive_growth());
-        for vec in results {
-            dst.append(vec);
-        }
-        dst
-    }
 }

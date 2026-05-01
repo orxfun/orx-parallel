@@ -33,30 +33,4 @@ impl<T> ColIntoInfUse<T> for SplitVec<T, Linear> {
         let results = exe.collect_arb(params, u, iter, x);
         merge_arb_into_split_vec_new(results, dst);
     }
-
-    fn inf_use_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
-    where
-        U: Use,
-        I: ConcurrentIter,
-        X: XapUse<U = U::Item, I = I::Item, O = T>,
-        R: ParRunnerInfallibleUse,
-        T: Send,
-    {
-        let (u, iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect(params, u, iter, x);
-        merge_ord_into_split_vec(results, dst)
-    }
-
-    fn inf_use_arb_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
-    where
-        U: Use,
-        I: ConcurrentIter,
-        X: XapUse<U = U::Item, I = I::Item, O = T>,
-        R: ParRunnerInfallibleUse,
-        T: Send,
-    {
-        let (u, iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb(params, u, iter, x);
-        merge_arb_into_split_vec(results, dst.unwrap_or_else(|| Self::with_linear_growth(10)))
-    }
 }
