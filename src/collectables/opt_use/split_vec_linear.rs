@@ -10,9 +10,9 @@ use orx_split_vec::{Linear, SplitVec};
 
 impl<T> ColIntoOptUse<T> for SplitVec<T, Linear> {
     fn opt_use_col_into<U, I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -29,9 +29,9 @@ impl<T> ColIntoOptUse<T> for SplitVec<T, Linear> {
     }
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -43,8 +43,6 @@ impl<T> ColIntoOptUse<T> for SplitVec<T, Linear> {
     {
         let (u, iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, u, iter, x1, x2);
-        results.map(|results| {
-            merge_arb_into_split_vec(results, dst.unwrap_or_else(|| Self::with_linear_growth(10)))
-        })
+        results.map(|results| merge_arb_into_split_vec(results, dst))
     }
 }

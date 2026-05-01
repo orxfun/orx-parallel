@@ -5,9 +5,9 @@ use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoRes<T>: Sized {
     fn res_col_into<I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
@@ -18,9 +18,9 @@ pub trait ColIntoRes<T>: Sized {
         E: Send;
 
     fn res_arb_col_into<I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,

@@ -3,13 +3,17 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
-use crate::infallible::{ParIter, ParCore, Xap};
+use crate::infallible::{ParCore, ParIter, Xap};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Linear, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
-    fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn new_empty() -> Self {
+        Self::with_linear_growth(10)
+    }
+
+    fn inf_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -18,10 +22,10 @@ impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect(params, iter, x);
-        merge_ord_into_split_vec(results, dst)
+        merge_ord_into_split_vec(results, dst);
     }
 
-    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -30,6 +34,6 @@ impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect_arb(params, iter, x);
-        merge_arb_into_split_vec(results, dst.unwrap_or_else(|| Self::with_linear_growth(10)))
+        merge_arb_into_split_vec(results, dst);
     }
 }

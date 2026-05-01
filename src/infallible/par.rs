@@ -1,5 +1,6 @@
 use core::cmp::Ordering;
 
+use crate::common_par_traits::ParInfCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
@@ -13,7 +14,7 @@ use crate::{
 };
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 
-pub trait Par: Sized + ParCore {
+pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     // configuration
 
     fn runner<Q: ParRunner>(
@@ -177,7 +178,7 @@ pub trait Par: Sized + ParCore {
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
-    fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send;

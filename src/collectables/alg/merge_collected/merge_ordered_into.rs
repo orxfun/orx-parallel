@@ -22,9 +22,8 @@ impl VecPos {
 // vec
 
 // TODO: performance: this method can be parallelized by pairwise merging
-pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>>) -> Vec<T> {
+pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: &mut Vec<T>) {
     let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
-    let mut dst = dst.unwrap_or_else(|| Vec::with_capacity(collected_len));
     dst.reserve(collected_len);
     let initial_len = dst.len();
     let total_len = initial_len + collected_len;
@@ -63,8 +62,6 @@ pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>
     }
 
     unsafe { dst.set_len(total_len) };
-
-    dst
 }
 
 // splitvec
@@ -72,10 +69,8 @@ pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: Option<Vec<T>
 // TODO: performance: this method can be parallelized by pairwise merging
 pub fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
     mut results: Vec<ValsAndIdx<T>>,
-    dst: Option<SplitVec<T, G>>,
-) -> SplitVec<T, G> {
-    let mut dst = dst.unwrap_or_else(|| PseudoDefault::pseudo_default());
-
+    dst: &mut SplitVec<T, G>,
+) {
     let mut queue = BinaryHeap::with_capacity(results.len());
     let mut pos_indices = vec![0; results.len()];
 
@@ -105,6 +100,4 @@ pub fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
         // allocation within vec.capacity() will still be reclaimed; however, as uninitialized memory
         unsafe { vec.values.set_len(0) };
     }
-
-    dst
 }

@@ -3,16 +3,16 @@ use crate::collectables::alg::merge_collected::{
 };
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
-use crate::result::{ParResultIter, ParResultCore, ParRunnerRes};
+use crate::result::{ParResultCore, ParResultIter, ParRunnerRes};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Linear, SplitVec};
 
 impl<T> ColIntoRes<T> for SplitVec<T, Linear> {
     fn res_col_into<I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
@@ -29,9 +29,9 @@ impl<T> ColIntoRes<T> for SplitVec<T, Linear> {
     }
 
     fn res_arb_col_into<I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
@@ -43,8 +43,6 @@ impl<T> ColIntoRes<T> for SplitVec<T, Linear> {
     {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, iter, x1, x2);
-        results.map(|results| {
-            merge_arb_into_split_vec(results, dst.unwrap_or_else(|| Self::with_linear_growth(10)))
-        })
+        results.map(|results| merge_arb_into_split_vec(results, dst))
     }
 }

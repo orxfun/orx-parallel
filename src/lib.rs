@@ -18,6 +18,7 @@ extern crate alloc;
 extern crate std;
 
 mod collectables;
+mod common_par_traits;
 mod infallible;
 mod infallible_use;
 mod into_parallel;
@@ -33,12 +34,13 @@ mod runner;
 mod sizes;
 
 pub use collectables::ParCollectInto;
+// pub use common_par_traits::ParInfCommon;
 pub use infallible::{EnumeratePar, Par};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
-pub use ops::Sum;
+pub use ops::{ParExtend, Sum};
 pub use option::ParOption;
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};

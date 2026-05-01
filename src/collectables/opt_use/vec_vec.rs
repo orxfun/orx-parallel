@@ -3,15 +3,14 @@ use crate::collectables::opt_use::ColIntoOptUse;
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore, ParUseOptionIter};
 use crate::sizes::SizePair;
-use alloc::vec;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoOptUse<T> for Vec<Vec<T>> {
     fn opt_use_col_into<U, I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -25,21 +24,16 @@ impl<T> ColIntoOptUse<T> for Vec<Vec<T>> {
         let results = exe.collect(s, params, u, iter, x1, x2);
 
         results.map(|results| {
-            let ordered = merge_ord_into_vec(results, None);
-            match dst {
-                Some(mut lst) => {
-                    lst.push(ordered);
-                    lst
-                }
-                None => vec![ordered],
-            }
+            let mut ordered = Vec::new();
+            merge_ord_into_vec(results, &mut ordered);
+            dst.push(ordered);
         })
     }
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -52,12 +46,6 @@ impl<T> ColIntoOptUse<T> for Vec<Vec<T>> {
         let (u, iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, u, iter, x1, x2);
 
-        results.map(|results| match dst {
-            Some(mut lst) => {
-                lst.extend(results);
-                lst
-            }
-            None => results,
-        })
+        results.map(|results| dst.extend(results))
     }
 }

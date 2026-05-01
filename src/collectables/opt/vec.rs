@@ -1,6 +1,4 @@
-use crate::collectables::alg::merge_collected::{
-    merge_arb_into_first_vec, merge_arb_into_vec, merge_ord_into_vec,
-};
+use crate::collectables::alg::merge_collected::{merge_arb_into_vec, merge_ord_into_vec};
 use crate::collectables::opt::ColIntoOpt;
 use crate::infallible::Xap;
 use crate::option::{ParOptionCore, ParOptionIter, ParRunnerOpt};
@@ -10,9 +8,9 @@ use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoOpt<T> for Vec<T> {
     fn opt_col_into<I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
@@ -28,9 +26,9 @@ impl<T> ColIntoOpt<T> for Vec<T> {
     }
 
     fn opt_arb_col_into<I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
@@ -42,9 +40,6 @@ impl<T> ColIntoOpt<T> for Vec<T> {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, iter, x1, x2);
 
-        results.map(|results| match dst {
-            Some(dst) => merge_arb_into_vec(results, dst),
-            None => merge_arb_into_first_vec(results),
-        })
+        results.map(|results| merge_arb_into_vec(results, dst))
     }
 }

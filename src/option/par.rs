@@ -1,3 +1,4 @@
+use crate::common_par_traits::ParOptCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
@@ -9,7 +10,7 @@ use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption,
 use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
 use core::cmp::Ordering;
 
-pub trait ParOption: Sized + ParOptionCore {
+pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Item> {
     // configuration
 
     fn runner<Q: ParRunner>(
@@ -221,7 +222,7 @@ pub trait ParOption: Sized + ParOptionCore {
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
-    fn collect_into<C>(self, dst: C) -> Option<C>
+    fn collect_into<C>(self, dst: &mut C) -> Option<()>
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send;

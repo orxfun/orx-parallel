@@ -137,7 +137,7 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
     );
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
             .map::<Result<_, Vec<char>>, _>(|u, x| {
@@ -155,7 +155,8 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
                 x.len() < 4
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
@@ -187,7 +188,7 @@ fn many_f_collect_err<C: ParCollectIntoTest<String>>(
     order: IterationOrder,
 ) {
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))
             .map(|u, x| {
@@ -208,7 +209,8 @@ fn many_f_collect_err<C: ParCollectIntoTest<String>>(
                 x.len() < 4
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))

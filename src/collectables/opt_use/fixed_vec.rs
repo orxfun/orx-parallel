@@ -8,9 +8,9 @@ use orx_fixed_vec::FixedVec;
 
 impl<T> ColIntoOptUse<T> for FixedVec<T> {
     fn opt_use_col_into<U, I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -20,14 +20,14 @@ impl<T> ColIntoOptUse<T> for FixedVec<T> {
         R: ParRunnerUseOpt,
         T: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoOptUse<T>>::opt_use_col_into(dst, par).map(|v| v.into())
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoOptUse<T>>::opt_use_col_into(dst, par)
     }
 
     fn opt_use_arb_col_into<U, I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -37,7 +37,7 @@ impl<T> ColIntoOptUse<T> for FixedVec<T> {
         R: ParRunnerUseOpt,
         T: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoOptUse<T>>::opt_use_arb_col_into(dst, par).map(|v| v.into())
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoOptUse<T>>::opt_use_arb_col_into(dst, par)
     }
 }

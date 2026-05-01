@@ -8,9 +8,9 @@ use orx_fixed_vec::FixedVec;
 
 impl<T> ColIntoResUse<T> for FixedVec<T> {
     fn res_use_col_into<U, I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         U: Use,
         I: ConcurrentIter,
@@ -21,14 +21,14 @@ impl<T> ColIntoResUse<T> for FixedVec<T> {
         T: Send,
         E: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoResUse<T>>::res_use_col_into(dst, par).map(|v| v.into())
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoResUse<T>>::res_use_col_into(dst, par)
     }
 
     fn res_use_arb_col_into<U, I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         U: Use,
         I: ConcurrentIter,
@@ -39,7 +39,7 @@ impl<T> ColIntoResUse<T> for FixedVec<T> {
         T: Send,
         E: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoResUse<T>>::res_use_arb_col_into(dst, par).map(|v| v.into())
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoResUse<T>>::res_use_arb_col_into(dst, par)
     }
 }

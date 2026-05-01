@@ -1,5 +1,6 @@
 use core::cmp::Ordering;
 
+use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap::FlattenOf;
@@ -9,14 +10,14 @@ use crate::infallible_use::{
 };
 use crate::option_use::ParUseOptionIter;
 use crate::result_use::ParUseResultIter;
+use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
 };
-use crate::{infallible_use::Use, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParUse: Sized + ParUseCore {
+pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     // configuration
 
     fn runner<Q: ParRunner>(
@@ -174,7 +175,7 @@ pub trait ParUse: Sized + ParUseCore {
         F: Fn(&mut Self::Use, Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
-    fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send;

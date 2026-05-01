@@ -5,7 +5,7 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
 impl<T> ColIntoInfUse<T> for FixedVec<T> {
-    fn inf_use_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
+    fn inf_use_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
         U: Use,
         I: ConcurrentIter,
@@ -13,11 +13,11 @@ impl<T> ColIntoInfUse<T> for FixedVec<T> {
         R: ParRunnerInfallibleUse,
         T: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoInfUse<T>>::inf_use_col_into(dst, par).into()
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoInfUse<T>>::inf_use_col_into(dst, par);
     }
 
-    fn inf_use_arb_col_into<U, I, X, R>(dst: Option<Self>, par: ParUseIter<U, I, X, R>) -> Self
+    fn inf_use_arb_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
         U: Use,
         I: ConcurrentIter,
@@ -25,7 +25,7 @@ impl<T> ColIntoInfUse<T> for FixedVec<T> {
         R: ParRunnerInfallibleUse,
         T: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoInfUse<T>>::inf_use_arb_col_into(dst, par).into()
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoInfUse<T>>::inf_use_arb_col_into(dst, par);
     }
 }

@@ -1,5 +1,6 @@
 #![allow(refining_impl_trait)]
 
+use crate::common_par_traits::ParInfCommon;
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
@@ -225,14 +226,14 @@ where
         exe.reduce(params, u, iter, x, f)
     }
 
-    fn collect_into<C>(self, dst: C) -> C
+    fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<X::O>,
         X::O: Send,
     {
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_use_col_into(Some(dst), self),
-            IterationOrder::Arbitrary => C::inf_use_arb_col_into(Some(dst), self),
+            IterationOrder::Ordered => C::inf_use_col_into(dst, self),
+            IterationOrder::Arbitrary => C::inf_use_arb_col_into(dst, self),
         }
     }
 
@@ -241,9 +242,29 @@ where
         C: ParCollectInto<X::O>,
         X::O: Send,
     {
+        let mut dst = C::new_empty();
         match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_use_col_into(None, self),
-            IterationOrder::Arbitrary => C::inf_use_arb_col_into(None, self),
+            IterationOrder::Ordered => C::inf_use_col_into(&mut dst, self),
+            IterationOrder::Arbitrary => C::inf_use_arb_col_into(&mut dst, self),
         }
+        dst
+    }
+}
+
+impl<U, I, X, R> ParInfCommon for ParUseIter<U, I, X, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
+    type CommonItem = <Self as ParUseCore>::Item;
+
+    fn common_collect_into<C>(self, dst: &mut C)
+    where
+        C: ParCollectInto<Self::CommonItem>,
+        Self::CommonItem: Send,
+    {
+        self.collect_into(dst);
     }
 }

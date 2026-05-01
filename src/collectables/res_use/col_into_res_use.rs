@@ -5,9 +5,9 @@ use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoResUse<T>: Sized {
     fn res_use_col_into<U, I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         U: Use,
         I: ConcurrentIter,
@@ -19,9 +19,9 @@ pub trait ColIntoResUse<T>: Sized {
         E: Send;
 
     fn res_use_arb_col_into<U, I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         U: Use,
         I: ConcurrentIter,

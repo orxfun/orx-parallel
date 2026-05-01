@@ -1,4 +1,6 @@
-use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
+use crate::collectables::alg::merge_collected::{
+    merge_arb_into_split_vec, merge_ord_into_split_vec,
+};
 use crate::collectables::res_use::ColIntoResUse;
 use crate::infallible_use::{Use, XapUse};
 use crate::result_use::{ParRunnerUseRes, ParUseResultCore, ParUseResultIter};
@@ -8,9 +10,9 @@ use orx_split_vec::{Recursive, SplitVec};
 
 impl<T> ColIntoResUse<T> for SplitVec<T, Recursive> {
     fn res_use_col_into<U, I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         U: Use,
         I: ConcurrentIter,
@@ -28,9 +30,9 @@ impl<T> ColIntoResUse<T> for SplitVec<T, Recursive> {
     }
 
     fn res_use_arb_col_into<U, I, M, E, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
-    ) -> Result<Self, E>
+    ) -> Result<(), E>
     where
         U: Use,
         I: ConcurrentIter,
@@ -43,12 +45,6 @@ impl<T> ColIntoResUse<T> for SplitVec<T, Recursive> {
     {
         let (u, iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, u, iter, x1, x2);
-        let mut dst = dst.unwrap_or_else(|| Self::with_recursive_growth());
-        results.map(|results| {
-            for vec in results {
-                dst.append(vec);
-            }
-            dst
-        })
+        results.map(|results| merge_arb_into_split_vec(results, dst))
     }
 }

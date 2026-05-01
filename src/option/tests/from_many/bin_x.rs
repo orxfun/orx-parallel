@@ -99,7 +99,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     );
 
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
             .into_optional()
@@ -109,7 +109,8 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
                 (0..5).map(move |i| a + i)
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
@@ -129,7 +130,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let result = match C::init_result(mode, |i| i as u64) {
-        Some(c) => inputs(N)
+        Some(mut c) => inputs(N)
             .into_par()
             .flat_map(|x| match x.as_str() == "42" {
                 true => [x.clone(), x.clone(), x].map(Some),
@@ -142,7 +143,8 @@ fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
                 (0..5).map(move |i| a + i)
             })
             .iteration_order(order)
-            .collect_into(c),
+            .collect_into(&mut c)
+            .map(|_| c),
         None => inputs(N)
             .into_par()
             .flat_map(|x| match x.as_str() == "42" {

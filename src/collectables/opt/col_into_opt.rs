@@ -5,9 +5,9 @@ use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoOpt<T>: Sized {
     fn opt_col_into<I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
@@ -17,9 +17,9 @@ pub trait ColIntoOpt<T>: Sized {
         T: Send;
 
     fn opt_arb_col_into<I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,

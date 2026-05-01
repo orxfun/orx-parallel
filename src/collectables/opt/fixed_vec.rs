@@ -8,9 +8,9 @@ use orx_fixed_vec::FixedVec;
 
 impl<T> ColIntoOpt<T> for FixedVec<T> {
     fn opt_col_into<I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
@@ -19,14 +19,14 @@ impl<T> ColIntoOpt<T> for FixedVec<T> {
         R: ParRunnerOpt,
         T: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoOpt<T>>::opt_col_into(dst, par).map(|v| v.into())
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoOpt<T>>::opt_col_into(dst, par)
     }
 
     fn opt_arb_col_into<I, M, X1, X2, S, R>(
-        dst: Option<Self>,
+        dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
-    ) -> Option<Self>
+    ) -> Option<()>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
@@ -35,7 +35,7 @@ impl<T> ColIntoOpt<T> for FixedVec<T> {
         R: ParRunnerOpt,
         T: Send,
     {
-        let dst = dst.map(|x| x.into_inner());
-        <Vec<T> as ColIntoOpt<T>>::opt_arb_col_into(dst, par).map(|v| v.into())
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoOpt<T>>::opt_arb_col_into(dst, par)
     }
 }

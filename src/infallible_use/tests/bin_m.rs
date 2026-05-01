@@ -82,19 +82,22 @@ fn bin_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     let expected = C::expected(mode, |i| i.to_string(), iter());
 
     let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(c) => inputs(N)
-            .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
-            .iteration_order(order)
-            .filter(|u, x| {
-                u.mutate();
-                x.len() < 4
-            })
-            .map(|u, x| {
-                u.mutate();
-                format!("{}0", x)
-            })
-            .collect_into(c),
+        Some(mut c) => {
+            inputs(N)
+                .into_par()
+                .using(|th_idx| UseValue::new(th_idx))
+                .iteration_order(order)
+                .filter(|u, x| {
+                    u.mutate();
+                    x.len() < 4
+                })
+                .map(|u, x| {
+                    u.mutate();
+                    format!("{}0", x)
+                })
+                .collect_into(&mut c);
+            c
+        }
         None => inputs(N)
             .into_par()
             .using(|th_idx| UseValue::new(th_idx))

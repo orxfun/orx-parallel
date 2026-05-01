@@ -1,13 +1,19 @@
-use crate::collectables::alg::merge_collected::merge_ord_into_split_vec;
+use crate::collectables::alg::merge_collected::{
+    merge_arb_into_split_vec, merge_ord_into_split_vec,
+};
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
-use crate::infallible::{ParIter, ParCore, Xap};
+use crate::infallible::{ParCore, ParIter, Xap};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
-    fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn new_empty() -> Self {
+        Self::with_recursive_growth()
+    }
+
+    fn inf_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -16,10 +22,10 @@ impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect(params, iter, x);
-        merge_ord_into_split_vec(results, dst)
+        merge_ord_into_split_vec(results, dst);
     }
 
-    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -28,10 +34,6 @@ impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect_arb(params, iter, x);
-        let mut dst = dst.unwrap_or_else(|| Self::with_recursive_growth());
-        for vec in results {
-            dst.append(vec);
-        }
-        dst
+        merge_arb_into_split_vec(results, dst);
     }
 }

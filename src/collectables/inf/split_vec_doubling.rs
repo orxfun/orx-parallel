@@ -9,7 +9,11 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Doubling, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Doubling> {
-    fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn new_empty() -> Self {
+        Self::with_doubling_growth()
+    }
+
+    fn inf_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -18,10 +22,10 @@ impl<T> ColIntoInf<T> for SplitVec<T, Doubling> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect(params, iter, x);
-        merge_ord_into_split_vec(results, dst)
+        merge_ord_into_split_vec(results, dst);
     }
 
-    fn inf_arb_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
+    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
@@ -30,6 +34,6 @@ impl<T> ColIntoInf<T> for SplitVec<T, Doubling> {
     {
         let (iter, x, mut exe, params) = par.destruct();
         let results = exe.collect_arb(params, iter, x);
-        merge_arb_into_split_vec(results, dst.unwrap_or_else(|| Self::with_doubling_growth()))
+        merge_arb_into_split_vec(results, dst);
     }
 }
