@@ -17,6 +17,14 @@ pub fn merge_arb_into_first_vec<T>(results: Vec<Vec<T>>) -> Vec<T> {
     }
 }
 
+pub fn merge_arb_into_vec_new<T>(results: Vec<Vec<T>>, dst: &mut Vec<T>) {
+    let total_len: usize = results.iter().map(|x| x.len()).sum();
+    dst.reserve(total_len);
+    for vec in results {
+        dst.extend(vec);
+    }
+}
+
 pub fn merge_arb_into_vec<T>(results: Vec<Vec<T>>, mut dst: Vec<T>) -> Vec<T> {
     let total_len: usize = results.iter().map(|x| x.len()).sum();
     dst.reserve(total_len);
@@ -24,6 +32,12 @@ pub fn merge_arb_into_vec<T>(results: Vec<Vec<T>>, mut dst: Vec<T>) -> Vec<T> {
         dst.extend(vec);
     }
     dst
+}
+
+pub fn merge_arb_into_split_vec_new<T, G: Growth>(results: Vec<Vec<T>>, dst: &mut SplitVec<T, G>) {
+    for vec in results {
+        dst.extend(vec);
+    }
 }
 
 pub fn merge_arb_into_split_vec<T, G: Growth>(
