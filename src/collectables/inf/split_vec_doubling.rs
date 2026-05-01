@@ -9,6 +9,16 @@ use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Doubling, SplitVec};
 
 impl<T> ColIntoInf<T> for SplitVec<T, Doubling> {
+    fn inf_col_into_new<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+        todo!()
+    }
+
     fn inf_col_into<I, X, R>(dst: Option<Self>, par: ParIter<I, X, R>) -> Self
     where
         I: ConcurrentIter,
