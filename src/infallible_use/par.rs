@@ -12,11 +12,12 @@ use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
+    ChunkSize, InfalliblePar, IterationOrder, NumThreads, ParCollectInto, ParUseOption,
+    ParUseResult, Sum,
 };
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParUse: Sized + ParUseCore {
+pub trait ParUse: Sized + ParUseCore + InfalliblePar<InfItem = Self::Item> {
     // configuration
 
     fn runner<Q: ParRunner>(

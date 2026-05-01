@@ -9,11 +9,11 @@ use crate::option::ParOptionIter;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
+    ChunkSize, InfalliblePar, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum
 };
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 
-pub trait Par: Sized + ParCore {
+pub trait Par: Sized + ParCore + InfalliblePar<InfItem=Self::Item> {
     // configuration
 
     fn runner<Q: ParRunner>(
