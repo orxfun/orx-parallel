@@ -7,7 +7,8 @@ use crate::result::par_core::ParResultCore;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult, Sum};
+use core::cmp::Ordering;
 
 pub trait ParResult: Sized + ParResultCore {
     // configuration
@@ -249,11 +250,131 @@ pub trait ParResult: Sized + ParResultCore {
 
     // compute - derived
 
+    fn all<F>(self, f: F) -> Result<bool, Self::Error>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item) -> bool + Sync,
+        Self::Error: Send,
+    {
+        self.map(|x| f(&x))
+            .find(|x| *x == false)
+            .map(|x| x.map(|_| false).unwrap_or(true))
+    }
+
+    fn any<F>(self, f: F) -> Result<bool, Self::Error>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item) -> bool + Sync,
+        Self::Error: Send,
+    {
+        self.map(|x| f(&x))
+            .find(|x| *x == true)
+            .map(|x| x.is_some())
+    }
+
+    fn count(self) -> Result<usize, Self::Error>
+    where
+        Self::Item: Send,
+        Self::Error: Send,
+    {
+        self.map(|_| 1).reduce(|a, b| a + b).map(|x| x.unwrap_or(0))
+    }
+
+    fn find<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item) -> bool + Sync,
+        Self::Error: Send,
+    {
+        self.filter(&f).first()
+    }
+
     fn for_each<F>(self, f: F) -> Result<(), Self::Error>
     where
         F: Fn(Self::Item) + Send + Copy,
         Self::Error: Send,
     {
         self.map(f).reduce(|_, _| {}).map(|_| ())
+    }
+
+    fn max(self) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Ord + Send,
+        Self::Error: Send,
+    {
+        self.reduce(Ord::max)
+    }
+
+    fn max_by<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        Self::Error: Send,
+    {
+        let reduce = |x, y| match f(&x, &y) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn max_by_key<B, F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Send,
+        B: Ord,
+        F: Fn(&Self::Item) -> B + Sync,
+        Self::Error: Send,
+    {
+        let reduce = |x, y| match f(&x).cmp(&f(&y)) {
+            Ordering::Greater | Ordering::Equal => x,
+            Ordering::Less => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn min(self) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Ord + Send,
+        Self::Error: Send,
+    {
+        self.reduce(Ord::min)
+    }
+
+    fn min_by<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Send,
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        Self::Error: Send,
+    {
+        let reduce = |x, y| match f(&x, &y) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn min_by_key<B, F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    where
+        Self::Item: Send,
+        B: Ord,
+        F: Fn(&Self::Item) -> B + Sync,
+        Self::Error: Send,
+    {
+        let reduce = |x, y| match f(&x).cmp(&f(&y)) {
+            Ordering::Less | Ordering::Equal => x,
+            Ordering::Greater => y,
+        };
+        self.reduce(reduce)
+    }
+
+    fn sum<S>(self) -> Result<S, Self::Error>
+    where
+        Self::Item: Sum<S>,
+        S: Send,
+        Self::Error: Send,
+    {
+        self.map(Self::Item::owned)
+            .reduce(Self::Item::add)
+            .map(|x| x.unwrap_or(Self::Item::zero()))
     }
 }
