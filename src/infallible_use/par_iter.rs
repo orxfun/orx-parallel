@@ -1,5 +1,6 @@
 #![allow(refining_impl_trait)]
 
+use crate::common_par_traits::ParInfCommon;
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::use_var::Use;
@@ -7,7 +8,7 @@ use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, M
 use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::{ChunkSize, NumThreads, ParCollectInto, ParInfCommon};
+use crate::{ChunkSize, NumThreads, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseIter<U, I, X, R = DefaultRunner>
