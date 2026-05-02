@@ -121,7 +121,7 @@ impl Experiment for Exp {
 
     type AlgFactors = Method;
 
-    type Input = (bool, Vec<u64>); // (heavy, input)
+    type Input = Vec<u64>;
 
     type Output = (bool, Output); // (ordered, output)
 
@@ -129,14 +129,16 @@ impl Experiment for Exp {
         const SEED: u64 = 654;
         let len = input_variant.len();
         let mut rng = ChaCha8Rng::seed_from_u64(SEED);
-        (
-            input_variant.heavy,
-            (0..len).map(|_| rng.random_range(0..150)).collect(),
-        )
+        (0..len).map(|_| rng.random_range(0..150)).collect()
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
-        let (h, input) = input;
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        let h = input_variant.heavy;
 
         match alg_variant {
             Method::SeqVec => (
@@ -250,11 +252,11 @@ impl Experiment for Exp {
 
     fn validate_output(
         &self,
-        _: &Self::InputFactors,
-        (h, input): &Self::Input,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
         (ordered, output): &Self::Output,
     ) {
-        let mut expected: Vec<_> = match h {
+        let mut expected: Vec<_> = match input_variant.heavy {
             true => input.iter().map(m).filter(f).map(h_m2).filter(f2).collect(),
             false => input.iter().map(m).filter(f).map(l_m2).filter(f2).collect(),
         };

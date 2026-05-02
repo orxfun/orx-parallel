@@ -82,7 +82,12 @@ impl Experiment for Exp {
         (0..len).map(|_| rng.random_range(0..150)).collect()
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
+    fn execute(
+        &mut self,
+        _: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
         match alg_variant {
             Method::SeqVec => (true, Output::Vec(input.iter().copied().collect())),
             Method::RayonVec => (true, Output::Vec(input.into_par_iter().copied().collect())),
