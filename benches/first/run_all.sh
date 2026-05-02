@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CARGO_TOML="$(cd "$SCRIPT_DIR/../.." && pwd)/Cargo.toml"
-RESULTS_FILE="$SCRIPT_DIR/run_results.txt"
+RESULTS_FILE="$SCRIPT_DIR/run_results.md"
 
 : > "$RESULTS_FILE"
 

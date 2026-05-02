@@ -224,9 +224,6 @@ fn run(c: &mut Criterion) {
 
     let variants: Vec<_> = all::<Method>().collect();
 
-    let treatments = vec![treatments.into_iter().next().unwrap()];
-    let variants = vec![variants.into_iter().next().unwrap()];
-
     Exp.bench(c, "first_ff", &treatments, &variants);
 }
 criterion_group!(benches, run);
