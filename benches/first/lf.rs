@@ -131,13 +131,31 @@ impl Experiment for Exp {
             Method::Rayon => {
                 let iter = input.1.as_slice().into_par_iter();
                 match input.0.heavy {
-                    false => iter.flat_map_iter(l_l).filter(|x| *x == 999).find_first(|_| true),
-                    true => iter.flat_map_iter(h_l).filter(|x| *x == 999).find_first(|_| true),
+                    false => iter
+                        .flat_map_iter(l_l)
+                        .filter(|x| *x == 999)
+                        .find_first(|_| true),
+                    true => iter
+                        .flat_map_iter(h_l)
+                        .filter(|x| *x == 999)
+                        .find_first(|_| true),
                 }
             }
             Method::Orx => match input.0.heavy {
-                false => input.1.as_slice().into_par().flat_map(l_l).filter(|x| *x == 999).first(),
-                true => input.1.as_slice().into_par().flat_map(h_l).filter(|x| *x == 999).first(),
+                false => input
+                    .1
+                    .as_slice()
+                    .into_par()
+                    .flat_map(l_l)
+                    .filter(|x| *x == 999)
+                    .first(),
+                true => input
+                    .1
+                    .as_slice()
+                    .into_par()
+                    .flat_map(h_l)
+                    .filter(|x| *x == 999)
+                    .first(),
             },
         }
     }
@@ -191,6 +209,9 @@ fn run(c: &mut Criterion) {
     ];
 
     let variants: Vec<_> = all::<Method>().collect();
+
+    let treatments = vec![treatments.into_iter().next().unwrap()];
+    let variants = vec![variants.into_iter().next().unwrap()];
 
     Exp.bench(c, "first_lf", &treatments, &variants);
 }

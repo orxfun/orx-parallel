@@ -131,12 +131,32 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => self.expected_output(&input.0, input).unwrap(),
             Method::Rayon => match input.0.heavy {
-                false => input.1.as_slice().into_par_iter().filter_map(|x| l_i(x, 999)).find_first(|_| true),
-                true => input.1.as_slice().into_par_iter().filter_map(|x| h_i(x, 999)).find_first(|_| true),
+                false => input
+                    .1
+                    .as_slice()
+                    .into_par_iter()
+                    .filter_map(|x| l_i(x, 999))
+                    .find_first(|_| true),
+                true => input
+                    .1
+                    .as_slice()
+                    .into_par_iter()
+                    .filter_map(|x| h_i(x, 999))
+                    .find_first(|_| true),
             },
             Method::Orx => match input.0.heavy {
-                false => input.1.as_slice().into_par().filter_map(|x| l_i(x, 999)).first(),
-                true => input.1.as_slice().into_par().filter_map(|x| h_i(x, 999)).first(),
+                false => input
+                    .1
+                    .as_slice()
+                    .into_par()
+                    .filter_map(|x| l_i(x, 999))
+                    .first(),
+                true => input
+                    .1
+                    .as_slice()
+                    .into_par()
+                    .filter_map(|x| h_i(x, 999))
+                    .first(),
             },
         }
     }
@@ -190,6 +210,9 @@ fn run(c: &mut Criterion) {
     ];
 
     let variants: Vec<_> = all::<Method>().collect();
+
+    let treatments = vec![treatments.into_iter().next().unwrap()];
+    let variants = vec![variants.into_iter().next().unwrap()];
 
     Exp.bench(c, "first_i", &treatments, &variants);
 }
