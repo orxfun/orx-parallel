@@ -79,7 +79,7 @@ impl Factors for Input {
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug, Sequence, Clone, Copy)]
 enum Method {
     Seq,
     Rayon,
@@ -136,8 +136,20 @@ impl Experiment for Exp {
                 }
             }
             Method::Orx => match input.0.heavy {
-                false => input.1.as_slice().into_par().map(l_m).filter(|x| *x == 999).first(),
-                true => input.1.as_slice().into_par().map(h_m).filter(|x| *x == 999).first(),
+                false => input
+                    .1
+                    .as_slice()
+                    .into_par()
+                    .map(l_m)
+                    .filter(|x| *x == 999)
+                    .first(),
+                true => input
+                    .1
+                    .as_slice()
+                    .into_par()
+                    .map(h_m)
+                    .filter(|x| *x == 999)
+                    .first(),
             },
         }
     }
