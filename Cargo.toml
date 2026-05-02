@@ -59,7 +59,118 @@ experimental = []
 [lib]
 doctest = false
 
+
 [[bench]]
-name = "first"
+name = "first-f"
 harness = false
 path = "benches/first/f.rs"
+
+[[bench]]
+name = "first-ff"
+harness = false
+path = "benches/first/ff.rs"
+
+[[bench]]
+name = "first-fff"
+harness = false
+path = "benches/first/fff.rs"
+
+[[bench]]
+name = "first-i"
+harness = false
+path = "benches/first/i.rs"
+
+[[bench]]
+name = "first-id"
+harness = false
+path = "benches/first/id.rs"
+
+[[bench]]
+name = "first-lf"
+harness = false
+path = "benches/first/lf.rs"
+
+[[bench]]
+name = "first-mf"
+harness = false
+path = "benches/first/mf.rs"
+
+[[bench]]
+name = "first-mfmf"
+harness = false
+path = "benches/first/mfmf.rs"
+
+[[bench]]
+name = "first-mi"
+harness = false
+path = "benches/first/mi.rs"
+
+[[bench]]
+name = "collect-f"
+harness = false
+path = "benches/collect/f.rs"
+
+[[bench]]
+name = "collect-id"
+harness = false
+path = "benches/collect/id.rs"
+
+[[bench]]
+name = "collect-l"
+harness = false
+path = "benches/collect/l.rs"
+
+[[bench]]
+name = "collect-m"
+harness = false
+path = "benches/collect/m.rs"
+
+[[bench]]
+name = "collect-mf"
+harness = false
+path = "benches/collect/mf.rs"
+
+[[bench]]
+name = "collect-mfm"
+harness = false
+path = "benches/collect/mfm.rs"
+
+[[bench]]
+name = "collect-mfmf"
+harness = false
+path = "benches/collect/mfmf.rs"
+
+[[bench]]
+name = "reduce-f"
+harness = false
+path = "benches/reduce/f.rs"
+
+[[bench]]
+name = "reduce-id"
+harness = false
+path = "benches/reduce/id.rs"
+
+[[bench]]
+name = "reduce-l"
+harness = false
+path = "benches/reduce/l.rs"
+
+[[bench]]
+name = "reduce-m"
+harness = false
+path = "benches/reduce/m.rs"
+
+[[bench]]
+name = "reduce-mf"
+harness = false
+path = "benches/reduce/mf.rs"
+
+[[bench]]
+name = "reduce-mfm"
+harness = false
+path = "benches/reduce/mfm.rs"
+
+[[bench]]
+name = "reduce-mfmf"
+harness = false
+path = "benches/reduce/mfmf.rs"
