@@ -66,16 +66,14 @@ impl Experiment for Exp {
         inputs(1 << input_variant.n)
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
         match alg_variant {
-            Method::Seq => self
-                .expected_output(
-                    &Input {
-                        n: input.len().ilog2() as usize,
-                    },
-                    input,
-                )
-                .unwrap(),
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon => input
                 .as_slice()
                 .into_par_iter()
