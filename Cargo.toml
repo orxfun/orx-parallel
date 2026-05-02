@@ -62,6 +62,15 @@ doctest = false
 
 # benchmarks
 
+## benchmarks - heterogeneoity
+
+[[bench]]
+name = "simple"
+harness = false
+path = "benches/heterogeneoity/simple.rs"
+
+## benchmarks - first
+
 [[bench]]
 name = "first-f"
 harness = false
@@ -107,6 +116,8 @@ name = "first-mi"
 harness = false
 path = "benches/first/mi.rs"
 
+## benchmarks - collect
+
 [[bench]]
 name = "collect-f"
 harness = false
@@ -141,6 +152,8 @@ path = "benches/collect/mfm.rs"
 name = "collect-mfmf"
 harness = false
 path = "benches/collect/mfmf.rs"
+
+## benchmarks - reduce
 
 [[bench]]
 name = "reduce-f"
