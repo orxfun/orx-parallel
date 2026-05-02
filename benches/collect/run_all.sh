@@ -48,6 +48,12 @@ update_bench_path() {
     mv "$tmp_toml" "$CARGO_TOML"
 }
 
+if grep -q '^name = "collect"$' "$CARGO_TOML"; then
+    BENCH_TARGET="collect"
+else
+    BENCH_TARGET="first"
+fi
+
 benchmark_files=("$SCRIPT_DIR"/*.rs)
 total_benchmarks=0
 for benchmark_file in "${benchmark_files[@]}"; do
@@ -71,14 +77,14 @@ for benchmark_file in "${benchmark_files[@]}"; do
         continue
     fi
 
-    update_bench_path "first" "benches/first/$benchmark_basename"
+    update_bench_path "$BENCH_TARGET" "benches/collect/$benchmark_basename"
 
     printf '[%d / %d] %s\n' "$benchmark_index" "$total_benchmarks" "$benchmark_name"
 
     tmp_output=$(mktemp)
     tmp_clean=$(mktemp)
     tmp_extract=$(mktemp)
-    (cd "$SCRIPT_DIR/../.." && cargo bench --color=never --bench first >"$tmp_output" 2>&1)
+    (cd "$SCRIPT_DIR/../.." && cargo bench --color=never --bench "$BENCH_TARGET" >"$tmp_output" 2>&1)
 
     # Criterion output may still include ANSI sequences from downstream formatting.
     sed -E 's/\x1B\[[0-9;]*[[:alpha:]]//g' "$tmp_output" > "$tmp_clean"
