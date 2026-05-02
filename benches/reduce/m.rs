@@ -100,17 +100,22 @@ impl Experiment for Exp {
 
     type AlgFactors = Method;
 
-    type Input = (Input, Vec<u64>);
+    type Input = Vec<u64>;
 
     type Output = Option<u64>;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
-        (*input_variant, inputs(1 << input_variant.n))
+        inputs(1 << input_variant.n)
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
-        let h = input.0.heavy;
-        let input = input.1.as_slice();
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        let h = input_variant.heavy;
+        let input = input.as_slice();
         match alg_variant {
             Method::Seq => match h {
                 true => input.iter().map(m).reduce(h_r),
@@ -133,8 +138,8 @@ impl Experiment for Exp {
 
     fn expected_output(
         &self,
-        _: &Self::InputFactors,
-        (input_variant, input): &Self::Input,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
     ) -> Option<Self::Output> {
         Some(match input_variant.heavy {
             true => input.iter().map(m).reduce(h_r),
