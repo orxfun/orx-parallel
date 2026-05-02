@@ -1,5 +1,3 @@
-use std::hint::black_box;
-
 use criterion::{Criterion, criterion_group, criterion_main};
 use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
@@ -7,14 +5,9 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::hint::black_box;
 
 const FIB_UPPER_BOUND: u64 = 301;
-
-fn inputs(len: usize) -> Vec<u64> {
-    const SEED: u64 = 654;
-    let mut rng = ChaCha8Rng::seed_from_u64(SEED);
-    (0..len).map(|_| rng.random_range(0..150)).collect()
-}
 
 fn fibonacci(n: u64) -> u64 {
     let mut a = 0;
@@ -118,17 +111,25 @@ impl Experiment for Exp {
 
     type AlgFactors = Method;
 
-    type Input = (Input, Vec<u64>);
+    type Input = Vec<u64>;
 
     type Output = Option<u64>;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
-        (*input_variant, inputs(1 << input_variant.n))
+        const SEED: u64 = 654;
+        let mut rng = ChaCha8Rng::seed_from_u64(SEED);
+        let len = 1 << input_variant.n;
+        (0..len).map(|_| rng.random_range(0..150)).collect()
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
-        let h = input.0.heavy;
-        let input = input.1.as_slice();
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        let h = input_variant.heavy;
+        let input = input.as_slice();
         match alg_variant {
             Method::Seq => match h {
                 true => input.iter().map(m).filter(f).map(h_m2).reduce(h_r),
@@ -171,8 +172,8 @@ impl Experiment for Exp {
 
     fn expected_output(
         &self,
-        _: &Self::InputFactors,
-        (input_variant, input): &Self::Input,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
     ) -> Option<Self::Output> {
         Some(match input_variant.heavy {
             true => input.iter().map(m).filter(f).map(h_m2).reduce(h_r),
