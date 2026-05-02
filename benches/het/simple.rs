@@ -81,28 +81,33 @@ impl Experiment for Exp {
 
     type AlgFactors = Method;
 
-    type Input = (Input, Vec<u64>);
+    type Input = Vec<u64>;
 
     type Output = Option<u64>;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         let len = 1 << input_variant.n;
-        (*input_variant, (0..len).map(|i| i as u64).collect())
+        (0..len).map(|i| i as u64).collect()
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
-        let h = input.0.heterogeneoity_level;
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        let h = input_variant.heterogeneoity_level;
         match alg_variant {
-            Method::Seq => self.expected_output(&input.0, input).unwrap(),
-            Method::Rayon => input.1.par_iter().map(|x| heterogeneous_map(h, *x)).max(),
-            Method::Orx => input.1.par().map(|x| heterogeneous_map(h, *x)).max(),
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
+            Method::Rayon => input.par_iter().map(|x| heterogeneous_map(h, *x)).max(),
+            Method::Orx => input.par().map(|x| heterogeneous_map(h, *x)).max(),
         }
     }
 
     fn expected_output(
         &self,
-        _: &Self::InputFactors,
-        (input_variant, input): &Self::Input,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
     ) -> Option<Self::Output> {
         let h = input_variant.heterogeneoity_level;
         Some(input.iter().map(|x| heterogeneous_map(h, *x)).max())
@@ -139,7 +144,7 @@ fn run(c: &mut Criterion) {
 
     let variants: Vec<_> = all::<Method>().collect();
 
-    Exp.bench(c, "first_id", &treatments, &variants);
+    Exp.bench(c, "het_simple", &treatments, &variants);
 }
 criterion_group!(benches, run);
 criterion_main!(benches);

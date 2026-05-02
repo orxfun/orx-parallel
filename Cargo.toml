@@ -67,7 +67,7 @@ doctest = false
 [[bench]]
 name = "het-simple"
 harness = false
-path = "benches/heterogeneoity/simple.rs"
+path = "benches/het/simple.rs"
 
 ## benchmarks - first
 
