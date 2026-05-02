@@ -101,7 +101,7 @@ impl Experiment for Exp {
 
     type AlgFactors = Method;
 
-    type Input = (Input, Vec<u64>); // (input_variant, input data)
+    type Input = Vec<u64>;
 
     type Output = Option<u64>;
 
@@ -118,15 +118,20 @@ impl Experiment for Exp {
         let mut vec = Vec::with_capacity(len);
         vec.extend((0..(len - 1)).map(|_| rng.random_range(0..150)));
         vec.insert(pos, 999);
-        (*input_variant, vec)
+        vec
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
         match alg_variant {
-            Method::Seq => self.expected_output(&input.0, input).unwrap(),
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon => {
-                let iter = input.1.as_slice().into_par_iter();
-                match input.0.heavy {
+                let iter = input.as_slice().into_par_iter();
+                match input_variant.heavy {
                     false => iter
                         .map(l_m)
                         .filter(|x| *x == 999)
@@ -141,9 +146,8 @@ impl Experiment for Exp {
                         .find_first(|_| true),
                 }
             }
-            Method::Orx => match input.0.heavy {
+            Method::Orx => match input_variant.heavy {
                 false => input
-                    .1
                     .as_slice()
                     .into_par()
                     .map(l_m)
@@ -152,7 +156,6 @@ impl Experiment for Exp {
                     .filter(|x| x.is_multiple_of(999))
                     .first(),
                 true => input
-                    .1
                     .as_slice()
                     .into_par()
                     .map(h_m)
@@ -166,8 +169,8 @@ impl Experiment for Exp {
 
     fn expected_output(
         &self,
-        _: &Self::InputFactors,
-        (input_variant, input): &Self::Input,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
     ) -> Option<Self::Output> {
         let iter = input.iter();
         Some(match input_variant.heavy {

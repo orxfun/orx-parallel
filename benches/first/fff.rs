@@ -107,7 +107,7 @@ impl Experiment for Exp {
 
     type AlgFactors = Method;
 
-    type Input = (Input, Vec<u64>);
+    type Input = Vec<u64>;
 
     type Output = Option<u64>;
 
@@ -119,15 +119,19 @@ impl Experiment for Exp {
             Pos::Late => (1 << 20) - 27,
         };
 
-        (*input_variant, inputs(len, pos, 999))
+        inputs(len, pos, 999)
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
         match alg_variant {
-            Method::Seq => self.expected_output(&input.0, input).unwrap(),
-            Method::Rayon => match input.0.heavy {
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
+            Method::Rayon => match input_variant.heavy {
                 true => input
-                    .1
                     .as_slice()
                     .into_par_iter()
                     .filter(|x| h_f(**x, 999))
@@ -136,7 +140,6 @@ impl Experiment for Exp {
                     .find_first(|_| true)
                     .copied(),
                 false => input
-                    .1
                     .as_slice()
                     .into_par_iter()
                     .filter(|x| l_f(**x, 999))
@@ -145,9 +148,8 @@ impl Experiment for Exp {
                     .find_first(|_| true)
                     .copied(),
             },
-            Method::Orx => match input.0.heavy {
+            Method::Orx => match input_variant.heavy {
                 true => input
-                    .1
                     .as_slice()
                     .into_par()
                     .filter(|x| h_f(**x, 999))
@@ -156,7 +158,6 @@ impl Experiment for Exp {
                     .first()
                     .copied(),
                 false => input
-                    .1
                     .as_slice()
                     .into_par()
                     .filter(|x| l_f(**x, 999))
@@ -170,8 +171,8 @@ impl Experiment for Exp {
 
     fn expected_output(
         &self,
-        _: &Self::InputFactors,
-        (input_variant, input): &Self::Input,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
     ) -> Option<Self::Output> {
         Some(match input_variant.heavy {
             true => input
