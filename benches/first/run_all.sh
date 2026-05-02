@@ -6,8 +6,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CARGO_TOML="$(cd "$SCRIPT_DIR/../.." && pwd)/Cargo.toml"
 RESULTS_FILE="$SCRIPT_DIR/run_results.txt"
 
-for benchmark_file in "$SCRIPT_DIR"/*.rs; do
+benchmark_files=("$SCRIPT_DIR"/*.rs)
+total_benchmarks=0
+for benchmark_file in "${benchmark_files[@]}"; do
     [ -e "$benchmark_file" ] || continue
+    total_benchmarks=$((total_benchmarks + 1))
+done
+
+benchmark_index=0
+
+for benchmark_file in "${benchmark_files[@]}"; do
+    [ -e "$benchmark_file" ] || continue
+
+    benchmark_index=$((benchmark_index + 1))
 
     benchmark_basename="$(basename "$benchmark_file")"
 
@@ -20,7 +31,7 @@ for benchmark_file in "$SCRIPT_DIR"/*.rs; do
 
     sed -i '/^\[\[bench\]\]$/,/^\[/ s|^path = "benches/first/.*\.rs"$|path = "benches/first/'"$benchmark_basename"'"|' "$CARGO_TOML"
 
-    printf '%s -> %s\n' "$benchmark_basename" "$benchmark_name"
+    printf '[%d / %d] %s -> %s\n' "$benchmark_index" "$total_benchmarks" "$benchmark_basename" "$benchmark_name"
 
     tmp_output=$(mktemp)
     tmp_clean=$(mktemp)
