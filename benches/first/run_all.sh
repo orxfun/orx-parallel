@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CARGO_TOML="$(cd "$SCRIPT_DIR/../.." && pwd)/Cargo.toml"
 RESULTS_FILE="$SCRIPT_DIR/run_results.txt"
 
+: > "$RESULTS_FILE"
+
 benchmark_files=("$SCRIPT_DIR"/*.rs)
 total_benchmarks=0
 for benchmark_file in "${benchmark_files[@]}"; do
