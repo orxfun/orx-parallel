@@ -68,8 +68,19 @@ impl Experiment for Exp {
 
     fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
         match alg_variant {
-            Method::Seq => self.expected_output(&Input { n: input.len().ilog2() as usize }, input).unwrap(),
-            Method::Rayon => input.as_slice().into_par_iter().find_first(|_| true).copied(),
+            Method::Seq => self
+                .expected_output(
+                    &Input {
+                        n: input.len().ilog2() as usize,
+                    },
+                    input,
+                )
+                .unwrap(),
+            Method::Rayon => input
+                .as_slice()
+                .into_par_iter()
+                .find_first(|_| true)
+                .copied(),
             Method::Orx => input.as_slice().into_par().first().copied(),
         }
     }
@@ -85,6 +96,9 @@ fn run(c: &mut Criterion) {
     let treatments = [Input { n: 10 }, Input { n: 15 }, Input { n: 20 }];
 
     let variants: Vec<_> = all::<Method>().collect();
+
+    let treatments = vec![treatments.into_iter().next().unwrap()];
+    let variants = vec![variants.into_iter().next().unwrap()];
 
     Exp.bench(c, "first_id", &treatments, &variants);
 }
