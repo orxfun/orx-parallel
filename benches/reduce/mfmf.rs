@@ -1,5 +1,3 @@
-use std::hint::black_box;
-
 use criterion::{Criterion, criterion_group, criterion_main};
 use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
@@ -7,6 +5,7 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::hint::black_box;
 
 const FIB_UPPER_BOUND: u64 = 301;
 
@@ -116,7 +115,7 @@ impl Experiment for Exp {
 
     type AlgFactors = Method;
 
-    type Input = (Input, Vec<u64>); // (input_variant, input data)
+    type Input = Vec<u64>;
 
     type Output = Option<u64>;
 
@@ -124,18 +123,20 @@ impl Experiment for Exp {
         let len = 1 << input_variant.n;
         const SEED: u64 = 654;
         let mut rng = ChaCha8Rng::seed_from_u64(SEED);
-        (
-            *input_variant,
-            (0..len).map(|_| rng.random_range(0..150)).collect(),
-        )
+        (0..len).map(|_| rng.random_range(0..150)).collect()
     }
 
-    fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
-        let h = input.0.heavy;
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        let h = input_variant.heavy;
         match alg_variant {
-            Method::Seq => self.expected_output(&input.0, input).unwrap(),
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon => {
-                let input = input.1.as_slice();
+                let input = input.as_slice();
                 Some(match h {
                     true => input
                         .into_par_iter()
@@ -154,7 +155,7 @@ impl Experiment for Exp {
                 })
             }
             Method::RayonRedWith => {
-                let input = input.1.as_slice();
+                let input = input.as_slice();
                 match h {
                     true => input
                         .into_par_iter()
@@ -173,7 +174,7 @@ impl Experiment for Exp {
                 }
             }
             Method::Orx => {
-                let input = input.1.as_slice();
+                let input = input.as_slice();
                 match h {
                     true => input
                         .into_par()
@@ -196,8 +197,8 @@ impl Experiment for Exp {
 
     fn expected_output(
         &self,
-        _: &Self::InputFactors,
-        (input_variant, input): &Self::Input,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
     ) -> Option<Self::Output> {
         Some(match input_variant.heavy {
             true => input
