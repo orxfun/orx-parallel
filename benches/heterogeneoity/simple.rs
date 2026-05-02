@@ -6,10 +6,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-/// Probability of a computation being much harder than the majority of computations
-const DIFFICULT_PROBABILITY: f64 = 0.1;
-
-fn heterogeneous_map(i: &u64) -> u64 {
+fn heterogeneous_map(heterogeneoity_level: f64, i: u64) -> u64 {
     fn fibonacci(n: u64) -> u64 {
         let mut a = 0;
         let mut b = 1;
@@ -21,12 +18,12 @@ fn heterogeneous_map(i: &u64) -> u64 {
         a
     }
 
-    let mut rng = ChaCha8Rng::seed_from_u64(*i);
+    let mut rng = ChaCha8Rng::seed_from_u64(i);
     for _ in 0..10 * i {
         let _: u32 = rng.random();
     }
 
-    let n = match rng.random_bool(DIFFICULT_PROBABILITY) {
+    let n = match rng.random_bool(heterogeneoity_level) {
         true => rng.random_range(10000..20000),
         false => rng.random_range(1..100),
     };
@@ -37,15 +34,19 @@ fn heterogeneous_map(i: &u64) -> u64 {
 #[derive(Clone, Copy)]
 struct Input {
     n: usize,
+    heterogeneoity_level: f64,
 }
 
 impl Factors for Input {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n"]
+        vec!["n", "het-lvl"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![format!("2e{}", self.n)]
+        vec![
+            format!("2e{}", self.n),
+            format!("{:4}", self.heterogeneoity_level),
+        ]
     }
 }
 
@@ -90,24 +91,51 @@ impl Experiment for Exp {
     }
 
     fn execute(&mut self, alg_variant: &Self::AlgFactors, input: &Self::Input) -> Self::Output {
+        let h = input.0.heterogeneoity_level;
         match alg_variant {
             Method::Seq => self.expected_output(&input.0, input).unwrap(),
-            Method::Rayon => input.1.par_iter().map(heterogeneous_map).max(),
-            Method::Orx => input.1.par().map(heterogeneous_map).max(),
+            Method::Rayon => input.1.par_iter().map(|x| heterogeneous_map(h, *x)).max(),
+            Method::Orx => input.1.par().map(|x| heterogeneous_map(h, *x)).max(),
         }
     }
 
     fn expected_output(
         &self,
         _: &Self::InputFactors,
-        (_, input): &Self::Input,
+        (input_variant, input): &Self::Input,
     ) -> Option<Self::Output> {
-        Some(input.iter().map(heterogeneous_map).max())
+        let h = input_variant.heterogeneoity_level;
+        Some(input.iter().map(|x| heterogeneous_map(h, *x)).max())
     }
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [Input { n: 5 }, Input { n: 10 }, Input { n: 15 }];
+    let treatments = [
+        Input {
+            n: 10,
+            heterogeneoity_level: 0.01,
+        },
+        Input {
+            n: 15,
+            heterogeneoity_level: 0.01,
+        },
+        Input {
+            n: 10,
+            heterogeneoity_level: 0.05,
+        },
+        Input {
+            n: 15,
+            heterogeneoity_level: 0.05,
+        },
+        Input {
+            n: 10,
+            heterogeneoity_level: 0.10,
+        },
+        Input {
+            n: 15,
+            heterogeneoity_level: 0.10,
+        },
+    ];
 
     let variants: Vec<_> = all::<Method>().collect();
 

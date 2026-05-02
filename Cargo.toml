@@ -65,7 +65,7 @@ doctest = false
 ## benchmarks - heterogeneoity
 
 [[bench]]
-name = "simple"
+name = "het-simple"
 harness = false
 path = "benches/heterogeneoity/simple.rs"
 
