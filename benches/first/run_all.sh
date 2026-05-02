@@ -31,7 +31,7 @@ for benchmark_file in "${benchmark_files[@]}"; do
 
     sed -i '/^\[\[bench\]\]$/,/^\[/ s|^path = "benches/first/.*\.rs"$|path = "benches/first/'"$benchmark_basename"'"|' "$CARGO_TOML"
 
-    printf '[%d / %d] %s -> %s\n' "$benchmark_index" "$total_benchmarks" "$benchmark_basename" "$benchmark_name"
+    printf '[%d / %d] %s\n' "$benchmark_index" "$total_benchmarks" "$benchmark_name"
 
     tmp_output=$(mktemp)
     tmp_clean=$(mktemp)
