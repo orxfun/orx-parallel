@@ -119,7 +119,7 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
     sum.load(Ordering::Relaxed)
 }
 
-fn orx_rec_sum(fs: &FileSystem, work: usize) -> u64 {
+fn orx_sum(fs: &FileSystem, work: usize) -> u64 {
     let extend = |idx: &usize, queue: &Queue<usize>| {
         queue.extend(fs.nodes[*idx].children.iter().copied());
     };
@@ -128,20 +128,6 @@ fn orx_rec_sum(fs: &FileSystem, work: usize) -> u64 {
         .iter()
         .copied()
         .into_par_recursive(extend)
-        .map(|idx| fs.nodes[idx].compute_score(work))
-        .reduce(|a, b| a + b)
-        .unwrap_or(0)
-}
-
-fn orx_extended_sum(fs: &FileSystem, work: usize) -> u64 {
-    let extend = |idx: &usize, queue: &Queue<usize>| {
-        queue.extend(fs.nodes[*idx].children.iter().copied());
-    };
-
-    fs.roots
-        .iter()
-        .copied()
-        .extend_into_par(extend)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
@@ -173,8 +159,7 @@ impl Factors for Input {
 enum Method {
     Seq,
     Rayon,
-    OrxRec,
-    OrxExtended,
+    Orx,
 }
 
 impl Factors for Method {
@@ -187,8 +172,7 @@ impl Factors for Method {
             match self {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
-                Self::OrxRec => "orx-rec",
-                Self::OrxExtended => "orx-extended",
+                Self::Orx => "orx",
             }
             .to_string(),
         ]
@@ -224,8 +208,7 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => seq_sum(input, input_variant.work),
             Method::Rayon => rayon_sum(input, input_variant.work),
-            Method::OrxRec => orx_rec_sum(input, input_variant.work),
-            Method::OrxExtended => orx_extended_sum(input, input_variant.work),
+            Method::Orx => orx_sum(input, input_variant.work),
         }
     }
 
