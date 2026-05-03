@@ -1,26 +1,45 @@
-use orx_iterable::{IntoCloningIterable, Iterable};
 use orx_parallel::*;
 
+fn parse_line_total(row: &str) -> Result<usize, String> {
+    let mut parts = row.split(',');
+
+    let qty = parts
+        .next()
+        .ok_or("missing quantity")?
+        .parse::<usize>()
+        .map_err(|_| "invalid quantity".to_string())?;
+
+    let unit_price = parts
+        .next()
+        .ok_or("missing unit price")?
+        .parse::<usize>()
+        .map_err(|_| "invalid unit price".to_string())?;
+
+    Ok(qty * unit_price)
+}
+
 fn main() {
-    let range = (7..4242).into_iterable();
-    let expected: usize = range.iter().sum();
-
-    // all alements are valid, of Ok variant
-    let good_input: Vec<_> = range.iter().map(|x| x.to_string()).collect();
-    let result = good_input
+    let good_rows = vec!["2,1500", "1,2300", "4,499", "5,1100"];
+    let total = good_rows
         .par()
-        .map(|x| x.parse::<usize>())
+        .map(|row| parse_line_total(row))
         .into_fallible()
-        .reduce(|a, b| a + b);
-    assert_eq!(result, Ok(Some(expected)));
+        // After `into_fallible`, we keep writing the computation for the success path only,
+        // just like using `?` lets us focus on the `Ok` value instead of the error variant.
+        .filter(|line_total| *line_total >= 2_000)
+        // `sum` also works directly on successful line totals; error handling stays implicit.
+        .sum();
 
-    // one element is invalid, of Err variant
-    let mut bad_input: Vec<_> = range.iter().map(|x| x.to_string()).collect();
-    bad_input.insert(bad_input.len() / 2, "!".to_string());
-    let result = bad_input
+    assert_eq!(total, Ok(2 * 1500 + 2300 + 5 * 1100));
+
+    // The computation short-circuits and stops immediately once any worker observes an error.
+    let bad_rows = vec!["2,1500", "1,2300", "x,499", "5,1100"];
+    let total = bad_rows
         .par()
-        .map(|x| x.parse::<usize>())
+        .map(|row| parse_line_total(row))
         .into_fallible()
-        .reduce(|a, b| a + b);
-    assert!(result.is_err()); // computation failed
+        .filter(|line_total| *line_total >= 2_000)
+        .sum();
+
+    assert!(total.is_err());
 }
