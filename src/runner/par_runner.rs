@@ -38,7 +38,7 @@ pub trait ParRunner: Sized + Sync {
     fn do_spawn_new_with_queue_len(
         spawned: usize,
         state: &Self::State,
-        queue_lower_bound: usize,
+        _queue_lower_bound: usize,
     ) -> Option<usize> {
         Self::do_spawn_new(spawned, state)
     }

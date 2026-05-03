@@ -128,6 +128,7 @@ fn orx_sum(fs: &FileSystem, work: usize) -> u64 {
         .iter()
         .copied()
         .into_par_recursive(extend)
+        .runner(runner::recursive_runner())
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)

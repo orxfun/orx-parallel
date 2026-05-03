@@ -1,4 +1,4 @@
-use crate::parameters::Params;
+use crate::parameters::{NumThreads, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
 use crate::runner::runner_variants::{
@@ -25,13 +25,11 @@ use crate::runner::runner_variants::{
 ///    iterators.  This reduces atomic queue contention (64× fewer queue operations) and gives
 ///    each thread a meaningful batch of work immediately.
 ///
-/// 2. **Queue-depth-gated thread spawning** — before spawning thread `t`, the runner checks that
-///    the iterator's current queue lower bound satisfies
-///    `queue_lower_bound >= t * min_items_per_thread`.  
-///    This prevents spawning 32 threads when the queue only contains 50 items; new threads are
-///    spawned only when enough work is visible to keep them busy.  Since threads start executing
-///    and extending the queue while the spawning loop runs, additional threads can still be
-///    admitted as the queue grows.
+/// 2. **Deterministic spawning with an auto thread cap** — for unknown-length recursive
+///    iterators, this runner spawns threads deterministically up to a capped thread count
+///    (`MAX_RECURSIVE_AUTO_THREADS` when `num_threads` is `Auto`).
+///    This avoids brittle queue-length gating during sequential spawning, where the first worker
+///    can briefly drain/reserve the initial frontier and make the queue appear empty.
 pub struct RecursiveChunkRunner<P: ParThreadPool> {
     pool: P,
 }
@@ -64,7 +62,7 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
     fn do_spawn_new_with_queue_len(
         spawned: usize,
         state: &Self::State,
-        queue_lower_bound: usize,
+        _queue_lower_bound: usize,
     ) -> Option<usize> {
         if spawned >= state.max_num_threads {
             return None;
@@ -78,9 +76,11 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
         if state.initial_len.is_some() {
             return (spawned < state.max_num_threads).then_some(spawned);
         }
-        // For unknown-length (recursive) iterators: only spawn thread `spawned` if the observable
-        // queue already holds enough items to keep it busy.
-        (queue_lower_bound >= spawned * state.min_items_per_thread).then_some(spawned)
+        // For unknown-length (recursive) iterators, queue lower bound is too transient during
+        // the sequential spawning phase: the first worker can reserve/drain the initial frontier
+        // before later spawn checks observe it, which falsely blocks parallelism.
+        // Therefore, this runner spawns up to the selected thread cap deterministically.
+        (spawned < state.max_num_threads).then_some(spawned)
     }
 
     fn new_state(
@@ -89,6 +89,11 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
         max_num_threads: usize,
         initial_len: Option<usize>,
     ) -> Self::State {
+        let max_num_threads = match (initial_len, params.num_threads) {
+            (None, NumThreads::Auto) => max_num_threads.min(heuristic::MAX_RECURSIVE_AUTO_THREADS),
+            _ => max_num_threads,
+        };
+
         let chunk_size = match initial_len {
             // Known length: delegate to the standard heuristic (same as FixedChunkRunner).
             Some(_) => {
@@ -97,12 +102,10 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
             // Unknown length (recursive): use the recursive-specific heuristic.
             None => heuristic::compute_chunk_size(params.chunk_size, max_num_threads),
         };
-        let min_items_per_thread = heuristic::compute_min_items_per_thread(chunk_size);
         State {
             max_num_threads,
             initial_len,
             chunk_size,
-            min_items_per_thread,
         }
     }
 

@@ -6,15 +6,12 @@ use crate::parameters::ChunkSize;
 /// initial batch of work even before the queue has fully grown.
 pub const DEFAULT_RECURSIVE_CHUNK_SIZE: usize = 64;
 
-/// How many *visible* queue items we require per active thread before spawning the next one.
-///
-/// Concretely, thread `t` (0-indexed) is only spawned if
-/// `queue_lower_bound >= t * MIN_ITEMS_PER_THREAD_FACTOR * chunk_size`.
-///
-/// A value of 2 means each thread should see at least 2 chunk-widths of work ahead.
-pub const MIN_ITEMS_PER_THREAD_FACTOR: usize = 2;
+/// Cap used for unknown-length recursive workloads when `num_threads` is `Auto`.
+/// Empirically, capping avoids heavy spawn overhead and run-to-run variance that appears
+/// when creating all available threads eagerly for small initial frontiers.
+pub const MAX_RECURSIVE_AUTO_THREADS: usize = 16;
 
-pub fn compute_chunk_size(chunk_size: ChunkSize, max_num_threads: usize) -> usize {
+pub fn compute_chunk_size(chunk_size: ChunkSize, _max_num_threads: usize) -> usize {
     match chunk_size {
         ChunkSize::Auto => DEFAULT_RECURSIVE_CHUNK_SIZE,
         ChunkSize::Min(min) => {
@@ -24,8 +21,4 @@ pub fn compute_chunk_size(chunk_size: ChunkSize, max_num_threads: usize) -> usiz
         // User-specified exact value: use as-is (they know better)
         ChunkSize::Exact(c) => c.into(),
     }
-}
-
-pub fn compute_min_items_per_thread(chunk_size: usize) -> usize {
-    chunk_size * MIN_ITEMS_PER_THREAD_FACTOR
 }
