@@ -134,6 +134,8 @@ struct Args {
     /// Print ORX workload diagnostics.
     #[arg(long, default_value_t = false)]
     diagnostics: bool,
+    #[arg(long, default_value_t = false)]
+    rec_runner: bool,
 }
 
 fn seq_sum(fs: &FileSystem, work: usize) -> u64 {
@@ -181,23 +183,48 @@ fn orx_sum(fs: &FileSystem, work: usize, args: &Args) -> u64 {
         queue.extend(fs.nodes[*idx].children.iter().copied());
     };
 
-    let input = fs
-        .roots
-        .iter()
-        .copied()
-        .into_par_recursive(extend)
-        .runner(runner::recursive_runner())
-        .num_threads(args.num_threads)
-        .chunk_size(args.chunk_size)
-        .map(|idx| fs.nodes[idx].compute_score(work));
-
-    if args.diagnostics {
-        input
+    match (args.diagnostics, args.rec_runner) {
+        (false, false) => fs
+            .roots
+            .iter()
+            .copied()
+            .into_par_recursive(extend)
+            .num_threads(args.num_threads)
+            .chunk_size(args.chunk_size)
+            .map(|idx| fs.nodes[idx].compute_score(work))
+            .sum(),
+        (false, true) => fs
+            .roots
+            .iter()
+            .copied()
+            .into_par_recursive(extend)
+            .num_threads(args.num_threads)
+            .chunk_size(args.chunk_size)
+            .runner(runner::recursive_runner())
+            .map(|idx| fs.nodes[idx].compute_score(work))
+            .sum(),
+        (true, false) => fs
+            .roots
+            .iter()
+            .copied()
+            .into_par_recursive(extend)
+            .num_threads(args.num_threads)
+            .chunk_size(args.chunk_size)
             .runner_with_diagnostics()
-            .reduce(|a, b| a + b)
-            .unwrap_or(0)
-    } else {
-        input.reduce(|a, b| a + b).unwrap_or(0)
+            .map(|idx| fs.nodes[idx].compute_score(work))
+            .sum(),
+        (true, true) => fs
+            .roots
+            .iter()
+            .copied()
+            .into_par_recursive(extend)
+            .num_threads(args.num_threads)
+            .runner(runner::recursive_runner())
+            .runner_with_diagnostics()
+            .chunk_size(args.chunk_size)
+            .map(|idx| fs.nodes[idx].compute_score(work))
+            .sum(),
+        _ => todo!(),
     }
 }
 
