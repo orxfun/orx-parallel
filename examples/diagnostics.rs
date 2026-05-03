@@ -1,14 +1,12 @@
 use clap::Parser;
 use orx_parallel::*;
+use std::hint::black_box;
 
 #[derive(Parser)]
 struct Args {
-    /// Length of the input array
+    /// Number of loan applications to score
     #[arg(long, default_value_t = 1_000_000)]
-    n: usize,
-    /// Magnitude of work per input element
-    #[arg(long, default_value_t = 10)]
-    work: usize,
+    num_applications: usize,
     /// Number of threads (0 = auto)
     #[arg(long, default_value_t = 0)]
     num_threads: usize,
@@ -17,11 +15,15 @@ struct Args {
     chunk_size: usize,
 }
 
-/// Fibonacci as example computation.
-fn compute(amount_of_work: usize, n: u64) -> u64 {
-    (0..amount_of_work)
-        .map(|j| {
-            let n = core::hint::black_box((n + j as u64) % 40);
+/// Computes a risk score for a single loan application.
+///
+/// The credit history length (derived from the applicant id) determines how
+/// much work is done per item, producing a naturally uneven workload — exactly
+/// the kind of load where diagnostics are most informative.
+fn compute_risk_score(applicant_id: usize, credit_history_len: usize) -> u64 {
+    (0..credit_history_len)
+        .map(|month| {
+            let n = black_box((applicant_id + month) as u64 % 40);
             let mut a = 0;
             let mut b = 1;
             for _ in 0..n {
@@ -37,19 +39,23 @@ fn compute(amount_of_work: usize, n: u64) -> u64 {
 fn main() {
     let args = Args::parse();
 
-    let sum = (0..args.n)
+    // `runner_with_diagnostics()` wraps the runner so that once the parallel
+    // computation finishes it prints a summary table and a visual timeline:
+    //
+    //   - which threads were spawned
+    //   - how many task chunks each thread pulled from the input
+    //   - a bar chart showing each thread's active time relative to the longest
+    //
+    // Re-run with different --num-threads and --chunk-size values to see how
+    // those settings affect load distribution across threads.
+    let total_risk: u64 = (0..args.num_applications)
         .par()
         .num_threads(args.num_threads)
         .chunk_size(args.chunk_size)
         .runner_with_diagnostics()
-        .map(|i| 2 * i)
-        .flat_map(|i| match i.is_multiple_of(2) {
-            true => [i, i + 1, i + 2, i + 3, i + 4],
-            false => [i, i + 1, usize::MAX, usize::MAX, usize::MAX],
-        })
-        .filter_map(|i| (i < usize::MAX).then_some(i))
-        .map(|i| compute(args.work, i as u64))
+        .map(|id| compute_risk_score(id, (id % 40) + 1))
         .reduce(|a, b| a + b)
-        .unwrap();
-    println!("\n\nSUM = {sum}");
+        .unwrap_or(0);
+
+    println!("\nTotal risk score across all applications: {total_risk}");
 }
