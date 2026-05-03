@@ -118,27 +118,51 @@ fn run(c: &mut Criterion) {
     let treatments = [
         Input {
             n: 10,
-            heterogeneoity_level: 0.01,
-        },
-        Input {
-            n: 15,
-            heterogeneoity_level: 0.01,
+            heterogeneoity_level: 0.001,
         },
         Input {
             n: 10,
-            heterogeneoity_level: 0.05,
-        },
-        Input {
-            n: 15,
-            heterogeneoity_level: 0.05,
+            heterogeneoity_level: 0.011,
         },
         Input {
             n: 10,
-            heterogeneoity_level: 0.10,
+            heterogeneoity_level: 0.101,
         },
         Input {
-            n: 15,
-            heterogeneoity_level: 0.10,
+            n: 10,
+            heterogeneoity_level: 0.201,
+        },
+        Input {
+            n: 12,
+            heterogeneoity_level: 0.001,
+        },
+        Input {
+            n: 12,
+            heterogeneoity_level: 0.011,
+        },
+        Input {
+            n: 12,
+            heterogeneoity_level: 0.101,
+        },
+        Input {
+            n: 12,
+            heterogeneoity_level: 0.201,
+        },
+        Input {
+            n: 14,
+            heterogeneoity_level: 0.001,
+        },
+        Input {
+            n: 14,
+            heterogeneoity_level: 0.011,
+        },
+        Input {
+            n: 14,
+            heterogeneoity_level: 0.101,
+        },
+        Input {
+            n: 14,
+            heterogeneoity_level: 0.201,
         },
     ];
 
