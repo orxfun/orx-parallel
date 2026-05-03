@@ -1,38 +1,49 @@
-pub use orx_parallel::*;
+use orx_parallel::*;
 
-fn start_by_enumerate() {
-    let inputs: Vec<i32> = (7..4242).collect();
-    let expected_sum_indices: usize = (0..inputs.len()).sum();
-    let expected_sum_values = inputs.iter().sum::<i32>() + 100 * inputs.len() as i32;
+const LOG: &[&str] = &[
+    "INFO  service started",
+    "DEBUG loading config",
+    "ERROR failed to connect to database",
+    "INFO  retrying connection",
+    "ERROR timeout after 30s",
+    "INFO  connection restored",
+    "WARN  high memory usage",
+    "ERROR disk quota exceeded",
+];
 
-    let (sum_indices, sum_values) = inputs
-        .into_par()
+// Expected line numbers of ERROR entries (0-based).
+const ERROR_LINE_NUMBERS: &[usize] = &[2, 4, 7];
+
+/// `enumerate()` can be placed first in the chain.
+/// Pairing each line with its number before filtering lets the result carry
+/// the original position of every error line.
+fn enumerate_then_filter() {
+    let error_positions: Vec<usize> = LOG
+        .par()
         .enumerate()
-        .map(|(idx, val)| (idx, val + 100))
-        .reduce(|agg, (idx, value)| (agg.0 + idx, agg.1 + value))
-        .unwrap_or((0, 0));
+        .filter(|(_, line)| line.starts_with("ERROR"))
+        .map(|(pos, _)| pos)
+        .collect();
 
-    assert_eq!(sum_indices, expected_sum_indices);
-    assert_eq!(sum_values, expected_sum_values);
+    assert_eq!(error_positions, ERROR_LINE_NUMBERS);
 }
 
+/// `enumerate()` can also appear after a `map` step.
+/// The index still corresponds to the position in the original input —
+/// the preceding `map` is a 1-to-1 transformation and does not shift indices.
 fn map_then_enumerate() {
-    let inputs: Vec<i32> = (7..4242).collect();
-    let expected_sum_indices: usize = (0..inputs.len()).sum();
-    let expected_sum_values = inputs.iter().sum::<i32>() + 100 * inputs.len() as i32;
-
-    let (sum_indices, sum_values) = inputs
-        .into_par()
-        .map(|x| x + 100)
+    let error_positions: Vec<usize> = LOG
+        .par()
+        .map(|line| line.split_whitespace().next().unwrap_or(""))
         .enumerate()
-        .reduce(|agg, (idx, value)| (agg.0 + idx, agg.1 + value))
-        .unwrap_or((0, 0));
+        .filter(|(_, level)| *level == "ERROR")
+        .map(|(pos, _)| pos)
+        .collect();
 
-    assert_eq!(sum_indices, expected_sum_indices);
-    assert_eq!(sum_values, expected_sum_values);
+    assert_eq!(error_positions, ERROR_LINE_NUMBERS);
 }
 
 fn main() {
-    start_by_enumerate();
+    enumerate_then_filter();
     map_then_enumerate();
 }
