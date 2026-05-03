@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-BENCH_TARGET_PREFIX="reduce-"
+BENCH_TARGET_PREFIX="rec-"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESULTS_FILE="$SCRIPT_DIR/run_results.txt"

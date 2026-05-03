@@ -69,6 +69,13 @@ name = "het-simple"
 harness = false
 path = "benches/het/simple.rs"
 
+## benchmarks - recursive
+
+[[bench]]
+name = "rec-file-system"
+harness = false
+path = "benches/rec/file_system.rs"
+
 ## benchmarks - first
 
 [[bench]]

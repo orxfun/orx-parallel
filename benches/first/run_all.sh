@@ -25,7 +25,8 @@ for benchmark_file in "${benchmark_files[@]}"; do
 
     benchmark_basename="$(basename "$benchmark_file")"
     benchmark_stem="${benchmark_basename%.rs}"
-    bench_target="$BENCH_TARGET_PREFIX$benchmark_stem"
+    benchmark_target_stem="${benchmark_stem//_/-}"
+    bench_target="$BENCH_TARGET_PREFIX$benchmark_target_stem"
 
     benchmark_name="$({ sed -n 's/.*Exp\.bench(c, "\([^"]*\)",.*/\1/p' "$benchmark_file"; } | head -n 1)"
 
