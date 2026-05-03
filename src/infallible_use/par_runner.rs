@@ -22,7 +22,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
         let (iter, st, results, x, u) = (&iter, &state, &results_bag, x, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
@@ -50,7 +50,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
         let (iter, st, results, x, u) = (&iter, &state, &results_bag, x, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
@@ -80,7 +80,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         {
             let (iter, st, results, x, u) = (&iter, &state, &results_bag, x, &u);
             self.pool_mut().scoped_computation(move |s| {
-                while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
                     spawned += 1;
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                         Self::begin_thread(st, th_idx);
@@ -112,7 +112,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
@@ -140,7 +140,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);

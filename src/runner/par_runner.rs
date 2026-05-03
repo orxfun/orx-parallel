@@ -30,6 +30,19 @@ pub trait ParRunner: Sized + Sync {
     /// it returns some.
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize>;
 
+    /// Like `do_spawn_new`, but additionally receives the current observable lower bound on the
+    /// number of items still in the concurrent iterator's queue. This enables adaptive spawning
+    /// strategies that throttle thread creation when the queue has little work visible.
+    ///
+    /// Default implementation delegates to `do_spawn_new` (ignores `queue_lower_bound`).
+    fn do_spawn_new_with_queue_len(
+        spawned: usize,
+        state: &Self::State,
+        queue_lower_bound: usize,
+    ) -> Option<usize> {
+        Self::do_spawn_new(spawned, state)
+    }
+
     /// Creates an initial state for a new parallel computation.
     fn new_state(
         &mut self,

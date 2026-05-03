@@ -30,7 +30,7 @@ mod pool;
 mod result;
 mod result_use;
 mod results;
-mod runner;
+pub mod runner;
 mod sizes;
 
 pub use collectables::ParCollectInto;
