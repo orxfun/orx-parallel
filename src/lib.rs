@@ -43,6 +43,7 @@ pub use into_parallel::{
 pub use ops::{ParExtend, Sum};
 pub use option::ParOption;
 pub use option_use::ParUseOption;
+pub use orx_concurrent_recursive_iter::Queue;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
