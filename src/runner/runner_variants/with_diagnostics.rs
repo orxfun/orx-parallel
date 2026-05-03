@@ -165,7 +165,7 @@ impl<S> StateWithDiagnostics<S> {
                     n => total / n,
                 };
 
-                println!("{LINE} [{t}]:\t{num_calls}\t{total}\t{avg_chunk_size}",);
+                println!("{LINE} [{t}]\t{num_calls}\t{total}\t{avg_chunk_size}",);
             }
         }
 
@@ -207,7 +207,7 @@ impl<S> StateWithDiagnostics<S> {
         for (t, life) in threads.iter() {
             let beg = (life.beg_ns / block_len) as usize;
             let busy = (life.up_time_ns() / block_len) as usize;
-            println!("{LINE} [{t}]:\t{}{}", "".repeat(beg), BLOCK.repeat(busy));
+            println!("{LINE} [{t}]\t{}{}", "".repeat(beg), BLOCK.repeat(busy));
         }
 
         println!("{LINE}\n{LINE}\n{LINE} ## Thread Task Counts");
@@ -226,7 +226,7 @@ impl<S> StateWithDiagnostics<S> {
             .filter(|(t, _)| used_threads.contains(&t))
         {
             let num_tasks = counts.iter().sum::<usize>() / block_len;
-            println!("{LINE} [{t}]:\t{}", BLOCK.repeat(num_tasks));
+            println!("{LINE} [{t}]\t{}", BLOCK.repeat(num_tasks));
         }
 
         println!();
