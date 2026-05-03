@@ -1,41 +1,13 @@
-/*
-
-* light & heavy show the intensity of computation
-* eN means an input of size 2^N is used
-* beg & mid & end show where the element to be found is located
-
-first_fff/seq/e20_early_light   time:   [262.80 ns 265.39 ns 268.11 ns]
-first_fff/rayon/e20_early_light time:   [3.2993 ms 3.4595 ms 3.6258 ms]
-first_fff/orx/e20_early_light   time:   [2.1888 ms 2.3173 ms 2.4550 ms]
-
-first_fff/seq/e20_mid_light     time:   [1.4297 ms 1.4540 ms 1.4811 ms]
-first_fff/rayon/e20_mid_light   time:   [16.840 ms 18.066 ms 19.320 ms]
-first_fff/orx/e20_mid_light     time:   [3.4804 ms 3.6483 ms 3.8281 ms]
-
-first_fff/seq/e20_late_light    time:   [2.7239 ms 2.7541 ms 2.7844 ms]
-first_fff/rayon/e20_late_light  time:   [20.120 ms 21.524 ms 23.026 ms]
-first_fff/orx/e20_late_light    time:   [4.2533 ms 4.6806 ms 5.1731 ms]
-
-first_fff/seq/e20_early_heavy   time:   [10.086 µs 10.276 µs 10.473 µs]
-first_fff/rayon/e20_early_heavy time:   [3.2627 ms 3.4016 ms 3.5408 ms]
-first_fff/orx/e20_early_heavy   time:   [2.0236 ms 2.0808 ms 2.1420 ms]
-
-first_fff/seq/e20_mid_heavy     time:   [29.877 ms 30.286 ms 30.744 ms]
-first_fff/rayon/e20_mid_heavy   time:   [21.912 ms 25.140 ms 29.709 ms]
-first_fff/orx/e20_mid_heavy     time:   [7.0121 ms 7.2658 ms 7.5417 ms]
-
-first_fff/seq/e20_late_heavy    time:   [59.441 ms 60.155 ms 60.856 ms]
-first_fff/rayon/e20_late_heavy  time:   [16.443 ms 17.635 ms 19.247 ms]
-first_fff/orx/e20_late_heavy    time:   [9.6193 ms 10.580 ms 11.931 ms]
-
-*/
-
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use enum_iterator::{Sequence, all};
+use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
+
+const FIB_UPPER_BOUND: u64 = 201;
 
 fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     const SEED: u64 = 654;
@@ -45,8 +17,6 @@ fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     vec.insert(pos, val);
     vec
 }
-
-const FIB_UPPER_BOUND: u64 = 201;
 
 fn fibonacci(n: u64) -> u64 {
     let mut a = 0;
@@ -69,141 +39,199 @@ fn h_f(x: u64, value: u64) -> bool {
     a - b + x == value
 }
 
-fn seq(input: &[u64], value: u64, h: bool) -> Option<u64> {
-    match h {
-        true => input
-            .iter()
-            .filter(|x| h_f(**x, value))
-            .filter(|x| *x + 1 > 900)
-            .filter(|x| x.is_multiple_of(9))
-            .next()
-            .copied(),
-        false => input
-            .iter()
-            .filter(|x| l_f(**x, value))
-            .filter(|x| *x + 1 > 900)
-            .filter(|x| x.is_multiple_of(9))
-            .next()
-            .copied(),
-    }
+#[derive(Debug, Clone, Copy)]
+enum Pos {
+    Early,
+    Mid,
+    Late,
 }
 
-fn orx(input: &[u64], value: u64, h: bool) -> Option<u64> {
-    match h {
-        true => input
-            .into_par()
-            .filter(|x| h_f(**x, value))
-            .filter(|x| *x + 1 > 900)
-            .filter(|x| x.is_multiple_of(9))
-            .first()
-            .copied(),
-        false => input
-            .into_par()
-            .filter(|x| l_f(**x, value))
-            .filter(|x| *x + 1 > 900)
-            .filter(|x| x.is_multiple_of(9))
-            .first()
-            .copied(),
-    }
-}
-
-fn rayon(input: &[u64], value: u64, h: bool) -> Option<u64> {
-    match h {
-        true => input
-            .into_par_iter()
-            .filter(|x| h_f(**x, value))
-            .filter(|x| *x + 1 > 900)
-            .filter(|x| x.is_multiple_of(9))
-            .find_first(|_| true)
-            .copied(),
-        false => input
-            .into_par_iter()
-            .filter(|x| l_f(**x, value))
-            .filter(|x| *x + 1 > 900)
-            .filter(|x| x.is_multiple_of(9))
-            .find_first(|_| true)
-            .copied(),
-    }
-}
-
-struct Treat {
-    len: usize,
-    pos: usize,
-    val: u64,
-    name: String,
+#[derive(Clone, Copy)]
+struct Input {
+    n: usize,
     heavy: bool,
+    pos: Pos,
+}
+
+impl Factors for Input {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["n", "pos", "task"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            format!("2e{}", self.n),
+            match self.pos {
+                Pos::Early => "early",
+                Pos::Mid => "mid",
+                Pos::Late => "late",
+            }
+            .to_string(),
+            match self.heavy {
+                true => "heavy",
+                false => "light",
+            }
+            .to_string(),
+        ]
+    }
+}
+
+#[derive(Debug, Sequence)]
+enum Method {
+    Seq,
+    Rayon,
+    Orx,
+}
+
+impl Factors for Method {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["method"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            match self {
+                Self::Seq => "seq",
+                Self::Rayon => "rayon",
+                Self::Orx => "orx",
+            }
+            .to_string(),
+        ]
+    }
+}
+
+struct Exp;
+
+impl Experiment for Exp {
+    type InputFactors = Input;
+
+    type AlgFactors = Method;
+
+    type Input = Vec<u64>;
+
+    type Output = Option<u64>;
+
+    fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
+        let len = 1 << input_variant.n;
+        let pos = match input_variant.pos {
+            Pos::Early => 1 << 8,
+            Pos::Mid => (1 << 19) + 7,
+            Pos::Late => (1 << 20) - 27,
+        };
+
+        inputs(len, pos, 999)
+    }
+
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        match alg_variant {
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
+            Method::Rayon => match input_variant.heavy {
+                true => input
+                    .as_slice()
+                    .into_par_iter()
+                    .filter(|x| h_f(**x, 999))
+                    .filter(|x| *x + 1 > 900)
+                    .filter(|x| x.is_multiple_of(9))
+                    .find_first(|_| true)
+                    .copied(),
+                false => input
+                    .as_slice()
+                    .into_par_iter()
+                    .filter(|x| l_f(**x, 999))
+                    .filter(|x| *x + 1 > 900)
+                    .filter(|x| x.is_multiple_of(9))
+                    .find_first(|_| true)
+                    .copied(),
+            },
+            Method::Orx => match input_variant.heavy {
+                true => input
+                    .as_slice()
+                    .into_par()
+                    .filter(|x| h_f(**x, 999))
+                    .filter(|x| *x + 1 > 900)
+                    .filter(|x| x.is_multiple_of(9))
+                    .first()
+                    .copied(),
+                false => input
+                    .as_slice()
+                    .into_par()
+                    .filter(|x| l_f(**x, 999))
+                    .filter(|x| *x + 1 > 900)
+                    .filter(|x| x.is_multiple_of(9))
+                    .first()
+                    .copied(),
+            },
+        }
+    }
+
+    fn expected_output(
+        &self,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
+    ) -> Option<Self::Output> {
+        Some(match input_variant.heavy {
+            true => input
+                .iter()
+                .filter(|x| h_f(**x, 999))
+                .filter(|x| *x + 1 > 900)
+                .filter(|x| x.is_multiple_of(9))
+                .next()
+                .copied(),
+            false => input
+                .iter()
+                .filter(|x| l_f(**x, 999))
+                .filter(|x| *x + 1 > 900)
+                .filter(|x| x.is_multiple_of(9))
+                .next()
+                .copied(),
+        })
+    }
+
+    fn validate_output(&self, _: &Self::InputFactors, _: &Self::Input, _: &Self::Output) {}
 }
 
 fn run(c: &mut Criterion) {
     let treatments = [
-        Treat {
-            len: 1 << 20,
-            pos: 1 << 8,
-            name: format!("e{}_early_light", 20),
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Early,
             heavy: false,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 19) + 7,
-            name: format!("e{}_mid_light", 20),
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Mid,
             heavy: false,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 20) - 27,
-            name: format!("e{}_late_light", 20),
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Late,
             heavy: false,
         },
-        Treat {
-            len: 1 << 20,
-            pos: 1 << 8,
-            name: format!("e{}_early_heavy", 20),
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Early,
             heavy: true,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 19) + 7,
-            name: format!("e{}_mid_heavy", 20),
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Mid,
             heavy: true,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 20) - 27,
-            name: format!("e{}_late_heavy", 20),
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Late,
             heavy: true,
         },
     ];
 
-    let mut group = c.benchmark_group("first_fff");
+    let variants: Vec<_> = all::<Method>().collect();
 
-    for t in treatments {
-        let input = inputs(t.len, t.pos, t.val);
-        let expected = seq(&input, t.val, t.heavy);
-
-        group.bench_with_input(BenchmarkId::new("seq", &t.name), &t.name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.val, t.heavy));
-            b.iter(|| seq(&input, t.val, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("rayon", &t.name), &t.name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.val, t.heavy));
-            b.iter(|| rayon(&input, t.val, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx", &t.name), &t.name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.val, t.heavy));
-            b.iter(|| orx(&input, t.val, t.heavy))
-        });
-    }
-
-    group.finish();
+    Exp.bench(c, "first_fff", &treatments, &variants);
 }
-
 criterion_group!(benches, run);
 criterion_main!(benches);

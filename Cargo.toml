@@ -38,19 +38,15 @@ yastl = { version = "0.1.2", optional = true, default-features = false }
 chrono = "0.4.42"
 clap = { version = "4.5.50", features = ["derive"] }
 criterion = { version = "0.8", features = ["html_reports"] }
+enum-iterator = { version = "2.3.0", default-features = false }
 orx-concurrent-option = { version = "1.5.0", default-features = false }
 orx-concurrent-vec = "3.10.0"
+orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
 orx-imp-vec = { version = "2.17.0" }
 rand = "0.9.2"
 rand_chacha = "0.9"
 rayon = "1.11.0"
 test-case = "3.3.1"
-orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
-
-[[bench]]
-name = "first"
-harness = false
-path = "benches/collect/mfmf.rs"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -62,3 +58,134 @@ experimental = []
 
 [lib]
 doctest = false
+
+
+# benchmarks
+
+## benchmarks - heterogeneoity
+
+[[bench]]
+name = "het-simple"
+harness = false
+path = "benches/het/simple.rs"
+
+## benchmarks - first
+
+[[bench]]
+name = "first-f"
+harness = false
+path = "benches/first/f.rs"
+
+[[bench]]
+name = "first-ff"
+harness = false
+path = "benches/first/ff.rs"
+
+[[bench]]
+name = "first-fff"
+harness = false
+path = "benches/first/fff.rs"
+
+[[bench]]
+name = "first-i"
+harness = false
+path = "benches/first/i.rs"
+
+[[bench]]
+name = "first-id"
+harness = false
+path = "benches/first/id.rs"
+
+[[bench]]
+name = "first-lf"
+harness = false
+path = "benches/first/lf.rs"
+
+[[bench]]
+name = "first-mf"
+harness = false
+path = "benches/first/mf.rs"
+
+[[bench]]
+name = "first-mfmf"
+harness = false
+path = "benches/first/mfmf.rs"
+
+[[bench]]
+name = "first-mi"
+harness = false
+path = "benches/first/mi.rs"
+
+## benchmarks - collect
+
+[[bench]]
+name = "collect-f"
+harness = false
+path = "benches/collect/f.rs"
+
+[[bench]]
+name = "collect-id"
+harness = false
+path = "benches/collect/id.rs"
+
+[[bench]]
+name = "collect-l"
+harness = false
+path = "benches/collect/l.rs"
+
+[[bench]]
+name = "collect-m"
+harness = false
+path = "benches/collect/m.rs"
+
+[[bench]]
+name = "collect-mf"
+harness = false
+path = "benches/collect/mf.rs"
+
+[[bench]]
+name = "collect-mfm"
+harness = false
+path = "benches/collect/mfm.rs"
+
+[[bench]]
+name = "collect-mfmf"
+harness = false
+path = "benches/collect/mfmf.rs"
+
+## benchmarks - reduce
+
+[[bench]]
+name = "reduce-f"
+harness = false
+path = "benches/reduce/f.rs"
+
+[[bench]]
+name = "reduce-id"
+harness = false
+path = "benches/reduce/id.rs"
+
+[[bench]]
+name = "reduce-l"
+harness = false
+path = "benches/reduce/l.rs"
+
+[[bench]]
+name = "reduce-m"
+harness = false
+path = "benches/reduce/m.rs"
+
+[[bench]]
+name = "reduce-mf"
+harness = false
+path = "benches/reduce/mf.rs"
+
+[[bench]]
+name = "reduce-mfm"
+harness = false
+path = "benches/reduce/mfm.rs"
+
+[[bench]]
+name = "reduce-mfmf"
+harness = false
+path = "benches/reduce/mfmf.rs"

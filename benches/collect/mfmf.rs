@@ -1,32 +1,11 @@
-/*
-
-* light & heavy show the intensity of computation
-* eN means an input of size 2^N is used
-* order:
-  * _ord means results are collected in order leading to same result as sequential
-  * _arb means results are collected in arbitrary order
-* container:
-  * _vec means, results are collected into a Vec
-  * _vv means, results are collected into a Vec<Vec<_>>
-  * _ll means, results are collected into a LinkedList<Vec<_>>
-  * Note that _ll and _vv 2-dim jagged results in rayon and orx, respectively
-
-placeholder
-
-*/
-
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use enum_iterator::{Sequence, all};
+use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::collections::LinkedList;
-
-fn inputs(len: usize) -> Vec<u64> {
-    const SEED: u64 = 654;
-    let mut rng = ChaCha8Rng::seed_from_u64(SEED);
-    (0..len).map(|_| rng.random_range(0..150)).collect()
-}
 
 const FIB_UPPER_BOUND: u64 = 301;
 
@@ -70,162 +49,263 @@ fn f2(a: &u64) -> bool {
     !(2 * a + 11).is_multiple_of(7)
 }
 
-fn seq(input: &[u64], h: bool) -> Vec<u64> {
-    match h {
-        true => input.iter().map(m).filter(f).map(h_m2).filter(f2).collect(),
-        false => input.iter().map(m).filter(f).map(l_m2).filter(f2).collect(),
-    }
-}
-
-fn orx<C: ParCollectInto<u64>>(input: &[u64], h: bool, order: IterationOrder) -> C {
-    match h {
-        true => input
-            .into_par()
-            .iteration_order(order)
-            .map(m)
-            .filter(f)
-            .map(h_m2)
-            .filter(f2)
-            .collect(),
-        false => input
-            .into_par()
-            .iteration_order(order)
-            .map(m)
-            .filter(f)
-            .map(l_m2)
-            .filter(f2)
-            .collect(),
-    }
-}
-
-fn rayon(input: &[u64], h: bool) -> Vec<u64> {
-    match h {
-        true => input
-            .into_par_iter()
-            .map(m)
-            .filter(f)
-            .map(h_m2)
-            .filter(f2)
-            .collect(),
-        false => input
-            .into_par_iter()
-            .map(m)
-            .filter(f)
-            .map(l_m2)
-            .filter(f2)
-            .collect(),
-    }
-}
-
-fn rayon_ll(input: &[u64], h: bool) -> LinkedList<Vec<u64>> {
-    match h {
-        true => input
-            .into_par_iter()
-            .map(m)
-            .filter(f)
-            .map(h_m2)
-            .filter(f2)
-            .collect_vec_list(),
-        false => input
-            .into_par_iter()
-            .map(m)
-            .filter(f)
-            .map(l_m2)
-            .filter(f2)
-            .collect_vec_list(),
-    }
-}
-
-struct Treat {
-    len: usize,
+struct Input {
+    n: usize,
     heavy: bool,
 }
 
-fn run(c: &mut Criterion) {
-    let treatments = [
-        Treat {
-            len: 1 << 15,
-            heavy: false,
-        },
-        Treat {
-            len: 1 << 20,
-            heavy: false,
-        },
-        Treat {
-            len: 1 << 15,
-            heavy: true,
-        },
-        Treat {
-            len: 1 << 20,
-            heavy: true,
-        },
-    ];
-
-    let mut group = c.benchmark_group("col_mfmf");
-
-    for t in treatments {
-        let name = format!(
-            "e{}_{}",
-            t.len.ilog2(),
-            match t.heavy {
-                true => "heavy",
-                false => "light",
-            },
-        );
-        let input = inputs(t.len);
-        let expected = seq(&input, t.heavy);
-        let mut expected_sorted = expected.clone();
-        expected_sorted.sort();
-
-        group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy));
-            b.iter(|| seq(&input, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.heavy));
-            b.iter(|| rayon(&input, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("rayon_ll", &name), &name, |b, _| {
-            let mut result: Vec<u64> = rayon_ll(&input, t.heavy)
-                .into_iter()
-                .flat_map(|x| Vec::from(x).into_iter())
-                .collect();
-            result.sort();
-            assert_eq!(&expected_sorted, &result);
-            b.iter(|| rayon_ll(&input, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx_ord", &name), &name, |b, _| {
-            assert_eq!(
-                &expected,
-                &orx::<Vec<u64>>(&input, t.heavy, IterationOrder::Ordered)
-            );
-            b.iter(|| orx::<Vec<u64>>(&input, t.heavy, IterationOrder::Ordered))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx_arb", &name), &name, |b, _| {
-            let mut result: Vec<u64> = orx(&input, t.heavy, IterationOrder::Arbitrary);
-            result.sort();
-            assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx::<Vec<u64>>(&input, t.heavy, IterationOrder::Arbitrary))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx_arb_vv", &name), &name, |b, _| {
-            let mut result: Vec<u64> =
-                orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary)
-                    .into_iter()
-                    .flatten()
-                    .collect();
-            result.sort();
-            assert_eq!(&expected_sorted, &result);
-            b.iter(|| orx::<Vec<Vec<_>>>(&input, t.heavy, IterationOrder::Arbitrary))
-        });
+impl Input {
+    fn len(&self) -> usize {
+        1 << self.n
     }
-
-    group.finish();
 }
 
+impl Factors for Input {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["n", "task"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            format!("2e{}", self.n),
+            match self.heavy {
+                true => "heavy",
+                false => "light",
+            }
+            .to_string(),
+        ]
+    }
+}
+
+#[derive(Debug, Sequence)]
+enum Method {
+    SeqVec,
+    RayonVec,
+    RayonVecList,
+    OrxVec,
+    OrxArbVec,
+    OrxArbVecVec,
+}
+
+impl Factors for Method {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["method"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            match self {
+                Self::SeqVec => "seq-vec",
+                Self::RayonVec => "rayon-vec",
+                Self::RayonVecList => "rayon-veclist",
+                Self::OrxVec => "orx-vec",
+                Self::OrxArbVec => "orx-arb-vec",
+                Self::OrxArbVecVec => "orx-arb-vecvec",
+            }
+            .to_string(),
+        ]
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum Output {
+    Vec(Vec<u64>),
+    VecList(LinkedList<Vec<u64>>),
+    VecVec(Vec<Vec<u64>>),
+}
+
+struct Exp;
+
+impl Experiment for Exp {
+    type InputFactors = Input;
+
+    type AlgFactors = Method;
+
+    type Input = Vec<u64>;
+
+    type Output = (bool, Output); // (ordered, output)
+
+    fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
+        const SEED: u64 = 654;
+        let len = input_variant.len();
+        let mut rng = ChaCha8Rng::seed_from_u64(SEED);
+        (0..len).map(|_| rng.random_range(0..150)).collect()
+    }
+
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        let h = input_variant.heavy;
+
+        match alg_variant {
+            Method::SeqVec => (
+                true,
+                Output::Vec(match h {
+                    true => input.iter().map(m).filter(f).map(h_m2).filter(f2).collect(),
+                    false => input.iter().map(m).filter(f).map(l_m2).filter(f2).collect(),
+                }),
+            ),
+            Method::RayonVec => (
+                true,
+                Output::Vec(match h {
+                    true => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .collect(),
+                    false => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .collect(),
+                }),
+            ),
+            Method::RayonVecList => (
+                false,
+                Output::VecList(match h {
+                    true => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .collect_vec_list(),
+                    false => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .collect_vec_list(),
+                }),
+            ),
+            Method::OrxVec => (
+                true,
+                Output::Vec(match h {
+                    true => input
+                        .into_par()
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .collect(),
+                }),
+            ),
+            Method::OrxArbVec => (
+                false,
+                Output::Vec(match h {
+                    true => input
+                        .into_par()
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .collect(),
+                }),
+            ),
+            Method::OrxArbVecVec => (
+                false,
+                Output::VecVec(match h {
+                    true => input
+                        .into_par()
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .collect(),
+                }),
+            ),
+        }
+    }
+
+    fn validate_output(
+        &self,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
+        (ordered, output): &Self::Output,
+    ) {
+        let mut expected: Vec<_> = match input_variant.heavy {
+            true => input.iter().map(m).filter(f).map(h_m2).filter(f2).collect(),
+            false => input.iter().map(m).filter(f).map(l_m2).filter(f2).collect(),
+        };
+        if !*ordered {
+            expected.sort();
+        }
+
+        match output {
+            Output::Vec(result) => match *ordered {
+                false => {
+                    let mut result = result.clone();
+                    result.sort();
+                    assert_eq!(expected, result)
+                }
+                true => assert_eq!(&expected, result),
+            },
+            Output::VecList(result) => {
+                assert!(!*ordered);
+                let mut result: Vec<u64> = result.iter().flat_map(|x| x.iter()).copied().collect();
+                result.sort();
+                assert_eq!(expected, result);
+            }
+            Output::VecVec(result) => {
+                assert!(!*ordered);
+                let mut result: Vec<u64> = result.iter().flat_map(|x| x.iter()).copied().collect();
+                result.sort();
+                assert_eq!(expected, result);
+            }
+        }
+    }
+}
+
+fn run(c: &mut Criterion) {
+    let treatments = vec![
+        Input {
+            n: 15,
+            heavy: false,
+        },
+        Input {
+            n: 20,
+            heavy: false,
+        },
+        Input { n: 15, heavy: true },
+        Input { n: 20, heavy: true },
+    ];
+
+    let variants: Vec<_> = all::<Method>().collect();
+
+    Exp.bench(c, "col_mfmf", &treatments, &variants);
+}
 criterion_group!(benches, run);
 criterion_main!(benches);

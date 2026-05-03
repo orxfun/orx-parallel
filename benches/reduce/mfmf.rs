@@ -1,42 +1,11 @@
-/*
-
-* light & heavy show the intensity of computation
-* eN means an input of size 2^N is used
-
-reduce_mfmf/seq/e15_light       time:   [54.684 µs 55.125 µs 55.603 µs]
-reduce_mfmf/rayon1/e15_light    time:   [7.0712 ms 7.1686 ms 7.2666 ms]
-reduce_mfmf/rayon2/e15_light    time:   [7.9791 ms 8.1189 ms 8.2630 ms]
-reduce_mfmf/orx/e15_light       time:   [1.2943 ms 1.3258 ms 1.3617 ms]
-
-reduce_mfmf/seq/e20_light       time:   [2.6323 ms 2.6552 ms 2.6808 ms]
-reduce_mfmf/rayon1/e20_light    time:   [10.068 ms 11.214 ms 12.433 ms]
-reduce_mfmf/rayon2/e20_light    time:   [16.924 ms 17.365 ms 17.799 ms]
-reduce_mfmf/orx/e20_light       time:   [2.6776 ms 2.7611 ms 2.8483 ms]
-
-reduce_mfmf/seq/e15_heavy       time:   [2.3604 ms 2.3842 ms 2.4090 ms]
-reduce_mfmf/rayon1/e15_heavy    time:   [9.9925 ms 10.299 ms 10.600 ms]
-reduce_mfmf/rayon2/e15_heavy    time:   [10.023 ms 10.515 ms 10.970 ms]
-reduce_mfmf/orx/e15_heavy       time:   [2.3577 ms 2.3811 ms 2.4061 ms]
-
-reduce_mfmf/seq/e20_heavy       time:   [86.268 ms 87.874 ms 89.749 ms]
-reduce_mfmf/rayon1/e20_heavy    time:   [16.306 ms 16.906 ms 17.513 ms]
-reduce_mfmf/rayon2/e20_heavy    time:   [16.252 ms 17.282 ms 18.402 ms]
-reduce_mfmf/orx/e20_heavy       time:   [10.698 ms 10.789 ms 10.883 ms]
-
-*/
-
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use enum_iterator::{Sequence, all};
+use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
-
-fn inputs(len: usize) -> Vec<u64> {
-    const SEED: u64 = 654;
-    let mut rng = ChaCha8Rng::seed_from_u64(SEED);
-    (0..len).map(|_| rng.random_range(0..150)).collect()
-}
 
 const FIB_UPPER_BOUND: u64 = 301;
 
@@ -90,148 +59,183 @@ fn f2(a: &u64) -> bool {
     !(2 * a + 11).is_multiple_of(7)
 }
 
-fn seq(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input
-            .iter()
-            .map(m)
-            .filter(f)
-            .map(h_m2)
-            .filter(f2)
-            .reduce(h_r),
-        false => input
-            .iter()
-            .map(m)
-            .filter(f)
-            .map(l_m2)
-            .filter(f2)
-            .reduce(l_r),
+#[derive(Clone, Copy)]
+struct Input {
+    n: usize,
+    heavy: bool,
+}
+
+impl Factors for Input {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["n", "task"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            format!("2e{}", self.n),
+            match self.heavy {
+                true => "heavy",
+                false => "light",
+            }
+            .to_string(),
+        ]
     }
 }
 
-fn orx(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input
-            .into_par()
-            .map(m)
-            .filter(f)
-            .map(h_m2)
-            .filter(f2)
-            .reduce(h_r),
-        false => input
-            .into_par()
-            .map(m)
-            .filter(f)
-            .map(l_m2)
-            .filter(f2)
-            .reduce(l_r),
+#[derive(Debug, Sequence)]
+enum Method {
+    Seq,
+    Rayon,
+    RayonRedWith,
+    Orx,
+}
+
+impl Factors for Method {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["method"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            match self {
+                Self::Seq => "seq",
+                Self::Rayon => "rayon",
+                Self::RayonRedWith => "rayon-reduce-with",
+                Self::Orx => "orx",
+            }
+            .to_string(),
+        ]
     }
 }
 
-fn rayon1(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => input
-            .into_par_iter()
-            .map(m)
-            .filter(f)
-            .map(h_m2)
-            .filter(f2)
-            .reduce_with(h_r),
-        false => input
-            .into_par_iter()
-            .map(m)
-            .filter(f)
-            .map(l_m2)
-            .filter(f2)
-            .reduce_with(l_r),
-    }
-}
+struct Exp;
 
-fn rayon2(input: &[u64], h: bool) -> Option<u64> {
-    match h {
-        true => Some(
-            input
-                .into_par_iter()
+impl Experiment for Exp {
+    type InputFactors = Input;
+
+    type AlgFactors = Method;
+
+    type Input = Vec<u64>;
+
+    type Output = Option<u64>;
+
+    fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
+        let len = 1 << input_variant.n;
+        const SEED: u64 = 654;
+        let mut rng = ChaCha8Rng::seed_from_u64(SEED);
+        (0..len).map(|_| rng.random_range(0..150)).collect()
+    }
+
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        let h = input_variant.heavy;
+        match alg_variant {
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
+            Method::Rayon => {
+                let input = input.as_slice();
+                Some(match h {
+                    true => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .reduce(|| 0, h_r),
+                    false => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .reduce(|| 0, l_r),
+                })
+            }
+            Method::RayonRedWith => {
+                let input = input.as_slice();
+                match h {
+                    true => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .reduce_with(h_r),
+                    false => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .reduce_with(l_r),
+                }
+            }
+            Method::Orx => {
+                let input = input.as_slice();
+                match h {
+                    true => input
+                        .into_par()
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .filter(f2)
+                        .reduce(h_r),
+                    false => input
+                        .into_par()
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .filter(f2)
+                        .reduce(l_r),
+                }
+            }
+        }
+    }
+
+    fn expected_output(
+        &self,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
+    ) -> Option<Self::Output> {
+        Some(match input_variant.heavy {
+            true => input
+                .iter()
                 .map(m)
                 .filter(f)
                 .map(h_m2)
                 .filter(f2)
-                .reduce(|| 0, h_r),
-        ),
-        false => Some(
-            input
-                .into_par_iter()
+                .reduce(h_r),
+            false => input
+                .iter()
                 .map(m)
                 .filter(f)
                 .map(l_m2)
                 .filter(f2)
-                .reduce(|| 0, l_r),
-        ),
+                .reduce(l_r),
+        })
     }
-}
-
-struct Treat {
-    len: usize,
-    heavy: bool,
 }
 
 fn run(c: &mut Criterion) {
     let treatments = [
-        Treat {
-            len: 1 << 15,
+        Input {
+            n: 15,
             heavy: false,
         },
-        Treat {
-            len: 1 << 20,
+        Input {
+            n: 20,
             heavy: false,
         },
-        Treat {
-            len: 1 << 15,
-            heavy: true,
-        },
-        Treat {
-            len: 1 << 20,
-            heavy: true,
-        },
+        Input { n: 15, heavy: true },
+        Input { n: 20, heavy: true },
     ];
 
-    let mut group = c.benchmark_group("reduce_mfmf");
+    let variants: Vec<_> = all::<Method>().collect();
 
-    for t in treatments {
-        let name = format!(
-            "e{}_{}",
-            t.len.ilog2(),
-            match t.heavy {
-                true => "heavy",
-                false => "light",
-            },
-        );
-        let input = inputs(t.len);
-        let expected = seq(&input, t.heavy);
-
-        group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy));
-            b.iter(|| seq(&input, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("rayon1", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon1(&input, t.heavy));
-            b.iter(|| rayon1(&input, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("rayon2", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon2(&input, t.heavy));
-            b.iter(|| rayon2(&input, t.heavy))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy));
-            b.iter(|| orx(&input, t.heavy))
-        });
-    }
-
-    group.finish();
+    Exp.bench(c, "reduce_mfmf", &treatments, &variants);
 }
-
 criterion_group!(benches, run);
 criterion_main!(benches);

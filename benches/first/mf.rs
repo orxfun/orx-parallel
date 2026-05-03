@@ -1,34 +1,6 @@
-/*
-
-* light & heavy show the intensity of computation
-* beg & mid & end show where the element to be found is located
-
-first_mf/seq/e20_light_Beg      time:   [231.82 ns 235.47 ns 239.49 ns]
-first_mf/rayon/e20_light_Beg    time:   [3.7929 ms 4.2524 ms 4.8267 ms]
-first_mf/orx/e20_light_Beg      time:   [1.9441 ms 1.9892 ms 2.0350 ms]
-
-first_mf/seq/e20_light_Mid      time:   [445.99 µs 450.12 µs 454.30 µs]
-first_mf/rayon/e20_light_Mid    time:   [17.842 ms 21.865 ms 27.117 ms]
-first_mf/orx/e20_light_Mid      time:   [4.4227 ms 4.5705 ms 4.7208 ms]
-
-first_mf/seq/e20_light_End      time:   [1.1407 ms 1.1608 ms 1.1817 ms]
-first_mf/rayon/e20_light_End    time:   [21.873 ms 25.001 ms 29.443 ms]
-first_mf/orx/e20_light_End      time:   [4.8992 ms 5.4526 ms 6.1000 ms]
-
-first_mf/seq/e20_heavy_Beg      time:   [5.3141 µs 5.3808 µs 5.4498 µs]
-first_mf/rayon/e20_heavy_Beg    time:   [4.2810 ms 4.5163 ms 4.7671 ms]
-first_mf/orx/e20_heavy_Beg      time:   [1.9881 ms 2.1270 ms 2.2911 ms]
-
-first_mf/seq/e20_heavy_Mid      time:   [18.854 ms 19.093 ms 19.336 ms]
-first_mf/rayon/e20_heavy_Mid    time:   [14.989 ms 16.881 ms 19.086 ms]
-first_mf/orx/e20_heavy_Mid      time:   [6.3391 ms 6.5511 ms 6.7769 ms]
-
-first_mf/seq/e20_heavy_End      time:   [40.435 ms 41.204 ms 42.092 ms]
-first_mf/rayon/e20_heavy_End    time:   [13.450 ms 14.076 ms 14.771 ms]
-first_mf/orx/e20_heavy_End      time:   [7.0313 ms 8.1575 ms 9.7294 ms]
-*/
-
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use enum_iterator::{Sequence, all};
+use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -70,123 +42,172 @@ fn l_m(x: &u64) -> u64 {
     }
 }
 
-fn seq(input: &[u64], h: bool, value: u64) -> Option<u64> {
-    let iter = input.iter();
-    match h {
-        false => iter.map(l_m).filter(|x| *x == value).next(),
-        true => iter.map(h_m).filter(|x| *x == value).next(),
-    }
-}
-
-fn orx(input: &[u64], h: bool, value: u64) -> Option<u64> {
-    match h {
-        false => input.into_par().map(l_m).filter(|x| *x == value).first(),
-        true => input.into_par().map(h_m).filter(|x| *x == value).first(),
-    }
-}
-
-fn rayon(input: &[u64], h: bool, value: u64) -> Option<u64> {
-    let iter = input.into_par_iter();
-    match h {
-        false => iter.map(l_m).filter(|x| *x == value).find_first(|_| true),
-        true => iter.map(h_m).filter(|x| *x == value).find_first(|_| true),
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Pos {
     Beg,
     Mid,
     End,
 }
 
-struct Treat {
-    len: usize,
-    pos: usize,
-    val: u64,
+#[derive(Clone, Copy)]
+struct Input {
+    n: usize,
     heavy: bool,
-    position: Pos,
+    pos: Pos,
+}
+
+impl Factors for Input {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["n", "pos", "task"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            format!("2e{}", self.n),
+            match self.pos {
+                Pos::Beg => "beg",
+                Pos::Mid => "mid",
+                Pos::End => "end",
+            }
+            .to_string(),
+            match self.heavy {
+                true => "heavy",
+                false => "light",
+            }
+            .to_string(),
+        ]
+    }
+}
+
+#[derive(Debug, Sequence, Clone, Copy)]
+enum Method {
+    Seq,
+    Rayon,
+    Orx,
+}
+
+impl Factors for Method {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["method"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![
+            match self {
+                Self::Seq => "seq",
+                Self::Rayon => "rayon",
+                Self::Orx => "orx",
+            }
+            .to_string(),
+        ]
+    }
+}
+
+struct Exp;
+
+impl Experiment for Exp {
+    type InputFactors = Input;
+
+    type AlgFactors = Method;
+
+    type Input = Vec<u64>;
+
+    type Output = Option<u64>;
+
+    fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
+        let len = 1 << input_variant.n;
+        let pos = match input_variant.pos {
+            Pos::Beg => len / 20,
+            Pos::Mid => len / 2,
+            Pos::End => 19 * len / 20,
+        };
+
+        inputs(len, pos, 999)
+    }
+
+    fn execute(
+        &mut self,
+        input_variant: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        match alg_variant {
+            Method::Seq => self.expected_output(input_variant, input).unwrap(),
+            Method::Rayon => {
+                let iter = input.as_slice().into_par_iter();
+                match input_variant.heavy {
+                    false => iter.map(l_m).filter(|x| *x == 999).find_first(|_| true),
+                    true => iter.map(h_m).filter(|x| *x == 999).find_first(|_| true),
+                }
+            }
+            Method::Orx => match input_variant.heavy {
+                false => input
+                    .as_slice()
+                    .into_par()
+                    .map(l_m)
+                    .filter(|x| *x == 999)
+                    .first(),
+                true => input
+                    .as_slice()
+                    .into_par()
+                    .map(h_m)
+                    .filter(|x| *x == 999)
+                    .first(),
+            },
+        }
+    }
+
+    fn expected_output(
+        &self,
+        input_variant: &Self::InputFactors,
+        input: &Self::Input,
+    ) -> Option<Self::Output> {
+        Some(match input_variant.heavy {
+            false => input.iter().map(l_m).filter(|x| *x == 999).next(),
+            true => input.iter().map(h_m).filter(|x| *x == 999).next(),
+        })
+    }
+
+    fn validate_output(&self, _: &Self::InputFactors, _: &Self::Input, _: &Self::Output) {}
 }
 
 fn run(c: &mut Criterion) {
     let treatments = [
-        Treat {
-            len: 1 << 20,
-            pos: 1 << 8,
-            position: Pos::Beg,
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Beg,
             heavy: false,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 19) + 7,
-            position: Pos::Mid,
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Mid,
             heavy: false,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 20) - 27,
-            position: Pos::End,
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::End,
             heavy: false,
         },
-        Treat {
-            len: 1 << 20,
-            pos: 1 << 8,
-            position: Pos::Beg,
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Beg,
             heavy: true,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 19) + 7,
-            position: Pos::Mid,
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::Mid,
             heavy: true,
         },
-        Treat {
-            len: 1 << 20,
-            pos: (1 << 20) - 27,
-            position: Pos::End,
-            val: 999,
+        Input {
+            n: 20,
+            pos: Pos::End,
             heavy: true,
         },
     ];
 
-    let mut group = c.benchmark_group("first_mf");
+    let variants: Vec<_> = all::<Method>().collect();
 
-    for t in treatments {
-        let name = format!(
-            "e{}_{}_{:?}",
-            t.len.ilog2(),
-            match t.heavy {
-                true => "heavy",
-                false => "light",
-            },
-            t.position,
-        );
-        let input = inputs(t.len, t.pos, t.val);
-        let expected = seq(&input, t.heavy, t.val);
-
-        group.bench_with_input(BenchmarkId::new("seq", &name), &name, |b, _| {
-            assert_eq!(&expected, &seq(&input, t.heavy, t.val));
-            b.iter(|| seq(&input, t.heavy, t.val))
-        });
-
-        group.bench_with_input(BenchmarkId::new("rayon", &name), &name, |b, _| {
-            assert_eq!(&expected, &rayon(&input, t.heavy, t.val));
-            b.iter(|| rayon(&input, t.heavy, t.val))
-        });
-
-        group.bench_with_input(BenchmarkId::new("orx", &name), &name, |b, _| {
-            assert_eq!(&expected, &orx(&input, t.heavy, t.val));
-            b.iter(|| orx(&input, t.heavy, t.val))
-        });
-    }
-
-    group.finish();
+    Exp.bench(c, "first_mf", &treatments, &variants);
 }
-
 criterion_group!(benches, run);
 criterion_main!(benches);
