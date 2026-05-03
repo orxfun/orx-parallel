@@ -59,11 +59,16 @@ impl<R: ParRunner> ParRunner for WithDiagnostics<R> {
         }
     }
 
-    fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState) {
+    fn complete_chunk_non_empty(state: &Self::State, chunk_state: Self::ChunkState) {
         state
             .task_counts
             .push(chunk_state.th_idx, chunk_state.chunk_size);
-        R::complete_chunk(&state.inner, chunk_state.inner);
+        R::complete_chunk_non_empty(&state.inner, chunk_state.inner);
+    }
+
+    fn complete_chunk_empty(state: &Self::State, chunk_state: Self::ChunkState) {
+        state.empty_chunk_counts.increment(chunk_state.th_idx);
+        R::complete_chunk_empty(&state.inner, chunk_state.inner);
     }
 
     fn complete_thread(state: &Self::State, th_idx: usize) {
@@ -87,6 +92,19 @@ impl TaskCounts {
     fn push(&self, th_idx: usize, chunk_size: usize) {
         let vec = unsafe { &mut *(self.0.as_ptr().add(th_idx) as *mut Vec<usize>) };
         vec.push(chunk_size);
+    }
+}
+
+struct EmptyChunkCounts(Vec<usize>);
+
+impl EmptyChunkCounts {
+    fn new(max_num_threads: usize) -> Self {
+        Self((0..max_num_threads).map(|_| 0usize).collect())
+    }
+
+    fn increment(&self, th_idx: usize) {
+        let count = unsafe { &mut *(self.0.as_ptr().add(th_idx) as *mut usize) };
+        *count += 1;
     }
 }
 
@@ -117,6 +135,7 @@ impl ThreadLifetimes {
 pub struct StateWithDiagnostics<S> {
     inner: S,
     task_counts: TaskCounts,
+    empty_chunk_counts: EmptyChunkCounts,
     thread_lifetimes: ThreadLifetimes,
 }
 
@@ -125,6 +144,7 @@ impl<S> StateWithDiagnostics<S> {
         Self {
             inner,
             task_counts: TaskCounts::new(max_num_threads),
+            empty_chunk_counts: EmptyChunkCounts::new(max_num_threads),
             thread_lifetimes: ThreadLifetimes::new(max_num_threads),
         }
     }
@@ -137,11 +157,12 @@ impl<S> StateWithDiagnostics<S> {
         let begin = &self.thread_lifetimes.begin;
         let end = &self.thread_lifetimes.end;
         let counts = &self.task_counts.0;
+        let empty_counts = &self.empty_chunk_counts.0;
 
         let used_threads: BTreeSet<_> = counts
             .iter()
             .enumerate()
-            .filter(|(_, x)| x.iter().sum::<usize>() > 0)
+            .filter(|(t, x)| x.iter().sum::<usize>() > 0 || empty_counts[*t] > 0)
             .map(|(t, _)| t)
             .collect();
 
@@ -169,12 +190,20 @@ impl<S> StateWithDiagnostics<S> {
         println!("{SEP}");
         println!("{SEP} ## Summary Table");
         println!(
-            "{SEP}   {:>6}  {:>10}  {:>10}  {:>9}  {:>9}  {:>9}  {:>7}",
-            "thread", "num_chunks", "num_tasks", "min_chunk", "avg_chunk", "max_chunk", "util%"
+            "{SEP}   {:>6}  {:>10}  {:>10}  {:>11}  {:>9}  {:>9}  {:>9}  {:>9}  {:>7}",
+            "thread",
+            "num_calls",
+            "num_tasks",
+            "empty_calls",
+            "min_chunk",
+            "avg_chunk",
+            "max_chunk",
+            "empty%",
+            "util%"
         );
         println!(
-            "{SEP}   {:->6}  {:->10}  {:->10}  {:->9}  {:->9}  {:->9}  {:->7}",
-            "", "", "", "", "", "", ""
+            "{SEP}   {:->6}  {:->10}  {:->10}  {:->11}  {:->9}  {:->9}  {:->9}  {:->9}  {:->7}",
+            "", "", "", "", "", "", "", "", ""
         );
 
         // Per-thread stats collected for balance metrics below.
@@ -183,13 +212,20 @@ impl<S> StateWithDiagnostics<S> {
         for (t, task_counts) in counts.iter().enumerate() {
             if used_threads.contains(&t) {
                 let total: usize = task_counts.iter().sum();
-                let num_chunks = task_counts.len();
+                let non_empty_calls = task_counts.len();
+                let empty_calls = empty_counts[t];
+                let num_calls = non_empty_calls + empty_calls;
                 let min_chunk = task_counts.iter().copied().min().unwrap_or(0);
                 let max_chunk = task_counts.iter().copied().max().unwrap_or(0);
-                let avg_chunk = if num_chunks == 0 {
+                let avg_chunk = if non_empty_calls == 0 {
                     0
                 } else {
-                    total / num_chunks
+                    total / non_empty_calls
+                };
+                let empty_rate = if num_calls == 0 {
+                    0.0
+                } else {
+                    empty_calls as f64 / num_calls as f64 * 100.0
                 };
 
                 let uptime_ns = match (begin[t], end[t]) {
@@ -200,11 +236,34 @@ impl<S> StateWithDiagnostics<S> {
 
                 thread_tasks.push(total);
                 println!(
-                    "{SEP}   {:>6}  {:>10}  {:>10}  {:>9}  {:>9}  {:>9}  {:>6.1}%",
-                    t, num_chunks, total, min_chunk, avg_chunk, max_chunk, util
+                    "{SEP}   {:>6}  {:>10}  {:>10}  {:>11}  {:>9}  {:>9}  {:>9}  {:>8.1}%  {:>6.1}%",
+                    t,
+                    num_calls,
+                    total,
+                    empty_calls,
+                    min_chunk,
+                    avg_chunk,
+                    max_chunk,
+                    empty_rate,
+                    util
                 );
             }
         }
+
+        let total_non_empty_calls: usize = counts.iter().map(|x| x.len()).sum();
+        let total_empty_calls: usize = empty_counts.iter().sum();
+        let total_calls = total_non_empty_calls + total_empty_calls;
+        let empty_rate = if total_calls == 0 {
+            0.0
+        } else {
+            total_empty_calls as f64 / total_calls as f64 * 100.0
+        };
+
+        println!("{SEP}");
+        println!("{SEP} ## Pull Outcomes");
+        println!("{SEP}   non-empty pulls : {total_non_empty_calls}");
+        println!("{SEP}   empty pulls     : {total_empty_calls}");
+        println!("{SEP}   empty pull rate: {empty_rate:.1}%");
 
         // ── Workload Balance ────────────────────────────────────────────────
         // These two scalars give a quick read on how evenly work was shared:

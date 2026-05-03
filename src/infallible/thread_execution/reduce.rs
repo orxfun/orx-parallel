@@ -18,11 +18,13 @@ where
     loop {
         let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
         let chunk_state = Q::begin_chunk(th_idx, chunk_size);
+        let mut non_empty = false;
 
         match chunk_size {
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
+                        non_empty = true;
                         let result = x.xap(i).into_iter().reduce(&f);
                         if result.is_some() {
                             acc = result;
@@ -41,6 +43,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
+                        non_empty = true;
                         let result = chunk.flat_map(|i| x.xap(i)).reduce(&f);
                         if result.is_some() {
                             acc = result;
@@ -52,7 +55,10 @@ where
                 }
             }
         }
-        Q::complete_chunk(state, chunk_state);
+        match non_empty {
+            true => Q::complete_chunk_non_empty(state, chunk_state),
+            false => Q::complete_chunk_empty(state, chunk_state),
+        }
     }
 
     // fold over the aggregate
@@ -62,11 +68,13 @@ where
             loop {
                 let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
                 let chunk_state = Q::begin_chunk(th_idx, chunk_size);
+                let mut non_empty = false;
 
                 match chunk_size {
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
+                                non_empty = true;
                                 let result = x.xap(i).into_iter().reduce(&f);
                                 if let Some(y) = result {
                                     acc = f(acc, y);
@@ -84,6 +92,7 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
+                                non_empty = true;
                                 let result = chunk.flat_map(|i| x.xap(i)).reduce(&f);
                                 if let Some(y) = result {
                                     acc = f(acc, y);
@@ -95,7 +104,10 @@ where
                     }
                 }
 
-                Q::complete_chunk(state, chunk_state);
+                match non_empty {
+                    true => Q::complete_chunk_non_empty(state, chunk_state),
+                    false => Q::complete_chunk_empty(state, chunk_state),
+                }
             }
 
             Some(acc)

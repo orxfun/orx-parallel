@@ -28,11 +28,13 @@ where
     loop {
         let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
         let chunk_state = Q::begin_chunk(th_idx, chunk_size);
+        let mut non_empty = false;
 
         match chunk_size {
             0 | 1 => {
                 match item_puller.next() {
                     Some(i) => {
+                        non_empty = true;
                         let result = x
                             .xap_use(u, i)
                             .into_iter()
@@ -54,6 +56,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
+                        non_empty = true;
                         let result = chunk
                             .flat_map(|i| x.xap_use(u, i))
                             .reduce(|a, b| f(unsafe { &mut *u }, a, b));
@@ -67,7 +70,10 @@ where
                 }
             }
         }
-        Q::complete_chunk(state, chunk_state);
+        match non_empty {
+            true => Q::complete_chunk_non_empty(state, chunk_state),
+            false => Q::complete_chunk_empty(state, chunk_state),
+        }
     }
 
     // fold over the aggregate
@@ -77,11 +83,13 @@ where
             loop {
                 let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
                 let chunk_state = Q::begin_chunk(th_idx, chunk_size);
+                let mut non_empty = false;
 
                 match chunk_size {
                     0 | 1 => {
                         match item_puller.next() {
                             Some(i) => {
+                                non_empty = true;
                                 let result = x
                                     .xap_use(u, i)
                                     .into_iter()
@@ -102,6 +110,7 @@ where
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
+                                non_empty = true;
                                 let result = chunk
                                     .flat_map(|i| x.xap_use(u, i))
                                     .reduce(|a, b| f(unsafe { &mut *u }, a, b));
@@ -115,7 +124,10 @@ where
                     }
                 }
 
-                Q::complete_chunk(state, chunk_state);
+                match non_empty {
+                    true => Q::complete_chunk_non_empty(state, chunk_state),
+                    false => Q::complete_chunk_empty(state, chunk_state),
+                }
             }
 
             Some(acc)

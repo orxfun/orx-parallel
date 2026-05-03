@@ -60,7 +60,10 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     fn begin_chunk(_: usize, _: usize) -> Self::ChunkState {}
 
     #[inline(always)]
-    fn complete_chunk(_: &Self::State, _: Self::ChunkState) {}
+    fn complete_chunk_non_empty(_: &Self::State, _: Self::ChunkState) {}
+
+    #[inline(always)]
+    fn complete_chunk_empty(_: &Self::State, _: Self::ChunkState) {}
 
     #[inline(always)]
     fn complete_thread(_: &Self::State, _: usize) {}

@@ -46,7 +46,9 @@ pub trait ParRunner: Sized + Sync {
 
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState;
 
-    fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState);
+    fn complete_chunk_non_empty(state: &Self::State, chunk_state: Self::ChunkState);
+
+    fn complete_chunk_empty(state: &Self::State, chunk_state: Self::ChunkState);
 
     fn complete_thread(state: &Self::State, th_idx: usize);
 
@@ -73,6 +75,6 @@ pub trait ParRunner: Sized + Sync {
         chunk_state: Self::ChunkState,
     ) {
         iter.skip_to_end();
-        Self::complete_chunk(state, chunk_state);
+        Self::complete_chunk_non_empty(state, chunk_state);
     }
 }
