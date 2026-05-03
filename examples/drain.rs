@@ -1,14 +1,29 @@
 use orx_parallel::*;
 
+// Each pending order is represented as (order_id, amount_cents).
+type Order = (u32, u64);
+
+fn pending_orders() -> Vec<Order> {
+    (1..=1000).map(|id| (id, 1_000 + id as u64 * 10)).collect()
+}
+
 fn main() {
-    let mut input: Vec<_> = (0..4242).collect();
-    let initial_sum: i32 = input.iter().sum();
+    let mut queue: Vec<Order> = pending_orders();
+    let total_in_queue: u64 = queue.iter().map(|(_, amt)| amt).sum();
 
-    let mid_sum = input.par_drain(1000..2000).reduce(|a, b| a + b).unwrap();
+    // Dispatch the first 200 orders: drain them from the queue and compute
+    // their combined value in parallel. The remaining orders stay in the queue.
+    let batch_size = 200;
+    let batch_total: u64 = queue
+        .par_drain(..batch_size)
+        .map(|(_, amount)| amount)
+        .reduce(|a, b| a + b)
+        .unwrap_or(0);
 
-    assert_eq!(mid_sum, (1000..2000).sum());
-    assert_eq!(input.len(), 4242 - 1000);
+    // The dispatched orders are gone from the queue.
+    assert_eq!(queue.len(), 1000 - batch_size);
 
-    let remaining_sum: i32 = input.iter().sum();
-    assert_eq!(initial_sum, mid_sum + remaining_sum);
+    // The remaining queue total equals the original minus what was dispatched.
+    let remaining_total: u64 = queue.iter().map(|(_, amt)| amt).sum();
+    assert_eq!(batch_total + remaining_total, total_in_queue);
 }
