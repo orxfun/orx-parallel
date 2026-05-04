@@ -33,6 +33,14 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
         (spawned < state.max_num_threads).then_some(spawned)
     }
 
+    fn do_spawn_new_with_queue_len(
+        spawned: usize,
+        state: &Self::State,
+        _size_hint: (usize, Option<usize>),
+    ) -> Option<usize> {
+        Self::do_spawn_new(spawned, state)
+    }
+
     fn new_state(
         &mut self,
         params: Params,

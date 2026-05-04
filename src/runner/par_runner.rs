@@ -38,10 +38,8 @@ pub trait ParRunner: Sized + Sync {
     fn do_spawn_new_with_queue_len(
         spawned: usize,
         state: &Self::State,
-        _queue_lower_bound: usize,
-    ) -> Option<usize> {
-        Self::do_spawn_new(spawned, state)
-    }
+        size_hint: (usize, Option<usize>),
+    ) -> Option<usize>;
 
     /// Creates an initial state for a new parallel computation.
     fn new_state(

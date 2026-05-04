@@ -34,9 +34,9 @@ impl<R: ParRunner> ParRunner for WithDiagnostics<R> {
     fn do_spawn_new_with_queue_len(
         spawned: usize,
         state: &Self::State,
-        queue_lower_bound: usize,
+        size_hint: (usize, Option<usize>),
     ) -> Option<usize> {
-        R::do_spawn_new_with_queue_len(spawned, &state.inner, queue_lower_bound)
+        R::do_spawn_new_with_queue_len(spawned, &state.inner, size_hint)
     }
 
     fn new_state(

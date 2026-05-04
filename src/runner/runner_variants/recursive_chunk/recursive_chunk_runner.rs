@@ -62,12 +62,9 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
     fn do_spawn_new_with_queue_len(
         spawned: usize,
         state: &Self::State,
-        _queue_lower_bound: usize,
+        size_hint: (usize, Option<usize>),
     ) -> Option<usize> {
-        std::println!(
-            "{spawned} => {_queue_lower_bound} ==> {:?}",
-            state.size_hint
-        );
+        std::println!("{spawned} => {size_hint:?} ==> {:?}", state.size_hint);
         if spawned >= state.max_num_threads {
             return None;
         }
