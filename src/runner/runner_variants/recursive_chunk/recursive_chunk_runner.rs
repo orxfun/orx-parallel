@@ -66,7 +66,7 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
     ) -> Option<usize> {
         std::println!(
             "{spawned} => {_queue_lower_bound} ==> {:?}",
-            state.initial_len
+            state.size_hint
         );
         if spawned >= state.max_num_threads {
             return None;
@@ -77,7 +77,7 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
         }
         // For iterators whose length is known up-front, fall back to always-spawn behaviour:
         // the FixedChunkRunner heuristic already sized chunk_size appropriately.
-        if state.initial_len.is_some() {
+        if state.size_hint.1.is_some() {
             return (spawned < state.max_num_threads).then_some(spawned);
         }
         // For unknown-length (recursive) iterators, queue lower bound is too transient during
@@ -93,26 +93,24 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
         max_num_threads: usize,
         size_hint: (usize, Option<usize>),
     ) -> Self::State {
-        // let max_num_threads = match (initial_len, params.num_threads) {
-        //     (None, NumThreads::Auto) => max_num_threads.min(heuristic::MAX_RECURSIVE_AUTO_THREADS),
-        //     _ => max_num_threads,
-        // };
+        let max_num_threads = match (size_hint.1, params.num_threads) {
+            (None, NumThreads::Auto) => max_num_threads.min(heuristic::MAX_RECURSIVE_AUTO_THREADS),
+            _ => max_num_threads,
+        };
 
-        // let chunk_size = match initial_len {
-        //     // Known length: delegate to the standard heuristic (same as FixedChunkRunner).
-        //     Some(_) => {
-        //         fixed_heuristic::compute_chunk_size(params.chunk_size, initial_len, max_num_threads)
-        //     }
-        //     // Unknown length (recursive): use the recursive-specific heuristic.
-        //     None => heuristic::compute_chunk_size(params.chunk_size, max_num_threads),
-        // };
-        // State {
-        //     max_num_threads,
-        //     initial_len,
-        //     chunk_size,
-        // }
-
-        todo!()
+        let chunk_size = match size_hint.1 {
+            // Known length: delegate to the standard heuristic (same as FixedChunkRunner).
+            Some(_) => {
+                fixed_heuristic::compute_chunk_size(params.chunk_size, size_hint, max_num_threads)
+            }
+            // Unknown length (recursive): use the recursive-specific heuristic.
+            None => heuristic::compute_chunk_size(params.chunk_size, max_num_threads),
+        };
+        State {
+            max_num_threads,
+            size_hint,
+            chunk_size,
+        }
     }
 
     #[inline(always)]
