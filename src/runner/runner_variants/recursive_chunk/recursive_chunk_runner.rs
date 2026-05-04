@@ -64,6 +64,10 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
         state: &Self::State,
         _queue_lower_bound: usize,
     ) -> Option<usize> {
+        std::println!(
+            "{spawned} => {_queue_lower_bound} ==> {:?}",
+            state.initial_len
+        );
         if spawned >= state.max_num_threads {
             return None;
         }
@@ -87,26 +91,28 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
         &mut self,
         params: Params,
         max_num_threads: usize,
-        initial_len: Option<usize>,
+        size_hint: (usize, Option<usize>),
     ) -> Self::State {
-        let max_num_threads = match (initial_len, params.num_threads) {
-            (None, NumThreads::Auto) => max_num_threads.min(heuristic::MAX_RECURSIVE_AUTO_THREADS),
-            _ => max_num_threads,
-        };
+        // let max_num_threads = match (initial_len, params.num_threads) {
+        //     (None, NumThreads::Auto) => max_num_threads.min(heuristic::MAX_RECURSIVE_AUTO_THREADS),
+        //     _ => max_num_threads,
+        // };
 
-        let chunk_size = match initial_len {
-            // Known length: delegate to the standard heuristic (same as FixedChunkRunner).
-            Some(_) => {
-                fixed_heuristic::compute_chunk_size(params.chunk_size, initial_len, max_num_threads)
-            }
-            // Unknown length (recursive): use the recursive-specific heuristic.
-            None => heuristic::compute_chunk_size(params.chunk_size, max_num_threads),
-        };
-        State {
-            max_num_threads,
-            initial_len,
-            chunk_size,
-        }
+        // let chunk_size = match initial_len {
+        //     // Known length: delegate to the standard heuristic (same as FixedChunkRunner).
+        //     Some(_) => {
+        //         fixed_heuristic::compute_chunk_size(params.chunk_size, initial_len, max_num_threads)
+        //     }
+        //     // Unknown length (recursive): use the recursive-specific heuristic.
+        //     None => heuristic::compute_chunk_size(params.chunk_size, max_num_threads),
+        // };
+        // State {
+        //     max_num_threads,
+        //     initial_len,
+        //     chunk_size,
+        // }
+
+        todo!()
     }
 
     #[inline(always)]

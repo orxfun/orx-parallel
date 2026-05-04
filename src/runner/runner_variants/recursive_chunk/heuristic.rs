@@ -9,7 +9,7 @@ pub const DEFAULT_RECURSIVE_CHUNK_SIZE: usize = 64;
 /// Cap used for unknown-length recursive workloads when `num_threads` is `Auto`.
 /// Empirically, capping avoids heavy spawn overhead and run-to-run variance that appears
 /// when creating all available threads eagerly for small initial frontiers.
-pub const MAX_RECURSIVE_AUTO_THREADS: usize = 16;
+pub const MAX_RECURSIVE_AUTO_THREADS: usize = 32;
 
 pub fn compute_chunk_size(chunk_size: ChunkSize, _max_num_threads: usize) -> usize {
     match chunk_size {

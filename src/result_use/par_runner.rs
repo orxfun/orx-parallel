@@ -27,12 +27,14 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
+            while let Some(th_idx) =
+                Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0)
+            {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
@@ -67,12 +69,14 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
+            while let Some(th_idx) =
+                Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0)
+            {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
@@ -110,13 +114,15 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         {
             let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
             self.pool_mut().scoped_computation(move |s| {
-                while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
+                while let Some(th_idx) =
+                    Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0)
+                {
                     spawned += 1;
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                         Self::begin_thread(st, th_idx);
@@ -156,12 +162,14 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
+            while let Some(th_idx) =
+                Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0)
+            {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
@@ -197,12 +205,14 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
         self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0) {
+            while let Some(th_idx) =
+                Self::do_spawn_new_with_queue_len(spawned, st, iter.size_hint().0)
+            {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);

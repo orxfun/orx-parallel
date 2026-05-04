@@ -48,7 +48,7 @@ pub trait ParRunner: Sized + Sync {
         &mut self,
         params: Params,
         max_num_threads: usize,
-        initial_len: Option<usize>,
+        size_hint: (usize, Option<usize>),
     ) -> Self::State;
 
     fn begin_thread(state: &Self::State, th_idx: usize);
@@ -76,9 +76,15 @@ pub trait ParRunner: Sized + Sync {
 
     // provided - helpers
 
-    fn nt_state(&mut self, params: Params, len: Option<usize>) -> (usize, Self::State) {
-        let max_nt = self.pool().max_num_threads_for_computation(params, len);
-        let state = self.new_state(params, max_nt, len);
+    fn nt_state(
+        &mut self,
+        params: Params,
+        size_hint: (usize, Option<usize>),
+    ) -> (usize, Self::State) {
+        let max_nt = self
+            .pool()
+            .max_num_threads_for_computation(params, size_hint.1);
+        let state = self.new_state(params, max_nt, size_hint);
         (max_nt, state)
     }
 
