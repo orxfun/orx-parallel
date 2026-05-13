@@ -238,6 +238,12 @@ fn run(c: &mut Criterion) {
             max_children: 8,
             work: 250,
         },
+        Input {
+            num_nodes: 160_000,
+            num_roots: 100,
+            max_children: 8,
+            work: 250,
+        },
     ];
 
     let variants: Vec<_> = all::<Method>().collect();

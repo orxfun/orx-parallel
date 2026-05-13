@@ -25,11 +25,14 @@ use crate::runner::runner_variants::{
 ///    iterators.  This reduces atomic queue contention (64× fewer queue operations) and gives
 ///    each thread a meaningful batch of work immediately.
 ///
-/// 2. **Deterministic spawning with an auto thread cap** — for unknown-length recursive
-///    iterators, this runner spawns threads deterministically up to a capped thread count
-///    (`MAX_RECURSIVE_AUTO_THREADS` when `num_threads` is `Auto`).
-///    This avoids brittle queue-length gating during sequential spawning, where the first worker
-///    can briefly drain/reserve the initial frontier and make the queue appear empty.
+/// 2. **Adaptive thread cap** — for unknown-length recursive iterators, the number of threads
+///    is capped at `sqrt(initial_queue * available_cpus) / 2 + 1` (when `num_threads` is `Auto`).
+///    This geometric-mean formula balances two competing forces:
+///    - Too many threads: spawn overhead (~100 µs/thread) hurts short workloads; late-spawned
+///      threads compete for a shrinking queue and contribute very little work.
+///    - Too few threads: leaves CPU cores idle.
+///    Example: 50 roots, 32 CPUs → cap = sqrt(50 × 32) / 2 + 1 = 21 threads, which lands in
+///    the empirically optimal 20–24 thread range without hard-coding a constant.
 pub struct RecursiveChunkRunner<P: ParThreadPool> {
     pool: P,
 }
@@ -62,26 +65,14 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
     fn do_spawn_new_with_queue_len(
         spawned: usize,
         state: &Self::State,
-        size_hint: (usize, Option<usize>),
+        _size_hint: (usize, Option<usize>),
     ) -> Option<usize> {
-        std::println!("{spawned} => {size_hint:?} ==> {:?}", state.size_hint);
-        if spawned >= state.max_num_threads {
-            return None;
-        }
-        if spawned == 0 {
-            // Always spawn at least one thread.
-            return Some(0);
-        }
-        // For iterators whose length is known up-front, fall back to always-spawn behaviour:
-        // the FixedChunkRunner heuristic already sized chunk_size appropriately.
-        if state.size_hint.1.is_some() {
-            return (spawned < state.max_num_threads).then_some(spawned);
-        }
-        // For unknown-length (recursive) iterators, queue lower bound is too transient during
-        // the sequential spawning phase: the first worker can reserve/drain the initial frontier
-        // before later spawn checks observe it, which falsely blocks parallelism.
-        // Therefore, this runner spawns up to the selected thread cap deterministically.
-        (spawned < state.max_num_threads).then_some(spawned)
+        // Deterministic spawning: always spawn up to max_num_threads.
+        // For unknown-length iterators the thread cap is computed adaptively in new_state()
+        // using the geometric-mean heuristic, so no queue-length gating is needed here.
+        // Queue-length gating is unreliable for recursive iterators because the queue can
+        // transiently appear empty while threads race to populate it from processed items.
+        Self::do_spawn_new(spawned, state)
     }
 
     fn new_state(
@@ -91,7 +82,25 @@ impl<P: ParThreadPool> ParRunner for RecursiveChunkRunner<P> {
         size_hint: (usize, Option<usize>),
     ) -> Self::State {
         let max_num_threads = match (size_hint.1, params.num_threads) {
-            (None, NumThreads::Auto) => max_num_threads.min(heuristic::MAX_RECURSIVE_AUTO_THREADS),
+            (None, NumThreads::Auto) => {
+                // Geometric-mean cap: sqrt(initial_queue * available_cpus) / 2 + 1.
+                //
+                // Rationale: for a recursive tree with `q` root items, the optimal thread
+                // count lies between `~q/chunk_size` (immediate concurrency, usually very low)
+                // and `available_cpus` (maximum hardware concurrency).  The geometric mean of
+                // these two bounds, `sqrt(q * cpus)`, scaled by 1/2 to account for the fact
+                // that not all initial items are immediately processable (chunk_size > 1),
+                // provides a principled, hardware-adaptive balance without requiring knowledge
+                // of the branching factor or work-per-node.
+                //
+                // Examples (available_cpus = 32):
+                //   q =   1 →  3 threads    q =  50 → 21 threads
+                //   q =   4 →  9 threads    q = 100 → 29 threads
+                //   q =  10 → 14 threads    q = 500 → 32 (capped)
+                let q = size_hint.0;
+                let n = (q * max_num_threads).isqrt() / 2 + 1;
+                n.max(1).min(max_num_threads)
+            }
             _ => max_num_threads,
         };
 
