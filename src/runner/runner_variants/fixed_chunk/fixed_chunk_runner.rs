@@ -12,6 +12,10 @@ impl<P: ParThreadPool> FixedChunkRunner<P> {
     pub fn new(pool: P) -> Self {
         Self { pool }
     }
+
+    pub fn with_pool<Q: ParThreadPool>(self, pool: Q) -> FixedChunkRunner<Q> {
+        FixedChunkRunner::new(pool)
+    }
 }
 
 impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
