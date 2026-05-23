@@ -8,3 +8,6 @@ pub use std_default_pool::StdDefaultPool;
 mod sequential;
 #[cfg(not(feature = "std"))]
 pub use sequential::SequentialPool;
+
+#[cfg(feature = "rayon-core")]
+mod rayon_core;
