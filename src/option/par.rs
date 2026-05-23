@@ -4,6 +4,7 @@ use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Map
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{UseClone, UseFun};
 use crate::option::ParOptionIter;
+use crate::pool::ParThreadPool;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, Sum};
@@ -28,6 +29,18 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
+    ) -> impl ParOption<
+        Item = Self::Item,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
+    >;
+
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
     ) -> impl ParOption<
         Item = Self::Item,
         Xap1 = Self::Xap1,
