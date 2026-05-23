@@ -6,3 +6,5 @@ pub use std_default_pool::StdDefaultPool;
 
 #[cfg(not(feature = "std"))]
 mod sequential;
+#[cfg(not(feature = "std"))]
+pub use sequential::SequentialPool;
