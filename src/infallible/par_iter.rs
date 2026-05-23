@@ -6,6 +6,7 @@ use crate::infallible::par_core::ParCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::{Par, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
@@ -93,6 +94,15 @@ where
             exe: exe.with_diagnostics(),
             params,
         }
+    }
+
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
+    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
+        let (iter, xap, exe, params) = self.destruct();
+        let exe = exe.with_pool(pool);
+        ParIter::new(iter, xap, exe, params)
     }
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
