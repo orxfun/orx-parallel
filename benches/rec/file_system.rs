@@ -120,12 +120,13 @@ fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     sum.load(Ordering::Relaxed)
 }
 
-fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
+fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
         .pool(pool)
+        .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
@@ -137,12 +138,13 @@ struct Input {
     num_roots: usize,
     max_children: usize,
     num_threads: usize,
+    chunk_size: usize,
     work: usize,
 }
 
 impl Factors for Input {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "r", "ch", "nt", "w"]
+        vec!["n", "r", "ch", "nt", "cs", "w"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -151,6 +153,7 @@ impl Factors for Input {
             self.num_roots.to_string(),
             self.max_children.to_string(),
             self.num_threads.to_string(),
+            self.chunk_size.to_string(),
             self.work.to_string(),
         ]
     }
@@ -221,7 +224,12 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => seq_sum(&input.fs, input_variant.work),
             Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
-            Method::Orx => orx_sum(&input.pool, &input.fs, input_variant.work),
+            Method::Orx => orx_sum(
+                &input.pool,
+                &input.fs,
+                input_variant.work,
+                input_variant.chunk_size,
+            ),
         }
     }
 
@@ -238,26 +246,31 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let num_threads = [8, 16, 32];
+    let chunk_sizes = [0, 256, 1024];
 
-    let treatments: Vec<_> = num_threads
+    let treatments: Vec<_> = chunk_sizes
         .into_iter()
-        .flat_map(|num_threads| {
-            [
-                Input {
-                    num_nodes: 10_000,
-                    num_roots: 20,
-                    max_children: 6,
-                    num_threads,
-                    work: 250,
-                },
-                Input {
-                    num_nodes: 40_000,
-                    num_roots: 50,
-                    max_children: 8,
-                    num_threads,
-                    work: 250,
-                },
-            ]
+        .flat_map(|chunk_size| {
+            num_threads.into_iter().flat_map(move |num_threads| {
+                [
+                    Input {
+                        num_nodes: 10_000,
+                        num_roots: 20,
+                        max_children: 6,
+                        num_threads,
+                        chunk_size,
+                        work: 250,
+                    },
+                    Input {
+                        num_nodes: 40_000,
+                        num_roots: 50,
+                        max_children: 8,
+                        num_threads,
+                        chunk_size,
+                        work: 250,
+                    },
+                ]
+            })
         })
         .collect();
 
