@@ -3,6 +3,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{UseClone, UseFun};
+use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::result::par_core::ParResultCore;
 use crate::result_use::ParUseResultIter;
@@ -32,6 +33,19 @@ pub trait ParResult:
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
+    ) -> impl ParResult<
+        Item = Self::Item,
+        Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
+    >;
+
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
     ) -> impl ParResult<
         Item = Self::Item,
         Error = Self::Error,
