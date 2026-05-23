@@ -78,26 +78,10 @@ fn build_tree() -> Dir {
 fn main() {
     let root = build_tree();
 
-    // `into_par_recursive` starts with an initial set of items — here just the
-    // root directory — and an `extend` function that enqueues each node's
-    // children when the node is processed.
-    //
-    // The queue grows dynamically as threads discover new nodes, so the full
-    // traversal order need not be known upfront. Threads keep pulling from the
-    // shared queue until it is empty.
-    //
-    // The explicit lifetime `'a` on `extend` unifies the lifetime of items
-    // stored inside the queue (`&&'a Dir`) with the lifetime of the items being
-    // pushed (`dir.children.iter()` yields `&'a Dir`). This is required because
-    // the queue's internal storage is invariant over its element type.
-    fn extend<'a>(dir: &&'a Dir, queue: &Queue<&'a Dir>) {
-        queue.extend(dir.children.iter());
-    }
-
     // After `into_par_recursive` we have a regular `ParIter` — all the usual
     // iterator adaptors work here, just as on any other parallel iterator.
     let total_files: usize = [&root]
-        .into_par_recursive(extend)
+        .into_par_recursive(|dir| dir.children.iter())
         .map(|dir| dir.file_count)
         .sum();
 
@@ -108,7 +92,7 @@ fn main() {
     // Because we have a full `ParIter` we can chain `filter` to restrict the
     // computation to a subset of nodes — here, directories with no children.
     let files_in_leaves: usize = [&root]
-        .into_par_recursive(extend)
+        .into_par_recursive(|dir| dir.children.iter())
         .filter(|dir| dir.children.is_empty())
         .map(|dir| dir.file_count)
         .sum();
@@ -120,7 +104,7 @@ fn main() {
     // `collect` works too — here we gather the names of all `tests` directories
     // anywhere in the tree.
     let mut test_dirs: Vec<&str> = [&root]
-        .into_par_recursive(extend)
+        .into_par_recursive(|dir| dir.children.iter())
         .filter(|dir| dir.name == "tests")
         .map(|dir| dir.name)
         .collect();

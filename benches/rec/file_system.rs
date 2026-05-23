@@ -1,6 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use enum_iterator::{Sequence, all};
-use orx_concurrent_recursive_iter::Queue;
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -120,14 +119,10 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
 }
 
 fn orx_sum(fs: &FileSystem, work: usize) -> u64 {
-    let extend = |idx: &usize, queue: &Queue<usize>| {
-        queue.extend(fs.nodes[*idx].children.iter().copied());
-    };
-
     fs.roots
         .iter()
         .copied()
-        .into_par_recursive(extend)
+        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)

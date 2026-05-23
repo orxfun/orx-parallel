@@ -1,5 +1,4 @@
 use clap::Parser;
-use orx_concurrent_recursive_iter::Queue;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -177,15 +176,11 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
 }
 
 fn orx_sum(fs: &FileSystem, work: usize, args: &Args) -> u64 {
-    let extend = |idx: &usize, queue: &Queue<usize>| {
-        queue.extend(fs.nodes[*idx].children.iter().copied());
-    };
-
     let input = fs
         .roots
         .iter()
         .copied()
-        .into_par_recursive(extend)
+        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
         .num_threads(args.num_threads)
         .chunk_size(args.chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work));
