@@ -53,7 +53,7 @@ all-features = true
 
 [features]
 default = ["std"]
-std = []
+std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 
 [lib]
