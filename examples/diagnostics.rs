@@ -1,6 +1,12 @@
 use clap::Parser;
+#[cfg(feature = "std")]
 use orx_parallel::*;
 use std::hint::black_box;
+
+#[cfg(not(feature = "std"))]
+fn main() {
+    println!("This example requires std");
+}
 
 #[derive(Parser)]
 struct Args {
@@ -36,6 +42,7 @@ fn compute_risk_score(applicant_id: usize, credit_history_len: usize) -> u64 {
         .sum()
 }
 
+#[cfg(feature = "std")]
 fn main() {
     let args = Args::parse();
 

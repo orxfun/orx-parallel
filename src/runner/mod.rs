@@ -5,7 +5,7 @@ pub use par_runner::ParRunner;
 
 // default
 
-pub type DefaultRunner = runner_variants::FixedChunkRunner<crate::pool::StdDefaultPool>;
+pub type DefaultRunner = runner_variants::FixedChunkRunner<crate::pool::DefaultPool>;
 
 pub fn default_runner() -> DefaultRunner {
     DefaultRunner::new(Default::default())
