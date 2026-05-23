@@ -5,7 +5,7 @@ use std::hint::black_box;
 
 #[cfg(not(feature = "std"))]
 fn main() {
-    println!("This example requires std");
+    panic!("This example requires std");
 }
 
 #[derive(Parser)]

@@ -9,7 +9,7 @@ use std::time::Instant;
 
 #[cfg(not(feature = "std"))]
 fn main() {
-    println!("This example requires std");
+    panic!("This example requires std");
 }
 
 #[derive(Clone)]
