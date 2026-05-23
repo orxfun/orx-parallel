@@ -82,6 +82,7 @@ where
         }
     }
 
+    #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
     ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
