@@ -26,6 +26,7 @@ struct Args {
 /// The credit history length (derived from the applicant id) determines how
 /// much work is done per item, producing a naturally uneven workload — exactly
 /// the kind of load where diagnostics are most informative.
+#[cfg(feature = "std")]
 fn compute_risk_score(applicant_id: usize, credit_history_len: usize) -> u64 {
     (0..credit_history_len)
         .map(|month| {
