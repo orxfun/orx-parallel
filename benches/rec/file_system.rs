@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
+use enum_iterator::Sequence;
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -90,12 +90,7 @@ fn seq_sum(fs: &FileSystem, work: usize) -> u64 {
     sum
 }
 
-fn rayon_sum(fs: &FileSystem, work: usize, num_threads: usize) -> u64 {
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build()
-        .expect("failed to build rayon thread pool");
-
+fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     fn spawn_job<'a>(
         scope: &Scope<'a>,
         fs: &'a FileSystem,
@@ -125,12 +120,12 @@ fn rayon_sum(fs: &FileSystem, work: usize, num_threads: usize) -> u64 {
     sum.load(Ordering::Relaxed)
 }
 
-fn orx_sum(fs: &FileSystem, work: usize, num_threads: usize) -> u64 {
+fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .num_threads(num_threads)
+        .pool(pool)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
@@ -187,22 +182,34 @@ impl Factors for Method {
 
 struct Exp;
 
+struct BenchInput {
+    fs: FileSystem,
+    pool: ThreadPool,
+}
+
 impl Experiment for Exp {
     type InputFactors = Input;
 
     type AlgFactors = Method;
 
-    type Input = FileSystem;
+    type Input = BenchInput;
 
     type Output = u64;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
-        FileSystem::generate(
+        let fs = FileSystem::generate(
             input_variant.num_nodes,
             input_variant.num_roots,
             input_variant.max_children,
             42,
-        )
+        );
+
+        let pool = ThreadPoolBuilder::new()
+            .num_threads(input_variant.num_threads)
+            .build()
+            .expect("failed to build rayon thread pool");
+
+        BenchInput { fs, pool }
     }
 
     fn execute(
@@ -212,9 +219,9 @@ impl Experiment for Exp {
         input: &Self::Input,
     ) -> Self::Output {
         match alg_variant {
-            Method::Seq => seq_sum(input, input_variant.work),
-            Method::Rayon => rayon_sum(input, input_variant.work, input_variant.num_threads),
-            Method::Orx => orx_sum(input, input_variant.work, input_variant.num_threads),
+            Method::Seq => seq_sum(&input.fs, input_variant.work),
+            Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
+            Method::Orx => orx_sum(&input.pool, &input.fs, input_variant.work),
         }
     }
 
@@ -224,7 +231,7 @@ impl Experiment for Exp {
         input: &Self::Input,
         output: &Self::Output,
     ) {
-        let expected = seq_sum(input, input_variant.work);
+        let expected = seq_sum(&input.fs, input_variant.work);
         assert_eq!(output, &expected);
     }
 }
@@ -254,7 +261,6 @@ fn run(c: &mut Criterion) {
         })
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
     let variants = vec![Method::Rayon, Method::Orx];
 
     Exp.bench(c, "file_system", &treatments, &variants);
