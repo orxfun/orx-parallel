@@ -7,6 +7,7 @@ use crate::infallible_use::{
 };
 use crate::option_use::ParUseOptionIter;
 use crate::option_use::par_core::ParUseOptionCore;
+use crate::pool::ParThreadPool;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
@@ -30,6 +31,19 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
+    ) -> impl ParUseOption<
+        Item = Self::Item,
+        Use = Self::Use,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
+    >;
+
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
     ) -> impl ParUseOption<
         Item = Self::Item,
         Use = Self::Use,
