@@ -1,5 +1,3 @@
-use core::cmp::Ordering;
-
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
@@ -9,12 +7,14 @@ use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
 };
 use crate::option_use::ParUseOptionIter;
+use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
 };
+use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
@@ -28,6 +28,11 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
+    ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = Self::Xap, Input = Self::Input>;
+
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
     ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = Self::Xap, Input = Self::Input>;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
