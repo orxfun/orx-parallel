@@ -12,10 +12,6 @@ impl<P: ParThreadPool> FixedChunkRunner<P> {
     pub fn new(pool: P) -> Self {
         Self { pool }
     }
-
-    pub fn with_pool<Q: ParThreadPool>(self, pool: Q) -> FixedChunkRunner<Q> {
-        FixedChunkRunner::new(pool)
-    }
 }
 
 impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
@@ -31,6 +27,13 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
 
     fn pool_mut(&mut self) -> &mut Self::Pool {
         &mut self.pool
+    }
+
+    fn with_pool<Q: ParThreadPool>(
+        self,
+        pool: Q,
+    ) -> impl ParRunner<State = Self::State, ChunkState = Self::ChunkState, Pool = Q> {
+        FixedChunkRunner::new(pool)
     }
 
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
