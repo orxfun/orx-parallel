@@ -3,7 +3,9 @@ use clap::Parser;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::{Scope, scope};
+use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
 
@@ -84,7 +86,8 @@ impl FileSystem {
 enum Method {
     Seq,
     Rayon,
-    Orx,
+    OrxRayonPool,
+    OrxNewPool,
     All,
 }
 
@@ -95,10 +98,11 @@ impl core::str::FromStr for Method {
         match s {
             "seq" => Ok(Self::Seq),
             "rayon" => Ok(Self::Rayon),
-            "orx" => Ok(Self::Orx),
+            "orx-rayon" => Ok(Self::OrxRayonPool),
+            "orx-new" => Ok(Self::OrxNewPool),
             "all" => Ok(Self::All),
             _ => Err(format!(
-                "unknown method: {s}; expected one of seq|rayon|orx|all"
+                "unknown method: {s}; expected one of seq|rayon|orx-rayon|orx-new|all"
             )),
         }
     }
@@ -121,7 +125,7 @@ struct Args {
     /// Seed for synthetic file-system generation.
     #[arg(long, default_value_t = 42)]
     seed: u64,
-    /// Which method to run: seq | rayon | orx | all.
+    /// Which method to run: seq | rayon | orx-rayon | orx-new | all.
     #[arg(long, default_value = "all")]
     method: Method,
     /// Number of measured repetitions.
@@ -183,11 +187,55 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
 
 #[cfg(feature = "std")]
 fn orx_sum(fs: &FileSystem, work: usize, args: &Args) -> u64 {
+    let nt = pool_nt(args.num_threads);
+    let pool = ThreadPoolBuilder::new()
+        .num_threads(nt)
+        .build()
+        .expect("failed to build rayon thread pool");
+
     let input = fs
         .roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .pool(&pool)
+        .num_threads(args.num_threads)
+        .chunk_size(args.chunk_size)
+        .map(|idx| fs.nodes[idx].compute_score(work));
+
+    if args.diagnostics {
+        input
+            .runner_with_diagnostics()
+            .reduce(|a, b| a + b)
+            .unwrap_or(0)
+    } else {
+        input.reduce(|a, b| a + b).unwrap_or(0)
+    }
+}
+
+#[cfg(feature = "std")]
+fn pool_nt(num_threads: usize) -> usize {
+    if num_threads == 0 {
+        std::thread::available_parallelism()
+            .map(usize::from)
+            .unwrap_or(1)
+            .max(1)
+    } else {
+        num_threads
+    }
+}
+
+#[cfg(feature = "std")]
+fn orx_sum_new_pool(fs: &FileSystem, work: usize, args: &Args) -> u64 {
+    let nt = pool_nt(args.num_threads);
+    let pool = NewPool::with_max_num_threads(NonZeroUsize::new(nt).expect(">0"));
+
+    let input = fs
+        .roots
+        .iter()
+        .copied()
+        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .pool(pool)
         .num_threads(args.num_threads)
         .chunk_size(args.chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work));
@@ -250,10 +298,11 @@ fn main() {
     println!("baseline seq sum = {baseline}");
 
     let selected: &[Method] = match args.method {
-        Method::All => &[Method::Seq, Method::Rayon, Method::Orx],
+        Method::All => &[Method::Seq, Method::Rayon, Method::OrxRayonPool, Method::OrxNewPool],
         Method::Seq => &[Method::Seq],
         Method::Rayon => &[Method::Rayon],
-        Method::Orx => &[Method::Orx],
+        Method::OrxRayonPool => &[Method::OrxRayonPool],
+        Method::OrxNewPool => &[Method::OrxNewPool],
     };
 
     for method in selected {
@@ -261,7 +310,8 @@ fn main() {
             let _ = match method {
                 Method::Seq => seq_sum(&fs, args.work),
                 Method::Rayon => rayon_sum(&fs, args.work),
-                Method::Orx => orx_sum(&fs, args.work, &args),
+                Method::OrxRayonPool => orx_sum(&fs, args.work, &args),
+                Method::OrxNewPool => orx_sum_new_pool(&fs, args.work, &args),
                 Method::All => unreachable!(),
             };
         }
@@ -274,7 +324,12 @@ fn main() {
         let (sum, _, _, _) = match method {
             Method::Seq => run_one("seq", args.repetitions, || seq_sum(&fs, args.work)),
             Method::Rayon => run_one("rayon", args.repetitions, || rayon_sum(&fs, args.work)),
-            Method::Orx => run_one("orx", args.repetitions, || orx_sum(&fs, args.work, &args)),
+            Method::OrxRayonPool => run_one("orx-rayon", args.repetitions, || {
+                orx_sum(&fs, args.work, &args)
+            }),
+            Method::OrxNewPool => run_one("orx-new", args.repetitions, || {
+                orx_sum_new_pool(&fs, args.work, &args)
+            }),
             Method::All => unreachable!(),
         };
 
