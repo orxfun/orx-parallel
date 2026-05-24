@@ -133,8 +133,8 @@ fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -
         .unwrap_or(0)
 }
 
-    fn orx_sum_new_pool(pool: &NewPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
-        fs.roots
+fn orx_sum_new_pool(pool: &NewPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+    fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
@@ -143,7 +143,7 @@ fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
-    }
+}
 
 #[derive(Clone)]
 struct Input {
