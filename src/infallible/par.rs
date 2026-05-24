@@ -1,5 +1,3 @@
-use core::cmp::Ordering;
-
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
@@ -7,12 +5,14 @@ use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParI
 use crate::infallible::{Xap, xap_variants::Id};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
+use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
 };
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
+use core::cmp::Ordering;
 
 pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     // configuration
@@ -25,6 +25,11 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
+    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
+
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
     ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
 
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;

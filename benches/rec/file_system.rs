@@ -1,10 +1,10 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
+use enum_iterator::Sequence;
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rayon::{Scope, scope};
+use rayon::{Scope, ThreadPool, ThreadPoolBuilder, scope};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[derive(Clone)]
@@ -90,7 +90,7 @@ fn seq_sum(fs: &FileSystem, work: usize) -> u64 {
     sum
 }
 
-fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
+fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     fn spawn_job<'a>(
         scope: &Scope<'a>,
         fs: &'a FileSystem,
@@ -109,35 +109,42 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
     }
 
     let sum = AtomicU64::new(0);
-    scope(|scope| {
-        for root in fs.roots.iter().copied() {
-            spawn_job(scope, fs, root, work, &sum);
-        }
+    pool.install(|| {
+        scope(|scope| {
+            for root in fs.roots.iter().copied() {
+                spawn_job(scope, fs, root, work, &sum);
+            }
+        });
     });
 
     sum.load(Ordering::Relaxed)
 }
 
-fn orx_sum(fs: &FileSystem, work: usize) -> u64 {
+fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .pool(pool)
+        .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
 }
 
+#[derive(Clone)]
 struct Input {
     num_nodes: usize,
     num_roots: usize,
     max_children: usize,
+    num_threads: usize,
+    chunk_size: usize,
     work: usize,
 }
 
 impl Factors for Input {
     fn factor_names() -> Vec<&'static str> {
-        vec!["nodes", "roots", "max_children", "work"]
+        vec!["n", "r", "ch", "nt", "cs", "w"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -145,6 +152,8 @@ impl Factors for Input {
             self.num_nodes.to_string(),
             self.num_roots.to_string(),
             self.max_children.to_string(),
+            self.num_threads.to_string(),
+            self.chunk_size.to_string(),
             self.work.to_string(),
         ]
     }
@@ -176,22 +185,34 @@ impl Factors for Method {
 
 struct Exp;
 
+struct BenchInput {
+    fs: FileSystem,
+    pool: ThreadPool,
+}
+
 impl Experiment for Exp {
     type InputFactors = Input;
 
     type AlgFactors = Method;
 
-    type Input = FileSystem;
+    type Input = BenchInput;
 
     type Output = u64;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
-        FileSystem::generate(
+        let fs = FileSystem::generate(
             input_variant.num_nodes,
             input_variant.num_roots,
             input_variant.max_children,
             42,
-        )
+        );
+
+        let pool = ThreadPoolBuilder::new()
+            .num_threads(input_variant.num_threads)
+            .build()
+            .expect("failed to build rayon thread pool");
+
+        BenchInput { fs, pool }
     }
 
     fn execute(
@@ -201,9 +222,14 @@ impl Experiment for Exp {
         input: &Self::Input,
     ) -> Self::Output {
         match alg_variant {
-            Method::Seq => seq_sum(input, input_variant.work),
-            Method::Rayon => rayon_sum(input, input_variant.work),
-            Method::Orx => orx_sum(input, input_variant.work),
+            Method::Seq => seq_sum(&input.fs, input_variant.work),
+            Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
+            Method::Orx => orx_sum(
+                &input.pool,
+                &input.fs,
+                input_variant.work,
+                input_variant.chunk_size,
+            ),
         }
     }
 
@@ -213,28 +239,42 @@ impl Experiment for Exp {
         input: &Self::Input,
         output: &Self::Output,
     ) {
-        let expected = seq_sum(input, input_variant.work);
+        let expected = seq_sum(&input.fs, input_variant.work);
         assert_eq!(output, &expected);
     }
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = vec![
-        Input {
-            num_nodes: 10_000,
-            num_roots: 20,
-            max_children: 6,
-            work: 250,
-        },
-        Input {
-            num_nodes: 40_000,
-            num_roots: 50,
-            max_children: 8,
-            work: 250,
-        },
-    ];
+    let num_threads = [8, 16, 32];
+    let chunk_sizes = [0, 256, 1024];
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let treatments: Vec<_> = chunk_sizes
+        .into_iter()
+        .flat_map(|chunk_size| {
+            num_threads.into_iter().flat_map(move |num_threads| {
+                [
+                    Input {
+                        num_nodes: 10_000,
+                        num_roots: 20,
+                        max_children: 6,
+                        num_threads,
+                        chunk_size,
+                        work: 250,
+                    },
+                    Input {
+                        num_nodes: 40_000,
+                        num_roots: 50,
+                        max_children: 8,
+                        num_threads,
+                        chunk_size,
+                        work: 250,
+                    },
+                ]
+            })
+        })
+        .collect();
+
+    let variants = vec![Method::Rayon, Method::Orx];
 
     Exp.bench(c, "file_system", &treatments, &variants);
 }

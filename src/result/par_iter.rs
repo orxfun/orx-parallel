@@ -4,6 +4,7 @@ use crate::ParCollectInto;
 use crate::common_par_traits::ParResCommon;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::pool::ParThreadPool;
 use crate::result::par::ParResult;
 use crate::result::par_core::ParResultCore;
 use crate::result::par_runner::ParRunnerRes;
@@ -139,6 +140,30 @@ where
         Size = Self::Size,
     > {
         let (iter, x1, x2, exe, s, params) = self.destruct();
+        ParResultIter {
+            iter,
+            x1,
+            x2,
+            exe: exe.with_diagnostics(),
+            s,
+            params,
+        }
+    }
+
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
+    ) -> impl ParResult<
+        Item = Self::Item,
+        Error = Self::Error,
+        Xap1 = Self::Xap1,
+        M = Self::M,
+        Xap2 = Self::Xap2,
+        Input = Self::Input,
+        Size = Self::Size,
+    > {
+        let (iter, x1, x2, exe, s, params) = self.destruct();
+        let exe = exe.with_pool(pool);
         ParResultIter {
             iter,
             x1,

@@ -1,10 +1,16 @@
 use clap::Parser;
+#[cfg(feature = "std")]
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::{Scope, scope};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
+
+#[cfg(not(feature = "std"))]
+fn main() {
+    panic!("This example requires std");
+}
 
 #[derive(Clone)]
 struct DirNode {
@@ -175,6 +181,7 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
     sum.load(Ordering::Relaxed)
 }
 
+#[cfg(feature = "std")]
 fn orx_sum(fs: &FileSystem, work: usize, args: &Args) -> u64 {
     let input = fs
         .roots
@@ -217,6 +224,7 @@ fn run_one(name: &str, reps: usize, mut f: impl FnMut() -> u64) -> (u64, f64, f6
     (last_sum, avg, min, max)
 }
 
+#[cfg(feature = "std")]
 fn main() {
     let args = Args::parse();
 

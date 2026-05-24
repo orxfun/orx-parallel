@@ -21,6 +21,11 @@ pub trait ParRunner: Sized + Sync {
     /// Mutable reference to the underlying thread pool.
     fn pool_mut(&mut self) -> &mut Self::Pool;
 
+    fn with_pool<Q: ParThreadPool>(
+        self,
+        pool: Q,
+    ) -> impl ParRunner<State = Self::State, ChunkState = Self::ChunkState, Pool = Q>;
+
     // required - orchestration
 
     /// Returns Some of the index of the new thread if it is beneficial to spawn a new thread
