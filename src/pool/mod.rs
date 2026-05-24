@@ -5,6 +5,8 @@ mod pool_impl;
 #[cfg(feature = "std")]
 pub use env::max_num_threads_by_env_variable;
 pub use par_thread_pool::ParThreadPool;
+#[cfg(feature = "std")]
+pub use pool_impl::NewPool;
 
 #[cfg(feature = "std")]
 pub type DefaultPool = pool_impl::StdDefaultPool;
