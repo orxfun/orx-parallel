@@ -11,3 +11,6 @@ pub use sequential::SequentialPool;
 
 #[cfg(feature = "rayon-core")]
 mod rayon_core;
+
+mod new_pool;
+pub use new_pool::NewPool;
