@@ -26,7 +26,7 @@ const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 /// [`max_num_threads`]: ParThreadPool::max_num_threads
 /// [`with_runner`]: crate::ParIter::with_runner
 #[derive(Clone)]
-pub struct NewPool {
+pub struct SimplePool {
     max_num_threads: NonZeroUsize,
     inner: Arc<Inner>,
 }
@@ -212,7 +212,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
     }
 }
 
-impl NewPool {
+impl SimplePool {
     /// By default (`StdDefaultPool::default()`), std thread pool assumes that all threads are available
     /// for the parallel computations.
     ///
@@ -289,7 +289,7 @@ impl NewPool {
     }
 }
 
-impl Default for NewPool {
+impl Default for SimplePool {
     fn default() -> Self {
         let env_max_num_threads = max_num_threads_by_env_variable();
 
@@ -306,7 +306,7 @@ impl Default for NewPool {
     }
 }
 
-impl ParThreadPool for NewPool {
+impl ParThreadPool for SimplePool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -344,7 +344,7 @@ impl ParThreadPool for NewPool {
     }
 }
 
-impl ParThreadPool for &NewPool {
+impl ParThreadPool for &SimplePool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -369,6 +369,6 @@ impl ParThreadPool for &NewPool {
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        <NewPool as ParThreadPool>::run_in_scope(s, work)
+        <SimplePool as ParThreadPool>::run_in_scope(s, work)
     }
 }

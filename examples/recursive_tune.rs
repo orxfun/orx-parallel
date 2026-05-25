@@ -228,7 +228,7 @@ fn pool_nt(num_threads: usize) -> usize {
 #[cfg(feature = "std")]
 fn orx_sum_new_pool(fs: &FileSystem, work: usize, args: &Args) -> u64 {
     let nt = pool_nt(args.num_threads);
-    let pool = NewPool::with_max_num_threads(NonZeroUsize::new(nt).expect(">0"));
+    let pool = SimplePool::with_max_num_threads(NonZeroUsize::new(nt).expect(">0"));
 
     let input = fs
         .roots
@@ -298,7 +298,12 @@ fn main() {
     println!("baseline seq sum = {baseline}");
 
     let selected: &[Method] = match args.method {
-        Method::All => &[Method::Seq, Method::Rayon, Method::OrxRayonPool, Method::OrxNewPool],
+        Method::All => &[
+            Method::Seq,
+            Method::Rayon,
+            Method::OrxRayonPool,
+            Method::OrxNewPool,
+        ],
         Method::Seq => &[Method::Seq],
         Method::Rayon => &[Method::Rayon],
         Method::OrxRayonPool => &[Method::OrxRayonPool],
