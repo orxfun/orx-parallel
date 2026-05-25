@@ -31,6 +31,11 @@ pub struct NewPool {
     inner: Arc<Inner>,
 }
 
+struct Inner {
+    shared: Arc<WorkerShared>,
+    workers: Mutex<Vec<std::thread::JoinHandle<()>>>,
+}
+
 struct WorkerShared {
     state: Mutex<WorkerState>,
     cv: Condvar,
@@ -40,11 +45,6 @@ struct WorkerState {
     shutdown: bool,
     active_scope_addr: Option<usize>,
     queue: VecDeque<Task>,
-}
-
-struct Inner {
-    shared: Arc<WorkerShared>,
-    workers: Mutex<Vec<std::thread::JoinHandle<()>>>,
 }
 
 impl Drop for Inner {
@@ -234,8 +234,9 @@ impl NewPool {
             cv: Condvar::new(),
         });
 
-        let mut workers = Vec::with_capacity(max_num_threads.into());
-        for _ in 0..usize::from(max_num_threads) {
+        let nt: usize = max_num_threads.into();
+        let mut workers = Vec::with_capacity(nt);
+        for _ in 0..nt {
             let shared_cloned = Arc::clone(&shared);
             workers.push(thread::spawn(move || worker_loop(shared_cloned)));
         }
