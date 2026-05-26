@@ -4,7 +4,7 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rayon::{Scope, ThreadPool, ThreadPoolBuilder, scope};
+use rayon::{Scope, ThreadPool, scope};
 use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -223,10 +223,7 @@ impl Experiment for Exp {
             42,
         );
 
-        let rayon_pool = ThreadPoolBuilder::new()
-            .num_threads(input_variant.num_threads)
-            .build()
-            .expect("failed to build rayon thread pool");
+        let rayon_pool = Pool::rayon(input_variant.num_threads);
 
         let new_pool = SimplePool::with_max_num_threads(
             NonZeroUsize::new(input_variant.num_threads).expect(">0"),
