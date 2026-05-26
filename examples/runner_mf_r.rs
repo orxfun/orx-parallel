@@ -209,7 +209,7 @@ fn run_timed(name: &str, f: impl FnOnce() -> Option<u64>) -> (Option<u64>, f64) 
     let start = Instant::now();
     let out = f();
     let elapsed_ms = start.elapsed().as_secs_f64() * 1_000.0;
-    println!("{name:<10} | {elapsed_ms:>9.3} ms | output={out:?}");
+    println!("{name:<10} | {elapsed_ms:>9.3} ms");
     (out, elapsed_ms)
 }
 
