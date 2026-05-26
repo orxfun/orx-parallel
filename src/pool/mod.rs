@@ -10,6 +10,6 @@ pub use par_thread_pool::ParThreadPool;
 pub use pool_impl::SimplePool;
 
 #[cfg(feature = "std")]
-pub type DefaultPool = pool_impl::StdDefaultPool;
+pub type DefaultPool = pool_impl::OncePool;
 #[cfg(not(feature = "std"))]
 pub type DefaultPool = pool_impl::SequentialPool;

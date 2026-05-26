@@ -17,11 +17,11 @@ use core::num::NonZeroUsize;
 /// [`pool`]: crate::Par::pool
 /// [`Pool`]: crate::Pool
 #[derive(Clone, Copy, Debug)]
-pub struct StdDefaultPool {
+pub struct OncePool {
     num_threads: NonZeroUsize,
 }
 
-impl StdDefaultPool {
+impl OncePool {
     /// Assumes (*) a thread pool of `num_threads` threads.
     ///
     /// Note that, this desired number of threads can be overwritten by the following:
@@ -41,14 +41,14 @@ impl StdDefaultPool {
     }
 }
 
-impl Default for StdDefaultPool {
+impl Default for OncePool {
     fn default() -> Self {
         let num_threads = max_num_threads_by_env_and_resource();
         Self { num_threads }
     }
 }
 
-impl ParThreadPool for StdDefaultPool {
+impl ParThreadPool for OncePool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s std::thread::Scope<'s, 'env>
     where
@@ -77,7 +77,7 @@ impl ParThreadPool for StdDefaultPool {
     }
 }
 
-impl ParThreadPool for &StdDefaultPool {
+impl ParThreadPool for &OncePool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s std::thread::Scope<'s, 'env>
     where
