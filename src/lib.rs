@@ -46,5 +46,6 @@ pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(feature = "std")]
 pub use pool::SimplePool;
+pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
