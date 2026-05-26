@@ -223,7 +223,7 @@ fn pool_nt(num_threads: usize) -> usize {
 #[cfg(feature = "std")]
 fn orx_sum_new_pool(fs: &FileSystem, work: usize, args: &Args) -> u64 {
     let nt = pool_nt(args.num_threads);
-    let pool = SimplePool::with_max_num_threads(NonZeroUsize::new(nt).expect(">0"));
+    let pool = BasicPool::with_max_num_threads(NonZeroUsize::new(nt).expect(">0"));
 
     let input = fs
         .roots

@@ -13,6 +13,6 @@ pub use sequential::SequentialPool;
 mod rayon_core;
 
 #[cfg(feature = "std")]
-mod simple_pool;
+mod basic;
 #[cfg(feature = "std")]
-pub use simple_pool::SimplePool;
+pub use basic::BasicPool;

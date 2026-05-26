@@ -133,7 +133,7 @@ fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -
         .unwrap_or(0)
 }
 
-fn orx_sum_new_pool(pool: &SimplePool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+fn orx_sum_new_pool(pool: &BasicPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
@@ -203,7 +203,7 @@ struct Exp;
 struct BenchInput {
     fs: FileSystem,
     rayon_pool: ThreadPool,
-    new_pool: SimplePool,
+    new_pool: BasicPool,
 }
 
 impl Experiment for Exp {
@@ -225,7 +225,7 @@ impl Experiment for Exp {
 
         let rayon_pool = Pool::rayon(input_variant.num_threads).unwrap();
 
-        let new_pool = SimplePool::with_max_num_threads(
+        let new_pool = BasicPool::with_max_num_threads(
             NonZeroUsize::new(input_variant.num_threads).expect(">0"),
         );
 
