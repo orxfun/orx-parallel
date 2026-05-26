@@ -21,7 +21,9 @@ impl Pool {
     ///
     /// [`ThreadPool`]: https://docs.rs/rayon-core/latest/rayon_core/struct.ThreadPool.html
     #[cfg(feature = "rayon-core")]
-    pub fn rayon(num_threads: impl Into<NumThreads>) -> rayon_core::ThreadPool {
+    pub fn rayon(
+        num_threads: impl Into<NumThreads>,
+    ) -> Result<rayon_core::ThreadPool, rayon_core::ThreadPoolBuildError> {
         let num_threads = match num_threads.into() {
             NumThreads::Auto => 0,
             NumThreads::Max(nt) => nt.into(),
@@ -29,6 +31,5 @@ impl Pool {
         rayon_core::ThreadPoolBuilder::new()
             .num_threads(num_threads)
             .build()
-            .expect("failed to build rayon thread pool")
     }
 }
