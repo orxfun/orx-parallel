@@ -1,8 +1,8 @@
 #[cfg(feature = "std")]
-mod std_default_pool;
+mod once;
 
 #[cfg(feature = "std")]
-pub use std_default_pool::StdDefaultPool;
+pub use once::OncePool;
 
 #[cfg(not(feature = "std"))]
 mod sequential;
@@ -11,3 +11,8 @@ pub use sequential::SequentialPool;
 
 #[cfg(feature = "rayon-core")]
 mod rayon_core;
+
+#[cfg(feature = "std")]
+mod basic;
+#[cfg(feature = "std")]
+pub use basic::BasicPool;

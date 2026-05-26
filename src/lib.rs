@@ -44,5 +44,8 @@ pub use ops::{ParExtend, Sum};
 pub use option::ParOption;
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+#[cfg(feature = "std")]
+pub use pool::BasicPool;
+pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;

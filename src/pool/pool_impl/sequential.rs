@@ -1,16 +1,24 @@
 use crate::pool::ParThreadPool;
 use core::num::NonZeroUsize;
 
-/// A 'thread pool' with [`max_num_threads`] of 1.
-/// All computations using this thread pool are executed sequentially by the main thread.
+/// A placeholder _thread pool_ allowed to use only the executing thread.
+/// Therefore, all computations using this thread pool are executed sequentially.
 ///
-/// This is the default thread pool used when "std" feature is disabled.
+/// This is the default **fallback** thread pool used when "std" feature is disabled.
+/// Normally, in no-std environments thread pool to be used by the parallel computation
+/// must be provided by the [`pool`] method to the parallel iterator.
+///
+/// Provided pool must implement [`ParThreadPool`].
+/// This crate provides optional or default implementations, which can be constructed
+/// using the [`Pool`] helper type.
+///
 /// Note that the thread pool to be used for a parallel computation can be set by the
 /// [`with_runner`] transformation separately for each parallel iterator.
 ///
-/// [`max_num_threads`]: ParThreadPool::max_num_threads
-/// [`with_runner`]: crate::ParIter::with_runner
-#[derive(Default, Clone)]
+/// [`pool`]: crate::Par::pool
+/// [`ParThreadPool`]: crate::ParThreadPool
+/// [`Pool`]: crate::Pool
+#[derive(Default, Clone, Copy, Debug)]
 pub struct SequentialPool;
 
 impl ParThreadPool for SequentialPool {
