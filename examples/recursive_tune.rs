@@ -186,7 +186,7 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
 
 #[cfg(feature = "std")]
 fn orx_sum(fs: &FileSystem, work: usize, args: &Args) -> u64 {
-    let pool = Pool::rayon(args.num_threads);
+    let pool = Pool::rayon(args.num_threads).unwrap();
 
     let input = fs
         .roots

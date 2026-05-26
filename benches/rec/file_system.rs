@@ -223,7 +223,7 @@ impl Experiment for Exp {
             42,
         );
 
-        let rayon_pool = Pool::rayon(input_variant.num_threads);
+        let rayon_pool = Pool::rayon(input_variant.num_threads).unwrap();
 
         let new_pool = SimplePool::with_max_num_threads(
             NonZeroUsize::new(input_variant.num_threads).expect(">0"),
