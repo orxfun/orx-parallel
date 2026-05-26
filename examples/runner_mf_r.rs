@@ -61,6 +61,10 @@ struct Args {
     /// Number of warmup runs per method before measured timings.
     #[arg(long, default_value_t = 1)]
     warmup_runs: usize,
+
+    /// Set to true to activate diagnostics printing with orx variants.
+    #[arg(long, default_value_t = false)]
+    diagnostics: bool,
 }
 
 fn values(len: usize) -> Vec<WorkItem> {
@@ -181,28 +185,38 @@ fn run_orx_fixed(
     pool: &rayon_core::ThreadPool,
     data: &[WorkItem],
     task_kind: TaskKind,
+    diagnostics: bool,
 ) -> Option<u64> {
     let len = data.len();
-    data.into_par()
+    let par = data
+        .into_par()
         .runner(Runner::fixed_chunk(pool))
         .num_threads(NUM_THREADS)
         .map(|value| expensive_map(value, task_kind, len))
-        .filter(selective_filter)
-        .reduce(reduce_sum)
+        .filter(selective_filter);
+    match diagnostics {
+        true => par.runner_with_diagnostics().reduce(reduce_sum),
+        false => par.reduce(reduce_sum),
+    }
 }
 
 fn run_orx_dyn(
     pool: &rayon_core::ThreadPool,
     data: &[WorkItem],
     task_kind: TaskKind,
+    diagnostics: bool,
 ) -> Option<u64> {
     let len = data.len();
-    data.into_par()
+    let par = data
+        .into_par()
         .runner(Runner::dynamic_chunk(pool))
         .num_threads(NUM_THREADS)
         .map(|value| expensive_map(value, task_kind, len))
-        .filter(selective_filter)
-        .reduce(reduce_sum)
+        .filter(selective_filter);
+    match diagnostics {
+        true => par.runner_with_diagnostics().reduce(reduce_sum),
+        false => par.reduce(reduce_sum),
+    }
 }
 
 fn run_timed(name: &str, f: impl FnOnce() -> Option<u64>) -> (Option<u64>, f64) {
@@ -239,18 +253,22 @@ fn main() {
     run_warmup(|| run_seq(&data, args.task_kind), args.warmup_runs);
     run_warmup(|| run_rayon(&pool, &data, args.task_kind), args.warmup_runs);
     run_warmup(
-        || run_orx_fixed(&pool, &data, args.task_kind),
+        || run_orx_fixed(&pool, &data, args.task_kind, false),
         args.warmup_runs,
     );
     run_warmup(
-        || run_orx_dyn(&pool, &data, args.task_kind),
+        || run_orx_dyn(&pool, &data, args.task_kind, false),
         args.warmup_runs,
     );
 
     let (seq, _) = run_timed("seq", || run_seq(&data, args.task_kind));
     let (rayon, _) = run_timed("rayon", || run_rayon(&pool, &data, args.task_kind));
-    let (orx_fixed, _) = run_timed("orx-fixed", || run_orx_fixed(&pool, &data, args.task_kind));
-    let (orx_dyn, _) = run_timed("orx-dyn", || run_orx_dyn(&pool, &data, args.task_kind));
+    let (orx_fixed, _) = run_timed("orx-fixed", || {
+        run_orx_fixed(&pool, &data, args.task_kind, args.diagnostics)
+    });
+    let (orx_dyn, _) = run_timed("orx-dyn", || {
+        run_orx_dyn(&pool, &data, args.task_kind, args.diagnostics)
+    });
 
     assert_eq!(rayon, seq, "rayon output mismatch");
     assert_eq!(orx_fixed, seq, "orx-fixed output mismatch");
