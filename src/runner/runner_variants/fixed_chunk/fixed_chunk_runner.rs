@@ -59,7 +59,7 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     fn begin_thread(_: &Self::State, _: usize) {}
 
     #[inline(always)]
-    fn next_chunk_size(state: &Self::State, _: Option<usize>) -> usize {
+    fn next_chunk_size(state: &Self::State, _: (usize, Option<usize>)) -> usize {
         state.chunk_size
     }
 

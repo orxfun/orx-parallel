@@ -53,8 +53,8 @@ impl<R: ParRunner> ParRunner for WithDiagnostics<R> {
         R::begin_thread(&state.inner, th_idx);
     }
 
-    fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize {
-        R::next_chunk_size(&state.inner, remaining)
+    fn next_chunk_size(state: &Self::State, size_hint: (usize, Option<usize>)) -> usize {
+        R::next_chunk_size(&state.inner, size_hint)
     }
 
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState {

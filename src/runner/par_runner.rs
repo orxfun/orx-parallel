@@ -45,9 +45,9 @@ pub trait ParRunner: Sized + Sync {
 
     fn begin_thread(state: &Self::State, th_idx: usize);
 
-    /// Returns the next chunk size to be pulled from the input with `remaining` length
-    /// for the current `state`.
-    fn next_chunk_size(state: &Self::State, remaining: Option<usize>) -> usize;
+    /// Returns the next chunk size to be pulled from the input with remaining length
+    /// provided by the `size_hint` for the current `state`.
+    fn next_chunk_size(state: &Self::State, size_hint: (usize, Option<usize>)) -> usize;
 
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState;
 
