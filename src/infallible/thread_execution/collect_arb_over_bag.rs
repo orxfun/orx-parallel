@@ -21,7 +21,7 @@ pub fn collect_arb_over_bag<Q, I, X, P>(
     let mut item_puller = iter.item_puller();
 
     loop {
-        let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
+        let chunk_size = Q::next_chunk_size(state, iter.size_hint());
         let chunk_state = Q::begin_chunk(th_idx, chunk_size);
 
         match chunk_size {

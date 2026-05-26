@@ -27,7 +27,7 @@ where
 
     // discover first aggregate
     loop {
-        let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
+        let chunk_size = Q::next_chunk_size(state, iter.size_hint());
         let chunk_state = Q::begin_chunk(th_idx, chunk_size);
 
         match chunk_size {
@@ -85,7 +85,7 @@ where
         None => None,
         Some(mut acc) => {
             loop {
-                let chunk_size = Q::next_chunk_size(state, iter.try_get_len());
+                let chunk_size = Q::next_chunk_size(state, iter.size_hint());
                 let chunk_state = Q::begin_chunk(th_idx, chunk_size);
 
                 match chunk_size {
