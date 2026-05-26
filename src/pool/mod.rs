@@ -1,4 +1,5 @@
 mod env;
+mod new_pool;
 mod par_thread_pool;
 mod pool_impl;
 
