@@ -18,7 +18,7 @@ use core::num::NonZeroUsize;
 /// [`pool`]: crate::Par::pool
 /// [`ParThreadPool`]: crate::ParThreadPool
 /// [`Pool`]: crate::Pool
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct SequentialPool;
 
 impl ParThreadPool for SequentialPool {
