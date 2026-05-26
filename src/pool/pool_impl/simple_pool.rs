@@ -213,7 +213,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 }
 
 impl SimplePool {
-    /// By default (`StdDefaultPool::default()`), std thread pool assumes that all threads are available
+    /// By default (`OncePool::default()`), std thread pool assumes that all threads are available
     /// for the parallel computations.
     ///
     /// Constructing the pool with this method makes sure that parallel computations cannot use more than
