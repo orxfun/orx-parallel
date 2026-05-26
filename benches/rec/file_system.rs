@@ -203,7 +203,7 @@ struct Exp;
 struct BenchInput {
     fs: FileSystem,
     rayon_pool: ThreadPool,
-    new_pool: BasicPool,
+    basic_pool: BasicPool,
 }
 
 impl Experiment for Exp {
@@ -224,15 +224,12 @@ impl Experiment for Exp {
         );
 
         let rayon_pool = Pool::rayon(input_variant.num_threads).unwrap();
-
-        let new_pool = BasicPool::with_max_num_threads(
-            NonZeroUsize::new(input_variant.num_threads).expect(">0"),
-        );
+        let basic_pool = Pool::basic(input_variant.num_threads);
 
         BenchInput {
             fs,
             rayon_pool,
-            new_pool,
+            basic_pool,
         }
     }
 
@@ -252,7 +249,7 @@ impl Experiment for Exp {
                 input_variant.chunk_size,
             ),
             Method::OrxNew => orx_sum_new_pool(
-                &input.new_pool,
+                &input.basic_pool,
                 &input.fs,
                 input_variant.work,
                 input_variant.chunk_size,
