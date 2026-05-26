@@ -5,10 +5,10 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::collections::LinkedList;
+use std::{collections::LinkedList, hint::black_box};
 
 fn f(a: &u64) -> bool {
-    !(a + 7).is_multiple_of(11)
+    !black_box((a + 7).is_multiple_of(11))
 }
 
 struct Input {
@@ -36,9 +36,12 @@ enum Method {
     SeqVec,
     RayonVec,
     RayonVecList,
-    OrxVec,
-    OrxArbVec,
-    OrxArbVecVec,
+    OrxVecFix,
+    OrxArbVecFix,
+    OrxArbVecVecFix,
+    OrxVecDyn,
+    OrxArbVecDyn,
+    OrxArbVecVecDyn,
 }
 
 impl Factors for Method {
@@ -52,9 +55,12 @@ impl Factors for Method {
                 Self::SeqVec => "seq-vec",
                 Self::RayonVec => "rayon-vec",
                 Self::RayonVecList => "rayon-veclist",
-                Self::OrxVec => "orx-vec",
-                Self::OrxArbVec => "orx-arb-vec",
-                Self::OrxArbVecVec => "orx-arb-vecvec",
+                Self::OrxVecFix => "orx-vec-fix",
+                Self::OrxArbVecFix => "orx-arb-vec-fix",
+                Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
+                Self::OrxVecDyn => "orx-vec-dyn",
+                Self::OrxArbVecDyn => "orx-arb-vec-dyn",
+                Self::OrxArbVecVecDyn => "orx-arb-vec2-dyn",
             }
             .to_string(),
         ]
@@ -102,26 +108,70 @@ impl Experiment for Exp {
                 false,
                 Output::VecList(input.into_par_iter().copied().filter(f).collect_vec_list()),
             ),
-            Method::OrxVec => (
+            Method::OrxVecFix => (
                 true,
-                Output::Vec(input.into_par().copied().filter(f).collect()),
+                Output::Vec(
+                    input
+                        .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .copied()
+                        .filter(f)
+                        .collect(),
+                ),
             ),
-            Method::OrxArbVec => (
+            Method::OrxArbVecFix => (
                 false,
                 Output::Vec(
                     input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .filter(f)
                         .collect(),
                 ),
             ),
-            Method::OrxArbVecVec => (
+            Method::OrxArbVecVecFix => (
                 false,
                 Output::VecVec(
                     input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .copied()
+                        .filter(f)
+                        .collect(),
+                ),
+            ),
+            Method::OrxVecDyn => (
+                true,
+                Output::Vec(
+                    input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .copied()
+                        .filter(f)
+                        .collect(),
+                ),
+            ),
+            Method::OrxArbVecDyn => (
+                false,
+                Output::Vec(
+                    input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .copied()
+                        .filter(f)
+                        .collect(),
+                ),
+            ),
+            Method::OrxArbVecVecDyn => (
+                false,
+                Output::VecVec(
+                    input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .filter(f)

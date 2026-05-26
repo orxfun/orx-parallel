@@ -88,7 +88,7 @@ impl Factors for Method {
                 Self::RayonVecList => "rayon-veclist",
                 Self::OrxVec => "orx-vec",
                 Self::OrxArbVec => "orx-arb-vec",
-                Self::OrxArbVecVec => "orx-arb-vecvec",
+                Self::OrxArbVecVec => "orx-arb-vec2",
             }
             .to_string(),
         ]
