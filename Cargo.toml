@@ -76,6 +76,13 @@ name = "rec-file-system"
 harness = false
 path = "benches/rec/file_system.rs"
 
+## benchmarks - runner
+
+[[bench]]
+name = "runner-mf-r"
+harness = false
+path = "benches/runner/mf_r.rs"
+
 ## benchmarks - first
 
 [[bench]]

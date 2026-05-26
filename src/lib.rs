@@ -34,7 +34,6 @@ mod runner;
 mod sizes;
 
 pub use collectables::ParCollectInto;
-// pub use common_par_traits::ParInfCommon;
 pub use infallible::{EnumeratePar, Par};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
