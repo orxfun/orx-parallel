@@ -3,7 +3,6 @@ use clap::Parser;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rayon::ThreadPoolBuilder;
 use rayon::{Scope, scope};
 use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -187,11 +186,7 @@ fn rayon_sum(fs: &FileSystem, work: usize) -> u64 {
 
 #[cfg(feature = "std")]
 fn orx_sum(fs: &FileSystem, work: usize, args: &Args) -> u64 {
-    let nt = pool_nt(args.num_threads);
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(nt)
-        .build()
-        .expect("failed to build rayon thread pool");
+    let pool = Pool::rayon(args.num_threads);
 
     let input = fs
         .roots
