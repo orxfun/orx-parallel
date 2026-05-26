@@ -1,9 +1,9 @@
 mod fixed_chunk;
 pub use fixed_chunk::FixedChunkRunner;
 
-// #[cfg(feature = "experimental")]
-// #[allow(dead_code)]
+#[cfg(feature = "std")]
 mod dynamic_chunk_runner;
+#[cfg(feature = "std")]
 pub use dynamic_chunk_runner::DynChunkRunner;
 
 #[cfg(feature = "std")]

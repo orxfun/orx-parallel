@@ -1,5 +1,7 @@
 use crate::ParThreadPool;
-use crate::runner::runner_variants::{DynChunkRunner, FixedChunkRunner};
+#[cfg(feature = "std")]
+use crate::runner::runner_variants::DynChunkRunner;
+use crate::runner::runner_variants::FixedChunkRunner;
 
 pub struct Runner;
 
@@ -8,6 +10,7 @@ impl Runner {
         FixedChunkRunner::new(pool)
     }
 
+    #[cfg(feature = "std")]
     pub fn dynamic_chunk<P: ParThreadPool>(pool: P) -> DynChunkRunner<P> {
         DynChunkRunner::new(pool)
     }
