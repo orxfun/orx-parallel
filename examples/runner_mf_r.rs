@@ -8,10 +8,10 @@ use std::time::Instant;
 
 const NUM_THREADS: usize = 16;
 const HOMOGENEOUS_WORK: usize = 96;
-const HETEROGENEOUS_LIGHT_WORK: usize = 24;
-const HETEROGENEOUS_MEDIUM_WORK: usize = 320;
+const HETEROGENEOUS_LIGHT_WORK: usize = 1;
+const HETEROGENEOUS_MEDIUM_WORK: usize = 20;
 const HETEROGENEOUS_HEAVY_WORK: usize = 2200;
-const HETEROGENEOUS_EXTREME_WORK: usize = 6200;
+const HETEROGENEOUS_EXTREME_WORK: usize = 66200;
 
 #[derive(Clone, Copy)]
 struct WorkItem {
