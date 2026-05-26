@@ -6,7 +6,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-fn heterogeneous_map(heterogeneoity_level: f64, i: u64) -> u64 {
+fn heterogeneous_map(heterogeneity_level: f64, i: u64) -> u64 {
     fn fibonacci(n: u64) -> u64 {
         let mut a = 0;
         let mut b = 1;
@@ -23,7 +23,7 @@ fn heterogeneous_map(heterogeneoity_level: f64, i: u64) -> u64 {
         let _: u32 = rng.random();
     }
 
-    let n = match rng.random_bool(heterogeneoity_level) {
+    let n = match rng.random_bool(heterogeneity_level) {
         true => rng.random_range(10000..20000),
         false => rng.random_range(1..100),
     };
@@ -34,7 +34,7 @@ fn heterogeneous_map(heterogeneoity_level: f64, i: u64) -> u64 {
 #[derive(Clone, Copy)]
 struct Input {
     n: usize,
-    heterogeneoity_level: f64,
+    heterogeneity_level: f64,
 }
 
 impl Factors for Input {
@@ -45,7 +45,7 @@ impl Factors for Input {
     fn factor_levels(&self) -> Vec<String> {
         vec![
             format!("2e{}", self.n),
-            format!("{:4}", self.heterogeneoity_level),
+            format!("{:4}", self.heterogeneity_level),
         ]
     }
 }
@@ -96,7 +96,7 @@ impl Experiment for Exp {
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
-        let h = input_variant.heterogeneoity_level;
+        let h = input_variant.heterogeneity_level;
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon => input.par_iter().map(|x| heterogeneous_map(h, *x)).max(),
@@ -109,7 +109,7 @@ impl Experiment for Exp {
         input_variant: &Self::InputFactors,
         input: &Self::Input,
     ) -> Option<Self::Output> {
-        let h = input_variant.heterogeneoity_level;
+        let h = input_variant.heterogeneity_level;
         Some(input.iter().map(|x| heterogeneous_map(h, *x)).max())
     }
 }
@@ -118,51 +118,51 @@ fn run(c: &mut Criterion) {
     let treatments = [
         Input {
             n: 10,
-            heterogeneoity_level: 0.001,
+            heterogeneity_level: 0.001,
         },
         Input {
             n: 10,
-            heterogeneoity_level: 0.011,
+            heterogeneity_level: 0.011,
         },
         Input {
             n: 10,
-            heterogeneoity_level: 0.101,
+            heterogeneity_level: 0.101,
         },
         Input {
             n: 10,
-            heterogeneoity_level: 0.201,
+            heterogeneity_level: 0.201,
         },
         Input {
             n: 12,
-            heterogeneoity_level: 0.001,
+            heterogeneity_level: 0.001,
         },
         Input {
             n: 12,
-            heterogeneoity_level: 0.011,
+            heterogeneity_level: 0.011,
         },
         Input {
             n: 12,
-            heterogeneoity_level: 0.101,
+            heterogeneity_level: 0.101,
         },
         Input {
             n: 12,
-            heterogeneoity_level: 0.201,
+            heterogeneity_level: 0.201,
         },
         Input {
             n: 14,
-            heterogeneoity_level: 0.001,
+            heterogeneity_level: 0.001,
         },
         Input {
             n: 14,
-            heterogeneoity_level: 0.011,
+            heterogeneity_level: 0.011,
         },
         Input {
             n: 14,
-            heterogeneoity_level: 0.101,
+            heterogeneity_level: 0.101,
         },
         Input {
             n: 14,
-            heterogeneoity_level: 0.201,
+            heterogeneity_level: 0.201,
         },
     ];
 
