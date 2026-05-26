@@ -1,21 +1,23 @@
-use crate::pool::{ParThreadPool, env::max_num_threads_by_env_and_resource};
+use crate::{
+    NumThreads,
+    pool::{ParThreadPool, env::max_num_threads_by_env_and_resource},
+};
 use core::num::NonZeroUsize;
 
-/// Native standard thread pool.
+/// A _one-time-use_ thread pool.
 ///
-/// This is the default thread pool used when "std" feature is enabled.
-/// Note that the thread pool to be used for a parallel computation can be set by the
-/// [`with_runner`] transformation separately for each parallel iterator.
+/// This is not an actual thread pool, rather a configuration on number of threads to be spawned.
+/// Desired threads will be spawned just before the computation starts and will be released right after.
+/// Therefore, it may be considered as a _one-time-use_ thread pool.
 ///
-/// Uses `std::thread::scope` and `scope.spawn(..)` to distribute work to threads.
+/// This is also the default thread pool used when "std" feature is enabled.
+/// Therefore, "orx-parallel" will not create and hold on to a thread pool unless it is explicitly created.
 ///
-/// Value of [`max_num_threads`] is determined as the minimum of:
+/// On the other hand, in order to reduce the overhead of spawning threads, thread pools can be created
+/// using [`Pool`] methods and passed to the parallel iterators using the [`pool`] transformation.
 ///
-/// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
-/// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", when set.
-///
-/// [`max_num_threads`]: ParThreadPool::max_num_threads
-/// [`with_runner`]: crate::ParIter::with_runner
+/// [`pool`]: crate::Par::pool
+/// [`Pool`]: crate::Pool
 #[derive(Clone)]
 pub struct StdDefaultPool {
     num_threads: NonZeroUsize,
@@ -32,8 +34,11 @@ impl StdDefaultPool {
     /// (*) This is not an actual thread pool, rather a configuration on number of threads to be spawned.
     /// Desired threads will be spawned just before the computation starts and will be released right after.
     /// Therefore, it may be considered as a _one-time-use_ thread pool.
-    pub fn new(num_threads: NonZeroUsize) -> Self {
-        let num_threads = max_num_threads_by_env_and_resource().min(num_threads);
+    pub fn new(num_threads: NumThreads) -> Self {
+        let num_threads = match num_threads {
+            NumThreads::Auto => max_num_threads_by_env_and_resource(),
+            NumThreads::Max(n) => max_num_threads_by_env_and_resource().min(n),
+        };
         Self { num_threads }
     }
 
