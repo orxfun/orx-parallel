@@ -1,7 +1,5 @@
-use crate::pool::{ParThreadPool, max_num_threads_by_env_variable};
+use crate::pool::{ParThreadPool, env::max_num_threads_by_env_and_resource};
 use core::num::NonZeroUsize;
-
-const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 
 /// Native standard thread pool.
 ///
@@ -20,10 +18,25 @@ const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
 /// [`with_runner`]: crate::ParIter::with_runner
 #[derive(Clone)]
 pub struct StdDefaultPool {
-    max_num_threads: NonZeroUsize,
+    num_threads: NonZeroUsize,
 }
 
 impl StdDefaultPool {
+    /// Assumes (*) a thread pool of `num_threads` threads.
+    ///
+    /// Note that, this desired number of threads can be overwritten by the following:
+    /// - if the system has `n < num_threads` available threads, computation will use `n` threads.
+    /// - if ORX_PARALLEL_MAX_NUM_THREADS environment variable exists with value `m < num_threads`,
+    ///   computation will use `m` threads.
+    ///
+    /// (*) This is not an actual thread pool, rather a configuration on number of threads to be spawned.
+    /// Desired threads will be spawned just before the computation starts and will be released right after.
+    /// Therefore, it may be considered as a _one-time-use_ thread pool.
+    pub fn new(num_threads: NonZeroUsize) -> Self {
+        let num_threads = max_num_threads_by_env_and_resource().min(num_threads);
+        Self { num_threads }
+    }
+
     /// By default (`StdDefaultPool::default()`), std thread pool assumes that all threads are available
     /// for the parallel computations.
     ///
@@ -31,8 +44,8 @@ impl StdDefaultPool {
     /// `max_num_threads` threads.
     pub fn with_max_num_threads(max_num_threads: NonZeroUsize) -> Self {
         let mut pool = Self::default();
-        if max_num_threads < pool.max_num_threads {
-            pool.max_num_threads = max_num_threads;
+        if max_num_threads < pool.num_threads {
+            pool.num_threads = max_num_threads;
         }
         pool
     }
@@ -40,18 +53,8 @@ impl StdDefaultPool {
 
 impl Default for StdDefaultPool {
     fn default() -> Self {
-        let env_max_num_threads = max_num_threads_by_env_variable();
-
-        let ava_max_num_threads = std::thread::available_parallelism().ok();
-
-        let max_num_threads = match (env_max_num_threads, ava_max_num_threads) {
-            (Some(env), Some(ava)) => env.min(ava),
-            (Some(env), None) => env,
-            (None, Some(ava)) => ava,
-            (None, None) => MAX_UNSET_NUM_THREADS,
-        };
-
-        Self { max_num_threads }
+        let num_threads = max_num_threads_by_env_and_resource();
+        Self { num_threads }
     }
 }
 
@@ -63,7 +66,7 @@ impl ParThreadPool for StdDefaultPool {
         'env: 'scope + 's;
 
     fn max_num_threads(&self) -> NonZeroUsize {
-        self.max_num_threads
+        self.num_threads
     }
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
@@ -92,7 +95,7 @@ impl ParThreadPool for &StdDefaultPool {
         'env: 'scope + 's;
 
     fn max_num_threads(&self) -> NonZeroUsize {
-        self.max_num_threads
+        self.num_threads
     }
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
