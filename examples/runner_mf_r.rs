@@ -50,6 +50,10 @@ struct Args {
     /// Input length exponent n where len = 2^n.
     #[arg(long, default_value_t = 20)]
     len_exp: usize,
+
+    /// Number of warmup runs per method before measured timings.
+    #[arg(long, default_value_t = 1)]
+    warmup_runs: usize,
 }
 
 fn values(len: usize) -> Vec<u64> {
@@ -136,21 +140,39 @@ fn run_timed(name: &str, f: impl FnOnce() -> Option<u64>) -> (Option<u64>, f64) 
     (out, elapsed_ms)
 }
 
+fn run_warmup(mut f: impl FnMut() -> Option<u64>, warmup_runs: usize) {
+    for _ in 0..warmup_runs {
+        let _ = f();
+    }
+}
+
 fn main() {
     let args = Args::parse();
     assert!(args.len_exp < usize::BITS as usize, "len_exp is too large");
 
     let len = 1usize << args.len_exp;
     println!(
-        "runner_mf_r example: task_kind={} len_exp={} len={} threads={}",
+        "runner_mf_r example: task_kind={} len_exp={} len={} threads={} warmup_runs={}",
         args.task_kind.as_str(),
         args.len_exp,
         len,
-        NUM_THREADS
+        NUM_THREADS,
+        args.warmup_runs
     );
 
     let data = values(len);
     let pool = Pool::rayon(NUM_THREADS).expect("failed to build rayon thread pool");
+
+    run_warmup(|| run_seq(&data, args.task_kind), args.warmup_runs);
+    run_warmup(|| run_rayon(&pool, &data, args.task_kind), args.warmup_runs);
+    run_warmup(
+        || run_orx_fixed(&pool, &data, args.task_kind),
+        args.warmup_runs,
+    );
+    run_warmup(
+        || run_orx_dyn(&pool, &data, args.task_kind),
+        args.warmup_runs,
+    );
 
     let (seq, _) = run_timed("seq", || run_seq(&data, args.task_kind));
     let (rayon, _) = run_timed("rayon", || run_rayon(&pool, &data, args.task_kind));
