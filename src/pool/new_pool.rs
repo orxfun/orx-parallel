@@ -1,5 +1,5 @@
 #[cfg(feature = "std")]
-use crate::{NumThreads, pool::pool_impl::OncePool};
+use crate::{BasicPool, NumThreads, pool::pool_impl::OncePool};
 
 pub struct Pool;
 
@@ -7,6 +7,11 @@ impl Pool {
     #[cfg(feature = "std")]
     pub fn once(num_threads: impl Into<NumThreads>) -> OncePool {
         OncePool::new(num_threads)
+    }
+
+    #[cfg(feature = "std")]
+    pub fn basic(num_threads: impl Into<NumThreads>) -> BasicPool {
+        BasicPool::new(num_threads)
     }
 
     /// Creates a rayon [`ThreadPool`].

@@ -1,4 +1,6 @@
-use crate::pool::{ParThreadPool, max_num_threads_by_env_variable};
+use crate::NumThreads;
+use crate::pool::ParThreadPool;
+use crate::pool::env::max_num_threads_by_env_and_resource;
 use core::num::NonZeroUsize;
 use std::any::Any;
 use std::boxed::Box;
@@ -9,27 +11,6 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use std::vec::Vec;
-
-const MAX_UNSET_NUM_THREADS: NonZeroUsize = NonZeroUsize::new(8).expect(">0");
-
-/// Native standard thread pool with persistent workers.
-///
-/// This is the default thread pool used when "std" feature is enabled.
-/// Note that the thread pool to be used for a parallel computation can be set by the
-/// [`with_runner`] transformation separately for each parallel iterator.
-///
-/// Value of [`max_num_threads`] is determined as the minimum of:
-///
-/// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
-/// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", when set.
-///
-/// [`max_num_threads`]: ParThreadPool::max_num_threads
-/// [`with_runner`]: crate::ParIter::with_runner
-#[derive(Clone)]
-pub struct BasicPool {
-    max_num_threads: NonZeroUsize,
-    inner: Arc<Inner>,
-}
 
 struct Inner {
     shared: Arc<WorkerShared>,
@@ -212,19 +193,38 @@ fn worker_loop(shared: Arc<WorkerShared>) {
     }
 }
 
-impl BasicPool {
-    /// By default (`OncePool::default()`), std thread pool assumes that all threads are available
-    /// for the parallel computations.
-    ///
-    /// Constructing the pool with this method makes sure that parallel computations cannot use more than
-    /// `max_num_threads` threads.
-    pub fn with_max_num_threads(max_num_threads: NonZeroUsize) -> Self {
-        let mut pool = Self::default();
-        pool.max_num_threads = max_num_threads.min(pool.max_num_threads);
-        pool
-    }
+/// Native standard thread pool with persistent workers.
+///
+/// This is the default thread pool used when "std" feature is enabled.
+/// Note that the thread pool to be used for a parallel computation can be set by the
+/// [`with_runner`] transformation separately for each parallel iterator.
+///
+/// Value of [`max_num_threads`] is determined as the minimum of:
+///
+/// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
+/// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", when set.
+///
+/// [`max_num_threads`]: ParThreadPool::max_num_threads
+/// [`with_runner`]: crate::ParIter::with_runner
+#[derive(Clone)]
+pub struct BasicPool {
+    max_num_threads: NonZeroUsize,
+    inner: Arc<Inner>,
+}
 
-    fn new(max_num_threads: NonZeroUsize) -> Self {
+impl Default for BasicPool {
+    fn default() -> Self {
+        Self::new(NumThreads::Auto)
+    }
+}
+
+impl BasicPool {
+    pub fn new(num_threads: impl Into<NumThreads>) -> Self {
+        let num_threads = match num_threads.into() {
+            NumThreads::Auto => max_num_threads_by_env_and_resource(),
+            NumThreads::Max(n) => max_num_threads_by_env_and_resource().min(n),
+        };
+
         let shared = Arc::new(WorkerShared {
             state: Mutex::new(WorkerState {
                 shutdown: false,
@@ -234,7 +234,7 @@ impl BasicPool {
             cv: Condvar::new(),
         });
 
-        let nt: usize = max_num_threads.into();
+        let nt: usize = num_threads.into();
         let mut workers = Vec::with_capacity(nt);
         for _ in 0..nt {
             let shared_cloned = Arc::clone(&shared);
@@ -242,7 +242,7 @@ impl BasicPool {
         }
 
         Self {
-            max_num_threads,
+            max_num_threads: num_threads,
             inner: Arc::new(Inner {
                 shared,
                 workers: Mutex::new(workers),
@@ -286,23 +286,6 @@ impl BasicPool {
         if let Some(err) = runtime.take_panic() {
             resume_unwind(err);
         }
-    }
-}
-
-impl Default for BasicPool {
-    fn default() -> Self {
-        let env_max_num_threads = max_num_threads_by_env_variable();
-
-        let ava_max_num_threads = std::thread::available_parallelism().ok();
-
-        let max_num_threads = match (env_max_num_threads, ava_max_num_threads) {
-            (Some(env), Some(ava)) => env.min(ava),
-            (Some(env), None) => env,
-            (None, Some(ava)) => ava,
-            (None, None) => MAX_UNSET_NUM_THREADS,
-        };
-
-        Self::new(max_num_threads)
     }
 }
 

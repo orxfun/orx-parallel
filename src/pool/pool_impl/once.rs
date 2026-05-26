@@ -21,6 +21,12 @@ pub struct OncePool {
     num_threads: NonZeroUsize,
 }
 
+impl Default for OncePool {
+    fn default() -> Self {
+        Self::new(NumThreads::Auto)
+    }
+}
+
 impl OncePool {
     /// Assumes (*) a thread pool of `num_threads` threads.
     ///
@@ -37,13 +43,6 @@ impl OncePool {
             NumThreads::Auto => max_num_threads_by_env_and_resource(),
             NumThreads::Max(n) => max_num_threads_by_env_and_resource().min(n),
         };
-        Self { num_threads }
-    }
-}
-
-impl Default for OncePool {
-    fn default() -> Self {
-        let num_threads = max_num_threads_by_env_and_resource();
         Self { num_threads }
     }
 }

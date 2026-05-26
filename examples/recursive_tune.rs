@@ -209,21 +209,8 @@ fn orx_sum(fs: &FileSystem, work: usize, args: &Args) -> u64 {
 }
 
 #[cfg(feature = "std")]
-fn pool_nt(num_threads: usize) -> usize {
-    if num_threads == 0 {
-        std::thread::available_parallelism()
-            .map(usize::from)
-            .unwrap_or(1)
-            .max(1)
-    } else {
-        num_threads
-    }
-}
-
-#[cfg(feature = "std")]
 fn orx_sum_new_pool(fs: &FileSystem, work: usize, args: &Args) -> u64 {
-    let nt = pool_nt(args.num_threads);
-    let pool = BasicPool::with_max_num_threads(NonZeroUsize::new(nt).expect(">0"));
+    let pool = BasicPool::new(args.num_threads);
 
     let input = fs
         .roots
