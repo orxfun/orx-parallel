@@ -70,9 +70,12 @@ enum Method {
     SeqVec,
     RayonVec,
     RayonVecList,
-    OrxVec,
-    OrxArbVec,
-    OrxArbVecVec,
+    OrxVecFix,
+    OrxArbVecFix,
+    OrxArbVecVecFix,
+    OrxVecDyn,
+    OrxArbVecDyn,
+    OrxArbVecVecDyn,
 }
 
 impl Factors for Method {
@@ -86,9 +89,12 @@ impl Factors for Method {
                 Self::SeqVec => "seq-vec",
                 Self::RayonVec => "rayon-vec",
                 Self::RayonVecList => "rayon-veclist",
-                Self::OrxVec => "orx-vec",
-                Self::OrxArbVec => "orx-arb-vec",
-                Self::OrxArbVecVec => "orx-arb-vec2",
+                Self::OrxVecFix => "orx-vec-fix",
+                Self::OrxArbVecFix => "orx-arb-vec-fix",
+                Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
+                Self::OrxVecDyn => "orx-vec-dyn",
+                Self::OrxArbVecDyn => "orx-arb-vec-dyn",
+                Self::OrxArbVecVecDyn => "orx-arb-vec2-dyn",
             }
             .to_string(),
         ]
@@ -150,38 +156,99 @@ impl Experiment for Exp {
                     false => input.into_par_iter().map(l_m).collect_vec_list(),
                 }),
             ),
-            Method::OrxVec => (
+            Method::OrxVecFix => (
                 true,
                 Output::Vec(match h {
-                    true => input.into_par().map(h_m).collect(),
-                    false => input.into_par().map(l_m).collect(),
+                    true => input
+                        .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .map(h_m)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .map(l_m)
+                        .collect(),
                 }),
             ),
-            Method::OrxArbVec => (
+            Method::OrxArbVecFix => (
                 false,
                 Output::Vec(match h {
                     true => input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .collect(),
                     false => input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .collect(),
                 }),
             ),
-            Method::OrxArbVecVec => (
+            Method::OrxArbVecVecFix => (
                 false,
                 Output::VecVec(match h {
                     true => input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .collect(),
                     false => input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(l_m)
+                        .collect(),
+                }),
+            ),
+            Method::OrxVecDyn => (
+                true,
+                Output::Vec(match h {
+                    true => input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .map(h_m)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .map(l_m)
+                        .collect(),
+                }),
+            ),
+            Method::OrxArbVecDyn => (
+                false,
+                Output::Vec(match h {
+                    true => input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(h_m)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(l_m)
+                        .collect(),
+                }),
+            ),
+            Method::OrxArbVecVecDyn => (
+                false,
+                Output::VecVec(match h {
+                    true => input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .map(h_m)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .collect(),
