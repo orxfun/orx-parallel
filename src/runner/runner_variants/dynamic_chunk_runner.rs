@@ -34,11 +34,11 @@ pub struct ChunkState {
     started_at: Instant,
 }
 
-const TARGET_CHUNK_TIME_NS: u64 = 2_000_000;
-const MIN_STABLE_SAMPLES: usize = 3;
-const LOW_VARIABILITY_PCT: u64 = 20;
-const HIGH_VARIABILITY_PCT: u64 = 65;
-const SLOWDOWN_FACTOR_PCT: u64 = 150;
+const TARGET_CHUNK_TIME_NS: u64 = 1_000_000;
+const MIN_STABLE_SAMPLES: usize = 5;
+const LOW_VARIABILITY_PCT: u64 = 15;
+const HIGH_VARIABILITY_PCT: u64 = 40;
+const SLOWDOWN_FACTOR_PCT: u64 = 125;
 
 impl State {
     fn ratio_to_pct(numerator: u64, denominator: u64) -> u64 {
@@ -218,7 +218,8 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
         let current = state.next_chunk_size.load(Ordering::Relaxed).max(min_chunk);
         let target_from_time =
             (state.target_chunk_time_ns / avg.max(1)).max(min_chunk as u64) as usize;
-        let target_from_balance = (remaining / state.max_num_threads.max(1)).max(min_chunk);
+        let target_from_balance =
+            (remaining / state.max_num_threads.max(1).saturating_mul(8)).max(min_chunk);
 
         let growth_factor = if variability <= LOW_VARIABILITY_PCT {
             2
@@ -236,6 +237,9 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
         desired = desired.min(target_from_balance.max(min_chunk));
         desired = desired.min(remaining);
         desired = desired.max(min_chunk);
+
+        let max_step = current.saturating_add((current.max(2)) / 2);
+        desired = desired.min(max_step.max(min_chunk));
 
         state.set_next_chunk_size(desired);
         desired
