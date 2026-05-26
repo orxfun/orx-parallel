@@ -9,8 +9,15 @@ use std::time::Instant;
 const NUM_THREADS: usize = 16;
 const HOMOGENEOUS_WORK: usize = 96;
 const HETEROGENEOUS_LIGHT_WORK: usize = 24;
-const HETEROGENEOUS_MEDIUM_WORK: usize = 192;
-const HETEROGENEOUS_HEAVY_WORK: usize = 1536;
+const HETEROGENEOUS_MEDIUM_WORK: usize = 320;
+const HETEROGENEOUS_HEAVY_WORK: usize = 2200;
+const HETEROGENEOUS_EXTREME_WORK: usize = 6200;
+
+#[derive(Clone, Copy)]
+struct WorkItem {
+    idx: usize,
+    seed: u64,
+}
 
 #[derive(Clone, Copy, Debug)]
 enum TaskKind {
@@ -56,37 +63,91 @@ struct Args {
     warmup_runs: usize,
 }
 
-fn values(len: usize) -> Vec<u64> {
+fn values(len: usize) -> Vec<WorkItem> {
     const SEED: u64 = 0xD1CE_BA5E;
     let mut rng = ChaCha8Rng::seed_from_u64(SEED ^ len as u64);
+
+    let region_len = (len / 24).max(64);
+
     (0..len)
-        .map(|idx| rng.random::<u64>() ^ ((idx as u64 + 1) * 0x9E37_79B9_7F4A_7C15))
+        .map(|idx| {
+            let region = idx / region_len;
+            let jitter = rng.random::<u64>();
+            let seed = jitter
+                ^ ((idx as u64 + 1) * 0x9E37_79B9_7F4A_7C15)
+                ^ ((region as u64 + 11) * 0xA076_1D64_78BD_642F);
+            WorkItem { idx, seed }
+        })
         .collect()
 }
 
-fn work_units(value: u64, task_kind: TaskKind) -> usize {
+fn work_units(item: &WorkItem, task_kind: TaskKind, len: usize) -> usize {
     match task_kind {
         TaskKind::Homogeneous => HOMOGENEOUS_WORK,
-        TaskKind::Heterogeneous => match value & 0x0f {
-            0 => HETEROGENEOUS_HEAVY_WORK,
-            1 | 2 | 3 => HETEROGENEOUS_MEDIUM_WORK,
-            _ => HETEROGENEOUS_LIGHT_WORK,
-        },
+        TaskKind::Heterogeneous => {
+            let region_len = (len / 24).max(64);
+            let region = item.idx / region_len;
+            let offset_in_region = item.idx % region_len;
+
+            // Region classes intentionally create hard scheduling cases:
+            // - clustered regions: long tasks come in contiguous blocks
+            // - bursty regions: long tasks come periodically in mini-waves
+            // - sparse regions: long tasks are scattered as outliers
+            let region_class = ((region as u64).wrapping_mul(37) ^ (item.seed >> 19)) % 7;
+
+            let clustered = match region_class {
+                0 | 1 => {
+                    let left = region_len / 5;
+                    let right = region_len - (region_len / 6);
+                    offset_in_region >= left && offset_in_region <= right
+                }
+                _ => false,
+            };
+
+            let bursty = match region_class {
+                2 | 3 => {
+                    let burst_window = region_len / 12 + 3;
+                    let phase = ((item.seed as usize) / 97) % (burst_window * 3);
+                    offset_in_region % (burst_window * 3) >= phase
+                        && offset_in_region % (burst_window * 3) < phase + burst_window
+                }
+                _ => false,
+            };
+
+            let sparse_outlier = match region_class {
+                4 | 5 => ((item.seed ^ item.idx as u64) & 0x7f) == 0,
+                _ => false,
+            };
+
+            match (clustered, bursty, sparse_outlier) {
+                (true, _, _) => HETEROGENEOUS_EXTREME_WORK,
+                (_, true, _) => HETEROGENEOUS_HEAVY_WORK,
+                (_, _, true) => HETEROGENEOUS_EXTREME_WORK,
+                _ => {
+                    let noisy_medium = ((item.seed >> 11) + item.idx as u64).is_multiple_of(9);
+                    if noisy_medium {
+                        HETEROGENEOUS_MEDIUM_WORK
+                    } else {
+                        HETEROGENEOUS_LIGHT_WORK
+                    }
+                }
+            }
+        }
     }
 }
 
-fn expensive_map(value: &u64, task_kind: TaskKind) -> u64 {
-    let mut acc = black_box(*value ^ 0xA076_1D64_78BD_642F);
-    let rounds = work_units(*value, task_kind);
+fn expensive_map(item: &WorkItem, task_kind: TaskKind, len: usize) -> u64 {
+    let mut acc = black_box(item.seed ^ 0xA076_1D64_78BD_642F);
+    let rounds = work_units(item, task_kind, len);
 
     for round in 0..rounds {
-        let salt = black_box((round as u64 + 1) * 0xE703_7ED1_A0B4_28DB);
+        let salt = black_box((round as u64 + 1) * 0xE703_7ED1_A0B4_28DB ^ item.idx as u64);
         acc = acc.rotate_left(11) ^ salt;
         acc = acc.wrapping_mul(0x9E37_79B9_7F4A_7C15);
         acc ^= acc >> 29;
     }
 
-    acc ^ (*value).rotate_left(7)
+    acc ^ item.seed.rotate_left(7)
 }
 
 fn selective_filter(value: &u64) -> bool {
@@ -98,36 +159,48 @@ fn reduce_sum(a: u64, b: u64) -> u64 {
     a.wrapping_add(b)
 }
 
-fn run_seq(data: &[u64], task_kind: TaskKind) -> Option<u64> {
+fn run_seq(data: &[WorkItem], task_kind: TaskKind) -> Option<u64> {
+    let len = data.len();
     data.iter()
-        .map(|value| expensive_map(value, task_kind))
+        .map(|value| expensive_map(value, task_kind, len))
         .filter(selective_filter)
         .reduce(reduce_sum)
 }
 
-fn run_rayon(pool: &rayon_core::ThreadPool, data: &[u64], task_kind: TaskKind) -> Option<u64> {
+fn run_rayon(pool: &rayon_core::ThreadPool, data: &[WorkItem], task_kind: TaskKind) -> Option<u64> {
+    let len = data.len();
     pool.install(|| {
         data.par_iter()
-            .map(|value| expensive_map(value, task_kind))
+            .map(|value| expensive_map(value, task_kind, len))
             .filter(selective_filter)
             .reduce_with(reduce_sum)
     })
 }
 
-fn run_orx_fixed(pool: &rayon_core::ThreadPool, data: &[u64], task_kind: TaskKind) -> Option<u64> {
+fn run_orx_fixed(
+    pool: &rayon_core::ThreadPool,
+    data: &[WorkItem],
+    task_kind: TaskKind,
+) -> Option<u64> {
+    let len = data.len();
     data.into_par()
         .runner(Runner::fixed_chunk(pool))
         .num_threads(NUM_THREADS)
-        .map(|value| expensive_map(value, task_kind))
+        .map(|value| expensive_map(value, task_kind, len))
         .filter(selective_filter)
         .reduce(reduce_sum)
 }
 
-fn run_orx_dyn(pool: &rayon_core::ThreadPool, data: &[u64], task_kind: TaskKind) -> Option<u64> {
+fn run_orx_dyn(
+    pool: &rayon_core::ThreadPool,
+    data: &[WorkItem],
+    task_kind: TaskKind,
+) -> Option<u64> {
+    let len = data.len();
     data.into_par()
         .runner(Runner::dynamic_chunk(pool))
         .num_threads(NUM_THREADS)
-        .map(|value| expensive_map(value, task_kind))
+        .map(|value| expensive_map(value, task_kind, len))
         .filter(selective_filter)
         .reduce(reduce_sum)
 }
