@@ -140,7 +140,8 @@ impl Experiment for Exp {
                         .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                 ),
             ),
         }

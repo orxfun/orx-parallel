@@ -154,7 +154,8 @@ impl Experiment for Exp {
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .filter(f)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                 ),
             ),
         }

@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 
+#[derive(Debug)]
 pub struct Vec2<T> {
     pub(super) inner: Vec<Vec<T>>,
 }

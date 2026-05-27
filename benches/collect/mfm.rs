@@ -237,7 +237,8 @@ impl Experiment for Exp {
                         .map(m)
                         .filter(f)
                         .map(h_m2)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
@@ -245,7 +246,8 @@ impl Experiment for Exp {
                         .map(m)
                         .filter(f)
                         .map(l_m2)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                 }),
             ),
         }

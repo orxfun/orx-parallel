@@ -200,13 +200,15 @@ impl Experiment for Exp {
                         .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .flat_map(h_l)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .flat_map(l_l)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                 }),
             ),
         }
