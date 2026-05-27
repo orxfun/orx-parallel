@@ -9,5 +9,7 @@ mod opt_use;
 mod par_col_into;
 mod res;
 mod res_use;
+mod vec2;
 
 pub use par_col_into::ParCollectInto;
+pub use vec2::Vec2;
