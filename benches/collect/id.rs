@@ -7,17 +7,17 @@ use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::collections::LinkedList;
 
-struct Input {
+struct InputVariant {
     n: usize,
 }
 
-impl Input {
+impl InputVariant {
     fn len(&self) -> usize {
         1 << self.n
     }
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
         vec!["n"]
     }
@@ -32,12 +32,9 @@ enum Method {
     SeqVec,
     RayonVec,
     RayonVecList,
-    OrxVecFix,
-    OrxArbVecFix,
-    OrxArbVecVecFix,
-    OrxVecDyn,
-    OrxArbVecDyn,
-    OrxArbVecVecDyn,
+    OrxVec,
+    OrxArbVec,
+    OrxArbVecVec,
 }
 
 impl Factors for Method {
@@ -51,12 +48,9 @@ impl Factors for Method {
                 Self::SeqVec => "seq-vec",
                 Self::RayonVec => "rayon-vec",
                 Self::RayonVecList => "rayon-veclist",
-                Self::OrxVecFix => "orx-vec-fix",
-                Self::OrxArbVecFix => "orx-arb-vec-fix",
-                Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
-                Self::OrxVecDyn => "orx-vec-dyn",
-                Self::OrxArbVecDyn => "orx-arb-vec-dyn",
-                Self::OrxArbVecVecDyn => "orx-arb-vec2-dyn",
+                Self::OrxVec => "orx-vec",
+                Self::OrxArbVec => "orx-arb-vec",
+                Self::OrxArbVecVec => "orx-arb-vec2",
             }
             .to_string(),
         ]
@@ -73,7 +67,7 @@ enum Output {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -101,65 +95,22 @@ impl Experiment for Exp {
                 false,
                 Output::VecList(input.into_par_iter().copied().collect_vec_list()),
             ),
-            Method::OrxVecFix => (
-                true,
-                Output::Vec(
-                    input
-                        .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
-                        .copied()
-                        .collect(),
-                ),
-            ),
-            Method::OrxArbVecFix => (
+            Method::OrxVec => (true, Output::Vec(input.into_par().copied().collect())),
+            Method::OrxArbVec => (
                 false,
                 Output::Vec(
                     input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .collect(),
                 ),
             ),
-            Method::OrxArbVecVecFix => (
+            Method::OrxArbVecVec => (
                 false,
                 Output::VecVec(
                     input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .copied()
-                        .collect(),
-                ),
-            ),
-            Method::OrxVecDyn => (
-                true,
-                Output::Vec(
-                    input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .copied()
-                        .collect(),
-                ),
-            ),
-            Method::OrxArbVecDyn => (
-                false,
-                Output::Vec(
-                    input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .copied()
-                        .collect(),
-                ),
-            ),
-            Method::OrxArbVecVecDyn => (
-                false,
-                Output::VecVec(
-                    input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .collect(),
@@ -205,7 +156,7 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = vec![Input { n: 15 }, Input { n: 20 }];
+    let treatments = vec![InputVariant { n: 15 }, InputVariant { n: 20 }];
 
     let variants: Vec<_> = all::<Method>().collect();
 

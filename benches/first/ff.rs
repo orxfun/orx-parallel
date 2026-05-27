@@ -47,13 +47,13 @@ enum Pos {
 }
 
 #[derive(Clone, Copy)]
-struct Input {
+struct InputVariant {
     n: usize,
     heavy: bool,
     pos: Pos,
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
         vec!["n", "pos", "task"]
     }
@@ -103,7 +103,7 @@ impl Factors for Method {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -191,32 +191,32 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let treatments = [
-        Input {
+        InputVariant {
             n: 20,
             pos: Pos::Early,
             heavy: false,
         },
-        Input {
+        InputVariant {
             n: 20,
             pos: Pos::Mid,
             heavy: false,
         },
-        Input {
+        InputVariant {
             n: 20,
             pos: Pos::Late,
             heavy: false,
         },
-        Input {
+        InputVariant {
             n: 20,
             pos: Pos::Early,
             heavy: true,
         },
-        Input {
+        InputVariant {
             n: 20,
             pos: Pos::Mid,
             heavy: true,
         },
-        Input {
+        InputVariant {
             n: 20,
             pos: Pos::Late,
             heavy: true,
