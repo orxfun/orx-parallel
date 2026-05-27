@@ -17,16 +17,26 @@ impl<P: ParThreadPool> DynChunkRunner<P> {
     }
 }
 
+#[derive(Clone, Copy, PartialEq)]
+enum Mode {
+    Explore,
+    Bulk,
+    Adaptive,
+}
+
 pub struct State {
     pub max_num_threads: usize,
     min_chunk_size: usize,
     fixed_chunk_size: Option<usize>,
-    target_chunk_time_ns: u64,
+    mode: AtomicUsize,
     next_chunk_size: AtomicUsize,
     sample_count: AtomicUsize,
     avg_ns_per_item: AtomicU64,
     avg_abs_deviation_ns_per_item: AtomicU64,
     conservative_runs: AtomicUsize,
+    initial_len: Option<usize>,
+    probe_idx: AtomicUsize,
+    measurements_in_phase: AtomicUsize,
 }
 
 pub struct ChunkState {
@@ -34,11 +44,11 @@ pub struct ChunkState {
     started_at: Instant,
 }
 
-const TARGET_CHUNK_TIME_NS: u64 = 1_000_000;
-const MIN_STABLE_SAMPLES: usize = 5;
-const LOW_VARIABILITY_PCT: u64 = 15;
-const HIGH_VARIABILITY_PCT: u64 = 40;
-const SLOWDOWN_FACTOR_PCT: u64 = 125;
+const PROBE_SIZES: &[usize] = &[1, 4, 16, 64, 256];
+const NUM_PROBES: usize = 5;
+const LOW_VARIABILITY_PCT: u64 = 20;
+const HIGH_VARIABILITY_PCT: u64 = 50;
+const SLOWDOWN_FACTOR_PCT: u64 = 135;
 
 impl State {
     fn ratio_to_pct(numerator: u64, denominator: u64) -> u64 {
@@ -56,12 +66,23 @@ impl State {
         }
     }
 
-    fn take_conservative_run(&self) -> bool {
-        self.conservative_runs
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
-                value.checked_sub(1)
-            })
-            .is_ok()
+    fn mode(&self) -> Mode {
+        match self.mode.load(Ordering::Relaxed) {
+            0 => Mode::Explore,
+            1 => Mode::Bulk,
+            _ => Mode::Adaptive,
+        }
+    }
+
+    fn set_mode(&self, m: Mode) {
+        self.mode.store(
+            match m {
+                Mode::Explore => 0,
+                Mode::Bulk => 1,
+                Mode::Adaptive => 2,
+            },
+            Ordering::Relaxed,
+        );
     }
 
     fn set_next_chunk_size(&self, chunk_size: usize) {
@@ -71,6 +92,17 @@ impl State {
 
     fn min_chunk_for_remaining(&self, remaining: usize) -> usize {
         min(self.min_chunk_size, remaining.max(1))
+    }
+
+    fn should_measure_this_chunk(&self) -> bool {
+        match self.mode() {
+            Mode::Explore => true,
+            Mode::Bulk => {
+                let samples = self.sample_count.load(Ordering::Relaxed);
+                samples < 10 || (samples % 50) == 0
+            }
+            Mode::Adaptive => true,
+        }
     }
 
     fn adapt_from_sample(&self, elapsed_ns: u64, chunk_size: usize) {
@@ -96,26 +128,64 @@ impl State {
         let variability = Self::ratio_to_pct(updated_dev, updated_avg);
         let slowdown = Self::ratio_to_pct(sample_ns_per_item, updated_avg);
 
-        if variability >= HIGH_VARIABILITY_PCT || slowdown >= SLOWDOWN_FACTOR_PCT {
-            let cool_down = 4 + (variability as usize / 10);
-            self.conservative_runs
-                .store(cool_down.max(2), Ordering::Relaxed);
-            self.set_next_chunk_size(self.min_chunk_size);
-            return;
+        match self.mode() {
+            Mode::Explore => {
+                self.measurements_in_phase.fetch_add(1, Ordering::Relaxed);
+                let meas = self.measurements_in_phase.load(Ordering::Relaxed);
+                if meas >= NUM_PROBES {
+                    self.measurements_in_phase.store(0, Ordering::Relaxed);
+                    if variability <= LOW_VARIABILITY_PCT * 2 {
+                        self.set_mode(Mode::Bulk);
+                        let bulk_size = self.compute_bulk_chunk_size();
+                        self.set_next_chunk_size(bulk_size);
+                    } else {
+                        self.set_mode(Mode::Adaptive);
+                    }
+                    self.probe_idx.store(0, Ordering::Relaxed);
+                }
+            }
+            Mode::Bulk => {
+                if slowdown >= SLOWDOWN_FACTOR_PCT {
+                    self.set_mode(Mode::Adaptive);
+                }
+            }
+            Mode::Adaptive => {
+                if variability >= HIGH_VARIABILITY_PCT || slowdown >= SLOWDOWN_FACTOR_PCT {
+                    let cool_down = 2 + (variability as usize / 20);
+                    self.conservative_runs
+                        .store(cool_down.max(1), Ordering::Relaxed);
+                    self.set_next_chunk_size(self.min_chunk_size);
+                } else if variability <= LOW_VARIABILITY_PCT {
+                    let current = self
+                        .next_chunk_size
+                        .load(Ordering::Relaxed)
+                        .max(self.min_chunk_size);
+                    let ramp = current
+                        .saturating_add(current / 3)
+                        .max(current.saturating_mul(2));
+                    self.set_next_chunk_size(ramp);
+                }
+            }
         }
+    }
 
-        if variability <= LOW_VARIABILITY_PCT
-            && self.sample_count.load(Ordering::Relaxed) >= MIN_STABLE_SAMPLES
-        {
-            let current = self
-                .next_chunk_size
-                .load(Ordering::Relaxed)
-                .max(self.min_chunk_size);
-            let ramp = current
-                .saturating_add(current / 2)
-                .max(current.saturating_mul(2));
-            self.set_next_chunk_size(ramp);
+    fn compute_bulk_chunk_size(&self) -> usize {
+        match self.initial_len {
+            Some(total) => {
+                let per_thread = total / self.max_num_threads.max(1);
+                per_thread / 4
+            }
+            None => 256,
         }
+        .max(self.min_chunk_size)
+    }
+
+    fn take_conservative_run(&self) -> bool {
+        self.conservative_runs
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
+                value.checked_sub(1)
+            })
+            .is_ok()
     }
 }
 
@@ -149,7 +219,7 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
         &mut self,
         params: Params,
         max_num_threads: usize,
-        _initial_len: Option<usize>,
+        initial_len: Option<usize>,
     ) -> Self::State {
         let min_chunk_size = match params.chunk_size {
             ChunkSize::Auto => 1,
@@ -161,18 +231,21 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
             _ => None,
         };
 
-        let initial_chunk_size = fixed_chunk_size.unwrap_or(min_chunk_size);
+        let initial_chunk_size = fixed_chunk_size.unwrap_or(1);
 
         State {
             max_num_threads,
             min_chunk_size,
             fixed_chunk_size,
-            target_chunk_time_ns: TARGET_CHUNK_TIME_NS,
+            mode: AtomicUsize::new(0),
             next_chunk_size: AtomicUsize::new(initial_chunk_size),
             sample_count: AtomicUsize::new(0),
             avg_ns_per_item: AtomicU64::new(0),
             avg_abs_deviation_ns_per_item: AtomicU64::new(0),
             conservative_runs: AtomicUsize::new(0),
+            initial_len,
+            probe_idx: AtomicUsize::new(0),
+            measurements_in_phase: AtomicUsize::new(0),
         }
     }
 
@@ -191,58 +264,33 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
             return 1;
         }
 
-        if state.sample_count.load(Ordering::Relaxed) == 0 {
-            return state.min_chunk_for_remaining(remaining);
+        match state.mode() {
+            Mode::Explore => {
+                let probe_idx = state.probe_idx.load(Ordering::Relaxed);
+                if probe_idx < NUM_PROBES {
+                    let chunk_size = PROBE_SIZES[probe_idx];
+                    state.probe_idx.fetch_add(1, Ordering::Relaxed);
+                    return min(chunk_size, remaining);
+                } else {
+                    return state.min_chunk_for_remaining(remaining);
+                }
+            }
+            Mode::Bulk => {
+                let current = state.next_chunk_size.load(Ordering::Relaxed);
+                return min(current, remaining);
+            }
+            Mode::Adaptive => {
+                if state.take_conservative_run() {
+                    return state.min_chunk_for_remaining(remaining);
+                }
+
+                let current = state
+                    .next_chunk_size
+                    .load(Ordering::Relaxed)
+                    .max(state.min_chunk_size);
+                return min(current, remaining);
+            }
         }
-
-        if state.sample_count.load(Ordering::Relaxed) < MIN_STABLE_SAMPLES {
-            return state.min_chunk_for_remaining(remaining);
-        }
-
-        if state.take_conservative_run() {
-            return state.min_chunk_for_remaining(remaining);
-        }
-
-        let avg = state.avg_ns_per_item.load(Ordering::Relaxed);
-        let dev = state.avg_abs_deviation_ns_per_item.load(Ordering::Relaxed);
-        if avg == 0 {
-            return state.min_chunk_for_remaining(remaining);
-        }
-
-        let variability = State::ratio_to_pct(dev, avg);
-        if variability >= HIGH_VARIABILITY_PCT {
-            return state.min_chunk_for_remaining(remaining);
-        }
-
-        let min_chunk = state.min_chunk_for_remaining(remaining);
-        let current = state.next_chunk_size.load(Ordering::Relaxed).max(min_chunk);
-        let target_from_time =
-            (state.target_chunk_time_ns / avg.max(1)).max(min_chunk as u64) as usize;
-        let target_from_balance =
-            (remaining / state.max_num_threads.max(1).saturating_mul(8)).max(min_chunk);
-
-        let growth_factor = if variability <= LOW_VARIABILITY_PCT {
-            2
-        } else {
-            3
-        };
-        let growth_divisor = if variability <= LOW_VARIABILITY_PCT {
-            1
-        } else {
-            2
-        };
-        let grown = current.saturating_mul(growth_factor) / growth_divisor;
-
-        let mut desired = grown.max(target_from_time);
-        desired = desired.min(target_from_balance.max(min_chunk));
-        desired = desired.min(remaining);
-        desired = desired.max(min_chunk);
-
-        let max_step = current.saturating_add((current.max(2)) / 2);
-        desired = desired.min(max_step.max(min_chunk));
-
-        state.set_next_chunk_size(desired);
-        desired
     }
 
     #[inline(always)]
@@ -255,12 +303,16 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
 
     #[inline(always)]
     fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState) {
-        let elapsed_ns = chunk_state
-            .started_at
-            .elapsed()
-            .as_nanos()
-            .min(u64::MAX as u128) as u64;
-        state.adapt_from_sample(elapsed_ns, chunk_state.requested_chunk_size);
+        if state.should_measure_this_chunk() {
+            let elapsed_ns = chunk_state
+                .started_at
+                .elapsed()
+                .as_nanos()
+                .min(u64::MAX as u128) as u64;
+            state.adapt_from_sample(elapsed_ns, chunk_state.requested_chunk_size);
+        } else {
+            state.sample_count.fetch_add(1, Ordering::Relaxed);
+        }
     }
 
     #[inline(always)]
