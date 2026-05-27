@@ -186,7 +186,12 @@ fn run(c: &mut Criterion) {
     let num_threads_options = [16, 32];
     let treatments: Vec<_> = num_threads_options
         .iter()
-        .flat_map(|&num_threads| [InputVariant { n: 15, num_threads }, InputVariant { n: 20, num_threads }])
+        .flat_map(|&num_threads| {
+            [
+                InputVariant { n: 15, num_threads },
+                InputVariant { n: 20, num_threads },
+            ]
+        })
         .collect();
 
     let variants: Vec<_> = all::<Method>().collect();

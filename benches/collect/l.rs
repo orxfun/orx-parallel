@@ -131,35 +131,35 @@ impl Experiment for Exp {
                 }),
             ),
             Method::RayonVec => {
-                    let pool = ThreadPoolBuilder::new()
-                        .num_threads(input_variant.num_threads)
-                        .build()
-                        .unwrap();
-                    pool.install(|| {
-                        (
-                            true,
-                            Output::Vec(match h {
-                                true => input.into_par_iter().flat_map_iter(h_l).collect(),
-                                false => input.into_par_iter().flat_map_iter(l_l).collect(),
-                            }),
-                        )
-                    })
-                },
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| {
+                    (
+                        true,
+                        Output::Vec(match h {
+                            true => input.into_par_iter().flat_map_iter(h_l).collect(),
+                            false => input.into_par_iter().flat_map_iter(l_l).collect(),
+                        }),
+                    )
+                })
+            }
             Method::RayonVecList => {
-                    let pool = ThreadPoolBuilder::new()
-                        .num_threads(input_variant.num_threads)
-                        .build()
-                        .unwrap();
-                    pool.install(|| {
-                        (
-                            false,
-                            Output::VecList(match h {
-                                true => input.into_par_iter().flat_map_iter(h_l).collect_vec_list(),
-                                false => input.into_par_iter().flat_map_iter(l_l).collect_vec_list(),
-                            }),
-                        )
-                    })
-                },
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| {
+                    (
+                        false,
+                        Output::VecList(match h {
+                            true => input.into_par_iter().flat_map_iter(h_l).collect_vec_list(),
+                            false => input.into_par_iter().flat_map_iter(l_l).collect_vec_list(),
+                        }),
+                    )
+                })
+            }
             Method::OrxVec => (
                 true,
                 Output::Vec(match h {
