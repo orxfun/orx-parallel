@@ -56,12 +56,12 @@ fn l_m2(x: u64) -> u64 {
 }
 
 #[derive(Clone, Copy)]
-struct Input {
+struct InputVariant {
     n: usize,
     heavy: bool,
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
         vec!["n", "task"]
     }
@@ -107,7 +107,7 @@ impl Factors for Method {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -184,16 +184,16 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let treatments = [
-        Input {
+        InputVariant {
             n: 15,
             heavy: false,
         },
-        Input {
+        InputVariant {
             n: 20,
             heavy: false,
         },
-        Input { n: 15, heavy: true },
-        Input { n: 20, heavy: true },
+        InputVariant { n: 15, heavy: true },
+        InputVariant { n: 20, heavy: true },
     ];
 
     let variants: Vec<_> = all::<Method>().collect();
