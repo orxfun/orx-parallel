@@ -96,7 +96,7 @@ impl Factors for Method {
             match self {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
-                Self::RayonRedWith => "rayon-reduce-with",
+                Self::RayonRedWith => "rayon-red-with",
                 Self::Orx => "orx",
             }
             .to_string(),

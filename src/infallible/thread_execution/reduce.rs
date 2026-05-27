@@ -9,8 +9,7 @@ where
     X: Xap<I = I::Item>,
     F: Fn(X::O, X::O) -> X::O,
 {
-    let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller();
+    let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
     let mut acc = None;
 
@@ -21,7 +20,7 @@ where
 
         match chunk_size {
             0 | 1 => {
-                match item_puller.next() {
+                match iter.next_by(th_idx) {
                     Some(i) => {
                         let result = x.xap(i).into_iter().reduce(&f);
                         if result.is_some() {
@@ -35,9 +34,7 @@ where
                 }
             }
             c => {
-                if c > chunk_puller.chunk_size() {
-                    chunk_puller = iter.chunk_puller(c);
-                }
+                chunk_puller.resize_for_chunk_size(c);
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
@@ -65,7 +62,7 @@ where
 
                 match chunk_size {
                     0 | 1 => {
-                        match item_puller.next() {
+                        match iter.next_by(th_idx) {
                             Some(i) => {
                                 let result = x.xap(i).into_iter().reduce(&f);
                                 if let Some(y) = result {
@@ -78,9 +75,7 @@ where
                         }
                     }
                     c => {
-                        if c > chunk_puller.chunk_size() {
-                            chunk_puller = iter.chunk_puller(c);
-                        }
+                        chunk_puller.resize_for_chunk_size(c);
 
                         match chunk_puller.pull() {
                             Some(chunk) => {
