@@ -4,6 +4,7 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::collections::LinkedList;
 use std::hint::black_box;
@@ -40,6 +41,7 @@ fn h_m(x: &u64) -> u64 {
 struct InputVariant {
     n: usize,
     heavy: bool,
+    num_threads: usize,
 }
 
 impl InputVariant {
@@ -50,7 +52,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "task"]
+        vec!["n", "task", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -61,6 +63,7 @@ impl Factors for InputVariant {
                 false => "light",
             }
             .to_string(),
+            self.num_threads.to_string(),
         ]
     }
 }
@@ -136,25 +139,49 @@ impl Experiment for Exp {
                     false => input.iter().map(l_m).collect(),
                 }),
             ),
-            Method::RayonVec => (
-                true,
-                Output::Vec(match h {
-                    true => input.into_par_iter().map(h_m).collect(),
-                    false => input.into_par_iter().map(l_m).collect(),
-                }),
-            ),
-            Method::RayonVecList => (
-                false,
-                Output::VecList(match h {
-                    true => input.into_par_iter().map(h_m).collect_vec_list(),
-                    false => input.into_par_iter().map(l_m).collect_vec_list(),
-                }),
-            ),
+            Method::RayonVec => {
+                    let pool = ThreadPoolBuilder::new()
+                        .num_threads(input_variant.num_threads)
+                        .build()
+                        .unwrap();
+                    pool.install(|| {
+                        (
+                            true,
+                            Output::Vec(match h {
+                                true => input.into_par_iter().map(h_m).collect(),
+                                false => input.into_par_iter().map(l_m).collect(),
+                            }),
+                        )
+                    })
+                },
+            Method::RayonVecList => {
+                    let pool = ThreadPoolBuilder::new()
+                        .num_threads(input_variant.num_threads)
+                        .build()
+                        .unwrap();
+                    pool.install(|| {
+                        (
+                            false,
+                            Output::VecList(match h {
+                                true => input.into_par_iter().map(h_m).collect_vec_list(),
+                                false => input.into_par_iter().map(l_m).collect_vec_list(),
+                            }),
+                        )
+                    })
+                },
             Method::OrxVec => (
                 true,
                 Output::Vec(match h {
-                    true => input.into_par().map(h_m).collect(),
-                    false => input.into_par().map(l_m).collect(),
+                    true => input
+                        .into_par()
+                        .num_threads(input_variant.num_threads)
+                        .map(h_m)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .num_threads(input_variant.num_threads)
+                        .map(l_m)
+                        .collect(),
                 }),
             ),
             Method::OrxArbVec => (
@@ -162,11 +189,13 @@ impl Experiment for Exp {
                 Output::Vec(match h {
                     true => input
                         .into_par()
+                        .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .collect(),
                     false => input
                         .into_par()
+                        .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .collect(),
@@ -177,11 +206,13 @@ impl Experiment for Exp {
                 Output::VecVec(match h {
                     true => input
                         .into_par()
+                        .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .collect(),
                     false => input
                         .into_par()
+                        .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .collect(),
@@ -230,18 +261,34 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = vec![
-        InputVariant {
-            n: 15,
-            heavy: false,
-        },
-        InputVariant {
-            n: 20,
-            heavy: false,
-        },
-        InputVariant { n: 15, heavy: true },
-        InputVariant { n: 20, heavy: true },
-    ];
+    let num_threads_options = [16, 32];
+    let treatments: Vec<_> = num_threads_options
+        .iter()
+        .flat_map(|&num_threads| {
+            [
+                InputVariant {
+                    n: 15,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 15,
+                    heavy: true,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    heavy: true,
+                    num_threads,
+                },
+            ]
+        })
+        .collect();
 
     let variants: Vec<_> = all::<Method>().collect();
 

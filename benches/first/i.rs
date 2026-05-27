@@ -4,6 +4,7 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 const FIB_UPPER_BOUND: u64 = 501;
@@ -56,11 +57,12 @@ struct InputVariant {
     n: usize,
     heavy: bool,
     pos: Pos,
+    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "pos", "task"]
+        vec!["n", "pos", "task", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -77,6 +79,7 @@ impl Factors for InputVariant {
                 false => "light",
             }
             .to_string(),
+            self.num_threads.to_string(),
         ]
     }
 }
@@ -135,27 +138,35 @@ impl Experiment for Exp {
     ) -> Self::Output {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
-            Method::Rayon => match input_variant.heavy {
-                false => input
-                    .as_slice()
-                    .into_par_iter()
-                    .filter_map(|x| l_i(x, 999))
-                    .find_first(|_| true),
-                true => input
-                    .as_slice()
-                    .into_par_iter()
-                    .filter_map(|x| h_i(x, 999))
-                    .find_first(|_| true),
-            },
+            Method::Rayon => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| match input_variant.heavy {
+                    false => input
+                        .as_slice()
+                        .into_par_iter()
+                        .filter_map(|x| l_i(x, 999))
+                        .find_first(|_| true),
+                    true => input
+                        .as_slice()
+                        .into_par_iter()
+                        .filter_map(|x| h_i(x, 999))
+                        .find_first(|_| true),
+                })
+            }
             Method::Orx => match input_variant.heavy {
                 false => input
                     .as_slice()
                     .into_par()
+                    .num_threads(input_variant.num_threads)
                     .filter_map(|x| l_i(x, 999))
                     .first(),
                 true => input
                     .as_slice()
                     .into_par()
+                    .num_threads(input_variant.num_threads)
                     .filter_map(|x| h_i(x, 999))
                     .first(),
             },
@@ -177,38 +188,50 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [
-        InputVariant {
-            n: 20,
-            pos: Pos::Beg,
-            heavy: false,
-        },
-        InputVariant {
-            n: 20,
-            pos: Pos::Mid,
-            heavy: false,
-        },
-        InputVariant {
-            n: 20,
-            pos: Pos::End,
-            heavy: false,
-        },
-        InputVariant {
-            n: 20,
-            pos: Pos::Beg,
-            heavy: true,
-        },
-        InputVariant {
-            n: 20,
-            pos: Pos::Mid,
-            heavy: true,
-        },
-        InputVariant {
-            n: 20,
-            pos: Pos::End,
-            heavy: true,
-        },
-    ];
+    let num_threads_options = [16, 32];
+    let treatments: Vec<_> = num_threads_options
+        .iter()
+        .flat_map(|&num_threads| {
+            [
+                InputVariant {
+                    n: 20,
+                    pos: Pos::Beg,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    pos: Pos::Mid,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    pos: Pos::End,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    pos: Pos::Beg,
+                    heavy: true,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    pos: Pos::Mid,
+                    heavy: true,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    pos: Pos::End,
+                    heavy: true,
+                    num_threads,
+                },
+            ]
+        })
+        .collect();
 
     let variants: Vec<_> = all::<Method>().collect();
 

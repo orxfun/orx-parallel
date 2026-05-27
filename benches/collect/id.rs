@@ -4,11 +4,13 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::collections::LinkedList;
 
 struct InputVariant {
     n: usize,
+    num_threads: usize,
 }
 
 impl InputVariant {
@@ -19,11 +21,11 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n"]
+        vec!["n", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![format!("2e{}", self.n)]
+        vec![format!("2e{}", self.n), self.num_threads.to_string()]
     }
 }
 
@@ -84,23 +86,47 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        _: &Self::InputFactors,
+        input_variant: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
         match alg_variant {
             Method::SeqVec => (true, Output::Vec(input.iter().copied().collect())),
-            Method::RayonVec => (true, Output::Vec(input.into_par_iter().copied().collect())),
-            Method::RayonVecList => (
-                false,
-                Output::VecList(input.into_par_iter().copied().collect_vec_list()),
+            Method::RayonVec => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| (true, Output::Vec(input.into_par_iter().copied().collect())))
+            }
+            Method::RayonVecList => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| {
+                    (
+                        false,
+                        Output::VecList(input.into_par_iter().copied().collect_vec_list()),
+                    )
+                })
+            }
+            Method::OrxVec => (
+                true,
+                Output::Vec(
+                    input
+                        .into_par()
+                        .num_threads(input_variant.num_threads)
+                        .copied()
+                        .collect(),
+                ),
             ),
-            Method::OrxVec => (true, Output::Vec(input.into_par().copied().collect())),
             Method::OrxArbVec => (
                 false,
                 Output::Vec(
                     input
                         .into_par()
+                        .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .collect(),
@@ -111,6 +137,7 @@ impl Experiment for Exp {
                 Output::VecVec(
                     input
                         .into_par()
+                        .num_threads(input_variant.num_threads)
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .collect(),
@@ -156,7 +183,11 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = vec![InputVariant { n: 15 }, InputVariant { n: 20 }];
+    let num_threads_options = [16, 32];
+    let treatments: Vec<_> = num_threads_options
+        .iter()
+        .flat_map(|&num_threads| [InputVariant { n: 15, num_threads }, InputVariant { n: 20, num_threads }])
+        .collect();
 
     let variants: Vec<_> = all::<Method>().collect();
 
