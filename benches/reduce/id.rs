@@ -4,6 +4,7 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
 
@@ -40,11 +41,12 @@ fn h_r(a: u64, b: u64) -> u64 {
 struct InputVariant {
     n: usize,
     heavy: bool,
+    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "task"]
+        vec!["n", "task", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -55,6 +57,7 @@ impl Factors for InputVariant {
                 false => "light",
             }
             .to_string(),
+            self.num_threads.to_string(),
         ]
     }
 }
@@ -113,17 +116,39 @@ impl Experiment for Exp {
                 true => input.iter().copied().reduce(h_r),
                 false => input.iter().copied().reduce(l_r),
             },
-            Method::RayonRedWith => match h {
-                true => input.into_par_iter().copied().reduce_with(h_r),
-                false => input.into_par_iter().copied().reduce_with(l_r),
-            },
-            Method::Rayon => Some(match h {
-                true => input.into_par_iter().copied().reduce(|| 0, h_r),
-                false => input.into_par_iter().copied().reduce(|| 0, l_r),
-            }),
+            Method::RayonRedWith => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| match h {
+                    true => input.into_par_iter().copied().reduce_with(h_r),
+                    false => input.into_par_iter().copied().reduce_with(l_r),
+                })
+            }
+            Method::Rayon => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| {
+                    Some(match h {
+                        true => input.into_par_iter().copied().reduce(|| 0, h_r),
+                        false => input.into_par_iter().copied().reduce(|| 0, l_r),
+                    })
+                })
+            }
             Method::Orx => match h {
-                true => input.into_par().copied().reduce(h_r),
-                false => input.into_par().copied().reduce(l_r),
+                true => input
+                    .into_par()
+                    .num_threads(input_variant.num_threads)
+                    .copied()
+                    .reduce(h_r),
+                false => input
+                    .into_par()
+                    .num_threads(input_variant.num_threads)
+                    .copied()
+                    .reduce(l_r),
             },
         }
     }
@@ -141,18 +166,34 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [
-        InputVariant {
-            n: 15,
-            heavy: false,
-        },
-        InputVariant {
-            n: 20,
-            heavy: false,
-        },
-        InputVariant { n: 15, heavy: true },
-        InputVariant { n: 20, heavy: true },
-    ];
+    let num_threads_options = [16, 32];
+    let treatments: Vec<_> = num_threads_options
+        .iter()
+        .flat_map(|&num_threads| {
+            [
+                InputVariant {
+                    n: 15,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 15,
+                    heavy: true,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    heavy: true,
+                    num_threads,
+                },
+            ]
+        })
+        .collect();
 
     let variants: Vec<_> = all::<Method>().collect();
 
