@@ -27,7 +27,7 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -67,7 +67,7 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -110,7 +110,7 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         {
@@ -156,7 +156,7 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -197,7 +197,7 @@ pub trait ParRunnerUseRes: ParRunner {
         E: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.try_get_len());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);

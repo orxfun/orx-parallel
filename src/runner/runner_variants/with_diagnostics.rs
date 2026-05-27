@@ -42,9 +42,9 @@ impl<R: ParRunner> ParRunner for WithDiagnostics<R> {
         &mut self,
         params: Params,
         max_num_threads: usize,
-        initial_len: Option<usize>,
+        size_hint: (usize, Option<usize>),
     ) -> Self::State {
-        let inner = self.0.new_state(params, max_num_threads, initial_len);
+        let inner = self.0.new_state(params, max_num_threads, size_hint);
         StateWithDiagnostics::new(max_num_threads, inner)
     }
 
