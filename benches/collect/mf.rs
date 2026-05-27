@@ -229,7 +229,8 @@ impl Experiment for Exp {
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .filter(f)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
@@ -237,7 +238,8 @@ impl Experiment for Exp {
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .filter(f)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                 }),
             ),
             Method::OrxVecDyn => (
@@ -290,7 +292,8 @@ impl Experiment for Exp {
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .filter(f)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
@@ -298,7 +301,8 @@ impl Experiment for Exp {
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .filter(f)
-                        .collect(),
+                        .collect::<Vec2<_>>()
+                        .into(),
                 }),
             ),
         }
