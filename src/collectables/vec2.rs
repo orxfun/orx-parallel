@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 
 pub struct Vec2<T> {
-    inner: Vec<Vec<T>>,
+    pub(super) inner: Vec<Vec<T>>,
 }
 
 impl<T> Vec2<T> {
