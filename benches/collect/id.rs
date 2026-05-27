@@ -32,9 +32,12 @@ enum Method {
     SeqVec,
     RayonVec,
     RayonVecList,
-    OrxVec,
-    OrxArbVec,
-    OrxArbVecVec,
+    OrxVecFix,
+    OrxArbVecFix,
+    OrxArbVecVecFix,
+    OrxVecDyn,
+    OrxArbVecDyn,
+    OrxArbVecVecDyn,
 }
 
 impl Factors for Method {
@@ -48,9 +51,12 @@ impl Factors for Method {
                 Self::SeqVec => "seq-vec",
                 Self::RayonVec => "rayon-vec",
                 Self::RayonVecList => "rayon-veclist",
-                Self::OrxVec => "orx-vec",
-                Self::OrxArbVec => "orx-arb-vec",
-                Self::OrxArbVecVec => "orx-arb-vecvec",
+                Self::OrxVecFix => "orx-vec-fix",
+                Self::OrxArbVecFix => "orx-arb-vec-fix",
+                Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
+                Self::OrxVecDyn => "orx-vec-dyn",
+                Self::OrxArbVecDyn => "orx-arb-vec-dyn",
+                Self::OrxArbVecVecDyn => "orx-arb-vec2-dyn",
             }
             .to_string(),
         ]
@@ -95,22 +101,65 @@ impl Experiment for Exp {
                 false,
                 Output::VecList(input.into_par_iter().copied().collect_vec_list()),
             ),
-            Method::OrxVec => (true, Output::Vec(input.into_par().copied().collect())),
-            Method::OrxArbVec => (
+            Method::OrxVecFix => (
+                true,
+                Output::Vec(
+                    input
+                        .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .copied()
+                        .collect(),
+                ),
+            ),
+            Method::OrxArbVecFix => (
                 false,
                 Output::Vec(
                     input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .collect(),
                 ),
             ),
-            Method::OrxArbVecVec => (
+            Method::OrxArbVecVecFix => (
                 false,
                 Output::VecVec(
                     input
                         .into_par()
+                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .copied()
+                        .collect(),
+                ),
+            ),
+            Method::OrxVecDyn => (
+                true,
+                Output::Vec(
+                    input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .copied()
+                        .collect(),
+                ),
+            ),
+            Method::OrxArbVecDyn => (
+                false,
+                Output::Vec(
+                    input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
+                        .iteration_order(IterationOrder::Arbitrary)
+                        .copied()
+                        .collect(),
+                ),
+            ),
+            Method::OrxArbVecVecDyn => (
+                false,
+                Output::VecVec(
+                    input
+                        .into_par()
+                        .runner(Runner::dynamic_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .copied()
                         .collect(),

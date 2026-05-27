@@ -44,13 +44,13 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
         &mut self,
         params: Params,
         max_num_threads: usize,
-        initial_len: Option<usize>,
+        size_hint: (usize, Option<usize>),
     ) -> Self::State {
         let chunk_size =
-            heuristic::compute_chunk_size(params.chunk_size, initial_len, max_num_threads);
+            heuristic::compute_chunk_size(params.chunk_size, size_hint, max_num_threads);
         State {
             max_num_threads,
-            initial_len,
+            size_hint,
             chunk_size,
         }
     }
@@ -59,7 +59,7 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
     fn begin_thread(_: &Self::State, _: usize) {}
 
     #[inline(always)]
-    fn next_chunk_size(state: &Self::State, _: Option<usize>) -> usize {
+    fn next_chunk_size(state: &Self::State, _: (usize, Option<usize>)) -> usize {
         state.chunk_size
     }
 

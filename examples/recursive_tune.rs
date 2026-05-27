@@ -4,7 +4,6 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::{Scope, scope};
-use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
 
