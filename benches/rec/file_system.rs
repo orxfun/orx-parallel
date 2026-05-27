@@ -5,7 +5,6 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::{Scope, ThreadPool, scope};
-use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[derive(Clone)]
@@ -121,24 +120,24 @@ fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     sum.load(Ordering::Relaxed)
 }
 
-fn orx_sum(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .pool(pool)
+        .runner(Runner::fixed_chunk(pool))
         .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
 }
 
-fn orx_sum_new_pool(pool: &BasicPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+fn orx_sum_dynamic(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .pool(pool)
+        .runner(Runner::dynamic_chunk(pool))
         .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
@@ -176,8 +175,8 @@ impl Factors for Input {
 enum Method {
     Seq,
     Rayon,
-    OrxRayon,
-    OrxNew,
+    OrxFix,
+    OrxDyn,
 }
 
 impl Factors for Method {
@@ -190,8 +189,8 @@ impl Factors for Method {
             match self {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
-                Self::OrxRayon => "orx-rayon",
-                Self::OrxNew => "orx-new",
+                Self::OrxFix => "orx-fix",
+                Self::OrxDyn => "orx-dyn",
             }
             .to_string(),
         ]
@@ -202,8 +201,7 @@ struct Exp;
 
 struct BenchInput {
     fs: FileSystem,
-    rayon_pool: ThreadPool,
-    basic_pool: BasicPool,
+    pool: ThreadPool,
 }
 
 impl Experiment for Exp {
@@ -223,14 +221,9 @@ impl Experiment for Exp {
             42,
         );
 
-        let rayon_pool = Pool::rayon(input_variant.num_threads).unwrap();
-        let basic_pool = Pool::basic(input_variant.num_threads);
+        let pool = Pool::rayon(input_variant.num_threads).unwrap();
 
-        BenchInput {
-            fs,
-            rayon_pool,
-            basic_pool,
-        }
+        BenchInput { fs, pool }
     }
 
     fn execute(
@@ -241,15 +234,15 @@ impl Experiment for Exp {
     ) -> Self::Output {
         match alg_variant {
             Method::Seq => seq_sum(&input.fs, input_variant.work),
-            Method::Rayon => rayon_sum(&input.rayon_pool, &input.fs, input_variant.work),
-            Method::OrxRayon => orx_sum(
-                &input.rayon_pool,
+            Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
+            Method::OrxFix => orx_sum_fixed(
+                &input.pool,
                 &input.fs,
                 input_variant.work,
                 input_variant.chunk_size,
             ),
-            Method::OrxNew => orx_sum_new_pool(
-                &input.basic_pool,
+            Method::OrxDyn => orx_sum_dynamic(
+                &input.pool,
                 &input.fs,
                 input_variant.work,
                 input_variant.chunk_size,
@@ -298,7 +291,7 @@ fn run(c: &mut Criterion) {
         })
         .collect();
 
-    let variants = vec![Method::Rayon, Method::OrxRayon, Method::OrxNew];
+    let variants = vec![Method::Rayon, Method::OrxFix, Method::OrxDyn];
 
     Exp.bench(c, "file_system", &treatments, &variants);
 }
