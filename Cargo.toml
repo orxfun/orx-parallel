@@ -52,7 +52,7 @@ test-case = "3.3.1"
 all-features = true
 
 [features]
-default = ["std", "rayon-core"]
+default = ["std", "rayon-core", "experimental"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 
