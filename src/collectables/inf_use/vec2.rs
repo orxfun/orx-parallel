@@ -1,10 +1,11 @@
+use crate::Vec2;
 use crate::collectables::alg::merge_collected::merge_ord_into_vec;
 use crate::collectables::inf_use::ColIntoInfUse;
 use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, ParUseIter, Use, XapUse};
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<T> ColIntoInfUse<T> for Vec<Vec<T>> {
+impl<T> ColIntoInfUse<T> for Vec2<T> {
     fn inf_use_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
         U: Use,
@@ -18,7 +19,7 @@ impl<T> ColIntoInfUse<T> for Vec<Vec<T>> {
 
         let mut ordered = Vec::new();
         merge_ord_into_vec(results, &mut ordered);
-        dst.push(ordered);
+        dst.inner.push(ordered);
     }
 
     fn inf_use_arb_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
@@ -31,6 +32,6 @@ impl<T> ColIntoInfUse<T> for Vec<Vec<T>> {
     {
         let (u, iter, x, mut exe, params) = par.destruct();
         let results = exe.collect_arb(params, u, iter, x);
-        dst.extend(results);
+        dst.inner.extend(results);
     }
 }

@@ -1,5 +1,5 @@
 use crate::collectables::{
-    inf::ColIntoInf, inf_use::ColIntoInfUse, opt::ColIntoOpt, opt_use::ColIntoOptUse,
+    Vec2, inf::ColIntoInf, inf_use::ColIntoInfUse, opt::ColIntoOpt, opt_use::ColIntoOptUse,
     res::ColIntoRes, res_use::ColIntoResUse,
 };
 use alloc::vec::Vec;
@@ -26,4 +26,4 @@ impl<T> ParCollectInto<T> for SplitVec<T, Recursive> {}
 
 impl<T> ParCollectInto<T> for Vec<T> {}
 
-impl<T> ParCollectInto<T> for Vec<Vec<T>> {}
+impl<T> ParCollectInto<T> for Vec2<T> {}

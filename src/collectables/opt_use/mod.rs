@@ -4,6 +4,6 @@ mod split_vec_doubling;
 mod split_vec_linear;
 mod split_vec_recursive;
 mod vec;
-mod vec_vec;
+mod vec2;
 
 pub use col_into_opt_use::ColIntoOptUse;

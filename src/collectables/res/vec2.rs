@@ -1,3 +1,4 @@
+use crate::Vec2;
 use crate::collectables::alg::merge_collected::merge_ord_into_vec;
 use crate::collectables::res::ColIntoRes;
 use crate::infallible::Xap;
@@ -6,7 +7,7 @@ use crate::sizes::SizePair;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<T> ColIntoRes<T> for Vec<Vec<T>> {
+impl<T> ColIntoRes<T> for Vec2<T> {
     fn res_col_into<I, M, E, X1, X2, S, R>(
         dst: &mut Self,
         par: ParResultIter<I, M, E, X1, X2, S, R>,
@@ -26,7 +27,7 @@ impl<T> ColIntoRes<T> for Vec<Vec<T>> {
         results.map(|results| {
             let mut ordered = Vec::new();
             merge_ord_into_vec(results, &mut ordered);
-            dst.push(ordered);
+            dst.inner.push(ordered);
         })
     }
 
@@ -46,6 +47,6 @@ impl<T> ColIntoRes<T> for Vec<Vec<T>> {
         let (iter, x1, x2, mut exe, s, params) = par.destruct();
         let results = exe.collect_arb(s, params, iter, x1, x2);
 
-        results.map(|results| dst.extend(results))
+        results.map(|results| dst.inner.extend(results))
     }
 }
