@@ -262,8 +262,8 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads = [8, 16, 32];
-    let chunk_sizes = [0, 256, 1024];
+    let num_threads = [16, 32];
+    let chunk_sizes = [0, 1024];
 
     let treatments: Vec<_> = chunk_sizes
         .into_iter()
@@ -291,7 +291,7 @@ fn run(c: &mut Criterion) {
         })
         .collect();
 
-    let variants = vec![Method::Rayon, Method::OrxFix, Method::OrxDyn];
+    let variants = vec![Method::Seq, Method::Rayon, Method::OrxFix, Method::OrxDyn];
 
     Exp.bench(c, "file_system", &treatments, &variants);
 }
