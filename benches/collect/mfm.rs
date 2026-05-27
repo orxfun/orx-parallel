@@ -7,7 +7,7 @@ use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::collections::LinkedList;
 
-const FIB_UPPER_BOUND: u64 = 301;
+const FIB_UPPER_BOUND: u64 = 501;
 
 fn fibonacci(n: u64) -> u64 {
     let mut a = 0;

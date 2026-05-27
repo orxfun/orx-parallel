@@ -7,7 +7,7 @@ use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
 
-const FIB_UPPER_BOUND: u64 = 201;
+const FIB_UPPER_BOUND: u64 = 501;
 
 fn inputs(len: usize, pos: usize, val: u64) -> Vec<u64> {
     const SEED: u64 = 654;
