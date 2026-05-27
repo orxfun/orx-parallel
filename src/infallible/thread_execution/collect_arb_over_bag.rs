@@ -17,15 +17,14 @@ pub fn collect_arb_over_bag<Q, I, X, P>(
     P: IntoConcurrentPinnedVec<X::O>,
     X::O: Send,
 {
-    let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller();
+    let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
     loop {
         let chunk_size = Q::next_chunk_size(state, iter.size_hint());
         let chunk_state = Q::begin_chunk(th_idx, chunk_size);
 
         match chunk_size {
-            0 | 1 => match item_puller.next() {
+            0 | 1 => match iter.next_by(th_idx) {
                 Some(i) => {
                     // TODO: possible to try to get len and bag.extend(values_vt.values()) when available, same holds for chunk below
                     for i in x.xap(i).into_iter() {
@@ -36,9 +35,7 @@ pub fn collect_arb_over_bag<Q, I, X, P>(
                 None => {}
             },
             c => {
-                if c > chunk_puller.chunk_size() {
-                    chunk_puller = iter.chunk_puller(c);
-                }
+                chunk_puller.resize_for_chunk_size(c);
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
