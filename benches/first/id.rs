@@ -13,11 +13,11 @@ fn inputs(len: usize) -> Vec<u64> {
 }
 
 #[derive(Clone, Copy)]
-struct Input {
+struct InputVariant {
     n: usize,
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
         vec!["n"]
     }
@@ -54,7 +54,7 @@ impl Factors for Method {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -91,7 +91,11 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [Input { n: 10 }, Input { n: 15 }, Input { n: 20 }];
+    let treatments = [
+        InputVariant { n: 10 },
+        InputVariant { n: 15 },
+        InputVariant { n: 20 },
+    ];
 
     let variants: Vec<_> = all::<Method>().collect();
 

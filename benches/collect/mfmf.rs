@@ -49,18 +49,18 @@ fn f2(a: &u64) -> bool {
     !(2 * a + 11).is_multiple_of(7)
 }
 
-struct Input {
+struct InputVariant {
     n: usize,
     heavy: bool,
 }
 
-impl Input {
+impl InputVariant {
     fn len(&self) -> usize {
         1 << self.n
     }
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
         vec!["n", "task"]
     }
@@ -82,12 +82,9 @@ enum Method {
     SeqVec,
     RayonVec,
     RayonVecList,
-    OrxVecFix,
-    OrxArbVecFix,
-    OrxArbVecVecFix,
-    OrxVecDyn,
-    OrxArbVecDyn,
-    OrxArbVecVecDyn,
+    OrxVec,
+    OrxArbVec,
+    OrxArbVecVec,
 }
 
 impl Factors for Method {
@@ -101,12 +98,9 @@ impl Factors for Method {
                 Self::SeqVec => "seq-vec",
                 Self::RayonVec => "rayon-vec",
                 Self::RayonVecList => "rayon-veclist",
-                Self::OrxVecFix => "orx-vec-fix",
-                Self::OrxArbVecFix => "orx-arb-vec-fix",
-                Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
-                Self::OrxVecDyn => "orx-vec-dyn",
-                Self::OrxArbVecDyn => "orx-arb-vec-dyn",
-                Self::OrxArbVecVecDyn => "orx-arb-vec2-dyn",
+                Self::OrxVec => "orx-vec",
+                Self::OrxArbVec => "orx-arb-vec",
+                Self::OrxArbVecVec => "orx-arb-vec2",
             }
             .to_string(),
         ]
@@ -123,7 +117,7 @@ enum Output {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -192,12 +186,11 @@ impl Experiment for Exp {
                         .collect_vec_list(),
                 }),
             ),
-            Method::OrxVecFix => (
+            Method::OrxVec => (
                 true,
                 Output::Vec(match h {
                     true => input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .map(m)
                         .filter(f)
                         .map(h_m2)
@@ -205,7 +198,6 @@ impl Experiment for Exp {
                         .collect(),
                     false => input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .map(m)
                         .filter(f)
                         .map(l_m2)
@@ -213,12 +205,11 @@ impl Experiment for Exp {
                         .collect(),
                 }),
             ),
-            Method::OrxArbVecFix => (
+            Method::OrxArbVec => (
                 false,
                 Output::Vec(match h {
                     true => input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(m)
                         .filter(f)
@@ -227,7 +218,6 @@ impl Experiment for Exp {
                         .collect(),
                     false => input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(m)
                         .filter(f)
@@ -236,12 +226,11 @@ impl Experiment for Exp {
                         .collect(),
                 }),
             ),
-            Method::OrxArbVecVecFix => (
+            Method::OrxArbVecVec => (
                 false,
                 Output::VecVec(match h {
                     true => input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(m)
                         .filter(f)
@@ -250,74 +239,6 @@ impl Experiment for Exp {
                         .collect(),
                     false => input
                         .into_par()
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(l_m2)
-                        .filter(f2)
-                        .collect(),
-                }),
-            ),
-            Method::OrxVecDyn => (
-                true,
-                Output::Vec(match h {
-                    true => input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .map(m)
-                        .filter(f)
-                        .map(h_m2)
-                        .filter(f2)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .map(m)
-                        .filter(f)
-                        .map(l_m2)
-                        .filter(f2)
-                        .collect(),
-                }),
-            ),
-            Method::OrxArbVecDyn => (
-                false,
-                Output::Vec(match h {
-                    true => input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(h_m2)
-                        .filter(f2)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(l_m2)
-                        .filter(f2)
-                        .collect(),
-                }),
-            ),
-            Method::OrxArbVecVecDyn => (
-                false,
-                Output::VecVec(match h {
-                    true => input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(h_m2)
-                        .filter(f2)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(m)
                         .filter(f)
@@ -370,16 +291,16 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let treatments = vec![
-        Input {
+        InputVariant {
             n: 15,
             heavy: false,
         },
-        Input {
+        InputVariant {
             n: 20,
             heavy: false,
         },
-        Input { n: 15, heavy: true },
-        Input { n: 20, heavy: true },
+        InputVariant { n: 15, heavy: true },
+        InputVariant { n: 20, heavy: true },
     ];
 
     let variants: Vec<_> = all::<Method>().collect();
