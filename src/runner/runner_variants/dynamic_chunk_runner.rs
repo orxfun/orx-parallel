@@ -34,7 +34,7 @@ pub struct State {
     avg_ns_per_item: AtomicU64,
     avg_abs_deviation_ns_per_item: AtomicU64,
     conservative_runs: AtomicUsize,
-    initial_len: Option<usize>,
+    size_hint: (usize, Option<usize>),
     probe_idx: AtomicUsize,
     measurements_in_phase: AtomicUsize,
 }
@@ -169,8 +169,15 @@ impl State {
         }
     }
 
+    fn remaining_len(&self) -> Option<usize> {
+        match self.size_hint.1 {
+            Some(ub) if ub == self.size_hint.0 => Some(ub),
+            _ => None,
+        }
+    }
+
     fn compute_bulk_chunk_size(&self) -> usize {
-        match self.initial_len {
+        match self.remaining_len() {
             Some(total) => {
                 let per_thread = total / self.max_num_threads.max(1);
                 per_thread / 4
@@ -219,7 +226,7 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
         &mut self,
         params: Params,
         max_num_threads: usize,
-        initial_len: Option<usize>,
+        size_hint: (usize, Option<usize>),
     ) -> Self::State {
         let min_chunk_size = match params.chunk_size {
             ChunkSize::Auto => 1,
@@ -243,7 +250,7 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
             avg_ns_per_item: AtomicU64::new(0),
             avg_abs_deviation_ns_per_item: AtomicU64::new(0),
             conservative_runs: AtomicUsize::new(0),
-            initial_len,
+            size_hint,
             probe_idx: AtomicUsize::new(0),
             measurements_in_phase: AtomicUsize::new(0),
         }

@@ -2,20 +2,20 @@ use crate::parameters::ChunkSize;
 
 pub fn compute_chunk_size(
     chunk_size: ChunkSize,
-    initial_len: Option<usize>,
+    size_hint: (usize, Option<usize>),
     max_num_threads: usize,
 ) -> usize {
     match chunk_size {
-        ChunkSize::Auto => auto_chunk_size(initial_len, max_num_threads),
-        ChunkSize::Min(min_chunk) => min_chunk_size(initial_len, max_num_threads, min_chunk.into()),
+        ChunkSize::Auto => auto_chunk_size(size_hint, max_num_threads),
+        ChunkSize::Min(min_chunk) => min_chunk_size(size_hint, max_num_threads, min_chunk.into()),
         ChunkSize::Exact(c) => c.into(),
     }
 }
 
-fn auto_chunk_size(initial_len: Option<usize>, max_num_threads: usize) -> usize {
+fn auto_chunk_size(size_hint: (usize, Option<usize>), max_num_threads: usize) -> usize {
     const DESIRED_CHUNK_SIZE: usize = 1024;
 
-    match initial_len {
+    match size_hint.1 {
         None | Some(0) => 1,
         Some(initial_len) => {
             let thread_load = initial_len / max_num_threads;
@@ -44,6 +44,10 @@ fn auto_chunk_size(initial_len: Option<usize>, max_num_threads: usize) -> usize 
     }
 }
 
-fn min_chunk_size(initial_len: Option<usize>, max_num_threads: usize, min_chunk: usize) -> usize {
-    core::cmp::max(min_chunk, auto_chunk_size(initial_len, max_num_threads))
+fn min_chunk_size(
+    size_hint: (usize, Option<usize>),
+    max_num_threads: usize,
+    min_chunk: usize,
+) -> usize {
+    core::cmp::max(min_chunk, auto_chunk_size(size_hint, max_num_threads))
 }
