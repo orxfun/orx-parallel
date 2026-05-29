@@ -752,10 +752,14 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
+    /// let num_threads = 2;
+    ///
     /// let partials: Vec<usize> = (1..6)
     ///     .into_par()
-    ///     .num_threads(1)
+    ///     .num_threads(num_threads)
     ///     .fold(|| 0usize, |acc, x| *acc += x);
+    ///
+    /// assert!(partials.len() <= num_threads);
     ///
     /// assert_eq!(partials.iter().sum::<usize>(), 15);
     /// ```
