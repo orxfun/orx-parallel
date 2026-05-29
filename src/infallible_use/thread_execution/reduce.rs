@@ -17,8 +17,26 @@ where
     X: XapUse<U = U::Item, I = I::Item>,
     F: Fn(&mut X::U, X::O, X::O) -> X::O,
 {
-    let mut u = u.create(th_idx);
-    let u = &mut u as *mut U::Item;
+    reduce_get_u::<Q, _, _, _, _>(u, th_idx, state, iter, x, f).0
+}
+
+pub fn reduce_get_u<Q, U, I, X, F>(
+    u: &U,
+    th_idx: usize,
+    state: &Q::State,
+    iter: &I,
+    x: X,
+    f: F,
+) -> (Option<X::O>, U::Item)
+where
+    Q: ParRunner,
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    F: Fn(&mut X::U, X::O, X::O) -> X::O,
+{
+    let mut use_var = u.create(th_idx);
+    let u = &mut use_var as *mut U::Item;
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
     let mut acc = None;
@@ -117,5 +135,5 @@ where
         }
     };
 
-    result
+    (result, use_var)
 }
