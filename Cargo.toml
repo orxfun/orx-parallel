@@ -56,9 +56,6 @@ default = ["std"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 
-[lib]
-doctest = false
-
 
 # examples
 

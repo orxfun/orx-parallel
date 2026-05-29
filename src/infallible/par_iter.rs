@@ -1,5 +1,3 @@
-#![allow(refining_impl_trait)]
-
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::Xap;
 use crate::infallible::par_core::ParCore;
