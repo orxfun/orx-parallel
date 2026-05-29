@@ -63,6 +63,58 @@ fn bin_f_reduce_err() {
     assert_eq!(result, None);
 }
 
+#[test]
+fn bin_f_fold_ok() {
+    let inputs = inputs_opt(N, None);
+    let expected = inputs
+        .clone()
+        .into_par()
+        .into_optional()
+        .filter(|x| x.len() > 1)
+        .filter(|x| x.len() < 4)
+        .collect::<std::vec::Vec<_>>()
+        .unwrap();
+
+    let mut expected_flat = String::new();
+    expected.iter().for_each(|x| expected_flat.push_str(x));
+    let mut expected: Vec<_> = expected_flat.chars().collect();
+    expected.sort();
+
+    let result = inputs
+        .into_par()
+        .into_optional()
+        .filter(|x| x.len() > 1)
+        .filter(|x| x.len() < 4)
+        .num_threads(4)
+        .fold(String::new, |s, x| s.push_str(&x));
+    let result = result.unwrap();
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: String, b: String| {
+            a.push_str(&b);
+            a
+        })
+        .unwrap();
+    let mut result: Vec<_> = result.chars().collect();
+    result.sort();
+
+    assert_eq!(&result, &expected);
+}
+
+#[test]
+fn bin_f_fold_err() {
+    let inputs = inputs_opt(N, Some(42));
+    let result = inputs
+        .into_par()
+        .into_optional()
+        .filter(|x| x.len() > 1)
+        .filter(|x| x.len() < 4)
+        .num_threads(4)
+        .fold(String::new, |s, x| s.push_str(&x));
+    assert_eq!(result, None);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn bin_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let expected = C::expected(

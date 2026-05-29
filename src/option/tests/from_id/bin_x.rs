@@ -74,6 +74,63 @@ fn bin_x_reduce_err() {
     assert_eq!(result, None);
 }
 
+#[test]
+fn bin_x_fold_ok() {
+    let inputs = inputs_opt(N, None);
+    let mut expected = inputs
+        .clone()
+        .into_par()
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .collect::<std::vec::Vec<_>>()
+        .unwrap();
+    expected.sort_unstable();
+
+    let result = inputs
+        .into_par()
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .num_threads(4)
+        .fold(Vec::new, |v, x| v.push(x));
+    let result = result.unwrap();
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: Vec<u64>, mut b: Vec<u64>| {
+            a.append(&mut b);
+            a
+        })
+        .unwrap();
+    let mut result = result;
+    result.sort_unstable();
+
+    assert_eq!(&result, &expected);
+}
+
+#[test]
+fn bin_x_fold_err() {
+    let inputs = inputs_opt(N, Some(42));
+    let result = inputs
+        .into_par()
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .num_threads(4)
+        .fold(Vec::new, |v, x| v.push(x));
+    assert_eq!(result, None);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let expected = C::expected(

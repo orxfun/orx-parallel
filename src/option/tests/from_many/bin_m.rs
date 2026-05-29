@@ -69,6 +69,60 @@ fn bin_m_reduce_err() {
     assert_eq!(result, None);
 }
 
+#[test]
+fn bin_m_fold_ok() {
+    let inputs = inputs(N);
+    let mut expected = inputs
+        .clone()
+        .into_par()
+        .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<std::vec::Vec<_>>()
+        .unwrap();
+    expected.sort_unstable();
+
+    let result = inputs
+        .into_par()
+        .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .map(|x| x.parse::<u64>().unwrap())
+        .num_threads(4)
+        .fold(Vec::new, |v, x| v.push(x));
+    let result = result.unwrap();
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: Vec<u64>, mut b: Vec<u64>| {
+            a.append(&mut b);
+            a
+        })
+        .unwrap();
+    let mut result = result;
+    result.sort_unstable();
+
+    assert_eq!(&result, &expected);
+}
+
+#[test]
+fn bin_m_fold_err() {
+    let inputs = inputs(N);
+    let result = inputs
+        .into_par()
+        .flat_map(|x| match x.as_str() == "42" {
+            true => [x.clone(), x.clone(), x].map(Some),
+            false => [None, None, None],
+        })
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .map(|x| x.parse::<u64>().unwrap())
+        .num_threads(4)
+        .fold(Vec::new, |v, x| v.push(x));
+    assert_eq!(result, None);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let expected = C::expected(
