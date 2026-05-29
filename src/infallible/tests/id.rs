@@ -44,9 +44,10 @@ fn id_fold() {
     let mut expected: Vec<_> = expected.chars().collect();
     expected.sort();
 
-    let result = inputs
-        .into_par()
-        .fold(String::new(), |s, x| s.push_str(&x))
+    let par = inputs.into_par().num_threads(4);
+    let result = par.fold(String::new(), |s, x| s.push_str(&x));
+    assert!(result.len() <= 4);
+    let result = result
         .into_iter()
         .reduce(|mut a: String, b: String| {
             a.push_str(&b);
