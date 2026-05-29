@@ -1,8 +1,7 @@
 use crate::infallible_use::Use;
 use alloc::vec::Vec;
-use core::cell::UnsafeCell;
 use orx_concurrent_bag::ConcurrentBag;
-use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
+use orx_pinned_vec::PinnedVec;
 
 pub struct UseVec<U>
 where
@@ -11,6 +10,18 @@ where
 {
     using: U,
     cache: ConcurrentBag<(usize, U::Item)>,
+}
+
+impl<U> UseVec<U>
+where
+    U: Use,
+    U::Item: Send,
+{
+    pub fn into_vec(self) -> Vec<U::Item> {
+        let mut vec = self.cache.into_inner();
+        vec.sort_by_key(|(th_idx, _)| *th_idx);
+        vec.into_iter().map(|(_, value)| value).collect()
+    }
 }
 
 impl<U> Use for UseVec<U>
