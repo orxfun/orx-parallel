@@ -35,6 +35,10 @@ where
     fn get(&self, thread_idx: usize) -> Self::ItemKind<'_> {
         let use_var = self.using.create(thread_idx);
         let idx = self.cache.push((thread_idx, use_var));
+        // SAFETY: it is safe to access to the index as it is
+        // pushed / initialized just above. Further, `get` will
+        // be called exactly once by the corresponding thread,
+        // and hence, there will be no race condition.
         let a = unsafe { &mut *self.cache.ptr_mut(idx) };
         &mut a.1
     }
