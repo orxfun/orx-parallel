@@ -60,6 +60,24 @@ experimental = []
 doctest = false
 
 
+# examples
+
+[[example]]
+name = "runner_mf_r"
+path = "examples/runner_mf_r.rs"
+required-features = ["rayon-core"]
+
+[[example]]
+name = "het"
+path = "examples/het.rs"
+required-features = ["rayon-core"]
+
+[[example]]
+name = "recursive_tune"
+path = "examples/recursive_tune.rs"
+required-features = ["rayon-core"]
+
+
 # benchmarks
 
 ## benchmarks - heterogeneoity
@@ -75,6 +93,7 @@ path = "benches/het/simple.rs"
 name = "rec-file-system"
 harness = false
 path = "benches/rec/file_system.rs"
+required-features = ["rayon-core"]
 
 ## benchmarks - runner
 
@@ -82,6 +101,7 @@ path = "benches/rec/file_system.rs"
 name = "runner-mf-r"
 harness = false
 path = "benches/runner/mf_r.rs"
+required-features = ["rayon-core"]
 
 ## benchmarks - first
 
