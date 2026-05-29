@@ -235,7 +235,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
             ()
         });
         let (using, iter, xap, mut exe, params) = fold.destruct();
-        exe.regular_fold(params, using, iter, xap, |_, _, _| {})
+        exe.fold(params, using, iter, xap, |_, _, _| {})
     }
 
     fn for_each<F>(self, f: F)
