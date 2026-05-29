@@ -153,7 +153,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let value = th::collect::<Self, _, _, _>(u, th_idx, st, iter, x);
+                    let mut u = u.get(th_idx);
+                    let value = th::collect::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
                 });
@@ -181,7 +182,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let value = th::collect_arb::<Self, _, _, _>(u, th_idx, st, iter, x);
+                    let mut u = u.get(th_idx);
+                    let value = th::collect_arb::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
                 });

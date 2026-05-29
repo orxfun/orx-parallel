@@ -1,10 +1,10 @@
-use crate::infallible_use::{Use, xap::XapUse};
+use crate::infallible_use::xap::XapUse;
 use crate::results::ValsAndIdx;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn collect<Q, U, I, X>(
-    u: &U,
+    u: &mut U,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
@@ -12,15 +12,11 @@ pub fn collect<Q, U, I, X>(
 ) -> ValsAndIdx<X::O>
 where
     Q: ParRunner,
-    U: Use,
     I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
+    X: XapUse<U = U, I = I::Item>,
 {
     let mut collected = ValsAndIdx::new();
     let out = &mut collected;
-
-    let mut u = u.create(th_idx);
-    let u = &mut u as *mut U::Item;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
