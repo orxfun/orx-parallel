@@ -7,6 +7,7 @@ use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
+use orx_self_or::SoM;
 
 pub trait ParRunnerInfallibleUse: ParRunner {
     fn next<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Option<ValIdx<X::O>>
@@ -26,8 +27,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.create(th_idx);
-                    let value = th::next::<Self, _, _, _>(&mut u, th_idx, st, iter, x);
+                    let mut u = u.get(th_idx);
+                    let value = th::next::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
                 });
