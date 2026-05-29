@@ -247,7 +247,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///     .into_par()
     ///     .map(|s| s.parse::<i32>().ok())
     ///     .map(|x| x.map(|x| x * 2))
-    ///     .filter(|x| x.map(|x| x > 3).unwrap_or(true))
+    ///     .filter(|x| x.as_ref().map(|x| *x > 3).unwrap_or(true))
     ///     .collect::<Vec<_>>()
     ///     .into_iter()
     ///     .collect();
@@ -350,11 +350,13 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// ```
     /// use orx_parallel::*;
+    /// use rand::{Rng, SeedableRng};
+    /// use rand_chacha::ChaCha20Rng;
     ///
     /// let values: Vec<_> = (0..8)
     ///     .into_par()
-    ///     .using(|thread_idx| thread_idx)
-    ///     .map(|thread_idx, x| x + *thread_idx)
+    ///     .using(|thread_idx| ChaCha20Rng::seed_from_u64(thread_idx as u64))
+    ///     .map(|rng, x| x + rng.random_range(0..10))
     ///     .collect();
     ///
     /// assert_eq!(values.len(), 8);
@@ -378,14 +380,18 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// ```
     /// use orx_parallel::*;
+    /// use rand::{Rng, SeedableRng};
+    /// use rand_chacha::ChaCha20Rng;
+    ///
+    /// let rng = ChaCha20Rng::seed_from_u64(42);
     ///
     /// let out: Vec<_> = (0..4)
     ///     .into_par()
-    ///     .using_clone(10usize)
-    ///     .map(|u, x| x + *u)
+    ///     .using_clone(rng)
+    ///     .map(|rng, x| x + rng.random_range(0..10))
     ///     .collect();
     ///
-    /// assert_eq!(out, vec![10, 11, 12, 13]);
+    /// assert_eq!(out.len(), 4);
     /// ```
     fn using_clone<U>(
         self,
