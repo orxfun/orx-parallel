@@ -3,7 +3,7 @@ use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn reduce<Q, U, I, M, X1, X2, S, F>(
+pub fn reduce_get_u<Q, U, I, M, X1, X2, S, F>(
     _: S,
     u: &U,
     th_idx: usize,
@@ -12,7 +12,7 @@ pub fn reduce<Q, U, I, M, X1, X2, S, F>(
     x1: X1,
     x2: X2,
     f: F,
-) -> Option<Option<X2::O>>
+) -> (Option<Option<X2::O>>, U::Item)
 where
     Q: ParRunner,
     U: Use,
@@ -22,8 +22,8 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     F: Fn(&mut U::Item, X2::O, X2::O) -> X2::O,
 {
-    let mut u = u.create(th_idx);
-    let u = &mut u as *mut U::Item;
+    let mut use_var = u.create(th_idx);
+    let u = &mut use_var as *mut U::Item;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
@@ -44,7 +44,7 @@ where
                                 (Some(a), false) => Some(a),
                                 (None, _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
-                                    return None;
+                                    return (None, use_var);
                                 }
                             };
                         }
@@ -65,7 +65,7 @@ where
                                 (Some(a), false) => Some(a),
                                 (None, _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
-                                    return None;
+                                    return (None, use_var);
                                 }
                             };
                         }
@@ -99,7 +99,7 @@ where
                                         Some(a) => f(unsafe { &mut *u }, acc, a),
                                         None => {
                                             Q::broadcast_stop(iter, state, chunk_state);
-                                            return None;
+                                            return (None, use_var);
                                         }
                                     };
                                 }
@@ -120,7 +120,7 @@ where
                                         Some(a) => f(unsafe { &mut *u2 }, acc, a),
                                         None => {
                                             Q::broadcast_stop(iter, state, chunk_state);
-                                            return None;
+                                            return (None, use_var);
                                         }
                                     };
                                 }
@@ -138,5 +138,27 @@ where
         }
     };
 
-    Some(result)
+    (Some(result), use_var)
+}
+
+pub fn reduce<Q, U, I, M, X1, X2, S, F>(
+    s: S,
+    u: &U,
+    th_idx: usize,
+    state: &Q::State,
+    iter: &I,
+    x1: X1,
+    x2: X2,
+    f: F,
+) -> Option<Option<X2::O>>
+where
+    Q: ParRunner,
+    U: Use,
+    I: ConcurrentIter,
+    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    F: Fn(&mut U::Item, X2::O, X2::O) -> X2::O,
+{
+    reduce_get_u::<Q, U, I, M, X1, X2, S, F>(s, u, th_idx, state, iter, x1, x2, f).0
 }
