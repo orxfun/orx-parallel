@@ -1,5 +1,3 @@
-use core::result;
-
 use crate::infallible_use::{Use, XapUse};
 use crate::option_use::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};
