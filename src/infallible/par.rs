@@ -273,8 +273,11 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
 
     /// Converts `Par<Item = Result<T, E>>` into `ParResult<Item = T, Error = E>`.
     ///
-    /// The resulting iterator short-circuits and returns the first observed
-    /// error.
+    /// The resulting fallible iterator **short-circuits** and returns the first
+    /// observed error.
+    ///
+    /// Similar to pattern using the `?` operator, fallible iterators allow us to
+    /// work with the **success path**.
     ///
     /// # Examples
     ///
@@ -286,16 +289,39 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///     .map(|s| s.parse::<i32>())
     ///     .into_fallible()
     ///     .map(|x| x * 2)
+    ///     .filter(|x| *x > 3)
     ///     .collect();
-    /// assert_eq!(ok, Ok(vec![2, 4, 6]));
+    /// assert_eq!(ok, Ok(vec![4, 6]));
     ///
     /// let fail: Result<Vec<_>, _> = ["1", "x", "3"]
     ///     .into_par()
     ///     .map(|s| s.parse::<i32>())
     ///     .into_fallible()
     ///     .map(|x| x * 2)
+    ///     .filter(|x| *x > 3)
     ///     .collect();
     /// assert!(fail.is_err());
+    /// ```
+    ///
+    /// Notice that `x` is of type `i32`, rather than `Result<i32, _>`, which
+    /// allows for concise expressions.
+    ///
+    /// Without fallible iterators, the above result could be obtained by the
+    /// following version, which is not only more verbose, but also lacks the
+    /// short-circuiting mechanism.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let ok: Result<Vec<_>, _> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<i32>())
+    ///     .map(|x| x.map(|x| x * 2))
+    ///     .filter(|x| x.as_ref().map(|x| *x > 3).unwrap_or(true))
+    ///     .collect::<Vec<_>>()
+    ///     .into_iter()
+    ///     .collect();
+    /// assert_eq!(ok, Ok(vec![4, 6]));
     /// ```
     fn into_fallible<T, E>(
         self,
