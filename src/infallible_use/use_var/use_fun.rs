@@ -16,3 +16,9 @@ impl<T, F: Fn(usize) -> T + Sync> Use for UseFun<T, F> {
         (self.0)(thread_idx)
     }
 }
+
+impl<T, F: Fn(usize) -> T + Sync> From<F> for UseFun<T, F> {
+    fn from(value: F) -> Self {
+        Self(value)
+    }
+}
