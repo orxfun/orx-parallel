@@ -588,6 +588,9 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// input position. With `IterationOrder::Arbitrary`, this may be any
     /// matching item reached first in parallel execution.
     ///
+    /// This operation is short-circuiting: once a first candidate is determined,
+    /// remaining work is cancelled.
+    ///
     /// # Examples
     ///
     /// ```
@@ -660,6 +663,9 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// Empty iterators return `true`.
     ///
+    /// This operation is short-circuiting: evaluation stops as soon as one item
+    /// fails the predicate.
+    ///
     /// # Examples
     ///
     /// ```
@@ -678,6 +684,9 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// Returns `true` if any item satisfies predicate `f`.
     ///
     /// Empty iterators return `false`.
+    ///
+    /// This operation is short-circuiting: evaluation stops as soon as one item
+    /// satisfies the predicate.
     ///
     /// # Examples
     ///
@@ -711,6 +720,9 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// Finds first/any item satisfying predicate `f`.
     ///
     /// This is equivalent to `self.filter(f).first()`.
+    ///
+    /// This operation is short-circuiting: once a matching item is found,
+    /// remaining work is cancelled.
     ///
     /// # Examples
     ///
