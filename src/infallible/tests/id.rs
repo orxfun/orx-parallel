@@ -45,7 +45,7 @@ fn id_fold() {
     expected.sort();
 
     let par = inputs.into_par().num_threads(4);
-    let result = par.fold(String::new(), |s, x| s.push_str(&x));
+    let result = par.fold(String::new, |s, x| s.push_str(&x));
     assert!(result.len() <= 4);
     let result = result
         .into_iter()
