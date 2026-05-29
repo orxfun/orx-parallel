@@ -94,6 +94,82 @@ fn many_f_reduce_err() {
     assert_eq!(result, None);
 }
 
+#[test]
+fn many_f_fold_ok() {
+    let inputs = inputs(N);
+    let expected = inputs
+        .clone()
+        .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Some(x)),
+        })
+        .into_optional()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .filter(|x| x.len() < 4)
+        .collect::<std::vec::Vec<_>>()
+        .unwrap();
+
+    let mut expected_flat = String::new();
+    expected.iter().for_each(|x| expected_flat.push_str(x));
+    let mut expected: Vec<_> = expected_flat.chars().collect();
+    expected.sort();
+
+    let result = inputs
+        .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Some(x)),
+        })
+        .into_optional()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .filter(|x| x.len() < 4)
+        .num_threads(4)
+        .fold(String::new, |s, x| s.push_str(&x));
+    let result = result.unwrap();
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: String, b: String| {
+            a.push_str(&b);
+            a
+        })
+        .unwrap();
+    let mut result: Vec<_> = result.chars().collect();
+    result.sort();
+
+    assert_eq!(&result, &expected);
+}
+
+#[test]
+fn many_f_fold_err() {
+    let inputs = inputs(N);
+    let result = inputs
+        .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(match x.as_str() == "42" {
+                true => Some(x),
+                false => None,
+            }),
+        })
+        .into_optional()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .filter(|x| x.len() < 4)
+        .num_threads(4)
+        .fold(String::new, |s, x| s.push_str(&x));
+    assert_eq!(result, None);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
     _: C,

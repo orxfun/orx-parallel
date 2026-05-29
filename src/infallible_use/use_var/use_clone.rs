@@ -20,3 +20,9 @@ impl<T: Clone + Send> UseClone<T> {
         Self(value)
     }
 }
+
+impl<T: Clone + Send> From<T> for UseClone<T> {
+    fn from(value: T) -> Self {
+        Self(value)
+    }
+}

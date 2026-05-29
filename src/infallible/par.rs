@@ -3,6 +3,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, Use};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
@@ -12,6 +13,7 @@ use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
 };
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
+use alloc::vec::Vec;
 use core::cmp::Ordering;
 
 pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
@@ -221,13 +223,27 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         self.filter(&f).first()
     }
 
+    fn fold<B, I, F>(self, init: I, f: F) -> Vec<B>
+    where
+        B: Send,
+        I: Fn() -> B + Sync,
+        F: Fn(&mut B, Self::Item) + Copy + Send,
+    {
+        let par_use = self.using(|_| init());
+        let fold = par_use.map(move |u: &mut B, x| {
+            f(u, x);
+            ()
+        });
+        let (using, iter, xap, mut exe, params) = fold.destruct();
+        exe.fold(params, using, iter, xap, |_, _, _| {})
+    }
+
     fn for_each<F>(self, f: F)
     where
         F: Fn(Self::Item) + Send + Copy,
     {
         let _ = self.map(f).reduce(|_, _| {});
     }
-
     fn max(self) -> Option<Self::Item>
     where
         Self::Item: Ord + Send,

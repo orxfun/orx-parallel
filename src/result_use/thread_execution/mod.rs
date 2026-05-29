@@ -8,4 +8,4 @@ pub use collect::collect;
 pub use collect_arb::collect_arb;
 pub use next::next;
 pub use next_any::next_any;
-pub use reduce::reduce;
+pub use reduce::{reduce, reduce_get_u};
