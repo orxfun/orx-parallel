@@ -3,7 +3,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, Use};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;

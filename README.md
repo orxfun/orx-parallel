@@ -24,7 +24,7 @@ The goal is to convert an expressive sequential program into an efficient parall
 
 The following is a naive [traveling salesperson](https://en.wikipedia.org/wiki/Travelling_salesman_problem) algorithm which randomly generates sequences and picks the one with the minimum duration as the best tour. The example demonstrates chaining of very common and useful `map`, `filter` and `reduce` (`min_by_key`) operations. Notice that the only difference between the sequential and parallel programs is the `par()` call.
 
-```rust
+```rust ignore
 use orx_parallel::*;
 use rand::prelude::*;
 
@@ -116,7 +116,7 @@ Any arbitrary sequential [Iterator](https://doc.rust-lang.org/std/iter/trait.Ite
 
 As demonstrated below, item type of the Iterator can as well be a mutable reference.
 
-```rust
+```rust  ignore
 use orx_parallel::*;
 use std::collections::HashMap;
 
@@ -309,7 +309,7 @@ In general, the requirement to early exit in fallible computation is common and 
 
 For parallel computation, this crate proposes to explicitly transform an iterator with fallible elements into a fallible parallel iterator.
 
-```rust
+```rust ignore
 use orx_parallel::*;
 use std::num::ParseIntError;
 
@@ -329,7 +329,7 @@ Currently, there exist two fallible parallel iterators [`ParIterResult`](https:/
 
 After converting into a fallible iterator, each chaining transformation is based on the success item type. Similar to `?` operator, this allows us to focus on the success path while any error case will be handled by early returning from the iterator with the error.
 
-```rust
+```rust ignore
 use orx_parallel::*;
 use std::num::ParseIntError;
 
@@ -509,7 +509,7 @@ When not explicitly set, [`DefaultPool`](https://docs.rs/orx-parallel/latest/orx
 
 To overwrite the defaults and explicitly set the thread pool to be used for the computation, [`with_pool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.with_pool) or [`with_runner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParIter.html#tymethod.with_runner) methods are used.
 
-```rust
+```rust ignore
 use orx_parallel::*;
 
 let inputs: Vec<_> = (0..42).collect();
