@@ -4,6 +4,7 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 fn heterogeneous_map(heterogeneity_level: f64, i: u64) -> u64 {
@@ -32,20 +33,22 @@ fn heterogeneous_map(heterogeneity_level: f64, i: u64) -> u64 {
 }
 
 #[derive(Clone, Copy)]
-struct Input {
+struct InputVariant {
     n: usize,
     heterogeneity_level: f64,
+    num_threads: usize,
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "het-lvl"]
+        vec!["n", "het-lvl", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
         vec![
             format!("2e{}", self.n),
             format!("{:4}", self.heterogeneity_level),
+            self.num_threads.to_string(),
         ]
     }
 }
@@ -54,7 +57,8 @@ impl Factors for Input {
 enum Method {
     Seq,
     Rayon,
-    Orx,
+    OrxFix,
+    OrxDyn,
 }
 
 impl Factors for Method {
@@ -67,7 +71,8 @@ impl Factors for Method {
             match self {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
-                Self::Orx => "orx",
+                Self::OrxFix => "orx-fix",
+                Self::OrxDyn => "orx-dyn",
             }
             .to_string(),
         ]
@@ -77,7 +82,7 @@ impl Factors for Method {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -99,8 +104,23 @@ impl Experiment for Exp {
         let h = input_variant.heterogeneity_level;
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
-            Method::Rayon => input.par_iter().map(|x| heterogeneous_map(h, *x)).max(),
-            Method::Orx => input.par().map(|x| heterogeneous_map(h, *x)).max(),
+            Method::Rayon => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| input.par_iter().map(|x| heterogeneous_map(h, *x)).max())
+            }
+            Method::OrxFix => input
+                .par()
+                .runner(Runner::fixed_chunk(Pool::once(input_variant.num_threads)))
+                .map(|x| heterogeneous_map(h, *x))
+                .max(),
+            Method::OrxDyn => input
+                .par()
+                .runner(Runner::dynamic_chunk(Pool::once(input_variant.num_threads)))
+                .map(|x| heterogeneous_map(h, *x))
+                .max(),
         }
     }
 
@@ -115,56 +135,74 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [
-        Input {
-            n: 10,
-            heterogeneity_level: 0.001,
-        },
-        Input {
-            n: 10,
-            heterogeneity_level: 0.011,
-        },
-        Input {
-            n: 10,
-            heterogeneity_level: 0.101,
-        },
-        Input {
-            n: 10,
-            heterogeneity_level: 0.201,
-        },
-        Input {
-            n: 12,
-            heterogeneity_level: 0.001,
-        },
-        Input {
-            n: 12,
-            heterogeneity_level: 0.011,
-        },
-        Input {
-            n: 12,
-            heterogeneity_level: 0.101,
-        },
-        Input {
-            n: 12,
-            heterogeneity_level: 0.201,
-        },
-        Input {
-            n: 14,
-            heterogeneity_level: 0.001,
-        },
-        Input {
-            n: 14,
-            heterogeneity_level: 0.011,
-        },
-        Input {
-            n: 14,
-            heterogeneity_level: 0.101,
-        },
-        Input {
-            n: 14,
-            heterogeneity_level: 0.201,
-        },
-    ];
+    let num_threads_options = [16, 32];
+    let treatments: Vec<_> = num_threads_options
+        .iter()
+        .flat_map(|&num_threads| {
+            [
+                InputVariant {
+                    n: 10,
+                    heterogeneity_level: 0.001,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 10,
+                    heterogeneity_level: 0.011,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 10,
+                    heterogeneity_level: 0.101,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 10,
+                    heterogeneity_level: 0.201,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 12,
+                    heterogeneity_level: 0.001,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 12,
+                    heterogeneity_level: 0.011,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 12,
+                    heterogeneity_level: 0.101,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 12,
+                    heterogeneity_level: 0.201,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 14,
+                    heterogeneity_level: 0.001,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 14,
+                    heterogeneity_level: 0.011,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 14,
+                    heterogeneity_level: 0.101,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 14,
+                    heterogeneity_level: 0.201,
+                    num_threads,
+                },
+            ]
+        })
+        .collect();
 
     let variants: Vec<_> = all::<Method>().collect();
 
