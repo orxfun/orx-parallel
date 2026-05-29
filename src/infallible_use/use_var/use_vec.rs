@@ -20,7 +20,10 @@ where
 {
     type Item = U::Item;
 
-    type ItemKind = U::Item;
+    type ItemKind<'a>
+        = &'a mut U::Item
+    where
+        Self: 'a;
 
     fn create(&self, thread_idx: usize) -> Self::Item {
         let use_var = self.using.create(thread_idx);
@@ -29,10 +32,10 @@ where
     }
 
     #[inline]
-    fn get(&self, thread_idx: usize) -> Self::ItemKind {
+    fn get(&self, thread_idx: usize) -> Self::ItemKind<'_> {
         let use_var = self.using.create(thread_idx);
-        let position = self.cache.push((thread_idx, use_var));
-        // unsafe {self.cache.};
-        todo!()
+        let idx = self.cache.push((thread_idx, use_var));
+        let a = unsafe { &mut *self.cache.ptr_mut(idx) };
+        &mut a.1
     }
 }
