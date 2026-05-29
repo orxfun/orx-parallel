@@ -223,18 +223,18 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         self.filter(&f).first()
     }
 
-    fn fold<B, F>(self, init: B, f: F) -> Vec<B>
+    fn fold<B, I, F>(self, init: I, f: F) -> Vec<B>
     where
-        B: Send + Clone,
+        B: Send,
+        I: Fn() -> B + Sync,
         F: Fn(&mut B, Self::Item) + Copy + Send,
     {
-        let par = self.using_clone(init);
-
-        let par = par.map(move |u: &mut B, x| {
+        let par_use = self.using(|_| init());
+        let fold = par_use.map(move |u: &mut B, x| {
             f(u, x);
             ()
         });
-        let (using, iter, xap, mut exe, params) = par.destruct();
+        let (using, iter, xap, mut exe, params) = fold.destruct();
         exe.regular_fold(params, using, iter, xap, |_, _, _| {})
     }
 
