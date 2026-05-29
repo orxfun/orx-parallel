@@ -4,10 +4,11 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
 
-const FIB_UPPER_BOUND: u64 = 301;
+const FIB_UPPER_BOUND: u64 = 501;
 
 fn fibonacci(n: u64) -> u64 {
     let mut a = 0;
@@ -56,14 +57,15 @@ fn l_m2(x: u64) -> u64 {
 }
 
 #[derive(Clone, Copy)]
-struct Input {
+struct InputVariant {
     n: usize,
     heavy: bool,
+    num_threads: usize,
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "task"]
+        vec!["n", "task", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -74,6 +76,7 @@ impl Factors for Input {
                 false => "light",
             }
             .to_string(),
+            self.num_threads.to_string(),
         ]
     }
 }
@@ -96,7 +99,7 @@ impl Factors for Method {
             match self {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
-                Self::RayonRedWith => "rayon-reduce-with",
+                Self::RayonRedWith => "rayon-red-with",
                 Self::Orx => "orx",
             }
             .to_string(),
@@ -107,7 +110,7 @@ impl Factors for Method {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -135,37 +138,63 @@ impl Experiment for Exp {
                 true => input.iter().map(m).filter(f).map(h_m2).reduce(h_r),
                 false => input.iter().map(m).filter(f).map(l_m2).reduce(l_r),
             },
-            Method::RayonRedWith => match h {
-                true => input
-                    .into_par_iter()
-                    .map(m)
-                    .filter(f)
-                    .map(h_m2)
-                    .reduce_with(h_r),
-                false => input
-                    .into_par_iter()
-                    .map(m)
-                    .filter(f)
-                    .map(l_m2)
-                    .reduce_with(l_r),
-            },
-            Method::Rayon => Some(match h {
-                true => input
-                    .into_par_iter()
-                    .map(m)
-                    .filter(f)
-                    .map(h_m2)
-                    .reduce(|| 0, h_r),
-                false => input
-                    .into_par_iter()
-                    .map(m)
-                    .filter(f)
-                    .map(l_m2)
-                    .reduce(|| 0, l_r),
-            }),
+            Method::RayonRedWith => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| match h {
+                    true => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(h_m2)
+                        .reduce_with(h_r),
+                    false => input
+                        .into_par_iter()
+                        .map(m)
+                        .filter(f)
+                        .map(l_m2)
+                        .reduce_with(l_r),
+                })
+            }
+            Method::Rayon => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| {
+                    Some(match h {
+                        true => input
+                            .into_par_iter()
+                            .map(m)
+                            .filter(f)
+                            .map(h_m2)
+                            .reduce(|| 0, h_r),
+                        false => input
+                            .into_par_iter()
+                            .map(m)
+                            .filter(f)
+                            .map(l_m2)
+                            .reduce(|| 0, l_r),
+                    })
+                })
+            }
             Method::Orx => match h {
-                true => input.into_par().map(m).filter(f).map(h_m2).reduce(h_r),
-                false => input.into_par().map(m).filter(f).map(l_m2).reduce(l_r),
+                true => input
+                    .into_par()
+                    .num_threads(input_variant.num_threads)
+                    .map(m)
+                    .filter(f)
+                    .map(h_m2)
+                    .reduce(h_r),
+                false => input
+                    .into_par()
+                    .num_threads(input_variant.num_threads)
+                    .map(m)
+                    .filter(f)
+                    .map(l_m2)
+                    .reduce(l_r),
             },
         }
     }
@@ -183,18 +212,34 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [
-        Input {
-            n: 15,
-            heavy: false,
-        },
-        Input {
-            n: 20,
-            heavy: false,
-        },
-        Input { n: 15, heavy: true },
-        Input { n: 20, heavy: true },
-    ];
+    let num_threads_options = [16, 32];
+    let treatments: Vec<_> = num_threads_options
+        .iter()
+        .flat_map(|&num_threads| {
+            [
+                InputVariant {
+                    n: 15,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    heavy: false,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 15,
+                    heavy: true,
+                    num_threads,
+                },
+                InputVariant {
+                    n: 20,
+                    heavy: true,
+                    num_threads,
+                },
+            ]
+        })
+        .collect();
 
     let variants: Vec<_> = all::<Method>().collect();
 

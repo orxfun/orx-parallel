@@ -23,15 +23,14 @@ where
     let mut u = u.create(th_idx);
     let u = &mut u as *mut U::Item;
 
-    let mut chunk_puller = iter.chunk_puller(0);
-    let mut item_puller = iter.item_puller();
+    let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
     loop {
         let chunk_size = Q::next_chunk_size(state, iter.size_hint());
         let chunk_state = Q::begin_chunk(th_idx, chunk_size);
 
         match chunk_size {
-            0 | 1 => match item_puller.next() {
+            0 | 1 => match iter.next_by(th_idx) {
                 Some(i) => {
                     for a in S::xap_use_opt(u, x1, x2, i) {
                         Q::broadcast_stop(iter, state, chunk_state);
@@ -45,9 +44,7 @@ where
                 None => {}
             },
             c => {
-                if c > chunk_puller.chunk_size() {
-                    chunk_puller = iter.chunk_puller(c);
-                }
+                chunk_puller.resize_for_chunk_size(c);
 
                 match chunk_puller.pull() {
                     Some(chunk) => {

@@ -4,6 +4,7 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 fn inputs(len: usize) -> Vec<u64> {
@@ -13,17 +14,18 @@ fn inputs(len: usize) -> Vec<u64> {
 }
 
 #[derive(Clone, Copy)]
-struct Input {
+struct InputVariant {
     n: usize,
+    num_threads: usize,
 }
 
-impl Factors for Input {
+impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n"]
+        vec!["n", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![format!("2e{}", self.n)]
+        vec![format!("2e{}", self.n), self.num_threads.to_string()]
     }
 }
 
@@ -54,7 +56,7 @@ impl Factors for Method {
 struct Exp;
 
 impl Experiment for Exp {
-    type InputFactors = Input;
+    type InputFactors = InputVariant;
 
     type AlgFactors = Method;
 
@@ -74,12 +76,25 @@ impl Experiment for Exp {
     ) -> Self::Output {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
-            Method::Rayon => input
+            Method::Rayon => {
+                let pool = ThreadPoolBuilder::new()
+                    .num_threads(input_variant.num_threads)
+                    .build()
+                    .unwrap();
+                pool.install(|| {
+                    input
+                        .as_slice()
+                        .into_par_iter()
+                        .find_first(|_| true)
+                        .copied()
+                })
+            }
+            Method::Orx => input
                 .as_slice()
-                .into_par_iter()
-                .find_first(|_| true)
+                .into_par()
+                .num_threads(input_variant.num_threads)
+                .first()
                 .copied(),
-            Method::Orx => input.as_slice().into_par().first().copied(),
         }
     }
 
@@ -91,7 +106,17 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let treatments = [Input { n: 10 }, Input { n: 15 }, Input { n: 20 }];
+    let num_threads_options = [16, 32];
+    let treatments: Vec<_> = num_threads_options
+        .iter()
+        .flat_map(|&num_threads| {
+            [
+                InputVariant { n: 10, num_threads },
+                InputVariant { n: 15, num_threads },
+                InputVariant { n: 20, num_threads },
+            ]
+        })
+        .collect();
 
     let variants: Vec<_> = all::<Method>().collect();
 
