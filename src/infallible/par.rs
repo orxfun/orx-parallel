@@ -3,7 +3,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParRunnerInfallibleUse, Use};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, Use};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
@@ -223,50 +223,50 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         self.filter(&f).first()
     }
 
-    fn fold2<B, F, R>(self, init: B, f: F) -> Vec<B>
+    fn fold<B, F, R>(self, init: B, f: F) -> Vec<B>
     where
         B: Send + Clone,
         F: Fn(&mut B, Self::Item) -> B + Copy + Send,
     {
         let par = self.using_clone(init);
-        par.for_each(move |u: &mut B, x| {
+        // par.for_each(move |u: &mut B, x: Self::Item| {
+        //     f(u, x);
+        //     todo!()
+        // });
+        let par = par.map(move |u: &mut B, x| {
             f(u, x);
-            12;
+            ()
         });
+        let (using, iter, xap, mut exe, params) = par.destruct();
+        let a = exe.regular_fold(params, using, iter, xap, |_, _, _| {});
+        // par.reduce(|u: &mut B, a, b| {
+        //     // abc
+        //     todo!()
+        // });
+
+        // let par = self.using_clone(init);
+        // par.for_each(move |u: &mut B, x| {
+        //     f(u, x);
+        //     12;
+        // });
 
         // let (iter, xap, mut exe, params) = self.destruct();
         // let xap = xap.map(|_| ());
         // let xap = IdUse::new(xap);
-        // let using = init.into();
+        // let using = UseClone::new(init);
+
+        // let a = exe
+        //     // .reduce(params, u, iter, x, f)
+        //     .regular_fold(params, using, iter, xap, |u: &mut B, a, b| {
+        //         // ac
+        //         todo!()
+        //     });
+
         // let f = |u:&mut B,a:
         // let a = exe.regular_fold(params, using, iter, xap, f);
         // let par_use = ParUseIter::new(using, iter, xap, exe, params);
 
-        todo!()
-    }
-
-    fn fold<U, B, F, R>(self, init: impl Into<U>, f: F) -> Vec<B>
-    where
-        B: Send,
-        U: Use<Item = B>,
-        F: FnMut(B, Self::Item) -> B,
-    {
-        let using = init.into();
-        let par = self.using_clone(todo!());
-        par.for_each(|u, x| {
-            f(u, x);
-            12;
-        });
-
-        // let (iter, xap, mut exe, params) = self.destruct();
-        // let xap = xap.map(|_| ());
-        // let xap = IdUse::new(xap);
-        // let using = init.into();
-        // let f = |u:&mut B,a:
-        // let a = exe.regular_fold(params, using, iter, xap, f);
-        // let par_use = ParUseIter::new(using, iter, xap, exe, params);
-
-        todo!()
+        a
     }
 
     fn for_each<F>(self, f: F)
