@@ -717,12 +717,15 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         self.map(|_| 1).reduce(|a, b| a + b).unwrap_or(0)
     }
 
-    /// Finds first/any item satisfying predicate `f`.
+    /// Finds first ([`Ordered`], default) or any ([`Arbitrary`]) item satisfying predicate `f`.
     ///
     /// This is equivalent to `self.filter(f).first()`.
     ///
     /// This operation is short-circuiting: once a matching item is found,
     /// remaining work is cancelled.
+    ///
+    /// [`Ordered`]: crate::IterationOrder::Ordered
+    /// [`Arbitrary`]: crate::IterationOrder::Arbitrary
     ///
     /// # Examples
     ///
