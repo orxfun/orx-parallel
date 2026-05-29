@@ -6,10 +6,11 @@ use crate::infallible_use::{UseClone, UseFun};
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::result::par_core::ParResultCore;
-use crate::result_use::ParUseResultIter;
+use crate::result_use::{ParRunnerUseRes, ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult, Sum};
+use alloc::vec::Vec;
 use core::cmp::Ordering;
 
 pub trait ParResult:
@@ -304,6 +305,22 @@ pub trait ParResult:
         Self::Error: Send,
     {
         self.filter(&f).first()
+    }
+
+    fn fold<B, I, F>(self, init: I, f: F) -> Result<Vec<B>, Self::Error>
+    where
+        B: Send,
+        I: Fn() -> B + Sync,
+        F: Fn(&mut B, Self::Item) + Copy + Send,
+        Self::Error: Send,
+    {
+        let par_use = self.using(|_| init());
+        let fold = par_use.map(move |u: &mut B, x| {
+            f(u, x);
+            ()
+        });
+        let (u, iter, x1, x2, mut exe, sizes, params) = fold.destruct();
+        exe.fold(sizes, params, u, iter, x1, x2, |_, _, _| {})
     }
 
     fn for_each<F>(self, f: F) -> Result<(), Self::Error>
