@@ -1,5 +1,6 @@
 use crate::ParCollectInto;
 
+#[doc(hidden)]
 pub trait ParInfCommon {
     type CommonItem;
 
