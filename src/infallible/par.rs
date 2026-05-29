@@ -223,50 +223,19 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         self.filter(&f).first()
     }
 
-    fn fold<B, F, R>(self, init: B, f: F) -> Vec<B>
+    fn fold<B, F>(self, init: B, f: F) -> Vec<B>
     where
         B: Send + Clone,
-        F: Fn(&mut B, Self::Item) -> B + Copy + Send,
+        F: Fn(&mut B, Self::Item) + Copy + Send,
     {
         let par = self.using_clone(init);
-        // par.for_each(move |u: &mut B, x: Self::Item| {
-        //     f(u, x);
-        //     todo!()
-        // });
+
         let par = par.map(move |u: &mut B, x| {
             f(u, x);
             ()
         });
         let (using, iter, xap, mut exe, params) = par.destruct();
-        let a = exe.regular_fold(params, using, iter, xap, |_, _, _| {});
-        // par.reduce(|u: &mut B, a, b| {
-        //     // abc
-        //     todo!()
-        // });
-
-        // let par = self.using_clone(init);
-        // par.for_each(move |u: &mut B, x| {
-        //     f(u, x);
-        //     12;
-        // });
-
-        // let (iter, xap, mut exe, params) = self.destruct();
-        // let xap = xap.map(|_| ());
-        // let xap = IdUse::new(xap);
-        // let using = UseClone::new(init);
-
-        // let a = exe
-        //     // .reduce(params, u, iter, x, f)
-        //     .regular_fold(params, using, iter, xap, |u: &mut B, a, b| {
-        //         // ac
-        //         todo!()
-        //     });
-
-        // let f = |u:&mut B,a:
-        // let a = exe.regular_fold(params, using, iter, xap, f);
-        // let par_use = ParUseIter::new(using, iter, xap, exe, params);
-
-        a
+        exe.regular_fold(params, using, iter, xap, |_, _, _| {})
     }
 
     fn for_each<F>(self, f: F)
