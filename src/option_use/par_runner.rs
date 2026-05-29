@@ -176,6 +176,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         }
 
         Self::complete_computation(state);
+
         let results = results_bag.into_inner().into_inner();
         let mut success = Vec::with_capacity(results.len());
         for result in results {
