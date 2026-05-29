@@ -1,10 +1,10 @@
-use crate::infallible_use::{XapUse, use_var::Use};
+use crate::infallible_use::XapUse;
 use crate::results::ValIdx;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn next<Q, U, I, X>(
-    u: &U,
+    u: &mut U,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
@@ -12,12 +12,9 @@ pub fn next<Q, U, I, X>(
 ) -> Option<ValIdx<X::O>>
 where
     Q: ParRunner,
-    U: Use,
     I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
+    X: XapUse<U = U, I = I::Item>,
 {
-    let mut u = u.create(th_idx);
-    let u = &mut u as *mut U::Item;
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
     loop {

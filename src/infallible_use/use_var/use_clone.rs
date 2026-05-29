@@ -5,9 +5,16 @@ pub struct UseClone<T: Clone + Send>(T);
 impl<T: Clone + Send> Use for UseClone<T> {
     type Item = T;
 
+    type ItemKind = T;
+
     #[inline]
     fn create(&self, _: usize) -> Self::Item {
         self.0.clone()
+    }
+
+    #[inline]
+    fn get(&self, thread_idx: usize) -> Self::ItemKind {
+        self.create(thread_idx)
     }
 }
 
