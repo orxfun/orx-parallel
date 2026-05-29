@@ -51,6 +51,38 @@ fn one_x_reduce() {
     assert_eq!(result, Some(160));
 }
 
+#[test]
+fn one_x_fold() {
+    let inputs = inputs(N);
+
+    let mut expected: Vec<_> = inputs
+        .iter()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .collect();
+    expected.sort_unstable();
+
+    let par = inputs.into_par().num_threads(4).flat_map(|x| {
+        let a = x.parse::<u64>().unwrap();
+        (0..5).map(move |i| a + i)
+    });
+    let result = par.fold(Vec::new, |v, x| v.push(x));
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: Vec<u64>, mut b: Vec<u64>| {
+            a.append(&mut b);
+            a
+        })
+        .unwrap();
+    let mut result = result;
+    result.sort_unstable();
+
+    assert_eq!(&result, &expected);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn one_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {

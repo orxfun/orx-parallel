@@ -57,6 +57,45 @@ fn many_x_reduce() {
     assert_eq!(result, Some(String::from("99!")));
 }
 
+#[test]
+fn many_x_fold() {
+    let inputs = inputs(N);
+
+    let mut expected = String::new();
+    inputs
+        .iter()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .flat_map(|x| [format!("{x}!"), x])
+        .for_each(|x| expected.push_str(&x));
+    let mut expected: Vec<_> = expected.chars().collect();
+    expected.sort();
+
+    let par = inputs
+        .into_par()
+        .num_threads(4)
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .flat_map(|x| [format!("{x}!"), x]);
+    let result = par.fold(String::new, |s, x| s.push_str(&x));
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: String, b: String| {
+            a.push_str(&b);
+            a
+        })
+        .unwrap();
+    let mut result: Vec<_> = result.chars().collect();
+    result.sort();
+
+    assert_eq!(&result, &expected);
+}
+
 #[test_matrix(
     [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
     [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
