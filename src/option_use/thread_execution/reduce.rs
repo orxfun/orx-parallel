@@ -12,7 +12,7 @@ pub fn reduce_get_u<Q, U, I, M, X1, X2, S, F>(
     x1: X1,
     x2: X2,
     f: F,
-) -> (Option<Option<X2::O>>, U::Item)
+) -> Option<(Option<X2::O>, U::Item)>
 where
     Q: ParRunner,
     U: Use,
@@ -44,7 +44,7 @@ where
                                 (Some(a), false) => Some(a),
                                 (None, _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
-                                    return (None, use_var);
+                                    return None;
                                 }
                             };
                         }
@@ -65,7 +65,7 @@ where
                                 (Some(a), false) => Some(a),
                                 (None, _) => {
                                     Q::broadcast_stop(iter, state, chunk_state);
-                                    return (None, use_var);
+                                    return None;
                                 }
                             };
                         }
@@ -99,7 +99,7 @@ where
                                         Some(a) => f(unsafe { &mut *u }, acc, a),
                                         None => {
                                             Q::broadcast_stop(iter, state, chunk_state);
-                                            return (None, use_var);
+                                            return None;
                                         }
                                     };
                                 }
@@ -120,7 +120,7 @@ where
                                         Some(a) => f(unsafe { &mut *u2 }, acc, a),
                                         None => {
                                             Q::broadcast_stop(iter, state, chunk_state);
-                                            return (None, use_var);
+                                            return None;
                                         }
                                     };
                                 }
@@ -138,7 +138,7 @@ where
         }
     };
 
-    (Some(result), use_var)
+    Some((result, use_var))
 }
 
 pub fn reduce<Q, U, I, M, X1, X2, S, F>(
@@ -160,5 +160,5 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     F: Fn(&mut U::Item, X2::O, X2::O) -> X2::O,
 {
-    reduce_get_u::<Q, U, I, M, X1, X2, S, F>(s, u, th_idx, state, iter, x1, x2, f).0
+    reduce_get_u::<Q, U, I, M, X1, X2, S, F>(s, u, th_idx, state, iter, x1, x2, f).map(|x| x.0)
 }
