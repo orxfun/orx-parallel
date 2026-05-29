@@ -65,6 +65,57 @@ fn one_m_reduce_err() {
     assert_eq!(result, None);
 }
 
+#[test]
+fn one_m_fold_ok() {
+    let inputs = inputs(N);
+    let mut expected = inputs
+        .clone()
+        .into_par()
+        .map(Some)
+        .into_optional()
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect::<std::vec::Vec<_>>()
+        .unwrap();
+    expected.sort_unstable();
+
+    let result = inputs
+        .into_par()
+        .map(Some)
+        .into_optional()
+        .map(|x| x.parse::<u64>().unwrap())
+        .num_threads(4)
+        .fold(Vec::new, |v, x| v.push(x));
+    let result = result.unwrap();
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: Vec<u64>, mut b: Vec<u64>| {
+            a.append(&mut b);
+            a
+        })
+        .unwrap();
+    let mut result = result;
+    result.sort_unstable();
+
+    assert_eq!(&result, &expected);
+}
+
+#[test]
+fn one_m_fold_err() {
+    let inputs = inputs(N);
+    let result = inputs
+        .into_par()
+        .map(|x| match x.as_str() == "42" {
+            true => Some(x),
+            false => None,
+        })
+        .into_optional()
+        .map(|x| x.parse::<u64>().unwrap())
+        .num_threads(4)
+        .fold(Vec::new, |v, x| v.push(x));
+    assert_eq!(result, None);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn one_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let expected = C::expected(
