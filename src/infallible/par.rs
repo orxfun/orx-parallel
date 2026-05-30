@@ -406,6 +406,69 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParUseIter::new(using, iter, xap, exe, params)
     }
 
+    /// Uses an externally owned [`UseVec`] as worker-local mutable state.
+    ///
+    /// Unlike [`Par::use_new`], the state container is provided by the caller,
+    /// which allows reading back per-worker values after the computation.
+    ///
+    /// This is practical when we need thread-local accumulation with a final
+    /// merge step, such as per-thread partial sums or local metrics.
+    ///
+    /// Note that the resulting `UseVec` length equals the number of worker
+    /// threads that actually participated in the computation. Exactly one
+    /// element is created per participating thread.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let n = 10_000usize;
+    /// let mut use_vec = UseVec::new(|_| 0usize);
+    ///
+    /// (0..n)
+    ///     .into_par()
+    ///     .map(|x| 2 * x)
+    ///     .use_vec(&mut use_vec)
+    ///     .for_each(|thread_sum, x| *thread_sum += x);
+    ///
+    /// let partial_sums = use_vec.into_vec();
+    /// let total: usize = partial_sums.into_iter().sum();
+    ///
+    /// assert_eq!(total, (n - 1) * n);
+    /// ```
+    ///
+    /// The following example demonstrates an expensive per-thread state:
+    /// a pre-allocated scratch buffer.
+    ///
+    /// ```
+    /// use core::fmt::Write;
+    /// use core::sync::atomic::{AtomicUsize, Ordering};
+    /// use orx_parallel::*;
+    ///
+    /// let created = AtomicUsize::new(0);
+    /// let mut use_vec = UseVec::new(|_| {
+    ///     created.fetch_add(1, Ordering::Relaxed);
+    ///     String::with_capacity(4096)
+    /// });
+    ///
+    /// let out: Vec<_> = (0..64)
+    ///     .into_par()
+    ///     .num_threads(4)
+    ///     .use_vec(&mut use_vec)
+    ///     .map(|buffer, x| {
+    ///         buffer.clear();
+    ///         write!(buffer, "{x}").unwrap();
+    ///         buffer.parse::<usize>().unwrap()
+    ///     })
+    ///     .collect();
+    ///
+    /// assert_eq!(out, (0..64).collect::<Vec<_>>());
+    ///
+    /// let buffers = use_vec.into_vec();
+    /// assert_eq!(created.load(Ordering::Relaxed), buffers.len());
+    /// assert!(buffers.len() <= 4);
+    /// ```
     fn use_vec<U, F>(
         self,
         use_vec: &mut UseVec<U, F>,
