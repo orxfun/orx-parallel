@@ -28,6 +28,29 @@ fn use_fun() {
 }
 
 #[test]
+fn use_fun2() {
+    let input = 0..10000;
+    let values: Vec<_> = input
+        .par()
+        .map(|x| 2 * x)
+        // a thread-local RNG is consumed while processing,
+        // and we only keep the transformed values.
+        .using(Use::fun(|thread_idx| {
+            ChaCha8Rng::seed_from_u64(1000 + thread_idx as u64)
+        }))
+        .map(|rng, x| x + rng.random_range(0..10))
+        .collect();
+
+    assert_eq!(values.len(), input.len());
+    assert!(
+        values
+            .iter()
+            .zip(input)
+            .all(|(value, x)| *value >= 2 * x && *value < 2 * x + 10)
+    );
+}
+
+#[test]
 fn use_vec() {
     let input = 0..10000;
     let par = input.par().map(|x| 2 * x);
