@@ -10,4 +10,8 @@ pub trait Use: Sync {
     fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_>;
 
     fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_>;
+
+    fn max_threads(&self) -> Option<usize> {
+        None
+    }
 }
