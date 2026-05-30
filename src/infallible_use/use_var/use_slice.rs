@@ -31,6 +31,12 @@ impl<'a, T: 'a> Using for UseSlice<'a, T> {
     }
 
     fn get(&self, thread_idx: usize) -> Self::ItemKind<'_> {
+        assert!(
+            thread_idx < self.len,
+            "Out of bounds UseSlice access; slice has length {}, but access by {}-th thread.",
+            self.len,
+            thread_idx,
+        );
         let ptr = unsafe { self.ptr.add(thread_idx) };
         unsafe { &mut *ptr }
     }
