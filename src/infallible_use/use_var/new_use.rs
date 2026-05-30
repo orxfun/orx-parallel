@@ -14,7 +14,7 @@ impl Use {
         UseClone::new(value)
     }
 
-    pub fn vec<T, F: Fn(usize) -> T>(init: F) -> UseVec<T, F> {
+    pub fn vec<T: Send, F: Fn(usize) -> T + Sync>(init: F) -> UseVec<T, F> {
         UseVec::new(init)
     }
 

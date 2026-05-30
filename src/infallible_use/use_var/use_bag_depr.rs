@@ -36,7 +36,7 @@ where
 {
     type Item = U::Item;
 
-    type ItemKind<'a>
+    type ItemBorrow<'a>
         = &'a mut U::Item
     where
         Self: 'a;
@@ -48,7 +48,7 @@ where
     }
 
     #[inline]
-    fn get(&self, thread_idx: usize) -> Self::ItemKind<'_> {
+    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         let use_var = self.using.create(thread_idx);
         let idx = self.cache.push((thread_idx, use_var));
         // SAFETY: it is safe to access to the index as it is
