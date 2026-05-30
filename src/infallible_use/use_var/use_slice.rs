@@ -21,7 +21,7 @@ unsafe impl<'a, T: 'a> Sync for UseSlice<'a, T> {}
 impl<'a, T: 'a> Using for UseSlice<'a, T> {
     type Item = T;
 
-    type ItemKind<'i>
+    type ItemBorrow<'i>
         = &'a mut T
     where
         Self: 'i;
@@ -30,7 +30,7 @@ impl<'a, T: 'a> Using for UseSlice<'a, T> {
         todo!()
     }
 
-    fn get(&self, thread_idx: usize) -> Self::ItemKind<'_> {
+    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         assert!(
             thread_idx < self.len,
             "Out of bounds UseSlice access; slice has length {}, but access by {}-th thread.",

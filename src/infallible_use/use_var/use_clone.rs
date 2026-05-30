@@ -5,7 +5,7 @@ pub struct UseClone<T: Clone + Send>(T);
 impl<T: Clone + Send> Using for UseClone<T> {
     type Item = T;
 
-    type ItemKind<'a>
+    type ItemBorrow<'a>
         = T
     where
         Self: 'a;
@@ -16,7 +16,7 @@ impl<T: Clone + Send> Using for UseClone<T> {
     }
 
     #[inline]
-    fn get(&self, thread_idx: usize) -> Self::ItemKind<'_> {
+    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         self.create(thread_idx)
     }
 }

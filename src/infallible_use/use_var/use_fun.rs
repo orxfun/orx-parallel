@@ -11,7 +11,7 @@ impl<T, F: Fn(usize) -> T + Sync> UseFun<T, F> {
 impl<T, F: Fn(usize) -> T + Sync> Using for UseFun<T, F> {
     type Item = T;
 
-    type ItemKind<'a>
+    type ItemBorrow<'a>
         = T
     where
         Self: 'a;
@@ -22,7 +22,7 @@ impl<T, F: Fn(usize) -> T + Sync> Using for UseFun<T, F> {
     }
 
     #[inline]
-    fn get(&self, thread_idx: usize) -> Self::ItemKind<'_> {
+    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         self.create(thread_idx)
     }
 }
