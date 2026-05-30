@@ -1,6 +1,7 @@
 use clap::Parser;
 #[cfg(feature = "std")]
 use orx_parallel::*;
+#[cfg(feature = "std")]
 use std::hint::black_box;
 
 #[cfg(not(feature = "std"))]

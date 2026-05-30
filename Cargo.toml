@@ -53,7 +53,7 @@ test-case = "3.3.1"
 all-features = true
 
 [features]
-default = ["std"]
+default = []
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 

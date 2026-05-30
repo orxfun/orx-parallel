@@ -5,7 +5,6 @@ mod pool_impl;
 
 pub use new_pool::Pool;
 
-#[cfg(feature = "std")]
 pub use par_thread_pool::ParThreadPool;
 #[cfg(feature = "std")]
 pub use pool_impl::BasicPool;
