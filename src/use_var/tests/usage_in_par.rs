@@ -3,6 +3,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
+use test_case::test_matrix;
 
 #[test]
 fn use_fun() {
@@ -41,17 +42,14 @@ fn use_vec() {
     assert_eq!(grand_total, (input.len() - 1) * input.len());
 }
 
-#[test]
-fn use_slice() {
-    let num_threads = 8;
-
-    let mut thread_sums = vec![0; num_threads];
+#[test_matrix([1, 4, 16, 100])]
+fn use_slice(slice_len: usize) {
+    let mut thread_sums = vec![0; slice_len];
 
     let input = 0..10000;
     input
         .par()
         .map(|x| 2 * x)
-        .num_threads(num_threads)
         .use_slice(&mut thread_sums)
         .for_each(|thread_sum, x| *thread_sum += x);
 
