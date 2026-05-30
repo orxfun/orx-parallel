@@ -5,7 +5,7 @@ use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn collect<Q, U, I, M, X1, X2, S>(
     _: S,
-    u: &U,
+    u: &mut U,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
