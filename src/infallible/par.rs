@@ -3,7 +3,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, UseBag, Using};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, UseBagDepr, Using};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
@@ -432,7 +432,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         Use = U,
         Xap = IdUse<Self::Xap, U>,
         Input = Self::Input,
-        Using = UseBag<UseFun<U, F>>,
+        Using = UseBagDepr<UseFun<U, F>>,
     >
     where
         F: Fn(usize) -> U + Sync,
@@ -440,7 +440,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     {
         let (iter, xap, exe, params) = self.destruct();
         let using = UseFun::new(f);
-        let use_vec = UseBag::new(using);
+        let use_vec = UseBagDepr::new(using);
         let xap = IdUse::new(xap);
         ParUseIter::new(use_vec, iter, xap, exe, params)
     }
