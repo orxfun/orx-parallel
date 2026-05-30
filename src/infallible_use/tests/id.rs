@@ -20,7 +20,7 @@ fn id_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .using22(|th_idx| UseValue::new(th_idx))
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_some());
@@ -52,14 +52,14 @@ fn id_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: Ite
         Some(mut c) => {
             inputs(N)
                 .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
+                .using22(|th_idx| UseValue::new(th_idx))
                 .iteration_order(order)
                 .collect_into(&mut c);
             c
         }
         None => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .using22(|th_idx| UseValue::new(th_idx))
             .iteration_order(order)
             .collect(),
     };
