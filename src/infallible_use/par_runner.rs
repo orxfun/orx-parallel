@@ -1,7 +1,7 @@
 use crate::infallible_use::XapUse;
 use crate::infallible_use::thread_execution as th;
+use crate::infallible_use::use_var::UseBag;
 use crate::infallible_use::use_var::Using;
-use crate::infallible_use::use_var::UseVec;
 use crate::results::ValsAndIdx;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};

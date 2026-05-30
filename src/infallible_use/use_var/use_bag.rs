@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::PinnedVec;
 
-pub struct UseVec<U>
+pub struct UseBag<U>
 where
     U: Using,
     U::Item: Send,
@@ -12,7 +12,7 @@ where
     cache: ConcurrentBag<(usize, U::Item)>,
 }
 
-impl<U> UseVec<U>
+impl<U> UseBag<U>
 where
     U: Using,
     U::Item: Send,
@@ -29,7 +29,7 @@ where
     }
 }
 
-impl<U> Using for UseVec<U>
+impl<U> Using for UseBag<U>
 where
     U: Using,
     U::Item: Send,
