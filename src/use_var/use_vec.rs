@@ -44,4 +44,8 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for &mut UseVec<T, F> {
         assert!(self.cache.len() > 0);
         unsafe { &mut *self.cache.ptr_mut(thread_idx) }
     }
+
+    fn max_threads(&self) -> Option<usize> {
+        None
+    }
 }
