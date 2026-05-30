@@ -1,6 +1,7 @@
 mod new_use;
 mod use_bag_depr;
 mod use_clone;
+mod use_dyn_vec;
 mod use_fun;
 mod using;
 
