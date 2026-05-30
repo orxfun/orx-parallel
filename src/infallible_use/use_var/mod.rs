@@ -3,6 +3,7 @@ mod use_bag_depr;
 mod use_clone;
 mod use_dyn_vec;
 mod use_fun;
+mod use_slice;
 mod using;
 
 pub use use_bag_depr::UseBagDepr;
