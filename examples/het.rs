@@ -77,6 +77,7 @@ fn run_orx_fixed(
         .max()
 }
 
+#[cfg(feature = "experimental")]
 fn run_orx_dyn(
     pool: &rayon_core::ThreadPool,
     input: &[u64],
@@ -124,12 +125,14 @@ fn main() {
     let (orx_fixed, _) = run_timed("orx-fixed", || {
         run_orx_fixed(&pool, &input, args.heterogeneity_level)
     });
+    #[cfg(feature = "experimental")]
     let (orx_dyn, _) = run_timed("orx-dyn", || {
         run_orx_dyn(&pool, &input, args.heterogeneity_level)
     });
 
     assert_eq!(rayon, seq, "rayon output mismatch");
     assert_eq!(orx_fixed, seq, "orx-fixed output mismatch");
+    #[cfg(feature = "experimental")]
     assert_eq!(orx_dyn, seq, "orx-dyn output mismatch");
 
     println!("all methods produced identical outputs");

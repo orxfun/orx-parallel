@@ -1,9 +1,9 @@
 mod fixed_chunk;
 pub use fixed_chunk::FixedChunkRunner;
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "experimental"))]
 mod dynamic_chunk_runner;
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "experimental"))]
 pub use dynamic_chunk_runner::DynChunkRunner;
 
 #[cfg(feature = "std")]

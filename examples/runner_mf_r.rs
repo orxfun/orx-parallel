@@ -200,6 +200,7 @@ fn run_orx_fixed(
     }
 }
 
+#[cfg(feature = "experimental")]
 fn run_orx_dyn(
     pool: &rayon_core::ThreadPool,
     data: &[WorkItem],
@@ -256,6 +257,7 @@ fn main() {
         || run_orx_fixed(&pool, &data, args.task_kind, false),
         args.warmup_runs,
     );
+    #[cfg(feature = "experimental")]
     run_warmup(
         || run_orx_dyn(&pool, &data, args.task_kind, false),
         args.warmup_runs,
@@ -266,12 +268,14 @@ fn main() {
     let (orx_fixed, _) = run_timed("orx-fixed", || {
         run_orx_fixed(&pool, &data, args.task_kind, args.diagnostics)
     });
+    #[cfg(feature = "experimental")]
     let (orx_dyn, _) = run_timed("orx-dyn", || {
         run_orx_dyn(&pool, &data, args.task_kind, args.diagnostics)
     });
 
     assert_eq!(rayon, seq, "rayon output mismatch");
     assert_eq!(orx_fixed, seq, "orx-fixed output mismatch");
+    #[cfg(feature = "experimental")]
     assert_eq!(orx_dyn, seq, "orx-dyn output mismatch");
 
     println!("all methods produced identical outputs");
