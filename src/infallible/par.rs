@@ -426,6 +426,10 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     where
         U: Sync + 'a,
     {
+        assert!(
+            slice.len() > 0,
+            "Number of parallel threads is limited to slice.len(); and hence, slice cannot be empty."
+        );
         let (iter, xap, exe, params) = self.destruct();
         let xap = IdUse::new(xap);
         let using = UseSlice::new(slice);

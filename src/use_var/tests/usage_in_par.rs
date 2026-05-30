@@ -56,3 +56,19 @@ fn use_slice(slice_len: usize) {
     let grand_total: usize = thread_sums.into_iter().sum();
     assert_eq!(grand_total, (input.len() - 1) * input.len());
 }
+
+#[test]
+#[should_panic]
+fn use_slice_panics_when_empty() {
+    let mut thread_sums = vec![0; 0];
+
+    let input = 0..10000;
+    input
+        .par()
+        .map(|x| 2 * x)
+        .use_slice(&mut thread_sums)
+        .for_each(|thread_sum, x| *thread_sum += x);
+
+    let grand_total: usize = thread_sums.into_iter().sum();
+    assert_eq!(grand_total, (input.len() - 1) * input.len());
+}
