@@ -1,4 +1,3 @@
-use crate::infallible_use::UseVec;
 use crate::*;
 use alloc::vec;
 use alloc::vec::Vec;
