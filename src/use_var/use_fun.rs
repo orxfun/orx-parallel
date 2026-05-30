@@ -25,6 +25,10 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseFun<T, F> {
     fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         self.init_get(thread_idx)
     }
+
+    fn max_threads(&self) -> Option<usize> {
+        None
+    }
 }
 
 impl<T: Send, F: Fn(usize) -> T + Sync> From<F> for UseFun<T, F> {

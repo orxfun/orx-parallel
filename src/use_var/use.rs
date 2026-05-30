@@ -11,7 +11,5 @@ pub trait Use: Sync {
 
     fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_>;
 
-    fn max_threads(&self) -> Option<usize> {
-        None
-    }
+    fn max_threads(&self) -> Option<usize>;
 }

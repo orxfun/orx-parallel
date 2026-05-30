@@ -42,4 +42,8 @@ impl<'a, T: 'a> Use for UseSlice<'a, T> {
     fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         self.init_get(thread_idx)
     }
+
+    fn max_threads(&self) -> Option<usize> {
+        Some(self.len)
+    }
 }
