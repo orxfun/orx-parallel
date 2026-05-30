@@ -1,6 +1,6 @@
 use crate::infallible_use::XapUse;
 use crate::infallible_use::thread_execution as th;
-use crate::infallible_use::use_var::Use;
+use crate::infallible_use::use_var::Using;
 use crate::infallible_use::use_var::UseVec;
 use crate::results::ValsAndIdx;
 use crate::results::{Val, ValIdx};
@@ -13,7 +13,7 @@ use orx_self_or::SoM;
 pub trait ParRunnerInfallibleUse: ParRunner {
     fn next<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Option<ValIdx<X::O>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item>,
         X::O: Send,
@@ -42,7 +42,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
     fn next_any<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Option<X::O>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item>,
         X::O: Send,
@@ -71,7 +71,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
     fn reduce<U, I, X, F>(&mut self, params: Params, u: U, iter: I, x: X, f: F) -> Option<X::O>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item>,
         F: Fn(&mut X::U, X::O, X::O) -> X::O + Send + Copy,
@@ -107,7 +107,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
     fn fold<U, I, X, F>(&mut self, params: Params, u: U, iter: I, x: X, f: F) -> Vec<U::Item>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item, O = ()>,
         F: Fn(&mut X::U, X::O, X::O) + Send + Copy,
@@ -139,7 +139,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
     fn collect<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<ValsAndIdx<X::O>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item>,
         X::O: Send,
@@ -168,7 +168,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
 
     fn collect_arb<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<Vec<X::O>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item>,
         X::O: Send,

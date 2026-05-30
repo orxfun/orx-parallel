@@ -2,7 +2,7 @@
 
 use crate::ParCollectInto;
 use crate::common_par_traits::ParOptCommon;
-use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Use, XapUse};
+use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Using, XapUse};
 use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
@@ -14,7 +14,7 @@ use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseOptionIter<U, I, M, X1, X2, S, R = DefaultRunner>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -32,7 +32,7 @@ where
 
 impl<U, I, M, X1, X2, S, R> ParUseOptionIter<U, I, M, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -62,7 +62,7 @@ where
 
 impl<U, I, M, X1, X2, S, R> ParUseOptionCore for ParUseOptionIter<U, I, M, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -112,7 +112,7 @@ where
 
 impl<U, I, M, X1, X2, S, R> ParUseOption for ParUseOptionIter<U, I, M, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -383,7 +383,7 @@ where
 
 impl<U, I, M, X1, X2, S, R> ParOptCommon for ParUseOptionIter<U, I, M, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U::Item, I = M>,

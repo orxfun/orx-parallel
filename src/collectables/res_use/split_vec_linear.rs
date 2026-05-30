@@ -2,7 +2,7 @@ use crate::collectables::alg::merge_collected::{
     merge_arb_into_split_vec, merge_ord_into_split_vec,
 };
 use crate::collectables::res_use::ColIntoResUse;
-use crate::infallible_use::{Use, XapUse};
+use crate::infallible_use::{Using, XapUse};
 use crate::result_use::{ParRunnerUseRes, ParUseResultCore, ParUseResultIter};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
@@ -14,7 +14,7 @@ impl<T> ColIntoResUse<T> for SplitVec<T, Linear> {
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
@@ -34,7 +34,7 @@ impl<T> ColIntoResUse<T> for SplitVec<T, Linear> {
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M, O = T>,

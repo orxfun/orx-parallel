@@ -1,4 +1,4 @@
-use crate::infallible_use::{Use, XapUse};
+use crate::infallible_use::{Using, XapUse};
 use crate::option_use::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};
 use crate::sizes::SizePair;
@@ -19,7 +19,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         x2: X2,
     ) -> Option<Option<ValIdx<X2::O>>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -66,7 +66,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         x2: X2,
     ) -> Option<Option<X2::O>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -114,7 +114,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         f: F,
     ) -> Option<Option<X2::O>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -169,7 +169,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         f: F,
     ) -> Option<Vec<U::Item>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M, O = ()>,
@@ -221,7 +221,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         x2: X2,
     ) -> Option<Vec<ValsAndIdx<X2::O>>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -268,7 +268,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         x2: X2,
     ) -> Option<Vec<Vec<X2::O>>>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M>,

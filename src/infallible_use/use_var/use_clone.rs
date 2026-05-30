@@ -1,8 +1,8 @@
-use crate::infallible_use::use_var::r#use::Use;
+use crate::infallible_use::use_var::using::Using;
 
 pub struct UseClone<T: Clone + Send>(T);
 
-impl<T: Clone + Send> Use for UseClone<T> {
+impl<T: Clone + Send> Using for UseClone<T> {
     type Item = T;
 
     type ItemKind<'a>

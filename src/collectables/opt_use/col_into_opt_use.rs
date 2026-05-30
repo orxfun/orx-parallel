@@ -1,4 +1,4 @@
-use crate::infallible_use::{Use, XapUse};
+use crate::infallible_use::{Using, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionIter};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
@@ -9,7 +9,7 @@ pub trait ColIntoOptUse<T>: Sized {
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<()>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
@@ -22,7 +22,7 @@ pub trait ColIntoOptUse<T>: Sized {
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<()>
     where
-        U: Use,
+        U: Using,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M, O = T>,

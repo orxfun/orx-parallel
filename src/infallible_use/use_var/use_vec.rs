@@ -1,11 +1,11 @@
-use crate::infallible_use::Use;
+use crate::infallible_use::Using;
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::PinnedVec;
 
 pub struct UseVec<U>
 where
-    U: Use,
+    U: Using,
     U::Item: Send,
 {
     using: U,
@@ -14,7 +14,7 @@ where
 
 impl<U> UseVec<U>
 where
-    U: Use,
+    U: Using,
     U::Item: Send,
 {
     pub fn new(using: U) -> Self {
@@ -29,9 +29,9 @@ where
     }
 }
 
-impl<U> Use for UseVec<U>
+impl<U> Using for UseVec<U>
 where
-    U: Use,
+    U: Using,
     U::Item: Send,
 {
     type Item = U::Item;

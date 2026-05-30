@@ -3,7 +3,7 @@
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
-use crate::infallible_use::use_var::Use;
+use crate::infallible_use::use_var::Using;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
@@ -13,7 +13,7 @@ use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseIter<U, I, X, R = DefaultRunner>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
@@ -27,7 +27,7 @@ where
 
 impl<U, I, X, R> ParUseIter<U, I, X, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
@@ -52,7 +52,7 @@ where
 
 impl<U, I, X, R> ParUseCore for ParUseIter<U, I, X, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
@@ -76,7 +76,7 @@ where
 
 impl<U, I, X, R> ParUse for ParUseIter<U, I, X, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
@@ -262,7 +262,7 @@ where
 
 impl<U, I, X, R> ParInfCommon for ParUseIter<U, I, X, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     R: ParRunner,
