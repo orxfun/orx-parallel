@@ -26,10 +26,6 @@ impl<'a, T: 'a> Use for UseSlice<'a, T> {
     where
         Self: 'i;
 
-    fn create(&self, thread_idx: usize) -> Self::Item {
-        todo!()
-    }
-
     #[inline]
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         assert!(

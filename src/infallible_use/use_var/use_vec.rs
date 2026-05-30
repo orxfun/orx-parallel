@@ -27,10 +27,6 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseVec<T, F> {
     where
         Self: 'i;
 
-    fn create(&self, thread_idx: usize) -> Self::Item {
-        todo!()
-    }
-
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         let use_var = (self.init)(thread_idx);
         unsafe { self.cache.set_value(thread_idx, use_var) };

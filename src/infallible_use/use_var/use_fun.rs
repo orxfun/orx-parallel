@@ -17,13 +17,8 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseFun<T, F> {
         Self: 'a;
 
     #[inline]
-    fn create(&self, thread_idx: usize) -> Self::Item {
-        (self.0)(thread_idx)
-    }
-
-    #[inline]
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        self.create(thread_idx)
+        (self.0)(thread_idx)
     }
 
     #[inline]
