@@ -2,12 +2,12 @@ use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_pinned_vec::PinnedVec;
 
-pub struct UseDynVec<T, F: Fn(usize) -> T> {
+pub struct UseVec<T, F: Fn(usize) -> T> {
     init: F,
     cache: ConcurrentBag<(usize, T)>,
 }
 
-impl<T, F: Fn(usize) -> T> UseDynVec<T, F> {
+impl<T, F: Fn(usize) -> T> UseVec<T, F> {
     pub fn new(init: F) -> Self {
         let cache = ConcurrentBag::new();
         Self { init, cache }
