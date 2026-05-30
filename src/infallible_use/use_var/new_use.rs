@@ -10,10 +10,6 @@ impl Use {
         UseFun::new(f)
     }
 
-    pub fn clone<T: Clone + Send>(value: T) -> UseClone<T> {
-        UseClone::new(value)
-    }
-
     pub fn vec<T: Send, F: Fn(usize) -> T + Sync>(init: F) -> UseVec<T, F> {
         UseVec::new(init)
     }
