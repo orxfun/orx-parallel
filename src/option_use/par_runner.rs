@@ -107,7 +107,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         &mut self,
         sizes: S,
         params: Params,
-        u: U,
+        mut u: U,
         iter: I,
         x1: X1,
         x2: X2,
@@ -152,9 +152,9 @@ pub trait ParRunnerUseOpt: ParRunner {
         }
 
         Self::complete_computation(state);
-        let mut u = u.create(results_bag.len());
+        let mut u = u.get_mut(0);
         Val::reduce_opt(results_bag.into_inner().into_inner(), |a, b| {
-            f(&mut u, a, b)
+            f(u.get_mut(), a, b)
         })
     }
 
