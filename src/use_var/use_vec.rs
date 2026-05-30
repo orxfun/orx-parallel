@@ -1,4 +1,4 @@
-use crate::infallible_use::Use;
+use super::r#use::Use;
 use alloc::vec::Vec;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 
@@ -19,7 +19,7 @@ impl<T: Send, F: Fn(usize) -> T + Sync> UseVec<T, F> {
     }
 }
 
-impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseVec<T, F> {
+impl<T: Send, F: Fn(usize) -> T + Sync> Use for &mut UseVec<T, F> {
     type Item = T;
 
     type ItemBorrow<'i>
@@ -27,7 +27,7 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseVec<T, F> {
     where
         Self: 'i;
 
-    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+    fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         let use_var = (self.init)(thread_idx);
         unsafe { self.cache.set_value(thread_idx, use_var) };
 
@@ -40,8 +40,12 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseVec<T, F> {
     }
 
     #[inline]
-    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+    fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         assert!(self.cache.len() > 0);
         unsafe { &mut *self.cache.ptr_mut(thread_idx) }
+    }
+
+    fn max_threads(&self) -> Option<usize> {
+        None
     }
 }

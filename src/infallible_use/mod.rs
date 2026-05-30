@@ -8,7 +8,6 @@ mod par_enum;
 mod par_iter;
 mod par_runner;
 mod thread_execution;
-mod use_var;
 mod xap;
 mod xap_enum;
 pub mod xap_variants;
@@ -18,7 +17,6 @@ pub use par_core::ParUseCore;
 pub use par_enum::EnumerateParUse;
 pub use par_iter::ParUseIter;
 pub use par_runner::ParRunnerInfallibleUse;
-pub use use_var::{Use, UseFun, UseSlice, UseVec};
 pub use xap::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse, XapUseBin, XapUseOne,
 };

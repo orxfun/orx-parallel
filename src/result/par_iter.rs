@@ -168,7 +168,7 @@ where
             iter,
             x1,
             x2,
-            exe: exe.with_diagnostics(),
+            exe,
             s,
             params,
         }

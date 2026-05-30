@@ -70,10 +70,18 @@ pub trait ParRunner: Sized + Sync {
         &mut self,
         params: Params,
         size_hint: (usize, Option<usize>),
+        computation_max_nt: Option<usize>,
     ) -> (usize, Self::State) {
         let max_nt = self
             .pool()
             .max_num_threads_for_computation(params, size_hint);
+
+        let max_nt = match computation_max_nt {
+            Some(0) => 1,
+            Some(comp_nt) if comp_nt < max_nt => comp_nt,
+            _ => max_nt,
+        };
+
         let state = self.new_state(params, max_nt, size_hint);
         (max_nt, state)
     }

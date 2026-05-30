@@ -14,7 +14,7 @@ pub trait ParRunnerInfallible: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, x) = (&iter, &state, &results_bag, x);
@@ -41,7 +41,7 @@ pub trait ParRunnerInfallible: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, x) = (&iter, &state, &results_bag, x);
@@ -69,7 +69,7 @@ pub trait ParRunnerInfallible: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, x) = (&iter, &state, &results_bag, x);
@@ -96,7 +96,7 @@ pub trait ParRunnerInfallible: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results) = (&iter, &state, &results_bag);
@@ -123,7 +123,7 @@ pub trait ParRunnerInfallible: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results) = (&iter, &state, &results_bag);
@@ -144,6 +144,7 @@ pub trait ParRunnerInfallible: ParRunner {
     }
 
     #[cfg(feature = "experimental")]
+    #[allow(unused)]
     fn collect_arb_over_bag<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
     where
         I: ConcurrentIter,
@@ -160,7 +161,7 @@ pub trait ParRunnerInfallible: ParRunner {
         };
 
         let mut spawned = 0;
-        let (_, state) = self.nt_state(params, iter.size_hint());
+        let (_, state) = self.nt_state(params, iter.size_hint(), None);
 
         let (iter, st, bag) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {

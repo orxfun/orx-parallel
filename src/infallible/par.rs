@@ -3,12 +3,12 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParUseIter, UseFun, xap_variants::IdUse};
-use crate::infallible_use::{UseSlice, UseVec};
+use crate::infallible_use::{ParUseIter, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
+use crate::use_var::{UseFun, UseSlice, UseVec};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
 };
@@ -341,6 +341,57 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParResultIter::new(iter, xap, Id::new(), exe, params)
     }
 
+    /// Creates one mutable `Use` value per participating worker.
+    ///
+    /// The initializer `f` is called with the worker's thread index, and the
+    /// returned value is then passed as `&mut Use` to downstream [`ParUse`]
+    /// operations such as `map`, `filter`, `flat_map`, `reduce`, and `for_each`.
+    ///
+    /// This is useful for thread-local scratch buffers, counters, or other
+    /// mutable state that should not be shared across workers.
+    ///
+    /// # Examples
+    ///
+    /// Reusing one buffer per worker avoids allocating a fresh String
+    /// for every parsed item.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let values: Vec<_> = (1..4)
+    ///     .into_par()
+    ///     .num_threads(1)
+    ///     .use_new(|_| String::new())
+    ///     .map(|buffer, x| {
+    ///         buffer.clear();
+    ///         buffer.push_str(&x.to_string());
+    ///         buffer.parse::<usize>().unwrap() * 10
+    ///     })
+    ///     .collect();
+    ///
+    /// assert_eq!(values, vec![10, 20, 30]);
+    /// ```
+    ///
+    /// Some pipelines need fast worker-local randomness, for example for
+    /// sampling, randomized search, or simulation.
+    /// Seeding one RNG per worker with thread_idx creates independent
+    /// thread-local random streams without shared mutable state.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use rand::{Rng, SeedableRng};
+    /// use rand_chacha::ChaCha8Rng;
+    ///
+    /// let values: Vec<_> = (0..8)
+    ///     .into_par()
+    ///     .num_threads(2)
+    ///     .use_new(|thread_idx| ChaCha8Rng::seed_from_u64(thread_idx as u64 + 1))
+    ///     .map(|rng, _| rng.random_range(0..100usize))
+    ///     .collect();
+    ///
+    /// assert_eq!(values.len(), 8);
+    /// assert!(values.into_iter().all(|x| x < 100));
+    /// ```
     fn use_new<U, F>(
         self,
         f: F,
@@ -355,6 +406,69 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParUseIter::new(using, iter, xap, exe, params)
     }
 
+    /// Uses an externally owned [`UseVec`] as worker-local mutable state.
+    ///
+    /// Unlike [`Par::use_new`], the state container is provided by the caller,
+    /// which allows reading back per-worker values after the computation.
+    ///
+    /// This is practical when we need thread-local accumulation with a final
+    /// merge step, such as per-thread partial sums or local metrics.
+    ///
+    /// Note that the resulting `UseVec` length equals the number of worker
+    /// threads that actually participated in the computation. Exactly one
+    /// element is created per participating thread.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let n = 10_000usize;
+    /// let mut use_vec = UseVec::new(|_| 0usize);
+    ///
+    /// (0..n)
+    ///     .into_par()
+    ///     .map(|x| 2 * x)
+    ///     .use_vec(&mut use_vec)
+    ///     .for_each(|thread_sum, x| *thread_sum += x);
+    ///
+    /// let partial_sums = use_vec.into_vec();
+    /// let total: usize = partial_sums.into_iter().sum();
+    ///
+    /// assert_eq!(total, (n - 1) * n);
+    /// ```
+    ///
+    /// The following example demonstrates an expensive per-thread state:
+    /// a pre-allocated scratch buffer.
+    ///
+    /// ```
+    /// use core::fmt::Write;
+    /// use core::sync::atomic::{AtomicUsize, Ordering};
+    /// use orx_parallel::*;
+    ///
+    /// let created = AtomicUsize::new(0);
+    /// let mut use_vec = UseVec::new(|_| {
+    ///     created.fetch_add(1, Ordering::Relaxed);
+    ///     String::with_capacity(4096)
+    /// });
+    ///
+    /// let out: Vec<_> = (0..64)
+    ///     .into_par()
+    ///     .num_threads(4)
+    ///     .use_vec(&mut use_vec)
+    ///     .map(|buffer, x| {
+    ///         buffer.clear();
+    ///         write!(buffer, "{x}").unwrap();
+    ///         buffer.parse::<usize>().unwrap()
+    ///     })
+    ///     .collect();
+    ///
+    /// assert_eq!(out, (0..64).collect::<Vec<_>>());
+    ///
+    /// let buffers = use_vec.into_vec();
+    /// assert_eq!(created.load(Ordering::Relaxed), buffers.len());
+    /// assert!(buffers.len() <= 4);
+    /// ```
     fn use_vec<U, F>(
         self,
         use_vec: &mut UseVec<U, F>,
@@ -368,6 +482,38 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParUseIter::new(use_vec, iter, xap, exe, params)
     }
 
+    /// Uses a caller-provided mutable slice as worker-local mutable state.
+    ///
+    /// This is similar to [`Par::use_vec`], but the state storage is a
+    /// borrowed slice instead of an owned `UseVec`. Therefore, no per-thread
+    /// state objects are created by this method; existing slice elements are
+    /// reused as thread-local state.
+    ///
+    /// The number of worker threads that can participate in the computation is
+    /// limited by `slice.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let n = 10_000usize;
+    /// let mut thread_sums = vec![0usize; 4];
+    ///
+    /// (0..n)
+    ///     .into_par()
+    ///     .num_threads(16) // actual participating workers are limited to 4
+    ///     .map(|x| 2 * x)
+    ///     .use_slice(&mut thread_sums)
+    ///     .for_each(|thread_sum, x| *thread_sum += x);
+    ///
+    /// let total: usize = thread_sums.into_iter().sum();
+    /// assert_eq!(total, (n - 1) * n);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `slice` is empty.
     fn use_slice<'a, U>(
         self,
         slice: &'a mut [U],
@@ -375,6 +521,10 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     where
         U: Sync + 'a,
     {
+        assert!(
+            slice.len() > 0,
+            "Number of parallel threads is limited to slice.len(); and hence, slice cannot be empty."
+        );
         let (iter, xap, exe, params) = self.destruct();
         let xap = IdUse::new(xap);
         let using = UseSlice::new(slice);

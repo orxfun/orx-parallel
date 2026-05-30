@@ -1,8 +1,8 @@
 use crate::infallible_use::XapUse;
 use crate::infallible_use::thread_execution as th;
-use crate::infallible_use::use_var::Use;
 use crate::results::ValsAndIdx;
 use crate::results::{Val, ValIdx};
+use crate::use_var::Use;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
@@ -18,7 +18,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, x, u) = (&iter, &state, &results_bag, x, &u);
@@ -27,7 +27,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::next::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -47,7 +47,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, x, u) = (&iter, &state, &results_bag, x, &u);
@@ -56,7 +56,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::next_any::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -77,7 +77,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         {
@@ -87,7 +87,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                     spawned += 1;
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                         Self::begin_thread(st, th_idx);
-                        let mut u = u.get(th_idx);
+                        let mut u = u.init_get(th_idx);
                         let value =
                             th::reduce::<Self, _, _, _, _>(u.get_mut(), th_idx, st, iter, x, f);
                         results.push(value);
@@ -98,7 +98,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         }
 
         Self::complete_computation(state);
-        let mut u = u.get_mut(0);
+        let mut u = u.get(0);
         Val::reduce(results_bag.into_inner().into_inner(), |a, b| {
             f(u.get_mut(), a, b)
         })
@@ -112,7 +112,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -121,7 +121,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::collect::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -141,7 +141,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         X::O: Send,
     {
         let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint());
+        let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
         let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
         let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -150,7 +150,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::collect_arb::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);

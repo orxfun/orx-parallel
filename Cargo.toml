@@ -84,6 +84,7 @@ required-features = ["rayon-core"]
 name = "het-simple"
 harness = false
 path = "benches/het/simple.rs"
+required-features = ["std"]
 
 ## benchmarks - recursive
 
@@ -174,6 +175,7 @@ path = "benches/collect/m.rs"
 name = "collect-mf"
 harness = false
 path = "benches/collect/mf.rs"
+required-features = ["std"]
 
 [[bench]]
 name = "collect-mfm"

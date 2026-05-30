@@ -2,7 +2,8 @@ use crate::collectables::alg::merge_collected::{
     merge_arb_into_split_vec, merge_ord_into_split_vec,
 };
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, ParUseIter, Use, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, ParUseIter, XapUse};
+use crate::use_var::Use;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Doubling, SplitVec};
 
