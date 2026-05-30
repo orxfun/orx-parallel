@@ -30,6 +30,7 @@ impl<'a, T: 'a> Using for UseSlice<'a, T> {
         todo!()
     }
 
+    #[inline]
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         assert!(
             thread_idx < self.len,
@@ -39,5 +40,10 @@ impl<'a, T: 'a> Using for UseSlice<'a, T> {
         );
         let ptr = unsafe { self.ptr.add(thread_idx) };
         unsafe { &mut *ptr }
+    }
+
+    #[inline]
+    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+        self.get(thread_idx)
     }
 }

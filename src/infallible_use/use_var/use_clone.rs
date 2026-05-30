@@ -19,6 +19,11 @@ impl<T: Clone + Send> Using for UseClone<T> {
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         self.create(thread_idx)
     }
+
+    #[inline]
+    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+        self.get(thread_idx)
+    }
 }
 
 /// SAFETY: Since T is Send, it is safe to share `UsingClone` with
