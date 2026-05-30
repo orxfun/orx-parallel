@@ -4,7 +4,6 @@ use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Map
 use crate::infallible_use::xap_variants::IdUse;
 use crate::infallible_use::{UseFun, UseSlice, UseVec};
 use crate::option::ParOptionIter;
-use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore};
 use crate::pool::ParThreadPool;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
