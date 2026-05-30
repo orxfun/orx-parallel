@@ -2,7 +2,7 @@ use crate::common_par_traits::ParResCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
-use crate::infallible_use::{UseClone, UseFun};
+use crate::infallible_use::{UseFun, UseSlice, UseVec};
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::result::par_core::ParResultCore;
@@ -65,7 +65,7 @@ pub trait ParResult:
 
     // kind transformations
 
-    fn using<U, F>(
+    fn use_new<U, F>(
         self,
         f: F,
     ) -> impl ParUseResult<
@@ -89,9 +89,9 @@ pub trait ParResult:
         ParUseResultIter::new(u, iter, x1, x2, exe, params)
     }
 
-    fn using_clone<U>(
+    fn use_vec<U, F>(
         self,
-        u: U,
+        use_vec: &mut UseVec<U, F>,
     ) -> impl ParUseResult<
         Item = Self::Item,
         Error = Self::Error,
@@ -103,12 +103,35 @@ pub trait ParResult:
         Size = Self::Size,
     >
     where
-        U: Clone + Send,
+        U: Send,
+        F: Fn(usize) -> U + Sync,
     {
         let (iter, x1, x2, exe, _, params) = self.destruct();
         let x1 = IdUse::<_, U>::new(x1);
         let x2 = IdUse::<_, U>::new(x2);
-        let u = UseClone::new(u);
+        ParUseResultIter::new(use_vec, iter, x1, x2, exe, params)
+    }
+
+    fn use_slice<'a, U>(
+        self,
+        slice: &'a mut [U],
+    ) -> impl ParUseResult<
+        Item = Self::Item,
+        Error = Self::Error,
+        Use = U,
+        Xap1 = IdUse<Self::Xap1, U>,
+        M = Self::M,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Input = Self::Input,
+        Size = Self::Size,
+    >
+    where
+        U: Sync + 'a,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseSlice::new(slice);
         ParUseResultIter::new(u, iter, x1, x2, exe, params)
     }
 
@@ -315,7 +338,7 @@ pub trait ParResult:
         F: Fn(&mut B, Self::Item) + Copy + Send,
         Self::Error: Send,
     {
-        let par_use = self.using(|_| init());
+        let par_use = self.use_new(|_| init());
         let fold = par_use.map(move |u: &mut B, x| {
             f(u, x);
             ()
