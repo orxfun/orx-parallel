@@ -1,13 +1,13 @@
 use crate::collectables::alg::merge_collected::{merge_arb_into_vec, merge_ord_into_vec};
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, ParUseIter, Using, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, ParUseIter, Use, XapUse};
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 impl<T> ColIntoInfUse<T> for Vec<T> {
     fn inf_use_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item, O = T>,
         R: ParRunnerInfallibleUse,
@@ -20,7 +20,7 @@ impl<T> ColIntoInfUse<T> for Vec<T> {
 
     fn inf_use_arb_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item, O = T>,
         R: ParRunnerInfallibleUse,

@@ -2,7 +2,7 @@ use crate::collectables::alg::merge_collected::{
     merge_arb_into_split_vec, merge_ord_into_split_vec,
 };
 use crate::collectables::opt_use::ColIntoOptUse;
-use crate::infallible_use::{Using, XapUse};
+use crate::infallible_use::{Use, XapUse};
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore, ParUseOptionIter};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
@@ -14,7 +14,7 @@ impl<T> ColIntoOptUse<T> for SplitVec<T, Doubling> {
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<()>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
@@ -33,7 +33,7 @@ impl<T> ColIntoOptUse<T> for SplitVec<T, Doubling> {
         par: ParUseOptionIter<U, I, M, X1, X2, S, R>,
     ) -> Option<()>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
         X2: XapUse<U = U::Item, I = M, O = T>,

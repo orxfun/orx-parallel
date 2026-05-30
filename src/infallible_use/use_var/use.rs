@@ -1,6 +1,6 @@
 use orx_self_or::SoM;
 
-pub trait Using: Sync {
+pub trait Use: Sync {
     type Item;
 
     type ItemBorrow<'i>: SoM<Self::Item>
@@ -14,7 +14,7 @@ pub trait Using: Sync {
     fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_>;
 }
 
-impl<'a, U: Using> Using for &'a mut U {
+impl<'a, U: Use> Use for &'a mut U {
     type Item = U::Item;
 
     type ItemBorrow<'i>
@@ -27,10 +27,10 @@ impl<'a, U: Using> Using for &'a mut U {
     }
 
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        <U as Using>::get(self, thread_idx)
+        <U as Use>::get(self, thread_idx)
     }
 
     fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        <U as Using>::get_mut(self, thread_idx)
+        <U as Use>::get_mut(self, thread_idx)
     }
 }

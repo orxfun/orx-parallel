@@ -1,4 +1,4 @@
-use crate::infallible_use::Using;
+use crate::infallible_use::Use;
 use alloc::vec::Vec;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 
@@ -19,7 +19,7 @@ impl<T: Send, F: Fn(usize) -> T + Sync> UseVec<T, F> {
     }
 }
 
-impl<T: Send, F: Fn(usize) -> T + Sync> Using for UseVec<T, F> {
+impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseVec<T, F> {
     type Item = T;
 
     type ItemBorrow<'i>

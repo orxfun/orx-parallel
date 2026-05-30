@@ -1,6 +1,6 @@
 use crate::{
     Params,
-    infallible_use::{Using, XapUse},
+    infallible_use::{Use, XapUse},
     runner::ParRunner,
     sizes::SizePair,
 };
@@ -15,7 +15,7 @@ pub trait ParUseResultCore {
 
     type Use;
 
-    type Using: Using<Item = Self::Use>;
+    type Using: Use<Item = Self::Use>;
 
     type Input: ConcurrentIter;
 

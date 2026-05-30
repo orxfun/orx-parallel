@@ -1,4 +1,4 @@
-use crate::infallible_use::{Using, XapUse};
+use crate::infallible_use::{Use, XapUse};
 use crate::{Params, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -9,7 +9,7 @@ pub trait ParUseCore {
 
     type Use;
 
-    type Using: Using<Item = Self::Use>;
+    type Using: Use<Item = Self::Use>;
 
     type Input: ConcurrentIter;
 
