@@ -1,4 +1,4 @@
-use crate::infallible_use::{UseClone, UseFun};
+use crate::infallible_use::{UseClone, UseFun, use_var::use_dyn_vec::UseDynVec};
 
 pub struct Use;
 
@@ -14,5 +14,7 @@ impl Use {
         UseClone::new(value)
     }
 
-    // pub fn dyn_vec<T,F>(f:F) -> UseB
+    pub fn dyn_vec<T, F: Fn(usize) -> T>(init: F) -> UseDynVec<T, F> {
+        UseDynVec::new(init)
+    }
 }

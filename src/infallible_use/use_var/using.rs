@@ -3,9 +3,9 @@ use orx_self_or::SoM;
 pub trait Using: Sync {
     type Item;
 
-    type ItemKind<'a>: SoM<Self::Item>
+    type ItemKind<'i>: SoM<Self::Item>
     where
-        Self: 'a;
+        Self: 'i;
 
     fn create(&self, thread_idx: usize) -> Self::Item;
 
