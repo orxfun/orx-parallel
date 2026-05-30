@@ -69,7 +69,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         Val::first(results_bag.into_inner().into_inner())
     }
 
-    fn reduce<U, I, X, F>(&mut self, params: Params, u: U, iter: I, x: X, f: F) -> Option<X::O>
+    fn reduce<U, I, X, F>(&mut self, params: Params, mut u: U, iter: I, x: X, f: F) -> Option<X::O>
     where
         U: Using,
         I: ConcurrentIter,
@@ -99,7 +99,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         }
 
         Self::complete_computation(state);
-        let mut u = u.get(0);
+        let mut u = u.get_mut(0);
         // let mut u = u.create(results_bag.len());
         Val::reduce(results_bag.into_inner().into_inner(), |a, b| {
             f(u.get_mut(), a, b)

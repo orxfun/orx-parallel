@@ -25,6 +25,11 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Using for UseFun<T, F> {
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         self.create(thread_idx)
     }
+
+    #[inline]
+    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+        self.get(thread_idx)
+    }
 }
 
 impl<T: Send, F: Fn(usize) -> T + Sync> From<F> for UseFun<T, F> {

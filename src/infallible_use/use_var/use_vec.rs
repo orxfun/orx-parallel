@@ -38,15 +38,20 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Using for UseVec<T, F> {
     fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         std::dbg!("AAAAAAAAAAAAAA", thread_idx, self.cache.len());
         let use_var = (self.init)(thread_idx);
-        let a = unsafe { self.cache.set_value(thread_idx, (thread_idx, use_var)) };
+        unsafe { self.cache.set_value(thread_idx, (thread_idx, use_var)) };
 
         // let idx = self.cache.push((thread_idx, use_var));
         // SAFETY: it is safe to access to the index as it is
         // pushed / initialized just above. Further, `get` will
         // be called exactly once by the corresponding thread,
         // and hence, there will be no race condition.
-        // let a = unsafe { &mut *self.cache.ptr_mut(idx) };
-        // &mut a.1
-        todo!()
+        let a = unsafe { &mut *self.cache.ptr_mut(thread_idx) };
+        &mut a.1
+    }
+
+    #[inline]
+    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+        let a = unsafe { &mut *self.cache.ptr_mut(thread_idx) };
+        &mut a.1
     }
 }

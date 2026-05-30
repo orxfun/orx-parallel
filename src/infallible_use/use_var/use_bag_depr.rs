@@ -58,4 +58,8 @@ where
         let a = unsafe { &mut *self.cache.ptr_mut(idx) };
         &mut a.1
     }
+
+    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+        todo!()
+    }
 }
