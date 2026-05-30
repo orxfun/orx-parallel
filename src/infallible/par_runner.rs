@@ -144,6 +144,7 @@ pub trait ParRunnerInfallible: ParRunner {
     }
 
     #[cfg(feature = "experimental")]
+    #[allow(unused)]
     fn collect_arb_over_bag<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
     where
         I: ConcurrentIter,
