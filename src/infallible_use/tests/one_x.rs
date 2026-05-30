@@ -13,7 +13,7 @@ fn one_x_find() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -28,7 +28,7 @@ fn one_x_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -44,7 +44,7 @@ fn one_x_reduce() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -75,7 +75,7 @@ fn one_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         Some(mut c) => {
             inputs(N)
                 .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
+                .use_new(|th_idx| UseValue::new(th_idx))
                 .iteration_order(order)
                 .flat_map(|u, x| {
                     u.mutate();
@@ -87,7 +87,7 @@ fn one_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         }
         None => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .iteration_order(order)
             .flat_map(|u, x| {
                 u.mutate();

@@ -14,7 +14,7 @@ fn inf_use_first() {
 
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| *x == &(n / 2).to_string())
             .first();
         assert_eq!(
@@ -24,7 +24,7 @@ fn inf_use_first() {
 
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.as_str() == "x")
             .first();
         assert_eq!(result, input.iter().filter(|x| x.as_str() == "x").next());
@@ -38,7 +38,7 @@ fn inf_use_reduce() {
 
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .reduce(|_, a, b| a + b);
         assert_eq!(result, input.iter().map(|x| x.len()).reduce(|a, b| a + b));
@@ -52,7 +52,7 @@ fn inf_use_collect() {
         let result: Vec<String> = input
             .clone()
             .into_par()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .collect();
         assert_eq!(
@@ -74,7 +74,7 @@ fn inf_use_collect_into() {
         input
             .clone()
             .into_par()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .collect_into(&mut result);
 
@@ -90,10 +90,10 @@ fn inf_use_all() {
     for n in N {
         let input = inputs(n);
 
-        let result = input.par().using_clone(()).all(|_, x| x.len() > 0);
+        let result = input.par().use_new(|_| ()).all(|_, x| x.len() > 0);
         assert_eq!(result, input.iter().all(|x| x.len() > 0));
 
-        let result = input.par().using_clone(()).all(|_, x| x.len() == 1);
+        let result = input.par().use_new(|_| ()).all(|_, x| x.len() == 1);
         assert_eq!(result, input.iter().all(|x| x.len() == 1));
     }
 }
@@ -103,10 +103,10 @@ fn inf_use_any() {
     for n in N {
         let input = inputs(n);
 
-        let result = input.par().using_clone(()).any(|_, x| x.len() > 1);
+        let result = input.par().use_new(|_| ()).any(|_, x| x.len() > 1);
         assert_eq!(result, input.iter().any(|x| x.len() > 1));
 
-        let result = input.par().using_clone(()).any(|_, x| x.len() == 4);
+        let result = input.par().use_new(|_| ()).any(|_, x| x.len() == 4);
         assert_eq!(result, input.iter().any(|x| x.len() == 4));
     }
 }
@@ -118,14 +118,14 @@ fn inf_use_count() {
 
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .count();
         assert_eq!(result, input.iter().filter(|x| x.len() < 2).count());
 
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() > 4)
             .count();
         assert_eq!(result, input.iter().filter(|x| x.len() > 4).count());
@@ -140,14 +140,14 @@ fn inf_use_find() {
         let result = input
             .clone()
             .into_par()
-            .using_clone(())
+            .use_new(|_| ())
             .find(|_, x| x.len() > 1);
         assert_eq!(result, input.iter().find(|x| x.len() > 1).cloned());
 
         let result = input
             .clone()
             .into_par()
-            .using_clone(())
+            .use_new(|_| ())
             .find(|_, x| x.len() > 10);
         assert_eq!(result, input.iter().find(|x| x.len() > 10).cloned());
     }
@@ -160,14 +160,14 @@ fn inf_use_find_any() {
     let result = input
         .clone()
         .into_par()
-        .using_clone(())
+        .use_new(|_| ())
         .iteration_order(IterationOrder::Arbitrary)
         .find(|_, x| x.len() > 1);
     assert!(result.is_some());
 
     let result = input
         .into_par()
-        .using_clone(())
+        .use_new(|_| ())
         .iteration_order(IterationOrder::Arbitrary)
         .find(|_, x| x.len() > 10);
     assert_eq!(result, None);
@@ -176,7 +176,7 @@ fn inf_use_find_any() {
     let input = inputs(0);
     let result = input
         .into_par()
-        .using_clone(())
+        .use_new(|_| ())
         .iteration_order(IterationOrder::Arbitrary)
         .find(|_, _| true);
     assert_eq!(result, None);
@@ -189,7 +189,7 @@ fn inf_use_for_each() {
         let total_len = AtomicUsize::new(0);
         input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .for_each(|_, x| _ = total_len.fetch_add(x.len(), Ordering::Relaxed));
         assert_eq!(total_len.into_inner(), input.iter().map(|x| x.len()).sum());
     }
@@ -199,7 +199,7 @@ fn inf_use_for_each() {
 fn inf_use_max() {
     for n in N {
         let input = inputs(n);
-        let result = input.par().using_clone(()).map(|_, x| x.len()).max();
+        let result = input.par().use_new(|_| ()).map(|_, x| x.len()).max();
         assert_eq!(result, input.iter().map(|x| x.len()).max());
     }
 }
@@ -210,7 +210,7 @@ fn inf_use_max_by() {
         let input = inputs(n);
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .max_by(|_, a, b| a.cmp(&b));
         assert_eq!(
@@ -226,7 +226,7 @@ fn inf_use_max_by_key() {
         let input = inputs(n);
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .max_by_key(|_, x| x.len() * 100 + x.parse::<usize>().unwrap());
         assert_eq!(
             result,
@@ -241,7 +241,7 @@ fn inf_use_max_by_key() {
 fn inf_use_min() {
     for n in N {
         let input = inputs(n);
-        let result = input.par().using_clone(()).map(|_, x| x.len()).min();
+        let result = input.par().use_new(|_| ()).map(|_, x| x.len()).min();
         assert_eq!(result, input.iter().map(|x| x.len()).min());
     }
 }
@@ -252,7 +252,7 @@ fn inf_use_min_by() {
         let input = inputs(n);
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .min_by(|_, a, b| a.cmp(&b));
         assert_eq!(
@@ -268,7 +268,7 @@ fn inf_use_min_by_key() {
         let input = inputs(n);
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .min_by_key(|_, x| x.len() * 100 + x.parse::<usize>().unwrap());
         assert_eq!(
             result,
@@ -286,7 +286,7 @@ fn inf_use_sum() {
 
         let result = input
             .par()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() > 1)
             .map(|_, x| x.len())
             .sum();

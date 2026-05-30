@@ -3,8 +3,8 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore};
-use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
+use crate::infallible_use::{ParUseIter, UseFun, xap_variants::IdUse};
+use crate::infallible_use::{UseSlice, UseVec};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
@@ -341,68 +341,43 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParResultIter::new(iter, xap, Id::new(), exe, params)
     }
 
-    /// Converts `Par` into `ParUse` by creating one `U` per used thread.
-    ///
-    /// The `using` value can then be mutably accessed in subsequent iterator
-    /// operations.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    /// use rand::{Rng, SeedableRng};
-    /// use rand_chacha::ChaCha20Rng;
-    ///
-    /// let values: Vec<_> = (0..8)
-    ///     .into_par()
-    ///     .using(|thread_idx| ChaCha20Rng::seed_from_u64(thread_idx as u64))
-    ///     .map(|rng, x| x + rng.random_range(0..10))
-    ///     .collect();
-    ///
-    /// assert_eq!(values.len(), 8);
-    /// ```
-    fn using<U, F>(
+    fn use_new<U, F>(
         self,
         f: F,
     ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
+        U: Send,
         F: Fn(usize) -> U + Sync,
     {
         let (iter, xap, exe, params) = self.destruct();
-        let using = UseFun::new(f);
         let xap = IdUse::new(xap);
+        let using = UseFun::new(f);
         ParUseIter::new(using, iter, xap, exe, params)
     }
 
-    /// Shorthand for `using(|_| u.clone())`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    /// use rand::{Rng, SeedableRng};
-    /// use rand_chacha::ChaCha20Rng;
-    ///
-    /// let rng = ChaCha20Rng::seed_from_u64(42);
-    ///
-    /// let out: Vec<_> = (0..4)
-    ///     .into_par()
-    ///     .using_clone(rng)
-    ///     .map(|rng, x| x + rng.random_range(0..10))
-    ///     .collect();
-    ///
-    /// assert_eq!(out.len(), 4);
-    /// ```
-    fn using_clone<U>(
+    fn use_vec<U, F>(
         self,
-        u: U,
+        use_vec: &mut UseVec<U, F>,
     ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
-        U: Clone + Send,
+        U: Send,
+        F: Fn(usize) -> U + Sync,
     {
         let (iter, xap, exe, params) = self.destruct();
-        let using = UseClone::new(u);
         let xap = IdUse::new(xap);
+        ParUseIter::new(use_vec, iter, xap, exe, params)
+    }
+
+    fn use_slice<'a, U>(
+        self,
+        slice: &'a mut [U],
+    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
+    where
+        U: Sync + 'a,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        let xap = IdUse::new(xap);
+        let using = UseSlice::new(slice);
         ParUseIter::new(using, iter, xap, exe, params)
     }
 
@@ -769,13 +744,10 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         I: Fn() -> B + Sync,
         F: Fn(&mut B, Self::Item) + Copy + Send,
     {
-        let par_use = self.using(|_| init());
-        let fold = par_use.map(move |u: &mut B, x| {
-            f(u, x);
-            ()
-        });
-        let (using, iter, xap, mut exe, params) = fold.destruct();
-        exe.fold(params, using, iter, xap, |_, _, _| {})
+        let mut use_vec = UseVec::new(|_| init());
+        let par_use = self.use_vec(&mut use_vec);
+        par_use.for_each(move |u: &mut B, x| f(u, x));
+        use_vec.into_vec()
     }
 
     /// Executes `f` for each item.

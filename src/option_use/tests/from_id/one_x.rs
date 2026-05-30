@@ -13,7 +13,7 @@ fn one_x_find_ok() {
     let result = inputs
         .into_par()
         .into_optional()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -29,7 +29,7 @@ fn one_x_find_any_ok() {
     let result = inputs
         .into_par()
         .into_optional()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -45,7 +45,7 @@ fn one_x_reduce_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .filter_map(|u, x| {
             u.mutate();
             Some(x)
@@ -71,7 +71,7 @@ fn one_x_reduce_err() {
     let inputs = inputs_opt(N, Some(42));
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .filter_map(|u, x| {
             u.mutate();
             Some(x)
@@ -110,7 +110,7 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     let result = match C::init_result(mode, |i| i as u64) {
         Some(mut c) => inputs_opt(N, None)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -126,7 +126,7 @@ fn one_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
             .map(|_| c),
         None => inputs_opt(N, None)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -149,7 +149,7 @@ fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
     let result = match C::init_result(mode, |i| i as u64) {
         Some(mut c) => inputs_opt(N, Some(42))
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -165,7 +165,7 @@ fn one_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
             .map(|_| c),
         None => inputs_opt(N, Some(42))
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)

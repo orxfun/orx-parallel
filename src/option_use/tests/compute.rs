@@ -24,7 +24,7 @@ fn opt_use_first() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| *x == (n / 2).to_string())
             .first();
         assert_eq!(
@@ -37,7 +37,7 @@ fn opt_use_first() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.as_str() == "x")
             .first();
         assert_eq!(
@@ -50,7 +50,7 @@ fn opt_use_first() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.as_str() == "x")
             .first();
         assert_eq!(result, None);
@@ -67,7 +67,7 @@ fn opt_use_reduce() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .reduce(|_, a, b| a + b);
         assert_eq!(
@@ -80,7 +80,7 @@ fn opt_use_reduce() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .reduce(|_, a, b| a + b);
         assert_eq!(result, None);
@@ -96,7 +96,7 @@ fn opt_use_collect() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .collect();
         assert_eq!(
@@ -115,7 +115,7 @@ fn opt_use_collect() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .collect();
         assert_eq!(result, None);
@@ -133,7 +133,7 @@ fn opt_use_collect_into() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .collect_into(&mut result);
 
@@ -149,7 +149,7 @@ fn opt_use_collect_into() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .collect_into(&mut result);
         assert_eq!(err, None);
@@ -166,7 +166,7 @@ fn opt_use_all() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .all(|_, x| x.len() > 0);
         assert_eq!(result, Some(input.iter().all(|x| x.len() > 0)));
 
@@ -175,7 +175,7 @@ fn opt_use_all() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .all(|_, x| x.len() == 1);
         assert_eq!(result, Some(input.iter().all(|x| x.len() == 1)));
 
@@ -184,7 +184,7 @@ fn opt_use_all() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .all(|_, x| x.len() > 0);
         assert_eq!(result, None);
     }
@@ -200,7 +200,7 @@ fn opt_use_any() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .any(|_, x| x.len() > 1);
         assert_eq!(result, Some(input.iter().any(|x| x.len() > 1)));
 
@@ -209,7 +209,7 @@ fn opt_use_any() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .any(|_, x| x.len() == 4);
         assert_eq!(result, Some(input.iter().any(|x| x.len() == 4)));
 
@@ -218,7 +218,7 @@ fn opt_use_any() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .any(|_, x| x.parse::<usize>().unwrap() > 60);
         assert_eq!(result, None);
     }
@@ -234,7 +234,7 @@ fn opt_use_count() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .count();
         assert_eq!(result, Some(input.iter().filter(|x| x.len() < 2).count()));
@@ -244,7 +244,7 @@ fn opt_use_count() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() > 4)
             .count();
         assert_eq!(result, Some(input.iter().filter(|x| x.len() > 4).count()));
@@ -254,7 +254,7 @@ fn opt_use_count() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() < 2)
             .count();
         assert_eq!(result, None);
@@ -271,7 +271,7 @@ fn opt_use_find() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .find(|_, x| x.len() > 1);
         assert_eq!(result, Some(input.iter().find(|x| x.len() > 1).cloned()));
 
@@ -280,7 +280,7 @@ fn opt_use_find() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .find(|_, x| x.len() > 10);
         assert_eq!(result, Some(input.iter().find(|x| x.len() > 10).cloned()));
 
@@ -289,7 +289,7 @@ fn opt_use_find() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .find(|_, x| x.len() > 10);
         assert_eq!(result, None);
     }
@@ -304,7 +304,7 @@ fn opt_use_find_any() {
         .into_par()
         .map(Some)
         .into_optional()
-        .using_clone(())
+        .use_new(|_| ())
         .iteration_order(IterationOrder::Arbitrary)
         .find(|_, x| x.len() > 1);
     assert!(matches!(result, Some(Some(_))));
@@ -314,7 +314,7 @@ fn opt_use_find_any() {
         .into_par()
         .map(Some)
         .into_optional()
-        .using_clone(())
+        .use_new(|_| ())
         .iteration_order(IterationOrder::Arbitrary)
         .find(|_, x| x.len() > 10);
     assert_eq!(result, Some(None));
@@ -325,7 +325,7 @@ fn opt_use_find_any() {
         .into_par()
         .map(Some)
         .into_optional()
-        .using_clone(())
+        .use_new(|_| ())
         .iteration_order(IterationOrder::Arbitrary)
         .find(|_, _| true);
     assert_eq!(result, Some(None));
@@ -341,7 +341,7 @@ fn opt_use_for_each() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .for_each(|_, x| _ = total_len_ok.fetch_add(x.len(), Ordering::Relaxed));
         assert_eq!(result, Some(()));
         assert_eq!(
@@ -355,7 +355,7 @@ fn opt_use_for_each() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .for_each(|_, x| _ = total_len_err.fetch_add(x.len(), Ordering::Relaxed));
         assert_eq!(result, None);
     }
@@ -370,7 +370,7 @@ fn opt_use_max() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .max();
         assert_eq!(result, Some(input.iter().map(|x| x.len()).max()));
@@ -380,7 +380,7 @@ fn opt_use_max() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .max();
         assert_eq!(result, None);
@@ -396,7 +396,7 @@ fn opt_use_max_by() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .max_by(|_, a, b| a.cmp(b));
         assert_eq!(
@@ -409,7 +409,7 @@ fn opt_use_max_by() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .max_by(|_, a, b| a.cmp(b));
         assert_eq!(result, None);
@@ -425,7 +425,7 @@ fn opt_use_max_by_key() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .max_by_key(|_, x| x.len() * 100 + x.parse::<usize>().unwrap());
         assert_eq!(
             result,
@@ -442,7 +442,7 @@ fn opt_use_max_by_key() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .max_by_key(|_, x| x.len() * 100 + x.parse::<usize>().unwrap());
         assert_eq!(result, None);
     }
@@ -457,7 +457,7 @@ fn opt_use_min() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .min();
         assert_eq!(result, Some(input.iter().map(|x| x.len()).min()));
@@ -467,7 +467,7 @@ fn opt_use_min() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .min();
         assert_eq!(result, None);
@@ -483,7 +483,7 @@ fn opt_use_min_by() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .min_by(|_, a, b| a.cmp(b));
         assert_eq!(
@@ -496,7 +496,7 @@ fn opt_use_min_by() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .map(|_, x| x.len())
             .min_by(|_, a, b| a.cmp(b));
         assert_eq!(result, None);
@@ -512,7 +512,7 @@ fn opt_use_min_by_key() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .min_by_key(|_, x| x.len() * 100 + x.parse::<usize>().unwrap());
         assert_eq!(
             result,
@@ -529,7 +529,7 @@ fn opt_use_min_by_key() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .min_by_key(|_, x| x.len() * 100 + x.parse::<usize>().unwrap());
         assert_eq!(result, None);
     }
@@ -545,7 +545,7 @@ fn opt_use_sum() {
             .into_par()
             .map(Some)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() > 1)
             .map(|_, x| x.len())
             .sum();
@@ -559,7 +559,7 @@ fn opt_use_sum() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .using_clone(())
+            .use_new(|_| ())
             .filter(|_, x| x.len() > 1)
             .map(|_, x| x.len())
             .sum();

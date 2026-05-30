@@ -15,7 +15,7 @@ fn id_find_ok() {
         .into_par()
         .map(|x| Some(x))
         .into_optional()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .first();
     assert_eq!(result, Some(Some(String::from("0"))));
 }
@@ -27,7 +27,7 @@ fn id_find_any_ok() {
         .into_par()
         .map(|x| Some(x))
         .into_optional()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_some());
@@ -38,7 +38,7 @@ fn id_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .map(|u, x| {
             u.mutate();
             Some(x)
@@ -59,7 +59,7 @@ fn id_reduce_ok_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .map(|u, x| {
             u.mutate();
             match x.as_str() == "42" {
@@ -93,7 +93,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -104,7 +104,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -122,7 +122,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {
@@ -136,7 +136,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {

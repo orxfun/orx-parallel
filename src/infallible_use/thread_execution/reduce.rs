@@ -1,25 +1,23 @@
-use crate::infallible_use::{XapUse, use_var::Use};
+use crate::infallible_use::XapUse;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn reduce_get_u<Q, U, I, X, F>(
-    u: &U,
+pub fn reduce<Q, U, I, X, F>(
+    u: &mut U,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
     x: X,
     f: F,
-) -> (Option<X::O>, U::Item)
+) -> Option<X::O>
 where
     Q: ParRunner,
-    U: Use,
     I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
+    X: XapUse<U = U, I = I::Item>,
     F: Fn(&mut X::U, X::O, X::O) -> X::O,
 {
-    let mut use_var = u.create(th_idx);
-    let u = &mut use_var as *mut U::Item;
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
+    let u = u as *mut U;
 
     let mut acc = None;
 
@@ -117,23 +115,5 @@ where
         }
     };
 
-    (result, use_var)
-}
-
-pub fn reduce<Q, U, I, X, F>(
-    u: &U,
-    th_idx: usize,
-    state: &Q::State,
-    iter: &I,
-    x: X,
-    f: F,
-) -> Option<X::O>
-where
-    Q: ParRunner,
-    U: Use,
-    I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
-    F: Fn(&mut X::U, X::O, X::O) -> X::O,
-{
-    reduce_get_u::<Q, _, _, _, _>(u, th_idx, state, iter, x, f).0
+    result
 }

@@ -35,7 +35,7 @@ mod sizes;
 
 pub use collectables::{ParCollectInto, Vec2};
 pub use infallible::{EnumeratePar, Par};
-pub use infallible_use::{EnumerateParUse, ParUse};
+pub use infallible_use::{EnumerateParUse, ParUse, UseVec};
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };

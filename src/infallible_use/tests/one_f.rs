@@ -13,7 +13,7 @@ fn one_f_find() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -27,7 +27,7 @@ fn one_f_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -42,7 +42,7 @@ fn one_f_reduce() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
             x.len() > 1
@@ -67,7 +67,7 @@ fn one_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         Some(mut c) => {
             inputs(N)
                 .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
+                .use_new(|th_idx| UseValue::new(th_idx))
                 .iteration_order(order)
                 .filter(|u, x| {
                     u.mutate();
@@ -78,7 +78,7 @@ fn one_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         }
         None => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .iteration_order(order)
             .filter(|u, x| {
                 u.mutate();
