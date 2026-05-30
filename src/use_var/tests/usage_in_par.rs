@@ -26,12 +26,13 @@ fn use_fun() {
     );
 }
 
-#[test]
-fn use_vec() {
+#[test_matrix([0,1, 4, 16, 100])]
+fn use_vec(num_threads: usize) {
     let input = 0..10000;
     let mut use_vec = UseVec::new(|_| 0);
     input
         .par()
+        .num_threads(num_threads)
         .map(|x| 2 * x)
         .use_vec(&mut use_vec)
         .for_each(|thread_sum, x| *thread_sum += x);
