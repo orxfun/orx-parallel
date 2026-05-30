@@ -32,7 +32,7 @@ fn bin_m_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using(|th_idx| UseValue::new(th_idx))
+        .using22(|th_idx| UseValue::new(th_idx))
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -85,7 +85,7 @@ fn bin_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         Some(mut c) => {
             inputs(N)
                 .into_par()
-                .using(|th_idx| UseValue::new(th_idx))
+                .using22(|th_idx| UseValue::new(th_idx))
                 .iteration_order(order)
                 .filter(|u, x| {
                     u.mutate();
@@ -100,7 +100,7 @@ fn bin_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         }
         None => inputs(N)
             .into_par()
-            .using(|th_idx| UseValue::new(th_idx))
+            .using22(|th_idx| UseValue::new(th_idx))
             .iteration_order(order)
             .filter(|u, x| {
                 u.mutate();

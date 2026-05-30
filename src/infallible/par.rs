@@ -3,7 +3,7 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, UseVec};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, UseVec, Using};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
@@ -341,6 +341,24 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParResultIter::new(iter, xap, Id::new(), exe, params)
     }
 
+    fn using<U>(
+        self,
+        using: U,
+    ) -> impl ParUse<
+        Item = Self::Item,
+        Use = U::Item,
+        Using = U,
+        Xap = IdUse<Self::Xap, U::Item>,
+        Input = Self::Input,
+    >
+    where
+        U: Using,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        let xap = IdUse::new(xap);
+        ParUseIter::new(using, iter, xap, exe, params)
+    }
+
     /// Converts `Par` into `ParUse` by creating one `U` per used thread.
     ///
     /// The `using` value can then be mutably accessed in subsequent iterator
@@ -361,7 +379,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// assert_eq!(values.len(), 8);
     /// ```
-    fn using<U, F>(
+    fn using22<U, F>(
         self,
         f: F,
     ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
@@ -790,7 +808,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         I: Fn() -> B + Sync,
         F: Fn(&mut B, Self::Item) + Copy + Send,
     {
-        let par_use = self.using(|_| init());
+        let par_use = self.using22(|_| init());
         let fold = par_use.map(move |u: &mut B, x| {
             f(u, x);
             ()

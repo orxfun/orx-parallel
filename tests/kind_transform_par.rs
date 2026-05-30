@@ -86,7 +86,7 @@ fn kind_transform_par() {
     fn map_to_use_opt(
         par: impl Par<Item = String>,
     ) -> impl ParUse<Use = char, Item = Option<String>> {
-        par.map(Some).using(|_| 'x')
+        par.map(Some).using22(|_| 'x')
     }
     let par = map_to_use_opt(get_par(42));
     let par = par.into_optional();
