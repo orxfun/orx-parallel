@@ -341,6 +341,57 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParResultIter::new(iter, xap, Id::new(), exe, params)
     }
 
+    /// Creates one mutable `Use` value per participating worker.
+    ///
+    /// The initializer `f` is called with the worker's thread index, and the
+    /// returned value is then passed as `&mut Use` to downstream [`ParUse`]
+    /// operations such as `map`, `filter`, `flat_map`, `reduce`, and `for_each`.
+    ///
+    /// This is useful for thread-local scratch buffers, counters, or other
+    /// mutable state that should not be shared across workers.
+    ///
+    /// # Examples
+    ///
+    /// Reusing one buffer per worker avoids allocating a fresh String
+    /// for every parsed item.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let values: Vec<_> = (1..4)
+    ///     .into_par()
+    ///     .num_threads(1)
+    ///     .use_new(|_| String::new())
+    ///     .map(|buffer, x| {
+    ///         buffer.clear();
+    ///         buffer.push_str(&x.to_string());
+    ///         buffer.parse::<usize>().unwrap() * 10
+    ///     })
+    ///     .collect();
+    ///
+    /// assert_eq!(values, vec![10, 20, 30]);
+    /// ```
+    ///
+    /// Some pipelines need fast worker-local randomness, for example for
+    /// sampling, randomized search, or simulation.
+    /// Seeding one RNG per worker with thread_idx creates independent
+    /// thread-local random streams without shared mutable state.
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use rand::{Rng, SeedableRng};
+    /// use rand_chacha::ChaCha8Rng;
+    ///
+    /// let values: Vec<_> = (0..8)
+    ///     .into_par()
+    ///     .num_threads(2)
+    ///     .use_new(|thread_idx| ChaCha8Rng::seed_from_u64(thread_idx as u64 + 1))
+    ///     .map(|rng, _| rng.random_range(0..100usize))
+    ///     .collect();
+    ///
+    /// assert_eq!(values.len(), 8);
+    /// assert!(values.into_iter().all(|x| x < 100));
+    /// ```
     fn use_new<U, F>(
         self,
         f: F,
