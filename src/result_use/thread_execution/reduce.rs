@@ -1,4 +1,4 @@
-use crate::infallible_use::{Use, XapUse};
+use crate::infallible_use::XapUse;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};

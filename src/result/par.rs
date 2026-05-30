@@ -6,7 +6,7 @@ use crate::infallible_use::{UseFun, UseSlice, UseVec};
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::result::par_core::ParResultCore;
-use crate::result_use::{ParRunnerUseRes, ParUseResultCore, ParUseResultIter};
+use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult, Sum};
