@@ -17,13 +17,13 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseFun<T, F> {
         Self: 'a;
 
     #[inline]
-    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+    fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         (self.0)(thread_idx)
     }
 
     #[inline]
-    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        self.get(thread_idx)
+    fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+        self.init_get(thread_idx)
     }
 }
 

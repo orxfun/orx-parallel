@@ -27,7 +27,7 @@ impl<'a, T: 'a> Use for UseSlice<'a, T> {
         Self: 'i;
 
     #[inline]
-    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+    fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         assert!(
             thread_idx < self.len,
             "Out of bounds UseSlice access; slice has length {}, but access by {}-th thread.",
@@ -39,7 +39,7 @@ impl<'a, T: 'a> Use for UseSlice<'a, T> {
     }
 
     #[inline]
-    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        self.get(thread_idx)
+    fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+        self.init_get(thread_idx)
     }
 }
