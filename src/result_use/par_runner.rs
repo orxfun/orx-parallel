@@ -1,4 +1,4 @@
-use crate::infallible_use::{Using, XapUse};
+use crate::infallible_use::{Use, XapUse};
 use crate::result_use::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};
 use crate::sizes::SizePair;
@@ -19,7 +19,7 @@ pub trait ParRunnerUseRes: ParRunner {
         x2: X2,
     ) -> Result<Option<ValIdx<X2::O>>, E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -67,7 +67,7 @@ pub trait ParRunnerUseRes: ParRunner {
         x2: X2,
     ) -> Result<Option<X2::O>, E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -116,7 +116,7 @@ pub trait ParRunnerUseRes: ParRunner {
         f: F,
     ) -> Result<Option<X2::O>, E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -172,7 +172,7 @@ pub trait ParRunnerUseRes: ParRunner {
         f: F,
     ) -> Result<Vec<U::Item>, E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M, O = ()>,
@@ -225,7 +225,7 @@ pub trait ParRunnerUseRes: ParRunner {
         x2: X2,
     ) -> Result<Vec<ValsAndIdx<X2::O>>, E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M>,
@@ -273,7 +273,7 @@ pub trait ParRunnerUseRes: ParRunner {
         x2: X2,
     ) -> Result<Vec<Vec<X2::O>>, E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M>,

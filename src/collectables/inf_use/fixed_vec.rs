@@ -1,5 +1,5 @@
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, Using, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, Use, XapUse};
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
@@ -7,7 +7,7 @@ use orx_fixed_vec::FixedVec;
 impl<T> ColIntoInfUse<T> for FixedVec<T> {
     fn inf_use_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item, O = T>,
         R: ParRunnerInfallibleUse,
@@ -19,7 +19,7 @@ impl<T> ColIntoInfUse<T> for FixedVec<T> {
 
     fn inf_use_arb_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X: XapUse<U = U::Item, I = I::Item, O = T>,
         R: ParRunnerInfallibleUse,

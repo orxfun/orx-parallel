@@ -1,4 +1,4 @@
-use crate::infallible_use::{Using, XapUse};
+use crate::infallible_use::{Use, XapUse};
 use crate::result_use::{ParRunnerUseRes, ParUseResultIter};
 use crate::sizes::SizePair;
 use orx_concurrent_iter::ConcurrentIter;
@@ -9,7 +9,7 @@ pub trait ColIntoResUse<T>: Sized {
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M, O = T>,
@@ -23,7 +23,7 @@ pub trait ColIntoResUse<T>: Sized {
         par: ParUseResultIter<U, I, M, E, X1, X2, S, R>,
     ) -> Result<(), E>
     where
-        U: Using,
+        U: Use,
         I: ConcurrentIter,
         X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
         X2: XapUse<U = U::Item, I = M, O = T>,

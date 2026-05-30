@@ -1,4 +1,4 @@
-use crate::infallible_use::Using;
+use crate::infallible_use::Use;
 use core::marker::PhantomData;
 
 pub struct UseSlice<'a, T: 'a> {
@@ -18,7 +18,7 @@ impl<'a, T: 'a> UseSlice<'a, T> {
 
 unsafe impl<'a, T: 'a> Sync for UseSlice<'a, T> {}
 
-impl<'a, T: 'a> Using for UseSlice<'a, T> {
+impl<'a, T: 'a> Use for UseSlice<'a, T> {
     type Item = T;
 
     type ItemBorrow<'i>
