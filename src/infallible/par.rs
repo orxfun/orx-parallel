@@ -482,6 +482,38 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParUseIter::new(use_vec, iter, xap, exe, params)
     }
 
+    /// Uses a caller-provided mutable slice as worker-local mutable state.
+    ///
+    /// This is similar to [`Par::use_vec`], but the state storage is a
+    /// borrowed slice instead of an owned `UseVec`. Therefore, no per-thread
+    /// state objects are created by this method; existing slice elements are
+    /// reused as thread-local state.
+    ///
+    /// The number of worker threads that can participate in the computation is
+    /// limited by `slice.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let n = 10_000usize;
+    /// let mut thread_sums = vec![0usize; 4];
+    ///
+    /// (0..n)
+    ///     .into_par()
+    ///     .num_threads(16) // actual participating workers are limited to 4
+    ///     .map(|x| 2 * x)
+    ///     .use_slice(&mut thread_sums)
+    ///     .for_each(|thread_sum, x| *thread_sum += x);
+    ///
+    /// let total: usize = thread_sums.into_iter().sum();
+    /// assert_eq!(total, (n - 1) * n);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if `slice` is empty.
     fn use_slice<'a, U>(
         self,
         slice: &'a mut [U],
