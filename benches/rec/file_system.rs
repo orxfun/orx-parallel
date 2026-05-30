@@ -132,6 +132,7 @@ fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: us
         .unwrap_or(0)
 }
 
+#[cfg(feature = "experimental")]
 fn orx_sum_dynamic(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
@@ -176,6 +177,7 @@ enum Method {
     Seq,
     Rayon,
     OrxFix,
+    #[cfg(feature = "experimental")]
     OrxDyn,
 }
 
@@ -190,6 +192,7 @@ impl Factors for Method {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
                 Self::OrxFix => "orx-fix",
+                #[cfg(feature = "experimental")]
                 Self::OrxDyn => "orx-dyn",
             }
             .to_string(),
@@ -241,6 +244,7 @@ impl Experiment for Exp {
                 input_variant.work,
                 input_variant.chunk_size,
             ),
+            #[cfg(feature = "experimental")]
             Method::OrxDyn => orx_sum_dynamic(
                 &input.pool,
                 &input.fs,
@@ -291,7 +295,19 @@ fn run(c: &mut Criterion) {
         })
         .collect();
 
-    let variants = vec![Method::Seq, Method::Rayon, Method::OrxFix, Method::OrxDyn];
+    let variants = {
+        let base = vec![Method::Seq, Method::Rayon, Method::OrxFix];
+        #[cfg(feature = "experimental")]
+        {
+            let mut v = base;
+            v.push(Method::OrxDyn);
+            v
+        }
+        #[cfg(not(feature = "experimental"))]
+        {
+            base
+        }
+    };
 
     Exp.bench(c, "file_system", &treatments, &variants);
 }

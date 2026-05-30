@@ -80,8 +80,11 @@ enum Method {
     OrxVecFix,
     OrxArbVecFix,
     OrxArbVecVecFix,
+    #[cfg(feature = "experimental")]
     OrxVecDyn,
+    #[cfg(feature = "experimental")]
     OrxArbVecDyn,
+    #[cfg(feature = "experimental")]
     OrxArbVecVecDyn,
 }
 
@@ -99,8 +102,11 @@ impl Factors for Method {
                 Self::OrxVecFix => "orx-vec-fix",
                 Self::OrxArbVecFix => "orx-arb-vec-fix",
                 Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
+                #[cfg(feature = "experimental")]
                 Self::OrxVecDyn => "orx-vec-dyn",
+                #[cfg(feature = "experimental")]
                 Self::OrxArbVecDyn => "orx-arb-vec-dyn",
+                #[cfg(feature = "experimental")]
                 Self::OrxArbVecVecDyn => "orx-arb-vec2-dyn",
             }
             .to_string(),
@@ -242,6 +248,7 @@ impl Experiment for Exp {
                         .into(),
                 }),
             ),
+            #[cfg(feature = "experimental")]
             Method::OrxVecDyn => (
                 true,
                 Output::Vec(match h {
@@ -261,6 +268,7 @@ impl Experiment for Exp {
                         .collect(),
                 }),
             ),
+            #[cfg(feature = "experimental")]
             Method::OrxArbVecDyn => (
                 false,
                 Output::Vec(match h {
@@ -282,6 +290,7 @@ impl Experiment for Exp {
                         .collect(),
                 }),
             ),
+            #[cfg(feature = "experimental")]
             Method::OrxArbVecVecDyn => (
                 false,
                 Output::VecVec(match h {
