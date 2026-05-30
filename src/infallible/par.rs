@@ -3,10 +3,8 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{
-    ParRunnerInfallibleUse, ParUseCore, UseBagDepr, UseSlice, UseVec, Using,
-};
 use crate::infallible_use::{ParUseIter, UseClone, UseFun, xap_variants::IdUse};
+use crate::infallible_use::{UseSlice, UseVec, Using};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
@@ -381,72 +379,6 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         let xap = IdUse::new(xap);
         let using = UseSlice::new(slice);
         ParUseIter::new(using, iter, xap, exe, params)
-    }
-
-    fn using<U>(
-        self,
-        using: U,
-    ) -> impl ParUse<
-        Item = Self::Item,
-        Use = U::Item,
-        Using = U,
-        Xap = IdUse<Self::Xap, U::Item>,
-        Input = Self::Input,
-    >
-    where
-        U: Using,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        let xap = IdUse::new(xap);
-        ParUseIter::new(using, iter, xap, exe, params)
-    }
-
-    fn using22<U, F>(
-        self,
-        f: F,
-    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
-    where
-        U: Send,
-        F: Fn(usize) -> U + Sync,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        let using = UseFun::new(f);
-        let xap = IdUse::new(xap);
-        ParUseIter::new(using, iter, xap, exe, params)
-    }
-
-    fn using_clone<U>(
-        self,
-        u: U,
-    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
-    where
-        U: Clone + Send,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        let using = UseClone::new(u);
-        let xap = IdUse::new(xap);
-        ParUseIter::new(using, iter, xap, exe, params)
-    }
-
-    fn using_cached<U, F>(
-        self,
-        f: F,
-    ) -> impl ParUse<
-        Item = Self::Item,
-        Use = U,
-        Xap = IdUse<Self::Xap, U>,
-        Input = Self::Input,
-        Using = UseBagDepr<UseFun<U, F>>,
-    >
-    where
-        F: Fn(usize) -> U + Sync,
-        U: Send,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        let using = UseFun::new(f);
-        let use_vec = UseBagDepr::new(using);
-        let xap = IdUse::new(xap);
-        ParUseIter::new(use_vec, iter, xap, exe, params)
     }
 
     /// Copies elements of a reference iterator.
