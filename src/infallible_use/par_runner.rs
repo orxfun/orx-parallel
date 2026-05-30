@@ -27,7 +27,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::next::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -56,7 +56,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::next_any::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -87,7 +87,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                     spawned += 1;
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                         Self::begin_thread(st, th_idx);
-                        let mut u = u.get(th_idx);
+                        let mut u = u.init_get(th_idx);
                         let value =
                             th::reduce::<Self, _, _, _, _>(u.get_mut(), th_idx, st, iter, x, f);
                         results.push(value);
@@ -98,7 +98,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         }
 
         Self::complete_computation(state);
-        let mut u = u.get_mut(0);
+        let mut u = u.get(0);
         Val::reduce(results_bag.into_inner().into_inner(), |a, b| {
             f(u.get_mut(), a, b)
         })
@@ -121,7 +121,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::collect::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -150,7 +150,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let mut u = u.get(th_idx);
+                    let mut u = u.init_get(th_idx);
                     let value = th::collect_arb::<Self, _, _, _>(u.get_mut(), th_idx, st, iter, x);
                     results.push(value);
                     Self::complete_thread(st, th_idx);

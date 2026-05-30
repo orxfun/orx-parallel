@@ -7,24 +7,7 @@ pub trait Use: Sync {
     where
         Self: 'i;
 
-    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_>;
+    fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_>;
 
-    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_>;
-}
-
-impl<'a, U: Use> Use for &'a mut U {
-    type Item = U::Item;
-
-    type ItemBorrow<'i>
-        = U::ItemBorrow<'i>
-    where
-        Self: 'i;
-
-    fn get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        <U as Use>::get(self, thread_idx)
-    }
-
-    fn get_mut(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        <U as Use>::get_mut(self, thread_idx)
-    }
+    fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_>;
 }
