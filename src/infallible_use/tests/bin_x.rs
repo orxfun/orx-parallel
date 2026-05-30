@@ -13,7 +13,7 @@ fn bin_x_find() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -32,7 +32,7 @@ fn bin_x_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using22(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -52,7 +52,7 @@ fn bin_x_reduce() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .filter(|u, x| {
             u.mutate();
             x.len() < 4
@@ -87,7 +87,7 @@ fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         Some(mut c) => {
             inputs(N)
                 .into_par()
-                .using22(|th_idx| UseValue::new(th_idx))
+                .use_new(|th_idx| UseValue::new(th_idx))
                 .iteration_order(order)
                 .filter(|u, x| {
                     u.mutate();
@@ -103,7 +103,7 @@ fn bin_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         }
         None => inputs(N)
             .into_par()
-            .using22(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .iteration_order(order)
             .filter(|u, x| {
                 u.mutate();

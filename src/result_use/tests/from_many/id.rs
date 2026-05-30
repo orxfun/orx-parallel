@@ -16,7 +16,7 @@ fn id_find_ok() {
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
         .into_fallible()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .first();
     assert_eq!(result, Ok(Some(String::from("0"))));
 }
@@ -28,7 +28,7 @@ fn id_find_any_ok() {
         .into_par()
         .flat_map(|x| [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok))
         .into_fallible()
-        .using_clone(UseValue::new(42))
+        .use_new(|_| UseValue::new(42))
         .iteration_order(IterationOrder::Arbitrary)
         .first();
     assert!(result.is_ok());
@@ -39,7 +39,7 @@ fn id_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using22(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .flat_map(|u, x| {
             u.mutate();
             [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
@@ -60,7 +60,7 @@ fn id_reduce_ok_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .using22(|th_idx| UseValue::new(th_idx))
+        .use_new(|th_idx| UseValue::new(th_idx))
         .flat_map(|u, x| {
             u.mutate();
             match x.as_str() == "42" {
@@ -94,7 +94,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .using22(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .flat_map(|u, x| {
                 u.mutate();
                 [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
@@ -105,7 +105,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .using22(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .flat_map(|u, x| {
                 u.mutate();
                 [x.clone(), x.clone(), x].map(Result::<_, Vec<char>>::Ok)
@@ -123,7 +123,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .using22(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .flat_map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {
@@ -137,7 +137,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .using22(|th_idx| UseValue::new(th_idx))
+            .use_new(|th_idx| UseValue::new(th_idx))
             .flat_map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {
