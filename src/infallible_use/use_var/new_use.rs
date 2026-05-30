@@ -13,4 +13,6 @@ impl Use {
     pub fn clone<T: Clone + Send>(value: T) -> UseClone<T> {
         UseClone::new(value)
     }
+
+    // pub fn dyn_vec<T,F>(f:F) -> UseB
 }
