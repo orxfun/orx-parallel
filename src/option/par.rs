@@ -2,7 +2,7 @@ use crate::common_par_traits::ParOptCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
-use crate::infallible_use::{UseClone, UseFun, UseSlice, UseVec};
+use crate::infallible_use::{UseFun, UseSlice, UseVec};
 use crate::option::ParOptionIter;
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore};
 use crate::pool::ParThreadPool;
@@ -124,28 +124,6 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         let x1 = IdUse::<_, U>::new(x1);
         let x2 = IdUse::<_, U>::new(x2);
         let u = UseSlice::new(slice);
-        ParUseOptionIter::new(u, iter, x1, x2, exe, params)
-    }
-
-    fn using_clone<U>(
-        self,
-        u: U,
-    ) -> impl ParUseOption<
-        Item = Self::Item,
-        Use = U,
-        Xap1 = IdUse<Self::Xap1, U>,
-        M = Self::M,
-        Xap2 = IdUse<Self::Xap2, U>,
-        Input = Self::Input,
-        Size = Self::Size,
-    >
-    where
-        U: Clone + Send,
-    {
-        let (iter, x1, x2, exe, _, params) = self.destruct();
-        let x1 = IdUse::<_, U>::new(x1);
-        let x2 = IdUse::<_, U>::new(x2);
-        let u = UseClone::new(u);
         ParUseOptionIter::new(u, iter, x1, x2, exe, params)
     }
 
