@@ -1,6 +1,6 @@
 use orx_self_or::SoM;
 
-pub trait Use: Sync {
+pub trait Using: Sync {
     type Item;
 
     type ItemKind<'a>: SoM<Self::Item>

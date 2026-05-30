@@ -1,4 +1,4 @@
-use crate::infallible_use::use_var::r#use::Use;
+use crate::infallible_use::use_var::using::Using;
 
 pub struct UseFun<T, F: Fn(usize) -> T + Sync>(F);
 
@@ -8,7 +8,7 @@ impl<T, F: Fn(usize) -> T + Sync> UseFun<T, F> {
     }
 }
 
-impl<T, F: Fn(usize) -> T + Sync> Use for UseFun<T, F> {
+impl<T, F: Fn(usize) -> T + Sync> Using for UseFun<T, F> {
     type Item = T;
 
     type ItemKind<'a>

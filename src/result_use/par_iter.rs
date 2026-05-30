@@ -2,7 +2,7 @@
 
 use crate::ParCollectInto;
 use crate::common_par_traits::ParResCommon;
-use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Use, XapUse};
+use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Using, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultCore;
@@ -14,7 +14,7 @@ use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseResultIter<U, I, M, E, X1, X2, S, R = DefaultRunner>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -32,7 +32,7 @@ where
 
 impl<U, I, M, E, X1, X2, S, R> ParUseResultIter<U, I, M, E, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -62,7 +62,7 @@ where
 
 impl<U, I, M, E, X1, X2, S, R> ParUseResultCore for ParUseResultIter<U, I, M, E, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -114,7 +114,7 @@ where
 
 impl<U, I, M, E, X1, X2, S, R> ParUseResult for ParUseResultIter<U, I, M, E, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,
@@ -391,7 +391,7 @@ where
 
 impl<U, I, M, E, X1, X2, S, R> ParResCommon for ParUseResultIter<U, I, M, E, X1, X2, S, R>
 where
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U::Item, I = M>,

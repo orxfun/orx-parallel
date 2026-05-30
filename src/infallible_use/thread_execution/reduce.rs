@@ -1,4 +1,4 @@
-use crate::infallible_use::{XapUse, use_var::Use};
+use crate::infallible_use::{XapUse, use_var::Using};
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
@@ -12,7 +12,7 @@ pub fn reduce_get_u<Q, U, I, X, F>(
 ) -> (Option<X::O>, U::Item)
 where
     Q: ParRunner,
-    U: Use,
+    U: Using,
     I: ConcurrentIter,
     X: XapUse<U = U::Item, I = I::Item>,
     F: Fn(&mut X::U, X::O, X::O) -> X::O,
