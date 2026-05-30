@@ -1,4 +1,3 @@
-use crate::infallible_use::Use;
 use crate::results::ValsAndIdx;
 use crate::sizes::SizePair;
 use crate::{infallible_use::XapUse, runner::ParRunner};
@@ -15,17 +14,15 @@ pub fn collect<Q, U, I, M, X1, X2, S>(
 ) -> Option<ValsAndIdx<X2::O>>
 where
     Q: ParRunner,
-    U: Use,
     I: ConcurrentIter,
-    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
-    X2: XapUse<U = U::Item, I = M>,
+    X1: XapUse<U = U, I = I::Item, O = Option<M>>,
+    X2: XapUse<U = U, I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
 {
     let mut collected = ValsAndIdx::new();
     let out = &mut collected;
 
-    let mut u = u.create(th_idx);
-    let u = &mut u as *mut U::Item;
+    let u = u as *mut U;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
