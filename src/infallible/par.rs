@@ -814,12 +814,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     {
         let mut use_vec = UseVec::new(|_| init());
         let par_use = self.use_vec(&mut use_vec);
-
-        let fold = par_use.map(move |u: &mut B, x| {
-            f(u, x);
-            ()
-        });
-        fold.for_each(|_, _| {});
+        par_use.for_each(move |u: &mut B, x| f(u, x));
         use_vec.into_vec()
     }
 
