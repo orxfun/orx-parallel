@@ -813,24 +813,15 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         I: Fn() -> B + Sync,
         F: Fn(&mut B, Self::Item) + Copy + Send,
     {
-        let par_use = self.using22(|_| init());
+        let par_use = self.use_cached(|_| init());
+
         let fold = par_use.map(move |u: &mut B, x| {
             f(u, x);
             ()
         });
+
         let (using, iter, xap, mut exe, params) = fold.destruct();
         exe.fold(params, using, iter, xap, |_, _, _| {})
-
-        // let par_use = self.using_cached(|_| init());
-
-        // // let par_use = self.using(|_| init());
-        // let fold = par_use.map(move |u: &mut B, x| {
-        //     f(u, x);
-        //     ()
-        // });
-        // let (using, iter, xap, mut exe, params) = fold.destruct();
-        // // exe.fold2(params, using, iter, xap, |_, _, _| {});
-        // todo!()
     }
 
     /// Executes `f` for each item.
