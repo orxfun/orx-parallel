@@ -357,9 +357,9 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParUseIter::new(using, iter, xap, exe, params)
     }
 
-    fn use_cached<U, F>(
+    fn use_vec<U, F>(
         self,
-        f: F,
+        use_vec: &mut UseVec<U, F>,
     ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
         U: Send,
@@ -367,8 +367,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     {
         let (iter, xap, exe, params) = self.destruct();
         let xap = IdUse::new(xap);
-        let using = UseVec::new(f);
-        ParUseIter::new(using, iter, xap, exe, params)
+        ParUseIter::new(use_vec, iter, xap, exe, params)
     }
 
     fn use_slice<'a, U>(
@@ -813,15 +812,15 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         I: Fn() -> B + Sync,
         F: Fn(&mut B, Self::Item) + Copy + Send,
     {
-        let par_use = self.use_cached(|_| init());
+        let mut use_vec = UseVec::new(|_| init());
+        let par_use = self.use_vec(&mut use_vec);
 
         let fold = par_use.map(move |u: &mut B, x| {
             f(u, x);
             ()
         });
-
-        let (using, iter, xap, mut exe, params) = fold.destruct();
-        exe.fold(params, using, iter, xap, |_, _, _| {})
+        fold.for_each(|_, _| {});
+        use_vec.into_vec()
     }
 
     /// Executes `f` for each item.

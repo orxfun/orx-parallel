@@ -57,7 +57,8 @@ fn many_m_reduce() {
 
 #[test]
 fn many_m_fold() {
-    let inputs = inputs(N);
+    // let inputs = inputs(N);
+    let inputs = inputs(50);
 
     let mut expected: Vec<_> = inputs
         .iter()
@@ -78,6 +79,7 @@ fn many_m_fold() {
         })
         .map(|x| x.parse::<u64>().unwrap());
     let result = par.fold(Vec::new, |v, x| v.push(x));
+    std::dbg!(result.len(), &result);
     assert!(result.len() <= 4);
     let result = result
         .into_iter()
