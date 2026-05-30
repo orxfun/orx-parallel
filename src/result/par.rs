@@ -79,6 +79,7 @@ pub trait ParResult:
         Size = Self::Size,
     >
     where
+        U: Send,
         F: Fn(usize) -> U + Sync,
     {
         let (iter, x1, x2, exe, _, params) = self.destruct();
