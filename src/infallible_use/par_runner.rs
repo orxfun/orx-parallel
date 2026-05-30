@@ -99,9 +99,10 @@ pub trait ParRunnerInfallibleUse: ParRunner {
         }
 
         Self::complete_computation(state);
-        let mut u = u.create(results_bag.len());
+        let mut u = u.get(0);
+        // let mut u = u.create(results_bag.len());
         Val::reduce(results_bag.into_inner().into_inner(), |a, b| {
-            f(&mut u, a, b)
+            f(u.get_mut(), a, b)
         })
     }
 
