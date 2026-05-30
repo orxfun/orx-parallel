@@ -2,7 +2,7 @@ use crate::common_par_traits::ParOptCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
-use crate::infallible_use::{UseClone, UseFun};
+use crate::infallible_use::{UseClone, UseFun, UseSlice, UseVec};
 use crate::option::ParOptionIter;
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionCore};
 use crate::pool::ParThreadPool;
@@ -60,7 +60,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
 
     // kind transformations
 
-    fn using<U, F>(
+    fn use_new<U, F>(
         self,
         f: F,
     ) -> impl ParUseOption<
@@ -80,6 +80,50 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         let x1 = IdUse::<_, U>::new(x1);
         let x2 = IdUse::<_, U>::new(x2);
         let u = UseFun::new(f);
+        ParUseOptionIter::new(u, iter, x1, x2, exe, params)
+    }
+
+    fn use_vec<U, F>(
+        self,
+        use_vec: &mut UseVec<U, F>,
+    ) -> impl ParUseOption<
+        Item = Self::Item,
+        Use = U,
+        Xap1 = IdUse<Self::Xap1, U>,
+        M = Self::M,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Input = Self::Input,
+        Size = Self::Size,
+    >
+    where
+        U: Send,
+        F: Fn(usize) -> U + Sync,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        ParUseOptionIter::new(use_vec, iter, x1, x2, exe, params)
+    }
+
+    fn use_slice<'a, U>(
+        self,
+        slice: &'a mut [U],
+    ) -> impl ParUseOption<
+        Item = Self::Item,
+        Use = U,
+        Xap1 = IdUse<Self::Xap1, U>,
+        M = Self::M,
+        Xap2 = IdUse<Self::Xap2, U>,
+        Input = Self::Input,
+        Size = Self::Size,
+    >
+    where
+        U: Sync + 'a,
+    {
+        let (iter, x1, x2, exe, _, params) = self.destruct();
+        let x1 = IdUse::<_, U>::new(x1);
+        let x2 = IdUse::<_, U>::new(x2);
+        let u = UseSlice::new(slice);
         ParUseOptionIter::new(u, iter, x1, x2, exe, params)
     }
 
@@ -288,7 +332,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         I: Fn() -> B + Sync,
         F: Fn(&mut B, Self::Item) + Copy + Send,
     {
-        let par_use = self.using(|_| init());
+        let par_use = self.use_new(|_| init());
         let fold = par_use.map(move |u: &mut B, x| {
             f(u, x);
             ()
