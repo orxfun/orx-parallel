@@ -341,7 +341,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         ParResultIter::new(iter, xap, Id::new(), exe, params)
     }
 
-    fn use_init<U, F>(
+    fn use_new<U, F>(
         self,
         f: F,
     ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
