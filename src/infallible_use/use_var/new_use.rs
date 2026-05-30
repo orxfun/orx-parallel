@@ -1,4 +1,4 @@
-use crate::infallible_use::{UseClone, UseFun, use_var::use_dyn_vec::UseDynVec};
+use crate::infallible_use::{UseClone, UseFun, UseSlice, UseVec};
 
 pub struct Use;
 
@@ -14,7 +14,11 @@ impl Use {
         UseClone::new(value)
     }
 
-    pub fn dyn_vec<T, F: Fn(usize) -> T>(init: F) -> UseDynVec<T, F> {
-        UseDynVec::new(init)
+    pub fn vec<T, F: Fn(usize) -> T>(init: F) -> UseVec<T, F> {
+        UseVec::new(init)
+    }
+
+    pub fn slice<'a, T: 'a>(slice: &'a mut [T]) -> UseSlice<'a, T> {
+        UseSlice::new(slice)
     }
 }
