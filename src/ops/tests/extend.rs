@@ -19,7 +19,7 @@ fn extend_par_use() {
     let mut vec = vec![42];
     let par = (0..170)
         .par()
-        .using_clone('x')
+        .use_new(|_| 'x')
         .map(|_, x| x * 2)
         .filter(|_, x| *x < 50);
     vec.par_extend(par);
@@ -67,7 +67,7 @@ fn extend_par_use_opt() {
         .par()
         .map(Some)
         .into_optional()
-        .using_clone('x')
+        .use_new(|_| 'x')
         .map(|_, x| x * 2)
         .filter(|_, x| *x < 50);
     let ok = vec.par_extend_opt(par);
@@ -84,7 +84,7 @@ fn extend_par_use_opt() {
         .par()
         .map(|x| (x < 10).then_some(x))
         .into_optional()
-        .using_clone('x')
+        .use_new(|_| 'x')
         .map(|_, x| x * 2)
         .filter(|_, x| *x < 50);
     let ok = vec.par_extend_opt(par);
@@ -130,7 +130,7 @@ fn extend_par_use_res() {
         .par()
         .map(Result::<_, char>::Ok)
         .into_fallible()
-        .using_clone('x')
+        .use_new(|_| 'x')
         .map(|_, x| x * 2)
         .filter(|_, x| *x < 50);
     let ok = vec.par_extend_res(par);
@@ -150,7 +150,7 @@ fn extend_par_use_res() {
             false => Err('x'),
         })
         .into_fallible()
-        .using_clone('x')
+        .use_new(|_| 'x')
         .map(|_, x| x * 2)
         .filter(|_, x| *x < 50);
     let ok = vec.par_extend_res(par);
