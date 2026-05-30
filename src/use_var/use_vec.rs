@@ -1,4 +1,4 @@
-use crate::infallible_use::Use;
+use super::r#use::Use;
 use alloc::vec::Vec;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 

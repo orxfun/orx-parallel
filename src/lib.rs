@@ -32,10 +32,11 @@ mod result_use;
 mod results;
 mod runner;
 mod sizes;
+mod use_var;
 
 pub use collectables::{ParCollectInto, Vec2};
 pub use infallible::{EnumeratePar, Par};
-pub use infallible_use::{EnumerateParUse, ParUse, UseVec};
+pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
     IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCol, ParColMut, ParDrain, Parallelizable,
 };
@@ -49,3 +50,4 @@ pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
+pub use use_var::UseVec;

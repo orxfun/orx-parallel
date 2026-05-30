@@ -3,12 +3,12 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParUseIter, UseFun, xap_variants::IdUse};
-use crate::infallible_use::{UseSlice, UseVec};
+use crate::infallible_use::{ParUseIter, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
+use crate::use_var::{UseFun, UseSlice, UseVec};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
 };
