@@ -338,13 +338,10 @@ pub trait ParResult:
         F: Fn(&mut B, Self::Item) + Copy + Send,
         Self::Error: Send,
     {
-        let par_use = self.use_new(|_| init());
-        let fold = par_use.map(move |u: &mut B, x| {
-            f(u, x);
-            ()
-        });
-        let (u, iter, x1, x2, mut exe, sizes, params) = fold.destruct();
-        exe.fold(sizes, params, u, iter, x1, x2, |_, _, _| {})
+        let mut use_vec = UseVec::new(|_| init());
+        let par_use = self.use_vec(&mut use_vec);
+        let result = par_use.for_each(move |u: &mut B, x| f(u, x));
+        result.map(|_| use_vec.into_vec())
     }
 
     fn for_each<F>(self, f: F) -> Result<(), Self::Error>
