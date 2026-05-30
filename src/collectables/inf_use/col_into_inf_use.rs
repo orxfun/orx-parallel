@@ -1,4 +1,5 @@
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, Use, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, XapUse};
+use crate::use_var::Use;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoInfUse<T>: Sized {

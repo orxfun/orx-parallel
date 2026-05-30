@@ -1,4 +1,5 @@
-use crate::infallible_use::{Use, XapUse};
+use crate::infallible_use::XapUse;
+use crate::use_var::Use;
 use crate::{Params, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 

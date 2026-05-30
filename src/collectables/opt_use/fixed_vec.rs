@@ -1,7 +1,8 @@
 use crate::collectables::opt_use::ColIntoOptUse;
-use crate::infallible_use::{Use, XapUse};
+use crate::infallible_use::XapUse;
 use crate::option_use::{ParRunnerUseOpt, ParUseOptionIter};
 use crate::sizes::SizePair;
+use crate::use_var::Use;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;

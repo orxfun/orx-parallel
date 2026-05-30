@@ -1,6 +1,7 @@
 use crate::collectables::alg::merge_collected::{merge_arb_into_vec, merge_ord_into_vec};
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, ParUseIter, Use, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseCore, ParUseIter, XapUse};
+use crate::use_var::Use;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 

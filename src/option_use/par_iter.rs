@@ -2,7 +2,7 @@
 
 use crate::ParCollectInto;
 use crate::common_par_traits::ParOptCommon;
-use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Use, XapUse};
+use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
@@ -10,6 +10,7 @@ use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::sizes::SizePair;
+use crate::use_var::Use;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseOptionIter<U, I, M, X1, X2, S, R = DefaultRunner>

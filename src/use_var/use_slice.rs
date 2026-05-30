@@ -1,4 +1,4 @@
-use crate::infallible_use::Use;
+use super::r#use::Use;
 use core::marker::PhantomData;
 
 pub struct UseSlice<'a, T: 'a> {

@@ -1,9 +1,5 @@
-use crate::{
-    Params,
-    infallible_use::{Use, XapUse},
-    runner::ParRunner,
-    sizes::SizePair,
-};
+use crate::use_var::Use;
+use crate::{Params, infallible_use::XapUse, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParUseResultCore {

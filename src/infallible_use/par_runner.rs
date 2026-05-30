@@ -1,8 +1,8 @@
 use crate::infallible_use::XapUse;
 use crate::infallible_use::thread_execution as th;
-use crate::infallible_use::use_var::Use;
 use crate::results::ValsAndIdx;
 use crate::results::{Val, ValIdx};
+use crate::use_var::Use;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;

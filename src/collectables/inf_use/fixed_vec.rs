@@ -1,5 +1,6 @@
 use crate::collectables::inf_use::ColIntoInfUse;
-use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, Use, XapUse};
+use crate::infallible_use::{ParRunnerInfallibleUse, ParUseIter, XapUse};
+use crate::use_var::Use;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;

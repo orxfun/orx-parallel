@@ -1,6 +1,7 @@
-use crate::infallible_use::{Use, XapUse};
+use crate::infallible_use::XapUse;
 use crate::result_use::{ParRunnerUseRes, ParUseResultIter};
 use crate::sizes::SizePair;
+use crate::use_var::Use;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoResUse<T>: Sized {
