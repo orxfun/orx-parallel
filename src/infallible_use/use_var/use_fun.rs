@@ -2,13 +2,13 @@ use crate::infallible_use::use_var::using::Using;
 
 pub struct UseFun<T, F: Fn(usize) -> T + Sync>(F);
 
-impl<T, F: Fn(usize) -> T + Sync> UseFun<T, F> {
+impl<T: Send, F: Fn(usize) -> T + Sync> UseFun<T, F> {
     pub fn new(f: F) -> Self {
         Self(f)
     }
 }
 
-impl<T, F: Fn(usize) -> T + Sync> Using for UseFun<T, F> {
+impl<T: Send, F: Fn(usize) -> T + Sync> Using for UseFun<T, F> {
     type Item = T;
 
     type ItemBorrow<'a>
@@ -27,7 +27,7 @@ impl<T, F: Fn(usize) -> T + Sync> Using for UseFun<T, F> {
     }
 }
 
-impl<T, F: Fn(usize) -> T + Sync> From<F> for UseFun<T, F> {
+impl<T: Send, F: Fn(usize) -> T + Sync> From<F> for UseFun<T, F> {
     fn from(value: F) -> Self {
         Self(value)
     }

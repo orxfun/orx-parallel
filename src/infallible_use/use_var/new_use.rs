@@ -1,10 +1,11 @@
-use crate::infallible_use::{UseClone, UseFun, UseSlice, UseVec};
+use crate::infallible_use::{UseFun, UseSlice, UseVec};
 
 pub struct Use;
 
 impl Use {
     pub fn fun<T, F>(f: F) -> UseFun<T, F>
     where
+        T: Send,
         F: Fn(usize) -> T + Sync,
     {
         UseFun::new(f)
