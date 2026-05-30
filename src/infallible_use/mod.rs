@@ -18,7 +18,7 @@ pub use par_core::ParUseCore;
 pub use par_enum::EnumerateParUse;
 pub use par_iter::ParUseIter;
 pub use par_runner::ParRunnerInfallibleUse;
-pub use use_var::{Use, UseClone, UseFun};
+pub use use_var::{Use, UseClone, UseFun, UseVec};
 pub use xap::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse, XapUseBin, XapUseOne,
 };

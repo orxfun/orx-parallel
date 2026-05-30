@@ -17,6 +17,11 @@ where
     U: Use,
     U::Item: Send,
 {
+    pub fn new(using: U) -> Self {
+        let cache = ConcurrentBag::new();
+        Self { using, cache }
+    }
+
     pub fn into_vec(self) -> Vec<U::Item> {
         let mut vec = self.cache.into_inner();
         vec.sort_by_key(|(th_idx, _)| *th_idx);
