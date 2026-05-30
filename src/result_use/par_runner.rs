@@ -6,6 +6,7 @@ use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
+use orx_self_or::SoM;
 
 pub trait ParRunnerUseRes: ParRunner {
     fn next<U, I, M, E, X1, X2, S>(
@@ -36,8 +37,16 @@ pub trait ParRunnerUseRes: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
-                    let value =
-                        th::next::<Self, _, _, _, _, _, _, _>(sizes, u, th_idx, st, iter, x1, x2);
+                    let mut u = u.get(th_idx);
+                    let value = th::next::<Self, _, _, _, _, _, _, _>(
+                        sizes,
+                        u.get_mut(),
+                        th_idx,
+                        st,
+                        iter,
+                        x1,
+                        x2,
+                    );
                     results.push(value);
                     Self::complete_thread(st, th_idx);
                 });
@@ -76,8 +85,15 @@ pub trait ParRunnerUseRes: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
+                    let mut u = u.get(th_idx);
                     let value = th::next_any::<Self, _, _, _, _, _, _, _>(
-                        sizes, u, th_idx, st, iter, x1, x2,
+                        sizes,
+                        u.get_mut(),
+                        th_idx,
+                        st,
+                        iter,
+                        x1,
+                        x2,
                     );
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -120,8 +136,16 @@ pub trait ParRunnerUseRes: ParRunner {
                     spawned += 1;
                     <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                         Self::begin_thread(st, th_idx);
+                        let mut u = u.get(th_idx);
                         let value = th::reduce::<Self, _, _, _, _, _, _, _, _>(
-                            sizes, u, th_idx, st, iter, x1, x2, f,
+                            sizes,
+                            u.get_mut(),
+                            th_idx,
+                            st,
+                            iter,
+                            x1,
+                            x2,
+                            f,
                         );
                         results.push(value);
                         Self::complete_thread(st, th_idx);
@@ -219,8 +243,15 @@ pub trait ParRunnerUseRes: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
+                    let mut u = u.get(th_idx);
                     let value = th::collect::<Self, _, _, _, _, _, _, _>(
-                        sizes, u, th_idx, st, iter, x1, x2,
+                        sizes,
+                        u.get_mut(),
+                        th_idx,
+                        st,
+                        iter,
+                        x1,
+                        x2,
                     );
                     results.push(value);
                     Self::complete_thread(st, th_idx);
@@ -260,8 +291,15 @@ pub trait ParRunnerUseRes: ParRunner {
                 spawned += 1;
                 <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                     Self::begin_thread(st, th_idx);
+                    let mut u = u.get(th_idx);
                     let value = th::collect_arb::<Self, _, _, _, _, _, _, _>(
-                        sizes, u, th_idx, st, iter, x1, x2,
+                        sizes,
+                        u.get_mut(),
+                        th_idx,
+                        st,
+                        iter,
+                        x1,
+                        x2,
                     );
                     results.push(value);
                     Self::complete_thread(st, th_idx);
