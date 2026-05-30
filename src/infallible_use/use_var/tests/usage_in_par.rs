@@ -30,7 +30,7 @@ fn use_fun() {
 fn use_vec() {
     let input = 0..10000;
     let mut use_vec = UseVec::new(|_| 0);
-    let use_par = input
+    input
         .par()
         .map(|x| 2 * x)
         .use_vec(&mut use_vec)
@@ -49,7 +49,7 @@ fn use_slice() {
     let mut thread_sums = vec![0; num_threads];
 
     let input = 0..10000;
-    let par = input
+    input
         .par()
         .map(|x| 2 * x)
         .num_threads(num_threads)
