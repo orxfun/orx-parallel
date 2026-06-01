@@ -6,6 +6,13 @@ pub struct XapUsePair<X: XapUse, V: Send> {
     p: PhantomData<V>,
 }
 
+impl<X: XapUse, V: Send> XapUsePair<X, V> {
+    pub fn new(x: X) -> Self {
+        let p = PhantomData;
+        Self { x, p }
+    }
+}
+
 impl<X: XapUse, V: Send> Clone for XapUsePair<X, V> {
     fn clone(&self) -> Self {
         Self {

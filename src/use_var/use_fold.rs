@@ -1,4 +1,5 @@
 use crate::use_var::{Use, pair_ptr::PairPtr};
+use alloc::vec::Vec;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_self_or::SoM;
 
@@ -20,6 +21,12 @@ where
     pub fn new(u: U, v: V) -> Self {
         let cache = ConcurrentOrderedBag::new();
         Self { u, v, cache }
+    }
+
+    pub fn into_vec_second(self) -> Vec<V::Item> {
+        let vec = unsafe { self.cache.into_inner().unwrap_only_if_counts_match() };
+        // vec.into_iter().collect()
+        todo!()
     }
 }
 
