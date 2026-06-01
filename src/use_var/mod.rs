@@ -7,9 +7,9 @@ mod use_fun;
 mod use_pair;
 mod use_slice;
 mod use_vec;
-mod use_vec_som;
 
 pub use r#use::Use;
 pub use use_fun::UseFun;
+pub use use_pair::UsePair;
 pub use use_slice::UseSlice;
 pub use use_vec::UseVec;
