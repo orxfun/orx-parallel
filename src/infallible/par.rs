@@ -81,9 +81,47 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// use orx_parallel::*;
     ///
-    /// let sum = (1..101).into_par().runner_with_diagnostics().sum();
+    /// let sum = (1..100_001)
+    ///     .into_par()
+    ///     .num_threads(4)
+    ///     .runner_with_diagnostics()
+    ///     .sum();
     ///
-    /// assert_eq!(sum, 5050);
+    /// assert_eq!(sum, 5000050000);
+    /// ```
+    ///
+    /// This will print a summary report which currently looks like the following:
+    ///
+    /// ```ignore
+    /// │ # Parallel Executor Diagnostics
+    /// │
+    /// │   Available threads : 4
+    /// │   Used threads      : 4
+    /// │   Wall time         : 1.15 ms
+    /// │
+    /// │ ## Summary Table
+    /// │   thread  num_chunks   num_tasks  min_chunk  avg_chunk  max_chunk    util%
+    /// │   ------  ----------  ----------  ---------  ---------  ---------  -------
+    /// │        0          35       27335        781        781        781   100.0%
+    /// │        1          32       24992        781        781        781    91.5%
+    /// │        2          30       23430        781        781        781    85.9%
+    /// │        3          28       21868        781        781        781    77.8%
+    /// │
+    /// │ ## Workload Balance
+    /// │   max/min task ratio  : 1.25x  (1.00 = perfect balance)
+    /// │   coeff. of variation : 8.3%  (lower is better)
+    /// │
+    /// │ ## Thread Active Timeline  (each block ≈ 0.02 ms)
+    /// │   [ 0] ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇
+    /// │   [ 1]     ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇
+    /// │   [ 2]         ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇
+    /// │   [ 3]             ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇
+    /// │
+    /// │ ## Thread Task Distribution  (bar length ∝ tasks processed)
+    /// │   [ 0] ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇  (27335)
+    /// │   [ 1] ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇  (24992)
+    /// │   [ 2] ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇  (23430)
+    /// │   [ 3] ▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇  (21868)
     /// ```
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
