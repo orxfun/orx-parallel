@@ -2,7 +2,7 @@ use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap::FlattenOf;
-use crate::infallible_use::xap_variants::IdUse;
+use crate::infallible_use::xap_variants::{IdUse, XapUsePair};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
 };
@@ -11,7 +11,7 @@ use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
-use crate::use_var::{Use, UsePair};
+use crate::use_var::{PairPtr, Use, UsePair};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum, UseVec,
 };
@@ -226,11 +226,18 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
         I: Fn() -> B + Sync,
         F: Fn(&mut Self::Use, &mut B, Self::Item) + Copy + Send,
     {
-        let (mut use1, iter, xap, exe, params) = self.destruct();
-        let mut use2 = UseVec::new(move |_| init());
-        // let use_pair = UsePair::new(use1, use2);
+        let (use1, iter, xap, exe, params) = self.destruct();
+        let use2 = UseVec::new(move |_| init());
+        let using = UsePair::new(use1, use2);
+        let xap = XapUsePair::<Self::Xap, B>::new(xap);
+        let par = ParUseIter::new(using, iter, xap, exe, params);
 
-        let x = xap.map(|u, x| todo!());
+        par.for_each(move |a: &mut PairPtr<Self::Use, B>, x| {
+            let (u, v) = a.u_v_mut();
+            f(u, v, x);
+        });
+
+        // let x = xap.map(|u, x| todo!());
 
         // let mut use_vec = UseVec::new(move |thread_idx| {
         //     let first = using.get(thread_idx);

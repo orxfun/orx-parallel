@@ -13,4 +13,8 @@ impl<U, V> PairPtr<U, V> {
     pub fn u_mut(&mut self) -> &mut U {
         unsafe { &mut *self.u }
     }
+
+    pub fn u_v_mut(&mut self) -> (&mut U, &mut V) {
+        (unsafe { &mut *self.u }, unsafe { &mut *self.v })
+    }
 }
