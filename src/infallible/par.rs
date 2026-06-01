@@ -92,7 +92,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// This will print a summary report which currently looks like the following:
     ///
-    /// ```ignore
+    /// ```console
     /// │ # Parallel Executor Diagnostics
     /// │
     /// │   Available threads : 4
