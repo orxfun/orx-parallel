@@ -31,7 +31,6 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for &mut UseVec<T, F> {
         let use_var = (self.init)(thread_idx);
         unsafe { self.cache.set_value(thread_idx, use_var) };
 
-        // let idx = self.cache.set_value(thread_idx, use_var);
         // SAFETY: it is safe to access to the index as it is
         // pushed / initialized just above. Further, `get` will
         // be called exactly once by the corresponding thread,
