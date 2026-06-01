@@ -3,6 +3,7 @@
 mod tests;
 
 mod r#use;
+mod use_cached;
 mod use_fun;
 mod use_slice;
 mod use_vec;
