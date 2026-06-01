@@ -227,25 +227,16 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
         F: Fn(&mut Self::Use, &mut B, Self::Item) + Copy + Send,
     {
         let (u, iter, xap, exe, params) = self.destruct();
-        let u = UseFold::new(u, |_| init());
+        let mut use_fold = UseFold::new(u, |_| init());
         let xap = UDummyPair::<Self::Xap, B>::new(xap);
-        let par = ParUseIter::new(u, iter, xap, exe, params);
+        let par = ParUseIter::new(&mut use_fold, iter, xap, exe, params);
 
         par.for_each(move |a: &mut PairPtr<Self::Use, B>, x| {
             let (u, v) = a.u_v_mut();
             f(u, v, x);
         });
 
-        // let x = xap.map(|u, x| todo!());
-
-        // let mut use_vec = UseVec::new(move |thread_idx| {
-        //     let first = using.get(thread_idx);
-        //     todo!()
-        // });
-        // let par_use = self.use_vec(&mut use_vec);
-        // par_use.for_each(move |u: &mut B, x| f(u, x));
-        // use_vec.into_vec()
-        todo!()
+        use_fold.into_vec()
     }
 
     fn for_each<F>(self, f: F)
