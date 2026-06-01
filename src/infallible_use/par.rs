@@ -11,9 +11,11 @@ use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
+use crate::use_var::Use;
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum, UseVec,
 };
+use alloc::vec::Vec;
 use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -216,6 +218,23 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
         F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
         self.filter(&f).first()
+    }
+
+    fn fold<B, I, F>(self, init: I, f: F) -> Vec<B>
+    where
+        B: Send,
+        I: Fn() -> B + Sync,
+        F: Fn(&mut Self::Use, &mut B, Self::Item) + Copy + Send,
+    {
+        let (mut using, iter, xap, exe, params) = self.destruct();
+        // let mut use_vec = UseVec::new(move |thread_idx| {
+        //     let first = using.get(thread_idx);
+        //     todo!()
+        // });
+        // let par_use = self.use_vec(&mut use_vec);
+        // par_use.for_each(move |u: &mut B, x| f(u, x));
+        // use_vec.into_vec()
+        todo!()
     }
 
     fn for_each<F>(self, f: F)
