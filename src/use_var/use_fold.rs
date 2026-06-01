@@ -1,50 +1,53 @@
-use crate::use_var::{Use, pair_ptr::PairPtr};
+use crate::use_var::{Use, UseVec, pair_ptr::PairPtr};
 use alloc::vec::Vec;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_self_or::SoM;
 
-pub struct UsePair<U, V>
+pub struct UseFold<U, T, F>
 where
     U: Use,
-    V: Use,
+    T: Send,
+    F: Fn(usize) -> T + Sync,
 {
     u: U,
-    v: V,
-    cache: ConcurrentOrderedBag<PairPtr<U::Item, V::Item>>,
+    v: UseVec<T, F>,
+    cache: ConcurrentOrderedBag<PairPtr<U::Item, T>>,
 }
 
-impl<U, V> UsePair<U, V>
+impl<U, T, F> UseFold<U, T, F>
 where
     U: Use,
-    V: Use,
+    T: Send,
+    F: Fn(usize) -> T + Sync,
 {
-    pub fn new(u: U, v: V) -> Self {
+    pub fn new(u: U, init: F) -> Self {
+        let v = UseVec::new(init);
         let cache = ConcurrentOrderedBag::new();
         Self { u, v, cache }
     }
 
-    pub fn into_vec_second(self) -> Vec<V::Item> {
-        let vec = unsafe { self.cache.into_inner().unwrap_only_if_counts_match() };
-        // vec.into_iter().collect()
-        todo!()
+    pub fn into_vec(self) -> Vec<T> {
+        let _ = unsafe { self.cache.into_inner().unwrap_only_if_counts_match() };
+        self.v.into_vec()
     }
 }
 
-impl<U, V> Use for UsePair<U, V>
+impl<U, T, F> Use for UseFold<U, T, F>
 where
     U: Use,
-    V: Use,
+    T: Send,
+    F: Fn(usize) -> T + Sync,
 {
-    type Item = PairPtr<U::Item, V::Item>;
+    type Item = PairPtr<U::Item, T>;
 
     type ItemBorrow<'i>
-        = &'i mut PairPtr<U::Item, V::Item>
+        = &'i mut PairPtr<U::Item, T>
     where
         Self: 'i;
 
     fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         let u = self.u.init_get(thread_idx).get_mut() as *mut U::Item;
-        let v = self.v.init_get(thread_idx).get_mut() as *mut V::Item;
+        let v = self.v.init_get(thread_idx).get_mut() as *mut T;
         let pair_ptr = PairPtr::new(u, v);
         unsafe { self.cache.set_value(thread_idx, pair_ptr) };
 

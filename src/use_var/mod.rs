@@ -11,7 +11,7 @@ mod use_vec;
 
 pub use pair_ptr::PairPtr;
 pub use r#use::Use;
-pub use use_fold::UsePair;
+pub use use_fold::UseFold;
 pub use use_fun::UseFun;
 pub use use_slice::UseSlice;
 pub use use_vec::UseVec;
