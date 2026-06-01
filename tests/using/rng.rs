@@ -25,7 +25,7 @@ fn using_rng_map() {
     let final_positions: Vec<_> = positions
         .par()
         .copied()
-        .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64))
+        .use_new(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64))
         .map(|rng, position| random_walk(rng, position, 100))
         .collect();
     let _ = final_positions.iter().sum::<i64>();
@@ -39,14 +39,14 @@ fn using_rng_xap() {
     let final_positions: Vec<_> = positions
         .par()
         .copied()
-        .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64))
+        .use_new(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64))
         .filter(|rng, _| rng.random_bool(0.7))
         .map(|rng, position| random_walk(rng, position, 100))
         .collect();
     let _ = final_positions.iter().sum::<i64>();
 }
 
-
+#[cfg(feature = "long-tests")]
 #[test]
 fn using_rng_xap_long() {
     let positions = input_positions();
@@ -55,7 +55,7 @@ fn using_rng_xap_long() {
     let final_positions: Vec<_> = positions
         .par()
         .copied()
-        .using(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64))
+        .use_new(|t_idx| ChaCha20Rng::seed_from_u64(42 * t_idx as u64))
         .filter(|rng, _| rng.random_bool(0.7))
         .filter_map(|rng, position| rng.random_bool(0.9).then_some(position))
         .filter(|rng, _| rng.random_bool(0.7))
