@@ -40,7 +40,7 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for &mut UseVec<T, F> {
 
     #[inline]
     fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        assert!(self.cache.len() > 0);
+        assert!(self.cache.len() > thread_idx);
         unsafe { &mut *self.cache.ptr_mut(thread_idx) }
     }
 
