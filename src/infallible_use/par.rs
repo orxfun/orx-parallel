@@ -11,7 +11,7 @@ use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
-use crate::use_var::{PairPtr, Use, UsePair};
+use crate::use_var::{PairPtr, Use, UseFold};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum, UseVec,
 };
@@ -228,7 +228,7 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     {
         let (use1, iter, xap, exe, params) = self.destruct();
         let use2 = UseVec::new(move |_| init());
-        let using = UsePair::new(use1, use2);
+        let using = UseFold::new(use1, use2);
         let xap = XapUsePair::<Self::Xap, B>::new(xap);
         let par = ParUseIter::new(using, iter, xap, exe, params);
 
