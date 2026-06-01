@@ -2,7 +2,7 @@ use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap::FlattenOf;
-use crate::infallible_use::xap_variants::{IdUse, XapUsePair};
+use crate::infallible_use::xap_variants::{IdUse, UDummyPair};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
 };
@@ -226,11 +226,10 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
         I: Fn() -> B + Sync,
         F: Fn(&mut Self::Use, &mut B, Self::Item) + Copy + Send,
     {
-        let (use1, iter, xap, exe, params) = self.destruct();
-        let use2 = UseVec::new(move |_| init());
-        let using = UseFold::new(use1, use2);
-        let xap = XapUsePair::<Self::Xap, B>::new(xap);
-        let par = ParUseIter::new(using, iter, xap, exe, params);
+        let (u, iter, xap, exe, params) = self.destruct();
+        let u = UseFold::new(u, |_| init());
+        let xap = UDummyPair::<Self::Xap, B>::new(xap);
+        let par = ParUseIter::new(u, iter, xap, exe, params);
 
         par.for_each(move |a: &mut PairPtr<Self::Use, B>, x| {
             let (u, v) = a.u_v_mut();

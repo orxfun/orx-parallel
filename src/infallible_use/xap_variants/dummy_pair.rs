@@ -1,19 +1,19 @@
 use crate::{infallible_use::XapUse, use_var::PairPtr};
 use core::marker::PhantomData;
 
-pub struct XapUsePair<X: XapUse, V: Send> {
+pub struct UDummyPair<X: XapUse, V: Send> {
     x: X,
     p: PhantomData<V>,
 }
 
-impl<X: XapUse, V: Send> XapUsePair<X, V> {
+impl<X: XapUse, V: Send> UDummyPair<X, V> {
     pub fn new(x: X) -> Self {
         let p = PhantomData;
         Self { x, p }
     }
 }
 
-impl<X: XapUse, V: Send> Clone for XapUsePair<X, V> {
+impl<X: XapUse, V: Send> Clone for UDummyPair<X, V> {
     fn clone(&self) -> Self {
         Self {
             x: self.x,
@@ -22,9 +22,9 @@ impl<X: XapUse, V: Send> Clone for XapUsePair<X, V> {
     }
 }
 
-impl<X: XapUse, V: Send> Copy for XapUsePair<X, V> {}
+impl<X: XapUse, V: Send> Copy for UDummyPair<X, V> {}
 
-impl<X: XapUse, V: Send> XapUse for XapUsePair<X, V> {
+impl<X: XapUse, V: Send> XapUse for UDummyPair<X, V> {
     type I = X::I;
 
     type O = X::O;
