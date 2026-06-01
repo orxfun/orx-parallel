@@ -11,7 +11,7 @@ use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
-use crate::use_var::Use;
+use crate::use_var::{Use, UsePair};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum, UseVec,
 };
@@ -226,7 +226,12 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
         I: Fn() -> B + Sync,
         F: Fn(&mut Self::Use, &mut B, Self::Item) + Copy + Send,
     {
-        let (mut using, iter, xap, exe, params) = self.destruct();
+        let (mut use1, iter, xap, exe, params) = self.destruct();
+        let mut use2 = UseVec::new(move |_| init());
+        // let use_pair = UsePair::new(use1, use2);
+
+        let x = xap.map(|u, x| todo!());
+
         // let mut use_vec = UseVec::new(move |thread_idx| {
         //     let first = using.get(thread_idx);
         //     todo!()

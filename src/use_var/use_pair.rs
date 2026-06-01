@@ -1,4 +1,4 @@
-use crate::use_var::Use;
+use crate::use_var::{Use, pair_ptr::PairPtr};
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 use orx_self_or::SoM;
 
@@ -9,29 +9,36 @@ where
 {
     u: U,
     v: V,
-    cache: ConcurrentOrderedBag<PairPtr<U, V>>,
+    cache: ConcurrentOrderedBag<PairPtr<U::Item, V::Item>>,
 }
 
-pub struct PairPtr<U: Use, V: Use>(*mut U::Item, *mut V::Item);
-
-unsafe impl<U: Use, V: Use> Send for PairPtr<U, V> {}
+impl<U, V> UsePair<U, V>
+where
+    U: Use,
+    V: Use,
+{
+    pub fn new(u: U, v: V) -> Self {
+        let cache = ConcurrentOrderedBag::new();
+        Self { u, v, cache }
+    }
+}
 
 impl<U, V> Use for UsePair<U, V>
 where
     U: Use,
     V: Use,
 {
-    type Item = PairPtr<U, V>;
+    type Item = PairPtr<U::Item, V::Item>;
 
     type ItemBorrow<'i>
-        = &'i mut PairPtr<U, V>
+        = &'i mut PairPtr<U::Item, V::Item>
     where
         Self: 'i;
 
     fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
         let u = self.u.init_get(thread_idx).get_mut() as *mut U::Item;
         let v = self.v.init_get(thread_idx).get_mut() as *mut V::Item;
-        let pair_ptr = PairPtr(u, v);
+        let pair_ptr = PairPtr::new(u, v);
         unsafe { self.cache.set_value(thread_idx, pair_ptr) };
 
         // SAFETY: it is safe to access to the index as it is

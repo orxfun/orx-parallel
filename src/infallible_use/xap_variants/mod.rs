@@ -8,6 +8,7 @@ mod many_x;
 mod one_f;
 mod one_m;
 mod one_x;
+mod xap_use_pair;
 
 pub use bin_f::UBinF;
 pub use bin_m::UBinM;
