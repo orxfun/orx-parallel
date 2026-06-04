@@ -46,6 +46,41 @@ fn inf_use_reduce() {
 }
 
 #[test]
+fn inf_use_fold() {
+    for n in N {
+        let input = inputs(n);
+
+        let mut expected = String::new();
+        input
+            .iter()
+            .filter(|x| x.len() < 2)
+            .for_each(|x| expected.push_str(x));
+        let mut expected: Vec<_> = expected.chars().collect();
+        expected.sort();
+
+        let par = input
+            .clone()
+            .into_par()
+            .num_threads(4)
+            .use_new(|_| ())
+            .filter(|_, x| x.len() < 2);
+        let result = par.fold(String::new, |_, s, x| s.push_str(&x));
+        assert!(result.len() <= 4);
+        let result = result
+            .into_iter()
+            .reduce(|mut a: String, b: String| {
+                a.push_str(&b);
+                a
+            })
+            .unwrap_or_default();
+        let mut result: Vec<_> = result.chars().collect();
+        result.sort();
+
+        assert_eq!(&result, &expected);
+    }
+}
+
+#[test]
 fn inf_use_collect() {
     for n in N {
         let input = inputs(n);

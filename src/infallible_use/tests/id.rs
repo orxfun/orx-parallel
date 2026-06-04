@@ -42,6 +42,68 @@ fn id_reduce() {
     assert_eq!(result, Some(String::from("99")));
 }
 
+#[test]
+fn xzy() {
+    let inputs = inputs(N);
+
+    let mut expected = String::new();
+    inputs.iter().for_each(|x| expected.push_str(x));
+    let mut expected: Vec<_> = expected.chars().collect();
+    expected.sort();
+
+    let par = inputs
+        .into_par()
+        .num_threads(4)
+        .use_new(|_| UseValue::new(42));
+    let result = par.fold(String::new, |u, s, x| {
+        u.mutate();
+        s.push_str(&x);
+    });
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: String, b: String| {
+            a.push_str(&b);
+            a
+        })
+        .unwrap();
+    let mut result: Vec<_> = result.chars().collect();
+    result.sort();
+
+    assert_eq!(&result, &expected);
+}
+
+#[test]
+fn id_fold() {
+    let inputs = inputs(N);
+
+    let mut expected = String::new();
+    inputs.iter().for_each(|x| expected.push_str(x));
+    let mut expected: Vec<_> = expected.chars().collect();
+    expected.sort();
+
+    let par = inputs
+        .into_par()
+        .num_threads(4)
+        .use_new(|_| UseValue::new(42));
+    let result = par.fold(String::new, |u, s, x| {
+        u.mutate();
+        s.push_str(&x);
+    });
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: String, b: String| {
+            a.push_str(&b);
+            a
+        })
+        .unwrap();
+    let mut result: Vec<_> = result.chars().collect();
+    result.sort();
+
+    assert_eq!(&result, &expected);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn id_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || inputs(N).into_iter();

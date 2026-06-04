@@ -72,6 +72,53 @@ fn many_f_reduce() {
     assert_eq!(result, Some(String::from("99")));
 }
 
+#[test]
+fn many_f_fold() {
+    let inputs = inputs(N);
+
+    let mut expected = String::new();
+    inputs
+        .iter()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .filter(|x| x.len() < 4)
+        .for_each(|x| expected.push_str(&x));
+    let mut expected: Vec<_> = expected.chars().collect();
+    expected.sort();
+
+    let par = inputs
+        .into_par()
+        .num_threads(4)
+        .use_new(|_| UseValue::new(42))
+        .flat_map(|u, x| {
+            u.mutate();
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .filter(|u, x| {
+            u.mutate();
+            x.len() < 4
+        });
+    let result = par.fold(String::new, |u, s, x| {
+        u.mutate();
+        s.push_str(&x);
+    });
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: String, b: String| {
+            a.push_str(&b);
+            a
+        })
+        .unwrap();
+    let mut result: Vec<_> = result.chars().collect();
+    result.sort();
+
+    assert_eq!(&result, &expected);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn many_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {

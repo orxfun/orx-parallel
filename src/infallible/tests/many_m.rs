@@ -57,8 +57,7 @@ fn many_m_reduce() {
 
 #[test]
 fn many_m_fold() {
-    // let inputs = inputs(N);
-    let inputs = inputs(50);
+    let inputs = inputs(N);
 
     let mut expected: Vec<_> = inputs
         .iter()
