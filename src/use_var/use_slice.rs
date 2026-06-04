@@ -21,13 +21,8 @@ unsafe impl<'a, T: 'a> Sync for UseSlice<'a, T> {}
 impl<'a, T: 'a> Use for UseSlice<'a, T> {
     type Item = T;
 
-    type ItemBorrow<'i>
-        = &'a mut T
-    where
-        Self: 'i;
-
     #[inline]
-    fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+    fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
         assert!(
             thread_idx < self.len,
             "Out of bounds UseSlice access; slice has length {}, but access by {}-th thread.",
@@ -39,7 +34,7 @@ impl<'a, T: 'a> Use for UseSlice<'a, T> {
     }
 
     #[inline]
-    fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+    fn get(&mut self, thread_idx: usize) -> &mut Self::Item {
         self.init_get(thread_idx)
     }
 
