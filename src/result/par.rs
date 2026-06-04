@@ -8,7 +8,7 @@ use crate::result::par_core::ParResultCore;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use crate::use_var::{UseFun, UseSlice, UseVec};
+use crate::use_var::{UseSlice, UseVec};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
@@ -85,7 +85,7 @@ pub trait ParResult:
         let (iter, x1, x2, exe, _, params) = self.destruct();
         let x1 = IdUse::<_, U>::new(x1);
         let x2 = IdUse::<_, U>::new(x2);
-        let u = UseFun::new(f);
+        let u = UseVec::new(f);
         ParUseResultIter::new(u, iter, x1, x2, exe, params)
     }
 

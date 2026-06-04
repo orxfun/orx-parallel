@@ -8,7 +8,7 @@ use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
-use crate::use_var::{UseFun, UseSlice, UseVec};
+use crate::use_var::{UseSlice, UseVec};
 use crate::{
     ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
 };
@@ -440,7 +440,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     {
         let (iter, xap, exe, params) = self.destruct();
         let xap = IdUse::new(xap);
-        let using = UseFun::new(f);
+        let using = UseVec::new(f);
         ParUseIter::new(using, iter, xap, exe, params)
     }
 
