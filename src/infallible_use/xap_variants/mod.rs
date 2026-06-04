@@ -1,6 +1,7 @@
 mod bin_f;
 mod bin_m;
 mod bin_x;
+mod dummy_pair;
 mod id;
 mod many_f;
 mod many_m;
@@ -12,6 +13,7 @@ mod one_x;
 pub use bin_f::UBinF;
 pub use bin_m::UBinM;
 pub use bin_x::UBinX;
+pub use dummy_pair::UDummyPair;
 pub use id::IdUse;
 pub use many_f::UManyF;
 pub use many_m::UManyM;

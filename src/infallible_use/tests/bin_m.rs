@@ -70,6 +70,47 @@ fn bin_m_reduce() {
     assert_eq!(result, Some(156));
 }
 
+#[test]
+fn bin_m_fold() {
+    let inputs = inputs(N);
+
+    let mut expected: Vec<_> = inputs
+        .iter()
+        .filter(|x| x.len() < 4)
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect();
+    expected.sort_unstable();
+
+    let par = inputs
+        .into_par()
+        .num_threads(4)
+        .use_new(|_| UseValue::new(42))
+        .filter(|u, x| {
+            u.mutate();
+            x.len() < 4
+        })
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        });
+    let result = par.fold(Vec::new, |u, v, x| {
+        u.mutate();
+        v.push(x);
+    });
+    assert!(result.len() <= 4);
+    let result = result
+        .into_iter()
+        .reduce(|mut a: Vec<u64>, mut b: Vec<u64>| {
+            a.append(&mut b);
+            a
+        })
+        .unwrap();
+    let mut result = result;
+    result.sort_unstable();
+
+    assert_eq!(&result, &expected);
+}
+
 #[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
 fn bin_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
     let iter = || {

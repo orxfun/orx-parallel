@@ -1,3 +1,4 @@
+#[cfg(feature = "long-tests")]
 #[cfg(test)]
 pub mod par_col_into_test;
 

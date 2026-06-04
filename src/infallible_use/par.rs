@@ -2,7 +2,7 @@ use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap::FlattenOf;
-use crate::infallible_use::xap_variants::IdUse;
+use crate::infallible_use::xap_variants::{IdUse, UDummyPair};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
 };
@@ -11,9 +11,11 @@ use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
+use crate::use_var::{PairPtr, Use, UseFold};
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum, UseVec,
 };
+use alloc::vec::Vec;
 use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -216,6 +218,25 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
         F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
         self.filter(&f).first()
+    }
+
+    fn fold<B, I, F>(self, init: I, f: F) -> Vec<B>
+    where
+        B: Send,
+        I: Fn() -> B + Sync,
+        F: Fn(&mut Self::Use, &mut B, Self::Item) + Copy + Send,
+    {
+        let (u, iter, xap, exe, params) = self.destruct();
+        let mut use_fold = UseFold::new(u, |_| init());
+        let xap = UDummyPair::<Self::Xap, B>::new(xap);
+        let par = ParUseIter::new(&mut use_fold, iter, xap, exe, params);
+
+        par.for_each(move |a: &mut PairPtr<Self::Use, B>, x| {
+            let (u, v) = a.u_v_mut();
+            f(u, v, x);
+        });
+
+        use_fold.into_vec()
     }
 
     fn for_each<F>(self, f: F)

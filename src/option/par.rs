@@ -6,7 +6,7 @@ use crate::option::ParOptionIter;
 use crate::pool::ParThreadPool;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use crate::use_var::{UseFun, UseSlice, UseVec};
+use crate::use_var::{UseSlice, UseVec};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, Sum};
 use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
 use alloc::vec::Vec;
@@ -78,7 +78,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         let (iter, x1, x2, exe, _, params) = self.destruct();
         let x1 = IdUse::<_, U>::new(x1);
         let x2 = IdUse::<_, U>::new(x2);
-        let u = UseFun::new(f);
+        let u = UseVec::new(f);
         ParUseOptionIter::new(u, iter, x1, x2, exe, params)
     }
 
