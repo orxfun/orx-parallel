@@ -1,7 +1,6 @@
 use crate::use_var::{Use, UseVec, pair_ptr::PairPtr};
 use alloc::vec::Vec;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
-use orx_self_or::SoM;
 
 pub struct UseFold<U, T, F>
 where
@@ -40,14 +39,9 @@ where
 {
     type Item = PairPtr<U::Item, T>;
 
-    type ItemBorrow<'i>
-        = &'i mut PairPtr<U::Item, T>
-    where
-        Self: 'i;
-
-    fn init_get(&self, thread_idx: usize) -> Self::ItemBorrow<'_> {
-        let u = self.u.init_get(thread_idx).get_mut() as *mut U::Item;
-        let v = self.v.init_get(thread_idx).get_mut() as *mut T;
+    fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
+        let u = self.u.init_get(thread_idx) as *mut U::Item;
+        let v = self.v.init_get(thread_idx) as *mut T;
         let pair_ptr = PairPtr::new(u, v);
         unsafe { self.cache.set_value(thread_idx, pair_ptr) };
 
@@ -58,7 +52,7 @@ where
         unsafe { &mut *self.cache.ptr_mut(thread_idx) }
     }
 
-    fn get(&mut self, thread_idx: usize) -> Self::ItemBorrow<'_> {
+    fn get(&mut self, thread_idx: usize) -> &mut Self::Item {
         assert!(self.cache.len() > thread_idx);
         unsafe { &mut *self.cache.ptr_mut(thread_idx) }
     }
