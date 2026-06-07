@@ -27,6 +27,10 @@ use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
 /// values while the computation short-circuits to `None` when any element
 /// evaluates to `None`.
 ///
+/// Related traits:
+/// - [`ParOption`](crate::ParOption) for `Option`-fallible pipelines without worker-local state,
+/// - [`ParUse`](crate::ParUse) for worker-local state in infallible pipelines.
+///
 /// # Examples
 ///
 /// Reusing a per-worker buffer:
@@ -69,7 +73,7 @@ use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
 /// assert!(out.unwrap().into_iter().enumerate().all(|(i, v)| v >= i));
 /// ```
 pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Self::Item> {
-    // params
+    // configuration
 
     /// Replaces the current parallel runner with `runner`.
     ///

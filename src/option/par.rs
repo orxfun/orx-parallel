@@ -24,6 +24,10 @@ use core::cmp::Ordering;
 /// `Option<T>`), and the parallel computation stops immediately when any
 /// element evaluates to `None`.
 ///
+/// Related traits:
+/// - [`Par`](crate::Par) for infallible pipelines,
+/// - [`ParUseOption`](crate::ParUseOption) for the same fallibility model with worker-local state.
+///
 /// # Examples
 ///
 /// Parse and validate incoming records in parallel.
