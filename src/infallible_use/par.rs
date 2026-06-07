@@ -11,9 +11,9 @@ use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
-use crate::use_var::{PairPtr, Use, UseFold};
+use crate::use_var::{PairPtr, UseFold};
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum, UseVec,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
 };
 use alloc::vec::Vec;
 use core::cmp::Ordering;
