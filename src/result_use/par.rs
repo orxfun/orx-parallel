@@ -24,6 +24,10 @@ use core::cmp::Ordering;
 /// Similar to using `?`, this trait keeps pipeline logic focused on successful
 /// values while computation short-circuits to `Err(e)` when any element fails.
 ///
+/// Related traits:
+/// - [`ParResult`](crate::ParResult) for `Result`-fallible pipelines without worker-local state,
+/// - [`ParUse`](crate::ParUse) for worker-local state in infallible pipelines.
+///
 /// # Examples
 ///
 /// Reusing a per-worker buffer:

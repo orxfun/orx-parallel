@@ -31,6 +31,11 @@ use orx_concurrent_iter::ConcurrentIter;
 /// [`use_vec`](crate::Par::use_vec), or
 /// [`use_slice`](crate::Par::use_slice).
 ///
+/// Related traits:
+/// - [`Par`](crate::Par) for pipelines without worker-local state,
+/// - [`ParUseOption`](crate::ParUseOption) via [`into_optional`](crate::ParUse::into_optional),
+/// - [`ParUseResult`](crate::ParUseResult) via [`into_fallible`](crate::ParUse::into_fallible).
+///
 /// # Examples
 ///
 /// ```

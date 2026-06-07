@@ -25,6 +25,10 @@ use core::cmp::Ordering;
 /// `Result<T, E>`), and the parallel computation stops when an error is
 /// observed.
 ///
+/// Related traits:
+/// - [`Par`](crate::Par) for infallible pipelines,
+/// - [`ParUseResult`](crate::ParUseResult) for the same fallibility model with worker-local state.
+///
 /// # Examples
 ///
 /// Parse and validate records in parallel.

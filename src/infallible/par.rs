@@ -24,6 +24,11 @@ use core::cmp::Ordering;
 /// configuration of execution details such as number of threads, chunk size,
 /// iteration order, and runner/pool selection.
 ///
+/// Related traits:
+/// - [`ParUse`](crate::ParUse) for worker-local mutable state,
+/// - [`ParOption`](crate::ParOption) for `Option`-based fallibility,
+/// - [`ParResult`](crate::ParResult) for `Result`-based fallibility.
+///
 /// # Examples
 ///
 /// ```
