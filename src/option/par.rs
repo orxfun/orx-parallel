@@ -56,6 +56,24 @@ use core::cmp::Ordering;
 pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Item> {
     // configuration
 
+    /// Replaces the current parallel runner with `runner`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// #![cfg(feature = "std")]
+    ///
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional()
+    ///     .runner(Runner::fixed_chunk(Pool::once(4)))
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
+    /// ```
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
@@ -69,6 +87,24 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     >;
 
     #[cfg(feature = "std")]
+    /// Wraps the current runner with diagnostics-enabled execution.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// #![cfg(feature = "std")]
+    ///
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional()
+    ///     .runner_with_diagnostics()
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
+    /// ```
     fn runner_with_diagnostics(
         self,
     ) -> impl ParOption<
@@ -80,6 +116,35 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         Size = Self::Size,
     >;
 
+    /// Replaces the pool used by the current runner.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///         .into_par()
+    ///         .map(|s| s.parse::<usize>().ok())
+    ///         .into_optional()
+    ///         .pool(Pool::once(4))
+    ///         .collect();
+    ///     assert_eq!(out, Some(vec![1, 2, 3]));
+    /// }
+    ///
+    /// #[cfg(feature = "rayon-core")]
+    /// {
+    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///         .into_par()
+    ///         .map(|s| s.parse::<usize>().ok())
+    ///         .into_optional()
+    ///         .pool(Pool::rayon(4))
+    ///         .collect();
+    ///     assert_eq!(out, Some(vec![1, 2, 3]));
+    /// }
+    /// ```
     fn pool<P: ParThreadPool>(
         self,
         pool: P,
@@ -92,14 +157,98 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         Size = Self::Size,
     >;
 
+    /// Sets the maximum number of worker threads for this computation.
+    ///
+    /// Integer values map as follows:
+    /// - `0` => automatic (default)
+    /// - `n > 0` => at most `n` threads
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional()
+    ///     .num_threads(1)
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
+    /// ```
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
+    /// Sets chunk size used when pulling items from the concurrent input.
+    ///
+    /// Integer values map as follows:
+    /// - `0` => automatic (default)
+    /// - `n > 0` => exact chunk size `n`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = ["1", "2", "3", "4"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional()
+    ///     .chunk_size(2)
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 2, 3, 4]));
+    /// ```
     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self;
 
+    /// Sets iteration-order semantics for order-sensitive operations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let ordered = (1..10_000)
+    ///     .into_par()
+    ///     .map(|x| Some(x))
+    ///     .into_optional()
+    ///     .iteration_order(IterationOrder::Ordered)
+    ///     .find(|x| x % 3421 == 0);
+    /// assert_eq!(ordered, Some(Some(3421)));
+    ///
+    /// let any = (1..10_000)
+    ///     .into_par()
+    ///     .map(|x| Some(x))
+    ///     .into_optional()
+    ///     .iteration_order(IterationOrder::Arbitrary)
+    ///     .find(|x| x % 3421 == 0)
+    ///     .unwrap()
+    ///     .unwrap();
+    /// assert!([3421, 6842].contains(&any));
+    /// ```
     fn iteration_order(self, collect: IterationOrder) -> Self;
 
     // kind transformations
 
+    /// Creates one mutable `Use` value per participating worker.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    /// use rand::prelude::*;
+    /// use rand_chacha::ChaCha8Rng;
+    ///
+    /// let out: Option<Vec<_>> = (0..8usize)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .use_new(|thread_idx| ChaCha8Rng::seed_from_u64(10 + thread_idx as u64))
+    ///     .map(|rng, x| x + rng.random_range(0..10))
+    ///     .collect();
+    ///
+    /// assert_eq!(out.as_ref().map(Vec::len), Some(8));
+    /// ```
     fn use_new<U, F>(
         self,
         f: F,
@@ -123,6 +272,25 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         ParUseOptionIter::new(u, iter, x1, x2, exe, params)
     }
 
+    /// Uses an externally-owned [`UseVec`](crate::UseVec) as worker-local state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mut sums = UseVec::new(|_| 0usize);
+    ///
+    /// let result = (1..11)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .use_vec(&mut sums)
+    ///     .for_each(|local, x| *local += x);
+    ///
+    /// assert_eq!(result, Some(()));
+    /// assert_eq!(sums.into_vec().into_iter().sum::<usize>(), 55);
+    /// ```
     fn use_vec<U, F>(
         self,
         use_vec: &mut UseVec<U, F>,
@@ -145,6 +313,28 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         ParUseOptionIter::new(use_vec, iter, x1, x2, exe, params)
     }
 
+    /// Uses a caller-provided mutable slice as worker-local mutable state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mut sums = vec![0usize; 4];
+    /// let result = (1..11)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .use_slice(&mut sums)
+    ///     .for_each(|local, x| *local += x);
+    ///
+    /// assert_eq!(result, Some(()));
+    /// assert_eq!(sums.into_iter().sum::<usize>(), 55);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the input produces at least one element but `slice` is empty.
     fn use_slice<'a, U>(
         self,
         slice: &'a mut [U],
@@ -167,6 +357,20 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         ParUseOptionIter::new(u, iter, x1, x2, exe, params)
     }
 
+    /// Copies elements of a reference iterator.
+    ///
+    /// Equivalent to `.map(|x| *x)` on the success path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let data = vec![1, 2, 3];
+    /// let copied: Option<Vec<_>> = data.par().map(Some).into_optional().copied().collect();
+    ///
+    /// assert_eq!(copied, Some(vec![1, 2, 3]));
+    /// ```
     fn copied<'a, O>(
         self,
     ) -> impl ParOption<
@@ -185,6 +389,18 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         ParOptionIter::new(iter, x1, x2.mapped(FnCopied::new()), exe, params)
     }
 
+    /// Clones elements of a reference iterator.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let data = vec!["a".to_string(), "b".to_string()];
+    /// let cloned: Option<Vec<_>> = data.par().map(Some).into_optional().cloned().collect();
+    ///
+    /// assert_eq!(cloned, Some(vec!["a".to_string(), "b".to_string()]));
+    /// ```
     fn cloned<'a, O>(
         self,
     ) -> impl ParOption<
@@ -205,6 +421,16 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
 
     // transformations
 
+    /// Maps each successful element with closure `h`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = (1..4).into_par().map(Some).into_optional().map(|x| 2 * x).collect();
+    /// assert_eq!(out, Some(vec![2, 4, 6]));
+    /// ```
     fn map<Q, H>(
         self,
         h: H,
@@ -219,6 +445,27 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
+    /// Runs `h` on each successful element and forwards the element unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use core::sync::atomic::{AtomicUsize, Ordering};
+    /// use orx_parallel::*;
+    ///
+    /// let seen = AtomicUsize::new(0);
+    /// let out: Option<Vec<_>> = (1..5)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .inspect(|_| {
+    ///         seen.fetch_add(1, Ordering::Relaxed);
+    ///     })
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 2, 3, 4]));
+    /// assert_eq!(seen.load(Ordering::Relaxed), 4);
+    /// ```
     fn inspect<H>(
         self,
         h: H,
@@ -233,6 +480,22 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     where
         H: Fn(&Self::Item) + Copy + Send;
 
+    /// Keeps successful elements satisfying predicate `h`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = (1..7)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .filter(|x| x % 2 == 1)
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 3, 5]));
+    /// ```
     fn filter<H>(
         self,
         h: H,
@@ -247,6 +510,22 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
+    /// Maps and filters successful elements in a single pass.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = ["1", "x", "5"]
+    ///     .into_par()
+    ///     .map(|s| Some(s))
+    ///     .into_optional()
+    ///     .filter_map(|s| s.parse::<usize>().ok())
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 5]));
+    /// ```
     fn filter_map<Q, H>(
         self,
         h: H,
@@ -261,6 +540,22 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
+    /// Maps each successful element to an iterator and flattens one level.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let out: Option<Vec<_>> = (1..4)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .flat_map(|x| [x, x + 10])
+    ///     .collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 11, 2, 12, 3, 13]));
+    /// ```
     fn flat_map<V, H>(
         self,
         h: H,
@@ -276,6 +571,18 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
 
+    /// Flattens one level of nested iterables on the success path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let nested = vec![vec![1, 2], vec![3, 4]];
+    /// let out: Option<Vec<_>> = nested.into_par().map(Some).into_optional().flatten().collect();
+    ///
+    /// assert_eq!(out, Some(vec![1, 2, 3, 4]));
+    /// ```
     fn flatten(
         self,
     ) -> impl ParOption<
@@ -291,20 +598,90 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
 
     // compute
 
+    /// Returns the first successful item according to iteration order.
+    ///
+    /// Returns:
+    /// - `None` if computation short-circuits due to a failure (`None` element)
+    /// - `Some(None)` if no successful element exists
+    /// - `Some(Some(x))` for the first successful element
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// assert_eq!((1..4).into_par().map(Some).into_optional().first(), Some(Some(1)));
+    /// assert_eq!(Vec::<usize>::new().into_par().map(Some).into_optional().first(), Some(None));
+    /// assert_eq!(vec![None, Some(1), Some(3)].into_par().into_optional().first(), None);
+    /// ```
     fn first(self) -> Option<Option<Self::Item>>
     where
         Self::Item: Send;
 
+    /// Reduces successful items into one value using `f`.
+    ///
+    /// Returns:
+    /// - `None` if computation short-circuits due to a failure
+    /// - `Some(None)` if there is no successful value to reduce
+    /// - `Some(Some(x))` for the reduced value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let ok = (1..6).into_par().map(Some).into_optional().reduce(|a, b| a + b);
+    /// assert_eq!(ok, Some(Some(15)));
+    ///
+    /// let fail = vec![Some(1), None, Some(3)].into_par().into_optional().reduce(|a, b| a + b);
+    /// assert_eq!(fail, None);
+    /// ```
     fn reduce<F>(self, f: F) -> Option<Option<Self::Item>>
     where
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send;
 
+    /// Collects successful items into `dst`.
+    ///
+    /// Returns `None` if any element fails, `Some(())` otherwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mut dst = vec![10usize];
+    /// let ok = (0..3).into_par().map(Some).into_optional().collect_into(&mut dst);
+    /// assert_eq!(ok, Some(()));
+    /// assert_eq!(dst, vec![10, 0, 1, 2]);
+    ///
+    /// let mut dst_fail = vec![];
+    /// let fail = vec![Some(1usize), None, Some(3)]
+    ///     .into_par()
+    ///     .into_optional()
+    ///     .collect_into(&mut dst_fail);
+    /// assert_eq!(fail, None);
+    /// ```
     fn collect_into<C>(self, dst: &mut C) -> Option<()>
     where
         C: ParCollectInto<Self::Item>,
         Self::Item: Send;
 
+    /// Collects successful items into a new collection.
+    ///
+    /// Returns `None` if any element fails, otherwise `Some(collection)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let ok: Option<Vec<_>> = (1..4).into_par().map(Some).into_optional().collect();
+    /// assert_eq!(ok, Some(vec![1, 2, 3]));
+    ///
+    /// let fail: Option<Vec<_>> = vec![Some(1), None, Some(3)].into_par().into_optional().collect();
+    /// assert_eq!(fail, None);
+    /// ```
     fn collect<C>(self) -> Option<C>
     where
         C: ParCollectInto<Self::Item>,
@@ -312,6 +689,19 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
 
     // compute - derived
 
+    /// Returns `Some(true)` if all successful items satisfy `f`.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// assert_eq!((1..5).into_par().map(Some).into_optional().all(|x| x > &0), Some(true));
+    /// assert_eq!((1..5).into_par().map(Some).into_optional().all(|x| x % 2 == 0), Some(false));
+    /// assert_eq!(vec![Some(1), None, Some(3)].into_par().into_optional().all(|x| x > &0), None);
+    /// ```
     fn all<F>(self, f: F) -> Option<bool>
     where
         Self::Item: Send,
@@ -322,6 +712,19 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
             .map(|x| x.is_none())
     }
 
+    /// Returns `Some(true)` if any successful item satisfies `f`.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// assert_eq!((1..5).into_par().map(Some).into_optional().any(|x| x % 2 == 0), Some(true));
+    /// assert_eq!((1..5).into_par().map(Some).into_optional().any(|x| x > &10), Some(false));
+    /// assert_eq!(vec![Some(1), None, Some(3)].into_par().into_optional().any(|x| x % 2 == 0), None);
+    /// ```
     fn any<F>(self, f: F) -> Option<bool>
     where
         Self::Item: Send,
@@ -332,10 +735,49 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
             .map(|x| x.is_some())
     }
 
+    /// Counts successful elements.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let ok = (1..11)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .filter(|x| x % 3 == 0)
+    ///     .count();
+    /// assert_eq!(ok, Some(3));
+    ///
+    /// let fail = vec![Some(1usize), None, Some(3)].into_par().into_optional().count();
+    /// assert_eq!(fail, None);
+    /// ```
     fn count(self) -> Option<usize> {
         self.map(|_| 1).reduce(|a, b| a + b).map(|x| x.unwrap_or(0))
     }
 
+    /// Finds first (ordered) or any (arbitrary) successful item satisfying `f`.
+    ///
+    /// Equivalent to `self.filter(f).first()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let found = (1..101)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .find(|x| x % 17 == 0);
+    /// assert_eq!(found, Some(Some(17)));
+    ///
+    /// let fail = vec![Some(1usize), None, Some(34)].into_par().into_optional().find(|x| x % 17 == 0);
+    /// assert_eq!(fail, None);
+    /// ```
     fn find<F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
@@ -344,6 +786,28 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.filter(&f).first()
     }
 
+    /// Folds successful elements into per-thread accumulators.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let partials = (1..6)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .fold(|| 0usize, |acc, x| *acc += x);
+    /// assert_eq!(partials.as_ref().map(|v| v.iter().sum::<usize>()), Some(15));
+    ///
+    /// let fail = vec![Some(1usize), None, Some(3)]
+    ///     .into_par()
+    ///     .into_optional()
+    ///     .fold(|| 0usize, |acc, x| *acc += x);
+    /// assert_eq!(fail, None);
+    /// ```
     fn fold<B, I, F>(self, init: I, f: F) -> Option<Vec<B>>
     where
         B: Send,
@@ -356,6 +820,28 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         result.map(|_| use_vec.into_vec())
     }
 
+    /// Executes `f` for each successful element.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use core::sync::atomic::{AtomicUsize, Ordering};
+    /// use orx_parallel::*;
+    ///
+    /// let total = AtomicUsize::new(0);
+    /// let ok = (1..5)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .for_each(|x| {
+    ///         total.fetch_add(x, Ordering::Relaxed);
+    ///     });
+    ///
+    /// assert_eq!(ok, Some(()));
+    /// assert_eq!(total.load(Ordering::Relaxed), 10);
+    /// ```
     fn for_each<F>(self, f: F) -> Option<()>
     where
         F: Fn(Self::Item) + Send + Copy,
@@ -363,6 +849,19 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.map(f).reduce(|_, _| {}).map(|_| ())
     }
 
+    /// Returns maximum successful element.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// assert_eq!((1..5).into_par().map(Some).into_optional().max(), Some(Some(4)));
+    /// assert_eq!(Vec::<usize>::new().into_par().map(Some).into_optional().max(), Some(None));
+    /// assert_eq!(vec![Some(1usize), None, Some(3)].into_par().into_optional().max(), None);
+    /// ```
     fn max(self) -> Option<Option<Self::Item>>
     where
         Self::Item: Ord + Send,
@@ -370,6 +869,22 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.reduce(Ord::max)
     }
 
+    /// Returns successful element considered maximum by comparator `f`.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let x = vec![-3_i32, 0, 1, 5, -10]
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .max_by(|a, b| a.cmp(b));
+    /// assert_eq!(x, Some(Some(5)));
+    /// ```
     fn max_by<F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
@@ -382,6 +897,22 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.reduce(reduce)
     }
 
+    /// Returns successful element with maximum key value.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let x = vec![-3_i32, 0, 1, 5, -10]
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .max_by_key(|x| x.abs());
+    /// assert_eq!(x, Some(Some(-10)));
+    /// ```
     fn max_by_key<B, F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
@@ -395,6 +926,19 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.reduce(reduce)
     }
 
+    /// Returns minimum successful element.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// assert_eq!((1..5).into_par().map(Some).into_optional().min(), Some(Some(1)));
+    /// assert_eq!(Vec::<usize>::new().into_par().map(Some).into_optional().min(), Some(None));
+    /// assert_eq!(vec![Some(1usize), None, Some(3)].into_par().into_optional().min(), None);
+    /// ```
     fn min(self) -> Option<Option<Self::Item>>
     where
         Self::Item: Ord + Send,
@@ -402,6 +946,22 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.reduce(Ord::min)
     }
 
+    /// Returns successful element considered minimum by comparator `f`.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let x = vec![-3_i32, 0, 1, 5, -10]
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .min_by(|a, b| a.cmp(b));
+    /// assert_eq!(x, Some(Some(-10)));
+    /// ```
     fn min_by<F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
@@ -414,6 +974,22 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.reduce(reduce)
     }
 
+    /// Returns successful element with minimum key value.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let x = vec![-3_i32, 0, 1, 5, -10]
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .min_by_key(|x| x.abs());
+    /// assert_eq!(x, Some(Some(0)));
+    /// ```
     fn min_by_key<B, F>(self, f: F) -> Option<Option<Self::Item>>
     where
         Self::Item: Send,
@@ -427,6 +1003,21 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         self.reduce(reduce)
     }
 
+    /// Sums successful elements using [`Sum`] implementation.
+    ///
+    /// Returns `None` on short-circuit failure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let ok: Option<usize> = (1..5).into_par().map(Some).into_optional().sum();
+    /// assert_eq!(ok, Some(10));
+    ///
+    /// let fail: Option<usize> = vec![Some(1usize), None, Some(3)].into_par().into_optional().sum();
+    /// assert_eq!(fail, None);
+    /// ```
     fn sum<S>(self) -> Option<S>
     where
         Self::Item: Sum<S>,
