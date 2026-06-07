@@ -540,9 +540,8 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// (0..n)
     ///     .into_par()
-    ///     .num_threads(16) // actual participating workers are limited to 4
     ///     .map(|x| 2 * x)
-    ///     .use_slice(&mut thread_sums)
+    ///     .use_slice(&mut thread_sums)    // participating workers are limited to 4
     ///     .for_each(|thread_sum, x| *thread_sum += x);
     ///
     /// let total: usize = thread_sums.into_iter().sum();
