@@ -50,4 +50,4 @@ pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
-pub use use_var::UseVec;
+pub use use_var::{Use, UseVec};

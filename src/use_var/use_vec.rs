@@ -2,6 +2,24 @@ use super::r#use::Use;
 use alloc::vec::Vec;
 use orx_concurrent_ordered_bag::ConcurrentOrderedBag;
 
+/// Owned worker-local mutable state.
+///
+/// `UseVec` stores one value per worker thread and lets parallel operations
+/// mutate those values independently. It is typically used with
+/// [`Par::use_vec`](crate::Par::use_vec).
+///
+/// # Examples
+///
+/// ```
+/// use orx_parallel::{Use, UseVec};
+///
+/// let use_vec = UseVec::new(|thread_idx| thread_idx + 10);
+///
+/// assert_eq!(*use_vec.init_get(0), 10);
+/// assert_eq!(*use_vec.init_get(1), 11);
+///
+/// assert_eq!(use_vec.into_vec(), vec![10, 11]);
+/// ```
 pub struct UseVec<T: Send, F: Fn(usize) -> T + Sync> {
     init: F,
     cache: ConcurrentOrderedBag<T>,
