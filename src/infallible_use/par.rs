@@ -19,6 +19,56 @@ use alloc::vec::Vec;
 use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
 
+/// Parallel iterator pipelines with worker-local mutable state.
+///
+/// `ParUse` extends the usual parallel iterator pipeline with an associated
+/// [`Use`](crate::Use) value that is passed into transformation and reduction
+/// steps as mutable worker-local state. This is useful when each worker needs
+/// its own reusable scratch space, accumulator, or other per-thread context.
+///
+/// You can enter this mode from [`Par`](crate::Par) via
+/// [`use_new`](crate::Par::use_new),
+/// [`use_vec`](crate::Par::use_vec), or
+/// [`use_slice`](crate::Par::use_slice).
+///
+/// # Examples
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// let n = 10_000usize;
+/// let mut partial_sums = UseVec::new(|_| 0usize);
+///
+/// (0..n)
+///     .into_par()
+///     .use_vec(&mut partial_sums)
+///     .for_each(|thread_sum, x| *thread_sum += x);
+///
+/// let total: usize = partial_sums.into_vec().into_iter().sum();
+/// assert_eq!(total, (n - 1) * n / 2);
+/// ```
+///
+/// Using an RNG as mutable worker-local state:
+///
+/// ```
+/// use orx_parallel::*;
+/// use rand::prelude::*;
+/// use rand_chacha::ChaCha8Rng;
+///
+/// let values: Vec<_> = (0..128usize)
+///     .into_par()
+///     .use_new(|thread_idx| ChaCha8Rng::seed_from_u64(42 + thread_idx as u64))
+///     .map(|rng, x| x + rng.random_range(0..10))
+///     .collect();
+///
+/// assert_eq!(values.len(), 128);
+/// assert!(
+///     values
+///         .iter()
+///         .enumerate()
+///         .all(|(i, v)| *v >= i && *v < i + 10)
+/// );
+/// ```
 pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     // configuration
 
