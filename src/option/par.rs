@@ -12,6 +12,47 @@ use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
+/// Fallible parallel iterator over `Option` values.
+///
+/// `ParOption` represents pipelines where each element may fail as `None`.
+/// It is commonly created from [`Par`](crate::Par) with
+/// [`into_optional`](crate::Par::into_optional).
+///
+/// Conceptually, this is similar to using the `?` operator in Rust:
+/// both let you write logic on the success path while failures short-circuit.
+/// In `ParOption`, the success path works with plain `T` values (instead of
+/// `Option<T>`), and the parallel computation stops immediately when any
+/// element evaluates to `None`.
+///
+/// # Examples
+///
+/// Parse and validate incoming records in parallel.
+/// If any record is invalid, the pipeline short-circuits to `None`.
+///
+/// ```
+/// use orx_parallel::*;
+///
+/// let records = ["3", "8", "21", "34"];
+///
+/// let validated: Option<Vec<usize>> = records
+///     .into_par()
+///     .map(|s| s.parse::<usize>().ok())
+///     .into_optional()
+///     .map(|x| x * 2)
+///     .filter(|x| *x <= 70)
+///     .collect();
+///
+/// assert_eq!(validated, Some(vec![6, 16, 42, 68]));
+///
+/// let with_failure: Option<Vec<usize>> = ["3", "bad", "21", "34"]
+///     .into_par()
+///     .map(|s| s.parse::<usize>().ok())
+///     .into_optional()
+///     .map(|x| x * 2)
+///     .collect();
+///
+/// assert_eq!(with_failure, None);
+/// ```
 pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Item> {
     // configuration
 
