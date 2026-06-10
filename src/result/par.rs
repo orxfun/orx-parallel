@@ -157,20 +157,86 @@ pub trait ParResult:
 
     /// Sets the maximum number of worker threads for this computation.
     ///
+    /// This method configures the **computation layer** of the thread count decision.
+    /// The actual number of threads used is determined by combining:
+    ///
+    /// 1. **Pool constraint** (from `pool()` method or default pool)
+    ///    - Already includes `ORX_PARALLEL_MAX_NUM_THREADS` environment variable constraint
+    /// 2. **Computation constraint** (this method)
+    ///    - Your per-computation thread preference
+    /// 3. **Input size constraint**
+    ///    - Cannot spawn more threads than input elements
+    ///
+    /// The actual thread count is the **minimum** of all these constraints.
+    ///
+    /// # Parameter Interpretation
+    ///
+    /// Integer values map as follows:
+    /// - `0` => `NumThreads::Auto` (use all available threads, spawn only as needed)
+    /// - `n > 0` => `NumThreads::Max(n)` (cap at `n` threads)
+    ///
+    /// # Thread Count Decision Logic
+    ///
+    /// ```text
+    /// available = pool.max_num_threads()      // Pool maximum (includes env variable)
+    ///
+    /// requested = match num_threads {
+    ///     0 | Auto => input_size.max(1),      // Limited by input size
+    ///     Max(n) => min(input_size, n),       // Limited by input size and this param
+    /// };
+    ///
+    /// actual_threads = min(requested, available)
+    /// ```
+    ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use orx_parallel::*;
     ///
+    /// // Sequential execution
     /// let out: Result<Vec<_>, _> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|s| s.parse::<usize>())
     ///     .into_fallible()
     ///     .num_threads(1)
     ///     .collect();
-    ///
     /// assert_eq!(out, Ok(vec![1, 2, 3]));
+    ///
+    /// // Cap at 4 threads
+    /// let out: Result<Vec<_>, _> = (1..1001)
+    ///     .into_par()
+    ///     .map(Ok::<_, String>)
+    ///     .into_fallible()
+    ///     .num_threads(4)
+    ///     .collect();
     /// ```
+    ///
+    /// # Interaction with Pool
+    ///
+    /// The actual thread count respects the thread pool's constraints:
+    ///
+    /// ```ignore
+    /// use orx_parallel::*;
+    ///
+    /// // Pool provides 4 threads max
+    /// let pool = Pool::once(4);
+    ///
+    /// // Request 6 threads, but pool only has 4
+    /// let out: Result<Vec<_>, _> = (1..1001)
+    ///     .into_par()
+    ///     .map(Ok::<_, String>)
+    ///     .into_fallible()
+    ///     .pool(pool)
+    ///     .num_threads(6)  // Request 6...
+    ///     .collect();      // ...but only 4 are available
+    /// ```
+    ///
+    /// # See Also
+    ///
+    /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
+    /// - [`pool()`](crate::Par::pool) - Configure thread pool
+    /// - [`Pool`](crate::Pool) - Factory for creating pools
+    /// - [`threading_model.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/threading_model.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
     /// Sets chunk size used when pulling items from the concurrent input.

@@ -163,24 +163,110 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
 
     /// Sets the maximum number of worker threads for this computation.
     ///
-    /// Integer values map as follows:
-    /// - `0` => automatic (default)
-    /// - `n > 0` => at most `n` threads
+    /// This method configures the **computation layer** of the thread count decision.
+    /// The actual number of threads used is determined by combining:
+    ///
+    /// 1. **Pool constraint** (from `pool()` method or default pool)
+    ///    - Already includes `ORX_PARALLEL_MAX_NUM_THREADS` environment variable constraint
+    /// 2. **Computation constraint** (this method)
+    ///    - Your per-computation thread preference
+    /// 3. **Input size constraint**
+    ///    - Cannot spawn more threads than input elements
+    ///
+    /// The actual thread count is the **minimum** of all these constraints.
+    ///
+    /// # Parameter Interpretation
+    ///
+    /// - `0` → `NumThreads::Auto` (use all available threads, spawn only as needed)
+    /// - `n > 0` → `NumThreads::Max(n)` (cap at `n` threads)
+    ///
+    /// # Thread Count Decision Logic
+    ///
+    /// ```text
+    /// available = pool.max_num_threads()      // Pool maximum (includes env variable)
+    ///
+    /// requested = match num_threads {
+    ///     0 | Auto => input_size.max(1),      // Limited by input size
+    ///     Max(n) => min(input_size, n),       // Limited by input size and this param
+    /// };
+    ///
+    /// actual_threads = min(requested, available)
+    /// ```
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use orx_parallel::*;
+    /// use std::num::NonZeroUsize;
     ///
+    /// // Auto: uses all available threads (respects ORX_PARALLEL_MAX_NUM_THREADS)
     /// let out: Option<Vec<_>> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|s| s.parse::<usize>().ok())
     ///     .into_optional()
-    ///     .num_threads(1)
+    ///     .num_threads(NumThreads::Auto)
     ///     .collect();
-    ///
     /// assert_eq!(out, Some(vec![1, 2, 3]));
+    ///
+    /// // Sequential execution (1 thread, no parallelism)
+    /// let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional()
+    ///     .num_threads(1)  // Sequential
+    ///     .collect();
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
+    ///
+    /// // Cap at 4 threads
+    /// let out: Option<Vec<_>> = (0..1000)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .num_threads(4)  // Use at most 4 threads
+    ///     .collect();
+    /// assert_eq!(out.as_ref().map(|v| v.len()), Some(1000));
+    ///
+    /// // With environment constraint: ORX_PARALLEL_MAX_NUM_THREADS=2
+    /// let out: Option<Vec<_>> = (0..1000)
+    ///     .into_par()
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .num_threads(4)  // Request 4, but env limits to 2
+    ///     .collect();      // Result: 2 threads used
     /// ```
+    ///
+    /// # Interaction with Pool
+    ///
+    /// The actual thread count also respects the thread pool's constraints:
+    ///
+    /// ```ignore
+    /// use orx_parallel::*;
+    ///
+    /// // Pool provides 4 threads max
+    /// let pool = Pool::once(4);
+    ///
+    /// // Computation requests 6 threads, but pool only has 4
+    /// let result = (0..1000)
+    ///     .into_par()
+    ///     .map(|x| x * 2)
+    ///     .pool(pool)
+    ///     .num_threads(6)  // Request 6...
+    ///     .collect();      // ...but only 4 are available
+    /// ```
+    ///
+    /// # Checking Sequential Execution
+    ///
+    /// ```ignore
+    /// let nt = NumThreads::Max(std::num::NonZeroUsize::new(1).unwrap());
+    /// assert!(nt.is_sequential());  // true
+    /// ```
+    ///
+    /// # See Also
+    ///
+    /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
+    /// - [`pool()`](crate::Par::pool) - Configure thread pool
+    /// - [`Pool`](crate::Pool) - Factory for creating pools
+    /// - [`threading_model.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/threading_model.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
     /// Sets chunk size used when pulling items from the concurrent input.
