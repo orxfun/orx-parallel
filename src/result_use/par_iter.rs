@@ -1,5 +1,3 @@
-#![allow(refining_impl_trait)]
-
 use crate::ParCollectInto;
 use crate::common_par_traits::ParResCommon;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
