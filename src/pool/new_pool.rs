@@ -47,7 +47,7 @@ pub struct Pool;
 impl Pool {
     /// Creates an [`OncePool`] with the specified thread configuration.
     ///
-    /// An `OncePool` is a lightweight virtual pool that spawns worker threads just before
+    /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before
     /// a computation starts and releases them immediately after. This reduces overhead when
     /// a persistent thread pool isn't needed.
     ///
