@@ -21,12 +21,11 @@ impl<T> ValIdx<T> {
         let mut value = None;
 
         for x in results {
-            if let Some(y) = x {
-                if y.idx < min_idx {
+            if let Some(y) = x
+                && y.idx < min_idx {
                     min_idx = y.idx;
                     value = Some(y);
                 }
-            }
         }
 
         value

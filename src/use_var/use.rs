@@ -25,6 +25,7 @@ pub trait Use: Sync {
     type Item;
 
     /// Returns the mutable worker-local value for `thread_idx`, creating it if needed.
+    #[allow(clippy::mut_from_ref)]
     fn init_get(&self, thread_idx: usize) -> &mut Self::Item;
 
     /// Returns the already-initialized mutable worker-local value for `thread_idx`.
