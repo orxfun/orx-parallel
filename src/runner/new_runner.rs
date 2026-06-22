@@ -17,7 +17,7 @@ use crate::runner::runner_variants::FixedChunkRunner;
 /// use orx_parallel::*;
 ///
 /// let pool = Pool::once(4);
-/// let sum: i64 = (0..1000)
+/// let sum: usize = (0..1000)
 ///     .into_par()
 ///     .runner(Runner::fixed_chunk(pool))
 ///     .map(|x| x * 2)
