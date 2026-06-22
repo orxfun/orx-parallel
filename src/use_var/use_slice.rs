@@ -1,6 +1,10 @@
 use super::r#use::Use;
 use core::marker::PhantomData;
 
+/// Borrowed worker-local state backed by a mutable slice.
+///
+/// Each worker thread uses the element at its thread index.
+/// This is typically used via `Par::use_slice`.
 pub struct UseSlice<'a, T: 'a> {
     ptr: *mut T,
     len: usize,
