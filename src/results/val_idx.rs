@@ -22,10 +22,11 @@ impl<T> ValIdx<T> {
 
         for x in results {
             if let Some(y) = x
-                && y.idx < min_idx {
-                    min_idx = y.idx;
-                    value = Some(y);
-                }
+                && y.idx < min_idx
+            {
+                min_idx = y.idx;
+                value = Some(y);
+            }
         }
 
         value

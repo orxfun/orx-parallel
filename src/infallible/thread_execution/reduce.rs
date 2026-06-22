@@ -53,7 +53,6 @@ where
     }
 
     // fold over the aggregate
-    
 
     match acc {
         None => None,

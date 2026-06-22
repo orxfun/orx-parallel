@@ -367,7 +367,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         Self::Xap: Xap<O = Option<T>>,
     {
         let (iter, xap, exe, params) = self.destruct();
-        
+
         ParOptionIter::new(iter, xap, Id::new(), exe, params)
     }
 
