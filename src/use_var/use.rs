@@ -21,6 +21,7 @@
 /// assert_eq!(use_vec.into_vec(), vec![1]);
 /// ```
 pub trait Use: Sync {
+    /// Type of the worker-local mutable value stored for each thread.
     type Item;
 
     /// Returns the mutable worker-local value for `thread_idx`, creating it if needed.
