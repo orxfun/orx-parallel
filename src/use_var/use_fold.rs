@@ -31,7 +31,7 @@ where
     }
 }
 
-impl<'a, U, T, F> Use for &'a mut UseFold<U, T, F>
+impl<U, T, F> Use for &mut UseFold<U, T, F>
 where
     U: Use,
     T: Send,
