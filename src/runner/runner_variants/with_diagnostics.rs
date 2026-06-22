@@ -193,11 +193,7 @@ impl<S> StateWithDiagnostics<S> {
                 let num_chunks = task_counts.len();
                 let min_chunk = task_counts.iter().copied().min().unwrap_or(0);
                 let max_chunk = task_counts.iter().copied().max().unwrap_or(0);
-                let avg_chunk = if num_chunks == 0 {
-                    0
-                } else {
-                    total / num_chunks
-                };
+                let avg_chunk = total.checked_div(num_chunks).unwrap_or(0);
 
                 let uptime_ns = match (begin[t], end[t]) {
                     (Some(b), Some(e)) => (e - b).as_nanos(),
@@ -262,17 +258,17 @@ impl<S> StateWithDiagnostics<S> {
 
         let mut threads = BTreeMap::new();
         for (t, (beg, end)) in begin.iter().copied().zip(end.iter().copied()).enumerate() {
-            if used_threads.contains(&t) {
-                if let (Some(beg), Some(end)) = (beg, end) {
-                    threads.insert(
-                        t,
-                        ThreadLife {
-                            beg,
-                            end,
-                            beg_ns: 0,
-                        },
-                    );
-                }
+            if used_threads.contains(&t)
+                && let (Some(beg), Some(end)) = (beg, end)
+            {
+                threads.insert(
+                    t,
+                    ThreadLife {
+                        beg,
+                        end,
+                        beg_ns: 0,
+                    },
+                );
             }
         }
 
