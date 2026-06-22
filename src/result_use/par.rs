@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use crate::common_par_traits::ParResCommon;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{
@@ -657,7 +659,7 @@ pub trait ParUseResult:
         Self::Error: Send,
     {
         self.map(|u, x| f(u, &x))
-            .find(|_, x| *x == false)
+            .find(|_, x| !*x)
             .map(|x| x.map(|_| false).unwrap_or(true))
     }
 
@@ -685,7 +687,7 @@ pub trait ParUseResult:
         Self::Error: Send,
     {
         self.map(|u, x| f(u, &x))
-            .find(|_, x| *x == true)
+            .find(|_, x| *x)
             .map(|x| x.is_some())
     }
 
