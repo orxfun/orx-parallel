@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use crate::infallible_use::XapUse;
 use crate::use_var::Use;
 use crate::{Params, runner::ParRunner, sizes::SizePair};

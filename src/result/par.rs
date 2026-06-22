@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use crate::common_par_traits::ParResCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
@@ -782,7 +784,7 @@ pub trait ParResult:
         Self::Error: Send,
     {
         self.map(|x| f(&x))
-            .find(|x| *x == false)
+            .find(|x| !*x)
             .map(|x| x.map(|_| false).unwrap_or(true))
     }
 
@@ -808,9 +810,7 @@ pub trait ParResult:
         F: Fn(&Self::Item) -> bool + Sync,
         Self::Error: Send,
     {
-        self.map(|x| f(&x))
-            .find(|x| *x == true)
-            .map(|x| x.is_some())
+        self.map(|x| f(&x)).find(|x| *x).map(|x| x.is_some())
     }
 
     /// Counts successful elements.

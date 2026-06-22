@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use core::cmp::Ordering;
 
 use crate::common_par_traits::ParOptCommon;
@@ -643,7 +645,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
         F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
         self.map(|u, x| f(u, &x))
-            .find(|_, x| *x == false)
+            .find(|_, x| !*x)
             .map(|x| x.is_none())
     }
 
@@ -677,7 +679,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
         F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
         self.map(|u, x| f(u, &x))
-            .find(|_, x| *x == true)
+            .find(|_, x| *x)
             .map(|x| x.is_some())
     }
 

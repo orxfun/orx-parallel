@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use crate::{Params, infallible::Xap, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
