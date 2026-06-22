@@ -7,6 +7,10 @@ use crate::{BasicPool, NumThreads, pool::pool_impl::OncePool};
 /// for parallel computations. Each pool type has different properties regarding thread lifecycle
 /// and persistence.
 ///
+/// > **Note:** `Pool` is a convenience factory for thread pools provided or adapted by this crate.
+/// > You can also implement [`ParThreadPool`](crate::ParThreadPool) yourself and pass it directly
+/// > to `.pool(...)` or to runner constructors that accept any thread pool implementing the trait.
+///
 /// # Thread Count Configuration
 ///
 /// When creating a pool, the thread count is determined by combining:
