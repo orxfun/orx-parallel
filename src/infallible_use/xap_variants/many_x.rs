@@ -9,7 +9,7 @@ pub struct UManyX<X: XapUse<Size = Many>, G: UFlatMap<U = X::U, I = X::O>> {
 
 impl<X: XapUse<Size = Many>, G: UFlatMap<U = X::U, I = X::O>> Clone for UManyX<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

@@ -53,7 +53,9 @@ where
     }
 
     // fold over the aggregate
-    let result = match acc {
+    
+
+    match acc {
         None => None,
         Some(mut acc) => {
             loop {
@@ -95,7 +97,5 @@ where
 
             Some(acc)
         }
-    };
-
-    result
+    }
 }

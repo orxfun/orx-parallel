@@ -8,7 +8,7 @@ pub struct UFnFlatMap<U, I, O: IntoIterator, F: Fn(&mut U, I) -> O + Copy + Send
 
 impl<U, I, O: IntoIterator, F: Fn(&mut U, I) -> O + Copy + Send> Clone for UFnFlatMap<U, I, O, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 

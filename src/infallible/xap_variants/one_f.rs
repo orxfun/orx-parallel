@@ -9,7 +9,7 @@ pub struct OneF<X: Xap<Size = One>, G: FilterMap<I = X::O>> {
 
 impl<X: Xap<Size = One>, G: FilterMap<I = X::O>> Clone for OneF<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

@@ -5,7 +5,7 @@ pub struct UFnMap<U, I, O, F: Fn(&mut U, I) -> O + Copy + Send>(F, PhantomData<(
 
 impl<U, I, O, F: Fn(&mut U, I) -> O + Copy + Send> Clone for UFnMap<U, I, O, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 

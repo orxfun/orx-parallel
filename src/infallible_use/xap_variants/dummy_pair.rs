@@ -15,10 +15,7 @@ impl<X: XapUse, V: Send> UDummyPair<X, V> {
 
 impl<X: XapUse, V: Send> Clone for UDummyPair<X, V> {
     fn clone(&self) -> Self {
-        Self {
-            x: self.x,
-            p: PhantomData,
-        }
+        *self
     }
 }
 
