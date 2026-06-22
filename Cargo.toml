@@ -78,7 +78,7 @@ required-features = ["rayon-core"]
 
 # benchmarks
 
-## benchmarks - heterogeneoity
+## benchmarks - heterogeneity
 
 [[bench]]
 name = "het-simple"
