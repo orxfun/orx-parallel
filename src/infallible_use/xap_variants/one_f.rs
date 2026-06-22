@@ -9,7 +9,7 @@ pub struct UOneF<X: XapUse<Size = One>, G: UFilterMap<U = X::U, I = X::O>> {
 
 impl<X: XapUse<Size = One>, G: UFilterMap<U = X::U, I = X::O>> Clone for UOneF<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

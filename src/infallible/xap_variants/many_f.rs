@@ -10,7 +10,7 @@ pub struct ManyF<X: Xap<Size = Many>, G: FilterMap<I = X::O>> {
 
 impl<X: Xap<Size = Many>, G: FilterMap<I = X::O>> Clone for ManyF<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

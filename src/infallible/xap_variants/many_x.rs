@@ -9,7 +9,7 @@ pub struct ManyX<X: Xap<Size = Many>, G: FlatMap<I = X::O>> {
 
 impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Clone for ManyX<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

@@ -7,7 +7,7 @@ pub struct Id<I>(PhantomData<I>);
 
 impl<I> Clone for Id<I> {
     fn clone(&self) -> Self {
-        Self::new()
+        *self
     }
 }
 

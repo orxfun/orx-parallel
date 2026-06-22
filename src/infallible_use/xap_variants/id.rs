@@ -10,10 +10,7 @@ pub struct IdUse<X: Xap, U> {
 
 impl<X: Xap, U> Clone for IdUse<X, U> {
     fn clone(&self) -> Self {
-        Self {
-            x: self.x,
-            p: PhantomData,
-        }
+        *self
     }
 }
 

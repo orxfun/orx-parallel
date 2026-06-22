@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
@@ -633,7 +635,7 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     where
         F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
-        self.map(|u, x| f(u, &x)).find(|_, x| *x == false).is_none()
+        self.map(|u, x| f(u, &x)).find(|_, x| !*x).is_none()
     }
 
     /// Returns `true` if any item satisfies predicate `f`.
@@ -652,7 +654,7 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     where
         F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
     {
-        self.map(|u, x| f(u, &x)).find(|_, x| *x == true).is_some()
+        self.map(|u, x| f(u, &x)).find(|_, x| *x).is_some()
     }
 
     /// Counts elements.

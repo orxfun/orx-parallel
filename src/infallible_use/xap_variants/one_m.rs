@@ -9,7 +9,7 @@ pub struct UOneM<X: XapUse<Size = One>, G: UMap<U = X::U, I = X::O>> {
 
 impl<X: XapUse<Size = One>, G: UMap<U = X::U, I = X::O>> Clone for UOneM<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

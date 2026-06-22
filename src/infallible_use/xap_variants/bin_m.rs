@@ -9,7 +9,7 @@ pub struct UBinM<X: XapUse<Size = Bin>, G: UMap<U = X::U, I = X::O>> {
 
 impl<X: XapUse<Size = Bin>, G: UMap<U = X::U, I = X::O>> Clone for UBinM<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

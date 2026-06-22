@@ -11,7 +11,7 @@ pub struct OneM<X: Xap<Size = One>, G: Map<I = X::O>> {
 
 impl<X: Xap<Size = One>, G: Map<I = X::O>> Clone for OneM<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

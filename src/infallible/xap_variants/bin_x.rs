@@ -10,7 +10,7 @@ pub struct BinX<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> {
 
 impl<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> Clone for BinX<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

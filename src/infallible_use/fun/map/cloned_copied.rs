@@ -7,7 +7,7 @@ pub struct UFnCloned<'a, U, I: Clone>(PhantomData<&'a (I, U)>);
 
 impl<'a, U, I: Clone> Clone for UFnCloned<'a, U, I> {
     fn clone(&self) -> Self {
-        Self::new()
+        *self
     }
 }
 
@@ -40,7 +40,7 @@ pub struct UFnCopied<'a, U, I: Copy>(PhantomData<&'a (I, U)>);
 
 impl<'a, U, I: Copy> Clone for UFnCopied<'a, U, I> {
     fn clone(&self) -> Self {
-        Self::new()
+        *self
     }
 }
 

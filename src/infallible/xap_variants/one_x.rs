@@ -9,7 +9,7 @@ pub struct OneX<X: Xap<Size = One>, G: FlatMap<I = X::O>> {
 
 impl<X: Xap<Size = One>, G: FlatMap<I = X::O>> Clone for OneX<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

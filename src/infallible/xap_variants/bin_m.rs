@@ -11,7 +11,7 @@ pub struct BinM<X: Xap<Size = Bin>, G: Map<I = X::O>> {
 
 impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Clone for BinM<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

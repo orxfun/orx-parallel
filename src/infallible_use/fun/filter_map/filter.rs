@@ -5,7 +5,7 @@ pub struct UFnFil<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send>(F, PhantomData<
 
 impl<U, I, F: Fn(&mut U, &I) -> bool + Copy + Send> Clone for UFnFil<U, I, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 

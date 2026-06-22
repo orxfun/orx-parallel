@@ -10,7 +10,7 @@ pub struct UManyF<X: XapUse<Size = Many>, G: UFilterMap<U = X::U, I = X::O>> {
 
 impl<X: XapUse<Size = Many>, G: UFilterMap<U = X::U, I = X::O>> Clone for UManyF<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 
