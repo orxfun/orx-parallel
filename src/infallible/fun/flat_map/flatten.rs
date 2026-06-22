@@ -5,7 +5,7 @@ pub struct FnFlatten<I: IntoIterator>(PhantomData<I>);
 
 impl<I: IntoIterator> Clone for FnFlatten<I> {
     fn clone(&self) -> Self {
-        Self::new()
+        *self
     }
 }
 

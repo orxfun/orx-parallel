@@ -5,7 +5,7 @@ pub struct FnMap<I, O, F: Fn(I) -> O + Copy + Send>(F, PhantomData<I>);
 
 impl<I, O, F: Fn(I) -> O + Copy + Send> Clone for FnMap<I, O, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 

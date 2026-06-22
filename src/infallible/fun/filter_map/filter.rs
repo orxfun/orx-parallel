@@ -5,7 +5,7 @@ pub struct FnFil<I, F: Fn(&I) -> bool + Copy + Send>(F, PhantomData<I>);
 
 impl<I, F: Fn(&I) -> bool + Copy + Send> Clone for FnFil<I, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 

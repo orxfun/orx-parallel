@@ -7,7 +7,7 @@ pub struct FnCloned<'a, I: Clone>(PhantomData<&'a I>);
 
 impl<'a, I: Clone> Clone for FnCloned<'a, I> {
     fn clone(&self) -> Self {
-        Self::new()
+        *self
     }
 }
 
@@ -38,7 +38,7 @@ pub struct FnCopied<'a, I: Copy>(PhantomData<&'a I>);
 
 impl<'a, I: Copy> Clone for FnCopied<'a, I> {
     fn clone(&self) -> Self {
-        Self::new()
+        *self
     }
 }
 

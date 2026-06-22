@@ -5,7 +5,7 @@ pub struct FnFlatMap<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send>(F, Phantom
 
 impl<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send> Clone for FnFlatMap<I, O, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 
