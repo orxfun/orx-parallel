@@ -197,7 +197,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 ///
 /// This is the default thread pool used when "std" feature is enabled.
 /// Note that the thread pool to be used for a parallel computation can be set by the
-/// [`with_runner`] transformation separately for each parallel iterator.
+/// [`runner`] transformation separately for each parallel iterator.
 ///
 /// Value of [`max_num_threads`] is determined as the minimum of:
 ///
@@ -205,7 +205,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 /// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", when set.
 ///
 /// [`max_num_threads`]: ParThreadPool::max_num_threads
-/// [`with_runner`]: crate::ParIter::with_runner
+/// [`runner`]: crate::Par::runner
 #[derive(Clone)]
 pub struct BasicPool {
     max_num_threads: NonZeroUsize,

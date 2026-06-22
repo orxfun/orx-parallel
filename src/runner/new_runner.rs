@@ -8,7 +8,7 @@ use crate::runner::runner_variants::FixedChunkRunner;
 /// A runner is passed to `.runner(...)` on a parallel iterator to select the execution strategy.
 ///
 /// > **Note:** `Runner` is a convenience factory for the runners provided by this crate.
-/// > You can also implement [`ParRunner`] yourself and pass it directly to `.runner(...)` —
+/// > You can also implement a compatible runner type yourself and pass it directly to `.runner(...)` —
 /// > the transformation accepts any type that satisfies the trait.
 ///
 /// # Examples
