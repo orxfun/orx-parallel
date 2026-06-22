@@ -40,7 +40,7 @@ use core::num::NonZeroUsize;
 ///
 /// # Implementations
 ///
-/// - [`OncePool`](crate::OncePool) - Lightweight virtual pool, spawns threads on-demand
+/// - [`Pool::once`](crate::Pool::once) - Lightweight virtual pool, spawns threads on-demand
 /// - [`BasicPool`](crate::BasicPool) - Persistent thread pool
 /// - Rayon thread pools via `Pool::rayon()`
 ///

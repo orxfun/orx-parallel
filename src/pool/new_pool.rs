@@ -49,7 +49,7 @@ use crate::{BasicPool, NumThreads, pool::pool_impl::OncePool};
 pub struct Pool;
 
 impl Pool {
-    /// Creates an [`OncePool`] with the specified thread configuration.
+    /// Creates a lightweight on-demand pool with the specified thread configuration.
     ///
     /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before
     /// a computation starts and releases them immediately after. This reduces overhead when
