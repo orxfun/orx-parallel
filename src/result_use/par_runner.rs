@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use crate::infallible_use::XapUse;
 use crate::result_use::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};

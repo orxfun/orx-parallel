@@ -10,7 +10,7 @@ pub struct UBinX<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> {
 
 impl<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> Clone for UBinX<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

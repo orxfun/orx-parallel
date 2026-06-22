@@ -52,7 +52,7 @@ test-case = "3.3.1"
 all-features = true
 
 [features]
-default = ["std"]
+default = ["std", "experimental", "long-tests"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 long-tests = []
@@ -78,7 +78,7 @@ required-features = ["rayon-core"]
 
 # benchmarks
 
-## benchmarks - heterogeneoity
+## benchmarks - heterogeneity
 
 [[bench]]
 name = "het-simple"

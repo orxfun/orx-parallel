@@ -5,7 +5,7 @@ pub struct FnIns<I, F: Fn(&I) + Copy + Send>(F, PhantomData<I>);
 
 impl<I, F: Fn(&I) + Copy + Send> Clone for FnIns<I, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 

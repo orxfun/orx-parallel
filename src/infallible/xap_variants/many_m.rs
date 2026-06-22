@@ -12,7 +12,7 @@ pub struct ManyM<X: Xap<Size = Many>, G: Map<I = X::O>> {
 
 impl<X: Xap<Size = Many>, G: Map<I = X::O>> Clone for ManyM<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

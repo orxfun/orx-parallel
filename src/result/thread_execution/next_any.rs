@@ -26,7 +26,7 @@ where
         match chunk_size {
             0 | 1 => match iter.next_by(th_idx) {
                 Some(i) => {
-                    for a in S::xap_res(x1, x2, i) {
+                    if let Some(a) = S::xap_res(x1, x2, i).into_iter().next() {
                         Q::broadcast_stop(iter, state, chunk_state);
                         match a {
                             Ok(a) => return Ok(Some(a)),
@@ -42,7 +42,7 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| S::xap_res(x1, x2, i)) {
+                        if let Some(a) = chunk.flat_map(|i| S::xap_res(x1, x2, i)).next() {
                             Q::broadcast_stop(iter, state, chunk_state);
                             match a {
                                 Ok(a) => return Ok(Some(a)),

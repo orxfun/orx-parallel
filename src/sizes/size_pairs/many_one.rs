@@ -30,7 +30,7 @@ impl SizePair for ManyOne {
         X2: Xap<I = M, Size = Self::S2>,
     {
         let iter = x1.xap(i).into_iter();
-        IterOptManyOne { iter, x2: x2 }
+        IterOptManyOne { iter, x2 }
     }
 
     // result

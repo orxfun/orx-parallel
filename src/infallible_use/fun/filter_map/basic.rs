@@ -5,7 +5,7 @@ pub struct UFnFilMap<U, I, O, F: Fn(&mut U, I) -> Option<O> + Copy + Send>(F, Ph
 
 impl<U, I, O, F: Fn(&mut U, I) -> Option<O> + Copy + Send> Clone for UFnFilMap<U, I, O, F> {
     fn clone(&self) -> Self {
-        Self::new(self.0)
+        *self
     }
 }
 

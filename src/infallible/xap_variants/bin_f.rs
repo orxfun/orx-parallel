@@ -9,7 +9,7 @@ pub struct BinF<X: Xap<Size = Bin>, G: FilterMap<I = X::O>> {
 
 impl<X: Xap<Size = Bin>, G: FilterMap<I = X::O>> Clone for BinF<X, G> {
     fn clone(&self) -> Self {
-        Self::new(self.x, self.g)
+        *self
     }
 }
 

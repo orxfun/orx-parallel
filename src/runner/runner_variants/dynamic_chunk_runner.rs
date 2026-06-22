@@ -52,11 +52,10 @@ const SLOWDOWN_FACTOR_PCT: u64 = 135;
 
 impl State {
     fn ratio_to_pct(numerator: u64, denominator: u64) -> u64 {
-        if denominator == 0 {
-            0
-        } else {
-            numerator.saturating_mul(100) / denominator
-        }
+        numerator
+            .saturating_mul(100)
+            .checked_div(denominator)
+            .unwrap_or(0)
     }
 
     fn ewma(previous: u64, sample: u64, numerator: u64, denominator: u64) -> u64 {
@@ -99,7 +98,7 @@ impl State {
             Mode::Explore => true,
             Mode::Bulk => {
                 let samples = self.sample_count.load(Ordering::Relaxed);
-                samples < 10 || (samples % 50) == 0
+                samples < 10 || samples.is_multiple_of(50)
             }
             Mode::Adaptive => true,
         }
@@ -277,14 +276,14 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
                 if probe_idx < NUM_PROBES {
                     let chunk_size = PROBE_SIZES[probe_idx];
                     state.probe_idx.fetch_add(1, Ordering::Relaxed);
-                    return min(chunk_size, remaining);
+                    min(chunk_size, remaining)
                 } else {
-                    return state.min_chunk_for_remaining(remaining);
+                    state.min_chunk_for_remaining(remaining)
                 }
             }
             Mode::Bulk => {
                 let current = state.next_chunk_size.load(Ordering::Relaxed);
-                return min(current, remaining);
+                min(current, remaining)
             }
             Mode::Adaptive => {
                 if state.take_conservative_run() {
@@ -295,7 +294,7 @@ impl<P: ParThreadPool> ParRunner for DynChunkRunner<P> {
                     .next_chunk_size
                     .load(Ordering::Relaxed)
                     .max(state.min_chunk_size);
-                return min(current, remaining);
+                min(current, remaining)
             }
         }
     }

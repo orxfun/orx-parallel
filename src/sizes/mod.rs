@@ -1,6 +1,7 @@
 mod size;
 mod size_pair;
 mod size_pairs;
+#[allow(clippy::module_inception)]
 mod sizes;
 
 pub use size::Size;
