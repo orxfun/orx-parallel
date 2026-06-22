@@ -32,7 +32,7 @@ pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: &mut Vec<T>) 
     let mut pos_indices = vec![0; results.len()];
 
     for (v, vec) in results.iter().enumerate() {
-        if let Some(pos) = vec.positions.get(0) {
+        if let Some(pos) = vec.positions.first() {
             queue.push(VecPos::new(v, 0, pos.len), pos.idx);
         }
     }
@@ -75,7 +75,7 @@ pub fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
     let mut pos_indices = vec![0; results.len()];
 
     for (v, vec) in results.iter().enumerate() {
-        if let Some(pos) = vec.positions.get(0) {
+        if let Some(pos) = vec.positions.first() {
             queue.push(VecPos::new(v, 0, pos.len), pos.idx);
         }
     }

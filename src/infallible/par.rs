@@ -367,8 +367,8 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         Self::Xap: Xap<O = Option<T>>,
     {
         let (iter, xap, exe, params) = self.destruct();
-        let x = ParOptionIter::new(iter, xap, Id::new(), exe, params);
-        x
+        
+        ParOptionIter::new(iter, xap, Id::new(), exe, params)
     }
 
     /// Converts `Par<Item = Result<T, E>>` into `ParResult<Item = T, Error = E>`.
@@ -621,7 +621,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         U: Sync + 'a,
     {
         assert!(
-            slice.len() > 0,
+            !slice.is_empty(),
             "Number of parallel threads is limited to slice.len(); and hence, slice cannot be empty."
         );
         let (iter, xap, exe, params) = self.destruct();
@@ -902,7 +902,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     where
         F: Fn(&Self::Item) -> bool + Sync,
     {
-        self.map(|x| f(&x)).find(|x| *x == false).is_none()
+        self.map(|x| f(&x)).find(|x| !*x).is_none()
     }
 
     /// Returns `true` if any item satisfies predicate `f`.
@@ -924,7 +924,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     where
         F: Fn(&Self::Item) -> bool + Sync,
     {
-        self.map(|x| f(&x)).find(|x| *x == true).is_some()
+        self.map(|x| f(&x)).find(|x| *x).is_some()
     }
 
     /// Counts elements.
