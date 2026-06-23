@@ -56,18 +56,20 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let baseline: usize = (0..1000).into_par().sum();
     ///
-    /// let baseline: usize = (0..1000).into_par().sum();
+    ///     let configured: usize = (0..1000)
+    ///         .into_par()
+    ///         .runner(Runner::fixed_chunk(Pool::once(4)))
+    ///         .sum();
     ///
-    /// let configured: usize = (0..1000)
-    ///     .into_par()
-    ///     .runner(Runner::fixed_chunk(Pool::once(4)))
-    ///     .sum();
-    ///
-    /// assert_eq!(baseline, configured);
+    ///     assert_eq!(baseline, configured);
+    /// }
     /// ```
     fn runner<Q: ParRunner>(
         self,
@@ -82,17 +84,19 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let sum = (1..100_001)
+    ///         .into_par()
+    ///         .num_threads(4)
+    ///         .runner_with_diagnostics()
+    ///         .sum();
     ///
-    /// let sum = (1..100_001)
-    ///     .into_par()
-    ///     .num_threads(4)
-    ///     .runner_with_diagnostics()
-    ///     .sum();
-    ///
-    /// assert_eq!(sum, 5000050000);
+    ///     assert_eq!(sum, 5000050000);
+    /// }
     /// ```
     ///
     /// This will print a summary report which currently looks like the following:
@@ -157,7 +161,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// {
     ///     let sum: usize = (1..101)
     ///         .into_par()
-    ///         .pool(Pool::rayon(8))
+    ///         .pool(Pool::rayon(8).unwrap())
     ///         .sum();
     ///     assert_eq!(sum, 5050);
     /// }

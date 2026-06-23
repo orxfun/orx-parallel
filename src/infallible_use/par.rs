@@ -88,17 +88,19 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let sum: usize = (1..101)
+    ///         .into_par()
+    ///         .use_new(|_| ())
+    ///         .runner(Runner::fixed_chunk(Pool::once(4)))
+    ///         .sum();
     ///
-    /// let sum: usize = (1..101)
-    ///     .into_par()
-    ///     .use_new(|_| ())
-    ///     .runner(Runner::fixed_chunk(Pool::once(4)))
-    ///     .sum();
-    ///
-    /// assert_eq!(sum, 5050);
+    ///     assert_eq!(sum, 5050);
+    /// }
     /// ```
     fn runner<Q: ParRunner>(
         self,
@@ -114,17 +116,19 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let sum: usize = (1..1001)
+    ///         .into_par()
+    ///         .use_new(|_| ())
+    ///         .runner_with_diagnostics()
+    ///         .sum();
     ///
-    /// let sum: usize = (1..1001)
-    ///     .into_par()
-    ///     .use_new(|_| ())
-    ///     .runner_with_diagnostics()
-    ///     .sum();
-    ///
-    /// assert_eq!(sum, 500500);
+    ///     assert_eq!(sum, 500500);
+    /// }
     /// ```
     fn runner_with_diagnostics(
         self,
@@ -154,7 +158,7 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     ///     let sum: usize = (1..101)
     ///         .into_par()
     ///         .use_new(|_| ())
-    ///         .pool(Pool::rayon(4))
+    ///         .pool(Pool::rayon(4).unwrap())
     ///         .sum();
     ///     assert_eq!(sum, 5050);
     /// }

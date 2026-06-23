@@ -14,14 +14,18 @@ use crate::runner::runner_variants::FixedChunkRunner;
 /// # Examples
 ///
 /// ```rust
-/// use orx_parallel::*;
+/// # #[cfg(not(feature = "std"))] fn main() {}
+/// #[cfg(feature = "std")]
+/// {
+///     use orx_parallel::*;
 ///
-/// let pool = Pool::once(4);
-/// let sum: usize = (0..1000)
-///     .into_par()
-///     .runner(Runner::fixed_chunk(pool))
-///     .map(|x| x * 2)
-///     .sum();
+///     let pool = Pool::once(4);
+///     let sum: usize = (0..1000)
+///         .into_par()
+///         .runner(Runner::fixed_chunk(pool))
+///         .map(|x| x * 2)
+///         .sum();
+/// }
 /// ```
 pub struct Runner;
 
@@ -34,14 +38,18 @@ impl Runner {
     /// # Example
     ///
     /// ```rust
-    /// use orx_parallel::*;
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// let pool = Pool::once(4);
-    /// let result: Vec<_> = (0..100)
-    ///     .into_par()
-    ///     .runner(Runner::fixed_chunk(pool))
-    ///     .map(|x| x + 1)
-    ///     .collect();
+    ///     let pool = Pool::once(4);
+    ///     let result: Vec<_> = (0..100)
+    ///         .into_par()
+    ///         .runner(Runner::fixed_chunk(pool))
+    ///         .map(|x| x + 1)
+    ///         .collect();
+    /// }
     /// ```
     pub fn fixed_chunk<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
         FixedChunkRunner::new(pool)
