@@ -31,6 +31,8 @@ mod result;
 mod result_use;
 mod results;
 mod runner;
+#[cfg(feature = "std")]
+pub mod scope;
 mod sizes;
 mod use_var;
 
