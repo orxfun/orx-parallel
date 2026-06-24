@@ -69,18 +69,20 @@ pub trait ParResult:
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let out: Result<Vec<_>, _> = ["1", "2", "3"]
+    ///         .into_par()
+    ///         .map(|s| s.parse::<usize>())
+    ///         .into_fallible()
+    ///         .runner(Runner::fixed_chunk(Pool::once(4)))
+    ///         .collect();
     ///
-    /// let out: Result<Vec<_>, _> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<usize>())
-    ///     .into_fallible()
-    ///     .runner(Runner::fixed_chunk(Pool::once(4)))
-    ///     .collect();
-    ///
-    /// assert_eq!(out, Ok(vec![1, 2, 3]));
+    ///     assert_eq!(out, Ok(vec![1, 2, 3]));
+    /// }
     /// ```
     fn runner<Q: ParRunner>(
         self,
@@ -101,18 +103,20 @@ pub trait ParResult:
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let out: Result<Vec<_>, _> = ["1", "2", "3"]
+    ///         .into_par()
+    ///         .map(|s| s.parse::<usize>())
+    ///         .into_fallible()
+    ///         .runner_with_diagnostics()
+    ///         .collect();
     ///
-    /// let out: Result<Vec<_>, _> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<usize>())
-    ///     .into_fallible()
-    ///     .runner_with_diagnostics()
-    ///     .collect();
-    ///
-    /// assert_eq!(out, Ok(vec![1, 2, 3]));
+    ///     assert_eq!(out, Ok(vec![1, 2, 3]));
+    /// }
     /// ```
     fn runner_with_diagnostics(
         self,

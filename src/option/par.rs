@@ -67,18 +67,20 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///         .into_par()
+    ///         .map(|s| s.parse::<usize>().ok())
+    ///         .into_optional()
+    ///         .runner(Runner::fixed_chunk(Pool::once(4)))
+    ///         .collect();
     ///
-    /// let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<usize>().ok())
-    ///     .into_optional()
-    ///     .runner(Runner::fixed_chunk(Pool::once(4)))
-    ///     .collect();
-    ///
-    /// assert_eq!(out, Some(vec![1, 2, 3]));
+    ///     assert_eq!(out, Some(vec![1, 2, 3]));
+    /// }
     /// ```
     fn runner<Q: ParRunner>(
         self,
@@ -98,18 +100,20 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// # Examples
     ///
     /// ```
-    /// #![cfg(feature = "std")]
+    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// #[cfg(feature = "std")]
+    /// {
+    ///     use orx_parallel::*;
     ///
-    /// use orx_parallel::*;
+    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
+    ///         .into_par()
+    ///         .map(|s| s.parse::<usize>().ok())
+    ///         .into_optional()
+    ///         .runner_with_diagnostics()
+    ///         .collect();
     ///
-    /// let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<usize>().ok())
-    ///     .into_optional()
-    ///     .runner_with_diagnostics()
-    ///     .collect();
-    ///
-    /// assert_eq!(out, Some(vec![1, 2, 3]));
+    ///     assert_eq!(out, Some(vec![1, 2, 3]));
+    /// }
     /// ```
     fn runner_with_diagnostics(
         self,
@@ -146,7 +150,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     ///         .into_par()
     ///         .map(|s| s.parse::<usize>().ok())
     ///         .into_optional()
-    ///         .pool(Pool::rayon(4))
+    ///         .pool(Pool::rayon(4).unwrap())
     ///         .collect();
     ///     assert_eq!(out, Some(vec![1, 2, 3]));
     /// }
