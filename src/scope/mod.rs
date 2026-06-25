@@ -62,7 +62,7 @@ mod handle;
 mod task;
 
 pub use handle::DynamicGroup;
-pub use task::{Task, TaskQueue, TaskQueueTrait, TaskSingle};
+pub use task::{Task, TaskQueue, TaskQueuePushBack, TaskQueueTrait, TaskSingle};
 
 #[cfg(test)]
 mod tests {

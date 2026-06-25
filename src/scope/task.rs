@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 
 use crate::ParThreadPool;
+use orx_meta::queue::{Queue, QueueSingle, StQueue};
 use std::sync::{Arc, Mutex};
 
 /// A unit of work that can be executed and returns a result.
@@ -37,6 +38,17 @@ pub trait Task: Send {
     fn run(self) -> Self::Output;
 }
 
+pub type TaskSingle<T> = QueueSingle<T>;
+pub type TaskQueue<F, B> = Queue<F, B>;
+
+pub trait TaskQueuePushBack: StQueue + Sized {
+    fn push_back<T: Task>(self, task: T) -> Self::PushBack<T> {
+        self.push(task)
+    }
+}
+
+impl<Q: StQueue> TaskQueuePushBack for Q {}
+
 pub struct TaskJoin<T: Send> {
     result: Arc<Mutex<Option<T>>>,
 }
@@ -69,72 +81,6 @@ impl<T: Send> TaskJoin<T> {
     }
 }
 
-/// A single-element task queue that wraps a `Task`.
-///
-/// This is the simplest container for a task, allowing it to be stored
-/// and executed later while maintaining full type information.
-///
-/// # Example
-///
-/// ```ignore
-/// use orx_parallel::scope::{Task, TaskSingle};
-///
-/// struct MyTask;
-/// impl Task for MyTask {
-///     type Output = i32;
-///     fn run(self) -> Self::Output { 42 }
-/// }
-///
-/// let queue = TaskSingle::new(MyTask);
-/// let result = queue.run_inline();
-/// assert_eq!(result, 42);
-/// ```
-pub struct TaskSingle<T: Task> {
-    task: T,
-}
-
-impl<T: Task + 'static> TaskSingle<T> {
-    /// Create a new single-element task queue.
-    pub fn new(task: T) -> Self {
-        Self { task }
-    }
-
-    /// Execute this task synchronously and return its output.
-    ///
-    /// This runs the task on the current thread immediately, without
-    /// any pool or async machinery. It's useful for testing or for
-    /// sequential execution within a larger computation.
-    pub fn run_inline(self) -> T::Output {
-        self.task.run()
-    }
-
-    /// Create a two-task queue by appending `task` to this queue.
-    pub fn push_back<U: Task + 'static>(self, task: U) -> TaskQueue<Self, TaskSingle<U>> {
-        TaskQueue::new(self, TaskSingle::new(task))
-    }
-}
-
-/// A recursively-composed task queue.
-///
-/// Each node keeps two sub-queues. Running the queue with a pool schedules both
-/// sides in parallel and recursively preserves that structure.
-pub struct TaskQueue<F: TaskQueueTrait, B: TaskQueueTrait> {
-    front: F,
-    back: B,
-}
-
-impl<F: TaskQueueTrait + 'static, B: TaskQueueTrait + 'static> TaskQueue<F, B> {
-    /// Create a new task queue from two sub-queues.
-    pub fn new(front: F, back: B) -> Self {
-        Self { front, back }
-    }
-
-    /// Append a task to the back of this queue.
-    pub fn push_back<T: Task + 'static>(self, task: T) -> TaskQueue<Self, TaskSingle<T>> {
-        TaskQueue::new(self, TaskSingle::new(task))
-    }
-}
-
 /// A marker trait for task queue implementations.
 ///
 /// A task queue can contain multiple tasks arranged in a hierarchy.
@@ -161,7 +107,6 @@ pub trait TaskQueueTrait: Send {
 
     fn join(handle: Self::JoinHandle) -> Self::Output;
 
-    /// Execute this queue using a pool.
     fn run_with_pool<P>(self, pool: &mut P) -> Self::Output
     where
         P: ParThreadPool,
@@ -182,7 +127,7 @@ impl<T: Task + 'static> TaskQueueTrait for TaskSingle<T> {
     type JoinHandle = TaskJoin<T::Output>;
 
     fn run_inline(self) -> Self::Output {
-        self.task.run()
+        self.pop().run()
     }
 
     fn spawn_with<'s, 'env, 'scope, P>(
@@ -197,7 +142,7 @@ impl<T: Task + 'static> TaskQueueTrait for TaskSingle<T> {
     {
         let join = TaskJoin::new();
         let join_clone = join.clone();
-        let task = Arc::new(Mutex::new(Some(self.task)));
+        let task = Arc::new(Mutex::new(Some(self.pop())));
 
         P::run_in_scope(scope_ref, move || {
             let task = task
@@ -218,14 +163,15 @@ impl<T: Task + 'static> TaskQueueTrait for TaskSingle<T> {
 
 impl<F, B> TaskQueueTrait for TaskQueue<F, B>
 where
-    F: TaskQueueTrait + 'static,
-    B: TaskQueueTrait + 'static,
+    F: Task + 'static,
+    B: TaskQueueTrait + StQueue + 'static,
 {
     type Output = (F::Output, B::Output);
-    type JoinHandle = (F::JoinHandle, B::JoinHandle);
+    type JoinHandle = (TaskJoin<F::Output>, B::JoinHandle);
 
     fn run_inline(self) -> Self::Output {
-        (self.front.run_inline(), self.back.run_inline())
+        let (front, back) = self.pop();
+        (front.run(), back.run_inline())
     }
 
     fn spawn_with<'s, 'env, 'scope, P>(
@@ -238,13 +184,28 @@ where
         'env: 'scope + 's,
         Self: 'scope + 'env,
     {
-        let front = self.front.spawn_with::<P>(scope_ref);
-        let back = self.back.spawn_with::<P>(scope_ref);
-        (front, back)
+        let (front, back) = self.pop();
+
+        let front_join = TaskJoin::new();
+        let front_join_clone = front_join.clone();
+        let front_task = Arc::new(Mutex::new(Some(front)));
+
+        P::run_in_scope(scope_ref, move || {
+            let front_task = front_task
+                .lock()
+                .expect("poisoned task queue lock")
+                .take()
+                .expect("task queue item executed more than once");
+            front_join_clone.store(front_task.run());
+        });
+
+        let back_join = back.spawn_with::<P>(scope_ref);
+
+        (front_join, back_join)
     }
 
     fn join(handle: Self::JoinHandle) -> Self::Output {
-        (F::join(handle.0), B::join(handle.1))
+        (handle.0.join(), B::join(handle.1))
     }
 }
 
@@ -274,7 +235,7 @@ mod tests {
         let queue = TaskSingle::new(Add(1)).push_back(Add(2)).push_back(Add(3));
 
         let result = queue.run_inline();
-        assert_eq!(result, ((2, 3), 4));
+        assert_eq!(result, (2, (3, 4)));
     }
 
     #[test]
