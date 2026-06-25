@@ -6,7 +6,7 @@
 //! To run: cargo run --example scope_api --features std
 
 use orx_parallel::Pool;
-use orx_parallel::scope::{Task, TaskQueuePushBack, TaskQueueTrait, TaskSingle};
+use orx_parallel::scope_poc::{Task, TaskQueuePushBack, TaskQueueTrait, TaskSingle};
 use std::time::{Duration, Instant};
 
 // ============================================================================

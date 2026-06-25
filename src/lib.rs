@@ -32,7 +32,7 @@ mod result_use;
 mod results;
 mod runner;
 #[cfg(feature = "std")]
-pub mod scope;
+pub mod scope_poc;
 mod sizes;
 mod use_var;
 
