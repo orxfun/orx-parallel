@@ -17,6 +17,7 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+mod adhoc;
 mod collectables;
 mod common_par_traits;
 mod infallible;
