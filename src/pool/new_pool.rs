@@ -1,5 +1,7 @@
 #[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
+#[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
+use crate::pool::pool_impl::WasmWebPool;
 #[cfg(feature = "std")]
 use crate::{BasicPool, pool::pool_impl::OncePool};
 
@@ -202,5 +204,24 @@ impl Pool {
         rayon_core::ThreadPoolBuilder::new()
             .num_threads(num_threads)
             .build()
+    }
+
+    /// Creates a wasm web-thread pool adapter backed by Rayon's global runtime.
+    ///
+    /// This pool is intended for `wasm32` web builds where the global Rayon pool
+    /// is initialized by `wasm-bindgen-rayon`.
+    ///
+    /// # Parameters
+    ///
+    /// - `num_threads` - Desired maximum number of threads for computations:
+    ///   - `NumThreads::Auto` uses Rayon's maximum supported thread count
+    ///   - `NumThreads::Max(n)` caps usage at `n`
+    ///
+    /// # Features
+    ///
+    /// Requires `wasm-web-threads` feature and `wasm32` target.
+    #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
+    pub fn wasm_web(num_threads: impl Into<NumThreads>) -> WasmWebPool {
+        WasmWebPool::new(num_threads)
     }
 }
