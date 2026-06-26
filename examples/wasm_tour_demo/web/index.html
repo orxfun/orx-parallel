@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orx-parallel wasm tour demo</title>
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --ink: #14213d;
+        --panel: #ffffff;
+        --accent: #0f766e;
+        --accent2: #f59e0b;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 20% 0%, #eef2ff 0, var(--bg) 55%);
+        color: var(--ink);
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      }
+      main {
+        max-width: 980px;
+        margin: 32px auto;
+        padding: 20px;
+      }
+      .card {
+        background: var(--panel);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(20, 33, 61, 0.08);
+        padding: 16px;
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 13px;
+      }
+      input {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: linear-gradient(90deg, var(--accent), #0ea5a1);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #status {
+        font-size: 14px;
+        min-height: 20px;
+        margin-bottom: 10px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .stat {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 8px;
+      }
+      .stat h3 {
+        margin: 0;
+        font-size: 12px;
+        color: #64748b;
+      }
+      .stat p {
+        margin: 4px 0 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      canvas {
+        width: 100%;
+        height: 430px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+      }
+      @media (max-width: 760px) {
+        .controls {
+          grid-template-columns: 1fr 1fr;
+        }
+        .stats {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>orx-parallel in browser wasm</h1>
+      <p>Find a short tour across hard-coded points by evaluating random permutations in parallel.</p>
+      <section class="card">
+        <div id="status">Initializing...</div>
+        <div class="controls">
+          <label>
+            Iterations
+            <input id="iterations" type="number" min="1" max="200000" value="10000" />
+          </label>
+          <label>
+            Threads
+            <input id="threads" type="number" min="1" max="64" value="4" />
+          </label>
+          <label>
+            Seed
+            <input id="seed" type="number" min="1" max="99999999" value="42" />
+          </label>
+          <label style="justify-content: flex-end;">
+            <span>&nbsp;</span>
+            <button id="run">Run parallel search</button>
+          </label>
+        </div>
+        <div class="stats">
+          <div class="stat"><h3>Best Distance</h3><p id="bestDistance">-</p></div>
+          <div class="stat"><h3>Elapsed</h3><p id="elapsed">-</p></div>
+          <div class="stat"><h3>Iterations/s</h3><p id="ips">-</p></div>
+        </div>
+        <canvas id="canvas" width="920" height="430"></canvas>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

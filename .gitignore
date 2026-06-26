@@ -15,3 +15,9 @@ Cargo.lock
 *.pdb
 
 benches/results/*.txt
+
+# wasm tour demo generated artifacts
+examples/wasm_tour_demo/web/node_modules/
+examples/wasm_tour_demo/web/dist/
+examples/wasm_tour_demo/web/pkg/
+examples/wasm_tour_demo/crate/target/
