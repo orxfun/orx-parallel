@@ -14,15 +14,8 @@ From repository root:
 ```bash
 cd examples/wasm_tour_demo
 
-RUSTFLAGS='-C target-feature=+atomics,+bulk-memory \
--Clink-arg=--shared-memory -Clink-arg=--max-memory=1073741824 \
--Clink-arg=--import-memory \
--Clink-arg=--export=__wasm_init_tls -Clink-arg=--export=__tls_size \
--Clink-arg=--export=__tls_align -Clink-arg=--export=__tls_base' \
-wasm-pack build crate \
-  --target web \
-  --out-dir ../web/pkg \
-  -- --features wasm-web-threads -Z build-std=panic_abort,std
+cd web
+npm run build:wasm
 ```
 
 ## Run frontend
@@ -30,7 +23,7 @@ wasm-pack build crate \
 ```bash
 cd web
 npm install
-npm run dev
+npm run dev:full
 ```
 
 Open the printed local URL. The Vite server is configured with COOP/COEP headers required for wasm threads.

@@ -17,3 +17,6 @@ rand = { version = "0.9", default-features = false, features = [
     "std",
     "small_rng",
 ] }
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
