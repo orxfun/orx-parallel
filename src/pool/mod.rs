@@ -10,6 +10,12 @@ pub use par_thread_pool::ParThreadPool;
 pub use pool_impl::BasicPool;
 #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
 pub use pool_impl::WasmWebPool;
+#[cfg(all(
+    feature = "wasm-web-threads",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool_impl::init_thread_pool;
 
 #[cfg(feature = "std")]
 pub type DefaultPool = pool_impl::OncePool;

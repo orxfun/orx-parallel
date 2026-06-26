@@ -16,6 +16,12 @@ mod rayon_core;
 mod wasm_web;
 #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
 pub use wasm_web::WasmWebPool;
+#[cfg(all(
+    feature = "wasm-web-threads",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use wasm_web::init_thread_pool;
 
 #[cfg(feature = "std")]
 mod basic;

@@ -1,6 +1,33 @@
 use crate::NumThreads;
 use crate::pool::ParThreadPool;
 use core::num::NonZeroUsize;
+use core::sync::atomic::{AtomicBool, Ordering};
+
+static WASM_WEB_THREAD_POOL_INIT_CALLED: AtomicBool = AtomicBool::new(false);
+
+#[cfg(target_feature = "atomics")]
+/// Initializes the worker-backed Rayon thread pool for wasm web builds.
+///
+/// This must be called (and awaited from JavaScript) before running parallel
+/// computations with [`WasmWebPool`].
+pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
+    WASM_WEB_THREAD_POOL_INIT_CALLED.store(true, Ordering::SeqCst);
+    wasm_bindgen_rayon::init_thread_pool(num_threads)
+}
+
+fn assert_wasm_thread_pool_initialized() {
+    if !cfg!(target_feature = "atomics") {
+        panic!(
+            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm_plan.md."
+        );
+    }
+
+    if !WASM_WEB_THREAD_POOL_INIT_CALLED.load(Ordering::SeqCst) {
+        panic!(
+            "Wasm web thread pool is not initialized. Call and await init_thread_pool(...) before running parallel computations."
+        );
+    }
+}
 
 /// wasm web-thread pool adapter backed by Rayon's global runtime.
 ///
@@ -51,6 +78,7 @@ impl ParThreadPool for WasmWebPool {
         'env: 'scope,
         for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,
     {
+        assert_wasm_thread_pool_initialized();
         rayon_core::scope(f)
     }
 
@@ -80,6 +108,7 @@ impl ParThreadPool for &WasmWebPool {
         'env: 'scope,
         for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,
     {
+        assert_wasm_thread_pool_initialized();
         rayon_core::scope(f)
     }
 
