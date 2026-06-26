@@ -1,60 +1,44 @@
-/// A unit of work that can be executed and returns a result.
-///
-/// The `Task` trait is the foundation of zero-cost parallel task composition.
-/// Tasks are `Send` to enable execution on thread pools.
-pub trait Task: Send {
-    /// The type of result produced by executing this task.
-    type Output: Send;
+pub trait Task {}
 
-    /// Execute the task and return its output.
-    fn run(self) -> Self::Output;
-}
+orx_meta::define_queue!(
+    elements => [Task];
+    queue => [Q; Qs, Qm];
+);
 
-// output
+impl<F: Task> Task for Qs<F> {}
 
-trait Oq {
-    type Push<O>: Oq;
-}
+impl<F: Task, B: Q> Task for Qm<F, B> {}
 
-struct Os<F> {
+pub struct TaskOf<O, F>
+where
+    F: FnOnce() -> O,
+{
     f: F,
+    output: Option<O>,
 }
 
-impl<F> Oq for Os<F> {
-    type Push<O> = Om<F, Os<O>>;
+impl<O, F: FnOnce() -> O> TaskOf<O, F> {
+    pub fn new(f: F) -> Self {
+        Self { f, output: None }
+    }
 }
 
-struct Om<F, B: Oq> {
-    f: F,
-    b: B,
-}
-
-impl<F, B: Oq> Oq for Om<F, B> {
-    type Push<O> = Om<F, B::Push<O>>;
-}
-
-// task
-
-trait Tq {
-    type O: Oq;
-
-    type Push<T: Task>: Tq<O = <Self::O as Oq>::Push<T::Output>>;
-
-    fn push<T: Task>(self, t: T) -> Self::Push<T>;
-}
+impl<O, F: FnOnce() -> O> Task for TaskOf<O, F> {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::*;
 
     #[test]
     fn abc() {
-        fn xyz<Q, T>(q: Q, t: T)
-        where
-            Q: Tq<O = usize>,
-            T: Task<Output = char>,
-        {
-            let q2 = q.push(t);
-        }
+        let q = Qm::new(TaskOf::new(|| 12))
+            .push(TaskOf::new(|| 'x'))
+            .push(TaskOf::new(|| true));
+
+        let mut pool = Pool::once(4);
+        pool.scoped_computation(|s| {
+            //
+        });
     }
 }
