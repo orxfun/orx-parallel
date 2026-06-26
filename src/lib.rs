@@ -47,6 +47,8 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(feature = "std")]
 pub use pool::BasicPool;
 pub use pool::{ParThreadPool, Pool};
+#[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
+pub use pool::WasmWebPool;
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
