@@ -1,0 +1,41 @@
+# orx-parallel wasm tour demo
+
+This demo shows how to run a parallel random tour search in the browser using `orx-parallel` wasm web threads.
+
+## Structure
+
+- `crate/`: Rust wasm compute module exporting `init_thread_pool`, `locations`, and `run_best_tour`.
+- `web/`: Vite frontend that initializes wasm threads, runs the search, and renders the best tour.
+
+## Build the wasm module
+
+From repository root:
+
+```bash
+cd examples/wasm_tour_demo
+
+RUSTFLAGS='-C target-feature=+atomics,+bulk-memory \
+-Clink-arg=--shared-memory -Clink-arg=--max-memory=1073741824 \
+-Clink-arg=--import-memory \
+-Clink-arg=--export=__wasm_init_tls -Clink-arg=--export=__tls_size \
+-Clink-arg=--export=__tls_align -Clink-arg=--export=__tls_base' \
+wasm-pack build crate \
+  --target web \
+  --out-dir ../web/pkg \
+  -- --features wasm-web-threads -Z build-std=panic_abort,std
+```
+
+## Run frontend
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Open the printed local URL. The Vite server is configured with COOP/COEP headers required for wasm threads.
+
+## Notes
+
+- `init_thread_pool(...)` must be awaited before running parallel workloads.
+- The thread count is effectively fixed after first initialization for the process lifetime.
