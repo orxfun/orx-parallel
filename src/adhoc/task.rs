@@ -25,11 +25,14 @@ impl<O> TaskOf<O> {
         f: F,
     ) -> Self
     where
-        F: FnOnce() -> O + Send,
+        F: FnOnce() -> O + Send + 'scope + 'env,
     {
         let x = Self { output: None };
+        let f = std::sync::Mutex::new(Some(f));
         P::run_in_scope(s, move || {
-            let result = f();
+            if let Some(func) = f.lock().unwrap().take() {
+                let _result = func();
+            }
         });
         x
     }
