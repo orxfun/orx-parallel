@@ -36,6 +36,8 @@ yastl = { version = "0.1.2", optional = true, default-features = false }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2", optional = true, default-features = false }
+
+[target.'cfg(all(target_arch = "wasm32", target_feature = "atomics"))'.dependencies]
 wasm-bindgen-rayon = { version = "1.3", optional = true, default-features = false }
 
 [dev-dependencies]
