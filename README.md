@@ -178,6 +178,7 @@ Optional features for advanced scenarios:
 - API docs: <https://docs.rs/orx-parallel>
 - Threading model: [docs/threading_model.md](docs/threading_model.md)
 - WebAssembly threads setup: [docs/wasm_web_threads.md](docs/wasm_web_threads.md)
+- WebAssembly rollout plan: [docs/wasm_plan.md](docs/wasm_plan.md)
 - Using mutable per-thread state safely: [docs/using.md](docs/using.md)
 - Examples folder: [examples](examples)
 - Bench suite: [benches](benches)
