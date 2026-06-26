@@ -169,6 +169,7 @@ orx-parallel = "3.4"
 Optional features for advanced scenarios:
 
 - `rayon-core` for direct Rayon thread pool integration,
+- `wasm-web-threads` for web wasm threading integration (requires wasm thread toolchain/runtime setup),
 - `experimental` for dynamic-chunk runner experiments,
 - `std` (enabled by default).
 
