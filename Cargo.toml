@@ -61,10 +61,10 @@ std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 long-tests = []
 wasm-web-threads = [
-	"std",
-	"rayon-core",
-	"dep:wasm-bindgen",
-	"dep:wasm-bindgen-rayon",
+    "std",
+    "rayon-core",
+    "dep:wasm-bindgen",
+    "dep:wasm-bindgen-rayon",
 ]
 
 
