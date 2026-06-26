@@ -22,7 +22,7 @@ orx-concurrent-bag = { git = "https://github.com/orxfun/orx-concurrent-bag/", br
 orx-concurrent-ordered-bag = { git = "https://github.com/orxfun/orx-concurrent-ordered-bag/", branch = "v4", default-features = false }
 orx-pinned-concurrent-col = { git = "https://github.com/orxfun/orx-pinned-concurrent-col/", branch = "v3", default-features = false }
 orx-concurrent-recursive-iter = { git = "https://github.com/orxfun/orx-concurrent-recursive-iter", branch = "v3", default-features = false }
-orx-meta = { version = "1.1.0", optional = true, default-features = false }
+orx-meta = { path = "../orx-meta", optional = true }
 
 # optional: generic iterator
 rayon = { version = "1.11.0", optional = true, default-features = false }
