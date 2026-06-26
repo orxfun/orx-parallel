@@ -179,6 +179,7 @@ Optional features for advanced scenarios:
 - Threading model: [docs/threading_model.md](docs/threading_model.md)
 - WebAssembly threads setup: [docs/wasm_web_threads.md](docs/wasm_web_threads.md)
 - WebAssembly rollout plan: [docs/wasm_plan.md](docs/wasm_plan.md)
+- WebAssembly compatibility, troubleshooting, and dual-build guidance: [docs/wasm_web_threads.md](docs/wasm_web_threads.md)
 - Using mutable per-thread state safely: [docs/using.md](docs/using.md)
 - Examples folder: [examples](examples)
 - Bench suite: [benches](benches)

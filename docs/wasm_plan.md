@@ -18,6 +18,15 @@ Enable orx-parallel to run in web wasm builds with real parallelism via Web Work
 ## Rollout Strategy
 Deliver in small, reviewable PRs with strict backward compatibility for native targets.
 
+## Implementation Status
+
+- PR1 completed.
+- PR2 completed.
+- PR3 completed.
+- PR4 completed.
+- PR5 completed.
+- PR6 completed.
+
 ## PR Roadmap
 
 ### PR1: Feature Gating and Dependency Skeleton
