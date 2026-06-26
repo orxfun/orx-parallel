@@ -40,7 +40,8 @@ async function setup() {
 runEl.addEventListener("click", async () => {
     const iterations = Math.max(1, Number(iterationsEl.value) || 1);
     const threads = Math.max(1, Number(threadsEl.value) || 1);
-    const seed = Math.max(1, Number(seedEl.value) || 1);
+    const seedInput = Math.max(1, Number(seedEl.value) || 1);
+    const seed = BigInt(Math.trunc(seedInput));
 
     runEl.disabled = true;
     statusEl.textContent = "Running...";
