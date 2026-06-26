@@ -19,10 +19,20 @@ pub struct TaskOf<O> {
     output: Option<O>,
 }
 
+pub struct Res<O>(*mut O);
+unsafe impl<O> Send for Res<O> {}
+unsafe impl<O> Sync for Res<O> {}
+impl<O> Res<O> {
+    fn write(&self, value: O) {
+        unsafe { self.0.write(value) };
+    }
+}
+
 impl<O> TaskOf<O> {
     pub fn load<'s, 'env, 'scope, F, P: ParThreadPool>(
         s: &P::ScopeRef<'s, 'env, 'scope>,
         f: F,
+        res: &'env Res<O>,
     ) -> Self
     where
         F: FnOnce() -> O + Send + 'scope + 'env,
@@ -31,7 +41,7 @@ impl<O> TaskOf<O> {
         let f = std::sync::Mutex::new(Some(f));
         P::run_in_scope(s, move || {
             if let Some(func) = f.lock().unwrap().take() {
-                let _result = func();
+                res.write(func());
             }
         });
         x
