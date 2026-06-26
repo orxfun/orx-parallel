@@ -69,43 +69,43 @@ pub fn run_best_tour(iterations: u32, seed: u64, threads: u32) -> Result<JsValue
 
     #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
     {
-    let iterations = iterations.max(1) as usize;
-    let threads = threads.max(1) as usize;
+        let iterations = iterations.max(1) as usize;
+        let threads = threads.max(1) as usize;
 
-    let start = js_sys::Date::now();
+        let start = js_sys::Date::now();
 
-    let pool = orx_parallel::Pool::wasm_web(threads);
+        let pool = orx_parallel::Pool::wasm_web(threads);
 
-    let best = (0..iterations)
-        .into_par()
-        .pool(pool)
-        .map(|k| random_tour(seed ^ (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)))
-        .map(|tour| {
-            let distance = tour_distance(&tour);
-            (tour, distance)
-        })
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
+        let best = (0..iterations)
+            .into_par()
+            .pool(pool)
+            .map(|k| random_tour(seed ^ (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)))
+            .map(|tour| {
+                let distance = tour_distance(&tour);
+                (tour, distance)
+            })
+            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
 
-    let elapsed_ms = js_sys::Date::now() - start;
+        let elapsed_ms = js_sys::Date::now() - start;
 
-    let (best_tour, best_distance) = match best {
-        Some(v) => v,
-        None => {
-            return Err(JsValue::from_str(
-                "no tour could be generated (unexpected empty search)",
-            ));
-        }
-    };
+        let (best_tour, best_distance) = match best {
+            Some(v) => v,
+            None => {
+                return Err(JsValue::from_str(
+                    "no tour could be generated (unexpected empty search)",
+                ));
+            }
+        };
 
-    let result = RunResult {
-        best_tour,
-        best_distance,
-        iterations,
-        elapsed_ms,
-    };
+        let result = RunResult {
+            best_tour,
+            best_distance,
+            iterations,
+            elapsed_ms,
+        };
 
-    serde_wasm_bindgen::to_value(&result)
-        .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
+        serde_wasm_bindgen::to_value(&result)
+            .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
     }
 }
 
