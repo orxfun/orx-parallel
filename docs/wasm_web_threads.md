@@ -82,6 +82,38 @@ After wasm module initialization, initialize the thread pool before any parallel
 
 `orx-parallel` fails fast when threaded wasm pool APIs are used before initialization.
 
+## Example
+
+A minimal wasm-threaded example is available at `examples/wasm_web_threads.rs`.
+
+It exposes:
+
+- `init_thread_pool(...)` re-export,
+- `parallel_sum(n)` as a parallel computation entry point.
+
+## Smoke Tests
+
+Smoke coverage lives in `tests/wasm_web_threads_smoke.rs` and includes:
+
+- panic path when using `Pool::wasm_web(...)` without initialization,
+- success path after awaiting `init_thread_pool(...)`.
+
+Compile smoke tests with the same threaded flags:
+
+```bash
+RUSTFLAGS='-C target-feature=+atomics,+bulk-memory \
+-Clink-arg=--shared-memory -Clink-arg=--max-memory=1073741824 \
+-Clink-arg=--import-memory \
+-Clink-arg=--export=__wasm_init_tls -Clink-arg=--export=__tls_size \
+-Clink-arg=--export=__tls_align -Clink-arg=--export=__tls_base' \
+cargo +nightly test \
+  --target wasm32-unknown-unknown \
+  --features wasm-web-threads \
+  --test wasm_web_threads_smoke \
+  -Z build-std=panic_abort,std \
+  --no-run
+```
+
 ## CI Reference
 
 Repository CI includes a dedicated `Check (wasm threads)` job in `.github/workflows/ci.yml` that validates this threaded build path.
