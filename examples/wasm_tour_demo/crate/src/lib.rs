@@ -22,19 +22,37 @@ struct RunResult {
     elapsed_ms: f64,
 }
 
-const LOCATIONS: [Location; 12] = [
-    Location { x: 3.0, y: 7.0 },
-    Location { x: 9.0, y: 5.0 },
-    Location { x: 3.0, y: 0.0 },
-    Location { x: 5.0, y: -3.0 },
-    Location { x: 12.0, y: 4.0 },
-    Location { x: 8.0, y: 9.0 },
-    Location { x: 6.0, y: 17.0 },
-    Location { x: 0.0, y: 11.0 },
-    Location { x: -3.0, y: 2.0 },
-    Location { x: 14.0, y: -2.0 },
-    Location { x: 2.0, y: 14.0 },
-    Location { x: -4.0, y: 9.0 },
+const LOCATIONS: [Location; 30] = [
+    Location { x: -18.0, y: 11.0 },
+    Location { x: -14.0, y: -7.0 },
+    Location { x: -12.0, y: 20.0 },
+    Location { x: -10.0, y: 4.0 },
+    Location { x: -8.0, y: -16.0 },
+    Location { x: -7.0, y: 13.0 },
+    Location { x: -5.0, y: -2.0 },
+    Location { x: -3.0, y: 17.0 },
+    Location { x: -1.0, y: -11.0 },
+    Location { x: 1.0, y: 9.0 },
+    Location { x: 2.0, y: -19.0 },
+    Location { x: 4.0, y: 3.0 },
+    Location { x: 6.0, y: 15.0 },
+    Location { x: 7.0, y: -6.0 },
+    Location { x: 9.0, y: 21.0 },
+    Location { x: 11.0, y: -13.0 },
+    Location { x: 13.0, y: 6.0 },
+    Location { x: 14.0, y: -1.0 },
+    Location { x: 16.0, y: 18.0 },
+    Location { x: 18.0, y: -9.0 },
+    Location { x: 20.0, y: 12.0 },
+    Location { x: 22.0, y: -4.0 },
+    Location { x: 24.0, y: 8.0 },
+    Location { x: 26.0, y: -15.0 },
+    Location { x: 28.0, y: 2.0 },
+    Location { x: 30.0, y: 16.0 },
+    Location { x: 32.0, y: -10.0 },
+    Location { x: 34.0, y: 5.0 },
+    Location { x: 36.0, y: -3.0 },
+    Location { x: 38.0, y: 14.0 },
 ];
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
@@ -80,6 +98,7 @@ pub fn run_best_tour(iterations: u32, seed: u64, threads: u32) -> Result<JsValue
             .into_par()
             .pool(pool)
             .map(|k| random_tour(seed ^ (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)))
+            .map(two_opt_improve)
             .map(|tour| {
                 let distance = tour_distance(&tour);
                 (tour, distance)
@@ -115,6 +134,53 @@ fn random_tour(seed: u64) -> Vec<usize> {
     let mut rng = SmallRng::seed_from_u64(seed);
     tour.shuffle(&mut rng);
     tour
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn two_opt_improve(mut tour: Vec<usize>) -> Vec<usize> {
+    let n = tour.len();
+    if n < 4 {
+        return tour;
+    }
+
+    let mut improved = true;
+    while improved {
+        improved = false;
+
+        for i in 0..(n - 1) {
+            let a = tour[i];
+            let b = tour[(i + 1) % n];
+
+            for j in (i + 2)..n {
+                if i == 0 && j == n - 1 {
+                    continue;
+                }
+
+                let c = tour[j];
+                let d = tour[(j + 1) % n];
+
+                let current = edge_distance(a, b) + edge_distance(c, d);
+                let swapped = edge_distance(a, c) + edge_distance(b, d);
+
+                if swapped + 1e-12 < current {
+                    tour[(i + 1)..=j].reverse();
+                    improved = true;
+                    break;
+                }
+            }
+
+            if improved {
+                break;
+            }
+        }
+    }
+
+    tour
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn edge_distance(i: usize, j: usize) -> f64 {
+    euclidean(LOCATIONS[i], LOCATIONS[j])
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
