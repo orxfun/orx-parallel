@@ -282,6 +282,6 @@ In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
 
 ## Example demos
 
-- Advanced interactive example: `examples/wasm_demo_tsp`
-- Basic plain TS example: `examples/wasm_vite_demo_basic`
-- Basic React example: `examples/wasm_react_demo_basic`
+- Advanced interactive example: [examples/wasm_demo_tsp](https://github.com/orxfun/orx-parallel/blob/main/examples/wasm_demo_tsp)
+- Basic plain TS example: [examples/wasm_vite_demo_basic](https://github.com/orxfun/orx-parallel/blob/main/examples/wasm_vite_demo_basic)
+- Basic React example: [examples/wasm_react_demo_basic](https://github.com/orxfun/orx-parallel/blob/main/examples/wasm_react_demo_basic)
