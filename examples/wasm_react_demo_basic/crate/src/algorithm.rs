@@ -1,9 +1,7 @@
-#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 use orx_parallel::{IntoParIter, Par};
 
 pub const MAX_N: u32 = 93;
 
-#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 pub fn fib_sum_parallel(start: u32, end: u32) -> u64 {
     let range_start = start as usize;
     let range_end_exclusive = (end as usize) + 1;
