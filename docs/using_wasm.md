@@ -8,7 +8,7 @@ If you want the low-level build/runtime matrix and troubleshooting details first
 
 You have:
 
-- a parallel rust algorithm using `orx-parallel`,
+- a parallel Rust algorithm using `orx-parallel`,
 - a goal to run it in the browser via wasm,
 - a frontend (plain TS, Vite, React, etc.) that calls wasm exports.
 
@@ -47,11 +47,11 @@ Path mapping used in the remaining steps:
 - Step 7: `my-wasm-project/web/package.json`
 - Step 8: `my-wasm-project/web/vite.config.ts`
 
-## Step 2: Add the right crate dependencies
+## Step 2: Add the required crate dependencies
 
 In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings:
 
-This demo targets at least version `4.0.0` of `orx-parallel`.
+This demo targets `orx-parallel` version `4.0.0`.
 
 ```toml
 [dependencies]
@@ -66,7 +66,10 @@ serde-wasm-bindgen = "0.6"
 
 Keep wasm-bindgen on a small public boundary layer in `my-wasm-project/crate/src/lib.rs`.
 
-Expose (i) one runtime initialization function and (ii) entry points for the computations.
+Expose:
+
+1. a runtime initialization function,
+2. entry points for computations.
 
 ### Runtime initialization function
 
@@ -122,7 +125,7 @@ pub fn run_best_tour_par(
 }
 ```
 
-### Why to use `cfg` attributes:
+### Why use `cfg` attributes?
 
 - threaded wasm builds get a Promise-based init path,
 - unsupported builds fail fast with a clear error.
@@ -134,7 +137,7 @@ Place heavy compute logic in internal modules and avoid wasm-specific code there
 This keeps computation code testable and reusable.
 
 ```rust
-/// Runs a parallel TSP search chunk and returns algorithm output.
+/// Runs a parallel TSP search chunk and returns computation output.
 pub fn run_search_parallel(
     iterations: usize,
     seed: u64,
@@ -154,7 +157,7 @@ pub fn run_search_parallel(
 
 Keep time-keeping in the caller (wasm boundary) when you need wall-clock timing in response payloads.
 
-Example mapping for your project:
+Typical mapping:
 
 - wasm boundary: `my-wasm-project/crate/src/lib.rs`
 - computation module: `my-wasm-project/crate/src/computation.rs` (or a dependency crate)
@@ -200,9 +203,9 @@ In your project, this is typically done in `my-wasm-project/web/src/main.ts`.
 
 There are two good patterns.
 
-### Pattern A: Fixed runtime + fixed computation threads
+### Pattern A: Fixed runtime + default per-run threads
 
-Good for simple demos.
+This is a good fit for simple demos.
 
 - initialize runtime with fixed thread count, say `N`,
 - run parallel operations with defaults.
@@ -215,9 +218,9 @@ let best = (0..iterations)
     .min_by(...);
 ```
 
-### Pattern B: Fixed startup cap + per-run limit
+### Pattern B: Fixed startup cap + configurable per-run limit
 
-Good for interactive apps.
+This is a good fit for interactive apps.
 
 - initialize runtime once with a cap, say `N`,
 - per computation use `.num_threads(threads)` in Rust pipeline.
