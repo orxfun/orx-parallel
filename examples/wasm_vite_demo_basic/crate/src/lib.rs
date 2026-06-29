@@ -1,7 +1,7 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-mod algorithm;
+mod computation;
 
 const FIXED_THREADS: u32 = 4;
 
@@ -47,12 +47,12 @@ pub fn run_fib_sum(start: u32, end: u32) -> Result<JsValue, JsValue> {
             return Err(JsValue::from_str("start must be <= end"));
         }
 
-        if end > algorithm::MAX_N {
+        if end > computation::MAX_N {
             return Err(JsValue::from_str("end is too large; use end <= 93"));
         }
 
         let started_at = js_sys::Date::now();
-        let sum = algorithm::fib_sum_parallel(start, end);
+        let sum = computation::fib_sum_parallel(start, end);
 
         let result = FibSumResult {
             start,

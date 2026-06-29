@@ -22,7 +22,7 @@ my-wasm-project/
         Cargo.toml
         src/
             lib.rs
-            algorithm.rs
+            computation.rs
     web/
         package.json
         src/
@@ -33,7 +33,7 @@ Recommended responsibilities:
 
 - `crate/`: Rust wasm library exposing a minimal `#[wasm_bindgen]` API boundary.
 - `crate/src/lib.rs`: wasm boundary layer where `#[wasm_bindgen]` exports are defined.
-- `crate/src/algorithm.rs`: pure Rust algorithm module without wasm-specific dependencies. This file is optional; the algorithm can instead live in a separate dependency crate.
+- `crate/src/computation.rs`: pure Rust computation module without wasm-specific dependencies. This file is optional; the computation can instead live in a separate dependency crate.
 - `web/`: frontend app that loads wasm, initializes runtime, and calls exported functions.
 
 This mirrors all example demos in this repository and keeps responsibilities clean.
@@ -42,7 +42,7 @@ Path mapping used in the remaining steps:
 
 - Step 2: `my-wasm-project/crate/Cargo.toml`
 - Step 3: `my-wasm-project/crate/src/lib.rs`
-- Step 4: `my-wasm-project/crate/src/algorithm.rs` (or a separate dependency crate)
+- Step 4: `my-wasm-project/crate/src/computation.rs` (or a separate dependency crate)
 - Step 5: `my-wasm-project/web/src/main.ts`
 - Step 7: `my-wasm-project/web/package.json`
 - Step 8: `my-wasm-project/web/vite.config.ts`
@@ -98,7 +98,7 @@ pub fn init_parallel_runtime(_num_threads: u32) -> Result<JsValue, JsValue> {
 
 ### 2. Entry points for computations
 
-Notice that this is just an entry point; the actual computation is implemented in the `tsp_alg` module which intentionally avoids wasm dependencies.
+Notice that this is just an entry point; the actual computation is implemented in the `computation` module which intentionally avoids wasm dependencies.
 
 ```rust
 #[wasm_bindgen]
@@ -123,7 +123,7 @@ pub fn run_best_tour_par(
         let threads = threads.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
         let output =
-            tsp_alg::run_search_parallel(iterations, seed, threads, num_cities, start_index);
+            computation::run_search_parallel(iterations, seed, threads, num_cities, start_index);
         run_output_to_js(output)
     }
 }
@@ -140,11 +140,11 @@ For reference:
 - `examples/wasm_vite_demo_basic/crate/src/lib.rs`
 - `examples/wasm_react_demo_basic/crate/src/lib.rs`
 
-## Step 4: Keep algorithm modules pure Rust
+## Step 4: Keep computation modules pure Rust
 
-Place heavy compute logic in internal modules and avoid wasm-specific code there. These functions can be implemented in `my-wasm-project/crate/src/algorithm.rs` for instance, or a separate dependency crate.
+Place heavy compute logic in internal modules and avoid wasm-specific code there. These functions can be implemented in `my-wasm-project/crate/src/computation.rs` for instance, or a separate dependency crate.
 
-This keeps algorithm code testable and reusable.
+This keeps computation code testable and reusable.
 
 ```rust
 /// Runs a parallel TSP search chunk and returns algorithm output.
@@ -170,7 +170,7 @@ Keep time-keeping in the caller (wasm boundary) when you need wall-clock timing 
 Example mapping for your project:
 
 - wasm boundary: `my-wasm-project/crate/src/lib.rs`
-- algorithm module: `my-wasm-project/crate/src/algorithm.rs` (or a dependency crate)
+- computation module: `my-wasm-project/crate/src/computation.rs` (or a dependency crate)
 
 ## Step 5: Initialize runtime once in frontend startup
 
@@ -219,7 +219,7 @@ let best = (0..iterations)
 
 See:
 
-- `examples/wasm_demo_tsp/crate/src/tsp_alg.rs`
+- `examples/wasm_demo_tsp/crate/src/computation.rs`
 - `examples/wasm_demo_tsp/web/src/main.ts`
 
 ## Step 7: Build with wasm thread flags
