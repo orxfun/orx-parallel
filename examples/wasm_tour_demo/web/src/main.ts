@@ -21,6 +21,10 @@ const numCitiesEl = document.getElementById("numCities") as HTMLInputElement;
 const runParallelEl = document.getElementById("runParallel") as HTMLButtonElement;
 const runSequentialEl = document.getElementById("runSequential") as HTMLButtonElement;
 const resetEl = document.getElementById("reset") as HTMLButtonElement;
+const runOverlayEl = document.getElementById("runOverlay") as HTMLDivElement;
+const runTitleEl = document.getElementById("runTitle") as HTMLParagraphElement;
+const runSubtitleEl = document.getElementById("runSubtitle") as HTMLParagraphElement;
+const runElapsedEl = document.getElementById("runElapsed") as HTMLParagraphElement;
 const bestDistanceEl = document.getElementById("bestDistance") as HTMLParagraphElement;
 const elapsedEl = document.getElementById("elapsed") as HTMLParagraphElement;
 const ipsEl = document.getElementById("ips") as HTMLParagraphElement;
@@ -40,6 +44,8 @@ let bestSoFar: Result | null = null;
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
 let currentNumCities = MAX_CITIES;
+let runTicker: number | undefined;
+let runStartedAtMs = 0;
 
 async function setup() {
     await init();
@@ -87,6 +93,14 @@ async function runSearch(mode: "parallel" | "sequential") {
     runParallelEl.disabled = true;
     runSequentialEl.disabled = true;
     resetEl.disabled = true;
+    iterationsEl.disabled = true;
+    threadsEl.disabled = true;
+    seedEl.disabled = true;
+    numCitiesEl.disabled = true;
+
+    setRunningView(mode, true);
+    await allowRunningOverlayToRender();
+
     statusEl.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
 
     try {
@@ -114,10 +128,54 @@ async function runSearch(mode: "parallel" | "sequential") {
     } catch (err) {
         statusEl.textContent = `Error: ${String(err)}`;
     } finally {
+        setRunningView(mode, false);
         runParallelEl.disabled = false;
         runSequentialEl.disabled = false;
         resetEl.disabled = false;
+        iterationsEl.disabled = false;
+        threadsEl.disabled = false;
+        seedEl.disabled = false;
+        numCitiesEl.disabled = false;
     }
+}
+
+function setRunningView(mode: "parallel" | "sequential", running: boolean) {
+    if (running) {
+        runStartedAtMs = performance.now();
+        runTitleEl.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+        runSubtitleEl.textContent = "Evaluating tours with 2-opt local search. Larger instances can take several minutes.";
+        runElapsedEl.textContent = "Elapsed: 0.0s";
+        runOverlayEl.classList.add("active");
+        runOverlayEl.setAttribute("aria-hidden", "false");
+        if (runTicker !== undefined) {
+            window.clearInterval(runTicker);
+        }
+        runTicker = window.setInterval(() => {
+            const secs = (performance.now() - runStartedAtMs) / 1000;
+            runElapsedEl.textContent = `Elapsed: ${secs.toFixed(1)}s`;
+        }, 200);
+        return;
+    }
+
+    if (runTicker !== undefined) {
+        window.clearInterval(runTicker);
+        runTicker = undefined;
+    }
+    runOverlayEl.classList.remove("active");
+    runOverlayEl.setAttribute("aria-hidden", "true");
+}
+
+function nextPaint() {
+    return new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+    });
+}
+
+async function allowRunningOverlayToRender() {
+    // Two frames + a tiny timeout makes spinner start reliably before sync wasm work blocks the UI thread.
+    await nextPaint();
+    await nextPaint();
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 24));
 }
 
 function readNumCities() {
