@@ -8,7 +8,7 @@ If you want the low-level build/runtime matrix and troubleshooting details first
 
 You have:
 
-- a Rust algorithm using `orx-parallel`,
+- a parallel rust algorithm using `orx-parallel`,
 - a goal to run it in the browser via wasm,
 - a frontend (plain TS, Vite, React, etc.) that calls wasm exports.
 
@@ -63,7 +63,7 @@ pub fn init_parallel_runtime(_num_threads: u32) -> Result<JsValue, JsValue> {
 
 ### 2. Entry points for computations
 
-Notice that this is just an entry point; the actual computation is implemented in the `tsp_alg` module which is pure rust, lacking wasm dependencies.
+Notice that this is just an entry point; the actual computation is implemented in the `tsp_alg` module which intentionally avoids wasm dependencies.
 
 ```rust
 #[wasm_bindgen]
@@ -105,7 +105,7 @@ For reference:
 - `examples/wasm_vite_demo_basic/crate/src/lib.rs`
 - `examples/wasm_react_demo_basic/crate/src/lib.rs`
 
-## Step 3: Keep algorithm modules pure Rust when possible
+## Step 3: Keep algorithm modules pure Rust
 
 Place heavy compute logic in internal modules and avoid wasm-specific code there.
 
