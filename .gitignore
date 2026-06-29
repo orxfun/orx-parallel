@@ -16,8 +16,8 @@ Cargo.lock
 
 benches/results/*.txt
 
-# wasm demo generated artifacts
-examples/wasm_demo/web/node_modules/
-examples/wasm_demo/web/dist/
-examples/wasm_demo/web/pkg/
-examples/wasm_demo/crate/target/
+# wasm demo tsp generated artifacts
+examples/wasm_demo_tsp/web/node_modules/
+examples/wasm_demo_tsp/web/dist/
+examples/wasm_demo_tsp/web/pkg/
+examples/wasm_demo_tsp/crate/target/

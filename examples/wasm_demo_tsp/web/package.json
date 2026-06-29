@@ -1,5 +1,5 @@
 {
-    "name": "orx-parallel-wasm-demo-web",
+    "name": "orx-parallel-wasm-demo-tsp-web",
     "version": "0.1.0",
     "private": true,
     "type": "module",
