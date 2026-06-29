@@ -67,6 +67,7 @@ const ctx = maybeCtx;
 
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
+const STARTUP_PARALLEL_RUNTIME_THREADS = 16;
 const state = {
     points: [] as Location[],
     threadPoolReady: false,
@@ -80,10 +81,21 @@ const state = {
 // Bootstraps wasm module, initial data and UI event wiring.
 async function setupApp() {
     await init();
+
+    try {
+        await init_parallel_runtime(STARTUP_PARALLEL_RUNTIME_THREADS);
+        state.threadPoolReady = true;
+    } catch (err) {
+        state.threadPoolReady = false;
+        ui.status.textContent = `Parallel runtime init failed: ${String(err)}. Sequential mode remains available.`;
+    }
+
     state.currentNumCities = readNumCities();
     state.points = locations(state.currentNumCities) as Location[];
     drawPoints(state.points);
-    ui.status.textContent = "Ready. Run parallel or sequential search.";
+    if (state.threadPoolReady) {
+        ui.status.textContent = `Ready. Parallel runtime initialized with ${STARTUP_PARALLEL_RUNTIME_THREADS} threads.`;
+    }
 
     ui.runParallel.addEventListener("click", async () => {
         await runSearch("parallel");
@@ -159,9 +171,7 @@ async function runSearch(mode: SearchMode) {
 
     try {
         if (settings.mode === "parallel" && !state.threadPoolReady) {
-            await init_parallel_runtime(settings.threads);
-            state.threadPoolReady = true;
-            ui.status.textContent = `Thread pool initialized with ${settings.threads} threads.`;
+            throw new Error("parallel runtime is not initialized");
         }
 
         let remaining = settings.iterations;
