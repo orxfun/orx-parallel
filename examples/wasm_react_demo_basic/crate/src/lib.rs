@@ -17,14 +17,14 @@ struct FibSumResult {
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-#[wasm_bindgen(js_name = init_parallel_runtime)]
+#[wasm_bindgen]
 /// Initializes the wasm thread pool with a fixed number of worker threads.
 pub fn init_parallel_runtime() -> js_sys::Promise {
     orx_parallel::init_thread_pool(FIXED_THREADS as usize)
 }
 
 #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
-#[wasm_bindgen(js_name = init_parallel_runtime)]
+#[wasm_bindgen]
 /// Returns an error when wasm threaded runtime is unavailable.
 pub fn init_parallel_runtime() -> Result<JsValue, JsValue> {
     Err(JsValue::from_str(

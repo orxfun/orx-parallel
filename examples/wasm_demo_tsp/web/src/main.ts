@@ -1,5 +1,5 @@
 import init, {
-    init_thread_pool,
+    init_parallel_runtime,
     locations,
     run_best_tour_par,
     run_best_tour_seq
@@ -159,7 +159,7 @@ async function runSearch(mode: SearchMode) {
 
     try {
         if (settings.mode === "parallel" && !state.threadPoolReady) {
-            await init_thread_pool(settings.threads);
+            await init_parallel_runtime(settings.threads);
             state.threadPoolReady = true;
             ui.status.textContent = `Thread pool initialized with ${settings.threads} threads.`;
         }

@@ -76,6 +76,6 @@ The frontend logic in `web/src/main.ts` is organized as:
 
 ## Important runtime notes
 
-- `init_thread_pool(...)` is required before first parallel run.
+- `init_parallel_runtime(...)` is required before first parallel run.
 - `Cancel Run` is cooperative: it stops after the current chunk.
 - Vite dev server is configured with COOP/COEP headers required for SharedArrayBuffer + wasm threads.
