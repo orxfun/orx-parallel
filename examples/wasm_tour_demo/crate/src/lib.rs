@@ -15,12 +15,14 @@ struct RunResult {
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 #[wasm_bindgen(js_name = init_thread_pool)]
+/// Initializes the wasm worker thread pool used by parallel runs.
 pub fn init_thread_pool_export(num_threads: u32) -> js_sys::Promise {
     orx_parallel::init_thread_pool(num_threads as usize)
 }
 
 #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
 #[wasm_bindgen(js_name = init_thread_pool)]
+/// Returns an error when thread-pool initialization is unavailable on this target.
 pub fn init_thread_pool_export(_num_threads: u32) -> Result<JsValue, JsValue> {
     Err(JsValue::from_str(
         "init_thread_pool is only available for wasm32 + atomics builds",
@@ -28,11 +30,13 @@ pub fn init_thread_pool_export(_num_threads: u32) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen]
+/// Returns the city coordinates for the requested problem size.
 pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
     locations::locations(num_cities)
 }
 
 #[wasm_bindgen]
+/// Runs a parallel TSP search chunk and returns the best tour found in that chunk.
 pub fn run_best_tour_par(
     iterations: u32,
     seed: u64,
@@ -60,6 +64,7 @@ pub fn run_best_tour_par(
 }
 
 #[wasm_bindgen]
+/// Runs a sequential TSP search chunk and returns the best tour found in that chunk.
 pub fn run_best_tour_seq(
     iterations: u32,
     seed: u64,
