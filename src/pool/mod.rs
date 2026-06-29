@@ -17,7 +17,12 @@ pub use pool_impl::WasmWebPool;
 ))]
 pub use pool_impl::init_thread_pool;
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "wasm-web-threads", target_arch = "wasm32"))]
+pub type DefaultPool = pool_impl::WasmWebPool;
+#[cfg(all(
+    feature = "std",
+    not(all(feature = "wasm-web-threads", target_arch = "wasm32"))
+))]
 pub type DefaultPool = pool_impl::OncePool;
 #[cfg(not(feature = "std"))]
 pub type DefaultPool = pool_impl::SequentialPool;
