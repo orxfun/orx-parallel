@@ -204,19 +204,26 @@ There are two good patterns.
 
 Good for simple demos.
 
-- initialize runtime with fixed thread count,
+- initialize runtime with fixed thread count, say `N`,
 - run parallel operations with defaults.
+
+```rust
+// uses N threads
+let best = (0..iterations)
+    .into_par()
+    .map(...)
+    .min_by(...);
+```
 
 ### Pattern B: Fixed startup cap + per-run limit
 
 Good for interactive apps.
 
-- initialize runtime once with a cap (for example `16`),
+- initialize runtime once with a cap, say `N`,
 - per computation use `.num_threads(threads)` in Rust pipeline.
 
-Example:
-
 ```rust
+// uses min(N, threads) threads
 let best = (0..iterations)
     .into_par()
     .num_threads(threads)
