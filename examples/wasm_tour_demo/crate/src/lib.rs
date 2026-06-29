@@ -89,43 +89,86 @@ pub fn run_best_tour(iterations: u32, seed: u64, threads: u32) -> Result<JsValue
     {
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
-
-        let start = js_sys::Date::now();
-
-        let pool = orx_parallel::Pool::wasm_web(threads);
-
-        let best = (0..iterations)
-            .into_par()
-            .pool(pool)
-            .map(|k| random_tour(seed ^ (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)))
-            .map(two_opt_improve)
-            .map(|tour| {
-                let distance = tour_distance(&tour);
-                (tour, distance)
-            })
-            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
-
-        let elapsed_ms = js_sys::Date::now() - start;
-
-        let (best_tour, best_distance) = match best {
-            Some(v) => v,
-            None => {
-                return Err(JsValue::from_str(
-                    "no tour could be generated (unexpected empty search)",
-                ));
-            }
-        };
-
-        let result = RunResult {
-            best_tour,
-            best_distance,
-            iterations,
-            elapsed_ms,
-        };
-
-        serde_wasm_bindgen::to_value(&result)
-            .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
+        run_search_parallel(iterations, seed, threads)
     }
+}
+
+#[wasm_bindgen]
+pub fn run_best_tour_seq(iterations: u32, seed: u64) -> Result<JsValue, JsValue> {
+    #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+    {
+        let _ = (iterations, seed);
+        return Err(JsValue::from_str(
+            "run_best_tour_seq requires wasm32 + atomics build",
+        ));
+    }
+
+    #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+    {
+        let iterations = iterations.max(1) as usize;
+        run_search_sequential(iterations, seed)
+    }
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn run_search_parallel(iterations: usize, seed: u64, threads: usize) -> Result<JsValue, JsValue> {
+    let start = js_sys::Date::now();
+    let pool = orx_parallel::Pool::wasm_web(threads);
+
+    let best = (0..iterations)
+        .into_par()
+        .pool(pool)
+        .map(|k| search_candidate(seed, k as u64))
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
+
+    let elapsed_ms = js_sys::Date::now() - start;
+    run_result_to_js(best, iterations, elapsed_ms)
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn run_search_sequential(iterations: usize, seed: u64) -> Result<JsValue, JsValue> {
+    let start = js_sys::Date::now();
+
+    let best = (0..iterations)
+        .map(|k| search_candidate(seed, k as u64))
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
+
+    let elapsed_ms = js_sys::Date::now() - start;
+    run_result_to_js(best, iterations, elapsed_ms)
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn search_candidate(seed: u64, k: u64) -> (Vec<usize>, f64) {
+    let tour = random_tour(seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15));
+    let tour = two_opt_improve(tour);
+    let distance = tour_distance(&tour);
+    (tour, distance)
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn run_result_to_js(
+    best: Option<(Vec<usize>, f64)>,
+    iterations: usize,
+    elapsed_ms: f64,
+) -> Result<JsValue, JsValue> {
+    let (best_tour, best_distance) = match best {
+        Some(v) => v,
+        None => {
+            return Err(JsValue::from_str(
+                "no tour could be generated (unexpected empty search)",
+            ));
+        }
+    };
+
+    let result = RunResult {
+        best_tour,
+        best_distance,
+        iterations,
+        elapsed_ms,
+    };
+
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
