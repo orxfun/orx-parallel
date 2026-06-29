@@ -12,7 +12,33 @@ You have:
 - a goal to run it in the browser via wasm,
 - a frontend (plain TS, Vite, React, etc.) that calls wasm exports.
 
-## Step 1: Add the right crate dependencies
+## Step 1: Start with a two-folder project layout
+
+Use a structure that separates Rust compute code from web app code:
+
+```text
+my-wasm-project/
+    crate/
+        Cargo.toml
+        src/
+            lib.rs
+            algorithm.rs
+    web/
+        package.json
+        src/
+            main.ts
+```
+
+Recommended responsibilities:
+
+- `crate/`: Rust wasm library exposing a minimal `#[wasm_bindgen]` API boundary.
+- `crate/src/lib.rs`: wasm boundary layer where `#[wasm_bindgen]` exports are defined.
+- `crate/src/algorithm.rs`: pure Rust algorithm module without wasm-specific dependencies. This file is optional; the algorithm can instead live in a separate dependency crate.
+- `web/`: frontend app that loads wasm, initializes runtime, and calls exported functions.
+
+This mirrors all example demos in this repository and keeps responsibilities clean.
+
+## Step 2: Add the right crate dependencies
 
 In your wasm crate `Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings:
 
@@ -31,7 +57,7 @@ For examples, see:
 - `examples/wasm_vite_demo_basic/crate/Cargo.toml`
 - `examples/wasm_react_demo_basic/crate/Cargo.toml`
 
-## Step 2: Expose a wasm API boundary
+## Step 3: Expose a wasm API boundary
 
 Keep wasm-bindgen on a small public boundary layer (typically `lib.rs`).
 
@@ -105,7 +131,7 @@ For reference:
 - `examples/wasm_vite_demo_basic/crate/src/lib.rs`
 - `examples/wasm_react_demo_basic/crate/src/lib.rs`
 
-## Step 3: Keep algorithm modules pure Rust
+## Step 4: Keep algorithm modules pure Rust
 
 Place heavy compute logic in internal modules and avoid wasm-specific code there.
 
@@ -137,7 +163,7 @@ Example:
 - wasm boundary: `examples/wasm_demo_tsp/crate/src/lib.rs`
 - algorithm module: `examples/wasm_demo_tsp/crate/src/tsp_alg.rs`
 
-## Step 4: Initialize runtime once in frontend startup
+## Step 5: Initialize runtime once in frontend startup
 
 After loading wasm module, call `init_parallel_runtime(...)` once and await it before parallel runs.
 
@@ -151,7 +177,7 @@ Example from TSP demo startup:
 
 - `examples/wasm_demo_tsp/web/src/main.ts`
 
-## Step 5: Decide thread-control strategy
+## Step 6: Decide thread-control strategy
 
 There are two good patterns.
 
@@ -189,7 +215,7 @@ See:
 - `examples/wasm_demo_tsp/crate/src/tsp_alg.rs`
 - `examples/wasm_demo_tsp/web/src/main.ts`
 
-## Step 6: Build with wasm thread flags
+## Step 7: Build with wasm thread flags
 
 Use nightly + `build-std` + atomics/shared-memory flags.
 
@@ -207,7 +233,7 @@ See:
 - `examples/wasm_vite_demo_basic/web/package.json`
 - `examples/wasm_react_demo_basic/web/package.json`
 
-## Step 7: Serve with COOP/COEP headers
+## Step 8: Serve with COOP/COEP headers
 
 Browser wasm threads require cross-origin isolation.
 
