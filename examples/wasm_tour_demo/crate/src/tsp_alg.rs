@@ -1,11 +1,12 @@
 use crate::locations::{Location, location_for};
+use core::cmp::Ordering::Equal;
 use orx_parallel::{IntoParIter, Par};
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, derive_new::new)]
 struct RunResult {
     best_tour: Vec<usize>,
     best_distance: f64,
@@ -27,7 +28,7 @@ pub fn run_search_parallel(
         .into_par()
         .pool(pool)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
     let elapsed_ms = js_sys::Date::now() - start;
     run_result_to_js(best, iterations, elapsed_ms)
@@ -43,17 +44,10 @@ pub fn run_search_sequential(
 
     let best = (0..iterations)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
     let elapsed_ms = js_sys::Date::now() - start;
     run_result_to_js(best, iterations, elapsed_ms)
-}
-
-fn search_candidate(seed: u64, k: u64, num_cities: usize) -> (Vec<usize>, f64) {
-    let tour = random_tour(seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15), num_cities);
-    let tour = two_opt_improve(tour);
-    let distance = tour_distance(&tour);
-    (tour, distance)
 }
 
 fn run_result_to_js(
@@ -61,24 +55,23 @@ fn run_result_to_js(
     iterations: usize,
     elapsed_ms: f64,
 ) -> Result<JsValue, JsValue> {
-    let (best_tour, best_distance) = match best {
-        Some(v) => v,
-        None => {
-            return Err(JsValue::from_str(
-                "no tour could be generated (unexpected empty search)",
-            ));
+    match best {
+        Some((best_tour, best_distance)) => {
+            let result = RunResult::new(best_tour, best_distance, iterations, elapsed_ms);
+            serde_wasm_bindgen::to_value(&result)
+                .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
         }
-    };
+        None => Err(JsValue::from_str(
+            "no tour could be generated (unexpected empty search)",
+        )),
+    }
+}
 
-    let result = RunResult {
-        best_tour,
-        best_distance,
-        iterations,
-        elapsed_ms,
-    };
-
-    serde_wasm_bindgen::to_value(&result)
-        .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
+fn search_candidate(seed: u64, k: u64, num_cities: usize) -> (Vec<usize>, f64) {
+    let tour = random_tour(seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15), num_cities);
+    let tour = two_opt_improve(tour);
+    let distance = tour_distance(&tour);
+    (tour, distance)
 }
 
 fn random_tour(seed: u64, num_cities: usize) -> Vec<usize> {
