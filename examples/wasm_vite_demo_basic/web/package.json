@@ -1,5 +1,5 @@
 {
-    "name": "orx-parallel-wasm-demo-basic-web",
+    "name": "orx-parallel-wasm-vite-demo-basic-web",
     "version": "0.1.0",
     "private": true,
     "type": "module",

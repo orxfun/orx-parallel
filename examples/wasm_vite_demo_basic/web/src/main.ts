@@ -1,7 +1,7 @@
 import init, {
     init_parallel_runtime,
     run_fib_sum
-} from "../pkg/orx_parallel_wasm_demo_basic.js";
+} from "../pkg/orx_parallel_wasm_vite_demo_basic.js";
 
 type FibSumResult = {
     start: number;
