@@ -23,15 +23,15 @@ pub fn clamp_num_cities(num_cities: u32) -> usize {
 
 pub fn location_for(idx: usize) -> Location {
     // Deterministic pseudo-random coordinates: random-looking, but stable per index.
-    let sx = splitmix64((idx as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
-    let sy = splitmix64((idx as u64).wrapping_mul(0xD1B5_4A32_D192_ED03));
+    let sx = split_mix_64((idx as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+    let sy = split_mix_64((idx as u64).wrapping_mul(0xD1B5_4A32_D192_ED03));
 
     let x = 100.0 * to_unit_f64(sx) - 50.0;
     let y = 100.0 * to_unit_f64(sy) - 50.0;
     Location { x, y }
 }
 
-fn splitmix64(mut x: u64) -> u64 {
+fn split_mix_64(mut x: u64) -> u64 {
     x = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
     let mut z = x;
     z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
