@@ -49,11 +49,13 @@ Path mapping used in the remaining steps:
 
 ## Step 2: Add the right crate dependencies
 
-In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings:
+In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` v4 with wasm threads and add wasm bindings:
+
+This demo targets at least version `4.0.0` of `orx-parallel`.
 
 ```toml
 [dependencies]
-orx-parallel = { path = "../../..", features = ["wasm-web-threads"] }
+orx-parallel = { version = "4.0.0", features = ["wasm-web-threads"] }
 wasm-bindgen = "0.2"
 js-sys = "0.3"
 serde = { version = "1", features = ["derive"] }
