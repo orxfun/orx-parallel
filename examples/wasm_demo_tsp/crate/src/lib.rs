@@ -1,9 +1,9 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-mod locations;
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-mod tsp_alg;
+mod computation;
+mod locations;
 
 #[derive(Debug, Serialize)]
 struct RunResult {
@@ -61,7 +61,7 @@ pub fn run_best_tour_par(
         let num_cities = locations::clamp_num_cities(num_cities);
         let started_at = js_sys::Date::now();
         let output =
-            tsp_alg::run_search_parallel(iterations, seed, threads, num_cities, start_index);
+            computation::run_search_parallel(iterations, seed, threads, num_cities, start_index);
         let elapsed_ms = js_sys::Date::now() - started_at;
         run_output_to_js(output, elapsed_ms)
     }
@@ -88,14 +88,17 @@ pub fn run_best_tour_seq(
         let iterations = iterations.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
         let started_at = js_sys::Date::now();
-        let output = tsp_alg::run_search_sequential(iterations, seed, num_cities, start_index);
+        let output = computation::run_search_sequential(iterations, seed, num_cities, start_index);
         let elapsed_ms = js_sys::Date::now() - started_at;
         run_output_to_js(output, elapsed_ms)
     }
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-fn run_output_to_js(output: tsp_alg::SearchRunOutput, elapsed_ms: f64) -> Result<JsValue, JsValue> {
+fn run_output_to_js(
+    output: computation::SearchRunOutput,
+    elapsed_ms: f64,
+) -> Result<JsValue, JsValue> {
     match output.best {
         Some((best_tour, best_distance)) => {
             let result = RunResult {
