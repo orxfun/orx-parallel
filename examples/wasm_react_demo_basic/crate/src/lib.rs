@@ -1,11 +1,9 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-use orx_parallel::{IntoParIter, Par};
+mod algorithm;
 
 const FIXED_THREADS: u32 = 4;
-const MAX_N: u32 = 93;
 
 #[derive(Debug, Serialize)]
 struct FibSumResult {
@@ -49,18 +47,12 @@ pub fn run_fib_sum(start: u32, end: u32) -> Result<JsValue, JsValue> {
             return Err(JsValue::from_str("start must be <= end"));
         }
 
-        if end > MAX_N {
+        if end > algorithm::MAX_N {
             return Err(JsValue::from_str("end is too large; use end <= 93"));
         }
 
         let started_at = js_sys::Date::now();
-        let range_start = start as usize;
-        let range_end_exclusive = (end as usize) + 1;
-
-        let sum: u64 = (range_start..range_end_exclusive)
-            .into_par()
-            .map(|n| fibonacci(n as u32))
-            .sum();
+        let sum = algorithm::fib_sum_parallel(start, end);
 
         let result = FibSumResult {
             start,
@@ -72,22 +64,5 @@ pub fn run_fib_sum(start: u32, end: u32) -> Result<JsValue, JsValue> {
 
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
-    }
-}
-
-fn fibonacci(n: u32) -> u64 {
-    match n {
-        0 => 0,
-        1 => 1,
-        _ => {
-            let mut a = 0u64;
-            let mut b = 1u64;
-            for _ in 2..=n {
-                let next = a.saturating_add(b);
-                a = b;
-                b = next;
-            }
-            b
-        }
     }
 }
