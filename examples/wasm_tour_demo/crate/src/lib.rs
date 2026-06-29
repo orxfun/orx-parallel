@@ -33,7 +33,7 @@ pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn run_best_tour(
+pub fn run_best_tour_par(
     iterations: u32,
     seed: u64,
     threads: u32,
@@ -44,7 +44,7 @@ pub fn run_best_tour(
     {
         let _ = (iterations, seed, threads, num_cities, start_index);
         return Err(JsValue::from_str(
-            "run_best_tour requires wasm32 + atomics build",
+            "run_best_tour_par requires wasm32 + atomics build",
         ));
     }
 

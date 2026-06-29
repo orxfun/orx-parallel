@@ -1,7 +1,7 @@
 import init, {
     init_thread_pool,
     locations,
-    run_best_tour,
+    run_best_tour_par,
     run_best_tour_seq
 } from "../pkg/orx_parallel_wasm_tour_demo.js";
 
@@ -131,7 +131,7 @@ async function runSearch(mode: "parallel" | "sequential") {
 
             const thisChunk = Math.min(remaining, chunkSize);
             const chunkResult = mode === "parallel"
-                ? (run_best_tour(thisChunk, seed, threads, numCities, BigInt(startIndex)) as Result)
+                ? (run_best_tour_par(thisChunk, seed, threads, numCities, BigInt(startIndex)) as Result)
                 : (run_best_tour_seq(thisChunk, seed, numCities, BigInt(startIndex)) as Result);
 
             runElapsedMs += chunkResult.elapsed_ms;
