@@ -107,12 +107,12 @@ For reference:
 
 ## Step 3: Keep algorithm modules pure Rust when possible
 
-Place heavy compute logic in internal modules and avoid wasm-specific code there unless timing/interop requires it.
+Place heavy compute logic in internal modules and avoid wasm-specific code there.
 
 This keeps algorithm code testable and reusable.
 
 ```rust
-/// Runs a parallel TSP search chunk and returns best/timing metadata.
+/// Runs a parallel TSP search chunk and returns algorithm output.
 pub fn run_search_parallel(
     iterations: usize,
     seed: u64,
@@ -120,22 +120,17 @@ pub fn run_search_parallel(
     num_cities: usize,
     start_index: u64,
 ) -> SearchRunOutput {
-    let start = js_sys::Date::now();
-
     let best = (0..iterations)
         .into_par()
         .num_threads(threads)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
-    let elapsed_ms = js_sys::Date::now() - start;
-    SearchRunOutput {
-        best,
-        iterations,
-        elapsed_ms,
-    }
+    SearchRunOutput { best, iterations }
 }
 ```
+
+Keep time-keeping in the caller (wasm boundary) when you need wall-clock timing in response payloads.
 
 Example:
 

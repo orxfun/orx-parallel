@@ -8,7 +8,6 @@ use rand::rngs::SmallRng;
 pub struct SearchRunOutput {
     pub best: Option<(Vec<usize>, f64)>,
     pub iterations: usize,
-    pub elapsed_ms: f64,
 }
 
 /// Runs a parallel TSP search chunk and returns best/timing metadata.
@@ -19,20 +18,13 @@ pub fn run_search_parallel(
     num_cities: usize,
     start_index: u64,
 ) -> SearchRunOutput {
-    let start = js_sys::Date::now();
-
     let best = (0..iterations)
         .into_par()
         .num_threads(threads)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
-    let elapsed_ms = js_sys::Date::now() - start;
-    SearchRunOutput {
-        best,
-        iterations,
-        elapsed_ms,
-    }
+    SearchRunOutput { best, iterations }
 }
 
 /// Runs a sequential TSP search chunk and returns best/timing metadata.
@@ -42,18 +34,11 @@ pub fn run_search_sequential(
     num_cities: usize,
     start_index: u64,
 ) -> SearchRunOutput {
-    let start = js_sys::Date::now();
-
     let best = (0..iterations)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
-    let elapsed_ms = js_sys::Date::now() - start;
-    SearchRunOutput {
-        best,
-        iterations,
-        elapsed_ms,
-    }
+    SearchRunOutput { best, iterations }
 }
 
 fn search_candidate(seed: u64, k: u64, num_cities: usize) -> (Vec<usize>, f64) {
