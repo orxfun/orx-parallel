@@ -32,7 +32,9 @@ pub fn init_thread_pool_export(_num_threads: u32) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 /// Returns the city coordinates for the requested problem size.
 pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
-    locations::locations(num_cities)
+    let locations = locations::locations(num_cities);
+    serde_wasm_bindgen::to_value(&locations)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))
 }
 
 #[wasm_bindgen]

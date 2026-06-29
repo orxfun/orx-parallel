@@ -1,5 +1,4 @@
 use serde::Serialize;
-use wasm_bindgen::prelude::*;
 
 const MIN_CITIES: usize = 5;
 const MAX_CITIES: usize = 200;
@@ -11,12 +10,10 @@ pub struct Location {
     pub y: f64,
 }
 
-/// Returns serialized city coordinates for the requested city count.
-pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
+/// Returns city coordinates for the requested city count.
+pub fn locations(num_cities: u32) -> Vec<Location> {
     let num_cities = clamp_num_cities(num_cities);
-    let locations: Vec<Location> = (0..num_cities).map(location_for).collect();
-    serde_wasm_bindgen::to_value(&locations)
-        .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))
+    (0..num_cities).map(location_for).collect()
 }
 
 /// Clamps a requested city count into the supported demo range.
