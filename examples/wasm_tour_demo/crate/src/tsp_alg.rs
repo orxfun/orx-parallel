@@ -4,12 +4,14 @@ use orx_parallel::{IntoParIter, Par};
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 
+/// Output of a single search chunk, including best candidate and timing info.
 pub struct SearchRunOutput {
     pub best: Option<(Vec<usize>, f64)>,
     pub iterations: usize,
     pub elapsed_ms: f64,
 }
 
+/// Runs a parallel TSP search chunk and returns best/timing metadata.
 pub fn run_search_parallel(
     iterations: usize,
     seed: u64,
@@ -34,6 +36,7 @@ pub fn run_search_parallel(
     }
 }
 
+/// Runs a sequential TSP search chunk and returns best/timing metadata.
 pub fn run_search_sequential(
     iterations: usize,
     seed: u64,
