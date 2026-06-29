@@ -62,12 +62,6 @@ serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
 ```
 
-For examples, see:
-
-- `examples/wasm_demo_tsp/crate/Cargo.toml`
-- `examples/wasm_vite_demo_basic/crate/Cargo.toml`
-- `examples/wasm_react_demo_basic/crate/Cargo.toml`
-
 ## Step 3: Expose a wasm API boundary
 
 Keep wasm-bindgen on a small public boundary layer in `my-wasm-project/crate/src/lib.rs`.
@@ -133,15 +127,9 @@ pub fn run_best_tour_par(
 - threaded wasm builds get a Promise-based init path,
 - unsupported builds fail fast with a clear error.
 
-For reference:
-
-- `examples/wasm_demo_tsp/crate/src/lib.rs`
-- `examples/wasm_vite_demo_basic/crate/src/lib.rs`
-- `examples/wasm_react_demo_basic/crate/src/lib.rs`
-
 ## Step 4: Keep computation modules pure Rust
 
-Place heavy compute logic in internal modules and avoid wasm-specific code there. These functions can be implemented in `my-wasm-project/crate/src/computation.rs` for instance, or a separate dependency crate.
+Place heavy compute logic in internal modules and avoid wasm-specific code there. For example, you can implement these functions in `my-wasm-project/crate/src/computation.rs` or in a separate dependency crate.
 
 This keeps computation code testable and reusable.
 
@@ -194,11 +182,6 @@ Good for simple demos.
 - initialize runtime with fixed thread count,
 - run parallel operations with defaults.
 
-See:
-
-- `examples/wasm_vite_demo_basic`
-- `examples/wasm_react_demo_basic`
-
 ### Pattern B: Fixed startup cap + per-run limit
 
 Good for interactive apps.
@@ -216,11 +199,6 @@ let best = (0..iterations)
     .min_by(...);
 ```
 
-See:
-
-- `examples/wasm_demo_tsp/crate/src/computation.rs`
-- `examples/wasm_demo_tsp/web/src/main.ts`
-
 ## Step 7: Build with wasm thread flags
 
 Use nightly + `build-std` + atomics/shared-memory flags.
@@ -233,12 +211,6 @@ RUSTFLAGS='-C target-feature=+atomics,+bulk-memory -C link-arg=--shared-memory -
 wasm-pack build ../crate --target web --out-dir ../web/pkg -- -Z build-std=panic_abort,std
 ```
 
-See:
-
-- `examples/wasm_demo_tsp/web/package.json`
-- `examples/wasm_vite_demo_basic/web/package.json`
-- `examples/wasm_react_demo_basic/web/package.json`
-
 ## Step 8: Serve with COOP/COEP headers
 
 Browser wasm threads require cross-origin isolation.
@@ -249,12 +221,6 @@ Set headers in dev server:
 - `Cross-Origin-Embedder-Policy: require-corp`
 
 In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
-
-See Vite config examples:
-
-- `examples/wasm_demo_tsp/web/vite.config.ts`
-- `examples/wasm_vite_demo_basic/web/vite.config.ts`
-- `examples/wasm_react_demo_basic/web/vite.config.ts`
 
 ## Common mistakes
 
