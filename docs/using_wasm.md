@@ -237,11 +237,7 @@ See Vite config examples:
 - Only `#[wasm_bindgen]` exports are visible to JS.
 - Internal iterator methods like `.num_threads(...)` are Rust-side API.
 
-4. Treating HTML input `min`/`max` as strict validation.
-
-- Enforce bounds in code too (parse + clamp) for reliability.
-
-5. Re-initializing runtime repeatedly.
+4. Re-initializing runtime repeatedly.
 
 - Usually initialize once at startup; vary per-run behavior using computation parameters.
 
