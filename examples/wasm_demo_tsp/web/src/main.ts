@@ -67,6 +67,8 @@ const ctx = maybeCtx;
 
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
+const MIN_THREADS = 1;
+const MAX_THREADS = 16;
 const STARTUP_PARALLEL_RUNTIME_THREADS = 16;
 const state = {
     points: [] as Location[],
@@ -119,6 +121,11 @@ async function setupApp() {
         ui.status.textContent = `Updated problem size to ${numCities} cities.`;
     });
 
+    ui.threads.addEventListener("change", () => {
+        const threads = readThreads();
+        ui.status.textContent = `Thread limit set to ${threads}.`;
+    });
+
     ui.cancelRun.addEventListener("click", () => {
         state.cancelRequested = true;
         ui.cancelRun.disabled = true;
@@ -128,7 +135,7 @@ async function setupApp() {
 
 function readRunSettings(mode: SearchMode): RunSettings {
     const iterations = Math.max(1, Number(ui.iterations.value) || 1);
-    const threads = Math.max(1, Number(ui.threads.value) || 1);
+    const threads = readThreads();
     const seedInput = Math.max(1, Number(ui.seed.value) || 1);
     return {
         mode,
@@ -319,6 +326,19 @@ function readNumCities() {
     state.currentNumCities = numCities;
     ui.numCities.value = String(numCities);
     return numCities;
+}
+
+function readThreads() {
+    const parsed = ui.threads.valueAsNumber;
+
+    if (!Number.isFinite(parsed)) {
+        ui.threads.value = String(MIN_THREADS);
+        return MIN_THREADS;
+    }
+
+    const threads = Math.max(MIN_THREADS, Math.min(MAX_THREADS, Math.trunc(parsed)));
+    ui.threads.value = String(threads);
+    return threads;
 }
 
 function clearBest() {
