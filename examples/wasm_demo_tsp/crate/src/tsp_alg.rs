@@ -20,11 +20,10 @@ pub fn run_search_parallel(
     start_index: u64,
 ) -> SearchRunOutput {
     let start = js_sys::Date::now();
-    let pool = orx_parallel::Pool::wasm_web(threads);
 
     let best = (0..iterations)
         .into_par()
-        .pool(pool)
+        .num_threads(threads)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
