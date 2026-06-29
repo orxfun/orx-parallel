@@ -59,9 +59,11 @@ pub fn run_best_tour_par(
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
+        let started_at = js_sys::Date::now();
         let output =
             tsp_alg::run_search_parallel(iterations, seed, threads, num_cities, start_index);
-        run_output_to_js(output)
+        let elapsed_ms = js_sys::Date::now() - started_at;
+        run_output_to_js(output, elapsed_ms)
     }
 }
 
@@ -85,20 +87,22 @@ pub fn run_best_tour_seq(
     {
         let iterations = iterations.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
+        let started_at = js_sys::Date::now();
         let output = tsp_alg::run_search_sequential(iterations, seed, num_cities, start_index);
-        run_output_to_js(output)
+        let elapsed_ms = js_sys::Date::now() - started_at;
+        run_output_to_js(output, elapsed_ms)
     }
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-fn run_output_to_js(output: tsp_alg::SearchRunOutput) -> Result<JsValue, JsValue> {
+fn run_output_to_js(output: tsp_alg::SearchRunOutput, elapsed_ms: f64) -> Result<JsValue, JsValue> {
     match output.best {
         Some((best_tour, best_distance)) => {
             let result = RunResult {
                 best_tour,
                 best_distance,
                 iterations: output.iterations,
-                elapsed_ms: output.elapsed_ms,
+                elapsed_ms,
             };
 
             serde_wasm_bindgen::to_value(&result)
