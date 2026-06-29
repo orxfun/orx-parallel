@@ -4,7 +4,7 @@ This demo shows how to run a parallel random tour search in the browser using `o
 
 ## Structure
 
-- `crate/`: Rust wasm compute module exporting `init_thread_pool`, `locations`, and `run_best_tour`.
+- `crate/`: Rust wasm compute module exporting `init_thread_pool`, `locations`, and `run_best_tour_par`.
 - `web/`: Vite frontend that initializes wasm threads, runs the search, and renders the best tour.
 
 ## Build the wasm module
