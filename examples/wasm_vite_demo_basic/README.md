@@ -6,7 +6,7 @@ A minimal wasm demo that computes a Fibonacci sum in parallel with `orx-parallel
 
 - Rust -> wasm compute module
 - Browser thread-pool initialization
-- Parallel computation with desired number of threads
+- Parallel computation with a fixed 4-thread runtime
 - Plain HTML + TypeScript frontend (no custom styling)
 
 ## Run the demo
