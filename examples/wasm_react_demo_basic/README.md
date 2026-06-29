@@ -6,8 +6,8 @@ A minimal React + wasm demo that computes a Fibonacci sum in parallel with orx-p
 
 - Rust -> wasm compute module
 - Browser thread-pool initialization
-- Parallel computation with fixed 4 threads
-- Plain React + TypeScript frontend
+- Parallel computation with desired number of threads
+- Plain React + TypeScript frontend (no custom styling)
 
 ## Run the demo
 
