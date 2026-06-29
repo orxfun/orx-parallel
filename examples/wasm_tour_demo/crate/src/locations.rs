@@ -1,14 +1,14 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-#[derive(Clone, Copy, Debug, Serialize)]
-pub struct Location {
-    pub(crate) x: f64,
-    pub(crate) y: f64,
-}
-
 const MIN_CITIES: usize = 5;
 const MAX_CITIES: usize = 200;
+
+#[derive(Clone, Copy, Debug, Serialize)]
+pub struct Location {
+    pub x: f64,
+    pub y: f64,
+}
 
 pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
     let num_cities = clamp_num_cities(num_cities);
@@ -22,12 +22,25 @@ pub fn clamp_num_cities(num_cities: u32) -> usize {
 }
 
 pub fn location_for(idx: usize) -> Location {
-    // Use a deterministic spiral-like layout for any requested city count.
-    let t = idx as f64;
-    let theta = t * 0.618_033_988_749_894_9 * core::f64::consts::TAU;
-    let radius = 8.0 + 2.4 * t.sqrt();
-    Location {
-        x: radius * theta.cos(),
-        y: radius * theta.sin(),
-    }
+    // Deterministic pseudo-random coordinates: random-looking, but stable per index.
+    let sx = splitmix64((idx as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+    let sy = splitmix64((idx as u64).wrapping_mul(0xD1B5_4A32_D192_ED03));
+
+    let x = 100.0 * to_unit_f64(sx) - 50.0;
+    let y = 100.0 * to_unit_f64(sy) - 50.0;
+    Location { x, y }
+}
+
+fn splitmix64(mut x: u64) -> u64 {
+    x = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = x;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+fn to_unit_f64(x: u64) -> f64 {
+    // Keep top 53 bits for an exact f64 mantissa and map to [0, 1).
+    let v = x >> 11;
+    (v as f64) * (1.0 / ((1u64 << 53) as f64))
 }
