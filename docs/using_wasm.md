@@ -38,9 +38,9 @@ Keep wasm-bindgen on a small public boundary layer (typically `lib.rs`).
 Expose at least:
 
 1. one runtime initialization function,
-2. one or more compute entry points.
+2. entry points for the computations.
 
-Example shape:
+### 1. Runtime initialization function
 
 ```rust
 use wasm_bindgen::prelude::*;
@@ -60,7 +60,41 @@ pub fn init_parallel_runtime(_num_threads: u32) -> Result<JsValue, JsValue> {
 }
 ```
 
-Why this split matters:
+
+### 2. Entry points for computations
+
+Notice that this is just an entry point; the actual computation is implemented in the `tsp_alg` module which is pure rust, lacking wasm dependencies.
+
+```rust
+#[wasm_bindgen]
+pub fn run_best_tour_par(
+    iterations: u32,
+    seed: u64,
+    threads: u32,
+    num_cities: u32,
+    start_index: u64,
+) -> Result<JsValue, JsValue> {
+    #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+    {
+        let _ = (iterations, seed, threads, num_cities, start_index);
+        return Err(JsValue::from_str(
+            "run_best_tour_par requires wasm32 + atomics build",
+        ));
+    }
+
+    #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+    {
+        let iterations = iterations.max(1) as usize;
+        let threads = threads.max(1) as usize;
+        let num_cities = locations::clamp_num_cities(num_cities);
+        let output =
+            tsp_alg::run_search_parallel(iterations, seed, threads, num_cities, start_index);
+        run_output_to_js(output)
+    }
+}
+```
+
+### Why this split matters:
 
 - threaded wasm builds get a Promise-based init path,
 - unsupported builds fail fast with a clear error.
@@ -76,6 +110,32 @@ For reference:
 Place heavy compute logic in internal modules and avoid wasm-specific code there unless timing/interop requires it.
 
 This keeps algorithm code testable and reusable.
+
+```rust
+/// Runs a parallel TSP search chunk and returns best/timing metadata.
+pub fn run_search_parallel(
+    iterations: usize,
+    seed: u64,
+    threads: usize,
+    num_cities: usize,
+    start_index: u64,
+) -> SearchRunOutput {
+    let start = js_sys::Date::now();
+
+    let best = (0..iterations)
+        .into_par()
+        .num_threads(threads)
+        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
+
+    let elapsed_ms = js_sys::Date::now() - start;
+    SearchRunOutput {
+        best,
+        iterations,
+        elapsed_ms,
+    }
+}
+```
 
 Example:
 
