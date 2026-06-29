@@ -9,7 +9,7 @@
   <body>
     <main>
       <h1>orx-parallel in browser wasm</h1>
-      <p>Find a short tour across hard-coded points by evaluating random permutations in parallel.</p>
+      <p>Find a short tour across points by applying local search (2-opt) on randomly created tours.</p>
       <section class="card">
         <div id="runOverlay" class="run-overlay" aria-live="polite" aria-hidden="true">
           <div class="run-overlay-card">
@@ -41,7 +41,7 @@
           </label>
           <label>
             Number of Cities
-            <input id="numCities" type="number" min="5" max="200" value="30" />
+            <input id="numCities" type="number" min="5" max="200" value="50" />
           </label>
         </div>
         <div class="actions">
