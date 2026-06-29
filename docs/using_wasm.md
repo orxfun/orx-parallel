@@ -264,12 +264,7 @@ In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
 
 - Symptom: threaded wasm path fails at runtime or behaves unexpectedly.
 
-3. Assuming every Rust method appears in JS API.
-
-- Only `#[wasm_bindgen]` exports are visible to JS.
-- Internal iterator methods like `.num_threads(...)` are Rust-side API.
-
-4. Re-initializing runtime repeatedly.
+3. Re-initializing runtime repeatedly.
 
 - Usually initialize once at startup; vary per-run behavior using computation parameters.
 
