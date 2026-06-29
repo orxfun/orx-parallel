@@ -54,13 +54,11 @@ pub fn run_fib_sum(start: u32, end: u32) -> Result<JsValue, JsValue> {
         }
 
         let started_at = js_sys::Date::now();
-        let pool = orx_parallel::Pool::wasm_web(FIXED_THREADS as usize);
         let range_start = start as usize;
         let range_end_exclusive = (end as usize) + 1;
 
         let sum: u64 = (range_start..range_end_exclusive)
             .into_par()
-            .pool(pool)
             .map(|n| fibonacci(n as u32))
             .sum();
 
