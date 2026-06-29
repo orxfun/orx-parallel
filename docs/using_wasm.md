@@ -220,7 +220,7 @@ let best = (0..iterations)
 
 ### Pattern B: Fixed startup cap + configurable per-run limit
 
-This is a good fit for interactive apps.
+This is a good fit for interactive apps and for having thread limits per-computation.
 
 - initialize runtime once with a cap, say `N`,
 - per computation use `.num_threads(threads)` in Rust pipeline.
