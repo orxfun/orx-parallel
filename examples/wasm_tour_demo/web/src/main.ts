@@ -6,31 +6,58 @@ import init, {
 } from "../pkg/orx_parallel_wasm_tour_demo.js";
 
 type Location = { x: number; y: number };
-type Result = {
+type SearchChunkResult = {
+    best_tour: number[];
+    best_distance: number;
+    iterations: number;
+    elapsed_ms: number;
+};
+type SearchMode = "parallel" | "sequential";
+
+type RunSettings = {
+    mode: SearchMode;
+    iterations: number;
+    threads: number;
+    seed: bigint;
+    numCities: number;
+};
+
+type RunAggregate = {
     best_tour: number[];
     best_distance: number;
     iterations: number;
     elapsed_ms: number;
 };
 
-const statusEl = document.getElementById("status") as HTMLDivElement;
-const iterationsEl = document.getElementById("iterations") as HTMLInputElement;
-const threadsEl = document.getElementById("threads") as HTMLInputElement;
-const seedEl = document.getElementById("seed") as HTMLInputElement;
-const numCitiesEl = document.getElementById("numCities") as HTMLInputElement;
-const runParallelEl = document.getElementById("runParallel") as HTMLButtonElement;
-const runSequentialEl = document.getElementById("runSequential") as HTMLButtonElement;
-const resetEl = document.getElementById("reset") as HTMLButtonElement;
-const runOverlayEl = document.getElementById("runOverlay") as HTMLDivElement;
-const runTitleEl = document.getElementById("runTitle") as HTMLParagraphElement;
-const runSubtitleEl = document.getElementById("runSubtitle") as HTMLParagraphElement;
-const runElapsedEl = document.getElementById("runElapsed") as HTMLParagraphElement;
-const cancelRunEl = document.getElementById("cancelRun") as HTMLButtonElement;
-const bestDistanceEl = document.getElementById("bestDistance") as HTMLParagraphElement;
-const elapsedEl = document.getElementById("elapsed") as HTMLParagraphElement;
-const ipsEl = document.getElementById("ips") as HTMLParagraphElement;
-const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const maybeCtx = canvas.getContext("2d");
+function mustElement<T extends HTMLElement>(id: string): T {
+    const el = document.getElementById(id);
+    if (!el) {
+        throw new Error(`missing required element: #${id}`);
+    }
+    return el as T;
+}
+
+const ui = {
+    status: mustElement<HTMLDivElement>("status"),
+    iterations: mustElement<HTMLInputElement>("iterations"),
+    threads: mustElement<HTMLInputElement>("threads"),
+    seed: mustElement<HTMLInputElement>("seed"),
+    numCities: mustElement<HTMLInputElement>("numCities"),
+    runParallel: mustElement<HTMLButtonElement>("runParallel"),
+    runSequential: mustElement<HTMLButtonElement>("runSequential"),
+    reset: mustElement<HTMLButtonElement>("reset"),
+    runOverlay: mustElement<HTMLDivElement>("runOverlay"),
+    runTitle: mustElement<HTMLParagraphElement>("runTitle"),
+    runSubtitle: mustElement<HTMLParagraphElement>("runSubtitle"),
+    runElapsed: mustElement<HTMLParagraphElement>("runElapsed"),
+    cancelRun: mustElement<HTMLButtonElement>("cancelRun"),
+    bestDistance: mustElement<HTMLParagraphElement>("bestDistance"),
+    elapsed: mustElement<HTMLParagraphElement>("elapsed"),
+    ips: mustElement<HTMLParagraphElement>("ips"),
+    canvas: mustElement<HTMLCanvasElement>("canvas")
+};
+
+const maybeCtx = ui.canvas.getContext("2d");
 
 if (!maybeCtx) {
     throw new Error("failed to acquire canvas 2D context");
@@ -38,101 +65,118 @@ if (!maybeCtx) {
 
 const ctx = maybeCtx;
 
-let points: Location[] = [];
-let initialized = false;
-let bestSoFar: Result | null = null;
-
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
-let currentNumCities = MAX_CITIES;
-let runTicker: number | undefined;
-let runStartedAtMs = 0;
-let cancelRequested = false;
+const state = {
+    points: [] as Location[],
+    threadPoolReady: false,
+    bestSoFar: null as RunAggregate | null,
+    currentNumCities: MAX_CITIES,
+    runTicker: undefined as number | undefined,
+    runStartedAtMs: 0,
+    cancelRequested: false
+};
 
-cancelRunEl.addEventListener("click", () => {
-    cancelRequested = true;
-    cancelRunEl.disabled = true;
-    runSubtitleEl.textContent = "Cancelling... this takes effect after the current chunk finishes.";
-});
-
-async function setup() {
+// Bootstraps wasm module, initial data and UI event wiring.
+async function setupApp() {
     await init();
-    currentNumCities = readNumCities();
-    points = locations(currentNumCities) as Location[];
-    drawPoints(points);
-    statusEl.textContent = "Ready. Run parallel or sequential search.";
+    state.currentNumCities = readNumCities();
+    state.points = locations(state.currentNumCities) as Location[];
+    drawPoints(state.points);
+    ui.status.textContent = "Ready. Run parallel or sequential search.";
+
+    ui.runParallel.addEventListener("click", async () => {
+        await runSearch("parallel");
+    });
+
+    ui.runSequential.addEventListener("click", async () => {
+        await runSearch("sequential");
+    });
+
+    ui.reset.addEventListener("click", () => {
+        clearBest();
+        drawPoints(state.points);
+        ui.status.textContent = "Best tour reset. Ready for a fresh run.";
+    });
+
+    ui.numCities.addEventListener("change", () => {
+        const numCities = readNumCities();
+        state.points = locations(numCities) as Location[];
+        clearBest();
+        drawPoints(state.points);
+        ui.status.textContent = `Updated problem size to ${numCities} cities.`;
+    });
+
+    ui.cancelRun.addEventListener("click", () => {
+        state.cancelRequested = true;
+        ui.cancelRun.disabled = true;
+        ui.runSubtitle.textContent = "Cancelling... this takes effect after the current chunk finishes.";
+    });
 }
 
-runParallelEl.addEventListener("click", async () => {
-    await runSearch("parallel");
-});
+function readRunSettings(mode: SearchMode): RunSettings {
+    const iterations = Math.max(1, Number(ui.iterations.value) || 1);
+    const threads = Math.max(1, Number(ui.threads.value) || 1);
+    const seedInput = Math.max(1, Number(ui.seed.value) || 1);
+    return {
+        mode,
+        iterations,
+        threads,
+        seed: BigInt(Math.trunc(seedInput)),
+        numCities: readNumCities()
+    };
+}
 
-runSequentialEl.addEventListener("click", async () => {
-    await runSearch("sequential");
-});
+function setControlsDisabled(disabled: boolean) {
+    ui.runParallel.disabled = disabled;
+    ui.runSequential.disabled = disabled;
+    ui.reset.disabled = disabled;
+    ui.iterations.disabled = disabled;
+    ui.threads.disabled = disabled;
+    ui.seed.disabled = disabled;
+    ui.numCities.disabled = disabled;
+}
 
-resetEl.addEventListener("click", () => {
-    clearBest();
-    drawPoints(points);
-    statusEl.textContent = "Best tour reset. Ready for a fresh run.";
-});
-
-numCitiesEl.addEventListener("change", () => {
-    const numCities = readNumCities();
-    points = locations(numCities) as Location[];
-    clearBest();
-    drawPoints(points);
-    statusEl.textContent = `Updated problem size to ${numCities} cities.`;
-});
-
-async function runSearch(mode: "parallel" | "sequential") {
-    const iterations = Math.max(1, Number(iterationsEl.value) || 1);
-    const threads = Math.max(1, Number(threadsEl.value) || 1);
-    const seedInput = Math.max(1, Number(seedEl.value) || 1);
-    const seed = BigInt(Math.trunc(seedInput));
-    const numCities = readNumCities();
-
-    if (points.length !== numCities) {
-        points = locations(numCities) as Location[];
-        clearBest();
-        drawPoints(points);
+function ensurePointsForCities(numCities: number) {
+    if (state.points.length === numCities) {
+        return;
     }
 
-    runParallelEl.disabled = true;
-    runSequentialEl.disabled = true;
-    resetEl.disabled = true;
-    iterationsEl.disabled = true;
-    threadsEl.disabled = true;
-    seedEl.disabled = true;
-    numCitiesEl.disabled = true;
+    state.points = locations(numCities) as Location[];
+    clearBest();
+    drawPoints(state.points);
+}
 
-    setRunningView(mode, true);
+async function runSearch(mode: SearchMode) {
+    const settings = readRunSettings(mode);
+    ensurePointsForCities(settings.numCities);
+
+    setControlsDisabled(true);
+    setRunningView(settings.mode, true);
     await allowRunningOverlayToRender();
 
-    statusEl.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+    ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
 
     try {
-        if (mode === "parallel" && !initialized) {
-            await init_thread_pool(threads);
-            initialized = true;
-            statusEl.textContent = `Thread pool initialized with ${threads} threads.`;
+        if (settings.mode === "parallel" && !state.threadPoolReady) {
+            await init_thread_pool(settings.threads);
+            state.threadPoolReady = true;
+            ui.status.textContent = `Thread pool initialized with ${settings.threads} threads.`;
         }
 
-        let remaining = iterations;
+        let remaining = settings.iterations;
         let startIndex = 0;
         let runElapsedMs = 0;
-        let runBest: Result | null = null;
-        const chunkSize = chooseChunkSize(mode, numCities, iterations);
+        let runBest: SearchChunkResult | null = null;
+        const chunkSize = chooseChunkSize(settings.mode, settings.numCities, settings.iterations);
 
         while (remaining > 0) {
-            if (cancelRequested) {
+            if (state.cancelRequested) {
                 break;
             }
 
             const thisChunk = Math.min(remaining, chunkSize);
-            const chunkResult = mode === "parallel"
-                ? (run_best_tour_par(thisChunk, seed, threads, numCities, BigInt(startIndex)) as Result)
-                : (run_best_tour_seq(thisChunk, seed, numCities, BigInt(startIndex)) as Result);
+            const chunkResult = runSearchChunk(settings, thisChunk, startIndex);
 
             runElapsedMs += chunkResult.elapsed_ms;
             startIndex += thisChunk;
@@ -143,81 +187,101 @@ async function runSearch(mode: "parallel" | "sequential") {
                 runBest = chunkResult;
             }
 
-            if (!bestSoFar || (runBest && runBest.best_distance < bestSoFar.best_distance)) {
-                bestSoFar = runBest;
-                if (bestSoFar) {
-                    drawTour(points, bestSoFar.best_tour);
-                }
+            const currentRunBest = runBest ?? chunkResult;
+
+            if (!state.bestSoFar || currentRunBest.best_distance < state.bestSoFar.best_distance) {
+                state.bestSoFar = toAggregate(currentRunBest, startIndex, runElapsedMs);
+                drawTour(state.points, state.bestSoFar.best_tour);
             }
 
-            runSubtitleEl.textContent = `Processed ${startIndex.toLocaleString()} / ${iterations.toLocaleString()} iterations...`;
+            ui.runSubtitle.textContent = `Processed ${startIndex.toLocaleString()} / ${settings.iterations.toLocaleString()} iterations...`;
             await nextPaint();
         }
 
         if (runBest) {
-            const summary: Result = {
-                best_tour: runBest.best_tour,
-                best_distance: runBest.best_distance,
-                iterations: startIndex,
-                elapsed_ms: runElapsedMs
-            };
+            const summary = toAggregate(runBest, startIndex, runElapsedMs);
             updateStats(summary);
         }
 
-        if (cancelRequested) {
-            statusEl.textContent = `${mode === "parallel" ? "Parallel" : "Sequential"} run cancelled after ${startIndex.toLocaleString()} iterations.`;
-        } else if (runBest && bestSoFar && runBest.best_distance <= bestSoFar.best_distance) {
-            statusEl.textContent = `${mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
+        if (state.cancelRequested) {
+            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run cancelled after ${startIndex.toLocaleString()} iterations.`;
+        } else if (runBest && state.bestSoFar && runBest.best_distance <= state.bestSoFar.best_distance) {
+            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
         } else {
-            statusEl.textContent = `${mode === "parallel" ? "Parallel" : "Sequential"} run completed; best tour unchanged.`;
+            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed; best tour unchanged.`;
         }
     } catch (err) {
-        statusEl.textContent = `Error: ${String(err)}`;
+        ui.status.textContent = `Error: ${String(err)}`;
     } finally {
-        setRunningView(mode, false);
-        runParallelEl.disabled = false;
-        runSequentialEl.disabled = false;
-        resetEl.disabled = false;
-        iterationsEl.disabled = false;
-        threadsEl.disabled = false;
-        seedEl.disabled = false;
-        numCitiesEl.disabled = false;
+        setRunningView(settings.mode, false);
+        setControlsDisabled(false);
     }
 }
 
-function chooseChunkSize(mode: "parallel" | "sequential", numCities: number, iterations: number) {
+function runSearchChunk(settings: RunSettings, chunkIterations: number, startIndex: number): SearchChunkResult {
+    if (settings.mode === "parallel") {
+        return run_best_tour_par(
+            chunkIterations,
+            settings.seed,
+            settings.threads,
+            settings.numCities,
+            BigInt(startIndex)
+        ) as SearchChunkResult;
+    }
+
+    return run_best_tour_seq(
+        chunkIterations,
+        settings.seed,
+        settings.numCities,
+        BigInt(startIndex)
+    ) as SearchChunkResult;
+}
+
+function toAggregate(best: SearchChunkResult, iterations: number, elapsedMs: number): RunAggregate {
+    return {
+        best_tour: best.best_tour,
+        best_distance: best.best_distance,
+        iterations,
+        elapsed_ms: elapsedMs
+    };
+}
+
+function chooseChunkSize(mode: SearchMode, numCities: number, iterations: number) {
     const base = mode === "parallel" ? 400 : 240;
     const scale = Math.max(1, Math.floor(220 / Math.max(numCities, 5)));
     return Math.max(8, Math.min(iterations, base * scale));
 }
 
-function setRunningView(mode: "parallel" | "sequential", running: boolean) {
+function setRunningView(mode: SearchMode, running: boolean) {
     if (running) {
-        cancelRequested = false;
-        runStartedAtMs = performance.now();
-        runTitleEl.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
-        runSubtitleEl.textContent = "Evaluating tours with 2-opt local search. Larger instances can take several minutes.";
-        runElapsedEl.textContent = "Elapsed: 0.0s";
-        cancelRunEl.disabled = false;
-        runOverlayEl.classList.add("active");
-        runOverlayEl.setAttribute("aria-hidden", "false");
-        if (runTicker !== undefined) {
-            window.clearInterval(runTicker);
+        state.cancelRequested = false;
+        state.runStartedAtMs = performance.now();
+        ui.runTitle.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+        ui.runSubtitle.textContent = "Evaluating tours with 2-opt local search. Larger instances can take several minutes.";
+        ui.runElapsed.textContent = "Elapsed: 0.0s";
+        ui.cancelRun.disabled = false;
+        ui.runOverlay.classList.add("active");
+        ui.runOverlay.setAttribute("aria-hidden", "false");
+
+        if (state.runTicker !== undefined) {
+            window.clearInterval(state.runTicker);
         }
-        runTicker = window.setInterval(() => {
-            const secs = (performance.now() - runStartedAtMs) / 1000;
-            runElapsedEl.textContent = `Elapsed: ${secs.toFixed(1)}s`;
+
+        state.runTicker = window.setInterval(() => {
+            const secs = (performance.now() - state.runStartedAtMs) / 1000;
+            ui.runElapsed.textContent = `Elapsed: ${secs.toFixed(1)}s`;
         }, 200);
         return;
     }
 
-    if (runTicker !== undefined) {
-        window.clearInterval(runTicker);
-        runTicker = undefined;
+    if (state.runTicker !== undefined) {
+        window.clearInterval(state.runTicker);
+        state.runTicker = undefined;
     }
-    cancelRunEl.disabled = true;
-    runOverlayEl.classList.remove("active");
-    runOverlayEl.setAttribute("aria-hidden", "true");
+
+    ui.cancelRun.disabled = true;
+    ui.runOverlay.classList.remove("active");
+    ui.runOverlay.setAttribute("aria-hidden", "true");
 }
 
 function nextPaint() {
@@ -234,35 +298,35 @@ async function allowRunningOverlayToRender() {
 }
 
 function readNumCities() {
-    const parsed = numCitiesEl.valueAsNumber;
+    const parsed = ui.numCities.valueAsNumber;
 
     if (!Number.isFinite(parsed)) {
-        numCitiesEl.value = String(currentNumCities);
-        return currentNumCities;
+        ui.numCities.value = String(state.currentNumCities);
+        return state.currentNumCities;
     }
 
     const numCities = Math.max(MIN_CITIES, Math.min(MAX_CITIES, Math.trunc(parsed)));
-    currentNumCities = numCities;
-    numCitiesEl.value = String(numCities);
+    state.currentNumCities = numCities;
+    ui.numCities.value = String(numCities);
     return numCities;
 }
 
 function clearBest() {
-    bestSoFar = null;
-    bestDistanceEl.textContent = "-";
-    elapsedEl.textContent = "-";
-    ipsEl.textContent = "-";
+    state.bestSoFar = null;
+    ui.bestDistance.textContent = "-";
+    ui.elapsed.textContent = "-";
+    ui.ips.textContent = "-";
 }
 
-function updateStats(result: Result) {
-    bestDistanceEl.textContent = result.best_distance.toFixed(3);
-    elapsedEl.textContent = `${result.elapsed_ms.toFixed(1)} ms`;
+function updateStats(result: RunAggregate) {
+    ui.bestDistance.textContent = result.best_distance.toFixed(3);
+    ui.elapsed.textContent = `${result.elapsed_ms.toFixed(1)} ms`;
     const ips = result.iterations / Math.max(result.elapsed_ms / 1000, 1e-9);
-    ipsEl.textContent = ips.toFixed(0);
+    ui.ips.textContent = ips.toFixed(0);
 }
 
 function drawPoints(locations: Location[]) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
     const mapped = mapPoints(locations);
 
     for (const p of mapped) {
@@ -308,9 +372,9 @@ function mapPoints(locations: Location[]) {
     const spanY = Math.max(maxY - minY, 1);
 
     return locations.map((p) => ({
-        x: pad + ((p.x - minX) / spanX) * (canvas.width - pad * 2),
-        y: canvas.height - (pad + ((p.y - minY) / spanY) * (canvas.height - pad * 2))
+        x: pad + ((p.x - minX) / spanX) * (ui.canvas.width - pad * 2),
+        y: ui.canvas.height - (pad + ((p.y - minY) / spanY) * (ui.canvas.height - pad * 2))
     }));
 }
 
-void setup();
+void setupApp();
