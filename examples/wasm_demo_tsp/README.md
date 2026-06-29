@@ -68,14 +68,15 @@ npm run build:wasm
 
 The frontend logic in `web/src/main.ts` is organized as:
 
-1. `setupApp()`: initializes wasm, loads city points, and wires all UI handlers.
-2. `runSearch(mode)`: reads settings, initializes threads (parallel mode), then runs chunked searches.
+1. `setupApp()`: initializes wasm, initializes the parallel runtime once with a fixed cap of 16 threads, loads city points, and wires all UI handlers.
+2. `runSearch(mode)`: reads settings and runs chunked searches.
 3. `runSearchChunk(...)`: calls wasm exports for either parallel or sequential chunk execution.
 4. Overlay helpers (`setRunningView`, `allowRunningOverlayToRender`): show progress and support cancellation.
 5. Canvas helpers (`drawPoints`, `drawTour`, `mapPoints`): render cities and best tour.
 
 ## Important runtime notes
 
-- `init_parallel_runtime(...)` is required before first parallel run.
+- `init_parallel_runtime(16)` is called once during app startup.
+- Per-run parallelism is limited by the `Threads` input (range `1..=16`) via `.num_threads(threads)` in the Rust parallel pipeline.
 - `Cancel Run` is cooperative: it stops after the current chunk.
 - Vite dev server is configured with COOP/COEP headers required for SharedArrayBuffer + wasm threads.
