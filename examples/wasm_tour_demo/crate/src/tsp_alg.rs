@@ -122,6 +122,12 @@ fn two_opt_improve(mut tour: Vec<usize>) -> Vec<usize> {
     tour
 }
 
+fn euclidean(a: Location, b: Location) -> f64 {
+    let dx = a.x - b.x;
+    let dy = a.y - b.y;
+    (dx * dx + dy * dy).sqrt()
+}
+
 fn edge_distance(i: usize, j: usize) -> f64 {
     euclidean(location_for(i), location_for(j))
 }
@@ -141,10 +147,4 @@ fn tour_distance(tour: &[usize]) -> f64 {
     let first = location_for(tour[0]);
     let last = location_for(*tour.last().expect("tour has at least one location"));
     sum + euclidean(last, first)
-}
-
-fn euclidean(a: Location, b: Location) -> f64 {
-    let dx = a.x - b.x;
-    let dy = a.y - b.y;
-    (dx * dx + dy * dy).sqrt()
 }
