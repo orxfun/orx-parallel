@@ -21,3 +21,9 @@ examples/wasm_demo_tsp/web/node_modules/
 examples/wasm_demo_tsp/web/dist/
 examples/wasm_demo_tsp/web/pkg/
 examples/wasm_demo_tsp/crate/target/
+
+# wasm demo basic generated artifacts
+examples/wasm_demo_basic/web/node_modules/
+examples/wasm_demo_basic/web/dist/
+examples/wasm_demo_basic/web/pkg/
+examples/wasm_demo_basic/crate/target/

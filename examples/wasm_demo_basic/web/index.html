@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orx-parallel wasm demo basic</title>
+  </head>
+  <body>
+    <h1>orx-parallel wasm demo basic</h1>
+    <p>Compute the sum of Fibonacci numbers over a range in parallel using 4 threads.</p>
+
+    <label>
+      Start (n):
+      <input id="start" type="number" min="0" max="93" value="1" />
+    </label>
+
+    <label>
+      End (n):
+      <input id="end" type="number" min="0" max="93" value="40" />
+    </label>
+
+    <button id="run">Run parallel Fibonacci sum</button>
+
+    <p id="status">Initializing...</p>
+    <pre id="output"></pre>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
