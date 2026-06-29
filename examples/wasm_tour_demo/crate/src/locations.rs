@@ -5,11 +5,13 @@ const MIN_CITIES: usize = 5;
 const MAX_CITIES: usize = 200;
 
 #[derive(Clone, Copy, Debug, Serialize)]
+/// A 2D city coordinate used by the TSP demo.
 pub struct Location {
     pub x: f64,
     pub y: f64,
 }
 
+/// Returns serialized city coordinates for the requested city count.
 pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
     let num_cities = clamp_num_cities(num_cities);
     let locations: Vec<Location> = (0..num_cities).map(location_for).collect();
@@ -17,10 +19,12 @@ pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
         .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))
 }
 
+/// Clamps a requested city count into the supported demo range.
 pub fn clamp_num_cities(num_cities: u32) -> usize {
     (num_cities as usize).clamp(MIN_CITIES, MAX_CITIES)
 }
 
+/// Returns the deterministic pseudo-random location for a city index.
 pub fn location_for(idx: usize) -> Location {
     // Deterministic pseudo-random coordinates: random-looking, but stable per index.
     let sx = split_mix_64((idx as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
