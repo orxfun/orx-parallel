@@ -49,7 +49,7 @@ Path mapping used in the remaining steps:
 
 ## Step 2: Add the right crate dependencies
 
-In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` v4 with wasm threads and add wasm bindings:
+In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings:
 
 This demo targets at least version `4.0.0` of `orx-parallel`.
 
@@ -72,12 +72,9 @@ For examples, see:
 
 Keep wasm-bindgen on a small public boundary layer in `my-wasm-project/crate/src/lib.rs`.
 
-Expose at least:
+Expose (i) one runtime initialization function and (ii) entry points for the computations.
 
-1. one runtime initialization function,
-2. entry points for the computations.
-
-### 1. Runtime initialization function
+### Runtime initialization function
 
 ```rust
 use wasm_bindgen::prelude::*;
@@ -98,7 +95,7 @@ pub fn init_parallel_runtime(_num_threads: u32) -> Result<JsValue, JsValue> {
 ```
 
 
-### 2. Entry points for computations
+### Entry points for computations
 
 Notice that this is just an entry point; the actual computation is implemented in the `computation` module which intentionally avoids wasm dependencies.
 
@@ -131,7 +128,7 @@ pub fn run_best_tour_par(
 }
 ```
 
-### Why this split matters:
+### Why to use `cfg` attributes:
 
 - threaded wasm builds get a Promise-based init path,
 - unsupported builds fail fast with a clear error.
