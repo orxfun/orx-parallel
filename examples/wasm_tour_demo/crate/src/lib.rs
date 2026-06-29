@@ -1,8 +1,17 @@
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 mod locations;
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 mod tsp_alg;
+
+#[derive(Debug, Serialize)]
+struct RunResult {
+    best_tour: Vec<usize>,
+    best_distance: f64,
+    iterations: usize,
+    elapsed_ms: f64,
+}
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 #[wasm_bindgen(js_name = init_thread_pool)]
@@ -44,7 +53,9 @@ pub fn run_best_tour(
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
-        tsp_alg::run_search_parallel(iterations, seed, threads, num_cities, start_index)
+        let output =
+            tsp_alg::run_search_parallel(iterations, seed, threads, num_cities, start_index);
+        run_output_to_js(output)
     }
 }
 
@@ -67,6 +78,27 @@ pub fn run_best_tour_seq(
     {
         let iterations = iterations.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
-        tsp_alg::run_search_sequential(iterations, seed, num_cities, start_index)
+        let output = tsp_alg::run_search_sequential(iterations, seed, num_cities, start_index);
+        run_output_to_js(output)
+    }
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn run_output_to_js(output: tsp_alg::SearchRunOutput) -> Result<JsValue, JsValue> {
+    match output.best {
+        Some((best_tour, best_distance)) => {
+            let result = RunResult {
+                best_tour,
+                best_distance,
+                iterations: output.iterations,
+                elapsed_ms: output.elapsed_ms,
+            };
+
+            serde_wasm_bindgen::to_value(&result)
+                .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
+        }
+        None => Err(JsValue::from_str(
+            "no tour could be generated (unexpected empty search)",
+        )),
     }
 }
