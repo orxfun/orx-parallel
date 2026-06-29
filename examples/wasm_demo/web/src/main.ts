@@ -3,7 +3,7 @@ import init, {
     locations,
     run_best_tour_par,
     run_best_tour_seq
-} from "../pkg/orx_parallel_wasm_tour_demo.js";
+} from "../pkg/orx_parallel_wasm_demo.js";
 
 type Location = { x: number; y: number };
 type SearchChunkResult = {

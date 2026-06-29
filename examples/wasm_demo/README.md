@@ -1,4 +1,4 @@
-# orx-parallel wasm tour demo
+# orx-parallel wasm demo
 
 This demo shows a complete setup for running `orx-parallel` in the browser with wasm threads.
 
@@ -20,21 +20,21 @@ cargo install wasm-pack
 2. Install frontend dependencies
 
 ```bash
-cd examples/wasm_tour_demo/web
+cd examples/wasm_demo/web
 npm install
 ```
 
 3. Build the Rust wasm package
 
 ```bash
-cd examples/wasm_tour_demo/web
+cd examples/wasm_demo/web
 npm run build:wasm
 ```
 
 4. Start the frontend
 
 ```bash
-cd examples/wasm_tour_demo/web
+cd examples/wasm_demo/web
 npm run dev
 ```
 
@@ -48,7 +48,7 @@ npm run dev
 - Build wasm and run dev server in one step:
 
 ```bash
-cd examples/wasm_tour_demo/web
+cd examples/wasm_demo/web
 npm run dev:full
 ```
 
@@ -58,7 +58,7 @@ npm run dev:full
 2. Rebuild wasm:
 
 ```bash
-cd examples/wasm_tour_demo/web
+cd examples/wasm_demo/web
 npm run build:wasm
 ```
 
