@@ -53,10 +53,11 @@ pub fn run_best_tour(
     seed: u64,
     threads: u32,
     num_cities: u32,
+    start_index: u64,
 ) -> Result<JsValue, JsValue> {
     #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
     {
-        let _ = (iterations, seed, threads, num_cities);
+        let _ = (iterations, seed, threads, num_cities, start_index);
         return Err(JsValue::from_str(
             "run_best_tour requires wasm32 + atomics build",
         ));
@@ -67,15 +68,20 @@ pub fn run_best_tour(
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
         let num_cities = clamp_num_cities(num_cities);
-        run_search_parallel(iterations, seed, threads, num_cities)
+        run_search_parallel(iterations, seed, threads, num_cities, start_index)
     }
 }
 
 #[wasm_bindgen]
-pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
+pub fn run_best_tour_seq(
+    iterations: u32,
+    seed: u64,
+    num_cities: u32,
+    start_index: u64,
+) -> Result<JsValue, JsValue> {
     #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
     {
-        let _ = (iterations, seed, num_cities);
+        let _ = (iterations, seed, num_cities, start_index);
         return Err(JsValue::from_str(
             "run_best_tour_seq requires wasm32 + atomics build",
         ));
@@ -85,7 +91,7 @@ pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<
     {
         let iterations = iterations.max(1) as usize;
         let num_cities = clamp_num_cities(num_cities);
-        run_search_sequential(iterations, seed, num_cities)
+        run_search_sequential(iterations, seed, num_cities, start_index)
     }
 }
 
@@ -95,6 +101,7 @@ fn run_search_parallel(
     seed: u64,
     threads: usize,
     num_cities: usize,
+    start_index: u64,
 ) -> Result<JsValue, JsValue> {
     let start = js_sys::Date::now();
     let pool = orx_parallel::Pool::wasm_web(threads);
@@ -102,7 +109,7 @@ fn run_search_parallel(
     let best = (0..iterations)
         .into_par()
         .pool(pool)
-        .map(|k| search_candidate(seed, k as u64, num_cities))
+        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
 
     let elapsed_ms = js_sys::Date::now() - start;
@@ -114,11 +121,12 @@ fn run_search_sequential(
     iterations: usize,
     seed: u64,
     num_cities: usize,
+    start_index: u64,
 ) -> Result<JsValue, JsValue> {
     let start = js_sys::Date::now();
 
     let best = (0..iterations)
-        .map(|k| search_candidate(seed, k as u64, num_cities))
+        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
 
     let elapsed_ms = js_sys::Date::now() - start;

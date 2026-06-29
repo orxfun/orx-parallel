@@ -25,6 +25,7 @@ const runOverlayEl = document.getElementById("runOverlay") as HTMLDivElement;
 const runTitleEl = document.getElementById("runTitle") as HTMLParagraphElement;
 const runSubtitleEl = document.getElementById("runSubtitle") as HTMLParagraphElement;
 const runElapsedEl = document.getElementById("runElapsed") as HTMLParagraphElement;
+const cancelRunEl = document.getElementById("cancelRun") as HTMLButtonElement;
 const bestDistanceEl = document.getElementById("bestDistance") as HTMLParagraphElement;
 const elapsedEl = document.getElementById("elapsed") as HTMLParagraphElement;
 const ipsEl = document.getElementById("ips") as HTMLParagraphElement;
@@ -46,6 +47,13 @@ const MAX_CITIES = 200;
 let currentNumCities = MAX_CITIES;
 let runTicker: number | undefined;
 let runStartedAtMs = 0;
+let cancelRequested = false;
+
+cancelRunEl.addEventListener("click", () => {
+    cancelRequested = true;
+    cancelRunEl.disabled = true;
+    runSubtitleEl.textContent = "Cancelling... this takes effect after the current chunk finishes.";
+});
 
 async function setup() {
     await init();
@@ -110,21 +118,59 @@ async function runSearch(mode: "parallel" | "sequential") {
             statusEl.textContent = `Thread pool initialized with ${threads} threads.`;
         }
 
-        const result = mode === "parallel"
-            ? (run_best_tour(iterations, seed, threads, numCities) as Result)
-            : (run_best_tour_seq(iterations, seed, numCities) as Result);
+        let remaining = iterations;
+        let startIndex = 0;
+        let runElapsedMs = 0;
+        let runBest: Result | null = null;
+        const chunkSize = chooseChunkSize(mode, numCities, iterations);
 
-        const isNewBest = !bestSoFar || result.best_distance < bestSoFar.best_distance;
-        if (isNewBest) {
-            bestSoFar = result;
-            drawTour(points, result.best_tour);
+        while (remaining > 0) {
+            if (cancelRequested) {
+                break;
+            }
+
+            const thisChunk = Math.min(remaining, chunkSize);
+            const chunkResult = mode === "parallel"
+                ? (run_best_tour(thisChunk, seed, threads, numCities, BigInt(startIndex)) as Result)
+                : (run_best_tour_seq(thisChunk, seed, numCities, BigInt(startIndex)) as Result);
+
+            runElapsedMs += chunkResult.elapsed_ms;
+            startIndex += thisChunk;
+            remaining -= thisChunk;
+
+            const isRunBest = !runBest || chunkResult.best_distance < runBest.best_distance;
+            if (isRunBest) {
+                runBest = chunkResult;
+            }
+
+            if (!bestSoFar || (runBest && runBest.best_distance < bestSoFar.best_distance)) {
+                bestSoFar = runBest;
+                if (bestSoFar) {
+                    drawTour(points, bestSoFar.best_tour);
+                }
+            }
+
+            runSubtitleEl.textContent = `Processed ${startIndex.toLocaleString()} / ${iterations.toLocaleString()} iterations...`;
+            await nextPaint();
         }
 
-        updateStats(bestSoFar ?? result);
+        if (runBest) {
+            const summary: Result = {
+                best_tour: runBest.best_tour,
+                best_distance: runBest.best_distance,
+                iterations: startIndex,
+                elapsed_ms: runElapsedMs
+            };
+            updateStats(summary);
+        }
 
-        statusEl.textContent = isNewBest
-            ? `${mode === "parallel" ? "Parallel" : "Sequential"} run found a new best tour.`
-            : `${mode === "parallel" ? "Parallel" : "Sequential"} run completed; best tour unchanged.`;
+        if (cancelRequested) {
+            statusEl.textContent = `${mode === "parallel" ? "Parallel" : "Sequential"} run cancelled after ${startIndex.toLocaleString()} iterations.`;
+        } else if (runBest && bestSoFar && runBest.best_distance <= bestSoFar.best_distance) {
+            statusEl.textContent = `${mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
+        } else {
+            statusEl.textContent = `${mode === "parallel" ? "Parallel" : "Sequential"} run completed; best tour unchanged.`;
+        }
     } catch (err) {
         statusEl.textContent = `Error: ${String(err)}`;
     } finally {
@@ -139,12 +185,20 @@ async function runSearch(mode: "parallel" | "sequential") {
     }
 }
 
+function chooseChunkSize(mode: "parallel" | "sequential", numCities: number, iterations: number) {
+    const base = mode === "parallel" ? 400 : 240;
+    const scale = Math.max(1, Math.floor(220 / Math.max(numCities, 5)));
+    return Math.max(8, Math.min(iterations, base * scale));
+}
+
 function setRunningView(mode: "parallel" | "sequential", running: boolean) {
     if (running) {
+        cancelRequested = false;
         runStartedAtMs = performance.now();
         runTitleEl.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
         runSubtitleEl.textContent = "Evaluating tours with 2-opt local search. Larger instances can take several minutes.";
         runElapsedEl.textContent = "Elapsed: 0.0s";
+        cancelRunEl.disabled = false;
         runOverlayEl.classList.add("active");
         runOverlayEl.setAttribute("aria-hidden", "false");
         if (runTicker !== undefined) {
@@ -161,6 +215,7 @@ function setRunningView(mode: "parallel" | "sequential", running: boolean) {
         window.clearInterval(runTicker);
         runTicker = undefined;
     }
+    cancelRunEl.disabled = true;
     runOverlayEl.classList.remove("active");
     runOverlayEl.setAttribute("aria-hidden", "true");
 }

@@ -84,6 +84,14 @@
         font-weight: 600;
         color: #475569;
       }
+      .run-actions {
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      button.cancel {
+        background: linear-gradient(90deg, #b91c1c, #dc2626);
+      }
       .run-bar {
         margin-top: 10px;
         width: 100%;
@@ -215,6 +223,9 @@
             </div>
             <p id="runSubtitle" class="run-subtitle">Working through candidate tours. This can take a few minutes for large runs.</p>
             <p id="runElapsed" class="run-elapsed">Elapsed: 0.0s</p>
+            <div class="run-actions">
+              <button id="cancelRun" class="cancel" type="button">Cancel Run</button>
+            </div>
             <div class="run-bar" aria-hidden="true"></div>
           </div>
         </div>
