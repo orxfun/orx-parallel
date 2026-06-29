@@ -17,6 +17,7 @@ const statusEl = document.getElementById("status") as HTMLDivElement;
 const iterationsEl = document.getElementById("iterations") as HTMLInputElement;
 const threadsEl = document.getElementById("threads") as HTMLInputElement;
 const seedEl = document.getElementById("seed") as HTMLInputElement;
+const numCitiesEl = document.getElementById("numCities") as HTMLInputElement;
 const runParallelEl = document.getElementById("runParallel") as HTMLButtonElement;
 const runSequentialEl = document.getElementById("runSequential") as HTMLButtonElement;
 const resetEl = document.getElementById("reset") as HTMLButtonElement;
@@ -24,19 +25,26 @@ const bestDistanceEl = document.getElementById("bestDistance") as HTMLParagraphE
 const elapsedEl = document.getElementById("elapsed") as HTMLParagraphElement;
 const ipsEl = document.getElementById("ips") as HTMLParagraphElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d");
+const maybeCtx = canvas.getContext("2d");
 
-if (!ctx) {
+if (!maybeCtx) {
     throw new Error("failed to acquire canvas 2D context");
 }
+
+const ctx = maybeCtx;
 
 let points: Location[] = [];
 let initialized = false;
 let bestSoFar: Result | null = null;
 
+const MIN_CITIES = 5;
+const MAX_CITIES = 200;
+let currentNumCities = MAX_CITIES;
+
 async function setup() {
     await init();
-    points = locations() as Location[];
+    currentNumCities = readNumCities();
+    points = locations(currentNumCities) as Location[];
     drawPoints(points);
     statusEl.textContent = "Ready. Run parallel or sequential search.";
 }
@@ -50,12 +58,17 @@ runSequentialEl.addEventListener("click", async () => {
 });
 
 resetEl.addEventListener("click", () => {
-    bestSoFar = null;
-    bestDistanceEl.textContent = "-";
-    elapsedEl.textContent = "-";
-    ipsEl.textContent = "-";
+    clearBest();
     drawPoints(points);
     statusEl.textContent = "Best tour reset. Ready for a fresh run.";
+});
+
+numCitiesEl.addEventListener("change", () => {
+    const numCities = readNumCities();
+    points = locations(numCities) as Location[];
+    clearBest();
+    drawPoints(points);
+    statusEl.textContent = `Updated problem size to ${numCities} cities.`;
 });
 
 async function runSearch(mode: "parallel" | "sequential") {
@@ -63,6 +76,13 @@ async function runSearch(mode: "parallel" | "sequential") {
     const threads = Math.max(1, Number(threadsEl.value) || 1);
     const seedInput = Math.max(1, Number(seedEl.value) || 1);
     const seed = BigInt(Math.trunc(seedInput));
+    const numCities = readNumCities();
+
+    if (points.length !== numCities) {
+        points = locations(numCities) as Location[];
+        clearBest();
+        drawPoints(points);
+    }
 
     runParallelEl.disabled = true;
     runSequentialEl.disabled = true;
@@ -77,8 +97,8 @@ async function runSearch(mode: "parallel" | "sequential") {
         }
 
         const result = mode === "parallel"
-            ? (run_best_tour(iterations, seed, threads) as Result)
-            : (run_best_tour_seq(iterations, seed) as Result);
+            ? (run_best_tour(iterations, seed, threads, numCities) as Result)
+            : (run_best_tour_seq(iterations, seed, numCities) as Result);
 
         const isNewBest = !bestSoFar || result.best_distance < bestSoFar.best_distance;
         if (isNewBest) {
@@ -98,6 +118,27 @@ async function runSearch(mode: "parallel" | "sequential") {
         runSequentialEl.disabled = false;
         resetEl.disabled = false;
     }
+}
+
+function readNumCities() {
+    const parsed = numCitiesEl.valueAsNumber;
+
+    if (!Number.isFinite(parsed)) {
+        numCitiesEl.value = String(currentNumCities);
+        return currentNumCities;
+    }
+
+    const numCities = Math.max(MIN_CITIES, Math.min(MAX_CITIES, Math.trunc(parsed)));
+    currentNumCities = numCities;
+    numCitiesEl.value = String(numCities);
+    return numCities;
+}
+
+function clearBest() {
+    bestSoFar = null;
+    bestDistanceEl.textContent = "-";
+    elapsedEl.textContent = "-";
+    ipsEl.textContent = "-";
 }
 
 function updateStats(result: Result) {

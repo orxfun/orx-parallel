@@ -22,38 +22,8 @@ struct RunResult {
     elapsed_ms: f64,
 }
 
-const LOCATIONS: [Location; 30] = [
-    Location { x: -18.0, y: 11.0 },
-    Location { x: -14.0, y: -7.0 },
-    Location { x: -12.0, y: 20.0 },
-    Location { x: -10.0, y: 4.0 },
-    Location { x: -8.0, y: -16.0 },
-    Location { x: -7.0, y: 13.0 },
-    Location { x: -5.0, y: -2.0 },
-    Location { x: -3.0, y: 17.0 },
-    Location { x: -1.0, y: -11.0 },
-    Location { x: 1.0, y: 9.0 },
-    Location { x: 2.0, y: -19.0 },
-    Location { x: 4.0, y: 3.0 },
-    Location { x: 6.0, y: 15.0 },
-    Location { x: 7.0, y: -6.0 },
-    Location { x: 9.0, y: 21.0 },
-    Location { x: 11.0, y: -13.0 },
-    Location { x: 13.0, y: 6.0 },
-    Location { x: 14.0, y: -1.0 },
-    Location { x: 16.0, y: 18.0 },
-    Location { x: 18.0, y: -9.0 },
-    Location { x: 20.0, y: 12.0 },
-    Location { x: 22.0, y: -4.0 },
-    Location { x: 24.0, y: 8.0 },
-    Location { x: 26.0, y: -15.0 },
-    Location { x: 28.0, y: 2.0 },
-    Location { x: 30.0, y: 16.0 },
-    Location { x: 32.0, y: -10.0 },
-    Location { x: 34.0, y: 5.0 },
-    Location { x: 36.0, y: -3.0 },
-    Location { x: 38.0, y: 14.0 },
-];
+const MIN_CITIES: usize = 5;
+const MAX_CITIES: usize = 200;
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 #[wasm_bindgen(js_name = init_thread_pool)]
@@ -70,16 +40,23 @@ pub fn init_thread_pool_export(_num_threads: u32) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn locations() -> Result<JsValue, JsValue> {
-    serde_wasm_bindgen::to_value(&LOCATIONS)
+pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
+    let num_cities = clamp_num_cities(num_cities);
+    let locations: Vec<Location> = (0..num_cities).map(location_for).collect();
+    serde_wasm_bindgen::to_value(&locations)
         .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))
 }
 
 #[wasm_bindgen]
-pub fn run_best_tour(iterations: u32, seed: u64, threads: u32) -> Result<JsValue, JsValue> {
+pub fn run_best_tour(
+    iterations: u32,
+    seed: u64,
+    threads: u32,
+    num_cities: u32,
+) -> Result<JsValue, JsValue> {
     #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
     {
-        let _ = (iterations, seed, threads);
+        let _ = (iterations, seed, threads, num_cities);
         return Err(JsValue::from_str(
             "run_best_tour requires wasm32 + atomics build",
         ));
@@ -89,15 +66,16 @@ pub fn run_best_tour(iterations: u32, seed: u64, threads: u32) -> Result<JsValue
     {
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
-        run_search_parallel(iterations, seed, threads)
+        let num_cities = clamp_num_cities(num_cities);
+        run_search_parallel(iterations, seed, threads, num_cities)
     }
 }
 
 #[wasm_bindgen]
-pub fn run_best_tour_seq(iterations: u32, seed: u64) -> Result<JsValue, JsValue> {
+pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
     #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
     {
-        let _ = (iterations, seed);
+        let _ = (iterations, seed, num_cities);
         return Err(JsValue::from_str(
             "run_best_tour_seq requires wasm32 + atomics build",
         ));
@@ -106,19 +84,25 @@ pub fn run_best_tour_seq(iterations: u32, seed: u64) -> Result<JsValue, JsValue>
     #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
     {
         let iterations = iterations.max(1) as usize;
-        run_search_sequential(iterations, seed)
+        let num_cities = clamp_num_cities(num_cities);
+        run_search_sequential(iterations, seed, num_cities)
     }
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-fn run_search_parallel(iterations: usize, seed: u64, threads: usize) -> Result<JsValue, JsValue> {
+fn run_search_parallel(
+    iterations: usize,
+    seed: u64,
+    threads: usize,
+    num_cities: usize,
+) -> Result<JsValue, JsValue> {
     let start = js_sys::Date::now();
     let pool = orx_parallel::Pool::wasm_web(threads);
 
     let best = (0..iterations)
         .into_par()
         .pool(pool)
-        .map(|k| search_candidate(seed, k as u64))
+        .map(|k| search_candidate(seed, k as u64, num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
 
     let elapsed_ms = js_sys::Date::now() - start;
@@ -126,11 +110,15 @@ fn run_search_parallel(iterations: usize, seed: u64, threads: usize) -> Result<J
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-fn run_search_sequential(iterations: usize, seed: u64) -> Result<JsValue, JsValue> {
+fn run_search_sequential(
+    iterations: usize,
+    seed: u64,
+    num_cities: usize,
+) -> Result<JsValue, JsValue> {
     let start = js_sys::Date::now();
 
     let best = (0..iterations)
-        .map(|k| search_candidate(seed, k as u64))
+        .map(|k| search_candidate(seed, k as u64, num_cities))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));
 
     let elapsed_ms = js_sys::Date::now() - start;
@@ -138,8 +126,8 @@ fn run_search_sequential(iterations: usize, seed: u64) -> Result<JsValue, JsValu
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-fn search_candidate(seed: u64, k: u64) -> (Vec<usize>, f64) {
-    let tour = random_tour(seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15));
+fn search_candidate(seed: u64, k: u64, num_cities: usize) -> (Vec<usize>, f64) {
+    let tour = random_tour(seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15), num_cities);
     let tour = two_opt_improve(tour);
     let distance = tour_distance(&tour);
     (tour, distance)
@@ -172,11 +160,26 @@ fn run_result_to_js(
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
-fn random_tour(seed: u64) -> Vec<usize> {
-    let mut tour: Vec<usize> = (0..LOCATIONS.len()).collect();
+fn random_tour(seed: u64, num_cities: usize) -> Vec<usize> {
+    let mut tour: Vec<usize> = (0..num_cities).collect();
     let mut rng = SmallRng::seed_from_u64(seed);
     tour.shuffle(&mut rng);
     tour
+}
+
+fn clamp_num_cities(num_cities: u32) -> usize {
+    (num_cities as usize).clamp(MIN_CITIES, MAX_CITIES)
+}
+
+fn location_for(idx: usize) -> Location {
+    // Use a deterministic spiral-like layout for any requested city count.
+    let t = idx as f64;
+    let theta = t * 0.618_033_988_749_894_9 * core::f64::consts::TAU;
+    let radius = 8.0 + 2.4 * t.sqrt();
+    Location {
+        x: radius * theta.cos(),
+        y: radius * theta.sin(),
+    }
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
@@ -223,7 +226,7 @@ fn two_opt_improve(mut tour: Vec<usize>) -> Vec<usize> {
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 fn edge_distance(i: usize, j: usize) -> f64 {
-    euclidean(LOCATIONS[i], LOCATIONS[j])
+    euclidean(location_for(i), location_for(j))
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
@@ -234,13 +237,13 @@ fn tour_distance(tour: &[usize]) -> f64 {
 
     let mut sum = 0.0;
     for w in tour.windows(2) {
-        let a = LOCATIONS[w[0]];
-        let b = LOCATIONS[w[1]];
+        let a = location_for(w[0]);
+        let b = location_for(w[1]);
         sum += euclidean(a, b);
     }
 
-    let first = LOCATIONS[tour[0]];
-    let last = LOCATIONS[*tour.last().expect("tour has at least one location")];
+    let first = location_for(tour[0]);
+    let last = location_for(*tour.last().expect("tour has at least one location"));
     sum + euclidean(last, first)
 }
 

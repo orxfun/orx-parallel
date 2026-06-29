@@ -31,7 +31,7 @@
       }
       .controls {
         display: grid;
-        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
         gap: 12px;
         margin-bottom: 14px;
       }
@@ -132,6 +132,10 @@
           <label>
             Seed
             <input id="seed" type="number" min="1" max="99999999" value="42" />
+          </label>
+          <label>
+            Number of Cities
+            <input id="numCities" type="number" min="5" max="200" value="30" />
           </label>
         </div>
         <div class="actions">
