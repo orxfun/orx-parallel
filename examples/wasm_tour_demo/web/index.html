@@ -24,10 +24,98 @@
         padding: 20px;
       }
       .card {
+        position: relative;
         background: var(--panel);
         border-radius: 16px;
         box-shadow: 0 8px 24px rgba(20, 33, 61, 0.08);
         padding: 16px;
+      }
+      .run-overlay {
+        position: absolute;
+        inset: 16px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.52);
+        backdrop-filter: blur(2px);
+        z-index: 5;
+      }
+      .run-overlay.active {
+        display: flex;
+      }
+      .run-overlay-card {
+        min-width: 260px;
+        max-width: 460px;
+        background: #ffffff;
+        border: 1px solid #dbe3ef;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+      }
+      .run-overlay-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid #d1d5db;
+        border-top-color: #0f766e;
+        animation: spin 0.9s linear infinite;
+      }
+      .run-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .run-subtitle {
+        margin: 0;
+        font-size: 13px;
+        color: #334155;
+      }
+      .run-elapsed {
+        margin: 8px 0 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+      }
+      .run-bar {
+        margin-top: 10px;
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+      }
+      .run-bar::after {
+        content: "";
+        display: block;
+        width: 35%;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #0f766e, #0ea5a1);
+        animation: slide 1.4s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes slide {
+        0% {
+          transform: translateX(-120%);
+        }
+        50% {
+          transform: translateX(85%);
+        }
+        100% {
+          transform: translateX(260%);
+        }
       }
       .controls {
         display: grid;
@@ -119,6 +207,17 @@
       <h1>orx-parallel in browser wasm</h1>
       <p>Find a short tour across hard-coded points by evaluating random permutations in parallel.</p>
       <section class="card">
+        <div id="runOverlay" class="run-overlay" aria-live="polite" aria-hidden="true">
+          <div class="run-overlay-card">
+            <div class="run-overlay-top">
+              <span class="spinner" aria-hidden="true"></span>
+              <p id="runTitle" class="run-title">Running search...</p>
+            </div>
+            <p id="runSubtitle" class="run-subtitle">Working through candidate tours. This can take a few minutes for large runs.</p>
+            <p id="runElapsed" class="run-elapsed">Elapsed: 0.0s</p>
+            <div class="run-bar" aria-hidden="true"></div>
+          </div>
+        </div>
         <div id="status">Initializing...</div>
         <div class="controls">
           <label>
