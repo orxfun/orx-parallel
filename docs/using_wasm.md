@@ -38,9 +38,18 @@ Recommended responsibilities:
 
 This mirrors all example demos in this repository and keeps responsibilities clean.
 
+Path mapping used in the remaining steps:
+
+- Step 2: `my-wasm-project/crate/Cargo.toml`
+- Step 3: `my-wasm-project/crate/src/lib.rs`
+- Step 4: `my-wasm-project/crate/src/algorithm.rs` (or a separate dependency crate)
+- Step 5: `my-wasm-project/web/src/main.ts`
+- Step 7: `my-wasm-project/web/package.json`
+- Step 8: `my-wasm-project/web/vite.config.ts`
+
 ## Step 2: Add the right crate dependencies
 
-In your wasm crate `Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings:
+In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings:
 
 ```toml
 [dependencies]
@@ -59,7 +68,7 @@ For examples, see:
 
 ## Step 3: Expose a wasm API boundary
 
-Keep wasm-bindgen on a small public boundary layer (typically `lib.rs`).
+Keep wasm-bindgen on a small public boundary layer in `my-wasm-project/crate/src/lib.rs`.
 
 Expose at least:
 
@@ -133,7 +142,7 @@ For reference:
 
 ## Step 4: Keep algorithm modules pure Rust
 
-Place heavy compute logic in internal modules and avoid wasm-specific code there.
+Place heavy compute logic in internal modules and avoid wasm-specific code there. These functions can be implemented in `my-wasm-project/crate/src/algorithm.rs` for instance, or a separate dependency crate.
 
 This keeps algorithm code testable and reusable.
 
@@ -158,10 +167,10 @@ pub fn run_search_parallel(
 
 Keep time-keeping in the caller (wasm boundary) when you need wall-clock timing in response payloads.
 
-Example:
+Example mapping for your project:
 
-- wasm boundary: `examples/wasm_demo_tsp/crate/src/lib.rs`
-- algorithm module: `examples/wasm_demo_tsp/crate/src/tsp_alg.rs`
+- wasm boundary: `my-wasm-project/crate/src/lib.rs`
+- algorithm module: `my-wasm-project/crate/src/algorithm.rs` (or a dependency crate)
 
 ## Step 5: Initialize runtime once in frontend startup
 
@@ -173,9 +182,7 @@ Typical frontend flow:
 2. `await init_parallel_runtime(...)`
 3. enable parallel actions
 
-Example from TSP demo startup:
-
-- `examples/wasm_demo_tsp/web/src/main.ts`
+In your project, this is typically done in `my-wasm-project/web/src/main.ts`.
 
 ## Step 6: Decide thread-control strategy
 
@@ -219,7 +226,7 @@ See:
 
 Use nightly + `build-std` + atomics/shared-memory flags.
 
-Example script (from demos):
+If you run this from `my-wasm-project/web`, use:
 
 ```bash
 RUSTUP_TOOLCHAIN=nightly \
@@ -241,6 +248,8 @@ Set headers in dev server:
 
 - `Cross-Origin-Opener-Policy: same-origin`
 - `Cross-Origin-Embedder-Policy: require-corp`
+
+In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
 
 See Vite config examples:
 
