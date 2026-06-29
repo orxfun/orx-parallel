@@ -169,6 +169,31 @@ Typical frontend flow:
 2. `await init_parallel_runtime(...)`
 3. enable parallel actions
 
+Example (TypeScript):
+
+```ts
+import init, {
+    init_parallel_runtime,
+    run_best_tour_par,
+} from "../pkg/orx_parallel_wasm_demo_tsp";
+
+let runtimeReady = false;
+
+export async function bootstrap() {
+    await init();
+    await init_parallel_runtime(16);
+    runtimeReady = true;
+}
+
+export function runParallelChunk() {
+    if (!runtimeReady) {
+        throw new Error("Parallel runtime is not initialized yet");
+    }
+
+    return run_best_tour_par(10000, 42n, 8, 100, 0n);
+}
+```
+
 In your project, this is typically done in `my-wasm-project/web/src/main.ts`.
 
 ## Step 6: Decide thread-control strategy
