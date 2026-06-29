@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+mod locations;
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 mod tsp_alg;
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
@@ -18,7 +20,7 @@ pub fn init_thread_pool_export(_num_threads: u32) -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
-    tsp_alg::locations(num_cities)
+    locations::locations(num_cities)
 }
 
 #[wasm_bindgen]
@@ -41,7 +43,7 @@ pub fn run_best_tour(
     {
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
-        let num_cities = tsp_alg::clamp_num_cities(num_cities);
+        let num_cities = locations::clamp_num_cities(num_cities);
         tsp_alg::run_search_parallel(iterations, seed, threads, num_cities, start_index)
     }
 }
@@ -64,7 +66,7 @@ pub fn run_best_tour_seq(
     #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
     {
         let iterations = iterations.max(1) as usize;
-        let num_cities = tsp_alg::clamp_num_cities(num_cities);
+        let num_cities = locations::clamp_num_cities(num_cities);
         tsp_alg::run_search_sequential(iterations, seed, num_cities, start_index)
     }
 }
