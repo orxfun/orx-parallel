@@ -31,9 +31,15 @@
       }
       .controls {
         display: grid;
-        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
         gap: 12px;
         margin-bottom: 14px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
       }
       label {
         display: flex;
@@ -55,6 +61,14 @@
         color: #fff;
         font-weight: 600;
         cursor: pointer;
+      }
+      button.secondary {
+        background: linear-gradient(90deg, #2563eb, #4f46e5);
+      }
+      button.ghost {
+        background: #f3f4f6;
+        color: #1f2937;
+        border: 1px solid #d1d5db;
       }
       #status {
         font-size: 14px;
@@ -92,7 +106,7 @@
       }
       @media (max-width: 760px) {
         .controls {
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1fr;
         }
         .stats {
           grid-template-columns: 1fr;
@@ -119,10 +133,11 @@
             Seed
             <input id="seed" type="number" min="1" max="99999999" value="42" />
           </label>
-          <label style="justify-content: flex-end;">
-            <span>&nbsp;</span>
-            <button id="run">Run parallel search</button>
-          </label>
+        </div>
+        <div class="actions">
+          <button id="runParallel">Run parallel search</button>
+          <button id="runSequential" class="secondary">Run sequential search</button>
+          <button id="reset" class="ghost">Reset best tour</button>
         </div>
         <div class="stats">
           <div class="stat"><h3>Best Distance</h3><p id="bestDistance">-</p></div>

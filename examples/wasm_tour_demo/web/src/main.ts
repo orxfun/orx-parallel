@@ -1,7 +1,8 @@
 import init, {
     init_thread_pool,
     locations,
-    run_best_tour
+    run_best_tour,
+    run_best_tour_seq
 } from "../pkg/orx_parallel_wasm_tour_demo.js";
 
 type Location = { x: number; y: number };
@@ -16,7 +17,9 @@ const statusEl = document.getElementById("status") as HTMLDivElement;
 const iterationsEl = document.getElementById("iterations") as HTMLInputElement;
 const threadsEl = document.getElementById("threads") as HTMLInputElement;
 const seedEl = document.getElementById("seed") as HTMLInputElement;
-const runEl = document.getElementById("run") as HTMLButtonElement;
+const runParallelEl = document.getElementById("runParallel") as HTMLButtonElement;
+const runSequentialEl = document.getElementById("runSequential") as HTMLButtonElement;
+const resetEl = document.getElementById("reset") as HTMLButtonElement;
 const bestDistanceEl = document.getElementById("bestDistance") as HTMLParagraphElement;
 const elapsedEl = document.getElementById("elapsed") as HTMLParagraphElement;
 const ipsEl = document.getElementById("ips") as HTMLParagraphElement;
@@ -29,40 +32,73 @@ if (!ctx) {
 
 let points: Location[] = [];
 let initialized = false;
+let bestSoFar: Result | null = null;
 
 async function setup() {
     await init();
     points = locations() as Location[];
     drawPoints(points);
-    statusEl.textContent = "Ready. Click run to initialize threads and search tours.";
+    statusEl.textContent = "Ready. Run parallel or sequential search.";
 }
 
-runEl.addEventListener("click", async () => {
+runParallelEl.addEventListener("click", async () => {
+    await runSearch("parallel");
+});
+
+runSequentialEl.addEventListener("click", async () => {
+    await runSearch("sequential");
+});
+
+resetEl.addEventListener("click", () => {
+    bestSoFar = null;
+    bestDistanceEl.textContent = "-";
+    elapsedEl.textContent = "-";
+    ipsEl.textContent = "-";
+    drawPoints(points);
+    statusEl.textContent = "Best tour reset. Ready for a fresh run.";
+});
+
+async function runSearch(mode: "parallel" | "sequential") {
     const iterations = Math.max(1, Number(iterationsEl.value) || 1);
     const threads = Math.max(1, Number(threadsEl.value) || 1);
     const seedInput = Math.max(1, Number(seedEl.value) || 1);
     const seed = BigInt(Math.trunc(seedInput));
 
-    runEl.disabled = true;
-    statusEl.textContent = "Running...";
+    runParallelEl.disabled = true;
+    runSequentialEl.disabled = true;
+    resetEl.disabled = true;
+    statusEl.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
 
     try {
-        if (!initialized) {
+        if (mode === "parallel" && !initialized) {
             await init_thread_pool(threads);
             initialized = true;
             statusEl.textContent = `Thread pool initialized with ${threads} threads.`;
         }
 
-        const result = run_best_tour(iterations, seed, threads) as Result;
-        updateStats(result);
-        drawTour(points, result.best_tour);
-        statusEl.textContent = "Completed.";
+        const result = mode === "parallel"
+            ? (run_best_tour(iterations, seed, threads) as Result)
+            : (run_best_tour_seq(iterations, seed) as Result);
+
+        const isNewBest = !bestSoFar || result.best_distance < bestSoFar.best_distance;
+        if (isNewBest) {
+            bestSoFar = result;
+            drawTour(points, result.best_tour);
+        }
+
+        updateStats(bestSoFar ?? result);
+
+        statusEl.textContent = isNewBest
+            ? `${mode === "parallel" ? "Parallel" : "Sequential"} run found a new best tour.`
+            : `${mode === "parallel" ? "Parallel" : "Sequential"} run completed; best tour unchanged.`;
     } catch (err) {
         statusEl.textContent = `Error: ${String(err)}`;
     } finally {
-        runEl.disabled = false;
+        runParallelEl.disabled = false;
+        runSequentialEl.disabled = false;
+        resetEl.disabled = false;
     }
-});
+}
 
 function updateStats(result: Result) {
     bestDistanceEl.textContent = result.best_distance.toFixed(3);
