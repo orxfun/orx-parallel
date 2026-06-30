@@ -7,8 +7,23 @@ mod rand_utils;
 use crate::par_with_use::run_search_parallel_use_mut;
 use crate::par_without_use::run_search_parallel_immutable;
 use crate::{alloc_tracking::AllocationStats, locations::locations};
+use clap::Parser;
 use std::hint::black_box;
 use std::time::{Duration, Instant};
+
+#[derive(Parser, Debug)]
+#[command(name = "use_demo_tsp")]
+#[command(about = "Compare immutable vs use_vec TSP search")]
+struct Args {
+    #[arg(long, default_value_t = 100)]
+    iterations: usize,
+
+    #[arg(long, default_value_t = 4)]
+    threads: usize,
+
+    #[arg(long, default_value_t = 50)]
+    num_cities: usize,
+}
 
 fn average_duration_and_allocs<F, T>(rounds: u32, mut run: F) -> (Duration, AllocationStats, T)
 where
@@ -43,11 +58,12 @@ fn ratio(use_vec_value: f64, immutable_value: f64) -> f64 {
 }
 
 fn main() {
-    let iterations = 100;
-    let threads = 4;
-    let num_cities = 50;
+    let args = Args::parse();
+    let iterations = args.iterations;
+    let threads = args.threads;
+    let num_cities = args.num_cities;
     let seed = 42;
-    let rounds = 1;
+    let rounds = 5;
 
     let locations: Vec<_> = locations(num_cities);
 
