@@ -1,11 +1,11 @@
 mod alloc_tracking;
 mod locations;
+mod par_immutable;
 mod par_with_use;
-mod par_without_use;
 mod rand_utils;
 
+use crate::par_immutable::run_search_parallel_immutable;
 use crate::par_with_use::run_search_parallel_use_mut;
-use crate::par_without_use::run_search_parallel_immutable;
 use crate::{alloc_tracking::AllocationStats, locations::locations};
 use clap::Parser;
 use std::hint::black_box;

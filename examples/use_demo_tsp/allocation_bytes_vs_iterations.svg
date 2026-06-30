@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="460" viewBox="0 0 840 460" role="img" aria-labelledby="title desc">
+  <title id="title">Allocation bytes vs iterations</title>
+  <desc id="desc">Line chart comparing immutable and use_vec allocation bytes across iteration counts.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .axis { stroke: #222222; stroke-width: 1.5; }
+    .grid { stroke: #d9d9d9; stroke-width: 1; }
+    .label { fill: #222222; font: 14px sans-serif; }
+    .small { fill: #444444; font: 12px sans-serif; }
+    .title { fill: #111111; font: 18px sans-serif; font-weight: 600; }
+    .immutable { fill: none; stroke: #c94f4f; stroke-width: 3; }
+    .usevec { fill: none; stroke: #2b7a78; stroke-width: 3; }
+    .point-immutable { fill: #c94f4f; }
+    .point-usevec { fill: #2b7a78; }
+    .legend-box { fill: #ffffff; stroke: #cccccc; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="840" height="460" />
+
+  <text class="title" x="70" y="36">Average Allocation Bytes vs Iterations</text>
+  <text class="small" x="70" y="56">Measured with threads = 4 and num_cities = 50</text>
+
+  <line class="axis" x1="70" y1="360" x2="760" y2="360" />
+  <line class="axis" x1="70" y1="70" x2="70" y2="360" />
+
+  <line class="grid" x1="70" y1="360" x2="760" y2="360" />
+  <line class="grid" x1="70" y1="290" x2="760" y2="290" />
+  <line class="grid" x1="70" y1="220" x2="760" y2="220" />
+  <line class="grid" x1="70" y1="150" x2="760" y2="150" />
+  <line class="grid" x1="70" y1="80" x2="760" y2="80" />
+
+  <text class="small" x="28" y="364">0</text>
+  <text class="small" x="10" y="294">100k</text>
+  <text class="small" x="10" y="224">200k</text>
+  <text class="small" x="10" y="154">300k</text>
+  <text class="small" x="10" y="84">400k</text>
+
+  <text class="label" x="120" y="390">1</text>
+  <text class="label" x="230" y="390">10</text>
+  <text class="label" x="340" y="390">50</text>
+  <text class="label" x="445" y="390">100</text>
+  <text class="label" x="550" y="390">500</text>
+  <text class="label" x="645" y="390">1000</text>
+
+  <text class="label" x="355" y="430">iterations</text>
+  <text class="label" x="18" y="30" transform="rotate(-90 18 30)">allocation bytes</text>
+
+  <polyline class="immutable" points="110,359 220,356 330,345 440,331 550,221 660,83" />
+  <polyline class="usevec" points="110,357 220,355 330,355 440,355 550,355 660,355" />
+
+  <circle class="point-immutable" cx="110" cy="359" r="4" />
+  <circle class="point-immutable" cx="220" cy="356" r="4" />
+  <circle class="point-immutable" cx="330" cy="345" r="4" />
+  <circle class="point-immutable" cx="440" cy="331" r="4" />
+  <circle class="point-immutable" cx="550" cy="221" r="4" />
+  <circle class="point-immutable" cx="660" cy="83" r="4" />
+
+  <circle class="point-usevec" cx="110" cy="357" r="4" />
+  <circle class="point-usevec" cx="220" cy="355" r="4" />
+  <circle class="point-usevec" cx="330" cy="355" r="4" />
+  <circle class="point-usevec" cx="440" cy="355" r="4" />
+  <circle class="point-usevec" cx="550" cy="355" r="4" />
+  <circle class="point-usevec" cx="660" cy="355" r="4" />
+
+  <rect class="legend-box" x="565" y="95" width="175" height="64" rx="6" />
+  <line class="immutable" x1="585" y1="116" x2="625" y2="116" />
+  <circle class="point-immutable" cx="605" cy="116" r="4" />
+  <text class="label" x="635" y="121">immutable</text>
+  <line class="usevec" x1="585" y1="141" x2="625" y2="141" />
+  <circle class="point-usevec" cx="605" cy="141" r="4" />
+  <text class="label" x="635" y="146">use_vec</text>
+</svg>
