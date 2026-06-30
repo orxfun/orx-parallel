@@ -5,11 +5,11 @@ use core::sync::atomic::{AtomicBool, Ordering};
 
 static WASM_WEB_THREAD_POOL_INIT_CALLED: AtomicBool = AtomicBool::new(false);
 
-#[cfg(target_feature = "atomics")]
 /// Initializes the worker-backed Rayon thread pool for wasm web builds.
 ///
 /// This must be called (and awaited from JavaScript) before running parallel
 /// computations with [`WasmWebPool`].
+#[cfg(target_feature = "atomics")]
 pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
     WASM_WEB_THREAD_POOL_INIT_CALLED.store(true, Ordering::SeqCst);
     wasm_bindgen_rayon::init_thread_pool(num_threads)
