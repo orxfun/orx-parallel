@@ -275,6 +275,8 @@ Set headers in dev server:
 
 In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
 
+For wasm thread worker helpers, also set Vite worker output to ES modules.
+
 ```typescript
 import { defineConfig } from "vite";
 
@@ -284,9 +286,24 @@ export default defineConfig({
             "Cross-Origin-Opener-Policy": "same-origin",
             "Cross-Origin-Embedder-Policy": "require-corp"
         }
+    },
+    worker: {
+        format: "es"
     }
 });
 ```
+
+Also set the same headers in production hosting; dev-only headers are not enough.
+
+For static hosts such as Cloudflare Pages, add a `my-wasm-project/web/public/_headers` file:
+
+```text
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+```
+
+After deployment, verify `self.crossOriginIsolated === true` in the browser console.
 
 ## Common mistakes
 
