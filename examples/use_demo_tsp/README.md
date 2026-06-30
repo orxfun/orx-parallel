@@ -1,4 +1,4 @@
-# `use_demo_tsp`
+# Impact of `use` transformation on memory allocation
 
 This example demonstrates the impact of a `use` transformation on a parallel traveling-salesperson-style search.
 
@@ -18,7 +18,7 @@ The immutable implementation in [par_immutable.rs](./par_immutable.rs) is clean,
 
 This version works well and is a good default starting point.
 
-The tradeoff is allocation behavior. Each iteration constructs a fresh `Vec<usize>` for the tour. As a result, allocation grows with problem size. For a fixed city count, allocation grows linearly with `iterations`. If `num_cities` also increases, the per-iteration allocation cost grows as well.
+The tradeoff is allocation behavior. Each iteration constructs a fresh `Vec<usize>` for the tour. As a result, allocation grows with problem size and search intensity. If `num_cities` also increases, the per-iteration allocation cost grows as well.
 
 In memory-tight situations, this can become a problem.
 
@@ -35,7 +35,7 @@ Compared to the clean immutable variant, this version is a bit more complicated.
 
 Allocation behavior is the reason to consider this design. Here we allocate two tour vectors per active worker thread instead of allocating a new tour per iteration. That changes the scaling behavior:
 
-- immutable: allocation grows with problem size and search intensity; i.e., it is linear in number of cities and number of iterations.
+- immutable: allocation grows with number of cities and number of iterations.
 - `use_vec`: allocation grows with number of threads and number of cities; however, it is **constant** in number of iterations.
 
 ## Why This Matters
@@ -85,7 +85,7 @@ The chart makes the behavior easy to see:
 
 - immutable allocation grows roughly linearly with `iterations`
 - doubling `num_cities` roughly doubles immutable allocation at the same iteration count
-- `use_vec` allocation is nearly flat as `iterations` increases
+- `use_vec` allocation remains flat as `iterations` increases
 - `use_vec` still depends on `num_cities`, but that dependency is paid once per worker-local state rather than once per iteration
 
 That is the practical effect of the `use` transformation in this example.
