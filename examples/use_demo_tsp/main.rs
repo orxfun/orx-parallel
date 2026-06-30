@@ -34,10 +34,6 @@ where
     )
 }
 
-fn fmt_calls_bytes(calls: u64, bytes: u64) -> String {
-    format!("{:>7}c / {:>9}b", calls, bytes)
-}
-
 fn ratio(use_vec_value: f64, immutable_value: f64) -> f64 {
     if immutable_value == 0.0 {
         f64::NAN
@@ -83,35 +79,28 @@ fn main() {
     println!(
         "iterations: {iterations}, threads: {threads}, cities: {num_cities}, rounds: {rounds}"
     );
-    println!("note: c = number of calls, b = bytes");
     println!();
     println!(
-        "| {:<10} | {:<12} | {:<21} |",
-        "method", "avg time", "avg allocations"
+        "| {:<10} | {:<12} | {:<20} | {:<21} |",
+        "method", "avg time", "avg allocation calls", "avg allocation bytes"
     );
-    println!("| {:-<10} | {:-<12} | {:-<21} |", "", "", "");
-    let immutable_alloc_cell = fmt_calls_bytes(
+    println!("| {:-<10} | {:-<12} | {:-<20} | {:-<21} |", "", "", "", "");
+    println!(
+        "| {:<10} | {:>9.3} ms | {:>20} | {:>19} b |",
+        "immutable",
+        immutable_avg.as_secs_f64() * 1e3,
         immutable_allocs.alloc_calls,
         immutable_allocs.gross_allocated_bytes(),
     );
-    let use_vec_alloc_cell = fmt_calls_bytes(
+    println!(
+        "| {:<10} | {:>9.3} ms | {:>20} | {:>19} b |",
+        "use_vec",
+        use_vec_avg.as_secs_f64() * 1e3,
         use_vec_allocs.alloc_calls,
         use_vec_allocs.gross_allocated_bytes(),
     );
-    println!(
-        "| {:<10} | {:>9.3} ms | {:>21} |",
-        "immutable",
-        immutable_avg.as_secs_f64() * 1e3,
-        immutable_alloc_cell,
-    );
-    println!(
-        "| {:<10} | {:>9.3} ms | {:>21} |",
-        "use_vec",
-        use_vec_avg.as_secs_f64() * 1e3,
-        use_vec_alloc_cell,
-    );
 
-    let speedup = immutable_avg.as_secs_f64() / use_vec_avg.as_secs_f64();
+    let time_ratio = ratio(use_vec_avg.as_secs_f64(), immutable_avg.as_secs_f64());
     let alloc_calls_ratio = ratio(
         use_vec_allocs.alloc_calls as f64,
         immutable_allocs.alloc_calls as f64,
@@ -121,9 +110,15 @@ fn main() {
         immutable_allocs.gross_allocated_bytes() as f64,
     );
     println!();
-    println!("use_vec speedup vs immutable: {speedup:.2}x");
-    println!("use_vec allocation calls vs immutable: {alloc_calls_ratio:.2}x");
-    println!("use_vec allocated bytes vs immutable: {alloc_bytes_ratio:.2}x");
+    println!("{:<38}: {:.2}x", "use_vec time vs immutable", time_ratio);
+    println!(
+        "{:<38}: {:.2}x",
+        "use_vec allocation calls vs immutable", alloc_calls_ratio
+    );
+    println!(
+        "{:<38}: {:.2}x",
+        "use_vec allocated bytes vs immutable", alloc_bytes_ratio
+    );
 
     println!();
 
