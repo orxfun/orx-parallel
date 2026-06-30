@@ -38,7 +38,8 @@ Recommended responsibilities:
 
 This mirrors all example demos in this repository and keeps responsibilities clean.
 
-Path mapping used in the remaining steps:
+<details>
+<summary>Path mapping used in the remaining steps (optional quick reference)</summary>
 
 - Step 2: `my-wasm-project/crate/Cargo.toml`
 - Step 3: `my-wasm-project/crate/src/lib.rs`
@@ -47,11 +48,13 @@ Path mapping used in the remaining steps:
 - Step 7: `my-wasm-project/web/package.json`
 - Step 8: `my-wasm-project/web/vite.config.ts`
 
+</details>
+
 ## Step 2: Add the required crate dependencies
 
-In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings:
+In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings.
 
-This demo targets `orx-parallel` version `4.0.0`.
+This demo targets `orx-parallel` version `4.0.0` or higher.
 
 ```toml
 [dependencies]
@@ -118,17 +121,21 @@ pub fn run_best_tour_par(
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
+        let locations = locations::locations(num_cities as u32);
         let output =
-            computation::run_search_parallel(iterations, seed, threads, num_cities, start_index);
+            computation::run_search_parallel(iterations, seed, threads, &locations, start_index);
         run_output_to_js(output)
     }
 }
 ```
 
-### Why use `cfg` attributes?
+<details>
+<summary>Why use `cfg` attributes? (optional background)</summary>
 
 - threaded wasm builds get a Promise-based init path,
-- unsupported builds fail fast with a clear error.
+- unsupported builds **fail fast with a clear error**.
+
+</details>
 
 ## Step 4: Keep computation modules pure Rust
 
@@ -142,25 +149,18 @@ pub fn run_search_parallel(
     iterations: usize,
     seed: u64,
     threads: usize,
-    num_cities: usize,
+    locations: &[Location],
     start_index: u64,
 ) -> SearchRunOutput {
     let best = (0..iterations)
         .into_par()
         .num_threads(threads)
-        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), num_cities))
+        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
     SearchRunOutput { best, iterations }
 }
 ```
-
-Keep time-keeping in the caller (wasm boundary) when you need wall-clock timing in response payloads.
-
-Typical mapping:
-
-- wasm boundary: `my-wasm-project/crate/src/lib.rs`
-- computation module: `my-wasm-project/crate/src/computation.rs` (or a dependency crate)
 
 ## Step 5: Initialize runtime once in frontend startup
 
@@ -195,6 +195,14 @@ export function runParallelChunk() {
 
     return run_best_tour_par(10000, 42n, 8, 100, 0n);
 }
+
+// Call bootstrap once during app startup.
+void bootstrap();
+
+// Then call runParallelChunk from UI actions (button click, route action, etc.).
+document.getElementById("run")?.addEventListener("click", () => {
+    void runParallelChunk();
+});
 ```
 
 In your project, this is typically done in `my-wasm-project/web/src/main.ts`.
@@ -208,7 +216,7 @@ There are two good patterns.
 This is a good fit for simple demos.
 
 - initialize runtime with fixed thread count, say `N`,
-- run parallel operations with defaults.
+- run parallel operations with defaults, which will use up to `N` threads depending on the computation.
 
 ```rust
 // uses N threads
@@ -220,10 +228,10 @@ let best = (0..iterations)
 
 ### Pattern B: Fixed startup cap + configurable per-run limit
 
-This is a good fit for interactive apps and for having thread limits per-computation.
+This is a good fit for interactive apps and for setting per-computation thread limits.
 
 - initialize runtime once with a cap, say `N`,
-- per computation use `.num_threads(threads)` in Rust pipeline.
+- use `.num_threads(threads)` desired number of `threads` per computation.
 
 ```rust
 // uses min(N, threads) threads
@@ -246,6 +254,16 @@ RUSTFLAGS='-C target-feature=+atomics,+bulk-memory -C link-arg=--shared-memory -
 wasm-pack build ../crate --target web --out-dir ../web/pkg -- -Z build-std=panic_abort,std
 ```
 
+<details>
+<summary>Why these requirements are needed (optional background)</summary>
+
+- `nightly`: required because this command uses unstable Cargo/Rust features for wasm threading, including `-Z build-std`.
+- `build-std`: rebuilds `std` for your wasm target/flags so the standard library matches the threaded wasm configuration used by your app.
+- `atomics` (`-C target-feature=+atomics`): enables WebAssembly atomic instructions, which are required for safe synchronization across worker threads.
+- shared-memory linker flags (`--shared-memory`, `--import-memory`, TLS exports, etc.): configure the wasm module and memory model so multiple workers can share linear memory and initialize thread-local storage correctly.
+
+</details>
+
 ## Step 8: Serve with COOP/COEP headers
 
 Browser wasm threads require cross-origin isolation.
@@ -257,19 +275,24 @@ Set headers in dev server:
 
 In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
 
+```typescript
+import { defineConfig } from "vite";
+
+export default defineConfig({
+    server: {
+        headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp"
+        }
+    }
+});
+```
+
 ## Common mistakes
 
-1. Calling parallel code before `await init_parallel_runtime(...)`.
-
-- Symptom: runtime panic/trap in browser.
-
-2. Missing atomics/shared-memory build flags.
-
-- Symptom: threaded wasm path fails at runtime or behaves unexpectedly.
-
-3. Re-initializing runtime repeatedly.
-
-- Usually initialize once at startup; vary per-run behavior using computation parameters.
+1. Calling parallel code before `await init_parallel_runtime(...)` => runtime panic/trap in browser.
+2. Missing atomics/shared-memory build flags => threaded wasm path fails at runtime or behaves unexpectedly.
+3. Re-initializing runtime repeatedly => usually initialize once at startup; vary per-run behavior using computation parameters.
 
 ## Minimal checklist
 
