@@ -8,6 +8,14 @@ pub struct Location {
     pub y: f64,
 }
 
+impl Location {
+    pub fn distance_to(self, other: Self) -> f64 {
+        let dx = self.x - other.x;
+        let dy = self.y - other.y;
+        (dx * dx + dy * dy).sqrt()
+    }
+}
+
 /// Returns city coordinates for the requested city count.
 pub fn locations(num_cities: u32) -> Vec<Location> {
     let num_cities = clamp_num_cities(num_cities);
