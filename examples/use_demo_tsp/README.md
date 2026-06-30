@@ -22,6 +22,21 @@ The tradeoff is allocation behavior. Each iteration constructs a fresh `Vec<usiz
 
 In memory-tight situations, this can become a problem.
 
+```rust
+fn run_search_parallel_immutable(
+    locations: &[Location],
+    iterations: usize,
+    seed: u64,
+    threads: usize,
+) -> Option<(Vec<usize>, f64)> {
+    (0..iterations)
+        .into_par()
+        .num_threads(threads)
+        .map(|k| search_candidate(locations, seed_for(seed, k)))
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal))
+}
+```
+
 ## `use_vec` Design
 
 The mutable design in [par_with_use.rs](https://github.com/orxfun/orx-parallel/blob/main/examples/use_demo_tsp/par_with_use.rs) uses worker-local state:
@@ -37,6 +52,46 @@ Allocation behavior is the reason to consider this design. Here we allocate two 
 
 - immutable: allocation grows with number of cities and number of iterations.
 - `use_vec`: allocation grows with number of threads and number of cities; however, it is **constant** in number of iterations.
+
+```rust
+struct ThreadData {
+    min_cost: f64,
+    temp_tour: Vec<usize>,
+    best_tour: Vec<usize>,
+}
+
+impl ThreadData {
+    fn new(num_cities: usize) -> Self { /*...*/ }
+
+    fn evaluate_temp_tour(&mut self, cost: f64) {
+        if cost < self.min_cost { // temp tour becomes the best tour
+            self.min_cost = cost;
+            core::mem::swap(&mut self.temp_tour, &mut self.best_tour);
+        }
+    }
+}
+
+fn run_search_parallel_use_mut(
+    locations: &[Location],
+    iterations: usize,
+    seed: u64,
+    threads: usize,
+) -> Option<(Vec<usize>, f64)> {
+    let mut data = UseVec::new(|_| ThreadData::new(locations.len()));
+
+    let par = (0..iterations).into_par().num_threads(threads);
+    let par = par.use_vec(&mut data);
+    par.for_each(|data, k| {
+        let cost = search_candidate(locations, seed_for(seed, k), &mut data.temp_tour);
+        data.evaluate_temp_tour(cost);
+    });
+
+    data.into_vec()
+        .into_iter()
+        .min_by(|x, y| x.min_cost.partial_cmp(&y.min_cost).unwrap_or(Equal))
+        .map(|x| (x.best_tour, x.min_cost))
+}
+```
 
 ## Why This Matters
 

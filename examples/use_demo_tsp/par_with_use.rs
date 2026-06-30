@@ -43,8 +43,8 @@ pub fn run_search_parallel_use_mut(
         data.evaluate_temp_tour(cost);
     });
 
-    let data = data.into_vec();
-    data.into_iter()
+    data.into_vec()
+        .into_iter()
         .min_by(|x, y| x.min_cost.partial_cmp(&y.min_cost).unwrap_or(Equal))
         .map(|x| (x.best_tour, x.min_cost))
 }
