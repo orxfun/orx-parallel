@@ -1,6 +1,7 @@
 mod locations;
 mod par_with_use;
 mod par_without_use;
+mod rand_utils;
 
 use crate::{locations::location_for, par_without_use::run_search_parallel};
 
