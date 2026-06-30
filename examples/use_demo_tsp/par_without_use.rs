@@ -26,7 +26,7 @@ fn search_candidate(
     let seed = seed ^ (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15);
     let tour = random_tour(seed, num_cities);
     let tour = two_opt_improve(locations, tour);
-    let distance = tour_distance(locations, &tour);
+    let distance = Location::tour_distance(locations, &tour);
     (tour, distance)
 }
 
@@ -78,21 +78,4 @@ fn two_opt_improve(locations: &[Location], mut tour: Vec<usize>) -> Vec<usize> {
     }
 
     tour
-}
-
-fn tour_distance(locations: &[Location], tour: &[usize]) -> f64 {
-    if tour.len() <= 1 {
-        return 0.0;
-    }
-
-    let mut sum = 0.0;
-    for w in tour.windows(2) {
-        let a = locations[w[0]];
-        let b = locations[w[1]];
-        sum += a.distance_to(b);
-    }
-
-    let first = locations[tour[0]];
-    let last = locations[*tour.last().expect("tour has at least one location")];
-    sum + last.distance_to(first)
 }

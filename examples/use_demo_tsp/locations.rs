@@ -14,6 +14,20 @@ impl Location {
         let dy = self.y - other.y;
         (dx * dx + dy * dy).sqrt()
     }
+
+    pub fn tour_distance(locations: &[Location], tour: &[usize]) -> f64 {
+        match (tour.first(), tour.last()) {
+            (Some(&first), Some(&last)) => {
+                let middle_distance: f64 = tour
+                    .windows(2)
+                    .map(|w| locations[w[0]].distance_to(locations[w[1]]))
+                    .sum();
+                let closing_distance = locations[last].distance_to(locations[first]);
+                middle_distance + closing_distance
+            }
+            _ => 0.0,
+        }
+    }
 }
 
 /// Returns city coordinates for the requested city count.
