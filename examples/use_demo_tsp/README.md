@@ -4,12 +4,12 @@ This example demonstrates the impact of a `use` transformation on a parallel tra
 
 The example compares two designs:
 
-1. An immutable implementation in [par_immutable.rs](./par_immutable.rs).
-2. A per-thread mutable implementation in [par_with_use.rs](./par_with_use.rs).
+1. An immutable implementation in [par_immutable.rs](https://github.com/orxfun/orx-parallel/blob/main/examples/use_demo_tsp/par_immutable.rs).
+2. A per-thread mutable implementation in [par_with_use.rs](https://github.com/orxfun/orx-parallel/blob/main/examples/use_demo_tsp/par_with_use.rs).
 
 ## Immutable Design
 
-The immutable implementation in [par_immutable.rs](./par_immutable.rs) is clean, direct, and pleasant to read. Each iteration:
+The immutable implementation in [par_immutable.rs](https://github.com/orxfun/orx-parallel/blob/main/examples/use_demo_tsp/par_immutable.rs) is clean, direct, and pleasant to read. Each iteration:
 
 1. creates a random tour,
 2. improves it with 2-opt,
@@ -24,7 +24,7 @@ In memory-tight situations, this can become a problem.
 
 ## `use_vec` Design
 
-The mutable design in [par_with_use.rs](./par_with_use.rs) uses worker-local state:
+The mutable design in [par_with_use.rs](https://github.com/orxfun/orx-parallel/blob/main/examples/use_demo_tsp/par_with_use.rs) uses worker-local state:
 
 - `temp_tour` stores the current candidate tour for a thread.
 - `best_tour` stores the best tour found so far by that thread.
