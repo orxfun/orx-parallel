@@ -96,8 +96,4 @@ impl AllocationStats {
     pub fn gross_allocated_bytes(&self) -> u64 {
         self.alloc_bytes + self.realloc_new_bytes
     }
-
-    pub fn gross_released_bytes(&self) -> u64 {
-        self.dealloc_bytes + self.realloc_old_bytes
-    }
 }
