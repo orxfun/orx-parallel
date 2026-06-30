@@ -40,7 +40,7 @@ Allocation behavior is the reason to consider this design. Here we allocate two 
 
 ## Why This Matters
 
-This example is meant to show what `use` transformations effect in practice:
+This example is meant to show what `use` transformations affect in practice:
 
 - They let you keep mutable state local to each worker.
 - They avoid repeated allocation inside hot iteration loops.
@@ -62,7 +62,7 @@ The output reports average time and average allocation statistics for both varia
 The following chart was generated from a series of runs with:
 
 - `threads = 4`
-- `num_cities = 50`
+- `num_cities = 50` and `100`
 - `rounds = 5`
 
 The x-axis is `iterations`, and the y-axis is average allocation bytes reported by the example.
@@ -71,18 +71,21 @@ The x-axis is `iterations`, and the y-axis is average allocation bytes reported 
 
 ### Measured Data
 
-| iterations | immutable allocation bytes | `use_vec` allocation bytes |
-| ---------- | -------------------------- | -------------------------- |
-| 1          | 934                        | 4319                       |
-| 10         | 5158                       | 7250                       |
-| 50         | 21158                      | 7250                       |
-| 100        | 41158                      | 7250                       |
-| 500        | 201158                     | 7250                       |
-| 1000       | 401158                     | 7250                       |
+| iterations | immutable bytes, 50 cities | `use_vec` bytes, 50 cities | immutable bytes, 100 cities | `use_vec` bytes, 100 cities |
+| ---------- | -------------------------- | -------------------------- | --------------------------- | --------------------------- |
+| 100        | 41158                      | 7250                       | 81158                       | 10450                       |
+| 200        | 81158                      | 7250                       | 161158                      | 10450                       |
+| 400        | 161158                     | 7250                       | 321158                      | 10450                       |
+| 800        | 321158                     | 7250                       | 641158                      | 10450                       |
+| 1600       | 641158                     | 7250                       | 1281158                     | 10450                       |
+| 3200       | 1281158                    | 7250                       | 2561158                     | 10450                       |
+| 6400       | 2561158                    | 7250                       | 5121158                     | 10450                       |
 
 The chart makes the behavior easy to see:
 
 - immutable allocation grows roughly linearly with `iterations`
+- doubling `num_cities` roughly doubles immutable allocation at the same iteration count
 - `use_vec` allocation is nearly flat as `iterations` increases
+- `use_vec` still depends on `num_cities`, but that dependency is paid once per worker-local state rather than once per iteration
 
 That is the practical effect of the `use` transformation in this example.
