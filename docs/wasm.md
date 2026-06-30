@@ -213,6 +213,8 @@ In your project, this is typically done in `my-wasm-project/web/src/main.ts`.
 
 There are two good patterns.
 
+Note: `init_parallel_runtime(0)` is treated as auto mode and uses the runtime maximum available worker count.
+
 ### Pattern A: Fixed runtime + default per-run threads
 
 This is a good fit for simple demos.

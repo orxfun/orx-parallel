@@ -9,8 +9,15 @@ static WASM_WEB_THREAD_POOL_INIT_CALLED: AtomicBool = AtomicBool::new(false);
 ///
 /// This must be called (and awaited from JavaScript) before running parallel
 /// computations with [`WasmWebPool`].
+///
+/// `num_threads = 0` is treated as an automatic setting and initializes the
+/// pool with `rayon_core::max_num_threads().max(1)`.
 #[cfg(target_feature = "atomics")]
 pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
+    let num_threads = match num_threads {
+        0 => rayon_core::max_num_threads().max(1),
+        n => n,
+    };
     WASM_WEB_THREAD_POOL_INIT_CALLED.store(true, Ordering::SeqCst);
     wasm_bindgen_rayon::init_thread_pool(num_threads)
 }
