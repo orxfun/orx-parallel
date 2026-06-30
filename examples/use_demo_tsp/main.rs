@@ -126,13 +126,13 @@ fn main() {
         immutable_allocs.gross_allocated_bytes() as f64,
     );
     println!();
-    println!("{:<38}: {:.2}x", "use_vec time vs immutable", time_ratio);
+    println!("{:<38}: {:.4}x", "use_vec time vs immutable", time_ratio);
     println!(
-        "{:<38}: {:.2}x",
+        "{:<38}: {:.4}x",
         "use_vec allocation calls vs immutable", alloc_calls_ratio
     );
     println!(
-        "{:<38}: {:.2}x",
+        "{:<38}: {:.4}x",
         "use_vec allocated bytes vs immutable", alloc_bytes_ratio
     );
 
