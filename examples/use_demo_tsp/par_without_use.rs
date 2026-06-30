@@ -4,7 +4,7 @@ use core::cmp::Ordering::Equal;
 use orx_parallel::*;
 use rand::prelude::*;
 
-pub fn run_search_parallel(
+pub fn run_search_parallel_immutable(
     locations: &[Location],
     iterations: usize,
     seed: u64,
@@ -13,12 +13,12 @@ pub fn run_search_parallel(
     (0..iterations)
         .into_par()
         .num_threads(threads)
-        .map(|k| search_candidate(locations, seed_for(seed, k), locations.len()))
+        .map(|k| search_candidate(locations, seed_for(seed, k)))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal))
 }
 
-fn search_candidate(locations: &[Location], seed: u64, num_cities: usize) -> (Vec<usize>, f64) {
-    let tour = random_tour(seed, num_cities);
+fn search_candidate(locations: &[Location], seed: u64) -> (Vec<usize>, f64) {
+    let tour = random_tour(seed, locations.len());
     let tour = two_opt_improve(locations, tour);
     let distance = Location::tour_distance(locations, &tour);
     (tour, distance)
