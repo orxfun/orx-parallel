@@ -41,57 +41,6 @@ pub fn run_search_parallel(
     SearchRunOutput { best, iterations }
 }
 
-pub fn run_search_parallel2(
-    iterations: usize,
-    seed: u64,
-    threads: usize,
-    num_cities: usize,
-    start_index: u64,
-) -> SearchRunOutput {
-    struct ThreadData {
-        min_cost: f64,
-        best: Vec<usize>,
-        temp: Vec<usize>,
-    }
-    impl ThreadData {
-        fn new(n: usize) -> Self {
-            Self {
-                min_cost: f64::MAX,
-                best: Vec::with_capacity(n),
-                temp: Vec::with_capacity(n),
-            }
-        }
-
-        fn swap(&mut self) {
-            core::mem::swap(&mut self.best, &mut self.temp)
-        }
-    }
-
-    let mut data = UseVec::new(|_| ThreadData::new(num_cities));
-    let par = (0..iterations).into_par().num_threads(threads);
-    let par = par.use_vec(&mut data);
-    par.for_each(|u, k| {
-        let curr = &mut u.temp;
-        let cost = search_candidate2(seed, start_index.wrapping_add(k as u64), num_cities, curr);
-        if cost < u.min_cost {
-            u.swap();
-        }
-    });
-
-    todo!()
-}
-
-fn search_candidate2(seed: u64, k: u64, num_cities: usize, tour: &mut [usize]) -> f64 {
-    random_tour2(
-        seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15),
-        num_cities,
-        tour,
-    );
-    two_opt_improve2(tour);
-    let distance = tour_distance(&tour);
-    distance
-}
-
 fn search_candidate(seed: u64, k: u64, num_cities: usize) -> (Vec<usize>, f64) {
     let tour = random_tour(seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15), num_cities);
     let tour = two_opt_improve(tour);
@@ -109,45 +58,6 @@ fn random_tour(seed: u64, num_cities: usize) -> Vec<usize> {
     let mut rng = SmallRng::seed_from_u64(seed);
     tour.shuffle(&mut rng);
     tour
-}
-
-fn two_opt_improve2(tour: &mut [usize]) {
-    let n = tour.len();
-    if n < 4 {
-        return;
-    }
-
-    let mut improved = true;
-    while improved {
-        improved = false;
-
-        for i in 0..(n - 1) {
-            let a = tour[i];
-            let b = tour[(i + 1) % n];
-
-            for j in (i + 2)..n {
-                if i == 0 && j == n - 1 {
-                    continue;
-                }
-
-                let c = tour[j];
-                let d = tour[(j + 1) % n];
-
-                let current = edge_distance(a, b) + edge_distance(c, d);
-                let swapped = edge_distance(a, c) + edge_distance(b, d);
-
-                if swapped + 1e-12 < current {
-                    tour[(i + 1)..=j].reverse();
-                    improved = true;
-                    break;
-                }
-            }
-
-            if improved {
-                break;
-            }
-        }
-    }
 }
 
 fn two_opt_improve(mut tour: Vec<usize>) -> Vec<usize> {
