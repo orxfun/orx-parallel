@@ -4,25 +4,17 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 
-#[derive(Debug)]
-pub struct SearchRunOutput {
-    pub best: Option<(Vec<usize>, f64)>,
-    pub iterations: usize,
-}
-
 pub fn run_search_parallel(
     locations: &[Location],
     iterations: usize,
     seed: u64,
     threads: usize,
-) -> SearchRunOutput {
-    let best = (0..iterations)
+) -> Option<(Vec<usize>, f64)> {
+    (0..iterations)
         .into_par()
         .num_threads(threads)
         .map(|k| search_candidate(locations, seed, k, locations.len()))
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
-
-    SearchRunOutput { best, iterations }
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal))
 }
 
 fn search_candidate(
