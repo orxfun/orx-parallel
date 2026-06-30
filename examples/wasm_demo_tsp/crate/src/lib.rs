@@ -59,9 +59,10 @@ pub fn run_best_tour_par(
         let iterations = iterations.max(1) as usize;
         let threads = threads.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
+        let locations = locations::locations(num_cities as u32);
         let started_at = js_sys::Date::now();
         let output =
-            computation::run_search_parallel(iterations, seed, threads, num_cities, start_index);
+            computation::run_search_parallel(iterations, seed, threads, &locations, start_index);
         let elapsed_ms = js_sys::Date::now() - started_at;
         run_output_to_js(output, elapsed_ms)
     }
@@ -87,8 +88,9 @@ pub fn run_best_tour_seq(
     {
         let iterations = iterations.max(1) as usize;
         let num_cities = locations::clamp_num_cities(num_cities);
+        let locations = locations::locations(num_cities as u32);
         let started_at = js_sys::Date::now();
-        let output = computation::run_search_sequential(iterations, seed, num_cities, start_index);
+        let output = computation::run_search_sequential(iterations, seed, &locations, start_index);
         let elapsed_ms = js_sys::Date::now() - started_at;
         run_output_to_js(output, elapsed_ms)
     }
