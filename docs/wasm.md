@@ -1,5 +1,7 @@
 # Using orx-parallel in WebAssembly
 
+*[live deployed demo (Cloudflare Pages)](https://7c573eae.orx-parallel-wasm-demo-tsp.pages.dev/)*
+
 This guide explains how to take a compute-heavy Rust algorithm that already uses `orx-parallel` and make it available in browser wasm builds.
 
 If you want the low-level build/runtime matrix and troubleshooting details first, also see `docs/wasm_web_threads.md`.
