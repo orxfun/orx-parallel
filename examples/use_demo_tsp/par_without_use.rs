@@ -1,8 +1,8 @@
 use crate::locations::Location;
+use crate::rand_utils::{rng_from_seed, seed_for};
 use core::cmp::Ordering::Equal;
 use orx_parallel::*;
 use rand::prelude::*;
-use rand::rngs::SmallRng;
 
 pub fn run_search_parallel(
     locations: &[Location],
@@ -13,17 +13,11 @@ pub fn run_search_parallel(
     (0..iterations)
         .into_par()
         .num_threads(threads)
-        .map(|k| search_candidate(locations, seed, k, locations.len()))
+        .map(|k| search_candidate(locations, seed_for(seed, k), locations.len()))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal))
 }
 
-fn search_candidate(
-    locations: &[Location],
-    seed: u64,
-    k: usize,
-    num_cities: usize,
-) -> (Vec<usize>, f64) {
-    let seed = seed ^ (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15);
+fn search_candidate(locations: &[Location], seed: u64, num_cities: usize) -> (Vec<usize>, f64) {
     let tour = random_tour(seed, num_cities);
     let tour = two_opt_improve(locations, tour);
     let distance = Location::tour_distance(locations, &tour);
@@ -32,7 +26,7 @@ fn search_candidate(
 
 fn random_tour(seed: u64, num_cities: usize) -> Vec<usize> {
     let mut tour: Vec<usize> = (0..num_cities).collect();
-    let mut rng = SmallRng::seed_from_u64(seed);
+    let mut rng = rng_from_seed(seed);
     tour.shuffle(&mut rng);
     tour
 }
