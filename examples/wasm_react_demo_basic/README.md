@@ -1,0 +1,29 @@
+# orx-parallel wasm react demo basic
+
+A minimal React + wasm demo that computes a Fibonacci sum in parallel with `orx-parallel`.
+
+## What it shows
+
+- Rust -> wasm compute module
+- Browser thread-pool initialization
+- Parallel computation with a fixed 4-thread runtime
+- Plain React + TypeScript frontend (no custom styling)
+
+## Run the demo
+
+```bash
+cd examples/wasm_react_demo_basic/web
+npm install
+npm run dev:full
+```
+
+Open the printed local URL and click Run parallel Fibonacci sum.
+
+## Rebuild wasm after Rust changes
+
+```bash
+cd examples/wasm_react_demo_basic/web
+npm run build:wasm
+```
+
+Then refresh the browser.

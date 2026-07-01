@@ -1,0 +1,331 @@
+# Using orx-parallel in WebAssembly
+
+*[live deployed demo (Cloudflare Pages)](https://7c573eae.orx-parallel-wasm-demo-tsp.pages.dev/)*
+
+This guide explains how to take a compute-heavy Rust algorithm that already uses `orx-parallel` and make it available in browser wasm builds.
+
+If you want the low-level build/runtime matrix and troubleshooting details first, also see `docs/wasm_web_threads.md`.
+
+## Who this is for
+
+You have:
+
+- a parallel Rust algorithm using `orx-parallel`,
+- a goal to run it in the browser via wasm,
+- a frontend (plain TS, Vite, React, etc.) that calls wasm exports.
+
+## Step 1: Start with a two-folder project layout
+
+Use a structure that separates Rust compute code from web app code:
+
+```text
+my-wasm-project/
+    crate/
+        Cargo.toml
+        src/
+            lib.rs
+            computation.rs
+    web/
+        package.json
+        src/
+            main.ts
+```
+
+Recommended responsibilities:
+
+- `crate/`: Rust wasm library exposing a minimal `#[wasm_bindgen]` API boundary.
+- `crate/src/lib.rs`: wasm boundary layer where `#[wasm_bindgen]` exports are defined.
+- `crate/src/computation.rs`: pure Rust computation module without wasm-specific dependencies. This file is optional; the computation can instead live in a separate dependency crate.
+- `web/`: frontend app that loads wasm, initializes runtime, and calls exported functions.
+
+This mirrors all example demos in this repository and keeps responsibilities clean.
+
+<details>
+<summary>Path mapping used in the remaining steps (optional quick reference)</summary>
+
+- Step 2: `my-wasm-project/crate/Cargo.toml`
+- Step 3: `my-wasm-project/crate/src/lib.rs`
+- Step 4: `my-wasm-project/crate/src/computation.rs` (or a separate dependency crate)
+- Step 5: `my-wasm-project/web/src/main.ts`
+- Step 7: `my-wasm-project/web/package.json`
+- Step 8: `my-wasm-project/web/vite.config.ts`
+
+</details>
+
+## Step 2: Add the required crate dependencies
+
+In `my-wasm-project/crate/Cargo.toml`, use `orx-parallel` with wasm threads and add wasm bindings.
+
+This demo targets `orx-parallel` version `4.0.0` or higher.
+
+```toml
+[dependencies]
+orx-parallel = { version = "4.0.0", features = ["wasm-web-threads"] }
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+```
+
+## Step 3: Expose a wasm API boundary
+
+Keep wasm-bindgen on a small public boundary layer in `my-wasm-project/crate/src/lib.rs`.
+
+Expose:
+
+1. a runtime initialization function,
+2. entry points for computations.
+
+### Runtime initialization function
+
+```rust
+use wasm_bindgen::prelude::*;
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+#[wasm_bindgen]
+pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
+    orx_parallel::init_thread_pool(num_threads as usize)
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+#[wasm_bindgen]
+pub fn init_parallel_runtime(_num_threads: u32) -> Result<JsValue, JsValue> {
+    Err(JsValue::from_str(
+        "init_parallel_runtime is only available for wasm32 + atomics builds",
+    ))
+}
+```
+
+
+### Entry points for computations
+
+Notice that this is just an entry point; the actual computation is implemented in the `computation` module which intentionally avoids wasm dependencies.
+
+```rust
+#[wasm_bindgen]
+pub fn run_best_tour_par(
+    iterations: u32,
+    seed: u64,
+    threads: u32,
+    num_cities: u32,
+    start_index: u64,
+) -> Result<JsValue, JsValue> {
+    #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+    {
+        let _ = (iterations, seed, threads, num_cities, start_index);
+        return Err(JsValue::from_str(
+            "run_best_tour_par requires wasm32 + atomics build",
+        ));
+    }
+
+    #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+    {
+        let iterations = iterations.max(1) as usize;
+        let threads = threads.max(1) as usize;
+        let num_cities = locations::clamp_num_cities(num_cities);
+        let locations = locations::locations(num_cities as u32);
+        let output =
+            computation::run_search_parallel(iterations, seed, threads, &locations, start_index);
+        run_output_to_js(output)
+    }
+}
+```
+
+<details>
+<summary>Why use `cfg` attributes? (optional background)</summary>
+
+- threaded wasm builds get a Promise-based init path,
+- unsupported builds **fail fast with a clear error**.
+
+</details>
+
+## Step 4: Keep computation modules pure Rust
+
+Place heavy compute logic in internal modules and avoid wasm-specific code there. For example, you can implement these functions in `my-wasm-project/crate/src/computation.rs` or in a separate dependency crate.
+
+This keeps computation code testable and reusable.
+
+```rust
+/// Runs a parallel TSP search chunk and returns computation output.
+pub fn run_search_parallel(
+    iterations: usize,
+    seed: u64,
+    threads: usize,
+    locations: &[Location],
+    start_index: u64,
+) -> SearchRunOutput {
+    let best = (0..iterations)
+        .into_par()
+        .num_threads(threads)
+        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
+
+    SearchRunOutput { best, iterations }
+}
+```
+
+## Step 5: Initialize runtime once in frontend startup
+
+After loading wasm module, call `init_parallel_runtime(...)` once and await it before parallel runs.
+
+Typical frontend flow:
+
+1. `await init()`
+2. `await init_parallel_runtime(...)`
+3. enable parallel actions
+
+Example (TypeScript):
+
+```ts
+import init, {
+    init_parallel_runtime,
+    run_best_tour_par,
+} from "../pkg/orx_parallel_wasm_demo_tsp";
+
+let runtimeReady = false;
+
+export async function bootstrap() {
+    await init();
+    await init_parallel_runtime(16);
+    runtimeReady = true;
+}
+
+export function runParallelChunk() {
+    if (!runtimeReady) {
+        throw new Error("Parallel runtime is not initialized yet");
+    }
+
+    return run_best_tour_par(10000, 42n, 8, 100, 0n);
+}
+
+// Call bootstrap once during app startup.
+void bootstrap();
+
+// Then call runParallelChunk from UI actions (button click, route action, etc.).
+document.getElementById("run")?.addEventListener("click", () => {
+    void runParallelChunk();
+});
+```
+
+In your project, this is typically done in `my-wasm-project/web/src/main.ts`.
+
+## Step 6: Decide thread-control strategy
+
+There are two good patterns.
+
+Note: `init_parallel_runtime(0)` is treated as auto mode and uses the runtime maximum available worker count.
+
+### Pattern A: Fixed runtime + default per-run threads
+
+This is a good fit for simple demos.
+
+- initialize runtime with fixed thread count, say `N`,
+- run parallel operations with defaults, which will use up to `N` threads depending on the computation.
+
+```rust
+// uses N threads
+let best = (0..iterations)
+    .into_par()
+    .map(...)
+    .min_by(...);
+```
+
+### Pattern B: Fixed startup cap + configurable per-run limit
+
+This is a good fit for interactive apps and for setting per-computation thread limits.
+
+- initialize runtime once with a cap, say `N`,
+- use `.num_threads(threads)` desired number of `threads` per computation.
+
+```rust
+// uses min(N, threads) threads
+let best = (0..iterations)
+    .into_par()
+    .num_threads(threads)
+    .map(...)
+    .min_by(...);
+```
+
+## Step 7: Build with wasm thread flags
+
+Use nightly + `build-std` + atomics/shared-memory flags.
+
+If you run this from `my-wasm-project/web`, use:
+
+```bash
+RUSTUP_TOOLCHAIN=nightly \
+RUSTFLAGS='-C target-feature=+atomics,+bulk-memory -C link-arg=--shared-memory -C link-arg=--max-memory=1073741824 -C link-arg=--import-memory -C link-arg=--export=__wasm_init_tls -C link-arg=--export=__tls_size -C link-arg=--export=__tls_align -C link-arg=--export=__tls_base' \
+wasm-pack build ../crate --target web --out-dir ../web/pkg -- -Z build-std=panic_abort,std
+```
+
+<details>
+<summary>Why these requirements are needed (optional background)</summary>
+
+- `nightly`: required because this command uses unstable Cargo/Rust features for wasm threading, including `-Z build-std`.
+- `build-std`: rebuilds `std` for your wasm target/flags so the standard library matches the threaded wasm configuration used by your app.
+- `atomics` (`-C target-feature=+atomics`): enables WebAssembly atomic instructions, which are required for safe synchronization across worker threads.
+- shared-memory linker flags (`--shared-memory`, `--import-memory`, TLS exports, etc.): configure the wasm module and memory model so multiple workers can share linear memory and initialize thread-local storage correctly.
+
+</details>
+
+## Step 8: Serve with COOP/COEP headers
+
+Browser wasm threads require cross-origin isolation.
+
+Set headers in dev server:
+
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Embedder-Policy: require-corp`
+
+In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
+
+For wasm thread worker helpers, also set Vite worker output to ES modules.
+
+```typescript
+import { defineConfig } from "vite";
+
+export default defineConfig({
+    server: {
+        headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp"
+        }
+    },
+    worker: {
+        format: "es"
+    }
+});
+```
+
+Also set the same headers in production hosting; dev-only headers are not enough.
+
+For static hosts such as Cloudflare Pages, add a `my-wasm-project/web/public/_headers` file:
+
+```text
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+```
+
+After deployment, verify `self.crossOriginIsolated === true` in the browser console.
+
+## Common mistakes
+
+1. Calling parallel code before `await init_parallel_runtime(...)` => runtime panic/trap in browser.
+2. Missing atomics/shared-memory build flags => threaded wasm path fails at runtime or behaves unexpectedly.
+3. Re-initializing runtime repeatedly => usually initialize once at startup; vary per-run behavior using computation parameters.
+
+## Minimal checklist
+
+- [ ] Add `wasm-web-threads` feature and wasm dependencies.
+- [ ] Export `init_parallel_runtime(...)` and compute entry points via `#[wasm_bindgen]`.
+- [ ] Await runtime init once before parallel runs.
+- [ ] Configure wasm thread build flags.
+- [ ] Configure COOP/COEP headers in dev/prod serving.
+- [ ] Validate with `wasm-pack build` and frontend type-check/build.
+
+## Example demos
+
+- Advanced interactive example: [examples/wasm_demo_tsp](https://github.com/orxfun/orx-parallel/blob/main/examples/wasm_demo_tsp)
+- Basic plain TS example: [examples/wasm_vite_demo_basic](https://github.com/orxfun/orx-parallel/blob/main/examples/wasm_vite_demo_basic)
+- Basic React example: [examples/wasm_react_demo_basic](https://github.com/orxfun/orx-parallel/blob/main/examples/wasm_react_demo_basic)

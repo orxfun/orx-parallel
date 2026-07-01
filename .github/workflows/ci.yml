@@ -67,6 +67,87 @@ jobs:
       run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features }}
 
 
+  wasm-threads:
+    name: Check (wasm threads)
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo registry & target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-nightly-wasm-threads
+
+      - name: Install nightly toolchain with wasm target and rust-src
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: wasm32-unknown-unknown
+          components: rust-src
+
+      - name: Check-wasm-threads
+        env:
+          RUSTFLAGS: >-
+            -C target-feature=+atomics,+bulk-memory
+            -C link-arg=--shared-memory
+            -C link-arg=--max-memory=1073741824
+            -C link-arg=--import-memory
+            -C link-arg=--export=__wasm_init_tls
+            -C link-arg=--export=__tls_size
+            -C link-arg=--export=__tls_align
+            -C link-arg=--export=__tls_base
+        run: |
+          cargo +nightly check \
+            --target wasm32-unknown-unknown \
+            --features wasm-web-threads \
+            -Z build-std=panic_abort,std
+
+      - name: Check-wasm-threads-example
+        env:
+          RUSTFLAGS: >-
+            -C target-feature=+atomics,+bulk-memory
+            -C link-arg=--shared-memory
+            -C link-arg=--max-memory=1073741824
+            -C link-arg=--import-memory
+            -C link-arg=--export=__wasm_init_tls
+            -C link-arg=--export=__tls_size
+            -C link-arg=--export=__tls_align
+            -C link-arg=--export=__tls_base
+        run: |
+          cargo +nightly check \
+            --target wasm32-unknown-unknown \
+            --features wasm-web-threads \
+            --example wasm_web_threads \
+            -Z build-std=panic_abort,std
+
+      - name: Check-wasm-threads-smoke-test
+        env:
+          RUSTFLAGS: >-
+            -C target-feature=+atomics,+bulk-memory
+            -C link-arg=--shared-memory
+            -C link-arg=--max-memory=1073741824
+            -C link-arg=--import-memory
+            -C link-arg=--export=__wasm_init_tls
+            -C link-arg=--export=__tls_size
+            -C link-arg=--export=__tls_align
+            -C link-arg=--export=__tls_base
+        run: |
+          cargo +nightly test \
+            --target wasm32-unknown-unknown \
+            --features wasm-web-threads \
+            --test wasm_web_threads_smoke \
+            -Z build-std=panic_abort,std \
+            --no-run
+
+
   test-32:
     name: Test (i686)
     runs-on: ubuntu-latest
