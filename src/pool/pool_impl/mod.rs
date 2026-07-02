@@ -23,6 +23,17 @@ pub use wasm_web::WasmWebPool;
 ))]
 pub use wasm_web::init_thread_pool;
 
+#[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32"))]
+mod wasm_web2;
+#[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32"))]
+pub use wasm_web2::WasmWebPool2;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use wasm_web2::init_thread_pool;
+
 #[cfg(feature = "std")]
 mod basic;
 #[cfg(feature = "std")]
