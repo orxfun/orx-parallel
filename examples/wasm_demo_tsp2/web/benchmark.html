@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orx-parallel wasm demo tsp2 benchmark</title>
+    <style>
+      body { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 24px; }
+      pre { white-space: pre-wrap; background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 8px; }
+      .muted { color: #475569; }
+    </style>
+  </head>
+  <body>
+    <h1>wasm_web2 benchmark (no UI interactions)</h1>
+    <p class="muted">Runs fixed sequential and parallel trials and prints median/p95 plus runtime counters.</p>
+    <pre id="output">Initializing benchmark...</pre>
+    <script type="module" src="/src/benchmark.ts"></script>
+  </body>
+</html>
