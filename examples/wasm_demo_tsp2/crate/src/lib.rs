@@ -27,6 +27,37 @@ struct RuntimeInfo {
     spawned_workers: usize,
 }
 
+#[cfg_attr(
+    not(all(target_arch = "wasm32", target_feature = "atomics")),
+    allow(dead_code)
+)]
+#[derive(Debug, Serialize)]
+struct PerfSnapshot {
+    tasks_enqueued: usize,
+    tasks_run_by_workers: usize,
+    tasks_run_by_main: usize,
+    notify_count: usize,
+    queue_depth_high_water: usize,
+}
+
+#[cfg_attr(
+    not(all(target_arch = "wasm32", target_feature = "atomics")),
+    allow(dead_code)
+)]
+#[derive(Debug, Serialize)]
+struct BenchmarkReport {
+    trials: usize,
+    iterations_per_trial: usize,
+    threads: usize,
+    num_cities: usize,
+    median_ms: f64,
+    p95_ms: f64,
+    mean_ms: f64,
+    min_ms: f64,
+    max_ms: f64,
+    perf: PerfSnapshot,
+}
+
 /// Initializes the wasm worker thread pool used by parallel runs.
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 #[wasm_bindgen]
@@ -46,12 +77,137 @@ pub fn parallel_runtime_info() -> Result<JsValue, JsValue> {
         .map_err(|e| JsValue::from_str(&format!("failed to serialize runtime info: {e}")))
 }
 
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+#[wasm_bindgen]
+pub fn parallel_perf_reset() {
+    orx_parallel::wasm_web2_perf_reset();
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+#[wasm_bindgen]
+pub fn parallel_perf_snapshot() -> Result<JsValue, JsValue> {
+    let (tasks_enqueued, tasks_run_by_workers, tasks_run_by_main, notify_count, queue_depth_high_water) =
+        orx_parallel::wasm_web2_perf_snapshot();
+    let snapshot = PerfSnapshot {
+        tasks_enqueued,
+        tasks_run_by_workers,
+        tasks_run_by_main,
+        notify_count,
+        queue_depth_high_water,
+    };
+    serde_wasm_bindgen::to_value(&snapshot)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize perf snapshot: {e}")))
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+#[wasm_bindgen]
+pub fn run_parallel_benchmark_report(
+    trials: u32,
+    iterations: u32,
+    seed: u64,
+    threads: u32,
+    num_cities: u32,
+) -> Result<JsValue, JsValue> {
+    let trials = trials.max(1) as usize;
+    let iterations = iterations.max(1) as usize;
+    let threads = threads.max(1) as usize;
+    let num_cities = locations::clamp_num_cities(num_cities);
+    let locations = locations::locations(num_cities as u32);
+
+    orx_parallel::wasm_web2_perf_reset();
+
+    let mut samples = Vec::with_capacity(trials);
+    let mut start_index = 0u64;
+
+    for _ in 0..trials {
+        let started_at = js_sys::Date::now();
+        let output = computation::run_search_parallel(iterations, seed, threads, &locations, start_index);
+        let elapsed_ms = js_sys::Date::now() - started_at;
+        if output.best.is_none() {
+            return Err(JsValue::from_str("parallel benchmark produced no best tour"));
+        }
+        samples.push(elapsed_ms);
+        start_index = start_index.wrapping_add(iterations as u64);
+    }
+
+    let mut sorted = samples.clone();
+    sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
+
+    let median_ms = percentile(&sorted, 50);
+    let p95_ms = percentile(&sorted, 95);
+    let sum_ms: f64 = samples.iter().copied().sum();
+    let mean_ms = sum_ms / samples.len() as f64;
+    let min_ms = sorted.first().copied().unwrap_or(0.0);
+    let max_ms = sorted.last().copied().unwrap_or(0.0);
+
+    let (tasks_enqueued, tasks_run_by_workers, tasks_run_by_main, notify_count, queue_depth_high_water) =
+        orx_parallel::wasm_web2_perf_snapshot();
+
+    let report = BenchmarkReport {
+        trials,
+        iterations_per_trial: iterations,
+        threads,
+        num_cities,
+        median_ms,
+        p95_ms,
+        mean_ms,
+        min_ms,
+        max_ms,
+        perf: PerfSnapshot {
+            tasks_enqueued,
+            tasks_run_by_workers,
+            tasks_run_by_main,
+            notify_count,
+            queue_depth_high_water,
+        },
+    };
+
+    serde_wasm_bindgen::to_value(&report)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize benchmark report: {e}")))
+}
+
 #[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
 #[wasm_bindgen]
 pub fn parallel_runtime_info() -> Result<JsValue, JsValue> {
     Err(JsValue::from_str(
         "parallel_runtime_info is only available for wasm32 + atomics builds",
     ))
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+#[wasm_bindgen]
+pub fn parallel_perf_reset() {}
+
+#[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+#[wasm_bindgen]
+pub fn parallel_perf_snapshot() -> Result<JsValue, JsValue> {
+    Err(JsValue::from_str(
+        "parallel_perf_snapshot is only available for wasm32 + atomics builds",
+    ))
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+#[wasm_bindgen]
+pub fn run_parallel_benchmark_report(
+    _trials: u32,
+    _iterations: u32,
+    _seed: u64,
+    _threads: u32,
+    _num_cities: u32,
+) -> Result<JsValue, JsValue> {
+    Err(JsValue::from_str(
+        "run_parallel_benchmark_report is only available for wasm32 + atomics builds",
+    ))
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+fn percentile(sorted_samples: &[f64], p: usize) -> f64 {
+    if sorted_samples.is_empty() {
+        return 0.0;
+    }
+    let n = sorted_samples.len();
+    let idx = ((n - 1) * p) / 100;
+    sorted_samples[idx]
 }
 
 /// Returns an error when thread-pool initialization is unavailable on this target.

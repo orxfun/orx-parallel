@@ -7,6 +7,14 @@ export default defineConfig({
             "Cross-Origin-Embedder-Policy": "require-corp"
         }
     },
+    build: {
+        rollupOptions: {
+            input: {
+                main: "index.html",
+                benchmark: "benchmark.html",
+            }
+        }
+    },
     worker: {
         format: "es"
     }

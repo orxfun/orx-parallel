@@ -10,7 +10,7 @@ use std::boxed::Box;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
-use std::sync::{Arc, Condvar, Mutex, OnceLock};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, OnceLock};
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::*;
 
@@ -32,6 +32,72 @@ extern "C" {
 struct Inner {
     shared: Arc<WorkerShared>,
     spawned_workers: usize,
+    telemetry: RuntimeTelemetry,
+}
+
+struct RuntimeTelemetry {
+    tasks_enqueued: AtomicUsize,
+    tasks_run_by_workers: AtomicUsize,
+    tasks_run_by_main: AtomicUsize,
+    notify_count: AtomicUsize,
+    queue_depth_high_water: AtomicUsize,
+}
+
+impl RuntimeTelemetry {
+    fn new() -> Self {
+        Self {
+            tasks_enqueued: AtomicUsize::new(0),
+            tasks_run_by_workers: AtomicUsize::new(0),
+            tasks_run_by_main: AtomicUsize::new(0),
+            notify_count: AtomicUsize::new(0),
+            queue_depth_high_water: AtomicUsize::new(0),
+        }
+    }
+
+    fn reset(&self) {
+        self.tasks_enqueued.store(0, Ordering::SeqCst);
+        self.tasks_run_by_workers.store(0, Ordering::SeqCst);
+        self.tasks_run_by_main.store(0, Ordering::SeqCst);
+        self.notify_count.store(0, Ordering::SeqCst);
+        self.queue_depth_high_water.store(0, Ordering::SeqCst);
+    }
+
+    fn snapshot(&self) -> (usize, usize, usize, usize, usize) {
+        (
+            self.tasks_enqueued.load(Ordering::SeqCst),
+            self.tasks_run_by_workers.load(Ordering::SeqCst),
+            self.tasks_run_by_main.load(Ordering::SeqCst),
+            self.notify_count.load(Ordering::SeqCst),
+            self.queue_depth_high_water.load(Ordering::SeqCst),
+        )
+    }
+}
+
+fn update_high_water(mark: &AtomicUsize, value: usize) {
+    let mut current = mark.load(Ordering::Relaxed);
+    while value > current {
+        match mark.compare_exchange_weak(current, value, Ordering::Relaxed, Ordering::Relaxed) {
+            Ok(_) => break,
+            Err(next) => current = next,
+        }
+    }
+}
+
+fn lock_pool_state<'a>(shared: &'a WorkerShared) -> MutexGuard<'a, WorkerState> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        loop {
+            match shared.state.try_lock() {
+                Ok(guard) => return guard,
+                Err(_) => core::hint::spin_loop(),
+            }
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        shared.state.lock().expect("poisoned pool lock")
+    }
 }
 
 struct WorkerShared {
@@ -48,7 +114,7 @@ struct WorkerState {
 impl Drop for Inner {
     fn drop(&mut self) {
         {
-            let mut state = self.shared.state.lock().expect("poisoned pool lock");
+            let mut state = lock_pool_state(&self.shared);
             state.shutdown = true;
             while let Some(task) = state.queue.pop_front() {
                 unsafe { task.drop() };
@@ -82,10 +148,6 @@ impl ScopeRuntime {
 
     fn complete_task(&self) {
         if self.pending.fetch_sub(1, Ordering::AcqRel) == 1 {
-            let _guard = self
-                .completion_lock
-                .lock()
-                .expect("poisoned scope completion lock");
             self.completion_cv.notify_all();
         }
     }
@@ -170,7 +232,7 @@ impl Task {
 fn worker_loop(shared: Arc<WorkerShared>) {
     loop {
         let (task, runtime_ptr) = {
-            let mut state = shared.state.lock().expect("poisoned pool lock");
+            let mut state = lock_pool_state(&shared);
             loop {
                 if state.shutdown {
                     return;
@@ -183,16 +245,32 @@ fn worker_loop(shared: Arc<WorkerShared>) {
                     break (task, runtime_ptr as *const ScopeRuntime);
                 }
 
-                state = shared.cv.wait(state).expect("poisoned pool lock");
+                #[cfg(target_arch = "wasm32")]
+                {
+                    drop(state);
+                    core::hint::spin_loop();
+                    state = lock_pool_state(&shared);
+                }
+
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    state = shared.cv.wait(state).expect("poisoned pool lock");
+                }
             }
         };
 
-        let runtime = unsafe { &*runtime_ptr };
+        let scope_runtime = unsafe { &*runtime_ptr };
         let result = catch_unwind(AssertUnwindSafe(|| unsafe { task.run() }));
-        if let Err(err) = result {
-            runtime.record_panic(err);
+        if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+            runtime
+                .telemetry
+                .tasks_run_by_workers
+                .fetch_add(1, Ordering::Relaxed);
         }
-        runtime.complete_task();
+        if let Err(err) = result {
+            scope_runtime.record_panic(err);
+        }
+        scope_runtime.complete_task();
     }
 }
 
@@ -210,6 +288,7 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
     Arc::new(Inner {
         shared,
         spawned_workers: num_threads.get(),
+        telemetry: RuntimeTelemetry::new(),
     })
 }
 
@@ -258,6 +337,25 @@ pub fn wasm_web2_runtime_info() -> (usize, usize) {
     let configured_threads = WASM_WEB2_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
     let spawned_workers = runtime().spawned_workers;
     (configured_threads, spawned_workers)
+}
+
+#[cfg(target_feature = "atomics")]
+/// Resets runtime performance counters for wasm-web-threads2.
+pub fn wasm_web2_perf_reset() {
+    if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+        runtime.telemetry.reset();
+    }
+}
+
+#[cfg(target_feature = "atomics")]
+/// Returns performance counters as:
+/// `(tasks_enqueued, tasks_run_by_workers, tasks_run_by_main, notify_count, queue_depth_high_water)`.
+pub fn wasm_web2_perf_snapshot() -> (usize, usize, usize, usize, usize) {
+    if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+        runtime.telemetry.snapshot()
+    } else {
+        (0, 0, 0, 0, 0)
+    }
 }
 
 #[cfg(target_feature = "atomics")]
@@ -323,7 +421,7 @@ impl WasmWebPool2 {
 
         {
             let runtime_ref = runtime();
-            let mut state = runtime_ref.shared.state.lock().expect("poisoned pool lock");
+            let mut state = lock_pool_state(&runtime_ref.shared);
             debug_assert!(state.active_scope_addr.is_none());
             state.active_scope_addr = Some(&scope_runtime as *const ScopeRuntime as usize);
         }
@@ -343,12 +441,16 @@ impl WasmWebPool2 {
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
                 let maybe_task = {
                     let runtime_ref = runtime();
-                    let mut state = runtime_ref.shared.state.lock().expect("poisoned pool lock");
+                    let mut state = lock_pool_state(&runtime_ref.shared);
                     state.queue.pop_front()
                 };
 
                 if let Some(task) = maybe_task {
                     let result = catch_unwind(AssertUnwindSafe(|| unsafe { task.run() }));
+                    runtime()
+                        .telemetry
+                        .tasks_run_by_main
+                        .fetch_add(1, Ordering::Relaxed);
                     if let Err(err) = result {
                         scope_runtime.record_panic(err);
                     }
@@ -375,7 +477,7 @@ impl WasmWebPool2 {
 
         {
             let runtime_ref = runtime();
-            let mut state = runtime_ref.shared.state.lock().expect("poisoned pool lock");
+            let mut state = lock_pool_state(&runtime_ref.shared);
             state.active_scope_addr = None;
             debug_assert!(state.queue.is_empty());
         }
@@ -407,6 +509,10 @@ impl ParThreadPool for WasmWebPool2 {
 
         if s.inline_only {
             let result = catch_unwind(AssertUnwindSafe(work));
+            runtime()
+                .telemetry
+                .tasks_run_by_main
+                .fetch_add(1, Ordering::Relaxed);
             if let Err(err) = result {
                 s.runtime().record_panic(err);
             }
@@ -417,10 +523,20 @@ impl ParThreadPool for WasmWebPool2 {
         let task = Task::new(work);
 
         {
-            let mut state = s.shared().state.lock().expect("poisoned pool lock");
+            let mut state = lock_pool_state(s.shared());
             state.queue.push_back(task);
+            let queue_len = state.queue.len();
+            runtime()
+                .telemetry
+                .tasks_enqueued
+                .fetch_add(1, Ordering::Relaxed);
+            update_high_water(&runtime().telemetry.queue_depth_high_water, queue_len);
         }
 
+        runtime()
+            .telemetry
+            .notify_count
+            .fetch_add(1, Ordering::Relaxed);
         s.shared().cv.notify_one();
     }
 

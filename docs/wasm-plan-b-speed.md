@@ -215,3 +215,30 @@ This milestone is complete when:
 2. Browser benchmark shows sustained improvement over baseline.
 3. Performance gap to `wasm_web` is reduced to target threshold (phase or stretch).
 4. Benchmarking process is documented and repeatable for future work.
+
+---
+
+## PR-1 Implementation Status
+
+Implemented in this milestone kickoff:
+
+1. wasm-web-threads2 runtime telemetry counters are now available:
+   - tasks enqueued
+   - tasks run by workers
+   - tasks run by main thread
+   - notify count
+   - queue depth high-water mark
+2. Demo crate exports telemetry APIs and a fixed-workload benchmark report API.
+3. A dedicated no-UI benchmark entry page was added (`benchmark.html`) with a script that runs fixed sequential and parallel trials and prints a JSON report.
+
+How to run benchmark harness:
+
+1. `cd examples/wasm_demo_tsp2/web`
+2. `npm run bench:full`
+3. Read JSON report from the benchmark page (and browser console).
+
+Report includes:
+
+1. runtime worker info (`configured_threads`, `spawned_workers`)
+2. sequential trial summary (wall/wasm medians and p95)
+3. parallel summary with wasm-web2 telemetry snapshot
