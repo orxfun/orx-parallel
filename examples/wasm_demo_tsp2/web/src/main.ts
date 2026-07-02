@@ -82,6 +82,8 @@ const state = {
     threadPoolReady: false,
     bestSoFar: null as RunAggregate | null,
     currentNumCities: MAX_CITIES,
+    isRunning: false,
+    activeRunId: 0,
     runTicker: undefined as number | undefined,
     runStartedAtMs: 0,
     cancelRequested: false
@@ -206,6 +208,14 @@ function ensurePointsForCities(numCities: number) {
 }
 
 async function runSearch(mode: SearchMode) {
+    if (state.isRunning) {
+        ui.status.textContent = "A search is already running. Please wait for it to finish or cancel it.";
+        return;
+    }
+
+    state.isRunning = true;
+    const runId = ++state.activeRunId;
+
     const settings = readRunSettings(mode);
     ensurePointsForCities(settings.numCities);
 
@@ -215,15 +225,16 @@ async function runSearch(mode: SearchMode) {
 
     ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
 
+    let startIndex = 0;
+    let runElapsedMs = 0;
+    let runBest: SearchChunkResult | null = null;
+
     try {
         if (settings.mode === "parallel" && !state.threadPoolReady) {
             throw new Error("parallel runtime is not initialized");
         }
 
         let remaining = settings.iterations;
-        let startIndex = 0;
-        let runElapsedMs = 0;
-        let runBest: SearchChunkResult | null = null;
         const chunkSize = chooseChunkSize(settings.mode, settings.numCities, settings.iterations);
 
         while (remaining > 0) {
@@ -274,10 +285,19 @@ async function runSearch(mode: SearchMode) {
         }
     } catch (err) {
         console.error("runSearch failed", err);
-        ui.status.textContent = `Error in ${settings.mode} run: ${String(err)}`;
+        if (runBest && startIndex > 0) {
+            const partial = toAggregate(runBest, startIndex, runElapsedMs);
+            updateStats(partial);
+            ui.status.textContent = `Error in ${settings.mode} run after ${startIndex.toLocaleString()} iterations: ${String(err)}`;
+        } else {
+            ui.status.textContent = `Error in ${settings.mode} run: ${String(err)}`;
+        }
     } finally {
-        setRunningView(settings.mode, false);
-        setControlsDisabled(false);
+        if (state.activeRunId === runId) {
+            setRunningView(settings.mode, false);
+            setControlsDisabled(false);
+            state.isRunning = false;
+        }
     }
 }
 
