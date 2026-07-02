@@ -51,6 +51,10 @@ pub use pool::{ParThreadPool, Pool};
 pub use pool::WasmWebPool;
 #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::init_thread_pool;
+#[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32"))]
+pub use pool::WasmWebPool2;
+#[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32", target_feature = "atomics"))]
+pub use pool::init_thread_pool;
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;

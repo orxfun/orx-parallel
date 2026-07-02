@@ -35,11 +35,21 @@ pub use pool_impl::init_thread_pool;
 ))]
 pub use pool_impl::init_thread_pool;
 
-#[cfg(all(feature = "std", feature = "wasm-web-threads", target_arch = "wasm32"))]
+#[cfg(all(feature = "std", feature = "wasm-web-threads2", target_arch = "wasm32"))]
+pub type DefaultPool = pool_impl::WasmWebPool2;
+#[cfg(all(
+    feature = "std",
+    feature = "wasm-web-threads",
+    target_arch = "wasm32",
+    not(feature = "wasm-web-threads2")
+))]
 pub type DefaultPool = pool_impl::WasmWebPool;
 #[cfg(all(
     feature = "std",
-    not(all(feature = "wasm-web-threads", target_arch = "wasm32"))
+    not(any(
+        all(feature = "wasm-web-threads", target_arch = "wasm32"),
+        all(feature = "wasm-web-threads2", target_arch = "wasm32")
+    ))
 ))]
 pub type DefaultPool = pool_impl::OncePool;
 #[cfg(not(feature = "std"))]
