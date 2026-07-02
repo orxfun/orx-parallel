@@ -1,9 +1,15 @@
 import init, {
     init_parallel_runtime,
     locations,
+    parallel_runtime_info,
     run_best_tour_par,
     run_best_tour_seq
 } from "../pkg/orx_parallel_wasm_demo_tsp2.js";
+
+type RuntimeInfo = {
+    configured_threads: number;
+    spawned_workers: number;
+};
 
 type Location = { x: number; y: number };
 type SearchChunkResult = {
@@ -138,8 +144,11 @@ async function initParallelRuntimeInBackground() {
             PARALLEL_RUNTIME_INIT_TIMEOUT_MS,
             "parallel runtime init timed out"
         );
+
+        const runtimeInfo = parallel_runtime_info() as RuntimeInfo;
+
         state.threadPoolReady = true;
-        ui.status.textContent = `Ready. Parallel runtime initialized with ${STARTUP_PARALLEL_RUNTIME_THREADS} threads.`;
+        ui.status.textContent = `Ready. Parallel runtime configured=${runtimeInfo.configured_threads}, spawned_workers=${runtimeInfo.spawned_workers}.`;
     } catch (err) {
         state.threadPoolReady = false;
         ui.status.textContent = `Parallel runtime init failed: ${String(err)}. Sequential mode remains available.`;
