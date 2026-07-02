@@ -11,21 +11,14 @@ use wasm_bindgen_test::*;
 wasm_bindgen_test_configure!(run_in_browser);
 
 #[wasm_bindgen_test(async)]
-async fn wasm_web2_init_is_idempotent_for_same_configuration() {
-    JsFuture::from(init_thread_pool(0))
-        .await
-        .expect("first init_thread_pool call should resolve");
-
-    JsFuture::from(init_thread_pool(1)).await.expect(
-        "second init_thread_pool call with the same normalized configuration should resolve",
-    );
-}
-
-#[wasm_bindgen_test(async)]
-async fn wasm_web2_init_rejects_mismatched_reinitialization() {
+async fn wasm_web2_init_is_idempotent_and_rejects_mismatch() {
     JsFuture::from(init_thread_pool(2))
         .await
         .expect("first init_thread_pool call should resolve");
+
+    JsFuture::from(init_thread_pool(2))
+        .await
+        .expect("second init_thread_pool call with the same configuration should resolve");
 
     let err = JsFuture::from(init_thread_pool(3))
         .await
