@@ -70,6 +70,7 @@ const MAX_CITIES = 200;
 const MIN_THREADS = 1;
 const MAX_THREADS = 16;
 const STARTUP_PARALLEL_RUNTIME_THREADS = 16;
+const PARALLEL_RUNTIME_INIT_TIMEOUT_MS = 12_000;
 const state = {
     points: [] as Location[],
     threadPoolReady: false,
@@ -84,20 +85,17 @@ const state = {
 async function setupApp() {
     await init();
 
-    try {
-        await init_parallel_runtime(STARTUP_PARALLEL_RUNTIME_THREADS);
-        state.threadPoolReady = true;
-    } catch (err) {
-        state.threadPoolReady = false;
-        ui.status.textContent = `Parallel runtime init failed: ${String(err)}. Sequential mode remains available.`;
-    }
-
     state.currentNumCities = readNumCities();
     state.points = locations(state.currentNumCities) as Location[];
     drawPoints(state.points);
-    if (state.threadPoolReady) {
-        ui.status.textContent = `Ready. Parallel runtime initialized with ${STARTUP_PARALLEL_RUNTIME_THREADS} threads.`;
-    }
+
+    wireUiHandlers();
+
+    ui.status.textContent = "Initializing parallel runtime...";
+    void initParallelRuntimeInBackground();
+}
+
+function wireUiHandlers() {
 
     ui.runParallel.addEventListener("click", async () => {
         await runSearch("parallel");
@@ -131,6 +129,30 @@ async function setupApp() {
         ui.cancelRun.disabled = true;
         ui.runSubtitle.textContent = "Cancelling... this takes effect after the current chunk finishes.";
     });
+}
+
+async function initParallelRuntimeInBackground() {
+    try {
+        await promiseWithTimeout(
+            init_parallel_runtime(STARTUP_PARALLEL_RUNTIME_THREADS),
+            PARALLEL_RUNTIME_INIT_TIMEOUT_MS,
+            "parallel runtime init timed out"
+        );
+        state.threadPoolReady = true;
+        ui.status.textContent = `Ready. Parallel runtime initialized with ${STARTUP_PARALLEL_RUNTIME_THREADS} threads.`;
+    } catch (err) {
+        state.threadPoolReady = false;
+        ui.status.textContent = `Parallel runtime init failed: ${String(err)}. Sequential mode remains available.`;
+    }
+}
+
+function promiseWithTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => {
+            window.setTimeout(() => reject(new Error(message)), timeoutMs);
+        })
+    ]);
 }
 
 function readRunSettings(mode: SearchMode): RunSettings {
@@ -215,20 +237,27 @@ async function runSearch(mode: SearchMode) {
             await nextPaint();
         }
 
-        if (runBest) {
-            const summary = toAggregate(runBest, startIndex, runElapsedMs);
-            updateStats(summary);
+        if (startIndex === 0) {
+            throw new Error(`${settings.mode} run produced no work`);
         }
+
+        if (!runBest) {
+            throw new Error(`${settings.mode} run produced no result`);
+        }
+
+        const summary = toAggregate(runBest, startIndex, runElapsedMs);
+        updateStats(summary);
 
         if (state.cancelRequested) {
             ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run cancelled after ${startIndex.toLocaleString()} iterations.`;
-        } else if (runBest && state.bestSoFar && runBest.best_distance <= state.bestSoFar.best_distance) {
-            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
+        } else if (state.bestSoFar && runBest.best_distance <= state.bestSoFar.best_distance) {
+            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed (${startIndex.toLocaleString()} iterations, ${runElapsedMs.toFixed(1)} ms).`;
         } else {
-            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed; best tour unchanged.`;
+            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed (${startIndex.toLocaleString()} iterations, ${runElapsedMs.toFixed(1)} ms); best tour unchanged.`;
         }
     } catch (err) {
-        ui.status.textContent = `Error: ${String(err)}`;
+        console.error("runSearch failed", err);
+        ui.status.textContent = `Error in ${settings.mode} run: ${String(err)}`;
     } finally {
         setRunningView(settings.mode, false);
         setControlsDisabled(false);

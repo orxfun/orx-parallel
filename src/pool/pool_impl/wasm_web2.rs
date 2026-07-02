@@ -4,6 +4,7 @@ use crate::pool::env::max_num_threads_by_env_and_resource;
 use alloc::format;
 use core::num::NonZeroUsize;
 use core::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
+use js_sys::Promise;
 use std::any::Any;
 use std::boxed::Box;
 use std::collections::VecDeque;
@@ -12,6 +13,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 use std::thread;
 use std::vec::Vec;
+use wasm_bindgen::JsValue;
+use wasm_bindgen::prelude::*;
 
 const WASM_WEB2_THREAD_POOL_UNINITIALIZED: u8 = 0;
 const WASM_WEB2_THREAD_POOL_INITIALIZED: u8 = 1;
@@ -21,6 +24,12 @@ static WASM_WEB2_THREAD_POOL_STATE: AtomicU8 = AtomicU8::new(WASM_WEB2_THREAD_PO
 #[cfg_attr(not(target_feature = "atomics"), allow(dead_code))]
 static WASM_WEB2_THREAD_POOL_NUM_THREADS: AtomicUsize = AtomicUsize::new(0);
 static WASM_WEB2_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
+
+#[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = startWorkers)]
+    fn start_workers(module: JsValue, memory: JsValue, num_threads: usize) -> Promise;
+}
 
 struct Inner {
     shared: Arc<WorkerShared>,
@@ -116,6 +125,7 @@ impl ScopeRuntime {
 pub struct ScopeRef<'env> {
     shared: *const WorkerShared,
     runtime: *const ScopeRuntime,
+    inline_only: bool,
     _marker: PhantomData<&'env ()>,
 }
 
@@ -218,6 +228,7 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
     });
 
     let mut workers = Vec::with_capacity(num_threads.get());
+    #[cfg(not(target_arch = "wasm32"))]
     for _ in 0..num_threads.get() {
         let shared_cloned = Arc::clone(&shared);
         workers.push(thread::spawn(move || worker_loop(shared_cloned)));
@@ -244,9 +255,11 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
     ) {
         Ok(_) => {
             WASM_WEB2_THREAD_POOL_NUM_THREADS.store(num_threads.get(), Ordering::SeqCst);
-            let runtime = init_runtime(num_threads);
-            let _ = WASM_WEB2_RUNTIME.set(runtime);
-            js_sys::Promise::resolve(&wasm_bindgen::JsValue::UNDEFINED)
+            start_workers(
+                wasm_bindgen::module(),
+                wasm_bindgen::memory(),
+                num_threads.get(),
+            )
         }
         Err(WASM_WEB2_THREAD_POOL_INITIALIZED) => {
             let configured_threads = WASM_WEB2_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
@@ -278,9 +291,12 @@ fn assert_wasm_thread_pool_initialized() {
 
 fn runtime() -> &'static Arc<Inner> {
     assert_wasm_thread_pool_initialized();
-    WASM_WEB2_RUNTIME
-        .get()
-        .expect("wasm web2 runtime must exist after init_thread_pool")
+    WASM_WEB2_RUNTIME.get_or_init(|| {
+        let num_threads = WASM_WEB2_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
+        let num_threads = NonZeroUsize::new(num_threads)
+            .expect("wasm web2 configured thread count must be > 0 after init_thread_pool");
+        init_runtime(num_threads)
+    })
 }
 
 /// wasm web-thread pool adapter for the new internal backend.
@@ -323,6 +339,11 @@ impl WasmWebPool2 {
         let scope_ref = ScopeRef {
             shared: Arc::as_ptr(&runtime().shared),
             runtime: &scope_runtime,
+            inline_only: runtime()
+                .workers
+                .lock()
+                .expect("poisoned workers lock")
+                .is_empty(),
             _marker: PhantomData,
         };
 
@@ -361,6 +382,15 @@ impl ParThreadPool for WasmWebPool2 {
         W: Fn() + Send + 'scope + 'env,
     {
         s.runtime().begin_task();
+
+        if s.inline_only {
+            let result = catch_unwind(AssertUnwindSafe(work));
+            if let Err(err) = result {
+                s.runtime().record_panic(err);
+            }
+            s.runtime().complete_task();
+            return;
+        }
 
         let task = Task::new(work);
 
