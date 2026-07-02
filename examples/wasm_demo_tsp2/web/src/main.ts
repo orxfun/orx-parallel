@@ -144,11 +144,19 @@ async function initParallelRuntimeInBackground() {
             PARALLEL_RUNTIME_INIT_TIMEOUT_MS,
             "parallel runtime init timed out"
         );
-
-        const runtimeInfo = parallel_runtime_info() as RuntimeInfo;
-
         state.threadPoolReady = true;
-        ui.status.textContent = `Ready. Parallel runtime configured=${runtimeInfo.configured_threads}, spawned_workers=${runtimeInfo.spawned_workers}.`;
+
+        try {
+            const runtimeInfo = parallel_runtime_info() as RuntimeInfo;
+            if (runtimeInfo.spawned_workers > 0) {
+                ui.status.textContent = `Ready. Parallel runtime configured=${runtimeInfo.configured_threads}, spawned_workers=${runtimeInfo.spawned_workers}.`;
+            } else {
+                ui.status.textContent = `Ready with fallback: configured=${runtimeInfo.configured_threads}, spawned_workers=0. Parallel runs will execute inline on this platform.`;
+            }
+        } catch (diagErr) {
+            console.warn("parallel_runtime_info failed", diagErr);
+            ui.status.textContent = "Ready. Parallel runtime initialized, but worker diagnostics are unavailable.";
+        }
     } catch (err) {
         state.threadPoolReady = false;
         ui.status.textContent = `Parallel runtime init failed: ${String(err)}. Sequential mode remains available.`;

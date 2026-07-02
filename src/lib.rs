@@ -68,6 +68,12 @@ pub use pool::init_thread_pool;
     target_feature = "atomics"
 ))]
 pub use pool::wasm_web2_runtime_info;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::wasm_web2_start_worker;
 pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;

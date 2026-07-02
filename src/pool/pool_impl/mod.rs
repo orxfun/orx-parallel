@@ -39,6 +39,12 @@ pub use wasm_web2::init_thread_pool;
     target_feature = "atomics"
 ))]
 pub use wasm_web2::wasm_web2_runtime_info;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use wasm_web2::wasm_web2_start_worker;
 
 #[cfg(feature = "std")]
 mod basic;
