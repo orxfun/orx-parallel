@@ -46,15 +46,29 @@ pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(feature = "std")]
 pub use pool::BasicPool;
-pub use pool::{ParThreadPool, Pool};
 #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
 pub use pool::WasmWebPool;
-#[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32", target_feature = "atomics"))]
-pub use pool::init_thread_pool;
 #[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32"))]
 pub use pool::WasmWebPool2;
-#[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32", target_feature = "atomics"))]
+#[cfg(all(
+    feature = "wasm-web-threads",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
 pub use pool::init_thread_pool;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::init_thread_pool;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::wasm_web2_runtime_info;
+pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;

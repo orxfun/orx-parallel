@@ -17,11 +17,41 @@ struct RunResult {
     elapsed_ms: f64,
 }
 
+#[cfg_attr(
+    not(all(target_arch = "wasm32", target_feature = "atomics")),
+    allow(dead_code)
+)]
+#[derive(Debug, Serialize)]
+struct RuntimeInfo {
+    configured_threads: usize,
+    spawned_workers: usize,
+}
+
 /// Initializes the wasm worker thread pool used by parallel runs.
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 #[wasm_bindgen]
 pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
     orx_parallel::init_thread_pool(num_threads as usize)
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+#[wasm_bindgen]
+pub fn parallel_runtime_info() -> Result<JsValue, JsValue> {
+    let (configured_threads, spawned_workers) = orx_parallel::wasm_web2_runtime_info();
+    let info = RuntimeInfo {
+        configured_threads,
+        spawned_workers,
+    };
+    serde_wasm_bindgen::to_value(&info)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize runtime info: {e}")))
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+#[wasm_bindgen]
+pub fn parallel_runtime_info() -> Result<JsValue, JsValue> {
+    Err(JsValue::from_str(
+        "parallel_runtime_info is only available for wasm32 + atomics builds",
+    ))
 }
 
 /// Returns an error when thread-pool initialization is unavailable on this target.

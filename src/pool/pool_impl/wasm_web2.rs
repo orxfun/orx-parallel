@@ -125,7 +125,6 @@ impl ScopeRuntime {
 pub struct ScopeRef<'env> {
     shared: *const WorkerShared,
     runtime: *const ScopeRuntime,
-    inline_only: bool,
     _marker: PhantomData<&'env ()>,
 }
 
@@ -228,7 +227,6 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
     });
 
     let mut workers = Vec::with_capacity(num_threads.get());
-    #[cfg(not(target_arch = "wasm32"))]
     for _ in 0..num_threads.get() {
         let shared_cloned = Arc::clone(&shared);
         workers.push(thread::spawn(move || worker_loop(shared_cloned)));
@@ -274,6 +272,18 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
         }
         Err(_) => unreachable!("invalid wasm-web-threads2 init state"),
     }
+}
+
+#[cfg(target_feature = "atomics")]
+/// Returns `(configured_threads, spawned_workers)` for the active wasm-web-threads2 runtime.
+pub fn wasm_web2_runtime_info() -> (usize, usize) {
+    let configured_threads = WASM_WEB2_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
+    let spawned_workers = runtime()
+        .workers
+        .lock()
+        .expect("poisoned workers lock")
+        .len();
+    (configured_threads, spawned_workers)
 }
 
 fn assert_wasm_thread_pool_initialized() {
@@ -339,11 +349,6 @@ impl WasmWebPool2 {
         let scope_ref = ScopeRef {
             shared: Arc::as_ptr(&runtime().shared),
             runtime: &scope_runtime,
-            inline_only: runtime()
-                .workers
-                .lock()
-                .expect("poisoned workers lock")
-                .is_empty(),
             _marker: PhantomData,
         };
 
@@ -382,15 +387,6 @@ impl ParThreadPool for WasmWebPool2 {
         W: Fn() + Send + 'scope + 'env,
     {
         s.runtime().begin_task();
-
-        if s.inline_only {
-            let result = catch_unwind(AssertUnwindSafe(work));
-            if let Err(err) = result {
-                s.runtime().record_panic(err);
-            }
-            s.runtime().complete_task();
-            return;
-        }
 
         let task = Task::new(work);
 
