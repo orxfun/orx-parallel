@@ -1,17 +1,46 @@
 use crate::NumThreads;
 use crate::pool::ParThreadPool;
 use core::num::NonZeroUsize;
-use core::sync::atomic::{AtomicBool, Ordering};
+use core::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
-static WASM_WEB2_THREAD_POOL_INIT_CALLED: AtomicBool = AtomicBool::new(false);
+const WASM_WEB2_THREAD_POOL_UNINITIALIZED: u8 = 0;
+const WASM_WEB2_THREAD_POOL_INITIALIZED: u8 = 1;
+
+#[cfg_attr(not(target_feature = "atomics"), allow(dead_code))]
+static WASM_WEB2_THREAD_POOL_STATE: AtomicU8 = AtomicU8::new(WASM_WEB2_THREAD_POOL_UNINITIALIZED);
+#[cfg_attr(not(target_feature = "atomics"), allow(dead_code))]
+static WASM_WEB2_THREAD_POOL_NUM_THREADS: AtomicUsize = AtomicUsize::new(0);
 
 /// Initializes the worker-backed wasm thread runtime for `WasmWebPool2`.
 ///
-/// This is a scaffold implementation for PR-1 and only marks runtime init state.
+/// This establishes the runtime init contract for the new wasm backend.
 #[cfg(target_feature = "atomics")]
-pub fn init_thread_pool(_num_threads: usize) -> js_sys::Promise {
-    WASM_WEB2_THREAD_POOL_INIT_CALLED.store(true, Ordering::SeqCst);
-    js_sys::Promise::resolve(&wasm_bindgen::JsValue::UNDEFINED)
+pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
+    let num_threads = num_threads.max(1);
+
+    match WASM_WEB2_THREAD_POOL_STATE.compare_exchange(
+        WASM_WEB2_THREAD_POOL_UNINITIALIZED,
+        WASM_WEB2_THREAD_POOL_INITIALIZED,
+        Ordering::SeqCst,
+        Ordering::SeqCst,
+    ) {
+        Ok(_) => {
+            WASM_WEB2_THREAD_POOL_NUM_THREADS.store(num_threads, Ordering::SeqCst);
+            js_sys::Promise::resolve(&wasm_bindgen::JsValue::UNDEFINED)
+        }
+        Err(WASM_WEB2_THREAD_POOL_INITIALIZED) => {
+            let configured_threads = WASM_WEB2_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
+
+            if configured_threads == num_threads {
+                js_sys::Promise::resolve(&wasm_bindgen::JsValue::UNDEFINED)
+            } else {
+                js_sys::Promise::reject(&wasm_bindgen::JsValue::from_str(&format!(
+                    "init_thread_pool was already called with {configured_threads} threads; refusing to reinitialize with {num_threads} threads"
+                )))
+            }
+        }
+        Err(_) => unreachable!("invalid wasm-web-threads2 init state"),
+    }
 }
 
 fn assert_wasm_thread_pool_initialized() {
@@ -21,7 +50,7 @@ fn assert_wasm_thread_pool_initialized() {
         );
     }
 
-    if !WASM_WEB2_THREAD_POOL_INIT_CALLED.load(Ordering::SeqCst) {
+    if WASM_WEB2_THREAD_POOL_STATE.load(Ordering::SeqCst) != WASM_WEB2_THREAD_POOL_INITIALIZED {
         panic!(
             "Wasm web2 thread pool is not initialized. Call and await init_thread_pool(...) before running parallel computations."
         );
