@@ -5,6 +5,7 @@
 ))]
 
 use orx_parallel::init_thread_pool;
+use orx_parallel::{IntoParIter, Par};
 use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen_test::*;
 
@@ -32,4 +33,15 @@ async fn wasm_web2_init_is_idempotent_and_rejects_mismatch() {
         message.contains("already called with 2 threads"),
         "unexpected rejection message: {message}"
     );
+}
+
+#[wasm_bindgen_test(async)]
+async fn wasm_web2_default_pool_runs_without_explicit_pool() {
+    JsFuture::from(init_thread_pool(2))
+        .await
+        .expect("init_thread_pool should resolve for the default-path smoke test");
+
+    let sum: usize = (0..128).into_par().sum();
+
+    assert_eq!(sum, (0..128usize).sum::<usize>());
 }
