@@ -1,6 +1,7 @@
 use crate::NumThreads;
 use crate::pool::ParThreadPool;
 use crate::pool::env::max_num_threads_by_env_and_resource;
+use alloc::format;
 use core::num::NonZeroUsize;
 use core::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 use std::any::Any;
