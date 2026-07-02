@@ -31,12 +31,11 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
         Err(WASM_WEB2_THREAD_POOL_INITIALIZED) => {
             let configured_threads = WASM_WEB2_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
 
-            if configured_threads == num_threads {
-                js_sys::Promise::resolve(&wasm_bindgen::JsValue::UNDEFINED)
-            } else {
-                js_sys::Promise::reject(&wasm_bindgen::JsValue::from_str(&format!(
+            match configured_threads == num_threads {
+                true => js_sys::Promise::resolve(&wasm_bindgen::JsValue::UNDEFINED),
+                false => js_sys::Promise::reject(&wasm_bindgen::JsValue::from_str(&format!(
                     "init_thread_pool was already called with {configured_threads} threads; refusing to reinitialize with {num_threads} threads"
-                )))
+                ))),
             }
         }
         Err(_) => unreachable!("invalid wasm-web-threads2 init state"),
