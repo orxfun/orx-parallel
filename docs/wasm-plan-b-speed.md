@@ -242,3 +242,61 @@ Report includes:
 1. runtime worker info (`configured_threads`, `spawned_workers`)
 2. sequential trial summary (wall/wasm medians and p95)
 3. parallel summary with wasm-web2 telemetry snapshot
+
+### PR-1 Baseline Sample (2026-07-02)
+
+```json
+{
+   "config": {
+      "trials": 20,
+      "iterations": 10000,
+      "threads": 16,
+      "numCities": 50,
+      "seed": "42"
+   },
+   "runtime": {
+      "configured_threads": 16,
+      "spawned_workers": 16
+   },
+   "sequential": {
+      "wall": {
+         "median_ms": 13299.269999995828,
+         "p95_ms": 16704.125,
+         "mean_ms": 13227.018750000745,
+         "min_ms": 8640.130000010133,
+         "max_ms": 17082.819999992847
+      },
+      "wasm": {
+         "median_ms": 13299,
+         "p95_ms": 16704,
+         "mean_ms": 13226.95,
+         "min_ms": 8640,
+         "max_ms": 17083
+      }
+   },
+   "parallel": {
+      "trials": 20,
+      "iterations_per_trial": 10000,
+      "threads": 16,
+      "num_cities": 50,
+      "median_ms": 3225,
+      "p95_ms": 3710,
+      "mean_ms": 3298.35,
+      "min_ms": 2621,
+      "max_ms": 5195,
+      "perf": {
+         "tasks_enqueued": 160,
+         "tasks_run_by_workers": 160,
+         "tasks_run_by_main": 0,
+         "notify_count": 160,
+         "queue_depth_high_water": 1
+      }
+   }
+}
+```
+
+Interpretation:
+
+1. True worker parallelism is active (`spawned_workers=16`, `tasks_run_by_main=0`).
+2. Queue occupancy is very low (`queue_depth_high_water=1`) with relatively few tasks per trial.
+3. PR-2 should focus on improving worker occupancy by tuning chunk granularity, then re-benchmark.
