@@ -11,8 +11,6 @@ use std::collections::VecDeque;
 use std::marker::PhantomData;
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
-use std::thread;
-use std::vec::Vec;
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::*;
 
@@ -33,7 +31,7 @@ extern "C" {
 
 struct Inner {
     shared: Arc<WorkerShared>,
-    workers: Mutex<Vec<thread::JoinHandle<()>>>,
+    spawned_workers: usize,
 }
 
 struct WorkerShared {
@@ -57,11 +55,6 @@ impl Drop for Inner {
             }
         }
         self.shared.cv.notify_all();
-
-        let mut workers = self.workers.lock().expect("poisoned workers lock");
-        for worker in workers.drain(..) {
-            let _ = worker.join();
-        }
     }
 }
 
@@ -97,19 +90,6 @@ impl ScopeRuntime {
         }
     }
 
-    fn wait_for_completion(&self) {
-        let mut guard = self
-            .completion_lock
-            .lock()
-            .expect("poisoned scope completion lock");
-        while self.pending.load(Ordering::Acquire) != 0 {
-            guard = self
-                .completion_cv
-                .wait(guard)
-                .expect("poisoned scope completion lock");
-        }
-    }
-
     fn record_panic(&self, err: Box<dyn Any + Send>) {
         let mut panic_slot = self.panic.lock().expect("poisoned scope panic lock");
         if panic_slot.is_none() {
@@ -125,6 +105,7 @@ impl ScopeRuntime {
 pub struct ScopeRef<'env> {
     shared: *const WorkerShared,
     runtime: *const ScopeRuntime,
+    inline_only: bool,
     _marker: PhantomData<&'env ()>,
 }
 
@@ -226,15 +207,9 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
         cv: Condvar::new(),
     });
 
-    let mut workers = Vec::with_capacity(num_threads.get());
-    for _ in 0..num_threads.get() {
-        let shared_cloned = Arc::clone(&shared);
-        workers.push(thread::spawn(move || worker_loop(shared_cloned)));
-    }
-
     Arc::new(Inner {
         shared,
-        workers: Mutex::new(workers),
+        spawned_workers: num_threads.get(),
     })
 }
 
@@ -253,6 +228,9 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
     ) {
         Ok(_) => {
             WASM_WEB2_THREAD_POOL_NUM_THREADS.store(num_threads.get(), Ordering::SeqCst);
+
+            let _ = WASM_WEB2_RUNTIME.get_or_init(|| init_runtime(num_threads));
+
             start_workers(
                 wasm_bindgen::module(),
                 wasm_bindgen::memory(),
@@ -278,12 +256,16 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
 /// Returns `(configured_threads, spawned_workers)` for the active wasm-web-threads2 runtime.
 pub fn wasm_web2_runtime_info() -> (usize, usize) {
     let configured_threads = WASM_WEB2_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
-    let spawned_workers = runtime()
-        .workers
-        .lock()
-        .expect("poisoned workers lock")
-        .len();
+    let spawned_workers = runtime().spawned_workers;
     (configured_threads, spawned_workers)
+}
+
+#[cfg(target_feature = "atomics")]
+#[wasm_bindgen]
+/// Worker entrypoint called from `worker_helpers2.js` after wasm init.
+pub fn wasm_web2_start_worker() {
+    let shared = Arc::clone(&runtime().shared);
+    worker_loop(shared);
 }
 
 fn assert_wasm_thread_pool_initialized() {
@@ -349,12 +331,47 @@ impl WasmWebPool2 {
         let scope_ref = ScopeRef {
             shared: Arc::as_ptr(&runtime().shared),
             runtime: &scope_runtime,
+            inline_only: runtime().spawned_workers == 0,
             _marker: PhantomData,
         };
 
         let user_result = catch_unwind(AssertUnwindSafe(|| f(&scope_ref)));
 
-        scope_runtime.wait_for_completion();
+        #[cfg(target_arch = "wasm32")]
+        {
+            // Main-thread wasm cannot block on Condvar/Atomics.wait.
+            while scope_runtime.pending.load(Ordering::Acquire) != 0 {
+                let maybe_task = {
+                    let runtime_ref = runtime();
+                    let mut state = runtime_ref.shared.state.lock().expect("poisoned pool lock");
+                    state.queue.pop_front()
+                };
+
+                if let Some(task) = maybe_task {
+                    let result = catch_unwind(AssertUnwindSafe(|| unsafe { task.run() }));
+                    if let Err(err) = result {
+                        scope_runtime.record_panic(err);
+                    }
+                    scope_runtime.complete_task();
+                } else {
+                    core::hint::spin_loop();
+                }
+            }
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let mut guard = scope_runtime
+                .completion_lock
+                .lock()
+                .expect("poisoned scope completion lock");
+            while scope_runtime.pending.load(Ordering::Acquire) != 0 {
+                guard = scope_runtime
+                    .completion_cv
+                    .wait(guard)
+                    .expect("poisoned scope completion lock");
+            }
+        }
 
         {
             let runtime_ref = runtime();
@@ -387,6 +404,15 @@ impl ParThreadPool for WasmWebPool2 {
         W: Fn() + Send + 'scope + 'env,
     {
         s.runtime().begin_task();
+
+        if s.inline_only {
+            let result = catch_unwind(AssertUnwindSafe(work));
+            if let Err(err) = result {
+                s.runtime().record_panic(err);
+            }
+            s.runtime().complete_task();
+            return;
+        }
 
         let task = Task::new(work);
 

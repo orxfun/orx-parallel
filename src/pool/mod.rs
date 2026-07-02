@@ -40,6 +40,12 @@ pub use pool_impl::init_thread_pool;
     target_feature = "atomics"
 ))]
 pub use pool_impl::wasm_web2_runtime_info;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool_impl::wasm_web2_start_worker;
 
 #[cfg(all(feature = "std", feature = "wasm-web-threads2", target_arch = "wasm32"))]
 pub type DefaultPool = pool_impl::WasmWebPool2;
