@@ -21,6 +21,7 @@ type ParallelBenchmarkReport = {
     trials: number;
     iterations_per_trial: number;
     threads: number;
+    chunk_size: number;
     num_cities: number;
     median_ms: number;
     p95_ms: number;
@@ -48,6 +49,7 @@ const CONFIG = {
     trials: 20,
     iterations: 10_000,
     threads: 16,
+    chunkSizes: [0, 1, 2, 4, 8, 16, 32, 64, 128, 256],
     numCities: 50,
     seed: 42n,
 };
@@ -120,13 +122,18 @@ async function main() {
     outputEl.textContent = "Running benchmark trials...";
 
     const sequential = await runSequentialTrials();
-    const parallel = run_parallel_benchmark_report(
-        CONFIG.trials,
-        CONFIG.iterations,
-        CONFIG.seed,
-        CONFIG.threads,
-        CONFIG.numCities,
-    ) as ParallelBenchmarkReport;
+    const parallel: ParallelBenchmarkReport[] = [];
+    for (const chunkSize of CONFIG.chunkSizes) {
+        const report = run_parallel_benchmark_report(
+            CONFIG.trials,
+            CONFIG.iterations,
+            CONFIG.seed,
+            CONFIG.threads,
+            chunkSize,
+            CONFIG.numCities,
+        ) as ParallelBenchmarkReport;
+        parallel.push(report);
+    }
 
     const report = {
         config: {

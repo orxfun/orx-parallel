@@ -126,6 +126,7 @@ impl Drop for Inner {
 
 struct ScopeRuntime {
     pending: AtomicUsize,
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
     completion_lock: Mutex<()>,
     completion_cv: Condvar,
     panic: Mutex<Option<Box<dyn Any + Send>>>,

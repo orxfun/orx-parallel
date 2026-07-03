@@ -32,11 +32,31 @@ pub fn run_search_parallel(
     locations: &[Location],
     start_index: u64,
 ) -> SearchRunOutput {
-    let best = (0..iterations)
-        .into_par()
-        .num_threads(threads)
-        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
+    run_search_parallel_with_chunk_size(iterations, seed, threads, locations, start_index, None)
+}
+
+/// Runs a parallel TSP search chunk with optional exact chunk size override.
+pub fn run_search_parallel_with_chunk_size(
+    iterations: usize,
+    seed: u64,
+    threads: usize,
+    locations: &[Location],
+    start_index: u64,
+    chunk_size: Option<usize>,
+) -> SearchRunOutput {
+    let best = (0..iterations).into_par();
+
+    let best = match chunk_size {
+        Some(chunk_size) if chunk_size > 0 => best
+            .num_threads(threads)
+            .chunk_size(chunk_size)
+            .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
+            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal)),
+        _ => best
+            .num_threads(threads)
+            .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
+            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal)),
+    };
 
     SearchRunOutput { best, iterations }
 }

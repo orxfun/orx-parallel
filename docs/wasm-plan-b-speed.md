@@ -300,3 +300,247 @@ Interpretation:
 1. True worker parallelism is active (`spawned_workers=16`, `tasks_run_by_main=0`).
 2. Queue occupancy is very low (`queue_depth_high_water=1`) with relatively few tasks per trial.
 3. PR-2 should focus on improving worker occupancy by tuning chunk granularity, then re-benchmark.
+
+### PR-2 Chunk Size Sweep Sample (2026-07-03)
+
+```json
+{
+   "config": {
+      "trials": 20,
+      "iterations": 10000,
+      "threads": 16,
+      "chunkSizes": [
+         0,
+         1,
+         2,
+         4,
+         8,
+         16,
+         32,
+         64,
+         128,
+         256
+      ],
+      "numCities": 50,
+      "seed": "42"
+   },
+   "runtime": {
+      "configured_threads": 16,
+      "spawned_workers": 16
+   },
+   "sequential": {
+      "wall": {
+         "median_ms": 7044.274999991059,
+         "p95_ms": 21749.969999998808,
+         "mean_ms": 8399.522749999165,
+         "min_ms": 5774.655000001192,
+         "max_ms": 22387.62000000477
+      },
+      "wasm": {
+         "median_ms": 7044,
+         "p95_ms": 21749,
+         "mean_ms": 8399.45,
+         "min_ms": 5774,
+         "max_ms": 22387
+      }
+   },
+   "parallel": [
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 0,
+         "num_cities": 50,
+         "median_ms": 11066,
+         "p95_ms": 12855,
+         "mean_ms": 11009.9,
+         "min_ms": 2976,
+         "max_ms": 13212,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 159,
+            "tasks_run_by_main": 1,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 1,
+         "num_cities": 50,
+         "median_ms": 3312,
+         "p95_ms": 3960,
+         "mean_ms": 3453.7,
+         "min_ms": 2908,
+         "max_ms": 4123,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 159,
+            "tasks_run_by_main": 1,
+            "notify_count": 160,
+            "queue_depth_high_water": 2
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 2,
+         "num_cities": 50,
+         "median_ms": 3274,
+         "p95_ms": 4043,
+         "mean_ms": 3468.45,
+         "min_ms": 3000,
+         "max_ms": 4104,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 160,
+            "tasks_run_by_main": 0,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 4,
+         "num_cities": 50,
+         "median_ms": 3294,
+         "p95_ms": 3685,
+         "mean_ms": 3432.75,
+         "min_ms": 2924,
+         "max_ms": 4045,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 160,
+            "tasks_run_by_main": 0,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 8,
+         "num_cities": 50,
+         "median_ms": 3600,
+         "p95_ms": 3671,
+         "mean_ms": 3467.9,
+         "min_ms": 2954,
+         "max_ms": 4070,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 160,
+            "tasks_run_by_main": 0,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 16,
+         "num_cities": 50,
+         "median_ms": 3301,
+         "p95_ms": 3752,
+         "mean_ms": 3399.2,
+         "min_ms": 2960,
+         "max_ms": 4159,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 159,
+            "tasks_run_by_main": 1,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 32,
+         "num_cities": 50,
+         "median_ms": 3517,
+         "p95_ms": 4305,
+         "mean_ms": 3617.65,
+         "min_ms": 2992,
+         "max_ms": 4357,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 159,
+            "tasks_run_by_main": 1,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 64,
+         "num_cities": 50,
+         "median_ms": 3428,
+         "p95_ms": 4021,
+         "mean_ms": 3517.05,
+         "min_ms": 3010,
+         "max_ms": 4385,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 160,
+            "tasks_run_by_main": 0,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 128,
+         "num_cities": 50,
+         "median_ms": 3840,
+         "p95_ms": 5097,
+         "mean_ms": 4029.6,
+         "min_ms": 3070,
+         "max_ms": 5104,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 160,
+            "tasks_run_by_main": 0,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 256,
+         "num_cities": 50,
+         "median_ms": 4437,
+         "p95_ms": 4857,
+         "mean_ms": 4424.1,
+         "min_ms": 3029,
+         "max_ms": 4933,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 160,
+            "tasks_run_by_main": 0,
+            "notify_count": 160,
+            "queue_depth_high_water": 1
+         }
+      }
+   ]
+}
+```
+
+Interpretation:
+
+1. Auto chunking (`chunk_size=0`) is a major regression in this workload (median ~11066 ms).
+2. Fixed chunk sizes between 1 and 16 are all strong and close, with best median at `chunk_size=2` (~3274 ms).
+3. Larger chunks (>= 32) degrade performance progressively, confirming PR-2 should focus on small-chunk behavior and safer auto policy for wasm-web-threads2.
