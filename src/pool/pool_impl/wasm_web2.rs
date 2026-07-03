@@ -11,6 +11,7 @@ use std::collections::VecDeque;
 use std::marker::PhantomData;
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, OnceLock};
+use std::vec::Vec;
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::*;
 
@@ -41,6 +42,24 @@ struct RuntimeTelemetry {
     tasks_run_by_main: AtomicUsize,
     notify_count: AtomicUsize,
     queue_depth_high_water: AtomicUsize,
+    queue_pop_count: AtomicUsize,
+    queue_empty_poll_count: AtomicUsize,
+    main_assist_time_ns: AtomicUsize,
+    state_try_lock_fail_count: AtomicUsize,
+    state_try_lock_spin_iters: AtomicUsize,
+    completion_notify_count: AtomicUsize,
+    worker_id_alloc: AtomicUsize,
+    worker_runs_by_id: Mutex<Vec<usize>>,
+}
+
+pub struct RuntimeTelemetryExtendedSnapshot {
+    pub queue_pop_count: usize,
+    pub queue_empty_poll_count: usize,
+    pub main_assist_time_ns: usize,
+    pub state_try_lock_fail_count: usize,
+    pub state_try_lock_spin_iters: usize,
+    pub completion_notify_count: usize,
+    pub worker_runs_by_id: alloc::vec::Vec<usize>,
 }
 
 impl RuntimeTelemetry {
@@ -51,6 +70,14 @@ impl RuntimeTelemetry {
             tasks_run_by_main: AtomicUsize::new(0),
             notify_count: AtomicUsize::new(0),
             queue_depth_high_water: AtomicUsize::new(0),
+            queue_pop_count: AtomicUsize::new(0),
+            queue_empty_poll_count: AtomicUsize::new(0),
+            main_assist_time_ns: AtomicUsize::new(0),
+            state_try_lock_fail_count: AtomicUsize::new(0),
+            state_try_lock_spin_iters: AtomicUsize::new(0),
+            completion_notify_count: AtomicUsize::new(0),
+            worker_id_alloc: AtomicUsize::new(0),
+            worker_runs_by_id: Mutex::new(Vec::new()),
         }
     }
 
@@ -60,6 +87,17 @@ impl RuntimeTelemetry {
         self.tasks_run_by_main.store(0, Ordering::SeqCst);
         self.notify_count.store(0, Ordering::SeqCst);
         self.queue_depth_high_water.store(0, Ordering::SeqCst);
+        self.queue_pop_count.store(0, Ordering::SeqCst);
+        self.queue_empty_poll_count.store(0, Ordering::SeqCst);
+        self.main_assist_time_ns.store(0, Ordering::SeqCst);
+        self.state_try_lock_fail_count.store(0, Ordering::SeqCst);
+        self.state_try_lock_spin_iters.store(0, Ordering::SeqCst);
+        self.completion_notify_count.store(0, Ordering::SeqCst);
+        self.worker_id_alloc.store(0, Ordering::SeqCst);
+        self.worker_runs_by_id
+            .lock()
+            .expect("poisoned worker_runs_by_id lock")
+            .clear();
     }
 
     fn snapshot(&self) -> (usize, usize, usize, usize, usize) {
@@ -70,6 +108,45 @@ impl RuntimeTelemetry {
             self.notify_count.load(Ordering::SeqCst),
             self.queue_depth_high_water.load(Ordering::SeqCst),
         )
+    }
+
+    fn snapshot_extended(&self) -> RuntimeTelemetryExtendedSnapshot {
+        RuntimeTelemetryExtendedSnapshot {
+            queue_pop_count: self.queue_pop_count.load(Ordering::SeqCst),
+            queue_empty_poll_count: self.queue_empty_poll_count.load(Ordering::SeqCst),
+            main_assist_time_ns: self.main_assist_time_ns.load(Ordering::SeqCst),
+            state_try_lock_fail_count: self.state_try_lock_fail_count.load(Ordering::SeqCst),
+            state_try_lock_spin_iters: self.state_try_lock_spin_iters.load(Ordering::SeqCst),
+            completion_notify_count: self.completion_notify_count.load(Ordering::SeqCst),
+            worker_runs_by_id: self
+                .worker_runs_by_id
+                .lock()
+                .expect("poisoned worker_runs_by_id lock")
+                .clone(),
+        }
+    }
+
+    fn register_worker(&self) -> usize {
+        let worker_id = self.worker_id_alloc.fetch_add(1, Ordering::Relaxed);
+        let mut worker_runs = self
+            .worker_runs_by_id
+            .lock()
+            .expect("poisoned worker_runs_by_id lock");
+        if worker_runs.len() <= worker_id {
+            worker_runs.resize(worker_id + 1, 0);
+        }
+        worker_id
+    }
+
+    fn record_worker_run(&self, worker_id: usize) {
+        let mut worker_runs = self
+            .worker_runs_by_id
+            .lock()
+            .expect("poisoned worker_runs_by_id lock");
+        if worker_runs.len() <= worker_id {
+            worker_runs.resize(worker_id + 1, 0);
+        }
+        worker_runs[worker_id] = worker_runs[worker_id].saturating_add(1);
     }
 }
 
@@ -83,13 +160,30 @@ fn update_high_water(mark: &AtomicUsize, value: usize) {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+fn now_ns() -> usize {
+    (js_sys::Date::now() * 1_000_000.0) as usize
+}
+
 fn lock_pool_state<'a>(shared: &'a WorkerShared) -> MutexGuard<'a, WorkerState> {
     #[cfg(target_arch = "wasm32")]
     {
         loop {
             match shared.state.try_lock() {
                 Ok(guard) => return guard,
-                Err(_) => core::hint::spin_loop(),
+                Err(_) => {
+                    if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+                        runtime
+                            .telemetry
+                            .state_try_lock_fail_count
+                            .fetch_add(1, Ordering::Relaxed);
+                        runtime
+                            .telemetry
+                            .state_try_lock_spin_iters
+                            .fetch_add(1, Ordering::Relaxed);
+                    }
+                    core::hint::spin_loop()
+                }
             }
         }
     }
@@ -149,6 +243,12 @@ impl ScopeRuntime {
 
     fn complete_task(&self) {
         if self.pending.fetch_sub(1, Ordering::AcqRel) == 1 {
+            if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+                runtime
+                    .telemetry
+                    .completion_notify_count
+                    .fetch_add(1, Ordering::Relaxed);
+            }
             self.completion_cv.notify_all();
         }
     }
@@ -231,6 +331,11 @@ impl Task {
 
 #[cfg_attr(not(target_feature = "atomics"), allow(dead_code))]
 fn worker_loop(shared: Arc<WorkerShared>) {
+    let worker_id = WASM_WEB2_RUNTIME
+        .get()
+        .map(|runtime| runtime.telemetry.register_worker())
+        .unwrap_or(0);
+
     loop {
         let (task, runtime_ptr) = {
             let mut state = lock_pool_state(&shared);
@@ -243,7 +348,20 @@ fn worker_loop(shared: Arc<WorkerShared>) {
                     let runtime_ptr = state
                         .active_scope_addr
                         .expect("active scope must be set while queue is non-empty");
+                    if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+                        runtime
+                            .telemetry
+                            .queue_pop_count
+                            .fetch_add(1, Ordering::Relaxed);
+                    }
                     break (task, runtime_ptr as *const ScopeRuntime);
+                }
+
+                if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+                    runtime
+                        .telemetry
+                        .queue_empty_poll_count
+                        .fetch_add(1, Ordering::Relaxed);
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -267,6 +385,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
                 .telemetry
                 .tasks_run_by_workers
                 .fetch_add(1, Ordering::Relaxed);
+            runtime.telemetry.record_worker_run(worker_id);
         }
         if let Err(err) = result {
             scope_runtime.record_panic(err);
@@ -360,6 +479,24 @@ pub fn wasm_web2_perf_snapshot() -> (usize, usize, usize, usize, usize) {
 }
 
 #[cfg(target_feature = "atomics")]
+/// Returns extended performance counters for diagnostics.
+pub fn wasm_web2_perf_snapshot_extended() -> RuntimeTelemetryExtendedSnapshot {
+    if let Some(runtime) = WASM_WEB2_RUNTIME.get() {
+        runtime.telemetry.snapshot_extended()
+    } else {
+        RuntimeTelemetryExtendedSnapshot {
+            queue_pop_count: 0,
+            queue_empty_poll_count: 0,
+            main_assist_time_ns: 0,
+            state_try_lock_fail_count: 0,
+            state_try_lock_spin_iters: 0,
+            completion_notify_count: 0,
+            worker_runs_by_id: alloc::vec::Vec::new(),
+        }
+    }
+}
+
+#[cfg(target_feature = "atomics")]
 #[wasm_bindgen]
 /// Worker entrypoint called from `worker_helpers2.js` after wasm init.
 pub fn wasm_web2_start_worker() {
@@ -440,10 +577,23 @@ impl WasmWebPool2 {
         {
             // Main-thread wasm cannot block on Condvar/Atomics.wait.
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
+                let assist_started_ns = now_ns();
                 let maybe_task = {
                     let runtime_ref = runtime();
                     let mut state = lock_pool_state(&runtime_ref.shared);
-                    state.queue.pop_front()
+                    let task = state.queue.pop_front();
+                    if task.is_some() {
+                        runtime_ref
+                            .telemetry
+                            .queue_pop_count
+                            .fetch_add(1, Ordering::Relaxed);
+                    } else {
+                        runtime_ref
+                            .telemetry
+                            .queue_empty_poll_count
+                            .fetch_add(1, Ordering::Relaxed);
+                    }
+                    task
                 };
 
                 if let Some(task) = maybe_task {
@@ -452,11 +602,21 @@ impl WasmWebPool2 {
                         .telemetry
                         .tasks_run_by_main
                         .fetch_add(1, Ordering::Relaxed);
+                    let assist_elapsed_ns = now_ns().saturating_sub(assist_started_ns);
+                    runtime()
+                        .telemetry
+                        .main_assist_time_ns
+                        .fetch_add(assist_elapsed_ns, Ordering::Relaxed);
                     if let Err(err) = result {
                         scope_runtime.record_panic(err);
                     }
                     scope_runtime.complete_task();
                 } else {
+                    let assist_elapsed_ns = now_ns().saturating_sub(assist_started_ns);
+                    runtime()
+                        .telemetry
+                        .main_assist_time_ns
+                        .fetch_add(assist_elapsed_ns, Ordering::Relaxed);
                     core::hint::spin_loop();
                 }
             }
@@ -509,11 +669,17 @@ impl ParThreadPool for WasmWebPool2 {
         s.runtime().begin_task();
 
         if s.inline_only {
+            let assist_started_ns = now_ns();
             let result = catch_unwind(AssertUnwindSafe(work));
             runtime()
                 .telemetry
                 .tasks_run_by_main
                 .fetch_add(1, Ordering::Relaxed);
+            let assist_elapsed_ns = now_ns().saturating_sub(assist_started_ns);
+            runtime()
+                .telemetry
+                .main_assist_time_ns
+                .fetch_add(assist_elapsed_ns, Ordering::Relaxed);
             if let Err(err) = result {
                 s.runtime().record_panic(err);
             }

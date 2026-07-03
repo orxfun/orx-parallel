@@ -45,6 +45,21 @@ struct PerfSnapshot {
     allow(dead_code)
 )]
 #[derive(Debug, Serialize)]
+struct PerfSnapshotExtended {
+    queue_pop_count: usize,
+    queue_empty_poll_count: usize,
+    main_assist_time_ns: usize,
+    state_try_lock_fail_count: usize,
+    state_try_lock_spin_iters: usize,
+    completion_notify_count: usize,
+    worker_runs_by_id: Vec<usize>,
+}
+
+#[cfg_attr(
+    not(all(target_arch = "wasm32", target_feature = "atomics")),
+    allow(dead_code)
+)]
+#[derive(Debug, Serialize)]
 struct BenchmarkReport {
     trials: usize,
     iterations_per_trial: usize,
@@ -57,6 +72,8 @@ struct BenchmarkReport {
     min_ms: f64,
     max_ms: f64,
     perf: PerfSnapshot,
+    perf_extended: PerfSnapshotExtended,
+    trial_samples_ms: Vec<f64>,
 }
 
 /// Initializes the wasm worker thread pool used by parallel runs.
@@ -103,6 +120,23 @@ pub fn parallel_perf_snapshot() -> Result<JsValue, JsValue> {
     };
     serde_wasm_bindgen::to_value(&snapshot)
         .map_err(|e| JsValue::from_str(&format!("failed to serialize perf snapshot: {e}")))
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
+#[wasm_bindgen]
+pub fn parallel_perf_snapshot_extended() -> Result<JsValue, JsValue> {
+    let ext = orx_parallel::wasm_web2_perf_snapshot_extended();
+    let snapshot = PerfSnapshotExtended {
+        queue_pop_count: ext.queue_pop_count,
+        queue_empty_poll_count: ext.queue_empty_poll_count,
+        main_assist_time_ns: ext.main_assist_time_ns,
+        state_try_lock_fail_count: ext.state_try_lock_fail_count,
+        state_try_lock_spin_iters: ext.state_try_lock_spin_iters,
+        completion_notify_count: ext.completion_notify_count,
+        worker_runs_by_id: ext.worker_runs_by_id,
+    };
+    serde_wasm_bindgen::to_value(&snapshot)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize extended perf snapshot: {e}")))
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
@@ -164,6 +198,7 @@ pub fn run_parallel_benchmark_report(
         notify_count,
         queue_depth_high_water,
     ) = orx_parallel::wasm_web2_perf_snapshot();
+    let perf_extended = orx_parallel::wasm_web2_perf_snapshot_extended();
 
     let report = BenchmarkReport {
         trials,
@@ -183,6 +218,16 @@ pub fn run_parallel_benchmark_report(
             notify_count,
             queue_depth_high_water,
         },
+        perf_extended: PerfSnapshotExtended {
+            queue_pop_count: perf_extended.queue_pop_count,
+            queue_empty_poll_count: perf_extended.queue_empty_poll_count,
+            main_assist_time_ns: perf_extended.main_assist_time_ns,
+            state_try_lock_fail_count: perf_extended.state_try_lock_fail_count,
+            state_try_lock_spin_iters: perf_extended.state_try_lock_spin_iters,
+            completion_notify_count: perf_extended.completion_notify_count,
+            worker_runs_by_id: perf_extended.worker_runs_by_id,
+        },
+        trial_samples_ms: samples,
     };
 
     serde_wasm_bindgen::to_value(&report)
@@ -206,6 +251,14 @@ pub fn parallel_perf_reset() {}
 pub fn parallel_perf_snapshot() -> Result<JsValue, JsValue> {
     Err(JsValue::from_str(
         "parallel_perf_snapshot is only available for wasm32 + atomics builds",
+    ))
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_feature = "atomics")))]
+#[wasm_bindgen]
+pub fn parallel_perf_snapshot_extended() -> Result<JsValue, JsValue> {
+    Err(JsValue::from_str(
+        "parallel_perf_snapshot_extended is only available for wasm32 + atomics builds",
     ))
 }
 
