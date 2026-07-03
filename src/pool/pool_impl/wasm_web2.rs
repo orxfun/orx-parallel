@@ -28,6 +28,12 @@ static WASM_WEB2_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 const MAIN_ASSIST_GRACE_SPINS: usize = 256;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_STALL_SPINS: usize = 4096;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_BACKLOG_THRESHOLD: usize = 2;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_FAILED_COOLDOWN_SPINS: usize = 64;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_WATCHDOG_SPINS: usize = 4096;
 
 #[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
 extern "C" {
@@ -594,7 +600,10 @@ impl WasmWebPool2 {
                 .telemetry
                 .tasks_run_by_workers
                 .load(Ordering::Relaxed);
+            let worker_runs_at_scope_start = last_worker_runs;
             let mut stall_spins = 0usize;
+            let mut failed_assist_cooldown = 0usize;
+            let mut watchdog_spins = 0usize;
 
             // Main-thread wasm cannot block on Condvar/Atomics.wait.
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
@@ -609,17 +618,35 @@ impl WasmWebPool2 {
                     last_pending = pending_now;
                     last_worker_runs = worker_runs_now;
                     stall_spins = 0;
+                    failed_assist_cooldown = 0;
+                    watchdog_spins = 0;
                     core::hint::spin_loop();
                     continue;
                 }
 
                 stall_spins = stall_spins.saturating_add(1);
+                watchdog_spins = watchdog_spins.saturating_add(1);
                 if stall_spins < MAIN_ASSIST_STALL_SPINS {
                     core::hint::spin_loop();
                     continue;
                 }
 
                 stall_spins = 0;
+
+                if failed_assist_cooldown > 0 {
+                    failed_assist_cooldown -= 1;
+                    core::hint::spin_loop();
+                    continue;
+                }
+
+                let should_force_assist = watchdog_spins >= MAIN_ASSIST_WATCHDOG_SPINS;
+                // Avoid bootstrap steals before workers make first observable progress,
+                // unless watchdog fallback is triggered.
+                if !should_force_assist && worker_runs_now == worker_runs_at_scope_start {
+                    core::hint::spin_loop();
+                    continue;
+                }
+
                 let assist_started_ns = now_ns();
                 let maybe_task = {
                     let runtime_ref = runtime();
@@ -628,7 +655,15 @@ impl WasmWebPool2 {
                         .main_assist_attempt_count
                         .fetch_add(1, Ordering::Relaxed);
                     let mut state = lock_pool_state(&runtime_ref.shared);
-                    let task = state.queue.pop_front();
+                    // Keep main mostly out of worker work unless backlog builds up;
+                    // fallback watchdog assist prevents indefinite no-progress loops.
+                    let should_try_pop = should_force_assist
+                        || state.queue.len() >= MAIN_ASSIST_BACKLOG_THRESHOLD;
+                    let task = if should_try_pop {
+                        state.queue.pop_front()
+                    } else {
+                        None
+                    };
                     if task.is_some() {
                         runtime_ref
                             .telemetry
@@ -662,6 +697,8 @@ impl WasmWebPool2 {
                         scope_runtime.record_panic(err);
                     }
                     scope_runtime.complete_task();
+                    failed_assist_cooldown = 0;
+                    watchdog_spins = 0;
                     last_pending = scope_runtime.pending.load(Ordering::Acquire);
                     last_worker_runs = runtime()
                         .telemetry
@@ -673,6 +710,7 @@ impl WasmWebPool2 {
                         .telemetry
                         .main_assist_time_ns
                         .fetch_add(assist_elapsed_ns, Ordering::Relaxed);
+                    failed_assist_cooldown = MAIN_ASSIST_FAILED_COOLDOWN_SPINS;
                     core::hint::spin_loop();
                     last_pending = pending_now;
                     last_worker_runs = worker_runs_now;
