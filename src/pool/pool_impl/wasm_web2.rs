@@ -338,7 +338,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 
     loop {
         let (task, runtime_ptr) = {
-            let mut state = lock_pool_state(&shared);
+            let mut state = shared.state.lock().expect("poisoned pool lock");
             loop {
                 if state.shutdown {
                     return;
@@ -364,17 +364,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
                         .fetch_add(1, Ordering::Relaxed);
                 }
 
-                #[cfg(target_arch = "wasm32")]
-                {
-                    drop(state);
-                    core::hint::spin_loop();
-                    state = lock_pool_state(&shared);
-                }
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    state = shared.cv.wait(state).expect("poisoned pool lock");
-                }
+                state = shared.cv.wait(state).expect("poisoned pool lock");
             }
         };
 
