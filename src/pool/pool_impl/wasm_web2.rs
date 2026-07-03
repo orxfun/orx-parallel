@@ -24,6 +24,9 @@ static WASM_WEB2_THREAD_POOL_STATE: AtomicU8 = AtomicU8::new(WASM_WEB2_THREAD_PO
 static WASM_WEB2_THREAD_POOL_NUM_THREADS: AtomicUsize = AtomicUsize::new(0);
 static WASM_WEB2_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_GRACE_SPINS: usize = 256;
+
 #[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
 extern "C" {
     #[wasm_bindgen(js_name = startWorkers)]
@@ -565,6 +568,13 @@ impl WasmWebPool2 {
 
         #[cfg(target_arch = "wasm32")]
         {
+            for _ in 0..MAIN_ASSIST_GRACE_SPINS {
+                if scope_runtime.pending.load(Ordering::Acquire) == 0 {
+                    break;
+                }
+                core::hint::spin_loop();
+            }
+
             // Main-thread wasm cannot block on Condvar/Atomics.wait.
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
                 let assist_started_ns = now_ns();
