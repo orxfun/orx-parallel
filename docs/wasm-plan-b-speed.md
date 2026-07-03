@@ -544,3 +544,259 @@ Interpretation:
 1. Auto chunking (`chunk_size=0`) is a major regression in this workload (median ~11066 ms).
 2. Fixed chunk sizes between 1 and 16 are all strong and close, with best median at `chunk_size=2` (~3274 ms).
 3. Larger chunks (>= 32) degrade performance progressively, confirming PR-2 should focus on small-chunk behavior and safer auto policy for wasm-web-threads2.
+
+### PR-2 Chunk Size Sweep Re-Run (2026-07-03, after setting demos to chunk size 1)
+
+```json
+{
+   "config": {
+      "trials": 20,
+      "iterations": 10000,
+      "threads": 16,
+      "chunkSizes": [
+         0,
+         1,
+         2,
+         4,
+         8,
+         16,
+         32,
+         64,
+         128,
+         256
+      ],
+      "numCities": 50,
+      "seed": "42"
+   },
+   "runtime": {
+      "configured_threads": 16,
+      "spawned_workers": 16
+   },
+   "sequential": {
+      "wall": {
+         "median_ms": 10005.964999973774,
+         "p95_ms": 21864.52000001073,
+         "mean_ms": 13253.319499996305,
+         "min_ms": 9047.125,
+         "max_ms": 21896.559999972582
+      },
+      "wasm": {
+         "median_ms": 10006,
+         "p95_ms": 21864,
+         "mean_ms": 13253.2,
+         "min_ms": 9047,
+         "max_ms": 21895
+      }
+   },
+   "parallel": [
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 0,
+         "num_cities": 50,
+         "median_ms": 16287,
+         "p95_ms": 19184,
+         "mean_ms": 16559.8,
+         "min_ms": 14600,
+         "max_ms": 19572,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 6
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 1,
+         "num_cities": 50,
+         "median_ms": 7501,
+         "p95_ms": 8802,
+         "mean_ms": 7585,
+         "min_ms": 6467,
+         "max_ms": 10043,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 6
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 2,
+         "num_cities": 50,
+         "median_ms": 6765,
+         "p95_ms": 7816,
+         "mean_ms": 6867.3,
+         "min_ms": 6173,
+         "max_ms": 7943,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 7
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 4,
+         "num_cities": 50,
+         "median_ms": 7020,
+         "p95_ms": 8640,
+         "mean_ms": 7309.75,
+         "min_ms": 6288,
+         "max_ms": 9673,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 5
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 8,
+         "num_cities": 50,
+         "median_ms": 6443,
+         "p95_ms": 7174,
+         "mean_ms": 6660.1,
+         "min_ms": 6231,
+         "max_ms": 7960,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 7
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 16,
+         "num_cities": 50,
+         "median_ms": 6797,
+         "p95_ms": 7621,
+         "mean_ms": 6809.7,
+         "min_ms": 6271,
+         "max_ms": 7908,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 6
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 32,
+         "num_cities": 50,
+         "median_ms": 6988,
+         "p95_ms": 7795,
+         "mean_ms": 7143.05,
+         "min_ms": 6294,
+         "max_ms": 10695,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 141,
+            "tasks_run_by_main": 19,
+            "notify_count": 160,
+            "queue_depth_high_water": 6
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 64,
+         "num_cities": 50,
+         "median_ms": 7265,
+         "p95_ms": 8094,
+         "mean_ms": 7256.55,
+         "min_ms": 6537,
+         "max_ms": 8173,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 5
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 128,
+         "num_cities": 50,
+         "median_ms": 7536,
+         "p95_ms": 8843,
+         "mean_ms": 7784.8,
+         "min_ms": 6554,
+         "max_ms": 9923,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 6
+         }
+      },
+      {
+         "trials": 20,
+         "iterations_per_trial": 10000,
+         "threads": 16,
+         "chunk_size": 256,
+         "num_cities": 50,
+         "median_ms": 8417,
+         "p95_ms": 9054,
+         "mean_ms": 8109.9,
+         "min_ms": 6794,
+         "max_ms": 9314,
+         "perf": {
+            "tasks_enqueued": 160,
+            "tasks_run_by_workers": 140,
+            "tasks_run_by_main": 20,
+            "notify_count": 160,
+            "queue_depth_high_water": 7
+         }
+      }
+   ]
+}
+```
+
+Interpretation (deeper):
+
+1. Chunk size still matters (`chunk_size=0` is worst), but even tuned chunk sizes remain far slower than earlier best-case runs, so chunking alone is not the main remaining gap.
+2. Telemetry shape changed materially: `tasks_run_by_main=20` and `tasks_run_by_workers=140` for almost all chunk sizes. That means the main thread is consistently executing one task per trial, indicating persistent worker-side underutilization or scheduler handoff overhead.
+3. `queue_depth_high_water` increased from ~1 in earlier runs to ~5-7, pointing to more queue accumulation and higher contention/backpressure.
+
+Likely underlying reasons for `wasm_demo_tsp2` vs `wasm_demo_tsp` gap (after controlling chunk size):
+
+1. Scheduler architecture overhead: `wasm_web2` currently uses a central queue and explicit wake/notify protocol, while `wasm_web` rides Rayon's mature work-stealing scheduler. Even with same chunk size, central handoff can cost more.
+2. Main-thread assist cost: the consistent `tasks_run_by_main=20` pattern suggests completion is relying on main-thread participation every trial, which adds coordination overhead and can steal time from orchestration.
+3. Synchronization strategy overhead: `wasm_web2` has multiple shared counters/state transitions and lock/spin paths in hot loops. This can dominate when each task body is expensive and long-lived.
+4. Task-topology ceiling: with `tasks_enqueued=160` for 20 trials, effective task fan-out is only 8 tasks/trial for 16 workers. This limits worker saturation independently of iterator chunk granularity.
+5. Worker readiness/wakeup dynamics: higher queue depth with nonzero main-thread execution can indicate workers are not draining as quickly as enqueuing pace, implying wakeup latency or scheduling imbalance.
+
+Suggested next diagnostic step (separate PR):
+
+1. Add per-worker run counters and per-trial timeline marks (enqueue-start/end, first worker start, completion) to isolate whether the gap is dominated by wakeup latency, lock contention, or low fan-out.
