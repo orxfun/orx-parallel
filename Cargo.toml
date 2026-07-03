@@ -250,3 +250,11 @@ path = "benches/reduce/mfm.rs"
 name = "reduce-mfmf"
 harness = false
 path = "benches/reduce/mfmf.rs"
+
+## benchmarks - problems
+
+[[bench]]
+name = "problems-tsp"
+harness = false
+path = "benches/problems/tsp.rs"
+required-features = ["std", "rayon-core"]
