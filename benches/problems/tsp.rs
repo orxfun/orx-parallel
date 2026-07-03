@@ -1,6 +1,5 @@
 use core::cmp::Ordering::Equal;
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -175,12 +174,11 @@ struct Input {
     iterations: usize,
     num_cities: usize,
     num_threads: usize,
-    chunk_size: usize,
 }
 
 impl Factors for Input {
     fn factor_names() -> Vec<&'static str> {
-        vec!["iter", "cities", "nt", "chunk"]
+        vec!["iter", "cities", "nt"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -188,22 +186,21 @@ impl Factors for Input {
             self.iterations.to_string(),
             self.num_cities.to_string(),
             self.num_threads.to_string(),
-            self.chunk_size.to_string(),
         ]
     }
 
     fn factor_names_short() -> Vec<&'static str> {
-        vec!["it", "c", "nt", "ch"]
+        vec!["it", "c", "nt"]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
     Rayon,
-    OrxOnce,
-    OrxBasic,
-    OrxRayonCore,
+    OrxOnce { chunk_size: usize },
+    OrxBasic { chunk_size: usize },
+    OrxRayonCore { chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -216,9 +213,11 @@ impl Factors for Method {
             match self {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
-                Self::OrxOnce => "orx-once",
-                Self::OrxBasic => "orx-basic",
-                Self::OrxRayonCore => "orx-rayon",
+                Self::OrxOnce { chunk_size } => return vec![format!("orx-once-ch{chunk_size}")],
+                Self::OrxBasic { chunk_size } => return vec![format!("orx-basic-ch{chunk_size}")],
+                Self::OrxRayonCore { chunk_size } => {
+                    return vec![format!("orx-rayon-ch{chunk_size}")];
+                }
             }
             .to_string(),
         ]
@@ -273,7 +272,6 @@ impl Experiment for Exp {
     ) -> Self::Output {
         let iterations = input_variant.iterations;
         let num_threads = input_variant.num_threads;
-        let chunk_size = input_variant.chunk_size;
         let start_index = 0;
 
         match alg_variant {
@@ -285,30 +283,30 @@ impl Experiment for Exp {
                 &input.locations,
                 start_index,
             ),
-            Method::OrxOnce => run_search_orx(
+            Method::OrxOnce { chunk_size } => run_search_orx(
                 Pool::once(num_threads),
                 iterations,
                 SEED,
                 num_threads,
-                chunk_size,
+                *chunk_size,
                 &input.locations,
                 start_index,
             ),
-            Method::OrxBasic => run_search_orx(
+            Method::OrxBasic { chunk_size } => run_search_orx(
                 &input.basic_pool,
                 iterations,
                 SEED,
                 num_threads,
-                chunk_size,
+                *chunk_size,
                 &input.locations,
                 start_index,
             ),
-            Method::OrxRayonCore => run_search_orx(
+            Method::OrxRayonCore { chunk_size } => run_search_orx(
                 &input.orx_rayon_pool,
                 iterations,
                 SEED,
                 num_threads,
-                chunk_size,
+                *chunk_size,
                 &input.locations,
                 start_index,
             ),
@@ -333,17 +331,18 @@ impl Experiment for Exp {
 fn run(c: &mut Criterion) {
     let chunk_sizes = [0usize, 1, 2, 4, 8, 16, 32, 64, 128, 256];
 
-    let treatments: Vec<_> = chunk_sizes
-        .into_iter()
-        .map(|chunk_size| Input {
-            iterations: 500,
-            num_cities: 50,
-            num_threads: 16,
-            chunk_size,
-        })
-        .collect();
+    let treatments = vec![Input {
+        iterations: 500,
+        num_cities: 50,
+        num_threads: 16,
+    }];
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let mut variants = vec![Method::Seq, Method::Rayon];
+    for chunk_size in chunk_sizes {
+        variants.push(Method::OrxOnce { chunk_size });
+        variants.push(Method::OrxBasic { chunk_size });
+        variants.push(Method::OrxRayonCore { chunk_size });
+    }
 
     Exp.bench(c, "problem_tsp", &treatments, &variants);
 }
