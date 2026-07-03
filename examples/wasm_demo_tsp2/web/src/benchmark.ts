@@ -42,6 +42,8 @@ type ParallelBenchmarkReport = {
         state_try_lock_fail_count: number;
         state_try_lock_spin_iters: number;
         completion_notify_count: number;
+        main_assist_attempt_count: number;
+        main_assist_success_count: number;
         worker_runs_by_id: number[];
     };
     trial_samples_ms: number[];
