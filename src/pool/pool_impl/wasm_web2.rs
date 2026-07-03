@@ -28,8 +28,6 @@ static WASM_WEB2_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 const MAIN_ASSIST_GRACE_SPINS: usize = 256;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_STALL_SPINS: usize = 4096;
-#[cfg(target_arch = "wasm32")]
-const MAIN_ASSIST_QUEUE_CONFIRMATIONS: usize = 8;
 
 #[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
 extern "C" {
@@ -592,17 +590,25 @@ impl WasmWebPool2 {
             }
 
             let mut last_pending = scope_runtime.pending.load(Ordering::Acquire);
+            let mut last_worker_runs = runtime()
+                .telemetry
+                .tasks_run_by_workers
+                .load(Ordering::Relaxed);
             let mut stall_spins = 0usize;
-            let mut queue_nonempty_confirms = 0usize;
 
             // Main-thread wasm cannot block on Condvar/Atomics.wait.
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
                 let pending_now = scope_runtime.pending.load(Ordering::Acquire);
+                let worker_runs_now = runtime()
+                    .telemetry
+                    .tasks_run_by_workers
+                    .load(Ordering::Relaxed);
 
-                if pending_now < last_pending {
+                // Consider both pending decrease and worker-run increase as forward progress.
+                if pending_now < last_pending || worker_runs_now > last_worker_runs {
                     last_pending = pending_now;
+                    last_worker_runs = worker_runs_now;
                     stall_spins = 0;
-                    queue_nonempty_confirms = 0;
                     core::hint::spin_loop();
                     continue;
                 }
@@ -614,27 +620,6 @@ impl WasmWebPool2 {
                 }
 
                 stall_spins = 0;
-
-                let queue_nonempty = {
-                    let runtime_ref = runtime();
-                    let state = lock_pool_state(&runtime_ref.shared);
-                    !state.queue.is_empty()
-                };
-
-                if queue_nonempty {
-                    queue_nonempty_confirms = queue_nonempty_confirms.saturating_add(1);
-                } else {
-                    queue_nonempty_confirms = 0;
-                    core::hint::spin_loop();
-                    continue;
-                }
-
-                if queue_nonempty_confirms < MAIN_ASSIST_QUEUE_CONFIRMATIONS {
-                    core::hint::spin_loop();
-                    continue;
-                }
-
-                queue_nonempty_confirms = 0;
                 let assist_started_ns = now_ns();
                 let maybe_task = {
                     let runtime_ref = runtime();
@@ -678,6 +663,10 @@ impl WasmWebPool2 {
                     }
                     scope_runtime.complete_task();
                     last_pending = scope_runtime.pending.load(Ordering::Acquire);
+                    last_worker_runs = runtime()
+                        .telemetry
+                        .tasks_run_by_workers
+                        .load(Ordering::Relaxed);
                 } else {
                     let assist_elapsed_ns = now_ns().saturating_sub(assist_started_ns);
                     runtime()
@@ -686,6 +675,7 @@ impl WasmWebPool2 {
                         .fetch_add(assist_elapsed_ns, Ordering::Relaxed);
                     core::hint::spin_loop();
                     last_pending = pending_now;
+                    last_worker_runs = worker_runs_now;
                 }
             }
         }
