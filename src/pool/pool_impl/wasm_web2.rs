@@ -657,8 +657,8 @@ impl WasmWebPool2 {
                     let mut state = lock_pool_state(&runtime_ref.shared);
                     // Keep main mostly out of worker work unless backlog builds up;
                     // fallback watchdog assist prevents indefinite no-progress loops.
-                    let should_try_pop = should_force_assist
-                        || state.queue.len() >= MAIN_ASSIST_BACKLOG_THRESHOLD;
+                    let should_try_pop =
+                        should_force_assist || state.queue.len() >= MAIN_ASSIST_BACKLOG_THRESHOLD;
                     let task = if should_try_pop {
                         state.queue.pop_front()
                     } else {
