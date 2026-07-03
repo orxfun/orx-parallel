@@ -52,6 +52,8 @@ struct PerfSnapshotExtended {
     state_try_lock_fail_count: usize,
     state_try_lock_spin_iters: usize,
     completion_notify_count: usize,
+    main_assist_attempt_count: usize,
+    main_assist_success_count: usize,
     worker_runs_by_id: Vec<usize>,
 }
 
@@ -133,6 +135,8 @@ pub fn parallel_perf_snapshot_extended() -> Result<JsValue, JsValue> {
         state_try_lock_fail_count: ext.state_try_lock_fail_count,
         state_try_lock_spin_iters: ext.state_try_lock_spin_iters,
         completion_notify_count: ext.completion_notify_count,
+        main_assist_attempt_count: ext.main_assist_attempt_count,
+        main_assist_success_count: ext.main_assist_success_count,
         worker_runs_by_id: ext.worker_runs_by_id,
     };
     serde_wasm_bindgen::to_value(&snapshot)
@@ -225,6 +229,8 @@ pub fn run_parallel_benchmark_report(
             state_try_lock_fail_count: perf_extended.state_try_lock_fail_count,
             state_try_lock_spin_iters: perf_extended.state_try_lock_spin_iters,
             completion_notify_count: perf_extended.completion_notify_count,
+            main_assist_attempt_count: perf_extended.main_assist_attempt_count,
+            main_assist_success_count: perf_extended.main_assist_success_count,
             worker_runs_by_id: perf_extended.worker_runs_by_id,
         },
         trial_samples_ms: samples,

@@ -28,6 +28,8 @@ static WASM_WEB2_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 const MAIN_ASSIST_GRACE_SPINS: usize = 256;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_STALL_SPINS: usize = 4096;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_QUEUE_CONFIRMATIONS: usize = 8;
 
 #[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
 extern "C" {
@@ -53,6 +55,8 @@ struct RuntimeTelemetry {
     state_try_lock_fail_count: AtomicUsize,
     state_try_lock_spin_iters: AtomicUsize,
     completion_notify_count: AtomicUsize,
+    main_assist_attempt_count: AtomicUsize,
+    main_assist_success_count: AtomicUsize,
     worker_id_alloc: AtomicUsize,
     worker_runs_by_id: Mutex<Vec<usize>>,
 }
@@ -64,6 +68,8 @@ pub struct RuntimeTelemetryExtendedSnapshot {
     pub state_try_lock_fail_count: usize,
     pub state_try_lock_spin_iters: usize,
     pub completion_notify_count: usize,
+    pub main_assist_attempt_count: usize,
+    pub main_assist_success_count: usize,
     pub worker_runs_by_id: alloc::vec::Vec<usize>,
 }
 
@@ -81,6 +87,8 @@ impl RuntimeTelemetry {
             state_try_lock_fail_count: AtomicUsize::new(0),
             state_try_lock_spin_iters: AtomicUsize::new(0),
             completion_notify_count: AtomicUsize::new(0),
+            main_assist_attempt_count: AtomicUsize::new(0),
+            main_assist_success_count: AtomicUsize::new(0),
             worker_id_alloc: AtomicUsize::new(0),
             worker_runs_by_id: Mutex::new(Vec::new()),
         }
@@ -98,6 +106,8 @@ impl RuntimeTelemetry {
         self.state_try_lock_fail_count.store(0, Ordering::SeqCst);
         self.state_try_lock_spin_iters.store(0, Ordering::SeqCst);
         self.completion_notify_count.store(0, Ordering::SeqCst);
+        self.main_assist_attempt_count.store(0, Ordering::SeqCst);
+        self.main_assist_success_count.store(0, Ordering::SeqCst);
         self.worker_id_alloc.store(0, Ordering::SeqCst);
         self.worker_runs_by_id
             .lock()
@@ -123,6 +133,8 @@ impl RuntimeTelemetry {
             state_try_lock_fail_count: self.state_try_lock_fail_count.load(Ordering::SeqCst),
             state_try_lock_spin_iters: self.state_try_lock_spin_iters.load(Ordering::SeqCst),
             completion_notify_count: self.completion_notify_count.load(Ordering::SeqCst),
+            main_assist_attempt_count: self.main_assist_attempt_count.load(Ordering::SeqCst),
+            main_assist_success_count: self.main_assist_success_count.load(Ordering::SeqCst),
             worker_runs_by_id: self
                 .worker_runs_by_id
                 .lock()
@@ -486,6 +498,8 @@ pub fn wasm_web2_perf_snapshot_extended() -> RuntimeTelemetryExtendedSnapshot {
             state_try_lock_fail_count: 0,
             state_try_lock_spin_iters: 0,
             completion_notify_count: 0,
+            main_assist_attempt_count: 0,
+            main_assist_success_count: 0,
             worker_runs_by_id: alloc::vec::Vec::new(),
         }
     }
@@ -579,6 +593,7 @@ impl WasmWebPool2 {
 
             let mut last_pending = scope_runtime.pending.load(Ordering::Acquire);
             let mut stall_spins = 0usize;
+            let mut queue_nonempty_confirms = 0usize;
 
             // Main-thread wasm cannot block on Condvar/Atomics.wait.
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
@@ -587,6 +602,7 @@ impl WasmWebPool2 {
                 if pending_now < last_pending {
                     last_pending = pending_now;
                     stall_spins = 0;
+                    queue_nonempty_confirms = 0;
                     core::hint::spin_loop();
                     continue;
                 }
@@ -598,9 +614,34 @@ impl WasmWebPool2 {
                 }
 
                 stall_spins = 0;
+
+                let queue_nonempty = {
+                    let runtime_ref = runtime();
+                    let state = lock_pool_state(&runtime_ref.shared);
+                    !state.queue.is_empty()
+                };
+
+                if queue_nonempty {
+                    queue_nonempty_confirms = queue_nonempty_confirms.saturating_add(1);
+                } else {
+                    queue_nonempty_confirms = 0;
+                    core::hint::spin_loop();
+                    continue;
+                }
+
+                if queue_nonempty_confirms < MAIN_ASSIST_QUEUE_CONFIRMATIONS {
+                    core::hint::spin_loop();
+                    continue;
+                }
+
+                queue_nonempty_confirms = 0;
                 let assist_started_ns = now_ns();
                 let maybe_task = {
                     let runtime_ref = runtime();
+                    runtime_ref
+                        .telemetry
+                        .main_assist_attempt_count
+                        .fetch_add(1, Ordering::Relaxed);
                     let mut state = lock_pool_state(&runtime_ref.shared);
                     let task = state.queue.pop_front();
                     if task.is_some() {
@@ -619,6 +660,10 @@ impl WasmWebPool2 {
 
                 if let Some(task) = maybe_task {
                     let result = catch_unwind(AssertUnwindSafe(|| unsafe { task.run() }));
+                    runtime()
+                        .telemetry
+                        .main_assist_success_count
+                        .fetch_add(1, Ordering::Relaxed);
                     runtime()
                         .telemetry
                         .tasks_run_by_main
