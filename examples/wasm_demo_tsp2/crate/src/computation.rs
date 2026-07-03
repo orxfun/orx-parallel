@@ -32,7 +32,7 @@ pub fn run_search_parallel(
     locations: &[Location],
     start_index: u64,
 ) -> SearchRunOutput {
-    run_search_parallel_with_chunk_size(iterations, seed, threads, locations, start_index, None)
+    run_search_parallel_with_chunk_size(iterations, seed, threads, locations, start_index, Some(1))
 }
 
 /// Runs a parallel TSP search chunk with optional exact chunk size override.

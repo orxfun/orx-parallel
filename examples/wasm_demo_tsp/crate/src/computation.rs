@@ -34,6 +34,7 @@ pub fn run_search_parallel(
 ) -> SearchRunOutput {
     let best = (0..iterations)
         .into_par()
+        .chunk_size(1)
         .num_threads(threads)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
