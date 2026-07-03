@@ -800,3 +800,107 @@ Likely underlying reasons for `wasm_demo_tsp2` vs `wasm_demo_tsp` gap (after con
 Suggested next diagnostic step (separate PR):
 
 1. Add per-worker run counters and per-trial timeline marks (enqueue-start/end, first worker start, completion) to isolate whether the gap is dominated by wakeup latency, lock contention, or low fan-out.
+
+### Diagnostic Checklist (Implementation-Ready)
+
+Goal:
+
+1. Identify which mechanism dominates the remaining gap after chunk-size control: wakeup latency, synchronization overhead, low fan-out, or load imbalance.
+
+Scope:
+
+1. Keep this as instrumentation only (no scheduling logic changes in same PR).
+2. Guard with a debug/perf cfg path so release hot path remains minimal.
+
+#### A) Add Counters in `wasm_web2` Runtime
+
+Add or extend these counters (atomics):
+
+1. Worker activity:
+   - `worker_runs_total`
+   - `worker_runs_by_id[worker_id]`
+   - `worker_steals_total` (or queue pop attempts if no steal concept)
+2. Main-thread assist:
+   - `main_assist_runs_total`
+   - `main_assist_time_ns_total`
+3. Queue/scheduler pressure:
+   - `queue_push_total`
+   - `queue_pop_total`
+   - `queue_empty_poll_total`
+   - `notify_total` (already exists)
+   - `wake_wait_total`
+   - `wake_spurious_total` (woke but no task)
+4. Synchronization cost proxies:
+   - `state_try_lock_fail_total`
+   - `state_try_lock_spin_iters_total`
+   - `completion_notify_total`
+5. Trial-level shape:
+   - `tasks_per_trial_total`
+   - `trials_with_main_assist`
+
+#### B) Add Per-Trial Timeline Marks
+
+Capture monotonic timestamps (ns/ms) for each trial:
+
+1. `t_trial_start`
+2. `t_enqueue_done`
+3. `t_first_worker_task_start`
+4. `t_last_worker_task_end`
+5. `t_completion_observed`
+
+From these, derive:
+
+1. `enqueue_phase = t_enqueue_done - t_trial_start`
+2. `worker_start_latency = t_first_worker_task_start - t_enqueue_done`
+3. `worker_active_span = t_last_worker_task_end - t_first_worker_task_start`
+4. `completion_tail = t_completion_observed - t_last_worker_task_end`
+5. `trial_total = t_completion_observed - t_trial_start`
+
+#### C) Add Derived Metrics to Benchmark Report
+
+Expose in benchmark JSON:
+
+1. `main_assist_share = main_assist_runs_total / tasks_enqueued`
+2. `worker_utilization_skew`:
+   - max/min or stddev of `worker_runs_by_id`
+3. `queue_pressure_index`:
+   - `queue_empty_poll_total / queue_pop_total`
+4. `lock_contention_index`:
+   - `state_try_lock_fail_total / queue_pop_total`
+5. Timeline medians/p95 for:
+   - `worker_start_latency`
+   - `completion_tail`
+
+#### D) Minimal Surfacing API
+
+1. Keep existing perf snapshot API and add:
+   - `wasm_web2_perf_snapshot_extended()` for new counters.
+   - `wasm_web2_perf_trial_samples()` returning compact per-trial durations.
+2. In demo benchmark report, include both basic and extended sections.
+
+#### E) Run Matrix (to isolate causes)
+
+Run at fixed seed/cities/iterations/threads:
+
+1. Chunk-size sweep: `{1, 2, 4, 8, 16}`.
+2. Thread sweep at fixed chunk (best from above): `{4, 8, 16}`.
+3. Repeat each with `N >= 20` trials.
+
+Compare against `wasm_demo_tsp` baseline using same workload.
+
+#### F) Decision Rules (what result means)
+
+1. If `worker_start_latency` is high and `wake_spurious_total` high:
+   - wake/notify path is primary bottleneck.
+2. If `lock_contention_index` high and `state_try_lock_spin_iters_total` grows with threads:
+   - synchronization path is primary bottleneck.
+3. If `worker_utilization_skew` is high with low queue pressure:
+   - load balancing/fan-out is primary bottleneck.
+4. If `completion_tail` is high with frequent main assist:
+   - completion coordination/main-thread help path is primary bottleneck.
+
+#### G) Acceptance for Diagnostic PR
+
+1. We can classify one dominant bottleneck with evidence from counters + timelines.
+2. We can explain why tuned chunk sizes still leave a gap vs `wasm_demo_tsp`.
+3. We can define a targeted follow-up optimization PR with measurable acceptance criteria.
