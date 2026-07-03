@@ -29,11 +29,11 @@ const MAIN_ASSIST_GRACE_SPINS: usize = 256;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_STALL_SPINS: usize = 4096;
 #[cfg(target_arch = "wasm32")]
-const MAIN_ASSIST_BACKLOG_THRESHOLD: usize = 2;
-#[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_FAILED_COOLDOWN_SPINS: usize = 64;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_WATCHDOG_SPINS: usize = 4096;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_RENOTIFY_SPINS: usize = 1024;
 
 #[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
 extern "C" {
@@ -600,7 +600,6 @@ impl WasmWebPool2 {
                 .telemetry
                 .tasks_run_by_workers
                 .load(Ordering::Relaxed);
-            let worker_runs_at_scope_start = last_worker_runs;
             let mut stall_spins = 0usize;
             let mut failed_assist_cooldown = 0usize;
             let mut watchdog_spins = 0usize;
@@ -640,9 +639,14 @@ impl WasmWebPool2 {
                 }
 
                 let should_force_assist = watchdog_spins >= MAIN_ASSIST_WATCHDOG_SPINS;
-                // Avoid bootstrap steals before workers make first observable progress,
-                // unless watchdog fallback is triggered.
-                if !should_force_assist && worker_runs_now == worker_runs_at_scope_start {
+
+                // Periodically wake workers to recover from missed wakeups while
+                // keeping main-thread stealing as a last-resort watchdog fallback.
+                if !should_force_assist {
+                    if watchdog_spins % MAIN_ASSIST_RENOTIFY_SPINS == 0 {
+                        let runtime_ref = runtime();
+                        runtime_ref.shared.cv.notify_all();
+                    }
                     core::hint::spin_loop();
                     continue;
                 }
@@ -655,15 +659,7 @@ impl WasmWebPool2 {
                         .main_assist_attempt_count
                         .fetch_add(1, Ordering::Relaxed);
                     let mut state = lock_pool_state(&runtime_ref.shared);
-                    // Keep main mostly out of worker work unless backlog builds up;
-                    // fallback watchdog assist prevents indefinite no-progress loops.
-                    let should_try_pop =
-                        should_force_assist || state.queue.len() >= MAIN_ASSIST_BACKLOG_THRESHOLD;
-                    let task = if should_try_pop {
-                        state.queue.pop_front()
-                    } else {
-                        None
-                    };
+                    let task = state.queue.pop_front();
                     if task.is_some() {
                         runtime_ref
                             .telemetry
@@ -711,6 +707,7 @@ impl WasmWebPool2 {
                         .main_assist_time_ns
                         .fetch_add(assist_elapsed_ns, Ordering::Relaxed);
                     failed_assist_cooldown = MAIN_ASSIST_FAILED_COOLDOWN_SPINS;
+                    runtime().shared.cv.notify_all();
                     core::hint::spin_loop();
                     last_pending = pending_now;
                     last_worker_runs = worker_runs_now;
