@@ -35,6 +35,16 @@ type ParallelBenchmarkReport = {
         notify_count: number;
         queue_depth_high_water: number;
     };
+    perf_extended: {
+        queue_pop_count: number;
+        queue_empty_poll_count: number;
+        main_assist_time_ns: number;
+        state_try_lock_fail_count: number;
+        state_try_lock_spin_iters: number;
+        completion_notify_count: number;
+        worker_runs_by_id: number[];
+    };
+    trial_samples_ms: number[];
 };
 
 type Summary = {

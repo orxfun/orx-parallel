@@ -50,6 +50,12 @@ pub use wasm_web2::wasm_web2_perf_snapshot;
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
+pub use wasm_web2::wasm_web2_perf_snapshot_extended;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
 pub use wasm_web2::wasm_web2_runtime_info;
 #[cfg(all(
     feature = "wasm-web-threads2",

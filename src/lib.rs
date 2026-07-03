@@ -67,12 +67,6 @@ pub use pool::init_thread_pool;
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
-pub use pool::wasm_web2_runtime_info;
-#[cfg(all(
-    feature = "wasm-web-threads2",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
 pub use pool::wasm_web2_perf_reset;
 #[cfg(all(
     feature = "wasm-web-threads2",
@@ -80,6 +74,18 @@ pub use pool::wasm_web2_perf_reset;
     target_feature = "atomics"
 ))]
 pub use pool::wasm_web2_perf_snapshot;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::wasm_web2_perf_snapshot_extended;
+#[cfg(all(
+    feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::wasm_web2_runtime_info;
 #[cfg(all(
     feature = "wasm-web-threads2",
     target_arch = "wasm32",
