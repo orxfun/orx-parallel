@@ -26,6 +26,8 @@ static WASM_WEB2_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_GRACE_SPINS: usize = 256;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_STALL_SPINS: usize = 4096;
 
 #[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
 extern "C" {
@@ -575,8 +577,27 @@ impl WasmWebPool2 {
                 core::hint::spin_loop();
             }
 
+            let mut last_pending = scope_runtime.pending.load(Ordering::Acquire);
+            let mut stall_spins = 0usize;
+
             // Main-thread wasm cannot block on Condvar/Atomics.wait.
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
+                let pending_now = scope_runtime.pending.load(Ordering::Acquire);
+
+                if pending_now < last_pending {
+                    last_pending = pending_now;
+                    stall_spins = 0;
+                    core::hint::spin_loop();
+                    continue;
+                }
+
+                stall_spins = stall_spins.saturating_add(1);
+                if stall_spins < MAIN_ASSIST_STALL_SPINS {
+                    core::hint::spin_loop();
+                    continue;
+                }
+
+                stall_spins = 0;
                 let assist_started_ns = now_ns();
                 let maybe_task = {
                     let runtime_ref = runtime();
@@ -611,6 +632,7 @@ impl WasmWebPool2 {
                         scope_runtime.record_panic(err);
                     }
                     scope_runtime.complete_task();
+                    last_pending = scope_runtime.pending.load(Ordering::Acquire);
                 } else {
                     let assist_elapsed_ns = now_ns().saturating_sub(assist_started_ns);
                     runtime()
@@ -618,6 +640,7 @@ impl WasmWebPool2 {
                         .main_assist_time_ns
                         .fetch_add(assist_elapsed_ns, Ordering::Relaxed);
                     core::hint::spin_loop();
+                    last_pending = pending_now;
                 }
             }
         }
