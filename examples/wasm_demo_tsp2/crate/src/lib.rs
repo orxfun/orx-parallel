@@ -49,6 +49,7 @@ struct BenchmarkReport {
     trials: usize,
     iterations_per_trial: usize,
     threads: usize,
+    chunk_size: usize,
     num_cities: usize,
     median_ms: f64,
     p95_ms: f64,
@@ -86,8 +87,13 @@ pub fn parallel_perf_reset() {
 #[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 #[wasm_bindgen]
 pub fn parallel_perf_snapshot() -> Result<JsValue, JsValue> {
-    let (tasks_enqueued, tasks_run_by_workers, tasks_run_by_main, notify_count, queue_depth_high_water) =
-        orx_parallel::wasm_web2_perf_snapshot();
+    let (
+        tasks_enqueued,
+        tasks_run_by_workers,
+        tasks_run_by_main,
+        notify_count,
+        queue_depth_high_water,
+    ) = orx_parallel::wasm_web2_perf_snapshot();
     let snapshot = PerfSnapshot {
         tasks_enqueued,
         tasks_run_by_workers,
@@ -106,11 +112,13 @@ pub fn run_parallel_benchmark_report(
     iterations: u32,
     seed: u64,
     threads: u32,
+    chunk_size: u32,
     num_cities: u32,
 ) -> Result<JsValue, JsValue> {
     let trials = trials.max(1) as usize;
     let iterations = iterations.max(1) as usize;
     let threads = threads.max(1) as usize;
+    let chunk_size = chunk_size as usize;
     let num_cities = locations::clamp_num_cities(num_cities);
     let locations = locations::locations(num_cities as u32);
 
@@ -121,10 +129,19 @@ pub fn run_parallel_benchmark_report(
 
     for _ in 0..trials {
         let started_at = js_sys::Date::now();
-        let output = computation::run_search_parallel(iterations, seed, threads, &locations, start_index);
+        let output = computation::run_search_parallel_with_chunk_size(
+            iterations,
+            seed,
+            threads,
+            &locations,
+            start_index,
+            (chunk_size > 0).then_some(chunk_size),
+        );
         let elapsed_ms = js_sys::Date::now() - started_at;
         if output.best.is_none() {
-            return Err(JsValue::from_str("parallel benchmark produced no best tour"));
+            return Err(JsValue::from_str(
+                "parallel benchmark produced no best tour",
+            ));
         }
         samples.push(elapsed_ms);
         start_index = start_index.wrapping_add(iterations as u64);
@@ -140,13 +157,19 @@ pub fn run_parallel_benchmark_report(
     let min_ms = sorted.first().copied().unwrap_or(0.0);
     let max_ms = sorted.last().copied().unwrap_or(0.0);
 
-    let (tasks_enqueued, tasks_run_by_workers, tasks_run_by_main, notify_count, queue_depth_high_water) =
-        orx_parallel::wasm_web2_perf_snapshot();
+    let (
+        tasks_enqueued,
+        tasks_run_by_workers,
+        tasks_run_by_main,
+        notify_count,
+        queue_depth_high_water,
+    ) = orx_parallel::wasm_web2_perf_snapshot();
 
     let report = BenchmarkReport {
         trials,
         iterations_per_trial: iterations,
         threads,
+        chunk_size,
         num_cities,
         median_ms,
         p95_ms,
@@ -193,6 +216,7 @@ pub fn run_parallel_benchmark_report(
     _iterations: u32,
     _seed: u64,
     _threads: u32,
+    _chunk_size: u32,
     _num_cities: u32,
 ) -> Result<JsValue, JsValue> {
     Err(JsValue::from_str(
