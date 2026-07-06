@@ -31,7 +31,9 @@ const MAIN_ASSIST_STALL_SPINS: usize = 4096;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_FAILED_COOLDOWN_SPINS: usize = 64;
 #[cfg(target_arch = "wasm32")]
-const MAIN_ASSIST_WATCHDOG_SPINS: usize = 4096;
+const MAIN_ASSIST_SOFT_WATCHDOG_SPINS: usize = 4096;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_HARD_WATCHDOG_SPINS: usize = 16384;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_RENOTIFY_SPINS: usize = 1024;
 
@@ -638,11 +640,12 @@ impl WasmWebPool2 {
                     continue;
                 }
 
-                let should_force_assist = watchdog_spins >= MAIN_ASSIST_WATCHDOG_SPINS;
+                let should_soft_force_assist = watchdog_spins >= MAIN_ASSIST_SOFT_WATCHDOG_SPINS;
+                let should_hard_force_assist = watchdog_spins >= MAIN_ASSIST_HARD_WATCHDOG_SPINS;
 
                 // Periodically wake workers to recover from missed wakeups while
                 // keeping main-thread stealing as a last-resort watchdog fallback.
-                if !should_force_assist {
+                if !should_soft_force_assist {
                     if watchdog_spins % MAIN_ASSIST_RENOTIFY_SPINS == 0 {
                         let runtime_ref = runtime();
                         runtime_ref.shared.cv.notify_all();
@@ -659,7 +662,15 @@ impl WasmWebPool2 {
                         .main_assist_attempt_count
                         .fetch_add(1, Ordering::Relaxed);
                     let mut state = lock_pool_state(&runtime_ref.shared);
-                    let task = state.queue.pop_front();
+                    // Soft watchdog: avoid deterministic tail steals.
+                    // Hard watchdog: still allow emergency takeover for progress safety.
+                    let allow_pop = should_hard_force_assist
+                        || scope_runtime.pending.load(Ordering::Acquire) > 1;
+                    let task = if allow_pop {
+                        state.queue.pop_front()
+                    } else {
+                        None
+                    };
                     if task.is_some() {
                         runtime_ref
                             .telemetry
