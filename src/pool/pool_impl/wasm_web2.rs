@@ -654,6 +654,16 @@ impl WasmWebPool2 {
                     continue;
                 }
 
+                // Soft watchdog is renotify-only; only hard watchdog can pop.
+                if !should_hard_force_assist {
+                    if watchdog_spins % MAIN_ASSIST_RENOTIFY_SPINS == 0 {
+                        let runtime_ref = runtime();
+                        runtime_ref.shared.cv.notify_all();
+                    }
+                    core::hint::spin_loop();
+                    continue;
+                }
+
                 let assist_started_ns = now_ns();
                 let maybe_task = {
                     let runtime_ref = runtime();
@@ -662,15 +672,7 @@ impl WasmWebPool2 {
                         .main_assist_attempt_count
                         .fetch_add(1, Ordering::Relaxed);
                     let mut state = lock_pool_state(&runtime_ref.shared);
-                    // Soft watchdog: avoid deterministic tail steals.
-                    // Hard watchdog: still allow emergency takeover for progress safety.
-                    let allow_pop = should_hard_force_assist
-                        || scope_runtime.pending.load(Ordering::Acquire) > 1;
-                    let task = if allow_pop {
-                        state.queue.pop_front()
-                    } else {
-                        None
-                    };
+                    let task = state.queue.pop_front();
                     if task.is_some() {
                         runtime_ref
                             .telemetry
