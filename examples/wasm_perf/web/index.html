@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orx-parallel wasm perf benchmark</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>WASM TSP Perf Comparison</h1>
+      <p>Compares rayon, rayon-orx, and orx using shared TSP logic. Initialization time is excluded from timing metrics.</p>
+
+      <section class="panel">
+        <div id="status" class="status">Ready.</div>
+        <div class="grid">
+          <label>
+            Thread count
+            <input id="threads" type="number" min="1" max="16" value="4" />
+          </label>
+          <label>
+            City counts (csv)
+            <input id="cities" type="text" value="50,75" />
+          </label>
+          <label>
+            Iterations (csv)
+            <input id="iterations" type="text" value="1000,10000" />
+          </label>
+          <label>
+            Warmups
+            <input id="warmups" type="number" min="0" max="20" value="2" />
+          </label>
+          <label>
+            Measured runs
+            <input id="runs" type="number" min="1" max="30" value="5" />
+          </label>
+          <label>
+            Seed
+            <input id="seed" type="number" min="1" max="99999999" value="42" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="run">Run benchmark</button>
+          <button id="clear" class="ghost">Clear output</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Results</h2>
+        <pre id="output">Press "Run benchmark".</pre>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

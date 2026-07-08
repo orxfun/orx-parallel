@@ -29,13 +29,17 @@ const MAIN_ASSIST_GRACE_SPINS: usize = 256;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_STALL_SPINS: usize = 4096;
 #[cfg(target_arch = "wasm32")]
-const MAIN_ASSIST_FAILED_COOLDOWN_SPINS: usize = 64;
+const MAIN_ASSIST_FAILED_COOLDOWN_SPINS: usize = 512;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_SOFT_WATCHDOG_SPINS: usize = 4096;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_HARD_WATCHDOG_SPINS: usize = 16384;
 #[cfg(target_arch = "wasm32")]
 const MAIN_ASSIST_RENOTIFY_SPINS: usize = 1024;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_SOFT_BACKLOG_THRESHOLD: usize = 3;
+#[cfg(target_arch = "wasm32")]
+const MAIN_ASSIST_MAX_SOFT_SUCCESSES_PER_SCOPE: usize = 1;
 
 #[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers2.js")]
 extern "C" {
@@ -605,6 +609,7 @@ impl WasmWebPool2 {
             let mut stall_spins = 0usize;
             let mut failed_assist_cooldown = 0usize;
             let mut watchdog_spins = 0usize;
+            let mut soft_assist_successes = 0usize;
 
             // Main-thread wasm cannot block on Condvar/Atomics.wait.
             while scope_runtime.pending.load(Ordering::Acquire) != 0 {
@@ -654,37 +659,41 @@ impl WasmWebPool2 {
                     continue;
                 }
 
-                // Soft watchdog is renotify-only; only hard watchdog can pop.
-                if !should_hard_force_assist {
-                    if watchdog_spins % MAIN_ASSIST_RENOTIFY_SPINS == 0 {
-                        let runtime_ref = runtime();
-                        runtime_ref.shared.cv.notify_all();
-                    }
-                    core::hint::spin_loop();
-                    continue;
-                }
-
                 let assist_started_ns = now_ns();
                 let maybe_task = {
                     let runtime_ref = runtime();
-                    runtime_ref
-                        .telemetry
-                        .main_assist_attempt_count
-                        .fetch_add(1, Ordering::Relaxed);
                     let mut state = lock_pool_state(&runtime_ref.shared);
-                    let task = state.queue.pop_front();
-                    if task.is_some() {
-                        runtime_ref
-                            .telemetry
-                            .queue_pop_count
-                            .fetch_add(1, Ordering::Relaxed);
+                    let allow_soft_pop = !should_hard_force_assist
+                        && soft_assist_successes < MAIN_ASSIST_MAX_SOFT_SUCCESSES_PER_SCOPE
+                        && pending_now > 1
+                        && state.queue.len() >= MAIN_ASSIST_SOFT_BACKLOG_THRESHOLD;
+                    let allow_pop = should_hard_force_assist || allow_soft_pop;
+
+                    if !allow_pop {
+                        if watchdog_spins % MAIN_ASSIST_RENOTIFY_SPINS == 0 {
+                            runtime_ref.shared.cv.notify_all();
+                        }
+                        None
                     } else {
                         runtime_ref
                             .telemetry
-                            .queue_empty_poll_count
+                            .main_assist_attempt_count
                             .fetch_add(1, Ordering::Relaxed);
+
+                        let task = state.queue.pop_front();
+                        if task.is_some() {
+                            runtime_ref
+                                .telemetry
+                                .queue_pop_count
+                                .fetch_add(1, Ordering::Relaxed);
+                        } else {
+                            runtime_ref
+                                .telemetry
+                                .queue_empty_poll_count
+                                .fetch_add(1, Ordering::Relaxed);
+                        }
+                        task
                     }
-                    task
                 };
 
                 if let Some(task) = maybe_task {
@@ -706,6 +715,9 @@ impl WasmWebPool2 {
                         scope_runtime.record_panic(err);
                     }
                     scope_runtime.complete_task();
+                    if !should_hard_force_assist {
+                        soft_assist_successes = soft_assist_successes.saturating_add(1);
+                    }
                     failed_assist_cooldown = 0;
                     watchdog_spins = 0;
                     last_pending = scope_runtime.pending.load(Ordering::Acquire);

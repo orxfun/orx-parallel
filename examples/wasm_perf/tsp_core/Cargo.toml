@@ -1,0 +1,15 @@
+[package]
+name = "orx-parallel-wasm-perf-tsp-core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+rand = { version = "0.9", default-features = false, features = [
+    "std",
+    "small_rng",
+] }
