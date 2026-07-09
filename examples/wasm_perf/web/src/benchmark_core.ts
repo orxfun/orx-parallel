@@ -1,4 +1,4 @@
-export type VariantName = "rayon" | "rayon-orx" | "orx";
+export type VariantName = "rayon" | "rayon-orx" | "orx" | "orx3";
 
 export type VariantRunner = {
     init_parallel_runtime: (numThreads: number) => Promise<unknown>;

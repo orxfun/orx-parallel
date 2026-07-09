@@ -50,6 +50,8 @@ pub use pool::BasicPool;
 pub use pool::WasmWebPool;
 #[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32"))]
 pub use pool::WasmWebPool2;
+#[cfg(all(feature = "wasm-web-threads3", target_arch = "wasm32"))]
+pub use pool::WasmWebPool3;
 #[cfg(all(
     feature = "wasm-web-threads",
     target_arch = "wasm32",
@@ -58,6 +60,12 @@ pub use pool::WasmWebPool2;
 pub use pool::init_thread_pool;
 #[cfg(all(
     feature = "wasm-web-threads2",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::init_thread_pool;
+#[cfg(all(
+    feature = "wasm-web-threads3",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
@@ -92,6 +100,18 @@ pub use pool::wasm_web2_runtime_info;
     target_feature = "atomics"
 ))]
 pub use pool::wasm_web2_start_worker;
+#[cfg(all(
+    feature = "wasm-web-threads3",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::wasm_web3_runtime_info;
+#[cfg(all(
+    feature = "wasm-web-threads3",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use pool::wasm_web3_start_worker;
 pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;

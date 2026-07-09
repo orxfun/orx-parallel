@@ -39,3 +39,9 @@ examples/wasm_react_demo_basic/web/node_modules/
 examples/wasm_react_demo_basic/web/dist/
 examples/wasm_react_demo_basic/web/pkg/
 examples/wasm_react_demo_basic/crate/target/
+
+# wasm demo tsp generated artifacts
+examples/wasm_perf/web/node_modules/
+examples/wasm_perf/web/dist/
+examples/wasm_perf/web/pkg/
+examples/wasm_perf/crate/target/
