@@ -42,7 +42,7 @@ pub fn run_best_tour_par(
     let started_at = js_sys::Date::now();
     let best = (0..iterations)
         .into_par()
-        .chunk_size(1)
+        .chunk_size(0)
         .num_threads(threads)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), &locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));

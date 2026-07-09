@@ -64,6 +64,29 @@ pub use wasm_web2::wasm_web2_runtime_info;
 ))]
 pub use wasm_web2::wasm_web2_start_worker;
 
+#[cfg(all(feature = "wasm-web-threads3", target_arch = "wasm32"))]
+mod wasm_web3;
+#[cfg(all(feature = "wasm-web-threads3", target_arch = "wasm32"))]
+pub use wasm_web3::WasmWebPool3;
+#[cfg(all(
+    feature = "wasm-web-threads3",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use wasm_web3::init_thread_pool;
+#[cfg(all(
+    feature = "wasm-web-threads3",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use wasm_web3::wasm_web3_runtime_info;
+#[cfg(all(
+    feature = "wasm-web-threads3",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use wasm_web3::wasm_web3_start_worker;
+
 #[cfg(feature = "std")]
 mod basic;
 #[cfg(feature = "std")]

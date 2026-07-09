@@ -78,6 +78,7 @@ wasm-web-threads = [
     "dep:wasm-bindgen-rayon",
 ]
 wasm-web-threads2 = ["std", "dep:wasm-bindgen", "dep:js-sys"]
+wasm-web-threads3 = ["std", "dep:wasm-bindgen", "dep:js-sys"]
 
 
 # examples
