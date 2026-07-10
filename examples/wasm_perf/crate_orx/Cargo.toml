@@ -9,7 +9,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 tsp-core = { package = "orx-parallel-wasm-perf-tsp-core", path = "../tsp_core" }
-orx-parallel = { path = "../../..", features = ["wasm-web-threads2"] }
+orx-parallel = { path = "../../..", features = [
+    "wasm-web-threads-experimental",
+] }
 wasm-bindgen = "0.2"
 js-sys = "0.3"
 serde = { version = "1", features = ["derive"] }
