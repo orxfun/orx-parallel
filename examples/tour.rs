@@ -33,7 +33,7 @@ fn main() {
         Location { x: 0, y: 71 },
     ];
 
-    let best_tour = (0..100)
+    let _best_tour = (0..100)
         .par()
         .map(|_| generate(&locations))
         .min_by(|x, y| match x.1 < y.1 {
