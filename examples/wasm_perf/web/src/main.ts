@@ -89,27 +89,20 @@ async function runBenchmark() {
                     run_best_tour_par: runRayonPar,
                 },
             ],
-            [
-                "rayon-orx",
-                {
-                    init_parallel_runtime: initRayonOrxRuntime,
-                    run_best_tour_par: runRayonOrxPar,
-                },
-            ],
-            [
-                "orx",
-                {
-                    init_parallel_runtime: initOrxRuntime,
-                    run_best_tour_par: runOrxPar,
-                },
-            ],
-            [
-                "orx3",
-                {
-                    init_parallel_runtime: initOrx3Runtime,
-                    run_best_tour_par: runOrx3Par,
-                },
-            ],
+            // [
+            //     "rayon-orx",
+            //     {
+            //         init_parallel_runtime: initRayonOrxRuntime,
+            //         run_best_tour_par: runRayonOrxPar,
+            //     },
+            // ],
+            // [
+            //     "orx3",
+            //     {
+            //         init_parallel_runtime: initOrx3Runtime,
+            //         run_best_tour_par: runOrx3Par,
+            //     },
+            // ],
         ];
 
         const rows = [];
