@@ -12,6 +12,17 @@ pub use sequential::SequentialPool;
 #[cfg(feature = "rayon-core")]
 mod rayon_core;
 
+#[cfg(all(feature = "wasm-web-threads-experimental", target_arch = "wasm32"))]
+mod wasm_web_exp;
+#[cfg(all(feature = "wasm-web-threads-experimental", target_arch = "wasm32"))]
+pub use wasm_web_exp::WasmWebPoolExp;
+#[cfg(all(
+    feature = "wasm-web-threads-experimental",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
+pub use wasm_web_exp::init_thread_pool;
+
 #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
 mod wasm_web;
 #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
@@ -22,70 +33,18 @@ pub use wasm_web::WasmWebPool;
     target_feature = "atomics"
 ))]
 pub use wasm_web::init_thread_pool;
-
-#[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32"))]
-mod wasm_web2;
-#[cfg(all(feature = "wasm-web-threads2", target_arch = "wasm32"))]
-pub use wasm_web2::WasmWebPool2;
 #[cfg(all(
-    feature = "wasm-web-threads2",
+    feature = "wasm-web-threads",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
-pub use wasm_web2::init_thread_pool;
+pub use wasm_web::wasm_web_runtime_info;
 #[cfg(all(
-    feature = "wasm-web-threads2",
+    feature = "wasm-web-threads",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
-pub use wasm_web2::wasm_web2_perf_reset;
-#[cfg(all(
-    feature = "wasm-web-threads2",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use wasm_web2::wasm_web2_perf_snapshot;
-#[cfg(all(
-    feature = "wasm-web-threads2",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use wasm_web2::wasm_web2_perf_snapshot_extended;
-#[cfg(all(
-    feature = "wasm-web-threads2",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use wasm_web2::wasm_web2_runtime_info;
-#[cfg(all(
-    feature = "wasm-web-threads2",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use wasm_web2::wasm_web2_start_worker;
-
-#[cfg(all(feature = "wasm-web-threads3", target_arch = "wasm32"))]
-mod wasm_web3;
-#[cfg(all(feature = "wasm-web-threads3", target_arch = "wasm32"))]
-pub use wasm_web3::WasmWebPool3;
-#[cfg(all(
-    feature = "wasm-web-threads3",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use wasm_web3::init_thread_pool;
-#[cfg(all(
-    feature = "wasm-web-threads3",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use wasm_web3::wasm_web3_runtime_info;
-#[cfg(all(
-    feature = "wasm-web-threads3",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use wasm_web3::wasm_web3_start_worker;
+pub use wasm_web::wasm_web_start_worker;
 
 #[cfg(feature = "std")]
 mod basic;
