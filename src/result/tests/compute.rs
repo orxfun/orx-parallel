@@ -365,10 +365,10 @@ fn res_max_by() {
             .map(Ok::<_, char>)
             .into_fallible()
             .map(|x| x.len())
-            .max_by(|a, b| a.cmp(&b));
+            .max_by(|a, b| a.cmp(b));
         assert_eq!(
             result,
-            Ok(input.iter().map(|x| x.len()).max_by(|a, b| a.cmp(&b)))
+            Ok(input.iter().map(|x| x.len()).max_by(|a, b| a.cmp(b)))
         );
 
         let input = inputs(core::cmp::max(100, n));
@@ -377,7 +377,7 @@ fn res_max_by() {
             .map(ok_or_err_at_fifty)
             .into_fallible()
             .map(|x| x.len())
-            .max_by(|a, b| a.cmp(&b));
+            .max_by(|a, b| a.cmp(b));
         assert_eq!(result, Err('x'));
     }
 }
@@ -444,10 +444,10 @@ fn res_min_by() {
             .map(Ok::<_, char>)
             .into_fallible()
             .map(|x| x.len())
-            .min_by(|a, b| a.cmp(&b));
+            .min_by(|a, b| a.cmp(b));
         assert_eq!(
             result,
-            Ok(input.iter().map(|x| x.len()).min_by(|a, b| a.cmp(&b)))
+            Ok(input.iter().map(|x| x.len()).min_by(|a, b| a.cmp(b)))
         );
 
         let input = inputs(core::cmp::max(100, n));
@@ -456,7 +456,7 @@ fn res_min_by() {
             .map(ok_or_err_at_fifty)
             .into_fallible()
             .map(|x| x.len())
-            .min_by(|a, b| a.cmp(&b));
+            .min_by(|a, b| a.cmp(b));
         assert_eq!(result, Err('x'));
     }
 }

@@ -3,9 +3,8 @@
 Step 1 benchmark harness for comparing wasm variants on the same TSP workload:
 
 - rayon: pure rayon + wasm-bindgen-rayon
-- rayon-orx: orx-parallel + rayon-core + wasm-bindgen-rayon backend
-- orx: orx-parallel wasm-web-threads-experimental backend
-- orx3: orx-parallel wasm-web-threads backend
+- orx-rayon: orx-parallel wasm-web-threads-experimental backend
+- orx: orx-parallel wasm-web-threads backend
 
 All variants reuse the same TSP algorithm and deterministic city generation from `tsp_core`.
 
@@ -13,9 +12,8 @@ All variants reuse the same TSP algorithm and deterministic city generation from
 
 - `tsp_core/`: shared TSP logic and location generation
 - `crate_rayon/`: wasm adapter for rayon-only variant
-- `crate_rayon_orx/`: wasm adapter for rayon-orx variant
-- `crate_orx/`: wasm adapter for orx variant
-- `crate_orx3/`: wasm adapter for orx3 variant
+- `crate_orx/`: wasm adapter for orx-rayon variant
+- `crate_rayon_orx/`: wasm adapter for orx variant
 - `web/`: browser benchmark runner (manual execution)
 
 ## Run

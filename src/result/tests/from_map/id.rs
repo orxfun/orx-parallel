@@ -14,7 +14,7 @@ fn id_find_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+        .map::<Result<_, Vec<char>>, _>(Ok)
         .into_fallible()
         .first();
     assert_eq!(result, Ok(Some(String::from("0"))));
@@ -25,7 +25,7 @@ fn id_find_any_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+        .map::<Result<_, Vec<char>>, _>(Ok)
         .into_fallible()
         .iteration_order(IterationOrder::Arbitrary)
         .first();
@@ -37,7 +37,7 @@ fn id_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+        .map::<Result<_, Vec<char>>, _>(Ok)
         .into_fallible()
         .reduce(|a, b| match a < b {
             true => b,
@@ -70,7 +70,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         |i| i.to_string(),
         inputs(N)
             .into_iter()
-            .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+            .map::<Result<_, Vec<char>>, _>(Ok)
             .map(|x| x.unwrap())
             .collect::<std::vec::Vec<_>>(),
     );
@@ -78,14 +78,14 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+            .map::<Result<_, Vec<char>>, _>(Ok)
             .into_fallible()
             .iteration_order(order)
             .collect_into(&mut c)
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+            .map::<Result<_, Vec<char>>, _>(Ok)
             .into_fallible()
             .iteration_order(order)
             .collect(),

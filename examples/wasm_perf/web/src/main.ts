@@ -1,26 +1,26 @@
 import initRayon, {
+    init_parallel_runtime as initRayonRuntime,
     run_best_tour_par as runRayonPar,
 } from "../pkg_rayon/orx_parallel_wasm_perf_rayon.js";
-import initRayonOrx, {
-    init_parallel_runtime as initRayonOrxRuntime,
-    run_best_tour_par as runRayonOrxPar,
-} from "../pkg_rayon_orx/orx_parallel_wasm_perf_rayon_orx.js";
+import initOrxRayon, {
+    init_parallel_runtime as initOrxRayonRuntime,
+    run_best_tour_par as runOrxRayonPar,
+} from "../pkg_orx/orx_parallel_wasm_perf_orx.js";
 import initOrx, {
     init_parallel_runtime as initOrxRuntime,
     run_best_tour_par as runOrxPar,
-} from "../pkg_orx/orx_parallel_wasm_perf_orx.js";
-import initOrx3, {
-    init_parallel_runtime as initOrx3Runtime,
-    run_best_tour_par as runOrx3Par,
-} from "../pkg_orx3/orx_parallel_wasm_perf_orx3.js";
+} from "../pkg_rayon_orx/orx_parallel_wasm_perf_rayon_orx.js";
 import {
     type BenchmarkConfig,
     type BenchmarkReport,
+    type VariantName,
     type VariantRunner,
     formatReportText,
     parseCsvInts,
     runVariantMatrix,
 } from "./benchmark_core";
+
+const VARIANT: VariantName = "rayon";
 
 function mustElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
@@ -44,10 +44,6 @@ const ui = {
 };
 
 let busy = false;
-let initializedThreads: number | undefined;
-let rayonRuntimeReady = false;
-let orxRuntimeReady = false;
-let orx3RuntimeReady = false;
 
 async function setup() {
     ui.run.addEventListener("click", () => {
@@ -70,49 +66,15 @@ async function runBenchmark() {
 
     try {
         const cfg = readConfig();
-        ui.status.textContent = "Loading wasm modules...";
+        ui.status.textContent = `Loading wasm module for ${VARIANT}...`;
 
-        await initRayon();
-        await initRayonOrx();
-        await initOrx();
-        await initOrx3();
+        const [variant, runner] = await createRunner(VARIANT);
 
-        ui.status.textContent = "Initializing runtimes (initialization excluded from timing)...";
-
-        await ensureRuntimes(cfg.threads);
-
-        const runners: Array<["rayon" | "rayon-orx" | "orx" | "orx3", VariantRunner]> = [
-            // [
-            //     "rayon",
-            //     {
-            //         init_parallel_runtime: initRayonOrxRuntime,
-            //         run_best_tour_par: runRayonPar,
-            //     },
-            // ],
-            [
-                "rayon-orx",
-                {
-                    init_parallel_runtime: initRayonOrxRuntime,
-                    run_best_tour_par: runRayonOrxPar,
-                },
-            ],
-            // [
-            //     "orx3",
-            //     {
-            //         init_parallel_runtime: initOrx3Runtime,
-            //         run_best_tour_par: runOrx3Par,
-            //     },
-            // ],
-        ];
-
-        const rows = [];
-
-        for (const [variant, runner] of runners) {
-            const variantRows = await runVariantMatrix(variant, runner, cfg, (message) => {
-                ui.status.textContent = message;
-            });
-            rows.push(...variantRows);
-        }
+        ui.status.textContent = `Initializing ${variant} runtime...`;
+        await runner.init_parallel_runtime(cfg.threads);
+        const rows = await runVariantMatrix(variant, runner, cfg, (message) => {
+            ui.status.textContent = message;
+        });
 
         const report: BenchmarkReport = {
             config: {
@@ -137,30 +99,41 @@ async function runBenchmark() {
     }
 }
 
-async function ensureRuntimes(threads: number) {
-    if (initializedThreads !== undefined && initializedThreads !== threads) {
-        throw new Error(
-            `Thread count is fixed to ${initializedThreads} after first initialization. Reload the page to run with ${threads}.`,
-        );
+async function createRunner(variant: VariantName): Promise<[VariantName, VariantRunner]> {
+    switch (variant) {
+        case "rayon": {
+            await initRayon();
+            return [
+                variant,
+                {
+                    init_parallel_runtime: initRayonRuntime,
+                    run_best_tour_par: runRayonPar,
+                },
+            ];
+        }
+        case "orx-rayon": {
+            await initOrxRayon();
+            return [
+                variant,
+                {
+                    init_parallel_runtime: initOrxRayonRuntime,
+                    run_best_tour_par: runOrxRayonPar,
+                },
+            ];
+        }
+        case "orx": {
+            await initOrx();
+            return [
+                variant,
+                {
+                    init_parallel_runtime: initOrxRuntime,
+                    run_best_tour_par: runOrxPar,
+                },
+            ];
+        }
     }
 
-    if (!rayonRuntimeReady) {
-        // Initialize wasm-bindgen-rayon once via rayon-orx and share it for rayon + rayon-orx.
-        await initRayonOrxRuntime(threads);
-        rayonRuntimeReady = true;
-    }
-
-    if (!orxRuntimeReady) {
-        await initOrxRuntime(threads);
-        orxRuntimeReady = true;
-    }
-
-    if (!orx3RuntimeReady) {
-        await initOrx3Runtime(threads);
-        orx3RuntimeReady = true;
-    }
-
-    initializedThreads = threads;
+    throw new Error(`unsupported variant: ${variant}`);
 }
 
 function readConfig(): BenchmarkConfig {

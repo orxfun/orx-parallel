@@ -8,7 +8,7 @@ fn extend_par() {
     vec.par_extend(par);
 
     let mut expected = vec![42];
-    let iter = (0..170).into_iter().map(|x| x * 2).filter(|x| *x < 50);
+    let iter = (0..170).map(|x| x * 2).filter(|x| *x < 50);
     expected.extend(iter);
 
     assert_eq!(vec, expected);
@@ -25,7 +25,7 @@ fn extend_par_use() {
     vec.par_extend(par);
 
     let mut expected = vec![42];
-    let iter = (0..170).into_iter().map(|x| x * 2).filter(|x| *x < 50);
+    let iter = (0..170).map(|x| x * 2).filter(|x| *x < 50);
     expected.extend(iter);
 
     assert_eq!(vec, expected);
@@ -43,7 +43,7 @@ fn extend_par_opt() {
     let ok = vec.par_extend_opt(par);
 
     let mut expected = vec![42];
-    let iter = (0..170).into_iter().map(|x| x * 2).filter(|x| *x < 50);
+    let iter = (0..170).map(|x| x * 2).filter(|x| *x < 50);
     expected.extend(iter);
 
     assert_eq!(ok, Some(()));
@@ -73,7 +73,7 @@ fn extend_par_use_opt() {
     let ok = vec.par_extend_opt(par);
 
     let mut expected = vec![42];
-    let iter = (0..170).into_iter().map(|x| x * 2).filter(|x| *x < 50);
+    let iter = (0..170).map(|x| x * 2).filter(|x| *x < 50);
     expected.extend(iter);
 
     assert_eq!(ok, Some(()));
@@ -103,7 +103,7 @@ fn extend_par_res() {
     let ok = vec.par_extend_res(par);
 
     let mut expected = vec![42];
-    let iter = (0..170).into_iter().map(|x| x * 2).filter(|x| *x < 50);
+    let iter = (0..170).map(|x| x * 2).filter(|x| *x < 50);
     expected.extend(iter);
 
     assert_eq!(ok, Ok(()));
@@ -136,7 +136,7 @@ fn extend_par_use_res() {
     let ok = vec.par_extend_res(par);
 
     let mut expected = vec![42];
-    let iter = (0..170).into_iter().map(|x| x * 2).filter(|x| *x < 50);
+    let iter = (0..170).map(|x| x * 2).filter(|x| *x < 50);
     expected.extend(iter);
 
     assert_eq!(ok, Ok(()));
