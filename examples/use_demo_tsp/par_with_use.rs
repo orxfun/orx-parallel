@@ -52,8 +52,8 @@ pub fn run_search_parallel_use_mut(
 fn search_candidate(locations: &[Location], seed: u64, tour: &mut [usize]) -> f64 {
     random_tour(seed, tour);
     two_opt_improve(locations, tour);
-    let distance = Location::tour_distance(locations, tour);
-    distance
+
+    Location::tour_distance(locations, tour)
 }
 
 fn random_tour(seed: u64, tour: &mut [usize]) {

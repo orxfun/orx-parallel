@@ -13,7 +13,7 @@ fn kind_transform_par_use() {
         (0..n)
             .par()
             .map(|x| x.to_string())
-            .use_new(move |_| u.clone())
+            .use_new(move |_| u)
     }
 
     fn collect(par: impl ParUse<Use = char, Item = String>) -> Vec<String> {

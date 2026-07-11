@@ -12,7 +12,7 @@ fn bin_x_find_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map(|x| Some(x))
+        .map(Some)
         .into_optional()
         .use_new(|_| UseValue::new(42))
         .filter(|u, x| {
@@ -33,7 +33,7 @@ fn bin_x_find_any_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map(|x| Some(x))
+        .map(Some)
         .into_optional()
         .use_new(|_| UseValue::new(42))
         .filter(|u, x| {
@@ -55,7 +55,7 @@ fn bin_x_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .map(|u, x| {
             u.mutate();
             Some(x)
@@ -85,7 +85,7 @@ fn bin_x_reduce_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .map(|u, x| {
             u.mutate();
             match x.as_str() == "42" {
@@ -120,7 +120,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
         |i| i as u64,
         inputs(N)
             .into_iter()
-            .map(|x| Some(x))
+            .map(Some)
             .map(|x| x.unwrap())
             .filter(|x| x.len() < 4)
             .flat_map(|x| {
@@ -133,7 +133,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
     let result = match C::init_result(mode, |i| i as u64) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -153,7 +153,7 @@ fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: 
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -180,7 +180,7 @@ fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
     let result = match C::init_result(mode, |i| i as u64) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {
@@ -203,7 +203,7 @@ fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {

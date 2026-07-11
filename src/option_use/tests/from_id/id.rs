@@ -36,7 +36,7 @@ fn id_reduce_ok() {
     let inputs = inputs_opt(N, None);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .filter_map(|u, x| {
             u.mutate();
             Some(x)
@@ -57,7 +57,7 @@ fn id_reduce_ok_err() {
     let inputs = inputs_opt(N, Some(42));
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .filter_map(|u, x| {
             u.mutate();
             Some(x)
@@ -87,7 +87,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs_opt(N, None)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -98,7 +98,7 @@ fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
             .map(|_| c),
         None => inputs_opt(N, None)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -116,7 +116,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs_opt(N, Some(42))
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -127,7 +127,7 @@ fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
             .map(|_| c),
         None => inputs_opt(N, Some(42))
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 Some(x)

@@ -53,7 +53,7 @@ fn one_f_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
             u.mutate();
             match x.as_str() == "7" {
@@ -81,7 +81,7 @@ fn one_f_reduce_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
             u.mutate();
             match x.as_str() == "7" {
@@ -126,7 +126,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {
@@ -144,7 +144,7 @@ fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, orde
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {
@@ -173,7 +173,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {
@@ -194,7 +194,7 @@ fn one_f_collect_err<C: ParCollectIntoTest<String>>(
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {

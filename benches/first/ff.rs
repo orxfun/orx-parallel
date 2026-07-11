@@ -184,15 +184,11 @@ impl Experiment for Exp {
         Some(match input_variant.heavy {
             true => input
                 .iter()
-                .filter(|x| x.is_multiple_of(9))
-                .filter(|x| h_f(**x, 999))
-                .next()
+                .find(|x| x.is_multiple_of(9) && h_f(**x, 999))
                 .copied(),
             false => input
                 .iter()
-                .filter(|x| x.is_multiple_of(9))
-                .filter(|x| l_f(**x, 999))
-                .next()
+                .find(|x| x.is_multiple_of(9) && l_f(**x, 999))
                 .copied(),
         })
     }

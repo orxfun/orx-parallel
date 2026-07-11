@@ -14,7 +14,7 @@ fn many_x_find_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map(|x| Some(x))
+        .map(Some)
         .into_optional()
         .use_new(|_| UseValue::new(42))
         .flat_map(|u, x| {
@@ -35,7 +35,7 @@ fn many_x_find_any_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map(|x| Some(x))
+        .map(Some)
         .into_optional()
         .use_new(|_| UseValue::new(42))
         .flat_map(|u, x| {
@@ -57,7 +57,7 @@ fn many_x_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .map(|u, x| {
             u.mutate();
             Some(x)
@@ -87,7 +87,7 @@ fn many_x_reduce_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .map(|u, x| {
             u.mutate();
             match x.as_str() == "42" {
@@ -126,7 +126,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
         |i| i.to_string(),
         inputs(N)
             .into_iter()
-            .map(|x| Some(x))
+            .map(Some)
             .map(|x| x.unwrap())
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -139,7 +139,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -159,7 +159,7 @@ fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 Some(x)
@@ -190,7 +190,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {
@@ -213,7 +213,7 @@ fn many_x_collect_err<C: ParCollectIntoTest<String>>(
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .map(|u, x| {
                 u.mutate();
                 match x.as_str() == "42" {

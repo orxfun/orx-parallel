@@ -145,7 +145,7 @@ fn expensive_map(item: &WorkItem, task_kind: TaskKind, len: usize) -> u64 {
     let rounds = work_units(item, task_kind, len);
 
     for round in 0..rounds {
-        let salt = black_box((round as u64 + 1) * 0xE703_7ED1_A0B4_28DB ^ item.idx as u64);
+        let salt = black_box(((round as u64 + 1) * 0xE703_7ED1_A0B4_28DB) ^ item.idx as u64);
         acc = acc.rotate_left(11) ^ salt;
         acc = acc.wrapping_mul(0x9E37_79B9_7F4A_7C15);
         acc ^= acc >> 29;
@@ -156,7 +156,7 @@ fn expensive_map(item: &WorkItem, task_kind: TaskKind, len: usize) -> u64 {
 
 fn selective_filter(value: &u64) -> bool {
     let folded = value ^ value.rotate_right(17);
-    folded.count_ones() % 3 != 0
+    !folded.count_ones().is_multiple_of(3)
 }
 
 fn reduce_sum(a: u64, b: u64) -> u64 {
