@@ -61,6 +61,8 @@ const ui = {
 };
 
 let busy = false;
+let initializedVariant: VariantName | undefined;
+let initializedThreads: number | undefined;
 
 async function setup() {
     ui.run.addEventListener("click", () => {
@@ -87,8 +89,17 @@ async function runBenchmark() {
 
         const [variant, runner] = await createRunner(VARIANT);
 
-        ui.status.textContent = `Initializing ${variant} runtime...`;
-        await runner.init_parallel_runtime(cfg.threads);
+        if (initializedVariant == null) {
+            ui.status.textContent = `Initializing ${variant} runtime...`;
+            await runner.init_parallel_runtime(cfg.threads);
+            initializedVariant = variant;
+            initializedThreads = cfg.threads;
+        } else if (initializedVariant !== variant || initializedThreads !== cfg.threads) {
+            throw new Error(
+                `runtime already initialized for ${initializedVariant} with ${initializedThreads} threads; reload the page to change variant or thread count`,
+            );
+        }
+
         const rows = await runVariantMatrix(variant, runner, cfg, (message) => {
             ui.status.textContent = message;
         });
