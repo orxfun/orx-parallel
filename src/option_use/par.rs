@@ -109,7 +109,6 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
         Size = Self::Size,
     >;
 
-    #[cfg(feature = "std")]
     /// Wraps the current runner with diagnostics-enabled execution.
     ///
     /// # Examples
@@ -124,11 +123,12 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
     ///     .use_new(|_| ());
     ///
     /// #[cfg(feature = "std")]
-    /// let par = .runner_with_diagnostics();
+    /// let par = par.runner_with_diagnostics();
     ///
     /// let out: Option<Vec<_>> = par.collect();
     /// assert_eq!(out, Some(vec![1, 2, 3]));
     /// ```
+    #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseOption<

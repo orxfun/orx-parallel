@@ -14,18 +14,17 @@ use crate::runner::runner_variants::FixedChunkRunner;
 /// # Examples
 ///
 /// ```rust
-/// # #[cfg(not(feature = "std"))] fn main() {}
-/// #[cfg(feature = "std")]
-/// {
-///     use orx_parallel::*;
+/// use orx_parallel::*;
 ///
-///     let pool = Pool::once(4);
-///     let sum: usize = (0..1000)
-///         .into_par()
-///         .runner(Runner::fixed_chunk(pool))
-///         .map(|x| x * 2)
-///         .sum();
-/// }
+/// let par = (0..100).par().map(|x| x + 1);
+///
+/// #[cfg(feature = "std")]
+/// let pool = Pool::once(4);
+///
+/// #[cfg(feature = "std")]
+/// let par = par.runner(Runner::fixed_chunk(pool));
+///
+/// let sum = par.sum();
 /// ```
 pub struct Runner;
 
@@ -38,18 +37,17 @@ impl Runner {
     /// # Example
     ///
     /// ```rust
-    /// # #[cfg(not(feature = "std"))] fn main() {}
-    /// #[cfg(feature = "std")]
-    /// {
-    ///     use orx_parallel::*;
+    /// use orx_parallel::*;
     ///
-    ///     let pool = Pool::once(4);
-    ///     let result: Vec<_> = (0..100)
-    ///         .into_par()
-    ///         .runner(Runner::fixed_chunk(pool))
-    ///         .map(|x| x + 1)
-    ///         .collect();
-    /// }
+    /// let par = (0..100).par().map(|x| x + 1);
+    ///
+    /// #[cfg(feature = "std")]
+    /// let pool = Pool::once(4);
+    ///
+    /// #[cfg(feature = "std")]
+    /// let par = par.runner(Runner::fixed_chunk(pool));
+    ///
+    /// let result: Vec<_> = par.collect();
     /// ```
     pub fn fixed_chunk<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
         FixedChunkRunner::new(pool)
@@ -65,12 +63,15 @@ impl Runner {
     /// ```rust
     /// use orx_parallel::*;
     ///
+    /// let par = (0..100).par().map(|x| x + 1);
+    ///
+    /// #[cfg(all(feature = "std", feature = "experimental"))]
     /// let pool = Pool::once(4);
-    /// let result: Vec<_> = (0..100)
-    ///     .into_par()
-    ///     .runner(Runner::dynamic_chunk(pool))
-    ///     .map(|x| x + 1)
-    ///     .collect();
+    ///
+    /// #[cfg(all(feature = "std", feature = "experimental"))]
+    /// let par = par.runner(Runner::dynamic_chunk(pool));
+    ///
+    /// let result: Vec<_> = par.collect();
     /// ```
     #[cfg(all(feature = "std", feature = "experimental"))]
     pub fn dynamic_chunk<P: ParThreadPool>(pool: P) -> DynChunkRunner<P> {
