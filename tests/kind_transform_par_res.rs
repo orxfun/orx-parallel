@@ -41,7 +41,7 @@ fn kind_transform_par_res() {
     fn filter(
         par: impl ParResult<Item = String, Error = char>,
     ) -> impl ParResult<Item = String, Error = char> {
-        par.filter(|x| x.len() > 0)
+        par.filter(|x| !x.is_empty())
     }
 
     fn filter_map(

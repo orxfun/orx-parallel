@@ -46,7 +46,7 @@ fn kind_transform_par_use_opt() {
     fn filter(
         par: impl ParUseOption<Use = char, Item = String>,
     ) -> impl ParUseOption<Use = char, Item = String> {
-        par.filter(|_u, x| x.len() > 0)
+        par.filter(|_u, x| !x.is_empty())
     }
 
     fn filter_map(
