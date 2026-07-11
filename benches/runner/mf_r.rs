@@ -96,7 +96,7 @@ fn work_units(value: u64, task_kind: TaskKind) -> usize {
         TaskKind::Homogeneous => HOMOGENEOUS_WORK,
         TaskKind::Heterogeneous => match value & 0x0f {
             0 => HETEROGENEOUS_HEAVY_WORK,
-            1 | 2 | 3 => HETEROGENEOUS_MEDIUM_WORK,
+            1..=3 => HETEROGENEOUS_MEDIUM_WORK,
             _ => HETEROGENEOUS_LIGHT_WORK,
         },
     }
@@ -118,7 +118,7 @@ fn expensive_map(value: &u64, task_kind: TaskKind) -> u64 {
 
 fn selective_filter(value: &u64) -> bool {
     let folded = value ^ value.rotate_right(17);
-    folded.count_ones() % 3 != 0
+    !folded.count_ones().is_multiple_of(3)
 }
 
 fn reduce_sum(a: u64, b: u64) -> u64 {

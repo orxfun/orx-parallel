@@ -178,8 +178,8 @@ impl Experiment for Exp {
         input: &Self::Input,
     ) -> Option<Self::Output> {
         Some(match input_variant.heavy {
-            true => input.iter().filter(|x| h_f(**x, 999)).next().copied(),
-            false => input.iter().filter(|x| l_f(**x, 999)).next().copied(),
+            true => input.iter().find(|x| h_f(**x, 999)).copied(),
+            false => input.iter().find(|x| l_f(**x, 999)).copied(),
         })
     }
 
