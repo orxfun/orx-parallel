@@ -13,7 +13,10 @@ waitForMsgType(self, "orx_parallel_worker_init").then(async ({ init }) => {
         const pkg = await import("../../../../..");
         await pkg.default(init);
         postMessage({ type: "orx_parallel_worker_ready" });
-        pkg.wasm_web3_start_worker();
+        if (typeof pkg.wasm_web_start_worker !== "function") {
+            throw new Error("wasm worker entrypoint is missing: expected wasm_web_start_worker");
+        }
+        pkg.wasm_web_start_worker();
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         postMessage({ type: "orx_parallel_worker_error", message });
