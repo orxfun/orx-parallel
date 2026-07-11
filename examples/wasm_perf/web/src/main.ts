@@ -20,7 +20,24 @@ import {
     runVariantMatrix,
 } from "./benchmark_core";
 
-const VARIANT: VariantName = "rayon";
+const DEFAULT_VARIANT: VariantName = "rayon";
+const VARIANT: VariantName = readVariantFromEnv(import.meta.env.PAR_POOL_VARIANT);
+
+function readVariantFromEnv(raw: string | undefined): VariantName {
+    if (!raw) {
+        return DEFAULT_VARIANT;
+    }
+
+    const normalized = raw.trim().toLowerCase();
+    if (normalized === "rayon" || normalized === "orx-rayon" || normalized === "orx") {
+        return normalized;
+    }
+
+    console.warn(
+        `unsupported PAR_POOL_VARIANT=${raw}; falling back to ${DEFAULT_VARIANT}. Supported values: rayon, orx-rayon, orx`,
+    );
+    return DEFAULT_VARIANT;
+}
 
 function mustElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
