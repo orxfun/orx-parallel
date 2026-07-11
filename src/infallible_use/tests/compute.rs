@@ -125,8 +125,8 @@ fn inf_use_all() {
     for n in N {
         let input = inputs(n);
 
-        let result = input.par().use_new(|_| ()).all(|_, x| x.len() > 0);
-        assert_eq!(result, input.iter().all(|x| x.len() > 0));
+        let result = input.par().use_new(|_| ()).all(|_, x| !x.is_empty());
+        assert_eq!(result, input.iter().all(|x| !x.is_empty()));
 
         let result = input.par().use_new(|_| ()).all(|_, x| x.len() == 1);
         assert_eq!(result, input.iter().all(|x| x.len() == 1));

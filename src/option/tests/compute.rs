@@ -156,8 +156,8 @@ fn opt_all() {
             .into_par()
             .map(Some)
             .into_optional()
-            .all(|x| x.len() > 0);
-        assert_eq!(result, Some(input.iter().all(|x| x.len() > 0)));
+            .all(|x| !x.is_empty());
+        assert_eq!(result, Some(input.iter().all(|x| !x.is_empty())));
 
         let result = input
             .clone()
@@ -172,7 +172,7 @@ fn opt_all() {
             .into_par()
             .map(some_or_none_at_fifty)
             .into_optional()
-            .all(|x| x.len() > 0);
+            .all(|x| !x.is_empty());
         assert_eq!(result, None);
     }
 }

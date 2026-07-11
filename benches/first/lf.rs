@@ -181,8 +181,8 @@ impl Experiment for Exp {
         input: &Self::Input,
     ) -> Option<Self::Output> {
         Some(match input_variant.heavy {
-            false => input.iter().flat_map(l_l).filter(|x| *x == 999).next(),
-            true => input.iter().flat_map(h_l).filter(|x| *x == 999).next(),
+            false => input.iter().flat_map(l_l).find(|x| *x == 999),
+            true => input.iter().flat_map(h_l).find(|x| *x == 999),
         })
     }
 

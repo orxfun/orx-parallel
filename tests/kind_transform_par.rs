@@ -37,7 +37,7 @@ fn kind_transform_par() {
     }
 
     fn filter(par: impl Par<Item = String>) -> impl Par<Item = String> {
-        par.filter(|x| x.len() > 0)
+        par.filter(|x| !x.is_empty())
     }
 
     fn filter_map(par: impl Par<Item = String>) -> impl Par<Item = String> {

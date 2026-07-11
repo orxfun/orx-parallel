@@ -164,8 +164,8 @@ fn res_use_all() {
             .map(Ok::<_, char>)
             .into_fallible()
             .use_new(|_| ())
-            .all(|_, x| x.len() > 0);
-        assert_eq!(result, Ok(input.iter().all(|x| x.len() > 0)));
+            .all(|_, x| !x.is_empty());
+        assert_eq!(result, Ok(input.iter().all(|x| !x.is_empty())));
 
         let result: Result<bool, char> = input
             .clone()
@@ -182,7 +182,7 @@ fn res_use_all() {
             .map(ok_or_err_at_fifty)
             .into_fallible()
             .use_new(|_| ())
-            .all(|_, x| x.len() > 0);
+            .all(|_, x| !x.is_empty());
         assert_eq!(result, Err('x'));
     }
 }

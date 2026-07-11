@@ -52,7 +52,7 @@ fn kind_transform_par_use_res() {
     fn filter(
         par: impl ParUseResult<Use = char, Item = String, Error = char>,
     ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
-        par.filter(|_u, x| x.len() > 0)
+        par.filter(|_u, x| !x.is_empty())
     }
 
     fn filter_map(
