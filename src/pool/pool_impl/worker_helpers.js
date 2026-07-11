@@ -34,7 +34,8 @@ export async function startWorkers(module, memory, numThreads) {
 
     _workers = await Promise.all(
         Array.from({ length: numThreads }, async (_, idx) => {
-            const worker = new Worker(new URL("./worker_helpers3.js", import.meta.url), {
+            // Spawn workers from this same module to avoid brittle generated filename suffixes.
+            const worker = new Worker(new URL(import.meta.url), {
                 type: "module",
             });
 

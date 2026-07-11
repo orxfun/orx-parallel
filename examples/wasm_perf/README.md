@@ -12,8 +12,8 @@ All variants reuse the same TSP algorithm and deterministic city generation from
 
 - `tsp_core/`: shared TSP logic and location generation
 - `crate_rayon/`: wasm adapter for rayon-only variant
-- `crate_orx/`: wasm adapter for orx-rayon variant
-- `crate_rayon_orx/`: wasm adapter for orx variant
+- `crate_orx/`: wasm adapter for orx variant
+- `crate_rayon_orx/`: wasm adapter for orx-rayon variant
 - `web/`: browser benchmark runner (manual execution)
 
 ## Run
