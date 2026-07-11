@@ -67,20 +67,18 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// use orx_parallel::*;
+    ///
+    /// let par = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional();
+    ///
     /// #[cfg(feature = "std")]
-    /// {
-    ///     use orx_parallel::*;
+    /// let par = par.runner(Runner::fixed_chunk(Pool::once(4)));
     ///
-    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>().ok())
-    ///         .into_optional()
-    ///         .runner(Runner::fixed_chunk(Pool::once(4)))
-    ///         .collect();
-    ///
-    ///     assert_eq!(out, Some(vec![1, 2, 3]));
-    /// }
+    /// let out: Option<Vec<_>> = par.collect();
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
     /// ```
     fn runner<Q: ParRunner>(
         self,
@@ -100,20 +98,18 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// use orx_parallel::*;
+    ///
+    /// let par = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional();
+    ///
     /// #[cfg(feature = "std")]
-    /// {
-    ///     use orx_parallel::*;
+    /// let par = par.runner_with_diagnostics();
     ///
-    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>().ok())
-    ///         .into_optional()
-    ///         .runner_with_diagnostics()
-    ///         .collect();
-    ///
-    ///     assert_eq!(out, Some(vec![1, 2, 3]));
-    /// }
+    /// let out: Option<Vec<_>> = par.collect();
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
     /// ```
     fn runner_with_diagnostics(
         self,
