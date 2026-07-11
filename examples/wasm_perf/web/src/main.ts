@@ -5,11 +5,11 @@ import initRayon, {
 import initOrxRayon, {
     init_parallel_runtime as initOrxRayonRuntime,
     run_best_tour_par as runOrxRayonPar,
-} from "../pkg_orx/orx_parallel_wasm_perf_orx.js";
+} from "../pkg_rayon_orx/orx_parallel_wasm_perf_rayon_orx.js";
 import initOrx, {
     init_parallel_runtime as initOrxRuntime,
     run_best_tour_par as runOrxPar,
-} from "../pkg_rayon_orx/orx_parallel_wasm_perf_rayon_orx.js";
+} from "../pkg_orx/orx_parallel_wasm_perf_orx.js";
 import {
     type BenchmarkConfig,
     type BenchmarkReport,
