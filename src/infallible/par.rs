@@ -88,9 +88,9 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// let par = (1..100_001).par().num_threads(4);
     ///
     /// #[cfg(feature = "std")]
-    /// let par = par.runner_with_diagnostics;
+    /// let par = par.runner_with_diagnostics();
     ///
-    /// let sum = par.sum()
+    /// let sum = par.sum();
     /// assert_eq!(sum, 5000050000);
     /// # }
     /// ```

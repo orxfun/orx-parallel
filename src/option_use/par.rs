@@ -1,6 +1,5 @@
+// TODO: remove this
 #![allow(clippy::type_complexity)]
-
-use core::cmp::Ordering;
 
 use crate::common_par_traits::ParOptCommon;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
@@ -13,6 +12,7 @@ use crate::pool::ParThreadPool;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
+use core::cmp::Ordering;
 
 /// Fallible parallel iterator with worker-local mutable state.
 ///
@@ -82,21 +82,19 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// use orx_parallel::*;
+    ///
+    /// let par = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional()
+    ///     .use_new(|_| ());
+    ///
     /// #[cfg(feature = "std")]
-    /// {
-    ///     use orx_parallel::*;
+    /// let par = par.runner(Runner::fixed_chunk(Pool::once(4)));
     ///
-    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>().ok())
-    ///         .into_optional()
-    ///         .use_new(|_| ())
-    ///         .runner(Runner::fixed_chunk(Pool::once(4)))
-    ///         .collect();
-    ///
-    ///     assert_eq!(out, Some(vec![1, 2, 3]));
-    /// }
+    /// let out: Option<Vec<_>> = par.collect();
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
     /// ```
     fn runner<Q: ParRunner>(
         self,
@@ -117,21 +115,19 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// use orx_parallel::*;
+    ///
+    /// let par = ["1", "2", "3"]
+    ///     .into_par()
+    ///     .map(|s| s.parse::<usize>().ok())
+    ///     .into_optional()
+    ///     .use_new(|_| ());
+    ///
     /// #[cfg(feature = "std")]
-    /// {
-    ///     use orx_parallel::*;
+    /// let par = .runner_with_diagnostics();
     ///
-    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>().ok())
-    ///         .into_optional()
-    ///         .use_new(|_| ())
-    ///         .runner_with_diagnostics()
-    ///         .collect();
-    ///
-    ///     assert_eq!(out, Some(vec![1, 2, 3]));
-    /// }
+    /// let out: Option<Vec<_>> = par.collect();
+    /// assert_eq!(out, Some(vec![1, 2, 3]));
     /// ```
     fn runner_with_diagnostics(
         self,

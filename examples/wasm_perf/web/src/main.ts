@@ -82,20 +82,20 @@ async function runBenchmark() {
         await ensureRuntimes(cfg.threads);
 
         const runners: Array<["rayon" | "rayon-orx" | "orx" | "orx3", VariantRunner]> = [
-            [
-                "rayon",
-                {
-                    init_parallel_runtime: initRayonOrxRuntime,
-                    run_best_tour_par: runRayonPar,
-                },
-            ],
             // [
-            //     "rayon-orx",
+            //     "rayon",
             //     {
             //         init_parallel_runtime: initRayonOrxRuntime,
-            //         run_best_tour_par: runRayonOrxPar,
+            //         run_best_tour_par: runRayonPar,
             //     },
             // ],
+            [
+                "rayon-orx",
+                {
+                    init_parallel_runtime: initRayonOrxRuntime,
+                    run_best_tour_par: runRayonOrxPar,
+                },
+            ],
             // [
             //     "orx3",
             //     {
