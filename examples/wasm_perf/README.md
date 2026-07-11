@@ -40,6 +40,15 @@ cd examples/wasm_perf/web
 npm run dev:full
 ```
 
+	Select benchmark variant from command line when starting the app:
+
+```bash
+cd examples/wasm_perf/web
+PAR_POOL_VARIANT=orx npm run dev:full
+```
+
+Supported values: `rayon`, `orx-rayon`, `orx`.
+
 4. Open the shown URL and run benchmark with these Step 1 defaults:
 
 - cities: `50,75`
