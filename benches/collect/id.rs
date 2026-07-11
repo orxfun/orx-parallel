@@ -91,7 +91,7 @@ impl Experiment for Exp {
         input: &Self::Input,
     ) -> Self::Output {
         match alg_variant {
-            Method::SeqVec => (true, Output::Vec(input.iter().copied().collect())),
+            Method::SeqVec => (true, Output::Vec(input.to_vec())),
             Method::RayonVec => {
                 let pool = ThreadPoolBuilder::new()
                     .num_threads(input_variant.num_threads)
@@ -153,7 +153,7 @@ impl Experiment for Exp {
         input: &Self::Input,
         (ordered, output): &Self::Output,
     ) {
-        let mut expected: Vec<_> = input.iter().copied().collect();
+        let mut expected: Vec<_> = input.to_vec();
         if !*ordered {
             expected.sort();
         }

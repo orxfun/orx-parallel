@@ -190,14 +190,12 @@ impl Experiment for Exp {
                 .map(l_m)
                 .filter(|x| *x == 999)
                 .map(|x| l_m(&x))
-                .filter(|x| x.is_multiple_of(999))
-                .next(),
+                .find(|x| x.is_multiple_of(999)),
             true => iter
                 .map(h_m)
                 .filter(|x| *x == 999)
                 .map(|x| h_m(&x))
-                .filter(|x| x.is_multiple_of(999))
-                .next(),
+                .find(|x| x.is_multiple_of(999)),
         })
     }
 
