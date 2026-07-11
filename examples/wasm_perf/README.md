@@ -49,6 +49,8 @@ PAR_POOL_VARIANT=orx npm run dev:full
 
 Supported values: `rayon`, `orx-rayon`, `orx`.
 
+`npm run preview` also rebuilds first, so `PAR_POOL_VARIANT=orx npm run preview` will serve the selected variant.
+
 4. Open the shown URL and run benchmark with these Step 1 defaults:
 
 - cities: `50,75`
