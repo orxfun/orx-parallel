@@ -6,6 +6,7 @@ export type VariantRunner = {
         iterations: number,
         seed: bigint,
         threads: number,
+        chunkSize: number,
         numCities: number,
         startIndex: bigint,
     ) => SearchChunkResult;
@@ -20,6 +21,7 @@ export type SearchChunkResult = {
 
 export type BenchmarkConfig = {
     threads: number;
+    chunkSize: number;
     cityCounts: number[];
     iterationCounts: number[];
     warmups: number;
@@ -44,6 +46,7 @@ export type BenchmarkRow = {
 export type BenchmarkReport = {
     config: {
         threads: number;
+        chunkSize: number;
         cityCounts: number[];
         iterationCounts: number[];
         warmups: number;
@@ -101,13 +104,13 @@ export async function runVariantMatrix(
 
             let startIndex = 0n;
             for (let i = 0; i < cfg.warmups; i++) {
-                runner.run_best_tour_par(iterations, cfg.seed, cfg.threads, cities, startIndex);
+                runner.run_best_tour_par(iterations, cfg.seed, cfg.threads, cfg.chunkSize, cities, startIndex);
                 startIndex += BigInt(iterations);
             }
 
             const samplesMs: number[] = [];
             for (let i = 0; i < cfg.runs; i++) {
-                const result = runner.run_best_tour_par(iterations, cfg.seed, cfg.threads, cities, startIndex);
+                const result = runner.run_best_tour_par(iterations, cfg.seed, cfg.threads, cfg.chunkSize, cities, startIndex);
                 samplesMs.push(result.elapsed_ms);
                 startIndex += BigInt(iterations);
             }
@@ -131,6 +134,7 @@ export function formatReportText(report: BenchmarkReport): string {
     lines.push("WASM benchmark report");
     lines.push("");
     lines.push(`threads: ${report.config.threads}`);
+    lines.push(`chunkSize: ${report.config.chunkSize}`);
     lines.push(`cityCounts: ${report.config.cityCounts.join(", ")}`);
     lines.push(`iterationCounts: ${report.config.iterationCounts.join(", ")}`);
     lines.push(`warmups: ${report.config.warmups}`);
