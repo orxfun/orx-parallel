@@ -31,18 +31,20 @@ pub fn run_best_tour_par(
     iterations: u32,
     seed: u64,
     threads: u32,
+    chunk_size: u32,
     num_cities: u32,
     start_index: u64,
 ) -> Result<JsValue, JsValue> {
     let iterations = iterations.max(1) as usize;
     let threads = threads.max(1) as usize;
+    let chunk_size = chunk_size.max(1) as usize;
     let num_cities = clamp_num_cities(num_cities);
     let locations = create_locations(num_cities as u32);
 
     let started_at = js_sys::Date::now();
     let best = (0..iterations)
         .into_par()
-        .chunk_size(1)
+        .chunk_size(chunk_size)
         .num_threads(threads)
         .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), &locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(core::cmp::Ordering::Equal));

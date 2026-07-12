@@ -50,6 +50,7 @@ function mustElement<T extends HTMLElement>(id: string): T {
 const ui = {
     status: mustElement<HTMLDivElement>("status"),
     threads: mustElement<HTMLInputElement>("threads"),
+    chunkSize: mustElement<HTMLInputElement>("chunk-size"),
     cities: mustElement<HTMLInputElement>("cities"),
     iterations: mustElement<HTMLInputElement>("iterations"),
     warmups: mustElement<HTMLInputElement>("warmups"),
@@ -107,6 +108,7 @@ async function runBenchmark() {
         const report: BenchmarkReport = {
             config: {
                 threads: cfg.threads,
+                chunkSize: cfg.chunkSize,
                 cityCounts: cfg.cityCounts,
                 iterationCounts: cfg.iterationCounts,
                 warmups: cfg.warmups,
@@ -166,6 +168,7 @@ async function createRunner(variant: VariantName): Promise<[VariantName, Variant
 
 function readConfig(): BenchmarkConfig {
     const threads = clampInt(ui.threads.valueAsNumber, 1, 16, 4);
+    const chunkSize = clampInt(ui.chunkSize.valueAsNumber, 1, 1_048_576, 1);
     const warmups = clampInt(ui.warmups.valueAsNumber, 0, 20, 2);
     const runs = clampInt(ui.runs.valueAsNumber, 1, 30, 5);
     const seedInput = clampInt(ui.seed.valueAsNumber, 1, 99_999_999, 42);
@@ -175,6 +178,7 @@ function readConfig(): BenchmarkConfig {
 
     return {
         threads,
+        chunkSize,
         cityCounts,
         iterationCounts,
         warmups,
@@ -185,6 +189,7 @@ function readConfig(): BenchmarkConfig {
 
 function setControlsEnabled(enabled: boolean) {
     ui.threads.disabled = !enabled;
+    ui.chunkSize.disabled = !enabled;
     ui.cities.disabled = !enabled;
     ui.iterations.disabled = !enabled;
     ui.warmups.disabled = !enabled;
