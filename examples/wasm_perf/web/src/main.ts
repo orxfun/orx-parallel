@@ -21,7 +21,9 @@ import {
 } from "./benchmark_core";
 
 const DEFAULT_VARIANT: VariantName = "rayon";
+const DEFAULT_NUM_THREADS = 4;
 const VARIANT: VariantName = readVariantFromEnv(import.meta.env.PAR_POOL_VARIANT);
+const NUM_THREADS = readNumThreadsFromEnv(import.meta.env.PAR_NUM_THREADS);
 
 function readVariantFromEnv(raw: string | undefined): VariantName {
     if (!raw) {
@@ -39,6 +41,22 @@ function readVariantFromEnv(raw: string | undefined): VariantName {
     return DEFAULT_VARIANT;
 }
 
+function readNumThreadsFromEnv(raw: string | undefined): number {
+    if (!raw) {
+        return DEFAULT_NUM_THREADS;
+    }
+
+    const parsed = Number.parseInt(raw.trim(), 10);
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 16) {
+        console.warn(
+            `unsupported PAR_NUM_THREADS=${raw}; falling back to ${DEFAULT_NUM_THREADS}. Supported range: 1..16`,
+        );
+        return DEFAULT_NUM_THREADS;
+    }
+
+    return parsed;
+}
+
 function mustElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
     if (!el) {
@@ -49,7 +67,6 @@ function mustElement<T extends HTMLElement>(id: string): T {
 
 const ui = {
     status: mustElement<HTMLDivElement>("status"),
-    threads: mustElement<HTMLInputElement>("threads"),
     chunkSize: mustElement<HTMLInputElement>("chunk-size"),
     cities: mustElement<HTMLInputElement>("cities"),
     iterations: mustElement<HTMLInputElement>("iterations"),
@@ -62,8 +79,11 @@ const ui = {
 };
 
 let busy = false;
-let initializedVariant: VariantName | undefined;
-let initializedThreads: number | undefined;
+let runtimePromise: Promise<[VariantName, VariantRunner]> | undefined;
+
+function readyMessage(): string {
+    return `Pool initialized: variant=${VARIANT}, threads=${NUM_THREADS}. Ready.`;
+}
 
 async function setup() {
     ui.run.addEventListener("click", () => {
@@ -72,8 +92,21 @@ async function setup() {
 
     ui.clear.addEventListener("click", () => {
         ui.output.textContent = "Output cleared.";
-        ui.status.textContent = "Ready.";
+        ui.status.textContent = readyMessage();
     });
+
+    ui.status.textContent = `Loading wasm module for ${VARIANT}...`;
+    void preInitializeRuntime();
+}
+
+async function preInitializeRuntime() {
+    try {
+        await getRuntimeRunner();
+        ui.status.textContent = readyMessage();
+    } catch (err) {
+        console.error("runtime initialization failed", err);
+        ui.status.textContent = `Runtime initialization failed: ${String(err)}`;
+    }
 }
 
 async function runBenchmark() {
@@ -86,20 +119,7 @@ async function runBenchmark() {
 
     try {
         const cfg = readConfig();
-        ui.status.textContent = `Loading wasm module for ${VARIANT}...`;
-
-        const [variant, runner] = await createRunner(VARIANT);
-
-        if (initializedVariant == null) {
-            ui.status.textContent = `Initializing ${variant} runtime...`;
-            await runner.init_parallel_runtime(cfg.threads);
-            initializedVariant = variant;
-            initializedThreads = cfg.threads;
-        } else if (initializedVariant !== variant || initializedThreads !== cfg.threads) {
-            throw new Error(
-                `runtime already initialized for ${initializedVariant} with ${initializedThreads} threads; reload the page to change variant or thread count`,
-            );
-        }
+        const [variant, runner] = await getRuntimeRunner();
 
         const rows = await runVariantMatrix(variant, runner, cfg, (message) => {
             ui.status.textContent = message;
@@ -167,7 +187,6 @@ async function createRunner(variant: VariantName): Promise<[VariantName, Variant
 }
 
 function readConfig(): BenchmarkConfig {
-    const threads = clampInt(ui.threads.valueAsNumber, 1, 16, 4);
     const chunkSize = clampInt(ui.chunkSize.valueAsNumber, 1, 1_048_576, 1);
     const warmups = clampInt(ui.warmups.valueAsNumber, 0, 20, 2);
     const runs = clampInt(ui.runs.valueAsNumber, 1, 30, 5);
@@ -177,7 +196,7 @@ function readConfig(): BenchmarkConfig {
     const iterationCounts = parseCsvInts(ui.iterations.value, [1000, 10000]).map((x) => clampInt(x, 1, 1_000_000, 1000));
 
     return {
-        threads,
+        threads: NUM_THREADS,
         chunkSize,
         cityCounts,
         iterationCounts,
@@ -188,7 +207,6 @@ function readConfig(): BenchmarkConfig {
 }
 
 function setControlsEnabled(enabled: boolean) {
-    ui.threads.disabled = !enabled;
     ui.chunkSize.disabled = !enabled;
     ui.cities.disabled = !enabled;
     ui.iterations.disabled = !enabled;
@@ -197,6 +215,23 @@ function setControlsEnabled(enabled: boolean) {
     ui.seed.disabled = !enabled;
     ui.run.disabled = !enabled;
     ui.clear.disabled = !enabled;
+}
+
+async function getRuntimeRunner(): Promise<[VariantName, VariantRunner]> {
+    if (!runtimePromise) {
+        runtimePromise = (async () => {
+            const [variant, runner] = await createRunner(VARIANT);
+            ui.status.textContent = `Initializing ${variant} runtime with ${NUM_THREADS} threads...`;
+            await runner.init_parallel_runtime(NUM_THREADS);
+            return [variant, runner];
+        })();
+
+        runtimePromise.catch(() => {
+            runtimePromise = undefined;
+        });
+    }
+
+    return runtimePromise;
 }
 
 function clampInt(value: number, min: number, max: number, fallback: number): number {

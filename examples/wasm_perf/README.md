@@ -45,11 +45,16 @@ npm run dev:full
 ```bash
 cd examples/wasm_perf/web
 PAR_POOL_VARIANT=orx npm run dev:full
+
+# optional: fix thread count from environment (default: 4)
+PAR_POOL_VARIANT=orx PAR_NUM_THREADS=8 npm run dev:full
 ```
 
 Supported values: `rayon`, `orx-rayon`, `orx`.
 
-`npm run preview` also rebuilds first, so `PAR_POOL_VARIANT=orx npm run preview` will serve the selected variant.
+`PAR_NUM_THREADS` supports values in `1..16`.
+
+`npm run preview` also rebuilds first, so `PAR_POOL_VARIANT=orx PAR_NUM_THREADS=8 npm run preview` will serve the selected variant and thread count.
 
 4. Open the shown URL and run benchmark with these Step 1 defaults:
 
@@ -61,10 +66,10 @@ Supported values: `rayon`, `orx-rayon`, `orx`.
 
 5. Run two separate sessions for fairness:
 
-- session A: threads = `4`
-- session B: threads = `8`
+- session A: `PAR_NUM_THREADS=4`
+- session B: `PAR_NUM_THREADS=8`
 
-Thread pool init is one-time per module; reload the page before switching thread count.
+Thread pool init starts automatically on page load and is one-time per module; reload the page after changing `PAR_POOL_VARIANT` or `PAR_NUM_THREADS`.
 
 ## Output
 
