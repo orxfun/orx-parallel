@@ -8,6 +8,7 @@ import initOrxRayon, {
 } from "../pkg_rayon_orx/orx_parallel_wasm_perf_rayon_orx.js";
 import initOrx, {
     init_parallel_runtime as initOrxRuntime,
+    run_best_tour_seq as runOrxSeq,
     run_best_tour_par as runOrxPar,
 } from "../pkg_orx/orx_parallel_wasm_perf_orx.js";
 import {
@@ -17,6 +18,7 @@ import {
     type VariantRunner,
     formatReportText,
     parseCsvInts,
+    runSequentialMatrix,
     runVariantMatrix,
 } from "./benchmark_core";
 
@@ -74,6 +76,7 @@ const ui = {
     runs: mustElement<HTMLInputElement>("runs"),
     seed: mustElement<HTMLInputElement>("seed"),
     run: mustElement<HTMLButtonElement>("run"),
+    runSequential: mustElement<HTMLButtonElement>("run-sequential"),
     clear: mustElement<HTMLButtonElement>("clear"),
     output: mustElement<HTMLPreElement>("output"),
 };
@@ -88,6 +91,10 @@ function readyMessage(): string {
 async function setup() {
     ui.run.addEventListener("click", () => {
         void runBenchmark();
+    });
+
+    ui.runSequential.addEventListener("click", () => {
+        void runSequentialBenchmark();
     });
 
     ui.clear.addEventListener("click", () => {
@@ -143,6 +150,46 @@ async function runBenchmark() {
     } catch (err) {
         console.error("benchmark failed", err);
         ui.status.textContent = `Benchmark failed: ${String(err)}`;
+    } finally {
+        setControlsEnabled(true);
+        busy = false;
+    }
+}
+
+async function runSequentialBenchmark() {
+    if (busy) {
+        return;
+    }
+
+    busy = true;
+    setControlsEnabled(false);
+
+    try {
+        const cfg = readConfig();
+        await getRuntimeRunner();
+
+        const rows = await runSequentialMatrix(runOrxSeq, cfg, (message) => {
+            ui.status.textContent = message;
+        });
+
+        const report: BenchmarkReport = {
+            config: {
+                threads: cfg.threads,
+                chunkSize: cfg.chunkSize,
+                cityCounts: cfg.cityCounts,
+                iterationCounts: cfg.iterationCounts,
+                warmups: cfg.warmups,
+                runs: cfg.runs,
+                seed: cfg.seed.toString(),
+            },
+            rows,
+        };
+
+        ui.output.textContent = formatReportText(report);
+        ui.status.textContent = "Sequential benchmark completed.";
+    } catch (err) {
+        console.error("sequential benchmark failed", err);
+        ui.status.textContent = `Sequential benchmark failed: ${String(err)}`;
     } finally {
         setControlsEnabled(true);
         busy = false;
@@ -214,6 +261,7 @@ function setControlsEnabled(enabled: boolean) {
     ui.runs.disabled = !enabled;
     ui.seed.disabled = !enabled;
     ui.run.disabled = !enabled;
+    ui.runSequential.disabled = !enabled;
     ui.clear.disabled = !enabled;
 }
 

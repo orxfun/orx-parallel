@@ -1,4 +1,4 @@
-export type VariantName = "rayon" | "orx-rayon" | "orx";
+export type VariantName = "rayon" | "orx-rayon" | "orx" | "sequential";
 
 export type VariantRunner = {
     init_parallel_runtime: (numThreads: number) => Promise<unknown>;
@@ -11,6 +11,13 @@ export type VariantRunner = {
         startIndex: bigint,
     ) => SearchChunkResult;
 };
+
+export type SequentialRunner = (
+    iterations: number,
+    seed: bigint,
+    numCities: number,
+    startIndex: bigint,
+) => SearchChunkResult;
 
 export type SearchChunkResult = {
     best_tour: number[];
@@ -118,6 +125,44 @@ export async function runVariantMatrix(
             const stats = summarize(samplesMs, iterations);
             rows.push({
                 variant,
+                threads: cfg.threads,
+                cities,
+                iterations,
+                ...stats,
+            });
+        }
+    }
+
+    return rows;
+}
+
+export async function runSequentialMatrix(
+    runner: SequentialRunner,
+    cfg: BenchmarkConfig,
+    onProgress: (message: string) => void,
+): Promise<BenchmarkRow[]> {
+    const rows: BenchmarkRow[] = [];
+
+    for (const cities of cfg.cityCounts) {
+        for (const iterations of cfg.iterationCounts) {
+            onProgress(`Running sequential for cities=${cities}, iterations=${iterations}...`);
+
+            let startIndex = 0n;
+            for (let i = 0; i < cfg.warmups; i++) {
+                runner(iterations, cfg.seed, cities, startIndex);
+                startIndex += BigInt(iterations);
+            }
+
+            const samplesMs: number[] = [];
+            for (let i = 0; i < cfg.runs; i++) {
+                const result = runner(iterations, cfg.seed, cities, startIndex);
+                samplesMs.push(result.elapsed_ms);
+                startIndex += BigInt(iterations);
+            }
+
+            const stats = summarize(samplesMs, iterations);
+            rows.push({
+                variant: "sequential",
                 threads: cfg.threads,
                 cities,
                 iterations,
