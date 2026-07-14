@@ -54,6 +54,8 @@ Supported values: `rayon`, `orx-rayon`, `orx`.
 
 `PAR_NUM_THREADS` supports values in `1..16`.
 
+The benchmark UI also exposes a "Number of threads" input. It starts with the same value as `PAR_NUM_THREADS`, but you can change it before running the benchmark. That input is used for `orx` and `orx-rayon`; `rayon` ignores it.
+
 `npm run preview` also rebuilds first, so `PAR_POOL_VARIANT=orx PAR_NUM_THREADS=8 npm run preview` will serve the selected variant and thread count.
 
 4. Open the shown URL and run benchmark with these Step 1 defaults:
