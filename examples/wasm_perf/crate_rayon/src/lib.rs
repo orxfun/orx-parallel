@@ -30,7 +30,7 @@ pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
 pub fn run_best_tour_par(
     iterations: u32,
     seed: u64,
-    _threads: u32,
+    _num_threads: u32,
     _chunk_size: u32,
     num_cities: u32,
     start_index: u64,

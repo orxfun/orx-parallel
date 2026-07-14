@@ -25,7 +25,7 @@ import {
 const DEFAULT_VARIANT: VariantName = "rayon";
 const DEFAULT_NUM_THREADS = 4;
 const VARIANT: VariantName = readVariantFromEnv(import.meta.env.PAR_POOL_VARIANT);
-const NUM_THREADS = readNumThreadsFromEnv(import.meta.env.PAR_NUM_THREADS);
+const POOL_NUM_THREADS = readNumThreadsFromEnv(import.meta.env.PAR_NUM_THREADS);
 
 function readVariantFromEnv(raw: string | undefined): VariantName {
     if (!raw) {
@@ -69,6 +69,7 @@ function mustElement<T extends HTMLElement>(id: string): T {
 
 const ui = {
     status: mustElement<HTMLDivElement>("status"),
+    threads: mustElement<HTMLInputElement>("threads"),
     chunkSize: mustElement<HTMLInputElement>("chunk-size"),
     cities: mustElement<HTMLInputElement>("cities"),
     iterations: mustElement<HTMLInputElement>("iterations"),
@@ -85,10 +86,12 @@ let busy = false;
 let runtimePromise: Promise<[VariantName, VariantRunner]> | undefined;
 
 function readyMessage(): string {
-    return `Pool initialized: variant=${VARIANT}, threads=${NUM_THREADS}. Ready.`;
+    return `Pool initialized: variant=${VARIANT}, threads=${POOL_NUM_THREADS}. Ready.`;
 }
 
 async function setup() {
+    ui.threads.value = String(POOL_NUM_THREADS);
+
     ui.run.addEventListener("click", () => {
         void runBenchmark();
     });
@@ -234,6 +237,7 @@ async function createRunner(variant: VariantName): Promise<[VariantName, Variant
 }
 
 function readConfig(): BenchmarkConfig {
+    const threads = clampInt(ui.threads.valueAsNumber, 1, 16, POOL_NUM_THREADS);
     const chunkSize = clampInt(ui.chunkSize.valueAsNumber, 1, 1_048_576, 1);
     const warmups = clampInt(ui.warmups.valueAsNumber, 0, 20, 2);
     const runs = clampInt(ui.runs.valueAsNumber, 1, 30, 5);
@@ -243,7 +247,7 @@ function readConfig(): BenchmarkConfig {
     const iterationCounts = parseCsvInts(ui.iterations.value, [1000, 10000]).map((x) => clampInt(x, 1, 1_000_000, 1000));
 
     return {
-        threads: NUM_THREADS,
+        threads,
         chunkSize,
         cityCounts,
         iterationCounts,
@@ -254,6 +258,7 @@ function readConfig(): BenchmarkConfig {
 }
 
 function setControlsEnabled(enabled: boolean) {
+    ui.threads.disabled = !enabled;
     ui.chunkSize.disabled = !enabled;
     ui.cities.disabled = !enabled;
     ui.iterations.disabled = !enabled;
@@ -269,8 +274,8 @@ async function getRuntimeRunner(): Promise<[VariantName, VariantRunner]> {
     if (!runtimePromise) {
         runtimePromise = (async () => {
             const [variant, runner] = await createRunner(VARIANT);
-            ui.status.textContent = `Initializing ${variant} runtime with ${NUM_THREADS} threads...`;
-            await runner.init_parallel_runtime(NUM_THREADS);
+            ui.status.textContent = `Initializing ${variant} runtime with ${POOL_NUM_THREADS} threads...`;
+            await runner.init_parallel_runtime(POOL_NUM_THREADS);
             return [variant, runner];
         })();
 
