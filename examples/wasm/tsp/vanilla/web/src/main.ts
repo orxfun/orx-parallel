@@ -45,6 +45,7 @@ const MAX_THREADS = 16;
 const DEFAULT_STARTUP_THREADS = 16;
 const CITY_NODE_COLOR = readCssColor("--city-node", "#f59e0b");
 const TOUR_LINE_COLOR = readCssColor("--tour-line", "#1d4ed8");
+const CANVAS_BACKGROUND_COLOR = readCssColor("--code-block-bg", "#0f172a");
 
 function mustElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
@@ -352,13 +353,14 @@ function updateStats(result: RunAggregate) {
 }
 
 function drawPoints(locations: Location[]) {
-    ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
+    ctx.fillStyle = CANVAS_BACKGROUND_COLOR;
+    ctx.fillRect(0, 0, ui.canvas.width, ui.canvas.height);
     const mapped = mapPoints(locations);
 
     for (const p of mapped) {
         ctx.beginPath();
         ctx.fillStyle = CITY_NODE_COLOR;
-        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
         ctx.fill();
     }
 }
