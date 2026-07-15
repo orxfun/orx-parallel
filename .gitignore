@@ -16,6 +16,12 @@ Cargo.lock
 
 benches/results/*.txt
 
+# wasm tsp examples
+examples/wasm/tsp/vanilla/web/node_modules/
+examples/wasm/tsp/vanilla/web/dist/
+examples/wasm/tsp/vanilla/web/pkg/
+examples/wasm/tsp/vanilla/crate/target/
+
 # wasm demo tsp generated artifacts
 examples/arch/wasm_demo_tsp/web/node_modules/
 examples/arch/wasm_demo_tsp/web/dist/
