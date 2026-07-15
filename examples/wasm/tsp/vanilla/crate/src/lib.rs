@@ -72,30 +72,20 @@ pub fn run_best_tour_par(
 
 #[cfg(target_feature = "atomics")]
 #[wasm_bindgen]
-pub fn run_best_tour_seq(
-    iterations: u32,
-    seed: u64,
-    num_cities: u32,
-    start_index: u64,
-) -> Result<JsValue, JsValue> {
+pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
     let iterations = iterations.max(1) as usize;
     let num_cities = locations::clamp_num_cities(num_cities);
     let locations = locations::locations(num_cities as u32);
     let started_at = js_sys::Date::now();
-    let output = computation::run_search_sequential(iterations, seed, &locations, start_index);
+    let output = computation::run_search_sequential(iterations, seed, &locations);
     let elapsed_ms = js_sys::Date::now() - started_at;
     run_output_to_js(output, elapsed_ms)
 }
 
 #[cfg(not(target_feature = "atomics"))]
 #[wasm_bindgen]
-pub fn run_best_tour_seq(
-    iterations: u32,
-    seed: u64,
-    num_cities: u32,
-    start_index: u64,
-) -> Result<JsValue, JsValue> {
-    let _ = (iterations, seed, num_cities, start_index);
+pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
+    let _ = (iterations, seed, num_cities);
     Err(JsValue::from_str(
         "run_best_tour_seq requires wasm32 + atomics build",
     ))

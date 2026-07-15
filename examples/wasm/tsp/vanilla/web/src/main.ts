@@ -236,7 +236,7 @@ function runSearchOnce(settings: RunSettings): SearchResult {
             settings.numCities
         );
     } else {
-        return run_best_tour_seq(settings.iterations, settings.seed, settings.numCities, 0n) as SearchResult;
+        return run_best_tour_seq(settings.iterations, settings.seed, settings.numCities) as SearchResult;
     }
 }
 
