@@ -16,7 +16,7 @@ pub fn run_search_sequential(
     start_index: u64,
 ) -> SearchRunOutput {
     let best = (0..iterations)
-        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
+        .map(|k| search_candidate(seed, locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
     SearchRunOutput { best, iterations }
@@ -33,15 +33,15 @@ pub fn run_search_parallel(
         .into_par()
         .chunk_size(chunk_size)
         .num_threads(threads)
-        .map(|k| search_candidate(seed, k as u64, locations))
+        .map(|_| search_candidate(seed, locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
     SearchRunOutput { best, iterations }
 }
 
-fn search_candidate(seed: u64, k: u64, locations: &[Location]) -> (Vec<usize>, f64) {
+fn search_candidate(seed: u64, locations: &[Location]) -> (Vec<usize>, f64) {
     let tour = random_tour(
-        seed ^ k.wrapping_mul(0x9E37_79B9_7F4A_7C15),
+        seed ^ 42u64.wrapping_mul(0x9E37_79B9_7F4A_7C15),
         locations.len(),
     );
     let tour = two_opt_improve(locations, tour);
