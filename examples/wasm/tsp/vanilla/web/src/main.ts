@@ -43,8 +43,8 @@ const MAX_CITIES = 200;
 const MIN_THREADS = 1;
 const MAX_THREADS = 16;
 const DEFAULT_STARTUP_THREADS = 16;
-const CITY_NODE_COLOR = "#f59e0b";
-const TOUR_LINE_COLOR = "#1d4ed8";
+const CITY_NODE_COLOR = readCssColor("--city-node", "#f59e0b");
+const TOUR_LINE_COLOR = readCssColor("--tour-line", "#1d4ed8");
 
 function mustElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
@@ -52,6 +52,11 @@ function mustElement<T extends HTMLElement>(id: string): T {
         throw new Error(`missing required element: #${id}`);
     }
     return el as T;
+}
+
+function readCssColor(variableName: string, fallback: string) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+    return value || fallback;
 }
 
 const ui = {
