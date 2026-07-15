@@ -6,6 +6,8 @@ use serde::Serialize;
 pub const MIN_CITIES: usize = 5;
 pub const MAX_CITIES: usize = 200;
 
+pub const RUN_FIB: bool = false;
+
 #[derive(Clone, Copy, Debug, Serialize)]
 pub struct Location {
     pub x: f64,

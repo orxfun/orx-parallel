@@ -1,8 +1,8 @@
 use orx_parallel::*;
 use serde::Serialize;
 use tsp_core::{
-    SearchRunOutput, clamp_num_cities, locations as create_locations, run_search_sequential,
-    search_candidate,
+    RUN_FIB, SearchRunOutput, clamp_num_cities, locations as create_locations,
+    run_search_sequential, search_candidate,
 };
 use wasm_bindgen::prelude::*;
 
@@ -35,6 +35,17 @@ pub fn run_best_tour_par(
     num_cities: u32,
     start_index: u64,
 ) -> Result<JsValue, JsValue> {
+    if RUN_FIB {
+        return run_other(
+            iterations,
+            seed,
+            num_threads,
+            chunk_size,
+            num_cities,
+            start_index,
+        );
+    }
+
     let iterations = iterations.max(1) as usize;
     let num_threads = num_threads as usize;
     let chunk_size = chunk_size as usize;
@@ -86,4 +97,62 @@ fn run_output_to_js(output: SearchRunOutput, elapsed_ms: f64) -> Result<JsValue,
             "no tour could be generated (unexpected empty search)",
         )),
     }
+}
+
+fn run_other(
+    iterations: u32,
+    seed: u64,
+    num_threads: u32,
+    chunk_size: u32,
+    num_cities: u32,
+    start_index: u64,
+) -> Result<JsValue, JsValue> {
+    const FIB_UPPER_BOUND: usize = 501;
+
+    fn fibonacci(n: usize) -> usize {
+        let mut a = 0;
+        let mut b = 1;
+        for _ in 0..n {
+            let c = a + b;
+            a = b;
+            b = c;
+        }
+        a
+    }
+
+    fn h_l(a: &usize) -> impl IntoIterator<Item = usize> {
+        (0..7).map(move |x| fibonacci((x + a) % FIB_UPPER_BOUND))
+    }
+
+    fn l_l(a: &usize) -> impl IntoIterator<Item = usize> {
+        (0..7).map(move |x| 2 * x + a)
+    }
+
+    let len = 1_000_000;
+    let input: Vec<usize> = (0..len).map(|x| x % 150).collect();
+
+    let started_at = js_sys::Date::now();
+    let output: Vec<usize> = match num_cities {
+        42 => input
+            .par()
+            .num_threads(num_threads as usize)
+            .chunk_size(chunk_size as usize)
+            .flat_map(h_l)
+            .collect(),
+        _ => input
+            .par()
+            .num_threads(num_threads as usize)
+            .chunk_size(chunk_size as usize)
+            .flat_map(l_l)
+            .collect(),
+    };
+    let elapsed_ms = js_sys::Date::now() - started_at;
+
+    run_output_to_js(
+        SearchRunOutput {
+            best: Some(((0..num_cities as usize).collect(), 1.0)),
+            iterations: len,
+        },
+        elapsed_ms,
+    )
 }
