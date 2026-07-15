@@ -8,7 +8,7 @@ As far as I could observe the prior is faster than the latter. The goal is to ma
 
 ## Step 1
 
-To observe performance, we want to create examples/wasm_perf.rs example which will compare variants:
+To observe performance, we want to create examples/experimental/wasm_perf.rs example which will compare variants:
 
 1. rayon: rayon and wasm-bindgen-rayon (no orx-parallel)
 2. rayon-orx: orx-parallel, rayon-core and wasm-bindgen-rayon, as in wasm_demo_tsp
@@ -19,24 +19,24 @@ We would like to solve a similar TSP problem with all of them and compare their 
 
 ### Step 1 Implementation
 
-Implemented at `examples/wasm_perf/` as a browser benchmark example with shared TSP logic:
+Implemented at `examples/experimental/wasm_perf/` as a browser benchmark example with shared TSP logic:
 
-1. rayon: `examples/wasm_perf/crate_rayon`
-2. rayon-orx: `examples/wasm_perf/crate_rayon_orx`
-3. orx: `examples/wasm_perf/crate_orx`
-4. orx3: `examples/wasm_perf/crate_orx3`
+1. rayon: `examples/experimental/wasm_perf/crate_rayon`
+2. rayon-orx: `examples/experimental/wasm_perf/crate_rayon_orx`
+3. orx: `examples/experimental/wasm_perf/crate_orx`
+4. orx3: `examples/experimental/wasm_perf/crate_orx3`
 
 Shared algorithm/data source:
 
-- `examples/wasm_perf/tsp_core` (deterministic locations + same 2-opt search implementation)
+- `examples/experimental/wasm_perf/tsp_core` (deterministic locations + same 2-opt search implementation)
 
 Browser harness:
 
-- `examples/wasm_perf/web` (manual benchmark UI and structured output)
+- `examples/experimental/wasm_perf/web` (manual benchmark UI and structured output)
 
 ### Run 4-Variant Benchmark
 
-From `examples/wasm_perf/web`:
+From `examples/experimental/wasm_perf/web`:
 
 ```bash
 npm install

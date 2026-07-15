@@ -29,21 +29,21 @@ cargo install wasm-pack
 2. Install web dependencies:
 
 ```bash
-cd examples/wasm_perf/web
+cd examples/experimental/wasm_perf/web
 npm install
 ```
 
 3. Build all wasm packages and start the benchmark UI:
 
 ```bash
-cd examples/wasm_perf/web
+cd examples/experimental/wasm_perf/web
 npm run dev:full
 ```
 
 	Select benchmark variant from command line when starting the app:
 
 ```bash
-cd examples/wasm_perf/web
+cd examples/experimental/wasm_perf/web
 PAR_POOL_VARIANT=orx npm run dev:full
 
 # optional: fix thread count from environment (default: 4)
