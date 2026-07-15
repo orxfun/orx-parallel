@@ -33,14 +33,14 @@ cd examples/experimental/wasm_perf/web
 npm install
 ```
 
-3. Build all wasm packages and start the benchmark UI:
+3. Build the wasm packages and start the benchmark UI:
 
 ```bash
 cd examples/experimental/wasm_perf/web
 npm run dev:full
 ```
 
-	Select benchmark variant from command line when starting the app:
+	Select benchmark variant from the command line when starting the app:
 
 ```bash
 cd examples/experimental/wasm_perf/web
@@ -57,6 +57,8 @@ Supported values: `rayon`, `orx-rayon`, `orx`.
 The benchmark UI also exposes a "Number of threads" input. It starts with the same value as `PAR_NUM_THREADS`, but you can change it before running the benchmark. That input is used for `orx` and `orx-rayon`; `rayon` ignores it.
 
 `npm run preview` also rebuilds first, so `PAR_POOL_VARIANT=orx PAR_NUM_THREADS=8 npm run preview` will serve the selected variant and thread count.
+
+The web scripts expect local frontend dependencies to be installed with `npm install` in `examples/experimental/wasm_perf/web`.
 
 4. Open the shown URL and run benchmark with these Step 1 defaults:
 
