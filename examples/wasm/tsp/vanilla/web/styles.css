@@ -19,8 +19,34 @@ main {
   padding: 20px;
 }
 
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.hero-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  box-shadow: 0 10px 20px rgba(20, 33, 61, 0.12);
+  flex: 0 0 auto;
+}
+
 h1 {
   margin: 0 0 8px;
+}
+
+.hero-kicker {
+  margin: 0;
+  max-width: 60ch;
+  color: #51607a;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 p {
@@ -277,6 +303,11 @@ canvas {
 }
 
 @media (max-width: 760px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .intro-cards {
     grid-template-columns: 1fr;
   }
