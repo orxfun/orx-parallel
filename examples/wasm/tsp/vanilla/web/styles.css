@@ -52,6 +52,23 @@ p {
   line-height: 1.5;
 }
 
+.code-block {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow-x: auto;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.code-block code {
+  font-family: inherit;
+  white-space: pre;
+}
+
 .card {
   position: relative;
   background: var(--panel);

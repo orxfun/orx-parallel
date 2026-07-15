@@ -15,8 +15,22 @@
           <p>Randomly create tours and improve with two-opt <code>Iterations</code> times</p>
         </article>
         <article class="intro-card">
-          <h2>Frontend: Vanilla</h2>
-          <p>Run the same TSP workload sequentially or in parallel with a vanilla Vite + TypeScript UI.</p>
+          <h2>Frontend</h2>
+          <p>Vanilla Vite + TypeScript UI.</p>
+        </article>
+        <article class="intro-card">
+          <h2>Sequential Code</h2>
+          <pre class="code-block"><code>(0..iterations)
+    .into_par()
+    .chunk_size(chunk_size)
+    .num_threads(threads)
+    .map(|k| search_candidate(seed, k as u64, locations))
+    .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal))</code>
+</pre>
+        </article>
+        <article class="intro-card">
+          <h2>Frontend</h2>
+          <p>Vanilla Vite + TypeScript UI.</p>
         </article>
       </section>
 
