@@ -7,8 +7,9 @@
   --parallel: #59b300;
   --sequential: #808000;
   --reset: #ff531a;
-  --city-node: #0099cc;
+  --city-node: #ffcc00;
   --tour-line: #b3b3ff;
+  --code-block-bg: #0f172a;
 }
 
 body {
@@ -87,7 +88,7 @@ p {
   margin: 0;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #0f172a;
+  background: var(--code-block-bg);
   color: #e2e8f0;
   overflow-x: auto;
   font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
