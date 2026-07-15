@@ -27,6 +27,31 @@ p {
   margin: 0 0 16px;
 }
 
+.intro-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0 18px;
+}
+
+.intro-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 10px 20px rgba(20, 33, 61, 0.06);
+}
+
+.intro-card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.intro-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 .card {
   position: relative;
   background: var(--panel);
@@ -235,6 +260,10 @@ canvas {
 }
 
 @media (max-width: 760px) {
+  .intro-cards {
+    grid-template-columns: 1fr;
+  }
+
   .controls {
     grid-template-columns: 1fr;
   }
