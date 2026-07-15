@@ -6,7 +6,7 @@ import init, {
 } from "../pkg/orx_parallel_wasm_tsp_vanilla.js";
 
 type Location = { x: number; y: number };
-type SearchChunkResult = {
+type SearchResult = {
     best_tour: number[];
     best_distance: number;
     iterations: number;
@@ -30,12 +30,19 @@ type RunAggregate = {
     elapsed_ms: number;
 };
 
+const runBestTourPar = run_best_tour_par as unknown as (
+    iterations: number,
+    seed: bigint,
+    threads: number,
+    chunkSize: number,
+    numCities: number
+) => SearchResult;
+
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
 const MIN_THREADS = 1;
 const MAX_THREADS = 16;
 const DEFAULT_STARTUP_THREADS = 16;
-const ITERATION_CHUNK_SIZE = 1000;
 
 function mustElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
@@ -59,7 +66,6 @@ const ui = {
     runTitle: mustElement<HTMLParagraphElement>("runTitle"),
     runSubtitle: mustElement<HTMLParagraphElement>("runSubtitle"),
     runElapsed: mustElement<HTMLParagraphElement>("runElapsed"),
-    cancelRun: mustElement<HTMLButtonElement>("cancelRun"),
     bestDistance: mustElement<HTMLParagraphElement>("bestDistance"),
     elapsed: mustElement<HTMLParagraphElement>("elapsed"),
     ips: mustElement<HTMLParagraphElement>("ips"),
@@ -78,8 +84,7 @@ const state = {
     bestSoFar: null as RunAggregate | null,
     currentNumCities: 50,
     runTicker: undefined as number | undefined,
-    runStartedAtMs: 0,
-    cancelRequested: false
+    runStartedAtMs: 0
 };
 
 async function setupApp() {
@@ -99,6 +104,7 @@ async function setupApp() {
     state.currentNumCities = readNumCities();
     state.points = locations(state.currentNumCities) as Location[];
     drawPoints(state.points);
+    ui.chunkSize.value = String(readChunkSize());
 
     ui.runParallel.addEventListener("click", async () => {
         await runSearch("parallel");
@@ -130,12 +136,6 @@ async function setupApp() {
     ui.chunkSize.addEventListener("change", () => {
         const chunkSize = readChunkSize();
         ui.status.textContent = `Chunk size set to ${chunkSize}.`;
-    });
-
-    ui.cancelRun.addEventListener("click", () => {
-        state.cancelRequested = true;
-        ui.cancelRun.disabled = true;
-        ui.runSubtitle.textContent = "Cancelling... this takes effect after the current chunk finishes.";
     });
 }
 
@@ -208,51 +208,16 @@ async function runSearch(mode: SearchMode) {
             throw new Error("parallel runtime is not initialized");
         }
 
-        let remaining = settings.iterations;
-        let startIndex = 0;
-        let runElapsedMs = 0;
-        let runBest: SearchChunkResult | null = null;
+        const result = runSearchOnce(settings);
 
-        while (remaining > 0) {
-            if (state.cancelRequested) {
-                break;
-            }
-
-            const thisChunk = Math.min(remaining, ITERATION_CHUNK_SIZE);
-            const chunkResult = runSearchChunk(settings, thisChunk, startIndex);
-
-            runElapsedMs += chunkResult.elapsed_ms;
-            startIndex += thisChunk;
-            remaining -= thisChunk;
-
-            const isRunBest = !runBest || chunkResult.best_distance < runBest.best_distance;
-            if (isRunBest) {
-                runBest = chunkResult;
-            }
-
-            const currentRunBest = runBest ?? chunkResult;
-
-            if (!state.bestSoFar || currentRunBest.best_distance < state.bestSoFar.best_distance) {
-                state.bestSoFar = toAggregate(currentRunBest, startIndex, runElapsedMs);
-                drawTour(state.points, state.bestSoFar.best_tour);
-            }
-
-            ui.runSubtitle.textContent = `Processed ${startIndex.toLocaleString()} / ${settings.iterations.toLocaleString()} iterations...`;
-            await nextPaint();
+        if (!state.bestSoFar || result.best_distance < state.bestSoFar.best_distance) {
+            state.bestSoFar = toAggregate(result);
+            drawTour(state.points, state.bestSoFar.best_tour);
         }
 
-        if (runBest) {
-            const summary = toAggregate(runBest, startIndex, runElapsedMs);
-            updateStats(summary);
-        }
-
-        if (state.cancelRequested) {
-            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run cancelled after ${startIndex.toLocaleString()} iterations.`;
-        } else if (runBest && state.bestSoFar && runBest.best_distance <= state.bestSoFar.best_distance) {
-            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
-        } else {
-            ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed; best tour unchanged.`;
-        }
+        updateStats(toAggregate(result));
+        ui.runSubtitle.textContent = `Processed ${settings.iterations.toLocaleString()} iterations in one call.`;
+        ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
     } catch (err) {
         ui.status.textContent = `Error: ${String(err)}`;
     } finally {
@@ -261,43 +226,35 @@ async function runSearch(mode: SearchMode) {
     }
 }
 
-function runSearchChunk(settings: RunSettings, chunkIterations: number, startIndex: number): SearchChunkResult {
+function runSearchOnce(settings: RunSettings): SearchResult {
     if (settings.mode === "parallel") {
-        return run_best_tour_par(
-            chunkIterations,
+        return runBestTourPar(
+            settings.iterations,
             settings.seed,
             settings.threads,
             settings.chunkSize,
-            settings.numCities,
-            BigInt(startIndex)
-        ) as SearchChunkResult;
+            settings.numCities
+        );
+    } else {
+        return run_best_tour_seq(settings.iterations, settings.seed, settings.numCities, 0n) as SearchResult;
     }
-
-    return run_best_tour_seq(
-        chunkIterations,
-        settings.seed,
-        settings.numCities,
-        BigInt(startIndex)
-    ) as SearchChunkResult;
 }
 
-function toAggregate(best: SearchChunkResult, iterations: number, elapsedMs: number): RunAggregate {
+function toAggregate(best: SearchResult): RunAggregate {
     return {
         best_tour: best.best_tour,
         best_distance: best.best_distance,
-        iterations,
-        elapsed_ms: elapsedMs
+        iterations: best.iterations,
+        elapsed_ms: best.elapsed_ms
     };
 }
 
 function setRunningView(mode: SearchMode, running: boolean) {
     if (running) {
-        state.cancelRequested = false;
         state.runStartedAtMs = performance.now();
         ui.runTitle.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
-        ui.runSubtitle.textContent = "Evaluating tours with 2-opt local search. Larger instances can take several minutes.";
+        ui.runSubtitle.textContent = "Evaluating tours with 2-opt local search. Larger instances can take longer.";
         ui.runElapsed.textContent = "Elapsed: 0.0s";
-        ui.cancelRun.disabled = false;
         ui.runOverlay.classList.add("active");
         ui.runOverlay.setAttribute("aria-hidden", "false");
 
@@ -317,7 +274,6 @@ function setRunningView(mode: SearchMode, running: boolean) {
         state.runTicker = undefined;
     }
 
-    ui.cancelRun.disabled = true;
     ui.runOverlay.classList.remove("active");
     ui.runOverlay.setAttribute("aria-hidden", "true");
 }
@@ -352,11 +308,11 @@ function readThreads() {
     const parsed = ui.threads.valueAsNumber;
 
     if (!Number.isFinite(parsed)) {
-        ui.threads.value = "0";
-        return 0;
+        ui.threads.value = String(MIN_THREADS);
+        return MIN_THREADS;
     }
 
-    const threads = Math.max(0, Math.trunc(parsed));
+    const threads = Math.max(MIN_THREADS, Math.min(MAX_THREADS, Math.trunc(parsed)));
     ui.threads.value = String(threads);
     return threads;
 }

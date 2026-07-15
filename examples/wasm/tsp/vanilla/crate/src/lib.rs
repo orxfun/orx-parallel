@@ -42,7 +42,6 @@ pub fn run_best_tour_par(
     threads: u32,
     chunk_size: u32,
     num_cities: u32,
-    start_index: u64,
 ) -> Result<JsValue, JsValue> {
     let iterations = iterations.max(1) as usize;
     let threads = threads as usize;
@@ -50,14 +49,8 @@ pub fn run_best_tour_par(
     let num_cities = locations::clamp_num_cities(num_cities);
     let locations = locations::locations(num_cities as u32);
     let started_at = js_sys::Date::now();
-    let output = computation::run_search_parallel(
-        iterations,
-        seed,
-        threads,
-        chunk_size,
-        &locations,
-        start_index,
-    );
+    let output =
+        computation::run_search_parallel(iterations, seed, threads, chunk_size, &locations);
     let elapsed_ms = js_sys::Date::now() - started_at;
     run_output_to_js(output, elapsed_ms)
 }
@@ -70,16 +63,8 @@ pub fn run_best_tour_par(
     threads: u32,
     chunk_size: u32,
     num_cities: u32,
-    start_index: u64,
 ) -> Result<JsValue, JsValue> {
-    let _ = (
-        iterations,
-        seed,
-        threads,
-        chunk_size,
-        num_cities,
-        start_index,
-    );
+    let _ = (iterations, seed, threads, chunk_size, num_cities);
     Err(JsValue::from_str(
         "run_best_tour_par requires wasm32 + atomics build",
     ))

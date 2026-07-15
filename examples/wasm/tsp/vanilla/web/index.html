@@ -20,9 +20,6 @@
             </div>
             <p id="runSubtitle" class="run-subtitle">Working through candidate tours. Larger runs can take a while.</p>
             <p id="runElapsed" class="run-elapsed">Elapsed: 0.0s</p>
-            <div class="run-actions">
-              <button id="cancelRun" class="cancel" type="button">Cancel Run</button>
-            </div>
             <div class="run-bar" aria-hidden="true"></div>
           </div>
         </div>
@@ -36,7 +33,7 @@
           </label>
           <label>
             Threads (1..16)
-            <input id="threads" type="number" min="0" max="16" value="0" />
+            <input id="threads" type="number" min="1" max="16" value="4" />
           </label>
           <label>
             Chunk size

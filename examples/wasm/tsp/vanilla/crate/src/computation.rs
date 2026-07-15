@@ -28,13 +28,12 @@ pub fn run_search_parallel(
     threads: usize,
     chunk_size: usize,
     locations: &[Location],
-    start_index: u64,
 ) -> SearchRunOutput {
     let best = (0..iterations)
         .into_par()
         .chunk_size(chunk_size)
         .num_threads(threads)
-        .map(|k| search_candidate(seed, start_index.wrapping_add(k as u64), locations))
+        .map(|k| search_candidate(seed, k as u64, locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
     SearchRunOutput { best, iterations }
