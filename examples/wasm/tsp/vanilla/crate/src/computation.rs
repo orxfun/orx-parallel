@@ -13,10 +13,9 @@ pub fn run_search_sequential(
     iterations: usize,
     seed: u64,
     locations: &[Location],
-    start_index: u64,
 ) -> SearchRunOutput {
     let best = (0..iterations)
-        .map(|k| search_candidate(seed, locations))
+        .map(|_| search_candidate(seed, locations))
         .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
 
     SearchRunOutput { best, iterations }
