@@ -109,6 +109,29 @@ p {
   padding: 16px;
 }
 
+.status-card {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  margin-bottom: 16px;
+  padding: 0;
+  padding-top: 10px;
+  padding-left: 10px;
+}
+
+.status-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
 .run-overlay {
   position: absolute;
   inset: 16px;
