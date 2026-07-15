@@ -45,8 +45,8 @@ pub fn run_best_tour_par(
     start_index: u64,
 ) -> Result<JsValue, JsValue> {
     let iterations = iterations.max(1) as usize;
-    let threads = threads.max(1) as usize;
-    let chunk_size = chunk_size.max(1) as usize;
+    let threads = threads as usize;
+    let chunk_size = chunk_size as usize;
     let num_cities = locations::clamp_num_cities(num_cities);
     let locations = locations::locations(num_cities as u32);
     let started_at = js_sys::Date::now();
