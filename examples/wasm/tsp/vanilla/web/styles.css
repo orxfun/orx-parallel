@@ -4,6 +4,11 @@
   --panel: #ffffff;
   --accent: #0f766e;
   --accent2: #f59e0b;
+  --parallel: #59b300;
+  --sequential: #808000;
+  --reset: #ff531a;
+  --city-node: #0099cc;
+  --tour-line: #b3b3ff;
 }
 
 body {
@@ -246,14 +251,21 @@ button {
   border: 0;
   border-radius: 12px;
   padding: 10px 12px;
-  background: linear-gradient(90deg, var(--accent), #0ea5a1);
   color: #fff;
   font-weight: 600;
   cursor: pointer;
 }
 
-button.secondary {
-  background: linear-gradient(90deg, #2563eb, #4f46e5);
+#runParallel {
+  background: var(--parallel);
+}
+
+#runSequential {
+  background: var(--sequential)
+}
+
+#reset {
+  background: var(--reset);
 }
 
 button.ghost {

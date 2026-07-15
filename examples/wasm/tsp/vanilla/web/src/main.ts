@@ -43,6 +43,8 @@ const MAX_CITIES = 200;
 const MIN_THREADS = 1;
 const MAX_THREADS = 16;
 const DEFAULT_STARTUP_THREADS = 16;
+const CITY_NODE_COLOR = "#f59e0b";
+const TOUR_LINE_COLOR = "#1d4ed8";
 
 function mustElement<T extends HTMLElement>(id: string): T {
     const el = document.getElementById(id);
@@ -350,7 +352,7 @@ function drawPoints(locations: Location[]) {
 
     for (const p of mapped) {
         ctx.beginPath();
-        ctx.fillStyle = "#0f766e";
+        ctx.fillStyle = CITY_NODE_COLOR;
         ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
         ctx.fill();
     }
@@ -364,7 +366,7 @@ function drawTour(locations: Location[], tour: number[]) {
 
     const mapped = mapPoints(locations);
     ctx.beginPath();
-    ctx.strokeStyle = "#f59e0b";
+    ctx.strokeStyle = TOUR_LINE_COLOR;
     ctx.lineWidth = 2;
 
     const first = mapped[tour[0]];
