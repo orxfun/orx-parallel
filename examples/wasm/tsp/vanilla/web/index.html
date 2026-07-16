@@ -34,8 +34,8 @@
             <details class="code-help">
               <summary class="code-help-trigger" aria-label="Show sequential code explanation">?</summary>
               <div class="code-help-popover" role="note">
-                <h2>Breakdown of operations</h2>
-                <pre class="code-block"><code>// random-number-generator to construct initial random tours
+                <h2 style="padding-left: 10px;">Sequential Code Breakdown</h2>
+                <pre class="code-block"><code class="language-rust">// random-number-generator to construct initial random tours
 let mut rng = SmallRng::seed_from_u64(seed);
 
 // we will construct & improve `iterations` tours
@@ -49,7 +49,7 @@ let mut rng = SmallRng::seed_from_u64(seed);
               </div>
             </details>
           </div>
-          <pre class="code-block"><code>let mut rng = SmallRng::seed_from_u64(seed);
+            <pre class="code-block"><code class="language-rust">let mut rng = SmallRng::seed_from_u64(seed);
 (0..iterations)
     .map(|_| create_tour(&mut rng, locations))
     .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
@@ -60,8 +60,8 @@ let mut rng = SmallRng::seed_from_u64(seed);
             <details class="code-help">
               <summary class="code-help-trigger" aria-label="Show parallel code explanation">?</summary>
               <div class="code-help-popover" role="note">
-                <h2>Breakdown of operations</h2>
-                <pre class="code-block"><code>// we will construct & improve `iterations` tours
+                <h2 style="padding-left: 10px;">Parallel Code Breakdown</h2>
+                <pre class="code-block"><code class="language-rust">// we will construct & improve `iterations` tours
 (0..iterations)
 
     // convert the iterator into parallel iterator
@@ -79,7 +79,7 @@ let mut rng = SmallRng::seed_from_u64(seed);
               </div>
             </details>
           </div>
-          <pre class="code-block"><code>(0..iterations)
+              <pre class="code-block"><code class="language-rust">(0..iterations)
     .into_par()
     .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))
     .map(|rng, _| create_tour(rng, locations))

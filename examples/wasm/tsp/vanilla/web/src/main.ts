@@ -4,6 +4,11 @@ import init, {
     run_best_tour_par,
     run_best_tour_seq
 } from "../pkg/orx_parallel_wasm_tsp_vanilla.js";
+import hljs from "highlight.js/lib/core";
+import rust from "highlight.js/lib/languages/rust";
+import "highlight.js/styles/github-dark.css";
+
+hljs.registerLanguage("rust", rust);
 
 type Location = { x: number; y: number };
 type SearchResult = {
@@ -111,6 +116,7 @@ async function setupApp() {
     state.points = generatePoints(readSeed(), state.currentNumCities);
     drawPoints(state.points);
     ui.chunkSize.value = String(readChunkSize());
+    highlightCodeBlocks();
 
     ui.runParallel.addEventListener("click", async () => {
         await runSearch("parallel");
@@ -170,6 +176,13 @@ function readStartupThreadsFromEnv() {
 
 function readEnvValue(key: string) {
     return (import.meta.env as Record<string, string | undefined>)[key];
+}
+
+function highlightCodeBlocks() {
+    document.querySelectorAll<HTMLPreElement>(".code-block code").forEach((block) => {
+        block.classList.add("language-rust");
+        hljs.highlightElement(block);
+    });
 }
 
 function readSeed() {
