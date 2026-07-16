@@ -1,7 +1,12 @@
 :root {
   --bg: #f6f7fb;
+  --bg-strong: #eef2ff;
   --ink: #14213d;
+  --muted: #51607a;
   --panel: #ffffff;
+  --panel-2: #f8fbff;
+  --panel-border: #dbe3ef;
+  --panel-shadow: rgba(20, 33, 61, 0.08);
   --accent: #0f766e;
   --accent2: #f59e0b;
   --parallel: #009900;
@@ -10,11 +15,57 @@
   --city-node: #ffff00;
   --tour-line: #ffcc00;
   --code-block-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-text: #0f172a;
+  --button-text: #ffffff;
+  --button-secondary-bg: #f3f4f6;
+  --button-secondary-text: #1f2937;
+  --status-bg: rgba(255, 255, 255, 0.88);
+  --status-text: #0f172a;
+  --overlay-bg: rgba(15, 23, 42, 0.52);
+  --overlay-card-bg: #ffffff;
+  --overlay-card-text: #0f172a;
+  --stats-bg: #f9fafb;
+  --stats-border: #e5e7eb;
+  --canvas-bg: #ffffff;
+  --toggle-bg: linear-gradient(180deg, #ffffff 0%, #edf7f5 100%);
+  --toggle-text: var(--accent);
+}
+
+:root[data-theme="dark"] {
+  --bg: #08101f;
+  --bg-strong: #0f172a;
+  --ink: #e2e8f0;
+  --muted: #94a3b8;
+  --panel: #111b2e;
+  --panel-2: #0f1a2e;
+  --panel-border: rgba(148, 163, 184, 0.18);
+  --panel-shadow: rgba(0, 0, 0, 0.36);
+  --code-block-bg: #020617;
+  --code-text: #dbeafe;
+  --input-bg: #0b1324;
+  --input-border: #334155;
+  --input-text: #e2e8f0;
+  --button-text: #f8fafc;
+  --button-secondary-bg: #1e293b;
+  --button-secondary-text: #e2e8f0;
+  --status-bg: rgba(15, 23, 42, 0.78);
+  --status-text: #e2e8f0;
+  --overlay-bg: rgba(2, 6, 23, 0.68);
+  --overlay-card-bg: #111b2e;
+  --overlay-card-text: #e2e8f0;
+  --stats-bg: #0f172a;
+  --stats-border: #1f2937;
+  --canvas-bg: #0b1324;
+  --toggle-bg: linear-gradient(180deg, #18233a 0%, #0f172a 100%);
+  --toggle-text: #dbeafe;
 }
 
 body {
   margin: 0;
-  background: radial-gradient(circle at 20% 0%, #eef2ff 0, var(--bg) 55%);
+  background: radial-gradient(circle at 20% 0%, var(--bg-strong) 0, var(--bg) 55%);
   color: var(--ink);
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
@@ -30,6 +81,11 @@ main {
   align-items: center;
   gap: 16px;
   margin-bottom: 18px;
+  justify-content: space-between;
+}
+
+.hero-copy {
+  flex: 1 1 auto;
 }
 
 .hero-logo {
@@ -50,9 +106,26 @@ h1 {
 .hero-kicker {
   margin: 0;
   max-width: 100ch;
-  color: #51607a;
+  color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.theme-toggle {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 110px;
+  padding: 10px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--toggle-bg);
+  color: var(--toggle-text);
+  font-weight: 700;
+  box-shadow: 0 8px 16px var(--panel-shadow);
+}
+
+.theme-toggle:hover {
+  filter: brightness(1.04);
 }
 
 p {
@@ -67,11 +140,10 @@ p {
 }
 
 .intro-card {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--panel-border);
   border-radius: 16px;
   padding: 16px 18px;
-  box-shadow: 0 10px 20px rgba(20, 33, 61, 0.06);
+  box-shadow: 0 10px 20px var(--panel-shadow);
 }
 
 .intro-card h2 {
@@ -112,7 +184,6 @@ p {
   justify-content: center;
   border: 1px solid rgba(15, 118, 110, 0.22);
   border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff 0%, #edf7f5 100%);
   color: var(--accent);
   font-size: 14px;
   font-weight: 800;
@@ -144,10 +215,10 @@ p {
   z-index: 10;
   display: none;
   padding: 10px 12px;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--panel-border);
   border-radius: 12px;
-  background: #ffffff;
-  color: #334155;
+  background: var(--panel);
+  color: var(--ink);
   font-size: 13px;
   line-height: 1.5;
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.14);
@@ -160,9 +231,9 @@ p {
   right: 10px;
   width: 10px;
   height: 10px;
-  background: #ffffff;
-  border-left: 1px solid #dbe3ef;
-  border-top: 1px solid #dbe3ef;
+  background: var(--panel);
+  border-left: 1px solid var(--panel-border);
+  border-top: 1px solid var(--panel-border);
   transform: rotate(45deg);
 }
 
@@ -180,7 +251,7 @@ p {
   padding: 14px 16px;
   border-radius: 12px;
   background: var(--code-block-bg);
-  color: #e2e8f0;
+  color: var(--code-text);
   overflow-x: auto;
   font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 13px;
@@ -194,7 +265,7 @@ p {
 
 .code-block code.hljs {
   background: transparent;
-  color: #e2e8f0;
+  color: var(--code-text);
   padding: 0;
 }
 
@@ -202,7 +273,7 @@ p {
   position: relative;
   background: var(--panel);
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(20, 33, 61, 0.08);
+  box-shadow: 0 8px 24px var(--panel-shadow);
   padding: 16px;
   margin-bottom: 15px;
 }
@@ -221,12 +292,11 @@ p {
   min-width: 0;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.88);
-  color: #0f172a;
+  background: var(--status-bg);
+  color: var(--status-text);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .run-overlay {
@@ -236,7 +306,7 @@ p {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.52);
+  background: var(--overlay-bg);
   backdrop-filter: blur(2px);
   z-index: 5;
 }
@@ -248,8 +318,8 @@ p {
 .run-overlay-card {
   min-width: 260px;
   max-width: 460px;
-  background: #ffffff;
-  border: 1px solid #dbe3ef;
+  background: var(--overlay-card-bg);
+  border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 14px 16px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
@@ -313,20 +383,20 @@ p {
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--overlay-card-text);
 }
 
 .run-subtitle {
   margin: 0;
   font-size: 13px;
-  color: #334155;
+  color: var(--muted);
 }
 
 .run-elapsed {
   margin: 8px 0 0;
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: var(--muted);
 }
 
 .run-actions {
@@ -344,7 +414,7 @@ button.cancel {
   width: 100%;
   height: 6px;
   border-radius: 999px;
-  background: #e2e8f0;
+  background: rgba(148, 163, 184, 0.26);
   overflow: hidden;
 }
 
@@ -408,11 +478,7 @@ button.cancel {
   display: grid;
   gap: 7px;
   padding: 0px 12px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-  box-shadow:
-    0 10px 22px rgba(20, 33, 61, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  color: #475569;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
@@ -429,12 +495,12 @@ button.cancel {
 }
 
 input {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   border-radius: 12px;
   padding: 9px 11px;
   font-size: 14px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--input-bg);
+  color: var(--input-text);
   width: 100%;
   box-sizing: border-box;
   transition:
@@ -444,7 +510,7 @@ input {
 }
 
 .controls input:hover {
-  border-color: #aebed2;
+  border-color: color-mix(in srgb, var(--input-border) 75%, var(--accent));
   box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
 }
 
@@ -470,7 +536,7 @@ button {
   border: 0;
   border-radius: 12px;
   padding: 11px 15px;
-  color: #fff;
+  color: var(--button-text);
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 8px 16px rgba(20, 33, 61, 0.12);
@@ -523,9 +589,9 @@ button:active::after {
 }
 
 button.ghost {
-  background: #f3f4f6;
-  color: #1f2937;
-  border: 1px solid #d1d5db;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: 1px solid var(--panel-border);
 }
 
 #status {
@@ -541,8 +607,8 @@ button.ghost {
 }
 
 .stat {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--stats-bg);
+  border: 1px solid var(--stats-border);
   border-radius: 10px;
   padding: 8px;
 }
@@ -550,21 +616,22 @@ button.ghost {
 .stat h3 {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--muted);
 }
 
 .stat p {
   margin: 4px 0 0;
   font-size: 16px;
   font-weight: 600;
+  color: var(--ink);
 }
 
 canvas {
   width: 100%;
   height: 430px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--panel-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--canvas-bg);
 }
 
 @media (max-width: 760px) {
