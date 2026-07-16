@@ -1,7 +1,6 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-#[cfg(all(target_arch = "wasm32", target_feature = "atomics"))]
 mod computation;
 mod locations;
 
@@ -97,10 +96,10 @@ fn run_output_to_js(
     elapsed_ms: f64,
 ) -> Result<JsValue, JsValue> {
     match output.best {
-        Some((best_tour, best_distance)) => {
+        Some(solution) => {
             let result = RunResult {
-                best_tour,
-                best_distance,
+                best_tour: solution.tour,
+                best_distance: solution.distance,
                 iterations: output.iterations,
                 elapsed_ms,
             };

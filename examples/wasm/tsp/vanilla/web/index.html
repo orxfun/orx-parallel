@@ -15,8 +15,8 @@
           alt="orx logo"
         />
         <div>
-          <h1>Parallel computation in WASM using orx-parallel</h1>
-          <p class="hero-kicker">A vanilla TSP demo with shared-memory wasm threads.</p>
+          <h1>Parallel computation in WASM</h1>
+          <p class="hero-kicker">A vanilla TSP demo with shared-memory wasm threads using orx-parallel.</p>
         </div>
       </header>
       <section class="intro-cards" aria-label="Example overview">
@@ -32,16 +32,14 @@
           <h2>Sequential Code</h2>
           <pre class="code-block"><code>(0..iterations)
     .map(|k| search_candidate(seed, locations))
-    .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal))</code></pre>
+    .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
         </article>
         <article class="intro-card">
           <h2>Parallel Code</h2>
           <pre class="code-block"><code>(0..iterations)
-    .into_par()
-    .chunk_size(chunk_size)
-    .num_threads(threads)
+    .into_par().chunk_size(chunk_size).num_threads(threads)
     .map(|k| search_candidate(seed, locations))
-    .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal))</code></pre>
+    .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
         </article>
       </section>
 

@@ -4,9 +4,9 @@
   --panel: #ffffff;
   --accent: #0f766e;
   --accent2: #f59e0b;
-  --parallel: #59b300;
-  --sequential: #808000;
-  --reset: #ff531a;
+  --parallel: #208000;
+  --sequential: #999966;
+  --reset: #ccccff;
   --city-node: #ffff00;
   --tour-line: #ffcc00;
   --code-block-bg: #0f172a;
@@ -49,7 +49,7 @@ h1 {
 
 .hero-kicker {
   margin: 0;
-  max-width: 60ch;
+  max-width: 100ch;
   color: #51607a;
   font-size: 14px;
   line-height: 1.5;
