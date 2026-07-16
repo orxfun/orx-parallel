@@ -5,7 +5,7 @@
   --accent: #0f766e;
   --accent2: #f59e0b;
   --parallel: #00b300;
-  --sequential: #805500;
+  --sequential: #666633;
   --reset: #e60000;
   --city-node: #ffff00;
   --tour-line: #ffcc00;
@@ -107,13 +107,13 @@ p {
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(20, 33, 61, 0.08);
   padding: 16px;
+  margin-bottom: 15px;
 }
 
 .status-card {
   display: flex;
   align-items: center;
   border: 1px solid rgba(15, 118, 110, 0.18);
-  margin-bottom: 16px;
   padding: 0;
   padding-top: 10px;
   padding-left: 10px;
@@ -244,45 +244,48 @@ button.cancel {
 }
 
 .control-panel {
-    display: grid;
-    grid-template-columns: auto 150px;
-    gap: 25px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  gap: 16px;
+  align-items: start;
 }
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 2px;
-  margin-bottom: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  gap: 12px;
 }
 
 .controls label {
   display: grid;
-  gap: 0;
-  padding: 6px 12px;
-  border: 1px solid #dbe3ef;
-  max-height: 60px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  box-shadow: 0 8px 18px rgba(20, 33, 61, 0.05);
-  color: #334155;
+  gap: 7px;
+  padding: 0px 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  box-shadow:
+    0 10px 22px rgba(20, 33, 61, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #475569;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  align-self: start;
 }
 
 input {
   border: 1px solid #d1d5db;
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 12px;
+  padding: 9px 11px;
   font-size: 14px;
   background: #fff;
   color: #0f172a;
@@ -295,13 +298,16 @@ input {
 }
 
 .controls input:hover {
-  border-color: #b6c3d7;
+  border-color: #aebed2;
+  box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
 }
 
 .controls input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+  box-shadow:
+    0 0 0 3px rgba(15, 118, 110, 0.16),
+    0 4px 14px rgba(15, 118, 110, 0.08);
 }
 
 .controls input:focus-visible {
@@ -316,10 +322,10 @@ button {
   position: relative;
   overflow: hidden;
   border: 0;
-  border-radius: 6px;
-  padding: 10px 15px;
+  border-radius: 12px;
+  padding: 11px 15px;
   color: #fff;
-  font-weight: 100;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 8px 16px rgba(20, 33, 61, 0.12);
   transition:
@@ -379,7 +385,6 @@ button.ghost {
 #status {
   font-size: 14px;
   min-height: 20px;
-  margin-bottom: 10px;
 }
 
 .stats {
