@@ -4,9 +4,9 @@
   --panel: #ffffff;
   --accent: #0f766e;
   --accent2: #f59e0b;
-  --parallel: #208000;
-  --sequential: #999966;
-  --reset: #ccccff;
+  --parallel: #00b300;
+  --sequential: #805500;
+  --reset: #e60000;
   --city-node: #ffff00;
   --tour-line: #ffcc00;
   --code-block-bg: #0f172a;
@@ -272,12 +272,48 @@ input {
 }
 
 button {
+  position: relative;
+  overflow: hidden;
   border: 0;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 6px;
+  padding: 10px 15px;
   color: #fff;
-  font-weight: 600;
+  font-weight: 100;
   cursor: pointer;
+  box-shadow: 0 8px 16px rgba(20, 33, 61, 0.12);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease;
+  will-change: transform;
+}
+
+button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 68%);
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+button:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 4px 10px rgba(20, 33, 61, 0.14);
+}
+
+button:active::after {
+  opacity: 1;
+  transform: scale(1.12);
 }
 
 #runParallel {
@@ -354,5 +390,18 @@ canvas {
 
   .stats {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  button::after {
+    transition: none;
+  }
+
+  button:hover,
+  button:active {
+    transform: none;
+    filter: none;
   }
 }
