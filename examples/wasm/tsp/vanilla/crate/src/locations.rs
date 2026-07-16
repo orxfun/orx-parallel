@@ -1,3 +1,5 @@
+use rand::prelude::*;
+use rand::rngs::SmallRng;
 use serde::Serialize;
 
 const MIN_CITIES: usize = 5;
@@ -31,33 +33,18 @@ impl Location {
     }
 }
 
-pub fn locations(num_cities: u32) -> Vec<Location> {
+pub fn locations(seed: u64, num_cities: u32) -> Vec<Location> {
     let num_cities = clamp_num_cities(num_cities);
-    (0..num_cities).map(location_for).collect()
+    let mut rng = SmallRng::seed_from_u64(seed);
+
+    (0..num_cities)
+        .map(|_| Location {
+            x: rng.random_range(-50.0..50.0),
+            y: rng.random_range(-50.0..50.0),
+        })
+        .collect()
 }
 
 pub(crate) fn clamp_num_cities(num_cities: u32) -> usize {
     (num_cities as usize).clamp(MIN_CITIES, MAX_CITIES)
-}
-
-fn location_for(idx: usize) -> Location {
-    let sx = split_mix_64((idx as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
-    let sy = split_mix_64((idx as u64).wrapping_mul(0xD1B5_4A32_D192_ED03));
-
-    let x = 100.0 * to_unit_f64(sx) - 50.0;
-    let y = 100.0 * to_unit_f64(sy) - 50.0;
-    Location { x, y }
-}
-
-fn split_mix_64(mut x: u64) -> u64 {
-    x = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
-    let mut z = x;
-    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-    z ^ (z >> 31)
-}
-
-fn to_unit_f64(x: u64) -> f64 {
-    let v = x >> 11;
-    (v as f64) * (1.0 / ((1u64 << 53) as f64))
 }
