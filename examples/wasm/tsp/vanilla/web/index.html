@@ -30,15 +30,17 @@
         </article>
         <article class="intro-card">
           <h2>Sequential Code</h2>
-          <pre class="code-block"><code>(0..iterations)
-    .map(|k| search_candidate(seed, locations))
+          <pre class="code-block"><code>let mut rng = SmallRng::seed_from_u64(seed);
+(0..iterations)
+    .map(|_| create_tour(&mut rng, locations))
     .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
         </article>
         <article class="intro-card">
           <h2>Parallel Code</h2>
           <pre class="code-block"><code>(0..iterations)
-    .into_par().chunk_size(chunk_size).num_threads(threads)
-    .map(|k| search_candidate(seed, locations))
+    .into_par()
+    .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))
+    .map(|rng, _| create_tour(rng, locations))
     .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
         </article>
       </section>

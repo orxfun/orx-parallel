@@ -19,8 +19,9 @@ pub fn run_search_sequential(
     seed: u64,
     locations: &[Location],
 ) -> SearchRunOutput {
+    let mut rng = SmallRng::seed_from_u64(seed);
     let best = (0..iterations)
-        .map(|_| search_candidate(seed, locations))
+        .map(|_| create_tour(&mut rng, locations))
         .min_by_key(|x| OrderedFloat::from(x.distance));
 
     SearchRunOutput { best, iterations }
@@ -37,26 +38,23 @@ pub fn run_search_parallel(
         .into_par()
         .chunk_size(chunk_size)
         .num_threads(threads)
-        .map(|_| search_candidate(seed, locations))
-        .min_by_key(|x| OrderedFloat::from(x.distance));
+        .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))
+        .map(|rng, _| create_tour(rng, locations))
+        .min_by_key(|_, x| OrderedFloat::from(x.distance));
 
     SearchRunOutput { best, iterations }
 }
 
-fn search_candidate(seed: u64, locations: &[Location]) -> Solution {
-    let tour = random_tour(
-        seed ^ 42u64.wrapping_mul(0x9E37_79B9_7F4A_7C15),
-        locations.len(),
-    );
+fn create_tour(rng: &mut impl Rng, locations: &[Location]) -> Solution {
+    let tour = random_tour(rng, locations.len());
     let tour = two_opt_improve(locations, tour);
     let distance = Location::tour_distance(locations, &tour);
     Solution { tour, distance }
 }
 
-fn random_tour(seed: u64, num_cities: usize) -> Vec<usize> {
+fn random_tour(rng: &mut impl Rng, num_cities: usize) -> Vec<usize> {
     let mut tour: Vec<usize> = (0..num_cities).collect();
-    let mut rng = SmallRng::seed_from_u64(seed);
-    tour.shuffle(&mut rng);
+    tour.shuffle(rng);
     tour
 }
 
