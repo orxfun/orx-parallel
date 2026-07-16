@@ -18,7 +18,7 @@ rand = { version = "0.9", default-features = false, features = [
     "std",
     "small_rng",
 ] }
-ordered-float = { version = "5.3.0", registry = "artifactory" }
+ordered-float = { version = "5.3.0" }
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
