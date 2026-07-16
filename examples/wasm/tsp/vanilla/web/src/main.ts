@@ -1,8 +1,5 @@
 import init, {
-    init_parallel_runtime,
     locations,
-    run_best_tour_par,
-    run_best_tour_seq
 } from "../pkg/orx_parallel_wasm_tsp_vanilla.js";
 import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
@@ -35,19 +32,10 @@ type RunAggregate = {
     elapsed_ms: number;
 };
 
-const runBestTourPar = run_best_tour_par as unknown as (
-    iterations: number,
-    seed: bigint,
-    threads: number,
-    chunkSize: number,
-    numCities: number
-) => SearchResult;
-
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
 const MIN_THREADS = 1;
 const MAX_THREADS = 16;
-const DEFAULT_STARTUP_THREADS = 16;
 const CITY_NODE_COLOR = readCssColor("--city-node", "#f59e0b");
 const TOUR_LINE_COLOR = readCssColor("--tour-line", "#1d4ed8");
 const CANVAS_BACKGROUND_COLOR = readCssColor("--code-block-bg", "#0f172a");
@@ -92,7 +80,6 @@ const ctx = maybeCtx;
 
 const state = {
     points: [] as Location[],
-    threadPoolReady: false,
     bestSoFar: null as RunAggregate | null,
     currentNumCities: 50,
     runStartedAtMs: 0
@@ -101,22 +88,12 @@ const state = {
 async function setupApp() {
     await init();
 
-    const startupThreads = readStartupThreadsFromEnv();
-
-    try {
-        await init_parallel_runtime(startupThreads);
-        state.threadPoolReady = true;
-        ui.status.textContent = `Ready. Parallel runtime initialized with ${startupThreads} threads.`;
-    } catch (err) {
-        state.threadPoolReady = false;
-        ui.status.textContent = `Parallel runtime init failed: ${String(err)}. Sequential mode remains available.`;
-    }
-
     state.currentNumCities = readNumCities();
     state.points = generatePoints(readSeed(), state.currentNumCities);
     drawPoints(state.points);
     ui.chunkSize.value = String(readChunkSize());
     highlightCodeBlocks();
+    ui.status.textContent = "Ready. Searches run in a worker so the page stays responsive.";
 
     ui.runParallel.addEventListener("click", async () => {
         await runSearch("parallel");
@@ -158,24 +135,6 @@ async function setupApp() {
         const chunkSize = readChunkSize();
         ui.status.textContent = `Chunk size set to ${chunkSize}.`;
     });
-}
-
-function readStartupThreadsFromEnv() {
-    const raw = readEnvValue("ORX_PARALLEL_MAX_NUM_THREADS");
-    if (!raw) {
-        return DEFAULT_STARTUP_THREADS;
-    }
-
-    const parsed = Number.parseInt(raw.trim(), 10);
-    if (!Number.isFinite(parsed)) {
-        return DEFAULT_STARTUP_THREADS;
-    }
-
-    return Math.max(MIN_THREADS, Math.min(MAX_THREADS, Math.trunc(parsed)));
-}
-
-function readEnvValue(key: string) {
-    return (import.meta.env as Record<string, string | undefined>)[key];
 }
 
 function highlightCodeBlocks() {
@@ -240,11 +199,7 @@ async function runSearch(mode: SearchMode) {
     ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
 
     try {
-        if (settings.mode === "parallel" && !state.threadPoolReady) {
-            throw new Error("parallel runtime is not initialized");
-        }
-
-        const result = runSearchOnce(settings);
+        const result = await runSearchOnce(settings);
 
         if (!state.bestSoFar || result.best_distance < state.bestSoFar.best_distance) {
             state.bestSoFar = toAggregate(result);
@@ -262,18 +217,46 @@ async function runSearch(mode: SearchMode) {
     }
 }
 
-function runSearchOnce(settings: RunSettings): SearchResult {
-    if (settings.mode === "parallel") {
-        return runBestTourPar(
-            settings.iterations,
-            settings.seed,
-            settings.threads,
-            settings.chunkSize,
-            settings.numCities
+function runSearchOnce(settings: RunSettings): Promise<SearchResult> {
+    return new Promise<SearchResult>((resolve, reject) => {
+        const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
+            type: "module"
+        });
+
+        const cleanup = () => {
+            worker.terminate();
+        };
+
+        worker.addEventListener(
+            "message",
+            (event: MessageEvent) => {
+                const data = event.data as
+                    | { type: "search-result"; result: SearchResult }
+                    | { type: "search-error"; message: string };
+
+                if (data.type === "search-error") {
+                    cleanup();
+                    reject(new Error(data.message));
+                    return;
+                }
+
+                cleanup();
+                resolve(data.result);
+            },
+            { once: true }
         );
-    } else {
-        return run_best_tour_seq(settings.iterations, settings.seed, settings.numCities) as SearchResult;
-    }
+
+        worker.addEventListener(
+            "error",
+            (event) => {
+                cleanup();
+                reject(new Error(event.message || "search worker failed"));
+            },
+            { once: true }
+        );
+
+        worker.postMessage({ type: "run-search", settings });
+    });
 }
 
 function toAggregate(best: SearchResult): RunAggregate {
