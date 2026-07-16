@@ -144,7 +144,7 @@ p {
   right: 0;
   z-index: 10;
   display: none;
-  width: min(260px, 72vw);
+  /* width: min(260px, 72vw); */
   padding: 10px 12px;
   border: 1px solid #dbe3ef;
   border-radius: 12px;
