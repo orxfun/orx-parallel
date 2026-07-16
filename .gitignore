@@ -22,6 +22,14 @@ examples/wasm/tsp/vanilla/web/dist/
 examples/wasm/tsp/vanilla/web/pkg/
 examples/wasm/tsp/vanilla/crate/target/
 
+examples/wasm/tsp/react/web/node_modules/
+examples/wasm/tsp/react/web/dist/
+examples/wasm/tsp/react/web/pkg/
+examples/wasm/tsp/react/crate/target/
+
+
+
+
 # wasm demo tsp generated artifacts
 examples/arch/wasm_demo_tsp/web/node_modules/
 examples/arch/wasm_demo_tsp/web/dist/
