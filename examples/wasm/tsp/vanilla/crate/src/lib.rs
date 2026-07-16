@@ -27,8 +27,8 @@ pub fn init_parallel_runtime(_num_threads: u32) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn locations(num_cities: u32) -> Result<JsValue, JsValue> {
-    let locations = locations::locations(num_cities);
+pub fn locations(seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
+    let locations = locations::locations(seed, num_cities);
     serde_wasm_bindgen::to_value(&locations)
         .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))
 }
@@ -46,7 +46,7 @@ pub fn run_best_tour_par(
     let threads = threads as usize;
     let chunk_size = chunk_size as usize;
     let num_cities = locations::clamp_num_cities(num_cities);
-    let locations = locations::locations(num_cities as u32);
+    let locations = locations::locations(seed, num_cities as u32);
     let started_at = js_sys::Date::now();
     let output =
         computation::run_search_parallel(iterations, seed, threads, chunk_size, &locations);
@@ -74,7 +74,7 @@ pub fn run_best_tour_par(
 pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
     let iterations = iterations.max(1) as usize;
     let num_cities = locations::clamp_num_cities(num_cities);
-    let locations = locations::locations(num_cities as u32);
+    let locations = locations::locations(seed, num_cities as u32);
     let started_at = js_sys::Date::now();
     let output = computation::run_search_sequential(iterations, seed, &locations);
     let elapsed_ms = js_sys::Date::now() - started_at;

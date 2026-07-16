@@ -108,7 +108,7 @@ async function setupApp() {
     }
 
     state.currentNumCities = readNumCities();
-    state.points = locations(state.currentNumCities) as Location[];
+    state.points = generatePoints(readSeed(), state.currentNumCities);
     drawPoints(state.points);
     ui.chunkSize.value = String(readChunkSize());
 
@@ -128,10 +128,19 @@ async function setupApp() {
 
     ui.numCities.addEventListener("change", () => {
         const numCities = readNumCities();
-        state.points = locations(numCities) as Location[];
+        state.points = generatePoints(readSeed(), numCities);
         clearBest();
         drawPoints(state.points);
         ui.status.textContent = `Updated problem size to ${numCities} cities.`;
+    });
+
+    ui.seed.addEventListener("change", () => {
+        const seed = readSeed();
+        const numCities = readNumCities();
+        state.points = generatePoints(seed, numCities);
+        clearBest();
+        drawPoints(state.points);
+        ui.status.textContent = `Updated city seed to ${seed.toString()}.`;
     });
 
     ui.threads.addEventListener("change", () => {
@@ -163,17 +172,25 @@ function readEnvValue(key: string) {
     return (import.meta.env as Record<string, string | undefined>)[key];
 }
 
+function readSeed() {
+    const seedInput = Math.max(1, Number(ui.seed.value) || 1);
+    return BigInt(Math.trunc(seedInput));
+}
+
+function generatePoints(seed: bigint, numCities: number) {
+    return locations(seed, numCities) as Location[];
+}
+
 function readRunSettings(mode: SearchMode): RunSettings {
     const iterations = Math.max(1, Number(ui.iterations.value) || 1);
     const threads = readThreads();
     const chunkSize = readChunkSize();
-    const seedInput = Math.max(1, Number(ui.seed.value) || 1);
     return {
         mode,
         iterations,
         threads,
         chunkSize,
-        seed: BigInt(Math.trunc(seedInput)),
+        seed: readSeed(),
         numCities: readNumCities()
     };
 }
@@ -194,7 +211,7 @@ function ensurePointsForCities(numCities: number) {
         return;
     }
 
-    state.points = locations(numCities) as Location[];
+    state.points = generatePoints(readSeed(), numCities);
     clearBest();
     drawPoints(state.points);
 }
