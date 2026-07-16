@@ -243,11 +243,33 @@ button.cancel {
   }
 }
 
+.control-panel {
+    display: grid;
+    grid-template-columns: auto 150px;
+    gap: 25px;
+}
+
 .controls {
   display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 12px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
   margin-bottom: 14px;
+}
+
+.controls label {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border: 1px solid #dbe3ef;
+  max-height: 60px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 8px 18px rgba(20, 33, 61, 0.05);
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .actions {
@@ -257,18 +279,37 @@ button.cancel {
   margin-bottom: 12px;
 }
 
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-}
-
 input {
   border: 1px solid #d1d5db;
   border-radius: 10px;
   padding: 8px 10px;
   font-size: 14px;
+  background: #fff;
+  color: #0f172a;
+  width: 100%;
+  box-sizing: border-box;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.controls input:hover {
+  border-color: #b6c3d7;
+}
+
+.controls input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+}
+
+.controls input:focus-visible {
+  outline: none;
+}
+
+.controls input::selection {
+  background: rgba(15, 118, 110, 0.18);
 }
 
 button {
@@ -286,6 +327,7 @@ button {
     box-shadow 120ms ease,
     filter 120ms ease;
   will-change: transform;
+  width: 100%;
 }
 
 button::after {
