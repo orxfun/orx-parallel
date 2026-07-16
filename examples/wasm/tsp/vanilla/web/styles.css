@@ -193,6 +193,12 @@ p {
   white-space: pre;
 }
 
+.code-block code.hljs {
+  background: transparent;
+  color: #e2e8f0;
+  padding: 0;
+}
+
 .card {
   position: relative;
   background: var(--panel);
