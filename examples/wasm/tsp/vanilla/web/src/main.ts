@@ -54,7 +54,6 @@ function readCssColor(variableName: string, fallback: string) {
 }
 
 const ui = {
-    themeToggle: mustElement<HTMLButtonElement>("themeToggle"),
     status: mustElement<HTMLDivElement>("status"),
     iterations: mustElement<HTMLInputElement>("iterations"),
     threads: mustElement<HTMLInputElement>("threads"),
@@ -89,7 +88,6 @@ const state = {
 async function setupApp() {
     await init();
 
-    setupThemeToggle();
     state.currentNumCities = readNumCities();
     state.points = generatePoints(readSeed(), state.currentNumCities);
     drawPoints(state.points);
@@ -137,27 +135,6 @@ async function setupApp() {
         const chunkSize = readChunkSize();
         ui.status.textContent = `Chunk size set to ${chunkSize}.`;
     });
-}
-
-function setupThemeToggle() {
-    const storageKey = "orx-parallel-wasm-tsp-vanilla-theme";
-    const savedTheme = window.localStorage.getItem(storageKey);
-    const initialTheme = savedTheme === "dark" ? "dark" : "light";
-
-    applyTheme(initialTheme);
-
-    ui.themeToggle.addEventListener("click", () => {
-        const currentTheme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-        const nextTheme = currentTheme === "dark" ? "light" : "dark";
-        applyTheme(nextTheme);
-        window.localStorage.setItem(storageKey, nextTheme);
-    });
-}
-
-function applyTheme(theme: "light" | "dark") {
-    document.documentElement.dataset.theme = theme;
-    ui.themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
-    ui.themeToggle.textContent = theme === "dark" ? "Light mode" : "Dark mode";
 }
 
 function highlightCodeBlocks() {
