@@ -21,7 +21,7 @@
       </header>
       <section class="intro-cards" aria-label="Example overview">
         <article class="intro-card">
-          <h2>Problem: TSP</h2>
+          <h2>Computation: Local Search for TSP</h2>
           <p>Randomly create tours and locally optimize with two-opt <code>Iterations</code> times, and return the best tour.</p>
         </article>
         <article class="intro-card">
@@ -29,14 +29,26 @@
           <p>Vanilla Vite + TypeScript UI.</p>
         </article>
         <article class="intro-card">
-          <h2>Sequential Code</h2>
+          <div class="code-card-header">
+            <h2>Sequential Code</h2>
+            <details class="code-help">
+              <summary class="code-help-trigger" aria-label="Show sequential code explanation">?</summary>
+              <div class="code-help-popover" role="note">PLACEHOLDER</div>
+            </details>
+          </div>
           <pre class="code-block"><code>let mut rng = SmallRng::seed_from_u64(seed);
 (0..iterations)
     .map(|_| create_tour(&mut rng, locations))
     .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
         </article>
         <article class="intro-card">
-          <h2>Parallel Code</h2>
+          <div class="code-card-header">
+            <h2>Parallel Code</h2>
+            <details class="code-help">
+              <summary class="code-help-trigger" aria-label="Show parallel code explanation">?</summary>
+              <div class="code-help-popover" role="note">PLACEHOLDER</div>
+            </details>
+          </div>
           <pre class="code-block"><code>(0..iterations)
     .into_par()
     .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))
