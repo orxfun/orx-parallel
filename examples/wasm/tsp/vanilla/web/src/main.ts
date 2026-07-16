@@ -93,7 +93,7 @@ async function setupApp() {
     drawPoints(state.points);
     ui.chunkSize.value = String(readChunkSize());
     highlightCodeBlocks();
-    ui.status.textContent = "Ready. Searches run in a worker so the page stays responsive.";
+    ui.status.textContent = "Ready";
 
     ui.runParallel.addEventListener("click", async () => {
         await runSearch("parallel");

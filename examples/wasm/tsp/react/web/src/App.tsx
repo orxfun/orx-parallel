@@ -110,7 +110,7 @@ export default function App() {
 
                 const initialPoints = generatePoints(toSeed(seed), numCities);
                 setPoints(initialPoints);
-                setStatus("Ready. Searches run in a worker so the page stays responsive.");
+                setStatus("Ready");
                 highlightCodeBlocks();
             } catch (err) {
                 if (!cancelled) {
@@ -278,12 +278,6 @@ export default function App() {
                 </article>
             </section>
 
-            <section className="card status-card" aria-label="Runtime status">
-                <div className="status-value" aria-live="polite">
-                    {status}
-                </div>
-            </section>
-
             <section className="card">
                 <div className={`run-overlay${isRunning ? " active" : ""}`} aria-live="polite" aria-hidden={!isRunning}>
                     <div className="run-overlay-card">
@@ -342,6 +336,8 @@ export default function App() {
                             Reset
                         </button>
                     </div>
+
+                    <div className="status-value" aria-live="polite">{status}</div>
                 </div>
 
                 <div className="stats">
