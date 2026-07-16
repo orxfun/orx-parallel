@@ -79,6 +79,101 @@ p {
   font-size: 18px;
 }
 
+.code-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.code-card-header h2 {
+  margin: 0;
+}
+
+.code-help {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.code-help summary {
+  list-style: none;
+}
+
+.code-help summary::-webkit-details-marker {
+  display: none;
+}
+
+.code-help-trigger {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, #edf7f5 100%);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(20, 33, 61, 0.08);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+}
+
+.code-help-trigger:hover,
+.code-help[open] .code-help-trigger {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(20, 33, 61, 0.12);
+}
+
+.code-help-trigger:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(15, 118, 110, 0.18),
+    0 8px 18px rgba(20, 33, 61, 0.12);
+}
+
+.code-help-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 10;
+  display: none;
+  width: min(260px, 72vw);
+  padding: 10px 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.14);
+}
+
+.code-help-popover::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-left: 1px solid #dbe3ef;
+  border-top: 1px solid #dbe3ef;
+  transform: rotate(45deg);
+}
+
+.code-help:hover .code-help-popover,
+.code-help:focus-within .code-help-popover,
+.code-help[open] .code-help-popover {
+  display: block;
+}
+
 .intro-card p {
   margin: 0;
   line-height: 1.5;
