@@ -1,12 +1,17 @@
 use crate::locations::Location;
-use core::cmp::Ordering::Equal;
+use ordered_float::OrderedFloat;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 
 pub struct SearchRunOutput {
-    pub best: Option<(Vec<usize>, f64)>,
+    pub best: Option<Solution>,
     pub iterations: usize,
+}
+
+pub struct Solution {
+    pub tour: Vec<usize>,
+    pub distance: f64,
 }
 
 pub fn run_search_sequential(
@@ -16,7 +21,7 @@ pub fn run_search_sequential(
 ) -> SearchRunOutput {
     let best = (0..iterations)
         .map(|_| search_candidate(seed, locations))
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
+        .min_by_key(|x| OrderedFloat::from(x.distance));
 
     SearchRunOutput { best, iterations }
 }
@@ -33,19 +38,19 @@ pub fn run_search_parallel(
         .chunk_size(chunk_size)
         .num_threads(threads)
         .map(|_| search_candidate(seed, locations))
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
+        .min_by_key(|x| OrderedFloat::from(x.distance));
 
     SearchRunOutput { best, iterations }
 }
 
-fn search_candidate(seed: u64, locations: &[Location]) -> (Vec<usize>, f64) {
+fn search_candidate(seed: u64, locations: &[Location]) -> Solution {
     let tour = random_tour(
         seed ^ 42u64.wrapping_mul(0x9E37_79B9_7F4A_7C15),
         locations.len(),
     );
     let tour = two_opt_improve(locations, tour);
     let distance = Location::tour_distance(locations, &tour);
-    (tour, distance)
+    Solution { tour, distance }
 }
 
 fn random_tour(seed: u64, num_cities: usize) -> Vec<usize> {
@@ -96,4 +101,30 @@ fn two_opt_improve(locations: &[Location], mut tour: Vec<usize>) -> Vec<usize> {
     }
 
     tour
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sequential_and_parallel_search_agree() {
+        let locations = crate::locations::locations(20);
+        let iterations = 32;
+        let seed = 12345;
+
+        let sequential = run_search_sequential(iterations, seed, &locations);
+        let parallel = run_search_parallel(iterations, seed, 2, 1, &locations);
+
+        assert_eq!(sequential.iterations, iterations);
+        assert_eq!(parallel.iterations, iterations);
+
+        let sequential_best = sequential
+            .best
+            .expect("sequential search should find a tour");
+        let parallel_best = parallel.best.expect("parallel search should find a tour");
+
+        assert_eq!(sequential_best.tour, parallel_best.tour);
+        assert_eq!(sequential_best.distance, parallel_best.distance);
+    }
 }
