@@ -4,7 +4,7 @@
   --panel: #ffffff;
   --accent: #0f766e;
   --accent2: #f59e0b;
-  --parallel: #00b300;
+  --parallel: #009900;
   --sequential: #47476b;
   --reset: #e60000;
   --city-node: #ffff00;
@@ -143,7 +143,6 @@ p {
   right: 0;
   z-index: 10;
   display: none;
-  /* width: min(260px, 72vw); */
   padding: 10px 12px;
   border: 1px solid #dbe3ef;
   border-radius: 12px;

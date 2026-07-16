@@ -90,26 +90,26 @@ let mut rng = SmallRng::seed_from_u64(seed);
       <section class="card">
         <div class="control-panel">
             <div class="controls">
-                <label>
-                    Iterations
-                    <input id="iterations" type="number" min="1" max="200000" value="10000" />
+              <label>
+                  Number of cities
+                  <input id="numCities" type="number" min="5" max="200" value="50" />
+              </label>
+              <label>
+                  Iterations
+                  <input id="iterations" type="number" min="1" max="200000" value="10000" />
+              </label>
+              <label>
+                  Threads (1..16)
+                  <input id="threads" type="number" min="1" max="16" value="4" />
+              </label>
+              <label>
+                  Chunk size
+                  <input id="chunkSize" type="number" min="0" max="1048576" value="0" />
                 </label>
-                <label>
-                    Threads (1..16)
-                    <input id="threads" type="number" min="1" max="16" value="4" />
-                </label>
-                <label>
-                    Seed
-                    <input id="seed" type="number" min="1" max="99999999" value="42" />
-                </label>
-                <label>
-                    Number of cities
-                    <input id="numCities" type="number" min="5" max="200" value="50" />
-                </label>
-                <label>
-                    Chunk size
-                    <input id="chunkSize" type="number" min="0" max="1048576" value="0" />
-                </label>
+              <label>
+                  Seed
+                  <input id="seed" type="number" min="1" max="99999999" value="42" />
+              </label>
             </div>
 
             <div class="actions">
