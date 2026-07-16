@@ -259,8 +259,8 @@ button.cancel {
 
 .controls label {
   display: grid;
-  gap: 8px;
-  padding: 10px 12px 12px;
+  gap: 0;
+  padding: 6px 12px;
   border: 1px solid #dbe3ef;
   max-height: 60px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
