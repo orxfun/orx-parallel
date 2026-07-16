@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #f6f7fb;
   --bg-strong: #eef2ff;
   --ink: #14213d;
@@ -30,37 +31,36 @@
   --stats-bg: #f9fafb;
   --stats-border: #e5e7eb;
   --canvas-bg: #ffffff;
-  --toggle-bg: linear-gradient(180deg, #ffffff 0%, #edf7f5 100%);
-  --toggle-text: var(--accent);
 }
 
-:root[data-theme="dark"] {
-  --bg: #08101f;
-  --bg-strong: #0f172a;
-  --ink: #e2e8f0;
-  --muted: #94a3b8;
-  --panel: #111b2e;
-  --panel-2: #0f1a2e;
-  --panel-border: rgba(148, 163, 184, 0.18);
-  --panel-shadow: rgba(0, 0, 0, 0.36);
-  --code-block-bg: #020617;
-  --code-text: #dbeafe;
-  --input-bg: #0b1324;
-  --input-border: #334155;
-  --input-text: #e2e8f0;
-  --button-text: #f8fafc;
-  --button-secondary-bg: #1e293b;
-  --button-secondary-text: #e2e8f0;
-  --status-bg: rgba(15, 23, 42, 0.78);
-  --status-text: #e2e8f0;
-  --overlay-bg: rgba(2, 6, 23, 0.68);
-  --overlay-card-bg: #111b2e;
-  --overlay-card-text: #e2e8f0;
-  --stats-bg: #0f172a;
-  --stats-border: #1f2937;
-  --canvas-bg: #0b1324;
-  --toggle-bg: linear-gradient(180deg, #18233a 0%, #0f172a 100%);
-  --toggle-text: #dbeafe;
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #08101f;
+    --bg-strong: #0f172a;
+    --ink: #e2e8f0;
+    --muted: #94a3b8;
+    --panel: #111b2e;
+    --panel-2: #0f1a2e;
+    --panel-border: rgba(148, 163, 184, 0.18);
+    --panel-shadow: rgba(0, 0, 0, 0.36);
+    --code-block-bg: #020617;
+    --code-text: #dbeafe;
+    --input-bg: #0b1324;
+    --input-border: #334155;
+    --input-text: #e2e8f0;
+    --button-text: #f8fafc;
+    --button-secondary-bg: #1e293b;
+    --button-secondary-text: #e2e8f0;
+    --status-bg: rgba(15, 23, 42, 0.78);
+    --status-text: #e2e8f0;
+    --overlay-bg: rgba(2, 6, 23, 0.68);
+    --overlay-card-bg: #111b2e;
+    --overlay-card-text: #e2e8f0;
+    --stats-bg: #0f172a;
+    --stats-border: #1f2937;
+    --canvas-bg: #0b1324;
+  }
 }
 
 body {
@@ -109,23 +109,6 @@ h1 {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.5;
-}
-
-.theme-toggle {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 110px;
-  padding: 10px 14px;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  background: var(--toggle-bg);
-  color: var(--toggle-text);
-  font-weight: 700;
-  box-shadow: 0 8px 16px var(--panel-shadow);
-}
-
-.theme-toggle:hover {
-  filter: brightness(1.04);
 }
 
 p {
