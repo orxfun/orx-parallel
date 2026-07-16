@@ -66,6 +66,7 @@ const ui = {
     runOverlay: mustElement<HTMLDivElement>("runOverlay"),
     runTitle: mustElement<HTMLParagraphElement>("runTitle"),
     runSubtitle: mustElement<HTMLParagraphElement>("runSubtitle"),
+    runElapsed: mustElement<HTMLParagraphElement>("runElapsed"),
     bestDistance: mustElement<HTMLParagraphElement>("bestDistance"),
     elapsed: mustElement<HTMLParagraphElement>("elapsed"),
     ips: mustElement<HTMLParagraphElement>("ips"),
@@ -82,7 +83,8 @@ const state = {
     points: [] as Location[],
     bestSoFar: null as RunAggregate | null,
     currentNumCities: 50,
-    runStartedAtMs: 0
+    runStartedAtMs: 0,
+    runTicker: undefined as number | undefined
 };
 
 async function setupApp() {
@@ -273,10 +275,25 @@ function setRunningView(mode: SearchMode, running: boolean) {
         state.runStartedAtMs = performance.now();
         ui.runTitle.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
         ui.runSubtitle.textContent = "Evaluating tours with 2-opt local search. Larger instances can take longer.";
+        ui.runElapsed.textContent = "Elapsed: 0.0 s";
         ui.runOverlay.classList.add("active");
         ui.runOverlay.setAttribute("aria-hidden", "false");
 
+        if (state.runTicker !== undefined) {
+            window.clearInterval(state.runTicker);
+        }
+
+        state.runTicker = window.setInterval(() => {
+            const secs = (performance.now() - state.runStartedAtMs) / 1000;
+            ui.runElapsed.textContent = `Elapsed: ${secs.toFixed(1)} s`;
+        }, 200);
+
         return;
+    }
+
+    if (state.runTicker !== undefined) {
+        window.clearInterval(state.runTicker);
+        state.runTicker = undefined;
     }
 
     ui.runOverlay.classList.remove("active");
