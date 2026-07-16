@@ -48,18 +48,6 @@
       </section>
 
       <section class="card">
-        <div id="runOverlay" class="run-overlay" aria-live="polite" aria-hidden="true">
-          <div class="run-overlay-card">
-            <div class="run-overlay-top">
-              <span class="spinner" aria-hidden="true"></span>
-              <p id="runTitle" class="run-title">Running search...</p>
-            </div>
-            <p id="runSubtitle" class="run-subtitle">Working through candidate tours. Larger runs can take a while.</p>
-            <p id="runElapsed" class="run-elapsed">Elapsed: 0.0s</p>
-            <div class="run-bar" aria-hidden="true"></div>
-          </div>
-        </div>
-
         <div class="control-panel">
             <div class="controls">
                 <label>
@@ -89,6 +77,20 @@
                 <button id="runSequential">Run sequential</button>
                 <button id="reset">Reset</button>
             </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div id="runOverlay" class="run-overlay" aria-live="polite" aria-hidden="true">
+          <div class="run-overlay-card">
+            <div class="run-overlay-top">
+              <span class="spinner" aria-hidden="true"></span>
+              <p id="runTitle" class="run-title">Running search...</p>
+            </div>
+            <p id="runSubtitle" class="run-subtitle">Working through candidate tours. Larger runs can take a while.</p>
+            <p id="runElapsed" class="run-elapsed">Elapsed: 0.0s</p>
+            <div class="run-bar" aria-hidden="true"></div>
+          </div>
         </div>
 
         <div class="stats">
