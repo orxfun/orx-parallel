@@ -36,11 +36,11 @@ pub fn locations(num_cities: u32) -> Vec<Location> {
     (0..num_cities).map(location_for).collect()
 }
 
-pub fn clamp_num_cities(num_cities: u32) -> usize {
+pub(crate) fn clamp_num_cities(num_cities: u32) -> usize {
     (num_cities as usize).clamp(MIN_CITIES, MAX_CITIES)
 }
 
-pub fn location_for(idx: usize) -> Location {
+fn location_for(idx: usize) -> Location {
     let sx = split_mix_64((idx as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
     let sy = split_mix_64((idx as u64).wrapping_mul(0xD1B5_4A32_D192_ED03));
 
