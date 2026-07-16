@@ -68,6 +68,7 @@ const PARALLEL_HELP = `// we will construct & improve \`iterations\` tours
 
     // \`use_new\` enables mutable variables in parallel computations
     // each thread will have its own random number generator
+    // \`t\` here is the thread index, with value in (0..num_threads)
     .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))
 
     // \`create_tour\` constructs a random tour and locally optimizes within 2-opt
