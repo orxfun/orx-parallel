@@ -97,6 +97,7 @@ main {
   border: 1px solid #dbe3ef;
   box-shadow: 0 10px 20px rgba(20, 33, 61, 0.12);
   flex: 0 0 auto;
+  border: none;
 }
 
 h1 {
