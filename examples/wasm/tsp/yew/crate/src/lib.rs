@@ -58,7 +58,7 @@ pub fn start_app() {
 }
 
 #[function_component(App)]
-fn app() -> Html {
+pub fn app() -> Html {
     let status = use_state(|| "Initializing...".to_string());
     let iterations = use_state(|| 10_000_u32);
     let threads = use_state(|| 4_u32);
@@ -663,7 +663,7 @@ fn draw_points(
     canvas: &HtmlCanvasElement,
     locations: &[locations::Location],
 ) {
-    ctx.set_fill_style(&JsValue::from_str(&canvas_background_color()));
+    ctx.set_fill_style_str(&canvas_background_color());
     ctx.fill_rect(
         0.0,
         0.0,
@@ -672,7 +672,7 @@ fn draw_points(
     );
 
     let mapped = map_points(canvas, locations);
-    ctx.set_fill_style(&JsValue::from_str(&city_node_color()));
+    ctx.set_fill_style_str(&city_node_color());
 
     for p in mapped {
         ctx.begin_path();
@@ -694,7 +694,7 @@ fn draw_tour(
 
     let mapped = map_points(canvas, locations);
     ctx.begin_path();
-    ctx.set_stroke_style(&JsValue::from_str(&tour_line_color()));
+    ctx.set_stroke_style_str(&tour_line_color());
     ctx.set_line_width(2.0);
 
     let first = mapped[tour[0]];
