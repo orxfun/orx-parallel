@@ -83,29 +83,28 @@ pub fn start_app() {
 
 #[component]
 fn App() -> impl IntoView {
-    let status = create_rw_signal("Initializing...".to_string());
-    let iterations = create_rw_signal(10_000_u32);
-    let threads = create_rw_signal(4_u32);
-    let chunk_size = create_rw_signal(0_u32);
-    let seed = create_rw_signal(42_u64);
-    let num_cities = create_rw_signal(50_u32);
-    let points = create_rw_signal(locations::create_locations(
+    let status = RwSignal::new("Initializing...".to_string());
+    let iterations = RwSignal::new(10_000_u32);
+    let threads = RwSignal::new(4_u32);
+    let chunk_size = RwSignal::new(0_u32);
+    let seed = RwSignal::new(42_u64);
+    let num_cities = RwSignal::new(50_u32);
+    let points = RwSignal::new(locations::create_locations(
         seed.get_untracked(),
         num_cities.get_untracked(),
     ));
-    let best_so_far = create_rw_signal(None::<RunResult>);
-    let best_distance = create_rw_signal("-".to_string());
-    let elapsed = create_rw_signal("-".to_string());
-    let ips = create_rw_signal("-".to_string());
-    let is_running = create_rw_signal(false);
-    let run_mode = create_rw_signal(SearchMode::Parallel);
-    let run_subtitle = create_rw_signal(
-        "Working through candidate tours. Larger runs can take a while.".to_string(),
-    );
-    let run_elapsed = create_rw_signal("Elapsed: 0.0 s".to_string());
-    let run_started_at_ms = create_rw_signal(0.0_f64);
+    let best_so_far = RwSignal::new(None::<RunResult>);
+    let best_distance = RwSignal::new("-".to_string());
+    let elapsed = RwSignal::new("-".to_string());
+    let ips = RwSignal::new("-".to_string());
+    let is_running = RwSignal::new(false);
+    let run_mode = RwSignal::new(SearchMode::Parallel);
+    let run_subtitle =
+        RwSignal::new("Working through candidate tours. Larger runs can take a while.".to_string());
+    let run_elapsed = RwSignal::new("Elapsed: 0.0 s".to_string());
+    let run_started_at_ms = RwSignal::new(0.0_f64);
     let run_ticker = Rc::new(RefCell::new(None::<Interval>));
-    let canvas_ref = create_node_ref::<html::Canvas>();
+    let canvas_ref = NodeRef::new();
 
     let ui = UiState {
         status,
@@ -127,7 +126,7 @@ fn App() -> impl IntoView {
         run_ticker,
     };
 
-    create_effect({
+    Effect::new({
         let canvas_ref = canvas_ref.clone();
         let points = ui.points;
         let best_so_far = ui.best_so_far;
@@ -594,7 +593,7 @@ fn draw_points(
     canvas: &HtmlCanvasElement,
     locations: &[locations::Location],
 ) {
-    ctx.set_fill_style(&JsValue::from_str(&canvas_background_color()));
+    ctx.set_fill_style_str(&canvas_background_color());
     ctx.fill_rect(
         0.0,
         0.0,
@@ -603,7 +602,7 @@ fn draw_points(
     );
 
     let mapped = map_points(canvas, locations);
-    ctx.set_fill_style(&JsValue::from_str(&city_node_color()));
+    ctx.set_fill_style_str(&city_node_color());
 
     for p in mapped {
         ctx.begin_path();
@@ -625,7 +624,7 @@ fn draw_tour(
 
     let mapped = map_points(canvas, locations);
     ctx.begin_path();
-    ctx.set_stroke_style(&JsValue::from_str(&tour_line_color()));
+    ctx.set_stroke_style_str(&tour_line_color());
     ctx.set_line_width(2.0);
 
     let first = mapped[tour[0]];
