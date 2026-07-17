@@ -445,28 +445,28 @@ button.cancel {
 
 .control-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 200px;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  gap: 16px;
   align-items: start;
-  margin-bottom: 16px;
 }
 
 .controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  gap: 12px;
 }
 
 .controls label {
   display: grid;
-  gap: 8px;
-  padding: 10px 12px 12px;
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  background: var(--panel-2);
+  gap: 7px;
+  padding: 0 12px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
 }
 
 .controls label:nth-child(5) {
@@ -476,18 +476,37 @@ button.cancel {
 .controls input {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 11px;
+  padding: 9px 11px;
   border: 1px solid var(--input-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--input-bg);
   color: var(--input-text);
   font-size: 14px;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.controls input:hover {
+  border-color: color-mix(in srgb, var(--input-border) 75%, var(--accent));
+  box-shadow: 0 2px 8px rgba(20, 33, 61, 0.04);
 }
 
 .controls input:focus {
   outline: none;
-  border-color: rgba(15, 118, 110, 0.5);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px rgba(15, 118, 110, 0.16),
+    0 4px 14px rgba(15, 118, 110, 0.08);
+}
+
+.controls input:focus-visible {
+  outline: none;
+}
+
+.controls input::selection {
+  background: rgba(15, 118, 110, 0.18);
 }
 
 .controls input:disabled,
@@ -500,39 +519,67 @@ button.cancel {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 0;
+  align-self: start;
 }
 
 .actions button {
   width: 100%;
+  position: relative;
+  overflow: hidden;
   border: 0;
   border-radius: 12px;
-  padding: 13px 14px;
+  padding: 11px 15px;
   color: var(--button-text);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
-  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 16px rgba(20, 33, 61, 0.12);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease;
+  will-change: transform;
+}
+
+.actions button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 68%);
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .actions button:hover:not(:disabled) {
   transform: translateY(-1px);
+  filter: brightness(1.03);
 }
 
 .actions button:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(1px) scale(0.97);
+  box-shadow: 0 4px 10px rgba(20, 33, 61, 0.14);
+}
+
+.actions button:active:not(:disabled)::after {
+  opacity: 1;
+  transform: scale(1.12);
 }
 
 #runParallel {
-  background: linear-gradient(135deg, var(--parallel), #22c55e);
+  background: var(--parallel);
 }
 
 #runSequential {
-  background: linear-gradient(135deg, var(--sequential), #334155);
+  background: var(--sequential);
 }
 
 #reset {
-  background: linear-gradient(135deg, var(--reset), #fb7185);
+  background: var(--reset);
 }
 
 .stats {
@@ -603,6 +650,10 @@ button.cancel {
   .intro-cards,
   .controls,
   .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .control-panel {
     grid-template-columns: 1fr;
   }
 
