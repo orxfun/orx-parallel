@@ -107,7 +107,7 @@ mod tests {
 
     #[test]
     fn sequential_and_parallel_search_agree() {
-        let locations = crate::locations::locations(123, 20);
+        let locations = crate::locations::create_locations(123, 20);
         let iterations = 32;
         let seed = 12345;
 
