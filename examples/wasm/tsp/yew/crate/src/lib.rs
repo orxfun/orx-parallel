@@ -642,8 +642,32 @@ fn canvas_2d_context(canvas: &HtmlCanvasElement) -> Option<CanvasRenderingContex
 }
 
 fn read_css_color(variable_name: &str, fallback: &str) -> String {
-    let _ = variable_name;
-    fallback.to_string()
+    let Some(window) = web_sys::window() else {
+        return fallback.to_string();
+    };
+
+    let Some(document) = window.document() else {
+        return fallback.to_string();
+    };
+
+    let Some(root) = document.document_element() else {
+        return fallback.to_string();
+    };
+
+    let Ok(Some(styles)) = window.get_computed_style(&root) else {
+        return fallback.to_string();
+    };
+
+    let Ok(value) = styles.get_property_value(variable_name) else {
+        return fallback.to_string();
+    };
+
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        fallback.to_string()
+    } else {
+        trimmed.to_string()
+    }
 }
 
 fn canvas_background_color() -> String {
