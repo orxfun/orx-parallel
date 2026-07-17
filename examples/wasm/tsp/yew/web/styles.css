@@ -209,7 +209,6 @@ p {
 }
 
 .code-help-title {
-  margin: 0 0 8px;
   padding-left: 10px;
 }
 
@@ -424,22 +423,27 @@ button.cancel {
 }
 
 @keyframes spin-reverse {
-  to {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  100% {
     transform: rotate(-360deg);
   }
 }
 
 @keyframes slide {
   0% {
-    transform: translateX(-110%);
+    transform: translateX(-120%);
   }
 
   50% {
-    transform: translateX(110%);
+    transform: translateX(85%);
   }
 
   100% {
-    transform: translateX(110%);
+    transform: translateX(260%);
   }
 }
 
@@ -461,12 +465,13 @@ button.cancel {
 .controls label {
   display: grid;
   gap: 7px;
-  padding: 0 12px;
+  padding: 0px 12px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.01em;
+  text-transform: none;
 }
 
 .controls input {
@@ -616,41 +621,34 @@ button.cancel {
   border: 1px solid var(--panel-border);
 }
 
-@media (max-width: 920px) {
-  .hero,
-  .control-panel {
+@media (max-width: 760px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .intro-cards {
     grid-template-columns: 1fr;
   }
 
-  .hero {
-    display: grid;
-    justify-items: start;
+  .controls {
+    grid-template-columns: 1fr;
   }
 
-  .actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .actions button {
-    flex: 1 1 180px;
-  }
-}
-
-@media (max-width: 680px) {
-  main {
-    margin: 12px auto;
-    padding: 12px;
-  }
-
-  .intro-cards,
-  .controls,
   .stats {
     grid-template-columns: 1fr;
   }
+}
 
-  .control-panel {
-    grid-template-columns: 1fr;
+@media (prefers-reduced-motion: reduce) {
+  button,
+  button::after {
+    transition: none;
   }
 
+  button:hover,
+  button:active {
+    transform: none;
+    filter: none;
+  }
 }
