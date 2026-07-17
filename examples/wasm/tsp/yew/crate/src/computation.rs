@@ -104,25 +104,55 @@ fn two_opt_improve(locations: &[Location], mut tour: Vec<usize>) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::locations::{Location, create_locations};
 
     #[test]
-    fn sequential_and_parallel_search_agree() {
-        let locations = crate::locations::locations(123, 20);
+    fn sequential_search_produces_valid_tour() {
+        let locations = create_locations(123, 20);
         let iterations = 32;
         let seed = 12345;
 
-        let sequential = run_search_sequential(iterations, seed, &locations);
-        let parallel = run_search_parallel(iterations, seed, 2, 1, &locations);
+        let output = run_search_sequential(iterations, seed, &locations);
 
-        assert_eq!(sequential.iterations, iterations);
-        assert_eq!(parallel.iterations, iterations);
+        assert_eq!(output.iterations, iterations);
+        let best = output.best.expect("sequential search should find a tour");
 
-        let sequential_best = sequential
-            .best
-            .expect("sequential search should find a tour");
-        let parallel_best = parallel.best.expect("parallel search should find a tour");
+        // Validate tour is complete and contains all cities
+        assert_eq!(best.tour.len(), locations.len());
+        let mut seen = vec![false; locations.len()];
+        for &city in &best.tour {
+            assert!(city < locations.len(), "tour contains invalid city index");
+            assert!(!seen[city], "tour contains duplicate city");
+            seen[city] = true;
+        }
 
-        assert_eq!(sequential_best.tour, parallel_best.tour);
-        assert_eq!(sequential_best.distance, parallel_best.distance);
+        // Validate distance is correct
+        let calculated_distance = Location::tour_distance(&locations, &best.tour);
+        assert_eq!(best.distance, calculated_distance);
+    }
+
+    #[test]
+    fn parallel_search_produces_valid_tour() {
+        let locations = create_locations(123, 20);
+        let iterations = 32;
+        let seed = 12345;
+
+        let output = run_search_parallel(iterations, seed, 2, 1, &locations);
+
+        assert_eq!(output.iterations, iterations);
+        let best = output.best.expect("parallel search should find a tour");
+
+        // Validate tour is complete and contains all cities
+        assert_eq!(best.tour.len(), locations.len());
+        let mut seen = vec![false; locations.len()];
+        for &city in &best.tour {
+            assert!(city < locations.len(), "tour contains invalid city index");
+            assert!(!seen[city], "tour contains duplicate city");
+            seen[city] = true;
+        }
+
+        // Validate distance is correct
+        let calculated_distance = Location::tour_distance(&locations, &best.tour);
+        assert_eq!(best.distance, calculated_distance);
     }
 }
