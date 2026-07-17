@@ -574,10 +574,10 @@ async fn run_search_async(
         }
         .to_string(),
     );
-    run_started_at_ms.set(Date::now());
+    let started_at = Date::now();
+    run_started_at_ms.set(started_at);
 
     run_ticker.set(None);
-    let started_at = *run_started_at_ms;
     let run_elapsed_state = run_elapsed.clone();
     run_ticker.set(Some(Interval::new(200, move || {
         let secs = (Date::now() - started_at) / 1000.0;
