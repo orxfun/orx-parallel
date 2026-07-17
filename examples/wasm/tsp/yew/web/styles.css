@@ -469,10 +469,6 @@ button.cancel {
   letter-spacing: 0.01em;
 }
 
-.controls label:nth-child(5) {
-  grid-column: 1 / -1;
-}
-
 .controls input {
   width: 100%;
   box-sizing: border-box;
@@ -657,7 +653,4 @@ button.cancel {
     grid-template-columns: 1fr;
   }
 
-  .controls label:nth-child(5) {
-    grid-column: auto;
-  }
 }
