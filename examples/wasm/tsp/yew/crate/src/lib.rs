@@ -641,45 +641,29 @@ fn canvas_2d_context(canvas: &HtmlCanvasElement) -> Option<CanvasRenderingContex
         .ok()
 }
 
-fn read_css_color(variable_name: &str, fallback: &str) -> String {
-    let Some(window) = web_sys::window() else {
-        return fallback.to_string();
-    };
-
-    let Some(document) = window.document() else {
-        return fallback.to_string();
-    };
-
-    let Some(root) = document.document_element() else {
-        return fallback.to_string();
-    };
-
-    let Ok(Some(styles)) = window.get_computed_style(&root) else {
-        return fallback.to_string();
-    };
-
-    let Ok(value) = styles.get_property_value(variable_name) else {
-        return fallback.to_string();
-    };
-
+fn read_css_color(variable_name: &str) -> Option<String> {
+    let window = web_sys::window()?;
+    let document = window.document()?;
+    let root = document.document_element()?;
+    let styles = window.get_computed_style(&root).ok()??;
+    let value = styles.get_property_value(variable_name).ok()?;
     let trimmed = value.trim();
-    if trimmed.is_empty() {
-        fallback.to_string()
-    } else {
-        trimmed.to_string()
+    match trimmed.is_empty() {
+        true => None,
+        false => Some(trimmed.to_string()),
     }
 }
 
 fn canvas_background_color() -> String {
-    read_css_color("--code-block-bg", "#0f172a")
+    read_css_color("--code-block-bg").unwrap_or("#0f172a".to_string())
 }
 
 fn city_node_color() -> String {
-    read_css_color("--city-node", "#f59e0b")
+    read_css_color("--city-node").unwrap_or("#f59e0b".to_string())
 }
 
 fn tour_line_color() -> String {
-    read_css_color("--tour-line", "#1d4ed8")
+    read_css_color("--tour-line").unwrap_or("#1d4ed8".to_string())
 }
 
 fn draw_points(
