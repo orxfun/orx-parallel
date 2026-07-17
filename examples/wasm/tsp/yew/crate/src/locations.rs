@@ -33,7 +33,7 @@ impl Location {
     }
 }
 
-pub fn locations(seed: u64, num_cities: u32) -> Vec<Location> {
+pub fn create_locations(seed: u64, num_cities: u32) -> Vec<Location> {
     let num_cities = clamp_num_cities(num_cities);
     let mut rng = SmallRng::seed_from_u64(seed);
 

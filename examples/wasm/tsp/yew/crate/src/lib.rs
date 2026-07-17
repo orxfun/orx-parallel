@@ -1,5 +1,3 @@
-#![cfg(target_feature = "atomics")]
-
 use gloo_timers::callback::Interval;
 use js_sys::Date;
 use serde::{Deserialize, Serialize};
@@ -57,13 +55,18 @@ unsafe extern "C" {
 }
 
 #[wasm_bindgen]
+#[allow(unused_variables)]
 pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
-    orx_parallel::init_thread_pool(num_threads as usize)
+    #[cfg(target_feature = "atomics")]
+    return orx_parallel::init_thread_pool(num_threads as usize);
+
+    #[cfg(not(target_feature = "atomics"))]
+    panic!("init_parallel_runtime requires a wasm target with atomics and shared memory enabled")
 }
 
 #[wasm_bindgen]
 pub fn locations(seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
-    let locations = locations::locations(seed, num_cities);
+    let locations = locations::create_locations(seed, num_cities);
     serde_wasm_bindgen::to_value(&locations)
         .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))
 }
@@ -80,7 +83,7 @@ pub fn run_best_tour_par(
     let threads = threads as usize;
     let chunk_size = chunk_size as usize;
     let num_cities = locations::clamp_num_cities(num_cities);
-    let locations = locations::locations(seed, num_cities as u32);
+    let locations = locations::create_locations(seed, num_cities as u32);
     let started_at = Date::now();
     let output =
         computation::run_search_parallel(iterations, seed, threads, chunk_size, &locations);
@@ -92,7 +95,7 @@ pub fn run_best_tour_par(
 pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
     let iterations = iterations.max(1) as usize;
     let num_cities = locations::clamp_num_cities(num_cities);
-    let locations = locations::locations(seed, num_cities as u32);
+    let locations = locations::create_locations(seed, num_cities as u32);
     let started_at = Date::now();
     let output = computation::run_search_sequential(iterations, seed, &locations);
     let elapsed_ms = Date::now() - started_at;
