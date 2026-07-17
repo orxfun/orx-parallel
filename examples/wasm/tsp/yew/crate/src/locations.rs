@@ -1,11 +1,11 @@
 use rand::prelude::*;
 use rand::rngs::SmallRng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 const MIN_CITIES: usize = 5;
 const MAX_CITIES: usize = 200;
 
-#[derive(Clone, Copy, Debug, Serialize, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Location {
     pub x: f64,
     pub y: f64,

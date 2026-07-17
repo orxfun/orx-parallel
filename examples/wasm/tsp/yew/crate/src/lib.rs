@@ -123,8 +123,8 @@ fn app() -> Html {
     let run_subtitle =
         use_state(|| "Working through candidate tours. Larger runs can take a while.".to_string());
     let run_elapsed = use_state(|| "Elapsed: 0.0 s".to_string());
-    let run_started_at_ms = use_mut_ref(|| 0.0_f64);
-    let run_ticker = use_mut_ref(|| None::<Interval>);
+    let run_started_at_ms = use_state(|| 0.0_f64);
+    let run_ticker = use_state(|| None::<Interval>);
     let canvas_ref = use_node_ref();
 
     {
@@ -460,7 +460,7 @@ fn app() -> Html {
                     </div>
                 </div>
 
-                <canvas node_ref={canvas_ref} id="canvas" width="920" height="430"></canvas>
+                <canvas ref={canvas_ref} id="canvas" width="920" height="430"></canvas>
             </section>
         </main>
     }
@@ -537,8 +537,8 @@ async fn run_search_async(
     run_mode: UseStateHandle<SearchMode>,
     run_subtitle: UseStateHandle<String>,
     run_elapsed: UseStateHandle<String>,
-    run_started_at_ms: UseMutRefHandle<f64>,
-    run_ticker: UseMutRefHandle<Option<Interval>>,
+    run_started_at_ms: UseStateHandle<f64>,
+    run_ticker: UseStateHandle<Option<Interval>>,
     status: UseStateHandle<String>,
 ) {
     let settings = RunSettings {
@@ -574,22 +574,22 @@ async fn run_search_async(
         }
         .to_string(),
     );
-    *run_started_at_ms.borrow_mut() = Date::now();
+    run_started_at_ms.set(Date::now());
 
-    run_ticker.borrow_mut().take();
-    let started_at = *run_started_at_ms.borrow();
+    run_ticker.set(None);
+    let started_at = *run_started_at_ms;
     let run_elapsed_state = run_elapsed.clone();
-    *run_ticker.borrow_mut() = Some(Interval::new(200, move || {
+    run_ticker.set(Some(Interval::new(200, move || {
         let secs = (Date::now() - started_at) / 1000.0;
         run_elapsed_state.set(format!("Elapsed: {secs:.1} s"));
-    }));
+    })));
 
     let result = match run_search_once(&settings).await {
         Ok(result) => result,
         Err(err) => {
             status.set(format!("Error: {err:?}"));
             is_running.set(false);
-            run_ticker.borrow_mut().take();
+            run_ticker.set(None);
             return;
         }
     };
@@ -619,7 +619,7 @@ async fn run_search_async(
     );
 
     is_running.set(false);
-    run_ticker.borrow_mut().take();
+    run_ticker.set(None);
 }
 
 async fn run_search_once(settings: &RunSettings) -> Result<RunResult, JsValue> {
@@ -705,27 +705,8 @@ fn canvas_2d_context(canvas: &HtmlCanvasElement) -> Option<CanvasRenderingContex
 }
 
 fn read_css_color(variable_name: &str, fallback: &str) -> String {
-    let Some(window) = web_sys::window() else {
-        return fallback.to_string();
-    };
-
-    let Some(document) = window.document() else {
-        return fallback.to_string();
-    };
-
-    let Some(root) = document.document_element() else {
-        return fallback.to_string();
-    };
-
-    match window.get_computed_style(&root) {
-        Ok(Some(style)) => style
-            .get_property_value(variable_name)
-            .ok()
-            .map(|value| value.trim().to_string())
-            .filter(|value| !value.is_empty())
-            .unwrap_or_else(|| fallback.to_string()),
-        _ => fallback.to_string(),
-    }
+    let _ = variable_name;
+    fallback.to_string()
 }
 
 fn canvas_background_color() -> String {
