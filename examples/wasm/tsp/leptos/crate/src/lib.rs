@@ -1,9 +1,6 @@
-#![cfg(target_feature = "atomics")]
-
 use gloo_timers::{callback::Interval, future::TimeoutFuture};
 use js_sys::Date;
 use leptos::html;
-use leptos::mount::mount_to_body;
 use leptos::prelude::*;
 use leptos::prelude::{
     AriaAttributes, ClassAttribute, ElementChild, GlobalAttributes, NodeRefAttribute, PropAttribute,
@@ -14,10 +11,12 @@ use std::rc::Rc;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{JsFuture, spawn_local};
+use wasm_bindings::RunResult;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
 mod computation;
 mod locations;
+mod wasm_bindings;
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
@@ -37,14 +36,6 @@ const PARALLEL_HELP: &str = "// we will construct & improve `iterations` tours\n
 enum SearchMode {
     Parallel,
     Sequential,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct RunResult {
-    best_tour: Vec<usize>,
-    best_distance: f64,
-    iterations: usize,
-    elapsed_ms: f64,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -90,49 +81,6 @@ pub fn start_app() {
     mount_to_body(App);
 }
 
-#[wasm_bindgen]
-pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
-    orx_parallel::init_thread_pool(num_threads as usize)
-}
-
-#[wasm_bindgen]
-pub fn locations(seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
-    let locations = locations::locations(seed, num_cities);
-    serde_wasm_bindgen::to_value(&locations)
-        .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))
-}
-
-#[wasm_bindgen]
-pub fn run_best_tour_par(
-    iterations: u32,
-    seed: u64,
-    threads: u32,
-    chunk_size: u32,
-    num_cities: u32,
-) -> Result<JsValue, JsValue> {
-    let iterations = iterations.max(1) as usize;
-    let threads = threads as usize;
-    let chunk_size = chunk_size as usize;
-    let num_cities = locations::clamp_num_cities(num_cities);
-    let locations = locations::locations(seed, num_cities as u32);
-    let started_at = Date::now();
-    let output =
-        computation::run_search_parallel(iterations, seed, threads, chunk_size, &locations);
-    let elapsed_ms = Date::now() - started_at;
-    run_output_to_js(output, elapsed_ms)
-}
-
-#[wasm_bindgen]
-pub fn run_best_tour_seq(iterations: u32, seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
-    let iterations = iterations.max(1) as usize;
-    let num_cities = locations::clamp_num_cities(num_cities);
-    let locations = locations::locations(seed, num_cities as u32);
-    let started_at = Date::now();
-    let output = computation::run_search_sequential(iterations, seed, &locations);
-    let elapsed_ms = Date::now() - started_at;
-    run_output_to_js(output, elapsed_ms)
-}
-
 #[component]
 fn App() -> impl IntoView {
     let status = create_rw_signal("Initializing...".to_string());
@@ -141,7 +89,7 @@ fn App() -> impl IntoView {
     let chunk_size = create_rw_signal(0_u32);
     let seed = create_rw_signal(42_u64);
     let num_cities = create_rw_signal(50_u32);
-    let points = create_rw_signal(locations::locations(
+    let points = create_rw_signal(locations::create_locations(
         seed.get_untracked(),
         num_cities.get_untracked(),
     ));
@@ -276,7 +224,7 @@ fn App() -> impl IntoView {
                                     move |ev| {
                                         let next_value = parse_u32_input(input_value(&ev), ui.num_cities.get_untracked());
                                         ui.num_cities.set(next_value);
-                                        ui.points.set(locations::locations(ui.seed.get_untracked(), next_value));
+                                        ui.points.set(locations::create_locations(ui.seed.get_untracked(), next_value));
                                         clear_best(&ui);
                                         ui.status.set(format!("Updated problem size to {next_value} cities."));
                                     }
@@ -349,7 +297,7 @@ fn App() -> impl IntoView {
                                         let next_value = parse_u64_input(input_value(&ev), ui.seed.get_untracked());
                                         ui.seed.set(next_value);
                                         let num_cities = ui.num_cities.get_untracked();
-                                        ui.points.set(locations::locations(next_value, num_cities));
+                                        ui.points.set(locations::create_locations(next_value, num_cities));
                                         clear_best(&ui);
                                         ui.status.set(format!("Updated city seed to {next_value}."));
                                     }
@@ -392,7 +340,7 @@ fn App() -> impl IntoView {
                                     clear_best(&ui);
                                     let seed = ui.seed.get_untracked();
                                     let num_cities = ui.num_cities.get_untracked();
-                                    ui.points.set(locations::locations(seed, num_cities));
+                                    ui.points.set(locations::create_locations(seed, num_cities));
                                     ui.status.set("Best tour reset. Ready for a fresh run.".to_string());
                                 }
                             }
@@ -452,28 +400,6 @@ fn CodeCard(
                 <code class="language-rust">{code}</code>
             </pre>
         </>
-    }
-}
-
-fn run_output_to_js(
-    output: computation::SearchRunOutput,
-    elapsed_ms: f64,
-) -> Result<JsValue, JsValue> {
-    match output.best {
-        Some(solution) => {
-            let result = RunResult {
-                best_tour: solution.tour,
-                best_distance: solution.distance,
-                iterations: output.iterations,
-                elapsed_ms,
-            };
-
-            serde_wasm_bindgen::to_value(&result)
-                .map_err(|e| JsValue::from_str(&format!("failed to serialize result: {e}")))
-        }
-        None => Err(JsValue::from_str(
-            "no tour could be generated (unexpected empty search)",
-        )),
     }
 }
 
@@ -576,8 +502,10 @@ fn ensure_points_for_cities(ui: &UiState, num_cities: u32) {
         return;
     }
 
-    ui.points
-        .set(locations::locations(ui.seed.get_untracked(), num_cities));
+    ui.points.set(locations::create_locations(
+        ui.seed.get_untracked(),
+        num_cities,
+    ));
     clear_best(ui);
 }
 
