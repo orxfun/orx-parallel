@@ -14,12 +14,12 @@ use wasm_bindgen_futures::{JsFuture, spawn_local};
 use wasm_bindings::RunResult;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
-mod code_card;
+mod components;
 mod computation;
 mod locations;
 mod wasm_bindings;
 
-use code_card::CodeCard;
+use components::code_card::CodeCard;
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
