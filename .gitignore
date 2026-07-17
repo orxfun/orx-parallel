@@ -27,6 +27,11 @@ examples/wasm/tsp/react/web/dist/
 examples/wasm/tsp/react/web/pkg/
 examples/wasm/tsp/react/crate/target/
 
+examples/wasm/tsp/leptos/web/node_modules/
+examples/wasm/tsp/leptos/web/dist/
+examples/wasm/tsp/leptos/web/pkg/
+examples/wasm/tsp/leptos/crate/target/
+
 
 
 
