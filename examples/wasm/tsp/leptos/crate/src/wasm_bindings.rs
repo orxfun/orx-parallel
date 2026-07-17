@@ -18,7 +18,8 @@ pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
     #[cfg(target_feature = "atomics")]
     return orx_parallel::init_thread_pool(num_threads as usize);
 
-    panic!("PLACEHOLDER, write a proper error message")
+    #[cfg(not(target_feature = "atomics"))]
+    panic!("init_parallel_runtime requires a wasm target with atomics and shared memory enabled")
 }
 
 #[wasm_bindgen]
