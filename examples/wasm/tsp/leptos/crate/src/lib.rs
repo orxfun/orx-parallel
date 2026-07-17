@@ -14,9 +14,12 @@ use wasm_bindgen_futures::{JsFuture, spawn_local};
 use wasm_bindings::RunResult;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
+mod code_card;
 mod computation;
 mod locations;
 mod wasm_bindings;
+
+use code_card::CodeCard;
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
@@ -369,36 +372,6 @@ fn App() -> impl IntoView {
                 <canvas node_ref=canvas_ref id="canvas" width="920" height="430"></canvas>
             </section>
         </main>
-    }
-}
-
-#[component]
-fn CodeCard(
-    title: &'static str,
-    help_title: &'static str,
-    help_body: &'static str,
-    code: &'static str,
-) -> impl IntoView {
-    view! {
-        <>
-            <div class="code-card-header">
-                <h2>{title}</h2>
-                <details class="code-help">
-                    <summary class="code-help-trigger" aria-label=move || format!("Show {} explanation", title.to_lowercase())>
-                        ?
-                    </summary>
-                    <div class="code-help-popover" role="note">
-                        <h2 class="code-help-title">{help_title}</h2>
-                        <pre class="code-block">
-                            <code class="language-rust">{help_body}</code>
-                        </pre>
-                    </div>
-                </details>
-            </div>
-            <pre class="code-block">
-                <code class="language-rust">{code}</code>
-            </pre>
-        </>
     }
 }
 
