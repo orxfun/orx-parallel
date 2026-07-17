@@ -28,9 +28,16 @@ self.addEventListener("message", async (event: MessageEvent) => {
     const payload = event.data as { type: "run-search"; settings: RunSettings };
 
     try {
+        const startedAt = performance.now();
         await ensureWasmInitialized();
         const result = await runSearch(payload.settings);
-        self.postMessage({ type: "search-result", result });
+        self.postMessage({
+            type: "search-result",
+            result: {
+                ...result,
+                elapsed_ms: performance.now() - startedAt
+            }
+        });
     } catch (err) {
         self.postMessage({
             type: "search-error",
