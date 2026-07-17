@@ -7,7 +7,10 @@ import "highlight.js/styles/github-dark.css";
 
 hljs.registerLanguage("rust", rust);
 
+(globalThis as typeof globalThis & { highlightCodeBlocks: () => void }).highlightCodeBlocks = () => {
+    hljs.highlightAll();
+};
+
 void init().then(() => {
     start_app();
-    hljs.highlightAll();
 });

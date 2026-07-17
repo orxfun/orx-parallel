@@ -53,6 +53,7 @@ struct RunSettings {
 #[wasm_bindgen(js_namespace = globalThis)]
 unsafe extern "C" {
     fn runSearchOnce(settings: JsValue) -> js_sys::Promise;
+    fn highlightCodeBlocks();
 }
 
 #[wasm_bindgen]
@@ -145,6 +146,13 @@ fn app() -> Html {
             let current_points = (*points).clone();
             let current_best = (*best_so_far).clone();
             draw_scene(&canvas_ref, &current_points, current_best.as_ref());
+            || ()
+        });
+    }
+
+    {
+        use_effect(move || {
+            highlightCodeBlocks();
             || ()
         });
     }
