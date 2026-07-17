@@ -48,16 +48,18 @@ async function ensureWasmInitialized() {
 }
 
 async function runSearch(settings: RunSettings): Promise<SearchResult> {
+    const seed = BigInt(settings.seed);
+
     if (settings.mode === "parallel") {
         await init_parallel_runtime(settings.threads);
         return run_best_tour_par(
             settings.iterations,
-            settings.seed,
+            seed,
             settings.threads,
             settings.chunk_size,
             settings.num_cities
         ) as SearchResult;
     }
 
-    return run_best_tour_seq(settings.iterations, settings.seed, settings.num_cities) as SearchResult;
+    return run_best_tour_seq(settings.iterations, seed, settings.num_cities) as SearchResult;
 }

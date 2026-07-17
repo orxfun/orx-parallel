@@ -1,4 +1,4 @@
-import init from "../pkg/orx_parallel_wasm_tsp_leptos.js";
+import init, { start_app } from "../pkg/orx_parallel_wasm_tsp_leptos.js";
 import "./search-runner.ts";
 import "../styles.css";
 import hljs from "highlight.js/lib/core";
@@ -8,5 +8,6 @@ import "highlight.js/styles/github-dark.css";
 hljs.registerLanguage("rust", rust);
 
 void init().then(() => {
+    start_app();
     hljs.highlightAll();
 });

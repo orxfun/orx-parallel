@@ -84,8 +84,8 @@ unsafe extern "C" {
 }
 
 #[cfg(target_arch = "wasm32")]
-#[wasm_bindgen(start)]
-pub fn main() {
+#[wasm_bindgen]
+pub fn start_app() {
     console_error_panic_hook::set_once();
     mount_to_body(App);
 }
