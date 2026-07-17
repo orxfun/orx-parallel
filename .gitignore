@@ -32,6 +32,11 @@ examples/wasm/tsp/leptos/web/dist/
 examples/wasm/tsp/leptos/web/pkg/
 examples/wasm/tsp/leptos/crate/target/
 
+examples/wasm/tsp/yew/web/node_modules/
+examples/wasm/tsp/yew/web/dist/
+examples/wasm/tsp/yew/web/pkg/
+examples/wasm/tsp/yew/crate/target/
+
 
 
 
