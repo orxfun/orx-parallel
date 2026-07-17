@@ -104,10 +104,11 @@ fn two_opt_improve(locations: &[Location], mut tour: Vec<usize>) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::locations::create_locations;
 
     #[test]
     fn sequential_and_parallel_search_agree() {
-        let locations = crate::locations::locations(123, 20);
+        let locations = create_locations(123, 20);
         let iterations = 32;
         let seed = 12345;
 
