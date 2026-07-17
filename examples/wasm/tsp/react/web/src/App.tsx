@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import init from "../pkg/orx_parallel_wasm_tsp_react.js";
 import { locations } from "../pkg/orx_parallel_wasm_tsp_react.js";
+import { CodeCard } from "./CodeCard";
 import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
 import "highlight.js/styles/github-dark.css";
@@ -359,30 +360,6 @@ export default function App() {
                 <canvas ref={canvasRef} id="canvas" width="920" height="430"></canvas>
             </section>
         </main>
-    );
-}
-
-function CodeCard({ title, helpTitle, helpBody, code }: { title: string; helpTitle: string; helpBody: string; code: string }) {
-    return (
-        <>
-            <div className="code-card-header">
-                <h2>{title}</h2>
-                <details className="code-help">
-                    <summary className="code-help-trigger" aria-label={`Show ${title.toLowerCase()} explanation`}>
-                        ?
-                    </summary>
-                    <div className="code-help-popover" role="note">
-                        <h2 style={{ paddingLeft: 10 }}>{helpTitle}</h2>
-                        <pre className="code-block">
-                            <code className="language-rust">{helpBody}</code>
-                        </pre>
-                    </div>
-                </details>
-            </div>
-            <pre className="code-block">
-                <code className="language-rust">{code}</code>
-            </pre>
-        </>
     );
 }
 
