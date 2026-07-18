@@ -39,6 +39,17 @@ examples/wasm/tsp/yew/crate/target/
 
 
 
+examples/wasm/tsp/leptos_old/web/node_modules/
+examples/wasm/tsp/leptos_old/web/dist/
+examples/wasm/tsp/leptos_old/web/pkg/
+examples/wasm/tsp/leptos_old/crate/target/
+
+examples/wasm/tsp/yew_old/web/node_modules/
+examples/wasm/tsp/yew_old/web/dist/
+examples/wasm/tsp/yew_old/web/pkg/
+examples/wasm/tsp/yew_old/crate/target/
+
+
 
 # wasm demo tsp generated artifacts
 examples/arch/wasm_demo_tsp/web/node_modules/
