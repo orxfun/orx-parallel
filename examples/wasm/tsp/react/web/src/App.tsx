@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import init from "../pkg/orx_parallel_wasm_tsp_react.js";
 import { locations } from "../pkg/orx_parallel_wasm_tsp_react.js";
 import { CodeCard } from "./CodeCard";
@@ -37,6 +37,8 @@ const MIN_CITIES = 5;
 const MAX_CITIES = 200;
 const MIN_THREADS = 1;
 const MAX_THREADS = 16;
+const MAX_ITERATIONS = 200000;
+const INITIAL_RUN_SUBTITLE = "Working through candidate tours. Larger runs can take a while.";
 
 const SEQUENTIAL_CODE = `let mut rng = SmallRng::seed_from_u64(seed);
 (0..iterations)
@@ -96,8 +98,17 @@ export default function App() {
     const [ips, setIps] = useState("-");
     const [isRunning, setIsRunning] = useState(false);
     const [runMode, setRunMode] = useState<SearchMode>("parallel");
-    const [runSubtitle, setRunSubtitle] = useState(
-        "Working through candidate tours. Larger runs can take a while."
+    const [runSubtitle, setRunSubtitle] = useState(INITIAL_RUN_SUBTITLE);
+
+    const baseRunSettings = useMemo<Pick<RunSettings, "iterations" | "threads" | "chunkSize" | "seed" | "numCities">>(
+        () => ({
+            iterations: clamp(iterations, 1, MAX_ITERATIONS),
+            threads: clamp(threads, MIN_THREADS, MAX_THREADS),
+            chunkSize: Math.max(0, Math.trunc(chunkSize)),
+            seed: toSeed(seed),
+            numCities: clamp(numCities, MIN_CITIES, MAX_CITIES)
+        }),
+        [chunkSize, iterations, numCities, seed, threads]
     );
 
     useEffect(() => {
@@ -183,12 +194,8 @@ export default function App() {
 
     async function runSearch(mode: SearchMode) {
         const settings: RunSettings = {
-            mode,
-            iterations: clamp(iterations, 1, Number.MAX_SAFE_INTEGER),
-            threads: clamp(threads, MIN_THREADS, MAX_THREADS),
-            chunkSize: Math.max(0, Math.trunc(chunkSize)),
-            seed: toSeed(seed),
-            numCities: clamp(numCities, MIN_CITIES, MAX_CITIES)
+            ...baseRunSettings,
+            mode
         };
 
         const currentPoints = points.length === settings.numCities ? points : generatePoints(settings.seed, settings.numCities);
@@ -218,14 +225,18 @@ export default function App() {
         try {
             const result = await runSearchOnce(settings);
 
-            if (!bestSoFar || result.best_distance < bestSoFar.best_distance) {
-                setBestSoFar({
+            setBestSoFar((currentBest) => {
+                if (currentBest && currentBest.best_distance <= result.best_distance) {
+                    return currentBest;
+                }
+
+                return {
                     best_tour: result.best_tour,
                     best_distance: result.best_distance,
                     iterations: result.iterations,
                     elapsed_ms: result.elapsed_ms
-                });
-            }
+                };
+            });
 
             setBestDistance(result.best_distance.toFixed(3));
             setElapsed(`${result.elapsed_ms.toFixed(1)} ms`);
@@ -295,27 +306,67 @@ export default function App() {
                     </div>
                 </div>
 
-                <div className="control-panel">
+                <div className="control-panel" aria-busy={isRunning}>
                     <div className="controls">
                         <label>
                             Number of cities
-                            <input id="numCities" type="number" min="5" max="200" value={numCities} onChange={(event) => updateNumCities(event.currentTarget.valueAsNumber)} />
+                            <input
+                                id="numCities"
+                                type="number"
+                                min={MIN_CITIES}
+                                max={MAX_CITIES}
+                                value={numCities}
+                                onChange={(event) => updateNumCities(event.currentTarget.valueAsNumber)}
+                                disabled={isRunning}
+                            />
                         </label>
                         <label>
                             Iterations
-                            <input id="iterations" type="number" min="1" max="200000" value={iterations} onChange={(event) => setIterations(clamp(event.currentTarget.valueAsNumber, 1, 200000))} />
+                            <input
+                                id="iterations"
+                                type="number"
+                                min={1}
+                                max={MAX_ITERATIONS}
+                                value={iterations}
+                                onChange={(event) => setIterations(clamp(event.currentTarget.valueAsNumber, 1, MAX_ITERATIONS))}
+                                disabled={isRunning}
+                            />
                         </label>
                         <label>
                             Threads (1..16)
-                            <input id="threads" type="number" min="1" max="16" value={threads} onChange={(event) => updateThreads(event.currentTarget.valueAsNumber)} />
+                            <input
+                                id="threads"
+                                type="number"
+                                min={MIN_THREADS}
+                                max={MAX_THREADS}
+                                value={threads}
+                                onChange={(event) => updateThreads(event.currentTarget.valueAsNumber)}
+                                disabled={isRunning}
+                            />
                         </label>
                         <label>
                             Chunk size
-                            <input id="chunkSize" type="number" min="0" max="1048576" value={chunkSize} onChange={(event) => updateChunkSize(event.currentTarget.valueAsNumber)} />
+                            <input
+                                id="chunkSize"
+                                type="number"
+                                min={0}
+                                max={1048576}
+                                value={chunkSize}
+                                onChange={(event) => updateChunkSize(event.currentTarget.valueAsNumber)}
+                                disabled={isRunning}
+                            />
                         </label>
                         <label>
                             Seed
-                            <input id="seed" type="number" min="1" max="99999999" value={seed} onChange={(event) => updateSeed(event.currentTarget.valueAsNumber)} />
+                            <input
+                                id="seed"
+                                type="number"
+                                min={1}
+                                max={99999999}
+                                value={seed}
+                                onChange={(event) => updateSeed(event.currentTarget.valueAsNumber)}
+                                disabled={isRunning}
+                            />
                         </label>
                     </div>
 
