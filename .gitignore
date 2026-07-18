@@ -16,12 +16,11 @@ Cargo.lock
 
 benches/results/*.txt
 
-# wasm tsp examples
+# wasm examples
 
-examples/wasm/tsp/*/web/node_modules/
-examples/wasm/tsp/*/web/dist/
-examples/wasm/tsp/*/web/pkg/
-examples/wasm/tsp/*/crate/target/
+node_modules/
+dist/
+pkg/
 
 
 
