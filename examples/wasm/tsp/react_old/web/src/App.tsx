@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import init from "../pkg/orx_parallel_wasm_tsp_react.js";
 import { locations } from "../pkg/orx_parallel_wasm_tsp_react.js";
-import { CodeCard } from "./CodeCard";
+import { CodeCard } from "./CodeCard.js";
 import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
 import "highlight.js/styles/github-dark.css";
