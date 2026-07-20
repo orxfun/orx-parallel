@@ -23,6 +23,12 @@ type RunSettings = {
     numCities: number;
 };
 
+type SearchRequest = {
+    type: "run-search";
+    settings: RunSettings;
+    locations: Location[];
+};
+
 const MAX_CITIES = 200;
 const MAX_THREADS = 16;
 const CITY_NODE_COLOR = readCssColor("--city-node");
@@ -285,7 +291,7 @@ function updateStats(result: SearchResult) {
     ui.ips.textContent = ips.toFixed(0);
 }
 
-function runSearchAlgorithm(settings: RunSettings): Promise<SearchResult> {
+function runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
     return new Promise<SearchResult>((resolve, reject) => {
         const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
             type: "module"
@@ -323,7 +329,7 @@ function runSearchAlgorithm(settings: RunSettings): Promise<SearchResult> {
             { once: true }
         );
 
-        worker.postMessage({ type: "run-search", settings });
+        worker.postMessage({ type: "run-search", settings, locations } satisfies SearchRequest);
     });
 }
 
@@ -338,7 +344,7 @@ async function runSearch(mode: SearchMode) {
     ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
 
     try {
-        const result = await runSearchAlgorithm(settings);
+        const result = await runSearchAlgorithm(settings, state.points);
 
         if (!state.best || result.best_distance < state.best.best_distance) {
             state.best = result;

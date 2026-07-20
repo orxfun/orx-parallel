@@ -11,6 +11,11 @@ type RunSettings = {
     numCities: number;
 };
 
+type Location = {
+    x: number;
+    y: number;
+};
+
 type SearchResult = {
     best_tour: number[];
     best_distance: number;
@@ -21,6 +26,7 @@ type SearchResult = {
 type SearchRequest = {
     type: "run-search";
     settings: RunSettings;
+    locations: Location[];
 };
 
 type SearchResponse =
@@ -47,7 +53,7 @@ self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
             settings.seed,
             settings.threads,
             settings.chunkSize,
-            // locations,
+            event.data.locations,
         );
 
         const message: SearchResponse = { type: "search-result", result };
