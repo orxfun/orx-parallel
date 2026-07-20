@@ -36,8 +36,8 @@ const CITY_NODE_COLOR = readCssColor("--city-node");
 const TOUR_LINE_COLOR = readCssColor("--tour-line");
 const CANVAS_BACKGROUND_COLOR = readCssColor("--code-block-bg");
 
-function readCssColor(variableName: string) {
-    getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
+function readCssColor(variableName: string): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
 }
 
 function mustElement<T extends HTMLElement>(id: string): T {
@@ -116,7 +116,64 @@ function readChunkSize() {
     return chunkSize;
 }
 
+function readSeed() {
+    const seedInput = Math.max(1, Number(ui.seed.value) || 1);
+    return BigInt(Math.trunc(seedInput));
+}
+
+function generatePoints(seed: bigint, numCities: number) {
+    return locations(seed, numCities) as Location[];
+}
+
+// code
+
+function highlightCodeBlocks() {
+    document.querySelectorAll<HTMLPreElement>(".code-block code").forEach((block) => {
+        block.classList.add("language-rust");
+        hljs.highlightElement(block);
+    });
+}
+
+// canvas
+
+function drawPoints(locations: Location[]) {
+    ctx.fillStyle = CANVAS_BACKGROUND_COLOR;
+    ctx.fillRect(0, 0, ui.canvas.width, ui.canvas.height);
+    const mapped = mapPoints(locations);
+
+    for (const p of mapped) {
+        ctx.beginPath();
+        ctx.fillStyle = CITY_NODE_COLOR;
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function mapPoints(locations: Location[]) {
+    const pad = 28;
+    const xs = locations.map((p) => p.x);
+    const ys = locations.map((p) => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const spanX = Math.max(maxX - minX, 1);
+    const spanY = Math.max(maxY - minY, 1);
+
+    return locations.map((p) => ({
+        x: pad + ((p.x - minX) / spanX) * (ui.canvas.width - pad * 2),
+        y: ui.canvas.height - (pad + ((p.y - minY) / spanY) * (ui.canvas.height - pad * 2))
+    }));
+}
+
 // state
+
+function clearBest() {
+    state.bestSoFar = null;
+    ui.bestDistance.textContent = "-";
+    ui.elapsed.textContent = "-";
+    ui.ips.textContent = "-";
+}
 
 const state = {
     points: [] as Location[],
@@ -125,6 +182,37 @@ const state = {
     runStartedAtMs: 0,
     runTicker: undefined as number | undefined
 };
+
+// search
+
+async function runSearch(mode: SearchMode) {
+    // const settings = readRunSettings(mode);
+    // ensurePointsForCities(settings.numCities);
+
+    // setControlsDisabled(true);
+    // setRunningView(settings.mode, true);
+    // await allowRunningOverlayToRender();
+
+    // ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+
+    // try {
+    //     const result = await runSearchOnce(settings);
+
+    //     if (!state.bestSoFar || result.best_distance < state.bestSoFar.best_distance) {
+    //         state.bestSoFar = toAggregate(result);
+    //         drawTour(state.points, state.bestSoFar.best_tour);
+    //     }
+
+    //     updateStats(toAggregate(result));
+    //     ui.runSubtitle.textContent = `Processed ${settings.iterations.toLocaleString()} iterations in one call.`;
+    //     ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
+    // } catch (err) {
+    //     ui.status.textContent = `Error: ${String(err)}`;
+    // } finally {
+    //     setRunningView(settings.mode, false);
+    //     setControlsDisabled(false);
+    // }
+}
 
 // set up
 
@@ -137,6 +225,47 @@ async function setupApp() {
     ui.chunkSize.value = String(readChunkSize());
     highlightCodeBlocks();
     ui.status.textContent = "Ready";
+
+    ui.runParallel.addEventListener("click", async () => {
+        await runSearch("parallel");
+    });
+
+    ui.runSequential.addEventListener("click", async () => {
+        await runSearch("sequential");
+    });
+
+    ui.reset.addEventListener("click", () => {
+        clearBest();
+        drawPoints(state.points);
+        ui.status.textContent = "Best tour reset. Ready for a fresh run.";
+    });
+
+    ui.numCities.addEventListener("change", () => {
+        const numCities = readNumCities();
+        state.points = generatePoints(readSeed(), numCities);
+        clearBest();
+        drawPoints(state.points);
+        ui.status.textContent = `Updated problem size to ${numCities} cities.`;
+    });
+
+    ui.seed.addEventListener("change", () => {
+        const seed = readSeed();
+        const numCities = readNumCities();
+        state.points = generatePoints(seed, numCities);
+        clearBest();
+        drawPoints(state.points);
+        ui.status.textContent = `Updated city seed to ${seed.toString()}.`;
+    });
+
+    ui.threads.addEventListener("change", () => {
+        const threads = readThreads();
+        ui.status.textContent = `Thread limit set to ${threads}.`;
+    });
+
+    ui.chunkSize.addEventListener("change", () => {
+        const chunkSize = readChunkSize();
+        ui.status.textContent = `Chunk size set to ${chunkSize}.`;
+    });
 }
 
 setupApp();
