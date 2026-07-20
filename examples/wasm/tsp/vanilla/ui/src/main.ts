@@ -306,7 +306,7 @@ function runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promi
             { once: true }
         );
 
-        worker.postMessage({ type: "run-search", settings, locations } satisfies SearchRequest);
+        worker.postMessage({ settings, locations } satisfies SearchRequest);
     });
 }
 
