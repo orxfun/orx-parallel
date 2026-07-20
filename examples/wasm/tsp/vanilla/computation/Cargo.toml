@@ -2,7 +2,7 @@
 name = "computation"
 version = "0.1.0"
 edition = "2024"
-publish = ["artifactory"]
+publish = false
 
 [dependencies]
 ordered-float = { version = "5.3.0" }
