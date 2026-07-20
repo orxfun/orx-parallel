@@ -1,13 +1,152 @@
-<!DOCTYPE html>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>orx-parallel wasm tsp vanilla</title>
     <link rel="stylesheet" href="/styles.css" />
-</head>
-<body>
-    
-</body>
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <a href="https://github.com/orxfun" target="_blank" rel="noreferrer">
+          <img
+            class="hero-logo"
+            src="https://avatars.githubusercontent.com/u/132661625?s=400&u=e13dbda1a79636fa7d02dd9ac8dfc02705694144&v=4"
+            alt="orx logo"
+          />
+        </a>
+        <div class="hero-copy">
+          <h1>Parallel computation in WASM</h1>
+          <p class="hero-kicker">A vanilla TSP demo with shared-memory wasm threads using orx-parallel.</p>
+        </div>
+      </header>
+      <section class="intro-cards" aria-label="Example overview">
+        <article class="intro-card">
+          <h2>Computation: Local Search for TSP</h2>
+          <p>Randomly create tours and locally optimize with two-opt <code>Iterations</code> times, and return the best tour.</p>
+        </article>
+        <article class="intro-card">
+          <h2>Frontend</h2>
+          <p>Vanilla Vite + TypeScript UI.</p>
+        </article>
+        <article class="intro-card">
+          <div class="code-card-header">
+            <h2>Sequential Code</h2>
+            <details class="code-help">
+              <summary class="code-help-trigger" aria-label="Show sequential code explanation">?</summary>
+              <div class="code-help-popover" role="note">
+                <h2 style="padding-left: 10px;">Sequential Code Breakdown</h2>
+                <pre class="code-block"><code class="language-rust">// random-number-generator to construct initial random tours
+let mut rng = SmallRng::seed_from_u64(seed);
+
+// we will construct & improve `iterations` tours
+(0..iterations)
+
+    // `create_tour`constructs a random tour and locally-optimizes within 2-opt
+    .map(|_| create_tour(&mut rng, locations))
+
+    // among all created tours, we pick the one with minimum distance
+    .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
+              </div>
+            </details>
+          </div>
+            <pre class="code-block"><code class="language-rust">let mut rng = SmallRng::seed_from_u64(seed);
+(0..iterations)
+    .map(|_| create_tour(&mut rng, locations))
+    .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
+        </article>
+        <article class="intro-card">
+          <div class="code-card-header">
+            <h2>Parallel Code</h2>
+            <details class="code-help">
+              <summary class="code-help-trigger" aria-label="Show parallel code explanation">?</summary>
+              <div class="code-help-popover" role="note">
+                <h2 style="padding-left: 10px;">Parallel Code Breakdown</h2>
+                <pre class="code-block"><code class="language-rust">// we will construct & improve `iterations` tours
+(0..iterations)
+
+    // convert the iterator into parallel iterator
+    .into_par()
+
+    // `use_new` enables mutable variables in parallel computations
+    // each thread will have its own random number generator
+    // `t` here is the thread index, with value in (0..num_threads)
+    .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))
+
+    // `create_tour`constructs a random tour and locally-optimizes within 2-opt
+    .map(|rng, _| create_tour(rng, locations))
+
+    // among all created tours, we pick the one with minimum distance
+    .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
+              </div>
+            </details>
+          </div>
+              <pre class="code-block"><code class="language-rust">(0..iterations)
+    .into_par()
+    .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))
+    .map(|rng, _| create_tour(rng, locations))
+    .min_by_key(|x| OrderedFloat::from(x.distance))</code></pre>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="control-panel">
+            <div class="controls">
+              <label>
+                  Number of cities
+                  <input id="numCities" type="number" min="5" max="200" value="50" />
+              </label>
+              <label>
+                  Iterations
+                  <input id="iterations" type="number" min="1" max="200000" value="10000" />
+              </label>
+              <label>
+                  Threads (1..16)
+                  <input id="threads" type="number" min="1" max="16" value="4" />
+              </label>
+              <label>
+                  Chunk size
+                  <input id="chunkSize" type="number" min="0" max="1048576" value="0" />
+                </label>
+              <label>
+                  Seed
+                  <input id="seed" type="number" min="1" max="99999999" value="42" />
+              </label>
+            </div>
+
+            <div class="actions">
+                <button id="runParallel">Run parallel</button>
+                <button id="runSequential">Run sequential</button>
+                <button id="reset">Reset</button>
+            </div>
+
+            <div id="status" class="status-value" aria-live="polite">Initializing...</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div id="runOverlay" class="run-overlay" aria-live="polite" aria-hidden="true">
+          <div class="run-overlay-card">
+            <div class="run-overlay-top">
+              <span class="spinner" aria-hidden="true"></span>
+              <p id="runTitle" class="run-title">Running search...</p>
+            </div>
+            <p id="runSubtitle" class="run-subtitle">Working through candidate tours. Larger runs can take a while.</p>
+               <p id="runElapsed" class="run-elapsed">Elapsed: 0.0 s</p>
+            <div class="run-bar" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><h3>Best Distance</h3><p id="bestDistance">-</p></div>
+          <div class="stat"><h3>Elapsed</h3><p id="elapsed">-</p></div>
+          <div class="stat"><h3>Iterations/s</h3><p id="ips">-</p></div>
+        </div>
+
+        <canvas id="canvas" width="920" height="430"></canvas>
+      </section>
+    </main>
+    <!-- <script type="module" src="/src/main.ts"></script> -->
+  </body>
 </html>
