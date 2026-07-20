@@ -32,11 +32,3 @@ This crate can be tested with:
 ```bash
 cargo test -p wasm_bindings --target wasm32-unknown-unknown
 ```
-
-That command only tests the bindings layer, which is the only responsibility of this crate.
-
-For a compile-only check, you can use:
-
-```bash
-cargo test -p wasm_bindings --target wasm32-unknown-unknown --no-run
-```
