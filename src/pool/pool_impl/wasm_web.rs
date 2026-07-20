@@ -23,7 +23,7 @@ static WASM_WEB3_THREAD_POOL_STATE: AtomicU8 = AtomicU8::new(WASM_WEB3_THREAD_PO
 static WASM_WEB3_THREAD_POOL_NUM_THREADS: AtomicUsize = AtomicUsize::new(0);
 static WASM_WEB3_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 
-#[wasm_bindgen(module = "/src/pool/pool_impl/worker_helpers.js")]
+#[wasm_bindgen(module = "/src/pool/pool_impl/wasm_web_start_workers.js")]
 extern "C" {
     #[wasm_bindgen(js_name = startWorkers)]
     fn start_workers(module: JsValue, memory: JsValue, num_threads: usize) -> Promise;
