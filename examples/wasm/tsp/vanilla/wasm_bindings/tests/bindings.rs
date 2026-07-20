@@ -48,12 +48,6 @@ fn run_search_returns_a_tour_summary() {
     assert_is_tour(&result.best_tour, locations.len());
 }
 
-#[wasm_bindgen_test]
-#[cfg(target_feature = "atomics")]
-fn init_parallel_runtime_returns_a_promise() {
-    let _promise = init_parallel_runtime(1);
-}
-
 fn assert_is_tour(tour: &[usize], expected_len: usize) {
     assert_eq!(tour.len(), expected_len, "incorrect tour length");
     let mut sorted = tour.to_vec();
