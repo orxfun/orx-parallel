@@ -1,37 +1,5 @@
 import init, { init_parallel_runtime, run_search } from "../pkg/wasm_bindings.js";
-
-type SearchMode = "parallel" | "sequential";
-
-type RunSettings = {
-    mode: SearchMode;
-    iterations: number;
-    threads: number;
-    chunkSize: number;
-    seed: bigint;
-    numCities: number;
-};
-
-type Location = {
-    x: number;
-    y: number;
-};
-
-type SearchResult = {
-    best_tour: number[];
-    best_distance: number;
-    iterations: number;
-    elapsed_ms: number;
-};
-
-type SearchRequest = {
-    type: "run-search";
-    settings: RunSettings;
-    locations: Location[];
-};
-
-type SearchResponse =
-    | { type: "search-result"; result: SearchResult }
-    | { type: "search-error"; message: string };
+import type { SearchRequest, SearchResponse } from "./shared-types.js";
 
 self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
     if (event.data.type !== "run-search") {

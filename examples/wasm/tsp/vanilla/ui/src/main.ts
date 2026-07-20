@@ -2,32 +2,9 @@ import init, { locations } from "../pkg/wasm_bindings.js";
 import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
 import "highlight.js/styles/github-dark.css";
+import type { Location, RunSettings, SearchMode, SearchRequest, SearchResult } from "./shared-types.js";
 
 hljs.registerLanguage("rust", rust);
-
-type Location = { x: number; y: number };
-type SearchResult = {
-    best_tour: number[];
-    best_distance: number;
-    iterations: number;
-    elapsed_ms: number;
-};
-type SearchMode = "parallel" | "sequential";
-
-type RunSettings = {
-    mode: SearchMode;
-    iterations: number;
-    threads: number;
-    chunkSize: number;
-    seed: bigint;
-    numCities: number;
-};
-
-type SearchRequest = {
-    type: "run-search";
-    settings: RunSettings;
-    locations: Location[];
-};
 
 const MAX_CITIES = 200;
 const MAX_THREADS = 16;
