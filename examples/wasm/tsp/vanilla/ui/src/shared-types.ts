@@ -19,7 +19,6 @@ export type RunSettings = {
 };
 
 export type SearchRequest = {
-    type: "run-search";
     settings: RunSettings;
     locations: Location[];
 };
