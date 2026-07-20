@@ -23,13 +23,6 @@ type RunSettings = {
     numCities: number;
 };
 
-type RunAggregate = {
-    best_tour: number[];
-    best_distance: number;
-    iterations: number;
-    elapsed_ms: number;
-};
-
 const MAX_CITIES = 200;
 const MAX_THREADS = 16;
 const CITY_NODE_COLOR = readCssColor("--city-node");
@@ -166,10 +159,33 @@ function mapPoints(locations: Location[]) {
     }));
 }
 
+function drawTour(locations: Location[], tour: number[]) {
+    drawPoints(locations);
+    if (tour.length === 0) {
+        return;
+    }
+
+    const mapped = mapPoints(locations);
+    ctx.beginPath();
+    ctx.strokeStyle = TOUR_LINE_COLOR;
+    ctx.lineWidth = 2;
+
+    const first = mapped[tour[0]];
+    ctx.moveTo(first.x, first.y);
+
+    for (const idx of tour.slice(1)) {
+        const p = mapped[idx];
+        ctx.lineTo(p.x, p.y);
+    }
+
+    ctx.lineTo(first.x, first.y);
+    ctx.stroke();
+}
+
 // state
 
 function clearBest() {
-    state.bestSoFar = null;
+    state.best = null;
     ui.bestDistance.textContent = "-";
     ui.elapsed.textContent = "-";
     ui.ips.textContent = "-";
@@ -177,7 +193,7 @@ function clearBest() {
 
 const state = {
     points: [] as Location[],
-    bestSoFar: null as RunAggregate | null,
+    best: null as SearchResult | null,
     currentNumCities: 50,
     runStartedAtMs: 0,
     runTicker: undefined as number | undefined
@@ -185,33 +201,159 @@ const state = {
 
 // search
 
+function readRunSettings(mode: SearchMode): RunSettings {
+    const iterations = Math.max(1, Number(ui.iterations.value) || 1);
+    const threads = readThreads();
+    const chunkSize = readChunkSize();
+    return {
+        mode,
+        iterations,
+        threads,
+        chunkSize,
+        seed: readSeed(),
+        numCities: readNumCities()
+    };
+}
+
+function ensurePointsForCities(numCities: number) {
+    if (state.points.length === numCities) {
+        return;
+    }
+
+    state.points = generatePoints(readSeed(), numCities);
+    clearBest();
+    drawPoints(state.points);
+}
+
+function setControlsDisabled(disabled: boolean) {
+    ui.runParallel.disabled = disabled;
+    ui.runSequential.disabled = disabled;
+    ui.reset.disabled = disabled;
+    ui.iterations.disabled = disabled;
+    ui.threads.disabled = disabled;
+    ui.chunkSize.disabled = disabled;
+    ui.seed.disabled = disabled;
+    ui.numCities.disabled = disabled;
+}
+
+function setRunningView(mode: SearchMode, running: boolean) {
+    if (running) {
+        state.runStartedAtMs = performance.now();
+        ui.runTitle.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+        ui.runSubtitle.textContent = "Evaluating tours with 2-opt local search. Larger instances can take longer.";
+        ui.runElapsed.textContent = "Elapsed: 0.0 s";
+        ui.runOverlay.classList.add("active");
+        ui.runOverlay.setAttribute("aria-hidden", "false");
+
+        if (state.runTicker !== undefined) {
+            window.clearInterval(state.runTicker);
+        }
+
+        state.runTicker = window.setInterval(() => {
+            const secs = (performance.now() - state.runStartedAtMs) / 1000;
+            ui.runElapsed.textContent = `Elapsed: ${secs.toFixed(1)} s`;
+        }, 200);
+
+        return;
+    }
+
+    if (state.runTicker !== undefined) {
+        window.clearInterval(state.runTicker);
+        state.runTicker = undefined;
+    }
+
+    ui.runOverlay.classList.remove("active");
+    ui.runOverlay.setAttribute("aria-hidden", "true");
+}
+
+function nextPaint() {
+    return new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+    });
+}
+
+async function allowRunningOverlayToRender() {
+    await nextPaint();
+    await nextPaint();
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 24));
+}
+
+function updateStats(result: SearchResult) {
+    ui.bestDistance.textContent = result.best_distance.toFixed(3);
+    ui.elapsed.textContent = `${result.elapsed_ms.toFixed(1)} ms`;
+    const ips = result.iterations / Math.max(result.elapsed_ms / 1000, 1e-9);
+    ui.ips.textContent = ips.toFixed(0);
+}
+
+function runSearchAlgorithm(settings: RunSettings): Promise<SearchResult> {
+    return new Promise<SearchResult>((resolve, reject) => {
+        const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
+            type: "module"
+        });
+
+        const cleanup = () => {
+            worker.terminate();
+        };
+
+        worker.addEventListener(
+            "message",
+            (event: MessageEvent) => {
+                const data = event.data as
+                    | { type: "search-result"; result: SearchResult }
+                    | { type: "search-error"; message: string };
+
+                if (data.type === "search-error") {
+                    cleanup();
+                    reject(new Error(data.message));
+                    return;
+                }
+
+                cleanup();
+                resolve(data.result);
+            },
+            { once: true }
+        );
+
+        worker.addEventListener(
+            "error",
+            (event) => {
+                cleanup();
+                reject(new Error(event.message || "search worker failed"));
+            },
+            { once: true }
+        );
+
+        worker.postMessage({ type: "run-search", settings });
+    });
+}
+
 async function runSearch(mode: SearchMode) {
-    // const settings = readRunSettings(mode);
-    // ensurePointsForCities(settings.numCities);
+    const settings = readRunSettings(mode);
+    ensurePointsForCities(settings.numCities);
 
-    // setControlsDisabled(true);
-    // setRunningView(settings.mode, true);
-    // await allowRunningOverlayToRender();
+    setControlsDisabled(true);
+    setRunningView(settings.mode, true);
+    await allowRunningOverlayToRender();
 
-    // ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+    ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
 
-    // try {
-    //     const result = await runSearchOnce(settings);
+    try {
+        const result = await runSearchAlgorithm(settings);
 
-    //     if (!state.bestSoFar || result.best_distance < state.bestSoFar.best_distance) {
-    //         state.bestSoFar = toAggregate(result);
-    //         drawTour(state.points, state.bestSoFar.best_tour);
-    //     }
+        if (!state.best || result.best_distance < state.best.best_distance) {
+            state.best = result;
+            drawTour(state.points, state.best.best_tour);
+        }
 
-    //     updateStats(toAggregate(result));
-    //     ui.runSubtitle.textContent = `Processed ${settings.iterations.toLocaleString()} iterations in one call.`;
-    //     ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
-    // } catch (err) {
-    //     ui.status.textContent = `Error: ${String(err)}`;
-    // } finally {
-    //     setRunningView(settings.mode, false);
-    //     setControlsDisabled(false);
-    // }
+        updateStats(result);
+        ui.runSubtitle.textContent = `Processed ${settings.iterations.toLocaleString()} iterations in one call.`;
+        ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
+    } catch (err) {
+        ui.status.textContent = `Error: ${String(err)}`;
+    } finally {
+        setRunningView(settings.mode, false);
+        setControlsDisabled(false);
+    }
 }
 
 // set up
