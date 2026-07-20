@@ -7,7 +7,8 @@
         "build:wasm": "RUSTUP_TOOLCHAIN=nightly RUSTFLAGS='-C target-feature=+atomics -C link-arg=--shared-memory -C link-arg=--max-memory=1073741824 -C link-arg=--import-memory -C link-arg=--export=__wasm_init_tls -C link-arg=--export=__tls_size -C link-arg=--export=__tls_align -C link-arg=--export=__tls_base' wasm-pack build ../wasm_bindings --target web --out-dir ../ui/pkg -- -Z build-std=panic_abort,std",
         "dev:full": "npm run build:wasm && npm exec -- vite",
         "dev": "npm exec -- vite",
-        "build": "npm exec -- vite build",
+        "typecheck": "tsc --noEmit",
+        "build": "npm run typecheck && npm exec -- vite build",
         "preview": "npm run build && npm exec -- vite preview"
     },
     "devDependencies": {
