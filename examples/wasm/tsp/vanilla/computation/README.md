@@ -36,7 +36,7 @@ default = []
 wasm-web-threads = ["orx-parallel/wasm-web-threads"]
 ```
 
-Note that the change is only in configuration, parallel computation code remains the same.
+Note that the difference is only in configuration; parallel computation code remains the same.
 
 ## How it fits into the example
 
