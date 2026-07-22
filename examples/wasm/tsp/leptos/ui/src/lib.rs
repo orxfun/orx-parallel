@@ -106,7 +106,7 @@ fn App() -> impl IntoView {
     let canvas_ref = NodeRef::<html::Canvas>::new();
 
     let ui = UiState {
-        canvas_ref: canvas_ref.clone(),
+        canvas_ref,
         status,
         iterations,
         threads,
@@ -131,7 +131,6 @@ fn App() -> impl IntoView {
     let canvas_background_color = read_css_color("--code-block-bg", "#0f172a");
 
     Effect::new({
-        let canvas_ref = canvas_ref.clone();
         let points = ui.points;
         let best_so_far = ui.best_so_far;
         let city_node_color = city_node_color.clone();
@@ -152,7 +151,6 @@ fn App() -> impl IntoView {
     });
 
     spawn_local({
-        let canvas_ref = canvas_ref.clone();
         let points = ui.points;
         let best_so_far = ui.best_so_far;
         let status = ui.status;
