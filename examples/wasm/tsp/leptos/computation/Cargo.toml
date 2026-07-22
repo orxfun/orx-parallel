@@ -1,0 +1,18 @@
+[package]
+name = "computation"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+ordered-float = { version = "5.3.0" }
+orx-parallel = { path = "../../../../..", default-features = false }
+rand = { version = "0.9", default-features = false, features = [
+    "std",
+    "small_rng",
+] }
+serde = { version = "1", features = ["derive"] }
+
+[features]
+default = []
+wasm-web-threads = ["orx-parallel/wasm-web-threads"]
