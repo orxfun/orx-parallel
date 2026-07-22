@@ -126,9 +126,9 @@ fn App() -> impl IntoView {
         run_ticker,
     };
 
-    let city_node_color = read_css_color("--city-node", "#f59e0b");
-    let tour_line_color = read_css_color("--tour-line", "#1d4ed8");
-    let canvas_background_color = read_css_color("--code-block-bg", "#0f172a");
+    let city_node_color = read_css_color("--city-node");
+    let tour_line_color = read_css_color("--tour-line");
+    let canvas_background_color = read_css_color("--code-block-bg");
 
     Effect::new({
         let points = ui.points;
@@ -606,34 +606,29 @@ fn parse_u64_input(value: String, fallback: u64) -> u64 {
     value.parse::<u64>().unwrap_or(fallback)
 }
 
-fn read_css_color(variable_name: &str, fallback: &str) -> String {
+fn read_css_color(variable_name: &str) -> String {
+    // This is a demo; if the expected CSS variable is missing, fail loudly.
     let Some(window) = web_sys::window() else {
-        return fallback.to_string();
+        panic!("missing window while reading CSS variable {variable_name}");
     };
 
     let Some(document) = window.document() else {
-        return fallback.to_string();
+        panic!("missing document while reading CSS variable {variable_name}");
     };
 
     let Some(element) = document.document_element() else {
-        return fallback.to_string();
+        panic!("missing document element while reading CSS variable {variable_name}");
     };
 
     let Ok(Some(style)) = window.get_computed_style(&element) else {
-        return fallback.to_string();
+        panic!("failed to read computed style for CSS variable {variable_name}");
     };
 
-    match style.get_property_value(variable_name) {
-        Ok(value) => {
-            let trimmed = value.trim();
-            if trimmed.is_empty() {
-                fallback.to_string()
-            } else {
-                trimmed.to_string()
-            }
-        }
-        Err(_) => fallback.to_string(),
-    }
+    style
+        .get_property_value(variable_name)
+        .expect("expected CSS variable to exist")
+        .trim()
+        .to_string()
 }
 
 fn js_error_message(err: JsValue) -> String {
