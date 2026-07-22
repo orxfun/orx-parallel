@@ -10,6 +10,22 @@ The same structure works for other parallelizable Rust workloads too. The import
 
 For the practical build flow, jump to [Building a browser UI with `orx-parallel`](#building-a-browser-ui-with-orx-parallel).
 
+```mermaid
+flowchart LR
+    UI[ui/\nBrowser UI] -->|module worker| WB[wasm_bindings/\nwasm boundary]
+    WB -->|calls into| C[computation/\nPure Rust computation]
+    C -->|results| WB
+    WB -->|postMessage| UI
+
+    subgraph Browser requirements
+        H[COOP + COEP headers]
+        T[threaded wasm build]
+    end
+
+    H -.-> UI
+    T -.-> WB
+```
+
 ## Project responsibilities
 
 ### `computation/`
