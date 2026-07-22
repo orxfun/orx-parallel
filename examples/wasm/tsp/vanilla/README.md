@@ -50,6 +50,8 @@ The UI should call into the wasm package, but it should not reimplement TSP logi
 5. `run_search` executes the Rust computation and returns the result to the worker.
 6. The worker posts the result back to the UI.
 
+**Alternatively, one can create a persistent search worker with the thread pool created only once.*
+
 ## Important rules for parallel wasm on the web
 
 Parallel wasm in the browser has a few hard requirements. Missing any one of them usually leads to code that still runs, but no longer uses parallel execution.
