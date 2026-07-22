@@ -100,3 +100,5 @@ That division is deliberate. It lets you validate the core search independently 
 - [UI README](./ui/README.md)
 
 The `ui/README.md` contains the exact setup and run commands for the browser app, while `wasm_bindings/README.md` documents the wasm API surface.
+
+## Steps to build the UI using `orx-parallel`
