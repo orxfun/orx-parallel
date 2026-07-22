@@ -6,6 +6,8 @@ use gloo_timers::{callback::Interval, future::TimeoutFuture};
 use js_sys::Date;
 use leptos::html;
 use leptos::prelude::*;
+use orx_iterable::IntoCloningIterable;
+use orx_iterable::Iterable;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -573,19 +575,18 @@ fn draw_scene(
 }
 
 fn map_points(locations: &[Location], width: f64, height: f64) -> Vec<(f64, f64)> {
-    let pad = 28.0;
-    let min_x = locations.iter().map(|p| p.x).fold(f64::INFINITY, f64::min);
-    let max_x = locations
-        .iter()
-        .map(|p| p.x)
-        .fold(f64::NEG_INFINITY, f64::max);
-    let min_y = locations.iter().map(|p| p.y).fold(f64::INFINITY, f64::min);
-    let max_y = locations
-        .iter()
-        .map(|p| p.y)
-        .fold(f64::NEG_INFINITY, f64::max);
+    let x = locations.iter().into_iterable().mapped(|x| x.x);
+    let min_x = x.iter().fold(f64::INFINITY, f64::min);
+    let max_x = x.iter().fold(f64::NEG_INFINITY, f64::max);
+
+    let y = locations.iter().into_iterable().mapped(|x| x.y);
+    let min_y = y.iter().fold(f64::INFINITY, f64::min);
+    let max_y = y.iter().fold(f64::NEG_INFINITY, f64::max);
+
     let span_x = f64::max(max_x - min_x, 1.0);
     let span_y = f64::max(max_y - min_y, 1.0);
+
+    let pad = 28.0;
 
     locations
         .iter()
@@ -613,10 +614,8 @@ fn read_css_color(variable_name: &str) -> String {
         let document = window.document()?;
         let element = document.document_element()?;
         let style = window.get_computed_style(&element).ok()??;
-        style
-            .get_property_value(variable_name)
-            .ok()
-            .map(|x| x.trim().to_string())
+        let value = style.get_property_value(variable_name).ok()?;
+        Some(value.trim().to_string())
     }
     read(variable_name).expect("expected CSS variable to exist")
 }
