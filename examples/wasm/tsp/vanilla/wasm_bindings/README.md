@@ -23,7 +23,9 @@ The returned object contains:
 
 Parallel search requires a wasm target with thread support enabled, including atomic operations and shared memory. In practice, this means building for `wasm32-unknown-unknown` with the appropriate threading support in the browser or host environment.
 
-If you intend to use parallel search, call `init_parallel_runtime` once before the first `run_search` call.
+If you intend to use parallel search, call `init_parallel_runtime` once before the first `run_search` call in each worker that will run parallel work.
+
+If the target does not support atomics and shared memory, `init_parallel_runtime` cannot succeed.
 
 ## Testing
 

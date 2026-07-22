@@ -1,17 +1,12 @@
 # orx-parallel wasm TSP vanilla
 
-This example is the recommended shape for using `orx-parallel` in the web with a JS-framework:
+This example shows the recommended web structure for `orx-parallel` with a Vite + TypeScript frontend:
 
-- `computation/` contains pure Rust logic
-  - knows nothing about JavaScript, wasm-bindgen, or the DOM
+- `computation/` contains pure Rust TSP logic
 - `wasm_bindings/` exposes a thin wasm API for that computation
-  - only translates between JS values and Rust types, and initializes the runtime needed for parallel search
-- `ui/` is the TypeScript/Vite frontend that consumes the wasm bindings
-  - only drives the user experience, starts workers, and calls the generated wasm bindings
+- `ui/` is the browser UI that consumes the wasm bindings
 
-In this example, `computation` crate contains functions to solve the traveling salesperson (TSP) problem. However, it can be any crate that contains the parallelizable computation.
-
-The split is intentional. It keeps the computation testable without the browser, keeps the wasm layer small, and keeps the UI focused on presentation and orchestration.
+The same structure works for other parallelizable Rust workloads too. The important part is the separation: keep the algorithm in Rust, keep the wasm layer thin, and keep the UI focused on orchestration.
 
 ## Project responsibilities
 
@@ -50,7 +45,7 @@ The UI should call into the wasm package, but it should not reimplement TSP logi
 5. `run_search` executes the Rust computation and returns the result to the worker.
 6. The worker posts the result back to the UI.
 
-**Alternatively, one can create a persistent search worker with the thread pool created only once.*
+The worker can be short-lived, or it can be kept alive and reused across searches. In either case, each worker that runs parallel work must call `init_parallel_runtime` once before its first parallel search.
 
 ## Important rules for parallel wasm on the web
 
@@ -58,35 +53,9 @@ Parallel wasm in the browser has a few hard requirements. Missing any one of the
 
 ### 1. Build wasm with thread support enabled
 
-The wasm build must target shared-memory/threaded wasm. In practice, that means using the build setup from `ui/package.json` and the Rust configurations of `computation/` and `wasm_bindings/`.
+The wasm build must target shared-memory/threaded wasm. In practice, that means using the build setup from `ui/package.json` and the Rust configuration in `computation/` and `wasm_bindings/`.
 
 If you change the Rust code, rebuild the wasm package before running the UI again.
-
-
-```toml
-# computation/Cargo.toml
-[dependencies]
-orx-parallel = { version = "4.0", default-features = false }
-
-[features]
-default = []
-wasm-web-threads = ["orx-parallel/wasm-web-threads"]
-```
-
-```toml
-# wasm_bindings/Cargo.toml
-[dependencies]
-computation = { path = "../computation", features = ["wasm-web-threads"] }
-```
-
-```json
-// ui/package.json
-{
-    "scripts": {
-        "build:wasm": "RUSTUP_TOOLCHAIN=nightly RUSTFLAGS='-C target-feature=+atomics -C link-arg=--shared-memory -C link-arg=--max-memory=1073741824 -C link-arg=--import-memory -C link-arg=--export=__wasm_init_tls -C link-arg=--export=__tls_size -C link-arg=--export=__tls_align -C link-arg=--export=__tls_base' wasm-pack build ../wasm_bindings --target web --out-dir ../ui/pkg -- -Z build-std=panic_abort,std",
-    }
-}
-```
 
 ### 2. Serve the app with cross-origin isolation headers
 
@@ -114,24 +83,6 @@ Call `init_parallel_runtime` once in each worker that will execute parallel work
 
 Do not assume that one worker initializing the runtime automatically prepares every other worker. If you create a new worker, that worker must initialize its own runtime before parallel search.
 
-```ts
-// ui/src/search-worker.ts
-import init, { init_parallel_runtime, run_search } from "../pkg/wasm_bindings.js";
-import type { SearchRequest, SearchResponse } from "./shared-types.js";
-
-self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
-    const settings = event.data.settings;
-    await init();
-
-    if (settings.mode === "parallel") {
-        await init_parallel_runtime(settings.threads);
-    }
-
-    let parallelize = settings.mode === "parallel";
-    const result = run_search(/*...*/);
-});
-```
-
 ## Testing strategy
 
 The separation also makes testing straightforward:
@@ -143,8 +94,6 @@ The separation also makes testing straightforward:
 That division is deliberate. It lets you validate the core search independently from the browser and only use wasm tests where they are actually needed.
 
 ## Read next
-
-Please also check the brief notes in readme files of three of these components.
 
 - [computation README](./computation/README.md)
 - [wasm bindings README](./wasm_bindings/README.md)

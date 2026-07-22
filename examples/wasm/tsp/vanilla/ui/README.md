@@ -40,12 +40,12 @@ Inside the worker:
 
 - import `init`, `init_parallel_runtime`, and `run_search` from `./pkg/wasm_bindings.js`
 - call `init()` in the worker before touching wasm exports
-- call `init_parallel_runtime(threadCount)` before the first parallel search in that worker module
+- call `init_parallel_runtime(threadCount)` before the first parallel search in that worker
 - send search results back to the main thread with `postMessage`
 
-In this example, the thread pool is created per search-worker module. That means each worker owns its own pool, and a new worker implies a new pool.
+In this example, the thread pool is created per worker. That means each worker owns its own pool, and a new worker implies a new pool.
 
-Alternatively, one can create a persistent search worker with the thread pool created only once.
+You can also keep a persistent search worker alive and reuse it for multiple searches. Either way, the worker must initialize the parallel runtime once before it runs parallel search.
 
 ## config files that matter
 
@@ -57,7 +57,7 @@ Alternatively, one can create a persistent search worker with the thread pool cr
 - `vite.config.ts` also sets `server.headers` for `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`; this is required for cross-origin isolation, which in turn is required for shared-memory wasm and browser threads
 - `tsconfig.json` uses `moduleResolution: "Bundler"` and `types: ["vite/client"]` so the generated wasm package and Vite imports typecheck cleanly
 
-Importantly, parallel computation will not word without `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers. As mentioned above, this is added to Vite configuration. If you serve the built `dist/` folder outside Vite, the server must send the same COOP/COEP headers. A plain static server like `npx serve dist` will not work for threaded wasm because the browser will reject `SharedArrayBuffer` unless `self.crossOriginIsolated` is true. This repo includes `npm run serve:dist`, which serves `dist/` locally with the required headers.
+Importantly, parallel computation will not work without `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers. As mentioned above, this is added to Vite configuration. If you serve the built `dist/` folder outside Vite, the server must send the same COOP/COEP headers. A plain static server like `npx serve dist` will not work for threaded wasm because the browser will reject `SharedArrayBuffer` unless `self.crossOriginIsolated` is true. This repo includes `npm run serve:dist`, which serves `dist/` locally with the required headers.
 
 ## minimal flow to run locally
 
