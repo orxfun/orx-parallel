@@ -9,12 +9,11 @@ use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::{JsValue, wasm_bindgen};
 use wasm_bindgen_futures::{JsFuture, spawn_local};
 use wasm_bindings::RunResult;
 use web_sys::CanvasRenderingContext2d;
-
-pub use wasm_bindings::{init_parallel_runtime, locations, run_search};
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
