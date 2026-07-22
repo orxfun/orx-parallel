@@ -313,7 +313,7 @@ fn App() -> impl IntoView {
                             on:click={
                                 let ui = ui.clone();
                                 move |_| {
-                                    spawn_local(run_search_app(ui.clone(), SearchMode::Parallel));
+                                    spawn_local(run_search(ui.clone(), SearchMode::Parallel));
                                 }
                             }
                         >
@@ -325,7 +325,7 @@ fn App() -> impl IntoView {
                             on:click={
                                 let ui = ui.clone();
                                 move |_| {
-                                    spawn_local(run_search_app(ui.clone(), SearchMode::Sequential));
+                                    spawn_local(run_search(ui.clone(), SearchMode::Sequential));
                                 }
                             }
                         >
@@ -382,7 +382,7 @@ fn App() -> impl IntoView {
     }
 }
 
-async fn run_search_app(ui: UiState, mode: SearchMode) {
+async fn run_search(ui: UiState, mode: SearchMode) {
     let settings = RunSettings {
         mode,
         iterations: ui.iterations.get_untracked(),
