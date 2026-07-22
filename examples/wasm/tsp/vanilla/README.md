@@ -8,6 +8,8 @@ This example shows the recommended web structure for `orx-parallel` with a Vite 
 
 The same structure works for other parallelizable Rust workloads too. The important part is the separation: keep the algorithm in Rust, keep the wasm layer thin, and keep the UI focused on orchestration.
 
+For the practical build flow, jump to [Building a browser UI with `orx-parallel`](#building-a-browser-ui-with-orx-parallel).
+
 ## Project responsibilities
 
 ### `computation/`
@@ -101,7 +103,7 @@ That division is deliberate. It lets you validate the core search independently 
 
 The `ui/README.md` contains the exact setup and run commands for the browser app, while `wasm_bindings/README.md` documents the wasm API surface.
 
-## Steps to build the UI using `orx-parallel`
+## Building a browser UI with `orx-parallel`
 
 1. Decide what should stay in Rust.
 
@@ -116,6 +118,8 @@ The `ui/README.md` contains the exact setup and run commands for the browser app
 3. Build the UI around a worker boundary.
 
    Let the browser UI live in `ui/`, and have it talk to the wasm package through a module worker. The UI should orchestrate when and how computations are triggered, not reimplement them.
+
+    The module worker keeps the main thread responsive, gives each worker a clean place to initialize wasm, and fits naturally with the ESM output produced by the UI build.
 
 4. Enable browser threads in the build.
 
