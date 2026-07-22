@@ -6,8 +6,6 @@ use gloo_timers::{callback::Interval, future::TimeoutFuture};
 use js_sys::Date;
 use leptos::html;
 use leptos::prelude::*;
-use orx_iterable::IntoCloningIterable;
-use orx_iterable::Iterable;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -364,7 +362,7 @@ fn App() -> impl IntoView {
                     <div class="run-overlay-card">
                         <div class="run-overlay-top">
                             <span class="spinner" aria-hidden="true"></span>
-                            <p id="runTitle" class="run-title">{move || if ui.run_mode.get() == SearchMode::Parallel { "Running parallel search..." } else { "Running sequential search..." }}</p>
+                            <p id="runTitle" class="run-title">{move || run_label(ui.run_mode.get())}</p>
                         </div>
                         <p id="runSubtitle" class="run-subtitle">{move || ui.run_subtitle.get()}</p>
                         <p id="runElapsed" class="run-elapsed">{move || ui.run_elapsed.get()}</p>
@@ -396,11 +394,7 @@ async fn run_search(ui: UiState, mode: SearchMode) {
 
     set_running_view(&ui, settings.mode, true);
     allow_running_overlay_to_render().await;
-    ui.status.set(if settings.mode == SearchMode::Parallel {
-        "Running parallel search...".to_string()
-    } else {
-        "Running sequential search...".to_string()
-    });
+    ui.status.set(run_label(settings.mode).to_string());
 
     let request = match serde_wasm_bindgen::to_value(&settings) {
         Ok(value) => value,
@@ -575,13 +569,22 @@ fn draw_scene(
 }
 
 fn map_points(locations: &[Location], width: f64, height: f64) -> Vec<(f64, f64)> {
-    let x = locations.iter().into_iterable().mapped(|x| x.x);
-    let min_x = x.iter().fold(f64::INFINITY, f64::min);
-    let max_x = x.iter().fold(f64::NEG_INFINITY, f64::max);
-
-    let y = locations.iter().into_iterable().mapped(|x| x.y);
-    let min_y = y.iter().fold(f64::INFINITY, f64::min);
-    let max_y = y.iter().fold(f64::NEG_INFINITY, f64::max);
+    let (min_x, max_x, min_y, max_y) = locations.iter().fold(
+        (
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+        ),
+        |(min_x, max_x, min_y, max_y), p| {
+            (
+                min_x.min(p.x),
+                max_x.max(p.x),
+                min_y.min(p.y),
+                max_y.max(p.y),
+            )
+        },
+    );
 
     let span_x = f64::max(max_x - min_x, 1.0);
     let span_y = f64::max(max_y - min_y, 1.0);
@@ -605,6 +608,13 @@ fn parse_u32_input(value: String, fallback: u32) -> u32 {
 
 fn parse_u64_input(value: String, fallback: u64) -> u64 {
     value.parse::<u64>().unwrap_or(fallback)
+}
+
+fn run_label(mode: SearchMode) -> &'static str {
+    match mode {
+        SearchMode::Parallel => "Running parallel search...",
+        SearchMode::Sequential => "Running sequential search...",
+    }
 }
 
 fn read_css_color(variable_name: &str) -> String {
