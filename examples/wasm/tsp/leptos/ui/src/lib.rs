@@ -608,27 +608,17 @@ fn parse_u64_input(value: String, fallback: u64) -> u64 {
 
 fn read_css_color(variable_name: &str) -> String {
     // This is a demo; if the expected CSS variable is missing, fail loudly.
-    let Some(window) = web_sys::window() else {
-        panic!("missing window while reading CSS variable {variable_name}");
-    };
-
-    let Some(document) = window.document() else {
-        panic!("missing document while reading CSS variable {variable_name}");
-    };
-
-    let Some(element) = document.document_element() else {
-        panic!("missing document element while reading CSS variable {variable_name}");
-    };
-
-    let Ok(Some(style)) = window.get_computed_style(&element) else {
-        panic!("failed to read computed style for CSS variable {variable_name}");
-    };
-
-    style
-        .get_property_value(variable_name)
-        .expect("expected CSS variable to exist")
-        .trim()
-        .to_string()
+    fn read(variable_name: &str) -> Option<String> {
+        let window = web_sys::window()?;
+        let document = window.document()?;
+        let element = document.document_element()?;
+        let style = window.get_computed_style(&element).ok()??;
+        style
+            .get_property_value(variable_name)
+            .ok()
+            .map(|x| x.trim().to_string())
+    }
+    read(variable_name).expect("expected CSS variable to exist")
 }
 
 fn js_error_message(err: JsValue) -> String {
