@@ -13,6 +13,7 @@ console_error_panic_hook = "0.1"
 gloo-timers = { version = "0.3", features = ["futures"] }
 js-sys = "0.3"
 leptos = { version = "0.7", features = ["csr"] }
+orx-iterable = "1.3"
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
 wasm-bindgen = "0.2"
