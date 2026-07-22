@@ -1,7 +1,8 @@
 import init, {
     init_parallel_runtime,
+    locations,
     run_search
-} from "../pkg/wasm_bindings.js";
+} from "../pkg/ui.js";
 
 type SearchMode = "parallel" | "sequential";
 
@@ -9,9 +10,9 @@ type RunSettings = {
     mode: SearchMode;
     iterations: number;
     threads: number;
-    chunk_size: number;
+    chunkSize: number;
     seed: number;
-    num_cities: number;
+    numCities: number;
 };
 
 type SearchResult = {
@@ -57,6 +58,7 @@ async function ensureParallelRuntimeInitialized(threadCount: number) {
 
 async function runSearch(settings: RunSettings): Promise<SearchResult> {
     const seed = BigInt(settings.seed);
+    const currentLocations = locations(seed, settings.numCities);
 
     if (settings.mode === "parallel") {
         await ensureParallelRuntimeInitialized(settings.threads);
@@ -65,8 +67,8 @@ async function runSearch(settings: RunSettings): Promise<SearchResult> {
             settings.iterations,
             seed,
             settings.threads,
-            settings.chunk_size,
-            settings.num_cities
+            settings.chunkSize,
+            currentLocations
         ) as SearchResult;
     }
 
@@ -75,7 +77,7 @@ async function runSearch(settings: RunSettings): Promise<SearchResult> {
         settings.iterations,
         seed,
         settings.threads,
-        settings.chunk_size,
-        settings.num_cities
+        settings.chunkSize,
+        currentLocations
     ) as SearchResult;
 }
