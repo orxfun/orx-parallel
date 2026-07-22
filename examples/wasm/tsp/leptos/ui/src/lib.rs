@@ -1,19 +1,23 @@
+mod canvas_view;
 mod code_card;
+mod controls;
+mod status;
 
+use canvas_view::{CanvasView, draw_scene};
 use code_card::CodeCard;
 use computation::{Location, create_locations};
+use controls::ControlsSection;
 use gloo_timers::{callback::Interval, future::TimeoutFuture};
 use js_sys::Date;
 use leptos::html;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
+use status::StatusSection;
 use std::cell::RefCell;
 use std::rc::Rc;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::{JsValue, wasm_bindgen};
-use wasm_bindgen_futures::{JsFuture, spawn_local};
+use wasm_bindgen_futures::JsFuture;
 use wasm_bindings::RunResult;
-use web_sys::CanvasRenderingContext2d;
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
@@ -130,49 +134,6 @@ fn App() -> impl IntoView {
     let tour_line_color = read_css_color("--tour-line");
     let canvas_background_color = read_css_color("--code-block-bg");
 
-    Effect::new({
-        let points = ui.points;
-        let best_so_far = ui.best_so_far;
-        let city_node_color = city_node_color.clone();
-        let tour_line_color = tour_line_color.clone();
-        let canvas_background_color = canvas_background_color.clone();
-        move |_| {
-            let current_points = points.get();
-            let current_best = best_so_far.get();
-            draw_scene(
-                &canvas_ref,
-                &current_points,
-                current_best.as_ref(),
-                &city_node_color,
-                &tour_line_color,
-                &canvas_background_color,
-            );
-        }
-    });
-
-    spawn_local({
-        let points = ui.points;
-        let best_so_far = ui.best_so_far;
-        let status = ui.status;
-        let city_node_color = city_node_color.clone();
-        let tour_line_color = tour_line_color.clone();
-        let canvas_background_color = canvas_background_color.clone();
-        async move {
-            TimeoutFuture::new(24).await;
-            let current_points = points.get_untracked();
-            let current_best = best_so_far.get_untracked();
-            draw_scene(
-                &canvas_ref,
-                &current_points,
-                current_best.as_ref(),
-                &city_node_color,
-                &tour_line_color,
-                &canvas_background_color,
-            );
-            status.set("Ready".to_string());
-        }
-    });
-
     view! {
         <main>
             <header class="hero">
@@ -208,175 +169,16 @@ fn App() -> impl IntoView {
                 </article>
             </section>
 
-            <section class="card">
-                <div class="control-panel">
-                    <div class="controls">
-                        <label>
-                            Number of cities
-                            <input
-                                id="numCities"
-                                type="number"
-                                min=MIN_CITIES.to_string()
-                                max=MAX_CITIES.to_string()
-                                prop:value=move || ui.num_cities.get().to_string()
-                                on:input={
-                                    let ui = ui.clone();
-                                    move |ev| {
-                                        let next_value = parse_u32_input(event_target_value(&ev), ui.num_cities.get_untracked());
-                                        ui.num_cities.set(next_value);
-                                        ui.points.set(create_locations(ui.seed.get_untracked(), next_value));
-                                        clear_best(&ui);
-                                        ui.status.set(format!("Updated problem size to {next_value} cities."));
-                                    }
-                                }
-                            />
-                        </label>
-                        <label>
-                            Iterations
-                            <input
-                                id="iterations"
-                                type="number"
-                                min="1"
-                                max="200000"
-                                prop:value=move || ui.iterations.get().to_string()
-                                on:input={
-                                    let ui = ui.clone();
-                                    move |ev| {
-                                        let next_value = parse_u32_input(event_target_value(&ev), ui.iterations.get_untracked());
-                                        ui.iterations.set(next_value.clamp(1, 200_000));
-                                    }
-                                }
-                            />
-                        </label>
-                        <label>
-                            Threads (1..16)
-                            <input
-                                id="threads"
-                                type="number"
-                                min="1"
-                                max="16"
-                                prop:value=move || ui.threads.get().to_string()
-                                on:input={
-                                    let ui = ui.clone();
-                                    move |ev| {
-                                        let next_value = parse_u32_input(event_target_value(&ev), ui.threads.get_untracked());
-                                        ui.threads.set(next_value.clamp(MIN_THREADS, MAX_THREADS));
-                                    }
-                                }
-                            />
-                        </label>
-                        <label>
-                            Chunk size
-                            <input
-                                id="chunkSize"
-                                type="number"
-                                min="0"
-                                max="1048576"
-                                prop:value=move || ui.chunk_size.get().to_string()
-                                on:input={
-                                    let ui = ui.clone();
-                                    move |ev| {
-                                        let next_value = parse_u32_input(event_target_value(&ev), ui.chunk_size.get_untracked());
-                                        ui.chunk_size.set(next_value);
-                                        ui.status.set(format!("Chunk size set to {next_value}."));
-                                    }
-                                }
-                            />
-                        </label>
-                        <label>
-                            Seed
-                            <input
-                                id="seed"
-                                type="number"
-                                min="1"
-                                max="99999999"
-                                prop:value=move || ui.seed.get().to_string()
-                                on:input={
-                                    let ui = ui.clone();
-                                    move |ev| {
-                                        let next_value = parse_u64_input(event_target_value(&ev), ui.seed.get_untracked());
-                                        ui.seed.set(next_value);
-                                        let num_cities = ui.num_cities.get_untracked();
-                                        ui.points.set(create_locations(next_value, num_cities));
-                                        clear_best(&ui);
-                                        ui.status.set(format!("Updated city seed to {next_value}."));
-                                    }
-                                }
-                            />
-                        </label>
-                    </div>
-
-                    <div class="actions">
-                        <button
-                            id="runParallel"
-                            prop:disabled=move || ui.is_running.get()
-                            on:click={
-                                let ui = ui.clone();
-                                move |_| {
-                                    spawn_local(run_search(ui.clone(), SearchMode::Parallel));
-                                }
-                            }
-                        >
-                            Run parallel
-                        </button>
-                        <button
-                            id="runSequential"
-                            prop:disabled=move || ui.is_running.get()
-                            on:click={
-                                let ui = ui.clone();
-                                move |_| {
-                                    spawn_local(run_search(ui.clone(), SearchMode::Sequential));
-                                }
-                            }
-                        >
-                            Run sequential
-                        </button>
-                        <button
-                            id="reset"
-                            prop:disabled=move || ui.is_running.get()
-                            on:click={
-                                let ui = ui.clone();
-                                move |_| {
-                                    clear_best(&ui);
-                                    ui.points.set(create_locations(ui.seed.get_untracked(), ui.num_cities.get_untracked()));
-                                    ui.status.set("Best tour reset. Ready for a fresh run.".to_string());
-                                }
-                            }
-                        >
-                            Reset
-                        </button>
-                    </div>
-                </div>
-
-                <div id="status" class="status-value" aria-live="polite">{move || ui.status.get()}</div>
-            </section>
+            <ControlsSection ui=ui.clone() />
 
             <section class="card">
-                <div
-                    id="runOverlay"
-                    class="run-overlay"
-                    class:active=move || ui.is_running.get()
-                    aria-live="polite"
-                    aria-hidden=move || (!ui.is_running.get()).to_string()
-                >
-                    <div class="run-overlay-card">
-                        <div class="run-overlay-top">
-                            <span class="spinner" aria-hidden="true"></span>
-                            <p id="runTitle" class="run-title">{move || run_label(ui.run_mode.get())}</p>
-                        </div>
-                        <p id="runSubtitle" class="run-subtitle">{move || ui.run_subtitle.get()}</p>
-                        <p id="runElapsed" class="run-elapsed">{move || ui.run_elapsed.get()}</p>
-                        <div class="run-bar" aria-hidden="true"></div>
-                    </div>
-                </div>
-
-                <div class="stats">
-                    <div class="stat"><h3>Best Distance</h3><p id="bestDistance">{move || ui.best_distance.get()}</p></div>
-                    <div class="stat"><h3>Elapsed</h3><p id="elapsed">{move || ui.elapsed.get()}</p></div>
-                    <div class="stat"><h3>Iterations/s</h3><p id="ips">{move || ui.ips.get()}</p></div>
-                </div>
-
-                <canvas id="canvas" width="920" height="430" node_ref=canvas_ref></canvas>
+                <StatusSection ui=ui.clone() />
+                <CanvasView
+                    ui=ui.clone()
+                    city_node_color=city_node_color.clone()
+                    tour_line_color=tour_line_color.clone()
+                    canvas_background_color=canvas_background_color.clone()
+                />
             </section>
         </main>
     }
@@ -511,97 +313,6 @@ fn update_stats(ui: &UiState, iterations: usize, best_distance: f64, elapsed_ms:
     ui.ips.set(format!("{ips:.0}"));
 }
 
-fn draw_scene(
-    canvas_ref: &NodeRef<html::Canvas>,
-    locations: &[Location],
-    best: Option<&RunResult>,
-    city_node_color: &str,
-    tour_line_color: &str,
-    canvas_background_color: &str,
-) {
-    let Some(canvas) = canvas_ref.get() else {
-        return;
-    };
-
-    let Ok(Some(context)) = canvas.get_context("2d") else {
-        return;
-    };
-
-    let Ok(ctx) = context.dyn_into::<CanvasRenderingContext2d>() else {
-        return;
-    };
-
-    let width = canvas.width() as f64;
-    let height = canvas.height() as f64;
-
-    ctx.set_fill_style_str(canvas_background_color);
-    ctx.fill_rect(0.0, 0.0, width, height);
-
-    let mapped = map_points(locations, width, height);
-
-    for p in &mapped {
-        ctx.begin_path();
-        ctx.set_fill_style_str(city_node_color);
-        let _ = ctx.arc(p.0, p.1, 6.0, 0.0, std::f64::consts::PI * 2.0);
-        ctx.fill();
-    }
-
-    if let Some(best) = best {
-        if best.best_tour.is_empty() {
-            return;
-        }
-
-        ctx.begin_path();
-        ctx.set_stroke_style_str(tour_line_color);
-        ctx.set_line_width(2.0);
-
-        let first = mapped[best.best_tour[0]];
-        ctx.move_to(first.0, first.1);
-
-        for idx in best.best_tour.iter().skip(1) {
-            let p = mapped[*idx];
-            ctx.line_to(p.0, p.1);
-        }
-
-        ctx.line_to(first.0, first.1);
-        ctx.stroke();
-    }
-}
-
-fn map_points(locations: &[Location], width: f64, height: f64) -> Vec<(f64, f64)> {
-    let (min_x, max_x, min_y, max_y) = locations.iter().fold(
-        (
-            f64::INFINITY,
-            f64::NEG_INFINITY,
-            f64::INFINITY,
-            f64::NEG_INFINITY,
-        ),
-        |(min_x, max_x, min_y, max_y), p| {
-            (
-                min_x.min(p.x),
-                max_x.max(p.x),
-                min_y.min(p.y),
-                max_y.max(p.y),
-            )
-        },
-    );
-
-    let span_x = f64::max(max_x - min_x, 1.0);
-    let span_y = f64::max(max_y - min_y, 1.0);
-
-    let pad = 28.0;
-
-    locations
-        .iter()
-        .map(|p| {
-            (
-                pad + ((p.x - min_x) / span_x) * (width - pad * 2.0),
-                height - (pad + ((p.y - min_y) / span_y) * (height - pad * 2.0)),
-            )
-        })
-        .collect()
-}
-
 fn parse_u32_input(value: String, fallback: u32) -> u32 {
     value.parse::<u32>().unwrap_or(fallback)
 }
@@ -627,6 +338,7 @@ fn read_css_color(variable_name: &str) -> String {
         let value = style.get_property_value(variable_name).ok()?;
         Some(value.trim().to_string())
     }
+
     read(variable_name).expect("expected CSS variable to exist")
 }
 
