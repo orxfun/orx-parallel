@@ -102,3 +102,47 @@ That division is deliberate. It lets you validate the core search independently 
 The `ui/README.md` contains the exact setup and run commands for the browser app, while `wasm_bindings/README.md` documents the wasm API surface.
 
 ## Steps to build the UI using `orx-parallel`
+
+1. Decide what should stay in Rust.
+
+   Put the pure-Rust computation in `computation/`. Keep it independent from the browser so it can be tested and benchmarked as a normal Rust crate.
+
+   This layer may expose many functions: some may use parallel execution, others may stay sequential, but none of them should depend on UI, DOM, or JavaScript concerns.
+
+2. Expose only a thin wasm API.
+
+   Add `wasm_bindings/` as the bridge between Rust and JavaScript. Its job is always the same: expose `init_parallel_runtime` and re-export the computation functions with `wasm_bindgen` so the UI can call them from the browser.
+
+3. Build the UI around a worker boundary.
+
+   Let the browser UI live in `ui/`, and have it talk to the wasm package through a module worker. The UI should orchestrate when and how computations are triggered, not reimplement them.
+
+4. Enable browser threads in the build.
+
+    Compile the wasm package with the threaded configuration from `ui/package.json` and the Rust feature wiring in `computation/` and `wasm_bindings/`. If the build is not thread-enabled, the parallel path will not actually run in parallel.
+
+5. Make sure the app is served with cross-origin isolation.
+
+    Use Vite or another server that sends `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers. Without them, the browser cannot use `SharedArrayBuffer`, so threaded wasm will fail.
+
+6. Initialize wasm inside each worker before running search.
+
+    Call `init()` first, then call `init_parallel_runtime(thread_count)` once per worker before the first parallel execution. If you create a new worker, that worker must initialize its own runtime too.
+
+    The same worker can then invoke any exposed computation function, parallel or sequential.
+
+7. Pass data through the wasm boundary in a simple shape.
+
+    Generate or load the input data in JavaScript, send it to the wasm function you need, and return the result back to the UI. Keep the exchanged data small and explicit so the boundary stays easy to reason about.
+
+8. Tune execution settings from the UI.
+
+    Expose thread count and other tuning knobs as user-facing settings if you need them. Good values depend on the workload and browser, so start modestly and measure before increasing them.
+
+9. Test each layer independently.
+
+    Verify the Rust computation with ordinary Rust tests, verify the wasm boundary in `wasm_bindings/`, and verify the browser behavior in `ui/`. This is the main advantage of the three-project layout.
+
+10. Keep the architecture strict.
+
+    Do not move computation logic into the UI, do not let the computation crate depend on DOM APIs, and do not turn the wasm bindings into a second implementation layer. The example stays reliable only if each project keeps its role.
