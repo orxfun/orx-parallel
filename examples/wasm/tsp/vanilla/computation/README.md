@@ -2,9 +2,7 @@
 
 This crate contains the pure Rust TSP implementation used by the wasm vanilla example.
 
-It is intentionally free of wasm-bindgen, JavaScript, and UI concerns.
-
-This simplifies maintenance of the crate; it can be tested (`cargo test`) or benchmarked (`cargo bench`), etc., normally as a pure rust crate.
+It is intentionally free of wasm-bindgen, JavaScript, and UI concerns, which keeps it easy to test and benchmark as an ordinary Rust crate.
 
 ## Responsibilities
 
@@ -14,22 +12,20 @@ This simplifies maintenance of the crate; it can be tested (`cargo test`) or ben
 
 ## How it enables parallelization
 
-This crate enables parallelization by default using `orx-parallel` within the exposed `run_search_parallel` function.
+This crate uses `orx-parallel` in `run_search_parallel`.
 
-However, this is not sufficient to enable parallelization within wasm.
+That is enough for native builds, but wasm needs the additional `wasm-web-threads` feature so the same parallel code can run with browser threads.
 
-The crate introduces the `wasm-web-threads` feature which in turn activates `orx-parallel/wasm-web-threads` feature, and this enables parallel computation in wasm.
+There are three common ways to wire `orx-parallel` into a crate:
 
-Note that there are the following three design alternatives for a crate using parallel computation via `orx-parallel`:
-
-* Include `orx-parallel` without `wasm-web-threads` feature if we do not intend to use it in wasm. 
-* Include `orx-parallel` with `wasm-web-threads` feature if we always want to use it in wasm.
-* Include `orx-parallel` with optionally adding `wasm-web-threads` feature if we want to allow using the library both in wasm or in different builds. This is demonstrated in this example in Cargo.toml as follows:
+* Include `orx-parallel` without `wasm-web-threads` if the crate will never run in wasm.
+* Include `orx-parallel` with `wasm-web-threads` if every build should support wasm threads.
+* Make `wasm-web-threads` optional if the crate should work both in native builds and in wasm builds. This example uses that approach:
 
 ```toml
 # computation/Cargo.toml
 [dependencies]
-orx-parallel = { version = "4.0", default-features = false }
+orx-parallel = { path = "../../../../..", default-features = false }
 
 [features]
 default = []
