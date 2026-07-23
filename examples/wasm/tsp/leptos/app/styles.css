@@ -15,7 +15,7 @@
   --reset: #e60000;
   --city-node: #ffff00;
   --tour-line: #ffcc00;
-  --code-block-bg: #000000;
+  --code-block-bg: #0f172a;
   --code-text: #e2e8f0;
   --input-bg: #ffffff;
   --input-border: #d1d5db;
@@ -40,11 +40,11 @@
     --bg-strong: #0f172a;
     --ink: #e2e8f0;
     --muted: #94a3b8;
-    --panel: #111b2e;
+    --panel: #0e1625;
     --panel-2: #0f1a2e;
     --panel-border: rgba(148, 163, 184, 0.18);
     --panel-shadow: rgba(0, 0, 0, 0.36);
-    --code-block-bg: #020617;
+    --code-block-bg: #000000;
     --code-text: #dbeafe;
     --input-bg: #0b1324;
     --input-border: #334155;
