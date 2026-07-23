@@ -1,4 +1,4 @@
-declare module "../pkg/ui.js" {
+declare module "../pkg/components.js" {
     export default function init(): Promise<void>;
 
     export function start_app(): void;

@@ -8,7 +8,7 @@ It illustrates enabling parallel computation using `orx-parallel` with wasm.
 
 The wasm package is built into `./pkg` with the `build:wasm` script:
 
-- `wasm-pack build ../wasm_bindings --target web --out-dir ../ui/pkg`
+- `wasm-pack build ../wasm_bindings --target web --out-dir ../app/pkg`
 - the Rust build uses nightly and enables shared-memory/threaded wasm flags
 
 The UI imports the generated bindings from `./pkg/wasm_bindings.js`:
@@ -21,12 +21,12 @@ The UI imports the generated bindings from `./pkg/wasm_bindings.js`:
 
 The `build:wasm` script in `package.json` is the step that produces the generated bindings and the `.wasm` artifact used by the UI.
 
-Note that `ui` is the name of this directory, so the `../ui/pkg` output path in the script resolves to the `pkg` folder next to this README.
+Note that `app` is the name of this directory, so the `../app/pkg` output path in the script resolves to the `pkg` folder next to this README.
 
 Important parts of that script:
 
 - `RUSTUP_TOOLCHAIN=nightly` selects nightly Rust because the wasm build uses unstable `-Z build-std`
-- `wasm-pack build ../wasm_bindings --target web --out-dir ../ui/pkg` compiles the Rust crate for the browser and writes the generated JS bindings into `./pkg`
+- `wasm-pack build ../wasm_bindings --target web --out-dir ../app/pkg` compiles the Rust crate for the browser and writes the generated JS bindings into `./pkg`
 - `-C target-feature=+atomics`, `--shared-memory`, and the TLS exports enable shared-memory wasm, which is required for browser threads
 - `--import-memory` and `--export=__wasm_init_tls` / `__tls_*` are part of the threaded wasm setup used by this example
 
