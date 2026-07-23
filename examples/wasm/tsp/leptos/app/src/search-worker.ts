@@ -1,7 +1,5 @@
-import init, { init_parallel_runtime, locations, run_search } from "../pkg/components.js";
-import type { RunSettings, SearchResult, SearchResponse } from "./shared-types.js";
-
-type SearchRequest = { type: "run-search"; settings: RunSettings };
+import init, { init_parallel_runtime, run_search } from "../pkg/components.js";
+import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
 
 self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
     try {
@@ -13,7 +11,6 @@ self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
         }
 
         const seed = normalizeSeed(settings.seed);
-        const currentLocations = locations(seed, settings.numCities);
         const parallelize = settings.mode === "parallel";
         const result = run_search(
             parallelize,
@@ -21,7 +18,7 @@ self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
             seed,
             settings.threads,
             settings.chunkSize,
-            currentLocations
+            event.data.locations
         ) as SearchResult;
 
         const response: SearchResponse = { type: "search-result", result };
