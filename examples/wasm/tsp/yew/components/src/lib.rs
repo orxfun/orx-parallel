@@ -718,15 +718,27 @@ fn draw_tour(
 }
 
 fn map_points(canvas: &HtmlCanvasElement, locations: &[Location]) -> Vec<Point> {
-    let pad = 28.0;
-    let xs: Vec<f64> = locations.iter().map(|p| p.x).collect();
-    let ys: Vec<f64> = locations.iter().map(|p| p.y).collect();
-    let min_x = xs.iter().copied().fold(f64::INFINITY, f64::min);
-    let max_x = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-    let min_y = ys.iter().copied().fold(f64::INFINITY, f64::min);
-    let max_y = ys.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let (min_x, max_x, min_y, max_y) = locations.iter().fold(
+        (
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+        ),
+        |(min_x, max_x, min_y, max_y), p| {
+            (
+                min_x.min(p.x),
+                max_x.max(p.x),
+                min_y.min(p.y),
+                max_y.max(p.y),
+            )
+        },
+    );
+
     let span_x = (max_x - min_x).max(1.0);
     let span_y = (max_y - min_y).max(1.0);
+
+    let pad = 28.0;
 
     locations
         .iter()
