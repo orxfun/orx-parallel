@@ -84,7 +84,7 @@ struct UiState {
 
 #[wasm_bindgen(js_namespace = globalThis)]
 unsafe extern "C" {
-    fn runSearchOnce(request: JsValue) -> js_sys::Promise;
+    fn runSearchAlgorithm(request: JsValue) -> js_sys::Promise;
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -221,7 +221,7 @@ async fn run_search(ui: UiState, mode: SearchMode) {
         }
     };
 
-    let response = JsFuture::from(runSearchOnce(request)).await;
+    let response = JsFuture::from(runSearchAlgorithm(request)).await;
 
     match response {
         Ok(value) => match serde_wasm_bindgen::from_value::<RunResult>(value) {

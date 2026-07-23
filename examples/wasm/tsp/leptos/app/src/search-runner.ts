@@ -1,6 +1,6 @@
 import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
 
-export function runSearchOnce(request: SearchRequest): Promise<SearchResult> {
+export function runSearchAlgorithm(request: SearchRequest): Promise<SearchResult> {
     return new Promise<SearchResult>((resolve, reject) => {
         const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
             type: "module"
@@ -39,7 +39,7 @@ export function runSearchOnce(request: SearchRequest): Promise<SearchResult> {
         worker.postMessage(request);
     });
 }
-// Expose the function globally so wasm-bindgen can call it from Rust via globalThis.runSearchOnce.
-(globalThis as typeof globalThis & { runSearchOnce: typeof runSearchOnce }).runSearchOnce = runSearchOnce;
+// Expose the function globally so wasm-bindgen can call it from Rust via globalThis.runSearchAlgorithm.
+(globalThis as typeof globalThis & { runSearchAlgorithm: typeof runSearchAlgorithm }).runSearchAlgorithm = runSearchAlgorithm;
 
 export { };
