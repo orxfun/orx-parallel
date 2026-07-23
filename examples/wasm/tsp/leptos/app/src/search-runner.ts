@@ -1,16 +1,7 @@
-import { locations } from "../pkg/components.js";
-import { normalizeSeed } from "./shared-types.js";
-import type { RunSettings, SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
+import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
 
-export function runSearchOnce(settings: RunSettings): Promise<SearchResult> {
+export function runSearchOnce(request: SearchRequest): Promise<SearchResult> {
     return new Promise<SearchResult>((resolve, reject) => {
-        const seed = normalizeSeed(settings.seed);
-        const request: SearchRequest = {
-            type: "run-search",
-            settings,
-            locations: locations(seed, settings.numCities) as { x: number; y: number }[]
-        };
-
         const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
             type: "module"
         });

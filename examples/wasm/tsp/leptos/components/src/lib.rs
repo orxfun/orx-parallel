@@ -50,6 +50,13 @@ struct RunSettings {
     num_cities: u32,
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SearchRequest {
+    settings: RunSettings,
+    locations: Vec<Location>,
+}
+
 #[derive(Clone)]
 struct UiState {
     canvas_ref: NodeRef<html::Canvas>,
@@ -74,7 +81,7 @@ struct UiState {
 
 #[wasm_bindgen(js_namespace = globalThis)]
 unsafe extern "C" {
-    fn runSearchOnce(settings: JsValue) -> js_sys::Promise;
+    fn runSearchOnce(request: JsValue) -> js_sys::Promise;
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -193,16 +200,20 @@ async fn run_search(ui: UiState, mode: SearchMode) {
         seed: ui.seed.get_untracked(),
         num_cities: ui.num_cities.get_untracked(),
     };
+    let request = SearchRequest {
+        settings: settings.clone(),
+        locations: ui.points.get_untracked(),
+    };
 
     set_running_view(&ui, settings.mode, true);
     allow_running_overlay_to_render().await;
     ui.status.set(run_label(settings.mode).to_string());
 
-    let request = match serde_wasm_bindgen::to_value(&settings) {
+    let request = match serde_wasm_bindgen::to_value(&request) {
         Ok(value) => value,
         Err(err) => {
             ui.status
-                .set(format!("Error: failed to serialize run settings: {err}"));
+                .set(format!("Error: failed to serialize run request: {err}"));
             set_running_view(&ui, settings.mode, false);
             return;
         }
