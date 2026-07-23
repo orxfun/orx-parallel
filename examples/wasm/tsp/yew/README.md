@@ -1,5 +1,8 @@
 # orx-parallel wasm TSP yew
 
+You can check, test, and play around with the built application at:
+https://orx-parallel-wasm-demo-tsp.pages.dev/
+
 This example shows the recommended web structure for `orx-parallel` with a Yew UI hosted by Vite:
 
 - `computation/` contains pure Rust TSP logic
