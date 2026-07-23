@@ -2,7 +2,7 @@ import init, {
     init_parallel_runtime,
     locations,
     run_search
-} from "../pkg/ui.js";
+} from "../pkg/components.js";
 
 type SearchMode = "parallel" | "sequential";
 

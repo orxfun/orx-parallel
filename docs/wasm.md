@@ -25,7 +25,7 @@ my-wasm-project/
         src/
             lib.rs
             computation.rs
-    web/
+    app/
         package.json
         src/
             main.ts
@@ -36,7 +36,7 @@ Recommended responsibilities:
 - `crate/`: Rust wasm library exposing a minimal `#[wasm_bindgen]` API boundary.
 - `crate/src/lib.rs`: wasm boundary layer where `#[wasm_bindgen]` exports are defined.
 - `crate/src/computation.rs`: pure Rust computation module without wasm-specific dependencies. This file is optional; the computation can instead live in a separate dependency crate.
-- `web/`: frontend app that loads wasm, initializes runtime, and calls exported functions.
+- `app/`: frontend app that loads wasm, initializes runtime, and calls exported functions.
 
 This mirrors all example demos in this repository and keeps responsibilities clean.
 
@@ -46,9 +46,9 @@ This mirrors all example demos in this repository and keeps responsibilities cle
 - Step 2: `my-wasm-project/crate/Cargo.toml`
 - Step 3: `my-wasm-project/crate/src/lib.rs`
 - Step 4: `my-wasm-project/crate/src/computation.rs` (or a separate dependency crate)
-- Step 5: `my-wasm-project/web/src/main.ts`
-- Step 7: `my-wasm-project/web/package.json`
-- Step 8: `my-wasm-project/web/vite.config.ts`
+- Step 5: `my-wasm-project/app/src/main.ts`
+- Step 7: `my-wasm-project/app/package.json`
+- Step 8: `my-wasm-project/app/vite.config.ts`
 
 </details>
 
@@ -207,7 +207,7 @@ document.getElementById("run")?.addEventListener("click", () => {
 });
 ```
 
-In your project, this is typically done in `my-wasm-project/web/src/main.ts`.
+In your project, this is typically done in `my-wasm-project/app/src/main.ts`.
 
 ## Step 6: Decide thread-control strategy
 
@@ -250,12 +250,12 @@ let best = (0..iterations)
 
 Use nightly + `build-std` + atomics/shared-memory flags.
 
-If you run this from `my-wasm-project/web`, use:
+If you run this from `my-wasm-project/app`, use:
 
 ```bash
 RUSTUP_TOOLCHAIN=nightly \
 RUSTFLAGS='-C target-feature=+atomics,+bulk-memory -C link-arg=--shared-memory -C link-arg=--max-memory=1073741824 -C link-arg=--import-memory -C link-arg=--export=__wasm_init_tls -C link-arg=--export=__tls_size -C link-arg=--export=__tls_align -C link-arg=--export=__tls_base' \
-wasm-pack build ../crate --target web --out-dir ../web/pkg -- -Z build-std=panic_abort,std
+wasm-pack build ../crate --target web --out-dir ../app/pkg -- -Z build-std=panic_abort,std
 ```
 
 <details>
@@ -277,7 +277,7 @@ Set headers in dev server:
 - `Cross-Origin-Opener-Policy: same-origin`
 - `Cross-Origin-Embedder-Policy: require-corp`
 
-In your project, place these headers in `my-wasm-project/web/vite.config.ts`.
+In your project, place these headers in `my-wasm-project/app/vite.config.ts`.
 
 For wasm thread worker helpers, also set Vite worker output to ES modules.
 
@@ -299,7 +299,7 @@ export default defineConfig({
 
 Also set the same headers in production hosting; dev-only headers are not enough.
 
-For static hosts such as Cloudflare Pages, add a `my-wasm-project/web/public/_headers` file:
+For static hosts such as Cloudflare Pages, add a `my-wasm-project/app/public/_headers` file:
 
 ```text
 /*

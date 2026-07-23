@@ -1,4 +1,4 @@
-import init, { start_app } from "../pkg/ui.js";
+import init, { start_app } from "../pkg/components.js";
 import "./search-runner.ts";
 import "../styles.css";
 import hljs from "highlight.js/lib/core";

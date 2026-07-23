@@ -4,7 +4,7 @@ This example shows the recommended web structure for `orx-parallel` with a Vite 
 
 - `computation/` contains pure Rust TSP logic
 - `wasm_bindings/` exposes a thin wasm API for that computation
-- `ui/` is the browser UI that consumes the wasm bindings
+- `app/` is the browser app that consumes the wasm bindings
 
 The same structure works for other parallelizable Rust workloads too. The important part is the separation: keep the algorithm in Rust, keep the wasm layer thin, and keep the UI focused on orchestration.
 
@@ -12,7 +12,7 @@ For the practical build flow, jump to [Building a browser UI with `orx-parallel`
 
 ```mermaid
 flowchart LR
-    UI[ui/\nBrowser UI] -->|module worker| WB[wasm_bindings/\nwasm boundary]
+    UI[app/\nBrowser UI] -->|module worker| WB[wasm_bindings/\nwasm boundary]
     WB -->|calls into| C[computation/\nPure Rust computation]
     C -->|results| WB
     WB -->|postMessage| UI
@@ -48,7 +48,7 @@ Its job is to:
 - serialize and deserialize values at the edge
 - initialize the parallel runtime before the first parallel search
 
-### `ui/`
+### `app/`
 
 This is the browser application. It owns the page, worker lifecycle, controls, and rendering.
 
@@ -71,7 +71,7 @@ Parallel wasm in the browser has a few hard requirements. Missing any one of the
 
 ### 1. Build wasm with thread support enabled
 
-The wasm build must target shared-memory/threaded wasm. In practice, that means using the build setup from `ui/package.json` and the Rust configuration in `computation/` and `wasm_bindings/`.
+The wasm build must target shared-memory/threaded wasm. In practice, that means using the build setup from `app/package.json` and the Rust configuration in `computation/` and `wasm_bindings/`.
 
 If you change the Rust code, rebuild the wasm package before running the UI again.
 
@@ -82,7 +82,7 @@ Browser threads require `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-
 A plain static server is usually not enough. Use the Vite dev server or a server that sends the same headers for the built app.
 
 ```ts
-// ui/vite.config.ts
+// app/vite.config.ts
 import { defineConfig } from "vite";
 
 export default defineConfig({
@@ -107,7 +107,7 @@ The separation also makes testing straightforward:
 
 - test the algorithm in `computation/` with ordinary Rust tests
 - test the wasm boundary in `wasm_bindings/`
-- test UI behavior in `ui/`
+- test UI behavior in `app/`
 
 That division is deliberate. It lets you validate the core search independently from the browser and only use wasm tests where they are actually needed.
 
@@ -115,9 +115,9 @@ That division is deliberate. It lets you validate the core search independently 
 
 - [computation README](./computation/README.md)
 - [wasm bindings README](./wasm_bindings/README.md)
-- [UI README](./ui/README.md)
+- [App README](./app/README.md)
 
-The `ui/README.md` contains the exact setup and run commands for the browser app, while `wasm_bindings/README.md` documents the wasm API surface.
+The `app/README.md` contains the exact setup and run commands for the browser app, while `wasm_bindings/README.md` documents the wasm API surface.
 
 ## Building a browser UI with `orx-parallel`
 
@@ -133,13 +133,13 @@ The `ui/README.md` contains the exact setup and run commands for the browser app
 
 3. Build the UI around a worker boundary.
 
-   Let the browser UI live in `ui/`, and have it talk to the wasm package through a module worker. The UI should orchestrate when and how computations are triggered, not reimplement them.
+    Let the browser UI live in `app/`, and have it talk to the wasm package through a module worker. The UI should orchestrate when and how computations are triggered, not reimplement them.
 
     The module worker keeps the main thread responsive, gives each worker a clean place to initialize wasm, and fits naturally with the ESM output produced by the UI build.
 
 4. Enable browser threads in the build.
 
-    Compile the wasm package with the threaded configuration from `ui/package.json` and the Rust feature wiring in `computation/` and `wasm_bindings/`. If the build is not thread-enabled, the parallel path will not actually run in parallel.
+    Compile the wasm package with the threaded configuration from `app/package.json` and the Rust feature wiring in `computation/` and `wasm_bindings/`. If the build is not thread-enabled, the parallel path will not actually run in parallel.
 
 5. Make sure the app is served with cross-origin isolation.
 
@@ -161,7 +161,7 @@ The `ui/README.md` contains the exact setup and run commands for the browser app
 
 9. Test each layer independently.
 
-    Verify the Rust computation with ordinary Rust tests, verify the wasm boundary in `wasm_bindings/`, and verify the browser behavior in `ui/`. This is the main advantage of the three-project layout.
+    Verify the Rust computation with ordinary Rust tests, verify the wasm boundary in `wasm_bindings/`, and verify the browser behavior in `app/`. This is the main advantage of the three-project layout.
 
 10. Keep the architecture strict.
 
