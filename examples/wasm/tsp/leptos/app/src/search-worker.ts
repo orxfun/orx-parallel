@@ -10,12 +10,11 @@ self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
             await init_parallel_runtime(settings.threads);
         }
 
-        const seed = normalizeSeed(settings.seed);
         const parallelize = settings.mode === "parallel";
         const result = run_search(
             parallelize,
             settings.iterations,
-            seed,
+            normalizeSeed(settings.seed),
             settings.threads,
             settings.chunkSize,
             event.data.locations
@@ -25,10 +24,7 @@ self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
         self.postMessage(response);
     } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        const response: SearchResponse = {
-            type: "search-error",
-            message
-        };
+        const response: SearchResponse = { type: "search-error", message };
         self.postMessage(response);
     }
 });
