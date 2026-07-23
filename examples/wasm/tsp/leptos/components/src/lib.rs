@@ -77,6 +77,9 @@ struct UiState {
     run_elapsed: RwSignal<String>,
     run_started_at_ms: RwSignal<f64>,
     run_ticker: Rc<RefCell<Option<Interval>>>,
+    city_node_color: String,
+    tour_line_color: String,
+    canvas_background_color: String,
 }
 
 #[wasm_bindgen(js_namespace = globalThis)]
@@ -135,11 +138,21 @@ fn App() -> impl IntoView {
         run_elapsed,
         run_started_at_ms,
         run_ticker,
+        city_node_color: String::new(),
+        tour_line_color: String::new(),
+        canvas_background_color: String::new(),
     };
 
     let city_node_color = read_css_color("--city-node");
     let tour_line_color = read_css_color("--tour-line");
     let canvas_background_color = read_css_color("--code-block-bg");
+
+    let ui = UiState {
+        city_node_color: city_node_color.clone(),
+        tour_line_color: tour_line_color.clone(),
+        canvas_background_color: canvas_background_color.clone(),
+        ..ui
+    };
 
     view! {
         <main>
@@ -248,9 +261,9 @@ async fn run_search(ui: UiState, mode: SearchMode) {
                         &ui.canvas_ref,
                         &ui.points.get_untracked(),
                         ui.best_so_far.get_untracked().as_ref(),
-                        "#f59e0b",
-                        "#1d4ed8",
-                        "#0f172a",
+                        &ui.city_node_color,
+                        &ui.tour_line_color,
+                        &ui.canvas_background_color,
                     );
                 }
 

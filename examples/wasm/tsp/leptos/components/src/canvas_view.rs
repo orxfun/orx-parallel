@@ -1,11 +1,10 @@
+use super::{Location, RunResult, UiState};
 use gloo_timers::future::TimeoutFuture;
 use leptos::html;
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::CanvasRenderingContext2d;
-
-use super::{Location, RunResult, UiState};
 
 #[component]
 pub fn CanvasView(
