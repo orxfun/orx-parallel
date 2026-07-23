@@ -133,7 +133,7 @@ That division is deliberate. It lets you validate the core search independently 
 - [computation README](./computation/README.md)
 - [wasm bindings README](./wasm_bindings/README.md)
 - [components README](./components/README.md)
-- [App README](./app/README.md)
+- [app README](./app/README.md)
 
 The `app/README.md` contains the exact setup and run commands for the browser app, while `wasm_bindings/README.md` documents the wasm API surface.
 
