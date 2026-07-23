@@ -5,7 +5,7 @@ import { CodeCard } from "./components/CodeCard";
 import { ControlsSection } from "./components/ControlsSection";
 import { StatusSection } from "./components/StatusSection";
 import { PARALLEL_CODE, PARALLEL_HELP, SEQUENTIAL_CODE, SEQUENTIAL_HELP } from "./code-snippets";
-import { runSearchOnce } from "./search-runner";
+import { runSearchAlgorithm } from "./search-runner";
 import type { Location, RunSettings, SearchMode, SearchRequest, SearchResult } from "./shared-types";
 
 const MIN_CITIES = 5;
@@ -169,7 +169,7 @@ export function App() {
         setStatus(settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...");
 
         try {
-            const result = await runSearchOnce(request);
+            const result = await runSearchAlgorithm(request);
 
             if (!best || result.best_distance < best.best_distance) {
                 setBest(result);

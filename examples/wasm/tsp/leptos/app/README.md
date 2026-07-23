@@ -39,7 +39,7 @@ When you change the Rust side, rerun `npm run build:wasm` so the generated `./pk
 Inside it:
 
 - import `init` and `start_app` from `./pkg/components.js`
-- import `./search-runner.ts` so the Leptos UI can call the worker bridge through `globalThis.runSearchOnce`
+- import `./search-runner.ts` so the Leptos UI can call the worker bridge through `globalThis.runSearchAlgorithm`
 - call `init()` before `start_app()` so the generated wasm package is ready before the UI mounts
 
 ## search worker

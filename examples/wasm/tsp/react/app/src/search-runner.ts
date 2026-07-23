@@ -1,6 +1,6 @@
 import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types";
 
-export function runSearchOnce(request: SearchRequest): Promise<SearchResult> {
+export function runSearchAlgorithm(request: SearchRequest): Promise<SearchResult> {
     return new Promise<SearchResult>((resolve, reject) => {
         const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
             type: "module"
