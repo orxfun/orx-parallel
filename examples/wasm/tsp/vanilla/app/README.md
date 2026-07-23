@@ -34,7 +34,11 @@ When you change the Rust side, rerun `npm run build:wasm` so the generated `./pk
 
 ## search worker
 
-`src/search-worker.ts` is a module worker created from `src/main.ts` with `new Worker(new URL("./search-worker.ts", import.meta.url), { type: "module" })`.
+`src/search-runner.ts` is the worker bridge used by `src/main.ts`.
+
+`runSearchAlgorithm(...)` in `src/search-runner.ts` creates a module worker from `src/search-worker.ts` with `new Worker(new URL("./search-worker.ts", import.meta.url), { type: "module" })`.
+
+`src/search-worker.ts` then performs the wasm execution.
 
 Inside the worker:
 
