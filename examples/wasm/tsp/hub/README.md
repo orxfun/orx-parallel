@@ -1,5 +1,8 @@
 # WASM TSP Hub
 
+You can check, test, and play around with the built application at:
+https://orx-parallel-wasm-demo-tsp.pages.dev/
+
 This page gives one central entrypoint for the four framework demos:
 
 - vanilla
