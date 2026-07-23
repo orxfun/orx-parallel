@@ -3,6 +3,7 @@ import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
 import "highlight.js/styles/github-dark.css";
 import type { Location, RunSettings, SearchMode, SearchRequest, SearchResult } from "./shared-types.js";
+import { runSearchAlgorithm } from "./search-runner.js";
 
 hljs.registerLanguage("rust", rust);
 
@@ -266,48 +267,6 @@ function updateStats(result: SearchResult) {
     ui.elapsed.textContent = `${result.elapsed_ms.toFixed(1)} ms`;
     const ips = result.iterations / Math.max(result.elapsed_ms / 1000, 1e-9);
     ui.ips.textContent = ips.toFixed(0);
-}
-
-function runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
-    return new Promise<SearchResult>((resolve, reject) => {
-        const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
-            type: "module"
-        });
-
-        const cleanup = () => {
-            worker.terminate();
-        };
-
-        worker.addEventListener(
-            "message",
-            (event: MessageEvent) => {
-                const data = event.data as
-                    | { type: "search-result"; result: SearchResult }
-                    | { type: "search-error"; message: string };
-
-                if (data.type === "search-error") {
-                    cleanup();
-                    reject(new Error(data.message));
-                    return;
-                }
-
-                cleanup();
-                resolve(data.result);
-            },
-            { once: true }
-        );
-
-        worker.addEventListener(
-            "error",
-            (event) => {
-                cleanup();
-                reject(new Error(event.message || "search worker failed"));
-            },
-            { once: true }
-        );
-
-        worker.postMessage({ settings, locations } satisfies SearchRequest);
-    });
 }
 
 async function runSearch(mode: SearchMode) {
