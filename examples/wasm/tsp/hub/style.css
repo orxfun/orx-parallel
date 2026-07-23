@@ -102,27 +102,29 @@ body {
 }
 
 .framework-card {
+  --framework-accent: var(--accent);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 14px;
   box-shadow: 0 8px 20px var(--panel-shadow);
   background: color-mix(in srgb, var(--panel) 94%, var(--bg) 6%);
+  border-color: var(--framework-accent);
 }
 
 .framework-card[data-framework="vanilla"] {
-  border-color: color-mix(in srgb, #99ddff 46%, var(--panel-border) 54%);
+  --framework-accent: color-mix(in srgb, #6666ff 46%, var(--panel-border) 54%);
 }
 
 .framework-card[data-framework="react"] {
-  border-color: color-mix(in srgb, #ffffb3 46%, var(--panel-border) 54%);
+  --framework-accent: color-mix(in srgb, #00bfff 46%, var(--panel-border) 54%);
 }
 
 .framework-card[data-framework="yew"] {
-  border-color: color-mix(in srgb, #ccff33 46%, var(--panel-border) 54%);
+  --framework-accent: color-mix(in srgb, #cc3399 46%, var(--panel-border) 54%);
 }
 
 .framework-card[data-framework="leptos"] {
-  border-color: color-mix(in srgb, #ef3939 46%, var(--panel-border) 54%);
+  --framework-accent: color-mix(in srgb, #ff3300 46%, var(--panel-border) 54%);
 }
 
 .framework-head {
@@ -156,7 +158,7 @@ body {
   gap: 10px;
 }
 
-.card-actions button {
+.framework-card .card-actions button {
   border: 1px solid rgba(15, 118, 110, 0.25);
   border-radius: 11px;
   padding: 10px 12px;
@@ -169,10 +171,15 @@ body {
   transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
 }
 
+.framework-card .card-actions button[data-action="demo"] {
+  background: var(--framework-accent);
+  border-color: var(--framework-accent);
+}
+
 .card-actions button[data-action="readme"] {
   background: transparent;
   color: var(--ink);
-  border-color: var(--accent);
+  border-color: var(--framework-accent);
 }
 
 .card-actions button:hover {
