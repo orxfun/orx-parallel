@@ -1,5 +1,8 @@
 # orx-parallel wasm TSP vanilla
 
+You can check, test, and play around with the built application at:
+https://orx-parallel-wasm-demo-tsp.pages.dev/
+
 This example shows the recommended web structure for `orx-parallel` with a Vite + TypeScript frontend:
 
 - `computation/` contains pure Rust TSP logic
