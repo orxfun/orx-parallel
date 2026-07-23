@@ -93,15 +93,11 @@ main {
 .hero-logo {
   width: 72px;
   height: 72px;
-  border-radius: 18px;
+  border-radius: 50%;
   object-fit: cover;
   background: #fff;
-  border: 1px solid #dbe3ef;
-  box-shadow: 0 10px 20px rgba(20, 33, 61, 0.12);
-  flex: 0 0 auto;
-  border: none;
+  border: 2px solid #666699;
 }
-
 h1 {
   margin: 0 0 8px;
 }
