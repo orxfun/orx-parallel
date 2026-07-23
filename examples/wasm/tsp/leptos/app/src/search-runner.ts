@@ -1,23 +1,15 @@
-type SearchMode = "parallel" | "sequential";
-
-type RunSettings = {
-    mode: SearchMode;
-    iterations: number;
-    threads: number;
-    chunkSize: number;
-    seed: bigint;
-    numCities: number;
-};
-
-type SearchResult = {
-    best_tour: number[];
-    best_distance: number;
-    iterations: number;
-    elapsed_ms: number;
-};
+import { locations } from "../pkg/components.js";
+import type { RunSettings, SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
 
 export function runSearchOnce(settings: RunSettings): Promise<SearchResult> {
     return new Promise<SearchResult>((resolve, reject) => {
+        const seed = normalizeSeed(settings.seed);
+        const request: SearchRequest = {
+            type: "run-search",
+            settings,
+            locations: locations(seed, settings.numCities) as { x: number; y: number }[]
+        };
+
         const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
             type: "module"
         });
@@ -29,9 +21,7 @@ export function runSearchOnce(settings: RunSettings): Promise<SearchResult> {
         worker.addEventListener(
             "message",
             (event: MessageEvent) => {
-                const data = event.data as
-                    | { type: "search-result"; result: SearchResult }
-                    | { type: "search-error"; message: string };
+                const data = event.data as SearchResponse;
 
                 if (data.type === "search-error") {
                     cleanup();
@@ -54,8 +44,24 @@ export function runSearchOnce(settings: RunSettings): Promise<SearchResult> {
             { once: true }
         );
 
-        worker.postMessage({ type: "run-search", settings });
+        worker.postMessage(request);
     });
+}
+
+function normalizeSeed(seed: number | bigint | string): bigint {
+    if (typeof seed === "bigint") {
+        return seed;
+    }
+
+    if (typeof seed === "number") {
+        if (!Number.isFinite(seed)) {
+            throw new Error("invalid seed: expected a finite number");
+        }
+
+        return BigInt(Math.trunc(seed));
+    }
+
+    return BigInt(seed);
 }
 
 (globalThis as typeof globalThis & { runSearchOnce: typeof runSearchOnce }).runSearchOnce = runSearchOnce;
