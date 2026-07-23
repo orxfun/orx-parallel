@@ -145,7 +145,7 @@ fn App() -> impl IntoView {
 
     let city_node_color = read_css_color("--city-node");
     let tour_line_color = read_css_color("--tour-line");
-    let canvas_background_color = read_css_color("--code-block-bg");
+    let canvas_background_color = read_css_color("--canvas-bg");
 
     let ui = UiState {
         city_node_color: city_node_color.clone(),

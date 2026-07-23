@@ -36,7 +36,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #08101f;
+    --bg: #000000;
     --bg-strong: #0f172a;
     --ink: #e2e8f0;
     --muted: #94a3b8;
@@ -59,7 +59,7 @@
     --overlay-card-text: #e2e8f0;
     --stats-bg: #0f172a;
     --stats-border: #1f2937;
-    --canvas-bg: #0b1324;
+    --canvas-bg: #000000;
   }
 }
 
