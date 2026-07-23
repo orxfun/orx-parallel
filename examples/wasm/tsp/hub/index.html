@@ -22,6 +22,26 @@
         <div class="panel-head-copy">
           <h1>Parallel Computation in WASM using <code>orx-parallel</code></h1>
           <p>Choose a frontend flavor for the same TSP demo: vanilla, React, Yew, or Leptos.</p>
+          </div>
+        </div>
+      </div>
+      <div class="panel-head">
+        <div>&nbsp;</div>
+        <div class="panel-head-copy">
+            <div class="hub-note" aria-label="Hub explanation">
+            <p>This hub demonstrates how <code>orx-parallel</code> can enable parallel computation in WebAssembly.</p>
+            <p class="hint">The TSP solver is included only as an example workload; it is not the central focus.</p>
+            <br />
+            <p>Each <strong>Demo</strong> opens an app built with that framework.</p>
+            <p class="hint">The applications should all look <i>almost</i> identical.</p>
+            <p>These demo apps allow to test out parallel computation on the client-side using web workers.</p>
+            <br />
+            <p>
+                Each <strong>README</strong> leads to the documentation how to enable parallel computation in the
+                corresponding framework.
+            </p>
+            <p class="hint">You may also browse the code used to create these demo applications.</p>
+            </div>
         </div>
       </div>
       <div class="framework-cards" aria-label="Framework pages">
@@ -91,27 +111,33 @@
     const buttons = Array.from(document.querySelectorAll("button[data-framework][data-action]"));
     const status = document.getElementById("status");
 
+    function setStatus(message) {
+      if (status) {
+        status.textContent = message;
+      }
+    }
+
     if (window.location.protocol === "file:") {
-      status.textContent = "This hub cannot run from file://. Start a local server and open http://localhost:<port> instead.";
+      setStatus("This hub cannot run from file://. Start a local server and open http://localhost:<port> instead.");
     }
 
     function openDemo(framework) {
       const url = demoUrls[framework];
       if (!url) {
-        status.textContent = "Unknown framework selection.";
+        setStatus("Unknown framework selection.");
         return;
       }
-      status.textContent = `Loading ${framework} from ${url} ...`;
+      setStatus(`Loading ${framework} from ${url} ...`);
       window.location.href = url;
     }
 
     function openReadme(framework) {
       const url = readmeUrls[framework];
       if (!url) {
-        status.textContent = "Unknown framework selection.";
+        setStatus("Unknown framework selection.");
         return;
       }
-      status.textContent = `Opening ${framework} README from ${url} ...`;
+      setStatus(`Opening ${framework} README from ${url} ...`);
       window.open(url, "_blank", "noopener,noreferrer");
     }
 

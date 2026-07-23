@@ -7,7 +7,7 @@
   --panel: #ffffff;
   --panel-border: #dbe3ef;
   --panel-shadow: rgba(20, 33, 61, 0.08);
-  --accent: #008ae6;
+  --accent: #cc3300;
   --accent2: #f59e0b;
   --parallel: #009900;
   --sequential: #47476b;
@@ -172,7 +172,7 @@ body {
 .card-actions button[data-action="readme"] {
   background: transparent;
   color: var(--ink);
-  border-color: var(--panel-border);
+  border-color: var(--accent);
 }
 
 .card-actions button:hover {
