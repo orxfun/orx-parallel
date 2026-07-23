@@ -10,40 +10,85 @@
   <main class="page">
     <section class="panel" aria-label="Framework switcher">
       <div class="panel-head">
-        <h1>Parallel Computation in WASM</h1>
-        <p>Choose a frontend flavor for the same TSP demo: vanilla, React, Yew, or Leptos.</p>
+        <a href="https://github.com/orxfun" target="_blank" rel="noreferrer" aria-label="ORX GitHub">
+          <img
+            class="panel-logo"
+            src="https://avatars.githubusercontent.com/u/132661625?s=400&u=e13dbda1a79636fa7d02dd9ac8dfc02705694144&v=4"
+            alt="ORX logo"
+          />
+        </a>
+        <div class="panel-head-copy">
+          <h1>Parallel Computation in WASM</h1>
+          <p>Choose a frontend flavor for the same TSP demo: vanilla, React, Yew, or Leptos.</p>
+        </div>
       </div>
-      <div class="controls" role="tablist" aria-label="Framework pages">
-        <button type="button" data-framework="vanilla">Vanilla</button>
-        <button type="button" data-framework="react">React</button>
-        <button type="button" data-framework="yew">Yew</button>
-        <button type="button" data-framework="leptos">Leptos</button>
+      <div class="framework-cards" aria-label="Framework pages">
+        <article class="framework-card" data-framework="vanilla">
+          <h2>Vanilla</h2>
+          <p>Vite + TypeScript frontend with direct DOM rendering.</p>
+          <div class="card-actions">
+            <button type="button" data-framework="vanilla" data-action="demo">Open Demo</button>
+            <button type="button" data-framework="vanilla" data-action="readme">Open README</button>
+          </div>
+        </article>
+        <article class="framework-card" data-framework="react">
+          <h2>React</h2>
+          <p>React frontend using the same shared-memory TSP computation.</p>
+          <div class="card-actions">
+            <button type="button" data-framework="react" data-action="demo">Open Demo</button>
+            <button type="button" data-framework="react" data-action="readme">Open README</button>
+          </div>
+        </article>
+        <article class="framework-card" data-framework="yew">
+          <h2>Yew</h2>
+          <p>Rust-based Yew UI with wasm output bundled in the app build.</p>
+          <div class="card-actions">
+            <button type="button" data-framework="yew" data-action="demo">Open Demo</button>
+            <button type="button" data-framework="yew" data-action="readme">Open README</button>
+          </div>
+        </article>
+        <article class="framework-card" data-framework="leptos">
+          <h2>Leptos</h2>
+          <p>Leptos frontend variant with the same threaded TSP runner.</p>
+          <div class="card-actions">
+            <button type="button" data-framework="leptos" data-action="demo">Open Demo</button>
+            <button type="button" data-framework="leptos" data-action="readme">Open README</button>
+          </div>
+        </article>
       </div>
-      <p class="status" id="status">Click a button to open that framework app in this tab.</p>
+      <p class="status" id="status">Choose a framework card action: Open Demo or Open README.</p>
       <p class="hint">
-        Buttons open bundled pages under ./apps/<framework>/index.html.
+        Demo links open bundled pages under ./apps/&lt;framework&gt;/index.html.
+        README links open GitHub docs for the same framework.
         Use an http/https server, not file://.
       </p>
     </section>
   </main>
 
   <script type="module">
-    const frameworkUrls = {
+    const demoUrls = {
       vanilla: "./apps/vanilla/index.html",
       react: "./apps/react/index.html",
       yew: "./apps/yew/index.html",
       leptos: "./apps/leptos/index.html"
     };
 
-    const buttons = Array.from(document.querySelectorAll("[data-framework]"));
+    const readmeUrls = {
+      vanilla: "https://github.com/orxfun/orx-parallel/blob/main/examples/wasm/tsp/vanilla/README.md",
+      react: "https://github.com/orxfun/orx-parallel/blob/main/examples/wasm/tsp/react/README.md",
+      yew: "https://github.com/orxfun/orx-parallel/blob/main/examples/wasm/tsp/yew/README.md",
+      leptos: "https://github.com/orxfun/orx-parallel/blob/main/examples/wasm/tsp/leptos/README.md"
+    };
+
+    const buttons = Array.from(document.querySelectorAll("button[data-framework][data-action]"));
     const status = document.getElementById("status");
 
     if (window.location.protocol === "file:") {
       status.textContent = "This hub cannot run from file://. Start a local server and open http://localhost:<port> instead.";
     }
 
-    function loadFramework(framework) {
-      const url = frameworkUrls[framework];
+    function openDemo(framework) {
+      const url = demoUrls[framework];
       if (!url) {
         status.textContent = "Unknown framework selection.";
         return;
@@ -52,10 +97,25 @@
       window.location.href = url;
     }
 
+    function openReadme(framework) {
+      const url = readmeUrls[framework];
+      if (!url) {
+        status.textContent = "Unknown framework selection.";
+        return;
+      }
+      status.textContent = `Opening ${framework} README from ${url} ...`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
     for (const button of buttons) {
       button.addEventListener("click", () => {
         const framework = button.dataset.framework;
-        loadFramework(framework);
+        const action = button.dataset.action;
+        if (action === "demo") {
+          openDemo(framework);
+        } else if (action === "readme") {
+          openReadme(framework);
+        }
       });
     }
   </script>
