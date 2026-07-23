@@ -1,5 +1,5 @@
-import init, { init_parallel_runtime, run_search } from "../pkg/wasm_bindings.js";
 import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
+import init, { init_parallel_runtime, run_search } from "../pkg/wasm_bindings.js";
 
 self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
     try {

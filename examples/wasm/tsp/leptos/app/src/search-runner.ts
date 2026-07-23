@@ -1,4 +1,5 @@
 import { locations } from "../pkg/components.js";
+import { normalizeSeed } from "./shared-types.js";
 import type { RunSettings, SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
 
 export function runSearchOnce(settings: RunSettings): Promise<SearchResult> {
@@ -47,23 +48,6 @@ export function runSearchOnce(settings: RunSettings): Promise<SearchResult> {
         worker.postMessage(request);
     });
 }
-
-function normalizeSeed(seed: number | bigint | string): bigint {
-    if (typeof seed === "bigint") {
-        return seed;
-    }
-
-    if (typeof seed === "number") {
-        if (!Number.isFinite(seed)) {
-            throw new Error("invalid seed: expected a finite number");
-        }
-
-        return BigInt(Math.trunc(seed));
-    }
-
-    return BigInt(seed);
-}
-
 (globalThis as typeof globalThis & { runSearchOnce: typeof runSearchOnce }).runSearchOnce = runSearchOnce;
 
 export { };
