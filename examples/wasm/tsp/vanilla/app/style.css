@@ -13,9 +13,9 @@
   --parallel: #009900;
   --sequential: #47476b;
   --reset: #e60000;
-  --city-node: #ffff00;
-  --tour-line: #ffcc00;
-  --code-block-bg: #0f172a;
+  --city-node: #e60000;
+  --tour-line: #e63900;
+  --code-block-bg: #333333;
   --code-text: #e2e8f0;
   --input-bg: #ffffff;
   --input-border: #d1d5db;
@@ -30,7 +30,7 @@
   --overlay-card-text: #0f172a;
   --stats-bg: #f9fafb;
   --stats-border: #e5e7eb;
-  --canvas-bg: #ffffff;
+  --canvas-bg: #f2f2f2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,6 +44,8 @@
     --panel-2: #0f1a2e;
     --panel-border: rgba(148, 163, 184, 0.18);
     --panel-shadow: rgba(0, 0, 0, 0.36);
+    --city-node: #ffff00;
+    --tour-line: #c6ff1a;
     --code-block-bg: #000000;
     --code-text: #dbeafe;
     --input-bg: #0b1324;
