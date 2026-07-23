@@ -15,3 +15,7 @@ export type SearchResult = {
     iterations: number;
     elapsed_ms: number;
 };
+
+export type SearchResponse =
+    | { type: "search-result"; result: SearchResult }
+    | { type: "search-error"; message: string };
