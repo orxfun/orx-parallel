@@ -24,6 +24,7 @@ rm -rf "$LOCAL_APPS_DIR"
 mkdir -p "$OUT_DIR/apps"
 mkdir -p "$LOCAL_APPS_DIR"
 cp "$HUB_DIR/index.html" "$OUT_DIR/index.html"
+cp "$HUB_DIR/style.css" "$OUT_DIR/style.css"
 
 for app in "${apps[@]}"; do
   SRC_DIR="$ROOT_DIR/$app/app/dist"
