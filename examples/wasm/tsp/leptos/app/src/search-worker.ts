@@ -1,10 +1,7 @@
 import init, { init_parallel_runtime, locations, run_search } from "../pkg/components.js";
-import type { RunSettings, SearchResult } from "./shared-types.js";
+import type { RunSettings, SearchResult, SearchResponse } from "./shared-types.js";
 
 type SearchRequest = { type: "run-search"; settings: RunSettings };
-type SearchResponse =
-    | { type: "search-result"; result: SearchResult }
-    | { type: "search-error"; message: string };
 
 self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
     try {
