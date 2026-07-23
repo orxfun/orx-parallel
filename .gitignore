@@ -22,6 +22,10 @@ node_modules/
 dist/
 pkg/
 
+# wasm hub generated artifacts
+examples/wasm/*/hub/apps/
+examples/wasm/*/hub/site/
+
 
 
 

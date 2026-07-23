@@ -1,0 +1,10 @@
+{
+    "name": "orx-parallel-wasm-tsp-hub",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "./build-hub.sh",
+        "serve": "node scripts/serve-site.mjs"
+    }
+}
