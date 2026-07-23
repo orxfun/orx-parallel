@@ -1,0 +1,22 @@
+{
+    "name": "orx-parallel-wasm-tsp-vanilla-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build:wasm": "RUSTUP_TOOLCHAIN=nightly RUSTFLAGS='-C target-feature=+atomics -C link-arg=--shared-memory -C link-arg=--max-memory=1073741824 -C link-arg=--import-memory -C link-arg=--export=__wasm_init_tls -C link-arg=--export=__tls_size -C link-arg=--export=__tls_align -C link-arg=--export=__tls_base' wasm-pack build ../wasm_bindings --target web --out-dir ../app/pkg -- -Z build-std=panic_abort,std",
+        "dev:full": "npm run build:wasm && npm exec -- vite",
+        "dev": "npm exec -- vite",
+        "typecheck": "tsc --noEmit",
+        "build": "npm run typecheck && npm exec -- vite build",
+        "preview": "npm run build && npm exec -- vite preview",
+        "serve:dist": "node scripts/serve-dist.mjs"
+    },
+    "devDependencies": {
+        "typescript": "^5.6.3",
+        "vite": "^5.4.10"
+    },
+    "dependencies": {
+        "highlight.js": "^11.11.1"
+    }
+}

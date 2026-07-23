@@ -41,7 +41,7 @@ fn kind_transform_par_opt() {
     }
 
     fn filter(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
-        par.filter(|x| x.len() > 0)
+        par.filter(|x| !x.is_empty())
     }
 
     fn filter_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {

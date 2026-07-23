@@ -14,7 +14,7 @@ fn many_f_find_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+        .map::<Result<_, Vec<char>>, _>(Ok)
         .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -30,7 +30,7 @@ fn many_f_find_any_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+        .map::<Result<_, Vec<char>>, _>(Ok)
         .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -47,7 +47,7 @@ fn many_f_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+        .map::<Result<_, Vec<char>>, _>(Ok)
         .into_fallible()
         .flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -94,7 +94,7 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
         |i| i.to_string(),
         inputs(N)
             .into_iter()
-            .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+            .map::<Result<_, Vec<char>>, _>(Ok)
             .map(|x| x.unwrap())
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -107,7 +107,7 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
     let result = match C::init_result(mode, |i| i.to_string()) {
         Some(mut c) => inputs(N)
             .into_par()
-            .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+            .map::<Result<_, Vec<char>>, _>(Ok)
             .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();
@@ -119,7 +119,7 @@ fn many_f_collect_ok<C: ParCollectIntoTest<String>>(
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .map::<Result<_, Vec<char>>, _>(|x| Ok(x))
+            .map::<Result<_, Vec<char>>, _>(Ok)
             .into_fallible()
             .flat_map(|x| {
                 let a = x.parse::<u64>().unwrap();

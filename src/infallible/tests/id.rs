@@ -40,7 +40,7 @@ fn id_fold() {
     let inputs = inputs(N);
 
     let mut expected = String::new();
-    inputs.iter().for_each(|x| expected.push_str(&x));
+    inputs.iter().for_each(|x| expected.push_str(x));
     let mut expected: Vec<_> = expected.chars().collect();
     expected.sort();
 

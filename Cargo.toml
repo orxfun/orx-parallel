@@ -66,11 +66,12 @@ criterion = { version = "0.8", features = ["html_reports"] }
 all-features = true
 
 [features]
-default = ["std", "experimental", "long-tests"]
+default = ["std"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 long-tests = []
-wasm-web-threads = [
+wasm-web-threads = ["std", "dep:wasm-bindgen", "dep:js-sys"]
+wasm-web-threads-experimental = [
     "std",
     "rayon-core",
     "dep:wasm-bindgen",
@@ -249,3 +250,11 @@ path = "benches/reduce/mfm.rs"
 name = "reduce-mfmf"
 harness = false
 path = "benches/reduce/mfmf.rs"
+
+## benchmarks - problems
+
+[[bench]]
+name = "problems-tsp"
+harness = false
+path = "benches/problems/tsp.rs"
+required-features = ["std", "rayon-core"]

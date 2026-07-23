@@ -33,7 +33,7 @@ fn many_m_find_any() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .flat_map(|u, x| {
             u.mutate();
             let a = x.parse::<u64>().unwrap();
@@ -136,7 +136,7 @@ fn many_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
         Some(mut c) => {
             inputs(N)
                 .into_par()
-                .use_new(|th_idx| UseValue::new(th_idx))
+                .use_new(UseValue::new)
                 .iteration_order(order)
                 .flat_map(|u, x| {
                     u.mutate();
@@ -152,7 +152,7 @@ fn many_m_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order:
         }
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .iteration_order(order)
             .flat_map(|u, x| {
                 u.mutate();

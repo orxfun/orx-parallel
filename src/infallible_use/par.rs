@@ -88,19 +88,15 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// use orx_parallel::*;
+    ///
+    /// let par = (1..101).par().use_new(|_| ());
+    ///
     /// #[cfg(feature = "std")]
-    /// {
-    ///     use orx_parallel::*;
+    /// let par = par.runner(Runner::fixed_chunk(Pool::once(4)));
     ///
-    ///     let sum: usize = (1..101)
-    ///         .into_par()
-    ///         .use_new(|_| ())
-    ///         .runner(Runner::fixed_chunk(Pool::once(4)))
-    ///         .sum();
-    ///
-    ///     assert_eq!(sum, 5050);
-    /// }
+    /// let sum = par.sum();
+    /// assert_eq!(sum, 5050);
     /// ```
     fn runner<Q: ParRunner>(
         self,
@@ -116,19 +112,15 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(not(feature = "std"))] fn main() {}
+    /// use orx_parallel::*;
+    ///
+    /// let par = (1..1001).par().use_new(|_| ());
+    ///
     /// #[cfg(feature = "std")]
-    /// {
-    ///     use orx_parallel::*;
+    /// let par = par.runner_with_diagnostics();
     ///
-    ///     let sum: usize = (1..1001)
-    ///         .into_par()
-    ///         .use_new(|_| ())
-    ///         .runner_with_diagnostics()
-    ///         .sum();
-    ///
-    ///     assert_eq!(sum, 500500);
-    /// }
+    /// let sum = par.sum();
+    /// assert_eq!(sum, 500500);
     /// ```
     fn runner_with_diagnostics(
         self,

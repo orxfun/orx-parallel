@@ -62,7 +62,7 @@ fn many_m_reduce_ok() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .filter_map(|u, x| {
             u.mutate();
             match x.as_str() == "7" {
@@ -95,7 +95,7 @@ fn many_m_reduce_err() {
     let inputs = inputs(N);
     let result = inputs
         .into_par()
-        .use_new(|th_idx| UseValue::new(th_idx))
+        .use_new(UseValue::new)
         .filter_map(|u, x| {
             u.mutate();
             match x.as_str() == "7" {
@@ -149,7 +149,7 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
     let result = match C::init_result(mode, |i| i as u64) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {
@@ -172,7 +172,7 @@ fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order:
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {
@@ -202,7 +202,7 @@ fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order
     let result = match C::init_result(mode, |i| i as u64) {
         Some(mut c) => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {
@@ -228,7 +228,7 @@ fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order
             .map(|_| c),
         None => inputs(N)
             .into_par()
-            .use_new(|th_idx| UseValue::new(th_idx))
+            .use_new(UseValue::new)
             .filter_map(|u, x| {
                 u.mutate();
                 match x.as_str() == "7" {

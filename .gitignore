@@ -16,20 +16,12 @@ Cargo.lock
 
 benches/results/*.txt
 
-# wasm demo tsp generated artifacts
-examples/wasm_demo_tsp/web/node_modules/
-examples/wasm_demo_tsp/web/dist/
-examples/wasm_demo_tsp/web/pkg/
-examples/wasm_demo_tsp/crate/target/
+# wasm examples
 
-# wasm vite demo basic generated artifacts
-examples/wasm_vite_demo_basic/web/node_modules/
-examples/wasm_vite_demo_basic/web/dist/
-examples/wasm_vite_demo_basic/web/pkg/
-examples/wasm_vite_demo_basic/crate/target/
+node_modules/
+dist/
+pkg/
 
-# wasm react demo basic generated artifacts
-examples/wasm_react_demo_basic/web/node_modules/
-examples/wasm_react_demo_basic/web/dist/
-examples/wasm_react_demo_basic/web/pkg/
-examples/wasm_react_demo_basic/crate/target/
+# wasm hub generated artifacts
+examples/wasm/*/hub/apps/
+examples/wasm/*/hub/site/

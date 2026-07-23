@@ -190,15 +190,13 @@ impl Experiment for Exp {
                 .iter()
                 .filter(|x| h_f(**x, 999))
                 .filter(|x| *x + 1 > 900)
-                .filter(|x| x.is_multiple_of(9))
-                .next()
+                .find(|x| x.is_multiple_of(9))
                 .copied(),
             false => input
                 .iter()
                 .filter(|x| l_f(**x, 999))
                 .filter(|x| *x + 1 > 900)
-                .filter(|x| x.is_multiple_of(9))
-                .next()
+                .find(|x| x.is_multiple_of(9))
                 .copied(),
         })
     }

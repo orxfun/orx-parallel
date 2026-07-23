@@ -19,7 +19,7 @@ fn inf_use_first() {
             .first();
         assert_eq!(
             result,
-            input.iter().filter(|x| *x == &(n / 2).to_string()).next()
+            input.iter().find(|x| *x == &(n / 2).to_string())
         );
 
         let result = input
@@ -27,7 +27,7 @@ fn inf_use_first() {
             .use_new(|_| ())
             .filter(|_, x| x.as_str() == "x")
             .first();
-        assert_eq!(result, input.iter().filter(|x| x.as_str() == "x").next());
+        assert_eq!(result, input.iter().find(|x| x.as_str() == "x"));
     }
 }
 
@@ -125,8 +125,8 @@ fn inf_use_all() {
     for n in N {
         let input = inputs(n);
 
-        let result = input.par().use_new(|_| ()).all(|_, x| x.len() > 0);
-        assert_eq!(result, input.iter().all(|x| x.len() > 0));
+        let result = input.par().use_new(|_| ()).all(|_, x| !x.is_empty());
+        assert_eq!(result, input.iter().all(|x| !x.is_empty()));
 
         let result = input.par().use_new(|_| ()).all(|_, x| x.len() == 1);
         assert_eq!(result, input.iter().all(|x| x.len() == 1));
@@ -247,10 +247,10 @@ fn inf_use_max_by() {
             .par()
             .use_new(|_| ())
             .map(|_, x| x.len())
-            .max_by(|_, a, b| a.cmp(&b));
+            .max_by(|_, a, b| a.cmp(b));
         assert_eq!(
             result,
-            input.iter().map(|x| x.len()).max_by(|a, b| a.cmp(&b))
+            input.iter().map(|x| x.len()).max_by(|a, b| a.cmp(b))
         );
     }
 }
@@ -289,10 +289,10 @@ fn inf_use_min_by() {
             .par()
             .use_new(|_| ())
             .map(|_, x| x.len())
-            .min_by(|_, a, b| a.cmp(&b));
+            .min_by(|_, a, b| a.cmp(b));
         assert_eq!(
             result,
-            input.iter().map(|x| x.len()).min_by(|a, b| a.cmp(&b))
+            input.iter().map(|x| x.len()).min_by(|a, b| a.cmp(b))
         );
     }
 }
