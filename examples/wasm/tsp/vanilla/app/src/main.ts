@@ -10,7 +10,7 @@ const MAX_CITIES = 200;
 const MAX_THREADS = 16;
 const CITY_NODE_COLOR = readCssColor("--city-node");
 const TOUR_LINE_COLOR = readCssColor("--tour-line");
-const CANVAS_BACKGROUND_COLOR = readCssColor("--code-block-bg");
+const CANVAS_BACKGROUND_COLOR = readCssColor("--canvas-bg");
 
 function readCssColor(variableName: string): string {
     return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
