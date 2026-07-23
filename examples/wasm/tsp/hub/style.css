@@ -109,8 +109,21 @@ body {
   background: color-mix(in srgb, var(--panel) 94%, var(--bg) 6%);
 }
 
+.framework-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.framework-logo {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
 .framework-card h2 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 1.1rem;
 }
 
