@@ -1,33 +1,11 @@
-import init, {
-    init_parallel_runtime,
-    locations,
-    run_search
-} from "../pkg/components.js";
-
-type SearchMode = "parallel" | "sequential";
-
-type RunSettings = {
-    mode: SearchMode;
-    iterations: number;
-    threads: number;
-    chunkSize: number;
-    seed: number;
-    numCities: number;
-};
-
-type SearchResult = {
-    best_tour: number[];
-    best_distance: number;
-    iterations: number;
-    elapsed_ms: number;
-};
+import init, { init_parallel_runtime, locations, run_search } from "../pkg/components.js";
+import type { SearchMode, RunSettings, SearchResult } from "./shared-types.js";
 
 let wasmInitPromise: Promise<void> | null = null;
 let parallelRuntimePromise: Promise<void> | null = null;
 
 self.addEventListener("message", async (event: MessageEvent) => {
     const payload = event.data as { type: "run-search"; settings: RunSettings };
-
     try {
         await ensureWasmInitialized();
         const result = await runSearch(payload.settings);
