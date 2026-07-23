@@ -44,33 +44,22 @@ fn canvas_2d_context(canvas: &HtmlCanvasElement) -> Option<CanvasRenderingContex
         .ok()
 }
 
-fn read_css_color(variable_name: &str) -> Option<String> {
-    let window = web_sys::window()?;
-    let document = window.document()?;
-    let root = document.document_element()?;
-    let styles = window.get_computed_style(&root).ok()??;
-    let value = styles.get_property_value(variable_name).ok()?;
-    let trimmed = value.trim();
-    match trimmed.is_empty() {
-        true => None,
-        false => Some(trimmed.to_string()),
+fn read_css_color(variable_name: &str) -> String {
+    // This is a demo; if the expected CSS variable is missing, fail loudly.
+    fn read(variable_name: &str) -> Option<String> {
+        let window = web_sys::window()?;
+        let document = window.document()?;
+        let element = document.document_element()?;
+        let style = window.get_computed_style(&element).ok()??;
+        let value = style.get_property_value(variable_name).ok()?;
+        Some(value.trim().to_string())
     }
-}
 
-fn canvas_background_color() -> String {
-    read_css_color("--code-block-bg").unwrap_or("#0f172a".to_string())
-}
-
-fn city_node_color() -> String {
-    read_css_color("--city-node").unwrap_or("#f59e0b".to_string())
-}
-
-fn tour_line_color() -> String {
-    read_css_color("--tour-line").unwrap_or("#1d4ed8".to_string())
+    read(variable_name).expect("expected CSS variable to exist")
 }
 
 fn draw_points(ctx: &CanvasRenderingContext2d, canvas: &HtmlCanvasElement, locations: &[Location]) {
-    ctx.set_fill_style_str(&canvas_background_color());
+    ctx.set_fill_style_str(&read_css_color("--code-block-bg"));
     ctx.fill_rect(
         0.0,
         0.0,
@@ -79,7 +68,7 @@ fn draw_points(ctx: &CanvasRenderingContext2d, canvas: &HtmlCanvasElement, locat
     );
 
     let mapped = map_points(canvas, locations);
-    ctx.set_fill_style_str(&city_node_color());
+    ctx.set_fill_style_str(&read_css_color("--city-node"));
 
     for p in mapped {
         ctx.begin_path();
@@ -101,7 +90,7 @@ fn draw_tour(
 
     let mapped = map_points(canvas, locations);
     ctx.begin_path();
-    ctx.set_stroke_style_str(&tour_line_color());
+    ctx.set_stroke_style_str(&read_css_color("--tour-line"));
     ctx.set_line_width(2.0);
 
     let first = mapped[tour[0]];
