@@ -25,38 +25,3 @@ pkg/
 # wasm hub generated artifacts
 examples/wasm/*/hub/apps/
 examples/wasm/*/hub/site/
-
-
-
-
-
-
-# wasm demo tsp generated artifacts
-examples/arch/wasm_demo_tsp/web/node_modules/
-examples/arch/wasm_demo_tsp/web/dist/
-examples/arch/wasm_demo_tsp/web/pkg/
-examples/arch/wasm_demo_tsp/crate/target/
-
-# wasm demo tsp generated artifacts
-examples/arch/wasm_demo_tsp2/web/node_modules/
-examples/arch/wasm_demo_tsp2/web/dist/
-examples/arch/wasm_demo_tsp2/web/pkg/
-examples/arch/wasm_demo_tsp2/crate/target/
-
-# wasm vite demo basic generated artifacts
-examples/arch/wasm_vite_demo_basic/web/node_modules/
-examples/arch/wasm_vite_demo_basic/web/dist/
-examples/arch/wasm_vite_demo_basic/web/pkg/
-examples/arch/wasm_vite_demo_basic/crate/target/
-
-# wasm react demo basic generated artifacts
-examples/arch/wasm_react_demo_basic/web/node_modules/
-examples/arch/wasm_react_demo_basic/web/dist/
-examples/arch/wasm_react_demo_basic/web/pkg/
-examples/arch/wasm_react_demo_basic/crate/target/
-
-# wasm demo tsp generated artifacts
-examples/experimental/wasm_perf/web/node_modules/
-examples/experimental/wasm_perf/web/dist/
-examples/experimental/wasm_perf/web/pkg/
-examples/experimental/wasm_perf/crate/target/
