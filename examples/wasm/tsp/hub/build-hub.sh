@@ -25,6 +25,7 @@ mkdir -p "$OUT_DIR/apps"
 mkdir -p "$LOCAL_APPS_DIR"
 cp "$HUB_DIR/index.html" "$OUT_DIR/index.html"
 cp "$HUB_DIR/style.css" "$OUT_DIR/style.css"
+cp "$HUB_DIR/favicon.ico" "$OUT_DIR/favicon.ico"
 cp -r "$HUB_DIR/assets" "$OUT_DIR/assets"
 
 for app in "${apps[@]}"; do
