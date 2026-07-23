@@ -27,3 +27,19 @@ export type SearchRequest = {
 export type SearchResponse =
     | { type: "search-result"; result: SearchResult }
     | { type: "search-error"; message: string };
+
+export function normalizeSeed(seed: number | bigint | string): bigint {
+    if (typeof seed === "bigint") {
+        return seed;
+    }
+
+    if (typeof seed === "number") {
+        if (!Number.isFinite(seed)) {
+            throw new Error("invalid seed: expected a finite number");
+        }
+
+        return BigInt(Math.trunc(seed));
+    }
+
+    return BigInt(seed);
+}

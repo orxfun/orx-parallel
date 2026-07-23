@@ -1,5 +1,6 @@
-import init, { init_parallel_runtime, run_search } from "../pkg/components.js";
 import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
+import init, { init_parallel_runtime, run_search } from "../pkg/components.js";
+import { normalizeSeed } from "./shared-types.js";
 
 self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
     try {
@@ -28,19 +29,3 @@ self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
         self.postMessage(response);
     }
 });
-
-function normalizeSeed(seed: number | bigint | string): bigint {
-    if (typeof seed === "bigint") {
-        return seed;
-    }
-
-    if (typeof seed === "number") {
-        if (!Number.isFinite(seed)) {
-            throw new Error("invalid seed: expected a finite number");
-        }
-
-        return BigInt(Math.trunc(seed));
-    }
-
-    return BigInt(seed);
-}
