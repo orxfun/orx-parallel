@@ -36,7 +36,7 @@ Note that the difference is only in configuration; parallel computation code rem
 
 ## How it fits into the example
 
-The `wasm_bindings/` crate exposes the functions from this crate to JavaScript, and `ui/` consumes those bindings from the browser.
+The `wasm_bindings/` crate exposes the functions from this crate to JavaScript, and `components/` consumes those bindings from the browser (hosted by `app/`).
 
 Note that `wasm_bindings` crate includes the `computation` crate with `wasm-web-threads` feature:
 
