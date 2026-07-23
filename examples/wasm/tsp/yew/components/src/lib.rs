@@ -1,14 +1,21 @@
+mod canvas_view;
+mod code_card;
+mod controls;
+mod status;
+
+use canvas_view::CanvasView;
+use code_card::CodeCard;
+use computation::{Location, create_locations};
+use controls::ControlsSection;
 use gloo_timers::callback::Interval;
 use js_sys::Date;
 use serde::{Deserialize, Serialize};
+use status::StatusSection;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{JsFuture, spawn_local};
 use wasm_bindings::RunResult;
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, HtmlInputElement, InputEvent};
-use yew::TargetCast;
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, MouseEvent};
 use yew::prelude::*;
-
-use computation::{Location, create_locations};
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
@@ -25,7 +32,7 @@ const PARALLEL_HELP: &str = "// we will construct & improve `iterations` tours\n
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
-enum SearchMode {
+pub(crate) enum SearchMode {
     Parallel,
     Sequential,
 }
@@ -112,7 +119,7 @@ pub fn app() -> Html {
         });
     }
 
-    let on_num_cities = {
+    let on_num_cities_change = {
         let num_cities = num_cities.clone();
         let points = points.clone();
         let seed = seed.clone();
@@ -121,8 +128,7 @@ pub fn app() -> Html {
         let elapsed = elapsed.clone();
         let ips = ips.clone();
         let status = status.clone();
-        Callback::from(move |event: InputEvent| {
-            let next_value = parse_u32_input(input_value(&event), *num_cities);
+        Callback::from(move |next_value: u32| {
             num_cities.set(next_value);
             points.set(generate_points(*seed, next_value));
             clear_best(&best_so_far, &best_distance, &elapsed, &ips);
@@ -130,33 +136,30 @@ pub fn app() -> Html {
         })
     };
 
-    let on_iterations = {
+    let on_iterations_change = {
         let iterations = iterations.clone();
-        Callback::from(move |event: InputEvent| {
-            let next_value = parse_u32_input(input_value(&event), *iterations);
+        Callback::from(move |next_value: u32| {
             iterations.set(next_value.clamp(1, 200_000));
         })
     };
 
-    let on_threads = {
+    let on_threads_change = {
         let threads = threads.clone();
-        Callback::from(move |event: InputEvent| {
-            let next_value = parse_u32_input(input_value(&event), *threads);
+        Callback::from(move |next_value: u32| {
             threads.set(next_value.clamp(MIN_THREADS, MAX_THREADS));
         })
     };
 
-    let on_chunk_size = {
+    let on_chunk_size_change = {
         let chunk_size = chunk_size.clone();
         let status = status.clone();
-        Callback::from(move |event: InputEvent| {
-            let next_value = parse_u32_input(input_value(&event), *chunk_size);
+        Callback::from(move |next_value: u32| {
             chunk_size.set(next_value);
             status.set(format!("Chunk size set to {next_value}."));
         })
     };
 
-    let on_seed = {
+    let on_seed_change = {
         let seed = seed.clone();
         let num_cities = num_cities.clone();
         let points = points.clone();
@@ -165,8 +168,7 @@ pub fn app() -> Html {
         let elapsed = elapsed.clone();
         let ips = ips.clone();
         let status = status.clone();
-        Callback::from(move |event: InputEvent| {
-            let next_value = parse_u64_input(input_value(&event), *seed);
+        Callback::from(move |next_value: u64| {
             seed.set(next_value);
             points.set(generate_points(next_value, *num_cities));
             clear_best(&best_so_far, &best_distance, &elapsed, &ips);
@@ -192,7 +194,7 @@ pub fn app() -> Html {
         let run_started_at_ms = run_started_at_ms.clone();
         let run_ticker = run_ticker.clone();
         let status = status.clone();
-        Callback::from(move |_| {
+        Callback::from(move |_event: MouseEvent| {
             spawn_local(run_search_async(
                 SearchMode::Parallel,
                 iterations.clone(),
@@ -234,7 +236,7 @@ pub fn app() -> Html {
         let run_started_at_ms = run_started_at_ms.clone();
         let run_ticker = run_ticker.clone();
         let status = status.clone();
-        Callback::from(move |_| {
+        Callback::from(move |_event: MouseEvent| {
             spawn_local(run_search_async(
                 SearchMode::Sequential,
                 iterations.clone(),
@@ -258,7 +260,7 @@ pub fn app() -> Html {
         })
     };
 
-    let reset = {
+    let on_reset = {
         let seed = seed.clone();
         let num_cities = num_cities.clone();
         let points = points.clone();
@@ -267,17 +269,11 @@ pub fn app() -> Html {
         let elapsed = elapsed.clone();
         let ips = ips.clone();
         let status = status.clone();
-        Callback::from(move |_| {
+        Callback::from(move |_event: MouseEvent| {
             clear_best(&best_so_far, &best_distance, &elapsed, &ips);
             points.set(generate_points(*seed, *num_cities));
             status.set("Best tour reset. Ready for a fresh run.".to_string());
         })
-    };
-
-    let overlay_class = if *is_running {
-        classes!("run-overlay", "active")
-    } else {
-        classes!("run-overlay")
     };
 
     html! {
@@ -317,148 +313,37 @@ pub fn app() -> Html {
                 </article>
             </section>
 
+            <ControlsSection
+                iterations={*iterations}
+                threads={*threads}
+                chunk_size={*chunk_size}
+                seed={*seed}
+                num_cities={*num_cities}
+                is_running={*is_running}
+                status={(*status).clone()}
+                on_num_cities_change={on_num_cities_change}
+                on_iterations_change={on_iterations_change}
+                on_threads_change={on_threads_change}
+                on_chunk_size_change={on_chunk_size_change}
+                on_seed_change={on_seed_change}
+                on_run_parallel={run_parallel}
+                on_run_sequential={run_sequential}
+                on_reset={on_reset}
+            />
+
             <section class="card">
-                <div
-                    class={overlay_class}
-                    aria-live="polite"
-                    aria-hidden={(!*is_running).to_string()}
-                >
-                    <div class="run-overlay-card">
-                        <div class="run-overlay-top">
-                            <span class="spinner" aria-hidden="true"></span>
-                            <p class="run-title">
-                                {if *run_mode == SearchMode::Parallel {
-                                    "Running parallel search..."
-                                } else {
-                                    "Running sequential search..."
-                                }}
-                            </p>
-                        </div>
-                        <p class="run-subtitle">{(*run_subtitle).clone()}</p>
-                        <p class="run-elapsed">{(*run_elapsed).clone()}</p>
-                        <div class="run-bar" aria-hidden="true"></div>
-                    </div>
-                </div>
-
-                <div class="control-panel">
-                    <div class="controls">
-                        <label>
-                            {"Number of cities"}
-                            <input
-                                id="numCities"
-                                type="number"
-                                min="5"
-                                max="200"
-                                value={(*num_cities).to_string()}
-                                oninput={on_num_cities}
-                            />
-                        </label>
-                        <label>
-                            {"Iterations"}
-                            <input
-                                id="iterations"
-                                type="number"
-                                min="1"
-                                max="200000"
-                                value={(*iterations).to_string()}
-                                oninput={on_iterations}
-                            />
-                        </label>
-                        <label>
-                            {"Threads (1..16)"}
-                            <input
-                                id="threads"
-                                type="number"
-                                min="1"
-                                max="16"
-                                value={(*threads).to_string()}
-                                oninput={on_threads}
-                            />
-                        </label>
-                        <label>
-                            {"Chunk size"}
-                            <input
-                                id="chunkSize"
-                                type="number"
-                                min="0"
-                                max="1048576"
-                                value={(*chunk_size).to_string()}
-                                oninput={on_chunk_size}
-                            />
-                        </label>
-                        <label>
-                            {"Seed"}
-                            <input
-                                id="seed"
-                                type="number"
-                                min="1"
-                                max="99999999"
-                                value={(*seed).to_string()}
-                                oninput={on_seed}
-                            />
-                        </label>
-                    </div>
-
-                    <div class="actions">
-                        <button id="runParallel" onclick={run_parallel} disabled={*is_running}>{"Run parallel"}</button>
-                        <button id="runSequential" onclick={run_sequential} disabled={*is_running}>{"Run sequential"}</button>
-                        <button id="reset" onclick={reset} disabled={*is_running}>{"Reset"}</button>
-                    </div>
-
-                    <div class="status-value" aria-live="polite">{(*status).clone()}</div>
-                </div>
-
-                <div class="stats">
-                    <div class="stat">
-                        <h3>{"Best Distance"}</h3>
-                        <p>{(*best_distance).clone()}</p>
-                    </div>
-                    <div class="stat">
-                        <h3>{"Elapsed"}</h3>
-                        <p>{(*elapsed).clone()}</p>
-                    </div>
-                    <div class="stat">
-                        <h3>{"Iterations/s"}</h3>
-                        <p>{(*ips).clone()}</p>
-                    </div>
-                </div>
-
-                <canvas ref={canvas_ref} id="canvas" width="920" height="430"></canvas>
+                <StatusSection
+                    is_running={*is_running}
+                    run_mode={*run_mode}
+                    run_subtitle={(*run_subtitle).clone()}
+                    run_elapsed={(*run_elapsed).clone()}
+                    best_distance={(*best_distance).clone()}
+                    elapsed={(*elapsed).clone()}
+                    ips={(*ips).clone()}
+                />
+                <CanvasView canvas_ref={canvas_ref.clone()} />
             </section>
         </main>
-    }
-}
-
-#[derive(Properties, PartialEq)]
-struct CodeCardProps {
-    title: &'static str,
-    help_title: &'static str,
-    help_body: &'static str,
-    code: &'static str,
-}
-
-#[function_component(CodeCard)]
-fn code_card(props: &CodeCardProps) -> Html {
-    html! {
-        <>
-            <div class="code-card-header">
-                <h2>{props.title}</h2>
-                <details class="code-help">
-                    <summary class="code-help-trigger" aria-label={format!("Show {} explanation", props.title.to_lowercase())}>
-                        {"?"}
-                    </summary>
-                    <div class="code-help-popover" role="note">
-                        <h2 class="code-help-title">{props.help_title}</h2>
-                        <pre class="code-block">
-                            <code class="language-rust">{props.help_body}</code>
-                        </pre>
-                    </div>
-                </details>
-            </div>
-            <pre class="code-block">
-                <code class="language-rust">{props.code}</code>
-            </pre>
-        </>
     }
 }
 
@@ -607,18 +492,6 @@ fn clear_best(
 
 fn generate_points(seed: u64, num_cities: u32) -> Vec<Location> {
     create_locations(seed, num_cities)
-}
-
-fn parse_u32_input(raw: String, fallback: u32) -> u32 {
-    raw.trim().parse::<u32>().unwrap_or(fallback)
-}
-
-fn parse_u64_input(raw: String, fallback: u64) -> u64 {
-    raw.trim().parse::<u64>().unwrap_or(fallback)
-}
-
-fn input_value(event: &InputEvent) -> String {
-    event.target_unchecked_into::<HtmlInputElement>().value()
 }
 
 fn draw_scene(canvas_ref: &NodeRef, points: &[Location], best_so_far: Option<&RunResult>) {
