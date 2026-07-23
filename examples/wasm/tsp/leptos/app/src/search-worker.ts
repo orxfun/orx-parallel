@@ -1,61 +1,56 @@
 import init, { init_parallel_runtime, locations, run_search } from "../pkg/components.js";
-import type { SearchMode, RunSettings, SearchResult } from "./shared-types.js";
+import type { RunSettings, SearchResult } from "./shared-types.js";
 
-let wasmInitPromise: Promise<void> | null = null;
-let parallelRuntimePromise: Promise<void> | null = null;
+type SearchRequest = { type: "run-search"; settings: RunSettings };
+type SearchResponse =
+    | { type: "search-result"; result: SearchResult }
+    | { type: "search-error"; message: string };
 
-self.addEventListener("message", async (event: MessageEvent) => {
-    const payload = event.data as { type: "run-search"; settings: RunSettings };
+self.addEventListener("message", async (event: MessageEvent<SearchRequest>) => {
     try {
-        await ensureWasmInitialized();
-        const result = await runSearch(payload.settings);
-        self.postMessage({ type: "search-result", result });
-    } catch (err) {
-        self.postMessage({
-            type: "search-error",
-            message: err instanceof Error ? err.message : String(err)
-        });
-    }
-});
+        const settings = event.data.settings;
+        await init();
 
-async function ensureWasmInitialized() {
-    if (!wasmInitPromise) {
-        wasmInitPromise = init().then(() => undefined);
-    }
+        if (settings.mode === "parallel") {
+            await init_parallel_runtime(settings.threads);
+        }
 
-    await wasmInitPromise;
-}
-
-async function ensureParallelRuntimeInitialized(threadCount: number) {
-    if (!parallelRuntimePromise) {
-        parallelRuntimePromise = init_parallel_runtime(threadCount).then(() => undefined);
-    }
-
-    await parallelRuntimePromise;
-}
-
-async function runSearch(settings: RunSettings): Promise<SearchResult> {
-    const seed = BigInt(settings.seed);
-    const currentLocations = locations(seed, settings.numCities);
-
-    if (settings.mode === "parallel") {
-        await ensureParallelRuntimeInitialized(settings.threads);
-        return run_search(
-            true,
+        const seed = normalizeSeed(settings.seed);
+        const currentLocations = locations(seed, settings.numCities);
+        const parallelize = settings.mode === "parallel";
+        const result = run_search(
+            parallelize,
             settings.iterations,
             seed,
             settings.threads,
             settings.chunkSize,
             currentLocations
         ) as SearchResult;
+
+        const response: SearchResponse = { type: "search-result", result };
+        self.postMessage(response);
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const response: SearchResponse = {
+            type: "search-error",
+            message
+        };
+        self.postMessage(response);
+    }
+});
+
+function normalizeSeed(seed: number | bigint | string): bigint {
+    if (typeof seed === "bigint") {
+        return seed;
     }
 
-    return run_search(
-        false,
-        settings.iterations,
-        seed,
-        settings.threads,
-        settings.chunkSize,
-        currentLocations
-    ) as SearchResult;
+    if (typeof seed === "number") {
+        if (!Number.isFinite(seed)) {
+            throw new Error("invalid seed: expected a finite number");
+        }
+
+        return BigInt(Math.trunc(seed));
+    }
+
+    return BigInt(seed);
 }
