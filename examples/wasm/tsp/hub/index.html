@@ -20,7 +20,7 @@
           />
         </a>
         <div class="panel-head-copy">
-          <h1>Parallel Computation in WASM</h1>
+          <h1>Parallel Computation in WASM using <code>orx-parallel</code></h1>
           <p>Choose a frontend flavor for the same TSP demo: vanilla, React, Yew, or Leptos.</p>
         </div>
       </div>
@@ -30,10 +30,10 @@
             <img class="framework-logo" src="./assets/logos/vite.svg" alt="Vite logo" loading="lazy" />
             <h2>Vanilla</h2>
           </div>
-          <p>Vite + TypeScript frontend with direct DOM rendering.</p>
+          <p>Vanilla TypeScript UI built with Vite and direct DOM updates.</p>
           <div class="card-actions">
-            <button type="button" data-framework="vanilla" data-action="demo">Open Demo</button>
-            <button type="button" data-framework="vanilla" data-action="readme">Open README</button>
+            <button type="button" data-framework="vanilla" data-action="demo">Demo</button>
+            <button type="button" data-framework="vanilla" data-action="readme">README</button>
           </div>
         </article>
         <article class="framework-card" data-framework="react">
@@ -41,10 +41,10 @@
             <img class="framework-logo" src="./assets/logos/react.svg" alt="React logo" loading="lazy" />
             <h2>React</h2>
           </div>
-          <p>React frontend using the same shared-memory TSP computation.</p>
+          <p>React component-based frontend with JSX and client-side state handling.</p>
           <div class="card-actions">
-            <button type="button" data-framework="react" data-action="demo">Open Demo</button>
-            <button type="button" data-framework="react" data-action="readme">Open README</button>
+            <button type="button" data-framework="react" data-action="demo">Demo</button>
+            <button type="button" data-framework="react" data-action="readme">README</button>
           </div>
         </article>
         <article class="framework-card" data-framework="yew">
@@ -52,10 +52,10 @@
             <img class="framework-logo" src="./assets/logos/yew.svg" alt="Yew logo" loading="lazy" />
             <h2>Yew</h2>
           </div>
-          <p>Rust-based Yew UI with wasm output bundled in the app build.</p>
+          <p>Rust-native Yew frontend with component and message-driven UI patterns.</p>
           <div class="card-actions">
-            <button type="button" data-framework="yew" data-action="demo">Open Demo</button>
-            <button type="button" data-framework="yew" data-action="readme">Open README</button>
+            <button type="button" data-framework="yew" data-action="demo">Demo</button>
+            <button type="button" data-framework="yew" data-action="readme">README</button>
           </div>
         </article>
         <article class="framework-card" data-framework="leptos">
@@ -63,14 +63,13 @@
             <img class="framework-logo" src="./assets/logos/leptos.svg" alt="Leptos logo" loading="lazy" />
             <h2>Leptos</h2>
           </div>
-          <p>Leptos frontend variant with the same threaded TSP runner.</p>
+          <p>Leptos frontend with fine-grained reactive signals and Rust component views.</p>
           <div class="card-actions">
-            <button type="button" data-framework="leptos" data-action="demo">Open Demo</button>
-            <button type="button" data-framework="leptos" data-action="readme">Open README</button>
+            <button type="button" data-framework="leptos" data-action="demo">Demo</button>
+            <button type="button" data-framework="leptos" data-action="readme">README</button>
           </div>
         </article>
       </div>
-      <p class="status" id="status">Choose a framework card action: Open Demo or Open README.</p>
     </section>
   </main>
 

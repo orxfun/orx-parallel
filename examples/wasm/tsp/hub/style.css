@@ -7,7 +7,7 @@
   --panel: #ffffff;
   --panel-border: #dbe3ef;
   --panel-shadow: rgba(20, 33, 61, 0.08);
-  --accent: #0f766e;
+  --accent: #008ae6;
   --accent2: #f59e0b;
   --parallel: #009900;
   --sequential: #47476b;
@@ -109,6 +109,22 @@ body {
   background: color-mix(in srgb, var(--panel) 94%, var(--bg) 6%);
 }
 
+.framework-card[data-framework="vanilla"] {
+  border-color: color-mix(in srgb, #99ddff 46%, var(--panel-border) 54%);
+}
+
+.framework-card[data-framework="react"] {
+  border-color: color-mix(in srgb, #ffffb3 46%, var(--panel-border) 54%);
+}
+
+.framework-card[data-framework="yew"] {
+  border-color: color-mix(in srgb, #ccff33 46%, var(--panel-border) 54%);
+}
+
+.framework-card[data-framework="leptos"] {
+  border-color: color-mix(in srgb, #ef3939 46%, var(--panel-border) 54%);
+}
+
 .framework-head {
   display: flex;
   align-items: center;
@@ -151,18 +167,6 @@ body {
   background: var(--accent);
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
-}
-
-.card-actions button[data-framework="react"] {
-  background: #0b7285;
-}
-
-.card-actions button[data-framework="yew"] {
-  background: var(--parallel);
-}
-
-.card-actions button[data-framework="leptos"] {
-  background: #b45309;
 }
 
 .card-actions button[data-action="readme"] {
