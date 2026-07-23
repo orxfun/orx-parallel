@@ -39,6 +39,7 @@ export function runSearchOnce(request: SearchRequest): Promise<SearchResult> {
         worker.postMessage(request);
     });
 }
+// Expose the function globally so wasm-bindgen can call it from Rust via globalThis.runSearchOnce.
 (globalThis as typeof globalThis & { runSearchOnce: typeof runSearchOnce }).runSearchOnce = runSearchOnce;
 
 export { };
