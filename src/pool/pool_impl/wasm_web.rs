@@ -266,12 +266,12 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
                 ))),
             }
         }
-        Err(_) => unreachable!("invalid wasm-web-threads init state"),
+        Err(_) => unreachable!("invalid wasm init state"),
     }
 }
 
 #[cfg(target_feature = "atomics")]
-/// Returns `(configured_threads, spawned_workers)` for the active wasm-web-threads runtime.
+/// Returns `(configured_threads, spawned_workers)` for the active wasm runtime.
 pub fn wasm_web_runtime_info() -> (usize, usize) {
     let configured_threads = WASM_WEB3_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
     let spawned_workers = runtime().spawned_workers;

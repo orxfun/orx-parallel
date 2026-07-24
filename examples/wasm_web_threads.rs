@@ -4,21 +4,21 @@
 )]
 
 #[cfg(all(
-    feature = "wasm-web-threads",
+    feature = "wasm",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
 use wasm_bindgen::prelude::*;
 
 #[cfg(all(
-    feature = "wasm-web-threads",
+    feature = "wasm",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
 pub use orx_parallel::*;
 
 #[cfg(all(
-    feature = "wasm-web-threads",
+    feature = "wasm",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]

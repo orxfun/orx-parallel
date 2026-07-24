@@ -12,35 +12,35 @@ pub use sequential::SequentialPool;
 #[cfg(feature = "rayon-core")]
 mod rayon_core;
 
-#[cfg(all(feature = "wasm-web-threads-experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 mod wasm_web_exp;
-#[cfg(all(feature = "wasm-web-threads-experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 pub use wasm_web_exp::WasmWebPoolExp;
 #[cfg(all(
-    feature = "wasm-web-threads-experimental",
+    feature = "wasm-experimental",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
 pub use wasm_web_exp::init_thread_pool;
 
-#[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 mod wasm_web;
-#[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 pub use wasm_web::WasmWebPool;
 #[cfg(all(
-    feature = "wasm-web-threads",
+    feature = "wasm",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
 pub use wasm_web::init_thread_pool;
 #[cfg(all(
-    feature = "wasm-web-threads",
+    feature = "wasm",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
 pub use wasm_web::wasm_web_runtime_info;
 #[cfg(all(
-    feature = "wasm-web-threads",
+    feature = "wasm",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
