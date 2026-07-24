@@ -113,6 +113,12 @@ harness = false
 path = "benches/het/simple.rs"
 required-features = ["std"]
 
+[[bench]]
+name = "het-advanced"
+harness = false
+path = "benches/het/advanced.rs"
+required-features = ["std"]
+
 ## benchmarks - recursive
 
 [[bench]]
