@@ -2,6 +2,7 @@ use crate::ParThreadPool;
 #[cfg(all(feature = "std", feature = "experimental"))]
 use crate::runner::runner_variants::DynChunkRunner;
 use crate::runner::runner_variants::FixedChunkRunner;
+use crate::runner::runner_variants::RunnerB;
 
 /// Entry point for creating parallel runners that control how work is distributed across threads.
 ///
@@ -51,6 +52,13 @@ impl Runner {
     /// ```
     pub fn fixed_chunk<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
         FixedChunkRunner::new(pool)
+    }
+
+    /// Creates runner-b placeholder strategy.
+    ///
+    /// Current implementation always uses chunk size 1.
+    pub fn b<P: ParThreadPool>(pool: P) -> RunnerB<P> {
+        RunnerB::new(pool)
     }
 
     /// Creates a runner that adjusts chunk sizes dynamically at runtime.
