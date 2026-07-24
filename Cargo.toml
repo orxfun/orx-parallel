@@ -70,8 +70,8 @@ default = ["std"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 long-tests = []
-wasm-web-threads = ["std", "dep:wasm-bindgen", "dep:js-sys"]
-wasm-web-threads-experimental = [
+wasm = ["std", "dep:wasm-bindgen", "dep:js-sys"]
+wasm-experimental = [
     "std",
     "rayon-core",
     "dep:wasm-bindgen",
@@ -105,7 +105,7 @@ required-features = ["std"]
 [[example]]
 name = "wasm_web_threads"
 path = "examples/wasm_web_threads.rs"
-required-features = ["wasm-web-threads"]
+required-features = ["wasm"]
 
 
 # benchmarks
