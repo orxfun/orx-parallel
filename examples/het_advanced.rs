@@ -9,9 +9,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 const NORMAL_ITERS_LIGHT: u32 = 200;
-const NORMAL_ITERS_HEAVY: u32 = 50;
-const OUTLIER_MULTIPLIER_MIN: u32 = 10000;
-const OUTLIER_MULTIPLIER_MAX: u32 = 100000;
+const NORMAL_ITERS_HEAVY: u32 = 5_000;
+const OUTLIER_MULTIPLIER_MIN: u32 = 10;
+const OUTLIER_MULTIPLIER_MAX: u32 = 100;
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 #[value(rename_all = "kebab-case")]
@@ -26,7 +26,7 @@ enum Method {
 #[derive(Parser, Debug)]
 struct Args {
     /// Number of input elements.
-    #[arg(long, default_value_t = 1 << 10)]
+    #[arg(long, default_value_t = 1 << 12)]
     n: usize,
 
     /// Number of threads for rayon and orx methods.
@@ -34,11 +34,11 @@ struct Args {
     num_threads: usize,
 
     /// Percentage of outlier elements in [0, 100].
-    #[arg(long, default_value_t = 1.0)]
+    #[arg(long, default_value_t = 5.0)]
     heterogeneity_percent: f64,
 
     /// Whether normal elements are moderate-cost (true) or very fast (false).
-    #[arg(long, default_value_t = true, action = ArgAction::Set)]
+    #[arg(long, default_value_t = false, action = ArgAction::Set)]
     heavy: bool,
 
     /// Method variant to run.
