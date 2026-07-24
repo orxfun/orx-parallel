@@ -47,7 +47,7 @@ body {
 .page {
   max-width: 1020px;
   margin: 32px auto;
-  padding: 20px;
+  padding: clamp(14px, 3vw, 20px);
   display: grid;
   gap: 14px;
 }
@@ -63,6 +63,7 @@ body {
 .panel-head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 14px;
   padding: 16px 18px 8px;
 }
@@ -210,8 +211,14 @@ body {
 }
 
 @media (max-width: 820px) {
+  .page {
+    margin: 16px auto;
+    padding: 12px;
+  }
+
   .panel-head {
     align-items: flex-start;
+    padding: 14px 14px 8px;
   }
 
   .panel-logo {
@@ -219,11 +226,31 @@ body {
     height: 56px;
   }
 
+  .panel-head h1 {
+    font-size: 1.35rem;
+  }
+
   .framework-cards {
     grid-template-columns: 1fr;
+    padding: 10px;
   }
 
   .card-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .panel-head {
+    gap: 10px;
+  }
+
+  .panel-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .framework-card {
+    padding: 12px;
   }
 }
