@@ -34,11 +34,11 @@ struct Args {
     num_threads: usize,
 
     /// Percentage of outlier elements in [0, 100].
-    #[arg(long, default_value_t = 5.0)]
+    #[arg(long, default_value_t = 10.0)]
     heterogeneity_percent: f64,
 
     /// Whether normal elements are moderate-cost (true) or very fast (false).
-    #[arg(long, default_value_t = false, action = ArgAction::Set)]
+    #[arg(long, default_value_t = true, action = ArgAction::Set)]
     heavy: bool,
 
     /// Method variant to run.
