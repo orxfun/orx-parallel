@@ -98,6 +98,11 @@ path = "examples/recursive_tune.rs"
 required-features = ["rayon-core"]
 
 [[example]]
+name = "het_advanced"
+path = "examples/het_advanced.rs"
+required-features = ["std"]
+
+[[example]]
 name = "wasm_web_threads"
 path = "examples/wasm_web_threads.rs"
 required-features = ["wasm-web-threads"]
