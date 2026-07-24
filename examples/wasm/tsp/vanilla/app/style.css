@@ -65,8 +65,13 @@
   }
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
+  min-height: 100svh;
   background: radial-gradient(circle at 20% 0%, var(--bg-strong) 0, var(--bg) 55%);
   color: var(--ink);
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
@@ -75,7 +80,7 @@ body {
 main {
   max-width: 1020px;
   margin: 32px auto;
-  padding: 20px;
+  padding: clamp(14px, 3vw, 20px);
 }
 
 .hero {
@@ -300,6 +305,7 @@ p {
 
 .run-overlay-card {
   min-width: 260px;
+  width: min(100%, 460px);
   max-width: 460px;
   background: var(--overlay-card-bg);
   border: 1px solid var(--panel-border);
@@ -611,16 +617,62 @@ button.ghost {
 
 canvas {
   width: 100%;
-  height: 430px;
+  height: clamp(240px, 50vh, 430px);
   border: 1px solid var(--panel-border);
   border-radius: 12px;
   background: var(--canvas-bg);
 }
 
+@media (max-width: 980px) {
+  .control-panel {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+    grid-auto-flow: row;
+  }
+
+  .actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .actions button {
+    flex: 1 1 180px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}
+
 @media (max-width: 760px) {
+  main {
+    margin: 16px auto;
+    padding: 12px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
   .hero {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
+  }
+
+  .hero-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
   }
 
   .intro-cards {
@@ -629,6 +681,38 @@ canvas {
 
   .controls {
     grid-template-columns: 1fr;
+  }
+
+  .controls label {
+    padding: 0;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    flex: 1 1 auto;
+  }
+
+  .run-overlay {
+    inset: 10px;
+  }
+
+  .run-overlay-card {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .code-help-popover {
+    left: 0;
+    right: auto;
+    width: min(320px, calc(100vw - 48px));
+  }
+
+  .code-help-popover::before {
+    left: 10px;
+    right: auto;
   }
 
   .stats {
