@@ -12,8 +12,8 @@ use std::hint::black_box;
 const FEW_N: usize = 1 << 12;
 const MANY_N: usize = 1 << 18;
 
-const NORMAL_ITERS_LIGHT: u32 = 200;
-const NORMAL_ITERS_HEAVY: u32 = 5_000;
+const NORMAL_ITERS_LIGHT: u32 = 50;
+const NORMAL_ITERS_HEAVY: u32 = 500;
 const OUTLIER_MULTIPLIER_MIN: u32 = 10;
 const OUTLIER_MULTIPLIER_MAX: u32 = 100;
 
