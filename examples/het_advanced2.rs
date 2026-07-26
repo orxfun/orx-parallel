@@ -515,23 +515,21 @@ fn run_orx_b(
     survival_percent: f64,
     diagnostics: bool,
 ) -> u64 {
-    match pattern {
-        ComputationPattern::Map => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
+    if diagnostics {
+        orx_parallel::enable_runner_b_diagnostics(true);
+    }
+    let result = match pattern {
+        ComputationPattern::Map => input
+            .par()
+            .num_threads(num_threads)
+            .chunk_size(0)
+            .runner(Runner::b(Pool::once(num_threads)))
+            .map(do_work)
+            .max()
+            .unwrap_or(0),
         ComputationPattern::FilterMap => {
             let threshold = ((survival_percent / 100.0) * u32::MAX as f64) as u32;
-            let par = input
+            input
                 .par()
                 .num_threads(num_threads)
                 .chunk_size(0)
@@ -540,16 +538,13 @@ fn run_orx_b(
                     let hash = item.seed.wrapping_mul(6364136223846793005) as u32;
                     hash < threshold
                 })
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+                .map(do_work)
+                .max()
+                .unwrap_or(0)
         }
         ComputationPattern::FlatMap => {
             let repeat_count = ((survival_percent / 100.0) * 5.0).ceil() as usize;
-            let par = input
+            input
                 .par()
                 .num_threads(num_threads)
                 .chunk_size(0)
@@ -561,46 +556,59 @@ fn run_orx_b(
                     } else {
                         vec![do_work(item)]
                     }
-                });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+                })
+                .max()
+                .unwrap_or(0)
         }
-        ComputationPattern::Tiny => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
-                .map(|item| {
-                    let mut state = item.seed;
-                    for _ in 0..10 {
-                        state = state.wrapping_mul(6364136223846793005) ^ state;
-                    }
-                    state
-                });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
+        ComputationPattern::Tiny => input
+            .par()
+            .num_threads(num_threads)
+            .chunk_size(0)
+            .runner(Runner::b(Pool::once(num_threads)))
+            .map(|item| {
+                let mut state = item.seed;
+                for _ in 0..10 {
+                    state = state.wrapping_mul(6364136223846793005) ^ state;
+                }
+                state
+            })
+            .max()
+            .unwrap_or(0),
+        ComputationPattern::Accumulate => input
+            .par()
+            .num_threads(num_threads)
+            .chunk_size(0)
+            .runner(Runner::b(Pool::once(num_threads)))
+            .map(do_work)
+            .max()
+            .unwrap_or(0),
+    };
+
+    if diagnostics {
+        orx_parallel::enable_runner_b_diagnostics(false);
+        if let Some(diag) = orx_parallel::take_last_runner_b_diagnostics() {
+            let explore_elapsed_ms =
+                diag.exploration_phase_started_at.elapsed().as_secs_f64() * 1_000.0;
+            eprintln!("=== RunnerB Exploration Diagnostics ===");
+            eprintln!("Exploration started: {:.3}ms ago", explore_elapsed_ms);
+            eprintln!("Samples collected: {}", diag.samples.len());
+            eprintln!("sample_num,chunk_size,elapsed_ns,ns_per_item");
+            for (i, (chunk_size, elapsed_ns)) in diag.samples.iter().enumerate() {
+                let ns_per_item = if *chunk_size > 0 {
+                    elapsed_ns / *chunk_size as u64
+                } else {
+                    *elapsed_ns
+                };
+                eprintln!("{},{},{},{}", i, chunk_size, elapsed_ns, ns_per_item);
             }
-        }
-        ComputationPattern::Accumulate => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+        } else {
+            eprintln!(
+                "No diagnostics data collected (diagnostics may not have been enabled before computation)"
+            );
         }
     }
+
+    result
 }
 
 fn run_selected_method(args: &Args, input: &[WorkItem]) -> u64 {

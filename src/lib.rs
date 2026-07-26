@@ -78,4 +78,10 @@ pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
+#[cfg(feature = "std")]
+pub use runner::enable_runner_b_diagnostics;
+#[cfg(feature = "std")]
+pub use runner::take_last_runner_b_diagnostics;
+#[cfg(feature = "std")]
+pub use runner::DiagnosticData;
 pub use use_var::{Use, UseVec};

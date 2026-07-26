@@ -6,6 +6,38 @@ use crate::runner::runner_variants::run_b::state::Mode;
 use crate::runner::runner_variants::run_b::state::{ChunkState, State};
 use core::cmp::min;
 
+#[cfg(feature = "std")]
+std::thread_local! {
+    static ENABLE_RUNNER_B_DIAGNOSTICS: std::cell::Cell<bool> = std::cell::Cell::new(false);
+    static LAST_RUNNER_B_DIAGNOSTICS: std::cell::RefCell<Option<crate::runner::runner_variants::run_b::state::DiagnosticData>> = std::cell::RefCell::new(None);
+}
+
+#[cfg(feature = "std")]
+/// Enable or disable diagnostics collection for RunnerB exploration phase.
+/// When enabled, RunnerB will collect chunk size and elapsed time samples during exploration.
+/// This is used for analyzing adaptive scheduling behavior.
+pub fn enable_runner_b_diagnostics(enable: bool) {
+    ENABLE_RUNNER_B_DIAGNOSTICS.with(|flag| flag.set(enable));
+}
+
+#[cfg(feature = "std")]
+/// Retrieve diagnostics from the last RunnerB parallel computation on this thread.
+/// Returns `None` if diagnostics were not enabled or no computation has run yet.
+pub fn take_last_runner_b_diagnostics()
+-> Option<crate::runner::runner_variants::run_b::state::DiagnosticData> {
+    LAST_RUNNER_B_DIAGNOSTICS.with(|cell| cell.borrow_mut().take())
+}
+
+#[cfg(feature = "std")]
+fn should_collect_diagnostics() -> bool {
+    ENABLE_RUNNER_B_DIAGNOSTICS.with(|flag| flag.get())
+}
+
+#[cfg(not(feature = "std"))]
+fn should_collect_diagnostics() -> bool {
+    false
+}
+
 pub struct RunnerB<P: ParThreadPool> {
     pool: P,
 }
@@ -81,6 +113,19 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
             avg_ns_per_item: core::sync::atomic::AtomicU64::new(0),
             #[cfg(feature = "std")]
             avg_abs_deviation_ns_per_item: core::sync::atomic::AtomicU64::new(0),
+            #[cfg(feature = "std")]
+            collect_diagnostics: should_collect_diagnostics(),
+            #[cfg(feature = "std")]
+            diagnostics: std::sync::Mutex::new(if should_collect_diagnostics() {
+                Some(
+                    crate::runner::runner_variants::run_b::state::DiagnosticData {
+                        samples: std::vec::Vec::new(),
+                        exploration_phase_started_at: std::time::Instant::now(),
+                    },
+                )
+            } else {
+                None
+            }),
         }
     }
 
@@ -141,5 +186,14 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
     fn complete_thread(_: &Self::State, _: usize) {}
 
     #[inline(always)]
-    fn complete_computation(_: Self::State) {}
+    fn complete_computation(state: Self::State) {
+        #[cfg(feature = "std")]
+        if state.collect_diagnostics {
+            if let Some(diag) = state.take_diagnostics() {
+                LAST_RUNNER_B_DIAGNOSTICS.with(|cell| {
+                    *cell.borrow_mut() = Some(diag);
+                });
+            }
+        }
+    }
 }
