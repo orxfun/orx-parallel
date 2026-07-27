@@ -131,7 +131,7 @@ Details:
 Parallel iterator definition and execution strategy are separate concerns:
 
 - express computation with iterator transforms,
-- choose runner strategy (`fixed_chunk`, `dynamic_chunk`) independently.
+- choose runner strategy (`fixed_chunk`) independently.
 
 This enables advanced users to implement domain-specific runners and use them with `.runner(...)`.
 

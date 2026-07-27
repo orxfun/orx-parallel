@@ -1,6 +1,4 @@
 use crate::ParThreadPool;
-#[cfg(all(feature = "std", feature = "experimental"))]
-use crate::runner::runner_variants::DynChunkRunner;
 use crate::runner::runner_variants::FixedChunkRunner;
 use crate::runner::runner_variants::RunnerB;
 
@@ -59,30 +57,5 @@ impl Runner {
     /// Current implementation always uses chunk size 1.
     pub fn b<P: ParThreadPool>(pool: P) -> RunnerB<P> {
         RunnerB::new(pool)
-    }
-
-    /// Creates a runner that adjusts chunk sizes dynamically at runtime.
-    ///
-    /// Threads request new chunks as they finish, which improves load balancing when
-    /// tasks have variable cost. Requires the `std` and `experimental` features.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use orx_parallel::*;
-    ///
-    /// let par = (0..100).par().map(|x| x + 1);
-    ///
-    /// #[cfg(all(feature = "std", feature = "experimental"))]
-    /// let pool = Pool::once(4);
-    ///
-    /// #[cfg(all(feature = "std", feature = "experimental"))]
-    /// let par = par.runner(Runner::dynamic_chunk(pool));
-    ///
-    /// let result: Vec<_> = par.collect();
-    /// ```
-    #[cfg(all(feature = "std", feature = "experimental"))]
-    pub fn dynamic_chunk<P: ParThreadPool>(pool: P) -> DynChunkRunner<P> {
-        DynChunkRunner::new(pool)
     }
 }

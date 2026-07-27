@@ -80,12 +80,6 @@ enum Method {
     OrxVecFix,
     OrxArbVecFix,
     OrxArbVecVecFix,
-    #[cfg(feature = "experimental")]
-    OrxVecDyn,
-    #[cfg(feature = "experimental")]
-    OrxArbVecDyn,
-    #[cfg(feature = "experimental")]
-    OrxArbVecVecDyn,
 }
 
 impl Factors for Method {
@@ -102,12 +96,6 @@ impl Factors for Method {
                 Self::OrxVecFix => "orx-vec-fix",
                 Self::OrxArbVecFix => "orx-arb-vec-fix",
                 Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
-                #[cfg(feature = "experimental")]
-                Self::OrxVecDyn => "orx-vec-dyn",
-                #[cfg(feature = "experimental")]
-                Self::OrxArbVecDyn => "orx-arb-vec-dyn",
-                #[cfg(feature = "experimental")]
-                Self::OrxArbVecVecDyn => "orx-arb-vec2-dyn",
             }
             .to_string(),
         ]
@@ -241,72 +229,6 @@ impl Experiment for Exp {
                         .into_par()
                         .num_threads(input_variant.num_threads)
                         .runner(Runner::fixed_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(l_m)
-                        .filter(f)
-                        .collect::<Vec2<_>>()
-                        .into(),
-                }),
-            ),
-            #[cfg(feature = "experimental")]
-            Method::OrxVecDyn => (
-                true,
-                Output::Vec(match h {
-                    true => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .map(h_m)
-                        .filter(f)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .map(l_m)
-                        .filter(f)
-                        .collect(),
-                }),
-            ),
-            #[cfg(feature = "experimental")]
-            Method::OrxArbVecDyn => (
-                false,
-                Output::Vec(match h {
-                    true => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(h_m)
-                        .filter(f)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(l_m)
-                        .filter(f)
-                        .collect(),
-                }),
-            ),
-            #[cfg(feature = "experimental")]
-            Method::OrxArbVecVecDyn => (
-                false,
-                Output::VecVec(match h {
-                    true => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(h_m)
-                        .filter(f)
-                        .collect::<Vec2<_>>()
-                        .into(),
-                    false => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .runner(Runner::dynamic_chunk(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .filter(f)
