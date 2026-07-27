@@ -76,18 +76,18 @@ impl State {
         }
     }
 
-    pub(crate) fn mode(&self) -> Mode {
+    pub(super) fn mode(&self) -> Mode {
         match self.mode.load(Ordering::Relaxed) {
             MODE_EXPLORE => Mode::Explore,
             _ => Mode::Fixed,
         }
     }
 
-    pub(crate) fn complete_exploration(&self) {
+    pub(super) fn complete_exploration(&self) {
         self.mode.store(MODE_FIXED, Ordering::Relaxed);
     }
 
-    pub(crate) fn record_chunk(&self, chunk_state: ChunkState) {
+    pub(super) fn record_chunk(&self, chunk_state: ChunkState) {
         let elapsed_ns = chunk_state
             .started_at
             .elapsed()
@@ -125,7 +125,7 @@ impl State {
             .store(updated_avg, Ordering::Relaxed);
     }
 
-    pub(crate) fn should_stop_exploration(&self) -> bool {
+    pub(super) fn should_stop_exploration(&self) -> bool {
         let explored = self.explored_tasks.load(Ordering::Relaxed);
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
         let min_samples = max(128, 8 * self.max_num_threads.max(1));
@@ -189,7 +189,7 @@ impl State {
         }
     }
 
-    pub(crate) fn choose_fixed_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
+    fn choose_fixed_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
         if avg_ns == 0 {
             return self.min_chunk_size;
@@ -222,7 +222,7 @@ impl State {
         min(min(c_bal, c_over), 1024).max(self.min_chunk_size)
     }
 
-    pub(crate) fn selected_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
+    pub(super) fn selected_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
         let remaining = size_hint.1.unwrap_or(size_hint.0).max(1);
         let chosen = match self.chosen_chunk_size.load(Ordering::Relaxed) {
             0 => {
