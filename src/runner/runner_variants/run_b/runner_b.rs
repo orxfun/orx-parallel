@@ -1,9 +1,7 @@
 use crate::parameters::{ChunkSize, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
-#[cfg(feature = "std")]
-use crate::runner::runner_variants::run_b::state::Mode;
-use crate::runner::runner_variants::run_b::state::{ChunkState, State};
+use crate::runner::runner_variants::run_b::state::{ChunkState, Mode, State};
 use core::cmp::min;
 
 pub struct RunnerB<P: ParThreadPool> {
@@ -64,26 +62,17 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
             max_num_threads,
             min_chunk_size,
             fixed_chunk_size,
-            #[cfg(feature = "std")]
             initial_len: match _size_hint.1 {
                 Some(upper_bound) if upper_bound == _size_hint.0 => Some(upper_bound),
                 _ => None,
             },
-            #[cfg(feature = "std")]
             explore_started_at: std::time::Instant::now(),
-            #[cfg(feature = "std")]
             mode: core::sync::atomic::AtomicUsize::new(0),
-            #[cfg(feature = "std")]
             chosen_chunk_size: core::sync::atomic::AtomicUsize::new(fixed_chunk_size.unwrap_or(0)),
-            #[cfg(feature = "std")]
             explored_tasks: core::sync::atomic::AtomicUsize::new(0),
-            #[cfg(feature = "std")]
             avg_ns_per_item: core::sync::atomic::AtomicU64::new(0),
-            #[cfg(feature = "std")]
             avg_abs_deviation_ns_per_item: core::sync::atomic::AtomicU64::new(0),
-            #[cfg(feature = "std")]
             prev_avg_ns_per_item: core::sync::atomic::AtomicU64::new(0),
-            #[cfg(feature = "std")]
             converged_samples: core::sync::atomic::AtomicUsize::new(0),
         }
     }
@@ -98,46 +87,25 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
             return min(fixed_chunk_size, remaining);
         }
 
-        #[cfg(feature = "std")]
-        {
-            return match state.mode() {
-                Mode::Explore => min(
-                    state.min_chunk_size,
-                    size_hint.1.unwrap_or(size_hint.0).max(1),
-                ),
-                Mode::Fixed => state.selected_chunk_size(size_hint),
-            };
-        }
-
-        #[cfg(not(feature = "std"))]
-        {
-            min(
+        match state.mode() {
+            Mode::Explore => min(
                 state.min_chunk_size,
                 size_hint.1.unwrap_or(size_hint.0).max(1),
-            )
+            ),
+            Mode::Fixed => state.selected_chunk_size(size_hint),
         }
     }
-
-    #[inline(always)]
     fn begin_chunk(_: usize, chunk_size: usize) -> Self::ChunkState {
         ChunkState::new(chunk_size)
     }
 
     #[inline(always)]
     fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState) {
-        #[cfg(feature = "std")]
-        {
-            if state.mode() == Mode::Explore {
-                state.record_chunk(chunk_state);
-                if state.should_stop_exploration() {
-                    state.complete_exploration();
-                }
+        if state.mode() == Mode::Explore {
+            state.record_chunk(chunk_state);
+            if state.should_stop_exploration() {
+                state.complete_exploration();
             }
-        }
-
-        #[cfg(not(feature = "std"))]
-        {
-            let _ = (state, chunk_state);
         }
     }
 
