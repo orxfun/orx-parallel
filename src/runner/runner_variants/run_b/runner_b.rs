@@ -1,8 +1,9 @@
 use crate::parameters::{ChunkSize, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
+use crate::runner::runner_variants::run_b::chunk_state::ChunkState;
 use crate::runner::runner_variants::run_b::mode::Mode;
-use crate::runner::runner_variants::run_b::state::{ChunkState, State};
+use crate::runner::runner_variants::run_b::state::State;
 use core::cmp::min;
 
 pub struct RunnerB<P: ParThreadPool> {
@@ -22,7 +23,7 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
 
     type State = State;
 
-    type ChunkState = crate::runner::runner_variants::run_b::state::ChunkState;
+    type ChunkState = ChunkState;
 
     fn pool(&self) -> &Self::Pool {
         &self.pool
