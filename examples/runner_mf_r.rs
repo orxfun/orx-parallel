@@ -200,25 +200,6 @@ fn run_orx_fixed(
     }
 }
 
-#[cfg(feature = "experimental")]
-fn run_orx_dyn(
-    pool: &rayon_core::ThreadPool,
-    data: &[WorkItem],
-    task_kind: TaskKind,
-    diagnostics: bool,
-) -> Option<u64> {
-    let len = data.len();
-    let par = data
-        .into_par()
-        .runner(Runner::dynamic_chunk(pool))
-        .num_threads(NUM_THREADS)
-        .map(|value| expensive_map(value, task_kind, len))
-        .filter(selective_filter);
-    match diagnostics {
-        true => par.runner_with_diagnostics().reduce(reduce_sum),
-        false => par.reduce(reduce_sum),
-    }
-}
 
 fn run_timed(name: &str, f: impl FnOnce() -> Option<u64>) -> (Option<u64>, f64) {
     let start = Instant::now();
@@ -257,26 +238,15 @@ fn main() {
         || run_orx_fixed(&pool, &data, args.task_kind, false),
         args.warmup_runs,
     );
-    #[cfg(feature = "experimental")]
-    run_warmup(
-        || run_orx_dyn(&pool, &data, args.task_kind, false),
-        args.warmup_runs,
-    );
 
     let (seq, _) = run_timed("seq", || run_seq(&data, args.task_kind));
     let (rayon, _) = run_timed("rayon", || run_rayon(&pool, &data, args.task_kind));
     let (orx_fixed, _) = run_timed("orx-fixed", || {
         run_orx_fixed(&pool, &data, args.task_kind, args.diagnostics)
     });
-    #[cfg(feature = "experimental")]
-    let (orx_dyn, _) = run_timed("orx-dyn", || {
-        run_orx_dyn(&pool, &data, args.task_kind, args.diagnostics)
-    });
 
     assert_eq!(rayon, seq, "rayon output mismatch");
     assert_eq!(orx_fixed, seq, "orx-fixed output mismatch");
-    #[cfg(feature = "experimental")]
-    assert_eq!(orx_dyn, seq, "orx-dyn output mismatch");
 
     println!("all methods produced identical outputs");
 }

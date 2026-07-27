@@ -132,18 +132,6 @@ fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: us
         .unwrap_or(0)
 }
 
-#[cfg(feature = "experimental")]
-fn orx_sum_dynamic(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
-    fs.roots
-        .iter()
-        .copied()
-        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .runner(Runner::dynamic_chunk(pool))
-        .chunk_size(chunk_size)
-        .map(|idx| fs.nodes[idx].compute_score(work))
-        .reduce(|a, b| a + b)
-        .unwrap_or(0)
-}
 
 #[derive(Clone)]
 struct Input {
@@ -177,8 +165,6 @@ enum Method {
     Seq,
     Rayon,
     OrxFix,
-    #[cfg(feature = "experimental")]
-    OrxDyn,
 }
 
 impl Factors for Method {
@@ -192,8 +178,6 @@ impl Factors for Method {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
                 Self::OrxFix => "orx-fix",
-                #[cfg(feature = "experimental")]
-                Self::OrxDyn => "orx-dyn",
             }
             .to_string(),
         ]
@@ -239,13 +223,6 @@ impl Experiment for Exp {
             Method::Seq => seq_sum(&input.fs, input_variant.work),
             Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
             Method::OrxFix => orx_sum_fixed(
-                &input.pool,
-                &input.fs,
-                input_variant.work,
-                input_variant.chunk_size,
-            ),
-            #[cfg(feature = "experimental")]
-            Method::OrxDyn => orx_sum_dynamic(
                 &input.pool,
                 &input.fs,
                 input_variant.work,

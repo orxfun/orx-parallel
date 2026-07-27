@@ -58,8 +58,6 @@ enum Method {
     Seq,
     Rayon,
     OrxFix,
-    #[cfg(feature = "experimental")]
-    OrxDyn,
 }
 
 impl Factors for Method {
@@ -73,8 +71,6 @@ impl Factors for Method {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
                 Self::OrxFix => "orx-fix",
-                #[cfg(feature = "experimental")]
-                Self::OrxDyn => "orx-dyn",
             }
             .to_string(),
         ]
@@ -116,12 +112,6 @@ impl Experiment for Exp {
             Method::OrxFix => input
                 .par()
                 .runner(Runner::fixed_chunk(Pool::once(input_variant.num_threads)))
-                .map(|x| heterogeneous_map(h, *x))
-                .max(),
-            #[cfg(feature = "experimental")]
-            Method::OrxDyn => input
-                .par()
-                .runner(Runner::dynamic_chunk(Pool::once(input_variant.num_threads)))
                 .map(|x| heterogeneous_map(h, *x))
                 .max(),
         }
