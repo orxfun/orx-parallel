@@ -1,3 +1,4 @@
+mod ewma;
 mod mode;
 mod runner_b;
 mod state;
