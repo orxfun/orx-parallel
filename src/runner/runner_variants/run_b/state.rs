@@ -3,7 +3,7 @@ use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::Instant;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Mode {
+pub(super) enum Mode {
     Explore,
     Fixed,
 }
