@@ -1,5 +1,4 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::Sequence;
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -132,12 +131,13 @@ fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: us
         .unwrap_or(0)
 }
 
-fn orx_sum_b(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
+fn orx_sum_b(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
         .runner(Runner::b(pool))
+        .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
@@ -149,13 +149,12 @@ struct Input {
     num_roots: usize,
     max_children: usize,
     num_threads: usize,
-    chunk_size: usize,
     work: usize,
 }
 
 impl Factors for Input {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "r", "ch", "nt", "cs", "w"]
+        vec!["n", "r", "ch", "nt", "w"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -164,18 +163,17 @@ impl Factors for Input {
             self.num_roots.to_string(),
             self.max_children.to_string(),
             self.num_threads.to_string(),
-            self.chunk_size.to_string(),
             self.work.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
     Rayon,
-    OrxFix,
-    OrxB,
+    OrxFix { chunk_size: usize },
+    OrxB { chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -184,15 +182,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::OrxFix => "orx-fix",
-                Self::OrxB => "orx-b",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon => "rayon".to_string(),
+            Self::OrxFix { chunk_size } => format!("orx-fix-{chunk_size}"),
+            Self::OrxB { chunk_size } => format!("orx-b-{chunk_size}"),
+        }]
     }
 }
 
@@ -234,13 +229,12 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => seq_sum(&input.fs, input_variant.work),
             Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
-            Method::OrxFix => orx_sum_fixed(
-                &input.pool,
-                &input.fs,
-                input_variant.work,
-                input_variant.chunk_size,
-            ),
-            Method::OrxB => orx_sum_b(&input.pool, &input.fs, input_variant.work),
+            Method::OrxFix { chunk_size } => {
+                orx_sum_fixed(&input.pool, &input.fs, input_variant.work, *chunk_size)
+            }
+            Method::OrxB { chunk_size } => {
+                orx_sum_b(&input.pool, &input.fs, input_variant.work, *chunk_size)
+            }
         }
     }
 
@@ -257,37 +251,39 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let num_threads = [16, 32];
-    let chunk_sizes = [0, 1024];
 
-    let treatments: Vec<_> = chunk_sizes
+    let treatments: Vec<_> = num_threads
         .into_iter()
-        .flat_map(|chunk_size| {
-            num_threads.into_iter().flat_map(move |num_threads| {
-                [
-                    Input {
-                        num_nodes: 10_000,
-                        num_roots: 20,
-                        max_children: 6,
-                        num_threads,
-                        chunk_size,
-                        work: 250,
-                    },
-                    Input {
-                        num_nodes: 40_000,
-                        num_roots: 50,
-                        max_children: 8,
-                        num_threads,
-                        chunk_size,
-                        work: 250,
-                    },
-                ]
-            })
+        .flat_map(|num_threads| {
+            [
+                Input {
+                    num_nodes: 10_000,
+                    num_roots: 20,
+                    max_children: 6,
+                    num_threads,
+                    work: 250,
+                },
+                Input {
+                    num_nodes: 40_000,
+                    num_roots: 50,
+                    max_children: 8,
+                    num_threads,
+                    work: 250,
+                },
+            ]
         })
         .collect();
 
-    let variants = vec![Method::Seq, Method::Rayon, Method::OrxFix, Method::OrxB];
+    let variants = vec![
+        Method::Seq,
+        Method::Rayon,
+        Method::OrxFix { chunk_size: 0 },
+        Method::OrxFix { chunk_size: 1024 },
+        Method::OrxB { chunk_size: 0 },
+        Method::OrxB { chunk_size: 1024 },
+    ];
 
-    Exp.bench(c, "file_system", &treatments, &variants);
+    Exp.bench(c, "rec_file_system", &treatments, &variants);
 }
 
 criterion_group!(benches, run);
