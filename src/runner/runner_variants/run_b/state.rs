@@ -25,7 +25,7 @@ pub struct ChunkState {
 }
 
 impl ChunkState {
-    pub(crate) fn new(chunk_size: usize) -> Self {
+    pub(super) fn new(chunk_size: usize) -> Self {
         Self {
             requested_chunk_size: chunk_size,
             started_at: Instant::now(),
@@ -44,7 +44,7 @@ const OVERHEAD_NS_PER_CHUNK: u64 = 2_000;
 const OVERHEAD_AMORTIZATION_FACTOR: u64 = 20;
 
 impl State {
-    pub fn new(
+    pub(super) fn new(
         max_num_threads: usize,
         min_chunk_size: usize,
         fixed_chunk_size: Option<usize>,
