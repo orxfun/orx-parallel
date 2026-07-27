@@ -4,26 +4,12 @@ use core::cmp::{max, min};
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 #[cfg(feature = "std")]
 use std::time::Instant;
-#[cfg(feature = "std")]
-use std::vec::Vec;
 
 #[cfg(feature = "std")]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Mode {
     Explore,
     Fixed,
-}
-
-#[cfg(feature = "std")]
-#[derive(Clone, Debug)]
-/// Diagnostics data collected by RunnerB during the exploration phase.
-/// Accessible via [`take_last_runner_b_diagnostics`](crate::take_last_runner_b_diagnostics)
-/// after a parallel computation completes.
-pub struct DiagnosticData {
-    /// Samples collected during exploration: (chunk_size, elapsed_ns)
-    pub samples: Vec<(u32, u64)>,
-    /// When exploration phase started
-    pub exploration_phase_started_at: Instant,
 }
 
 pub struct State {
@@ -48,10 +34,6 @@ pub struct State {
     pub(crate) prev_avg_ns_per_item: AtomicU64,
     #[cfg(feature = "std")]
     pub(crate) converged_samples: AtomicUsize,
-    #[cfg(feature = "std")]
-    pub collect_diagnostics: bool,
-    #[cfg(feature = "std")]
-    pub(crate) diagnostics: std::sync::Mutex<Option<DiagnosticData>>,
 }
 
 pub struct ChunkState {
@@ -146,68 +128,11 @@ impl State {
         }
         self.prev_avg_ns_per_item
             .store(updated_avg, Ordering::Relaxed);
-
-        // Record diagnostic sample during exploration phase (early exit if disabled)
-        self.record_sample(chunk_state.requested_chunk_size as u32, elapsed_ns);
     }
 
     #[cfg(not(feature = "std"))]
     #[allow(dead_code)]
     pub(crate) fn record_chunk(&self, _: ChunkState) {}
-
-    #[cfg(feature = "std")]
-    pub(crate) fn record_sample(&self, chunk_size: u32, elapsed_ns: u64) {
-        // Early exit if diagnostics are disabled (negligible overhead via branch prediction)
-        if !self.collect_diagnostics {
-            return;
-        }
-
-        // Only record samples during exploration phase
-        if self.mode() != Mode::Explore {
-            return;
-        }
-
-        // Record the sample; cap at 512 samples to keep overhead bounded
-        const MAX_DIAGNOSTIC_SAMPLES: usize = 512;
-        if let Ok(mut diag_guard) = self.diagnostics.try_lock() {
-            if let Some(diag) = diag_guard.as_mut() {
-                if diag.samples.len() < MAX_DIAGNOSTIC_SAMPLES {
-                    diag.samples.push((chunk_size, elapsed_ns));
-                }
-            }
-        }
-        // If lock fails (contention), silently skip this sample to avoid blocking
-    }
-
-    #[cfg(not(feature = "std"))]
-    #[allow(dead_code)]
-    pub(crate) fn record_sample(&self, _: u32, _: u64) {}
-
-    #[cfg(feature = "std")]
-    /// Enable diagnostics collection for exploration phase.
-    /// Must be called before any work is scheduled.
-    pub fn enable_diagnostics(&mut self) {
-        self.collect_diagnostics = true;
-        // Initialize DiagnosticData if not already present
-        if let Ok(mut diag_guard) = self.diagnostics.try_lock() {
-            if diag_guard.is_none() {
-                *diag_guard = Some(DiagnosticData {
-                    samples: Vec::new(),
-                    exploration_phase_started_at: self.explore_started_at,
-                });
-            }
-        }
-    }
-
-    #[cfg(feature = "std")]
-    /// Retrieve collected diagnostics, consuming them from the State.
-    pub fn take_diagnostics(&self) -> Option<DiagnosticData> {
-        if let Ok(mut diag_guard) = self.diagnostics.lock() {
-            diag_guard.take()
-        } else {
-            None
-        }
-    }
 
     #[cfg(feature = "std")]
     pub(crate) fn should_stop_exploration(&self) -> bool {

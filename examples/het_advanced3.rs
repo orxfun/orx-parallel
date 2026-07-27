@@ -134,7 +134,7 @@ fn run_orx_fixed_1(work: &[WorkItem], num_threads: usize, diagnostics: bool) -> 
         .map(do_work);
 
     if diagnostics {
-        par.max().unwrap_or(0)
+        par.runner_with_diagnostics().max().unwrap_or(0)
     } else {
         par.max().unwrap_or(0)
     }
@@ -149,44 +149,25 @@ fn run_orx_fixed_auto(work: &[WorkItem], num_threads: usize, diagnostics: bool) 
         .map(do_work);
 
     if diagnostics {
-        par.max().unwrap_or(0)
+        par.runner_with_diagnostics().max().unwrap_or(0)
     } else {
         par.max().unwrap_or(0)
     }
 }
 
 fn run_orx_b(work: &[WorkItem], num_threads: usize, diagnostics: bool) -> usize {
-    if diagnostics {
-        orx_parallel::enable_runner_b_diagnostics(true);
-    }
-
-    let result = work
+    let par = work
         .par()
         .num_threads(num_threads)
         .chunk_size(0)
         .runner(Runner::b(Pool::once(num_threads)))
-        .map(do_work)
-        .max()
-        .unwrap_or(0);
+        .map(do_work);
 
     if diagnostics {
-        orx_parallel::enable_runner_b_diagnostics(false);
-        if let Some(diag) = orx_parallel::take_last_runner_b_diagnostics() {
-            eprintln!("=== RunnerB Diagnostics ===");
-            eprintln!("Samples: {}", diag.samples.len());
-            eprintln!("sample_num,chunk_size,elapsed_ns,ns_per_item");
-            for (i, (chunk_size, elapsed_ns)) in diag.samples.iter().enumerate() {
-                let ns_per_item = if *chunk_size > 0 {
-                    elapsed_ns / *chunk_size as u64
-                } else {
-                    *elapsed_ns
-                };
-                eprintln!("{},{},{},{}", i, chunk_size, elapsed_ns, ns_per_item);
-            }
-        }
+        par.runner_with_diagnostics().max().unwrap_or(0)
+    } else {
+        par.max().unwrap_or(0)
     }
-
-    result
 }
 
 fn run_selected_method(args: &Args, work: &[WorkItem]) -> usize {
