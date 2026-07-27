@@ -50,11 +50,7 @@ pub use pool::BasicPool;
 pub use pool::WasmWebPool;
 #[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 pub use pool::WasmWebPoolExp;
-#[cfg(all(
-    feature = "wasm",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::init_thread_pool;
 #[cfg(all(
     feature = "wasm-experimental",
@@ -62,26 +58,12 @@ pub use pool::init_thread_pool;
     target_feature = "atomics"
 ))]
 pub use pool::init_thread_pool;
-#[cfg(all(
-    feature = "wasm",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::wasm_web_runtime_info;
-#[cfg(all(
-    feature = "wasm",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::wasm_web_start_worker;
 pub use pool::{ParThreadPool, Pool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
-#[cfg(feature = "std")]
-pub use runner::enable_runner_b_diagnostics;
-#[cfg(feature = "std")]
-pub use runner::take_last_runner_b_diagnostics;
-#[cfg(feature = "std")]
-pub use runner::DiagnosticData;
 pub use use_var::{Use, UseVec};
