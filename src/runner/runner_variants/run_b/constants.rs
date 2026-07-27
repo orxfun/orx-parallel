@@ -42,3 +42,15 @@ pub const EWMA_PARAMS_DEV: EwmaParams = EwmaParams {
     numerator: 3,
     denominator: 4,
 };
+
+/// Returns a conservative chunk-size balance target based on workload variability.
+/// Used as fallback when the total item count is unknown. Higher variability triggers smaller
+/// chunks to improve load balancing and reduce tail latency.
+pub fn fallback_balance_bound(variability_pct: u64) -> usize {
+    match variability_pct {
+        v if v < 25 => 128,
+        v if v < 75 => 64,
+        v if v < 150 => 16,
+        _ => 4,
+    }
+}

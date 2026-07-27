@@ -134,15 +134,6 @@ impl State {
         }
     }
 
-    fn fallback_balance_bound(variability_pct: u64) -> usize {
-        match variability_pct {
-            v if v < 25 => 128,
-            v if v < 75 => 64,
-            v if v < 150 => 16,
-            _ => 4,
-        }
-    }
-
     fn choose_fixed_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
         if avg_ns == 0 {
@@ -168,7 +159,7 @@ impl State {
             Some(remaining) if remaining > 0 => {
                 max(1, remaining / (self.max_num_threads.max(1) * waves))
             }
-            _ => Self::fallback_balance_bound(variability_pct),
+            _ => fallback_balance_bound(variability_pct),
         };
 
         min(min(c_bal, c_over), 1024).max(self.min_chunk_size)
