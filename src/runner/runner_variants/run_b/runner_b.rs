@@ -58,23 +58,17 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
             _ => None,
         };
 
-        State {
+        let initial_len = match _size_hint.1 {
+            Some(upper_bound) if upper_bound == _size_hint.0 => Some(upper_bound),
+            _ => None,
+        };
+
+        State::new(
             max_num_threads,
             min_chunk_size,
             fixed_chunk_size,
-            initial_len: match _size_hint.1 {
-                Some(upper_bound) if upper_bound == _size_hint.0 => Some(upper_bound),
-                _ => None,
-            },
-            explore_started_at: std::time::Instant::now(),
-            mode: core::sync::atomic::AtomicUsize::new(0),
-            chosen_chunk_size: core::sync::atomic::AtomicUsize::new(fixed_chunk_size.unwrap_or(0)),
-            explored_tasks: core::sync::atomic::AtomicUsize::new(0),
-            avg_ns_per_item: core::sync::atomic::AtomicU64::new(0),
-            avg_abs_deviation_ns_per_item: core::sync::atomic::AtomicU64::new(0),
-            prev_avg_ns_per_item: core::sync::atomic::AtomicU64::new(0),
-            converged_samples: core::sync::atomic::AtomicUsize::new(0),
-        }
+            initial_len,
+        )
     }
 
     #[inline(always)]
