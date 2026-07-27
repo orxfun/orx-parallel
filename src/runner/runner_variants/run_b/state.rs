@@ -31,6 +31,10 @@ impl ChunkState {
             started_at: Instant::now(),
         }
     }
+
+    fn elapsed_ns(&self) -> u64 {
+        self.started_at.elapsed().as_nanos().min(u64::MAX as u128) as u64
+    }
 }
 
 const EXPLORATION_MIN_MS: u128 = 5;
@@ -73,11 +77,7 @@ impl State {
     }
 
     pub(super) fn record_chunk(&self, chunk_state: ChunkState) {
-        let elapsed_ns = chunk_state
-            .started_at
-            .elapsed()
-            .as_nanos()
-            .min(u64::MAX as u128) as u64;
+        let elapsed_ns = chunk_state.elapsed_ns();
         let items = chunk_state.requested_chunk_size.max(1) as u64;
         let sample_ns_per_item = elapsed_ns / items;
 
@@ -163,14 +163,11 @@ impl State {
     }
 
     fn fallback_balance_bound(variability_pct: u64) -> usize {
-        if variability_pct < 25 {
-            128
-        } else if variability_pct < 75 {
-            64
-        } else if variability_pct < 150 {
-            16
-        } else {
-            4
+        match variability_pct {
+            v if v < 25 => 128,
+            v if v < 75 => 64,
+            v if v < 150 => 16,
+            _ => 4,
         }
     }
 
@@ -189,12 +186,10 @@ impl State {
         let mut c_over = amortized.div_ceil(avg_ns) as usize;
         c_over = max(c_over, self.min_chunk_size);
 
-        let waves = if variability_pct < 25 {
-            2
-        } else if variability_pct < 75 {
-            4
-        } else {
-            8
+        let waves = match variability_pct {
+            v if v < 25 => 2,
+            v if v < 75 => 4,
+            _ => 8,
         };
 
         let c_bal = match size_hint.1 {
