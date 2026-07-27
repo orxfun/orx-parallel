@@ -1,3 +1,4 @@
+mod chunk_state;
 mod constants;
 mod ewma;
 mod mode;

@@ -1,3 +1,4 @@
+use crate::runner::runner_variants::run_b::chunk_state::ChunkState;
 use crate::runner::runner_variants::run_b::constants::*;
 use crate::runner::runner_variants::run_b::mode::{AtomicMode, Mode};
 use core::cmp::{max, min};
@@ -17,24 +18,6 @@ pub struct State {
     avg_abs_deviation_ns_per_item: AtomicU64,
     prev_avg_ns_per_item: AtomicU64,
     converged_samples: AtomicUsize,
-}
-
-pub struct ChunkState {
-    pub requested_chunk_size: usize,
-    pub started_at: Instant,
-}
-
-impl ChunkState {
-    pub(super) fn new(chunk_size: usize) -> Self {
-        Self {
-            requested_chunk_size: chunk_size,
-            started_at: Instant::now(),
-        }
-    }
-
-    fn elapsed_ns(&self) -> u64 {
-        self.started_at.elapsed().as_nanos().min(u64::MAX as u128) as u64
-    }
 }
 
 impl State {
