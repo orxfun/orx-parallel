@@ -1,3 +1,5 @@
+use crate::runner::runner_variants::run_b::ewma::EwmaParams;
+
 /// Minimum wall-clock exploration time before chunk-size is fixed.
 pub const EXPLORATION_MIN_MS: u128 = 5;
 
@@ -24,3 +26,15 @@ pub const CONVERGENCE_THRESHOLD: usize = 5;
 
 /// Minimum number of sampled items before convergence-based stopping is considered.
 pub const CONVERGENCE_MIN_SAMPLES: usize = 96;
+
+/// EWMA smoothing parameters for the per-item time average (α = 1/8); slow to react, filters noise.
+pub const EWMA_PARAMS_AVG: EwmaParams = EwmaParams {
+    numerator: 7,
+    denominator: 8,
+};
+
+/// EWMA smoothing parameters for the per-item deviation (α = 1/4); faster to react, tracks variability spikes.
+pub const EWMA_PARAMS_DEV: EwmaParams = EwmaParams {
+    numerator: 3,
+    denominator: 4,
+};

@@ -1,7 +1,7 @@
 #[derive(Clone, Copy)]
 pub struct EwmaParams {
-    numerator: u64,
-    denominator: u64,
+    pub numerator: u64,
+    pub denominator: u64,
 }
 
 impl EwmaParams {
@@ -13,13 +13,3 @@ impl EwmaParams {
         }
     }
 }
-
-pub const EWMA_PARAMS_AVG: EwmaParams = EwmaParams {
-    numerator: 7,
-    denominator: 8,
-};
-
-pub const EWMA_PARAMS_DEV: EwmaParams = EwmaParams {
-    numerator: 3,
-    denominator: 4,
-};
