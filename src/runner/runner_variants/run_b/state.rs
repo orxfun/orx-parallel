@@ -123,16 +123,15 @@ impl State {
     }
 
     fn variability_pct(&self) -> u64 {
-        let avg = self.avg_ns_per_item.load(Ordering::Relaxed);
-        if avg == 0 {
-            return 0;
+        match self.avg_ns_per_item.load(Ordering::Relaxed) {
+            0 => 0,
+            avg => self
+                .avg_abs_deviation_ns_per_item
+                .load(Ordering::Relaxed)
+                .saturating_mul(100)
+                .checked_div(avg)
+                .unwrap_or(0),
         }
-
-        self.avg_abs_deviation_ns_per_item
-            .load(Ordering::Relaxed)
-            .saturating_mul(100)
-            .checked_div(avg)
-            .unwrap_or(0)
     }
 
     fn fallback_balance_bound(variability_pct: u64) -> usize {
