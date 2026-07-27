@@ -45,6 +45,10 @@ pub struct State {
     #[cfg(feature = "std")]
     pub(crate) avg_abs_deviation_ns_per_item: AtomicU64,
     #[cfg(feature = "std")]
+    pub(crate) prev_avg_ns_per_item: AtomicU64,
+    #[cfg(feature = "std")]
+    pub(crate) converged_samples: AtomicUsize,
+    #[cfg(feature = "std")]
     pub collect_diagnostics: bool,
     #[cfg(feature = "std")]
     pub(crate) diagnostics: std::sync::Mutex<Option<DiagnosticData>>,
@@ -128,6 +132,21 @@ impl State {
         self.explored_tasks
             .fetch_add(chunk_state.requested_chunk_size.max(1), Ordering::Relaxed);
 
+        // Track convergence: if average is stable (changed < 2%), increment counter
+        let prev_avg = self.prev_avg_ns_per_item.load(Ordering::Relaxed);
+        if prev_avg > 0 {
+            let change = updated_avg.abs_diff(prev_avg);
+            let threshold = prev_avg / 50; // 2% change threshold
+            if change < threshold {
+                self.converged_samples.fetch_add(1, Ordering::Relaxed);
+            } else {
+                // Reset convergence counter if change exceeds threshold
+                self.converged_samples.store(0, Ordering::Relaxed);
+            }
+        }
+        self.prev_avg_ns_per_item
+            .store(updated_avg, Ordering::Relaxed);
+
         // Record diagnostic sample during exploration phase (early exit if disabled)
         self.record_sample(chunk_state.requested_chunk_size as u32, elapsed_ns);
     }
@@ -193,8 +212,26 @@ impl State {
     #[cfg(feature = "std")]
     pub(crate) fn should_stop_exploration(&self) -> bool {
         let explored = self.explored_tasks.load(Ordering::Relaxed);
+        let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
         let min_samples = max(128, 8 * self.max_num_threads.max(1));
         let elapsed_ms = self.explore_started_at.elapsed().as_millis();
+
+        // Early exit for tiny work: if per-item work is extremely small,
+        // exploration overhead dominates. Stop after minimal sampling.
+        const TINY_WORK_THRESHOLD_NS: u64 = 500;
+        const TINY_WORK_MIN_SAMPLES: usize = 64;
+        if avg_ns > 0 && avg_ns < TINY_WORK_THRESHOLD_NS && explored >= TINY_WORK_MIN_SAMPLES {
+            return true;
+        }
+
+        // Convergence-based stopping: if average has been stable for 5 samples,
+        // and we've explored enough, stop exploring
+        let converged = self.converged_samples.load(Ordering::Relaxed);
+        const CONVERGENCE_THRESHOLD: usize = 5;
+        const CONVERGENCE_MIN_SAMPLES: usize = 96;
+        if converged >= CONVERGENCE_THRESHOLD && explored >= CONVERGENCE_MIN_SAMPLES {
+            return true;
+        }
 
         let fraction_reached = match self.initial_len {
             Some(total) if total > 0 => {

@@ -114,6 +114,10 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
             #[cfg(feature = "std")]
             avg_abs_deviation_ns_per_item: core::sync::atomic::AtomicU64::new(0),
             #[cfg(feature = "std")]
+            prev_avg_ns_per_item: core::sync::atomic::AtomicU64::new(0),
+            #[cfg(feature = "std")]
+            converged_samples: core::sync::atomic::AtomicUsize::new(0),
+            #[cfg(feature = "std")]
             collect_diagnostics: should_collect_diagnostics(),
             #[cfg(feature = "std")]
             diagnostics: std::sync::Mutex::new(if should_collect_diagnostics() {
