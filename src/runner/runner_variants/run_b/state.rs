@@ -8,6 +8,9 @@ pub(crate) enum Mode {
     Fixed,
 }
 
+const MODE_EXPLORE: usize = 0;
+const MODE_FIXED: usize = 1;
+
 pub struct State {
     pub max_num_threads: usize,
     pub min_chunk_size: usize,
@@ -44,6 +47,28 @@ const OVERHEAD_NS_PER_CHUNK: u64 = 2_000;
 const OVERHEAD_AMORTIZATION_FACTOR: u64 = 20;
 
 impl State {
+    pub fn new(
+        max_num_threads: usize,
+        min_chunk_size: usize,
+        fixed_chunk_size: Option<usize>,
+        initial_len: Option<usize>,
+    ) -> Self {
+        Self {
+            max_num_threads,
+            min_chunk_size,
+            fixed_chunk_size,
+            initial_len,
+            explore_started_at: std::time::Instant::now(),
+            mode: AtomicUsize::new(MODE_EXPLORE),
+            chosen_chunk_size: AtomicUsize::new(fixed_chunk_size.unwrap_or(0)),
+            explored_tasks: AtomicUsize::new(0),
+            avg_ns_per_item: AtomicU64::new(0),
+            avg_abs_deviation_ns_per_item: AtomicU64::new(0),
+            prev_avg_ns_per_item: AtomicU64::new(0),
+            converged_samples: AtomicUsize::new(0),
+        }
+    }
+
     fn ewma(previous: u64, sample: u64, numerator: u64, denominator: u64) -> u64 {
         match previous {
             0 => sample,
@@ -53,13 +78,13 @@ impl State {
 
     pub(crate) fn mode(&self) -> Mode {
         match self.mode.load(Ordering::Relaxed) {
-            0 => Mode::Explore,
+            MODE_EXPLORE => Mode::Explore,
             _ => Mode::Fixed,
         }
     }
 
     pub(crate) fn complete_exploration(&self) {
-        self.mode.store(1, Ordering::Relaxed);
+        self.mode.store(MODE_FIXED, Ordering::Relaxed);
     }
 
     pub(crate) fn record_chunk(&self, chunk_state: ChunkState) {
