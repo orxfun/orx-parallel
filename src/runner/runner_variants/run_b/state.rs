@@ -1,29 +1,21 @@
+use crate::runner::runner_variants::run_b::mode::{AtomicMode, Mode};
 use core::cmp::{max, min};
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::Instant;
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum Mode {
-    Explore,
-    Fixed,
-}
-
-const MODE_EXPLORE: usize = 0;
-const MODE_FIXED: usize = 1;
 
 pub struct State {
     pub max_num_threads: usize,
     pub min_chunk_size: usize,
     pub fixed_chunk_size: Option<usize>,
     pub initial_len: Option<usize>,
-    pub(crate) explore_started_at: Instant,
-    pub(crate) mode: AtomicUsize,
-    pub(crate) chosen_chunk_size: AtomicUsize,
-    pub(crate) explored_tasks: AtomicUsize,
-    pub(crate) avg_ns_per_item: AtomicU64,
-    pub(crate) avg_abs_deviation_ns_per_item: AtomicU64,
-    pub(crate) prev_avg_ns_per_item: AtomicU64,
-    pub(crate) converged_samples: AtomicUsize,
+    explore_started_at: Instant,
+    mode: AtomicMode,
+    chosen_chunk_size: AtomicUsize,
+    explored_tasks: AtomicUsize,
+    avg_ns_per_item: AtomicU64,
+    avg_abs_deviation_ns_per_item: AtomicU64,
+    prev_avg_ns_per_item: AtomicU64,
+    converged_samples: AtomicUsize,
 }
 
 pub struct ChunkState {
@@ -59,7 +51,7 @@ impl State {
             fixed_chunk_size,
             initial_len,
             explore_started_at: std::time::Instant::now(),
-            mode: AtomicUsize::new(MODE_EXPLORE),
+            mode: AtomicMode::new_explore(),
             chosen_chunk_size: AtomicUsize::new(fixed_chunk_size.unwrap_or(0)),
             explored_tasks: AtomicUsize::new(0),
             avg_ns_per_item: AtomicU64::new(0),
@@ -76,15 +68,14 @@ impl State {
         }
     }
 
+    #[inline(always)]
     pub(super) fn mode(&self) -> Mode {
-        match self.mode.load(Ordering::Relaxed) {
-            MODE_EXPLORE => Mode::Explore,
-            _ => Mode::Fixed,
-        }
+        self.mode.mode()
     }
 
+    #[inline(always)]
     pub(super) fn complete_exploration(&self) {
-        self.mode.store(MODE_FIXED, Ordering::Relaxed);
+        self.mode.complete_exploration();
     }
 
     pub(super) fn record_chunk(&self, chunk_state: ChunkState) {
