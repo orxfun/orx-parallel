@@ -27,6 +27,10 @@ pub const CONVERGENCE_THRESHOLD: usize = 5;
 /// Minimum number of sampled items before convergence-based stopping is considered.
 pub const CONVERGENCE_MIN_SAMPLES: usize = 96;
 
+/// Divisor for the convergence stability check: the EWMA average must change by less than
+/// `1 / CONVERGENCE_STABILITY_DIVISOR` (i.e. 2%) between updates to count as stable.
+pub const CONVERGENCE_STABILITY_DIVISOR: u64 = 50;
+
 /// EWMA smoothing parameters for the per-item time average (α = 1/8); slow to react, filters noise.
 pub const EWMA_PARAMS_AVG: EwmaParams = EwmaParams {
     numerator: 7,
