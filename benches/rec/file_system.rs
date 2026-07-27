@@ -132,6 +132,16 @@ fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: us
         .unwrap_or(0)
 }
 
+fn orx_sum_b(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
+    fs.roots
+        .iter()
+        .copied()
+        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .runner(Runner::b(pool))
+        .map(|idx| fs.nodes[idx].compute_score(work))
+        .reduce(|a, b| a + b)
+        .unwrap_or(0)
+}
 
 #[derive(Clone)]
 struct Input {
@@ -165,6 +175,7 @@ enum Method {
     Seq,
     Rayon,
     OrxFix,
+    OrxB,
 }
 
 impl Factors for Method {
@@ -178,6 +189,7 @@ impl Factors for Method {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
                 Self::OrxFix => "orx-fix",
+                Self::OrxB => "orx-b",
             }
             .to_string(),
         ]
@@ -228,6 +240,7 @@ impl Experiment for Exp {
                 input_variant.work,
                 input_variant.chunk_size,
             ),
+            Method::OrxB => orx_sum_b(&input.pool, &input.fs, input_variant.work),
         }
     }
 
@@ -272,19 +285,7 @@ fn run(c: &mut Criterion) {
         })
         .collect();
 
-    let variants = {
-        let base = vec![Method::Seq, Method::Rayon, Method::OrxFix];
-        #[cfg(feature = "experimental")]
-        {
-            let mut v = base;
-            v.push(Method::OrxDyn);
-            v
-        }
-        #[cfg(not(feature = "experimental"))]
-        {
-            base
-        }
-    };
+    let variants = vec![Method::Seq, Method::Rayon, Method::OrxFix, Method::OrxB];
 
     Exp.bench(c, "file_system", &treatments, &variants);
 }
