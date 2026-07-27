@@ -1,3 +1,4 @@
+use crate::runner::runner_variants::run_b::constants::*;
 use crate::runner::runner_variants::run_b::ewma::{EWMA_PARAMS_AVG, EWMA_PARAMS_DEV};
 use crate::runner::runner_variants::run_b::mode::{AtomicMode, Mode};
 use core::cmp::{max, min};
@@ -36,12 +37,6 @@ impl ChunkState {
         self.started_at.elapsed().as_nanos().min(u64::MAX as u128) as u64
     }
 }
-
-const EXPLORATION_MIN_MS: u128 = 5;
-const EXPLORATION_TARGET_PCT: usize = 2;
-const EXPLORATION_CAP_PCT: usize = 10;
-const OVERHEAD_NS_PER_CHUNK: u64 = 2_000;
-const OVERHEAD_AMORTIZATION_FACTOR: u64 = 20;
 
 impl State {
     pub(super) fn new(
@@ -118,8 +113,6 @@ impl State {
 
         // Early exit for tiny work: if per-item work is extremely small,
         // exploration overhead dominates. Stop after minimal sampling.
-        const TINY_WORK_THRESHOLD_NS: u64 = 500;
-        const TINY_WORK_MIN_SAMPLES: usize = 64;
         if avg_ns > 0 && avg_ns < TINY_WORK_THRESHOLD_NS && explored >= TINY_WORK_MIN_SAMPLES {
             return true;
         }
@@ -127,8 +120,6 @@ impl State {
         // Convergence-based stopping: if average has been stable for 5 samples,
         // and we've explored enough, stop exploring
         let converged = self.converged_samples.load(Ordering::Relaxed);
-        const CONVERGENCE_THRESHOLD: usize = 5;
-        const CONVERGENCE_MIN_SAMPLES: usize = 96;
         if converged >= CONVERGENCE_THRESHOLD && explored >= CONVERGENCE_MIN_SAMPLES {
             return true;
         }
