@@ -55,8 +55,8 @@ impl State {
 
     pub(super) fn record_chunk(&self, chunk_state: ChunkState) {
         let elapsed_ns = chunk_state.elapsed_ns();
-        let items = chunk_state.requested_chunk_size.max(1) as u64;
-        let sample_ns_per_item = elapsed_ns / items;
+        let items = chunk_state.requested_chunk_size.max(1);
+        let sample_ns_per_item = elapsed_ns / items as u64;
 
         let previous_avg = self.avg_ns_per_item.load(Ordering::Relaxed);
         let updated_avg = EWMA_PARAMS_AVG.ewma(previous_avg, sample_ns_per_item);
@@ -68,19 +68,19 @@ impl State {
         self.avg_abs_deviation_ns_per_item
             .store(updated_dev, Ordering::Relaxed);
 
-        self.explored_tasks
-            .fetch_add(chunk_state.requested_chunk_size.max(1), Ordering::Relaxed);
+        self.explored_tasks.fetch_add(items, Ordering::Relaxed);
 
-        // Track convergence: if average is stable (changed < 2%), increment counter
+        // Track convergence: if average is stable, increment counter
+        // average stable == change < prev_avg / CONVERGENCE_STABILITY_DIVISOR
+        // (i.e., percentage change < 1/CONVERGENCE_STABILITY_DIVISOR ≈ 2%)
         let prev_avg = self.prev_avg_ns_per_item.load(Ordering::Relaxed);
         if prev_avg > 0 {
             let change = updated_avg.abs_diff(prev_avg);
-            let threshold = prev_avg / 50; // 2% change threshold
-            if change < threshold {
-                self.converged_samples.fetch_add(1, Ordering::Relaxed);
-            } else {
-                // Reset convergence counter if change exceeds threshold
-                self.converged_samples.store(0, Ordering::Relaxed);
+            let threshold = prev_avg / CONVERGENCE_STABILITY_DIVISOR;
+            let stable = change < threshold;
+            match stable {
+                true => _ = self.converged_samples.fetch_add(1, Ordering::Relaxed),
+                false => self.converged_samples.store(0, Ordering::Relaxed), // reset
             }
         }
         self.prev_avg_ns_per_item
