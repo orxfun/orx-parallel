@@ -1,3 +1,4 @@
+use crate::runner::runner_variants::run_b::ewma::{EWMA_PARAMS_AVG, EWMA_PARAMS_DEV};
 use crate::runner::runner_variants::run_b::mode::{AtomicMode, Mode};
 use core::cmp::{max, min};
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -7,7 +8,7 @@ pub struct State {
     pub max_num_threads: usize,
     pub min_chunk_size: usize,
     pub fixed_chunk_size: Option<usize>,
-    pub initial_len: Option<usize>,
+    initial_len: Option<usize>,
     explore_started_at: Instant,
     mode: AtomicMode,
     chosen_chunk_size: AtomicUsize,
@@ -61,13 +62,6 @@ impl State {
         }
     }
 
-    fn ewma(previous: u64, sample: u64, numerator: u64, denominator: u64) -> u64 {
-        match previous {
-            0 => sample,
-            value => (value.saturating_mul(numerator) + sample) / denominator,
-        }
-    }
-
     #[inline(always)]
     pub(super) fn mode(&self) -> Mode {
         self.mode.mode()
@@ -88,12 +82,12 @@ impl State {
         let sample_ns_per_item = elapsed_ns / items;
 
         let previous_avg = self.avg_ns_per_item.load(Ordering::Relaxed);
-        let updated_avg = Self::ewma(previous_avg, sample_ns_per_item, 7, 8);
+        let updated_avg = EWMA_PARAMS_AVG.ewma(previous_avg, sample_ns_per_item);
         self.avg_ns_per_item.store(updated_avg, Ordering::Relaxed);
 
         let deviation = updated_avg.abs_diff(sample_ns_per_item);
         let previous_dev = self.avg_abs_deviation_ns_per_item.load(Ordering::Relaxed);
-        let updated_dev = Self::ewma(previous_dev, deviation, 3, 4);
+        let updated_dev = EWMA_PARAMS_DEV.ewma(previous_dev, deviation);
         self.avg_abs_deviation_ns_per_item
             .store(updated_dev, Ordering::Relaxed);
 
