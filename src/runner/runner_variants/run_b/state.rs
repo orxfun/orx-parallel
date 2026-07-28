@@ -173,7 +173,7 @@ impl State {
         }
 
         let variability_pct = self.variability_pct();
-        if avg_ns >= 200 * OVERHEAD_NS_PER_CHUNK || variability_pct >= 150 {
+        if avg_ns >= HEAVY_WORK_NS_THRESHOLD || variability_pct >= HIGH_VARIABILITY_PCT_THRESHOLD {
             return self.min_chunk_size;
         }
 
