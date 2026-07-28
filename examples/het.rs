@@ -10,11 +10,11 @@ const NUM_THREADS: usize = 16;
 #[derive(Parser, Debug)]
 struct Args {
     /// Input length exponent n where len = 2^n.
-    #[arg(long, default_value_t = 14)]
+    #[arg(long, default_value_t = 10)]
     len_exp: usize,
 
     /// Probability of selecting a heavy task in [0.0, 1.0].
-    #[arg(long, default_value_t = 0.101)]
+    #[arg(long, default_value_t = 0.5)]
     heterogeneity_level: f64,
 }
 
@@ -35,10 +35,9 @@ fn heterogeneous_map(heterogeneity_level: f64, i: u64) -> u64 {
         let _: u32 = rng.random();
     }
 
-    let n = if rng.random_bool(heterogeneity_level) {
-        200_000_000
-    } else {
-        1
+    let n = match rng.random_bool(heterogeneity_level) {
+        true => 200_000_000,
+        false => 1,
     };
 
     fibonacci(n)
@@ -62,6 +61,15 @@ fn run_rayon(
             .map(|x| heterogeneous_map(heterogeneity_level, *x))
             .max()
     })
+}
+
+fn run_orx(pool: &rayon_core::ThreadPool, input: &[u64], heterogeneity_level: f64) -> Option<u64> {
+    input
+        .into_par()
+        .pool(pool)
+        .num_threads(NUM_THREADS)
+        .map(|x| heterogeneous_map(heterogeneity_level, *x))
+        .max()
 }
 
 fn run_orx_fixed(
@@ -108,11 +116,13 @@ fn main() {
     let (rayon, _) = run_timed("rayon", || {
         run_rayon(&pool, &input, args.heterogeneity_level)
     });
+    let (orx, _) = run_timed("orx", || run_orx(&pool, &input, args.heterogeneity_level));
     let (orx_fixed, _) = run_timed("orx-fixed", || {
         run_orx_fixed(&pool, &input, args.heterogeneity_level)
     });
 
     assert_eq!(rayon, seq, "rayon output mismatch");
+    assert_eq!(orx, seq, "orx-fixed output mismatch");
     assert_eq!(orx_fixed, seq, "orx-fixed output mismatch");
 
     println!("all methods produced identical outputs");
