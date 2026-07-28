@@ -21,13 +21,7 @@ linearized.into_par().map(compute).sum()
     let log = |sum: u64| println!("  sum = {sum}");
 
     timed("sequential", || sequential(root), log);
-
-    // rayon miri fails with:
-    // Undefined Behavior: trying to retag from <84156795> for SharedReadWrite permission at alloc41643328[0x8],
-    // but that tag does not exist in the borrow stack for this location
-
     timed("rayon", || rayon(root), log);
-
     timed("orx_rec", || orx_rec(root), log);
     timed("orx_rec_linearized", || orx_rec_linearized(root), log);
 
