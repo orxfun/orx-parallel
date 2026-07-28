@@ -105,11 +105,6 @@ path = "examples/het_advanced2.rs"
 required-features = ["std"]
 
 [[example]]
-name = "wasm_web_threads"
-path = "examples/wasm_web_threads.rs"
-required-features = ["wasm"]
-
-[[example]]
 name = "recursive-tree"
 path = "examples/recursive_tree/main.rs"
 
