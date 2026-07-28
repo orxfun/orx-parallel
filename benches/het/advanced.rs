@@ -52,7 +52,7 @@ enum Method {
     Rayon,
     FixedAuto,
     Fixed1,
-    B,
+    Adaptive,
 }
 
 impl Factors for Method {
@@ -67,7 +67,7 @@ impl Factors for Method {
                 Self::Rayon => "rayon",
                 Self::FixedAuto => "fixed-auto",
                 Self::Fixed1 => "fixed-1",
-                Self::B => "b",
+                Self::Adaptive => "adaptive-chunk",
             }
             .to_string(),
         ]
@@ -166,10 +166,12 @@ impl Experiment for Exp {
                 .runner(Runner::fixed_chunk(Pool::once(input_variant.num_threads)))
                 .map(do_work)
                 .max(),
-            Method::B => input
+            Method::Adaptive => input
                 .par()
                 .chunk_size(0)
-                .runner(Runner::b(Pool::once(input_variant.num_threads)))
+                .runner(Runner::adaptive_chunk(Pool::once(
+                    input_variant.num_threads,
+                )))
                 .map(do_work)
                 .max(),
         }

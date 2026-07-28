@@ -1,6 +1,6 @@
-use crate::runner::runner_variants::run_b::chunk_state::ChunkState;
-use crate::runner::runner_variants::run_b::constants::*;
-use crate::runner::runner_variants::run_b::mode::{AtomicMode, Mode};
+use crate::runner::runner_variants::adaptive_chunk::chunk_state::ChunkState;
+use crate::runner::runner_variants::adaptive_chunk::constants::*;
+use crate::runner::runner_variants::adaptive_chunk::mode::{AtomicMode, Mode};
 use core::cmp::{max, min};
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::Instant;

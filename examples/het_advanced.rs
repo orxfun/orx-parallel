@@ -20,7 +20,7 @@ enum Method {
     Rayon,
     FixedAuto,
     Fixed1,
-    B,
+    Adaptive,
 }
 
 #[derive(Parser, Debug)]
@@ -154,12 +154,12 @@ fn run_orx_fixed_1(input: &[WorkItem], num_threads: usize, diagnostics: bool) ->
     }
 }
 
-fn run_orx_b(input: &[WorkItem], num_threads: usize, diagnostics: bool) -> Option<u64> {
+fn run_orx_adaptive(input: &[WorkItem], num_threads: usize, diagnostics: bool) -> Option<u64> {
     let par = input
         .par()
         .num_threads(num_threads)
         .chunk_size(0)
-        .runner(Runner::b(Pool::once(num_threads)))
+        .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
         .map(do_work);
 
     if diagnostics {
@@ -175,7 +175,7 @@ fn run_selected_method(args: &Args, input: &[WorkItem]) -> Option<u64> {
         Method::Rayon => run_rayon(input, args.num_threads),
         Method::FixedAuto => run_orx_fixed_auto(input, args.num_threads, args.diagnostics),
         Method::Fixed1 => run_orx_fixed_1(input, args.num_threads, args.diagnostics),
-        Method::B => run_orx_b(input, args.num_threads, args.diagnostics),
+        Method::Adaptive => run_orx_adaptive(input, args.num_threads, args.diagnostics),
     }
 }
 

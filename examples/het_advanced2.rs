@@ -22,7 +22,7 @@ enum Method {
     Rayon,
     FixedAuto,
     Fixed1,
-    B,
+    Adaptive,
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -508,7 +508,7 @@ fn run_orx_fixed_1(
     }
 }
 
-fn run_orx_b(
+fn run_orx_adaptive(
     input: &[WorkItem],
     num_threads: usize,
     pattern: ComputationPattern,
@@ -521,7 +521,7 @@ fn run_orx_b(
                 .par()
                 .num_threads(num_threads)
                 .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
+                .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
                 .map(do_work);
             if diagnostics {
                 par.runner_with_diagnostics().max().unwrap_or(0)
@@ -535,7 +535,7 @@ fn run_orx_b(
                 .par()
                 .num_threads(num_threads)
                 .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
+                .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
                 .filter(|item| {
                     let hash = item.seed.wrapping_mul(6364136223846793005) as u32;
                     hash < threshold
@@ -553,7 +553,7 @@ fn run_orx_b(
                 .par()
                 .num_threads(num_threads)
                 .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
+                .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
                 .flat_map(move |item| {
                     let is_special = (item.seed as u32) % 100 < 30;
                     if is_special {
@@ -573,7 +573,7 @@ fn run_orx_b(
                 .par()
                 .num_threads(num_threads)
                 .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
+                .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
                 .map(|item| {
                     let mut state = item.seed;
                     for _ in 0..10 {
@@ -592,7 +592,7 @@ fn run_orx_b(
                 .par()
                 .num_threads(num_threads)
                 .chunk_size(0)
-                .runner(Runner::b(Pool::once(num_threads)))
+                .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
                 .map(do_work);
             if diagnostics {
                 par.runner_with_diagnostics().max().unwrap_or(0)
@@ -621,7 +621,7 @@ fn run_selected_method(args: &Args, input: &[WorkItem]) -> u64 {
             args.survival_percent,
             args.diagnostics,
         ),
-        Method::B => run_orx_b(
+        Method::Adaptive => run_orx_adaptive(
             input,
             args.num_threads,
             args.pattern,

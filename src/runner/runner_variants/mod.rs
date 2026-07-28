@@ -2,9 +2,9 @@ mod fixed_chunk;
 pub use fixed_chunk::FixedChunkRunner;
 
 #[cfg(feature = "std")]
-mod run_b;
+mod adaptive_chunk;
 #[cfg(feature = "std")]
-pub use run_b::RunnerB;
+pub use adaptive_chunk::AdaptiveChunkRunner;
 
 #[cfg(feature = "std")]
 mod with_diagnostics;
