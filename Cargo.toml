@@ -85,18 +85,13 @@ wasm-experimental = [
 # examples
 
 [[example]]
-name = "runner_mf_r"
-path = "examples/runner_mf_r.rs"
-required-features = ["rayon-core"]
+name = "diagnostics"
+path = "examples/diagnostics.rs"
+required-features = ["std"]
 
 [[example]]
 name = "het"
 path = "examples/het.rs"
-required-features = ["rayon-core"]
-
-[[example]]
-name = "recursive_tune"
-path = "examples/recursive_tune.rs"
 required-features = ["rayon-core"]
 
 [[example]]
