@@ -136,7 +136,7 @@ fn orx_sum_adaptive(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size:
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .runner(Runner::adaptive_chunk(pool))
+        .runner(Runner::adaptive(pool))
         .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)

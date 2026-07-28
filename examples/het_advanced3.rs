@@ -160,7 +160,7 @@ fn run_orx_adaptive(work: &[WorkItem], num_threads: usize, diagnostics: bool) ->
         .par()
         .num_threads(num_threads)
         .chunk_size(0)
-        .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
+        .runner(Runner::adaptive(Pool::once(num_threads)))
         .map(do_work);
 
     if diagnostics {

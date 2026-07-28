@@ -169,9 +169,7 @@ impl Experiment for Exp {
             Method::Adaptive => input
                 .par()
                 .chunk_size(0)
-                .runner(Runner::adaptive_chunk(Pool::once(
-                    input_variant.num_threads,
-                )))
+                .runner(Runner::adaptive(Pool::once(input_variant.num_threads)))
                 .map(do_work)
                 .max(),
         }
