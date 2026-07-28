@@ -81,15 +81,11 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
     #[inline(always)]
     fn next_chunk_size(state: &Self::State, size_hint: (usize, Option<usize>)) -> usize {
         if let Some(fixed_chunk_size) = state.fixed_chunk_size {
-            let remaining = size_hint.1.unwrap_or(size_hint.0).max(1);
-            return min(fixed_chunk_size, remaining);
+            return fixed_chunk_size;
         }
 
         match state.mode() {
-            Mode::Explore => min(
-                state.min_chunk_size,
-                size_hint.1.unwrap_or(size_hint.0).max(1),
-            ),
+            Mode::Explore => state.min_chunk_size,
             Mode::Fixed => state.selected_chunk_size(size_hint),
         }
     }
