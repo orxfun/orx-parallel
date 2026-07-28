@@ -77,9 +77,10 @@ enum Method {
     SeqVec,
     RayonVec,
     RayonVecList,
-    OrxVecFix,
-    OrxArbVecFix,
-    OrxArbVecVecFix,
+    OrxVec,
+    OrxArbVec,
+    OrxArbVecVec,
+    OrxVecFixed,
 }
 
 impl Factors for Method {
@@ -93,9 +94,10 @@ impl Factors for Method {
                 Self::SeqVec => "seq-vec",
                 Self::RayonVec => "rayon-vec",
                 Self::RayonVecList => "rayon-veclist",
-                Self::OrxVecFix => "orx-vec-fix",
-                Self::OrxArbVecFix => "orx-arb-vec-fix",
-                Self::OrxArbVecVecFix => "orx-arb-vec2-fix",
+                Self::OrxVec => "orx-vec",
+                Self::OrxArbVec => "orx-arb-vec",
+                Self::OrxArbVecVec => "orx-arb-vec2",
+                Self::OrxVecFixed => "orx-vec-fixed",
             }
             .to_string(),
         ]
@@ -173,32 +175,29 @@ impl Experiment for Exp {
                     )
                 })
             }
-            Method::OrxVecFix => (
+            Method::OrxVec => (
                 true,
                 Output::Vec(match h {
                     true => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed(Pool::once(0)))
                         .map(h_m)
                         .filter(f)
                         .collect(),
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed(Pool::once(0)))
                         .map(l_m)
                         .filter(f)
                         .collect(),
                 }),
             ),
-            Method::OrxArbVecFix => (
+            Method::OrxArbVec => (
                 false,
                 Output::Vec(match h {
                     true => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .filter(f)
@@ -206,20 +205,18 @@ impl Experiment for Exp {
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .filter(f)
                         .collect(),
                 }),
             ),
-            Method::OrxArbVecVecFix => (
+            Method::OrxArbVecVec => (
                 false,
                 Output::VecVec(match h {
                     true => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .filter(f)
@@ -228,12 +225,30 @@ impl Experiment for Exp {
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .filter(f)
                         .collect::<Vec2<_>>()
                         .into(),
+                }),
+            ),
+            Method::OrxVecFixed => (
+                true,
+                Output::Vec(match h {
+                    true => input
+                        .into_par()
+                        .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                        .num_threads(input_variant.num_threads)
+                        .map(h_m)
+                        .filter(f)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                        .num_threads(input_variant.num_threads)
+                        .map(l_m)
+                        .filter(f)
+                        .collect(),
                 }),
             ),
         }
