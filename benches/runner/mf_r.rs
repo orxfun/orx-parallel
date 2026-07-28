@@ -12,7 +12,6 @@ const HOMOGENEOUS_WORK: usize = 96;
 const HETEROGENEOUS_LIGHT_WORK: usize = 24;
 const HETEROGENEOUS_MEDIUM_WORK: usize = 192;
 const HETEROGENEOUS_HEAVY_WORK: usize = 1536;
-
 #[derive(Clone, Copy, Debug)]
 enum TaskKind {
     Homogeneous,
