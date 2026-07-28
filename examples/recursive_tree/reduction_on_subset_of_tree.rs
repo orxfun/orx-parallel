@@ -1,5 +1,6 @@
 use crate::run_utils::timed;
 use orx_parallel::*;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 type Node = crate::node::Node<String>;
 
@@ -21,6 +22,7 @@ linearized.into_par().map(compute).sum()
     let log = |sum: u64| println!("  sum = {sum}");
 
     timed("sequential", || sequential(root), log);
+    timed("rayon", || rayon(root), log);
     timed("orx_rec", || orx_rec(root), log);
     timed("orx_rec_linearized", || orx_rec_linearized(root), log);
 
@@ -48,6 +50,25 @@ fn sequential(root: &Node) -> u64 {
     }
 
     seq_compute_node(root)
+}
+
+/// # rayon: defining the computation with rayon's scoped threads.
+fn rayon(root: &Node) -> u64 {
+    fn process_node<'scope>(sum: &'scope AtomicU64, node: &'scope Node, s: &rayon::Scope<'scope>) {
+        for child in node.children.iter().filter(filter) {
+            s.spawn(move |s| {
+                process_node(sum, child, s);
+            });
+        }
+        let node_value = compute(node);
+        sum.fetch_add(node_value, Ordering::Relaxed);
+    }
+
+    let sum = AtomicU64::new(0);
+    rayon::in_place_scope(|s| {
+        process_node(&sum, root, s);
+    });
+    sum.into_inner()
 }
 
 /// # orx-parallel: parallel recursive iterator

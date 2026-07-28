@@ -1,5 +1,6 @@
 use crate::run_utils::timed;
 use orx_parallel::*;
+use std::sync::Mutex;
 
 type Node = crate::node::Node<String>;
 
@@ -20,6 +21,7 @@ linearized.into_par().map(compute).collect()
     let log = |vec: Vec<u64>| println!("  collection-len = {:?}", vec.len());
 
     timed("sequential", || sequential(root), log);
+    timed("rayon", || rayon(root), log);
     timed("orx_rec", || orx_rec(root), log);
     timed("orx_rec_linearized", || orx_rec_linearized(root), log);
 
@@ -48,6 +50,31 @@ fn sequential(root: &Node) -> Vec<u64> {
     let mut result = vec![];
     seq_compute_node(root, &mut result);
     result
+}
+
+/// # rayon: defining the computation with rayon's scoped threads.
+fn rayon(root: &Node) -> Vec<u64> {
+    fn process_node<'scope>(
+        result: &'scope Mutex<Vec<u64>>,
+        node: &'scope Node,
+        s: &rayon::Scope<'scope>,
+    ) {
+        for child in &node.children {
+            s.spawn(move |s| {
+                process_node(result, child, s);
+            });
+        }
+
+        let node_value = compute(node);
+        let mut guard = result.lock().expect("result mutex poisoned");
+        guard.push(node_value);
+    }
+
+    let result = Mutex::new(vec![]);
+    rayon::in_place_scope(|s| {
+        process_node(&result, root, s);
+    });
+    result.into_inner().expect("result mutex poisoned")
 }
 
 /// # orx-parallel: parallel recursive iterator
