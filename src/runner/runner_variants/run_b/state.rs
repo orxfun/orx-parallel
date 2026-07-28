@@ -90,7 +90,10 @@ impl State {
     pub(super) fn should_stop_exploration(&self) -> bool {
         let explored = self.explored_tasks.load(Ordering::Relaxed);
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
-        let min_samples = max(128, 8 * self.max_num_threads.max(1));
+        let min_samples = max(
+            EXPLORATION_MIN_SAMPLES_BASE,
+            EXPLORATION_SAMPLES_PER_THREAD * self.max_num_threads.max(1),
+        );
         let elapsed_ms = self.explore_started_at.elapsed().as_millis();
 
         // Early exit for tiny work: if per-item work is extremely small,
