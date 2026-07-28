@@ -109,6 +109,9 @@ name = "wasm_web_threads"
 path = "examples/wasm_web_threads.rs"
 required-features = ["wasm"]
 
+[[example]]
+name = "recursive-tree"
+path = "examples/recursive_tree/main.rs"
 
 # benchmarks
 
@@ -263,11 +266,3 @@ path = "benches/reduce/mfm.rs"
 name = "reduce-mfmf"
 harness = false
 path = "benches/reduce/mfmf.rs"
-
-## benchmarks - problems
-
-[[bench]]
-name = "problems-tsp"
-harness = false
-path = "benches/problems/tsp.rs"
-required-features = ["std", "rayon-core"]
