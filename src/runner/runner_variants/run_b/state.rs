@@ -27,6 +27,8 @@ impl State {
         fixed_chunk_size: Option<usize>,
         initial_len: Option<usize>,
     ) -> Self {
+        debug_assert!(max_num_threads > 0);
+
         Self {
             max_num_threads,
             min_chunk_size,
@@ -92,7 +94,7 @@ impl State {
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
         let min_samples = max(
             EXPLORATION_MIN_SAMPLES_BASE,
-            EXPLORATION_SAMPLES_PER_THREAD * self.max_num_threads.max(1),
+            EXPLORATION_SAMPLES_PER_THREAD * self.max_num_threads,
         );
         let elapsed_ms = self.explore_started_at.elapsed().as_millis();
 
@@ -159,9 +161,7 @@ impl State {
         };
 
         let c_bal = match size_hint.1 {
-            Some(remaining) if remaining > 0 => {
-                max(1, remaining / (self.max_num_threads.max(1) * waves))
-            }
+            Some(remaining) if remaining > 0 => max(1, remaining / (self.max_num_threads * waves)),
             _ => fallback_balance_bound(variability_pct),
         };
 
