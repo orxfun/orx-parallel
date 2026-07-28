@@ -18,9 +18,10 @@ const OUTLIER_MULTIPLIER_MAX: u32 = 100;
 enum Method {
     Seq,
     Rayon,
-    FixedAuto,
-    Fixed1,
-    Adaptive,
+    OrxFix,
+    OrxFix1,
+    Orx,
+    Orx1,
 }
 
 #[derive(Parser, Debug)]
@@ -124,58 +125,40 @@ fn run_rayon(input: &[WorkItem], num_threads: usize) -> Option<u64> {
     pool.install(|| input.par_iter().map(do_work).max())
 }
 
-fn run_orx_fixed_auto(input: &[WorkItem], num_threads: usize, diagnostics: bool) -> Option<u64> {
+fn run_orx(
+    input: &[WorkItem],
+    num_threads: usize,
+    diagnostics: bool,
+    chunk_size: usize,
+    adaptive: bool,
+) -> Option<u64> {
     let par = input
         .par()
         .num_threads(num_threads)
-        .chunk_size(0)
-        .runner(Runner::fixed(Pool::once(num_threads)))
+        .chunk_size(chunk_size)
         .map(do_work);
 
-    if diagnostics {
-        par.runner_with_diagnostics().max()
-    } else {
-        par.max()
+    match (adaptive, diagnostics) {
+        (false, false) => par.runner(Runner::adaptive(Pool::once(num_threads))).max(),
+        (false, true) => par
+            .runner(Runner::adaptive(Pool::once(num_threads)))
+            .runner_with_diagnostics()
+            .max(),
+        (true, false) => par.max(),
+        (true, true) => par.runner_with_diagnostics().max(),
     }
-}
 
-fn run_orx_fixed_1(input: &[WorkItem], num_threads: usize, diagnostics: bool) -> Option<u64> {
-    let par = input
-        .par()
-        .num_threads(num_threads)
-        .chunk_size(1)
-        .runner(Runner::fixed(Pool::once(num_threads)))
-        .map(do_work);
-
-    if diagnostics {
-        par.runner_with_diagnostics().max()
-    } else {
-        par.max()
-    }
-}
-
-fn run_orx_adaptive(input: &[WorkItem], num_threads: usize, diagnostics: bool) -> Option<u64> {
-    let par = input
-        .par()
-        .num_threads(num_threads)
-        .chunk_size(0)
-        .runner(Runner::adaptive(Pool::once(num_threads)))
-        .map(do_work);
-
-    if diagnostics {
-        par.runner_with_diagnostics().max()
-    } else {
-        par.max()
-    }
+    todo!()
 }
 
 fn run_selected_method(args: &Args, input: &[WorkItem]) -> Option<u64> {
     match args.method {
         Method::Seq => run_seq(input),
         Method::Rayon => run_rayon(input, args.num_threads),
-        Method::FixedAuto => run_orx_fixed_auto(input, args.num_threads, args.diagnostics),
-        Method::Fixed1 => run_orx_fixed_1(input, args.num_threads, args.diagnostics),
-        Method::Adaptive => run_orx_adaptive(input, args.num_threads, args.diagnostics),
+        Method::OrxFix => run_orx(input, args.num_threads, args.diagnostics, 0, false),
+        Method::OrxFix1 => run_orx(input, args.num_threads, args.diagnostics, 1, false),
+        Method::Orx => run_orx(input, args.num_threads, args.diagnostics, 0, true),
+        Method::Orx1 => run_orx(input, args.num_threads, args.diagnostics, 1, true),
     }
 }
 
