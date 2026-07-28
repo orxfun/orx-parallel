@@ -15,6 +15,10 @@ pub const OVERHEAD_NS_PER_CHUNK: u64 = 2_000;
 /// Chunk size is chosen so that per-item work amortizes dispatch overhead by this factor.
 pub const OVERHEAD_AMORTIZATION_FACTOR: u64 = 20;
 
+/// Target minimum per-item work (ns) for a chunk to amortize dispatch overhead.
+/// Equal to `OVERHEAD_AMORTIZATION_FACTOR * OVERHEAD_NS_PER_CHUNK`.
+pub const AMORTIZED_OVERHEAD_NS: u64 = OVERHEAD_AMORTIZATION_FACTOR * OVERHEAD_NS_PER_CHUNK;
+
 /// Per-item work below this threshold (ns) is considered "tiny"; exploration exits early.
 pub const TINY_WORK_THRESHOLD_NS: u64 = 500;
 
@@ -61,6 +65,10 @@ pub const HIGH_VARIABILITY_PCT_THRESHOLD: u64 = 150;
 /// Equal to `HEAVY_WORK_OVERHEAD_FACTOR * OVERHEAD_NS_PER_CHUNK`.
 pub const HEAVY_WORK_NS_THRESHOLD: u64 = HEAVY_WORK_OVERHEAD_FACTOR * OVERHEAD_NS_PER_CHUNK;
 
+/// Hard upper bound on the computed chunk size; prevents excessively large chunks
+/// that would hurt load balance even when overhead amortization suggests a larger value.
+pub const MAX_CHUNK_SIZE: usize = 1024;
+
 /// Returns a conservative chunk-size balance target based on workload variability.
 /// Used as fallback when the total item count is unknown. Higher variability triggers smaller
 /// chunks to improve load balancing and reduce tail latency.
@@ -70,5 +78,16 @@ pub fn fallback_balance_bound(variability_pct: u64) -> usize {
         v if v < 75 => 64,
         v if v < 150 => 16,
         _ => 4,
+    }
+}
+
+/// Returns the number of scheduling waves (rounds of chunks per thread) based on workload variability.
+/// More waves means smaller chunks and finer scheduling granularity, reducing thread idle time
+/// when per-item durations are unpredictable.
+pub fn balance_waves(variability_pct: u64) -> usize {
+    match variability_pct {
+        v if v < 25 => 2,
+        v if v < 75 => 4,
+        _ => 8,
     }
 }
