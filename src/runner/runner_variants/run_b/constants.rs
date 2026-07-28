@@ -27,6 +27,12 @@ pub const CONVERGENCE_THRESHOLD: usize = 5;
 /// Minimum number of sampled items before convergence-based stopping is considered.
 pub const CONVERGENCE_MIN_SAMPLES: usize = 96;
 
+/// Base minimum exploration threshold. Actual threshold scales with thread count: `max(128, 8 * num_threads)`.
+pub const EXPLORATION_MIN_SAMPLES_BASE: usize = 128;
+
+/// Scaling factor for exploration threshold relative to thread count.
+pub const EXPLORATION_SAMPLES_PER_THREAD: usize = 8;
+
 /// Divisor for the convergence stability check: the EWMA average must change by less than
 /// `1 / CONVERGENCE_STABILITY_DIVISOR` (i.e. 2%) between updates to count as stable.
 pub const CONVERGENCE_STABILITY_DIVISOR: u64 = 50;
