@@ -4,7 +4,6 @@ use crate::runner::par_runner::ParRunner;
 use crate::runner::runner_variants::run_b::chunk_state::ChunkState;
 use crate::runner::runner_variants::run_b::mode::Mode;
 use crate::runner::runner_variants::run_b::state::State;
-use core::cmp::min;
 
 pub struct RunnerB<P: ParThreadPool> {
     pool: P,
@@ -80,13 +79,12 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
 
     #[inline(always)]
     fn next_chunk_size(state: &Self::State, size_hint: (usize, Option<usize>)) -> usize {
-        if let Some(fixed_chunk_size) = state.fixed_chunk_size {
-            return fixed_chunk_size;
-        }
-
-        match state.mode() {
-            Mode::Explore => state.min_chunk_size,
-            Mode::Fixed => state.selected_chunk_size(size_hint),
+        match state.fixed_chunk_size {
+            Some(fixed_chunk_size) => fixed_chunk_size,
+            None => match state.mode() {
+                Mode::Explore => state.min_chunk_size,
+                Mode::Fixed => state.selected_chunk_size(size_hint),
+            },
         }
     }
     fn begin_chunk(_: usize, chunk_size: usize) -> Self::ChunkState {
