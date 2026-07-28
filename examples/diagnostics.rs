@@ -1,13 +1,6 @@
 use clap::Parser;
-#[cfg(feature = "std")]
 use orx_parallel::*;
-#[cfg(feature = "std")]
 use std::hint::black_box;
-
-#[cfg(not(feature = "std"))]
-fn main() {
-    panic!("This example requires std");
-}
 
 #[derive(Parser)]
 struct Args {
@@ -27,7 +20,6 @@ struct Args {
 /// The credit history length (derived from the applicant id) determines how
 /// much work is done per item, producing a naturally uneven workload — exactly
 /// the kind of load where diagnostics are most informative.
-#[cfg(feature = "std")]
 fn compute_risk_score(applicant_id: usize, credit_history_len: usize) -> u64 {
     (0..credit_history_len)
         .map(|month| {
@@ -44,7 +36,6 @@ fn compute_risk_score(applicant_id: usize, credit_history_len: usize) -> u64 {
         .sum()
 }
 
-#[cfg(feature = "std")]
 fn main() {
     let args = Args::parse();
 
