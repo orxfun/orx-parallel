@@ -91,6 +91,14 @@ impl State {
 
     pub(super) fn should_stop_exploration(&self) -> bool {
         let explored = self.explored_tasks.load(Ordering::Relaxed);
+        let fraction_capped = match self.initial_len {
+            Some(total) if total > 0 => explored.saturating_mul(100) >= total * EXPLORATION_CAP_PCT,
+            _ => false,
+        };
+        if fraction_capped {
+            return true;
+        }
+
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
         let min_samples = max(
             EXPLORATION_MIN_SAMPLES_BASE,
@@ -104,7 +112,7 @@ impl State {
             return true;
         }
 
-        // Convergence-based stopping: if average has been stable for 5 samples,
+        // Convergence-based stopping: if average has been stable for N samples,
         // and we've explored enough, stop exploring
         let converged = self.converged_samples.load(Ordering::Relaxed);
         if converged >= CONVERGENCE_THRESHOLD && explored >= CONVERGENCE_MIN_SAMPLES {
@@ -118,13 +126,7 @@ impl State {
             _ => false,
         };
 
-        let fraction_capped = match self.initial_len {
-            Some(total) if total > 0 => explored.saturating_mul(100) >= total * EXPLORATION_CAP_PCT,
-            _ => false,
-        };
-
-        fraction_capped
-            || (explored >= min_samples && (elapsed_ms >= EXPLORATION_MIN_MS || fraction_reached))
+        explored >= min_samples && (elapsed_ms >= EXPLORATION_MIN_MS || fraction_reached)
     }
 
     fn variability_pct(&self) -> u64 {
