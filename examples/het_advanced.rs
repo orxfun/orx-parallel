@@ -43,7 +43,7 @@ struct Args {
     heavy: bool,
 
     /// Method variant to run.
-    #[arg(long, value_enum, default_value_t = Method::FixedAuto)]
+    #[arg(long, value_enum, default_value_t = Method::Orx)]
     method: Method,
 
     /// Enables diagnostics printing for orx variants.
@@ -147,8 +147,6 @@ fn run_orx(
         (true, false) => par.max(),
         (true, true) => par.runner_with_diagnostics().max(),
     }
-
-    todo!()
 }
 
 fn run_selected_method(args: &Args, input: &[WorkItem]) -> Option<u64> {
