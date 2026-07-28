@@ -139,6 +139,21 @@ impl State {
         elapsed_ms >= EXPLORATION_MIN_MS
     }
 
+    pub(super) fn selected_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
+        // TODO: it is okay if this method just returns chosen, we can omit remaining
+        let remaining = size_hint.1.unwrap_or(size_hint.0).max(1);
+        let chosen = match self.chosen_chunk_size.load(Ordering::Relaxed) {
+            0 => {
+                let chunk_size = self.choose_fixed_chunk_size(size_hint);
+                self.chosen_chunk_size.store(chunk_size, Ordering::Relaxed);
+                chunk_size
+            }
+            chunk_size => chunk_size,
+        };
+
+        min(chosen, remaining)
+    }
+
     fn variability_pct(&self) -> u64 {
         match self.avg_ns_per_item.load(Ordering::Relaxed) {
             0 => 0,
@@ -178,19 +193,5 @@ impl State {
         };
 
         min(min(c_bal, c_over), 1024).max(self.min_chunk_size)
-    }
-
-    pub(super) fn selected_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
-        let remaining = size_hint.1.unwrap_or(size_hint.0).max(1);
-        let chosen = match self.chosen_chunk_size.load(Ordering::Relaxed) {
-            0 => {
-                let chunk_size = self.choose_fixed_chunk_size(size_hint);
-                self.chosen_chunk_size.store(chunk_size, Ordering::Relaxed);
-                chunk_size
-            }
-            chunk_size => chunk_size,
-        };
-
-        min(chosen, remaining)
     }
 }
