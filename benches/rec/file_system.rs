@@ -131,12 +131,12 @@ fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: us
         .unwrap_or(0)
 }
 
-fn orx_sum_b(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+fn orx_sum_adaptive(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     fs.roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .runner(Runner::b(pool))
+        .runner(Runner::adaptive_chunk(pool))
         .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
@@ -173,7 +173,7 @@ enum Method {
     Seq,
     Rayon,
     OrxFix { chunk_size: usize },
-    OrxB { chunk_size: usize },
+    OrxAdaptive { chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -186,7 +186,7 @@ impl Factors for Method {
             Self::Seq => "seq".to_string(),
             Self::Rayon => "rayon".to_string(),
             Self::OrxFix { chunk_size } => format!("orx-fix-{chunk_size}"),
-            Self::OrxB { chunk_size } => format!("orx-b-{chunk_size}"),
+            Self::OrxAdaptive { chunk_size } => format!("orx-adaptive-{chunk_size}"),
         }]
     }
 }
@@ -232,8 +232,8 @@ impl Experiment for Exp {
             Method::OrxFix { chunk_size } => {
                 orx_sum_fixed(&input.pool, &input.fs, input_variant.work, *chunk_size)
             }
-            Method::OrxB { chunk_size } => {
-                orx_sum_b(&input.pool, &input.fs, input_variant.work, *chunk_size)
+            Method::OrxAdaptive { chunk_size } => {
+                orx_sum_adaptive(&input.pool, &input.fs, input_variant.work, *chunk_size)
             }
         }
     }
@@ -279,8 +279,8 @@ fn run(c: &mut Criterion) {
         Method::Rayon,
         Method::OrxFix { chunk_size: 0 },
         Method::OrxFix { chunk_size: 1024 },
-        Method::OrxB { chunk_size: 0 },
-        Method::OrxB { chunk_size: 1024 },
+        Method::OrxAdaptive { chunk_size: 0 },
+        Method::OrxAdaptive { chunk_size: 1024 },
     ];
 
     Exp.bench(c, "rec_file_system", &treatments, &variants);

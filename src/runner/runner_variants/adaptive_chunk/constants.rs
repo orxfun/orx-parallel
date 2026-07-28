@@ -1,4 +1,4 @@
-use crate::runner::runner_variants::run_b::ewma::EwmaParams;
+use crate::runner::runner_variants::adaptive_chunk::ewma::EwmaParams;
 
 /// Minimum wall-clock exploration time before chunk-size is fixed.
 pub const EXPLORATION_MIN_MS: u128 = 5;

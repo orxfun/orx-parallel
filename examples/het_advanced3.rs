@@ -12,7 +12,7 @@
 /// - Rayon
 /// - Chili (recursive work stealing)
 /// - Paralight (range work stealing)
-/// - Fixed-1, Fixed-Auto, RunnerB (orx-parallel)
+/// - Fixed-1, Fixed-Auto, AdaptiveChunkRunner (orx-parallel)
 use clap::{Parser, ValueEnum};
 use orx_parallel::*;
 use rayon::ThreadPoolBuilder;
@@ -28,7 +28,7 @@ enum Method {
     Paralight,
     Fixed1,
     FixedAuto,
-    B,
+    Adaptive,
 }
 
 #[derive(Parser, Debug)]
@@ -45,7 +45,7 @@ struct Args {
     #[arg(long, default_value_t = 5)]
     runs: usize,
 
-    /// Enables diagnostics printing for RunnerB.
+    /// Enables diagnostics printing for AdaptiveChunkRunner.
     #[arg(long, default_value_t = false)]
     diagnostics: bool,
 }
@@ -155,12 +155,12 @@ fn run_orx_fixed_auto(work: &[WorkItem], num_threads: usize, diagnostics: bool) 
     }
 }
 
-fn run_orx_b(work: &[WorkItem], num_threads: usize, diagnostics: bool) -> usize {
+fn run_orx_adaptive(work: &[WorkItem], num_threads: usize, diagnostics: bool) -> usize {
     let par = work
         .par()
         .num_threads(num_threads)
         .chunk_size(0)
-        .runner(Runner::b(Pool::once(num_threads)))
+        .runner(Runner::adaptive_chunk(Pool::once(num_threads)))
         .map(do_work);
 
     if diagnostics {
@@ -178,7 +178,7 @@ fn run_selected_method(args: &Args, work: &[WorkItem]) -> usize {
         Method::Paralight => run_paralight(work, args.num_threads),
         Method::Fixed1 => run_orx_fixed_1(work, args.num_threads, args.diagnostics),
         Method::FixedAuto => run_orx_fixed_auto(work, args.num_threads, args.diagnostics),
-        Method::B => run_orx_b(work, args.num_threads, args.diagnostics),
+        Method::Adaptive => run_orx_adaptive(work, args.num_threads, args.diagnostics),
     }
 }
 

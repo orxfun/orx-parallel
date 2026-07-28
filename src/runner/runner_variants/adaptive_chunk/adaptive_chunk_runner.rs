@@ -1,23 +1,23 @@
 use crate::parameters::{ChunkSize, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
-use crate::runner::runner_variants::run_b::chunk_state::ChunkState;
-use crate::runner::runner_variants::run_b::mode::Mode;
-use crate::runner::runner_variants::run_b::state::State;
+use crate::runner::runner_variants::adaptive_chunk::chunk_state::ChunkState;
+use crate::runner::runner_variants::adaptive_chunk::mode::Mode;
+use crate::runner::runner_variants::adaptive_chunk::state::State;
 
-pub struct RunnerB<P: ParThreadPool> {
+pub struct AdaptiveChunkRunner<P: ParThreadPool> {
     pool: P,
 }
 
-unsafe impl<P: ParThreadPool> Sync for RunnerB<P> {}
+unsafe impl<P: ParThreadPool> Sync for AdaptiveChunkRunner<P> {}
 
-impl<P: ParThreadPool> RunnerB<P> {
+impl<P: ParThreadPool> AdaptiveChunkRunner<P> {
     pub fn new(pool: P) -> Self {
         Self { pool }
     }
 }
 
-impl<P: ParThreadPool> ParRunner for RunnerB<P> {
+impl<P: ParThreadPool> ParRunner for AdaptiveChunkRunner<P> {
     type Pool = P;
 
     type State = State;
@@ -36,7 +36,7 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
         self,
         pool: Q,
     ) -> impl ParRunner<State = Self::State, ChunkState = Self::ChunkState, Pool = Q> {
-        RunnerB::new(pool)
+        AdaptiveChunkRunner::new(pool)
     }
 
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
