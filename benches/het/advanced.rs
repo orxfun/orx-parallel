@@ -46,13 +46,12 @@ struct WorkItem {
     iterations: u32,
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
     Rayon,
-    FixedAuto,
-    Fixed1,
-    Adaptive,
+    OrxFixed { chunk_size: usize },
+    Orx { chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -61,16 +60,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::FixedAuto => "fixed-auto",
-                Self::Fixed1 => "fixed-1",
-                Self::Adaptive => "adaptive-chunk",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon => "rayon".to_string(),
+            Self::OrxFixed { chunk_size } => format!("orx-fixed-auto-{chunk_size}"),
+            Self::Orx { chunk_size } => format!("orx-{chunk_size}"),
+        }]
     }
 }
 
@@ -154,21 +149,15 @@ impl Experiment for Exp {
                     .unwrap();
                 pool.install(|| input.par_iter().map(do_work).max())
             }
-            Method::FixedAuto => input
+            Method::OrxFixed { chunk_size } => input
                 .par()
-                .chunk_size(0)
+                .chunk_size(*chunk_size)
                 .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                 .map(do_work)
                 .max(),
-            Method::Fixed1 => input
+            Method::Orx { chunk_size } => input
                 .par()
-                .chunk_size(1)
-                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
-                .map(do_work)
-                .max(),
-            Method::Adaptive => input
-                .par()
-                .chunk_size(0)
+                .chunk_size(*chunk_size)
                 .runner(Runner::adaptive(Pool::once(input_variant.num_threads)))
                 .map(do_work)
                 .max(),
@@ -202,7 +191,15 @@ fn run(c: &mut Criterion) {
         }
     }
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let variants = vec![
+        Method::Seq,
+        Method::Rayon,
+        Method::Orx { chunk_size: 0 },
+        Method::Orx { chunk_size: 1 },
+        Method::OrxFixed { chunk_size: 0 },
+        Method::OrxFixed { chunk_size: 1 },
+    ];
+
     Exp.bench(c, "het_advanced", &treatments, &variants);
 }
 

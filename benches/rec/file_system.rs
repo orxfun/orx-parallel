@@ -119,28 +119,20 @@ fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     sum.load(Ordering::Relaxed)
 }
 
-fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
-    fs.roots
+fn orx(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize, adaptive: bool) -> u64 {
+    let par = fs
+        .roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .runner(Runner::fixed(pool))
         .chunk_size(chunk_size)
-        .map(|idx| fs.nodes[idx].compute_score(work))
-        .reduce(|a, b| a + b)
-        .unwrap_or(0)
-}
+        .map(|idx| fs.nodes[idx].compute_score(work));
 
-fn orx_sum_adaptive(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
-    fs.roots
-        .iter()
-        .copied()
-        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .runner(Runner::adaptive(pool))
-        .chunk_size(chunk_size)
-        .map(|idx| fs.nodes[idx].compute_score(work))
-        .reduce(|a, b| a + b)
-        .unwrap_or(0)
+    match adaptive {
+        true => par.runner(Runner::adaptive(pool)).reduce(|a, b| a + b),
+        false => par.runner(Runner::fixed(pool)).reduce(|a, b| a + b),
+    }
+    .unwrap_or(0)
 }
 
 #[derive(Clone)]
@@ -229,12 +221,20 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => seq_sum(&input.fs, input_variant.work),
             Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
-            Method::OrxFix { chunk_size } => {
-                orx_sum_fixed(&input.pool, &input.fs, input_variant.work, *chunk_size)
-            }
-            Method::OrxAdaptive { chunk_size } => {
-                orx_sum_adaptive(&input.pool, &input.fs, input_variant.work, *chunk_size)
-            }
+            Method::OrxFix { chunk_size } => orx(
+                &input.pool,
+                &input.fs,
+                input_variant.work,
+                *chunk_size,
+                false,
+            ),
+            Method::OrxAdaptive { chunk_size } => orx(
+                &input.pool,
+                &input.fs,
+                input_variant.work,
+                *chunk_size,
+                true,
+            ),
         }
     }
 
