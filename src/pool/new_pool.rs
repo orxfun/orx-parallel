@@ -1,5 +1,6 @@
 #[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
+use crate::pool::DefaultPool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 use crate::pool::pool_impl::WasmWebPool;
 #[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
@@ -55,6 +56,11 @@ use crate::{BasicPool, pool::pool_impl::OncePool};
 pub struct Pool;
 
 impl Pool {
+    /// Creates [`DefaultPool`] with the given `num_threads`.
+    pub fn default(num_threads: impl Into<NumThreads>) -> DefaultPool {
+        DefaultPool::new(num_threads)
+    }
+
     /// Creates a lightweight on-demand pool with the specified thread configuration.
     ///
     /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before
