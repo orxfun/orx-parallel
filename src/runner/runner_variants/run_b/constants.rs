@@ -49,6 +49,18 @@ pub const EWMA_PARAMS_DEV: EwmaParams = EwmaParams {
     denominator: 4,
 };
 
+/// If per-item work exceeds this multiple of `OVERHEAD_NS_PER_CHUNK`, dispatch overhead is
+/// negligible and `min_chunk_size` is used directly for best load balance.
+pub const HEAVY_WORK_OVERHEAD_FACTOR: u64 = 200;
+
+/// If workload variability (deviation as % of average) exceeds this threshold, the work is
+/// too heterogeneous for amortization-based sizing; `min_chunk_size` is used to limit imbalance.
+pub const HIGH_VARIABILITY_PCT_THRESHOLD: u64 = 150;
+
+/// Per-item time threshold (ns) above which dispatch overhead is negligible.
+/// Equal to `HEAVY_WORK_OVERHEAD_FACTOR * OVERHEAD_NS_PER_CHUNK`.
+pub const HEAVY_WORK_NS_THRESHOLD: u64 = HEAVY_WORK_OVERHEAD_FACTOR * OVERHEAD_NS_PER_CHUNK;
+
 /// Returns a conservative chunk-size balance target based on workload variability.
 /// Used as fallback when the total item count is unknown. Higher variability triggers smaller
 /// chunks to improve load balancing and reduce tail latency.
