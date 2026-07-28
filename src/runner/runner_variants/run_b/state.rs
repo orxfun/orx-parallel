@@ -18,6 +18,7 @@ pub struct State {
     avg_abs_deviation_ns_per_item: AtomicU64,
     prev_avg_ns_per_item: AtomicU64,
     converged_samples: AtomicUsize,
+    min_samples: usize,
 }
 
 impl State {
@@ -28,6 +29,11 @@ impl State {
         initial_len: Option<usize>,
     ) -> Self {
         debug_assert!(max_num_threads > 0);
+
+        let min_samples = max(
+            EXPLORATION_MIN_SAMPLES_BASE,
+            EXPLORATION_SAMPLES_PER_THREAD * max_num_threads,
+        );
 
         Self {
             max_num_threads,
@@ -42,6 +48,7 @@ impl State {
             avg_abs_deviation_ns_per_item: AtomicU64::new(0),
             prev_avg_ns_per_item: AtomicU64::new(0),
             converged_samples: AtomicUsize::new(0),
+            min_samples,
         }
     }
 
@@ -99,11 +106,11 @@ impl State {
             return true;
         }
 
+        if explored < self.min_samples {
+            return false;
+        }
+
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
-        let min_samples = max(
-            EXPLORATION_MIN_SAMPLES_BASE,
-            EXPLORATION_SAMPLES_PER_THREAD * self.max_num_threads,
-        );
         let elapsed_ms = self.explore_started_at.elapsed().as_millis();
 
         // Early exit for tiny work: if per-item work is extremely small,
@@ -126,7 +133,7 @@ impl State {
             _ => false,
         };
 
-        explored >= min_samples && (elapsed_ms >= EXPLORATION_MIN_MS || fraction_reached)
+        elapsed_ms >= EXPLORATION_MIN_MS || fraction_reached
     }
 
     fn variability_pct(&self) -> u64 {
