@@ -157,13 +157,13 @@ impl Experiment for Exp {
             Method::FixedAuto => input
                 .par()
                 .chunk_size(0)
-                .runner(Runner::fixed_chunk(Pool::once(input_variant.num_threads)))
+                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                 .map(do_work)
                 .max(),
             Method::Fixed1 => input
                 .par()
                 .chunk_size(1)
-                .runner(Runner::fixed_chunk(Pool::once(input_variant.num_threads)))
+                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                 .map(do_work)
                 .max(),
             Method::Adaptive => input

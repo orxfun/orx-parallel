@@ -71,7 +71,7 @@ fn run_orx_fixed(
 ) -> Option<u64> {
     input
         .into_par()
-        .runner(Runner::fixed_chunk(pool))
+        .runner(Runner::fixed(pool))
         .num_threads(NUM_THREADS)
         .map(|x| heterogeneous_map(heterogeneity_level, *x))
         .max()

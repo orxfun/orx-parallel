@@ -93,7 +93,7 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     /// let par = (1..101).par().use_new(|_| ());
     ///
     /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::fixed_chunk(Pool::once(4)));
+    /// let par = par.runner(Runner::fixed(Pool::once(4)));
     ///
     /// let sum = par.sum();
     /// assert_eq!(sum, 5050);
