@@ -1,9 +1,9 @@
+use super::chunk_state::ChunkState;
+use super::mode::Mode;
+use super::state::State;
 use crate::parameters::{ChunkSize, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
-use crate::runner::runner_variants::adaptive_chunk::chunk_state::ChunkState;
-use crate::runner::runner_variants::adaptive_chunk::mode::Mode;
-use crate::runner::runner_variants::adaptive_chunk::state::State;
 
 pub struct AdaptiveChunkRunner<P: ParThreadPool> {
     pool: P,

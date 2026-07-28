@@ -68,12 +68,12 @@ impl Runner {
     /// let pool = Pool::once(4);
     ///
     /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::adaptive_chunk(pool));
+    /// let par = par.runner(Runner::adaptive(pool));
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
     #[cfg(feature = "std")]
-    pub fn adaptive_chunk<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
+    pub fn adaptive<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
         AdaptiveChunkRunner::new(pool)
     }
 }
