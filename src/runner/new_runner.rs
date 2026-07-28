@@ -36,7 +36,7 @@ impl Runner {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```
     /// use orx_parallel::*;
     ///
     /// let par = (0..100).par().map(|x| x + 1);
@@ -56,7 +56,22 @@ impl Runner {
     /// Creates an adaptive chunk runner.
     ///
     /// This strategy explores and selects chunk sizes based on observed runtime behavior.
-    /// Requires the `std` feature.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let par = (0..100).par().map(|x| x + 1);
+    ///
+    /// #[cfg(feature = "std")]
+    /// let pool = Pool::once(4);
+    ///
+    /// #[cfg(feature = "std")]
+    /// let par = par.runner(Runner::adaptive_chunk(pool));
+    ///
+    /// let result: Vec<_> = par.collect();
+    /// ```
     #[cfg(feature = "std")]
     pub fn adaptive_chunk<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
         AdaptiveChunkRunner::new(pool)
