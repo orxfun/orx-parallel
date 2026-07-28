@@ -129,7 +129,7 @@ fn run_orx_fixed_auto(input: &[WorkItem], num_threads: usize, diagnostics: bool)
         .par()
         .num_threads(num_threads)
         .chunk_size(0)
-        .runner(Runner::fixed_chunk(Pool::once(num_threads)))
+        .runner(Runner::fixed(Pool::once(num_threads)))
         .map(do_work);
 
     if diagnostics {
@@ -144,7 +144,7 @@ fn run_orx_fixed_1(input: &[WorkItem], num_threads: usize, diagnostics: bool) ->
         .par()
         .num_threads(num_threads)
         .chunk_size(1)
-        .runner(Runner::fixed_chunk(Pool::once(num_threads)))
+        .runner(Runner::fixed(Pool::once(num_threads)))
         .map(do_work);
 
     if diagnostics {

@@ -22,7 +22,7 @@ use crate::runner::runner_variants::FixedChunkRunner;
 /// let pool = Pool::once(4);
 ///
 /// #[cfg(feature = "std")]
-/// let par = par.runner(Runner::fixed_chunk(pool));
+/// let par = par.runner(Runner::fixed(pool));
 ///
 /// let sum = par.sum();
 /// ```
@@ -45,11 +45,11 @@ impl Runner {
     /// let pool = Pool::once(4);
     ///
     /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::fixed_chunk(pool));
+    /// let par = par.runner(Runner::fixed(pool));
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
-    pub fn fixed_chunk<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
+    pub fn fixed<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
         FixedChunkRunner::new(pool)
     }
 

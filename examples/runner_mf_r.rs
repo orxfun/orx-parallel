@@ -190,7 +190,7 @@ fn run_orx_fixed(
     let len = data.len();
     let par = data
         .into_par()
-        .runner(Runner::fixed_chunk(pool))
+        .runner(Runner::fixed(pool))
         .num_threads(NUM_THREADS)
         .map(|value| expensive_map(value, task_kind, len))
         .filter(selective_filter);
@@ -199,7 +199,6 @@ fn run_orx_fixed(
         false => par.reduce(reduce_sum),
     }
 }
-
 
 fn run_timed(name: &str, f: impl FnOnce() -> Option<u64>) -> (Option<u64>, f64) {
     let start = Instant::now();

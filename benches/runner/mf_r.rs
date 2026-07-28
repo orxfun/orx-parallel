@@ -160,7 +160,7 @@ impl Experiment for Exp {
             }),
             Method::OrxFixed => data
                 .into_par()
-                .runner(Runner::fixed_chunk(&input.pool))
+                .runner(Runner::fixed(&input.pool))
                 .num_threads(NUM_THREADS)
                 .map(|value| expensive_map(value, task_kind))
                 .filter(selective_filter)

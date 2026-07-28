@@ -179,14 +179,14 @@ impl Experiment for Exp {
                     true => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .runner(Runner::fixed(Pool::once(0)))
                         .map(h_m)
                         .filter(f)
                         .collect(),
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .runner(Runner::fixed(Pool::once(0)))
                         .map(l_m)
                         .filter(f)
                         .collect(),
@@ -198,7 +198,7 @@ impl Experiment for Exp {
                     true => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .filter(f)
@@ -206,7 +206,7 @@ impl Experiment for Exp {
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .filter(f)
@@ -219,7 +219,7 @@ impl Experiment for Exp {
                     true => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(h_m)
                         .filter(f)
@@ -228,7 +228,7 @@ impl Experiment for Exp {
                     false => input
                         .into_par()
                         .num_threads(input_variant.num_threads)
-                        .runner(Runner::fixed_chunk(Pool::once(0)))
+                        .runner(Runner::fixed(Pool::once(0)))
                         .iteration_order(IterationOrder::Arbitrary)
                         .map(l_m)
                         .filter(f)

@@ -111,7 +111,7 @@ impl Experiment for Exp {
             }
             Method::OrxFix => input
                 .par()
-                .runner(Runner::fixed_chunk(Pool::once(input_variant.num_threads)))
+                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                 .map(|x| heterogeneous_map(h, *x))
                 .max(),
         }

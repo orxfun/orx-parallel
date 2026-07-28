@@ -89,7 +89,7 @@ pub trait ParUseResult:
     ///     .use_new(|_| ());
     ///
     /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::fixed_chunk(Pool::once(4)));
+    /// let par = par.runner(Runner::fixed(Pool::once(4)));
     ///
     /// let out: Result<Vec<_>, _> = par.collect();
     /// assert_eq!(out, Ok(vec![1, 2, 3]));

@@ -124,7 +124,7 @@ fn orx_sum_fixed(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: us
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .runner(Runner::fixed_chunk(pool))
+        .runner(Runner::fixed(pool))
         .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
