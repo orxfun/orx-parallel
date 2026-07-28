@@ -18,8 +18,8 @@ const OUTLIER_MULTIPLIER_MAX: u32 = 100;
 enum Method {
     Seq,
     Rayon,
-    OrxFix,
-    OrxFix1,
+    OrxFixed,
+    OrxFixed1,
     Orx,
     Orx1,
 }
@@ -139,9 +139,9 @@ fn run_orx(
         .map(do_work);
 
     match (adaptive, diagnostics) {
-        (false, false) => par.runner(Runner::adaptive(Pool::once(num_threads))).max(),
+        (false, false) => par.runner(Runner::fixed(Pool::once(num_threads))).max(),
         (false, true) => par
-            .runner(Runner::adaptive(Pool::once(num_threads)))
+            .runner(Runner::fixed(Pool::once(num_threads)))
             .runner_with_diagnostics()
             .max(),
         (true, false) => par.max(),
@@ -153,8 +153,8 @@ fn run_selected_method(args: &Args, input: &[WorkItem]) -> Option<u64> {
     match args.method {
         Method::Seq => run_seq(input),
         Method::Rayon => run_rayon(input, args.num_threads),
-        Method::OrxFix => run_orx(input, args.num_threads, args.diagnostics, 0, false),
-        Method::OrxFix1 => run_orx(input, args.num_threads, args.diagnostics, 1, false),
+        Method::OrxFixed => run_orx(input, args.num_threads, args.diagnostics, 0, false),
+        Method::OrxFixed1 => run_orx(input, args.num_threads, args.diagnostics, 1, false),
         Method::Orx => run_orx(input, args.num_threads, args.diagnostics, 0, true),
         Method::Orx1 => run_orx(input, args.num_threads, args.diagnostics, 1, true),
     }

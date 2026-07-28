@@ -25,10 +25,10 @@ enum Method {
     Seq,
     Rayon,
     Chili,
-    Paralight,
-    Fixed1,
-    FixedAuto,
-    Adaptive,
+    OrxFixed1,
+    OrxFixed,
+    Orx,
+    Orx1,
 }
 
 #[derive(Parser, Debug)]
@@ -38,7 +38,7 @@ struct Args {
     num_threads: usize,
 
     /// Method variant to run.
-    #[arg(long, value_enum, default_value_t = Method::FixedAuto)]
+    #[arg(long, value_enum, default_value_t = Method::Orx)]
     method: Method,
 
     /// Number of runs to average.
@@ -119,55 +119,29 @@ fn run_chili(work: &[WorkItem]) -> usize {
     out.into_iter().max().unwrap_or(0)
 }
 
-fn run_paralight(work: &[WorkItem], num_threads: usize) -> usize {
-    // TODO: Proper paralight integration. For now, use Rayon for compatibility.
-    // The paralight API has compatibility issues with the available version.
-    run_rayon(work, num_threads)
-}
-
-fn run_orx_fixed_1(work: &[WorkItem], num_threads: usize, diagnostics: bool) -> usize {
+fn run_orx(
+    work: &[WorkItem],
+    num_threads: usize,
+    diagnostics: bool,
+    chunk_size: usize,
+    adaptive: bool,
+) -> usize {
     let par = work
         .par()
         .num_threads(num_threads)
-        .chunk_size(1)
-        .runner(Runner::fixed(Pool::once(num_threads)))
+        .chunk_size(chunk_size)
         .map(do_work);
 
-    if diagnostics {
-        par.runner_with_diagnostics().max().unwrap_or(0)
-    } else {
-        par.max().unwrap_or(0)
+    match (adaptive, diagnostics) {
+        (false, false) => par.runner(Runner::fixed(Pool::once(num_threads))).max(),
+        (false, true) => par
+            .runner(Runner::fixed(Pool::once(num_threads)))
+            .runner_with_diagnostics()
+            .max(),
+        (true, false) => par.max(),
+        (true, true) => par.runner_with_diagnostics().max(),
     }
-}
-
-fn run_orx_fixed_auto(work: &[WorkItem], num_threads: usize, diagnostics: bool) -> usize {
-    let par = work
-        .par()
-        .num_threads(num_threads)
-        .chunk_size(0)
-        .runner(Runner::fixed(Pool::once(num_threads)))
-        .map(do_work);
-
-    if diagnostics {
-        par.runner_with_diagnostics().max().unwrap_or(0)
-    } else {
-        par.max().unwrap_or(0)
-    }
-}
-
-fn run_orx_adaptive(work: &[WorkItem], num_threads: usize, diagnostics: bool) -> usize {
-    let par = work
-        .par()
-        .num_threads(num_threads)
-        .chunk_size(0)
-        .runner(Runner::adaptive(Pool::once(num_threads)))
-        .map(do_work);
-
-    if diagnostics {
-        par.runner_with_diagnostics().max().unwrap_or(0)
-    } else {
-        par.max().unwrap_or(0)
-    }
+    .unwrap_or(0)
 }
 
 fn run_selected_method(args: &Args, work: &[WorkItem]) -> usize {
@@ -175,10 +149,10 @@ fn run_selected_method(args: &Args, work: &[WorkItem]) -> usize {
         Method::Seq => run_seq(work),
         Method::Rayon => run_rayon(work, args.num_threads),
         Method::Chili => run_chili(work),
-        Method::Paralight => run_paralight(work, args.num_threads),
-        Method::Fixed1 => run_orx_fixed_1(work, args.num_threads, args.diagnostics),
-        Method::FixedAuto => run_orx_fixed_auto(work, args.num_threads, args.diagnostics),
-        Method::Adaptive => run_orx_adaptive(work, args.num_threads, args.diagnostics),
+        Method::OrxFixed => run_orx(work, args.num_threads, args.diagnostics, 0, false),
+        Method::OrxFixed1 => run_orx(work, args.num_threads, args.diagnostics, 1, false),
+        Method::Orx => run_orx(work, args.num_threads, args.diagnostics, 0, true),
+        Method::Orx1 => run_orx(work, args.num_threads, args.diagnostics, 1, true),
     }
 }
 

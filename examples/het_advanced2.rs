@@ -20,9 +20,10 @@ const OUTLIER_MULTIPLIER_MAX: u32 = 100;
 enum Method {
     Seq,
     Rayon,
-    FixedAuto,
-    Fixed1,
-    Adaptive,
+    OrxFixed,
+    OrxFixed1,
+    Orx,
+    Orx1,
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -43,7 +44,7 @@ enum ComputationPattern {
 #[derive(Parser, Debug)]
 struct Args {
     /// Number of input elements.
-    #[arg(long, default_value_t = 1 << 14)]
+    #[arg(long, default_value_t = 1 << 16)]
     n: usize,
 
     /// Number of threads for rayon and orx methods.
@@ -67,7 +68,7 @@ struct Args {
     survival_percent: f64,
 
     /// Method variant to run.
-    #[arg(long, value_enum, default_value_t = Method::FixedAuto)]
+    #[arg(long, value_enum, default_value_t = Method::Orx)]
     method: Method,
 
     /// Enables diagnostics printing for orx variants.
@@ -318,167 +319,75 @@ fn run_rayon(
     }
 }
 
-fn run_orx_fixed_auto(
-    input: &[WorkItem],
+fn run_orx_par(
+    par: impl Par<Item = u64>,
     num_threads: usize,
-    pattern: ComputationPattern,
-    survival_percent: f64,
+    adaptive: bool,
     diagnostics: bool,
 ) -> u64 {
-    match pattern {
-        ComputationPattern::Map => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::fixed(Pool::once(num_threads)))
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::FilterMap => {
-            let threshold = ((survival_percent / 100.0) * u32::MAX as f64) as u32;
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::fixed(Pool::once(num_threads)))
-                .filter(|item| {
-                    let hash = item.seed.wrapping_mul(6364136223846793005) as u32;
-                    hash < threshold
-                })
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::FlatMap => {
-            let repeat_count = ((survival_percent / 100.0) * 5.0).ceil() as usize;
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::fixed(Pool::once(num_threads)))
-                .flat_map(move |item| {
-                    let is_special = (item.seed as u32) % 100 < 30;
-                    if is_special {
-                        (0..repeat_count).map(|_| do_work(item)).collect::<Vec<_>>()
-                    } else {
-                        vec![do_work(item)]
-                    }
-                });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::Tiny => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::fixed(Pool::once(num_threads)))
-                .map(|item| {
-                    let mut state = item.seed;
-                    for _ in 0..10 {
-                        state = state.wrapping_mul(6364136223846793005) ^ state;
-                    }
-                    state
-                });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::Accumulate => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::fixed(Pool::once(num_threads)))
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
+    match (adaptive, diagnostics) {
+        (false, false) => par.runner(Runner::fixed(Pool::once(num_threads))).max(),
+        (false, true) => par
+            .runner(Runner::fixed(Pool::once(num_threads)))
+            .runner_with_diagnostics()
+            .max(),
+        (true, false) => par.max(),
+        (true, true) => par.runner_with_diagnostics().max(),
     }
+    .unwrap_or(0)
 }
 
-fn run_orx_fixed_1(
+fn run_orx(
     input: &[WorkItem],
     num_threads: usize,
     pattern: ComputationPattern,
     survival_percent: f64,
     diagnostics: bool,
+    chunk_size: usize,
+    adaptive: bool,
 ) -> u64 {
     match pattern {
         ComputationPattern::Map => {
             let par = input
                 .par()
                 .num_threads(num_threads)
-                .chunk_size(1)
-                .runner(Runner::fixed(Pool::once(num_threads)))
+                .chunk_size(chunk_size)
                 .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+            run_orx_par(par, num_threads, adaptive, diagnostics)
         }
         ComputationPattern::FilterMap => {
             let threshold = ((survival_percent / 100.0) * u32::MAX as f64) as u32;
             let par = input
                 .par()
                 .num_threads(num_threads)
-                .chunk_size(1)
-                .runner(Runner::fixed(Pool::once(num_threads)))
+                .chunk_size(chunk_size)
                 .filter(|item| {
                     let hash = item.seed.wrapping_mul(6364136223846793005) as u32;
                     hash < threshold
                 })
                 .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+            run_orx_par(par, num_threads, adaptive, diagnostics)
         }
         ComputationPattern::FlatMap => {
             let repeat_count = ((survival_percent / 100.0) * 5.0).ceil() as usize;
             let par = input
                 .par()
                 .num_threads(num_threads)
-                .chunk_size(1)
-                .runner(Runner::fixed(Pool::once(num_threads)))
+                .chunk_size(chunk_size)
                 .flat_map(move |item| {
                     let is_special = (item.seed as u32) % 100 < 30;
-                    if is_special {
-                        (0..repeat_count).map(|_| do_work(item)).collect::<Vec<_>>()
-                    } else {
-                        vec![do_work(item)]
+                    match is_special {
+                        true => (0..repeat_count).map(|_| do_work(item)).collect::<Vec<_>>(),
+                        false => vec![do_work(item)],
                     }
                 });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+            run_orx_par(par, num_threads, adaptive, diagnostics)
         }
         ComputationPattern::Tiny => {
             let par = input
                 .par()
                 .num_threads(num_threads)
-                .chunk_size(1)
-                .runner(Runner::fixed(Pool::once(num_threads)))
+                .chunk_size(chunk_size)
                 .map(|item| {
                     let mut state = item.seed;
                     for _ in 0..10 {
@@ -486,119 +395,15 @@ fn run_orx_fixed_1(
                     }
                     state
                 });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+            run_orx_par(par, num_threads, adaptive, diagnostics)
         }
         ComputationPattern::Accumulate => {
             let par = input
                 .par()
                 .num_threads(num_threads)
-                .chunk_size(1)
-                .runner(Runner::fixed(Pool::once(num_threads)))
+                .chunk_size(chunk_size)
                 .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-    }
-}
-
-fn run_orx_adaptive(
-    input: &[WorkItem],
-    num_threads: usize,
-    pattern: ComputationPattern,
-    survival_percent: f64,
-    diagnostics: bool,
-) -> u64 {
-    match pattern {
-        ComputationPattern::Map => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::adaptive(Pool::once(num_threads)))
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::FilterMap => {
-            let threshold = ((survival_percent / 100.0) * u32::MAX as f64) as u32;
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::adaptive(Pool::once(num_threads)))
-                .filter(|item| {
-                    let hash = item.seed.wrapping_mul(6364136223846793005) as u32;
-                    hash < threshold
-                })
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::FlatMap => {
-            let repeat_count = ((survival_percent / 100.0) * 5.0).ceil() as usize;
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::adaptive(Pool::once(num_threads)))
-                .flat_map(move |item| {
-                    let is_special = (item.seed as u32) % 100 < 30;
-                    if is_special {
-                        (0..repeat_count).map(|_| do_work(item)).collect::<Vec<_>>()
-                    } else {
-                        vec![do_work(item)]
-                    }
-                });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::Tiny => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::adaptive(Pool::once(num_threads)))
-                .map(|item| {
-                    let mut state = item.seed;
-                    for _ in 0..10 {
-                        state = state.wrapping_mul(6364136223846793005) ^ state;
-                    }
-                    state
-                });
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
-        }
-        ComputationPattern::Accumulate => {
-            let par = input
-                .par()
-                .num_threads(num_threads)
-                .chunk_size(0)
-                .runner(Runner::adaptive(Pool::once(num_threads)))
-                .map(do_work);
-            if diagnostics {
-                par.runner_with_diagnostics().max().unwrap_or(0)
-            } else {
-                par.max().unwrap_or(0)
-            }
+            run_orx_par(par, num_threads, adaptive, diagnostics)
         }
     }
 }
@@ -607,26 +412,41 @@ fn run_selected_method(args: &Args, input: &[WorkItem]) -> u64 {
     match args.method {
         Method::Seq => run_seq(input, args.pattern, args.survival_percent),
         Method::Rayon => run_rayon(input, args.num_threads, args.pattern, args.survival_percent),
-        Method::FixedAuto => run_orx_fixed_auto(
+        Method::OrxFixed => run_orx(
             input,
             args.num_threads,
             args.pattern,
             args.survival_percent,
             args.diagnostics,
+            0,
+            false,
         ),
-        Method::Fixed1 => run_orx_fixed_1(
+        Method::OrxFixed1 => run_orx(
             input,
             args.num_threads,
             args.pattern,
             args.survival_percent,
             args.diagnostics,
+            1,
+            false,
         ),
-        Method::Adaptive => run_orx_adaptive(
+        Method::Orx => run_orx(
             input,
             args.num_threads,
             args.pattern,
             args.survival_percent,
             args.diagnostics,
+            0,
+            true,
+        ),
+        Method::Orx1 => run_orx(
+            input,
+            args.num_threads,
+            args.pattern,
+            args.survival_percent,
+            args.diagnostics,
+            1,
+            true,
         ),
     }
 }
