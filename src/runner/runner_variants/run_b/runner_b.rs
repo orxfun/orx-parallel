@@ -50,6 +50,8 @@ impl<P: ParThreadPool> ParRunner for RunnerB<P> {
         max_num_threads: usize,
         _size_hint: (usize, Option<usize>),
     ) -> Self::State {
+        debug_assert!(max_num_threads > 0);
+
         let min_chunk_size = match params.chunk_size {
             ChunkSize::Auto => 1,
             ChunkSize::Min(chunk_size) | ChunkSize::Exact(chunk_size) => chunk_size.into(),
