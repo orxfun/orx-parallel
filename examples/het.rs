@@ -10,12 +10,16 @@ const NUM_THREADS: usize = 16;
 #[derive(Parser, Debug)]
 struct Args {
     /// Input length exponent n where len = 2^n.
-    #[arg(long, default_value_t = 10)]
+    #[arg(long, default_value_t = 9)]
     len_exp: usize,
 
     /// Probability of selecting a heavy task in [0.0, 1.0].
     #[arg(long, default_value_t = 0.5)]
     heterogeneity_level: f64,
+
+    /// Chunk size parameter to be used by orx variants (0: Auto).
+    #[arg(long, default_value_t = 0)]
+    chunk_size: usize,
 }
 
 fn fibonacci(n: u64) -> u64 {
@@ -63,26 +67,22 @@ fn run_rayon(
     })
 }
 
-fn run_orx(pool: &rayon_core::ThreadPool, input: &[u64], heterogeneity_level: f64) -> Option<u64> {
-    input
-        .into_par()
-        .pool(pool)
-        .num_threads(NUM_THREADS)
-        .map(|x| heterogeneous_map(heterogeneity_level, *x))
-        .max()
-}
-
-fn run_orx_fixed(
+fn run_orx(
     pool: &rayon_core::ThreadPool,
     input: &[u64],
     heterogeneity_level: f64,
+    chunk_size: usize,
+    adaptive: bool,
 ) -> Option<u64> {
-    input
+    let par = input
         .into_par()
-        .runner(Runner::fixed(pool))
         .num_threads(NUM_THREADS)
-        .map(|x| heterogeneous_map(heterogeneity_level, *x))
-        .max()
+        .chunk_size(chunk_size)
+        .map(|x| heterogeneous_map(heterogeneity_level, *x));
+    match adaptive {
+        true => par.runner(Runner::adaptive(pool)).max(),
+        false => par.runner(Runner::fixed(pool)).max(),
+    }
 }
 
 fn run_timed(name: &str, f: impl FnOnce() -> Option<u64>) -> (Option<u64>, f64) {
@@ -116,9 +116,23 @@ fn main() {
     let (rayon, _) = run_timed("rayon", || {
         run_rayon(&pool, &input, args.heterogeneity_level)
     });
-    let (orx, _) = run_timed("orx", || run_orx(&pool, &input, args.heterogeneity_level));
+    let (orx, _) = run_timed("orx", || {
+        run_orx(
+            &pool,
+            &input,
+            args.heterogeneity_level,
+            args.chunk_size,
+            true,
+        )
+    });
     let (orx_fixed, _) = run_timed("orx-fixed", || {
-        run_orx_fixed(&pool, &input, args.heterogeneity_level)
+        run_orx(
+            &pool,
+            &input,
+            args.heterogeneity_level,
+            args.chunk_size,
+            false,
+        )
     });
 
     assert_eq!(rayon, seq, "rayon output mismatch");
