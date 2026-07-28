@@ -184,7 +184,7 @@ impl State {
 
         let waves = balance_waves(variability_pct);
         let balanced_chunk_size = match size_hint.1 {
-            Some(remaining) if remaining > 0 => remaining / (self.max_num_threads * waves),
+            Some(remaining) => remaining / (self.max_num_threads * waves),
             _ => fallback_balance_bound(variability_pct),
         };
 
