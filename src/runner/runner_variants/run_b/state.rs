@@ -98,8 +98,9 @@ impl State {
 
     pub(super) fn should_stop_exploration(&self) -> bool {
         let explored = self.explored_tasks.load(Ordering::Relaxed);
+        let explored_x100 = explored.saturating_mul(100);
         let fraction_capped = match self.initial_len {
-            Some(total) if total > 0 => explored.saturating_mul(100) >= total * EXPLORATION_CAP_PCT,
+            Some(total) if total > 0 => explored_x100 >= total * EXPLORATION_CAP_PCT,
             _ => false,
         };
         if fraction_capped {
@@ -108,6 +109,22 @@ impl State {
 
         if explored < self.min_samples {
             return false;
+        }
+
+        let fraction_reached = match self.initial_len {
+            Some(total) if total > 0 => explored_x100 >= total * EXPLORATION_TARGET_PCT,
+            _ => false,
+        };
+
+        if fraction_reached {
+            return true;
+        }
+
+        // Convergence-based stopping: if average has been stable for N samples,
+        // and we've explored enough, stop exploring
+        let converged = self.converged_samples.load(Ordering::Relaxed);
+        if converged >= CONVERGENCE_THRESHOLD && explored >= CONVERGENCE_MIN_SAMPLES {
+            return true;
         }
 
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
@@ -119,21 +136,7 @@ impl State {
             return true;
         }
 
-        // Convergence-based stopping: if average has been stable for N samples,
-        // and we've explored enough, stop exploring
-        let converged = self.converged_samples.load(Ordering::Relaxed);
-        if converged >= CONVERGENCE_THRESHOLD && explored >= CONVERGENCE_MIN_SAMPLES {
-            return true;
-        }
-
-        let fraction_reached = match self.initial_len {
-            Some(total) if total > 0 => {
-                explored.saturating_mul(100) >= total * EXPLORATION_TARGET_PCT
-            }
-            _ => false,
-        };
-
-        elapsed_ms >= EXPLORATION_MIN_MS || fraction_reached
+        elapsed_ms >= EXPLORATION_MIN_MS
     }
 
     fn variability_pct(&self) -> u64 {
