@@ -76,6 +76,7 @@ enum Method {
     OrxVec,
     OrxArbVec,
     OrxArbVecVec,
+    OrxVecFixed,
 }
 
 impl Factors for Method {
@@ -92,6 +93,7 @@ impl Factors for Method {
                 Self::OrxVec => "orx-vec",
                 Self::OrxArbVec => "orx-arb-vec",
                 Self::OrxArbVecVec => "orx-arb-vec2",
+                Self::OrxVecFixed => "orx-vec-fixed",
             }
             .to_string(),
         ]
@@ -218,6 +220,23 @@ impl Experiment for Exp {
                         .map(l_m)
                         .collect::<Vec2<_>>()
                         .into(),
+                }),
+            ),
+            Method::OrxVecFixed => (
+                true,
+                Output::Vec(match h {
+                    true => input
+                        .into_par()
+                        .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                        .num_threads(input_variant.num_threads)
+                        .map(h_m)
+                        .collect(),
+                    false => input
+                        .into_par()
+                        .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                        .num_threads(input_variant.num_threads)
+                        .map(l_m)
+                        .collect(),
                 }),
             ),
         }
