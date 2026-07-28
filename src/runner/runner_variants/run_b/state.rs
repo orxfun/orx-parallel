@@ -168,30 +168,34 @@ impl State {
 
     fn choose_fixed_chunk_size(&self, size_hint: (usize, Option<usize>)) -> usize {
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
-        if avg_ns == 0 {
+        if avg_ns == 0 || avg_ns >= HEAVY_WORK_NS_THRESHOLD {
             return self.min_chunk_size;
         }
 
         let variability_pct = self.variability_pct();
-        if avg_ns >= HEAVY_WORK_NS_THRESHOLD || variability_pct >= HIGH_VARIABILITY_PCT_THRESHOLD {
+        if variability_pct >= HIGH_VARIABILITY_PCT_THRESHOLD {
             return self.min_chunk_size;
         }
 
-        let amortized = OVERHEAD_AMORTIZATION_FACTOR.saturating_mul(OVERHEAD_NS_PER_CHUNK);
-        let mut c_over = amortized.div_ceil(avg_ns) as usize;
-        c_over = max(c_over, self.min_chunk_size);
+        let amortized_chunk_size = max(
+            AMORTIZED_OVERHEAD_NS.div_ceil(avg_ns) as usize,
+            self.min_chunk_size,
+        );
 
-        let waves = match variability_pct {
-            v if v < 25 => 2,
-            v if v < 75 => 4,
-            _ => 8,
-        };
-
-        let c_bal = match size_hint.1 {
-            Some(remaining) if remaining > 0 => max(1, remaining / (self.max_num_threads * waves)),
+        let waves = balance_waves(variability_pct);
+        let balanced_chunk_size = match size_hint.1 {
+            Some(remaining) if remaining > 0 => remaining / (self.max_num_threads * waves),
             _ => fallback_balance_bound(variability_pct),
         };
 
-        min(min(c_bal, c_over), 1024).max(self.min_chunk_size)
+        max(
+            min3(balanced_chunk_size, amortized_chunk_size, MAX_CHUNK_SIZE),
+            self.min_chunk_size,
+        )
     }
+}
+
+#[inline(always)]
+fn min3(a: usize, b: usize, c: usize) -> usize {
+    min(min(a, b), c)
 }
