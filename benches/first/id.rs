@@ -34,6 +34,7 @@ enum Method {
     Seq,
     Rayon,
     Orx,
+    OrxFixed,
 }
 
 impl Factors for Method {
@@ -47,6 +48,7 @@ impl Factors for Method {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
                 Self::Orx => "orx",
+                Self::OrxFixed => "orx-fixed",
             }
             .to_string(),
         ]
@@ -92,6 +94,13 @@ impl Experiment for Exp {
             Method::Orx => input
                 .as_slice()
                 .into_par()
+                .num_threads(input_variant.num_threads)
+                .first()
+                .copied(),
+            Method::OrxFixed => input
+                .as_slice()
+                .into_par()
+                .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
                 .num_threads(input_variant.num_threads)
                 .first()
                 .copied(),

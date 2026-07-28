@@ -78,6 +78,7 @@ enum Method {
     Seq,
     Rayon,
     Orx,
+    OrxFixed,
 }
 
 impl Factors for Method {
@@ -91,6 +92,7 @@ impl Factors for Method {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
                 Self::Orx => "orx",
+                Self::OrxFixed => "orx-fixed",
             }
             .to_string(),
         ]
@@ -169,6 +171,28 @@ impl Experiment for Exp {
                 true => input
                     .as_slice()
                     .into_par()
+                    .num_threads(input_variant.num_threads)
+                    .map(h_m)
+                    .filter(|x| *x == 999)
+                    .map(|x| h_m(&x))
+                    .filter(|x| x.is_multiple_of(999))
+                    .first(),
+            },
+            Method::OrxFixed => match input_variant.heavy {
+                false => input
+                    .as_slice()
+                    .into_par()
+                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                    .num_threads(input_variant.num_threads)
+                    .map(l_m)
+                    .filter(|x| *x == 999)
+                    .map(|x| l_m(&x))
+                    .filter(|x| x.is_multiple_of(999))
+                    .first(),
+                true => input
+                    .as_slice()
+                    .into_par()
+                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
                     .num_threads(input_variant.num_threads)
                     .map(h_m)
                     .filter(|x| *x == 999)
