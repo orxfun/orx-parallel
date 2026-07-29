@@ -311,3 +311,11 @@ name = "stateful-using-monte-carlo-batch"
 harness = false
 path = "benches/stateful_using/monte_carlo_batch.rs"
 required-features = ["std"]
+
+## benchmarks - arbitrary_iter
+
+[[bench]]
+name = "arbitrary-iter-map-set-processing"
+harness = false
+path = "benches/arbitrary_iter/map_set_processing.rs"
+required-features = ["std"]
