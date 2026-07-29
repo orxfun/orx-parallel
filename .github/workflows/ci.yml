@@ -107,7 +107,7 @@ jobs:
         run: |
           cargo +nightly check \
             --target wasm32-unknown-unknown \
-            --features wasm-web-threads \
+            --features wasm \
             -Z build-std=panic_abort,std
 
       - name: Check-wasm-threads-example
@@ -124,7 +124,7 @@ jobs:
         run: |
           cargo +nightly check \
             --target wasm32-unknown-unknown \
-            --features wasm-web-threads \
+            --features wasm \
             --example wasm_web_threads \
             -Z build-std=panic_abort,std
 
@@ -142,7 +142,7 @@ jobs:
         run: |
           cargo +nightly test \
             --target wasm32-unknown-unknown \
-            --features wasm-web-threads \
+            --features wasm \
             --test wasm_web_threads_smoke \
             -Z build-std=panic_abort,std \
             --no-run
