@@ -261,3 +261,17 @@ path = "benches/reduce/mfm.rs"
 name = "reduce-mfmf"
 harness = false
 path = "benches/reduce/mfmf.rs"
+
+## benchmarks - throughput_linear
+
+[[bench]]
+name = "throughput-linear-log-collect"
+harness = false
+path = "benches/throughput_linear/log_collect.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "throughput-linear-log-reduce"
+harness = false
+path = "benches/throughput_linear/log_reduce.rs"
+required-features = ["std"]

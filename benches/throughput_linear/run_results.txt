@@ -1,0 +1,6 @@
+# throughput_linear
+
+Pending benchmark results.
+Run benches with:
+- cargo bench --bench throughput-linear-log-collect
+- cargo bench --bench throughput-linear-log-reduce
