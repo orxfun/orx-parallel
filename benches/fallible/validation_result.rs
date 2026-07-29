@@ -132,6 +132,21 @@ fn parse_line_total(row: &str) -> Result<u64, ParseErr> {
     Ok(qty * unit)
 }
 
+fn failure_kinds(input: &[String]) -> (bool, bool) {
+    let mut has_missing = false;
+    let mut has_invalid = false;
+
+    for row in input {
+        match parse_line_total(row) {
+            Err(ParseErr::Missing) => has_missing = true,
+            Err(ParseErr::Invalid) => has_invalid = true,
+            Ok(_) => {}
+        }
+    }
+
+    (has_missing, has_invalid)
+}
+
 fn seq_sum(input: &[String], threshold: u64) -> Result<u64, ParseErr> {
     let mut sum = 0_u64;
     for row in input {
@@ -207,8 +222,38 @@ impl Experiment for Exp {
         }
     }
 
-    fn expected_output(&self, _: &Self::InputFactors, input: &Self::Input) -> Option<Self::Output> {
-        Some(seq_sum(input, 2_000))
+    fn validate_output(&self, _: &Self::InputFactors, input: &Self::Input, output: &Self::Output) {
+        let expected = seq_sum(input, 2_000);
+
+        match expected {
+            Ok(expected_sum) => {
+                assert_eq!(*output, Ok(expected_sum));
+            }
+            Err(_) => {
+                let (has_missing, has_invalid) = failure_kinds(input);
+
+                match output {
+                    Err(ParseErr::Missing) => {
+                        assert!(
+                            has_missing,
+                            "output has Missing but input has no Missing failures"
+                        );
+                    }
+                    Err(ParseErr::Invalid) => {
+                        assert!(
+                            has_invalid,
+                            "output has Invalid but input has no Invalid failures"
+                        );
+                    }
+                    Ok(sum) => {
+                        panic!(
+                            "expected failure for this input, but run produced success with sum={}",
+                            sum
+                        );
+                    }
+                }
+            }
+        }
     }
 }
 
