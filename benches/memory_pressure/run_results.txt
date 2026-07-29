@@ -1,5 +1,0 @@
-# memory_pressure
-
-Pending benchmark results.
-Run bench with:
-- cargo bench --bench memory-pressure-string-formatting

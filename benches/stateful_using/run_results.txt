@@ -1,5 +1,0 @@
-# stateful_using
-
-Pending benchmark results.
-Run bench with:
-- cargo bench --bench stateful-using-monte-carlo-batch
