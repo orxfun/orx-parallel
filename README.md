@@ -131,7 +131,7 @@ Details:
 Parallel iterator definition and execution strategy are separate concerns:
 
 - express computation with iterator transforms,
-- choose runner strategy (`fixed_chunk`, `dynamic_chunk`) independently.
+- choose runner strategy (`fixed`) independently.
 
 This enables advanced users to implement domain-specific runners and use them with `.runner(...)`.
 
@@ -169,17 +169,15 @@ orx-parallel = "3.4"
 Optional features for advanced scenarios:
 
 - `rayon-core` for direct Rayon thread pool integration,
-- `wasm-web-threads` for web wasm threading integration (requires wasm thread toolchain/runtime setup),
-- `experimental` for dynamic-chunk runner experiments,
+- `wasm` for web wasm threading integration (requires wasm thread toolchain/runtime setup),
 - `std` (enabled by default).
 
 ## More Documentation
 
 - API docs: <https://docs.rs/orx-parallel>
 - Threading model: [docs/threading_model.md](docs/threading_model.md)
-- WebAssembly threads setup: [docs/wasm_web_threads.md](docs/wasm_web_threads.md)
-- WebAssembly rollout plan: [docs/wasm_plan.md](docs/wasm_plan.md)
-- WebAssembly compatibility, troubleshooting, and dual-build guidance: [docs/wasm_web_threads.md](docs/wasm_web_threads.md)
+- WebAssembly usage, setup, and troubleshooting: [docs/wasm.md](docs/wasm.md)
+- WebAssembly internals and backend details: [docs/wasm_internals.md](docs/wasm_internals.md)
 - Using mutable per-thread state safely: [docs/using.md](docs/using.md)
 - Examples folder: [examples](examples)
 - Bench suite: [benches](benches)

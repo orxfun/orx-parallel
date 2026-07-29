@@ -1,6 +1,6 @@
 use crate::ParThreadPool;
-#[cfg(all(feature = "std", feature = "experimental"))]
-use crate::runner::runner_variants::DynChunkRunner;
+#[cfg(feature = "std")]
+use crate::runner::runner_variants::AdaptiveChunkRunner;
 use crate::runner::runner_variants::FixedChunkRunner;
 
 /// Entry point for creating parallel runners that control how work is distributed across threads.
@@ -22,7 +22,7 @@ use crate::runner::runner_variants::FixedChunkRunner;
 /// let pool = Pool::once(4);
 ///
 /// #[cfg(feature = "std")]
-/// let par = par.runner(Runner::fixed_chunk(pool));
+/// let par = par.runner(Runner::fixed(pool));
 ///
 /// let sum = par.sum();
 /// ```
@@ -36,7 +36,7 @@ impl Runner {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```
     /// use orx_parallel::*;
     ///
     /// let par = (0..100).par().map(|x| x + 1);
@@ -45,36 +45,35 @@ impl Runner {
     /// let pool = Pool::once(4);
     ///
     /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::fixed_chunk(pool));
+    /// let par = par.runner(Runner::fixed(pool));
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
-    pub fn fixed_chunk<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
+    pub fn fixed<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
         FixedChunkRunner::new(pool)
     }
 
-    /// Creates a runner that adjusts chunk sizes dynamically at runtime.
+    /// Creates an adaptive chunk runner.
     ///
-    /// Threads request new chunks as they finish, which improves load balancing when
-    /// tasks have variable cost. Requires the `std` and `experimental` features.
+    /// This strategy explores and selects chunk sizes based on observed runtime behavior.
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```
     /// use orx_parallel::*;
     ///
     /// let par = (0..100).par().map(|x| x + 1);
     ///
-    /// #[cfg(all(feature = "std", feature = "experimental"))]
+    /// #[cfg(feature = "std")]
     /// let pool = Pool::once(4);
     ///
-    /// #[cfg(all(feature = "std", feature = "experimental"))]
-    /// let par = par.runner(Runner::dynamic_chunk(pool));
+    /// #[cfg(feature = "std")]
+    /// let par = par.runner(Runner::adaptive(pool));
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
-    #[cfg(all(feature = "std", feature = "experimental"))]
-    pub fn dynamic_chunk<P: ParThreadPool>(pool: P) -> DynChunkRunner<P> {
-        DynChunkRunner::new(pool)
+    #[cfg(feature = "std")]
+    pub fn adaptive<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
+        AdaptiveChunkRunner::new(pool)
     }
 }

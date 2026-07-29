@@ -24,9 +24,7 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
 
 fn assert_wasm_thread_pool_initialized() {
     if !cfg!(target_feature = "atomics") {
-        panic!(
-            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm_plan.md."
-        );
+        panic!("Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm.md.");
     }
 
     if !WASM_WEB_THREAD_POOL_INIT_CALLED.load(Ordering::SeqCst) {
@@ -38,7 +36,7 @@ fn assert_wasm_thread_pool_initialized() {
 
 /// wasm web-thread pool adapter backed by Rayon's global runtime.
 ///
-/// This pool is available only on `wasm32` with `wasm-web-threads-experimental` feature.
+/// This pool is available only on `wasm32` with `wasm-experimental` feature.
 /// It schedules scoped jobs on Rayon's global scope.
 #[derive(Clone, Copy, Debug)]
 pub struct WasmWebPoolExp {

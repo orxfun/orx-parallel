@@ -75,6 +75,7 @@ enum Method {
     Rayon,
     RayonRedWith,
     Orx,
+    OrxFixed,
 }
 
 impl Factors for Method {
@@ -89,6 +90,7 @@ impl Factors for Method {
                 Self::Rayon => "rayon",
                 Self::RayonRedWith => "rayon-red-with",
                 Self::Orx => "orx",
+                Self::OrxFixed => "orx-fixed",
             }
             .to_string(),
         ]
@@ -153,6 +155,20 @@ impl Experiment for Exp {
                     .reduce(h_r),
                 false => input
                     .into_par()
+                    .num_threads(input_variant.num_threads)
+                    .map(m)
+                    .reduce(l_r),
+            },
+            Method::OrxFixed => match h {
+                true => input
+                    .into_par()
+                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                    .num_threads(input_variant.num_threads)
+                    .map(m)
+                    .reduce(h_r),
+                false => input
+                    .into_par()
+                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
                     .num_threads(input_variant.num_threads)
                     .map(m)
                     .reduce(l_r),

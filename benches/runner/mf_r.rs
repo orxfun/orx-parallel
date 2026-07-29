@@ -1,5 +1,3 @@
-use std::hint::black_box;
-
 use criterion::{Criterion, criterion_group, criterion_main};
 use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
@@ -7,13 +5,13 @@ use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use std::hint::black_box;
 
 const NUM_THREADS: usize = 16;
 const HOMOGENEOUS_WORK: usize = 96;
 const HETEROGENEOUS_LIGHT_WORK: usize = 24;
 const HETEROGENEOUS_MEDIUM_WORK: usize = 192;
 const HETEROGENEOUS_HEAVY_WORK: usize = 1536;
-
 #[derive(Clone, Copy, Debug)]
 enum TaskKind {
     Homogeneous,
@@ -52,9 +50,8 @@ impl Factors for Input {
 enum Method {
     Seq,
     Rayon,
+    Orx,
     OrxFixed,
-    #[cfg(feature = "experimental")]
-    OrxDyn,
 }
 
 impl Factors for Method {
@@ -67,9 +64,8 @@ impl Factors for Method {
             match self {
                 Self::Seq => "seq",
                 Self::Rayon => "rayon",
+                Self::Orx => "orx",
                 Self::OrxFixed => "orx-fixed",
-                #[cfg(feature = "experimental")]
-                Self::OrxDyn => "orx-dyn",
             }
             .to_string(),
         ]
@@ -162,17 +158,16 @@ impl Experiment for Exp {
                     .filter(selective_filter)
                     .reduce_with(reduce_sum)
             }),
-            Method::OrxFixed => data
+            Method::Orx => data
                 .into_par()
-                .runner(Runner::fixed_chunk(&input.pool))
+                .runner(Runner::adaptive(&input.pool))
                 .num_threads(NUM_THREADS)
                 .map(|value| expensive_map(value, task_kind))
                 .filter(selective_filter)
                 .reduce(reduce_sum),
-            #[cfg(feature = "experimental")]
-            Method::OrxDyn => data
+            Method::OrxFixed => data
                 .into_par()
-                .runner(Runner::dynamic_chunk(&input.pool))
+                .runner(Runner::fixed(&input.pool))
                 .num_threads(NUM_THREADS)
                 .map(|value| expensive_map(value, task_kind))
                 .filter(selective_filter)

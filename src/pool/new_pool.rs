@@ -1,8 +1,9 @@
 #[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
-#[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
+use crate::pool::DefaultPool;
+#[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 use crate::pool::pool_impl::WasmWebPool;
-#[cfg(all(feature = "wasm-web-threads-experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 use crate::pool::pool_impl::WasmWebPoolExp;
 #[cfg(feature = "std")]
 use crate::{BasicPool, pool::pool_impl::OncePool};
@@ -55,6 +56,11 @@ use crate::{BasicPool, pool::pool_impl::OncePool};
 pub struct Pool;
 
 impl Pool {
+    /// Creates [`DefaultPool`] with the given `num_threads`.
+    pub fn default(num_threads: impl Into<NumThreads>) -> DefaultPool {
+        DefaultPool::new(num_threads)
+    }
+
     /// Creates a lightweight on-demand pool with the specified thread configuration.
     ///
     /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before
@@ -221,8 +227,8 @@ impl Pool {
     ///
     /// # Features
     ///
-    /// Requires `wasm-web-threads-experimental` feature and `wasm32` target.
-    #[cfg(all(feature = "wasm-web-threads-experimental", target_arch = "wasm32"))]
+    /// Requires `wasm-experimental` feature and `wasm32` target.
+    #[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
     pub fn wasm_web_exp(num_threads: impl Into<NumThreads>) -> WasmWebPoolExp {
         WasmWebPoolExp::new(num_threads)
     }
@@ -239,8 +245,8 @@ impl Pool {
     ///
     /// # Features
     ///
-    /// Requires `wasm-web-threads` feature and `wasm32` target.
-    #[cfg(all(feature = "wasm-web-threads", target_arch = "wasm32"))]
+    /// Requires `wasm` feature and `wasm32` target.
+    #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
     pub fn wasm_web(num_threads: impl Into<NumThreads>) -> WasmWebPool {
         WasmWebPool::new(num_threads)
     }

@@ -1,5 +1,5 @@
 #![cfg(all(
-    feature = "wasm-web-threads-experimental",
+    feature = "wasm-experimental",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
