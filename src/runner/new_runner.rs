@@ -1,7 +1,7 @@
+use crate::ParThreadPool;
 #[cfg(feature = "std")]
 use crate::runner::runner_variants::AdaptiveChunkRunner;
 use crate::runner::runner_variants::FixedChunkRunner;
-use crate::{ParThreadPool, runner::DefaultRunner};
 
 /// Entry point for creating parallel runners that control how work is distributed across threads.
 ///
@@ -29,11 +29,6 @@ use crate::{ParThreadPool, runner::DefaultRunner};
 pub struct Runner;
 
 impl Runner {
-    /// Creates [`DefaultRunner`] which performs best across all benchmarked use cases.
-    pub fn default() -> DefaultRunner {
-        DefaultRunner::new(Default::default())
-    }
-
     /// Creates a runner that splits work into fixed-size chunks ahead of time.
     ///
     /// This is the default strategy: the input is divided into equal chunks, one per thread.
