@@ -1,0 +1,6 @@
+# fallible
+
+Pending benchmark results.
+Run benches with:
+- cargo bench --bench fallible-validation-result
+- cargo bench --bench fallible-validation-option

@@ -289,3 +289,17 @@ name = "early-exit-suspicious-find-any"
 harness = false
 path = "benches/early_exit/suspicious_find_any.rs"
 required-features = ["std"]
+
+## benchmarks - fallible
+
+[[bench]]
+name = "fallible-validation-result"
+harness = false
+path = "benches/fallible/validation_result.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "fallible-validation-option"
+harness = false
+path = "benches/fallible/validation_option.rs"
+required-features = ["std"]
