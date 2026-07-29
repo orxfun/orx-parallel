@@ -335,3 +335,11 @@ name = "contention-merge-grouped-topk"
 harness = false
 path = "benches/contention_merge/grouped_topk.rs"
 required-features = ["std"]
+
+## benchmarks - memory_pressure
+
+[[bench]]
+name = "memory-pressure-string-formatting"
+harness = false
+path = "benches/memory_pressure/string_formatting.rs"
+required-features = ["std"]
