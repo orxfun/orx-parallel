@@ -275,3 +275,17 @@ name = "throughput-linear-log-reduce"
 harness = false
 path = "benches/throughput_linear/log_reduce.rs"
 required-features = ["std"]
+
+## benchmarks - early_exit
+
+[[bench]]
+name = "early-exit-suspicious-first"
+harness = false
+path = "benches/early_exit/suspicious_first.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "early-exit-suspicious-find-any"
+harness = false
+path = "benches/early_exit/suspicious_find_any.rs"
+required-features = ["std"]
