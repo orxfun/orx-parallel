@@ -320,6 +320,14 @@ harness = false
 path = "benches/arbitrary_iter/map_set_processing.rs"
 required-features = ["std"]
 
+## benchmarks - recursive
+
+[[bench]]
+name = "recursive-tree-traversal"
+harness = false
+path = "benches/recursive/tree_traversal.rs"
+required-features = ["std"]
+
 ## benchmarks - contention_merge
 
 [[bench]]

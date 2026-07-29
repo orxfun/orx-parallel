@@ -1,0 +1,5 @@
+# recursive
+
+Pending benchmark results.
+Run bench with:
+- cargo bench --bench recursive-tree-traversal
