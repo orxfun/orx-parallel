@@ -164,8 +164,8 @@ impl Factors for Input {
 enum Method {
     Seq,
     Rayon,
+    Orx { chunk_size: usize },
     OrxFix { chunk_size: usize },
-    OrxAdaptive { chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -178,7 +178,7 @@ impl Factors for Method {
             Self::Seq => "seq".to_string(),
             Self::Rayon => "rayon".to_string(),
             Self::OrxFix { chunk_size } => format!("orx-fix-{chunk_size}"),
-            Self::OrxAdaptive { chunk_size } => format!("orx-adaptive-{chunk_size}"),
+            Self::Orx { chunk_size } => format!("orx-adaptive-{chunk_size}"),
         }]
     }
 }
@@ -228,7 +228,7 @@ impl Experiment for Exp {
                 *chunk_size,
                 false,
             ),
-            Method::OrxAdaptive { chunk_size } => orx(
+            Method::Orx { chunk_size } => orx(
                 &input.pool,
                 &input.fs,
                 input_variant.work,
@@ -279,8 +279,8 @@ fn run(c: &mut Criterion) {
         Method::Rayon,
         Method::OrxFix { chunk_size: 0 },
         Method::OrxFix { chunk_size: 1024 },
-        Method::OrxAdaptive { chunk_size: 0 },
-        Method::OrxAdaptive { chunk_size: 1024 },
+        Method::Orx { chunk_size: 0 },
+        Method::Orx { chunk_size: 1024 },
     ];
 
     Exp.bench(c, "rec_file_system", &treatments, &variants);

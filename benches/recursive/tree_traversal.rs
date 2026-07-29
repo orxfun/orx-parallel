@@ -45,6 +45,8 @@ enum Method {
     Rayon,
     Orx,
     OrxFixed,
+    OrxLin,
+    OrxFixedLin,
 }
 
 impl Factors for Method {
@@ -59,6 +61,8 @@ impl Factors for Method {
                 Self::Rayon => "rayon",
                 Self::Orx => "orx",
                 Self::OrxFixed => "orx-fixed",
+                Self::OrxLin => "orx-lin",
+                Self::OrxFixedLin => "orx-fixed-lin",
             }
             .to_string(),
         ]
@@ -213,6 +217,36 @@ fn orx_fixed_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
         .unwrap_or_default()
 }
 
+fn orx_lin_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
+    let linearized: Vec<_> = [root]
+        .into_par_recursive(|node| &node.children)
+        .num_threads(num_threads)
+        .collect();
+
+    linearized
+        .into_par()
+        .num_threads(num_threads)
+        .map(|node| process_node(node))
+        .reduce(merge_agg)
+        .unwrap_or_default()
+}
+
+fn orx_fixed_lin_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
+    let linearized: Vec<_> = [root]
+        .into_par_recursive(|node| &node.children)
+        .runner(Runner::fixed(Pool::default(num_threads)))
+        .num_threads(num_threads)
+        .collect();
+
+    linearized
+        .into_par()
+        .runner(Runner::fixed(Pool::default(num_threads)))
+        .num_threads(num_threads)
+        .map(|node| process_node(node))
+        .reduce(merge_agg)
+        .unwrap_or_default()
+}
+
 impl Experiment for Exp {
     type InputFactors = InputVariant;
 
@@ -241,6 +275,8 @@ impl Experiment for Exp {
             Method::Rayon => rayon_traverse(input, input_variant.num_threads),
             Method::Orx => orx_traverse(input, input_variant.num_threads),
             Method::OrxFixed => orx_fixed_traverse(input, input_variant.num_threads),
+            Method::OrxLin => orx_lin_traverse(input, input_variant.num_threads),
+            Method::OrxFixedLin => orx_fixed_lin_traverse(input, input_variant.num_threads),
         }
     }
 
