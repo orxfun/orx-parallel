@@ -319,3 +319,11 @@ name = "arbitrary-iter-map-set-processing"
 harness = false
 path = "benches/arbitrary_iter/map_set_processing.rs"
 required-features = ["std"]
+
+## benchmarks - contention_merge
+
+[[bench]]
+name = "contention-merge-grouped-topk"
+harness = false
+path = "benches/contention_merge/grouped_topk.rs"
+required-features = ["std"]
