@@ -303,3 +303,11 @@ name = "fallible-validation-option"
 harness = false
 path = "benches/fallible/validation_option.rs"
 required-features = ["std"]
+
+## benchmarks - stateful_using
+
+[[bench]]
+name = "stateful-using-monte-carlo-batch"
+harness = false
+path = "benches/stateful_using/monte_carlo_batch.rs"
+required-features = ["std"]
