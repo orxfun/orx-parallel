@@ -1,6 +1,0 @@
-# early_exit
-
-Pending benchmark results.
-Run benches with:
-- cargo bench --bench early-exit-suspicious-first
-- cargo bench --bench early-exit-suspicious-find-any

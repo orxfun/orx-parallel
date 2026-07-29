@@ -1,5 +1,0 @@
-# contention_merge
-
-Pending benchmark results.
-Run bench with:
-- cargo bench --bench contention-merge-grouped-topk
