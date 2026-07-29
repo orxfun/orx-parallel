@@ -124,14 +124,6 @@ harness = false
 path = "benches/het/advanced.rs"
 required-features = ["std"]
 
-## benchmarks - recursive
-
-[[bench]]
-name = "rec-file-system"
-harness = false
-path = "benches/rec/file_system.rs"
-required-features = ["rayon-core"]
-
 ## benchmarks - runner
 
 [[bench]]
@@ -321,6 +313,12 @@ path = "benches/arbitrary_iter/map_set_processing.rs"
 required-features = ["std"]
 
 ## benchmarks - recursive
+
+[[bench]]
+name = "recursive-file-system"
+harness = false
+path = "benches/recursive/file_system.rs"
+required-features = ["std", "rayon-core"]
 
 [[bench]]
 name = "recursive-tree-traversal"
