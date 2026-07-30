@@ -51,38 +51,32 @@ fn fibonacci(n: u64) -> u64 {
 }
 
 fn map_item(x: &u64) -> u64 {
-    7 * x + 1000
+    fibonacci((7 * x + 1000) % 10)
 }
 
-fn reduce_pair(a: u64, b: u64) -> u64 {
-    let f = fibonacci(a % 5);
-    let g = a.wrapping_add(f);
-    g.wrapping_add(b).wrapping_sub(f)
-}
-
-fn run_seq(input: &[u64]) -> Option<u64> {
+fn run_seq(input: &[u64]) -> Vec<u64> {
     black_box(input)
         .iter()
         .map(map_item)
         .filter(|&x| x % 2 == 0)
-        .reduce(reduce_pair)
+        .collect()
 }
 
-fn run_orx(input: &[u64], num_threads: usize, diag: bool) -> Option<u64> {
+fn run_orx(input: &[u64], num_threads: usize, diag: bool) -> Vec<u64> {
     let par = black_box(input)
         .iter()
         .iter_into_par()
-        .filter(|&&x| x % 2 == 0)
-        .num_threads(num_threads)
-        .map(map_item);
+        .map(map_item)
+        .filter(|&x| x % 2 == 0)
+        .num_threads(num_threads);
 
     match diag {
-        false => par.reduce(reduce_pair),
-        true => par.runner_with_diagnostics().reduce(reduce_pair),
+        false => par.collect(),
+        true => par.runner_with_diagnostics().collect(),
     }
 }
 
-fn run_once(input: &[u64], method: Method, num_threads: usize, diag: bool) -> Option<u64> {
+fn run_once(input: &[u64], method: Method, num_threads: usize, diag: bool) -> Vec<u64> {
     match method {
         Method::Seq => run_seq(input),
         Method::Orx => run_orx(input, num_threads, diag),
@@ -107,8 +101,9 @@ fn main() {
     }
 
     println!("Running {} timed iterations...", args.runs);
+    let expected = run_once(&input, Method::Seq, args.num_threads, false);
     let mut durations: Vec<Duration> = Vec::with_capacity(args.runs);
-    let mut result: Option<u64> = None;
+    let mut result = vec![];
 
     for i in 0..args.runs {
         let diag = args.diagnostics && i == 0;
@@ -116,6 +111,7 @@ fn main() {
         result = black_box(run_once(&input, args.method, args.num_threads, diag));
         durations.push(t0.elapsed());
     }
+    assert_eq!(result, expected);
 
     let total_ns: u64 = durations.iter().map(|d| d.as_nanos() as u64).sum();
     let avg_ns = total_ns / args.runs as u64;
@@ -126,5 +122,4 @@ fn main() {
     println!("avg: {:.3} ms", avg_ns as f64 / 1_000_000.0);
     println!("min: {:.3} ms", min_ns as f64 / 1_000_000.0);
     println!("max: {:.3} ms", max_ns as f64 / 1_000_000.0);
-    println!("output: {:?}", result);
 }
