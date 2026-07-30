@@ -2,6 +2,7 @@ use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
 use crate::results::{Val, ValIdx, ValsAndIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
+use alloc::vec;
 use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
@@ -13,25 +14,35 @@ pub trait ParRunnerInfallible: ParRunner {
         X: Xap<I = I::Item>,
         X::O: Send,
     {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+        match params.is_sequential() {
+            true => iter
+                .into_seq_iter()
+                .flat_map(|i| x.xap(i).into_iter())
+                .enumerate()
+                .next()
+                .map(|(idx, val)| ValIdx::new(val, idx)),
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, st, results, x) = (&iter, &state, &results_bag, x);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    Self::begin_thread(st, th_idx);
-                    let value = th::next::<Self, _, _>(th_idx, st, iter, x);
-                    results.push(value);
-                    Self::complete_thread(st, th_idx);
+                let (iter, st, results, x) = (&iter, &state, &results_bag, x);
+                self.pool_mut().scoped_computation(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            Self::begin_thread(st, th_idx);
+                            let value = th::next::<Self, _, _>(th_idx, st, iter, x);
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
                 });
-            }
-        });
 
-        Self::complete_computation(state);
-        ValIdx::first(results_bag.into_inner().into_inner())
+                Self::complete_computation(state);
+                ValIdx::first(results_bag.into_inner().into_inner())
+            }
+        }
     }
 
     fn next_any<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<X::O>
@@ -40,25 +51,33 @@ pub trait ParRunnerInfallible: ParRunner {
         X: Xap<I = I::Item>,
         X::O: Send,
     {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+        match params.is_sequential() {
+            true => iter
+                .into_seq_iter()
+                .flat_map(|i| x.xap(i).into_iter())
+                .next(),
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, st, results, x) = (&iter, &state, &results_bag, x);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    Self::begin_thread(st, th_idx);
-                    let value = th::next_any::<Self, _, _>(th_idx, st, iter, x);
-                    results.push(value);
-                    Self::complete_thread(st, th_idx);
+                let (iter, st, results, x) = (&iter, &state, &results_bag, x);
+                self.pool_mut().scoped_computation(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            Self::begin_thread(st, th_idx);
+                            let value = th::next_any::<Self, _, _>(th_idx, st, iter, x);
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
                 });
-            }
-        });
 
-        Self::complete_computation(state);
-        Val::first(results_bag.into_inner().into_inner())
+                Self::complete_computation(state);
+                Val::first(results_bag.into_inner().into_inner())
+            }
+        }
     }
 
     fn reduce<I, X, F>(&mut self, params: Params, iter: I, x: X, f: F) -> Option<X::O>
@@ -103,25 +122,36 @@ pub trait ParRunnerInfallible: ParRunner {
         X: Xap<I = I::Item>,
         X::O: Send,
     {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
-
-        let (iter, st, results) = (&iter, &state, &results_bag);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    Self::begin_thread(st, th_idx);
-                    let value = th::collect::<Self, _, _>(th_idx, st, iter, x);
-                    results.push(value);
-                    Self::complete_thread(st, th_idx);
-                });
+        match params.is_sequential() && false {
+            true => {
+                let values = iter
+                    .into_seq_iter()
+                    .flat_map(|i| x.xap(i).into_iter())
+                    .collect();
+                vec![ValsAndIdx::new_seq(values)]
             }
-        });
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        Self::complete_computation(state);
-        results_bag.into_inner().into_inner()
+                let (iter, st, results) = (&iter, &state, &results_bag);
+                self.pool_mut().scoped_computation(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            Self::begin_thread(st, th_idx);
+                            let value = th::collect::<Self, _, _>(th_idx, st, iter, x);
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
+                });
+
+                Self::complete_computation(state);
+                results_bag.into_inner().into_inner()
+            }
+        }
     }
 
     fn collect_arb<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<Vec<X::O>>
@@ -130,25 +160,34 @@ pub trait ParRunnerInfallible: ParRunner {
         X: Xap<I = I::Item>,
         X::O: Send,
     {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+        match params.is_sequential() {
+            true => vec![
+                iter.into_seq_iter()
+                    .flat_map(|i| x.xap(i).into_iter())
+                    .collect(),
+            ],
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, st, results) = (&iter, &state, &results_bag);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    Self::begin_thread(st, th_idx);
-                    let value = th::collect_arb::<Self, _, _>(th_idx, st, iter, x);
-                    results.push(value);
-                    Self::complete_thread(st, th_idx);
+                let (iter, st, results) = (&iter, &state, &results_bag);
+                self.pool_mut().scoped_computation(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            Self::begin_thread(st, th_idx);
+                            let value = th::collect_arb::<Self, _, _>(th_idx, st, iter, x);
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
                 });
-            }
-        });
 
-        Self::complete_computation(state);
-        results_bag.into_inner().into_inner()
+                Self::complete_computation(state);
+                results_bag.into_inner().into_inner()
+            }
+        }
     }
 
     #[cfg(feature = "experimental")]
