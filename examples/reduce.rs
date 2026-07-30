@@ -74,13 +74,11 @@ fn run_orx(input: &[u64], num_threads: usize, diag: bool) -> Option<u64> {
         .iter_into_par()
         .filter(|&&x| x % 2 == 0)
         .num_threads(num_threads)
-        // .runner(Runner::fixed(Pool::default(0)))
         .map(map_item);
 
-    if diag {
-        par.runner_with_diagnostics().reduce(reduce_pair)
-    } else {
-        par.reduce(reduce_pair)
+    match diag {
+        false => par.reduce(reduce_pair),
+        true => par.runner_with_diagnostics().reduce(reduce_pair),
     }
 }
 
