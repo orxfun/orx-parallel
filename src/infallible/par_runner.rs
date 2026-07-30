@@ -68,25 +68,33 @@ pub trait ParRunnerInfallible: ParRunner {
         F: Fn(X::O, X::O) -> X::O + Send + Copy,
         X::O: Send,
     {
-        let mut spawned = 0;
-        let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
-        let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+        match params.is_sequential() {
+            true => iter
+                .into_seq_iter()
+                .flat_map(|i| x.xap(i).into_iter())
+                .reduce(f),
+            _ => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
-        let (iter, st, results, x) = (&iter, &state, &results_bag, x);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    Self::begin_thread(st, th_idx);
-                    let value = th::reduce::<Self, _, _, _>(th_idx, st, iter, x, f);
-                    results.push(value);
-                    Self::complete_thread(st, th_idx);
+                let (iter, st, results, x) = (&iter, &state, &results_bag, x);
+                self.pool_mut().scoped_computation(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            Self::begin_thread(st, th_idx);
+                            let value = th::reduce::<Self, _, _, _>(th_idx, st, iter, x, f);
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
                 });
-            }
-        });
 
-        Self::complete_computation(state);
-        Val::reduce(results_bag.into_inner().into_inner(), f)
+                Self::complete_computation(state);
+                Val::reduce(results_bag.into_inner().into_inner(), f)
+            }
+        }
     }
 
     fn collect<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<ValsAndIdx<X::O>>
