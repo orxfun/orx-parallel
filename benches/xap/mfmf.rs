@@ -4,7 +4,7 @@ use orx_parallel::infallible::{Xap, fun::FnCopied, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;
