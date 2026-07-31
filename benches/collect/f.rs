@@ -1,6 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
-use orx_parallel::IterationOrder::Arbitrary;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
