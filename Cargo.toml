@@ -124,13 +124,152 @@ harness = false
 path = "benches/het/advanced.rs"
 required-features = ["std"]
 
-## benchmarks - runner
+## benchmarks - xap
 
 [[bench]]
-name = "runner-mf-r"
+name = "xap-cf"
 harness = false
-path = "benches/runner/mf_r.rs"
-required-features = ["rayon-core"]
+path = "benches/xap/cf.rs"
+
+[[bench]]
+name = "xap-cmmmm"
+harness = false
+path = "benches/xap/cmmmm.rs"
+
+[[bench]]
+name = "xap-f"
+harness = false
+path = "benches/xap/f.rs"
+
+[[bench]]
+name = "xap-ff"
+harness = false
+path = "benches/xap/ff.rs"
+
+[[bench]]
+name = "xap-fff"
+harness = false
+path = "benches/xap/fff.rs"
+
+[[bench]]
+name = "xap-ffff"
+harness = false
+path = "benches/xap/ffff.rs"
+
+[[bench]]
+name = "xap-i"
+harness = false
+path = "benches/xap/i.rs"
+
+[[bench]]
+name = "xap-ii"
+harness = false
+path = "benches/xap/ii.rs"
+
+[[bench]]
+name = "xap-iii"
+harness = false
+path = "benches/xap/iii.rs"
+
+[[bench]]
+name = "xap-iiii"
+harness = false
+path = "benches/xap/iiii.rs"
+
+[[bench]]
+name = "xap-l-cons"
+harness = false
+path = "benches/xap/l_cons.rs"
+
+[[bench]]
+name = "xap-l-iter"
+harness = false
+path = "benches/xap/l_iter.rs"
+
+[[bench]]
+name = "xap-l-vec"
+harness = false
+path = "benches/xap/l_vec.rs"
+
+[[bench]]
+name = "xap-lf"
+harness = false
+path = "benches/xap/lf.rs"
+
+[[bench]]
+name = "xap-ll-cons"
+harness = false
+path = "benches/xap/ll_cons.rs"
+
+[[bench]]
+name = "xap-ll-iter"
+harness = false
+path = "benches/xap/ll_iter.rs"
+
+[[bench]]
+name = "xap-ll-vec"
+harness = false
+path = "benches/xap/ll_vec.rs"
+
+[[bench]]
+name = "xap-lll-cons"
+harness = false
+path = "benches/xap/lll_cons.rs"
+
+[[bench]]
+name = "xap-lll-iter"
+harness = false
+path = "benches/xap/lll_iter.rs"
+
+[[bench]]
+name = "xap-lll-vec"
+harness = false
+path = "benches/xap/lll_vec.rs"
+
+[[bench]]
+name = "xap-lm"
+harness = false
+path = "benches/xap/lm.rs"
+
+[[bench]]
+name = "xap-zzzzzzz"
+harness = false
+path = "benches/xap/zzzzzzz.rs"
+
+[[bench]]
+name = "xap-m"
+harness = false
+path = "benches/xap/m.rs"
+
+[[bench]]
+name = "xap-mf"
+harness = false
+path = "benches/xap/mf.rs"
+
+[[bench]]
+name = "xap-mfm"
+harness = false
+path = "benches/xap/mfm.rs"
+
+[[bench]]
+name = "xap-mfmf"
+harness = false
+path = "benches/xap/mfmf.rs"
+
+[[bench]]
+name = "xap-mfmfmf"
+harness = false
+path = "benches/xap/mfmfmf.rs"
+
+[[bench]]
+name = "xap-mm"
+harness = false
+path = "benches/xap/mm.rs"
+
+[[bench]]
+name = "xap-mmmm"
+harness = false
+path = "benches/xap/mmmm.rs"
 
 ## benchmarks - first
 
