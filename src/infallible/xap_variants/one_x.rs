@@ -2,6 +2,7 @@ use crate::infallible::fun::FlatMap;
 use crate::infallible::xap::{Xap, XapOne};
 use crate::sizes::{Many, One};
 
+/// One-to-one xap followed by a flat-map step.
 pub struct OneX<X: Xap<Size = One>, G: FlatMap<I = X::O>> {
     x: X,
     g: G,
@@ -16,6 +17,7 @@ impl<X: Xap<Size = One>, G: FlatMap<I = X::O>> Clone for OneX<X, G> {
 impl<X: Xap<Size = One>, G: FlatMap<I = X::O>> Copy for OneX<X, G> {}
 
 impl<X: Xap<Size = One>, G: FlatMap<I = X::O>> OneX<X, G> {
+    /// Creates a one-to-many xap.
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }

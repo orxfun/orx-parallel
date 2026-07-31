@@ -3,6 +3,7 @@ use crate::infallible::xap::Xap;
 use crate::sizes::One;
 use core::marker::PhantomData;
 
+/// Identity xap that returns the input unchanged.
 pub struct Id<I>(PhantomData<I>);
 
 impl<I> Clone for Id<I> {
@@ -16,6 +17,7 @@ impl<I> Copy for Id<I> {}
 unsafe impl<I> Send for Id<I> {}
 
 impl<I> Id<I> {
+    /// Creates an identity xap.
     pub const fn new() -> Self {
         Self(PhantomData)
     }

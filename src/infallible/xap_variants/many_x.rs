@@ -2,6 +2,7 @@ use crate::infallible::fun::FlatMap;
 use crate::infallible::xap::Xap;
 use crate::sizes::Many;
 
+/// Many-valued xap followed by a flat-map step.
 pub struct ManyX<X: Xap<Size = Many>, G: FlatMap<I = X::O>> {
     x: X,
     g: G,
@@ -16,6 +17,7 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Clone for ManyX<X, G> {
 impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Copy for ManyX<X, G> {}
 
 impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> ManyX<X, G> {
+    /// Creates a many-valued flat-map xap.
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
@@ -40,6 +42,7 @@ impl<X: Xap<Size = Many>, G: FlatMap<I = X::O>> Xap for ManyX<X, G> {
 
 // iter
 
+/// Iterator returned by a many-valued flat-map xap.
 pub struct IterManyX<I, G>
 where
     I: Iterator,

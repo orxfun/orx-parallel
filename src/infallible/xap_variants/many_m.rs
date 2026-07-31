@@ -5,6 +5,7 @@ use crate::infallible::xap::Xap;
 use crate::sizes::Many;
 use core::iter::FusedIterator;
 
+/// Many-valued xap followed by a map step.
 pub struct ManyM<X: Xap<Size = Many>, G: Map<I = X::O>> {
     x: X,
     g: G,
@@ -19,6 +20,7 @@ impl<X: Xap<Size = Many>, G: Map<I = X::O>> Clone for ManyM<X, G> {
 impl<X: Xap<Size = Many>, G: Map<I = X::O>> Copy for ManyM<X, G> {}
 
 impl<X: Xap<Size = Many>, G: Map<I = X::O>> ManyM<X, G> {
+    /// Creates a many-valued mapped xap.
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
@@ -52,6 +54,7 @@ impl<X: Xap<Size = Many>, G: Map<I = X::O>> Xap for ManyM<X, G> {
 
 // iter
 
+/// Iterator returned by a many-valued mapped xap.
 pub struct IterManyM<I, G>
 where
     I: Iterator,
