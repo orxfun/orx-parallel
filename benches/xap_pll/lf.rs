@@ -1,33 +1,5 @@
-/*
-
-The goal of this benchmark is to measure the overhead of Xap abstraction.
-Operations after iteration are kept to be as simple as possible to observe the overhead.
-
-SUM:
-xap_p_lf/iter/1024      time:   [2.0020 µs 2.0100 µs 2.0179 µs]
-xap_p_lf/xap/1024       time:   [2.0557 µs 2.0654 µs 2.0747 µs]
-
-xap_p_lf/iter/32768     time:   [174.70 µs 175.79 µs 176.89 µs]
-xap_p_lf/xap/32768      time:   [179.30 µs 180.63 µs 182.11 µs]
-
-REDUCE:
-xap_p_lf/iter/1024  time:   [3.3685 µs 3.3886 µs 3.4085 µs]
-xap_p_lf/xap/1024   time:   [3.4032 µs 3.4224 µs 3.4425 µs]
-
-xap_p_lf/iter/32768 time:   [127.38 µs 128.06 µs 128.82 µs]
-xap_p_lf/xap/32768  time:   [128.42 µs 129.19 µs 129.97 µs]
-
-
-COLLECT:
-xap_p_lf/iter/1024      time:   [11.551 µs 11.713 µs 11.873 µs]
-xap_p_lf/xap/1024       time:   [11.200 µs 11.274 µs 11.355 µs]
-
-xap_p_lf/iter/32768     time:   [523.77 µs 529.19 µs 535.50 µs]
-xap_p_lf/xap/32768      time:   [514.21 µs 517.57 µs 520.85 µs]
-
-*/
-
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use orx_criterion::{Experiment, Factors};
 use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -168,27 +140,77 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     E::out(iter, |i| xap.xap(i))
 }
 
-fn run(c: &mut Criterion) {
-    let len = [1 << 10, 1 << 15];
+#[derive(Clone, Copy)]
+struct InputVariant {
+    n: usize,
+}
 
-    let mut group = c.benchmark_group("xap_p_lf");
-
-    for n in len {
-        let input = inputs(n);
-        let expected = iter::<Output>(&input);
-
-        group.bench_with_input(BenchmarkId::new("iter", n), &n, |b, _| {
-            assert_eq!(&expected, &iter::<Output>(&input));
-            b.iter(|| iter::<Output>(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("xap", n), &n, |b, _| {
-            assert_eq!(&expected, &xap::<Output>(&input));
-            b.iter(|| xap::<Output>(black_box(&input)))
-        });
+impl Factors for InputVariant {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["n"]
     }
 
-    group.finish();
+    fn factor_levels(&self) -> Vec<String> {
+        vec![self.n.to_string()]
+    }
+}
+
+enum Method {
+    Iter,
+    XapPll,
+}
+
+impl Factors for Method {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["method"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![match self {
+            Self::Iter => "iter".to_string(),
+            Self::XapPll => "xap_pll".to_string(),
+        }]
+    }
+}
+
+struct Bench;
+
+impl Experiment for Bench {
+    type InputFactors = InputVariant;
+
+    type AlgFactors = Method;
+
+    type Input = Vec<u64>;
+
+    type Output = <Output as Exp>::Out;
+
+    fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
+        inputs(input_variant.n)
+    }
+
+    fn execute(
+        &mut self,
+        _: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        match alg_variant {
+            Method::Iter => iter::<Output>(input),
+            Method::XapPll => xap::<Output>(input),
+        }
+    }
+
+    fn expected_output(&self, _: &Self::InputFactors, input: &Self::Input) -> Option<Self::Output> {
+        Some(iter::<Output>(input))
+    }
+}
+
+fn run(c: &mut Criterion) {
+    let len = [1 << 10, 1 << 15];
+    let treatments: Vec<_> = len.into_iter().map(|n| InputVariant { n }).collect();
+    let variants = vec![Method::Iter, Method::XapPll];
+
+    Bench.bench(c, "xap_p_lf", &treatments, &variants);
 }
 
 criterion_group!(benches, run);

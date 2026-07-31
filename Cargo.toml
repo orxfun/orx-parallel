@@ -271,6 +271,58 @@ name = "xap-mmmm"
 harness = false
 path = "benches/xap/mmmm.rs"
 
+## benchmarks - xap-pll
+
+[[bench]]
+name = "xap-pll-fff"
+harness = false
+path = "benches/xap_pll/fff.rs"
+
+[[bench]]
+name = "xap-pll-iii"
+harness = false
+path = "benches/xap_pll/iii.rs"
+
+[[bench]]
+name = "xap-pll-l-vec"
+harness = false
+path = "benches/xap_pll/l_vec.rs"
+
+[[bench]]
+name = "xap-pll-lf"
+harness = false
+path = "benches/xap_pll/lf.rs"
+
+[[bench]]
+name = "xap-pll-lfmi"
+harness = false
+path = "benches/xap_pll/lfmi.rs"
+
+[[bench]]
+name = "xap-pll-lfmli"
+harness = false
+path = "benches/xap_pll/lfmli.rs"
+
+[[bench]]
+name = "xap-pll-lfmli2"
+harness = false
+path = "benches/xap_pll/lfmli2.rs"
+
+[[bench]]
+name = "xap-pll-ll-vec"
+harness = false
+path = "benches/xap_pll/ll_vec.rs"
+
+[[bench]]
+name = "xap-pll-lll-vec"
+harness = false
+path = "benches/xap_pll/lll_vec.rs"
+
+[[bench]]
+name = "xap-pll-mmm"
+harness = false
+path = "benches/xap_pll/mmm.rs"
+
 ## benchmarks - first
 
 [[bench]]
