@@ -79,7 +79,7 @@ fn format_number(idx: u64) -> (String, StringAgg) {
     let value = (idx.wrapping_mul(2654435761)).wrapping_add(0x9E3779B1);
     let formatted = format!("NUM_{:016x}_VAL_{}", idx, value);
     let len = formatted.len() as u64;
-    let checksum = (idx ^ value as u64).wrapping_mul(31).wrapping_add(len);
+    let checksum = (idx ^ value).wrapping_mul(31).wrapping_add(len);
 
     (
         formatted,

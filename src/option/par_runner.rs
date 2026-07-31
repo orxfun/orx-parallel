@@ -86,10 +86,7 @@ pub trait ParRunnerOpt: ParRunner {
                     .next();
                 match first {
                     None => Some(None),
-                    Some(result) => match result {
-                        Some(val) => Some(Some(val)),
-                        None => None,
-                    },
+                    Some(result) => result.map(Some),
                 }
             }
             false => {

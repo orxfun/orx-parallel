@@ -190,7 +190,7 @@ fn rayon_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
                 .children
                 .par_iter()
                 .map(visit)
-                .reduce(|| TreeAgg::default(), merge_agg);
+                .reduce(TreeAgg::default, merge_agg);
             merge_agg(local, child_agg)
         }
 
@@ -202,7 +202,7 @@ fn orx_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
     [root]
         .into_par_recursive(|node| &node.children)
         .num_threads(num_threads)
-        .map(|node| process_node(node))
+        .map(process_node)
         .reduce(merge_agg)
         .unwrap_or_default()
 }
@@ -212,7 +212,7 @@ fn orx_fixed_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
         .into_par_recursive(|node| &node.children)
         .runner(Runner::fixed(Pool::default(num_threads)))
         .num_threads(num_threads)
-        .map(|node| process_node(node))
+        .map(process_node)
         .reduce(merge_agg)
         .unwrap_or_default()
 }
@@ -226,7 +226,7 @@ fn orx_lin_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
     linearized
         .into_par()
         .num_threads(num_threads)
-        .map(|node| process_node(node))
+        .map(process_node)
         .reduce(merge_agg)
         .unwrap_or_default()
 }
@@ -242,7 +242,7 @@ fn orx_fixed_lin_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
         .into_par()
         .runner(Runner::fixed(Pool::default(num_threads)))
         .num_threads(num_threads)
-        .map(|node| process_node(node))
+        .map(process_node)
         .reduce(merge_agg)
         .unwrap_or_default()
 }
