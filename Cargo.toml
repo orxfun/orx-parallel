@@ -232,11 +232,6 @@ harness = false
 path = "benches/xap/lm.rs"
 
 [[bench]]
-name = "xap-zzzzzzz"
-harness = false
-path = "benches/xap/zzzzzzz.rs"
-
-[[bench]]
 name = "xap-m"
 harness = false
 path = "benches/xap/m.rs"
