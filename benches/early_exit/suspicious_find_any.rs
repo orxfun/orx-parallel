@@ -187,7 +187,7 @@ impl Experiment for Exp {
                 .map(|e| e.source),
             Method::OrxFixed => input
                 .into_par()
-                .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                 .iteration_order(IterationOrder::Arbitrary)
                 .num_threads(input_variant.num_threads)
                 .find(|e| is_suspicious(e))

@@ -211,7 +211,7 @@ impl Experiment for Exp {
             Method::OrxFixed => input
                 .as_slice()
                 .into_par()
-                .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                 .num_threads(input_variant.num_threads)
                 .use_new(|_| ThreadState::new())
                 .map(|state, seed| simulate(state, *seed, steps, with_trace))

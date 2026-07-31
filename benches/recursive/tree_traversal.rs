@@ -210,7 +210,7 @@ fn orx_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
 fn orx_fixed_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
     [root]
         .into_par_recursive(|node| &node.children)
-        .runner(Runner::fixed(Pool::default(num_threads)))
+        .runner(Runner::fixed(Pool::once(num_threads)))
         .num_threads(num_threads)
         .map(process_node)
         .reduce(merge_agg)
@@ -234,13 +234,13 @@ fn orx_lin_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
 fn orx_fixed_lin_traverse(root: &TreeNode, num_threads: usize) -> TreeAgg {
     let linearized: Vec<_> = [root]
         .into_par_recursive(|node| &node.children)
-        .runner(Runner::fixed(Pool::default(num_threads)))
+        .runner(Runner::fixed(Pool::once(num_threads)))
         .num_threads(num_threads)
         .collect();
 
     linearized
         .into_par()
-        .runner(Runner::fixed(Pool::default(num_threads)))
+        .runner(Runner::fixed(Pool::once(num_threads)))
         .num_threads(num_threads)
         .map(process_node)
         .reduce(merge_agg)

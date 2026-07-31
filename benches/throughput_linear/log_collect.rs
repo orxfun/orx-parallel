@@ -209,14 +209,14 @@ impl Experiment for Exp {
             Method::OrxFixed => match h {
                 true => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                    .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                     .num_threads(input_variant.num_threads)
                     .filter(|r| keep(r))
                     .map(parse_project_heavy)
                     .collect(),
                 false => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
+                    .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
                     .num_threads(input_variant.num_threads)
                     .filter(|r| keep(r))
                     .map(parse_project_light)

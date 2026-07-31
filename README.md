@@ -55,21 +55,7 @@ Pick `orx-parallel` when:
 
 ### 1) Performance on real iterator pipelines
 
-Benchmarks are in [benches](benches) with captured outputs such as:
-
-- [benches/collect/run_results.txt](benches/collect/run_results.txt)
-- [benches/reduce/run_results.txt](benches/reduce/run_results.txt)
-- [benches/first/run_results.txt](benches/first/run_results.txt)
-- [benches/het/run_results.txt](benches/het/run_results.txt)
-- [benches/rec/run_results.txt](benches/rec/run_results.txt)
-
-Sample results from those files (same machine/run set):
-
-- `reduce_mf` (heavy, n=2e20): `orx = 6,636,929 ns`, `rayon = 17,711,519 ns` (~2.67x faster for `orx`)
-- `first_f` (heavy-mid, n=2e20, nt=32): `orx = 6,860,511 ns`, `rayon = 24,283,885 ns` (~3.54x faster for `orx`)
-- `col_l` (heavy, n=2e20): `orx-arb-vec2 = 18,013,458 ns`, `rayon-vec = 52,945,777 ns` (~2.94x faster for `orx`)
-
-As usual with parallel workloads, outcomes depend on workload shape and scheduling. Some cases favor Rayon; many measured scenarios here favor `orx-parallel`.
+TODO: will re-evaluate
 
 ### 2) API convenience close to `Iterator`
 
@@ -174,13 +160,7 @@ Optional features for advanced scenarios:
 
 ## More Documentation
 
-- API docs: <https://docs.rs/orx-parallel>
-- Threading model: [docs/threading_model.md](docs/threading_model.md)
-- WebAssembly usage, setup, and troubleshooting: [docs/wasm.md](docs/wasm.md)
-- WebAssembly internals and backend details: [docs/wasm_internals.md](docs/wasm_internals.md)
-- Using mutable per-thread state safely: [docs/using.md](docs/using.md)
-- Examples folder: [examples](examples)
-- Bench suite: [benches](benches)
+TODO: will re-write
 
 ## Contributing
 
