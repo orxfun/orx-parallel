@@ -3,6 +3,7 @@ use crate::infallible::xap::{Xap, XapBin};
 use crate::sizes::{Bin, Many};
 use core::iter::FusedIterator;
 
+/// Zero-or-one xap followed by a flat-map step.
 pub struct BinX<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> {
     x: X,
     g: G,
@@ -17,6 +18,7 @@ impl<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> Clone for BinX<X, G> {
 impl<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> Copy for BinX<X, G> {}
 
 impl<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> BinX<X, G> {
+    /// Creates an optional flat-map xap.
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
@@ -40,6 +42,7 @@ impl<X: Xap<Size = Bin>, G: FlatMap<I = X::O>> Xap for BinX<X, G> {
 
 // iter
 
+/// Iterator returned by a binary flat-map xap.
 pub struct IterBinX<I: Iterator> {
     i: Option<I>,
 }

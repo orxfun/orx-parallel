@@ -3,6 +3,7 @@ use crate::infallible::xap::Xap;
 use crate::sizes::Many;
 use core::iter::FusedIterator;
 
+/// Many-valued xap followed by a filter-map step.
 pub struct ManyF<X: Xap<Size = Many>, G: FilterMap<I = X::O>> {
     x: X,
     g: G,
@@ -17,6 +18,7 @@ impl<X: Xap<Size = Many>, G: FilterMap<I = X::O>> Clone for ManyF<X, G> {
 impl<X: Xap<Size = Many>, G: FilterMap<I = X::O>> Copy for ManyF<X, G> {}
 
 impl<X: Xap<Size = Many>, G: FilterMap<I = X::O>> ManyF<X, G> {
+    /// Creates a many-valued filter-map xap.
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
@@ -40,6 +42,7 @@ impl<X: Xap<Size = Many>, G: FilterMap<I = X::O>> Xap for ManyF<X, G> {
 
 // iter
 
+/// Iterator returned by a many-valued filter-map xap.
 pub struct IterManyF<I, G>
 where
     I: Iterator,

@@ -4,6 +4,7 @@ use crate::infallible::fun::MapEnum;
 use crate::infallible::xap::{Xap, XapOne};
 use crate::sizes::One;
 
+/// One-to-one xap followed by a map step.
 pub struct OneM<X: Xap<Size = One>, G: Map<I = X::O>> {
     x: X,
     g: G,
@@ -18,6 +19,7 @@ impl<X: Xap<Size = One>, G: Map<I = X::O>> Clone for OneM<X, G> {
 impl<X: Xap<Size = One>, G: Map<I = X::O>> Copy for OneM<X, G> {}
 
 impl<X: Xap<Size = One>, G: Map<I = X::O>> OneM<X, G> {
+    /// Creates a one-to-one mapped xap.
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }
