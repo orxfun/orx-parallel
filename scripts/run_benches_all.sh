@@ -14,14 +14,18 @@ fi
 
 # Benchmark categories to run (exclude xap, xap_pll)
 CATEGORIES=(
-    "throughput_linear"
+    "arbitrary_iter"
+    "collect"
+    "contention_merge"
     "early_exit"
     "fallible"
-    "stateful_using"
-    "arbitrary_iter"
-    "recursive"
-    "contention_merge"
+    "first"
+    "het"
     "memory_pressure"
+    "recursive"
+    "reduce"
+    "stateful_using"
+    "throughput_linear"
 )
 
 echo "Running all benchmark categories..."
