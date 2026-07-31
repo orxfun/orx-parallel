@@ -68,7 +68,7 @@ criterion = { version = "0.8", features = ["html_reports"] }
 all-features = true
 
 [features]
-default = ["std", "rayon-core", "rayon"]
+default = ["std"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 long-tests = []
@@ -123,14 +123,6 @@ name = "het-advanced"
 harness = false
 path = "benches/het/advanced.rs"
 required-features = ["std"]
-
-## benchmarks - recursive
-
-[[bench]]
-name = "rec-file-system"
-harness = false
-path = "benches/rec/file_system.rs"
-required-features = ["rayon-core"]
 
 ## benchmarks - runner
 
@@ -261,3 +253,91 @@ path = "benches/reduce/mfm.rs"
 name = "reduce-mfmf"
 harness = false
 path = "benches/reduce/mfmf.rs"
+
+## benchmarks - throughput_linear
+
+[[bench]]
+name = "throughput-linear-log-collect"
+harness = false
+path = "benches/throughput_linear/log_collect.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "throughput-linear-log-reduce"
+harness = false
+path = "benches/throughput_linear/log_reduce.rs"
+required-features = ["std"]
+
+## benchmarks - early_exit
+
+[[bench]]
+name = "early-exit-suspicious-first"
+harness = false
+path = "benches/early_exit/suspicious_first.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "early-exit-suspicious-find-any"
+harness = false
+path = "benches/early_exit/suspicious_find_any.rs"
+required-features = ["std"]
+
+## benchmarks - fallible
+
+[[bench]]
+name = "fallible-validation-result"
+harness = false
+path = "benches/fallible/validation_result.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "fallible-validation-option"
+harness = false
+path = "benches/fallible/validation_option.rs"
+required-features = ["std"]
+
+## benchmarks - stateful_using
+
+[[bench]]
+name = "stateful-using-monte-carlo-batch"
+harness = false
+path = "benches/stateful_using/monte_carlo_batch.rs"
+required-features = ["std"]
+
+## benchmarks - arbitrary_iter
+
+[[bench]]
+name = "arbitrary-iter-map-set-processing"
+harness = false
+path = "benches/arbitrary_iter/map_set_processing.rs"
+required-features = ["std"]
+
+## benchmarks - recursive
+
+[[bench]]
+name = "recursive-file-system"
+harness = false
+path = "benches/recursive/file_system.rs"
+required-features = ["std", "rayon-core"]
+
+[[bench]]
+name = "recursive-tree-traversal"
+harness = false
+path = "benches/recursive/tree_traversal.rs"
+required-features = ["std"]
+
+## benchmarks - contention_merge
+
+[[bench]]
+name = "contention-merge-grouped-topk"
+harness = false
+path = "benches/contention_merge/grouped_topk.rs"
+required-features = ["std"]
+
+## benchmarks - memory_pressure
+
+[[bench]]
+name = "memory-pressure-string-formatting"
+harness = false
+path = "benches/memory_pressure/string_formatting.rs"
+required-features = ["std"]

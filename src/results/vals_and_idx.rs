@@ -1,3 +1,4 @@
+use alloc::vec;
 use alloc::vec::Vec;
 
 /// Marks the starting input index and number of consecutive elements.
@@ -18,6 +19,14 @@ impl<T> ValsAndIdx<T> {
             values: Vec::new(),
             positions: Vec::new(),
         }
+    }
+
+    pub fn new_seq(values: Vec<T>) -> Self {
+        let positions = vec![IdxLen {
+            idx: 0,
+            len: values.len(),
+        }];
+        Self { values, positions }
     }
 
     #[inline]

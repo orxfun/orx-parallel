@@ -135,6 +135,41 @@ fn orx(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize, adapt
     .unwrap_or(0)
 }
 
+fn orx_lin(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+    let linearized: Vec<_> = fs
+        .roots
+        .iter()
+        .copied()
+        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .chunk_size(chunk_size)
+        .collect();
+
+    linearized
+        .into_par()
+        .runner(Runner::adaptive(pool))
+        .map(|idx| fs.nodes[idx].compute_score(work))
+        .reduce(|a, b| a + b)
+        .unwrap_or(0)
+}
+
+fn orx_lin_fix(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+    let linearized: Vec<_> = fs
+        .roots
+        .iter()
+        .copied()
+        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .chunk_size(chunk_size)
+        .runner(Runner::fixed(pool))
+        .collect();
+
+    linearized
+        .into_par()
+        .runner(Runner::fixed(pool))
+        .map(|idx| fs.nodes[idx].compute_score(work))
+        .reduce(|a, b| a + b)
+        .unwrap_or(0)
+}
+
 #[derive(Clone)]
 struct Input {
     num_nodes: usize,
@@ -164,8 +199,10 @@ impl Factors for Input {
 enum Method {
     Seq,
     Rayon,
+    Orx { chunk_size: usize },
     OrxFix { chunk_size: usize },
-    OrxAdaptive { chunk_size: usize },
+    OrxLin { chunk_size: usize },
+    OrxFixLin { chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -178,7 +215,9 @@ impl Factors for Method {
             Self::Seq => "seq".to_string(),
             Self::Rayon => "rayon".to_string(),
             Self::OrxFix { chunk_size } => format!("orx-fix-{chunk_size}"),
-            Self::OrxAdaptive { chunk_size } => format!("orx-adaptive-{chunk_size}"),
+            Self::Orx { chunk_size } => format!("orx-adaptive-{chunk_size}"),
+            Self::OrxLin { chunk_size } => format!("orx-lin-{chunk_size}"),
+            Self::OrxFixLin { chunk_size } => format!("orx-fix-lin-{chunk_size}"),
         }]
     }
 }
@@ -228,13 +267,19 @@ impl Experiment for Exp {
                 *chunk_size,
                 false,
             ),
-            Method::OrxAdaptive { chunk_size } => orx(
+            Method::Orx { chunk_size } => orx(
                 &input.pool,
                 &input.fs,
                 input_variant.work,
                 *chunk_size,
                 true,
             ),
+            Method::OrxLin { chunk_size } => {
+                orx_lin(&input.pool, &input.fs, input_variant.work, *chunk_size)
+            }
+            Method::OrxFixLin { chunk_size } => {
+                orx_lin_fix(&input.pool, &input.fs, input_variant.work, *chunk_size)
+            }
         }
     }
 
@@ -279,8 +324,12 @@ fn run(c: &mut Criterion) {
         Method::Rayon,
         Method::OrxFix { chunk_size: 0 },
         Method::OrxFix { chunk_size: 1024 },
-        Method::OrxAdaptive { chunk_size: 0 },
-        Method::OrxAdaptive { chunk_size: 1024 },
+        Method::Orx { chunk_size: 0 },
+        Method::Orx { chunk_size: 1024 },
+        Method::OrxFixLin { chunk_size: 0 },
+        Method::OrxFixLin { chunk_size: 1024 },
+        Method::OrxLin { chunk_size: 0 },
+        Method::OrxLin { chunk_size: 1024 },
     ];
 
     Exp.bench(c, "rec_file_system", &treatments, &variants);

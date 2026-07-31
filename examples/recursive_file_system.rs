@@ -5,7 +5,7 @@ use orx_parallel::*;
 /// Represents a directory in the file system.
 struct Dir {
     name: &'static str,
-    /// Number of files directly inside this directory (not counting subdirs).
+    /// Number of files directly inside this directory (not counting subdir's).
     file_count: usize,
     children: Vec<Dir>,
 }
