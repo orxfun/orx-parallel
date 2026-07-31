@@ -19,7 +19,7 @@ extern crate std;
 
 mod collectables;
 mod common_par_traits;
-mod infallible;
+pub mod infallible;
 mod infallible_use;
 mod into_parallel;
 mod ops;
