@@ -100,10 +100,11 @@ pub trait ParRunnerInfallibleUse: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0) as *mut U::Item;
+                let u_xap = u.init_get(0) as *mut U::Item;
+                let u_f = u.get(0);
                 iter.into_seq_iter()
-                    .flat_map(|i| x.xap_use(u, i).into_iter())
-                    .reduce(|a, b| f(unsafe { &mut *u }, a, b))
+                    .flat_map(|i| x.xap_use(u_xap, i).into_iter())
+                    .reduce(|a, b| f(u_f, a, b))
             }
             false => {
                 let mut spawned = 0;
