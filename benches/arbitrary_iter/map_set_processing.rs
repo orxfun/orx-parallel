@@ -143,11 +143,8 @@ fn seq_set(set: &HashSet<u64>) -> Agg {
         .unwrap_or_default()
 }
 
-fn rayon_map(map: &HashMap<u64, u32>, num_threads: usize) -> Agg {
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build()
-        .unwrap();
+fn rayon_map(map: &HashMap<u64, u32>, nt: usize) -> Agg {
+    let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
 
     pool.install(|| {
         map.iter()
@@ -159,11 +156,8 @@ fn rayon_map(map: &HashMap<u64, u32>, num_threads: usize) -> Agg {
     })
 }
 
-fn rayon_set(set: &HashSet<u64>, num_threads: usize) -> Agg {
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build()
-        .unwrap();
+fn rayon_set(set: &HashSet<u64>, nt: usize) -> Agg {
+    let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
 
     pool.install(|| {
         set.iter()
@@ -175,39 +169,35 @@ fn rayon_set(set: &HashSet<u64>, num_threads: usize) -> Agg {
     })
 }
 
-fn orx_map(map: &HashMap<u64, u32>, fixed_runner: bool, num_threads: usize) -> Agg {
+fn orx_map(map: &HashMap<u64, u32>, fixed_runner: bool, nt: usize) -> Agg {
     let par = map
         .iter()
         .iter_into_par()
-        .num_threads(num_threads)
+        .num_threads(nt)
         .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
         .filter(|x| keep(*x))
         .map(Agg::from_val);
 
     let result = match fixed_runner {
         false => par.reduce(merge),
-        true => par
-            .runner(Runner::fixed(Pool::default(num_threads)))
-            .reduce(merge),
+        true => par.runner(Runner::fixed(Pool::default(nt))).reduce(merge),
     };
 
     result.unwrap_or_default()
 }
 
-fn orx_set(set: &HashSet<u64>, fixed_runner: bool, num_threads: usize) -> Agg {
+fn orx_set(set: &HashSet<u64>, fixed_runner: bool, nt: usize) -> Agg {
     let par = set
         .iter()
         .iter_into_par()
-        .num_threads(num_threads)
+        .num_threads(nt)
         .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
         .filter(|x| keep(*x))
         .map(Agg::from_val);
 
     let result = match fixed_runner {
         false => par.reduce(merge),
-        true => par
-            .runner(Runner::fixed(Pool::default(num_threads)))
-            .reduce(merge),
+        true => par.runner(Runner::fixed(Pool::default(nt))).reduce(merge),
     };
 
     result.unwrap_or_default()
