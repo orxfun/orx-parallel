@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
+use orx_parallel::IterationOrder::Arbitrary;
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
@@ -53,7 +53,6 @@ fn f2(a: &u64) -> bool {
 struct InputVariant {
     n: usize,
     heavy: bool,
-    num_threads: usize,
 }
 
 impl InputVariant {
@@ -64,7 +63,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "task", "nt"]
+        vec!["n", "task"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -75,20 +74,18 @@ impl Factors for InputVariant {
                 false => "light",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
 enum Method {
     SeqVec,
-    RayonVec,
-    RayonVecList,
-    OrxVec,
-    OrxArbVec,
-    OrxArbVecVec,
-    OrxVecFixed,
+    RayonVec { nt: usize },
+    RayonVecList { nt: usize },
+    OrxVec { nt: usize },
+    OrxArbVec { nt: usize },
+    OrxArbVecVec { nt: usize },
+    OrxVecFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -97,18 +94,15 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::SeqVec => "seq-vec",
-                Self::RayonVec => "rayon-vec",
-                Self::RayonVecList => "rayon-veclist",
-                Self::OrxVec => "orx-vec",
-                Self::OrxArbVec => "orx-arb-vec",
-                Self::OrxArbVecVec => "orx-arb-vec2",
-                Self::OrxVecFixed => "orx-vec-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::SeqVec => "seq-vec".to_string(),
+            Self::RayonVec { nt } => format!("rayon-vec-{nt}"),
+            Self::RayonVecList { nt } => format!("rayon-veclist-{nt}"),
+            Self::OrxVec { nt } => format!("orx-vec-{nt}"),
+            Self::OrxArbVec { nt } => format!("orx-arb-vec-{nt}"),
+            Self::OrxArbVecVec { nt } => format!("orx-arb-vec2-{nt}"),
+            Self::OrxVecFixed { nt } => format!("orx-vec-fixed-{nt}"),
+        }]
     }
 }
 
@@ -117,6 +111,111 @@ enum Output {
     Vec(Vec<u64>),
     VecList(LinkedList<Vec<u64>>),
     VecVec(Vec<Vec<u64>>),
+}
+
+fn run_seq(input: &[u64], heavy: bool) -> Output {
+    Output::Vec(match heavy {
+        true => input.iter().map(m).filter(f).map(h_m2).filter(f2).collect(),
+        false => input.iter().map(m).filter(f).map(l_m2).filter(f2).collect(),
+    })
+}
+
+fn run_rayon(input: &[u64], heavy: bool, nt: usize, list: bool) -> Output {
+    let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
+    match (heavy, list) {
+        (true, false) => Output::Vec(pool.install(|| {
+            input
+                .into_par_iter()
+                .map(m)
+                .filter(f)
+                .map(h_m2)
+                .filter(f2)
+                .collect()
+        })),
+        (false, false) => Output::Vec(pool.install(|| {
+            input
+                .into_par_iter()
+                .map(m)
+                .filter(f)
+                .map(l_m2)
+                .filter(f2)
+                .collect()
+        })),
+        (true, true) => Output::VecList(pool.install(|| {
+            input
+                .into_par_iter()
+                .map(m)
+                .filter(f)
+                .map(h_m2)
+                .filter(f2)
+                .collect_vec_list()
+        })),
+        (false, true) => Output::VecList(pool.install(|| {
+            input
+                .into_par_iter()
+                .map(m)
+                .filter(f)
+                .map(l_m2)
+                .filter(f2)
+                .collect_vec_list()
+        })),
+    }
+}
+
+fn run_orx(
+    input: &[u64],
+    heavy: bool,
+    fixed: bool,
+    nt: usize,
+    ord: IterationOrder,
+    list: bool,
+) -> Output {
+    match heavy {
+        true => {
+            let par = input
+                .into_par()
+                .num_threads(nt)
+                .iteration_order(ord)
+                .map(m)
+                .filter(f)
+                .map(h_m2)
+                .filter(f2);
+            match (fixed, list) {
+                (false, false) => Output::Vec(par.collect()),
+                (false, true) => Output::VecVec(par.collect::<Vec2<_>>().into()),
+                (true, false) => {
+                    Output::Vec(par.runner(Runner::fixed(Pool::default(nt))).collect())
+                }
+                (true, true) => Output::VecVec(
+                    par.runner(Runner::fixed(Pool::default(nt)))
+                        .collect::<Vec2<_>>()
+                        .into(),
+                ),
+            }
+        }
+        false => {
+            let par = input
+                .into_par()
+                .num_threads(nt)
+                .iteration_order(ord)
+                .map(m)
+                .filter(f)
+                .map(l_m2)
+                .filter(f2);
+            match (fixed, list) {
+                (false, false) => Output::Vec(par.collect()),
+                (false, true) => Output::VecVec(par.collect::<Vec2<_>>().into()),
+                (true, false) => {
+                    Output::Vec(par.runner(Runner::fixed(Pool::default(nt))).collect())
+                }
+                (true, true) => Output::VecVec(
+                    par.runner(Runner::fixed(Pool::default(nt)))
+                        .collect::<Vec2<_>>()
+                        .into(),
+                ),
+            }
+        }
+    }
 }
 
 struct Exp;
@@ -143,161 +242,25 @@ impl Experiment for Exp {
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
-        let h = input_variant.heavy;
+        let heavy = input_variant.heavy;
 
         match alg_variant {
-            Method::SeqVec => (
+            Method::SeqVec => (true, run_seq(input, heavy)),
+            Method::RayonVec { nt } => (true, run_rayon(input, heavy, *nt, false)),
+            Method::RayonVecList { nt } => (false, run_rayon(input, heavy, *nt, true)),
+            Method::OrxVec { nt } => (
                 true,
-                Output::Vec(match h {
-                    true => input.iter().map(m).filter(f).map(h_m2).filter(f2).collect(),
-                    false => input.iter().map(m).filter(f).map(l_m2).filter(f2).collect(),
-                }),
+                run_orx(input, heavy, false, *nt, IterationOrder::Ordered, false),
             ),
-            Method::RayonVec => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
-                    .build()
-                    .unwrap();
-                pool.install(|| {
-                    (
-                        true,
-                        Output::Vec(match h {
-                            true => input
-                                .into_par_iter()
-                                .map(m)
-                                .filter(f)
-                                .map(h_m2)
-                                .filter(f2)
-                                .collect(),
-                            false => input
-                                .into_par_iter()
-                                .map(m)
-                                .filter(f)
-                                .map(l_m2)
-                                .filter(f2)
-                                .collect(),
-                        }),
-                    )
-                })
+            Method::OrxArbVec { nt } => {
+                (false, run_orx(input, heavy, false, *nt, Arbitrary, false))
             }
-            Method::RayonVecList => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
-                    .build()
-                    .unwrap();
-                pool.install(|| {
-                    (
-                        false,
-                        Output::VecList(match h {
-                            true => input
-                                .into_par_iter()
-                                .map(m)
-                                .filter(f)
-                                .map(h_m2)
-                                .filter(f2)
-                                .collect_vec_list(),
-                            false => input
-                                .into_par_iter()
-                                .map(m)
-                                .filter(f)
-                                .map(l_m2)
-                                .filter(f2)
-                                .collect_vec_list(),
-                        }),
-                    )
-                })
+            Method::OrxArbVecVec { nt } => {
+                (false, run_orx(input, heavy, false, *nt, Arbitrary, true))
             }
-            Method::OrxVec => (
+            Method::OrxVecFixed { nt } => (
                 true,
-                Output::Vec(match h {
-                    true => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .map(m)
-                        .filter(f)
-                        .map(h_m2)
-                        .filter(f2)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .map(m)
-                        .filter(f)
-                        .map(l_m2)
-                        .filter(f2)
-                        .collect(),
-                }),
-            ),
-            Method::OrxArbVec => (
-                false,
-                Output::Vec(match h {
-                    true => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(h_m2)
-                        .filter(f2)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(l_m2)
-                        .filter(f2)
-                        .collect(),
-                }),
-            ),
-            Method::OrxArbVecVec => (
-                false,
-                Output::VecVec(match h {
-                    true => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(h_m2)
-                        .filter(f2)
-                        .collect::<Vec2<_>>()
-                        .into(),
-                    false => input
-                        .into_par()
-                        .num_threads(input_variant.num_threads)
-                        .iteration_order(IterationOrder::Arbitrary)
-                        .map(m)
-                        .filter(f)
-                        .map(l_m2)
-                        .filter(f2)
-                        .collect::<Vec2<_>>()
-                        .into(),
-                }),
-            ),
-            Method::OrxVecFixed => (
-                true,
-                Output::Vec(match h {
-                    true => input
-                        .into_par()
-                        .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
-                        .num_threads(input_variant.num_threads)
-                        .map(m)
-                        .filter(f)
-                        .map(h_m2)
-                        .filter(f2)
-                        .collect(),
-                    false => input
-                        .into_par()
-                        .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
-                        .num_threads(input_variant.num_threads)
-                        .map(m)
-                        .filter(f)
-                        .map(l_m2)
-                        .filter(f2)
-                        .collect(),
-                }),
+                run_orx(input, heavy, true, *nt, IterationOrder::Ordered, false),
             ),
         }
     }
@@ -342,38 +305,33 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [16, 32];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
+    let ns = [15, 20];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| {
             [
-                InputVariant {
-                    n: 15,
-                    heavy: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    heavy: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 15,
-                    heavy: true,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    heavy: true,
-                    num_threads,
-                },
+                InputVariant { n, heavy: false },
+                InputVariant { n, heavy: true },
             ]
         })
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::RayonVec { nt },
+            Method::RayonVecList { nt },
+            Method::OrxVec { nt },
+            Method::OrxArbVec { nt },
+            Method::OrxArbVecVec { nt },
+            Method::OrxVecFixed { nt },
+        ]
+    };
+    let mut variants = vec![Method::SeqVec];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
-    Exp.bench(c, "col_mfmf", &treatments, &variants);
+    Exp.bench(c, "collect_mfmf", &treatments, &variants);
 }
 criterion_group!(benches, run);
 criterion_main!(benches);
