@@ -117,7 +117,7 @@ fn cpu_mix(seed: u64, rounds: usize) -> u64 {
 }
 
 fn keep(record: &LogRecord) -> bool {
-    (record.severity >= 3 && record.code % 7 != 0) || record.code == 777
+    (record.severity >= 3 && !record.code.is_multiple_of(7)) || record.code == 777
 }
 
 fn to_bucket(record: &LogRecord, heavy: bool) -> Agg {

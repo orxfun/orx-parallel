@@ -110,7 +110,7 @@ fn mix64(x: u64) -> u64 {
 }
 
 fn keep(v: u64) -> bool {
-    v & 0x7 != 0 && v.trailing_zeros() % 3 != 0
+    v & 0x7 != 0 && !v.trailing_zeros().is_multiple_of(3)
 }
 
 fn inputs(len: usize) -> Input {
@@ -162,7 +162,7 @@ fn rayon_map(map: &HashMap<u64, u32>, num_threads: usize) -> Agg {
             .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
             .filter(|x| keep(*x))
             .map(Agg::from_val)
-            .reduce(|| Agg::default(), merge)
+            .reduce(Agg::default, merge)
     })
 }
 
@@ -178,7 +178,7 @@ fn rayon_set(set: &HashSet<u64>, num_threads: usize) -> Agg {
             .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
             .filter(|x| keep(*x))
             .map(Agg::from_val)
-            .reduce(|| Agg::default(), merge)
+            .reduce(Agg::default, merge)
     })
 }
 

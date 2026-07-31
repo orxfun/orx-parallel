@@ -122,7 +122,7 @@ pub trait ParRunnerInfallible: ParRunner {
         X: Xap<I = I::Item>,
         X::O: Send,
     {
-        match params.is_sequential() && false {
+        match params.is_sequential() {
             true => {
                 let values = iter
                     .into_seq_iter()

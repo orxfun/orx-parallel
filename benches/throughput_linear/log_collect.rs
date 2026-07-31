@@ -136,7 +136,7 @@ fn parse_project_heavy(record: &LogRecord) -> Projected {
 }
 
 fn keep(record: &LogRecord) -> bool {
-    (record.severity >= 3 && record.code % 5 != 0) || record.code == 777
+    (record.severity >= 3 && !record.code.is_multiple_of(5)) || record.code == 777
 }
 
 impl Experiment for Exp {
