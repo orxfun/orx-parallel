@@ -26,6 +26,8 @@ CATEGORIES=(
     "reduce"
     "stateful_using"
     "throughput_linear"
+    "xap"
+    "xap_pll"
 )
 
 echo "Running all benchmark categories..."
