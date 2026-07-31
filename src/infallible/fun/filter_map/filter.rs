@@ -1,6 +1,7 @@
 use crate::infallible::fun::FilterMap;
 use core::marker::PhantomData;
 
+/// Filter adapter backed by a predicate.
 pub struct FnFil<I, F: Fn(&I) -> bool + Copy + Send>(F, PhantomData<I>);
 
 impl<I, F: Fn(&I) -> bool + Copy + Send> Clone for FnFil<I, F> {
@@ -14,6 +15,7 @@ impl<I, F: Fn(&I) -> bool + Copy + Send> Copy for FnFil<I, F> {}
 unsafe impl<I, F: Fn(&I) -> bool + Copy + Send> Send for FnFil<I, F> {}
 
 impl<I, F: Fn(&I) -> bool + Copy + Send> FnFil<I, F> {
+    /// Creates a filter adapter.
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
