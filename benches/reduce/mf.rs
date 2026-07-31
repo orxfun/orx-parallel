@@ -162,14 +162,14 @@ impl Experiment for Exp {
             Method::OrxFixed { nt } => match h {
                 true => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(*nt)))
+                    .runner(Runner::fixed(Pool::once(*nt)))
                     .num_threads(*nt)
                     .map(m)
                     .filter(f)
                     .reduce(h_r),
                 false => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(*nt)))
+                    .runner(Runner::fixed(Pool::once(*nt)))
                     .num_threads(*nt)
                     .map(m)
                     .filter(f)

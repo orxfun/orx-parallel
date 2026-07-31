@@ -164,7 +164,7 @@ fn count_orx_fixed(input: &[u16], num_threads: usize) -> Vec<u32> {
 
     input
         .into_par()
-        .runner(Runner::fixed(Pool::default(num_threads)))
+        .runner(Runner::fixed(Pool::once(num_threads)))
         .num_threads(num_threads)
         .use_vec(&mut use_vec)
         .for_each(|local, key| {

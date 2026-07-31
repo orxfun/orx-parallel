@@ -56,11 +56,6 @@ use crate::{BasicPool, pool::pool_impl::OncePool};
 pub struct Pool;
 
 impl Pool {
-    /// Creates [`DefaultPool`] with the given `num_threads`.
-    pub fn default(num_threads: impl Into<NumThreads>) -> DefaultPool {
-        DefaultPool::new(num_threads)
-    }
-
     /// Creates a lightweight on-demand pool with the specified thread configuration.
     ///
     /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before

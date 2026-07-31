@@ -148,7 +148,7 @@ fn orx_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringA
 fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
     let pairs: Vec<_> = (0..n)
         .into_par()
-        .runner(Runner::fixed(Pool::default(num_threads)))
+        .runner(Runner::fixed(Pool::once(num_threads)))
         .num_threads(num_threads)
         .map(|i| format_number(i as u64))
         .collect();

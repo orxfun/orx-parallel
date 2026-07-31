@@ -148,10 +148,7 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon { nt } => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| match input_variant.heavy {
                     false => input
                         .as_slice()
@@ -187,7 +184,7 @@ impl Experiment for Exp {
                 false => input
                     .as_slice()
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(*nt)))
+                    .runner(Runner::fixed(Pool::once(*nt)))
                     .num_threads(*nt)
                     .map(l_m)
                     .filter_map(|x| l_i(x, 999))
@@ -195,7 +192,7 @@ impl Experiment for Exp {
                 true => input
                     .as_slice()
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(*nt)))
+                    .runner(Runner::fixed(Pool::once(*nt)))
                     .num_threads(*nt)
                     .map(h_m)
                     .filter_map(|x| h_i(x, 999))
