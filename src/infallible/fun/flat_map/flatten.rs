@@ -1,6 +1,7 @@
 use crate::infallible::fun::FlatMap;
 use core::marker::PhantomData;
 
+/// Flat-map adapter that flattens nested iterables.
 pub struct FnFlatten<I: IntoIterator>(PhantomData<I>);
 
 impl<I: IntoIterator> Clone for FnFlatten<I> {
@@ -14,6 +15,7 @@ impl<I: IntoIterator> Copy for FnFlatten<I> {}
 unsafe impl<I: IntoIterator> Send for FnFlatten<I> {}
 
 impl<I: IntoIterator> FnFlatten<I> {
+    /// Creates a flatten adapter.
     pub fn new() -> Self {
         Self(PhantomData)
     }
