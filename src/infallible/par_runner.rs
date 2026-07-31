@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParRunnerInfallible: ParRunner {
+pub(crate) trait ParRunnerInfallible: ParRunner {
     fn next<I, X>(&mut self, params: Params, iter: I, x: X) -> Option<ValIdx<X::O>>
     where
         I: ConcurrentIter,
