@@ -1,7 +1,9 @@
 'use strict';
 
 // ---- Configuration ----
-const BASE_URL = 'https://raw.githubusercontent.com/orxfun/orx-parallel/v4-enhanced-benches/benches/results/';
+const BRANCH = "v4-enhanced-benches";
+const BASE_RESULT_URL = `https://raw.githubusercontent.com/orxfun/orx-parallel/${BRANCH}/benches/results/`;
+const BASE_CODE_URL = `https://github.com/orxfun/orx-parallel/blob/${BRANCH}/benches/`;
 
 const CATALOG = {
     early_exit: ['suspicious_find_any', 'suspicious_first'],
@@ -167,15 +169,17 @@ function selectBench(bench) {
 async function loadBench(category, bench) {
     // Hide data panels, show loading message
     setEmptyMsg('Loading…');
+    showPanel('link-panel', false);
     showPanel('filters-panel', false);
     showPanel('chart-panel', false);
     showPanel('table-panel', false);
 
-    const url = `${BASE_URL}${category}/${bench}.csv`;
+    const resultUrl = `${BASE_RESULT_URL}${category}/${bench}.csv`;
+    const codeUrl = `${BASE_CODE_URL}${category}/${bench}.rs`;
 
     try {
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
+        const resp = await fetch(resultUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${resultUrl}`);
         const text = await resp.text();
         const { headers, rows } = parseCsv(text);
 
@@ -191,9 +195,11 @@ async function loadBench(category, bench) {
         }
 
         setEmptyMsg('', false);
+        renderLink(resultUrl, codeUrl);
         renderFilters();
         renderChart();
         renderTable();
+        showPanel('link-panel', true);
         showPanel('filters-panel', true);
         showPanel('chart-panel', true);
         showPanel('table-panel', true);
@@ -205,6 +211,16 @@ async function loadBench(category, bench) {
         showPanel('table-panel', false);
     }
 }
+
+// ---- Link ----
+function renderLink(resultUrl, codeUrl) {
+    const resultLink = document.getElementById('result-link');
+    resultLink.innerHTML = `<a href="${resultUrl}" target="_blank">CSV</a>`
+
+    const codeLink = document.getElementById('code-link');
+    codeLink.innerHTML = `<a href="${codeUrl}" target="_blank">Code</a>`
+}
+
 
 // ---- Filters ----
 function renderFilters() {
