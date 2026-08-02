@@ -60,7 +60,7 @@ impl Factors for Method {
         vec![match self {
             Self::Seq => "seq".to_string(),
             Self::Rayon { nt } => format!("rayon-{nt}"),
-            Self::OrxFixed { nt, chunk_size } => format!("orx-fixed-auto-{nt}-{chunk_size}"),
+            Self::OrxFixed { nt, chunk_size } => format!("orx-fixed-{nt}-{chunk_size}"),
             Self::Orx { nt, chunk_size } => format!("orx-{nt}-{chunk_size}"),
         }]
     }
@@ -140,10 +140,7 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon { nt } => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| input.par_iter().map(do_work).max())
             }
             Method::OrxFixed { nt, chunk_size } => input

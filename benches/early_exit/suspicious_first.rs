@@ -12,6 +12,16 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
 
 const CPU_MIX_ROUNDS: usize = 40;
+fn cpu_mix(seed: u64) -> u64 {
+    let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
+}
 
 #[derive(Debug, Clone, Copy)]
 enum Pos {
@@ -85,17 +95,6 @@ struct Event {
 }
 
 struct Exp;
-
-fn cpu_mix(seed: u64) -> u64 {
-    let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
-    for r in 0..CPU_MIX_ROUNDS {
-        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
-        x = black_box(x ^ salt);
-        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
-        x = black_box(x ^ (x >> 27));
-    }
-    x
-}
 
 fn suspicious_signature(ts: u64, payload_seed: u64) -> u64 {
     cpu_mix(ts ^ payload_seed)

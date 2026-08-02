@@ -99,10 +99,7 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon { nt } => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| input.par_iter().map(|x| heterogeneous_map(h, *x)).max())
             }
             Method::Orx { nt } => input
@@ -142,8 +139,13 @@ fn run(c: &mut Criterion) {
         })
         .collect();
 
-    let par_variants =
-        |nt: usize| [Method::Rayon { nt }, Method::Orx { nt }, Method::OrxFix { nt }];
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFix { nt },
+        ]
+    };
 
     let mut variants = vec![Method::Seq];
     variants.extend(par_variants(1));
