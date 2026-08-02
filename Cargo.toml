@@ -504,7 +504,7 @@ required-features = ["std"]
 name = "recursive-file-system"
 harness = false
 path = "benches/recursive/file_system.rs"
-required-features = ["std", "rayon-core"]
+required-features = ["std"]
 
 [[bench]]
 name = "recursive-tree-traversal"
