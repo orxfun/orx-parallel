@@ -381,10 +381,11 @@ function renderTable() {
     }
     html += '</tr></thead><tbody>';
     for (const row of filtered) {
+        console.log('\n\n')
         html += '<tr>';
         for (const h of state.headers) {
             if (h === 'time (ns)') {
-                html += `<td style="text-align:right;>${escHtml(parseInt(row[h]).toLocaleString('en') ?? '')}</td>`;
+                html += `<td style="text-align:right;">${escHtml(parseInt(row[h]).toLocaleString('en') ?? '')}</td>`;
             } else {
                 html += `<td>${escHtml(row[h] ?? '')}</td>`;
             }

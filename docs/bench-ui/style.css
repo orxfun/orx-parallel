@@ -202,7 +202,7 @@ li {
 .chip {
     padding: 3px 10px;
     border: 1px solid var(--panel-border);
-    border-radius: 20px;
+    border-radius: 5px;
     background: transparent;
     color: var(--ink);
     font-family: inherit;
