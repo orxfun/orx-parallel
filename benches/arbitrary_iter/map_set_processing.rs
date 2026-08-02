@@ -10,6 +10,9 @@ use rand_chacha::ChaCha8Rng;
 use rayon::ThreadPoolBuilder;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use std::collections::{HashMap, HashSet};
+use std::hint::black_box;
+
+const CPU_MIX_ROUNDS: usize = 40;
 
 #[derive(Debug, Clone, Copy)]
 enum Dataset {
@@ -95,11 +98,15 @@ struct Input {
 
 struct Exp;
 
-fn mix64(x: u64) -> u64 {
-    let mut z = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
-    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-    z ^ (z >> 31)
+fn cpu_mix(x: u64) -> u64 {
+    let mut x = black_box(x ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
 }
 
 fn keep(v: u64) -> bool {
@@ -127,7 +134,7 @@ fn inputs(len: usize) -> Input {
 
 fn seq_map(map: &HashMap<u64, u32>) -> Agg {
     map.iter()
-        .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
+        .map(|(k, v)| cpu_mix(*k ^ (*v as u64).rotate_left(13)))
         .filter(|x| keep(*x))
         .map(Agg::from_val)
         .reduce(merge)
@@ -136,7 +143,7 @@ fn seq_map(map: &HashMap<u64, u32>) -> Agg {
 
 fn seq_set(set: &HashSet<u64>) -> Agg {
     set.iter()
-        .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
+        .map(|k| cpu_mix(*k ^ 0xF0F0_0F0F_AAAA_5555))
         .filter(|x| keep(*x))
         .map(Agg::from_val)
         .reduce(merge)
@@ -149,7 +156,7 @@ fn rayon_map(map: &HashMap<u64, u32>, nt: usize) -> Agg {
     pool.install(|| {
         map.iter()
             .par_bridge()
-            .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
+            .map(|(k, v)| cpu_mix(*k ^ (*v as u64).rotate_left(13)))
             .filter(|x| keep(*x))
             .map(Agg::from_val)
             .reduce(Agg::default, merge)
@@ -162,7 +169,7 @@ fn rayon_set(set: &HashSet<u64>, nt: usize) -> Agg {
     pool.install(|| {
         set.iter()
             .par_bridge()
-            .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
+            .map(|k| cpu_mix(*k ^ 0xF0F0_0F0F_AAAA_5555))
             .filter(|x| keep(*x))
             .map(Agg::from_val)
             .reduce(Agg::default, merge)
@@ -174,7 +181,7 @@ fn orx_map(map: &HashMap<u64, u32>, fixed_runner: bool, nt: usize) -> Agg {
         .iter()
         .iter_into_par()
         .num_threads(nt)
-        .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
+        .map(|(k, v)| cpu_mix(*k ^ (*v as u64).rotate_left(13)))
         .filter(|x| keep(*x))
         .map(Agg::from_val);
 
@@ -191,7 +198,7 @@ fn orx_set(set: &HashSet<u64>, fixed_runner: bool, nt: usize) -> Agg {
         .iter()
         .iter_into_par()
         .num_threads(nt)
-        .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
+        .map(|k| cpu_mix(*k ^ 0xF0F0_0F0F_AAAA_5555))
         .filter(|x| keep(*x))
         .map(Agg::from_val);
 
@@ -248,7 +255,7 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let ns = [16, 20];
+    let ns = [14, 18];
     let datasets = [Dataset::Map, Dataset::Set];
     let treatments: Vec<_> = ns
         .into_iter()
