@@ -183,9 +183,7 @@ fn run_orx(
             match (fixed, list) {
                 (false, false) => Output::Vec(par.collect()),
                 (false, true) => Output::VecVec(par.collect::<Vec2<_>>().into()),
-                (true, false) => {
-                    Output::Vec(par.runner(Runner::fixed(Pool::once(nt))).collect())
-                }
+                (true, false) => Output::Vec(par.runner(Runner::fixed(Pool::once(nt))).collect()),
                 (true, true) => Output::VecVec(
                     par.runner(Runner::fixed(Pool::once(nt)))
                         .collect::<Vec2<_>>()
@@ -205,9 +203,7 @@ fn run_orx(
             match (fixed, list) {
                 (false, false) => Output::Vec(par.collect()),
                 (false, true) => Output::VecVec(par.collect::<Vec2<_>>().into()),
-                (true, false) => {
-                    Output::Vec(par.runner(Runner::fixed(Pool::once(nt))).collect())
-                }
+                (true, false) => Output::Vec(par.runner(Runner::fixed(Pool::once(nt))).collect()),
                 (true, true) => Output::VecVec(
                     par.runner(Runner::fixed(Pool::once(nt)))
                         .collect::<Vec2<_>>()
@@ -305,7 +301,7 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let ns = [15, 20];
+    let ns = [16, 20];
     let treatments: Vec<_> = ns
         .into_iter()
         .flat_map(|n| {

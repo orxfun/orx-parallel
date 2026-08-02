@@ -183,7 +183,7 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let ns = [15, 20];
+    let ns = [16, 20];
     let treatments: Vec<_> = ns.into_iter().map(|n| InputVariant { n }).collect();
 
     let par_variants = |nt: usize| {
