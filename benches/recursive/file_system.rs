@@ -3,7 +3,7 @@ use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use rayon::{Scope, ThreadPool, scope};
+use rayon::{Scope, ThreadPoolBuilder, scope};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[derive(Clone)]
@@ -89,7 +89,7 @@ fn seq_sum(fs: &FileSystem, work: usize) -> u64 {
     sum
 }
 
-fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
+fn rayon_sum(nt: usize, fs: &FileSystem, work: usize) -> u64 {
     fn spawn_job<'a>(
         scope: &Scope<'a>,
         fs: &'a FileSystem,
@@ -108,6 +108,7 @@ fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     }
 
     let sum = AtomicU64::new(0);
+    let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
     pool.install(|| {
         scope(|scope| {
             for root in fs.roots.iter().copied() {
@@ -119,52 +120,58 @@ fn rayon_sum(pool: &ThreadPool, fs: &FileSystem, work: usize) -> u64 {
     sum.load(Ordering::Relaxed)
 }
 
-fn orx(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize, adaptive: bool) -> u64 {
+fn orx(nt: usize, fs: &FileSystem, work: usize, chunk_size: usize, adaptive: bool) -> u64 {
     let par = fs
         .roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .num_threads(nt)
         .chunk_size(chunk_size)
         .map(|idx| fs.nodes[idx].compute_score(work));
 
     match adaptive {
-        true => par.runner(Runner::adaptive(pool)).reduce(|a, b| a + b),
-        false => par.runner(Runner::fixed(pool)).reduce(|a, b| a + b),
+        true => par.reduce(|a, b| a + b),
+        false => par
+            .runner(Runner::fixed(Pool::once(nt)))
+            .reduce(|a, b| a + b),
     }
     .unwrap_or(0)
 }
 
-fn orx_lin(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+fn orx_lin(nt: usize, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     let linearized: Vec<_> = fs
         .roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .num_threads(nt)
         .chunk_size(chunk_size)
         .collect();
 
     linearized
         .into_par()
-        .runner(Runner::adaptive(pool))
+        .num_threads(nt)
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
 }
 
-fn orx_lin_fix(pool: &ThreadPool, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
+fn orx_lin_fix(nt: usize, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
     let linearized: Vec<_> = fs
         .roots
         .iter()
         .copied()
         .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
+        .num_threads(nt)
         .chunk_size(chunk_size)
-        .runner(Runner::fixed(pool))
+        .runner(Runner::fixed(Pool::once(nt)))
         .collect();
 
     linearized
         .into_par()
-        .runner(Runner::fixed(pool))
+        .num_threads(nt)
+        .runner(Runner::fixed(Pool::once(nt)))
         .map(|idx| fs.nodes[idx].compute_score(work))
         .reduce(|a, b| a + b)
         .unwrap_or(0)
@@ -175,13 +182,12 @@ struct Input {
     num_nodes: usize,
     num_roots: usize,
     max_children: usize,
-    num_threads: usize,
     work: usize,
 }
 
 impl Factors for Input {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "r", "ch", "nt", "w"]
+        vec!["n", "r", "ch", "w"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -189,7 +195,6 @@ impl Factors for Input {
             self.num_nodes.to_string(),
             self.num_roots.to_string(),
             self.max_children.to_string(),
-            self.num_threads.to_string(),
             self.work.to_string(),
         ]
     }
@@ -198,11 +203,11 @@ impl Factors for Input {
 #[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx { chunk_size: usize },
-    OrxFix { chunk_size: usize },
-    OrxLin { chunk_size: usize },
-    OrxFixLin { chunk_size: usize },
+    Rayon { nt: usize },
+    Orx { nt: usize, chunk_size: usize },
+    OrxFix { nt: usize, chunk_size: usize },
+    OrxLin { nt: usize, chunk_size: usize },
+    OrxFixLin { nt: usize, chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -213,42 +218,33 @@ impl Factors for Method {
     fn factor_levels(&self) -> Vec<String> {
         vec![match self {
             Self::Seq => "seq".to_string(),
-            Self::Rayon => "rayon".to_string(),
-            Self::OrxFix { chunk_size } => format!("orx-fix-{chunk_size}"),
-            Self::Orx { chunk_size } => format!("orx-adaptive-{chunk_size}"),
-            Self::OrxLin { chunk_size } => format!("orx-lin-{chunk_size}"),
-            Self::OrxFixLin { chunk_size } => format!("orx-fix-lin-{chunk_size}"),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::OrxFix { nt, chunk_size } => format!("orx-fix-{nt}-{chunk_size}"),
+            Self::Orx { nt, chunk_size } => format!("orx-adaptive-{nt}-{chunk_size}"),
+            Self::OrxLin { nt, chunk_size } => format!("orx-lin-{nt}-{chunk_size}"),
+            Self::OrxFixLin { nt, chunk_size } => format!("orx-fix-lin-{nt}-{chunk_size}"),
         }]
     }
 }
 
 struct Exp;
 
-struct BenchInput {
-    fs: FileSystem,
-    pool: ThreadPool,
-}
-
 impl Experiment for Exp {
     type InputFactors = Input;
 
     type AlgFactors = Method;
 
-    type Input = BenchInput;
+    type Input = FileSystem;
 
     type Output = u64;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
-        let fs = FileSystem::generate(
+        FileSystem::generate(
             input_variant.num_nodes,
             input_variant.num_roots,
             input_variant.max_children,
             42,
-        );
-
-        let pool = Pool::rayon(input_variant.num_threads).unwrap();
-
-        BenchInput { fs, pool }
+        )
     }
 
     fn execute(
@@ -258,27 +254,19 @@ impl Experiment for Exp {
         input: &Self::Input,
     ) -> Self::Output {
         match alg_variant {
-            Method::Seq => seq_sum(&input.fs, input_variant.work),
-            Method::Rayon => rayon_sum(&input.pool, &input.fs, input_variant.work),
-            Method::OrxFix { chunk_size } => orx(
-                &input.pool,
-                &input.fs,
-                input_variant.work,
-                *chunk_size,
-                false,
-            ),
-            Method::Orx { chunk_size } => orx(
-                &input.pool,
-                &input.fs,
-                input_variant.work,
-                *chunk_size,
-                true,
-            ),
-            Method::OrxLin { chunk_size } => {
-                orx_lin(&input.pool, &input.fs, input_variant.work, *chunk_size)
+            Method::Seq => seq_sum(&input, input_variant.work),
+            Method::Rayon { nt } => rayon_sum(*nt, &input, input_variant.work),
+            Method::OrxFix { nt, chunk_size } => {
+                orx(*nt, &input, input_variant.work, *chunk_size, false)
             }
-            Method::OrxFixLin { chunk_size } => {
-                orx_lin_fix(&input.pool, &input.fs, input_variant.work, *chunk_size)
+            Method::Orx { nt, chunk_size } => {
+                orx(*nt, &input, input_variant.work, *chunk_size, true)
+            }
+            Method::OrxLin { nt, chunk_size } => {
+                orx_lin(*nt, &input, input_variant.work, *chunk_size)
+            }
+            Method::OrxFixLin { nt, chunk_size } => {
+                orx_lin_fix(*nt, &input, input_variant.work, *chunk_size)
             }
         }
     }
@@ -289,50 +277,63 @@ impl Experiment for Exp {
         input: &Self::Input,
         output: &Self::Output,
     ) {
-        let expected = seq_sum(&input.fs, input_variant.work);
+        let expected = seq_sum(&input, input_variant.work);
         assert_eq!(output, &expected);
     }
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads = [16, 32];
-
-    let treatments: Vec<_> = num_threads
-        .into_iter()
-        .flat_map(|num_threads| {
-            [
-                Input {
-                    num_nodes: 10_000,
-                    num_roots: 20,
-                    max_children: 6,
-                    num_threads,
-                    work: 250,
-                },
-                Input {
-                    num_nodes: 40_000,
-                    num_roots: 50,
-                    max_children: 8,
-                    num_threads,
-                    work: 250,
-                },
-            ]
-        })
-        .collect();
-
-    let variants = vec![
-        Method::Seq,
-        Method::Rayon,
-        Method::OrxFix { chunk_size: 0 },
-        Method::OrxFix { chunk_size: 1024 },
-        Method::Orx { chunk_size: 0 },
-        Method::Orx { chunk_size: 1024 },
-        Method::OrxFixLin { chunk_size: 0 },
-        Method::OrxFixLin { chunk_size: 1024 },
-        Method::OrxLin { chunk_size: 0 },
-        Method::OrxLin { chunk_size: 1024 },
+    let treatments = vec![
+        Input {
+            num_nodes: 10_000,
+            num_roots: 20,
+            max_children: 6,
+            work: 250,
+        },
+        Input {
+            num_nodes: 40_000,
+            num_roots: 50,
+            max_children: 8,
+            work: 250,
+        },
     ];
 
-    Exp.bench(c, "rec_file_system", &treatments, &variants);
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt, chunk_size: 0 },
+            Method::Orx { nt, chunk_size: 1 },
+            Method::Orx {
+                nt,
+                chunk_size: 1024,
+            },
+            Method::OrxFix { nt, chunk_size: 0 },
+            Method::OrxFix { nt, chunk_size: 1 },
+            Method::OrxFix {
+                nt,
+                chunk_size: 1024,
+            },
+            Method::OrxLin { nt, chunk_size: 0 },
+            Method::OrxLin { nt, chunk_size: 1 },
+            Method::OrxLin {
+                nt,
+                chunk_size: 1024,
+            },
+            Method::OrxFixLin { nt, chunk_size: 0 },
+            Method::OrxFixLin { nt, chunk_size: 1 },
+            Method::OrxFixLin {
+                nt,
+                chunk_size: 1024,
+            },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    for nt in [1, 4, 16] {
+        variants.extend(par_variants(nt));
+    }
+
+    Exp.bench(c, "recursive_file_system", &treatments, &variants);
 }
 
 criterion_group!(benches, run);
