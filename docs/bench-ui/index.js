@@ -373,13 +373,21 @@ function renderTable() {
 
     let html = '<table><thead><tr>';
     for (const h of state.headers) {
-        html += `<th>${escHtml(h)}</th>`;
+        if (h === 'time (ns)') {
+            html += `<th style="text-align:right;">${escHtml(h)}</th>`;
+        } else {
+            html += `<th>${escHtml(h)}</th>`;
+        }
     }
     html += '</tr></thead><tbody>';
     for (const row of filtered) {
         html += '<tr>';
         for (const h of state.headers) {
-            html += `<td>${escHtml(row[h] ?? '')}</td>`;
+            if (h === 'time (ns)') {
+                html += `<td style="text-align:right;>${escHtml(parseInt(row[h]).toLocaleString('en') ?? '')}</td>`;
+            } else {
+                html += `<td>${escHtml(row[h] ?? '')}</td>`;
+            }
         }
         html += '</tr>';
     }
