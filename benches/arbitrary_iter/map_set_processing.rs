@@ -13,6 +13,16 @@ use std::collections::{HashMap, HashSet};
 use std::hint::black_box;
 
 const CPU_MIX_ROUNDS: usize = 40;
+fn cpu_mix(x: u64) -> u64 {
+    let mut x = black_box(x ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
+}
 
 #[derive(Debug, Clone, Copy)]
 enum Dataset {
@@ -97,17 +107,6 @@ struct Input {
 }
 
 struct Exp;
-
-fn cpu_mix(x: u64) -> u64 {
-    let mut x = black_box(x ^ 0x9E37_79B9_7F4A_7C15);
-    for r in 0..CPU_MIX_ROUNDS {
-        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
-        x = black_box(x ^ salt);
-        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
-        x = black_box(x ^ (x >> 27));
-    }
-    x
-}
 
 fn keep(v: u64) -> bool {
     v & 0x7 != 0 && !v.trailing_zeros().is_multiple_of(3)
