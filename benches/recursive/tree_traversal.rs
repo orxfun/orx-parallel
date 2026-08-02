@@ -294,7 +294,7 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let depths = [10, 12];
-    let topologies = [Topology::Balanced, Topology::Skewed];
+    let topologies = [Topology::Skewed, Topology::Balanced];
     let treatments: Vec<_> = depths
         .into_iter()
         .flat_map(|depth| topologies.map(|topology| InputVariant { depth, topology }))
@@ -311,7 +311,7 @@ fn run(c: &mut Criterion) {
     };
 
     let mut variants = vec![Method::Seq];
-    // variants.extend(par_variants(1));
+    variants.extend(par_variants(1));
     variants.extend(par_variants(4));
     variants.extend(par_variants(16));
 

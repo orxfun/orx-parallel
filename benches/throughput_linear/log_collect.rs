@@ -169,10 +169,7 @@ impl Experiment for Exp {
                     .collect(),
             },
             Method::Rayon { nt } => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| match h {
                     true => input
                         .into_par_iter()
@@ -247,7 +244,13 @@ fn run(c: &mut Criterion) {
         .flat_map(|n| heavy_options.map(|heavy| InputVariant { n, heavy }))
         .collect();
 
-    let par_variants = |nt: usize| [Method::Rayon { nt }, Method::Orx { nt }, Method::OrxFixed { nt }];
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
 
     let mut variants = vec![Method::Seq];
     variants.extend(par_variants(1));
