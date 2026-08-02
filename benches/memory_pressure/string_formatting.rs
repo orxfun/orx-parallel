@@ -3,7 +3,6 @@
 //! including buffer reuse and locality considerations.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rayon::ThreadPoolBuilder;
@@ -11,12 +10,11 @@ use rayon::ThreadPoolBuilder;
 #[derive(Clone, Copy)]
 struct InputVariant {
     size: usize,
-    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["size", "nt"]
+        vec!["size"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -27,17 +25,16 @@ impl Factors for InputVariant {
                 _ => "unknown",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -46,15 +43,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -184,15 +178,15 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        input_variant: &Self::InputFactors,
+        _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
         let (strings, agg) = match alg_variant {
             Method::Seq => seq_format_and_collect(*input),
-            Method::Rayon => rayon_format_and_collect(*input, input_variant.num_threads),
-            Method::Orx => orx_format_and_collect(*input, input_variant.num_threads),
-            Method::OrxFixed => orx_fixed_format_and_collect(*input, input_variant.num_threads),
+            Method::Rayon { nt } => rayon_format_and_collect(*input, *nt),
+            Method::Orx { nt } => orx_format_and_collect(*input, *nt),
+            Method::OrxFixed { nt } => orx_fixed_format_and_collect(*input, *nt),
         };
 
         Output {
@@ -211,24 +205,17 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    size: 1_000_000,
-                    num_threads,
-                },
-                InputVariant {
-                    size: 10_000_000,
-                    num_threads,
-                },
-            ]
-        })
+    let treatments: Vec<_> = [1_000_000, 10_000_000]
+        .into_iter()
+        .map(|size| InputVariant { size })
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| [Method::Rayon { nt }, Method::Orx { nt }, Method::OrxFixed { nt }];
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "string_formatting_collection", &treatments, &variants);
 }

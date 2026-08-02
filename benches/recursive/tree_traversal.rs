@@ -3,7 +3,6 @@
 //! scheduling and work distribution under recursive expansion.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rayon::ThreadPoolBuilder;
@@ -18,12 +17,11 @@ enum Topology {
 struct InputVariant {
     depth: usize,
     topology: Topology,
-    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["depth", "topology", "nt"]
+        vec!["depth", "topology"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -34,19 +32,18 @@ impl Factors for InputVariant {
                 Topology::Skewed => "skewed",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
-    OrxLin,
-    OrxFixedLin,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
+    OrxLin { nt: usize },
+    OrxFixedLin { nt: usize },
 }
 
 impl Factors for Method {
@@ -55,17 +52,14 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-                Self::OrxLin => "orx-lin",
-                Self::OrxFixedLin => "orx-fixed-lin",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+            Self::OrxLin { nt } => format!("orx-lin-{nt}"),
+            Self::OrxFixedLin { nt } => format!("orx-fixed-lin-{nt}"),
+        }]
     }
 }
 
@@ -266,17 +260,17 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        input_variant: &Self::InputFactors,
+        _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
         match alg_variant {
             Method::Seq => seq_traverse(input),
-            Method::Rayon => rayon_traverse(input, input_variant.num_threads),
-            Method::Orx => orx_traverse(input, input_variant.num_threads),
-            Method::OrxFixed => orx_fixed_traverse(input, input_variant.num_threads),
-            Method::OrxLin => orx_lin_traverse(input, input_variant.num_threads),
-            Method::OrxFixedLin => orx_fixed_lin_traverse(input, input_variant.num_threads),
+            Method::Rayon { nt } => rayon_traverse(input, *nt),
+            Method::Orx { nt } => orx_traverse(input, *nt),
+            Method::OrxFixed { nt } => orx_fixed_traverse(input, *nt),
+            Method::OrxLin { nt } => orx_lin_traverse(input, *nt),
+            Method::OrxFixedLin { nt } => orx_fixed_lin_traverse(input, *nt),
         }
     }
 
@@ -286,36 +280,27 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    depth: 10,
-                    topology: Topology::Balanced,
-                    num_threads,
-                },
-                InputVariant {
-                    depth: 12,
-                    topology: Topology::Balanced,
-                    num_threads,
-                },
-                InputVariant {
-                    depth: 10,
-                    topology: Topology::Skewed,
-                    num_threads,
-                },
-                InputVariant {
-                    depth: 12,
-                    topology: Topology::Skewed,
-                    num_threads,
-                },
-            ]
-        })
+    let depths = [10, 12];
+    let topologies = [Topology::Balanced, Topology::Skewed];
+    let treatments: Vec<_> = depths
+        .into_iter()
+        .flat_map(|depth| topologies.map(|topology| InputVariant { depth, topology }))
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+            Method::OrxLin { nt },
+            Method::OrxFixedLin { nt },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "recursive_tree_traversal", &treatments, &variants);
 }

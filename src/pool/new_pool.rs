@@ -1,6 +1,5 @@
 #[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
-use crate::pool::DefaultPool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 use crate::pool::pool_impl::WasmWebPool;
 #[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]

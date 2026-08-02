@@ -12,7 +12,7 @@ fi
 
 CATEGORY="$1"
 BENCH_DIR="benches/$CATEGORY"
-RESULTS_DIR="benches/results"
+RESULTS_DIR="benches/results/$CATEGORY"
 
 # Validate that the category directory exists
 if [[ ! -d "$BENCH_DIR" ]]; then
