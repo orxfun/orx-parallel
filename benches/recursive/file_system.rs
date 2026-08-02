@@ -157,26 +157,6 @@ fn orx_lin(nt: usize, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
         .unwrap_or(0)
 }
 
-fn orx_lin_fix(nt: usize, fs: &FileSystem, work: usize, chunk_size: usize) -> u64 {
-    let linearized: Vec<_> = fs
-        .roots
-        .iter()
-        .copied()
-        .into_par_recursive(|idx| fs.nodes[*idx].children.iter().copied())
-        .num_threads(nt)
-        .chunk_size(chunk_size)
-        .runner(Runner::fixed(Pool::once(nt)))
-        .collect();
-
-    linearized
-        .into_par()
-        .num_threads(nt)
-        .runner(Runner::fixed(Pool::once(nt)))
-        .map(|idx| fs.nodes[idx].compute_score(work))
-        .reduce(|a, b| a + b)
-        .unwrap_or(0)
-}
-
 #[derive(Clone)]
 struct Input {
     num_nodes: usize,
@@ -207,7 +187,6 @@ enum Method {
     Orx { nt: usize, chunk_size: usize },
     OrxFix { nt: usize, chunk_size: usize },
     OrxLin { nt: usize, chunk_size: usize },
-    OrxFixLin { nt: usize, chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -219,10 +198,9 @@ impl Factors for Method {
         vec![match self {
             Self::Seq => "seq".to_string(),
             Self::Rayon { nt } => format!("rayon-{nt}"),
-            Self::OrxFix { nt, chunk_size } => format!("orx-fix-{nt}-{chunk_size}"),
-            Self::Orx { nt, chunk_size } => format!("orx-adaptive-{nt}-{chunk_size}"),
+            Self::OrxFix { nt, chunk_size } => format!("orx-fixed-{nt}-{chunk_size}"),
+            Self::Orx { nt, chunk_size } => format!("orx-{nt}-{chunk_size}"),
             Self::OrxLin { nt, chunk_size } => format!("orx-lin-{nt}-{chunk_size}"),
-            Self::OrxFixLin { nt, chunk_size } => format!("orx-fix-lin-{nt}-{chunk_size}"),
         }]
     }
 }
@@ -264,9 +242,6 @@ impl Experiment for Exp {
             }
             Method::OrxLin { nt, chunk_size } => {
                 orx_lin(*nt, &input, input_variant.work, *chunk_size)
-            }
-            Method::OrxFixLin { nt, chunk_size } => {
-                orx_lin_fix(*nt, &input, input_variant.work, *chunk_size)
             }
         }
     }
@@ -316,12 +291,6 @@ fn run(c: &mut Criterion) {
             Method::OrxLin { nt, chunk_size: 0 },
             Method::OrxLin { nt, chunk_size: 1 },
             Method::OrxLin {
-                nt,
-                chunk_size: 1024,
-            },
-            Method::OrxFixLin { nt, chunk_size: 0 },
-            Method::OrxFixLin { nt, chunk_size: 1 },
-            Method::OrxFixLin {
                 nt,
                 chunk_size: 1024,
             },

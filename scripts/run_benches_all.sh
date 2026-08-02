@@ -14,12 +14,12 @@ fi
 
 # Benchmark categories to run (exclude xap, xap_pll)
 CATEGORIES=(
-    # "arbitrary_iter"
-    # "collect"
-    # "contention_merge"
-    # "early_exit"
-    # "fallible"
-    # "first"
+    "arbitrary_iter"
+    "collect"
+    "contention_merge"
+    "early_exit"
+    "fallible"
+    "first"
     "het"
     "memory_pressure"
     "recursive"
