@@ -6,6 +6,19 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rayon::ThreadPoolBuilder;
+use std::hint::black_box;
+
+const CPU_MIX_ROUNDS: usize = 40;
+fn cpu_mix(x: u64) -> u64 {
+    let mut x = black_box(x ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
+}
 
 #[derive(Debug, Clone, Copy)]
 enum Topology {
@@ -144,12 +157,12 @@ fn build_skewed_tree(depth: usize, node_id: &mut u64) -> TreeNode {
 }
 
 fn process_node(node: &TreeNode) -> TreeAgg {
-    let value = node.value;
+    let value = cpu_mix(node.value as u64);
     let matches = if value & 0xF == 0x7 { 1 } else { 0 };
 
     TreeAgg {
         count: 1,
-        sum_value: (value as u64),
+        sum_value: value,
         checksum: node.id ^ (value as u64).rotate_left(7) ^ matches,
     }
 }
@@ -298,7 +311,7 @@ fn run(c: &mut Criterion) {
     };
 
     let mut variants = vec![Method::Seq];
-    variants.extend(par_variants(1));
+    // variants.extend(par_variants(1));
     variants.extend(par_variants(4));
     variants.extend(par_variants(16));
 
