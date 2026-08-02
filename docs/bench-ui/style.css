@@ -159,6 +159,15 @@ li {
     min-width: 0;
 }
 
+/* ---- Links ---- */
+#link-panel {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    padding: 12px 16px;
+}
+
+
 /* ---- Filters ---- */
 .filter-group {
     display: flex;
