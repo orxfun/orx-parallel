@@ -3,7 +3,6 @@
 //! compares statistics-only vs stats+trace workloads.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -15,7 +14,6 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 struct InputVariant {
     n: usize,
     with_trace: bool,
-    num_threads: usize,
 }
 
 impl InputVariant {
@@ -33,7 +31,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "mode", "nt"]
+        vec!["n", "mode"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -44,17 +42,16 @@ impl Factors for InputVariant {
                 false => "stats",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -63,15 +60,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -200,19 +194,19 @@ impl Experiment for Exp {
 
         match alg_variant {
             Method::Seq => seq_stats(input, with_trace, steps),
-            Method::Rayon => rayon_stats(input, with_trace, steps, input_variant.num_threads),
-            Method::Orx => input
+            Method::Rayon { nt } => rayon_stats(input, with_trace, steps, *nt),
+            Method::Orx { nt } => input
                 .as_slice()
                 .into_par()
-                .num_threads(input_variant.num_threads)
+                .num_threads(*nt)
                 .use_new(|_| ThreadState::new())
                 .map(|state, seed| simulate(state, *seed, steps, with_trace))
                 .reduce(|_, a, b| merge(a, b)),
-            Method::OrxFixed => input
+            Method::OrxFixed { nt } => input
                 .as_slice()
                 .into_par()
-                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
-                .num_threads(input_variant.num_threads)
+                .runner(Runner::fixed(Pool::once(*nt)))
+                .num_threads(*nt)
                 .use_new(|_| ThreadState::new())
                 .map(|state, seed| simulate(state, *seed, steps, with_trace))
                 .reduce(|_, a, b| merge(a, b)),
@@ -243,36 +237,19 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 16,
-                    with_trace: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    with_trace: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    with_trace: true,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    with_trace: true,
-                    num_threads,
-                },
-            ]
-        })
+    let ns = [16, 20];
+    let trace_modes = [false, true];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| trace_modes.map(|with_trace| InputVariant { n, with_trace }))
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| [Method::Rayon { nt }, Method::Orx { nt }, Method::OrxFixed { nt }];
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(
         c,

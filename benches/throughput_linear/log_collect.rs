@@ -3,7 +3,6 @@
 //! projected outputs to compare sequential, Rayon, and orx execution styles.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -16,7 +15,6 @@ use std::hint::black_box;
 struct InputVariant {
     n: usize,
     heavy: bool,
-    num_threads: usize,
 }
 
 impl InputVariant {
@@ -27,7 +25,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "task", "nt"]
+        vec!["n", "task"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -38,17 +36,16 @@ impl Factors for InputVariant {
                 false => "light",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -57,15 +54,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -174,9 +168,9 @@ impl Experiment for Exp {
                     .map(parse_project_light)
                     .collect(),
             },
-            Method::Rayon => {
+            Method::Rayon { nt } => {
                 let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
+                    .num_threads(*nt)
                     .build()
                     .unwrap();
                 pool.install(|| match h {
@@ -192,32 +186,32 @@ impl Experiment for Exp {
                         .collect(),
                 })
             }
-            Method::Orx => match h {
+            Method::Orx { nt } => match h {
                 true => input
                     .into_par()
-                    .num_threads(input_variant.num_threads)
+                    .num_threads(*nt)
                     .filter(|r| keep(r))
                     .map(parse_project_heavy)
                     .collect(),
                 false => input
                     .into_par()
-                    .num_threads(input_variant.num_threads)
+                    .num_threads(*nt)
                     .filter(|r| keep(r))
                     .map(parse_project_light)
                     .collect(),
             },
-            Method::OrxFixed => match h {
+            Method::OrxFixed { nt } => match h {
                 true => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
-                    .num_threads(input_variant.num_threads)
+                    .runner(Runner::fixed(Pool::once(*nt)))
+                    .num_threads(*nt)
                     .filter(|r| keep(r))
                     .map(parse_project_heavy)
                     .collect(),
                 false => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
-                    .num_threads(input_variant.num_threads)
+                    .runner(Runner::fixed(Pool::once(*nt)))
+                    .num_threads(*nt)
                     .filter(|r| keep(r))
                     .map(parse_project_light)
                     .collect(),
@@ -246,36 +240,19 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 16,
-                    heavy: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    heavy: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    heavy: true,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    heavy: true,
-                    num_threads,
-                },
-            ]
-        })
+    let ns = [16, 20];
+    let heavy_options = [false, true];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| heavy_options.map(|heavy| InputVariant { n, heavy }))
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| [Method::Rayon { nt }, Method::Orx { nt }, Method::OrxFixed { nt }];
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "throughput_linear_log_collect", &treatments, &variants);
 }
