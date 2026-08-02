@@ -381,7 +381,6 @@ function renderTable() {
     }
     html += '</tr></thead><tbody>';
     for (const row of filtered) {
-        console.log('\n\n')
         html += '<tr>';
         for (const h of state.headers) {
             if (h === 'time (ns)') {
