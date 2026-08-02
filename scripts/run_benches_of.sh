@@ -12,7 +12,7 @@ fi
 
 CATEGORY="$1"
 BENCH_DIR="benches/$CATEGORY"
-RESULTS_DIR="$BENCH_DIR/results"
+RESULTS_DIR="benches/results"
 
 # Validate that the category directory exists
 if [[ ! -d "$BENCH_DIR" ]]; then
@@ -70,12 +70,8 @@ while read -r bench_name; do
     criterion_dir="${bench_name//-/_}"
     criterion_path="target/criterion/$criterion_dir/summary_$criterion_dir.csv"
     
-    # Derive result filename: convert benchmark name to underscores and remove category prefix with hyphens
-    # First convert all hyphens to underscores
+    # Derive result filename: convert benchmark name to underscores
     result_file="${bench_name//-/_}"
-    # Then remove category prefix (which now has underscores)
-    category_prefix="${CATEGORY}_"
-    result_file="${result_file#$category_prefix}"
     result_file="$result_file.csv"
     
     # Copy the summary CSV if it exists
