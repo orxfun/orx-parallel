@@ -527,12 +527,3 @@ name = "memory-pressure-string-formatting"
 harness = false
 path = "benches/memory_pressure/string_formatting.rs"
 required-features = ["std"]
-
-
-## TODO: temporary benchmarks
-
-[[bench]]
-name = "xyz-cf"
-harness = false
-path = "benches/xyz/cf.rs"
-required-features = ["std"]
