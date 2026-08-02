@@ -11,6 +11,8 @@ use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
 
+const CPU_MIX_ROUNDS: usize = 40;
+
 #[derive(Debug, Clone, Copy)]
 enum Pos {
     Early,
@@ -79,7 +81,7 @@ struct Event {
     code: u16,
     ts: u64,
     payload_seed: u64,
-    signature: u8,
+    signature: u64,
 }
 
 struct Exp;
@@ -88,19 +90,20 @@ fn cpu_mix(seed: u64, rounds: usize) -> u64 {
     let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
     for r in 0..rounds {
         let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
-        x ^= salt;
-        x = x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B);
-        x ^= x >> 27;
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
     }
     x
 }
 
-fn suspicious_signature(ts: u64, payload_seed: u64) -> u8 {
-    (cpu_mix(ts ^ payload_seed, 7) & 0xFF) as u8
+fn suspicious_signature(ts: u64, payload_seed: u64) -> u64 {
+    cpu_mix(ts ^ payload_seed, CPU_MIX_ROUNDS)
 }
 
 fn is_suspicious(event: &Event) -> bool {
-    event.code == 911 && suspicious_signature(event.ts, event.payload_seed) == event.signature
+    suspicious_signature(event.ts, event.payload_seed) == event.signature
+        && black_box(event.code == 911)
 }
 
 fn sentinel_index(len: usize, pos: Pos) -> Option<usize> {
@@ -122,7 +125,7 @@ fn inputs(len: usize, pos: Pos) -> Vec<Event> {
             code: rng.random_range(100..=900),
             ts: 1_900_000_000 + idx as u64,
             payload_seed: rng.random::<u64>() ^ (idx as u64).rotate_left(11),
-            signature: rng.random::<u8>(),
+            signature: rng.random(),
         })
         .collect();
 
@@ -192,8 +195,8 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let ns = [16, 20];
-    let positions = [Pos::Early, Pos::Mid, Pos::Late, Pos::Never];
+    let ns = [14, 18];
+    let positions = [Pos::Never, Pos::Late, Pos::Mid, Pos::Early];
     let treatments: Vec<_> = ns
         .into_iter()
         .flat_map(|n| positions.map(|pos| InputVariant { n, pos }))
