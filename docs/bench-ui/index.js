@@ -1,24 +1,13 @@
 'use strict';
 
 // ---- Configuration ----
+const GITHUB_REPO = 'orxfun/orx-parallel';
 const BRANCH = "v4-enhanced-benches";
+const BASE_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;
 const BASE_RESULT_URL = `https://raw.githubusercontent.com/orxfun/orx-parallel/${BRANCH}/benches/results/`;
 const BASE_CODE_URL = `https://github.com/orxfun/orx-parallel/blob/${BRANCH}/benches/`;
 
-const CATALOG = {
-    early_exit: ['suspicious_find_any', 'suspicious_first'],
-    fallible: ['validation_option', 'validation_result'],
-    first: ['f', 'ff', 'fff', 'i', 'id', 'lf', 'mf', 'mfmf', 'mi'],
-    het: ['advanced', 'simple'],
-    recursive: ['tree_traversal'],
-    reduce: ['f', 'id', 'l', 'm', 'mf', 'mfm', 'mfmf'],
-    stateful_using: ['monte_carlo_batch'],
-    throughput_linear: ['log_collect', 'log_reduce'],
-    xap: ['cf', 'cmmmm', 'f', 'ff', 'fff', 'ffff', 'i', 'ii', 'iii', 'iiii',
-        'l_cons', 'l_iter', 'l_vec', 'lf', 'll_cons', 'll_iter', 'll_vec',
-        'lll_cons', 'lll_iter', 'lll_vec', 'lm', 'm', 'mf', 'mfm', 'mfmf',
-        'mfmfmf', 'mm', 'mmmm'],
-};
+const CATALOG = Object.create(null);
 
 // Columns to skip when building filters (non-filterable metadata + target value)
 const SKIP_COLS = new Set(['t', 'i', 'a', 'time (ns)']);
@@ -58,6 +47,70 @@ function parseCsv(text) {
     return { headers, rows };
 }
 
+function sortNames(values) {
+    return [...values].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+}
+
+async function fetchGitHubContents(path) {
+    const url = `${BASE_API_URL}${path}?ref=${encodeURIComponent(BRANCH)}`;
+    const resp = await fetch(url, {
+        headers: {
+            Accept: 'application/vnd.github+json',
+        },
+    });
+    if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status} for ${url}`);
+    }
+    const data = await resp.json();
+    if (!Array.isArray(data)) {
+        throw new Error(`Unexpected response for ${url}`);
+    }
+    return data;
+}
+
+async function loadCatalog() {
+    setEmptyMsg('Loading categories…');
+    showPanel('link-panel', false);
+    showPanel('filters-panel', false);
+    showPanel('chart-panel', false);
+    showPanel('table-panel', false);
+
+    try {
+        const rootItems = await fetchGitHubContents('benches/results');
+        const categories = rootItems
+            .filter(item => item.type === 'dir')
+            .map(item => item.name)
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+        for (const key of Object.keys(CATALOG)) {
+            delete CATALOG[key];
+        }
+
+        const categoryEntries = await Promise.all(categories.map(async (category) => {
+            const items = await fetchGitHubContents(`benches/results/${encodeURIComponent(category)}`);
+            const benches = items
+                .filter(item => item.type === 'file' && item.name.toLowerCase().endsWith('.csv'))
+                .map(item => item.name.replace(/\.csv$/i, ''))
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            return [category, benches];
+        }));
+
+        for (const [category, benches] of categoryEntries) {
+            CATALOG[category] = benches;
+        }
+
+        renderCategories();
+        if (categories.length > 0) {
+            selectCategory(categories[0]);
+        } else {
+            setEmptyMsg('No benchmark categories found.');
+        }
+    } catch (err) {
+        console.error(err);
+        setEmptyMsg(`Failed to load categories: ${err.message}`);
+    }
+}
+
 /**
  * Returns sorted method names: seq first, then grouped by prefix (rayon, orx, orx-fixed),
  * sorted numerically within each group, then anything else alphabetically.
@@ -84,8 +137,8 @@ function sortMethods(methods) {
 
 function sortMethodsForChart(methods) {
     return [...methods].sort((a, b) => {
-        if (a === 'seq') return -1;
-        if (b === 'seq') return 1;
+        if (a.startsWith('seq')) return -1;
+        if (b.startsWith('seq')) return 1;
         return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
 }
@@ -103,6 +156,10 @@ function methodColor(method) {
         const lightness = minLightness + (hash % 1000) / 1000 * span;
         return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     };
+
+    if (/^seq(?:[-_].+)?$/.test(method) || /^iter(?:[-_].+)?$/.test(method)) {
+        return tone(125, 125, 125, 0);
+    }
 
     if (/^rayon(?:[-_].+)?$/.test(method)) {
         return tone(210, 82, 34, 64);
@@ -132,7 +189,7 @@ function setEmptyMsg(msg, visible = true) {
 function renderCategories() {
     const ul = document.getElementById('category-list');
     ul.innerHTML = '';
-    for (const cat of Object.keys(CATALOG)) {
+    for (const cat of Object.keys(CATALOG).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))) {
         const li = document.createElement('li');
         const btn = document.createElement('button');
         btn.textContent = cat;
@@ -147,7 +204,8 @@ function renderBenches() {
     const ul = document.getElementById('bench-list');
     ul.innerHTML = '';
     if (!state.category) return;
-    for (const bench of CATALOG[state.category]) {
+    const benches = CATALOG[state.category] || [];
+    for (const bench of benches) {
         const li = document.createElement('li');
         const btn = document.createElement('button');
         btn.textContent = bench;
@@ -185,7 +243,7 @@ async function loadBench(category, bench) {
     showPanel('chart-panel', false);
     showPanel('table-panel', false);
 
-    const resultUrl = `${BASE_RESULT_URL}${category}/${category}_${bench}.csv`;
+    const resultUrl = `${BASE_RESULT_URL}${category}/${bench}.csv`;
     const codeUrl = `${BASE_CODE_URL}${category}/${bench}.rs`;
 
     try {
@@ -415,5 +473,4 @@ function renderTable() {
 }
 
 // ---- Init ----
-renderCategories();
-renderBenches();
+loadCatalog();
