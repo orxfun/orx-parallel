@@ -1,10 +1,8 @@
 'use strict';
 
 // ---- Configuration ----
-const GITHUB_REPO = 'orxfun/orx-parallel';
 const BRANCH = "v4-enhanced-benches";
-const BASE_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;
-const BASE_RESULT_URL = `https://raw.githubusercontent.com/orxfun/orx-parallel/${BRANCH}/benches/results/`;
+const BASE_RESULT_URL = './results/';
 const BASE_CODE_URL = `https://github.com/orxfun/orx-parallel/blob/${BRANCH}/benches/`;
 
 const CATALOG = Object.create(null);
@@ -51,21 +49,34 @@ function sortNames(values) {
     return [...values].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
-async function fetchGitHubContents(path) {
-    const url = `${BASE_API_URL}${path}?ref=${encodeURIComponent(BRANCH)}`;
-    const resp = await fetch(url, {
-        headers: {
-            Accept: 'application/vnd.github+json',
-        },
-    });
+async function fetchDirectoryListing(path) {
+    const resp = await fetch(path);
     if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status} for ${url}`);
+        throw new Error(`HTTP ${resp.status} for ${path}`);
     }
-    const data = await resp.json();
-    if (!Array.isArray(data)) {
-        throw new Error(`Unexpected response for ${url}`);
+
+    const html = await resp.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const anchors = [...doc.querySelectorAll('a[href]')];
+    const byKey = new Map();
+
+    for (const a of anchors) {
+        const href = a.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || href.startsWith('?') || href.startsWith('javascript:')) continue;
+
+        const url = new URL(href, resp.url);
+        if (url.origin !== window.location.origin) continue;
+
+        const parts = url.pathname.split('/').filter(Boolean);
+        const name = decodeURIComponent(parts[parts.length - 1] || '');
+        if (!name || name === '..') continue;
+
+        const isDirectory = href.endsWith('/') || url.pathname.endsWith('/');
+        const key = `${isDirectory ? 'd' : 'f'}:${name}`;
+        byKey.set(key, { name, isDirectory });
     }
-    return data;
+
+    return [...byKey.values()];
 }
 
 async function loadCatalog() {
@@ -76,22 +87,20 @@ async function loadCatalog() {
     showPanel('table-panel', false);
 
     try {
-        const rootItems = await fetchGitHubContents('benches/results');
-        const categories = rootItems
-            .filter(item => item.type === 'dir')
-            .map(item => item.name)
-            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+        const rootItems = await fetchDirectoryListing(BASE_RESULT_URL);
+        const categories = sortNames(rootItems
+            .filter(item => item.isDirectory)
+            .map(item => item.name));
 
         for (const key of Object.keys(CATALOG)) {
             delete CATALOG[key];
         }
 
         const categoryEntries = await Promise.all(categories.map(async (category) => {
-            const items = await fetchGitHubContents(`benches/results/${encodeURIComponent(category)}`);
-            const benches = items
-                .filter(item => item.type === 'file' && item.name.toLowerCase().endsWith('.csv'))
-                .map(item => item.name.replace(/\.csv$/i, ''))
-                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            const items = await fetchDirectoryListing(`${BASE_RESULT_URL}${encodeURIComponent(category)}/`);
+            const benches = sortNames(items
+                .filter(item => !item.isDirectory && item.name.toLowerCase().endsWith('.csv'))
+                .map(item => item.name.replace(/\.csv$/i, '')));
             return [category, benches];
         }));
 
@@ -243,8 +252,9 @@ async function loadBench(category, bench) {
     showPanel('chart-panel', false);
     showPanel('table-panel', false);
 
-    const resultUrl = `${BASE_RESULT_URL}${category}/${bench}.csv`;
-    const codeUrl = `${BASE_CODE_URL}${category}/${bench}.rs`;
+    const resultUrl = `${BASE_RESULT_URL}${encodeURIComponent(category)}/${encodeURIComponent(bench)}.csv`;
+    const sourceBench = bench.startsWith(`${category}_`) ? bench.slice(category.length + 1) : bench;
+    const codeUrl = `${BASE_CODE_URL}${encodeURIComponent(category)}/${encodeURIComponent(sourceBench)}.rs`;
 
     try {
         const resp = await fetch(resultUrl);
