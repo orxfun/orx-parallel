@@ -82,6 +82,14 @@ function sortMethods(methods) {
     });
 }
 
+function sortMethodsForChart(methods) {
+    return [...methods].sort((a, b) => {
+        if (a === 'seq') return -1;
+        if (b === 'seq') return 1;
+        return a.localeCompare(b);
+    });
+}
+
 /** Assign a consistent color to a method name. */
 function methodColor(method) {
     if (method === 'seq') return '#47476b';
@@ -291,8 +299,8 @@ function renderChart() {
     // Determine selected methods from the method filter (or all distinct if method isn't a filter col)
     const methodSel = state.filters['method'];
     const methods = methodSel
-        ? sortMethods([...methodSel])
-        : sortMethods([...new Set(filtered.map(r => r['method']))]);
+        ? sortMethodsForChart([...methodSel])
+        : sortMethodsForChart([...new Set(filtered.map(r => r['method']))]);
 
     // For each selected method, average time over filtered rows where method == that method
     const sums = Object.fromEntries(methods.map(m => [m, 0]));
