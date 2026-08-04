@@ -31,6 +31,10 @@
                     <li>The integer suffices in method names represent number of threads; eg, <code>orx-4</code> uses
                         <code>orx-parallel</code> crate with 4 threads.
                     </li>
+                    <li>If you see a second integer suffix, it refers to the user entered chunk size.
+                        For instance, <code>orx-16-1</code> is executed with 16 threads with a fix chunk size of 1.
+                        A chunk size of 0 is the default and corresponds to auto chunk size selection.
+                    </li>
                     <li><code>seq</code> stands for sequential; <code>rayon</code> uses rayon's parallel iterator.</li>
                     <li><code>orx</code> uses default adaptive parallel runner while <code>orx-fixed</code> uses
                         <code>Runner::fixed</code>.

@@ -174,7 +174,7 @@ async function loadBench(category, bench) {
     showPanel('chart-panel', false);
     showPanel('table-panel', false);
 
-    const resultUrl = `${BASE_RESULT_URL}${category}/${bench}.csv`;
+    const resultUrl = `${BASE_RESULT_URL}${category}/${category}_${bench}.csv`;
     const codeUrl = `${BASE_CODE_URL}${category}/${bench}.rs`;
 
     try {
