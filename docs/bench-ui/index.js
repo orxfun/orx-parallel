@@ -93,25 +93,28 @@ function sortMethodsForChart(methods) {
 /** Assign a consistent color to a method name. */
 function methodColor(method) {
     if (method === 'seq') return '#47476b';
-    if (/^rayon-(\d+)$/.test(method)) {
-        const n = parseInt(method.split('-')[1]) || 1;
-        const l = Math.max(30, 62 - n * 3);
-        return `hsl(210, 80%, ${l}%)`;
+    const hash = (() => {
+        let value = 0;
+        for (const c of method) value = (value * 31 + c.charCodeAt(0)) & 0xffff;
+        return value;
+    })();
+    const tone = (hue, saturation, minLightness, maxLightness) => {
+        const span = maxLightness - minLightness;
+        const lightness = minLightness + (hash % 1000) / 1000 * span;
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    };
+
+    if (/^rayon(?:[-_].+)?$/.test(method)) {
+        return tone(210, 82, 34, 64);
     }
-    if (/^orx-fixed-(\d+)$/.test(method)) {
-        const n = parseInt(method.split('-')[2]) || 1;
-        const l = Math.max(35, 60 - n * 3);
-        return `hsl(35, 90%, ${l}%)`;
+    if (/^orx-fixed(?:[-_].+)?$/.test(method)) {
+        return tone(28, 95, 46, 72);
     }
-    if (/^orx-(\d+)$/.test(method)) {
-        const n = parseInt(method.split('-')[1]) || 1;
-        const l = Math.max(28, 48 - n * 2);
-        return `hsl(120, 55%, ${l}%)`;
+    if (/^orx(?:[-_].+)?$/.test(method) || /^xap(?:[-_].+)?$/.test(method)) {
+        return tone(116, 70, 42, 72);
     }
     // Generic fallback: hash to a palette
     const palette = ['#6366f1', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6', '#0ea5e9'];
-    let hash = 0;
-    for (const c of method) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
     return palette[hash % palette.length];
 }
 
