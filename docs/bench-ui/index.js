@@ -108,7 +108,7 @@ function methodColor(method) {
         return tone(210, 82, 34, 64);
     }
     if (/^orx-fixed(?:[-_].+)?$/.test(method)) {
-        return tone(28, 95, 46, 72);
+        return tone(12, 100, 44, 58);
     }
     if (/^orx(?:[-_].+)?$/.test(method) || /^xap(?:[-_].+)?$/.test(method)) {
         return tone(116, 70, 42, 72);
