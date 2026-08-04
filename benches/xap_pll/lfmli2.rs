@@ -237,7 +237,7 @@ fn run(c: &mut Criterion) {
     let treatments: Vec<_> = len.into_iter().map(|n| InputVariant { n }).collect();
     let variants = vec![Method::Iter, Method::XapPll];
 
-    Bench.bench(c, "xap_p_lfmli2", &treatments, &variants);
+    Bench.bench(c, "xap_pll_lfmli2", &treatments, &variants);
 }
 
 criterion_group!(benches, run);
