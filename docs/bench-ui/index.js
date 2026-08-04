@@ -86,7 +86,7 @@ function sortMethodsForChart(methods) {
     return [...methods].sort((a, b) => {
         if (a === 'seq') return -1;
         if (b === 'seq') return 1;
-        return a.localeCompare(b);
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
 }
 
