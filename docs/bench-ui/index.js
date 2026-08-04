@@ -246,7 +246,7 @@ function renderFilters() {
             const chip = document.createElement('button');
             chip.className = 'chip' + (state.filters[col].has(val) ? ' active' : '');
             chip.textContent = val;
-            chip.addEventListener('click', () => toggleFilter(col, val, chip));
+            chip.addEventListener('click', (event) => toggleFilter(col, val, chip, event));
             chips.appendChild(chip);
         }
 
@@ -255,16 +255,24 @@ function renderFilters() {
     }
 }
 
-function toggleFilter(col, val, chip) {
+function toggleFilter(col, val, chip, event) {
     const sel = state.filters[col];
-    if (sel.has(val)) {
-        // Require at least one value to remain selected
-        if (sel.size <= 1) return;
-        sel.delete(val);
-        chip.classList.remove('active');
+    if (event.ctrlKey) {
+        if (sel.has(val)) {
+            sel.delete(val);
+            chip.classList.remove('active');
+        } else {
+            sel.add(val);
+            chip.classList.add('active');
+        }
     } else {
+        sel.clear();
         sel.add(val);
-        chip.classList.add('active');
+
+        const chips = chip.parentElement.querySelectorAll('.chip');
+        for (const otherChip of chips) {
+            otherChip.classList.toggle('active', otherChip === chip);
+        }
     }
     renderChart();
     renderTable();
