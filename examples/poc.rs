@@ -31,11 +31,24 @@ enum Out {
 }
 
 impl Out {
-    fn log(&self) {
+    fn a(self) -> u64 {
         match self {
-            Self::A(x) => println!("{x}"),
-            Self::B(x) => println!("{:?}", x.first()),
-            Self::C(x) => println!("{x:?}"),
+            Self::A(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn b(self) -> Vec<String> {
+        match self {
+            Self::B(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    fn c(self) -> Option<u64> {
+        match self {
+            Self::C(value) => value,
+            _ => unreachable!(),
         }
     }
 }
@@ -56,7 +69,7 @@ where
 }
 
 fn main() {
-    let seq = false;
+    // let seq = false;
     let n = 100_000;
 
     let fa = || (0..n).map(cpu_mix).sum::<u64>();
@@ -71,12 +84,20 @@ fn main() {
 
     let computations = vec![Compute::A(fa), Compute::B(fb), Compute::C(fc)];
 
-    let outputs: Vec<_> = match seq {
-        true => computations.into_iter().map(|x| x.run()).collect(),
-        false => computations.into_par().map(|x| x.run()).collect(),
-    };
+    let outputs: Vec<_> = computations.into_par().map(|x| x.run()).collect();
+    // let outputs: Vec<_> = match seq {
+    //     true => computations.into_iter().map(|x| x.run()).collect(),
+    //     false => computations.into_par().map(|x| x.run()).collect(),
+    // };
 
-    for x in &outputs {
-        x.log();
-    }
+    let mut outputs = outputs.into_iter();
+    let (a, b, c) = (
+        outputs.next().unwrap().a(),
+        outputs.next().unwrap().b(),
+        outputs.next().unwrap().c(),
+    );
+
+    println!("a = {a}");
+    println!("b.len() = {}", b.len());
+    println!("c = {c:?}");
 }
