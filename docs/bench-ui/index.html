@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orx-parallel – Benchmark Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <link rel="icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./index.js" type="text/javascript" defer></script>
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- Header -->
+        <header class="header">
+            <a href="https://github.com/orxfun/orx-parallel" target="_blank" rel="noreferrer"
+                aria-label="orx-parallel on GitHub">
+                <img class="header-logo"
+                    src="https://avatars.githubusercontent.com/u/132661625?s=400&u=e13dbda1a79636fa7d02dd9ac8dfc02705694144&v=4"
+                    alt="ORX logo" />
+            </a>
+            <div>
+                <h1><code>orx-parallel</code> – Benchmark Results</h1>
+                <ul>
+                    <li>The integer suffices in method names represent number of threads; eg, <code>orx-4</code> uses
+                        <code>orx-parallel</code> crate with 4 threads.
+                    </li>
+                    <li>If you see a second integer suffix, it refers to the user entered chunk size.
+                        For instance, <code>orx-16-1</code> is executed with 16 threads with a fix chunk size of 1.
+                        A chunk size of 0 is the default and corresponds to auto chunk size selection.
+                    </li>
+                    <li><code>seq</code> stands for sequential; <code>rayon</code> uses rayon's parallel iterator.</li>
+                    <li><code>orx</code> uses default adaptive parallel runner while <code>orx-fixed</code> uses
+                        <code>Runner::fixed</code>.
+                    </li>
+                </ul>
+            </div>
+        </header>
+
+        <!-- Body -->
+        <div class="body">
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="panel">
+                    <div class="panel-title">Category</div>
+                    <ul class="nav-list" id="category-list"></ul>
+                </div>
+                <div class="panel">
+                    <div class="panel-title">Benchmark</div>
+                    <ul class="nav-list" id="bench-list"></ul>
+                </div>
+            </aside>
+
+            <!-- Main content -->
+            <div class="main">
+                <div class="panel" id="empty-panel">
+                    <div class="state-msg" id="empty-msg">Select a category and benchmark from the left panel to view
+                        results.</div>
+                </div>
+
+                <div class="panel" id="link-panel" style="display:none">
+                    <div id="result-link"></div>
+                    <div id="code-link"></div>
+                </div>
+
+                <div class="panel" id="filters-panel" style="display:none">
+                    <div class="panel-title">Filters</div>
+                    <div class="filter-group" id="filter-group"></div>
+                </div>
+
+                <div class="panel" id="chart-panel" style="display:none">
+                    <div class="panel-title">Average Time (ns) by Method</div>
+                    <div class="chart-wrap">
+                        <canvas id="bench-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel" id="table-panel" style="display:none">
+                    <div class="panel-title">Data</div>
+                    <div class="table-wrap" id="table-container"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

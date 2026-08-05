@@ -12,7 +12,7 @@ if [[ ! -f "$RUN_BENCHES_SCRIPT" ]]; then
     exit 1
 fi
 
-# Benchmark categories to run (exclude xap, xap_pll)
+# Benchmark categories to run
 CATEGORIES=(
     "arbitrary_iter"
     "collect"
@@ -26,6 +26,8 @@ CATEGORIES=(
     "reduce"
     "stateful_using"
     "throughput_linear"
+    "xap"
+    "xap_pll"
 )
 
 echo "Running all benchmark categories..."

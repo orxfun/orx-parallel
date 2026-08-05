@@ -3,7 +3,6 @@
 //! pipelines over map/filter/reduce workloads.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -11,6 +10,19 @@ use rand_chacha::ChaCha8Rng;
 use rayon::ThreadPoolBuilder;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use std::collections::{HashMap, HashSet};
+use std::hint::black_box;
+
+const CPU_MIX_ROUNDS: usize = 40;
+fn cpu_mix(x: u64) -> u64 {
+    let mut x = black_box(x ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
+}
 
 #[derive(Debug, Clone, Copy)]
 enum Dataset {
@@ -22,7 +34,6 @@ enum Dataset {
 struct InputVariant {
     n: usize,
     dataset: Dataset,
-    num_threads: usize,
 }
 
 impl InputVariant {
@@ -33,7 +44,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "dataset", "nt"]
+        vec!["n", "dataset"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -44,17 +55,15 @@ impl Factors for InputVariant {
                 Dataset::Set => "hash-set",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -63,15 +72,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -102,13 +108,6 @@ struct Input {
 
 struct Exp;
 
-fn mix64(x: u64) -> u64 {
-    let mut z = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
-    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-    z ^ (z >> 31)
-}
-
 fn keep(v: u64) -> bool {
     v & 0x7 != 0 && !v.trailing_zeros().is_multiple_of(3)
 }
@@ -134,7 +133,7 @@ fn inputs(len: usize) -> Input {
 
 fn seq_map(map: &HashMap<u64, u32>) -> Agg {
     map.iter()
-        .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
+        .map(|(k, v)| cpu_mix(*k ^ (*v as u64).rotate_left(13)))
         .filter(|x| keep(*x))
         .map(Agg::from_val)
         .reduce(merge)
@@ -143,89 +142,71 @@ fn seq_map(map: &HashMap<u64, u32>) -> Agg {
 
 fn seq_set(set: &HashSet<u64>) -> Agg {
     set.iter()
-        .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
+        .map(|k| cpu_mix(*k ^ 0xF0F0_0F0F_AAAA_5555))
         .filter(|x| keep(*x))
         .map(Agg::from_val)
         .reduce(merge)
         .unwrap_or_default()
 }
 
-fn rayon_map(map: &HashMap<u64, u32>, num_threads: usize) -> Agg {
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build()
-        .unwrap();
+fn rayon_map(map: &HashMap<u64, u32>, nt: usize) -> Agg {
+    let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
 
     pool.install(|| {
         map.iter()
             .par_bridge()
-            .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
+            .map(|(k, v)| cpu_mix(*k ^ (*v as u64).rotate_left(13)))
             .filter(|x| keep(*x))
             .map(Agg::from_val)
             .reduce(Agg::default, merge)
     })
 }
 
-fn rayon_set(set: &HashSet<u64>, num_threads: usize) -> Agg {
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build()
-        .unwrap();
+fn rayon_set(set: &HashSet<u64>, nt: usize) -> Agg {
+    let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
 
     pool.install(|| {
         set.iter()
             .par_bridge()
-            .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
+            .map(|k| cpu_mix(*k ^ 0xF0F0_0F0F_AAAA_5555))
             .filter(|x| keep(*x))
             .map(Agg::from_val)
             .reduce(Agg::default, merge)
     })
 }
 
-fn orx_map(map: &HashMap<u64, u32>, num_threads: usize) -> Agg {
-    map.iter()
+fn orx_map(map: &HashMap<u64, u32>, fixed_runner: bool, nt: usize) -> Agg {
+    let par = map
+        .iter()
         .iter_into_par()
-        .num_threads(num_threads)
-        .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
+        .num_threads(nt)
+        .map(|(k, v)| cpu_mix(*k ^ (*v as u64).rotate_left(13)))
         .filter(|x| keep(*x))
-        .map(Agg::from_val)
-        .reduce(merge)
-        .unwrap_or_default()
+        .map(Agg::from_val);
+
+    let result = match fixed_runner {
+        false => par.reduce(merge),
+        true => par.runner(Runner::fixed(Pool::once(nt))).reduce(merge),
+    };
+
+    result.unwrap_or_default()
 }
 
-fn orx_fixed_map(map: &HashMap<u64, u32>, num_threads: usize) -> Agg {
-    map.iter()
+fn orx_set(set: &HashSet<u64>, fixed_runner: bool, nt: usize) -> Agg {
+    let par = set
+        .iter()
         .iter_into_par()
-        .runner(Runner::fixed(Pool::default(num_threads)))
-        .num_threads(num_threads)
-        .map(|(k, v)| mix64(*k ^ (*v as u64).rotate_left(13)))
+        .num_threads(nt)
+        .map(|k| cpu_mix(*k ^ 0xF0F0_0F0F_AAAA_5555))
         .filter(|x| keep(*x))
-        .map(Agg::from_val)
-        .reduce(merge)
-        .unwrap_or_default()
-}
+        .map(Agg::from_val);
 
-fn orx_set(set: &HashSet<u64>, num_threads: usize) -> Agg {
-    set.iter()
-        .iter_into_par()
-        .num_threads(num_threads)
-        .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
-        .filter(|x| keep(*x))
-        .map(Agg::from_val)
-        .reduce(merge)
-        .unwrap_or_default()
-}
+    let result = match fixed_runner {
+        false => par.reduce(merge),
+        true => par.runner(Runner::fixed(Pool::once(nt))).reduce(merge),
+    };
 
-fn orx_fixed_set(set: &HashSet<u64>, num_threads: usize) -> Agg {
-    set.iter()
-        .iter_into_par()
-        .runner(Runner::fixed(Pool::default(num_threads)))
-        .num_threads(num_threads)
-        .map(|k| mix64(*k ^ 0xF0F0_0F0F_AAAA_5555))
-        .filter(|x| keep(*x))
-        .map(Agg::from_val)
-        .reduce(merge)
-        .unwrap_or_default()
+    result.unwrap_or_default()
 }
 
 impl Experiment for Exp {
@@ -249,18 +230,14 @@ impl Experiment for Exp {
     ) -> Self::Output {
         match (input_variant.dataset, alg_variant) {
             (Dataset::Map, Method::Seq) => seq_map(&input.map),
-            (Dataset::Map, Method::Rayon) => rayon_map(&input.map, input_variant.num_threads),
-            (Dataset::Map, Method::Orx) => orx_map(&input.map, input_variant.num_threads),
-            (Dataset::Map, Method::OrxFixed) => {
-                orx_fixed_map(&input.map, input_variant.num_threads)
-            }
+            (Dataset::Map, Method::Rayon { nt }) => rayon_map(&input.map, *nt),
+            (Dataset::Map, Method::Orx { nt }) => orx_map(&input.map, false, *nt),
+            (Dataset::Map, Method::OrxFixed { nt }) => orx_map(&input.map, true, *nt),
 
             (Dataset::Set, Method::Seq) => seq_set(&input.set),
-            (Dataset::Set, Method::Rayon) => rayon_set(&input.set, input_variant.num_threads),
-            (Dataset::Set, Method::Orx) => orx_set(&input.set, input_variant.num_threads),
-            (Dataset::Set, Method::OrxFixed) => {
-                orx_fixed_set(&input.set, input_variant.num_threads)
-            }
+            (Dataset::Set, Method::Rayon { nt }) => rayon_set(&input.set, *nt),
+            (Dataset::Set, Method::Orx { nt }) => orx_set(&input.set, false, *nt),
+            (Dataset::Set, Method::OrxFixed { nt }) => orx_set(&input.set, true, *nt),
         }
     }
 
@@ -277,36 +254,25 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 16,
-                    dataset: Dataset::Map,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    dataset: Dataset::Map,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    dataset: Dataset::Set,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    dataset: Dataset::Set,
-                    num_threads,
-                },
-            ]
-        })
+    let ns = [14, 18];
+    let datasets = [Dataset::Map, Dataset::Set];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| datasets.map(|dataset| InputVariant { n, dataset }))
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(
         c,

@@ -1,6 +1,7 @@
 use crate::infallible::fun::FlatMap;
 use core::marker::PhantomData;
 
+/// Flat-map adapter backed by a closure.
 pub struct FnFlatMap<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send>(F, PhantomData<(I, O)>);
 
 impl<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send> Clone for FnFlatMap<I, O, F> {
@@ -14,6 +15,7 @@ impl<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send> Copy for FnFlatMap<I, O, F
 unsafe impl<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send> Send for FnFlatMap<I, O, F> {}
 
 impl<I, O: IntoIterator, F: Fn(I) -> O + Copy + Send> FnFlatMap<I, O, F> {
+    /// Creates a flat-map adapter.
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }

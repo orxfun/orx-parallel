@@ -12,7 +12,7 @@ fi
 
 CATEGORY="$1"
 BENCH_DIR="benches/$CATEGORY"
-RESULTS_DIR="$BENCH_DIR/results"
+RESULTS_DIR="docs/bench-ui/results/$CATEGORY"
 
 # Validate that the category directory exists
 if [[ ! -d "$BENCH_DIR" ]]; then
@@ -66,16 +66,18 @@ while read -r bench_name; do
     # Run the benchmark
     cargo bench --bench "$bench_name"
     
-    # Convert benchmark name to criterion directory name (replace hyphens with underscores)
+    # Criterion stores this benchmark under the full bench name with underscores.
     criterion_dir="${bench_name//-/_}"
     criterion_path="target/criterion/$criterion_dir/summary_$criterion_dir.csv"
+
+    # Benchmark names can use hyphens while category directories use underscores.
+    # We strip the category prefix only for the output file name under bench-ui/results.
+    bench_stem="$bench_name"
+    bench_stem="${bench_stem#${CATEGORY}_}"
+    bench_stem="${bench_stem#${CATEGORY//_/-}-}"
     
-    # Derive result filename: convert benchmark name to underscores and remove category prefix with hyphens
-    # First convert all hyphens to underscores
-    result_file="${bench_name//-/_}"
-    # Then remove category prefix (which now has underscores)
-    category_prefix="${CATEGORY}_"
-    result_file="${result_file#$category_prefix}"
+    # Save the CSV under the bench stem so bench-ui can discover it without the category prefix.
+    result_file="${bench_stem//-/_}"
     result_file="$result_file.csv"
     
     # Copy the summary CSV if it exists
@@ -88,5 +90,8 @@ while read -r bench_name; do
     
     echo ""
 done <<< "$BENCHMARKS"
+
+echo "Updating bench-ui catalog manifest..."
+python3 scripts/update_bench_ui_catalog.py
 
 echo "All benchmarks for category '$CATEGORY' completed."

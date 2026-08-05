@@ -1,6 +1,7 @@
 use crate::infallible::fun::Map;
 use core::marker::PhantomData;
 
+/// Map adapter backed by a closure.
 pub struct FnMap<I, O, F: Fn(I) -> O + Copy + Send>(F, PhantomData<I>);
 
 impl<I, O, F: Fn(I) -> O + Copy + Send> Clone for FnMap<I, O, F> {
@@ -14,6 +15,7 @@ impl<I, O, F: Fn(I) -> O + Copy + Send> Copy for FnMap<I, O, F> {}
 unsafe impl<I, O, F: Fn(I) -> O + Copy + Send> Send for FnMap<I, O, F> {}
 
 impl<I, O, F: Fn(I) -> O + Copy + Send> FnMap<I, O, F> {
+    /// Creates a map adapter.
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }

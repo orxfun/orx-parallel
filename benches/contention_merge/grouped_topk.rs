@@ -3,16 +3,28 @@
 //! while comparing sequential and parallel aggregation strategies.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::hint::black_box;
 
 const KEY_SPACE: usize = 4096;
 const TOP_K: usize = 32;
+
+const CPU_MIX_ROUNDS: usize = 40;
+fn cpu_mix(x: u16) -> u64 {
+    let mut x = black_box(x as u64);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
+}
 
 #[derive(Debug, Clone, Copy)]
 enum Dist {
@@ -24,7 +36,6 @@ enum Dist {
 struct InputVariant {
     n: usize,
     dist: Dist,
-    num_threads: usize,
 }
 
 impl InputVariant {
@@ -35,7 +46,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "dist", "nt"]
+        vec!["n", "dist"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -46,17 +57,15 @@ impl Factors for InputVariant {
                 Dist::Skewed => "skewed",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -65,15 +74,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -106,22 +112,22 @@ fn inputs(len: usize, dist: Dist) -> Vec<u16> {
         .collect()
 }
 
-fn count_seq(input: &[u16]) -> Vec<u32> {
-    let mut counts = vec![0_u32; KEY_SPACE];
+fn count_seq(input: &[u16]) -> Vec<u64> {
+    let mut counts = vec![0u64; KEY_SPACE];
     for key in input {
-        counts[*key as usize] += 1;
+        counts[*key as usize] += cpu_mix(*key);
     }
     counts
 }
 
-fn merge_counts(mut a: Vec<u32>, b: Vec<u32>) -> Vec<u32> {
+fn merge_counts(mut a: Vec<u64>, b: Vec<u64>) -> Vec<u64> {
     for (x, y) in a.iter_mut().zip(b) {
         *x += y;
     }
     a
 }
 
-fn count_rayon(input: &[u16], num_threads: usize) -> Vec<u32> {
+fn count_rayon(input: &[u16], num_threads: usize) -> Vec<u64> {
     let pool = ThreadPoolBuilder::new()
         .num_threads(num_threads)
         .build()
@@ -131,55 +137,45 @@ fn count_rayon(input: &[u16], num_threads: usize) -> Vec<u32> {
         input
             .into_par_iter()
             .fold(
-                || vec![0_u32; KEY_SPACE],
+                || vec![0u64; KEY_SPACE],
                 |mut local, key| {
-                    local[*key as usize] += 1;
+                    local[*key as usize] += cpu_mix(*key);
                     local
                 },
             )
-            .reduce(|| vec![0_u32; KEY_SPACE], merge_counts)
+            .reduce(|| vec![0u64; KEY_SPACE], merge_counts)
     })
 }
 
-fn count_orx(input: &[u16], num_threads: usize) -> Vec<u32> {
-    let mut use_vec = UseVec::new(|_| vec![0_u32; KEY_SPACE]);
+fn count_orx(input: &[u16], fixed_runner: bool, num_threads: usize) -> Vec<u64> {
+    let mut use_vec = UseVec::new(|_| vec![0u64; KEY_SPACE]);
 
-    input
+    let par = input
         .into_par()
         .num_threads(num_threads)
-        .use_vec(&mut use_vec)
-        .for_each(|local, key| {
-            local[*key as usize] += 1;
-        });
+        .use_vec(&mut use_vec);
+
+    match fixed_runner {
+        false => par.for_each(|local, key| {
+            local[*key as usize] += cpu_mix(*key);
+        }),
+        true => {
+            let runner = Runner::fixed(Pool::once(num_threads));
+            par.runner(runner).for_each(|local, key| {
+                local[*key as usize] += cpu_mix(*key);
+            })
+        }
+    }
 
     use_vec
         .into_vec()
         .into_iter()
         .reduce(merge_counts)
-        .unwrap_or_else(|| vec![0_u32; KEY_SPACE])
+        .unwrap_or_else(|| vec![0u64; KEY_SPACE])
 }
 
-fn count_orx_fixed(input: &[u16], num_threads: usize) -> Vec<u32> {
-    let mut use_vec = UseVec::new(|_| vec![0_u32; KEY_SPACE]);
-
-    input
-        .into_par()
-        .runner(Runner::fixed(Pool::default(num_threads)))
-        .num_threads(num_threads)
-        .use_vec(&mut use_vec)
-        .for_each(|local, key| {
-            local[*key as usize] += 1;
-        });
-
-    use_vec
-        .into_vec()
-        .into_iter()
-        .reduce(merge_counts)
-        .unwrap_or_else(|| vec![0_u32; KEY_SPACE])
-}
-
-fn topk_agg(counts: &[u32]) -> Agg {
-    let mut entries: Vec<(usize, u32)> = counts.iter().copied().enumerate().collect();
+fn topk_agg(counts: &[u64]) -> Agg {
+    let mut entries: Vec<(usize, u64)> = counts.iter().copied().enumerate().collect();
     entries.sort_unstable_by(|(ka, ca), (kb, cb)| cb.cmp(ca).then(ka.cmp(kb)));
 
     let mut checksum = 0_u64;
@@ -212,15 +208,15 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        input_variant: &Self::InputFactors,
+        _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
         let counts = match alg_variant {
             Method::Seq => count_seq(input),
-            Method::Rayon => count_rayon(input, input_variant.num_threads),
-            Method::Orx => count_orx(input, input_variant.num_threads),
-            Method::OrxFixed => count_orx_fixed(input, input_variant.num_threads),
+            Method::Rayon { nt } => count_rayon(input, *nt),
+            Method::Orx { nt } => count_orx(input, false, *nt),
+            Method::OrxFixed { nt } => count_orx(input, true, *nt),
         };
 
         topk_agg(&counts)
@@ -232,36 +228,25 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 16,
-                    dist: Dist::Uniform,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    dist: Dist::Uniform,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    dist: Dist::Skewed,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    dist: Dist::Skewed,
-                    num_threads,
-                },
-            ]
-        })
+    let ns = [16, 20];
+    let distributions = [Dist::Uniform, Dist::Skewed];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| distributions.map(|dist| InputVariant { n, dist }))
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "contention_merge_grouped_topk", &treatments, &variants);
 }

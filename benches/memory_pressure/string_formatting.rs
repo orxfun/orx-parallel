@@ -3,41 +3,51 @@
 //! including buffer reuse and locality considerations.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rayon::ThreadPoolBuilder;
+use std::hint::black_box;
+
+const CPU_MIX_ROUNDS: usize = 1_000;
+fn cpu_mix(seed: u64) -> u64 {
+    let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
+}
 
 #[derive(Clone, Copy)]
 struct InputVariant {
     size: usize,
-    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["size", "nt"]
+        vec!["size"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
         vec![
             match self.size {
-                1_000_000 => "small-1m",
-                10_000_000 => "medium-10m",
+                10_000 => "small-10k",
+                100_000 => "medium-100k",
                 _ => "unknown",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -46,15 +56,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -69,7 +76,7 @@ fn merge_agg(a: StringAgg, b: StringAgg) -> StringAgg {
     StringAgg {
         count: a.count + b.count,
         total_len: a.total_len + b.total_len,
-        checksum: a.checksum ^ b.checksum,
+        checksum: a.checksum + b.checksum,
     }
 }
 
@@ -79,7 +86,7 @@ fn format_number(idx: u64) -> (String, StringAgg) {
     let value = (idx.wrapping_mul(2654435761)).wrapping_add(0x9E3779B1);
     let formatted = format!("NUM_{:016x}_VAL_{}", idx, value);
     let len = formatted.len() as u64;
-    let checksum = (idx ^ value).wrapping_mul(31).wrapping_add(len);
+    let checksum = cpu_mix((idx ^ value).wrapping_mul(31).wrapping_add(len));
 
     (
         formatted,
@@ -129,43 +136,43 @@ fn rayon_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, Strin
 }
 
 fn orx_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
-    let pairs: Vec<_> = (0..n)
-        .into_par()
+    let mut stats = vec![StringAgg::default(); num_threads];
+    let strings = (0..n)
+        .par()
+        .use_slice(&mut stats)
         .num_threads(num_threads)
-        .map(|i| format_number(i as u64))
+        .map(|stats, i| {
+            let (s, agg) = format_number(i as u64);
+            *stats = merge_agg(*stats, agg);
+            s
+        })
         .collect();
-
-    let strings = pairs.iter().map(|(s, _)| s.clone()).collect();
-    let agg = pairs
-        .into_iter()
-        .map(|(_, a)| a)
-        .reduce(merge_agg)
-        .unwrap_or_default();
+    let agg = stats.into_par().reduce(merge_agg).unwrap_or_default();
 
     (strings, agg)
 }
 
 fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
-    let pairs: Vec<_> = (0..n)
-        .into_par()
-        .runner(Runner::fixed(Pool::default(num_threads)))
+    let mut stats = vec![StringAgg::default(); num_threads];
+    let strings = (0..n)
+        .par()
+        .runner(Runner::fixed(Pool::once(num_threads)))
+        .use_slice(&mut stats)
         .num_threads(num_threads)
-        .map(|i| format_number(i as u64))
+        .map(|stats, i| {
+            let (s, agg) = format_number(i as u64);
+            *stats = merge_agg(*stats, agg);
+            s
+        })
         .collect();
-
-    let strings = pairs.iter().map(|(s, _)| s.clone()).collect();
-    let agg = pairs
-        .into_iter()
-        .map(|(_, a)| a)
-        .reduce(merge_agg)
-        .unwrap_or_default();
+    let agg = stats.into_par().reduce(merge_agg).unwrap_or_default();
 
     (strings, agg)
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct Output {
-    string_count: u64,
+    strings: Vec<String>,
     agg: StringAgg,
 }
 
@@ -184,51 +191,44 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        input_variant: &Self::InputFactors,
+        _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
         let (strings, agg) = match alg_variant {
             Method::Seq => seq_format_and_collect(*input),
-            Method::Rayon => rayon_format_and_collect(*input, input_variant.num_threads),
-            Method::Orx => orx_format_and_collect(*input, input_variant.num_threads),
-            Method::OrxFixed => orx_fixed_format_and_collect(*input, input_variant.num_threads),
+            Method::Rayon { nt } => rayon_format_and_collect(*input, *nt),
+            Method::Orx { nt } => orx_format_and_collect(*input, *nt),
+            Method::OrxFixed { nt } => orx_fixed_format_and_collect(*input, *nt),
         };
 
-        Output {
-            string_count: strings.len() as u64,
-            agg,
-        }
+        Output { strings, agg }
     }
 
     fn expected_output(&self, _: &Self::InputFactors, input: &Self::Input) -> Option<Self::Output> {
         let (strings, agg) = seq_format_and_collect(*input);
-        Some(Output {
-            string_count: strings.len() as u64,
-            agg,
-        })
+        Some(Output { strings, agg })
     }
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    size: 1_000_000,
-                    num_threads,
-                },
-                InputVariant {
-                    size: 10_000_000,
-                    num_threads,
-                },
-            ]
-        })
+    let treatments: Vec<_> = [10_000, 100_000]
+        .into_iter()
+        .map(|size| InputVariant { size })
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "string_formatting_collection", &treatments, &variants);
 }

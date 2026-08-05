@@ -3,7 +3,6 @@
 //! fail-early datasets to compare missing-value propagation costs.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -22,7 +21,6 @@ enum InvalidProfile {
 struct InputVariant {
     n: usize,
     profile: InvalidProfile,
-    num_threads: usize,
 }
 
 impl InputVariant {
@@ -33,7 +31,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "scenario", "nt"]
+        vec!["n", "scenario"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -45,17 +43,16 @@ impl Factors for InputVariant {
                 InvalidProfile::FailEarly => "fail-early",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -64,15 +61,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -163,7 +157,7 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        input_variant: &Self::InputFactors,
+        _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
@@ -171,20 +165,20 @@ impl Experiment for Exp {
 
         match alg_variant {
             Method::Seq => seq_sum(input, THRESHOLD),
-            Method::Rayon => rayon_sum(input, THRESHOLD, input_variant.num_threads),
-            Method::Orx => input
+            Method::Rayon { nt } => rayon_sum(input, THRESHOLD, *nt),
+            Method::Orx { nt } => input
                 .as_slice()
                 .into_par()
-                .num_threads(input_variant.num_threads)
+                .num_threads(*nt)
                 .map(|row| parse_line_total(row))
                 .into_optional()
                 .filter(|x| *x >= THRESHOLD)
                 .sum(),
-            Method::OrxFixed => input
+            Method::OrxFixed { nt } => input
                 .as_slice()
                 .into_par()
-                .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
-                .num_threads(input_variant.num_threads)
+                .runner(Runner::fixed(Pool::once(*nt)))
+                .num_threads(*nt)
                 .map(|row| parse_line_total(row))
                 .into_optional()
                 .filter(|x| *x >= THRESHOLD)
@@ -198,46 +192,29 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 16,
-                    profile: InvalidProfile::SuccessHeavy,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    profile: InvalidProfile::SuccessHeavy,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    profile: InvalidProfile::Mixed,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    profile: InvalidProfile::Mixed,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    profile: InvalidProfile::FailEarly,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    profile: InvalidProfile::FailEarly,
-                    num_threads,
-                },
-            ]
-        })
+    let ns = [16, 20];
+    let profiles = [
+        InvalidProfile::SuccessHeavy,
+        InvalidProfile::Mixed,
+        InvalidProfile::FailEarly,
+    ];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| profiles.map(|profile| InputVariant { n, profile }))
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "fallible_validation_option", &treatments, &variants);
 }

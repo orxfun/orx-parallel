@@ -1,5 +1,4 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -48,12 +47,11 @@ fn m(x: &u64) -> u64 {
 struct InputVariant {
     n: usize,
     heavy: bool,
-    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "task", "nt"]
+        vec!["n", "task"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -64,18 +62,17 @@ impl Factors for InputVariant {
                 false => "light",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    RayonRedWith,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    RayonRedWith { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -84,16 +81,13 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::RayonRedWith => "rayon-red-with",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::RayonRedWith { nt } => format!("rayon-red-with-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -125,9 +119,9 @@ impl Experiment for Exp {
                 true => input.iter().map(m).reduce(h_r),
                 false => input.iter().map(m).reduce(l_r),
             },
-            Method::RayonRedWith => {
+            Method::RayonRedWith { nt } => {
                 let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
+                    .num_threads(*nt)
                     .build()
                     .unwrap();
                 pool.install(|| match h {
@@ -135,9 +129,9 @@ impl Experiment for Exp {
                     false => input.into_par_iter().map(m).reduce_with(l_r),
                 })
             }
-            Method::Rayon => {
+            Method::Rayon { nt } => {
                 let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
+                    .num_threads(*nt)
                     .build()
                     .unwrap();
                 pool.install(|| {
@@ -147,29 +141,29 @@ impl Experiment for Exp {
                     })
                 })
             }
-            Method::Orx => match h {
+            Method::Orx { nt } => match h {
                 true => input
                     .into_par()
-                    .num_threads(input_variant.num_threads)
+                    .num_threads(*nt)
                     .map(m)
                     .reduce(h_r),
                 false => input
                     .into_par()
-                    .num_threads(input_variant.num_threads)
+                    .num_threads(*nt)
                     .map(m)
                     .reduce(l_r),
             },
-            Method::OrxFixed => match h {
+            Method::OrxFixed { nt } => match h {
                 true => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
-                    .num_threads(input_variant.num_threads)
+                    .runner(Runner::fixed(Pool::once(*nt)))
+                    .num_threads(*nt)
                     .map(m)
                     .reduce(h_r),
                 false => input
                     .into_par()
-                    .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
-                    .num_threads(input_variant.num_threads)
+                    .runner(Runner::fixed(Pool::once(*nt)))
+                    .num_threads(*nt)
                     .map(m)
                     .reduce(l_r),
             },
@@ -189,36 +183,25 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [16, 32];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 15,
-                    heavy: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    heavy: false,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 15,
-                    heavy: true,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    heavy: true,
-                    num_threads,
-                },
-            ]
-        })
-        .collect();
+    let treatments: Vec<_> = vec![
+        InputVariant { n: 15, heavy: false },
+        InputVariant { n: 20, heavy: false },
+        InputVariant { n: 15, heavy: true },
+        InputVariant { n: 20, heavy: true },
+    ];
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::RayonRedWith { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "reduce_m", &treatments, &variants);
 }

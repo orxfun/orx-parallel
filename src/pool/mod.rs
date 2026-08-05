@@ -17,15 +17,11 @@ pub use new_pool::Pool;
 pub use par_thread_pool::ParThreadPool;
 #[cfg(feature = "std")]
 pub use pool_impl::BasicPool;
-#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
-pub use pool_impl::WasmWebPoolExp;
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 pub use pool_impl::WasmWebPool;
-#[cfg(all(
-    feature = "wasm",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
+#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
+pub use pool_impl::WasmWebPoolExp;
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool_impl::init_thread_pool;
 #[cfg(all(
     feature = "wasm-experimental",
@@ -33,17 +29,9 @@ pub use pool_impl::init_thread_pool;
     target_feature = "atomics"
 ))]
 pub use pool_impl::init_thread_pool;
-#[cfg(all(
-    feature = "wasm",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool_impl::wasm_web_runtime_info;
-#[cfg(all(
-    feature = "wasm",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool_impl::wasm_web_start_worker;
 
 #[cfg(all(feature = "std", feature = "wasm-experimental", target_arch = "wasm32"))]

@@ -21,12 +21,11 @@ struct InputVariant {
     n: usize,
     heavy: bool,
     heterogeneity_percent: u8,
-    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "heavy", "het", "nt"]
+        vec!["n", "heavy", "het"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -34,7 +33,6 @@ impl Factors for InputVariant {
             self.n.to_string(),
             if self.heavy { "true" } else { "false" }.to_string(),
             format!("{}%", self.heterogeneity_percent),
-            self.num_threads.to_string(),
         ]
     }
 }
@@ -48,9 +46,9 @@ struct WorkItem {
 #[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    OrxFixed { chunk_size: usize },
-    Orx { chunk_size: usize },
+    Rayon { nt: usize },
+    OrxFixed { nt: usize, chunk_size: usize },
+    Orx { nt: usize, chunk_size: usize },
 }
 
 impl Factors for Method {
@@ -61,9 +59,9 @@ impl Factors for Method {
     fn factor_levels(&self) -> Vec<String> {
         vec![match self {
             Self::Seq => "seq".to_string(),
-            Self::Rayon => "rayon".to_string(),
-            Self::OrxFixed { chunk_size } => format!("orx-fixed-auto-{chunk_size}"),
-            Self::Orx { chunk_size } => format!("orx-{chunk_size}"),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::OrxFixed { nt, chunk_size } => format!("orx-fixed-{nt}-{chunk_size}"),
+            Self::Orx { nt, chunk_size } => format!("orx-{nt}-{chunk_size}"),
         }]
     }
 }
@@ -141,23 +139,22 @@ impl Experiment for Exp {
     ) -> Self::Output {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
-            Method::Rayon => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
-                    .build()
-                    .unwrap();
+            Method::Rayon { nt } => {
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| input.par_iter().map(do_work).max())
             }
-            Method::OrxFixed { chunk_size } => input
+            Method::OrxFixed { nt, chunk_size } => input
                 .par()
                 .chunk_size(*chunk_size)
-                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
+                .runner(Runner::fixed(Pool::once(*nt)))
+                .num_threads(*nt)
                 .map(do_work)
                 .max(),
-            Method::Orx { chunk_size } => input
+            Method::Orx { nt, chunk_size } => input
                 .par()
                 .chunk_size(*chunk_size)
-                .runner(Runner::adaptive(Pool::once(input_variant.num_threads)))
+                .runner(Runner::adaptive(Pool::once(*nt)))
+                .num_threads(*nt)
                 .map(do_work)
                 .max(),
         }
@@ -169,35 +166,37 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let thread_options = [4, 8, 16];
     let sizes = [FEW_N, MANY_N];
     let heavy_options = [false, true];
     let het_options = [2, 5, 10];
 
     let mut treatments = Vec::new();
-    for &num_threads in &thread_options {
-        for &n in &sizes {
-            for &heavy in &heavy_options {
-                for &heterogeneity_percent in &het_options {
-                    treatments.push(InputVariant {
-                        n,
-                        heavy,
-                        heterogeneity_percent,
-                        num_threads,
-                    });
-                }
+    for &n in &sizes {
+        for &heavy in &heavy_options {
+            for &heterogeneity_percent in &het_options {
+                treatments.push(InputVariant {
+                    n,
+                    heavy,
+                    heterogeneity_percent,
+                });
             }
         }
     }
 
-    let variants = vec![
-        Method::Seq,
-        Method::Rayon,
-        Method::Orx { chunk_size: 0 },
-        Method::Orx { chunk_size: 1 },
-        Method::OrxFixed { chunk_size: 0 },
-        Method::OrxFixed { chunk_size: 1 },
-    ];
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt, chunk_size: 0 },
+            Method::Orx { nt, chunk_size: 1 },
+            Method::OrxFixed { nt, chunk_size: 0 },
+            Method::OrxFixed { nt, chunk_size: 1 },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    for nt in [1, 4, 16] {
+        variants.extend(par_variants(nt));
+    }
 
     Exp.bench(c, "het_advanced", &treatments, &variants);
 }

@@ -1,5 +1,4 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -36,29 +35,27 @@ fn heterogeneous_map(heterogeneity_level: f64, i: u64) -> u64 {
 struct InputVariant {
     n: usize,
     heterogeneity_level: f64,
-    num_threads: usize,
 }
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "het-lvl", "nt"]
+        vec!["n", "het-lvl"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
         vec![
             format!("2e{}", self.n),
             format!("{:4}", self.heterogeneity_level),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFix,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFix { nt: usize },
 }
 
 impl Factors for Method {
@@ -67,15 +64,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFix => "orx-fix",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFix { nt } => format!("orx-fix-{nt}"),
+        }]
     }
 }
 
@@ -104,17 +98,19 @@ impl Experiment for Exp {
         let h = input_variant.heterogeneity_level;
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
-            Method::Rayon => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
-                    .build()
-                    .unwrap();
+            Method::Rayon { nt } => {
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| input.par_iter().map(|x| heterogeneous_map(h, *x)).max())
             }
-            Method::Orx => input.par().map(|x| heterogeneous_map(h, *x)).max(),
-            Method::OrxFix => input
+            Method::Orx { nt } => input
                 .par()
-                .runner(Runner::fixed(Pool::once(input_variant.num_threads)))
+                .num_threads(*nt)
+                .map(|x| heterogeneous_map(h, *x))
+                .max(),
+            Method::OrxFix { nt } => input
+                .par()
+                .runner(Runner::fixed(Pool::once(*nt)))
+                .num_threads(*nt)
                 .map(|x| heterogeneous_map(h, *x))
                 .max(),
         }
@@ -131,76 +127,30 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [16, 32];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 10,
-                    heterogeneity_level: 0.001,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 10,
-                    heterogeneity_level: 0.011,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 10,
-                    heterogeneity_level: 0.101,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 10,
-                    heterogeneity_level: 0.201,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 12,
-                    heterogeneity_level: 0.001,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 12,
-                    heterogeneity_level: 0.011,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 12,
-                    heterogeneity_level: 0.101,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 12,
-                    heterogeneity_level: 0.201,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 14,
-                    heterogeneity_level: 0.001,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 14,
-                    heterogeneity_level: 0.011,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 14,
-                    heterogeneity_level: 0.101,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 14,
-                    heterogeneity_level: 0.201,
-                    num_threads,
-                },
-            ]
+    let ns = [10, 12, 14];
+    let heterogeneity_levels = [0.001, 0.011, 0.101, 0.201];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| {
+            heterogeneity_levels.map(|heterogeneity_level| InputVariant {
+                n,
+                heterogeneity_level,
+            })
         })
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFix { nt },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "het_simple", &treatments, &variants);
 }

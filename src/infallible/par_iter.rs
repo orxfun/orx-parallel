@@ -9,6 +9,7 @@ use crate::runner::{DefaultRunner, ParRunner};
 use crate::{Par, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
 
+/// Parallel iterator.
 pub struct ParIter<I, X, R = DefaultRunner>
 where
     I: ConcurrentIter,

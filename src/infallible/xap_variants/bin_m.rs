@@ -4,6 +4,7 @@ use crate::infallible::fun::MapEnum;
 use crate::infallible::xap::{Xap, XapBin};
 use crate::sizes::Bin;
 
+/// Zero-or-one xap followed by a map step.
 pub struct BinM<X: Xap<Size = Bin>, G: Map<I = X::O>> {
     x: X,
     g: G,
@@ -18,6 +19,7 @@ impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Clone for BinM<X, G> {
 impl<X: Xap<Size = Bin>, G: Map<I = X::O>> Copy for BinM<X, G> {}
 
 impl<X: Xap<Size = Bin>, G: Map<I = X::O>> BinM<X, G> {
+    /// Creates an optional mapped xap.
     pub fn new(x: X, g: G) -> Self {
         Self { x, g }
     }

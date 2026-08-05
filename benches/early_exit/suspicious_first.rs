@@ -3,7 +3,6 @@
 //! first-hit latency across sequential and parallel execution strategies.
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use enum_iterator::{Sequence, all};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rand::prelude::*;
@@ -11,6 +10,18 @@ use rand_chacha::ChaCha8Rng;
 use rayon::ThreadPoolBuilder;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::hint::black_box;
+
+const CPU_MIX_ROUNDS: usize = 40;
+fn cpu_mix(seed: u64) -> u64 {
+    let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..CPU_MIX_ROUNDS {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
+}
 
 #[derive(Debug, Clone, Copy)]
 enum Pos {
@@ -24,7 +35,6 @@ enum Pos {
 struct InputVariant {
     n: usize,
     pos: Pos,
-    num_threads: usize,
 }
 
 impl InputVariant {
@@ -35,7 +45,7 @@ impl InputVariant {
 
 impl Factors for InputVariant {
     fn factor_names() -> Vec<&'static str> {
-        vec!["n", "pos", "nt"]
+        vec!["n", "pos"]
     }
 
     fn factor_levels(&self) -> Vec<String> {
@@ -48,17 +58,16 @@ impl Factors for InputVariant {
                 Pos::Never => "never",
             }
             .to_string(),
-            self.num_threads.to_string(),
         ]
     }
 }
 
-#[derive(Debug, Sequence)]
+#[derive(Debug)]
 enum Method {
     Seq,
-    Rayon,
-    Orx,
-    OrxFixed,
+    Rayon { nt: usize },
+    Orx { nt: usize },
+    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -67,15 +76,12 @@ impl Factors for Method {
     }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![
-            match self {
-                Self::Seq => "seq",
-                Self::Rayon => "rayon",
-                Self::Orx => "orx",
-                Self::OrxFixed => "orx-fixed",
-            }
-            .to_string(),
-        ]
+        vec![match self {
+            Self::Seq => "seq".to_string(),
+            Self::Rayon { nt } => format!("rayon-{nt}"),
+            Self::Orx { nt } => format!("orx-{nt}"),
+            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+        }]
     }
 }
 
@@ -85,28 +91,18 @@ struct Event {
     code: u16,
     ts: u64,
     payload_seed: u64,
-    signature: u8,
+    signature: u64,
 }
 
 struct Exp;
 
-fn cpu_mix(seed: u64, rounds: usize) -> u64 {
-    let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
-    for r in 0..rounds {
-        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
-        x ^= salt;
-        x = x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B);
-        x ^= x >> 27;
-    }
-    x
-}
-
-fn suspicious_signature(ts: u64, payload_seed: u64) -> u8 {
-    (cpu_mix(ts ^ payload_seed, 7) & 0xFF) as u8
+fn suspicious_signature(ts: u64, payload_seed: u64) -> u64 {
+    cpu_mix(ts ^ payload_seed)
 }
 
 fn is_suspicious(event: &Event) -> bool {
-    event.code == 911 && suspicious_signature(event.ts, event.payload_seed) == event.signature
+    suspicious_signature(event.ts, event.payload_seed) == event.signature
+        && black_box(event.code == 911)
 }
 
 fn sentinel_index(len: usize, pos: Pos) -> Option<usize> {
@@ -128,7 +124,7 @@ fn inputs(len: usize, pos: Pos) -> Vec<Event> {
             code: rng.random_range(100..=900),
             ts: 1_900_000_000 + idx as u64,
             payload_seed: rng.random::<u64>() ^ (idx as u64).rotate_left(11),
-            signature: rng.random::<u8>(),
+            signature: rng.random(),
         })
         .collect();
 
@@ -159,7 +155,7 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        input_variant: &Self::InputFactors,
+        _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
@@ -167,11 +163,8 @@ impl Experiment for Exp {
 
         match alg_variant {
             Method::Seq => input.iter().find(|e| is_suspicious(e)).map(|e| e.source),
-            Method::Rayon => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(input_variant.num_threads)
-                    .build()
-                    .unwrap();
+            Method::Rayon { nt } => {
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| {
                     input
                         .into_par_iter()
@@ -179,16 +172,16 @@ impl Experiment for Exp {
                         .map(|e| e.source)
                 })
             }
-            Method::Orx => input
+            Method::Orx { nt } => input
                 .into_par()
-                .num_threads(input_variant.num_threads)
+                .num_threads(*nt)
                 .filter(|e| is_suspicious(e))
                 .first()
                 .map(|e| e.source),
-            Method::OrxFixed => input
+            Method::OrxFixed { nt } => input
                 .into_par()
-                .runner(Runner::fixed(Pool::default(input_variant.num_threads)))
-                .num_threads(input_variant.num_threads)
+                .runner(Runner::fixed(Pool::once(*nt)))
+                .num_threads(*nt)
                 .filter(|e| is_suspicious(e))
                 .first()
                 .map(|e| e.source),
@@ -201,56 +194,25 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let num_threads_options = [4, 16];
-    let treatments: Vec<_> = num_threads_options
-        .iter()
-        .flat_map(|&num_threads| {
-            [
-                InputVariant {
-                    n: 16,
-                    pos: Pos::Early,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    pos: Pos::Early,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    pos: Pos::Mid,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    pos: Pos::Mid,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    pos: Pos::Late,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    pos: Pos::Late,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 16,
-                    pos: Pos::Never,
-                    num_threads,
-                },
-                InputVariant {
-                    n: 20,
-                    pos: Pos::Never,
-                    num_threads,
-                },
-            ]
-        })
+    let ns = [14, 18];
+    let positions = [Pos::Never, Pos::Late, Pos::Mid, Pos::Early];
+    let treatments: Vec<_> = ns
+        .into_iter()
+        .flat_map(|n| positions.map(|pos| InputVariant { n, pos }))
         .collect();
 
-    let variants: Vec<_> = all::<Method>().collect();
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
+
+    let mut variants = vec![Method::Seq];
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
+    variants.extend(par_variants(16));
 
     Exp.bench(c, "early_exit_suspicious_first", &treatments, &variants);
 }

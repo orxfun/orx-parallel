@@ -19,7 +19,8 @@ extern crate std;
 
 mod collectables;
 mod common_par_traits;
-mod infallible;
+/// Core module for infallible computations.
+pub mod infallible;
 mod infallible_use;
 mod into_parallel;
 mod ops;

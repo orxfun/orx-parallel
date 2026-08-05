@@ -1,81 +1,11 @@
-/*
-
-The goal of this benchmark is to measure the overhead of Xap abstraction.
-Operations after iteration are kept to be as simple as possible to observe the overhead.
-
-SUM:
-xap_p_lfmi/iter/1024    time:   [5.4200 µs 5.4449 µs 5.4688 µs]
-                        change: [+8.8708% +9.9878% +11.098%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 2 outliers among 100 measurements (2.00%)
-  1 (1.00%) low mild
-  1 (1.00%) high mild
-xap_p_lfmi/xap/1024     time:   [3.2825 µs 3.3011 µs 3.3196 µs]
-                        change: [−43.883% −43.175% −42.464%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 4 outliers among 100 measurements (4.00%)
-  2 (2.00%) low mild
-  2 (2.00%) high mild
-xap_p_lfmi/iter/32768   time:   [304.97 µs 306.64 µs 308.23 µs]
-                        change: [−16.209% −15.248% −14.261%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 2 outliers among 100 measurements (2.00%)
-  1 (1.00%) low mild
-  1 (1.00%) high mild
-xap_p_lfmi/xap/32768    time:   [347.39 µs 348.80 µs 350.19 µs]
-
-
-REDUCE:
-xap_p_lfmi/iter/1024    time:   [4.3136 µs 4.3327 µs 4.3515 µs]
-                        change: [−20.851% −20.163% −19.480%] (p = 0.00 < 0.05)
-                        Performance has improved.
-Found 5 outliers among 100 measurements (5.00%)
-  3 (3.00%) low mild
-  2 (2.00%) high severe
-xap_p_lfmi/xap/1024     time:   [5.0219 µs 5.0437 µs 5.0655 µs]
-                        change: [+51.854% +53.064% +54.331%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 3 outliers among 100 measurements (3.00%)
-  3 (3.00%) low mild
-xap_p_lfmi/iter/32768   time:   [322.09 µs 323.38 µs 324.76 µs]
-                        change: [+5.7655% +6.5122% +7.2742%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 2 outliers among 100 measurements (2.00%)
-  1 (1.00%) low mild
-  1 (1.00%) high mild
-xap_p_lfmi/xap/32768    time:   [358.46 µs 359.86 µs 361.24 µs]
-
-
-COLLECT:
-xap_p_lfmi/iter/1024    time:   [7.5991 µs 7.6388 µs 7.6799 µs]
-                        change: [+74.360% +76.170% +78.036%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 6 outliers among 100 measurements (6.00%)
-  4 (4.00%) low mild
-  1 (1.00%) high mild
-  1 (1.00%) high severe
-xap_p_lfmi/xap/1024     time:   [7.6930 µs 7.7451 µs 7.7992 µs]
-                        change: [+51.839% +53.073% +54.317%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 2 outliers among 100 measurements (2.00%)
-  2 (2.00%) low mild
-xap_p_lfmi/iter/32768   time:   [684.20 µs 686.98 µs 689.92 µs]
-                        change: [+111.46% +112.89% +114.36%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 4 outliers among 100 measurements (4.00%)
-  1 (1.00%) low severe
-  3 (3.00%) high mild
-xap_p_lfmi/xap/32768    time:   [651.77 µs 655.10 µs 658.61 µs]
-
-*/
-
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
+use orx_criterion::{Experiment, Factors};
 use orx_parallel::infallible::{Xap, xap_variants::Id};
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-type Output = Collect;
+type Output = Sum;
 
 trait Exp {
     type Out;
@@ -223,27 +153,77 @@ fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
     E::out(iter, |i| xap.xap(i))
 }
 
-fn run(c: &mut Criterion) {
-    let len = [1 << 10, 1 << 15];
+#[derive(Clone, Copy)]
+struct InputVariant {
+    n: usize,
+}
 
-    let mut group = c.benchmark_group("xap_p_lfmi");
-
-    for n in len {
-        let input = inputs(n);
-        let expected = iter::<Output>(&input);
-
-        group.bench_with_input(BenchmarkId::new("iter", n), &n, |b, _| {
-            assert_eq!(&expected, &iter::<Output>(&input));
-            b.iter(|| iter::<Output>(black_box(&input)))
-        });
-
-        group.bench_with_input(BenchmarkId::new("xap", n), &n, |b, _| {
-            assert_eq!(&expected, &xap::<Output>(&input));
-            b.iter(|| xap::<Output>(black_box(&input)))
-        });
+impl Factors for InputVariant {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["n"]
     }
 
-    group.finish();
+    fn factor_levels(&self) -> Vec<String> {
+        vec![self.n.to_string()]
+    }
+}
+
+enum Method {
+    Iter,
+    XapPll,
+}
+
+impl Factors for Method {
+    fn factor_names() -> Vec<&'static str> {
+        vec!["method"]
+    }
+
+    fn factor_levels(&self) -> Vec<String> {
+        vec![match self {
+            Self::Iter => "iter".to_string(),
+            Self::XapPll => "xap_pll".to_string(),
+        }]
+    }
+}
+
+struct Bench;
+
+impl Experiment for Bench {
+    type InputFactors = InputVariant;
+
+    type AlgFactors = Method;
+
+    type Input = Vec<u64>;
+
+    type Output = <Output as Exp>::Out;
+
+    fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
+        inputs(input_variant.n)
+    }
+
+    fn execute(
+        &mut self,
+        _: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
+    ) -> Self::Output {
+        match alg_variant {
+            Method::Iter => iter::<Output>(input),
+            Method::XapPll => xap::<Output>(input),
+        }
+    }
+
+    fn expected_output(&self, _: &Self::InputFactors, input: &Self::Input) -> Option<Self::Output> {
+        Some(iter::<Output>(input))
+    }
+}
+
+fn run(c: &mut Criterion) {
+    let len = [1 << 10, 1 << 15];
+    let treatments: Vec<_> = len.into_iter().map(|n| InputVariant { n }).collect();
+    let variants = vec![Method::Iter, Method::XapPll];
+
+    Bench.bench(c, "xap_pll_lfmi", &treatments, &variants);
 }
 
 criterion_group!(benches, run);
