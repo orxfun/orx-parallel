@@ -5,7 +5,7 @@ use std::hint::black_box;
 #[derive(Parser)]
 struct Args {
     /// Number of loan applications to score
-    #[arg(long, default_value_t = 1_000_000)]
+    #[arg(long, default_value_t = 10_000_000)]
     num_applications: usize,
     /// Number of threads (0 = auto)
     #[arg(long, default_value_t = 0)]
@@ -48,7 +48,7 @@ fn main() {
     //
     // Re-run with different --num-threads and --chunk-size values to see how
     // those settings affect load distribution across threads.
-    let total_risk: u64 = (0..args.num_applications)
+    let _total_risk: u64 = (0..args.num_applications)
         .par()
         .num_threads(args.num_threads)
         .chunk_size(args.chunk_size)
@@ -56,6 +56,4 @@ fn main() {
         .map(|id| compute_risk_score(id, (id % 40) + 1))
         .reduce(|a, b| a + b)
         .unwrap_or(0);
-
-    println!("\nTotal risk score across all applications: {total_risk}");
 }

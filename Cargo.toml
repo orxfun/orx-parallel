@@ -85,28 +85,58 @@ wasm-experimental = [
 # examples
 
 [[example]]
+name = "recursive_tree"
+path = "examples/recursive_tree/main.rs"
+required-features = ["std"]
+
+[[example]]
+name = "use_impact_on_memory"
+path = "examples/use_impact_on_memory/main.rs"
+
+[[example]]
 name = "diagnostics"
 path = "examples/diagnostics.rs"
 required-features = ["std"]
 
 [[example]]
-name = "het"
-path = "examples/het.rs"
-required-features = ["rayon-core"]
-
-[[example]]
-name = "het_advanced"
-path = "examples/het_advanced.rs"
+name = "enumerate"
+path = "examples/enumerate.rs"
 required-features = ["std"]
 
 [[example]]
-name = "het_advanced2"
-path = "examples/het_advanced2.rs"
+name = "fallible_option"
+path = "examples/fallible_option.rs"
 required-features = ["std"]
 
 [[example]]
-name = "recursive-tree"
-path = "examples/recursive_tree/main.rs"
+name = "fallible_result"
+path = "examples/fallible_result.rs"
+required-features = ["std"]
+
+[[example]]
+name = "iter_of_iter_collect"
+path = "examples/iter_of_iter_collect.rs"
+required-features = ["std"]
+
+[[example]]
+name = "iter_of_iter_reduce"
+path = "examples/iter_of_iter_reduce.rs"
+required-features = ["std"]
+
+[[example]]
+name = "max_num_threads_config"
+path = "examples/max_num_threads_config.rs"
+required-features = ["std"]
+
+[[example]]
+name = "par_mut"
+path = "examples/par_mut.rs"
+required-features = ["std"]
+
+[[example]]
+name = "recursive_file_system"
+path = "examples/recursive_file_system.rs"
+required-features = ["std"]
 
 # benchmarks
 
