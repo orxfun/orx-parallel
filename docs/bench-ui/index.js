@@ -1,7 +1,8 @@
 'use strict';
 
 // ---- Configuration ----
-const BRANCH = "v4-enhanced-benches";
+// TODO: will be changed to main once v4 is released
+const BRANCH = "v4";
 const BASE_RESULT_URL = 'results/';
 const CATALOG_MANIFEST_URL = `${BASE_RESULT_URL}catalog.json`;
 const BASE_CODE_URL = `https://github.com/orxfun/orx-parallel/blob/${BRANCH}/benches/`;
