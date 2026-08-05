@@ -124,6 +124,11 @@ path = "examples/iter_of_iter_reduce.rs"
 required-features = ["std"]
 
 [[example]]
+name = "max_num_threads_config"
+path = "examples/max_num_threads_config.rs"
+required-features = ["std"]
+
+[[example]]
 name = "par_mut"
 path = "examples/par_mut.rs"
 required-features = ["std"]
