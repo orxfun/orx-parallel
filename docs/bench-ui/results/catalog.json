@@ -1,0 +1,103 @@
+{
+  "arbitrary_iter": [
+    "map_set_processing"
+  ],
+  "collect": [
+    "f",
+    "id",
+    "l",
+    "m",
+    "mf",
+    "mfm",
+    "mfmf"
+  ],
+  "contention_merge": [
+    "grouped_topk"
+  ],
+  "early_exit": [
+    "suspicious_find_any",
+    "suspicious_first"
+  ],
+  "fallible": [
+    "validation_option",
+    "validation_result"
+  ],
+  "first": [
+    "f",
+    "ff",
+    "fff",
+    "i",
+    "id",
+    "lf",
+    "mf",
+    "mfmf",
+    "mi"
+  ],
+  "het": [
+    "advanced",
+    "simple"
+  ],
+  "memory_pressure": [],
+  "recursive": [
+    "file_system",
+    "tree_traversal"
+  ],
+  "reduce": [
+    "f",
+    "id",
+    "l",
+    "m",
+    "mf",
+    "mfm",
+    "mfmf"
+  ],
+  "stateful_using": [
+    "monte_carlo_batch"
+  ],
+  "throughput_linear": [
+    "log_collect",
+    "log_reduce"
+  ],
+  "xap": [
+    "cf",
+    "cmmmm",
+    "f",
+    "ff",
+    "fff",
+    "ffff",
+    "i",
+    "ii",
+    "iii",
+    "iiii",
+    "l_cons",
+    "l_iter",
+    "l_vec",
+    "lf",
+    "ll_cons",
+    "ll_iter",
+    "ll_vec",
+    "lll_cons",
+    "lll_iter",
+    "lll_vec",
+    "lm",
+    "m",
+    "mf",
+    "mfm",
+    "mfmf",
+    "mfmfmf",
+    "mm",
+    "mmmm"
+  ],
+  "xap_pll": [
+    "fff",
+    "iii",
+    "l_vec",
+    "lf",
+    "lfmi",
+    "lfmli",
+    "lfmli2",
+    "ll_vec",
+    "lll_vec",
+    "mmm"
+  ]
+}
