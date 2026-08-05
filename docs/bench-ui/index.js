@@ -438,7 +438,7 @@ function renderChart() {
                     grid: { color: gridColor },
                     title: {
                         display: true,
-                        text: 'Time (ns)',
+                        text: 'Average Time (ns)',
                         color: tickColor,
                         font: { family: '"IBM Plex Sans", sans-serif', size: 12 },
                     },
