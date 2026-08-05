@@ -21,6 +21,12 @@ impl<I: IntoIterator> FnFlatten<I> {
     }
 }
 
+impl<I: IntoIterator> Default for FnFlatten<I> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<I: IntoIterator> FlatMap for FnFlatten<I> {
     type I = I;
 

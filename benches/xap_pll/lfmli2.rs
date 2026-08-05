@@ -147,12 +147,7 @@ fn f5(i: u64) -> Option<u64> {
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
     let iter = inputs.iter().copied();
     E::out(iter, |i| {
-        f1(i)
-            .into_iter()
-            .filter(f2)
-            .map(f3)
-            .flat_map(f4)
-            .filter_map(f5)
+        f1(i).filter(f2).map(f3).flat_map(f4).filter_map(f5)
     })
 }
 

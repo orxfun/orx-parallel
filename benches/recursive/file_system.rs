@@ -232,16 +232,16 @@ impl Experiment for Exp {
         input: &Self::Input,
     ) -> Self::Output {
         match alg_variant {
-            Method::Seq => seq_sum(&input, input_variant.work),
-            Method::Rayon { nt } => rayon_sum(*nt, &input, input_variant.work),
+            Method::Seq => seq_sum(input, input_variant.work),
+            Method::Rayon { nt } => rayon_sum(*nt, input, input_variant.work),
             Method::OrxFix { nt, chunk_size } => {
-                orx(*nt, &input, input_variant.work, *chunk_size, false)
+                orx(*nt, input, input_variant.work, *chunk_size, false)
             }
             Method::Orx { nt, chunk_size } => {
-                orx(*nt, &input, input_variant.work, *chunk_size, true)
+                orx(*nt, input, input_variant.work, *chunk_size, true)
             }
             Method::OrxLin { nt, chunk_size } => {
-                orx_lin(*nt, &input, input_variant.work, *chunk_size)
+                orx_lin(*nt, input, input_variant.work, *chunk_size)
             }
         }
     }
@@ -252,7 +252,7 @@ impl Experiment for Exp {
         input: &Self::Input,
         output: &Self::Output,
     ) {
-        let expected = seq_sum(&input, input_variant.work);
+        let expected = seq_sum(input, input_variant.work);
         assert_eq!(output, &expected);
     }
 }
