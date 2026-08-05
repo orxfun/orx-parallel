@@ -23,6 +23,12 @@ impl<I> Id<I> {
     }
 }
 
+impl<I> Default for Id<I> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<I> XapEnumByInput for Id<I> {
     type Enumerated = Id<(usize, I)>;
 

@@ -23,6 +23,12 @@ impl<'a, I: Clone> FnCloned<'a, I> {
     }
 }
 
+impl<'a, I: Clone> Default for FnCloned<'a, I> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a, I: Clone> Map for FnCloned<'a, I> {
     type I = &'a I;
 
@@ -53,6 +59,12 @@ impl<'a, I: Copy> FnCopied<'a, I> {
     /// Creates a copy adapter.
     pub fn new() -> Self {
         Self(PhantomData)
+    }
+}
+
+impl<'a, I: Copy> Default for FnCopied<'a, I> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

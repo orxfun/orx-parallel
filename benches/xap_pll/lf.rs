@@ -131,7 +131,7 @@ fn f2(i: &u64) -> bool {
 
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
     let iter = inputs.iter().copied();
-    E::out(iter, |i| f1(i).into_iter().filter(f2))
+    E::out(iter, |i| f1(i).filter(f2))
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {

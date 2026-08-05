@@ -163,7 +163,7 @@ fn process_node(node: &TreeNode) -> TreeAgg {
     TreeAgg {
         count: 1,
         sum_value: value,
-        checksum: node.id ^ (value as u64).rotate_left(7) ^ matches,
+        checksum: node.id ^ value.rotate_left(7) ^ matches,
     }
 }
 

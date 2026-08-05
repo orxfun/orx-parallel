@@ -142,9 +142,7 @@ fn f4(i: u64) -> Option<u64> {
 
 fn iter<E: Exp>(inputs: &[u64]) -> E::Out {
     let iter = inputs.iter().copied();
-    E::out(iter, |i| {
-        f1(i).into_iter().filter(f2).map(f3).filter_map(f4)
-    })
+    E::out(iter, |i| f1(i).filter(f2).map(f3).filter_map(f4))
 }
 
 fn xap<E: Exp>(inputs: &[u64]) -> E::Out {
