@@ -66,12 +66,18 @@ while read -r bench_name; do
     # Run the benchmark
     cargo bench --bench "$bench_name"
     
-    # Convert benchmark name to criterion directory name (replace hyphens with underscores)
+    # Criterion stores this benchmark under the full bench name with underscores.
     criterion_dir="${bench_name//-/_}"
     criterion_path="target/criterion/$criterion_dir/summary_$criterion_dir.csv"
+
+    # Benchmark names can use hyphens while category directories use underscores.
+    # We strip the category prefix only for the output file name under bench-ui/results.
+    bench_stem="$bench_name"
+    bench_stem="${bench_stem#${CATEGORY}_}"
+    bench_stem="${bench_stem#${CATEGORY//_/-}-}"
     
-    # Derive result filename: convert benchmark name to underscores
-    result_file="${bench_name//-/_}"
+    # Save the CSV under the bench stem so bench-ui can discover it without the category prefix.
+    result_file="${bench_stem//-/_}"
     result_file="$result_file.csv"
     
     # Copy the summary CSV if it exists
