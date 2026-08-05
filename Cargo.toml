@@ -85,6 +85,15 @@ wasm-experimental = [
 # examples
 
 [[example]]
+name = "recursive_tree"
+path = "examples/recursive_tree/main.rs"
+required-features = ["std"]
+
+[[example]]
+name = "use_impact_on_memory"
+path = "examples/use_impact_on_memory/main.rs"
+
+[[example]]
 name = "diagnostics"
 path = "examples/diagnostics.rs"
 required-features = ["std"]
@@ -105,8 +114,9 @@ path = "examples/het_advanced2.rs"
 required-features = ["std"]
 
 [[example]]
-name = "recursive-tree"
-path = "examples/recursive_tree/main.rs"
+name = "iter_of_iter_reduce"
+path = "examples/iter_of_iter_reduce.rs"
+required-features = ["std"]
 
 # benchmarks
 
