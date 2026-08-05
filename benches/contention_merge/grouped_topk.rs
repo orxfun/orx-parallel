@@ -182,12 +182,12 @@ fn topk_agg(counts: &[u64]) -> Agg {
     let mut top_sum = 0_u64;
 
     for (rank, (key, count)) in entries.into_iter().take(TOP_K).enumerate() {
-        top_sum += count as u64;
-        checksum ^= ((key as u64) << 20) ^ ((count as u64) << 7) ^ rank as u64;
+        top_sum += count;
+        checksum ^= ((key as u64) << 20) ^ (count << 7) ^ rank as u64;
     }
 
     Agg {
-        total: counts.iter().map(|x| *x as u64).sum(),
+        total: counts.iter().sum(),
         top_sum,
         checksum,
     }
