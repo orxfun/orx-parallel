@@ -91,4 +91,7 @@ while read -r bench_name; do
     echo ""
 done <<< "$BENCHMARKS"
 
+echo "Updating bench-ui catalog manifest..."
+python3 scripts/update_bench_ui_catalog.py
+
 echo "All benchmarks for category '$CATEGORY' completed."
