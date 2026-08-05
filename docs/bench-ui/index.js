@@ -130,34 +130,38 @@ function sortMethodsForChart(methods) {
     });
 }
 
+
 /** Assign a consistent color to a method name. */
 function methodColor(method) {
-    if (method === 'seq') return '#47476b';
+    const RANDOMNESS = 20;
+    const rgbDelta = () => RANDOMNESS - Math.floor(Math.random() * (2 * RANDOMNESS + 1));
+    const rgb = (r, g, b) => {
+        const red = Math.max(0, Math.min(255, r + rgbDelta()));
+        const green = Math.max(0, Math.min(255, g + rgbDelta()));
+        const blue = Math.max(0, Math.min(255, b + rgbDelta()));
+        return `rgb(${red},${green},${blue})`;
+    };
+
+    if (method.startsWith("seq") || method.startsWith("iter")) {
+        return rgb(71, 71, 107);
+    }
+
+    if (method.startsWith("rayon")) {
+        return rgb(29, 104, 158);
+    }
+    if (method.startsWith("orx-") && method.includes("-fixed")) {
+        return rgb(153, 102, 0);
+    }
+    if (method.startsWith("orx") || method.startsWith("xap")) {
+        return rgb(204, 255, 51);
+    }
+
+    // Generic fallback: hash to a palette
     const hash = (() => {
         let value = 0;
         for (const c of method) value = (value * 31 + c.charCodeAt(0)) & 0xffff;
         return value;
     })();
-    const tone = (hue, saturation, minLightness, maxLightness) => {
-        const span = maxLightness - minLightness;
-        const lightness = minLightness + (hash % 1000) / 1000 * span;
-        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-    };
-
-    if (/^seq(?:[-_].+)?$/.test(method) || /^iter(?:[-_].+)?$/.test(method)) {
-        return tone(125, 125, 125, 0);
-    }
-
-    if (/^rayon(?:[-_].+)?$/.test(method)) {
-        return tone(210, 82, 34, 64);
-    }
-    if (/^orx-fixed(?:[-_].+)?$/.test(method)) {
-        return tone(12, 100, 44, 58);
-    }
-    if (/^orx(?:[-_].+)?$/.test(method) || /^xap(?:[-_].+)?$/.test(method)) {
-        return tone(116, 70, 42, 72);
-    }
-    // Generic fallback: hash to a palette
     const palette = ['#6366f1', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6', '#0ea5e9'];
     return palette[hash % palette.length];
 }
