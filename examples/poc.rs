@@ -1,4 +1,4 @@
-// use orx_parallel::*;
+use orx_parallel::*;
 use std::hint::black_box;
 
 const CPU_MIX_ROUNDS: usize = 40;
@@ -56,6 +56,7 @@ where
 }
 
 fn main() {
+    let seq = false;
     let n = 100_000;
 
     let fa = || (0..n).map(cpu_mix).sum::<u64>();
@@ -68,8 +69,13 @@ fn main() {
     };
     let fc = || (0..n).map(cpu_mix).filter(|x| !x.is_multiple_of(13)).min();
 
-    let computations = [Compute::A(fa), Compute::B(fb), Compute::C(fc)];
-    let outputs: Vec<_> = computations.into_iter().map(|x| x.run()).collect();
+    let computations = vec![Compute::A(fa), Compute::B(fb), Compute::C(fc)];
+
+    let outputs: Vec<_> = match seq {
+        true => computations.into_iter().map(|x| x.run()).collect(),
+        false => computations.into_par().map(|x| x.run()).collect(),
+    };
+
     for x in &outputs {
         x.log();
     }
