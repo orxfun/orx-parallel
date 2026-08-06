@@ -1,5 +1,5 @@
 use crate::node::Node;
-use rand::Rng;
+use rand::{Rng, RngExt};
 use std::{collections::HashSet, marker::PhantomData, ops::Range};
 
 pub struct Tree<T>(PhantomData<T>);

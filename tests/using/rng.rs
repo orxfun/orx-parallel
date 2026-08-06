@@ -1,5 +1,5 @@
 use orx_parallel::*;
-use rand::{Rng, SeedableRng};
+use rand::{Rng, RngExt, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
 fn random_walk(rng: &mut impl Rng, position: i64, num_steps: usize) -> i64 {
