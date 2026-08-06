@@ -91,7 +91,7 @@ impl Experiment for Exp {
             Method::OrxFixed { nt } => input
                 .as_slice()
                 .into_par()
-                .runner(Runner::fixed(Pool::once(*nt)))
+                .runner(Runner::fixed(pool::get_global_pool()))
                 .num_threads(*nt)
                 .first()
                 .copied(),

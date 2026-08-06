@@ -195,7 +195,7 @@ impl Experiment for Exp {
                 .reduce(merge),
             Method::OrxFixed { nt } => input
                 .into_par()
-                .runner(Runner::fixed(Pool::once(*nt)))
+                .runner(Runner::fixed(pool::get_global_pool()))
                 .num_threads(*nt)
                 .filter(|r| keep(r))
                 .map(|r| to_bucket(r, h))

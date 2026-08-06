@@ -184,7 +184,7 @@ impl Experiment for Exp {
                 false => input
                     .as_slice()
                     .into_par()
-                    .runner(Runner::fixed(Pool::once(*nt)))
+                    .runner(Runner::fixed(pool::get_global_pool()))
                     .num_threads(*nt)
                     .map(l_m)
                     .filter_map(|x| l_i(x, 999))
@@ -192,7 +192,7 @@ impl Experiment for Exp {
                 true => input
                     .as_slice()
                     .into_par()
-                    .runner(Runner::fixed(Pool::once(*nt)))
+                    .runner(Runner::fixed(pool::get_global_pool()))
                     .num_threads(*nt)
                     .map(h_m)
                     .filter_map(|x| h_i(x, 999))

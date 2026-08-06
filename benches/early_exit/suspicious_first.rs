@@ -180,7 +180,7 @@ impl Experiment for Exp {
                 .map(|e| e.source),
             Method::OrxFixed { nt } => input
                 .into_par()
-                .runner(Runner::fixed(Pool::once(*nt)))
+                .runner(Runner::fixed(pool::get_global_pool()))
                 .num_threads(*nt)
                 .filter(|e| is_suspicious(e))
                 .first()
