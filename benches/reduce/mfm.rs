@@ -135,10 +135,7 @@ impl Experiment for Exp {
                 false => input.iter().map(m).filter(f).map(l_m2).reduce(l_r),
             },
             Method::RayonRedWith { nt } => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| match h {
                     true => input
                         .into_par_iter()
@@ -155,10 +152,7 @@ impl Experiment for Exp {
                 })
             }
             Method::Rayon { nt } => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| {
                     Some(match h {
                         true => input
@@ -227,8 +221,14 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let treatments: Vec<_> = vec![
-        InputVariant { n: 15, heavy: false },
-        InputVariant { n: 20, heavy: false },
+        InputVariant {
+            n: 15,
+            heavy: false,
+        },
+        InputVariant {
+            n: 20,
+            heavy: false,
+        },
         InputVariant { n: 15, heavy: true },
         InputVariant { n: 20, heavy: true },
     ];
