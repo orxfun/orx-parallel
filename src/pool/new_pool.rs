@@ -2,7 +2,7 @@
 use crate::NumThreads;
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 use crate::pool::pool_impl::WasmWebPool;
-#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm_experimental", target_arch = "wasm32"))]
 use crate::pool::pool_impl::WasmWebPoolExp;
 #[cfg(feature = "std")]
 use crate::{BasicPool, pool::pool_impl::OncePool};
@@ -221,8 +221,8 @@ impl Pool {
     ///
     /// # Features
     ///
-    /// Requires `wasm-experimental` feature and `wasm32` target.
-    #[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
+    /// Requires `wasm_experimental` feature and `wasm32` target.
+    #[cfg(all(feature = "wasm_experimental", target_arch = "wasm32"))]
     pub fn wasm_web_exp(num_threads: impl Into<NumThreads>) -> WasmWebPoolExp {
         WasmWebPoolExp::new(num_threads)
     }
