@@ -51,7 +51,7 @@ static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
 
 // 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm_experimental", target_arch = "wasm32"))]
-pub type DefaultPool = WasmWebPoolExp;
+pub type DefaultPool = &'static WasmWebPoolExp;
 
 // 2. wasm
 #[cfg(all(
@@ -60,7 +60,7 @@ pub type DefaultPool = WasmWebPoolExp;
     target_arch = "wasm32",
     not(feature = "wasm_experimental"),
 ))]
-pub type DefaultPool = WasmWebPool;
+pub type DefaultPool = &'static WasmWebPool;
 
 // 3. rayon
 #[cfg(all(
@@ -69,7 +69,7 @@ pub type DefaultPool = WasmWebPool;
     not(feature = "wasm"),
     not(feature = "wasm_experimental"),
 ))]
-pub type DefaultPool = rayon_core::ThreadPool;
+pub type DefaultPool = &'static rayon_core::ThreadPool;
 
 // 4. basic
 #[cfg(all(
@@ -79,7 +79,7 @@ pub type DefaultPool = rayon_core::ThreadPool;
     not(feature = "wasm"),
     not(feature = "wasm_experimental"),
 ))]
-pub type DefaultPool = BasicPool;
+pub type DefaultPool = &'static BasicPool;
 
 // 5. once
 #[cfg(all(
@@ -89,7 +89,7 @@ pub type DefaultPool = BasicPool;
     not(feature = "wasm"),
     not(feature = "wasm_experimental"),
 ))]
-pub type DefaultPool = OncePool;
+pub type DefaultPool = &'static OncePool;
 
 // 6. sequential
 #[cfg(all(
@@ -105,7 +105,7 @@ pub type DefaultPool = SequentialPool;
 
 // 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm_experimental", target_arch = "wasm32"))]
-pub fn pool() -> &'static DefaultPool {
+pub fn get_global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -116,7 +116,7 @@ pub fn pool() -> &'static DefaultPool {
     target_arch = "wasm32",
     not(feature = "wasm_experimental"),
 ))]
-pub fn pool() -> &'static DefaultPool {
+pub fn get_global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -127,7 +127,7 @@ pub fn pool() -> &'static DefaultPool {
     not(feature = "wasm"),
     not(feature = "wasm_experimental"),
 ))]
-pub fn pool() -> &'static DefaultPool {
+pub fn get_global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -139,7 +139,7 @@ pub fn pool() -> &'static DefaultPool {
     not(feature = "wasm"),
     not(feature = "wasm_experimental"),
 ))]
-pub fn pool() -> &'static DefaultPool {
+pub fn get_global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -151,7 +151,7 @@ pub fn pool() -> &'static DefaultPool {
     not(feature = "wasm"),
     not(feature = "wasm_experimental"),
 ))]
-pub fn pool() -> &'static DefaultPool {
+pub fn get_global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -163,6 +163,6 @@ pub fn pool() -> &'static DefaultPool {
     not(feature = "wasm"),
     not(feature = "wasm_experimental"),
 ))]
-pub fn pool() -> DefaultPool {
+pub fn get_global_pool() -> DefaultPool {
     Default::default()
 }
