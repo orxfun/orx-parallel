@@ -1,5 +1,7 @@
 use crate::NumThreads;
 use crate::pool::ParThreadPool;
+#[allow(unused_imports)]
+use alloc::format;
 use core::num::NonZeroUsize;
 use core::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 use js_sys::Promise;
