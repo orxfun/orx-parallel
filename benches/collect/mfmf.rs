@@ -305,7 +305,7 @@ impl Experiment for Exp {
 }
 
 fn run(c: &mut Criterion) {
-    let ns = [20];
+    let ns = [16, 20];
     let treatments: Vec<_> = ns
         .into_iter()
         .flat_map(|n| {
@@ -319,16 +319,16 @@ fn run(c: &mut Criterion) {
     let par_variants = |nt: usize| {
         [
             Method::RayonVec { nt },
-            // Method::RayonVecList { nt },
+            Method::RayonVecList { nt },
             Method::OrxVec { nt },
-            // Method::OrxArbVec { nt },
-            // Method::OrxArbVecVec { nt },
-            // Method::OrxVecFixed { nt },
+            Method::OrxArbVec { nt },
+            Method::OrxArbVecVec { nt },
+            Method::OrxVecFixed { nt },
         ]
     };
     let mut variants = vec![Method::SeqVec];
-    // variants.extend(par_variants(1));
-    // variants.extend(par_variants(4));
+    variants.extend(par_variants(1));
+    variants.extend(par_variants(4));
     variants.extend(par_variants(16));
 
     Exp.bench(c, "collect_mfmf", &treatments, &variants);
