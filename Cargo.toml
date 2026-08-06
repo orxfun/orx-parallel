@@ -38,10 +38,10 @@ wasm-bindgen-rayon = { version = "1.3", optional = true, default-features = fals
 [dev-dependencies]
 clap = { version = "4.6.5", features = ["derive"] }
 orx-criterion = { git = "https://github.com/orxfun/orx-criterion" }
-rand = "0.10.2"
-rand_chacha = "0.10"
-rayon = "1.12.0"
-test-case = "3.3.1"
+rand = { version = "0.10.2" }
+rand_chacha = { version = "0.10" }
+rayon = { version = "1.12.0" }
+test-case = { version = "3.3.1" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }

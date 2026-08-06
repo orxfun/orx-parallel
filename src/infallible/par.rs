@@ -479,7 +479,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// ```
     /// use orx_parallel::*;
-    /// use rand::{Rng, SeedableRng};
+    /// use rand::{Rng, RngExt, SeedableRng};
     /// use rand_chacha::ChaCha8Rng;
     ///
     /// let values: Vec<_> = (0..8)
