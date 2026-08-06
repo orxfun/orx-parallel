@@ -14,12 +14,12 @@ mod rayon_core;
 #[cfg(feature = "rayon-core")]
 pub use rayon_core::build_default_rayon_thread_pool;
 
-#[cfg(all(feature = "wasm_experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 mod wasm_web_exp;
-#[cfg(all(feature = "wasm_experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 pub use wasm_web_exp::WasmWebPoolExp;
 #[cfg(all(
-    feature = "wasm_experimental",
+    feature = "wasm-experimental",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]

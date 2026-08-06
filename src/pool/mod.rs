@@ -5,12 +5,12 @@ mod par_thread_pool;
 mod pool_impl;
 
 // 1. wasm-experimental
-#[cfg(all(feature = "std", feature = "wasm_experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "std", feature = "wasm-experimental", target_arch = "wasm32"))]
 pub use pool_impl::WasmWebPoolExp;
 
 #[cfg(all(
     feature = "std",
-    feature = "wasm_experimental",
+    feature = "wasm-experimental",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]
@@ -21,7 +21,7 @@ pub use pool_impl::init_thread_pool;
     feature = "std",
     feature = "wasm",
     target_arch = "wasm32",
-    not(feature = "wasm_experimental"),
+    not(feature = "wasm-experimental"),
 ))]
 pub use pool_impl::WasmWebPool;
 
@@ -29,7 +29,7 @@ pub use pool_impl::WasmWebPool;
     feature = "std",
     feature = "wasm",
     target_arch = "wasm32",
-    not(feature = "wasm_experimental"),
+    not(feature = "wasm-experimental"),
     target_feature = "atomics",
 ))]
 pub use pool_impl::init_thread_pool;
@@ -38,7 +38,7 @@ pub use pool_impl::init_thread_pool;
     feature = "std",
     feature = "wasm",
     target_arch = "wasm32",
-    not(feature = "wasm_experimental"),
+    not(feature = "wasm-experimental"),
     target_feature = "atomics",
 ))]
 pub use pool_impl::wasm_web_runtime_info;
@@ -47,7 +47,7 @@ pub use pool_impl::wasm_web_runtime_info;
     feature = "std",
     feature = "wasm",
     target_arch = "wasm32",
-    not(feature = "wasm_experimental"),
+    not(feature = "wasm-experimental"),
     target_feature = "atomics",
 ))]
 pub use pool_impl::wasm_web_start_worker;
@@ -55,30 +55,30 @@ pub use pool_impl::wasm_web_start_worker;
 // 4. basic
 #[cfg(all(
     feature = "std",
-    feature = "persistent_pool",
-    not(feature = "persistent_pool_rayon"),
+    feature = "persistent-pool",
+    not(feature = "persistent-pool-rayon"),
     not(feature = "wasm"),
-    not(feature = "wasm_experimental"),
+    not(feature = "wasm-experimental"),
 ))]
 pub use pool_impl::BasicPool;
 
 // 5. once
 #[cfg(all(
     feature = "std",
-    not(feature = "persistent_pool"),
-    not(feature = "persistent_pool_rayon"),
+    not(feature = "persistent-pool"),
+    not(feature = "persistent-pool-rayon"),
     not(feature = "wasm"),
-    not(feature = "wasm_experimental"),
+    not(feature = "wasm-experimental"),
 ))]
 pub use pool_impl::OncePool;
 
 // 6. sequential
 #[cfg(all(
     not(feature = "std"),
-    not(feature = "persistent_pool"),
-    not(feature = "persistent_pool_rayon"),
+    not(feature = "persistent-pool"),
+    not(feature = "persistent-pool-rayon"),
     not(feature = "wasm"),
-    not(feature = "wasm_experimental"),
+    not(feature = "wasm-experimental"),
 ))]
 pub use pool_impl::SequentialPool;
 
