@@ -67,10 +67,8 @@ where
                 return elt;
             }
 
-            match self.i.next() {
-                Some(i) => self.inner = Some(self.g.flat_map(i).into_iter()),
-                None => return None,
-            }
+            let i = self.i.next()?;
+            self.inner = Some(self.g.flat_map(i).into_iter());
         }
     }
 

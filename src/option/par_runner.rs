@@ -140,11 +140,8 @@ pub trait ParRunnerOpt: ParRunner {
                     None => Some(None),
                     Some(None) => None,
                     Some(Some(mut acc)) => {
-                        for x in iter {
-                            match x {
-                                None => return None,
-                                Some(val) => acc = f(acc, val),
-                            }
+                        for maybe in iter {
+                            acc = f(acc, maybe?);
                         }
                         Some(Some(acc))
                     }
@@ -196,11 +193,8 @@ pub trait ParRunnerOpt: ParRunner {
                     .into_seq_iter()
                     .flat_map(|i| S::xap_opt(x1, x2, i).into_iter());
                 let mut values = vec![];
-                for result in iter {
-                    match result {
-                        None => return None,
-                        Some(val) => values.push(val),
-                    }
+                for maybe in iter {
+                    values.push(maybe?);
                 }
                 Some(vec![ValsAndIdx::new_seq(values)])
             }
@@ -250,11 +244,8 @@ pub trait ParRunnerOpt: ParRunner {
                     .into_seq_iter()
                     .flat_map(|i| S::xap_opt(x1, x2, i).into_iter());
                 let mut values = vec![];
-                for result in iter {
-                    match result {
-                        None => return None,
-                        Some(val) => values.push(val),
-                    }
+                for maybe in iter {
+                    values.push(maybe?);
                 }
                 Some(vec![values])
             }

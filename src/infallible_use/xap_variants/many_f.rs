@@ -61,13 +61,9 @@ where
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.i.next() {
-                Some(i) => {
-                    if let y @ Some(_) = self.g.filter_map(unsafe { &mut *self.u }, i) {
-                        return y;
-                    }
-                }
-                None => return None,
+            let i = self.i.next()?;
+            if let y @ Some(_) = self.g.filter_map(unsafe { &mut *self.u }, i) {
+                return y;
             }
         }
     }

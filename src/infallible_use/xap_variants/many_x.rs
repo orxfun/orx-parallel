@@ -65,13 +65,8 @@ where
             if let elt @ Some(_) = and_then_or_clear(&mut self.inner, Iterator::next) {
                 return elt;
             }
-
-            match self.i.next() {
-                Some(i) => {
-                    self.inner = Some(self.g.flat_map(unsafe { &mut *self.u }, i).into_iter())
-                }
-                None => return None,
-            }
+            let i = self.i.next()?;
+            self.inner = Some(self.g.flat_map(unsafe { &mut *self.u }, i).into_iter());
         }
     }
 
