@@ -73,10 +73,7 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon { nt } => {
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| {
                     input
                         .as_slice()
