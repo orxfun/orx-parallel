@@ -316,7 +316,7 @@ use std::num::ParseIntError;
 let collect: Result<Vec<i32>, ParseIntError> = vec!["7", "2", "34"]
     .into_par()
     .map(|x| x.parse::<i32>())
-    .into_into_fallible() // <-- explicit transformation to fallible iterator
+    .into_fallible() // <-- explicit transformation to fallible iterator
     .collect();
 ```
 
@@ -324,7 +324,7 @@ Currently, there exist two fallible parallel iterators [`ParIterResult`](https:/
 
 | Regular Iterator | Transformation  Method| Fallible Iterator |
 | --- | --- | --- |
-| `ParIter<Item=Result<T, E>>` | `into_into_fallible()` | `ParIterResult<Item=T, Error=E>` |
+| `ParIter<Item=Result<T, E>>` | `into_fallible()` | `ParIterResult<Item=T, Error=E>` |
 | `ParIter<Item=Option<T>>` | `into_into_optional()` | `ParIterOption<Item=T>` |
 
 After converting into a fallible iterator, each chaining transformation is based on the success item type. Similar to `?` operator, this allows us to focus on the success path while any error case will be handled by early returning from the iterator with the error.
@@ -336,7 +336,7 @@ use std::num::ParseIntError;
 let sum: Result<i32, ParseIntError> = vec!["7", "2", "34"]
     .into_par()
     .map(|x| x.parse::<i32>()) // Item = Result<i32, ParseIntError>
-    .into_into_fallible() // we are only working with success type after this point
+    .into_fallible() // we are only working with success type after this point
     .map(|x| x + 1)
     .filter(|x| x % 2 == 0)
     .flat_map(|x| [x, x + 1, x + 2])
@@ -346,7 +346,7 @@ assert_eq!(sum, Ok(27));
 let sum: Result<i32, ParseIntError> = vec!["7", "!!!", "34"]
     .into_par()
     .map(|x| x.parse::<i32>())
-    .into_into_fallible()
+    .into_fallible()
     .map(|x| x + 1)
     .filter(|x| x % 2 == 0)
     .flat_map(|x| [x, x + 1, x + 2])
