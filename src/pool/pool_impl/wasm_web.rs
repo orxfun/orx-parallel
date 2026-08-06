@@ -285,10 +285,12 @@ pub fn wasm_web_start_worker() {
 }
 
 fn assert_wasm_thread_pool_initialized() {
-    assert!(
-        cfg!(target_feature = "atomics"),
-        "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm-plan-b.md."
-    );
+    const {
+        assert!(
+            cfg!(target_feature = "atomics"),
+            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm-plan-b.md."
+        );
+    }
 
     assert_eq!(
         WASM_WEB3_THREAD_POOL_STATE.load(Ordering::SeqCst),
@@ -322,6 +324,7 @@ impl Default for WasmWebPool {
 
 impl WasmWebPool {
     /// Creates a new wasm web-thread pool adapter.
+    #[allow(clippy::missing_panics_doc)]
     pub fn new(num_threads: impl Into<NumThreads>) -> Self {
         let max_num_threads = match num_threads.into() {
             NumThreads::Auto => NonZeroUsize::new(1).expect("1"),
