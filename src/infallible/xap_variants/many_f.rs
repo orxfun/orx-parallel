@@ -107,13 +107,9 @@ where
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         loop {
-            match self.i.next_back() {
-                Some(i) => {
-                    if let y @ Some(_) = self.g.filter_map(i) {
-                        return y;
-                    }
-                }
-                None => return None,
+            let i = self.i.next_back()?;
+            if let y @ Some(_) = self.g.filter_map(i) {
+                return y;
             }
         }
     }
