@@ -4,6 +4,14 @@ use std::sync::LazyLock;
 
 // PERSISTENT_POOL
 
+// 0. all-features
+#[cfg(all(
+    feature = "std",
+    feature = "wasm-experimental",
+    not(target_arch = "wasm32")
+))]
+static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
+
 // 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm-experimental", target_arch = "wasm32"))]
 static PERSISTENT_POOL: LazyLock<WasmWebPoolExp> = LazyLock::new(Default::default);
@@ -48,6 +56,14 @@ static PERSISTENT_POOL: LazyLock<BasicPool> = LazyLock::new(Default::default);
 static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
 
 // DEFAULT POOL
+
+// 0. all-features
+#[cfg(all(
+    feature = "std",
+    feature = "wasm-experimental",
+    not(target_arch = "wasm32")
+))]
+pub type DefaultPool = &'static OncePool;
 
 // 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm-experimental", target_arch = "wasm32"))]
@@ -108,6 +124,16 @@ pub type DefaultPool = &'static OncePool;
 pub type DefaultPool = SequentialPool;
 
 // GET POOL
+
+// 0. all-features
+#[cfg(all(
+    feature = "std",
+    feature = "wasm-experimental",
+    not(target_arch = "wasm32")
+))]
+pub fn get_global_pool() -> DefaultPool {
+    &PERSISTENT_POOL
+}
 
 // 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm-experimental", target_arch = "wasm32"))]

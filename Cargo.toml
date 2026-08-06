@@ -50,7 +50,7 @@ criterion = { version = "0.8", features = ["html_reports"] }
 all-features = true
 
 [features]
-default = ["std"]
+default = ["std", "long-tests"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 long-tests = []
