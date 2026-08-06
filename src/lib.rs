@@ -50,12 +50,12 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use pool::BasicPool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 pub use pool::WasmWebPool;
-#[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
+#[cfg(all(feature = "wasm_experimental", target_arch = "wasm32"))]
 pub use pool::WasmWebPoolExp;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::init_thread_pool;
 #[cfg(all(
-    feature = "wasm-experimental",
+    feature = "wasm_experimental",
     target_arch = "wasm32",
     target_feature = "atomics"
 ))]

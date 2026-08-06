@@ -27,6 +27,8 @@ impl Default for OncePool {
     }
 }
 
+unsafe impl Sync for OncePool {}
+
 impl OncePool {
     /// Assumes (*) a thread pool of `num_threads` threads.
     ///
