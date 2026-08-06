@@ -1,4 +1,4 @@
-use crate::pool::{ParThreadPool, env::max_num_threads_by_env_and_resource};
+use crate::pool::ParThreadPool;
 use core::num::NonZeroUsize;
 use rayon_core::ThreadPool;
 
@@ -60,10 +60,17 @@ impl ParThreadPool for &rayon_core::ThreadPool {
     }
 }
 
+// 3. rayon
+#[cfg(all(
+    feature = "std",
+    feature = "persistent-pool-rayon",
+    not(feature = "wasm"),
+    not(feature = "wasm-experimental"),
+))]
 pub fn build_default_rayon_thread_pool() -> rayon_core::ThreadPool {
-    let num_threads = max_num_threads_by_env_and_resource();
+    let num_threads = crate::pool::env::max_num_threads_by_env_and_resource();
     rayon_core::ThreadPoolBuilder::new()
         .num_threads(num_threads.into())
         .build()
-        .unwrap()
+        .expect("failed to build rayon-core thread pool")
 }
