@@ -51,6 +51,7 @@ static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
 
 // 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm-experimental", target_arch = "wasm32"))]
+/// Default thread pool
 pub type DefaultPool = &'static WasmWebPoolExp;
 
 // 2. wasm
@@ -60,6 +61,7 @@ pub type DefaultPool = &'static WasmWebPoolExp;
     target_arch = "wasm32",
     not(feature = "wasm-experimental"),
 ))]
+/// Default thread pool
 pub type DefaultPool = &'static WasmWebPool;
 
 // 3. rayon
@@ -69,6 +71,7 @@ pub type DefaultPool = &'static WasmWebPool;
     not(feature = "wasm"),
     not(feature = "wasm-experimental"),
 ))]
+/// Default thread pool
 pub type DefaultPool = &'static rayon_core::ThreadPool;
 
 // 4. basic
@@ -79,6 +82,7 @@ pub type DefaultPool = &'static rayon_core::ThreadPool;
     not(feature = "wasm"),
     not(feature = "wasm-experimental"),
 ))]
+/// Default thread pool
 pub type DefaultPool = &'static BasicPool;
 
 // 5. once
@@ -89,6 +93,7 @@ pub type DefaultPool = &'static BasicPool;
     not(feature = "wasm"),
     not(feature = "wasm-experimental"),
 ))]
+/// Default thread pool
 pub type DefaultPool = &'static OncePool;
 
 // 6. sequential
@@ -99,6 +104,7 @@ pub type DefaultPool = &'static OncePool;
     not(feature = "wasm"),
     not(feature = "wasm-experimental"),
 ))]
+/// Default thread pool
 pub type DefaultPool = SequentialPool;
 
 // GET POOL
