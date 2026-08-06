@@ -317,7 +317,8 @@ pub struct WasmWebPool {
 
 impl Default for WasmWebPool {
     fn default() -> Self {
-        Self::new(NumThreads::Auto)
+        let num_threads = WASM_WEB3_THREAD_POOL_NUM_THREADS.load(Ordering::Relaxed);
+        Self::new(num_threads)
     }
 }
 
@@ -325,10 +326,9 @@ impl WasmWebPool {
     /// Creates a new wasm web-thread pool adapter.
     pub fn new(num_threads: impl Into<NumThreads>) -> Self {
         let max_num_threads = match num_threads.into() {
-            NumThreads::Auto => max_num_threads_by_env_and_resource(),
-            NumThreads::Max(n) => max_num_threads_by_env_and_resource().min(n),
+            NumThreads::Auto => NonZeroUsize::new(1).expect("1"),
+            NumThreads::Max(n) => n,
         };
-
         Self { max_num_threads }
     }
 

@@ -4,9 +4,11 @@ use std::sync::LazyLock;
 
 // PERSISTENT_POOL
 
+// 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm_experimental", target_arch = "wasm32"))]
 static PERSISTENT_POOL: LazyLock<WasmWebPoolExp> = LazyLock::new(Default::default);
 
+// 2. wasm
 #[cfg(all(
     feature = "std",
     feature = "wasm",
@@ -15,6 +17,7 @@ static PERSISTENT_POOL: LazyLock<WasmWebPoolExp> = LazyLock::new(Default::defaul
 ))]
 static PERSISTENT_POOL: LazyLock<WasmWebPool> = LazyLock::new(Default::default);
 
+// 3. rayon
 #[cfg(all(
     feature = "std",
     feature = "persistent_pool_rayon",
@@ -24,6 +27,7 @@ static PERSISTENT_POOL: LazyLock<WasmWebPool> = LazyLock::new(Default::default);
 static PERSISTENT_POOL: LazyLock<rayon_core::ThreadPool> =
     LazyLock::new(build_default_rayon_thread_pool);
 
+// 4. basic
 #[cfg(all(
     feature = "std",
     feature = "persistent_pool",
@@ -33,11 +37,23 @@ static PERSISTENT_POOL: LazyLock<rayon_core::ThreadPool> =
 ))]
 static PERSISTENT_POOL: LazyLock<BasicPool> = LazyLock::new(Default::default);
 
-// DefaultPool
+// 5. once
+#[cfg(all(
+    feature = "std",
+    not(feature = "persistent_pool"),
+    not(feature = "persistent_pool_rayon"),
+    not(feature = "wasm"),
+    not(feature = "wasm_experimental"),
+))]
+static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
 
+// DEFAULT POOL
+
+// 1. wasm-experimental
 #[cfg(all(feature = "std", feature = "wasm_experimental", target_arch = "wasm32"))]
 pub type DefaultPool = WasmWebPoolExp;
 
+// 2. wasm
 #[cfg(all(
     feature = "std",
     feature = "wasm",
@@ -46,6 +62,7 @@ pub type DefaultPool = WasmWebPoolExp;
 ))]
 pub type DefaultPool = WasmWebPool;
 
+// 3. rayon
 #[cfg(all(
     feature = "std",
     feature = "persistent_pool_rayon",
@@ -54,6 +71,7 @@ pub type DefaultPool = WasmWebPool;
 ))]
 pub type DefaultPool = rayon_core::ThreadPool;
 
+// 4. basic
 #[cfg(all(
     feature = "std",
     feature = "persistent_pool",
@@ -63,6 +81,7 @@ pub type DefaultPool = rayon_core::ThreadPool;
 ))]
 pub type DefaultPool = BasicPool;
 
+// 5. once
 #[cfg(all(
     feature = "std",
     not(feature = "persistent_pool"),
@@ -72,6 +91,7 @@ pub type DefaultPool = BasicPool;
 ))]
 pub type DefaultPool = OncePool;
 
+// 6. sequential
 #[cfg(all(
     not(feature = "std"),
     not(feature = "persistent_pool"),
@@ -81,4 +101,68 @@ pub type DefaultPool = OncePool;
 ))]
 pub type DefaultPool = SequentialPool;
 
-// access
+// GET POOL
+
+// 1. wasm-experimental
+#[cfg(all(feature = "std", feature = "wasm_experimental", target_arch = "wasm32"))]
+pub fn pool() -> &'static DefaultPool {
+    &PERSISTENT_POOL
+}
+
+// 2. wasm
+#[cfg(all(
+    feature = "std",
+    feature = "wasm",
+    target_arch = "wasm32",
+    not(feature = "wasm_experimental"),
+))]
+pub fn pool() -> &'static DefaultPool {
+    &PERSISTENT_POOL
+}
+
+// 3. rayon
+#[cfg(all(
+    feature = "std",
+    feature = "persistent_pool_rayon",
+    not(feature = "wasm"),
+    not(feature = "wasm_experimental"),
+))]
+pub fn pool() -> &'static DefaultPool {
+    &PERSISTENT_POOL
+}
+
+// 4. basic
+#[cfg(all(
+    feature = "std",
+    feature = "persistent_pool",
+    not(feature = "persistent_pool_rayon"),
+    not(feature = "wasm"),
+    not(feature = "wasm_experimental"),
+))]
+pub fn pool() -> &'static DefaultPool {
+    &PERSISTENT_POOL
+}
+
+// 5. once
+#[cfg(all(
+    feature = "std",
+    not(feature = "persistent_pool"),
+    not(feature = "persistent_pool_rayon"),
+    not(feature = "wasm"),
+    not(feature = "wasm_experimental"),
+))]
+pub fn pool() -> &'static DefaultPool {
+    &PERSISTENT_POOL
+}
+
+// 6. sequential
+#[cfg(all(
+    not(feature = "std"),
+    not(feature = "persistent_pool"),
+    not(feature = "persistent_pool_rayon"),
+    not(feature = "wasm"),
+    not(feature = "wasm_experimental"),
+))]
+pub fn pool() -> DefaultPool {
+    Default::default()
+}
