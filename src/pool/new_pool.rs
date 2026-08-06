@@ -1,11 +1,6 @@
-#[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
-#[cfg(all(feature = "wasm", target_arch = "wasm32"))]
-use crate::pool::pool_impl::WasmWebPool;
-#[cfg(all(feature = "wasm_experimental", target_arch = "wasm32"))]
-use crate::pool::pool_impl::WasmWebPoolExp;
 #[cfg(feature = "std")]
-use crate::{BasicPool, pool::pool_impl::OncePool};
+use crate::pool::pool_impl::{BasicPool, OncePool};
 
 /// Factory for creating thread pools with different characteristics.
 ///
@@ -206,42 +201,5 @@ impl Pool {
         rayon_core::ThreadPoolBuilder::new()
             .num_threads(num_threads)
             .build()
-    }
-
-    /// Creates a wasm web-thread pool adapter backed by Rayon's global runtime.
-    ///
-    /// This pool is intended for `wasm32` web builds where the global Rayon pool
-    /// is initialized by `wasm-bindgen-rayon`.
-    ///
-    /// # Parameters
-    ///
-    /// - `num_threads` - Desired maximum number of threads for computations:
-    ///   - `NumThreads::Auto` uses Rayon's maximum supported thread count
-    ///   - `NumThreads::Max(n)` caps usage at `n`
-    ///
-    /// # Features
-    ///
-    /// Requires `wasm_experimental` feature and `wasm32` target.
-    #[cfg(all(feature = "wasm_experimental", target_arch = "wasm32"))]
-    pub fn wasm_web_exp(num_threads: impl Into<NumThreads>) -> WasmWebPoolExp {
-        WasmWebPoolExp::new(num_threads)
-    }
-
-    /// Creates the main wasm web-thread pool adapter.
-    ///
-    /// This pool is intended for `wasm32` web builds and uses the simplified wasm backend.
-    ///
-    /// # Parameters
-    ///
-    /// - `num_threads` - Desired maximum number of threads for computations:
-    ///   - `NumThreads::Auto` uses backend default supported thread count
-    ///   - `NumThreads::Max(n)` caps usage at `n`
-    ///
-    /// # Features
-    ///
-    /// Requires `wasm` feature and `wasm32` target.
-    #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
-    pub fn wasm_web(num_threads: impl Into<NumThreads>) -> WasmWebPool {
-        WasmWebPool::new(num_threads)
     }
 }
