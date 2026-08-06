@@ -156,7 +156,7 @@ pub trait ParRunnerUseRes: ParRunner {
         match params.is_sequential() {
             true => {
                 let u_xap = u.init_get(0) as *mut U::Item;
-                let u_f = u.get(0);
+                let u_f = u_xap;
                 let mut iter = iter
                     .into_seq_iter()
                     .flat_map(|i| S::xap_use_res(u_xap, x1, x2, i).into_iter());
@@ -165,7 +165,7 @@ pub trait ParRunnerUseRes: ParRunner {
                     Some(Err(e)) => Err(e),
                     Some(Ok(mut acc)) => {
                         for maybe in iter {
-                            acc = f(u_f, acc, maybe?);
+                            acc = f(unsafe { &mut *u_f }, acc, maybe?);
                         }
                         Ok(Some(acc))
                     }
