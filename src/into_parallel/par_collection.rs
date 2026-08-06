@@ -2,9 +2,10 @@ use crate::infallible::{ParIter, xap_variants::Id};
 use crate::runner::default_runner;
 use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 
-/// Adds `.par()` to concurrent collections.
+/// A collection from which a parallel iterator can be created repeatedly
+/// using `par()` method.
 ///
-/// Sequential counterpart: collection iteration methods such as `iter()`.
+/// Sequential counterpart: `iter()`.
 pub trait ParCollection: ConcurrentCollection {
     /// Returns a parallel iterator over shared references to collection items.
     ///
@@ -14,8 +15,12 @@ pub trait ParCollection: ConcurrentCollection {
     /// use orx_parallel::*;
     ///
     /// let values = vec![1, 2, 3, 4];
-    /// let sum: i32 = ParCol::par(&values).copied().sum();
     ///
+    /// let sum: i32 = ParCollection::par(&values).copied().sum();
+    /// assert_eq!(sum, 10);
+    ///
+    /// // alternatively
+    /// let sum: i32 = values.par().copied().sum();
     /// assert_eq!(sum, 10);
     /// ```
     fn par(&self) -> ParIter<<Self::Iterable<'_> as ConcurrentIterable>::Iter, Id<&Self::Item>> {

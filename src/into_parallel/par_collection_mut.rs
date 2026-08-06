@@ -3,9 +3,10 @@ use crate::into_parallel::par_collection::ParCollection;
 use crate::runner::default_runner;
 use orx_concurrent_iter::ConcurrentCollectionMut;
 
-/// Adds `.par_mut()` to concurrent mutable collections.
+/// A collection from which a mutable parallel iterator can be created repeatedly
+/// using `par_mut()` method.
 ///
-/// Sequential counterpart: mutable iteration methods such as `iter_mut()`.
+/// Sequential counterpart: `iter_mut()`.
 pub trait ParCollectionMut: ConcurrentCollectionMut + ParCollection {
     /// Returns a parallel iterator over mutable references to collection items.
     ///
@@ -15,9 +16,13 @@ pub trait ParCollectionMut: ConcurrentCollectionMut + ParCollection {
     /// use orx_parallel::*;
     ///
     /// let mut values = vec![1, 2, 3, 4];
-    /// ParColMut::par_mut(&mut values).for_each(|x| *x *= 2);
     ///
+    /// ParCollectionMut::par_mut(&mut values).for_each(|x| *x *= 2);
     /// assert_eq!(values, vec![2, 4, 6, 8]);
+    ///
+    /// // alternatively
+    /// values.par_mut().for_each(|x| *x *= 2);
+    /// assert_eq!(values, vec![4, 8, 12, 16]);
     /// ```
     fn par_mut(&mut self) -> ParIter<Self::IterMut<'_>, Id<&mut Self::Item>> {
         ParIter::new(
