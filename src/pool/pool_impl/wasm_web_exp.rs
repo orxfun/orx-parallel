@@ -36,7 +36,7 @@ fn assert_wasm_thread_pool_initialized() {
 
 /// wasm web-thread pool adapter backed by Rayon's global runtime.
 ///
-/// This pool is available only on `wasm32` with `wasm_experimental` feature.
+/// This pool is available only on `wasm32` with `wasm-experimental` feature.
 /// It schedules scoped jobs on Rayon's global scope.
 #[derive(Clone, Copy, Debug)]
 pub struct WasmWebPoolExp {
