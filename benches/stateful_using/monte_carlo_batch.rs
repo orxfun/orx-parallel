@@ -244,7 +244,13 @@ fn run(c: &mut Criterion) {
         .flat_map(|n| trace_modes.map(|with_trace| InputVariant { n, with_trace }))
         .collect();
 
-    let par_variants = |nt: usize| [Method::Rayon { nt }, Method::Orx { nt }, Method::OrxFixed { nt }];
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
 
     let mut variants = vec![Method::Seq];
     variants.extend(par_variants(1));

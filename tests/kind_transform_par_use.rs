@@ -10,10 +10,7 @@ use std::string::{String, ToString};
 #[test]
 fn kind_transform_par_use() {
     fn get_par(n: usize, u: char) -> impl EnumerateParUse<Use = char, Item = String> {
-        (0..n)
-            .par()
-            .map(|x| x.to_string())
-            .use_new(move |_| u)
+        (0..n).par().map(|x| x.to_string()).use_new(move |_| u)
     }
 
     fn collect(par: impl ParUse<Use = char, Item = String>) -> Vec<String> {

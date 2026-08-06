@@ -13,10 +13,7 @@ fn inf_first() {
         let input = inputs(n);
 
         let result = input.par().filter(|x| *x == &(n / 2).to_string()).first();
-        assert_eq!(
-            result,
-            input.iter().find(|x| *x == &(n / 2).to_string())
-        );
+        assert_eq!(result, input.iter().find(|x| *x == &(n / 2).to_string()));
 
         let result = input.par().filter(|x| x.as_str() == "x").first();
         assert_eq!(result, input.iter().find(|x| x.as_str() == "x"));

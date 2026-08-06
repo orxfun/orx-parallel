@@ -17,10 +17,7 @@ fn inf_use_first() {
             .use_new(|_| ())
             .filter(|_, x| *x == &(n / 2).to_string())
             .first();
-        assert_eq!(
-            result,
-            input.iter().find(|x| *x == &(n / 2).to_string())
-        );
+        assert_eq!(result, input.iter().find(|x| *x == &(n / 2).to_string()));
 
         let result = input
             .par()

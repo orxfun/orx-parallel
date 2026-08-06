@@ -136,10 +136,7 @@ impl Experiment for Exp {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),
             Method::Rayon { nt } => {
                 let input = input.as_slice();
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| {
                     Some(match h {
                         true => input
@@ -161,10 +158,7 @@ impl Experiment for Exp {
             }
             Method::RayonRedWith { nt } => {
                 let input = input.as_slice();
-                let pool = ThreadPoolBuilder::new()
-                    .num_threads(*nt)
-                    .build()
-                    .unwrap();
+                let pool = ThreadPoolBuilder::new().num_threads(*nt).build().unwrap();
                 pool.install(|| match h {
                     true => input
                         .into_par_iter()
@@ -255,8 +249,14 @@ impl Experiment for Exp {
 
 fn run(c: &mut Criterion) {
     let treatments: Vec<_> = vec![
-        InputVariant { n: 15, heavy: false },
-        InputVariant { n: 20, heavy: false },
+        InputVariant {
+            n: 15,
+            heavy: false,
+        },
+        InputVariant {
+            n: 20,
+            heavy: false,
+        },
         InputVariant { n: 15, heavy: true },
         InputVariant { n: 20, heavy: true },
     ];

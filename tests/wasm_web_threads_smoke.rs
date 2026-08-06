@@ -1,8 +1,4 @@
-#![cfg(all(
-    feature = "wasm",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
+#![cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 
 use orx_parallel::{IntoParIter, Par, Pool, init_thread_pool};
 use wasm_bindgen_futures::JsFuture;

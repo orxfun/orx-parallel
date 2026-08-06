@@ -263,7 +263,13 @@ fn run(c: &mut Criterion) {
         .flat_map(|n| profiles.map(|profile| InputVariant { n, profile }))
         .collect();
 
-    let par_variants = |nt: usize| [Method::Rayon { nt }, Method::Orx { nt }, Method::OrxFixed { nt }];
+    let par_variants = |nt: usize| {
+        [
+            Method::Rayon { nt },
+            Method::Orx { nt },
+            Method::OrxFixed { nt },
+        ]
+    };
 
     let mut variants = vec![Method::Seq];
     variants.extend(par_variants(1));
