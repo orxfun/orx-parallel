@@ -63,6 +63,7 @@ static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
     feature = "wasm-experimental",
     not(target_arch = "wasm32")
 ))]
+/// Default thread pool
 pub type DefaultPool = &'static OncePool;
 
 // 1. wasm-experimental
@@ -131,6 +132,7 @@ pub type DefaultPool = SequentialPool;
     feature = "wasm-experimental",
     not(target_arch = "wasm32")
 ))]
+/// Returns the default global thread pool.
 pub fn get_global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
