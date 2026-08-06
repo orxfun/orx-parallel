@@ -46,15 +46,19 @@ test-case = { version = "3.3.1" }
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
 
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+getrandom = { version = "0.4", features = ["wasm_js"] }
+wasm-bindgen-futures = "0.4"
+wasm-bindgen-test = "0.3"
+
 [package.metadata.docs.rs]
 all-features = true
 
 [features]
-default = ["std", "long-tests"]
+default = ["std"]
 std = ["orx-concurrent-recursive-iter/std"]
 experimental = []
 long-tests = []
-wasm = ["std", "dep:wasm-bindgen", "dep:js-sys"]
 wasm-experimental = [
     "std",
     "rayon-core",
@@ -62,8 +66,9 @@ wasm-experimental = [
     "dep:js-sys",
     "dep:wasm-bindgen-rayon",
 ]
-persistent-pool = ["std"]
+wasm = ["std", "dep:wasm-bindgen", "dep:js-sys"]
 persistent-pool-rayon = ["std", "rayon-core"]
+persistent-pool = ["std"]
 
 
 # examples

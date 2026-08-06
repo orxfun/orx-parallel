@@ -1,3 +1,4 @@
+#[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
 #[cfg(feature = "std")]
 use crate::pool::pool_impl::{BasicPool, OncePool};
