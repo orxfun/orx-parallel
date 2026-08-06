@@ -5,7 +5,7 @@ use orx_concurrent_iter::{ConcurrentCollection, ConcurrentIterable};
 /// Adds `.par()` to concurrent collections.
 ///
 /// Sequential counterpart: collection iteration methods such as `iter()`.
-pub trait ParCol: ConcurrentCollection {
+pub trait ParCollection: ConcurrentCollection {
     /// Returns a parallel iterator over shared references to collection items.
     ///
     /// # Example
@@ -28,4 +28,4 @@ pub trait ParCol: ConcurrentCollection {
     }
 }
 
-impl<X> ParCol for X where X: ConcurrentCollection {}
+impl<X> ParCollection for X where X: ConcurrentCollection {}

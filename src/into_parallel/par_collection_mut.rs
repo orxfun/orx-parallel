@@ -1,12 +1,12 @@
 use crate::infallible::{ParIter, xap_variants::Id};
-use crate::into_parallel::par_collection::ParCol;
+use crate::into_parallel::par_collection::ParCollection;
 use crate::runner::default_runner;
 use orx_concurrent_iter::ConcurrentCollectionMut;
 
 /// Adds `.par_mut()` to concurrent mutable collections.
 ///
 /// Sequential counterpart: mutable iteration methods such as `iter_mut()`.
-pub trait ParColMut: ConcurrentCollectionMut + ParCol {
+pub trait ParCollectionMut: ConcurrentCollectionMut + ParCollection {
     /// Returns a parallel iterator over mutable references to collection items.
     ///
     /// # Example
@@ -29,4 +29,4 @@ pub trait ParColMut: ConcurrentCollectionMut + ParCol {
     }
 }
 
-impl<X> ParColMut for X where X: ConcurrentCollectionMut + ParCol {}
+impl<X> ParCollectionMut for X where X: ConcurrentCollectionMut + ParCollection {}
