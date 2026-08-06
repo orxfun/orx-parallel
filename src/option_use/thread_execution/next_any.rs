@@ -32,10 +32,7 @@ where
                 Some(i) => {
                     if let Some(a) = S::xap_use_opt(u, x1, x2, i).into_iter().next() {
                         Q::broadcast_stop(iter, state, chunk_state);
-                        match a {
-                            Some(a) => return Some(Some(a)),
-                            None => return None,
-                        }
+                        return Some(Some(a?));
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -48,10 +45,7 @@ where
                     Some(chunk) => {
                         if let Some(a) = chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i)).next() {
                             Q::broadcast_stop(iter, state, chunk_state);
-                            match a {
-                                Some(a) => return Some(Some(a)),
-                                None => return None,
-                            }
+                            return Some(Some(a?));
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,
