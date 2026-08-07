@@ -90,8 +90,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
     ///     .into_optional()
     ///     .use_new(|_| ());
     ///
-    /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::fixed(Pool::once(4)));
+    /// let par = par.runner(Runner::fixed());
     ///
     /// let out: Option<Vec<_>> = par.collect();
     /// assert_eq!(out, Some(vec![1, 2, 3]));

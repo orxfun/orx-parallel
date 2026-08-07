@@ -62,8 +62,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// let par = (0..1000).par();
     ///
-    /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::fixed(Pool::once(4)));
+    /// let par = par.runner(Runner::fixed());
     ///     
     /// let configured: usize = par.sum();
     /// assert_eq!(baseline, configured);

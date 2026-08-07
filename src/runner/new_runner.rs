@@ -18,13 +18,12 @@ use crate::runner::runner_variants::FixedChunkRunner;
 /// use orx_parallel::*;
 ///
 /// let par = (0..100).par().map(|x| x + 1);
+/// let par = par.runner(Runner::fixed());
+/// let sum = par.sum();
 ///
+/// let par = (0..100).par().map(|x| x + 1);
 /// #[cfg(feature = "std")]
-/// let pool = Pool::once(4);
-///
-/// #[cfg(feature = "std")]
-/// let par = par.runner(Runner::fixed(pool));
-///
+/// let par = par.runner(Runner::adaptive());
 /// let sum = par.sum();
 /// ```
 pub struct Runner;
@@ -41,8 +40,6 @@ impl Runner {
     /// use orx_parallel::*;
     ///
     /// let par = (0..100).par().map(|x| x + 1);
-    ///
-    /// #[cfg(feature = "std")]
     /// let par = par.runner(Runner::fixed());
     ///
     /// let result: Vec<_> = par.collect();
