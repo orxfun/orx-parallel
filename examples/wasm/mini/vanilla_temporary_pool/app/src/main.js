@@ -3,6 +3,7 @@ const threadsEl = document.getElementById("num_threads");
 const runEl = document.getElementById("run");
 const resultEl = document.getElementById("result");
 
+// create one worker per computation/click
 runEl.addEventListener("click", () => {
     const input = Number(inputEl.value);
     const threads = Number(threadsEl.value);

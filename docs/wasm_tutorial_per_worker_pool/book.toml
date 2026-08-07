@@ -1,5 +1,5 @@
 [book]
-title = "orx-parallel wasm & vanilla-js tutorial"
+title = "orx-parallel wasm & vanilla-js tutorial (temporary pool)"
 authors = ["orx-parallel contributors"]
 language = "en"
 src = "src"

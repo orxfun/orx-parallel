@@ -27,7 +27,7 @@ mkdir app # if not yet created
     <label>
         threads
         <input id="num_threads" type="number" value="1" min="0" max="32" />
-        try with 1 for sequential; 4, 16, etc. for multi-threaded computation
+        try with 1 for sequential; 0 to use all threads in the pool; 16 to use exactly 16 threads; etc.
     </label>
 
     <hr />
@@ -55,6 +55,7 @@ const threadsEl = document.getElementById("num_threads");
 const runEl = document.getElementById("run");
 const resultEl = document.getElementById("result");
 
+// create one worker per computation/click
 runEl.addEventListener("click", () => {
     const input = Number(inputEl.value);
     const threads = Number(threadsEl.value);
