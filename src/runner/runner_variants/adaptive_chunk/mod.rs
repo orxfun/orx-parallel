@@ -4,5 +4,6 @@ mod constants;
 mod ewma;
 mod mode;
 mod state;
+mod timing;
 
 pub use adaptive_chunk_runner::AdaptiveChunkRunner;
