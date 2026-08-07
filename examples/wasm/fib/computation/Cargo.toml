@@ -1,0 +1,11 @@
+[package]
+name = "computation"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+orx-parallel = { path = "../../../..", default-features = false }
+
+[features]
+default = []
+wasm = ["orx-parallel/wasm"]
