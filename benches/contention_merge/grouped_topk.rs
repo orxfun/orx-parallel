@@ -159,12 +159,12 @@ fn count_orx(input: &[u16], fixed_runner: bool, num_threads: usize) -> Vec<u64> 
         false => par.for_each(|local, key| {
             local[*key as usize] += cpu_mix(*key);
         }),
-        true => {
-            let runner = Runner::fixed(Pool::once(num_threads));
-            par.runner(runner).for_each(|local, key| {
+        true => par
+            .runner(Runner::fixed())
+            .num_threads(num_threads)
+            .for_each(|local, key| {
                 local[*key as usize] += cpu_mix(*key);
-            })
-        }
+            }),
     }
 
     use_vec

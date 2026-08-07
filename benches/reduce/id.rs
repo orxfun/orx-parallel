@@ -135,13 +135,13 @@ impl Experiment for Exp {
             Method::OrxFixed { nt } => match h {
                 true => input
                     .into_par()
-                    .runner(Runner::fixed(pool::get_global_pool()))
+                    .runner(Runner::fixed())
                     .num_threads(*nt)
                     .copied()
                     .reduce(h_r),
                 false => input
                     .into_par()
-                    .runner(Runner::fixed(pool::get_global_pool()))
+                    .runner(Runner::fixed())
                     .num_threads(*nt)
                     .copied()
                     .reduce(l_r),

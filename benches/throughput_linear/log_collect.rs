@@ -200,14 +200,14 @@ impl Experiment for Exp {
             Method::OrxFixed { nt } => match h {
                 true => input
                     .into_par()
-                    .runner(Runner::fixed(pool::get_global_pool()))
+                    .runner(Runner::fixed())
                     .num_threads(*nt)
                     .filter(|r| keep(r))
                     .map(parse_project_heavy)
                     .collect(),
                 false => input
                     .into_par()
-                    .runner(Runner::fixed(pool::get_global_pool()))
+                    .runner(Runner::fixed())
                     .num_threads(*nt)
                     .filter(|r| keep(r))
                     .map(parse_project_light)

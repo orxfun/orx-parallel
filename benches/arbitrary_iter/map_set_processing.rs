@@ -186,9 +186,7 @@ fn orx_map(map: &HashMap<u64, u32>, fixed_runner: bool, nt: usize) -> Agg {
 
     let result = match fixed_runner {
         false => par.reduce(merge),
-        true => par
-            .runner(Runner::fixed(pool::get_global_pool()))
-            .reduce(merge),
+        true => par.runner(Runner::fixed()).reduce(merge),
     };
 
     result.unwrap_or_default()
@@ -205,9 +203,7 @@ fn orx_set(set: &HashSet<u64>, fixed_runner: bool, nt: usize) -> Agg {
 
     let result = match fixed_runner {
         false => par.reduce(merge),
-        true => par
-            .runner(Runner::fixed(pool::get_global_pool()))
-            .reduce(merge),
+        true => par.runner(Runner::fixed()).reduce(merge),
     };
 
     result.unwrap_or_default()

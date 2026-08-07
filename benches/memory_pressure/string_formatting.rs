@@ -156,7 +156,7 @@ fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, S
     let mut stats = vec![StringAgg::default(); num_threads];
     let strings = (0..n)
         .par()
-        .runner(Runner::fixed(Pool::once(num_threads)))
+        .runner(Runner::fixed())
         .use_slice(&mut stats)
         .num_threads(num_threads)
         .map(|stats, i| {

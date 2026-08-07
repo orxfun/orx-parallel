@@ -109,7 +109,7 @@ impl Experiment for Exp {
                 .max(),
             Method::OrxFix { nt } => input
                 .par()
-                .runner(Runner::fixed(pool::get_global_pool()))
+                .runner(Runner::fixed())
                 .num_threads(*nt)
                 .map(|x| heterogeneous_map(h, *x))
                 .max(),

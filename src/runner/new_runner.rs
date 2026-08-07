@@ -1,4 +1,5 @@
-use crate::ParThreadPool;
+use crate::pool::DefaultPool;
+use crate::pool::get_global_pool;
 #[cfg(feature = "std")]
 use crate::runner::runner_variants::AdaptiveChunkRunner;
 use crate::runner::runner_variants::FixedChunkRunner;
@@ -42,15 +43,12 @@ impl Runner {
     /// let par = (0..100).par().map(|x| x + 1);
     ///
     /// #[cfg(feature = "std")]
-    /// let pool = Pool::once(4);
-    ///
-    /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::fixed(pool));
+    /// let par = par.runner(Runner::fixed());
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
-    pub fn fixed<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
-        FixedChunkRunner::new(pool)
+    pub fn fixed() -> FixedChunkRunner<DefaultPool> {
+        FixedChunkRunner::new(get_global_pool())
     }
 
     /// Creates an adaptive chunk runner.
@@ -65,15 +63,12 @@ impl Runner {
     /// let par = (0..100).par().map(|x| x + 1);
     ///
     /// #[cfg(feature = "std")]
-    /// let pool = Pool::once(4);
-    ///
-    /// #[cfg(feature = "std")]
-    /// let par = par.runner(Runner::adaptive(pool));
+    /// let par = par.runner(Runner::adaptive());
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
     #[cfg(feature = "std")]
-    pub fn adaptive<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
-        AdaptiveChunkRunner::new(pool)
+    pub fn adaptive() -> AdaptiveChunkRunner<DefaultPool> {
+        AdaptiveChunkRunner::new(get_global_pool())
     }
 }

@@ -133,7 +133,7 @@ fn orx(nt: usize, fs: &FileSystem, work: usize, chunk_size: usize, adaptive: boo
     match adaptive {
         true => par.reduce(|a, b| a + b),
         false => par
-            .runner(Runner::fixed(pool::get_global_pool()))
+            .runner(Runner::fixed())
             .reduce(|a, b| a + b),
     }
     .unwrap_or(0)

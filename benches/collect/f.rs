@@ -90,9 +90,9 @@ fn run_orx(input: &[u64], fixed: bool, nt: usize, ord: IterationOrder, list: boo
     match (fixed, list) {
         (false, false) => Output::Vec(par.collect()),
         (false, true) => Output::VecVec(par.collect::<Vec2<_>>().into()),
-        (true, false) => Output::Vec(par.runner(Runner::fixed(pool::get_global_pool())).collect()),
+        (true, false) => Output::Vec(par.runner(Runner::fixed()).collect()),
         (true, true) => Output::VecVec(
-            par.runner(Runner::fixed(pool::get_global_pool()))
+            par.runner(Runner::fixed())
                 .collect::<Vec2<_>>()
                 .into(),
         ),

@@ -146,14 +146,14 @@ impl Experiment for Exp {
             Method::OrxFixed { nt, chunk_size } => input
                 .par()
                 .chunk_size(*chunk_size)
-                .runner(Runner::fixed(pool::get_global_pool()))
+                .runner(Runner::fixed())
                 .num_threads(*nt)
                 .map(do_work)
                 .max(),
             Method::Orx { nt, chunk_size } => input
                 .par()
                 .chunk_size(*chunk_size)
-                .runner(Runner::adaptive(Pool::once(*nt)))
+                .runner(Runner::adaptive())
                 .num_threads(*nt)
                 .map(do_work)
                 .max(),
