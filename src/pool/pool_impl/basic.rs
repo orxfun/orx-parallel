@@ -22,9 +22,19 @@ struct WorkerShared {
     cv: Condvar,
 }
 
+// Wraps a raw pointer so it can be stored in Mutex<WorkerState> across threads.
+struct ScopeRuntimePtr(*const ScopeRuntime);
+unsafe impl Send for ScopeRuntimePtr {}
+impl Copy for ScopeRuntimePtr {}
+impl Clone for ScopeRuntimePtr {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
 struct WorkerState {
     shutdown: bool,
-    active_scope_addr: Option<usize>,
+    active_scope: Option<ScopeRuntimePtr>,
     queue: VecDeque<Task>,
 }
 
@@ -175,9 +185,10 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 
                 if let Some(task) = state.queue.pop_front() {
                     let runtime_ptr = state
-                        .active_scope_addr
-                        .expect("active scope must be set while queue is non-empty");
-                    break (task, runtime_ptr as *const ScopeRuntime);
+                        .active_scope
+                        .expect("active scope must be set while queue is non-empty")
+                        .0;
+                    break (task, runtime_ptr);
                 }
 
                 state = shared.cv.wait(state).expect("poisoned pool lock");
@@ -233,7 +244,7 @@ impl BasicPool {
         let shared = Arc::new(WorkerShared {
             state: Mutex::new(WorkerState {
                 shutdown: false,
-                active_scope_addr: None,
+                active_scope: None,
                 queue: VecDeque::new(),
             }),
             cv: Condvar::new(),
@@ -264,8 +275,8 @@ impl BasicPool {
 
         {
             let mut state = self.inner.shared.state.lock().expect("poisoned pool lock");
-            debug_assert!(state.active_scope_addr.is_none());
-            state.active_scope_addr = Some(&runtime as *const ScopeRuntime as usize);
+            debug_assert!(state.active_scope.is_none());
+            state.active_scope = Some(ScopeRuntimePtr(&runtime as *const ScopeRuntime));
         }
 
         let scope_ref = ScopeRef {
@@ -280,7 +291,7 @@ impl BasicPool {
 
         {
             let mut state = self.inner.shared.state.lock().expect("poisoned pool lock");
-            state.active_scope_addr = None;
+            state.active_scope = None;
             debug_assert!(state.queue.is_empty());
         }
 
@@ -322,12 +333,10 @@ impl ParThreadPool for BasicPool {
         s.runtime().begin_task();
 
         let task = Task::new(work);
-
         {
             let mut state = s.shared().state.lock().expect("poisoned pool lock");
             state.queue.push_back(task);
         }
-
         s.shared().cv.notify_one();
     }
 }
