@@ -1,6 +1,6 @@
 use crate::NumThreads;
 use crate::pool::ParThreadPool;
-use crate::pool::env::max_num_threads_by_env_and_resource;
+#[allow(unused_imports)]
 use alloc::format;
 use core::num::NonZeroUsize;
 use core::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
@@ -236,6 +236,7 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
 /// Initializes the worker-backed wasm thread runtime for `WasmWebPool`.
 #[cfg(target_feature = "atomics")]
 pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
+    #[allow(clippy::missing_panics_doc)]
     let num_threads = NonZeroUsize::new(num_threads.max(1)).expect(">0");
 
     match WASM_WEB3_THREAD_POOL_STATE.compare_exchange(
@@ -287,10 +288,12 @@ pub fn wasm_web_start_worker() {
 }
 
 fn assert_wasm_thread_pool_initialized() {
-    assert!(
-        cfg!(target_feature = "atomics"),
-        "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm-plan-b.md."
-    );
+    const {
+        assert!(
+            cfg!(target_feature = "atomics"),
+            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm-plan-b.md."
+        );
+    }
 
     assert_eq!(
         WASM_WEB3_THREAD_POOL_STATE.load(Ordering::SeqCst),
@@ -317,18 +320,19 @@ pub struct WasmWebPool {
 
 impl Default for WasmWebPool {
     fn default() -> Self {
-        Self::new(NumThreads::Auto)
+        let num_threads = WASM_WEB3_THREAD_POOL_NUM_THREADS.load(Ordering::Relaxed);
+        Self::new(num_threads)
     }
 }
 
 impl WasmWebPool {
     /// Creates a new wasm web-thread pool adapter.
+    #[allow(clippy::missing_panics_doc)]
     pub fn new(num_threads: impl Into<NumThreads>) -> Self {
         let max_num_threads = match num_threads.into() {
-            NumThreads::Auto => max_num_threads_by_env_and_resource(),
-            NumThreads::Max(n) => max_num_threads_by_env_and_resource().min(n),
+            NumThreads::Auto => NonZeroUsize::new(1).expect("1"),
+            NumThreads::Max(n) => n,
         };
-
         Self { max_num_threads }
     }
 

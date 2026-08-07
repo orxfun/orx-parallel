@@ -1,4 +1,4 @@
-use std::time::Instant;
+use super::timing::{Instant, Timing};
 
 pub struct ChunkState {
     pub requested_chunk_size: usize,
@@ -9,11 +9,11 @@ impl ChunkState {
     pub fn new(chunk_size: usize) -> Self {
         Self {
             requested_chunk_size: chunk_size,
-            started_at: Instant::now(),
+            started_at: Timing::now(),
         }
     }
 
     pub fn elapsed_ns(&self) -> u64 {
-        self.started_at.elapsed().as_nanos().min(u64::MAX as u128) as u64
+        Timing::elapsed_ns_from(self.started_at)
     }
 }

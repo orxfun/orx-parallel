@@ -1,9 +1,9 @@
 use super::chunk_state::ChunkState;
 use super::constants::*;
 use super::mode::{AtomicMode, Mode};
+use super::timing::{Instant, Timing};
 use core::cmp::{max, min};
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::time::Instant;
 
 pub struct State {
     pub max_num_threads: usize,
@@ -40,7 +40,7 @@ impl State {
             min_chunk_size,
             fixed_chunk_size,
             initial_len,
-            explore_started_at: std::time::Instant::now(),
+            explore_started_at: Timing::now(),
             mode: AtomicMode::new_explore(),
             chosen_chunk_size: AtomicUsize::new(fixed_chunk_size.unwrap_or(0)),
             explored_tasks: AtomicUsize::new(0),
@@ -128,7 +128,6 @@ impl State {
         }
 
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
-        let elapsed_ms = self.explore_started_at.elapsed().as_millis();
 
         // Early exit for tiny work: if per-item work is extremely small,
         // exploration overhead dominates. Stop after minimal sampling.
@@ -136,6 +135,7 @@ impl State {
             return true;
         }
 
+        let elapsed_ms = Timing::elapsed_millis_from(self.explore_started_at);
         elapsed_ms >= EXPLORATION_MIN_MS
     }
 

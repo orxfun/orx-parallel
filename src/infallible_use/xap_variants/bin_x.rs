@@ -34,11 +34,10 @@ impl<X: XapUse<Size = Bin>, G: UFlatMap<U = X::U, I = X::O>> XapUse for UBinX<X,
     type U = X::U;
 
     fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
-        let u = unsafe { &mut *u };
         let i = self
             .x
             .bin_value(u, i)
-            .map(|x| self.g.flat_map(u, x).into_iter());
+            .map(|x| self.g.flat_map(unsafe { &mut *u }, x).into_iter());
         IterBinX { i }
     }
 }

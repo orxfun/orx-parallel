@@ -202,7 +202,7 @@ impl Experiment for Exp {
                 match h {
                     true => input
                         .into_par()
-                        .runner(Runner::fixed(Pool::once(*nt)))
+                        .runner(Runner::fixed(pool::get_global_pool()))
                         .num_threads(*nt)
                         .map(m)
                         .filter(f)
@@ -211,7 +211,7 @@ impl Experiment for Exp {
                         .reduce(h_r),
                     false => input
                         .into_par()
-                        .runner(Runner::fixed(Pool::once(*nt)))
+                        .runner(Runner::fixed(pool::get_global_pool()))
                         .num_threads(*nt)
                         .map(m)
                         .filter(f)

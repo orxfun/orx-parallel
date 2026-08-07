@@ -11,6 +11,14 @@ pub use sequential::SequentialPool;
 
 #[cfg(feature = "rayon-core")]
 mod rayon_core;
+// 3. rayon
+#[cfg(all(
+    feature = "std",
+    feature = "persistent-pool-rayon",
+    not(feature = "wasm"),
+    not(feature = "wasm-experimental"),
+))]
+pub use rayon_core::build_default_rayon_thread_pool;
 
 #[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 mod wasm_web_exp;

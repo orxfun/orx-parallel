@@ -23,15 +23,17 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
 }
 
 fn assert_wasm_thread_pool_initialized() {
-    if !cfg!(target_feature = "atomics") {
-        panic!("Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm.md.");
+    const {
+        assert!(
+            cfg!(target_feature = "atomics"),
+            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm.md."
+        )
     }
 
-    if !WASM_WEB_THREAD_POOL_INIT_CALLED.load(Ordering::SeqCst) {
-        panic!(
-            "Wasm web thread pool is not initialized. Call and await init_thread_pool(...) before running parallel computations."
-        );
-    }
+    assert!(
+        !WASM_WEB_THREAD_POOL_INIT_CALLED.load(Ordering::SeqCst),
+        "Wasm web thread pool is not initialized. Call and await init_thread_pool(...) before running parallel computations."
+    );
 }
 
 /// wasm web-thread pool adapter backed by Rayon's global runtime.
@@ -51,6 +53,7 @@ impl Default for WasmWebPoolExp {
 
 impl WasmWebPoolExp {
     /// Creates a new wasm web-thread pool adapter.
+    #[allow(clippy::missing_panics_doc)]
     pub fn new(num_threads: impl Into<NumThreads>) -> Self {
         let rayon_max = NonZeroUsize::new(rayon_core::max_num_threads().max(1)).expect(">0");
         let max_num_threads = match num_threads.into() {
