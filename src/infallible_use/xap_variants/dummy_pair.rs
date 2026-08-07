@@ -34,7 +34,7 @@ impl<X: XapUse, V: Send> XapUse for UDummyPair<X, V> {
 
     fn xap_use(&self, u: *mut Self::U, i: Self::I) -> Self::Values {
         let pair_ptr: &mut PairPtr<X::U, V> = unsafe { &mut *u };
-        let u = pair_ptr.u_mut();
+        let u = pair_ptr.u_ptr();
         self.x.xap_use(u, i)
     }
 }
