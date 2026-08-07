@@ -24,6 +24,13 @@ jobs:
             "--no-default-features --features persistent-pool-rayon",
             "--no-default-features --features persistent-pool",
           ]
+        features_miri:
+          [
+            "",
+            "--no-default-features",
+            "--no-default-features --features std",
+            "--no-default-features --features persistent-pool",
+          ]
 
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +62,7 @@ jobs:
         run: cargo clippy --all-targets ${{ matrix.features }} -- -D warnings --verbose
 
       - name: Miri
-        run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features }} --features long-tests
+        run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features_miri }} --features long-tests
 
   wasm:
     name: Check (wasm)
