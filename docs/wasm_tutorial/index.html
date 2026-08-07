@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>orx-parallel & wasm</title>
+  <link rel="icon" href="./favicon.ico" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <main class="page">
+    <section class="panel" aria-label="Framework switcher">
+      <div class="panel-head">
+        <a href="https://github.com/orxfun" target="_blank" rel="noreferrer" aria-label="ORX GitHub">
+          <img class="panel-logo"
+            src="https://avatars.githubusercontent.com/u/132661625?s=400&u=e13dbda1a79636fa7d02dd9ac8dfc02705694144&v=4"
+            alt="ORX logo" onerror="this.onerror=null;this.src='./assets/logos/orx.png';" />
+        </a>
+        <div class="panel-head-copy">
+          <h1>Tutorial: <code>orx-parallel</code> & Vanilla JS</h1>
+          <p class="hero-kicker">creating a minimal working example</p>
+        </div>
+      </div>
+      <div class="framework-cards" aria-label="Framework pages">
+        <article class="framework-card" data-framework="vanilla">
+          <div class="framework-head">
+            <h2>Persistent Worker & Thread Pool</h2>
+          </div>
+          <p>one worker & thread pool is used throughout the application</p>
+          <div class="card-actions">
+            <button type="button" data-framework="persistent" data-action="tutorial">Tutorial</button>
+            <button type="button" data-framework="persistent" data-action="code">Code</button>
+          </div>
+        </article>
+        <article class="framework-card" data-framework="react">
+          <div class="framework-head">
+            <h2>Temporary Worker & Thread Pool</h2>
+          </div>
+          <p>a worker & thread pool is created per computation</p>
+          <div class="card-actions">
+            <button type="button" data-framework="temporary" data-action="tutorial">Tutorial</button>
+            <button type="button" data-framework="temporary" data-action="code">Code</button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    const tutorialUrls = {
+      persistent: "./wasm_tutorial_persistent_pool/book/index.html",
+      temporary: "./wasm_tutorial_temporary_pool/book/index.html",
+    };
+
+    const codeUrls = {
+      persistent: "https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla_persistent_pool",
+      temporary: "https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla_temporary_pool",
+    };
+
+    const buttons = Array.from(document.querySelectorAll("button[data-framework][data-action]"));
+    const status = document.getElementById("status");
+
+    function setStatus(message) {
+      if (status) {
+        status.textContent = message;
+      }
+    }
+
+    if (window.location.protocol === "file:") {
+      setStatus("This hub cannot run from file://. Start a local server and open http://localhost:<port> instead.");
+    }
+
+    function openTutorial(framework) {
+      const url = tutorialUrls[framework];
+      if (!url) {
+        setStatus("Unknown framework selection.");
+        return;
+      }
+      setStatus(`Loading ${framework} from ${url} ...`);
+      window.location.href = url;
+    }
+
+    function openCode(framework) {
+      const url = codeUrls[framework];
+      if (!url) {
+        setStatus("Unknown framework selection.");
+        return;
+      }
+      setStatus(`Opening ${framework} README from ${url} ...`);
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    for (const button of buttons) {
+      button.addEventListener("click", () => {
+        const framework = button.dataset.framework;
+        const action = button.dataset.action;
+        if (action === "tutorial") {
+          openTutorial(framework);
+        } else if (action === "code") {
+          openCode(framework);
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
