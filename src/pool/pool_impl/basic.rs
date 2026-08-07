@@ -22,19 +22,8 @@ struct WorkerShared {
     cv: Condvar,
 }
 
-// Wraps a raw pointer so it can be stored in Mutex<WorkerState> across threads.
-struct ScopeRuntimePtr(*const ScopeRuntime);
-unsafe impl Send for ScopeRuntimePtr {}
-impl Copy for ScopeRuntimePtr {}
-impl Clone for ScopeRuntimePtr {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 struct WorkerState {
     shutdown: bool,
-    active_scope: Option<ScopeRuntimePtr>,
     queue: VecDeque<Task>,
 }
 
@@ -44,7 +33,6 @@ impl Drop for Inner {
             let mut state = self.shared.state.lock().expect("poisoned pool lock");
             state.shutdown = true;
             while let Some(task) = state.queue.pop_front() {
-                // A scope waits for all submitted work; this is a defensive fallback.
                 unsafe { task.drop() };
             }
         }
@@ -133,12 +121,13 @@ struct Task {
     data: *mut (),
     run_fn: unsafe fn(*mut ()),
     drop_fn: unsafe fn(*mut ()),
+    runtime: *const ScopeRuntime,
 }
 
 unsafe impl Send for Task {}
 
 impl Task {
-    fn new<W>(work: W) -> Self
+    fn new<W>(work: W, runtime: *const ScopeRuntime) -> Self
     where
         W: Fn() + Send,
     {
@@ -162,6 +151,7 @@ impl Task {
             data: Box::into_raw(boxed) as *mut (),
             run_fn: run_impl::<W>,
             drop_fn: drop_impl::<W>,
+            runtime,
         }
     }
 
@@ -176,7 +166,7 @@ impl Task {
 
 fn worker_loop(shared: Arc<WorkerShared>) {
     loop {
-        let (task, runtime_ptr) = {
+        let task = {
             let mut state = shared.state.lock().expect("poisoned pool lock");
             loop {
                 if state.shutdown {
@@ -184,18 +174,14 @@ fn worker_loop(shared: Arc<WorkerShared>) {
                 }
 
                 if let Some(task) = state.queue.pop_front() {
-                    let runtime_ptr = state
-                        .active_scope
-                        .expect("active scope must be set while queue is non-empty")
-                        .0;
-                    break (task, runtime_ptr);
+                    break task;
                 }
 
                 state = shared.cv.wait(state).expect("poisoned pool lock");
             }
         };
 
-        let runtime = unsafe { &*runtime_ptr };
+        let runtime = unsafe { &*task.runtime };
         let result = catch_unwind(AssertUnwindSafe(|| unsafe { task.run() }));
         if let Err(err) = result {
             runtime.record_panic(err);
@@ -244,7 +230,6 @@ impl BasicPool {
         let shared = Arc::new(WorkerShared {
             state: Mutex::new(WorkerState {
                 shutdown: false,
-                active_scope: None,
                 queue: VecDeque::new(),
             }),
             cv: Condvar::new(),
@@ -273,12 +258,6 @@ impl BasicPool {
     {
         let runtime = ScopeRuntime::new();
 
-        {
-            let mut state = self.inner.shared.state.lock().expect("poisoned pool lock");
-            debug_assert!(state.active_scope.is_none());
-            state.active_scope = Some(ScopeRuntimePtr(&runtime as *const ScopeRuntime));
-        }
-
         let scope_ref = ScopeRef {
             shared: Arc::as_ptr(&self.inner.shared),
             runtime: &runtime,
@@ -288,12 +267,6 @@ impl BasicPool {
         let user_result = catch_unwind(AssertUnwindSafe(|| f(&scope_ref)));
 
         runtime.wait_for_completion();
-
-        {
-            let mut state = self.inner.shared.state.lock().expect("poisoned pool lock");
-            state.active_scope = None;
-            debug_assert!(state.queue.is_empty());
-        }
 
         if let Err(err) = user_result {
             resume_unwind(err);
@@ -332,7 +305,7 @@ impl ParThreadPool for BasicPool {
     {
         s.runtime().begin_task();
 
-        let task = Task::new(work);
+        let task = Task::new(work, s.runtime());
         {
             let mut state = s.shared().state.lock().expect("poisoned pool lock");
             state.queue.push_back(task);
