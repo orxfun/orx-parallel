@@ -27,3 +27,6 @@ examples/wasm/*/hub/apps/
 examples/wasm/*/hub/site/
 
 /docs/task*
+
+
+/docs/*/book
