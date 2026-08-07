@@ -236,6 +236,7 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
 /// Initializes the worker-backed wasm thread runtime for `WasmWebPool`.
 #[cfg(target_feature = "atomics")]
 pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
+    #[allow(clippy::missing_panics_doc)]
     let num_threads = NonZeroUsize::new(num_threads.max(1)).expect(">0");
 
     match WASM_WEB3_THREAD_POOL_STATE.compare_exchange(
