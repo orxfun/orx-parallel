@@ -19,13 +19,13 @@ cargo install mdbook
 Build the book:
 
 ```bash
-cd docs/wasm_tutorial_persistent_pool
+cd docs/wasm_tutorial/wasm_tutorial_persistent_pool
 mdbook build
 ```
 
 Serve locally with live reload:
 
 ```bash
-cd docs/wasm_tutorial_persistent_pool
+cd docs/wasm_tutorial/wasm_tutorial_persistent_pool
 mdbook serve --open
 ```
