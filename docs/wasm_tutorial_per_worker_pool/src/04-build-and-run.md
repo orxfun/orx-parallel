@@ -53,7 +53,9 @@ Open the Vite URL and run a computation:
 
 * Enter `1` for number of threads, press `run` and wait until the result `2601945768813055516` is displayed. This runs the computation on a single thread.
 
-* Now enter `4`, `16` and `32` for number of threads, `run` and wait until you see the same result `2601945768813055516`. This would run the computation in parallel.
+* Enter `0` to use all available threads, press `run` and wait until the result `2601945768813055516` is displayed.
+
+* Now enter `4`, `16` and `32` for number of threads, `run` and wait until you see the same result `2601945768813055516`.
 
 ## Common pitfalls
 

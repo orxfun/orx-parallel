@@ -1,4 +1,4 @@
-# Parallellizaton in Vanilla JS UI with `orx-parallel`
+# Parallellizaton in Vanilla JS UI with `orx-parallel` and temporary worker
 
 This tutorial shows how to build a minimal JavaScript frontend to achieve parallel computaiton using `orx-parallel` in wasm.
 
@@ -10,6 +10,19 @@ The UI is minimalistic for demonstration purposes:
 4. One text **output** to display the result.
 
 The user enters the **input**, **number of threads** and presses the button. The computation is parallelized using `orx-parallel` and the result is displayed in the **output**.
+
+## Temporary vs Persistent Worker
+
+In this demo, a worker and a thread pool is created per computation. This is a clean and flexible approach.
+
+The alternative is to use a persistent worker and thread pool which might reduce overhead.
+
+These two approaches differ only in the `app` and either one can be taken depending on the application.
+
+You may access the source code created by following the tutorials:
+* in [`examples/wasm/mini/vanilla_temporary_pool`](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla_temporary_pool) creating a worker per computation, and
+* in [`examples/wasm/mini/vanilla_persistent_pool`](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla_persistent_pool) using a single persistent worker.
+
 
 ## Chapters
 

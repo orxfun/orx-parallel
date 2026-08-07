@@ -17,7 +17,7 @@ fn cpu_mix(x: u64) -> u64 {
 pub fn compute(input: usize, num_threads: usize) -> u64 {
     (0..input)
         .par() // <= parallelization through orx-parallel
-        .num_threads(num_threads)
+        .num_threads(num_threads) // can be omitted to use all threads in the pool
         .filter(|x| !x.is_multiple_of(42))
         .map(|x| cpu_mix(x as u64))
         .sum()

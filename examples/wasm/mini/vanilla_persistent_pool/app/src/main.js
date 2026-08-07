@@ -7,10 +7,12 @@ const resultEl = document.getElementById("result");
 // Set to `0` to create the pool with all available threads.
 const threadsInPool = 32;
 
+// create one persistent worker
 const worker = new Worker(new URL("./worker.js", import.meta.url), {
     type: "module"
 });
 
+// immediately initiate thread pool
 worker.postMessage({ type: "init", threads: threadsInPool });
 
 worker.addEventListener("message", (event) => {
