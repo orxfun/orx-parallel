@@ -237,7 +237,10 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
 #[cfg(target_feature = "atomics")]
 pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
     #[allow(clippy::missing_panics_doc)]
-    let num_threads = NonZeroUsize::new(num_threads.max(1)).expect(">0");
+    let num_threads = match num_threads {
+        0 => crate::pool::env::max_num_threads_by_env_and_resource(),
+        n => NonZeroUsize::new(n).expect(">0"),
+    };
 
     match WASM_WEB3_THREAD_POOL_STATE.compare_exchange(
         WASM_WEB3_THREAD_POOL_UNINITIALIZED,
