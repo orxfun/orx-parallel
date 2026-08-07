@@ -17,7 +17,7 @@ where
     F: Fn(&mut X::U, X::O, X::O) -> X::O,
 {
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
-    let u_xap = u as *mut U;
+    let u = u as *mut U;
 
     let mut acc = None;
 
@@ -30,7 +30,10 @@ where
             0 | 1 => {
                 match iter.next_by(th_idx) {
                     Some(i) => {
-                        let result = x.xap_use(u_xap, i).into_iter().reduce(|a, b| f(u, a, b));
+                        let result = x
+                            .xap_use(u, i)
+                            .into_iter()
+                            .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                         if result.is_some() {
                             acc = result;
                             break;
@@ -47,8 +50,8 @@ where
                 match chunk_puller.pull() {
                     Some(chunk) => {
                         let result = chunk
-                            .flat_map(|i| x.xap_use(u_xap, i))
-                            .reduce(|a, b| f(u, a, b));
+                            .flat_map(|i| x.xap_use(u, i))
+                            .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                         if result.is_some() {
                             acc = result;
                             break;
@@ -75,10 +78,12 @@ where
                     0 | 1 => {
                         match iter.next_by(th_idx) {
                             Some(i) => {
-                                let result =
-                                    x.xap_use(u_xap, i).into_iter().reduce(|a, b| f(u, a, b));
+                                let result = x
+                                    .xap_use(u, i)
+                                    .into_iter()
+                                    .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                                 if let Some(y) = result {
-                                    acc = f(u, acc, y);
+                                    acc = f(unsafe { &mut *u }, acc, y);
                                 }
                             }
                             // TODO: a good back-off strategy might be used, needs benchmark with ConcurrentQueue
@@ -92,10 +97,10 @@ where
                         match chunk_puller.pull() {
                             Some(chunk) => {
                                 let result = chunk
-                                    .flat_map(|i| x.xap_use(u_xap, i))
-                                    .reduce(|a, b| f(u, a, b));
+                                    .flat_map(|i| x.xap_use(u, i))
+                                    .reduce(|a, b| f(unsafe { &mut *u }, a, b));
                                 if let Some(y) = result {
-                                    acc = f(u, acc, y);
+                                    acc = f(unsafe { &mut *u }, acc, y);
                                 }
                             }
                             None if iter.is_completed_when_none_returned() => break,
