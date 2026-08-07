@@ -6,6 +6,7 @@
 **>_** Create the `wasm_bindings` crate
 
 ```bash
+cd .. # go back to top level
 cargo new --lib wasm_bindings
 ```
 
@@ -71,7 +72,6 @@ cargo build --target wasm32-unknown-unknown -Z build-std=panic_abort,std
 And also test it out with with `wasm-pack`:
 
 ```bash
-cd wasm_bindings
 RUSTUP_TOOLCHAIN=nightly \
 RUSTFLAGS='-C target-feature=+atomics -C link-arg=--shared-memory -C link-arg=--max-memory=1073741824 -C link-arg=--import-memory -C link-arg=--export=__heap_base -C link-arg=--export=__wasm_init_tls -C link-arg=--export=__tls_size -C link-arg=--export=__tls_align -C link-arg=--export=__tls_base' \
 wasm-pack build . --target web --out-dir ../app/pkg -- -Z build-std=panic_abort,std

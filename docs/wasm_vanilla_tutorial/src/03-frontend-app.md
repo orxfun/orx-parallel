@@ -5,7 +5,8 @@
 **>_** Create the frontend directory `app, if not created
 
 ```bash
-mkdir app
+cd .. # go back to top level
+mkdir app # if not yet created
 ```
 
 **>_** Create the simple page `app/index.html`:
