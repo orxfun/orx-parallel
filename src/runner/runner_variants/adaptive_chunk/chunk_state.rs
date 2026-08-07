@@ -30,6 +30,6 @@ fn now_ns() -> u64 {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system time is before UNIX_EPOCH");
-        return now.as_nanos().min(u64::MAX as u128) as u64;
+        now.as_nanos().min(u64::MAX as u128) as u64
     }
 }
