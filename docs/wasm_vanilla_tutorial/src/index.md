@@ -1,4 +1,4 @@
-# Wasm Vanilla Tutorial
+# Parallellizaton in Vanilla JS UI with `orx-parallel`
 
 This tutorial shows how to build a minimal JavaScript frontend to achieve parallel computaiton using `orx-parallel` in wasm.
 
