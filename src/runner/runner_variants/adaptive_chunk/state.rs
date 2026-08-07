@@ -3,14 +3,13 @@ use super::constants::*;
 use super::mode::{AtomicMode, Mode};
 use core::cmp::{max, min};
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::time::Instant;
 
 pub struct State {
     pub max_num_threads: usize,
     pub min_chunk_size: usize,
     pub fixed_chunk_size: Option<usize>,
     initial_len: Option<usize>,
-    explore_started_at: Instant,
+    explore_started_at_ns: u64,
     mode: AtomicMode,
     chosen_chunk_size: AtomicUsize,
     explored_tasks: AtomicUsize,
@@ -40,7 +39,7 @@ impl State {
             min_chunk_size,
             fixed_chunk_size,
             initial_len,
-            explore_started_at: std::time::Instant::now(),
+            explore_started_at_ns: now_ns(),
             mode: AtomicMode::new_explore(),
             chosen_chunk_size: AtomicUsize::new(fixed_chunk_size.unwrap_or(0)),
             explored_tasks: AtomicUsize::new(0),
@@ -128,7 +127,9 @@ impl State {
         }
 
         let avg_ns = self.avg_ns_per_item.load(Ordering::Relaxed);
-        let elapsed_ms = self.explore_started_at.elapsed().as_millis();
+        let elapsed_ms = now_ns()
+            .saturating_sub(self.explore_started_at_ns)
+            .saturating_div(1_000_000) as u128;
 
         // Early exit for tiny work: if per-item work is extremely small,
         // exploration overhead dominates. Stop after minimal sampling.
@@ -194,4 +195,21 @@ impl State {
 #[inline(always)]
 fn min3(a: usize, b: usize, c: usize) -> usize {
     min(min(a, b), c)
+}
+
+#[inline(always)]
+fn now_ns() -> u64 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        return (js_sys::Date::now() * 1_000_000.0) as u64;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time is before UNIX_EPOCH");
+        return now.as_nanos().min(u64::MAX as u128) as u64;
+    }
 }
