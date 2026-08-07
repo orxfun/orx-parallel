@@ -1,0 +1,8 @@
+[book]
+title = "orx-parallel wasm & vanilla-js tutorial (persistent pool)"
+authors = ["orx-parallel contributors"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
