@@ -184,10 +184,10 @@ fn run_orx(
                 (false, false) => Output::Vec(par.collect()),
                 (false, true) => Output::VecVec(par.collect::<Vec2<_>>().into()),
                 (true, false) => {
-                    Output::Vec(par.runner(Runner::fixed(pool::get_global_pool())).collect())
+                    Output::Vec(par.runner(Runner::fixed()).collect())
                 }
                 (true, true) => Output::VecVec(
-                    par.runner(Runner::fixed(pool::get_global_pool()))
+                    par.runner(Runner::fixed())
                         .collect::<Vec2<_>>()
                         .into(),
                 ),
@@ -206,10 +206,10 @@ fn run_orx(
                 (false, false) => Output::Vec(par.collect()),
                 (false, true) => Output::VecVec(par.collect::<Vec2<_>>().into()),
                 (true, false) => {
-                    Output::Vec(par.runner(Runner::fixed(pool::get_global_pool())).collect())
+                    Output::Vec(par.runner(Runner::fixed()).collect())
                 }
                 (true, true) => Output::VecVec(
-                    par.runner(Runner::fixed(pool::get_global_pool()))
+                    par.runner(Runner::fixed())
                         .collect::<Vec2<_>>()
                         .into(),
                 ),

@@ -168,7 +168,7 @@ impl Experiment for Exp {
                 false => input
                     .as_slice()
                     .into_par()
-                    .runner(Runner::fixed(pool::get_global_pool()))
+                    .runner(Runner::fixed())
                     .num_threads(*nt)
                     .flat_map(l_l)
                     .filter(|x| *x == 999)
@@ -176,7 +176,7 @@ impl Experiment for Exp {
                 true => input
                     .as_slice()
                     .into_par()
-                    .runner(Runner::fixed(pool::get_global_pool()))
+                    .runner(Runner::fixed())
                     .num_threads(*nt)
                     .flat_map(h_l)
                     .filter(|x| *x == 999)
