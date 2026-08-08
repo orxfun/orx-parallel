@@ -82,8 +82,26 @@ impl ScopeRuntime {
     }
 
     fn complete_task(&self) {
-        if self.pending.fetch_sub(1, Ordering::AcqRel) == 1 {
+        #[cfg(target_arch = "wasm32")]
+        {
+            self.pending.fetch_sub(1, Ordering::AcqRel);
             self.completion_cv.notify_all();
+        }
+
+        // Decrement and notify under the lock so the main thread cannot exit
+        // wait_for_completion (and free this ScopeRuntime) while we still hold a
+        // reference to completion_lock / completion_cv.
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let guard = self
+                .completion_lock
+                .lock()
+                .expect("poisoned scope completion lock");
+            let prev = self.pending.fetch_sub(1, Ordering::AcqRel);
+            if prev == 1 {
+                self.completion_cv.notify_all();
+            }
+            drop(guard);
         }
     }
 
