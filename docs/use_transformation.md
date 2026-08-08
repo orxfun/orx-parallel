@@ -236,9 +236,11 @@ This is a nice immutable design that creates, improves and evaluates `iterations
 
 However, in performance critical applications, allocations might be a problem. Notice that this implementation will allocate `iterations` vectors just to return only one best tour.
 
-In a sequential implementation, we could have managed this with 2 vector allocations: one would be the working tour and the other is the best-so-far.
+In a sequential implementation, we could have managed this with `2` vector allocations: one would be the temporary tour and the other is the best-so-far.
 
 ### Memory optimization with use transformation
+
+With thread-local mutable variables, parallel implementation can be achieved by using `2 x T` vector allocations for `T` threads. Note that this reduces the space complexity from linear to constant.
 
 ```rust
 struct ThreadData {
@@ -258,14 +260,14 @@ impl ThreadData {
 
     fn evaluate_temp_tour(&mut self, cost: u64) {
         if cost < self.min_cost {
-            // temp tour becomes the best tour
             self.min_cost = cost;
+            // temp tour becomes the best tour
             core::mem::swap(&mut self.temp_tour, &mut self.best_tour);
         }
     }
 }
 
-/// randomizes the sequence of the mutable `tour`
+/// randomizes the sequence of the mutable `tour` in-place
 fn randomize_tour(seed: u64, tour: &mut [usize]) { /*..*/ }
 
 /// takes a mutable `tour` and improves it in-place, returns its distance
@@ -294,3 +296,7 @@ pub fn run_search_parallel_use_mut(
         .map(|x| (x.best_tour, x.min_cost))
 }
 ```
+
+Significance of this design choice in memory requirement is represented in the chart below where the x-axis is `iterations`, and the y-axis is average allocation bytes reported by the example.
+
+![Allocation bytes vs iterations](../examples/use_impact_on_memory/allocation_bytes_vs_iterations.svg)

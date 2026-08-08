@@ -93,7 +93,7 @@ assert_eq!(total_price(&["1,2300", "4,???", "5,1100"]), None);
 
 ## Use Transformations: Safe Mutable Per-Thread State
 
-`use` transformations provide a safe and ergonomic way to use mutable worker-local state in parallel pipelines.
+`use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines.
 
 Highlights:
 
@@ -101,29 +101,25 @@ Highlights:
 - memory efficiency: exactly one use-variable per worker thread
 - predictable allocation behavior for stateful workloads
 
-TODO
-
-
-You can pre-create one state value per worker with `UseVec` and pass it with `use_vec`, or construct state per thread with `using`/`using_clone`.
-
-```rust ignore
+```rust
 use orx_parallel::*;
 
 struct ThreadData {
-	sum: usize,
+    sum: usize,
 }
 
-let mut data = UseVec::new(|_| ThreadData { sum: 0 });
+// define how to create thread-local variables
+let mut data = UseVec::new(|_th_idx| ThreadData { sum: 0 });
 
 (0..100_000)
-	.into_par()
-	.use_vec(&mut data)
-	.for_each(|d, x| d.sum += x);
+    .into_par() // ← mutably lend it to parallel iterator
+    .use_vec(&mut data)
+    .for_each(|d, x| d.sum += x); // ← d: &mut ThreadData
+
+let results: Vec<ThreadData> = data.into_vec(); // ← get created vars back
 ```
 
-For a practical memory-allocation comparison and chart:
-
-- `examples/use_impact_on_memory/README.md`
+For practical use cases, please see [`use_transformation.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md).
 
 ## Configurable Resource Usage
 
