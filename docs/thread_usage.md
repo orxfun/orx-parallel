@@ -1,12 +1,12 @@
 # Thread Usage and Pool Configuration
 
-This document explains how orx-parallel manages threads and how you can control that behavior at the global and per-computation level.
+This document explains how `orx-parallel` manages threads and how you can control that behavior at the global and per-computation level.
 
 ---
 
 ## Global Configuration
 
-There are four ways to use orx-parallel depending on which features you enable:
+There are four ways to use `orx-parallel` depending on which features you enable:
 
 | Feature flags           | Thread pool used         |
 | ----------------------- | ------------------------ |
@@ -19,7 +19,7 @@ There are four ways to use orx-parallel depending on which features you enable:
 
 `OncePool` is not a persistent thread pool — it does not hold on to any threads between computations. If a computation uses `T` threads, exactly `T` threads are spawned just before the computation starts and released immediately after it completes. When no parallel computation is running, no threads are blocked or held in reserve.
 
-This design fits naturally with orx-parallel's execution model: regardless of the number of tasks in the input, the library always spawns exactly `T` threads. Those `T` threads live for the duration of the computation, continuously pulling tasks from a concurrent task queue, and are all released once the computation completes. Because the number of `thread::spawn` calls is constant — not proportional to input size — the spawning overhead is often insignificant. This makes `OncePool` the default for most use cases.
+This design fits naturally with `orx-parallel`'s execution model: regardless of the number of tasks in the input, the library always spawns exactly `T` threads. Those `T` threads live for the duration of the computation, continuously pulling tasks from a concurrent task queue, and are all released once the computation completes. Because the number of `thread::spawn` calls is constant — not proportional to input size — the spawning overhead is often insignificant. This makes `OncePool` the default for most use cases.
 
 ### BasicPool (`persistent-pool`)
 
@@ -70,7 +70,7 @@ The actual number of threads used by any computation is always `min(pool_capacit
 
 ## Pool-Agnostic Design
 
-orx-parallel is not tied to any specific thread pool. The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement, so you can plug in any executor. To use a custom pool for a single computation, pass it with `.pool(...)`:
+`orx-parallel` is not tied to any specific thread pool. The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement, so you can plug in any executor. To use a custom pool for a single computation, pass it with `.pool(...)`:
 
 ```rust
 inputs.par().pool(my_custom_pool).sum()
