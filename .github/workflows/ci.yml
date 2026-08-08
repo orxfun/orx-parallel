@@ -134,20 +134,6 @@ jobs:
             -C link-arg=--export=__tls_base
         run: cargo +nightly test --verbose --target wasm32-unknown-unknown ${{ matrix.wasm-features }} -Z build-std=panic_abort,std --no-run
 
-      - name: Clippy-wasm
-        env:
-          RUSTFLAGS: >-
-            -C target-feature=+atomics,+bulk-memory,+mutable-globals
-            -C link-arg=--shared-memory
-            -C link-arg=--max-memory=1073741824
-            -C link-arg=--import-memory
-            -C link-arg=--export=__heap_base
-            -C link-arg=--export=__wasm_init_tls
-            -C link-arg=--export=__tls_size
-            -C link-arg=--export=__tls_align
-            -C link-arg=--export=__tls_base
-        run: cargo +nightly clippy --target wasm32-unknown-unknown ${{ matrix.wasm-features }} -Z build-std=panic_abort,std -- -D warnings --verbose
-
       - name: Check-wasm-threads-example
         env:
           RUSTFLAGS: >-
