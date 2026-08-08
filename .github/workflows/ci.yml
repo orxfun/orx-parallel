@@ -44,9 +44,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-stable-${{ matrix.features || 'default' }}
 
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: ${{ matrix.toolchain }}
+          components: clippy
 
       - name: Install miri
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu miri
@@ -260,9 +260,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-stable-i686
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: stable
+          components: clippy
 
       - name: Set up QEMU for multi-arch Docker
         uses: docker/setup-qemu-action@v2
