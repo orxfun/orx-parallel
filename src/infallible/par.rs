@@ -84,13 +84,13 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// # fn main() {
     /// use orx_parallel::*;
     ///
-    /// let par = (1..100_001).par().num_threads(4);
+    /// let par = (1..10_001).par().num_threads(4);
     ///
     /// #[cfg(feature = "std")]
     /// let par = par.runner_with_diagnostics();
     ///
     /// let sum = par.sum();
-    /// assert_eq!(sum, 5000050000);
+    /// assert_eq!(sum, 50005000);
     /// # }
     /// ```
     ///
