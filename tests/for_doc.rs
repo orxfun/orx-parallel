@@ -1,170 +1,97 @@
-// fn xyz() {
-//     use orx_parallel::*;
-//     use std::cell::UnsafeCell;
-
-//     const N: u64 = 10_000_000;
-//     const MAX_NUM_THREADS: usize = 8;
-
-//     // just some work
-//     fn fibonacci(n: u64) -> u64 {
-//         let mut a = 0;
-//         let mut b = 1;
-//         for _ in 0..n {
-//             let c = a + b;
-//             a = b;
-//             b = c;
-//         }
-//         a
-//     }
-
-//     #[derive(Default, Debug)]
-//     struct ThreadMetrics {
-//         thread_idx: usize,
-//         num_items_handled: usize,
-//         handled_42: bool,
-//         num_filtered_out: usize,
-//     }
-
-//     struct ThreadMetricsWriter<'a> {
-//         metrics_ref: &'a mut ThreadMetrics,
-//     }
-
-//     struct ComputationMetrics {
-//         thread_metrics: UnsafeCell<[ThreadMetrics; MAX_NUM_THREADS]>,
-//     }
-//     impl ComputationMetrics {
-//         fn new() -> Self {
-//             let mut thread_metrics: [ThreadMetrics; MAX_NUM_THREADS] = Default::default();
-//             for i in 0..MAX_NUM_THREADS {
-//                 thread_metrics[i].thread_idx = i;
-//             }
-//             Self {
-//                 thread_metrics: UnsafeCell::new(thread_metrics),
-//             }
-//         }
-//     }
-
-//     impl ComputationMetrics {
-//         unsafe fn create_for_thread<'a>(&mut self, thread_idx: usize) -> ThreadMetricsWriter<'a> {
-//             // SAFETY: here we create a mutable variable to the thread_idx-th metrics
-//             // * If we call this method multiple times with the same index,
-//             //   we create multiple mutable references to the same ThreadMetrics,
-//             //   which would lead to a race condition.
-//             // * We must make sure that `create_for_thread` is called only once per thread.
-//             // * If we use `create_for_thread` within the `using` call to create mutable values
-//             //   used by the threads, we are certain that the parallel computation
-//             //   will only call this method once per thread; hence, it will not
-//             //   cause the race condition.
-//             // * On the other hand, we must ensure that we do not call this method
-//             //   externally.
-//             let array = unsafe { &mut *self.thread_metrics.get() };
-//             ThreadMetricsWriter {
-//                 metrics_ref: &mut array[thread_idx],
-//             }
-//         }
-//     }
-
-//     fn main() {
-//         let mut metrics = ComputationMetrics::new();
-
-//         let input: Vec<u64> = (0..N).collect();
-
-//         let sum = input
-//             .par()
-//             // SAFETY: we do not call `create_for_thread` externally;
-//             // it is safe if it is called only by the parallel computation.
-//             .using(|t| unsafe { metrics.create_for_thread(t) })
-//             .map(|m: &mut ThreadMetricsWriter<'_>, i| {
-//                 // collect some useful metrics
-//                 m.metrics_ref.num_items_handled += 1;
-//                 m.metrics_ref.handled_42 |= *i == 42;
-
-//                 // actual work
-//                 fibonacci((*i % 50) + 1) % 100
-//             })
-//             .filter(|m, i| {
-//                 let is_even = i % 2 == 0;
-
-//                 if !is_even {
-//                     m.metrics_ref.num_filtered_out += 1;
-//                 }
-
-//                 is_even
-//             })
-//             .num_threads(MAX_NUM_THREADS)
-//             .sum();
-
-//         println!("\nINPUT-LEN = {N}");
-//         println!("SUM = {sum}");
-
-//         println!("\n\n");
-
-//         println!("COLLECTED METRICS PER THREAD");
-//         for metrics in metrics.thread_metrics.get_mut().iter() {
-//             println!("* {metrics:?}");
-//         }
-//         let total_by_metrics: usize = metrics
-//             .thread_metrics
-//             .get_mut()
-//             .iter()
-//             .map(|x| x.num_items_handled)
-//             .sum();
-//         println!("\n-> total num_items_handled by collected metrics: {total_by_metrics:?}\n");
-
-//         assert_eq!(N as usize, total_by_metrics);
-//     }
-// }
-
 #[test]
 fn for_doc() {
+    use core::cmp::Ordering::Equal;
     use orx_parallel::*;
+    use rand::prelude::*;
+    use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-    #[derive(Default, Debug)]
-    struct ThreadMetrics {
-        num_items_handled: usize,
-        handled_12345: bool,
-        num_filtered_out: usize,
+    #[derive(Clone, Copy, Debug)]
+    /// A 2D city coordinate used by the TSP demo.
+    pub struct Location {
+        pub x: f64,
+        pub y: f64,
     }
 
-    let input: Vec<u64> = (0..1_000_000).collect();
+    impl Location {
+        pub fn distance_to(self, other: Self) -> f64 {
+            let dx = self.x - other.x;
+            let dy = self.y - other.y;
+            (dx * dx + dy * dy).sqrt()
+        }
 
-    // define how to create thread-local variables
-    let mut thread_metrics = UseVec::new(|_th_idx| ThreadMetrics::default());
-
-    let total = input
-        .par()
-        .num_threads(8)
-        .use_vec(&mut thread_metrics) // ← mutable lend it to parallel iterator
-        .map(|metrics, x| {
-            metrics.num_items_handled += 1;
-            metrics.handled_12345 |= *x == 12345;
-
-            x + x / 7 + 17
-        })
-        .filter(|metrics, x| match x.is_multiple_of(3) {
-            true => true,
-            false => {
-                metrics.num_filtered_out += 1;
-                false
+        pub fn tour_distance(locations: &[Location], tour: &[usize]) -> f64 {
+            match (tour.first(), tour.last()) {
+                (Some(&first), Some(&last)) => {
+                    let middle_distance: f64 = tour
+                        .windows(2)
+                        .map(|w| locations[w[0]].distance_to(locations[w[1]]))
+                        .sum();
+                    let closing_distance = locations[last].distance_to(locations[first]);
+                    middle_distance + closing_distance
+                }
+                _ => 0.0,
             }
-        })
-        .sum();
-    assert_eq!(total, 190481523804);
+        }
+    }
 
-    let thread_metrics = thread_metrics.into_vec(); // ← get the created vars back
-    for (th_idx, metrics) in thread_metrics.iter().enumerate() {
-        println!("[th-{th_idx}]\t{metrics:?}");
+    /// Returns city coordinates for the requested city count.
+    pub fn locations(num_cities: usize) -> Vec<Location> {
+        (0..num_cities).map(location_for).collect()
+    }
+
+    /// Returns the deterministic pseudo-random location for a city index.
+    fn location_for(idx: usize) -> Location {
+        // Deterministic pseudo-random coordinates: random-looking, but stable per index.
+        let sx = split_mix_64((idx as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15));
+        let sy = split_mix_64((idx as u64).wrapping_mul(0xD1B5_4A32_D192_ED03));
+
+        let x = 100.0 * to_unit_f64(sx) - 50.0;
+        let y = 100.0 * to_unit_f64(sy) - 50.0;
+        Location { x, y }
+    }
+
+    fn split_mix_64(mut x: u64) -> u64 {
+        x = x.wrapping_add(0x9E37_79B9_7F4A_7C15);
+        let mut z = x;
+        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+        z ^ (z >> 31)
+    }
+
+    fn to_unit_f64(x: u64) -> f64 {
+        // Keep top 53 bits for an exact f64 mantissa and map to [0, 1).
+        let v = x >> 11;
+        (v as f64) * (1.0 / ((1u64 << 53) as f64))
+    }
+
+    pub fn seed_for(seed: u64, k: usize) -> u64 {
+        seed ^ (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)
+    }
+
+    pub fn rng_from_seed(seed: u64) -> impl Rng {
+        SmallRng::seed_from_u64(seed)
+    }
+
+    /// returns the shortest found tour for the given `locations`
+    pub fn run_search_parallel_immutable(
+        locations: &[Location],
+        iterations: usize,
+        seed: u64,
+    ) -> Option<(Vec<usize>, u64)> {
+        (0..iterations)
+            .par()
+            .map(|k| random_tour(seed, k))
+            .map(|tour| two_opt_improve(locations, tour))
+            .min_by_key(|(_tour, distance)| *distance)
+    }
+
+    /// creates a random tour
+    fn random_tour(seed: u64, num_cities: usize) -> Vec<usize> {
+        todo!()
+    }
+
+    /// takes `tour`, and returns the improved tour and its distance
+    fn two_opt_improve(locations: &[Location], tour: Vec<usize>) -> (Vec<usize>, u64) {
+        todo!()
     }
 }
-
-/*
-[th-0]  ThreadMetrics { num_items_handled: 130212, handled_12345: false, num_filtered_out: 86816 }
-[th-1]  ThreadMetrics { num_items_handled: 106251, handled_12345: false, num_filtered_out: 70828 }
-[th-2]  ThreadMetrics { num_items_handled: 112540, handled_12345: false, num_filtered_out: 75035 }
-[th-3]  ThreadMetrics { num_items_handled: 176754, handled_12345: false, num_filtered_out: 117822 }
-[th-4]  ThreadMetrics { num_items_handled: 110223, handled_12345: false, num_filtered_out: 73475 }
-[th-5]  ThreadMetrics { num_items_handled: 110554, handled_12345: true, num_filtered_out: 73713 }
-[th-6]  ThreadMetrics { num_items_handled: 126773, handled_12345: false, num_filtered_out: 84523 }
-[th-7]  ThreadMetrics { num_items_handled: 126693, handled_12345: false, num_filtered_out: 84455 }
-
-*/
