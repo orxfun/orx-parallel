@@ -52,6 +52,64 @@ let best_tour = (0..num_tours)
     .min_by_key(|t| t.duration());
 ```
 
+## What Can Be Parallelized?
+
+### 1. Direct collection support
+
+Common inputs are directly supported, including:
+
+- vectors and slices
+- `VecDeque`
+- ranges
+- draining iterators (`par_drain`)
+
+### 2. Any arbitrary iterator
+
+Any regular iterator can be parallelized with `iter_into_par()`.
+
+```rust
+use orx_parallel::*;
+
+fn par_compute(inputs: impl IntoIterator<Item = u64>) -> u64 {
+    inputs
+        .into_iter()
+        .iter_into_par() // ← parallelization over arbitrary iterator
+        .filter(|x| !x.is_multiple_of(7))
+        .sum()
+}
+
+assert_eq!(par_compute(0..100), 4215);
+
+assert_eq!(par_compute(vec![4, 2, 9, 14, 1]), 16);
+
+let source: Vec<u64> = (0..100).collect();
+let iter = source.iter().copied().filter(|x| !x.is_power_of_two());
+assert_eq!(par_compute(iter), 4088);
+```
+
+This feature allows to parallelize computations on all iterable collections; on maps or sets, for instance.
+
+```rust
+use orx_parallel::*;
+use std::collections::HashMap;
+
+let mut map: HashMap<_, _> = (0..1024).map(|x| (x.to_string(), x)).collect();
+
+map.values_mut()
+    .iter_into_par()
+    .filter(|x| **x % 2 == 0)
+    .for_each(|x| *x *= 2);
+```
+
+This broad path is generic, rather than being optimized for a specific collection. It works across many iterator sources and is especially useful when each task is substantial relative to parallelization overhead.
+
+### 3. Extensible via concurrent iterator abstractions
+
+`orx-parallel` builds on concurrent iterator traits from `orx-concurrent-iter`.
+If a collection provides a suitable concurrent iterator implementation (for example `IntoConcurrentIter` / `ConcurrentIterable`), it can integrate naturally with `orx-parallel`.
+
+In practice, this means collection-specific parallelization can live in the collection crate itself, where internals are available for optimized implementations (do not hesitate to ask for support if you need help with this).
+
 ## First-Class Fallible Computation
 
 Fallible parallel flows are a core feature.
@@ -83,34 +141,6 @@ fn total_price(rows: &[&str]) -> Option<u64> {
 assert_eq!(total_price(&["1,2300", "4,499", "5,1100"]), Some(7496));
 assert_eq!(total_price(&["1,2300", "4,???", "5,1100"]), None);
 ```
-
-## Use Transformations: Safe Mutable Per-Thread State
-
-`use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines:
-
-- no unsafe code in application-level iterator logic
-- exactly one use-variable per worker thread
-- predictable allocation behavior for stateful workloads
-
-```rust
-use orx_parallel::*;
-
-struct ThreadData {
-    sum: usize,
-}
-
-// define how to create thread-local variables
-let mut data = UseVec::new(|_th_idx| ThreadData { sum: 0 });
-
-(0..100_000)
-    .par() // ← mutably lend it to parallel iterator
-    .use_vec(&mut data)
-    .for_each(|d, x| d.sum += x); // ← d: &mut ThreadData
-
-let results: Vec<ThreadData> = data.into_vec(); // ← get created vars back
-```
-
-For practical use cases, please see [`use_transformation.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md).
 
 ## Configurable Resource Usage
 
@@ -145,6 +175,69 @@ assert_eq!(result.len(), 1000);
 
 Please see [`thread-usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) for detailed information.
 
+## Performance and Benchmarks
+
+The crate is benchmarked extensively with the goal to achieve practical performance and continued improvement.
+
+- Live benchmark dashboard: https://orx-parallel-benchmarks.pages.dev/
+- Benchmark sources: [`benches`](https://github.com/orxfun/orx-parallel/tree/main/benches)
+
+## Use Transformations: Safe Mutable Per-Thread State
+
+`use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines:
+
+- no unsafe code in application-level iterator logic
+- exactly one use-variable per worker thread
+- predictable allocation behavior for stateful workloads
+
+```rust
+use orx_parallel::*;
+
+struct ThreadData {
+    sum: usize,
+}
+
+// define how to create thread-local variables
+let mut data = UseVec::new(|_th_idx| ThreadData { sum: 0 });
+
+(0..100_000)
+    .par() // ← mutably lend it to parallel iterator
+    .use_vec(&mut data)
+    .for_each(|d, x| d.sum += x); // ← d: &mut ThreadData
+
+let results: Vec<ThreadData> = data.into_vec(); // ← get created vars back
+```
+
+For practical use cases, please see [`use_transformation.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md).
+
+## Recursive Iterators for Non-Linear Data
+
+Parallel traversal over recursive structures (such as trees or graphs) is supported out of the box without losing convenient iterator ergonomics.
+
+Notice below that after the `into_par_recursive` call, we use regular iterator methods without additional complexity.
+
+```rust ignore
+[root] // ← we start with initial set of tasks
+	.into_par_recursive(|node| &node.children) // ← we define how to explore new tasks
+	.map(process_node) // ← we process nodes as if they were in a linear data structure
+	.reduce(merge_agg)
+	.unwrap_or_default();
+```
+
+For practical examples, see:
+
+- [`examples/recursive_tree/main.rs`](https://github.com/orxfun/orx-parallel/tree/main/examples/recursive_tree)
+- [`examples/recursive_file_system.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/recursive_file_system.rs)
+
+## WASM Support
+
+`orx-parallel` supports browser-hosted wasm with dedicated examples and guides.
+
+- demos (vanilla, React, Leptos, Yew): [`examples/wasm/tsp/`](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/tsp/)
+- live demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
+- tutorials: https://orx-parallel-wasm-tutorials.pages.dev/
+- wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
+- internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
 
 ## Runner Strategies and Extensibility
 
@@ -183,97 +276,10 @@ This separation makes it easy to:
 - tune per-workload execution behavior
 - prototype custom runners and benchmark new scheduling ideas (happy to receive research ideas & contributions)
 
-## Recursive Iterators for Non-Linear Data
+## Contributing
 
-Parallel traversal over recursive structures (such as trees or graphs) is supported out of the box without losing convenient iterator ergonomics.
+Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR.
 
-Notice below that after the `into_par_recursive` call, we use regular iterator methods without additional complexity.
+## License
 
-```rust ignore
-[root] // ← we start with initial set of tasks
-	.into_par_recursive(|node| &node.children) // ← we define how to explore new tasks
-	.map(process_node) // ← we process nodes as if they were in a linear data structure
-	.reduce(merge_agg)
-	.unwrap_or_default();
-```
-
-For practical examples, see:
-
-- [`examples/recursive_tree/main.rs`](https://github.com/orxfun/orx-parallel/tree/main/examples/recursive_tree)
-- [`examples/recursive_file_system.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/recursive_file_system.rs)
-
-## Performance and Benchmarks
-
-The crate is benchmarked extensively with the goal to achieve practical performance and continued improvement.
-
-- Live benchmark dashboard: https://orx-parallel-benchmarks.pages.dev/
-- Benchmark sources: [`benches`](https://github.com/orxfun/orx-parallel/tree/main/benches)
-
-## What Can Be Parallelized?
-
-### 1. Direct collection support
-
-Common inputs are directly supported, including:
-
-- vectors and slices
-- `VecDeque`
-- ranges
-- draining iterators (`par_drain`)
-
-### 2. Any arbitrary iterator
-
-Any regular iterator can be parallelized with `iter_into_par()`.
-
-```rust
-use orx_parallel::*;
-
-// parallelize computation on any iterator
-fn par_compute(inputs: impl IntoIterator<Item = u64>) -> u64 {
-    inputs
-        .into_iter()
-        .iter_into_par() // ← parallelization over arbitrary iterator
-        .filter(|x| !x.is_multiple_of(7))
-        .sum()
-}
-
-assert_eq!(par_compute(0..100), 4215);
-
-assert_eq!(par_compute(vec![4, 2, 9, 14, 1]), 16);
-
-let source: Vec<u64> = (0..100).collect();
-let iter = source.iter().copied().filter(|x| !x.is_power_of_two());
-assert_eq!(par_compute(iter), 4088);
-```
-
-This feature allows us to parallelize computations on all iterable collections; on maps or sets, for instance.
-
-```rust
-use orx_parallel::*;
-use std::collections::HashMap;
-
-let mut map: HashMap<_, _> = (0..1024).map(|x| (x.to_string(), x)).collect();
-
-map.values_mut()
-    .iter_into_par()
-    .filter(|x| **x % 2 == 0)
-    .for_each(|x| *x *= 2);
-```
-
-This broad path is generic, rather than being optimized for a specific collection. It works across many iterator sources and is especially useful when each task is substantial relative to parallelization overhead.
-
-### 3. Extensible via concurrent iterator abstractions
-
-`orx-parallel` builds on concurrent iterator traits from `orx-concurrent-iter`.
-If a collection provides a suitable concurrent iterator implementation (for example `IntoConcurrentIter` / `ConcurrentIterable`), it can integrate naturally with `orx-parallel`.
-
-In practice, this means collection-specific parallelization can live in the collection crate itself, where internals are available for optimized implementations.
-
-## WASM Support
-
-`orx-parallel` supports browser-hosted wasm with dedicated examples and guides.
-
-- demos (vanilla, React, Leptos, Yew): [`examples/wasm/tsp/`](https://github.com/orxfun/orx-parallel/tree/main/examples/tsp/)
-- live demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
-- tutorials: https://orx-parallel-wasm-tutorials.pages.dev/
-- wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
-- internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
+Dual-licensed under [Apache 2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT).
