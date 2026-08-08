@@ -6,6 +6,8 @@
 
 High-performance, configurable, expressive parallel computations with an iterator-style API.
 
+The crate focuses on practical parallelization with a convenient iterator API, broad input coverage, first-class fallible flows, configurable resource usage, safe per-thread mutable state, recursive traversal support, browser-hosted wasm support, and customizable runner strategies for advanced tuning.
+
 ## Parallelization with Iterator Ergonomics
 
 In many pipelines, parallelization is as simple as **`iter → par`**, **`into_iter → into_par`** and **`iter_mut → par_mut`** substitutions.
