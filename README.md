@@ -6,16 +6,9 @@
 
 High-performance, configurable, expressive parallel computations with an iterator-style API.
 
-## Install
-
-```toml
-[dependencies]
-orx-parallel = "4.0"
-```
-
 ## Parallelization with Iterator Ergonomics
 
-In many pipelines, parallelization is as simple as **`iter → par`** and **`into_iter → into_par`** substitution.
+In many pipelines, parallelization is as simple as **`iter → par`**, **`into_iter → into_par`** and **`iter_mut → par_mut`** substitutions.
 
 ```rust
 use orx_parallel::*;
@@ -54,7 +47,7 @@ let best_tour = (0..num_tours)
 // parallel
 let best_tour = (0..num_tours)
     .par() // ← parallelized
-    .map(|_| Tour::random(num_cities))
+    .map(|_| Tour::random(num_cities)) // ← rest is the same as seq code
     .filter(|t| t.starts_at_coffee_shop())
     .min_by_key(|t| t.duration());
 ```
@@ -93,12 +86,10 @@ assert_eq!(total_price(&["1,2300", "4,???", "5,1100"]), None);
 
 ## Use Transformations: Safe Mutable Per-Thread State
 
-`use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines.
+`use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines:
 
-Highlights:
-
-- convenience and safety: no unsafe code in application-level iterator logic
-- memory efficiency: exactly one use-variable per worker thread
+- no unsafe code in application-level iterator logic
+- exactly one use-variable per worker thread
 - predictable allocation behavior for stateful workloads
 
 ```rust
@@ -126,7 +117,7 @@ For practical use cases, please see [`use_transformation.md`](https://github.com
 `orx-parallel` is not tied to any specific thread pool; it can work with transient threads or persistent thread pools. The default thread pool can be configured by features and `ORX_PARALLEL_MAX_NUM_THREADS` environment variable.
 
 ```toml
-# default features -> OncePool
+# default features ("std") -> transient threads
 orx-parallel = { version = "4.0" }
 
 # persistent built-in pool
@@ -136,9 +127,9 @@ orx-parallel = { version = "4.0", features = ["persistent-pool"] }
 orx-parallel = { version = "4.0", features = ["persistent-pool-rayon"] }
 ```
 
-The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement, so you can also plug in any pool with `.pool(...)`.
+The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement, so you can also plug in a custom pool with `.pool(...)`.
 
-In addition, you can tune the thread count for each individual computation:
+In addition, you can conveniently tune the thread count for each individual computation:
 
 ```rust
 use orx_parallel::*;
@@ -164,9 +155,8 @@ Built-in runners:
 - `Runner::fixed()`: fixed chunking strategy (default in `no-std` builds)
 - `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
 
-	<!-- .runner(Runner::fixed()) -->
 ```rust
-// default features; i.e., "std" enabled
+// default features ("std")
 use orx_parallel::*;
 
 let sum: usize = (0..10_000)
@@ -185,18 +175,17 @@ assert_eq!(sum, (1..=10_000).sum());
 
 Alternatively, you may implement your own `ParRunner`:
 
-* which is optimized for a certain type of computations and use it for those computations, or
+* which is optimized for a certain type of computations and use it for them, or
 * which is better than the adaptive or fixed runner in general, and use it everywhere.
 
 This separation makes it easy to:
 
 - tune per-workload execution behavior
-- prototype custom runners
-- benchmark new scheduling ideas quickly (happy to receive research ideas & contributions)
+- prototype custom runners and benchmark new scheduling ideas (happy to receive research ideas & contributions)
 
 ## Recursive Iterators for Non-Linear Data
 
-Parallel traversal over recursive structures (for example trees) is supported out of the box without losing convenient iterator ergonomics.
+Parallel traversal over recursive structures (such as trees or graphs) is supported out of the box without losing convenient iterator ergonomics.
 
 Notice below that after the `into_par_recursive` call, we use regular iterator methods without additional complexity.
 
@@ -220,13 +209,13 @@ The crate is benchmarked extensively with the goal to achieve practical performa
 - Live benchmark dashboard: https://orx-parallel-benchmarks.pages.dev/
 - Benchmark sources: [`benches`](https://github.com/orxfun/orx-parallel/tree/main/benches)
 
-## What Can Be Parallelized
+## What Can Be Parallelized?
 
 ### 1. Direct collection support
 
 Common inputs are directly supported, including:
 
-- vectors and slices (`par`, `par_mut`, `into_par`)
+- vectors and slices
 - `VecDeque`
 - ranges
 - draining iterators (`par_drain`)
@@ -242,7 +231,7 @@ use orx_parallel::*;
 fn par_compute(inputs: impl IntoIterator<Item = u64>) -> u64 {
     inputs
         .into_iter()
-        .iter_into_par() // ← parallelize
+        .iter_into_par() // ← parallelization over arbitrary iterator
         .filter(|x| !x.is_multiple_of(7))
         .sum()
 }
