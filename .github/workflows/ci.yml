@@ -61,7 +61,7 @@ jobs:
         run: cargo clippy --all-targets ${{ matrix.features }} -- -D warnings --verbose
 
       - name: Miri
-        run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features_miri }} --features long-tests
+        run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features_miri }}
 
   wasm:
     name: Check (wasm)
