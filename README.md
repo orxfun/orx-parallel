@@ -249,8 +249,7 @@ Built-in runners:
 - `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
 
 ```rust
-// default features ("std")
-use orx_parallel::*;
+use orx_parallel::*; // assume default features used: ["std"]
 
 let sum: usize = (0..10_000)
 	.par()
