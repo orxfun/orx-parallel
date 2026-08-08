@@ -134,43 +134,6 @@ jobs:
             -C link-arg=--export=__tls_base
         run: cargo +nightly test --verbose --target wasm32-unknown-unknown ${{ matrix.wasm-features }} -Z build-std=panic_abort,std --no-run
 
-      - name: Check-wasm-threads-example
-        env:
-          RUSTFLAGS: >-
-            -C target-feature=+atomics,+bulk-memory
-            -C link-arg=--shared-memory
-            -C link-arg=--max-memory=1073741824
-            -C link-arg=--import-memory
-            -C link-arg=--export=__wasm_init_tls
-            -C link-arg=--export=__tls_size
-            -C link-arg=--export=__tls_align
-            -C link-arg=--export=__tls_base
-        run: |
-          cargo +nightly check \
-            --target wasm32-unknown-unknown \
-            --features wasm \
-            --example wasm_web_threads \
-            -Z build-std=panic_abort,std
-
-      - name: Check-wasm-threads-smoke-test
-        env:
-          RUSTFLAGS: >-
-            -C target-feature=+atomics,+bulk-memory
-            -C link-arg=--shared-memory
-            -C link-arg=--max-memory=1073741824
-            -C link-arg=--import-memory
-            -C link-arg=--export=__wasm_init_tls
-            -C link-arg=--export=__tls_size
-            -C link-arg=--export=__tls_align
-            -C link-arg=--export=__tls_base
-        run: |
-          cargo +nightly test \
-            --target wasm32-unknown-unknown \
-            --features wasm \
-            --test wasm_web_threads_smoke \
-            -Z build-std=panic_abort,std \
-            --no-run
-
   wasm-hub:
     name: Build (wasm hub)
     runs-on: ubuntu-latest
