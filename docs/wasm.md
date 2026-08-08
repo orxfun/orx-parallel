@@ -1,25 +1,34 @@
 # Using orx-parallel in WebAssembly
 
-This guide focuses on using `orx-parallel` in browser-hosted wasm builds.
+This guide explains how to use `orx-parallel` in browser-hosted `wasm32` builds.
 
-Published demo: [orx-parallel-wasm-demo-tsp.pages.dev](https://orx-parallel-wasm-demo-tsp.pages.dev/).
+If you want to understand the internal runtime design, see [wasm_internals.md](wasm_internals.md).
 
-If you want to understand how the wasm backends work internally, see [wasm_internals.md](wasm_internals.md).
+Live examples:
+
+- TSP demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
+- tutorials: https://orx-parallel-wasm-tutorials.pages.dev/
+
+## Overview
+
+The documented browser-hosted wasm path uses the `wasm` feature.
+
+- exported pool type: `WasmWebPool`
+- exported init function: `init_thread_pool(...)` on atomics-enabled `wasm32`
+- implementation: custom worker-backed runtime in `src/pool/pool_impl/wasm_web.rs`
+
+The examples under `examples/wasm/` use this backend.
 
 ## Which feature to enable
 
-For browser threads, enable the `wasm` feature:
+For browser-hosted parallel wasm, use the `wasm` feature.
 
 ```toml
 [dependencies]
 orx-parallel = { version = "4.0", default-features = false, features = ["wasm"] }
 ```
 
-That is the recommended feature for web wasm support in this crate.
-
-## When the feature should be optional
-
-If a crate needs to support both native builds and wasm builds, make the wasm support optional and forward it to `orx-parallel`:
+If your crate needs to build both natively and for the browser, keep the wasm feature optional and forward it:
 
 ```toml
 [dependencies]
@@ -30,48 +39,68 @@ default = []
 wasm = ["orx-parallel/wasm"]
 ```
 
-This is the pattern used by the example computation crates under [examples/wasm/tsp](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/tsp).
-
-The parallel computation code itself does not need a separate wasm-specific branch. The configuration changes; the algorithm code does not.
+This is the pattern used by the computation crates under `examples/wasm/tsp/*/computation`.
 
 ## What stays the same
 
-The same `orx-parallel` APIs are used in native and wasm builds.
+The main design goal is unchanged:
 
-- Keep the computation logic in Rust.
-- Keep the parallelization logic in Rust.
-- Use the wasm layer only to expose a small API to JavaScript or to a frontend app.
+- keep algorithm code in Rust
+- keep parallelization logic in Rust
+- keep the wasm layer thin
+- let the browser host handle worker startup and serving requirements
 
-The example projects under `examples/wasm/tsp` follow the same split for React, Yew, Leptos, and a vanilla browser host.
+In other words, the computation pipeline should usually remain the same between native and wasm builds. The differences are in feature selection, initialization, and host setup.
 
-## Required browser-thread setup
+## Required browser setup
 
 Parallel wasm in the browser requires all of the following.
 
-### 1. Build wasm with atomics and shared memory enabled
+### 1. Build with atomics and shared memory enabled
 
-Your wasm build must target a threaded wasm configuration.
+The runtime initialization export exists only when all of these hold:
 
-In this repository, the exact wiring is demonstrated in the browser example apps under `examples/wasm/tsp/*/app` and in the matching Rust crates under `examples/wasm/tsp/*/computation` and `examples/wasm/tsp/*/wasm_bindings`.
+- target is `wasm32`
+- the crate feature `wasm` is enabled
+- the build includes `target_feature = "atomics"`
 
-If the wasm build is not atomics-enabled, the parallel wasm path cannot initialize.
+The working example apps build with a command of this form:
 
-### 2. Serve the app with cross-origin isolation headers
+```bash
+RUSTUP_TOOLCHAIN=nightly \
+RUSTFLAGS='-C target-feature=+atomics -C link-arg=--shared-memory -C link-arg=--max-memory=1073741824 -C link-arg=--import-memory -C link-arg=--export=__heap_base -C link-arg=--export=__wasm_init_tls -C link-arg=--export=__tls_size -C link-arg=--export=__tls_align -C link-arg=--export=__tls_base' \
+wasm-pack build ../wasm_bindings --target web --out-dir ../app/pkg -- -Z build-std=panic_abort,std
+```
 
-Browser threads require `SharedArrayBuffer`, which in turn requires cross-origin isolation.
+See:
 
-In practice, your server must send both headers:
+- `examples/wasm/tsp/vanilla/app/package.json`
+- `examples/wasm/mini/vanilla_persistent_pool/app/package.json`
+
+If the build is not atomics-enabled, `init_thread_pool(...)` is not available and the parallel runtime cannot be initialized.
+
+### 2. Serve with cross-origin isolation headers
+
+Browser wasm threads require `SharedArrayBuffer`, which in practice means cross-origin isolation.
+
+The host must send:
 
 - `Cross-Origin-Opener-Policy: same-origin`
 - `Cross-Origin-Embedder-Policy: require-corp`
 
-The Vite-based example apps show this setup.
+See:
+
+- `examples/wasm/tsp/vanilla/app/vite.config.ts`
+- `examples/wasm/mini/vanilla_persistent_pool/app/vite.config.js`
+- `examples/wasm/tsp/vanilla/app/scripts/serve-dist.mjs`
+
+Vite dev servers in the examples are configured accordingly. If you serve a production `dist/` directory yourself, your production server must set the same headers.
 
 ### 3. Initialize the runtime before the first parallel computation
 
-For the wasm backends, initialization is explicit.
+Initialization is explicit.
 
-In a typical `wasm_bindings` crate, expose a thin wrapper such as:
+In the example `wasm_bindings` crates, the public wrapper looks like this:
 
 ```rust
 #[wasm_bindgen]
@@ -84,49 +113,70 @@ pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
 }
 ```
 
-Call and await that initialization before the first parallel execution.
+Call and await this once before the first parallel computation in that wasm runtime.
 
-If your frontend uses Web Workers, each worker that performs parallel work must initialize its runtime before its first parallel computation.
+Notes:
 
-## Recommended project structure
+- `num_threads = 0` means automatic thread selection
+- `0` uses the crate's resource/env-based auto choice
+- calling `init_thread_pool(...)` again with the same thread count resolves successfully
+- calling it again with a different thread count is rejected
 
-The examples in `examples/wasm/tsp` use a four-layer split that scales well:
+## Recommended crate structure
 
-- `computation/` for pure Rust algorithm code including parallelization by `orx-parallel` api
-- `wasm_bindings/` for a thin `wasm_bindgen` boundary
-- `components/` or another UI crate for UI logic
-- `app/` for the browser host, worker setup, and dev server configuration
+The examples use a split that works well in practice:
 
-This separation keeps the algorithm testable outside the browser and prevents wasm or UI concerns from leaking into the computation crate.
+- `computation/` for the pure Rust algorithm crate
+- `wasm_bindings/` for the `wasm_bindgen` boundary
+- `app/` for the browser host, worker setup, and dev/prod serving config
+- optionally `components/` when the frontend framework benefits from a separate UI crate
 
-## Dual-build guidance
+This keeps the computation crate testable and reusable outside the browser.
 
-If your crate should run natively and in the browser:
+## Minimal example layout
 
-1. Keep the computation crate free of browser-specific code.
-2. Make the wasm feature optional.
-3. Add the wasm initialization only in the wasm-facing crate.
-4. Keep the browser host responsible for worker startup and HTTP headers.
+In the TSP examples:
 
-This is usually the cleanest way to support native tests and benchmarks while also supporting browser threads.
+- `computation` depends on `orx-parallel` with `default-features = false`
+- `computation` forwards a local `wasm` feature to `orx-parallel/wasm`
+- `wasm_bindings` enables that `wasm` feature and exposes a small JS-friendly API
+- `app` imports the generated `pkg/wasm_bindings.js` and handles browser orchestration
+
+See:
+
+- `examples/wasm/tsp/vanilla/computation/Cargo.toml`
+- `examples/wasm/tsp/vanilla/wasm_bindings/Cargo.toml`
+- `examples/wasm/tsp/vanilla/app/README.md`
+
+## Important note about the `wasm` backend build flow
+
+The custom `wasm` backend uses a JS helper module from `src/pool/pool_impl/wasm_web_start_workers.js`, and the example build scripts include one extra post-build step that copies a worker helper file next to the generated wasm-pack snippet.
+
+That is why the example `build:wasm` scripts do more than just call `wasm-pack build`.
+
+If you are building your own app, the safest path is to start from one of the existing example scripts and adapt it rather than reconstructing the worker bootstrap from scratch.
 
 ## Troubleshooting
 
-If wasm parallelism does not work as expected, check these first:
+If parallel wasm does not work as expected, check these first:
 
-- The crate was built with the `wasm` feature enabled.
-- The wasm target was built with atomics and shared-memory support.
-- The app is served with `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers.
-- `init_thread_pool(...)` was called and awaited before the first parallel computation.
-- Every worker that executes parallel code initializes its own runtime.
+- the crate was built for `wasm32`
+- the `wasm` feature is enabled
+- the wasm build includes atomics and shared-memory flags
+- the app is served with COOP/COEP headers
+- `init_thread_pool(...)` was awaited before the first parallel run
+- you did not attempt to reinitialize with a different thread count
+- your build or packaging step preserved the worker helper files used by the selected backend
 
 ## Example entry points
 
-For complete end-to-end examples, start with one of these:
+For end-to-end working references, start with:
 
-- `examples/wasm/tsp/react`
-- `examples/wasm/tsp/yew`
-- `examples/wasm/tsp/leptos`
 - `examples/wasm/tsp/vanilla`
+- `examples/wasm/tsp/react`
+- `examples/wasm/tsp/leptos`
+- `examples/wasm/tsp/yew`
+- `examples/wasm/mini/vanilla_persistent_pool`
+- `examples/wasm/mini/vanilla_temporary_pool`
 
-Each example uses the same core pattern while adapting the browser host to a different framework.
+All of them follow the same basic rule: initialize once, then run parallel computations through the same Rust API you would use natively.
