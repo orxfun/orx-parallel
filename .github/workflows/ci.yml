@@ -178,7 +178,7 @@ jobs:
         run: |
           for app in react yew leptos vanilla; do
             cd examples/wasm/tsp/$app/app
-            npm ci
+            npm install
             cd -
           done
 
