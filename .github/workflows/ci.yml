@@ -150,10 +150,10 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: |
-            examples/wasm/tsp/react/app/package-lock.json
-            examples/wasm/tsp/yew/app/package-lock.json
-            examples/wasm/tsp/leptos/app/package-lock.json
-            examples/wasm/tsp/vanilla/app/package-lock.json
+            examples/wasm/tsp/react/app/package.json
+            examples/wasm/tsp/yew/app/package.json
+            examples/wasm/tsp/leptos/app/package.json
+            examples/wasm/tsp/vanilla/app/package.json
 
       - name: Cache cargo registry & target
         uses: actions/cache@v4
