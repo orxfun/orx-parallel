@@ -230,7 +230,7 @@ fn run(c: &mut Criterion) {
     variants.extend(par_variants(4));
     variants.extend(par_variants(16));
 
-    Exp.bench(c, "string_formatting_collection", &treatments, &variants);
+    Exp.bench(c, "string_formatting", &treatments, &variants);
 }
 
 criterion_group!(benches, run);
