@@ -4,7 +4,7 @@
 [![orx-parallel crate](https://img.shields.io/crates/d/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 
-High-performance, configurable, expressive parallel computations with an iterator-style API.
+High-performance, expressive, configurable parallel computations with an iterator-style API.
 
 The crate focuses on practical parallelization with a convenient iterator API, broad input coverage, first-class fallible flows, configurable resource usage, safe per-thread mutable state, recursive traversal support, browser-hosted wasm support, and customizable runner strategies for advanced tuning.
 
@@ -133,9 +133,9 @@ fn parse_qty_and_price(row: &str) -> Option<(u64, u64)> {
 
 fn total_price(rows: &[&str]) -> Option<u64> {
     rows.par()
-        .map(|row| parse_qty_and_price(row)) // ← might fail
-        .into_optional() // ← uplift & focus on success path
-        .filter(|(qty, _)| *qty >= 2)
+        .map(|row| parse_qty_and_price(row)) // ← some might return None
+        .into_optional() // ← uplift
+        .filter(|(qty, _)| *qty >= 2) // ← then focus only on success path
         .map(|(qty, unit_price)| qty * unit_price)
         .sum()
 }
