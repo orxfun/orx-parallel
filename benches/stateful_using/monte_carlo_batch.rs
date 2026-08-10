@@ -170,6 +170,30 @@ fn rayon_stats(input: &[u64], with_trace: bool, steps: usize, num_threads: usize
     })
 }
 
+fn orx_stats(input: &[u64], with_trace: bool, steps: usize, num_threads: usize) -> Option<Stats> {
+    input
+        .par()
+        .num_threads(num_threads)
+        .use_new(|_| ThreadState::new())
+        .map(|state, seed| simulate(state, *seed, steps, with_trace))
+        .reduce(|_, a, b| merge(a, b))
+}
+
+fn orx_fixed_stats(
+    input: &[u64],
+    with_trace: bool,
+    steps: usize,
+    num_threads: usize,
+) -> Option<Stats> {
+    input
+        .par()
+        .num_threads(num_threads)
+        .runner(Runner::fixed())
+        .use_new(|_| ThreadState::new())
+        .map(|state, seed| simulate(state, *seed, steps, with_trace))
+        .reduce(|_, a, b| merge(a, b))
+}
+
 impl Experiment for Exp {
     type InputFactors = InputVariant;
 
@@ -195,21 +219,8 @@ impl Experiment for Exp {
         match alg_variant {
             Method::Seq => seq_stats(input, with_trace, steps),
             Method::Rayon { nt } => rayon_stats(input, with_trace, steps, *nt),
-            Method::Orx { nt } => input
-                .as_slice()
-                .into_par()
-                .num_threads(*nt)
-                .use_new(|_| ThreadState::new())
-                .map(|state, seed| simulate(state, *seed, steps, with_trace))
-                .reduce(|_, a, b| merge(a, b)),
-            Method::OrxFixed { nt } => input
-                .as_slice()
-                .into_par()
-                .runner(Runner::fixed())
-                .num_threads(*nt)
-                .use_new(|_| ThreadState::new())
-                .map(|state, seed| simulate(state, *seed, steps, with_trace))
-                .reduce(|_, a, b| merge(a, b)),
+            Method::Orx { nt } => orx_stats(input, with_trace, steps, *nt),
+            Method::OrxFixed { nt } => orx_fixed_stats(input, with_trace, steps, *nt),
         }
     }
 
