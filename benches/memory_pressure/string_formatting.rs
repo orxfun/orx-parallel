@@ -147,7 +147,7 @@ fn orx_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringA
             s
         })
         .collect();
-    let agg = stats.into_par().reduce(merge_agg).unwrap_or_default();
+    let agg = stats.into_iter().reduce(merge_agg).unwrap_or_default();
 
     (strings, agg)
 }
@@ -165,7 +165,7 @@ fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, S
             s
         })
         .collect();
-    let agg = stats.into_par().reduce(merge_agg).unwrap_or_default();
+    let agg = stats.into_iter().reduce(merge_agg).unwrap_or_default();
 
     (strings, agg)
 }
