@@ -108,7 +108,7 @@ let best_tour = (0..num_tours)
 
 ### 2. `use_vec`: Collecting thread local information
 
-> `use_vec` creates one variable per thread, holds them in a vector of length `T`, and can be used after the parallel computation finalizes.
+> `use_vec` creates one variable per thread, holds them in a vector of length `T`, and can be used after parallel computation finalizes.
 
 For instance, one can simply collect results into thread-local vectors and get them all back.
 
@@ -206,7 +206,7 @@ assert_eq!(1_000, thread_results.iter().map(|x| x.len()).sum::<usize>());
 We use a traveling salesperson problem to demonstrate a possible use of *use transformation* and its impact on memory efficiency. In the algorithm:
 
 * we create many random tours,
-* we locally optimized each of them (heavy computation part),
+* we locally optimize each of them (heavy computation part),
 * pick and return the the shortest one found.
 
 ### Initial approach, immutable design
