@@ -65,10 +65,10 @@ pub use pool_impl::BasicPool;
 // 5. once
 #[cfg(all(
     feature = "std",
-    not(feature = "persistent-pool"),
-    not(feature = "persistent-pool-rayon"),
-    not(feature = "wasm"),
-    not(feature = "wasm-experimental"),
+    // not(feature = "persistent-pool"),
+    // not(feature = "persistent-pool-rayon"),
+    // not(feature = "wasm"),
+    // not(feature = "wasm-experimental"),
 ))]
 pub use pool_impl::OncePool;
 

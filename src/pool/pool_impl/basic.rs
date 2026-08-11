@@ -347,3 +347,32 @@ impl ParThreadPool for &BasicPool {
         <BasicPool as ParThreadPool>::run_in_scope(s, work)
     }
 }
+
+impl ParThreadPool for &mut BasicPool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s ScopeRef<'env>
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        self.max_num_threads
+    }
+
+    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
+    {
+        (*self).scoped_computation_impl(f)
+    }
+
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        <BasicPool as ParThreadPool>::run_in_scope(s, work)
+    }
+}

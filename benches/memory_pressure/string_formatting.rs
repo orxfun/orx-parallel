@@ -5,12 +5,38 @@
 mod utils;
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
-use orx_parallel::*;
-use rayon::ThreadPoolBuilder;
+use orx_parallel::{pool::BasicPool, *};
 use std::hint::black_box;
+use std::sync::LazyLock;
 use utils::Pool;
 
 const NUM_WARMUPS_PER_POOL: usize = 5;
+
+// Static BasicPools created once for the entire benchmark process, matching the
+// --features persistent-pool scenario (Run B). Warmup runs at first access.
+static BASIC_POOL_4: LazyLock<BasicPool> = LazyLock::new(|| {
+    let pool = orx_parallel::Pool::basic(4);
+    for _ in 0..NUM_WARMUPS_PER_POOL {
+        (0..100_000_usize)
+            .par()
+            .pool(&pool)
+            .map(|i| format_number(i as u64).0)
+            .collect::<Vec<_>>();
+    }
+    pool
+});
+
+static BASIC_POOL_16: LazyLock<BasicPool> = LazyLock::new(|| {
+    let pool = orx_parallel::Pool::basic(16);
+    for _ in 0..NUM_WARMUPS_PER_POOL {
+        (0..100_000_usize)
+            .par()
+            .pool(&pool)
+            .map(|i| format_number(i as u64).0)
+            .collect::<Vec<_>>();
+    }
+    pool
+});
 
 const CPU_MIX_ROUNDS: usize = 40;
 fn cpu_mix(seed: u64) -> u64 {
@@ -51,7 +77,7 @@ enum Method {
     Seq,
     Rayon { nt: usize },
     Orx { nt: usize },
-    OrxFixed { nt: usize },
+    OrxPersistent { nt: usize },
 }
 
 impl Factors for Method {
@@ -64,7 +90,7 @@ impl Factors for Method {
             Self::Seq => "seq".to_string(),
             Self::Rayon { nt } => format!("rayon-{nt}"),
             Self::Orx { nt } => format!("orx-{nt}"),
-            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
+            Self::OrxPersistent { nt } => format!("orx-persist-{nt}"),
         }]
     }
 }
@@ -115,13 +141,8 @@ fn seq_format_and_collect(n: usize) -> (Vec<String>, StringAgg) {
     (strings, agg)
 }
 
-fn rayon_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
+fn rayon_format_and_collect(n: usize, pool: &mut rayon::ThreadPool) -> (Vec<String>, StringAgg) {
     use rayon::prelude::*;
-
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build()
-        .unwrap();
 
     pool.install(|| {
         let pairs: Vec<_> = (0..n)
@@ -139,12 +160,14 @@ fn rayon_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, Strin
     })
 }
 
-fn orx_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
-    let mut stats = vec![StringAgg::default(); num_threads];
+fn orx_format_and_collect(n: usize, pool: impl ParThreadPool) -> (Vec<String>, StringAgg) {
+    let nt: usize = pool.max_num_threads().into();
+    let mut stats = vec![StringAgg::default(); nt];
+
     let strings = (0..n)
         .par()
+        .pool(pool)
         .use_slice(&mut stats)
-        .num_threads(num_threads)
         .map(|stats, i| {
             let (s, agg) = format_number(i as u64);
             *stats = merge_agg(*stats, agg);
@@ -152,23 +175,6 @@ fn orx_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringA
         })
         .collect();
     let agg = stats.into_iter().reduce(merge_agg).unwrap_or_default();
-
-    (strings, agg)
-}
-
-fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
-    let all: Vec<_> = (0..n)
-        .par()
-        .num_threads(num_threads)
-        .map(|i| format_number(i as u64))
-        .collect();
-    let mut strings = vec![];
-    let mut agg = StringAgg::default();
-
-    for (s, x) in all {
-        strings.push(s);
-        agg = merge_agg(agg, x);
-    }
 
     (strings, agg)
 }
@@ -216,28 +222,35 @@ impl Experiment for Exp {
                 pool
             }
             Method::Orx { nt } => {
-                let mut pool = Pool::new_basic(*nt);
+                let mut pool = Pool::new_once(*nt);
                 for _ in 0..NUM_WARMUPS_PER_POOL {
-                    pool.rayon().install(|| {
-                        (0..*input)
-                            .par()
-                            .map(|i| format_number(i as u64).0)
-                            .collect::<Vec<_>>()
-                    });
+                    (0..*input)
+                        .par()
+                        .pool(pool.once())
+                        .map(|i| format_number(i as u64).0)
+                        .collect::<Vec<_>>();
                 }
                 pool
             }
-            Method::OrxFixed { nt } => {
-                let mut pool = Pool::new_once(*nt);
-                for _ in 0..NUM_WARMUPS_PER_POOL {
-                    pool.rayon().install(|| {
-                        (0..*input)
-                            .par()
-                            .map(|i| format_number(i as u64).0)
-                            .collect::<Vec<_>>()
-                    });
-                }
-                pool
+            Method::OrxPersistent { nt } => {
+                // let mut pool = Pool::new_basic(*nt);
+                // for _ in 0..NUM_WARMUPS_PER_POOL {
+                //     (0..*input)
+                //         .par()
+                //         .pool(pool.basic())
+                //         .map(|i| format_number(i as u64).0)
+                //         .collect::<Vec<_>>();
+                // }
+                // pool
+
+                // Touch the static to trigger lazy init + warmup (no-op on subsequent calls).
+                // The actual pool lives for the entire benchmark process — no per-group creation.
+                let _ = match nt {
+                    4 => &*BASIC_POOL_4,
+                    16 => &*BASIC_POOL_16,
+                    _ => panic!("unsupported nt for orx-persist static pool"),
+                };
+                Pool::Seq
             }
         }
     }
@@ -247,13 +260,21 @@ impl Experiment for Exp {
         _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
-        _: &mut Self::GroupArtifact,
+        pool: &mut Self::GroupArtifact,
     ) -> Self::Output {
         let (strings, agg) = match alg_variant {
             Method::Seq => seq_format_and_collect(*input),
-            Method::Rayon { nt } => rayon_format_and_collect(*input, *nt),
-            Method::Orx { nt } => orx_format_and_collect(*input, *nt),
-            Method::OrxFixed { nt } => orx_fixed_format_and_collect(*input, *nt),
+            Method::Rayon { nt: _ } => rayon_format_and_collect(*input, pool.rayon()),
+            Method::Orx { nt: _ } => orx_format_and_collect(*input, pool.once()),
+            // Method::OrxPersistent { nt: _ } => orx_format_and_collect(*input, pool.basic()),
+            Method::OrxPersistent { nt } => {
+                let pool: &BasicPool = match nt {
+                    4 => &BASIC_POOL_4,
+                    16 => &BASIC_POOL_16,
+                    _ => panic!("unsupported nt for orx-persist static pool"),
+                };
+                orx_format_and_collect(*input, pool)
+            }
         };
 
         Output { strings, agg }
@@ -273,9 +294,9 @@ fn run(c: &mut Criterion) {
 
     let par_variants = |nt: usize| {
         [
-            Method::Rayon { nt },
-            Method::Orx { nt },
-            Method::OrxFixed { nt },
+            // Method::Rayon { nt },
+            // Method::Orx { nt },
+            Method::OrxPersistent { nt },
         ]
     };
 
