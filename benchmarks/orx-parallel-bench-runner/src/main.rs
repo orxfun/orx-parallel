@@ -4,6 +4,7 @@ mod table;
 use crate::args::RunnerArgs;
 use crate::table::Table;
 use clap::Parser;
+use indicatif::ProgressBar;
 use std::fs;
 use std::process::{Command, Stdio};
 use toml_edit::DocumentMut;
@@ -11,20 +12,23 @@ use toml_edit::DocumentMut;
 fn main() {
     let args = RunnerArgs::parse();
     assert!(!args.threads.is_empty());
-    println!("{args:?}");
 
     let methods = get_method_features(&args);
     let inputs = get_input_factors(&args, &methods[0]);
-    println!("{methods:?}");
-    println!("{inputs:?}");
 
+    println!("{args:?}");
+    println!("methods={methods:?}");
+    println!("threads={:?}", args.threads);
+    println!("inputs={inputs:?}");
+
+    let bar = ProgressBar::new((methods.len() * args.threads.len()) as u64);
     let mut table = Table::new(inputs);
 
     for method in &methods {
         for &threads in &args.threads {
-            println!("\n\n\n{method} => {threads}");
             let output = run_once(&args, threads, method);
             table.append(output, threads);
+            bar.inc(1);
         }
     }
 
