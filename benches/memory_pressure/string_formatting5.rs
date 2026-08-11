@@ -186,7 +186,7 @@ fn run(c: &mut Criterion) {
         [
             Method::Rayon { nt },
             Method::Orx { nt },
-            // Method::OrxFixed { nt },
+            Method::OrxFixed { nt },
         ]
     };
 
@@ -198,7 +198,7 @@ fn run(c: &mut Criterion) {
 
     Exp.bench(
         c,
-        "memory_pressure_string_formatting2",
+        "memory_pressure_string_formatting5",
         &treatments,
         &variants,
     );

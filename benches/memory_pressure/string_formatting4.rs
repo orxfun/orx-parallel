@@ -4,6 +4,8 @@
 //! Simulates allocation-heavy workloads where output materialization dominates,
 //! including buffer reuse and locality considerations.
 
+static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
@@ -184,7 +186,7 @@ fn run(c: &mut Criterion) {
 
     let par_variants = |nt: usize| {
         [
-            Method::Rayon { nt },
+            // Method::Rayon { nt },
             Method::Orx { nt },
             // Method::OrxFixed { nt },
         ]
@@ -198,7 +200,7 @@ fn run(c: &mut Criterion) {
 
     Exp.bench(
         c,
-        "memory_pressure_string_formatting2",
+        "memory_pressure_string_formatting4",
         &treatments,
         &variants,
     );

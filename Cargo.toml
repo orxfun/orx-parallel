@@ -37,11 +37,13 @@ wasm-bindgen-rayon = { version = "1.3", optional = true, default-features = fals
 
 [dev-dependencies]
 clap = { version = "4.6.5", features = ["derive"] }
-orx-criterion = { version = "1.0.0" }
+# orx-criterion = { version = "1.0.0" }
+orx-criterion = { path = "../orx-criterion" }
 rand = { version = "0.10.2" }
 rand_chacha = { version = "0.10" }
 rayon = { version = "1.12.0" }
 test-case = { version = "3.3.1" }
+
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
@@ -548,8 +550,41 @@ path = "benches/memory_pressure/string_formatting.rs"
 required-features = ["std"]
 
 
+# TODO: temporary
 [[bench]]
 name = "memory-pressure-string-formatting2"
 harness = false
 path = "benches/memory_pressure/string_formatting2.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "memory-pressure-string-formatting3"
+harness = false
+path = "benches/memory_pressure/string_formatting3.rs"
+required-features = ["std"]
+
+
+[[bench]]
+name = "memory-pressure-string-formatting4"
+harness = false
+path = "benches/memory_pressure/string_formatting4.rs"
+required-features = ["std"]
+
+
+[[bench]]
+name = "memory-pressure-string-formatting5"
+harness = false
+path = "benches/memory_pressure/string_formatting5.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "memory-pressure-string-formatting2-orx"
+harness = false
+path = "benches/memory_pressure/string_formatting2_orx.rs"
+required-features = ["std"]
+
+[[bench]]
+name = "memory-pressure-string-formatting2-rayon"
+harness = false
+path = "benches/memory_pressure/string_formatting2_rayon.rs"
 required-features = ["std"]
