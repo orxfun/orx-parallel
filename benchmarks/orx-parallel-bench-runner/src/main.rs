@@ -16,10 +16,10 @@ fn main() {
     let methods = get_method_features(&args);
     let inputs = get_input_factors(&args, &methods[0]);
 
-    println!("{args:?}");
-    println!("methods={methods:?}");
-    println!("threads={:?}", args.threads);
-    println!("inputs={inputs:?}");
+    println!(
+        "\n{args:?}\n\nmethods={methods:?}\nthreads={:?}\ninputs={inputs:?}\n",
+        args.threads
+    );
 
     let bar = ProgressBar::new((methods.len() * args.threads.len()) as u64);
     let mut table = Table::new(inputs);
@@ -32,7 +32,7 @@ fn main() {
         }
     }
 
-    println!("\n\n\n{table:?}");
+    table.print();
     table.write_csv(&args.path_result);
 }
 
