@@ -6,6 +6,10 @@ pub struct RunnerArgs {
     #[arg(long)]
     pub path: String,
 
+    /// Path of the csv file where results will be written
+    #[arg(long)]
+    pub path_result: String,
+
     /// Number of warmup runs
     #[arg(long)]
     pub warmup_runs: usize,
