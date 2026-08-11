@@ -65,6 +65,16 @@ impl Table {
 
         wtr.flush().expect("Failed to flush CSV writer");
     }
+
+    pub fn print(&self) {
+        let mut table = comfy_table::Table::new();
+
+        for row in &self.rows {
+            table.add_row(row);
+        }
+
+        println!("\n{table}\n");
+    }
 }
 
 fn prop_value(parts: &[String], prop: &str) -> String {
