@@ -16,13 +16,3 @@ fn main() {
 
     runner::run(&args, Exp, &input_variants, &Method::get());
 }
-
-// RAYON_NUM_THREADS=4 cargo run
-
-/*
-clear; cargo run --release --features seq -- --warmup-runs 4 --actual-runs 20
-clear; RAYON_NUM_THREADS=4 ORX_PARALLEL_MAX_NUM_THREADS=4 cargo run --release --features rayon -- --warmup-runs 4 --actual-runs 20
-clear; RAYON_NUM_THREADS=4 ORX_PARALLEL_MAX_NUM_THREADS=4 cargo run --release --features orx-once -- --warmup-runs 4 --actual-runs 20
-clear; RAYON_NUM_THREADS=4 ORX_PARALLEL_MAX_NUM_THREADS=4 cargo run --release --features orx-basic -- --warmup-runs 4 --actual-runs 20
-clear; RAYON_NUM_THREADS=4 ORX_PARALLEL_MAX_NUM_THREADS=4 cargo run --release --features orx-rayon -- --warmup-runs 4 --actual-runs 20
-*/

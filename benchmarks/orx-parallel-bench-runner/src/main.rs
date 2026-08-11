@@ -34,6 +34,7 @@ fn main() {
 
     table.print();
     table.write_csv(&args.path_result);
+    println!("\nwritten to:\n{}\n", args.path_result);
 }
 
 fn command(args: &RunnerArgs, threads: usize, method: &str, mode: &str) -> Command {
