@@ -1,6 +1,7 @@
 pub enum Pool {
-    #[cfg(feature = "rayon-core")]
-    Rayon(rayon_core::ThreadPool),
+    Seq,
+
+    Rayon(rayon::ThreadPool),
 
     #[cfg(feature = "std")]
     Basic(orx_parallel::pool::BasicPool),
@@ -12,9 +13,11 @@ pub enum Pool {
 impl Pool {
     // new
 
-    #[cfg(feature = "rayon-core")]
     pub fn new_rayon(nt: usize) -> Self {
-        let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(nt)
+            .build()
+            .unwrap();
         Self::Rayon(pool)
     }
 
@@ -32,8 +35,7 @@ impl Pool {
 
     // get
 
-    #[cfg(feature = "rayon-core")]
-    pub fn rayon(&mut self) -> &mut rayon_core::ThreadPool {
+    pub fn rayon(&mut self) -> &mut rayon::ThreadPool {
         match self {
             Self::Rayon(p) => p,
             _ => unreachable!(),
