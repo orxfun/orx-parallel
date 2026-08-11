@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 //! Memory pressure benchmark: large string formatting and allocation.
 //! Simulates allocation-heavy workloads where output materialization dominates,
 //! including buffer reuse and locality considerations.
@@ -72,14 +74,6 @@ struct StringAgg {
     checksum: u64,
 }
 
-fn merge_agg(a: StringAgg, b: StringAgg) -> StringAgg {
-    StringAgg {
-        count: a.count + b.count,
-        total_len: a.total_len + b.total_len,
-        checksum: a.checksum + b.checksum,
-    }
-}
-
 struct Exp;
 
 fn format_number(idx: u64) -> (String, StringAgg) {
@@ -98,20 +92,18 @@ fn format_number(idx: u64) -> (String, StringAgg) {
     )
 }
 
-fn seq_format_and_collect(n: usize) -> (Vec<String>, StringAgg) {
+fn seq_format_and_collect(n: usize) -> Vec<String> {
     let mut strings = Vec::with_capacity(n);
-    let mut agg = StringAgg::default();
 
     for i in 0..n {
-        let (s, a) = format_number(i as u64);
-        agg = merge_agg(agg, a);
+        let (s, _) = format_number(i as u64);
         strings.push(s);
     }
 
-    (strings, agg)
+    strings
 }
 
-fn rayon_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
+fn rayon_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
     use rayon::prelude::*;
 
     let pool = ThreadPoolBuilder::new()
@@ -120,75 +112,33 @@ fn rayon_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, Strin
         .unwrap();
 
     pool.install(|| {
-        let pairs: Vec<_> = (0..n)
+        (0..n)
             .into_par_iter()
-            .map(|i| format_number(i as u64))
-            .collect();
-
-        let strings = pairs.iter().map(|(s, _)| s.clone()).collect();
-        let mut agg = StringAgg::default();
-        for (_, a) in &pairs {
-            agg = merge_agg(agg, *a);
-        }
-
-        (strings, agg)
+            .map(|i| format_number(i as u64).0)
+            .collect()
     })
 }
 
-fn orx_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
-    let mut stats = vec![StringAgg::default(); num_threads];
-    let strings = (0..n)
+fn orx_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
+    (0..n)
         .par()
-        .use_slice(&mut stats)
         .num_threads(num_threads)
-        .map(|stats, i| {
-            let (s, agg) = format_number(i as u64);
-            *stats = merge_agg(*stats, agg);
-            s
-        })
-        .collect();
-    let agg = stats.into_iter().reduce(merge_agg).unwrap_or_default();
-
-    (strings, agg)
+        .map(|i| format_number(i as u64).0)
+        .collect()
 }
 
-fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, StringAgg) {
-    let all: Vec<_> = (0..n)
+fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
+    (0..n)
         .par()
+        .runner(Runner::fixed())
         .num_threads(num_threads)
-        .map(|i| format_number(i as u64))
-        .collect();
-    let mut strings = vec![];
-    let mut agg = StringAgg::default();
-
-    for (s, x) in all {
-        strings.push(s);
-        agg = merge_agg(agg, x);
-    }
-
-    (strings, agg)
-
-    // let mut stats = vec![StringAgg::default(); num_threads];
-    // let strings = (0..n)
-    //     .par()
-    //     .runner(Runner::fixed())
-    //     .use_slice(&mut stats)
-    //     .num_threads(num_threads)
-    //     .map(|stats, i| {
-    //         let (s, agg) = format_number(i as u64);
-    //         *stats = merge_agg(*stats, agg);
-    //         s
-    //     })
-    //     .collect();
-    // let agg = stats.into_iter().reduce(merge_agg).unwrap_or_default();
-
-    // (strings, agg)
+        .map(|i| format_number(i as u64).0)
+        .collect()
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct Output {
     strings: Vec<String>,
-    agg: StringAgg,
 }
 
 impl Experiment for Exp {
@@ -210,19 +160,19 @@ impl Experiment for Exp {
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
-        let (strings, agg) = match alg_variant {
+        let strings = match alg_variant {
             Method::Seq => seq_format_and_collect(*input),
             Method::Rayon { nt } => rayon_format_and_collect(*input, *nt),
             Method::Orx { nt } => orx_format_and_collect(*input, *nt),
             Method::OrxFixed { nt } => orx_fixed_format_and_collect(*input, *nt),
         };
 
-        Output { strings, agg }
+        Output { strings }
     }
 
     fn expected_output(&self, _: &Self::InputFactors, input: &Self::Input) -> Option<Self::Output> {
-        let (strings, agg) = seq_format_and_collect(*input);
-        Some(Output { strings, agg })
+        let strings = seq_format_and_collect(*input);
+        Some(Output { strings })
     }
 }
 
@@ -234,9 +184,9 @@ fn run(c: &mut Criterion) {
 
     let par_variants = |nt: usize| {
         [
-            Method::Rayon { nt },
+            // Method::Rayon { nt },
             Method::Orx { nt },
-            Method::OrxFixed { nt },
+            // Method::OrxFixed { nt },
         ]
     };
 
@@ -244,10 +194,11 @@ fn run(c: &mut Criterion) {
     // variants.extend(par_variants(1));
     variants.extend(par_variants(4));
     variants.extend(par_variants(16));
+    variants.extend(par_variants(32));
 
     Exp.bench(
         c,
-        "memory_pressure_string_formatting",
+        "memory_pressure_string_formatting2",
         &treatments,
         &variants,
     );

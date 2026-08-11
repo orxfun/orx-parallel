@@ -546,3 +546,10 @@ name = "memory-pressure-string-formatting"
 harness = false
 path = "benches/memory_pressure/string_formatting.rs"
 required-features = ["std"]
+
+
+[[bench]]
+name = "memory-pressure-string-formatting2"
+harness = false
+path = "benches/memory_pressure/string_formatting2.rs"
+required-features = ["std"]
