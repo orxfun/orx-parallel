@@ -76,10 +76,11 @@ struct StringAgg {
 
 struct Exp;
 
-fn format_number(idx: u64) -> (String, StringAgg) {
+fn format_number(idx: u64) -> (u64, StringAgg) {
     let value = (idx.wrapping_mul(2654435761)).wrapping_add(0x9E3779B1);
-    let formatted = format!("NUM_{:016x}_VAL_{}", idx, value);
-    let len = formatted.len() as u64;
+    // let formatted = format!("NUM_{:016x}_VAL_{}", idx, value);
+    let formatted = value;
+    let len = black_box(formatted + 1) as u64;
     let checksum = cpu_mix((idx ^ value).wrapping_mul(31).wrapping_add(len));
 
     (
@@ -92,7 +93,7 @@ fn format_number(idx: u64) -> (String, StringAgg) {
     )
 }
 
-fn seq_format_and_collect(n: usize) -> Vec<String> {
+fn seq_format_and_collect(n: usize) -> Vec<u64> {
     let mut strings = Vec::with_capacity(n);
 
     for i in 0..n {
@@ -103,7 +104,7 @@ fn seq_format_and_collect(n: usize) -> Vec<String> {
     strings
 }
 
-fn rayon_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
+fn rayon_format_and_collect(n: usize, num_threads: usize) -> Vec<u64> {
     use rayon::prelude::*;
 
     let pool = ThreadPoolBuilder::new()
@@ -119,7 +120,7 @@ fn rayon_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
     })
 }
 
-fn orx_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
+fn orx_format_and_collect(n: usize, num_threads: usize) -> Vec<u64> {
     (0..n)
         .par()
         .num_threads(num_threads)
@@ -127,7 +128,7 @@ fn orx_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
         .collect()
 }
 
-fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
+fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> Vec<u64> {
     (0..n)
         .par()
         .runner(Runner::fixed())
@@ -138,7 +139,7 @@ fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 struct Output {
-    strings: Vec<String>,
+    strings: Vec<u64>,
 }
 
 impl Experiment for Exp {
@@ -184,7 +185,7 @@ fn run(c: &mut Criterion) {
 
     let par_variants = |nt: usize| {
         [
-            Method::Rayon { nt },
+            // Method::Rayon { nt },
             Method::Orx { nt },
             // Method::OrxFixed { nt },
         ]
@@ -198,7 +199,7 @@ fn run(c: &mut Criterion) {
 
     Exp.bench(
         c,
-        "memory_pressure_string_formatting2",
+        "memory_pressure_string_formatting3",
         &treatments,
         &variants,
     );

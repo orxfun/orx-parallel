@@ -184,7 +184,7 @@ fn run(c: &mut Criterion) {
 
     let par_variants = |nt: usize| {
         [
-            Method::Rayon { nt },
+            // Method::Rayon { nt },
             Method::Orx { nt },
             // Method::OrxFixed { nt },
         ]
@@ -198,7 +198,7 @@ fn run(c: &mut Criterion) {
 
     Exp.bench(
         c,
-        "memory_pressure_string_formatting2",
+        "memory_pressure_string_formatting2_orx",
         &treatments,
         &variants,
     );
