@@ -29,6 +29,9 @@ impl Table {
             .collect();
 
         for output in output_rows {
+            #[cfg(debug_assertions)]
+            println!("{output}");
+
             let parts: Vec<String> = output.split("__").map(|x| x.to_string()).collect();
 
             let method = prop_value(&parts, "method");
@@ -73,7 +76,7 @@ impl Table {
             table.add_row(row);
         }
 
-        println!("\n{table}\n");
+        println!("\n\n{table}\n");
     }
 }
 

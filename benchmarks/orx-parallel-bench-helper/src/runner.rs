@@ -34,8 +34,8 @@ pub fn run_benchmark<E>(
 
         println!(
             "{}__{}__{}",
-            alg_variant.key_short(),
-            input_variant.key_short(),
+            alg_variant.key_short().replace("_", "__"),
+            input_variant.key_short().replace("_", "__"),
             elapsed_ns_per_run
         );
     }
@@ -62,4 +62,15 @@ pub fn run<E: Experiment>(
         RunMode::ListMethods => list_methods::<E>(),
         RunMode::Run => run_benchmark(&args, exp, &input_variants, &alg_variant),
     }
+}
+
+pub fn cpu_mix(rounds: usize, seed: u64) -> u64 {
+    let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
+    for r in 0..rounds {
+        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
+        x = black_box(x ^ salt);
+        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
+        x = black_box(x ^ (x >> 27));
+    }
+    x
 }

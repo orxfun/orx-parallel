@@ -1,6 +1,8 @@
 use crate::{alg::Method, input::InputVariant};
 use orx_criterion::Experiment;
-use std::hint::black_box;
+use orx_parallel_bench_helper::runner::cpu_mix;
+
+const CPU_MIX_ROUNDS: usize = 40;
 
 pub struct Exp;
 
@@ -33,11 +35,18 @@ impl Experiment for Exp {
 
         Output { strings, agg }
     }
+
+    fn expected_output(
+        &self,
+        _input_factors: &Self::InputFactors,
+        input: &Self::Input,
+    ) -> Option<Self::Output> {
+        let (strings, agg) = run_seq(*input);
+        Some(Output { strings, agg })
+    }
 }
 
 // computation helpers
-
-const CPU_MIX_ROUNDS: usize = 40;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Output {
@@ -56,7 +65,10 @@ fn format_number(idx: u64) -> (String, StringAgg) {
     let value = (idx.wrapping_mul(2654435761)).wrapping_add(0x9E3779B1);
     let formatted = format!("NUM_{:016x}_VAL_{}", idx, value);
     let len = formatted.len() as u64;
-    let checksum = cpu_mix((idx ^ value).wrapping_mul(31).wrapping_add(len));
+    let checksum = cpu_mix(
+        CPU_MIX_ROUNDS,
+        (idx ^ value).wrapping_mul(31).wrapping_add(len),
+    );
 
     (
         formatted,
@@ -66,17 +78,6 @@ fn format_number(idx: u64) -> (String, StringAgg) {
             checksum,
         },
     )
-}
-
-fn cpu_mix(seed: u64) -> u64 {
-    let mut x = black_box(seed ^ 0x9E37_79B9_7F4A_7C15);
-    for r in 0..CPU_MIX_ROUNDS {
-        let salt = black_box((r as u64 + 1) * 0xA076_1D64_78BD_642F);
-        x = black_box(x ^ salt);
-        x = black_box(x.rotate_left(9).wrapping_mul(0xD6E8_FD9D_79A1_4E3B));
-        x = black_box(x ^ (x >> 27));
-    }
-    x
 }
 
 fn merge_agg(a: StringAgg, b: StringAgg) -> StringAgg {
