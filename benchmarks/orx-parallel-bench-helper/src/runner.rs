@@ -1,4 +1,4 @@
-use crate::BenchArgs;
+use crate::{BenchArgs, RunMode};
 use orx_criterion::{Experiment, Factors};
 use std::{hint::black_box, time::Instant};
 
@@ -44,4 +44,22 @@ pub fn run_benchmark<E>(
 pub fn list_inputs<E: Experiment>() {
     let keys = <E::InputFactors as Factors>::factor_names_short();
     println!("{keys:?}");
+}
+
+pub fn list_methods<E: Experiment>() {
+    let keys = <E::AlgFactors as Factors>::factor_names_short();
+    println!("{keys:?}");
+}
+
+pub fn run<E: Experiment>(
+    args: &BenchArgs,
+    exp: E,
+    input_variants: &[E::InputFactors],
+    alg_variant: &E::AlgFactors,
+) {
+    match args.run_mode {
+        RunMode::ListInputs => list_inputs::<E>(),
+        RunMode::ListMethods => list_methods::<E>(),
+        RunMode::Run => run_benchmark(&args, exp, &input_variants, &alg_variant),
+    }
 }

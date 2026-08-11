@@ -14,10 +14,7 @@ fn main() {
         InputVariant { size: 100_000 },
     ];
 
-    match args.list_inputs {
-        true => runner::list_inputs::<Exp>(),
-        false => runner::run_benchmark(&args, Exp, &input_variants, &Method::get()),
-    }
+    runner::run(&args, Exp, &input_variants, &Method::get());
 }
 
 // RAYON_NUM_THREADS=4 cargo run
