@@ -29,7 +29,6 @@ impl Table {
             .collect();
 
         for output in output_rows {
-            println!("output:\n{output}\n\n");
             let parts: Vec<String> = output.split("__").map(|x| x.to_string()).collect();
 
             let method = prop_value(&parts, "method");
