@@ -3,13 +3,14 @@
 //! including buffer reuse and locality considerations.
 
 mod utils;
-use utils::Pool;
-
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
 use rayon::ThreadPoolBuilder;
 use std::hint::black_box;
+use utils::Pool;
+
+const NUM_WARMUPS_PER_POOL: usize = 5;
 
 const CPU_MIX_ROUNDS: usize = 40;
 fn cpu_mix(seed: u64) -> u64 {
@@ -187,7 +188,7 @@ impl Experiment for Exp {
 
     type Output = Output;
 
-    type GroupArtifact = ();
+    type GroupArtifact = Pool;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         input_variant.size
@@ -196,9 +197,49 @@ impl Experiment for Exp {
     fn group_artifact(
         &mut self,
         _: &Self::InputFactors,
-        _: &Self::AlgFactors,
-        _: &Self::Input,
+        alg_variant: &Self::AlgFactors,
+        input: &Self::Input,
     ) -> Self::GroupArtifact {
+        match alg_variant {
+            Method::Seq => Pool::Seq,
+            Method::Rayon { nt } => {
+                use rayon::prelude::*;
+                let mut pool = Pool::new_rayon(*nt);
+                for _ in 0..NUM_WARMUPS_PER_POOL {
+                    pool.rayon().install(|| {
+                        (0..*input)
+                            .into_par_iter()
+                            .map(|i| format_number(i as u64).0)
+                            .collect::<Vec<_>>()
+                    });
+                }
+                pool
+            }
+            Method::Orx { nt } => {
+                let mut pool = Pool::new_basic(*nt);
+                for _ in 0..NUM_WARMUPS_PER_POOL {
+                    pool.rayon().install(|| {
+                        (0..*input)
+                            .par()
+                            .map(|i| format_number(i as u64).0)
+                            .collect::<Vec<_>>()
+                    });
+                }
+                pool
+            }
+            Method::OrxFixed { nt } => {
+                let mut pool = Pool::new_once(*nt);
+                for _ in 0..NUM_WARMUPS_PER_POOL {
+                    pool.rayon().install(|| {
+                        (0..*input)
+                            .par()
+                            .map(|i| format_number(i as u64).0)
+                            .collect::<Vec<_>>()
+                    });
+                }
+                pool
+            }
+        }
     }
 
     fn execute(
