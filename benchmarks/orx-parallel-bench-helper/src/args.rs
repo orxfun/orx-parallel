@@ -1,10 +1,24 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
+use std::fmt::Display;
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum RunMode {
+    ListInputs,
+    ListMethods,
+    Run,
+}
+
+impl Display for RunMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
 
 #[derive(Parser)]
 pub struct BenchArgs {
-    /// When set to true, the program will only return the list of inputs and exit
-    #[arg(long, default_value_t = false)]
-    pub list_inputs: bool,
+    /// Run mode
+    #[arg(long, default_value_t = RunMode::Run)]
+    pub run_mode: RunMode,
 
     /// Number of warmup runs
     #[arg(long)]

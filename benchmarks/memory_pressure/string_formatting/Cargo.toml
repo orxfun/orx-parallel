@@ -12,7 +12,6 @@ orx-parallel-bench-helper = { path = "../../orx-parallel-bench-helper" }
 rayon = { version = "1.12.0" }
 
 [features]
-default = []
 seq = []
 orx-once = []
 orx-basic = ["orx-parallel/persistent-pool"]
