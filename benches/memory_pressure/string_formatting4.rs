@@ -4,8 +4,6 @@
 //! Simulates allocation-heavy workloads where output materialization dominates,
 //! including buffer reuse and locality considerations.
 
-static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
@@ -152,8 +150,18 @@ impl Experiment for Exp {
 
     type Output = Output;
 
+    type GroupArtifact = ();
+
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         input_variant.size
+    }
+
+    fn group_artifact(
+        &mut self,
+        _: &Self::InputFactors,
+        _: &Self::AlgFactors,
+        _: &Self::Input,
+    ) -> Self::GroupArtifact {
     }
 
     fn execute(
@@ -161,6 +169,7 @@ impl Experiment for Exp {
         _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
+        _: &mut Self::GroupArtifact,
     ) -> Self::Output {
         let strings = match alg_variant {
             Method::Seq => seq_format_and_collect(*input),

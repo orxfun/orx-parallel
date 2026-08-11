@@ -2,6 +2,9 @@
 //! Simulates allocation-heavy workloads where output materialization dominates,
 //! including buffer reuse and locality considerations.
 
+mod utils;
+use utils::Pool;
+
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
 use orx_parallel::*;
@@ -167,22 +170,6 @@ fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> (Vec<String>, S
     }
 
     (strings, agg)
-
-    // let mut stats = vec![StringAgg::default(); num_threads];
-    // let strings = (0..n)
-    //     .par()
-    //     .runner(Runner::fixed())
-    //     .use_slice(&mut stats)
-    //     .num_threads(num_threads)
-    //     .map(|stats, i| {
-    //         let (s, agg) = format_number(i as u64);
-    //         *stats = merge_agg(*stats, agg);
-    //         s
-    //     })
-    //     .collect();
-    // let agg = stats.into_iter().reduce(merge_agg).unwrap_or_default();
-
-    // (strings, agg)
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -200,8 +187,18 @@ impl Experiment for Exp {
 
     type Output = Output;
 
+    type GroupArtifact = ();
+
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         input_variant.size
+    }
+
+    fn group_artifact(
+        &mut self,
+        _: &Self::InputFactors,
+        _: &Self::AlgFactors,
+        _: &Self::Input,
+    ) -> Self::GroupArtifact {
     }
 
     fn execute(
@@ -209,6 +206,7 @@ impl Experiment for Exp {
         _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
+        _: &mut Self::GroupArtifact,
     ) -> Self::Output {
         let (strings, agg) = match alg_variant {
             Method::Seq => seq_format_and_collect(*input),

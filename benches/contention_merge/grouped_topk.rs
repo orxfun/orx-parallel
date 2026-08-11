@@ -202,8 +202,18 @@ impl Experiment for Exp {
 
     type Output = Agg;
 
+    type GroupArtifact = ();
+
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         inputs(input_variant.len(), input_variant.dist)
+    }
+
+    fn group_artifact(
+        &mut self,
+        _: &Self::InputFactors,
+        _: &Self::AlgFactors,
+        _: &Self::Input,
+    ) -> Self::GroupArtifact {
     }
 
     fn execute(
@@ -211,6 +221,7 @@ impl Experiment for Exp {
         _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
+        _: &mut Self::GroupArtifact,
     ) -> Self::Output {
         let counts = match alg_variant {
             Method::Seq => count_seq(input),

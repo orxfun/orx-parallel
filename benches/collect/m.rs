@@ -183,6 +183,8 @@ impl Experiment for Exp {
 
     type Output = (bool, Output); // (ordered, output)
 
+    type GroupArtifact = ();
+
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         const SEED: u64 = 654;
         let len = input_variant.len();
@@ -190,11 +192,20 @@ impl Experiment for Exp {
         (0..len).map(|_| rng.random_range(0..150)).collect()
     }
 
+    fn group_artifact(
+        &mut self,
+        _: &Self::InputFactors,
+        _: &Self::AlgFactors,
+        _: &Self::Input,
+    ) -> Self::GroupArtifact {
+    }
+
     fn execute(
         &mut self,
         input_variant: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
+        _: &mut Self::GroupArtifact,
     ) -> Self::Output {
         let heavy = input_variant.heavy;
 
