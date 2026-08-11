@@ -24,11 +24,12 @@ fn main() {
         for &threads in &args.threads {
             println!("\n\n\n{method} => {threads}");
             let output = run_once(&args, threads, method);
-            table.append(output);
+            table.append(output, threads);
         }
     }
 
     println!("\n\n\n{table:?}");
+    table.write_csv(&args.path_result);
 }
 
 fn command(args: &RunnerArgs, threads: usize, method: &str, mode: &str) -> Command {
