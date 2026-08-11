@@ -6,8 +6,7 @@
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use orx_criterion::{Experiment, Factors};
-use orx_parallel::*;
-use rayon::ThreadPoolBuilder;
+use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::hint::black_box;
 
 const CPU_MIX_ROUNDS: usize = 40;
@@ -48,8 +47,6 @@ impl Factors for InputVariant {
 enum Method {
     Seq,
     Rayon { nt: usize },
-    Orx { nt: usize },
-    OrxFixed { nt: usize },
 }
 
 impl Factors for Method {
@@ -61,8 +58,6 @@ impl Factors for Method {
         vec![match self {
             Self::Seq => "seq".to_string(),
             Self::Rayon { nt } => format!("rayon-{nt}"),
-            Self::Orx { nt } => format!("orx-{nt}"),
-            Self::OrxFixed { nt } => format!("orx-fixed-{nt}"),
         }]
     }
 }
@@ -103,13 +98,8 @@ fn seq_format_and_collect(n: usize) -> Vec<String> {
     strings
 }
 
-fn rayon_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
+fn rayon_format_and_collect(n: usize, pool: &mut ThreadPool) -> Vec<String> {
     use rayon::prelude::*;
-
-    let pool = ThreadPoolBuilder::new()
-        .num_threads(num_threads)
-        .build()
-        .unwrap();
 
     pool.install(|| {
         (0..n)
@@ -117,23 +107,6 @@ fn rayon_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
             .map(|i| format_number(i as u64).0)
             .collect()
     })
-}
-
-fn orx_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
-    (0..n)
-        .par()
-        .num_threads(num_threads)
-        .map(|i| format_number(i as u64).0)
-        .collect()
-}
-
-fn orx_fixed_format_and_collect(n: usize, num_threads: usize) -> Vec<String> {
-    (0..n)
-        .par()
-        .runner(Runner::fixed())
-        .num_threads(num_threads)
-        .map(|i| format_number(i as u64).0)
-        .collect()
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -150,8 +123,33 @@ impl Experiment for Exp {
 
     type Output = Output;
 
+    type GroupArtifact = ThreadPool;
+
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         input_variant.size
+    }
+
+    fn group_artifact(
+        &mut self,
+        _: &Self::InputFactors,
+        alg_variant: &Self::AlgFactors,
+        n: &Self::Input,
+    ) -> Self::GroupArtifact {
+        let nt = match alg_variant {
+            Method::Rayon { nt } => *nt,
+            _ => 1,
+        } - 1;
+        let pool = ThreadPoolBuilder::new().num_threads(nt).build().unwrap();
+        for _ in 0..3 {
+            use rayon::prelude::*;
+            pool.install(|| {
+                (0..*n)
+                    .into_par_iter()
+                    .map(|i| format_number(i as u64).0)
+                    .collect::<Vec<_>>()
+            });
+        }
+        pool
     }
 
     fn execute(
@@ -159,12 +157,14 @@ impl Experiment for Exp {
         _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
+        pool: &mut Self::GroupArtifact,
     ) -> Self::Output {
         let strings = match alg_variant {
             Method::Seq => seq_format_and_collect(*input),
-            Method::Rayon { nt } => rayon_format_and_collect(*input, *nt),
-            Method::Orx { nt } => orx_format_and_collect(*input, *nt),
-            Method::OrxFixed { nt } => orx_fixed_format_and_collect(*input, *nt),
+            Method::Rayon { nt } => {
+                assert_eq!(pool.current_num_threads(), *nt - 1);
+                rayon_format_and_collect(*input, pool)
+            }
         };
 
         Output { strings }
@@ -182,13 +182,7 @@ fn run(c: &mut Criterion) {
         .map(|size| InputVariant { size })
         .collect();
 
-    let par_variants = |nt: usize| {
-        [
-            Method::Rayon { nt },
-            // Method::Orx { nt },
-            // Method::OrxFixed { nt },
-        ]
-    };
+    let par_variants = |nt: usize| [Method::Rayon { nt }];
 
     let mut variants = vec![Method::Seq];
     // variants.extend(par_variants(1));

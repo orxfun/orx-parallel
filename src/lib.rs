@@ -68,5 +68,3 @@ pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
 pub use use_var::{Use, UseVec};
-
-// static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;

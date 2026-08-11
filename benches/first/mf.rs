@@ -112,6 +112,8 @@ impl Experiment for Exp {
 
     type Output = Option<u64>;
 
+    type GroupArtifact = ();
+
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         let len = 1 << input_variant.n;
         let pos = match input_variant.pos {
@@ -123,11 +125,20 @@ impl Experiment for Exp {
         inputs(len, pos, 999)
     }
 
+    fn group_artifact(
+        &mut self,
+        _: &Self::InputFactors,
+        _: &Self::AlgFactors,
+        _: &Self::Input,
+    ) -> Self::GroupArtifact {
+    }
+
     fn execute(
         &mut self,
         input_variant: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
+        _: &mut Self::GroupArtifact,
     ) -> Self::Output {
         match alg_variant {
             Method::Seq => self.expected_output(input_variant, input).unwrap(),

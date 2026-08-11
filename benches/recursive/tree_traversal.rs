@@ -263,6 +263,8 @@ impl Experiment for Exp {
 
     type Output = TreeAgg;
 
+    type GroupArtifact = ();
+
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         let mut node_id = 0u64;
         match input_variant.topology {
@@ -271,11 +273,20 @@ impl Experiment for Exp {
         }
     }
 
+    fn group_artifact(
+        &mut self,
+        _: &Self::InputFactors,
+        _: &Self::AlgFactors,
+        _: &Self::Input,
+    ) -> Self::GroupArtifact {
+    }
+
     fn execute(
         &mut self,
         _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
+        _: &mut Self::GroupArtifact,
     ) -> Self::Output {
         match alg_variant {
             Method::Seq => seq_traverse(input),
