@@ -6,7 +6,7 @@ use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::{collections::LinkedList, hint::black_box};
 
-const FIB_UPPER_BOUND: u64 = 57;
+const FIB_UPPER_BOUND: u64 = 99;
 
 pub struct Exp;
 
