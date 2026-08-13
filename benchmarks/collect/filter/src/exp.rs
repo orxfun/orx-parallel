@@ -28,30 +28,31 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        _: &Self::InputFactors,
+        input_variant: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
+        let h = input_variant.heavy;
         match alg_variant {
-            Method::Seq => (true, run_seq(input)),
-            Method::Rayon => (true, run_rayon(input, false)),
-            Method::RayonVec2 => (false, run_rayon(input, true)),
-            Method::OrxOnce => (true, run_orx(input, IterationOrder::Ordered, false)),
-            Method::OrxBasic => (true, run_orx(input, IterationOrder::Ordered, false)),
-            Method::OrxRayon => (true, run_orx(input, IterationOrder::Ordered, false)),
-            Method::OrxOnceVec2 => (false, run_orx(input, IterationOrder::Ordered, true)),
-            Method::OrxBasicVec2 => (false, run_orx(input, IterationOrder::Ordered, true)),
-            Method::OrxRayonVec2 => (false, run_orx(input, IterationOrder::Ordered, true)),
+            Method::Seq => (true, run_seq(input, h)),
+            Method::Rayon => (true, run_rayon(input, h, false)),
+            Method::RayonVec2 => (false, run_rayon(input, h, true)),
+            Method::OrxOnce => (true, run_orx(input, h, IterationOrder::Ordered, false)),
+            Method::OrxBasic => (true, run_orx(input, h, IterationOrder::Ordered, false)),
+            Method::OrxRayon => (true, run_orx(input, h, IterationOrder::Ordered, false)),
+            Method::OrxOnceVec2 => (false, run_orx(input, h, IterationOrder::Ordered, true)),
+            Method::OrxBasicVec2 => (false, run_orx(input, h, IterationOrder::Ordered, true)),
+            Method::OrxRayonVec2 => (false, run_orx(input, h, IterationOrder::Ordered, true)),
         }
     }
 
     fn validate_output(
         &self,
-        _: &Self::InputFactors,
+        input_variant: &Self::InputFactors,
         input: &Self::Input,
         (ordered, output): &Self::Output,
     ) {
-        let mut expected = match run_seq(input) {
+        let mut expected = match run_seq(input, input_variant.heavy) {
             Output::Vec(vec) => vec,
             _ => unreachable!(),
         };
@@ -92,28 +93,51 @@ pub enum Output {
     VecVec(Vec<Vec<u64>>),
 }
 
-fn f(a: &u64) -> bool {
+fn l_f(a: &u64) -> bool {
+    !black_box((a + 7).is_multiple_of(11))
+}
+
+fn h_f(a: &u64) -> bool {
     let a = runner::fib(FIB_UPPER_BOUND, *a);
     !black_box((a + 7).is_multiple_of(11))
 }
 
-fn run_seq(input: &[u64]) -> Output {
-    Output::Vec(input.iter().copied().filter(f).collect())
-}
-
-fn run_rayon(input: &[u64], list: bool) -> Output {
-    use rayon::prelude::*;
-    match list {
-        false => Output::Vec(input.into_par_iter().copied().filter(f).collect()),
-        true => Output::VecList(input.into_par_iter().copied().filter(f).collect_vec_list()),
+fn run_seq(input: &[u64], heavy: bool) -> Output {
+    match heavy {
+        true => Output::Vec(input.iter().copied().filter(h_f).collect()),
+        false => Output::Vec(input.iter().copied().filter(l_f).collect()),
     }
 }
 
-fn run_orx(input: &[u64], ord: IterationOrder, list: bool) -> Output {
+fn run_rayon(input: &[u64], heavy: bool, list: bool) -> Output {
+    use rayon::prelude::*;
+    match (heavy, list) {
+        (true, false) => Output::Vec(input.into_par_iter().copied().filter(h_f).collect()),
+        (true, true) => Output::VecList(
+            input
+                .into_par_iter()
+                .copied()
+                .filter(h_f)
+                .collect_vec_list(),
+        ),
+        (false, false) => Output::Vec(input.into_par_iter().copied().filter(l_f).collect()),
+        (false, true) => Output::VecList(
+            input
+                .into_par_iter()
+                .copied()
+                .filter(l_f)
+                .collect_vec_list(),
+        ),
+    }
+}
+
+fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder, list: bool) -> Output {
     use orx_parallel::*;
-    let par = input.into_par().iteration_order(ord).copied().filter(f);
-    match list {
-        false => Output::Vec(par.collect()),
-        true => Output::VecVec(par.collect::<Vec2<_>>().into()),
+    let par = input.into_par().iteration_order(ord).copied();
+    match (heavy, list) {
+        (true, false) => Output::Vec(par.filter(h_f).collect()),
+        (true, true) => Output::VecVec(par.filter(h_f).collect::<Vec2<_>>().into()),
+        (false, false) => Output::Vec(par.filter(l_f).collect()),
+        (false, true) => Output::VecVec(par.filter(l_f).collect::<Vec2<_>>().into()),
     }
 }

@@ -1,5 +1,5 @@
 [package]
-name = "map"
+name = "chain2"
 version = "0.1.0"
 edition = "2024"
 publish = ["artifactory"]
@@ -19,7 +19,3 @@ rayon = []
 orx-once = []
 orx-basic = ["orx-parallel/persistent-pool"]
 orx-rayon = ["orx-parallel/persistent-pool-rayon"]
-rayon-vec2 = []
-orx-once-vec2 = []
-orx-basic-vec2 = ["orx-parallel/persistent-pool"]
-orx-rayon-vec2 = ["orx-parallel/persistent-pool-rayon"]
