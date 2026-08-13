@@ -74,3 +74,15 @@ pub fn cpu_mix(rounds: usize, seed: u64) -> u64 {
     }
     x
 }
+
+pub fn fib(upper_bound: u64, n: u64) -> u64 {
+    let n = black_box(n % upper_bound);
+    let mut a = 0;
+    let mut b = 1;
+    for _ in 0..n {
+        let c = black_box(a + b);
+        a = black_box(b);
+        b = black_box(c);
+    }
+    a
+}
