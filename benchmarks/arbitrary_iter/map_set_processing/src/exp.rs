@@ -1,7 +1,7 @@
 use crate::input::Dataset;
 use crate::{alg::Method, input::InputVariant};
+use bench_helper::runner::cpu_mix;
 use orx_criterion::Experiment;
-use orx_parallel_bench_helper::runner::cpu_mix;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::collections::{HashMap, HashSet};

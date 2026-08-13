@@ -1,6 +1,6 @@
 use crate::{alg::Method, input::InputVariant};
+use bench_helper::runner::cpu_mix;
 use orx_criterion::Experiment;
-use orx_parallel_bench_helper::runner::cpu_mix;
 
 const CPU_MIX_ROUNDS: usize = 40;
 

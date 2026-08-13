@@ -4,8 +4,8 @@ mod input;
 
 use crate::input::{Dataset, InputVariant};
 use crate::{alg::Method, exp::Exp};
+use bench_helper::{BenchArgs, runner};
 use clap::Parser;
-use orx_parallel_bench_helper::{BenchArgs, runner};
 
 fn main() {
     let args = BenchArgs::parse();

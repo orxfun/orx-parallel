@@ -1,5 +1,5 @@
 [package]
-name = "string_formatting"
+name = "filter"
 version = "0.1.0"
 edition = "2024"
 publish = ["artifactory"]
@@ -9,6 +9,8 @@ clap = { version = "4.6.6" }
 orx-criterion = { version = "1.0.0" }
 orx-parallel = { path = "../../../" }
 bench-helper = { path = "../../bench-helper" }
+rand = { version = "0.10.2" }
+rand_chacha = { version = "0.10" }
 rayon = { version = "1.12.0" }
 
 [features]
@@ -16,4 +18,8 @@ seq = []
 orx-once = []
 orx-basic = ["orx-parallel/persistent-pool"]
 orx-rayon = ["orx-parallel/persistent-pool-rayon"]
+orx-once-vec2 = []
+orx-basic-vec2 = ["orx-parallel/persistent-pool"]
+orx-rayon-vec2 = ["orx-parallel/persistent-pool-rayon"]
 rayon = []
+rayon-vec2 = []

@@ -1,5 +1,5 @@
 [package]
-name = "orx-parallel-bench-runner"
+name = "bench-runner"
 version = "0.1.0"
 edition = "2024"
 publish = ["artifactory"]

@@ -9,10 +9,11 @@ use clap::Parser;
 fn main() {
     let args = BenchArgs::parse();
 
-    let input_variants = [
-        InputVariant { size: 10_000 },
-        InputVariant { size: 100_000 },
-    ];
+    let ns = [16, 20];
+    let heavy = [true, false];
+
+    let combine_heavy = |n| heavy.map(|heavy| InputVariant { n, heavy });
+    let input_variants: Vec<_> = ns.into_iter().flat_map(combine_heavy).collect();
 
     runner::run(&args, Exp, &input_variants, &Method::get());
 }
