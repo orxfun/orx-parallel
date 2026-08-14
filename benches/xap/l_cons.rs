@@ -125,18 +125,8 @@ impl Experiment for Bench {
 
     type Output = <Output as Exp>::Out;
 
-    type GroupArtifact = ();
-
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         inputs(input_variant.n)
-    }
-
-    fn group_artifact(
-        &mut self,
-        _: &Self::InputFactors,
-        _: &Self::AlgFactors,
-        _: &Self::Input,
-    ) -> Self::GroupArtifact {
     }
 
     fn execute(
@@ -144,7 +134,6 @@ impl Experiment for Bench {
         _: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
-        _: &mut Self::GroupArtifact,
     ) -> Self::Output {
         match alg_variant {
             Method::Iter => iter::<Output>(input),
