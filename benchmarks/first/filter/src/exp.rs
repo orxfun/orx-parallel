@@ -17,7 +17,7 @@ impl Experiment for Exp {
 
     type Input = Vec<u64>;
 
-    type Output = u64;
+    type Output = Option<u64>;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         const SEED: u64 = 654;
@@ -66,29 +66,26 @@ fn h_f(a: &u64) -> bool {
     !black_box((a + 7).is_multiple_of(11))
 }
 
-fn run_seq(input: &[u64], heavy: bool) -> u64 {
+fn run_seq(input: &[u64], heavy: bool) -> Option<u64> {
     match heavy {
         true => input.iter().copied().filter(h_f).find(find),
         false => input.iter().copied().filter(l_f).find(find),
     }
-    .unwrap()
 }
 
-fn run_rayon(input: &[u64], heavy: bool) -> u64 {
+fn run_rayon(input: &[u64], heavy: bool) -> Option<u64> {
     use rayon::prelude::*;
     match heavy {
         true => input.into_par_iter().copied().filter(h_f).find_first(find),
         false => input.into_par_iter().copied().filter(l_f).find_first(find),
     }
-    .unwrap()
 }
 
-fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> u64 {
+fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> Option<u64> {
     use orx_parallel::*;
     let par = input.into_par().iteration_order(ord).copied();
     match heavy {
         true => par.filter(h_f).find(find),
         false => par.filter(l_f).find(find),
     }
-    .unwrap()
 }
