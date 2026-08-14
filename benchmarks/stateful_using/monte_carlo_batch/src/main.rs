@@ -3,7 +3,7 @@ mod exp;
 mod input;
 
 use crate::{alg::Method, exp::Exp, input::InputVariant};
-use bench_helper::{runner, BenchArgs};
+use bench_helper::{BenchArgs, runner};
 use clap::Parser;
 
 fn main() {

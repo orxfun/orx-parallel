@@ -27,15 +27,20 @@ impl Method {
 }
 
 impl Factors for Method {
-    fn factor_names() -> Vec<&'static str> { vec!["method"] }
+    fn factor_names() -> Vec<&'static str> {
+        vec!["method"]
+    }
 
     fn factor_levels(&self) -> Vec<String> {
-        vec![match self {
-            Self::Seq => "seq",
-            Self::Rayon => "rayon",
-            Self::OrxOnce => "orx-once",
-            Self::OrxBasic => "orx-basic",
-            Self::OrxRayon => "orx-rayon",
-        }.to_string()]
+        vec![
+            match self {
+                Self::Seq => "seq",
+                Self::Rayon => "rayon",
+                Self::OrxOnce => "orx-once",
+                Self::OrxBasic => "orx-basic",
+                Self::OrxRayon => "orx-rayon",
+            }
+            .to_string(),
+        ]
     }
 }
