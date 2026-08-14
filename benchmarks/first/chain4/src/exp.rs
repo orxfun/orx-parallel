@@ -17,7 +17,7 @@ impl Experiment for Exp {
 
     type Input = Vec<u64>;
 
-    type Output = u64;
+    type Output = Option<u64>;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         const SEED: u64 = 654;
@@ -95,7 +95,7 @@ fn fm(x: u64) -> Option<u64> {
     }
 }
 
-fn run_seq(input: &[u64], heavy: bool) -> u64 {
+fn run_seq(input: &[u64], heavy: bool) -> Option<u64> {
     match heavy {
         true => input
             .iter()
@@ -112,10 +112,9 @@ fn run_seq(input: &[u64], heavy: bool) -> u64 {
             .filter_map(fm)
             .find(find),
     }
-    .unwrap()
 }
 
-fn run_rayon(input: &[u64], heavy: bool) -> u64 {
+fn run_rayon(input: &[u64], heavy: bool) -> Option<u64> {
     use rayon::prelude::*;
     match heavy {
         true => input
@@ -133,10 +132,9 @@ fn run_rayon(input: &[u64], heavy: bool) -> u64 {
             .filter_map(fm)
             .find_first(find),
     }
-    .unwrap()
 }
 
-fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> u64 {
+fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> Option<u64> {
     use orx_parallel::*;
     let par = input.into_par().iteration_order(ord);
     match heavy {
@@ -153,5 +151,4 @@ fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> u64 {
             .filter_map(fm)
             .find(find),
     }
-    .unwrap()
 }

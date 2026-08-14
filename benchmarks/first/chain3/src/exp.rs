@@ -17,7 +17,7 @@ impl Experiment for Exp {
 
     type Input = Vec<u64>;
 
-    type Output = u64;
+    type Output = Option<u64>;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         const SEED: u64 = 654;
@@ -88,15 +88,14 @@ fn fl(x: u64) -> impl IntoIterator<Item = u64> {
     })
 }
 
-fn run_seq(input: &[u64], heavy: bool) -> u64 {
+fn run_seq(input: &[u64], heavy: bool) -> Option<u64> {
     match heavy {
         true => input.iter().filter(f).map(h_m).flat_map(fl).find(find),
         false => input.iter().filter(f).map(l_m).flat_map(fl).find(find),
     }
-    .unwrap()
 }
 
-fn run_rayon(input: &[u64], heavy: bool) -> u64 {
+fn run_rayon(input: &[u64], heavy: bool) -> Option<u64> {
     use rayon::prelude::*;
     match heavy {
         true => input
@@ -112,15 +111,13 @@ fn run_rayon(input: &[u64], heavy: bool) -> u64 {
             .flat_map_iter(fl)
             .find_first(find),
     }
-    .unwrap()
 }
 
-fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> u64 {
+fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> Option<u64> {
     use orx_parallel::*;
     let par = input.into_par().iteration_order(ord);
     match heavy {
         true => par.filter(f).map(h_m).flat_map(fl).find(find),
         false => par.filter(f).map(l_m).flat_map(fl).find(find),
     }
-    .unwrap()
 }
