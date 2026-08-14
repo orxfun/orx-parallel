@@ -17,7 +17,7 @@ impl Experiment for Exp {
 
     type Input = Vec<u64>;
 
-    type Output = u64;
+    type Output = Option<u64>;
 
     fn input(&mut self, input_variant: &Self::InputFactors) -> Self::Input {
         const SEED: u64 = 654;
@@ -75,29 +75,26 @@ fn h_m(x: &u64) -> impl IntoIterator<Item = u64> {
     })
 }
 
-fn run_seq(input: &[u64], heavy: bool) -> u64 {
+fn run_seq(input: &[u64], heavy: bool) -> Option<u64> {
     match heavy {
         true => input.iter().flat_map(h_m).find(find),
         false => input.iter().flat_map(l_m).find(find),
     }
-    .unwrap()
 }
 
-fn run_rayon(input: &[u64], heavy: bool) -> u64 {
+fn run_rayon(input: &[u64], heavy: bool) -> Option<u64> {
     use rayon::prelude::*;
     match heavy {
         true => input.into_par_iter().flat_map_iter(h_m).find_first(find),
         false => input.into_par_iter().flat_map_iter(l_m).find_first(find),
     }
-    .unwrap()
 }
 
-fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> u64 {
+fn run_orx(input: &[u64], heavy: bool, ord: IterationOrder) -> Option<u64> {
     use orx_parallel::*;
     let par = input.into_par().iteration_order(ord);
     match heavy {
         true => par.flat_map(h_m).find(find),
         false => par.flat_map(l_m).find(find),
     }
-    .unwrap()
 }
