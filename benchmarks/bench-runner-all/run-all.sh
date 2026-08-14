@@ -1,0 +1,19 @@
+cargo run --release -- \
+    --path .. \
+    --path-result ../../docs/bench-ui/results/ \
+    --warmup-runs 25 \
+    --actual-runs 200 \
+    --threads 4 \
+    --threads 8 \
+    --threads 16 \
+    --categories arbitrary_iter \
+    --categories collect \
+    --categories contention_merge \
+    --categories early_exit \
+    --categories fallible \
+    --categories first \
+    --categories heterogeneous \
+    --categories memory_pressure \
+    --categories reduce \
+    --categories stateful_using \
+    --categories throughput_linear
