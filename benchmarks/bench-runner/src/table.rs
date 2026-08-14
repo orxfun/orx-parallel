@@ -1,5 +1,5 @@
 use csv::Writer;
-use std::fs::File;
+use std::{fs::File, path::PathBuf};
 
 #[derive(Debug)]
 pub struct Table {
@@ -58,7 +58,7 @@ impl Table {
         }
     }
 
-    pub fn write_csv(&self, path: &str) {
+    pub fn write_csv(&self, path: &PathBuf) {
         let file = File::create(path).expect("Failed to create CSV file");
         let mut wtr = Writer::from_writer(file);
 

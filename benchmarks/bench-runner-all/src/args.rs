@@ -3,11 +3,11 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 pub struct RunnerArgs {
-    /// Path of the benchmark program
+    /// Path of the directory containing benchmarks
     #[arg(long)]
     pub path: PathBuf,
 
-    /// Path of the csv file where results will be written
+    /// Path of the folder where results will be written
     #[arg(long)]
     pub path_result: PathBuf,
 
@@ -19,7 +19,7 @@ pub struct RunnerArgs {
     #[arg(long)]
     pub actual_runs: usize,
 
-    /// Number of threads to run experiments with
+    /// Benchmark categories to run
     #[arg(long)]
-    pub threads: Vec<usize>,
+    pub categories: Vec<usize>,
 }
