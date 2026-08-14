@@ -24,7 +24,12 @@ impl Factors for InputVariant {
     fn factor_levels(&self) -> Vec<String> {
         vec![
             format!("2e{}", self.n),
-            if self.with_trace { "stats+trace" } else { "stats" }.to_string(),
+            if self.with_trace {
+                "stats+trace"
+            } else {
+                "stats"
+            }
+            .to_string(),
         ]
     }
 }
