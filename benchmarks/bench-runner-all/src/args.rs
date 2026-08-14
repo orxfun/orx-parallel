@@ -19,7 +19,11 @@ pub struct RunnerArgs {
     #[arg(long)]
     pub actual_runs: usize,
 
+    /// Number of threads to run experiments with
+    #[arg(long)]
+    pub threads: Vec<usize>,
+
     /// Benchmark categories to run
     #[arg(long)]
-    pub categories: Vec<usize>,
+    pub categories: Vec<String>,
 }
