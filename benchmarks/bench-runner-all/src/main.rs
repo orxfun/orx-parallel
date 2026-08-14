@@ -1,6 +1,7 @@
 mod args;
 
 use crate::args::RunnerArgs;
+use bench_runner::run_benchmark;
 use clap::Parser;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
