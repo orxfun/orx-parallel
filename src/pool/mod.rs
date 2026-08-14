@@ -53,23 +53,11 @@ pub use pool_impl::wasm_web_runtime_info;
 pub use pool_impl::wasm_web_start_worker;
 
 // 4. basic
-#[cfg(all(
-    feature = "std",
-    feature = "persistent-pool",
-    not(feature = "persistent-pool-rayon"),
-    not(feature = "wasm"),
-    not(feature = "wasm-experimental"),
-))]
+#[cfg(feature = "std")]
 pub use pool_impl::BasicPool;
 
 // 5. once
-#[cfg(all(
-    feature = "std",
-    not(feature = "persistent-pool"),
-    not(feature = "persistent-pool-rayon"),
-    not(feature = "wasm"),
-    not(feature = "wasm-experimental"),
-))]
+#[cfg(feature = "std")]
 pub use pool_impl::OncePool;
 
 // 6. sequential

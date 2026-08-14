@@ -106,3 +106,32 @@ impl ParThreadPool for &OncePool {
         s.spawn(work);
     }
 }
+
+impl ParThreadPool for &mut OncePool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s std::thread::Scope<'s, 'env>
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        self.num_threads
+    }
+
+    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
+    {
+        std::thread::scope(f)
+    }
+
+    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        s.spawn(work);
+    }
+}

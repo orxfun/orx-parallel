@@ -100,35 +100,27 @@ async function loadCatalog() {
 }
 
 /**
- * Returns sorted method names: seq first, then grouped by prefix (rayon, orx, orx-fixed),
- * sorted numerically within each group, then anything else alphabetically.
+ * Returns sorted method names: seq first, then orx-once, orx-basic, orx-rayon, then rayon, then anything else.
  */
 function sortMethods(methods) {
     const order = (m) => {
-        if (m === 'seq') return [0, 0, m];
-        const rayonMatch = m.match(/^rayon-(\d+)$/);
-        if (rayonMatch) return [1, parseInt(rayonMatch[1]), m];
-        const orxMatch = m.match(/^orx-(\d+)$/);
-        if (orxMatch) return [2, parseInt(orxMatch[1]), m];
-        const orxFixedMatch = m.match(/^orx-fixed-(\d+)$/);
-        if (orxFixedMatch) return [3, parseInt(orxFixedMatch[1]), m];
-        return [4, 0, m];
+        if (m === 'seq') return [0, m];
+        if (m === 'orx-once') return [1, m];
+        if (m === 'orx-basic') return [2, m];
+        if (m === 'orx-rayon') return [3, m];
+        if (m.startsWith('rayon')) return [4, m];
+        return [5, m];
     };
     return [...methods].sort((a, b) => {
-        const [ka, na, sa] = order(a);
-        const [kb, nb, sb] = order(b);
+        const [ka, sa] = order(a);
+        const [kb, sb] = order(b);
         if (ka !== kb) return ka - kb;
-        if (na !== nb) return na - nb;
-        return sa.localeCompare(sb);
+        return sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
     });
 }
 
 function sortMethodsForChart(methods) {
-    return [...methods].sort((a, b) => {
-        if (a.startsWith('seq')) return -1;
-        if (b.startsWith('seq')) return 1;
-        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-    });
+    return sortMethods(methods);
 }
 
 
@@ -249,11 +241,16 @@ async function loadBench(category, bench) {
         state.rows = rows;
         state.filterCols = headers.filter(h => !SKIP_COLS.has(h));
 
-        // Initialize all filters with all distinct values selected
+        // Initialize filters: all methods selected by default, only first value for other columns
         state.filters = {};
         for (const col of state.filterCols) {
             const vals = [...new Set(rows.map(r => r[col]))];
-            state.filters[col] = new Set(vals);
+            if (col === 'method') {
+                state.filters[col] = new Set(vals);
+            } else {
+                const sorted = vals.slice().sort();
+                state.filters[col] = new Set([sorted[0]]);
+            }
         }
 
         setEmptyMsg('', false);

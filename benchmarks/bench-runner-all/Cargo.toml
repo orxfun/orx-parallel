@@ -1,0 +1,9 @@
+[package]
+name = "bench-runner-all"
+version = "0.1.0"
+edition = "2024"
+publish = ["artifactory"]
+
+[dependencies]
+bench-runner = { path = "../bench-runner" }
+clap = { version = "4.6.6", features = ["derive"] }
