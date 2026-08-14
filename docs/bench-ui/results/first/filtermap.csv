@@ -1,0 +1,16 @@
+method,num_threads,n,task,time (ns)
+seq,4,2e16,heavy,301
+seq,8,2e16,heavy,432
+seq,16,2e16,heavy,241
+rayon,4,2e16,heavy,179792
+rayon,8,2e16,heavy,362809
+rayon,16,2e16,heavy,644223
+orx-once,4,2e16,heavy,180454
+orx-once,8,2e16,heavy,360756
+orx-once,16,2e16,heavy,668977
+orx-basic,4,2e16,heavy,59725
+orx-basic,8,2e16,heavy,113392
+orx-basic,16,2e16,heavy,220883
+orx-rayon,4,2e16,heavy,158122
+orx-rayon,8,2e16,heavy,327140
+orx-rayon,16,2e16,heavy,773428

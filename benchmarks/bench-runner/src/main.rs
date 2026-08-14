@@ -7,6 +7,8 @@ use clap::Parser;
 use indicatif::ProgressBar;
 use std::fs;
 use std::process::{Command, Stdio};
+use std::thread::sleep;
+use std::time::Duration;
 use toml_edit::DocumentMut;
 
 fn main() {
@@ -26,6 +28,7 @@ fn main() {
 
     for method in &methods {
         for &threads in &args.threads {
+            sleep(Duration::from_millis(500));
             let output = run_once(&args, threads, method);
             table.append(output, threads);
             bar.inc(1);

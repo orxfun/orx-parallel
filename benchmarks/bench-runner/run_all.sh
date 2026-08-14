@@ -1,0 +1,23 @@
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/collect/chain2 --path-result ~/orx/orx-parallel/docs/bench-ui/results/collect/chain2.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/collect/chain3 --path-result ~/orx/orx-parallel/docs/bench-ui/results/collect/chain3.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/collect/chain4 --path-result ~/orx/orx-parallel/docs/bench-ui/results/collect/chain4.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/collect/filter --path-result ~/orx/orx-parallel/docs/bench-ui/results/collect/filter.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/collect/filtermap --path-result ~/orx/orx-parallel/docs/bench-ui/results/collect/filtermap.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/collect/flatmap --path-result ~/orx/orx-parallel/docs/bench-ui/results/collect/flatmap.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/collect/map --path-result ~/orx/orx-parallel/docs/bench-ui/results/collect/map.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/first/chain2 --path-result ~/orx/orx-parallel/docs/bench-ui/results/first/chain2.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/first/chain3 --path-result ~/orx/orx-parallel/docs/bench-ui/results/first/chain3.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/first/chain4 --path-result ~/orx/orx-parallel/docs/bench-ui/results/first/chain4.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/first/filter --path-result ~/orx/orx-parallel/docs/bench-ui/results/first/filter.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/first/filtermap --path-result ~/orx/orx-parallel/docs/bench-ui/results/first/filtermap.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/first/flatmap --path-result ~/orx/orx-parallel/docs/bench-ui/results/first/flatmap.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/first/map --path-result ~/orx/orx-parallel/docs/bench-ui/results/first/map.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/reduce/chain2 --path-result ~/orx/orx-parallel/docs/bench-ui/results/reduce/chain2.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/reduce/chain3 --path-result ~/orx/orx-parallel/docs/bench-ui/results/reduce/chain3.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/reduce/chain4 --path-result ~/orx/orx-parallel/docs/bench-ui/results/reduce/chain4.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/reduce/filter --path-result ~/orx/orx-parallel/docs/bench-ui/results/reduce/filter.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/reduce/filtermap --path-result ~/orx/orx-parallel/docs/bench-ui/results/reduce/filtermap.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/reduce/flatmap --path-result ~/orx/orx-parallel/docs/bench-ui/results/reduce/flatmap.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
+cargo run --release -- --path ~/orx/orx-parallel/benchmarks/reduce/map --path-result ~/orx/orx-parallel/docs/bench-ui/results/reduce/map.csv --warmup-runs 20 --actual-runs 100 --threads 4 --threads 8 --threads 16
