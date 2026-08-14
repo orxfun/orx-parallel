@@ -30,7 +30,7 @@ impl Table {
 
         for output in output_rows {
             #[cfg(debug_assertions)]
-            println!("{output}");
+            println!("> {output}");
 
             let parts: Vec<String> = output.split("__").map(|x| x.to_string()).collect();
 
@@ -86,5 +86,7 @@ fn prop_value(parts: &[String], prop: &str) -> String {
         .filter(|x| x.starts_with(&format!("{prop}:")))
         .map(|x| x.split(":").last().unwrap().to_string())
         .next()
-        .unwrap()
+        .expect(&format!(
+            "Cannot find the property value `{prop}` in parts = {parts:?}"
+        ))
 }
