@@ -1,11 +1,15 @@
 cargo run --release -- \
     --path .. \
     --path-result ../../docs/bench-ui/results/ \
-    --warmup-runs 25 \
-    --actual-runs 200 \
+    --warmup-runs 50 \
+    --actual-runs 500 \
     --threads 4 \
     --threads 8 \
     --threads 16 \
+    --threads 20 \
+    --threads 24 \
+    --threads 28 \
+    --threads 32 \
     --categories arbitrary_iter \
     --categories collect \
     --categories contention_merge \

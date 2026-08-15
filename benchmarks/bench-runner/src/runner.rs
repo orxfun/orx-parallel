@@ -29,7 +29,7 @@ pub fn run_benchmark(
 
     for method in &methods {
         for &threads in threads {
-            sleep(Duration::from_millis(500));
+            sleep(Duration::from_millis(1000));
             let output = run_once(path, warmup_runs, actual_runs, threads, method);
             table.append(output, threads);
             bar.inc(1);
