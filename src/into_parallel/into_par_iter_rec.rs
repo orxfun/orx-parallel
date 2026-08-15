@@ -34,7 +34,7 @@ where
     /// ];
     ///
     /// // Start from the root and expand recursively.
-    /// let mut visited: Vec<_> = vec![0usize]
+    /// let mut visited: Vec<_> = [0usize]
     ///     .into_par_recursive(|node| children[*node].iter().copied())
     ///     .map(|x| 2 * x + 1)
     ///     .collect();
