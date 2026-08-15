@@ -123,6 +123,28 @@ function sortMethodsForChart(methods) {
     return sortMethods(methods);
 }
 
+function sortFilterValues(col, values) {
+    if (col === 'method') {
+        return sortMethods(values);
+    }
+
+    if (col === 'threads') {
+        return [...values].sort((a, b) => {
+            const na = Number(a);
+            const nb = Number(b);
+            const aIsNum = Number.isFinite(na);
+            const bIsNum = Number.isFinite(nb);
+
+            if (aIsNum && bIsNum) return nb - na;
+            if (aIsNum) return -1;
+            if (bIsNum) return 1;
+            return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+        });
+    }
+
+    return [...values].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+}
+
 
 /** Assign a consistent color to a method name. */
 function methodColor(method) {
@@ -248,7 +270,7 @@ async function loadBench(category, bench) {
             if (col === 'method') {
                 state.filters[col] = new Set(vals);
             } else {
-                const sorted = vals.slice().sort();
+                const sorted = sortFilterValues(col, vals);
                 state.filters[col] = new Set([sorted[0]]);
             }
         }
@@ -288,7 +310,7 @@ function renderFilters() {
 
     for (const col of state.filterCols) {
         const allVals = [...new Set(state.rows.map(r => r[col]))];
-        const sorted = col === 'method' ? sortMethods(allVals) : allVals.slice().sort();
+        const sorted = sortFilterValues(col, allVals);
 
         const row = document.createElement('div');
         row.className = 'filter-row';
