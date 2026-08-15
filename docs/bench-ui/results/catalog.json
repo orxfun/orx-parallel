@@ -1,4 +1,8 @@
 {
+  "arbitrary_iter": [
+    "generic_iter",
+    "map_set_processing"
+  ],
   "collect": [
     "chain2",
     "chain3",
@@ -8,6 +12,33 @@
     "flatmap",
     "map"
   ],
+  "contention_merge": [
+    "grouped_topk"
+  ],
+  "early_exit": [
+    "find_first",
+    "suspicious_find_any"
+  ],
+  "fallible": [
+    "validation_option",
+    "validation_result"
+  ],
+  "first": [
+    "chain2",
+    "chain3",
+    "chain4",
+    "filter",
+    "filtermap",
+    "flatmap",
+    "map"
+  ],
+  "heterogeneous": [
+    "advanced",
+    "simple"
+  ],
+  "memory_pressure": [
+    "string_formatting"
+  ],
   "reduce": [
     "chain2",
     "chain3",
@@ -16,5 +47,12 @@
     "filtermap",
     "flatmap",
     "map"
+  ],
+  "stateful_using": [
+    "monte_carlo_batch"
+  ],
+  "throughput_linear": [
+    "log_collect",
+    "log_reduce"
   ]
 }
