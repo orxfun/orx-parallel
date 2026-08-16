@@ -87,12 +87,12 @@ impl Experiment for Exp {
 
     fn execute(
         &mut self,
-        _input_variant: &Self::InputFactors,
+        input_variant: &Self::InputFactors,
         alg_variant: &Self::AlgFactors,
         input: &Self::Input,
     ) -> Self::Output {
         let (items, capacity, generations) = input;
-        let population_size = 100;
+        let population_size = input_variant.population_size;
         match alg_variant {
             Method::Seq => run_ga_sequential(items, *capacity, *generations, population_size),
             Method::Rayon => run_ga_rayon(items, *capacity, *generations, population_size),
