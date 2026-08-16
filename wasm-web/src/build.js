@@ -72,7 +72,11 @@ export async function buildWasm({
         "build-std=panic_abort,std"
     ], {
         stdio: "inherit",
-        env: { ...process.env, RUSTUP_TOOLCHAIN: rustupToolchain, RUSTFLAGS: rustflags }
+        env: {
+            ...process.env,
+            RUSTUP_TOOLCHAIN: rustupToolchain,
+            CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUSTFLAGS: rustflags
+        }
     });
 
     return prepareWasm({ outDir: outputDir, bindingsFile, threads });
