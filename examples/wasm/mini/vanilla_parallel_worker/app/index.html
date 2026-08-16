@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+
+<body>
+    <label>
+        input
+        <input id="input" type="number" value="1000000" min="1" />
+        the larger the input, the harder the computation
+    </label>
+
+    <br />
+
+    <label>
+        threads
+        <input id="num_threads" type="number" value="1" min="0" max="32" />
+        0 uses all threads configured for the wasm pool
+    </label>
+
+    <hr />
+
+    <label>
+        <button id="run">run</button>
+        press & wait until the result is displayed below
+    </label>
+
+    <hr />
+
+    <p id="result">-</p>
+
+    <script type="module" src="./src/main.ts"></script>
+</body>
+
+</html>

@@ -22,7 +22,8 @@
         "typecheck": "tsc -p tsconfig.json --noEmit",
         "test": "npm run build && node --test test/client.test.mjs test/build.test.mjs",
         "wasm:build": "node src/build.js build",
-        "wasm:prepare": "node src/build.js prepare"
+        "wasm:prepare": "node src/build.js prepare",
+        "prepare": "npm run build"
     },
     "devDependencies": {
         "typescript": "^5.8.3"
