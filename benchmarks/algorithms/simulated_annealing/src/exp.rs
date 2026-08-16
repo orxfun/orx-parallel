@@ -2,8 +2,8 @@ use crate::{alg::Method, input::InputVariant};
 use orx_criterion::Experiment;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 const INITIAL_TEMPERATURE: f64 = 25.0;
 const COOLING_RATE: f64 = 0.995;
