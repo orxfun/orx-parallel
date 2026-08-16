@@ -5,7 +5,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 use std::hint::black_box;
 
-const CPU_MIX_ROUNDS: usize = 1000;
+const CPU_MIX_ROUNDS: usize = 100;
 
 /// Represents a knapsack item with weight and value
 #[derive(Clone, Debug)]
@@ -19,18 +19,25 @@ pub struct Item {
 pub struct Individual {
     pub genes: Vec<bool>, // true = item included, false = not included
     pub fitness: u32,
+    heavy: bool,
 }
 
 impl Individual {
-    pub fn new(genes: Vec<bool>) -> Self {
-        Individual { genes, fitness: 0 }
+    pub fn new(heavy: bool, genes: Vec<bool>) -> Self {
+        Individual {
+            heavy,
+            genes,
+            fitness: 0,
+        }
     }
 
     pub fn evaluate(&mut self, items: &[Item], capacity: u32) {
         let mut total_weight = 0u32;
         let mut total_value = 0u32;
 
-        let _ = black_box(cpu_mix(CPU_MIX_ROUNDS, total_value as u64));
+        if self.heavy {
+            let _ = black_box(cpu_mix(CPU_MIX_ROUNDS, total_value as u64));
+        }
 
         for (i, &included) in self.genes.iter().enumerate() {
             if included {
@@ -93,12 +100,15 @@ impl Experiment for Exp {
     ) -> Self::Output {
         let (items, capacity, generations) = input;
         let population_size = input_variant.population_size;
+        let heavy = input_variant.heavy;
         match alg_variant {
-            Method::Seq => run_ga_sequential(items, *capacity, *generations, population_size),
-            Method::Rayon => run_ga_rayon(items, *capacity, *generations, population_size),
-            Method::OrxOnce => run_ga_orx(items, *capacity, *generations, population_size),
-            Method::OrxBasic => run_ga_orx(items, *capacity, *generations, population_size),
-            Method::OrxRayon => run_ga_orx(items, *capacity, *generations, population_size),
+            Method::Seq => {
+                run_ga_sequential(items, *capacity, *generations, heavy, population_size)
+            }
+            Method::Rayon => run_ga_rayon(items, *capacity, *generations, heavy, population_size),
+            Method::OrxOnce => run_ga_orx(items, *capacity, *generations, heavy, population_size),
+            Method::OrxBasic => run_ga_orx(items, *capacity, *generations, heavy, population_size),
+            Method::OrxRayon => run_ga_orx(items, *capacity, *generations, heavy, population_size),
         }
     }
 
@@ -133,10 +143,11 @@ fn run_ga_sequential(
     items: &[Item],
     capacity: u32,
     generations: usize,
+    heavy: bool,
     population_size: usize,
 ) -> GaResult {
     let mut rng = ChaCha8Rng::seed_from_u64(0);
-    let mut population = create_initial_population(&mut rng, items.len(), population_size);
+    let mut population = create_initial_population(&mut rng, heavy, items.len(), population_size);
 
     for _ in 0..generations {
         // Evaluate fitness
@@ -185,12 +196,13 @@ fn run_ga_rayon(
     items: &[Item],
     capacity: u32,
     generations: usize,
+    heavy: bool,
     population_size: usize,
 ) -> GaResult {
     use rayon::prelude::*;
 
     let mut rng = ChaCha8Rng::seed_from_u64(0);
-    let mut population = create_initial_population(&mut rng, items.len(), population_size);
+    let mut population = create_initial_population(&mut rng, heavy, items.len(), population_size);
 
     for _ in 0..generations {
         // Parallel fitness evaluation
@@ -245,12 +257,13 @@ fn run_ga_orx(
     items: &[Item],
     capacity: u32,
     generations: usize,
+    heavy: bool,
     population_size: usize,
 ) -> GaResult {
     use orx_parallel::*;
 
     let mut rng = ChaCha8Rng::seed_from_u64(0);
-    let mut population = create_initial_population(&mut rng, items.len(), population_size);
+    let mut population = create_initial_population(&mut rng, heavy, items.len(), population_size);
 
     for _ in 0..generations {
         // Parallel fitness evaluation
@@ -317,6 +330,7 @@ fn run_ga_orx(
 
 fn create_initial_population(
     rng: &mut impl Rng,
+    heavy: bool,
     num_items: usize,
     population_size: usize,
 ) -> Vec<Individual> {
@@ -325,7 +339,7 @@ fn create_initial_population(
             let genes = (0..num_items)
                 .map(|_| rng.random_range(0..2) == 1)
                 .collect();
-            Individual::new(genes)
+            Individual::new(heavy, genes)
         })
         .collect()
 }
@@ -342,5 +356,5 @@ fn crossover(parent1: &Individual, parent2: &Individual, rng: &mut impl Rng) -> 
         }
     }
 
-    Individual::new(child_genes)
+    Individual::new(parent1.heavy, child_genes)
 }
