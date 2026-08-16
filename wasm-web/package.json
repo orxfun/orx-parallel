@@ -1,0 +1,13 @@
+{
+    "name": "orx-parallel-web",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test": "npm run build && node --test test/client.test.mjs"
+    },
+    "devDependencies": {
+        "typescript": "^5.8.3"
+    }
+}
