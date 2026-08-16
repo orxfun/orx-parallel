@@ -10,12 +10,12 @@ cargo run --release -- \
     --threads 24 \
     --threads 28 \
     --threads 32 \
-    --categories arbitrary_iter \
-    --categories collect \
-    --categories contention_merge \
-    --categories early_exit \
-    --categories fallible \
-    --categories first \
+    # --categories arbitrary_iter \
+    # --categories collect \
+    # --categories contention_merge \
+    # --categories early_exit \
+    # --categories fallible \
+    # --categories first \
     --categories heterogeneous \
     --categories memory_pressure \
     --categories reduce \
