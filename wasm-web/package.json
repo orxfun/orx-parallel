@@ -1,0 +1,31 @@
+{
+    "name": "orx-parallel-web",
+    "private": true,
+    "type": "module",
+    "files": [
+        "dist",
+        "src"
+    ],
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./worker": "./dist/worker.js",
+        "./vite": "./src/vite.js",
+        "./build": "./src/build.js"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test": "npm run build && node --test test/client.test.mjs test/build.test.mjs test/vite.test.mjs",
+        "wasm:build": "node src/build.js build",
+        "wasm:prepare": "node src/build.js prepare",
+        "prepare": "npm run build"
+    },
+    "devDependencies": {
+        "typescript": "^5.8.3"
+    }
+}
