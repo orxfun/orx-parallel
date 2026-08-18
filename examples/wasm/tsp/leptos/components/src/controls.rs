@@ -2,8 +2,8 @@ use leptos::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
 use super::{
-    MAX_CITIES, MAX_THREADS, MIN_CITIES, MIN_THREADS, SearchMode, UiState, clear_best,
-    create_locations, parse_u32_input, parse_u64_input, run_search,
+    MAX_CITIES, MAX_THREADS, MIN_CITIES, MIN_THREADS, UiState, clear_best, create_locations,
+    parse_u32_input, parse_u64_input, run_search,
 };
 
 #[component]
@@ -50,12 +50,12 @@ pub fn ControlsSection(ui: UiState) -> impl IntoView {
                         />
                     </label>
                     <label>
-                        Threads (1..16)
+                        Threads (0..32)
                         <input
                             id="threads"
                             type="number"
-                            min="1"
-                            max="16"
+                            min=MIN_THREADS.to_string()
+                            max=MAX_THREADS.to_string()
                             prop:value=move || ui.threads.get().to_string()
                             on:input={
                                 let ui = ui.clone();
@@ -109,28 +109,16 @@ pub fn ControlsSection(ui: UiState) -> impl IntoView {
 
                 <div class="actions">
                     <button
-                        id="runParallel"
+                        id="run"
                         prop:disabled=move || ui.is_running.get()
                         on:click={
                             let ui = ui.clone();
                             move |_| {
-                                spawn_local(run_search(ui.clone(), SearchMode::Parallel));
+                                spawn_local(run_search(ui.clone()));
                             }
                         }
                     >
-                        Run parallel
-                    </button>
-                    <button
-                        id="runSequential"
-                        prop:disabled=move || ui.is_running.get()
-                        on:click={
-                            let ui = ui.clone();
-                            move |_| {
-                                spawn_local(run_search(ui.clone(), SearchMode::Sequential));
-                            }
-                        }
-                    >
-                        Run sequential
+                        Run
                     </button>
                     <button
                         id="reset"
