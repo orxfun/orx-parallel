@@ -33,6 +33,7 @@ export class ParallelWorker<T extends ComputationMap> {
     private initializationResolve: (() => void) | undefined;
     private initializationReject: ((reason: unknown) => void) | undefined;
     private terminated = false;
+    private initializedThreadCount: number | undefined;
 
     constructor(options: ParallelWorkerOptions<T>) {
         if (!Number.isInteger(options.threads ?? 0) || (options.threads ?? 0) < 0) {
@@ -64,6 +65,10 @@ export class ParallelWorker<T extends ComputationMap> {
             methods: [...this.methods]
         } satisfies WorkerRequest);
         return this.initialization;
+    }
+
+    get initializedThreads(): number | undefined {
+        return this.initializedThreadCount;
     }
 
     call<K extends keyof T & string>(method: K, args: Parameters<T[K]>): CancellablePromise<Awaited<ReturnType<T[K]>>> {
@@ -100,6 +105,7 @@ export class ParallelWorker<T extends ComputationMap> {
         this.worker.terminate();
         this.worker = this.createWorker();
         this.initialization = undefined;
+        this.initializedThreadCount = undefined;
         await this.ready();
     }
 
@@ -119,6 +125,7 @@ export class ParallelWorker<T extends ComputationMap> {
 
     private handleResponse(response: WorkerResponse): void {
         if (response.type === "ready") {
+            this.initializedThreadCount = response.threads;
             this.initializationResolve?.();
             this.initializationResolve = undefined;
             this.initializationReject = undefined;

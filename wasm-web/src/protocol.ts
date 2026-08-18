@@ -13,7 +13,7 @@ export type WorkerRequest =
     };
 
 export type WorkerResponse =
-    | { type: "ready" }
+    | { type: "ready"; threads: number }
     | { type: "result"; id: number; value: unknown }
     | { type: "error"; id?: number; message: string };
 

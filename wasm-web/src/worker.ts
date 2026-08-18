@@ -3,6 +3,7 @@ import type { WasmBindings, WorkerRequest, WorkerResponse } from "./protocol.js"
 let bindings: WasmBindings | undefined;
 let allowedMethods = new Set<string>();
 let initialization: Promise<void> | undefined;
+let initializedThreads: number | undefined;
 
 function respond(response: WorkerResponse): void {
     self.postMessage(response);
@@ -20,10 +21,14 @@ function initialize(request: Extract<WorkerRequest, { type: "init" }>): Promise<
             throw new Error("wasm bindings must export init_parallel_runtime");
         }
 
+        const threads = request.threads === 0
+            ? Math.max(1, self.navigator?.hardwareConcurrency ?? 1)
+            : request.threads;
         await imported.default();
-        await imported.init_parallel_runtime(request.threads);
+        await imported.init_parallel_runtime(threads);
         bindings = imported;
         allowedMethods = new Set(request.methods);
+        initializedThreads = threads;
     })();
 
     return initialization;
@@ -34,7 +39,7 @@ self.addEventListener("message", (event: MessageEvent<WorkerRequest>) => {
 
     if (request.type === "init") {
         initialize(request)
-            .then(() => respond({ type: "ready" }))
+            .then(() => respond({ type: "ready", threads: initializedThreads ?? request.threads }))
             .catch((error: unknown) => {
                 const message = error instanceof Error ? error.message : String(error);
                 respond({ type: "error", message });
