@@ -1,16 +1,36 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { orxParallelWasm } from "orx-parallel-web/vite";
 
 export default defineConfig({
-    plugins: [react()],
+    plugins: [
+        react(),
+        orxParallelWasm({
+            bindings: "../wasm_bindings",
+            outDir: "./pkg",
+            schemas: {
+                run_search: {
+                    args: [
+                        { type: "number" },
+                        { type: "bigint" },
+                        { type: "number" },
+                        { type: "number" },
+                        {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    x: { type: "number" },
+                                    y: { type: "number" }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        })
+    ],
     base: "./",
-    envPrefix: ["VITE_", "ORX_PARALLEL_"],
-    server: {
-        headers: {
-            "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Embedder-Policy": "require-corp"
-        }
-    },
     worker: {
         format: "es"
     }

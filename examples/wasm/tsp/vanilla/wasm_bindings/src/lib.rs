@@ -14,7 +14,7 @@ pub struct RunResult {
 #[wasm_bindgen]
 /// Initializes the shared thread pool used by the parallel search path.
 ///
-/// This function must be called once before invoking `run_search` when using the parallel mode.
+/// This function must be called once before invoking `run_search`.
 #[allow(unused_variables)]
 pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
     #[cfg(target_feature = "atomics")]
@@ -35,7 +35,7 @@ pub fn locations(seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 /// Runs the TSP search over the provided locations and returns the best tour.
 ///
-/// Call `init_parallel_runtime` first if you plan to use the parallel search mode.
+/// Call `init_parallel_runtime` first.
 ///
 /// `locations` should be a JS array of objects shaped like `{ x: number, y: number }`.
 ///
