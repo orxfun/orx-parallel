@@ -32,24 +32,17 @@ Important parts of that script:
 
 When you change the Rust side, rerun `npm run build:wasm` so the generated `./pkg/wasm_bindings.js` and `./pkg/*.wasm` stay in sync with the code imported by the UI.
 
-## search worker
+## persistent search worker
 
-`src/search-runner.ts` is the worker bridge used by `src/main.ts`.
+`src/search-runner.ts` owns one persistent `ParallelWorker` from
+`orx-parallel-web`. It initializes the generated wasm package and its parallel
+runtime once, then sends every `run_search(...)` call through the same worker.
+Calls are serialized, which matches the wasm pool's single active computation
+scope while retaining parallelism inside each search.
 
-`runSearchAlgorithm(...)` in `src/search-runner.ts` creates a module worker from `src/search-worker.ts` with `new Worker(new URL("./search-worker.ts", import.meta.url), { type: "module" })`.
-
-`src/search-worker.ts` then performs the wasm execution.
-
-Inside the worker:
-
-- import `init`, `init_parallel_runtime`, and `run_search` from `./pkg/wasm_bindings.js`
-- call `init()` in the worker before touching wasm exports
-- call `init_parallel_runtime(threadCount)` before the first parallel search in that worker
-- send search results back to the main thread with `postMessage`
-
-In this example, the thread pool is created per worker. That means each worker owns its own pool, and a new worker implies a new pool.
-
-You can also keep a persistent search worker alive and reuse it for multiple searches. Either way, the worker must initialize the parallel runtime once before it runs parallel search.
+The worker terminates when the page unloads. The Vite plugin rebuilds the wasm
+package, prepares the nested wasm workers, and provides the cross-origin
+isolation headers required for shared-memory wasm.
 
 ## config files that matter
 
@@ -57,8 +50,8 @@ You can also keep a persistent search worker alive and reuse it for multiple sea
   - `dev:full` builds wasm first, then starts Vite
   - `dev` starts Vite only
   - `build` runs TypeScript typechecking before the production build
+- `vite.config.ts` uses `orxParallelWasm(...)` to build the wasm package, configure the persistent worker, and set the required isolation headers
 - `vite.config.ts` uses `worker.format: "es"` so the module worker is emitted in ESM form
-- `vite.config.ts` also sets `server.headers` for `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`; this is required for cross-origin isolation, which in turn is required for shared-memory wasm and browser threads
 - `tsconfig.json` uses `moduleResolution: "Bundler"` and `types: ["vite/client"]` so the generated wasm package and Vite imports typecheck cleanly
 
 Importantly, parallel computation will not work without `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers. As mentioned above, this is added to Vite configuration. If you serve the built `dist/` folder outside Vite, the server must send the same COOP/COEP headers. A plain static server like `npx serve dist` will not work for threaded wasm because the browser will reject `SharedArrayBuffer` unless `self.crossOriginIsolated` is true. This repo includes `npm run serve:dist`, which serves `dist/` locally with the required headers.
@@ -68,7 +61,7 @@ Importantly, parallel computation will not work without `Cross-Origin-Opener-Pol
 Vite:
 
 ```bash
-npm run dev:full
+npm run dev
 
 # or
 npm run build:wasm

@@ -1,10 +1,11 @@
-import { buildWasm } from "./build.js";
+import { buildWasm, resolveThreads } from "./build.js";
 import { fileURLToPath } from "node:url";
 
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 
 export function orxParallelWasm(options) {
     let buildPromise;
+    const threads = options.threads ?? resolveThreads();
 
     return {
         name: "orx-parallel-wasm",
@@ -14,6 +15,9 @@ export function orxParallelWasm(options) {
                     fs: {
                         allow: [config.root ?? process.cwd(), packageRoot]
                     }
+                },
+                define: {
+                    __ORX_PARALLEL_MAX_NUM_THREADS__: JSON.stringify(threads)
                 }
             };
         },

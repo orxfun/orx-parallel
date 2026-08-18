@@ -3,11 +3,12 @@ import test from "node:test";
 import { orxParallelWasm } from "../src/vite.js";
 
 test("Vite plugin allows the app and local package roots", () => {
-    const plugin = orxParallelWasm({});
+    const plugin = orxParallelWasm({ threads: 16 });
     const config = plugin.config({ root: "/example/app" });
 
     assert.equal(config.server.fs.allow[0], "/example/app");
     assert.match(config.server.fs.allow[1], /wasm-web\/?$/);
+    assert.equal(config.define.__ORX_PARALLEL_MAX_NUM_THREADS__, "16");
 });
 
 test("Vite middleware adds cross-origin isolation headers", () => {

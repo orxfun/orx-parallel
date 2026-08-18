@@ -11,7 +11,6 @@
   --accent: #0f766e;
   --accent2: #f59e0b;
   --parallel: #009900;
-  --sequential: #47476b;
   --reset: #e60000;
   --city-node: #e60000;
   --tour-line: #e63900;
@@ -78,7 +77,7 @@ body {
 }
 
 main {
-  max-width: 1020px;
+  max-width: 1050px;
   margin: 32px auto;
   padding: clamp(14px, 3vw, 20px);
 }
@@ -328,14 +327,12 @@ p {
   border-radius: 50%;
   background:
     radial-gradient(circle at center, rgba(255, 255, 255, 0.12) 0 35%, transparent 35.5%),
-    repeating-conic-gradient(
-      from 0deg,
+    repeating-conic-gradient(from 0deg,
       rgba(15, 118, 110, 0.05) 0deg 10deg,
       rgba(15, 118, 110, 0.98) 10deg 24deg,
       rgba(14, 165, 161, 0.98) 24deg 38deg,
       rgba(91, 179, 0, 0.98) 38deg 52deg,
-      rgba(15, 118, 110, 0.05) 52deg 60deg
-    );
+      rgba(15, 118, 110, 0.05) 52deg 60deg);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
   animation: spin 1s linear infinite;
@@ -424,6 +421,7 @@ button.cancel {
 }
 
 @keyframes spin-reverse {
+
   0%,
   100% {
     transform: rotate(0deg);
@@ -565,12 +563,8 @@ button:active::after {
   transform: scale(1.12);
 }
 
-#runParallel {
+#run {
   background: var(--parallel);
-}
-
-#runSequential {
-  background: var(--sequential)
 }
 
 #reset {
@@ -721,6 +715,7 @@ canvas {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   button,
   button::after {
     transition: none;

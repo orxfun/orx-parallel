@@ -13,7 +13,7 @@ function initialize(request: Extract<WorkerRequest, { type: "init" }>): Promise<
     if (initialization !== undefined) return initialization;
 
     initialization = (async () => {
-        const imported = (await import(request.bindingsUrl)) as WasmBindings;
+        const imported = (await import(/* @vite-ignore */ request.bindingsUrl)) as WasmBindings;
         if (typeof imported.default !== "function") {
             throw new Error("wasm bindings must export a default initializer");
         }

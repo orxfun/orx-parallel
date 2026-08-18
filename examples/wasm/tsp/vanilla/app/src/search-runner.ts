@@ -1,41 +1,39 @@
-import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
+import { ParallelWorker } from "orx-parallel-web";
+import bindingsUrl from "../pkg/wasm_bindings.js?url";
+import type { Location, RunSettings, SearchResult } from "./shared-types";
 
-export function runSearchAlgorithm(settings: SearchRequest["settings"], locations: SearchRequest["locations"]): Promise<SearchResult> {
-    return new Promise<SearchResult>((resolve, reject) => {
-        const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
-            type: "module"
-        });
+type TspComputations = {
+    run_search: (
+        parallelize: boolean,
+        iterations: number,
+        seed: bigint,
+        threads: number,
+        chunkSize: number,
+        locations: Location[]
+    ) => SearchResult;
+};
 
-        const cleanup = () => {
-            worker.terminate();
-        };
+const searchWorker = new ParallelWorker<TspComputations>({
+    bindingsUrl,
+    methods: ["run_search"],
+    threads: 0
+});
 
-        worker.addEventListener(
-            "message",
-            (event: MessageEvent) => {
-                const data = event.data as SearchResponse;
+export function initializeSearchWorker(): Promise<void> {
+    return searchWorker.ready();
+}
 
-                if (data.type === "search-error") {
-                    cleanup();
-                    reject(new Error(data.message));
-                    return;
-                }
+export function terminateSearchWorker(): void {
+    searchWorker.terminate();
+}
 
-                cleanup();
-                resolve(data.result);
-            },
-            { once: true }
-        );
-
-        worker.addEventListener(
-            "error",
-            (event) => {
-                cleanup();
-                reject(new Error(event.message || "search worker failed"));
-            },
-            { once: true }
-        );
-
-        worker.postMessage({ settings, locations } satisfies SearchRequest);
-    });
+export function runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
+    return searchWorker.call("run_search", [
+        true,
+        settings.iterations,
+        settings.seed,
+        settings.threads,
+        settings.chunkSize,
+        locations
+    ]);
 }
