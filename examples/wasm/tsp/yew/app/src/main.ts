@@ -1,5 +1,5 @@
 import init, { start_app } from "../pkg/components.js";
-import "./search-runner.ts";
+import { createSearchWorker, terminateSearchWorker } from "./search-runner";
 import "../style.css";
 import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
@@ -11,6 +11,8 @@ hljs.registerLanguage("rust", rust);
     hljs.highlightAll();
 };
 
-void init().then(() => {
+void init().then(async () => {
+    await createSearchWorker(0);
     start_app();
+    window.addEventListener("beforeunload", terminateSearchWorker, { once: true });
 });

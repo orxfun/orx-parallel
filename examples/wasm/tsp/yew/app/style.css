@@ -565,12 +565,8 @@ button:active::after {
   transform: scale(1.12);
 }
 
-#runParallel {
+#run {
   background: var(--parallel);
-}
-
-#runSequential {
-  background: var(--sequential)
 }
 
 #reset {

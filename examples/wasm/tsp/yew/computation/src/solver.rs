@@ -9,18 +9,7 @@ pub struct Solution {
     pub distance: f64,
 }
 
-pub fn run_search_sequential(
-    iterations: usize,
-    seed: u64,
-    locations: &[Location],
-) -> Option<Solution> {
-    let mut rng = SmallRng::seed_from_u64(seed);
-    (0..iterations)
-        .map(|_| create_tour(&mut rng, locations))
-        .min_by_key(|x| OrderedFloat(x.distance))
-}
-
-pub fn run_search_parallel(
+pub fn run_search(
     iterations: usize,
     seed: u64,
     threads: usize,

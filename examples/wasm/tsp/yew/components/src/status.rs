@@ -1,10 +1,8 @@
-use crate::SearchMode;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct StatusSectionProps {
     pub is_running: bool,
-    pub run_mode: SearchMode,
     pub run_subtitle: String,
     pub run_elapsed: String,
     pub best_distance: String,
@@ -20,12 +18,6 @@ pub fn status_section(props: &StatusSectionProps) -> Html {
         classes!("run-overlay")
     };
 
-    let run_title = if props.run_mode == SearchMode::Parallel {
-        "Running parallel search..."
-    } else {
-        "Running sequential search..."
-    };
-
     html! {
         <>
             <div
@@ -36,7 +28,7 @@ pub fn status_section(props: &StatusSectionProps) -> Html {
                 <div class="run-overlay-card">
                     <div class="run-overlay-top">
                         <span class="spinner" aria-hidden="true"></span>
-                        <p class="run-title">{run_title}</p>
+                        <p class="run-title">{"Running search..."}</p>
                     </div>
                     <p class="run-subtitle">{props.run_subtitle.clone()}</p>
                     <p class="run-elapsed">{props.run_elapsed.clone()}</p>
