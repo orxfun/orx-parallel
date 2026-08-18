@@ -2,7 +2,7 @@ use computation::{Location, create_locations};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 /// Result returned to the frontend after a search completes.
 pub struct RunResult {
     pub best_tour: Vec<usize>,
