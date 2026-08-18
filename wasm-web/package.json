@@ -20,7 +20,7 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "typecheck": "tsc -p tsconfig.json --noEmit",
-        "test": "npm run build && node --test test/client.test.mjs test/build.test.mjs",
+        "test": "npm run build && node --test test/client.test.mjs test/build.test.mjs test/vite.test.mjs",
         "wasm:build": "node src/build.js build",
         "wasm:prepare": "node src/build.js prepare",
         "prepare": "npm run build"
