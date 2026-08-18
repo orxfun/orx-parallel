@@ -4,7 +4,6 @@ import type { Location, RunSettings, SearchResult } from "./shared-types";
 
 type TspComputations = {
     run_search: (
-        parallelize: boolean,
         iterations: number,
         seed: bigint,
         threads: number,
@@ -29,7 +28,6 @@ export function terminateSearchWorker(): void {
 
 export function runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
     return searchWorker.call("run_search", [
-        true,
         settings.iterations,
         settings.seed,
         settings.threads,
