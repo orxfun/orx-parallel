@@ -12,26 +12,32 @@ type TspComputations = {
     ) => SearchResult;
 };
 
-const searchWorker = new ParallelWorker<TspComputations>({
-    bindingsUrl,
-    methods: ["run_search"],
-    threads: 0
-});
+export class SearchWorker {
+    constructor(private readonly worker: ParallelWorker<TspComputations>) {
+    }
 
-export function initializeSearchWorker(): Promise<void> {
-    return searchWorker.ready();
+    runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
+        return this.worker.call("run_search", [
+            settings.iterations,
+            settings.seed,
+            settings.threads,
+            settings.chunkSize,
+            locations
+        ]);
+    }
+
+    terminate(): void {
+        this.worker.terminate();
+    }
 }
 
-export function terminateSearchWorker(): void {
-    searchWorker.terminate();
+export async function createSearchWorker(threads: number): Promise<SearchWorker> {
+    const searchWorker = new ParallelWorker<TspComputations>({
+        bindingsUrl,
+        methods: ["run_search"],
+        threads,
+    });
+    await searchWorker.ready();
+    return new SearchWorker(searchWorker);
 }
 
-export function runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
-    return searchWorker.call("run_search", [
-        settings.iterations,
-        settings.seed,
-        settings.threads,
-        settings.chunkSize,
-        locations
-    ]);
-}

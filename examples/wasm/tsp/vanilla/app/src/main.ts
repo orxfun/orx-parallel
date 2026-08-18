@@ -3,7 +3,7 @@ import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
 import "highlight.js/styles/github-dark.css";
 import type { Location, RunSettings, SearchResult } from "./shared-types";
-import { initializeSearchWorker, runSearchAlgorithm, terminateSearchWorker } from "./search-runner.js";
+import { createSearchWorker, type SearchWorker } from "./search-runner.js";
 
 hljs.registerLanguage("rust", rust);
 
@@ -182,6 +182,8 @@ const state = {
     runTicker: undefined as number | undefined
 };
 
+let searchWorker: SearchWorker | undefined;
+
 // search
 
 function readRunSettings(): RunSettings {
@@ -277,7 +279,7 @@ async function runSearch() {
     ui.status.textContent = "Running search...";
 
     try {
-        const result = await runSearchAlgorithm(settings, state.points);
+        const result = await searchWorker!.runSearchAlgorithm(settings, state.points);
 
         if (!state.best || result.best_distance < state.best.best_distance) {
             state.best = result;
@@ -299,7 +301,7 @@ async function runSearch() {
 
 async function setupApp() {
     await init();
-    await initializeSearchWorker();
+    searchWorker = await createSearchWorker(0);
 
     state.currentNumCities = readNumCities();
     state.points = generatePoints(readSeed(), state.currentNumCities);
@@ -350,4 +352,4 @@ void setupApp().catch((error: unknown) => {
     ui.status.textContent = `Error: ${String(error)}`;
 });
 
-window.addEventListener("beforeunload", () => terminateSearchWorker());
+window.addEventListener("beforeunload", () => searchWorker?.terminate());
