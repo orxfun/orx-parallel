@@ -15,7 +15,7 @@ class FakeWorker {
 
     postMessage(message) {
         if (message.type === "init") {
-            queueMicrotask(() => this.emit("message", { data: { type: "ready" } }));
+            queueMicrotask(() => this.emit("message", { data: { type: "ready", threads: 4 } }));
             return;
         }
 
@@ -49,6 +49,7 @@ test("initializes once and serializes calls", async () => {
 
     assert.equal(await first, 4);
     assert.equal(await second, 6);
+    assert.equal(worker.initializedThreads, 4);
     assert.deepEqual(fake.calls, ["double", "double"]);
     worker.terminate();
     assert.equal(fake.terminated, true);

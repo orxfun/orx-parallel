@@ -12,6 +12,8 @@ const chunkSizeEl = document.getElementById("chunk_size") as HTMLInputElement;
 const runEl = document.getElementById("run") as HTMLButtonElement;
 const runChunksEl = document.getElementById("run_chunks") as HTMLButtonElement;
 const resultEl = document.getElementById("result") as HTMLParagraphElement;
+const durationEl = document.getElementById("duration") as HTMLParagraphElement;
+const poolThreadsEl = document.getElementById("pool_threads") as HTMLParagraphElement;
 
 const worker = new ParallelWorker<Computations>({
     bindingsUrl,
@@ -19,13 +21,26 @@ const worker = new ParallelWorker<Computations>({
     threads: 0
 });
 
+void worker.ready().then(
+    () => poolThreadsEl.textContent = `thread pool initialized with ${worker.initializedThreads} threads`,
+    (error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        poolThreadsEl.textContent = `thread pool error: ${message}`;
+    }
+);
+
 async function run(computation: () => Promise<bigint>): Promise<void> {
     runEl.disabled = true;
     runChunksEl.disabled = true;
     resultEl.textContent = "running...";
+    durationEl.textContent = "-";
+    const start = performance.now();
 
     try {
-        resultEl.textContent = String(await computation());
+        const result = await computation();
+        const durationMillis = performance.now() - start;
+        resultEl.textContent = String(result);
+        durationEl.textContent = `completed in ${durationMillis.toFixed(3)} milliseconds`;
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         resultEl.textContent = `error: ${message}`;
