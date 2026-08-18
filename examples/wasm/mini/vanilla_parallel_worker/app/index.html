@@ -16,11 +16,26 @@
         0 uses all threads configured for the wasm pool
     </label>
 
+    <br />
+
+    <label>
+        chunk size
+        <input id="chunk_size" type="number" value="1024" min="1" />
+        number of elements each thread pulls at once in "run with chunks"
+    </label>
+
     <hr />
 
     <label>
         <button id="run">run</button>
         press & wait until the result is displayed below
+    </label>
+
+    <br />
+
+    <label>
+        <button id="run_chunks">run with chunks</button>
+        same computation using the chunk size above
     </label>
 
     <hr />
