@@ -22,6 +22,16 @@ pub fn compute(input: usize, num_threads: usize) -> u64 {
         .sum()
 }
 
+pub fn compute_chunks(input: usize, num_threads: usize, chunk_size: usize) -> u64 {
+    (0..input)
+        .par()
+        .num_threads(num_threads)
+        .chunk_size(chunk_size)
+        .filter(|x| !x.is_multiple_of(42))
+        .map(|x| cpu_mix(x as u64))
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
