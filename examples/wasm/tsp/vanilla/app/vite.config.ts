@@ -1,14 +1,14 @@
 import { defineConfig } from "vite";
+import { orxParallelWasm } from "orx-parallel-web/vite";
 
 export default defineConfig({
     base: "./",
-    envPrefix: ["VITE_", "ORX_PARALLEL_"],
-    server: {
-        headers: {
-            "Cross-Origin-Opener-Policy": "same-origin",
-            "Cross-Origin-Embedder-Policy": "require-corp"
-        }
-    },
+    plugins: [
+        orxParallelWasm({
+            bindings: "../wasm_bindings",
+            outDir: "./pkg"
+        })
+    ],
     worker: {
         format: "es"
     }
