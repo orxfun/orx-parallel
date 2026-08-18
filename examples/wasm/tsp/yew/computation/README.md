@@ -1,6 +1,6 @@
 # computation
 
-This crate contains the pure Rust TSP implementation used by the wasm Yew example.
+This crate contains the pure Rust TSP implementation used by the wasm TSP example.
 
 It is intentionally free of wasm-bindgen, JavaScript, and UI concerns, which keeps it easy to test and benchmark as an ordinary Rust crate.
 
@@ -8,11 +8,11 @@ It is intentionally free of wasm-bindgen, JavaScript, and UI concerns, which kee
 
 - generate TSP instances
 - build and improve tours
-- run sequential and parallel search strategies
+- run parallel search
 
 ## How it enables parallelization
 
-This crate uses `orx-parallel` in `run_search_parallel`.
+This crate uses `orx-parallel` in `run_search`.
 
 That is enough for native builds, but wasm needs the additional `wasm` feature so the same parallel code can run with browser threads.
 
@@ -36,7 +36,7 @@ Note that the difference is only in configuration; parallel computation code rem
 
 ## How it fits into the example
 
-The `wasm_bindings/` crate exposes the functions from this crate to JavaScript, and `components/` consumes those bindings from the browser (hosted by `app/`).
+The `wasm_bindings/` crate exposes the functions from this crate to JavaScript, and `app/` consumes those bindings from the browser.
 
 Note that `wasm_bindings` crate includes the `computation` crate with `wasm` feature:
 

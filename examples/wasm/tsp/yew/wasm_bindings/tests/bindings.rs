@@ -38,7 +38,7 @@ fn run_search_returns_a_tour_summary() {
     ];
     let locations_val = to_value(&locations).expect("locations should serialize");
 
-    let result = run_search(false, 1, 7, 1, 1, locations_val).expect("run_search should succeed");
+    let result = run_search(1, 7, 1, 1, locations_val).expect("run_search should succeed");
     let result: RunResult = from_value(result).expect("result should deserialize");
 
     assert_eq!(result.iterations, 1);

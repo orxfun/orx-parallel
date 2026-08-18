@@ -1,45 +1,35 @@
-import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
+import { ParallelWorker } from "orx-parallel-web";
+import bindingsUrl from "../pkg/components.js?url";
+import { normalizeSeed, type Location, type RunSettings, type SearchResult } from "./shared-types.js";
 
-export function runSearchAlgorithm(request: SearchRequest): Promise<SearchResult> {
-    return new Promise<SearchResult>((resolve, reject) => {
-        const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
-            type: "module"
-        });
+type TspComputations = {
+    run_search: (iterations: number, seed: bigint, threads: number, chunkSize: number, locations: Location[]) => SearchResult;
+};
 
-        const cleanup = () => {
-            worker.terminate();
-        };
+let searchWorker: ParallelWorker<TspComputations> | undefined;
 
-        worker.addEventListener(
-            "message",
-            (event: MessageEvent) => {
-                const data = event.data as SearchResponse;
-
-                if (data.type === "search-error") {
-                    cleanup();
-                    reject(new Error(data.message));
-                    return;
-                }
-
-                cleanup();
-                resolve(data.result);
-            },
-            { once: true }
-        );
-
-        worker.addEventListener(
-            "error",
-            (event) => {
-                cleanup();
-                reject(new Error(event.message || "search worker failed"));
-            },
-            { once: true }
-        );
-
-        worker.postMessage(request);
-    });
+export async function createSearchWorker(threads: number): Promise<void> {
+    searchWorker = new ParallelWorker<TspComputations>({ bindingsUrl, methods: ["run_search"], threads });
+    await searchWorker.ready();
 }
-// Expose the function globally so wasm-bindgen can call it from Rust via globalThis.runSearchAlgorithm.
-(globalThis as typeof globalThis & { runSearchAlgorithm: typeof runSearchAlgorithm }).runSearchAlgorithm = runSearchAlgorithm;
 
-export { };
+export function terminateSearchWorker(): void {
+    searchWorker?.terminate();
+    searchWorker = undefined;
+}
+
+export function runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
+    if (!searchWorker) {
+        return Promise.reject(new Error("search worker is not initialized"));
+    }
+
+    return searchWorker.call("run_search", [
+        settings.iterations,
+        normalizeSeed(settings.seed),
+        settings.threads,
+        settings.chunkSize,
+        locations
+    ]);
+}
+
+(globalThis as typeof globalThis & { runSearchAlgorithm: typeof runSearchAlgorithm }).runSearchAlgorithm = runSearchAlgorithm;
