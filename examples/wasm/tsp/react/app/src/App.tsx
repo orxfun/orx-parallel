@@ -5,12 +5,12 @@ import { CodeCard } from "./components/CodeCard";
 import { ControlsSection } from "./components/ControlsSection";
 import { StatusSection } from "./components/StatusSection";
 import { PARALLEL_CODE, PARALLEL_HELP, SEQUENTIAL_CODE, SEQUENTIAL_HELP } from "./code-snippets";
-import { runSearchAlgorithm } from "./search-runner";
-import type { Location, RunSettings, SearchMode, SearchRequest, SearchResult } from "./shared-types";
+import type { SearchWorker } from "./search-runner";
+import type { Location, RunSettings, SearchResult } from "./shared-types";
 
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
-const MAX_THREADS = 16;
+const MAX_THREADS = 32;
 
 function readCssColor(variableName: string): string {
     return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
@@ -41,7 +41,11 @@ function generatePoints(seed: bigint, numCities: number) {
     return locations(seed, numCities) as Location[];
 }
 
-export function App() {
+type AppProps = {
+    searchWorker: SearchWorker;
+};
+
+export function App({ searchWorker }: AppProps) {
     const [status, setStatus] = useState("Initializing...");
     const [iterations, setIterations] = useState(10_000);
     const [threads, setThreads] = useState(4);
@@ -54,7 +58,6 @@ export function App() {
     const [elapsed, setElapsed] = useState("-");
     const [ips, setIps] = useState("-");
     const [isRunning, setIsRunning] = useState(false);
-    const [runMode, setRunMode] = useState<SearchMode>("parallel");
     const [runSubtitle, setRunSubtitle] = useState("Working through candidate tours. Larger runs can take a while.");
     const [runElapsed, setRunElapsed] = useState("Elapsed: 0.0 s");
 
@@ -93,8 +96,7 @@ export function App() {
         setIps(value.toFixed(0));
     }
 
-    function setRunningView(mode: SearchMode, running: boolean) {
-        setRunMode(mode);
+    function setRunningView(running: boolean) {
         setIsRunning(running);
 
         if (running) {
@@ -119,9 +121,8 @@ export function App() {
         }
     }
 
-    function readRunSettings(mode: SearchMode): RunSettings {
+    function readRunSettings(): RunSettings {
         return {
-            mode,
             iterations: clamp(iterations, 1, 200_000),
             threads: clamp(threads, 0, MAX_THREADS),
             chunkSize: Math.max(0, Math.trunc(chunkSize)),
@@ -147,8 +148,8 @@ export function App() {
         setStatus(`Updated city seed to ${normalizedSeed}.`);
     }
 
-    async function runSearch(mode: SearchMode) {
-        const settings = readRunSettings(mode);
+    async function runSearch() {
+        const settings = readRunSettings();
 
         if (settings.numCities !== numCities) {
             setNumCities(settings.numCities);
@@ -159,17 +160,14 @@ export function App() {
             clearBest();
         }
 
-        const request: SearchRequest = {
-            settings,
-            locations: points.length === settings.numCities ? points : generatePoints(settings.seed, settings.numCities)
-        };
+        const locations = points.length === settings.numCities ? points : generatePoints(settings.seed, settings.numCities);
 
-        setRunningView(settings.mode, true);
+        setRunningView(true);
         await allowRunningOverlayToRender();
-        setStatus(settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...");
+        setStatus("Running search...");
 
         try {
-            const result = await runSearchAlgorithm(request);
+            const result = await searchWorker.runSearchAlgorithm(settings, locations);
 
             if (!best || result.best_distance < best.best_distance) {
                 setBest(result);
@@ -177,11 +175,11 @@ export function App() {
 
             updateStats(result);
             setRunSubtitle(`Processed ${settings.iterations.toLocaleString()} iterations in one call.`);
-            setStatus(`${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`);
+            setStatus("Run completed.");
         } catch (err) {
             setStatus(`Error: ${String(err)}`);
         } finally {
-            setRunningView(settings.mode, false);
+            setRunningView(false);
         }
     }
 
@@ -252,11 +250,8 @@ export function App() {
                 }}
                 onSeedChange={applySeed}
                 onNumCitiesChange={applyNumCities}
-                onRunParallel={() => {
-                    void runSearch("parallel");
-                }}
-                onRunSequential={() => {
-                    void runSearch("sequential");
+                onRun={() => {
+                    void runSearch();
                 }}
                 onReset={() => {
                     clearBest();
@@ -268,7 +263,6 @@ export function App() {
             <section className="card">
                 <StatusSection
                     isRunning={isRunning}
-                    runMode={runMode}
                     runSubtitle={runSubtitle}
                     runElapsed={runElapsed}
                     bestDistance={bestDistance}
