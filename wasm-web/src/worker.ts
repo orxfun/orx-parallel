@@ -65,6 +65,11 @@ async function initializeCall(request: Extract<WorkerRequest, { type: "call" }>)
     if (typeof computation !== "function") {
         throw new Error(`wasm binding is not a function: ${request.method}`);
     }
+    if (computation.length !== request.args.length) {
+        throw new Error(
+            `wasm binding ${request.method} expects ${computation.length} arguments but received ${request.args.length}`
+        );
+    }
 
     const value = await (computation as (...args: unknown[]) => unknown)(...request.args);
     respond({ type: "result", id: request.id, value });

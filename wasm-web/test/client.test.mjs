@@ -73,3 +73,29 @@ test("cancels a queued call", async () => {
     assert.deepEqual(fake.calls, ["double"]);
     worker.terminate();
 });
+
+test("rejects a worker-reported call error", async () => {
+    const fake = new FakeWorker();
+    fake.postMessage = function (message) {
+        if (message.type === "init") {
+            queueMicrotask(() => this.emit("message", { data: { type: "ready", threads: 4 } }));
+            return;
+        }
+        queueMicrotask(() => this.emit("message", {
+            data: {
+                type: "error",
+                id: message.id,
+                message: "wasm binding double expects 1 arguments but received 2"
+            }
+        }));
+    };
+
+    const worker = new ParallelWorker({
+        bindingsUrl: "./bindings.js",
+        methods: ["double"],
+        workerFactory: () => fake
+    });
+
+    await assert.rejects(worker.call("double", [2, 3]), /expects 1 arguments but received 2/);
+    worker.terminate();
+});
