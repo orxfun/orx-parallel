@@ -14,7 +14,7 @@ const DEFAULT_RUSTFLAGS = [
     "-C link-arg=--export=__tls_base"
 ].join(" ");
 
-export function normalizeThreads(value = 0) {
+export function normalizeThreads(value) {
     const threads = Number(value);
     if (!Number.isInteger(threads) || threads < 0) {
         throw new Error("threads must be a non-negative integer");
@@ -53,7 +53,7 @@ export async function buildWasm({
     bindings,
     outDir,
     bindingsFile,
-    threads = 0,
+    threads,
     wasmPack = "wasm-pack",
     rustupToolchain = "nightly",
     rustflags = DEFAULT_RUSTFLAGS
