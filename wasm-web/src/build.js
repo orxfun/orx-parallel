@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 
 const DEFAULT_RUSTFLAGS = [
@@ -22,8 +22,12 @@ export function resolveThreads(value = process.env.ORX_PARALLEL_MAX_NUM_THREADS 
     return threads;
 }
 
-export async function prepareWasm({ outDir, bindingsFile = "wasm_bindings.js", threads = resolveThreads() }) {
+export async function prepareWasm({ outDir, bindingsFile, threads = resolveThreads() }) {
     const outputDir = resolve(outDir);
+    const entry = bindingsFile ?? await readFile(join(outputDir, "package.json"), "utf8")
+        .then(text => JSON.parse(text).main)
+        .catch(() => undefined)
+        ?? "wasm_bindings.js";
     const snippetRoot = join(outputDir, "snippets");
     const workerSources = await findFiles(snippetRoot, "wasm_web_start_workers.js");
 
@@ -37,7 +41,7 @@ export async function prepareWasm({ outDir, bindingsFile = "wasm_bindings.js", t
     }
 
     const manifest = {
-        bindingsUrl: `./${bindingsFile}`,
+        bindingsUrl: `./${entry}`,
         threads,
         workerHelpers: workerSources.map((source) => relative(outputDir, join(dirname(source), "worker_helpers.js")))
     };
@@ -48,7 +52,7 @@ export async function prepareWasm({ outDir, bindingsFile = "wasm_bindings.js", t
 export async function buildWasm({
     bindings,
     outDir,
-    bindingsFile = "wasm_bindings.js",
+    bindingsFile,
     threads = resolveThreads(),
     wasmPack = "wasm-pack",
     rustupToolchain = "nightly",
@@ -59,6 +63,8 @@ export async function buildWasm({
     }
 
     const outputDir = resolve(outDir);
+    // stale artifacts of a previously built crate would otherwise be copied into dist and picked up by workers
+    await rm(outputDir, { recursive: true, force: true });
     await mkdir(outputDir, { recursive: true });
     execFileSync(wasmPack, [
         "build",

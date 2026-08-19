@@ -70,11 +70,16 @@ export function orxParallelWasm(options) {
                     // ignore
                 }
                 // Post-process all copied snippet JS files to ensure they import the package entry.
-                // Prefer the wasm package JS (wasm_bindings.js or components-*.js) so worker imports don't execute DOM code.
+                // The entry must be the verbatim wasm-bindgen glue of *this* pkg: a hashed Rollup chunk may be
+                // tree-shaken, and a leftover glue of another crate would instantiate the wasm with wrong imports.
                 try {
                     const fs = await import('node:fs/promises');
                     const assetFiles = await fs.readdir(destAssets).catch(() => []);
-                    const pkgMain = assetFiles.find(n => n === 'wasm_bindings.js')
+                    const pkgEntry = await readFile(pathResolve(pkgDir, 'package.json'), 'utf8')
+                        .then(text => JSON.parse(text).main)
+                        .catch(() => undefined);
+                    const pkgMain = (pkgEntry && assetFiles.includes(pkgEntry) ? pkgEntry : undefined)
+                        || assetFiles.find(n => n === 'wasm_bindings.js')
                         || assetFiles.find(n => /^wasm_bindings-.*\.js$/.test(n))
                         || assetFiles.find(n => /^components-.*\.js$/.test(n))
                         || assetFiles.find(n => n === 'components.js')
@@ -132,7 +137,7 @@ export function orxParallelWasm(options) {
                                 duplicates.push({ src: f, dest: 'components.js' });
                             }
                         }
-                        for (const { src, dest } of duplicates) {
+                        for (const { src, dest } of duplicates.filter(d => d.dest !== pkgMain)) {
                             try {
                                 const srcPath = pathResolve(destAssets, src);
                                 const destPath = pathResolve(destAssets, dest);
