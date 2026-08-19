@@ -21,7 +21,6 @@ test("prepareWasm copies worker helpers and writes a manifest", async () => {
 test("normalizeThreads validates the configured value", () => {
     assert.equal(normalizeThreads("4"), 4);
     assert.equal(normalizeThreads(0), 0);
-    assert.equal(normalizeThreads(), 0);
     assert.throws(() => normalizeThreads(-1), /non-negative integer/);
     assert.throws(() => normalizeThreads("many"), /non-negative integer/);
 });

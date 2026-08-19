@@ -7,6 +7,14 @@ import { resolve as pathResolve } from "node:path";
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 
 export function orxParallelWasm(options) {
+    if (options?.threads === undefined) {
+        throw new Error("Threads must be explicitly specified in `orxParallelWasm` call. You may use `orxParallelWasm({ threads: 16, ... })` to limit the number of threads in the pool to 16, or `orxParallelWasm({ threads: 0, ... })` to use all available threads.");
+    } else if (options?.outDir === undefined) {
+        throw new Error("PLACEHOLDER 1");
+    } else if (options?.bindings === undefined) {
+        throw new Error("PLACEHOLDER 2");
+    }
+
     let buildPromise;
     const threads = normalizeThreads(options.threads);
     let resolvedConfig;
@@ -110,7 +118,7 @@ export function orxParallelWasm(options) {
                     }
 
                     const snippetsRoot = pathResolve(distDir, 'assets', 'snippets');
-                    await visit(snippetsRoot).catch(() => {});
+                    await visit(snippetsRoot).catch(() => { });
 
                     // Ensure there's a stable assets/index.js shim that forwards to the pkgMain
                     try {
@@ -157,7 +165,7 @@ export function orxParallelWasm(options) {
                             const base = wasmName.replace(/(-[A-Za-z0-9_]+)?\.wasm$/, '').replace(/-bg$/, '_bg');
                             // find a JS candidate that likely provides the glue
                             const jsCandidate = assetFiles.find(n => n.includes(base.replace('_bg', '')) && n.endsWith('.js'))
-                                || assetFiles.find(n => n.startsWith(base.replace('_bg','')) && n.endsWith('.js'))
+                                || assetFiles.find(n => n.startsWith(base.replace('_bg', '')) && n.endsWith('.js'))
                                 || assetFiles.find(n => /components-.*\.js$/.test(n))
                                 || assetFiles.find(n => /wasm_bindings.*\.js$/.test(n));
                             if (jsCandidate) {
