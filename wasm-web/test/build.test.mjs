@@ -3,7 +3,7 @@ import { mkdtemp, readFile, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { prepareWasm, resolveThreads } from "../src/build.js";
+import { prepareWasm, normalizeThreads } from "../src/build.js";
 
 test("prepareWasm copies worker helpers and writes a manifest", async () => {
     const root = await mkdtemp(join(tmpdir(), "orx-parallel-web-"));
@@ -18,9 +18,10 @@ test("prepareWasm copies worker helpers and writes a manifest", async () => {
     assert.deepEqual(JSON.parse(await readFile(join(root, "orx-parallel-web.json"), "utf8")), manifest);
 });
 
-test("resolveThreads validates the build environment value", () => {
-    assert.equal(resolveThreads("4"), 4);
-    assert.equal(resolveThreads("0"), 0);
-    assert.throws(() => resolveThreads("-1"), /non-negative integer/);
-    assert.throws(() => resolveThreads("many"), /non-negative integer/);
+test("normalizeThreads validates the configured value", () => {
+    assert.equal(normalizeThreads("4"), 4);
+    assert.equal(normalizeThreads(0), 0);
+    assert.equal(normalizeThreads(), 0);
+    assert.throws(() => normalizeThreads(-1), /non-negative integer/);
+    assert.throws(() => normalizeThreads("many"), /non-negative integer/);
 });

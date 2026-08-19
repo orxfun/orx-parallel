@@ -44,8 +44,9 @@ node wasm-web/src/build.js build
 
 Both modes copy the generated `wasm_web_start_workers.js` files to the
 adjacent `worker_helpers.js` paths and write `orx-parallel-web.json`. The
-`ORX_PARALLEL_MAX_NUM_THREADS` environment variable supplies the build-time
-thread limit; `0` leaves browser hardware-concurrency selection to the client.
+build-time thread limit comes from the `threads` option of the Vite plugin (or
+of `buildWasm`/`prepareWasm`); `0`, the default, leaves browser
+hardware-concurrency selection to the client.
 
 The Vite integration is available from `orx-parallel-web/vite` and adds the
 cross-origin isolation headers required by `SharedArrayBuffer`.
