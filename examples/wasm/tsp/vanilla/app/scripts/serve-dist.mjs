@@ -61,7 +61,17 @@ const server = http.createServer(async (request, response) => {
     let filePath = absolutePath;
 
     if ((await fileExists(filePath)) && (await fs.stat(filePath)).isDirectory()) {
-        filePath = path.join(filePath, "index.html");
+        // prefer module index files for directories so imports like '/assets/' can resolve to a JS module
+        const idxJs = path.join(filePath, "index.js");
+        const idxMjs = path.join(filePath, "index.mjs");
+        const idxHtml = path.join(filePath, "index.html");
+        if (await fileExists(idxJs)) {
+            filePath = idxJs;
+        } else if (await fileExists(idxMjs)) {
+            filePath = idxMjs;
+        } else {
+            filePath = idxHtml;
+        }
     }
 
     if (!(await fileExists(filePath))) {
