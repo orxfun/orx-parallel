@@ -14,15 +14,15 @@ const DEFAULT_RUSTFLAGS = [
     "-C link-arg=--export=__tls_base"
 ].join(" ");
 
-export function resolveThreads(value = process.env.ORX_PARALLEL_MAX_NUM_THREADS ?? "0") {
+export function normalizeThreads(value = 0) {
     const threads = Number(value);
     if (!Number.isInteger(threads) || threads < 0) {
-        throw new Error("ORX_PARALLEL_MAX_NUM_THREADS must be a non-negative integer");
+        throw new Error("threads must be a non-negative integer");
     }
     return threads;
 }
 
-export async function prepareWasm({ outDir, bindingsFile, threads = resolveThreads() }) {
+export async function prepareWasm({ outDir, bindingsFile, threads = 0 }) {
     const outputDir = resolve(outDir);
     const entry = bindingsFile ?? await readFile(join(outputDir, "package.json"), "utf8")
         .then(text => JSON.parse(text).main)
@@ -42,7 +42,7 @@ export async function prepareWasm({ outDir, bindingsFile, threads = resolveThrea
 
     const manifest = {
         bindingsUrl: `./${entry}`,
-        threads,
+        threads: normalizeThreads(threads),
         workerHelpers: workerSources.map((source) => relative(outputDir, join(dirname(source), "worker_helpers.js")))
     };
     await writeFile(join(outputDir, "orx-parallel-web.json"), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -53,7 +53,7 @@ export async function buildWasm({
     bindings,
     outDir,
     bindingsFile,
-    threads = resolveThreads(),
+    threads = 0,
     wasmPack = "wasm-pack",
     rustupToolchain = "nightly",
     rustflags = DEFAULT_RUSTFLAGS
@@ -116,14 +116,13 @@ async function main() {
     const options = {
         bindings,
         outDir,
-        bindingsFile: process.env.ORX_PARALLEL_WASM_BINDINGS_FILE,
-        threads: resolveThreads()
+        bindingsFile: process.env.ORX_PARALLEL_WASM_BINDINGS_FILE
     };
 
     if (mode === "build") {
         await buildWasm(options);
     } else if (mode === "prepare") {
-        await prepareWasm({ outDir, bindingsFile: options.bindingsFile, threads: options.threads });
+        await prepareWasm({ outDir, bindingsFile: options.bindingsFile });
     } else {
         throw new Error("usage: node src/build.js <build|prepare>");
     }

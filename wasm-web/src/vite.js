@@ -1,4 +1,4 @@
-import { buildWasm, resolveThreads } from "./build.js";
+import { buildWasm, normalizeThreads } from "./build.js";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import { readFile } from "node:fs/promises";
@@ -8,7 +8,7 @@ const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 
 export function orxParallelWasm(options) {
     let buildPromise;
-    const threads = options.threads ?? resolveThreads();
+    const threads = normalizeThreads(options.threads);
     let resolvedConfig;
 
     return {
