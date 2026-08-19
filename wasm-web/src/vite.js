@@ -6,18 +6,30 @@ import { resolve as pathResolve } from "node:path";
 
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 
+/**
+ * Vite plugin that builds a Rust `wasm-pack` crate, prepares the generated
+ * package, and integrates the resulting wasm/JS assets into the consumer
+ * build (copies into `dist/assets`, writes COOP/COEP headers, and creates
+ * stable shims for worker/wasm artifacts).
+ *
+ * Options (object):
+ * - `threads` (number, required): max number of threads for the parallel runtime (0 = auto).
+ * - `bindings` (string, required): path to the Rust crate directory containing `Cargo.toml` to build.
+ * - `outDir` (string, optional): directory where `wasm-pack` should write the package (defaults to `./pkg`).
+ * - `bindingsFile` (string, optional): explicit package entry filename to use instead of auto-detection.
+ *
+ * Returns a Vite plugin object.
+ */
 export function orxParallelWasm(options) {
     if (options?.threads === undefined) {
         throw new Error(
             "`threads` is required: you may set `threads: 16` to limit the number of threads in the pool to 16, or `threads: 0` to use all available threads."
         );
-    } else if (options?.outDir === undefined) {
+    }
+
+    if (options?.bindings === undefined) {
         throw new Error(
-            "`outDir` is required: set `outDir` to the directory where `wasm-pack` will write the package output (the wasm-bindgen `pkg` folder). Example: orxParallelWasm({ threads: 4, outDir: './pkg', bindings: '../wasm_bindings' }). The plugin copies this directory into the final consumer build (e.g. `dist/assets`) and reads its generated JS glue and .wasm files (and `package.json` `main` when present)."
-        );
-    } else if (options?.bindings === undefined) {
-        throw new Error(
-            "`bindings` is required: point `bindings` at the Rust crate directory (the folder containing Cargo.toml) that `wasm-pack` should build, for example '../wasm_bindings'. If you already have a built package, run `node wasm-web/src/build.js prepare` against that output instead. This value is used during the build step to invoke `wasm-pack build` and produce the package that the plugin will copy into the final build."
+            "`bindings` is required: path to the Rust crate directory containing Cargo.toml that `wasm-pack` should build (for example '../wasm_bindings'). This plugin always builds the crate with `wasm-pack` during the build step; prebuilt packages are not accepted here. You may run the prepare script separately if you need to work with an existing pkg directory. `outDir` is optional — when omitted the plugin defaults to './pkg'."
         );
     }
 
@@ -43,7 +55,12 @@ export function orxParallelWasm(options) {
             resolvedConfig = config;
         },
         buildStart() {
-            buildPromise ??= buildWasm(options);
+            buildPromise ??= (async () => {
+                // Ensure an outDir is set for builds (default to ./pkg)
+                options.outDir = options.outDir ?? './pkg';
+                return buildWasm(options);
+            })();
+
             return buildPromise;
         },
         async writeBundle() {
