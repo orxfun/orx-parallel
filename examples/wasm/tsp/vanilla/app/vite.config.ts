@@ -6,7 +6,6 @@ export default defineConfig({
     plugins: [
         orxParallelWasm({
             bindings: "../wasm_bindings",
-            outDir: "./pkg",
             threads: 0,
         })
     ],

@@ -22,7 +22,7 @@ export function normalizeThreads(value) {
     return threads;
 }
 
-export async function prepareWasm({ outDir, bindingsFile, threads = 0 }) {
+export async function prepareWasm({ outDir, bindingsFile, threads }) {
     const outputDir = resolve(outDir);
     const entry = bindingsFile ?? await readFile(join(outputDir, "package.json"), "utf8")
         .then(text => JSON.parse(text).main)
