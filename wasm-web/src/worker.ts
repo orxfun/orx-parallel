@@ -5,21 +5,12 @@ let allowedMethods = new Set<string>();
 let initialization: Promise<void> | undefined;
 let initializedThreads: number | undefined;
 
-/**
- * Send a WorkerResponse back to the main thread.
- * @param response - the response message to post via postMessage
- */
+/** Post a WorkerResponse to the main thread. */
 function respond(response: WorkerResponse): void {
     self.postMessage(response);
 }
 
-/**
- * Initialize the WASM bindings and the parallel runtime.
- * Loads the module at `request.bindingsUrl`, runs its default initializer
- * and `init_parallel_runtime`, then sets `bindings`, `allowedMethods`,
- * and `initializedThreads`. Returns a memoized Promise.
- * @param request - initialization request containing bindingsUrl, threads, and methods
- */
+/** Initialize WASM bindings and the parallel runtime (memoized). */
 function initialize(request: Extract<WorkerRequest, { type: "init" }>): Promise<void> {
     if (initialization !== undefined) return initialization;
 
@@ -64,12 +55,7 @@ self.addEventListener("message", (event: MessageEvent<WorkerRequest>) => {
     });
 });
 
-/**
- * Validate and invoke an allowed WASM binding method and post the result.
- * Throws if the worker is not initialized, the method is not allowed,
- * or the binding is not a callable function with the expected arity.
- * @param request - call request containing method, args, and id
- */
+/** Validate and invoke an allowed WASM binding call, then post the result. */
 async function initializeCall(request: Extract<WorkerRequest, { type: "call" }>): Promise<void> {
     if (bindings === undefined) {
         throw new Error("worker is not initialized");
