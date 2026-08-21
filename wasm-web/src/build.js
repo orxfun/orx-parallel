@@ -14,14 +14,6 @@ const DEFAULT_RUSTFLAGS = [
     "-C link-arg=--export=__tls_base"
 ].join(" ");
 
-export function normalizeThreads(value) {
-    const threads = Number(value);
-    if (!Number.isInteger(threads) || threads < 0) {
-        throw new Error("threads must be a non-negative integer");
-    }
-    return threads;
-}
-
 export async function prepareWasm({ outDir, bindingsFile }) {
     const outputDir = resolve(outDir);
     const entry = bindingsFile ?? await readFile(join(outputDir, "package.json"), "utf8")
