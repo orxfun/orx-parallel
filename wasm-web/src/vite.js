@@ -124,18 +124,45 @@ export function orxParallelWasm(options) {
                 try {
                     const fs = await import('node:fs/promises');
                     const assetFiles = await fs.readdir(destAssets).catch(() => []);
-                    // prefer the first built crate as the primary package entry used by snippets
-                    const primaryPkgDir = pkgDirs[0] ?? pathResolve(process.cwd(), options.outDir ?? './pkg');
-                    const pkgEntry = await readFile(pathResolve(primaryPkgDir, 'package.json'), 'utf8')
-                        .then(text => JSON.parse(text).main)
-                        .catch(() => undefined);
-                    const pkgMain = (pkgEntry && assetFiles.includes(pkgEntry) ? pkgEntry : undefined)
-                        || assetFiles.find(n => n === 'wasm_bindings.js')
-                        || assetFiles.find(n => /^wasm_bindings-.*\.js$/.test(n))
-                        || assetFiles.find(n => /^components-.*\.js$/.test(n))
-                        || assetFiles.find(n => n === 'components.js')
-                        || assetFiles.find(n => /^components_bg.*\.js$/.test(n))
-                        || assetFiles.find(n => /^index-.*\.js$/.test(n))
+
+                    // Build a deterministic map of crate -> entry JS filename.
+                    // For each produced pkg dir prefer `package.json`'s `main`,
+                    // otherwise pick a JS that contains the crate basename, or any JS.
+                    const crateEntryMap = Object.create(null);
+                    for (let i = 0; i < (pkgDirs.length || 0); i++) {
+                        const pd = pkgDirs[i];
+                        const crate = crateNames[i] ?? pathBasename(String(pd)).replace(/[^A-Za-z0-9_\-]/g, '_');
+                        const entriesInPkg = await fs.readdir(pd).catch(() => []);
+
+                        let declaredMain;
+                        try {
+                            const pj = await readFile(pathResolve(pd, 'package.json'), 'utf8')
+                                .then(text => JSON.parse(text))
+                                .catch(() => undefined);
+                            if (pj && typeof pj.main === 'string') declaredMain = pj.main;
+                        } catch (e) {
+                            declaredMain = undefined;
+                        }
+
+                        let candidate;
+                        if (declaredMain && entriesInPkg.includes(declaredMain)) candidate = declaredMain;
+                        if (!candidate) candidate = entriesInPkg.find(n => n.includes(crate) && n.endsWith('.js'));
+                        if (!candidate) candidate = entriesInPkg.find(n => n.endsWith('.js'));
+
+                        // Prefer the filename as present in the final assets directory when possible.
+                        if (candidate && assetFiles.includes(candidate)) {
+                            crateEntryMap[crate] = candidate;
+                        } else if (candidate) {
+                            crateEntryMap[crate] = candidate;
+                        } else {
+                            crateEntryMap[crate] = undefined;
+                        }
+                    }
+
+                    // Primary pkgMain is the entry for the first crate or a fallback JS in assets
+                    const primaryCrate = crateNames[0];
+                    const pkgMain = (primaryCrate && crateEntryMap[primaryCrate])
+                        || assetFiles.find(n => n.endsWith('.js'))
                         || 'index.js';
 
                     const replacement = `import(new URL('../../../../..', import.meta.url).href + '${pkgMain}')`;
@@ -198,10 +225,7 @@ export function orxParallelWasm(options) {
                     try {
                         for (let i = 0; i < (crateNames.length || 0); i++) {
                             const crate = crateNames[i];
-                            // find a JS candidate that contains the crate name or fall back to pkgMain
-                            const candidate = assetFiles.find(n => n.includes(crate) && n.endsWith('.js'))
-                                || assetFiles.find(n => /^index-.*\.js$/.test(n))
-                                || pkgMain;
+                            const candidate = crateEntryMap[crate] || assetFiles.find(n => n.endsWith('.js')) || pkgMain;
                             if (candidate) {
                                 const shimName = `${crate}.js`;
                                 const shimPath = pathResolve(destAssets, shimName);
@@ -213,10 +237,10 @@ export function orxParallelWasm(options) {
                                 }
                             }
                         }
-                        // ensure a `wasm_bindings.js` compatibility shim pointing at first crate
+                        // ensure a compatibility shim `wasm_bindings.js` pointing at first crate's entry
                         if (crateNames.length > 0) {
                             const first = crateNames[0];
-                            const candidate = assetFiles.find(n => n.includes(first) && n.endsWith('.js')) || pkgMain || 'index.js';
+                            const candidate = crateEntryMap[first] || pkgMain || 'index.js';
                             const shimPath = pathResolve(destAssets, 'wasm_bindings.js');
                             const shimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
                             await writeFile(shimPath, shimContent, 'utf8').catch(() => { /* ignore */ });
@@ -226,15 +250,14 @@ export function orxParallelWasm(options) {
                     }
                     // Create wrapper modules for wasm-imported JS namespaces like `components_bg.js`
                     try {
-                        const wasmFiles = assetFiles.filter(n => /_?bg[-_]?.*\.wasm$/.test(n) || /components_bg/.test(n));
+                        const wasmFiles = assetFiles.filter(n => /_?bg[-_]?.*\.wasm$/.test(n));
                         for (const wasmName of wasmFiles) {
                             // derive base like 'components_bg' from 'components_bg-XXX.wasm' or 'components_bg.wasm'
                             const base = wasmName.replace(/(-[A-Za-z0-9_]+)?\.wasm$/, '').replace(/-bg$/, '_bg');
-                            // find a JS candidate that likely provides the glue
+                            // find a JS candidate that likely provides the glue by name match
                             const jsCandidate = assetFiles.find(n => n.includes(base.replace('_bg', '')) && n.endsWith('.js'))
                                 || assetFiles.find(n => n.startsWith(base.replace('_bg', '')) && n.endsWith('.js'))
-                                || assetFiles.find(n => /components-.*\.js$/.test(n))
-                                || assetFiles.find(n => /wasm_bindings.*\.js$/.test(n));
+                                || assetFiles.find(n => n.endsWith('.js'));
                             if (jsCandidate) {
                                 const wrapperName = `${base}.js`;
                                 const wrapperPath = pathResolve(destAssets, wrapperName);
