@@ -7,6 +7,9 @@ import { createSearchWorker, type SearchWorker } from "./search-runner.js";
 
 hljs.registerLanguage("rust", rust);
 
+// 0 means "use all available threads"; passed to createSearchWorker and used to size the threads input
+const num_threads = 0;
+
 const MAX_CITIES = 200;
 const MAX_THREADS = 32;
 const CITY_NODE_COLOR = readCssColor("--city-node");
@@ -32,6 +35,7 @@ const ui = {
     chunkSize: mustElement<HTMLInputElement>("chunkSize"),
     seed: mustElement<HTMLInputElement>("seed"),
     numCities: mustElement<HTMLInputElement>("numCities"),
+    threadsMax: mustElement<HTMLSpanElement>("threadsMax"),
     run: mustElement<HTMLButtonElement>("run"),
     reset: mustElement<HTMLButtonElement>("reset"),
     runOverlay: mustElement<HTMLDivElement>("runOverlay"),
@@ -74,9 +78,18 @@ function readThreads() {
         return 0;
     }
 
-    const threads = Math.max(0, Math.min(MAX_THREADS, Math.trunc(parsed)));
+    const threads = Math.max(0, Math.min(state.maxThreads, Math.trunc(parsed)));
     ui.threads.value = String(threads);
     return threads;
+}
+
+function applyThreadsCap() {
+    // num_threads === 0 means "all available threads", so fall back to hardwareConcurrency
+    const maxThreads = num_threads > 0 ? num_threads : (navigator.hardwareConcurrency || MAX_THREADS);
+    state.maxThreads = maxThreads;
+    ui.threadsMax.textContent = `Threads (0..${maxThreads})`
+    ui.threads.max = String(maxThreads);
+    ui.threads.value = String(Math.min(4, maxThreads));
 }
 
 function readChunkSize() {
@@ -178,6 +191,7 @@ const state = {
     points: [] as Location[],
     best: null as SearchResult | null,
     currentNumCities: 50,
+    maxThreads: MAX_THREADS,
     runStartedAtMs: 0,
     runTicker: undefined as number | undefined
 };
@@ -301,7 +315,8 @@ async function runSearch() {
 
 async function setupApp() {
     await init();
-    searchWorker = await createSearchWorker(0);
+    applyThreadsCap();
+    searchWorker = await createSearchWorker(num_threads);
 
     state.currentNumCities = readNumCities();
     state.points = generatePoints(readSeed(), state.currentNumCities);
