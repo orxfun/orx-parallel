@@ -39,7 +39,6 @@ export function orxParallelWasm(options) {
                         allow: [config.root ?? process.cwd(), packageRoot]
                     }
                 },
-                // no compile-time defines are injected
             };
         },
         configResolved(config) {
