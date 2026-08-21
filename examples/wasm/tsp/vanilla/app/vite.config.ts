@@ -6,7 +6,6 @@ export default defineConfig({
     plugins: [
         orxParallelWasm({
             bindings: "../wasm_bindings",
-            threads: 0,
         })
     ],
     worker: {
