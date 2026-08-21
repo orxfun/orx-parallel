@@ -13,9 +13,9 @@ const packageRoot = fileURLToPath(new URL("..", import.meta.url));
  * stable shims for worker/wasm artifacts).
  *
  * Options (object):
- * - `threads` (number, required): max number of threads for the parallel runtime (0 = auto).
- * - `bindings` (string, required): path to the Rust crate directory containing `Cargo.toml` to build.
- * - `outDir` (string, optional): directory where `wasm-pack` should write the package (defaults to `./pkg`).
+ * - `bindings` (string | string[], required): path, or array of paths, to Rust crate directory(ies)
+ *   containing `Cargo.toml` that `wasm-pack` should build (e.g. `"../wasm_bindings"` or
+ *   `["../wasm_bindings","../components"]`).
  * - `bindingsFile` (string, optional): explicit package entry filename to use instead of auto-detection.
  *
  * Returns a Vite plugin object.
@@ -23,7 +23,7 @@ const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 export function orxParallelWasm(options) {
     if (options?.bindings === undefined) {
         throw new Error(
-            "`bindings` is required: path to the Rust crate directory containing Cargo.toml that `wasm-pack` should build (for example '../wasm_bindings'). This plugin always builds the crate with `wasm-pack` during the build step; prebuilt packages are not accepted here. You may run the prepare script separately if you need to work with an existing pkg directory. `outDir` is optional — when omitted the plugin defaults to './pkg'."
+            "`bindings` is required: a path or array of paths to Rust crate directory(ies) (each with Cargo.toml) that `wasm-pack` will build, e.g. '../wasm_bindings' or ['../wasm_bindings','../components']. This plugin builds the listed crates during the build step (prebuilt pkg directories are not accepted). Output directories default to './pkg' (per-crate subdirs when multiple bindings are used). Use `bindingsFile` to override the package entry filename."
         );
     }
 
@@ -57,12 +57,12 @@ export function orxParallelWasm(options) {
                     const crateName = pathBasename(String(bindingPath)).replace(/[^A-Za-z0-9_\-]/g, '_');
                     crateNames.push(crateName);
 
+                    // compute per-crate output: single binding -> ./pkg, multiple -> ./pkg/<crateName>
                     let perOut;
                     if (bindingsList.length === 1) {
-                        perOut = options.outDir ?? './pkg';
+                        perOut = './pkg';
                     } else {
-                        // when building multiple crates, place outputs under outDir/<crateName>
-                        const baseOut = options.outDir ?? './pkg';
+                        const baseOut = './pkg';
                         perOut = pathResolve(process.cwd(), baseOut, crateName);
                     }
 
@@ -71,7 +71,6 @@ export function orxParallelWasm(options) {
                         bindings: bindingPath,
                         outDir: perOut,
                         bindingsFile: options.bindingsFile,
-                        threads: options.threads
                     });
 
                     pkgDirs.push(pathResolve(process.cwd(), perOut));
@@ -97,7 +96,7 @@ export function orxParallelWasm(options) {
                 // copy each produced pkg output into dist/assets so all wasm/js/snippets are present
                 const destAssets = pathResolve(distDir, "assets");
                 await mkdir(destAssets, { recursive: true });
-                for (const pd of (pkgDirs.length ? pkgDirs : [pathResolve(process.cwd(), options.outDir ?? './pkg')])) {
+                for (const pd of (pkgDirs.length ? pkgDirs : [pathResolve(process.cwd(), './pkg')])) {
                     try {
                         await cp(pd, destAssets, { recursive: true, force: true });
                     } catch (e) {
