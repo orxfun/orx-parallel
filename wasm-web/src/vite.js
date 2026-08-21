@@ -2,7 +2,7 @@ import { buildWasm } from "./build.js";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import { readFile } from "node:fs/promises";
-import { resolve as pathResolve, basename as pathBasename } from "node:path";
+import { resolve as pathResolve, basename as pathBasename, relative as pathRelative } from "node:path";
 
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 
@@ -176,9 +176,23 @@ export function orxParallelWasm(options) {
                             } else if (ent.isFile() && p.endsWith('.js')) {
                                 try {
                                     let content = await readFile(p, 'utf8');
-                                    content = content.split('import("../../../../..")').join(replacement);
-                                    content = content.split("import('../../../../..')").join(replacement);
-                                    content = content.replace(/import\(\s*['\"]?\.\.\/\.\.\/\.\.\.\s*['\"]?\s*\)/g, replacement);
+
+                                    // compute a relative URL from this file to the assets directory
+                                    // e.g. '../../../../../' so the snippet can import the asset file by name
+                                    const rel = pathResolve(p).replace(/\\/g, '/');
+                                    const assetsPath = destAssets.replace(/\\/g, '/');
+                                    // dirname of the file
+                                    const fileDir = pathResolve(p, '..').replace(/\\/g, '/');
+                                    // compute relative path from file's dir to assets dir (posix-style)
+                                    let relToAssets = pathRelative(fileDir, assetsPath).replace(/\\/g, '/');
+                                    if (!relToAssets || relToAssets === '') relToAssets = '.';
+                                    if (!relToAssets.endsWith('/')) relToAssets += '/';
+
+                                    const fileReplacement = `import(new URL('${relToAssets}', import.meta.url).href + '${pkgMain}')`;
+
+                                    content = content.split('import("../../../../..")').join(fileReplacement);
+                                    content = content.split("import('../../../../..')").join(fileReplacement);
+                                    content = content.replace(/import\(\s*['\"]?\.\.\/\.\.\/\.\.\.\s*['\"]?\s*\)/g, fileReplacement);
                                     await writeFile(p, content, 'utf8');
                                 } catch (e) {
                                     // ignore per-file errors
