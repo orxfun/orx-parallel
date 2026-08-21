@@ -8,9 +8,6 @@ export default defineConfig({
             bindings: ["../wasm_bindings"],
         })
     ],
-    optimizeDeps: {
-        exclude: ["orx-parallel-wasm"]
-    },
     worker: {
         format: "es"
     }
