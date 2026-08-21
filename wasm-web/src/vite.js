@@ -2,7 +2,7 @@ import { buildWasm } from "./build.js";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import { readFile } from "node:fs/promises";
-import { resolve as pathResolve } from "node:path";
+import { resolve as pathResolve, basename as pathBasename } from "node:path";
 
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 
@@ -29,6 +29,10 @@ export function orxParallelWasm(options) {
 
     let buildPromise;
     let resolvedConfig;
+    // normalized list of crate paths to build
+    const bindingsList = Array.isArray(options.bindings) ? options.bindings : [options.bindings];
+    const pkgDirs = [];
+    const crateNames = [];
 
     return {
         name: "orx-parallel-wasm",
@@ -46,9 +50,34 @@ export function orxParallelWasm(options) {
         },
         buildStart() {
             buildPromise ??= (async () => {
-                // Ensure an outDir is set for builds (default to ./pkg)
-                options.outDir = options.outDir ?? './pkg';
-                return buildWasm(options);
+                // Build each crate in `bindingsList` sequentially. For a single binding
+                // respect options.outDir; for multiple bindings create per-crate subdirs.
+                for (let i = 0; i < bindingsList.length; i++) {
+                    const bindingPath = bindingsList[i];
+                    const crateName = pathBasename(String(bindingPath)).replace(/[^A-Za-z0-9_\-]/g, '_');
+                    crateNames.push(crateName);
+
+                    let perOut;
+                    if (bindingsList.length === 1) {
+                        perOut = options.outDir ?? './pkg';
+                    } else {
+                        // when building multiple crates, place outputs under outDir/<crateName>
+                        const baseOut = options.outDir ?? './pkg';
+                        perOut = pathResolve(process.cwd(), baseOut, crateName);
+                    }
+
+                    // call buildWasm with a copy of options for this crate
+                    await buildWasm({
+                        bindings: bindingPath,
+                        outDir: perOut,
+                        bindingsFile: options.bindingsFile,
+                        threads: options.threads
+                    });
+
+                    pkgDirs.push(pathResolve(process.cwd(), perOut));
+                }
+
+                return undefined;
             })();
 
             return buildPromise;
@@ -65,16 +94,15 @@ export function orxParallelWasm(options) {
                 const consumerOut = (resolvedConfig && resolvedConfig.build && resolvedConfig.build.outDir) || "dist";
                 const distDir = pathResolve(process.cwd(), consumerOut);
 
-                const pkgOut = options.outDir || "pkg";
-                const pkgDir = pathResolve(process.cwd(), pkgOut);
-
-                // copy entire pkg output into dist/assets so all wasm/js/snippets are present
+                // copy each produced pkg output into dist/assets so all wasm/js/snippets are present
                 const destAssets = pathResolve(distDir, "assets");
                 await mkdir(destAssets, { recursive: true });
-                try {
-                    await cp(pkgDir, destAssets, { recursive: true, force: true });
-                } catch (e) {
-                    // ignore if pkg doesn't exist
+                for (const pd of (pkgDirs.length ? pkgDirs : [pathResolve(process.cwd(), options.outDir ?? './pkg')])) {
+                    try {
+                        await cp(pd, destAssets, { recursive: true, force: true });
+                    } catch (e) {
+                        // ignore if pkg doesn't exist
+                    }
                 }
 
                 // write Cloudflare/Netlify-style _headers into dist so Pages will set COOP/COEP and wasm MIME
@@ -96,7 +124,9 @@ export function orxParallelWasm(options) {
                 try {
                     const fs = await import('node:fs/promises');
                     const assetFiles = await fs.readdir(destAssets).catch(() => []);
-                    const pkgEntry = await readFile(pathResolve(pkgDir, 'package.json'), 'utf8')
+                    // prefer the first built crate as the primary package entry used by snippets
+                    const primaryPkgDir = pkgDirs[0] ?? pathResolve(process.cwd(), options.outDir ?? './pkg');
+                    const pkgEntry = await readFile(pathResolve(primaryPkgDir, 'package.json'), 'utf8')
                         .then(text => JSON.parse(text).main)
                         .catch(() => undefined);
                     const pkgMain = (pkgEntry && assetFiles.includes(pkgEntry) ? pkgEntry : undefined)
@@ -141,7 +171,7 @@ export function orxParallelWasm(options) {
                     } catch (e) {
                         // ignore
                     }
-                    // Duplicate common worker/wasm files to stable filenames to reduce deploy fragility
+                    // Duplicate common worker files to stable filenames (worker, worker_helpers)
                     try {
                         const duplicates = [];
                         for (const f of assetFiles) {
@@ -150,12 +180,6 @@ export function orxParallelWasm(options) {
                             }
                             if (/^worker_helpers[-_].*\.js$/.test(f)) {
                                 duplicates.push({ src: f, dest: 'worker_helpers.js' });
-                            }
-                            if (/^wasm_bindings[-_].*\.js$/.test(f)) {
-                                duplicates.push({ src: f, dest: 'wasm_bindings.js' });
-                            }
-                            if (/^components[-_].*\.js$/.test(f)) {
-                                duplicates.push({ src: f, dest: 'components.js' });
                             }
                         }
                         for (const { src, dest } of duplicates.filter(d => d.dest !== pkgMain)) {
@@ -166,6 +190,36 @@ export function orxParallelWasm(options) {
                             } catch (e) {
                                 // ignore per-file duplicate errors
                             }
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                    // Create explicit shims for each built crate named by its basename
+                    try {
+                        for (let i = 0; i < (crateNames.length || 0); i++) {
+                            const crate = crateNames[i];
+                            // find a JS candidate that contains the crate name or fall back to pkgMain
+                            const candidate = assetFiles.find(n => n.includes(crate) && n.endsWith('.js'))
+                                || assetFiles.find(n => /^index-.*\.js$/.test(n))
+                                || pkgMain;
+                            if (candidate) {
+                                const shimName = `${crate}.js`;
+                                const shimPath = pathResolve(destAssets, shimName);
+                                const shimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
+                                try {
+                                    await writeFile(shimPath, shimContent, 'utf8');
+                                } catch (e) {
+                                    // ignore per-file errors
+                                }
+                            }
+                        }
+                        // ensure a `wasm_bindings.js` compatibility shim pointing at first crate
+                        if (crateNames.length > 0) {
+                            const first = crateNames[0];
+                            const candidate = assetFiles.find(n => n.includes(first) && n.endsWith('.js')) || pkgMain || 'index.js';
+                            const shimPath = pathResolve(destAssets, 'wasm_bindings.js');
+                            const shimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
+                            await writeFile(shimPath, shimContent, 'utf8').catch(() => { /* ignore */ });
                         }
                     } catch (e) {
                         // ignore

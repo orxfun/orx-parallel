@@ -8,7 +8,7 @@
         "dev:full": "npm exec -- vite",
         "dev": "npm exec -- vite",
         "typecheck": "tsc --noEmit",
-        "build": "npm run typecheck && npm exec -- vite build",
+        "build": "npm run build:wasm && npm run typecheck && npm exec -- vite build",
         "preview": "npm run build && npm exec -- vite preview",
         "serve:dist": "node scripts/serve-dist.mjs"
     },
