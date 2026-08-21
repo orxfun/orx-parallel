@@ -29,8 +29,11 @@ export function orxParallelWasm(options) {
 
     let buildPromise;
     let resolvedConfig;
-    // normalized list of crate paths to build
+    // normalized list of crate paths to build (must be non-empty)
     const bindingsList = Array.isArray(options.bindings) ? options.bindings : [options.bindings];
+    if (!Array.isArray(bindingsList) || bindingsList.length === 0) {
+        throw new Error("`bindings` must be a non-empty string or array of crate paths, e.g. ['../wasm_bindings'] or '../wasm_bindings'.");
+    }
     const pkgDirs = [];
     const crateNames = [];
 
@@ -82,229 +85,160 @@ export function orxParallelWasm(options) {
             return buildPromise;
         },
         async writeBundle() {
-            // ensure wasm build completed
-            try {
-                await (buildPromise || Promise.resolve());
-            } catch (e) {
-                // ignore
+            // ensure wasm build completed (propagate errors)
+            await (buildPromise || Promise.resolve());
+
+            const consumerOut = (resolvedConfig && resolvedConfig.build && resolvedConfig.build.outDir) || "dist";
+            const distDir = pathResolve(process.cwd(), consumerOut);
+
+            // copy each produced pkg output into dist/assets so all wasm/js/snippets are present
+            const destAssets = pathResolve(distDir, "assets");
+            await mkdir(destAssets, { recursive: true });
+
+            if (!pkgDirs.length) {
+                throw new Error('No package outputs were produced for the configured `bindings`. Ensure the Rust crates were built.');
             }
 
-            try {
-                const consumerOut = (resolvedConfig && resolvedConfig.build && resolvedConfig.build.outDir) || "dist";
-                const distDir = pathResolve(process.cwd(), consumerOut);
+            for (const pd of pkgDirs) {
+                // Let CP throw if the pkg dir is missing or copy fails
+                await cp(pd, destAssets, { recursive: true, force: true });
+            }
 
-                // copy each produced pkg output into dist/assets so all wasm/js/snippets are present
-                const destAssets = pathResolve(distDir, "assets");
-                await mkdir(destAssets, { recursive: true });
-                for (const pd of (pkgDirs.length ? pkgDirs : [pathResolve(process.cwd(), './pkg')])) {
-                    try {
-                        await cp(pd, destAssets, { recursive: true, force: true });
-                    } catch (e) {
-                        // ignore if pkg doesn't exist
-                    }
-                }
-
-                // write Cloudflare/Netlify-style _headers into dist so Pages will set COOP/COEP and wasm MIME
-                try {
-                    const headers = `/*
+            // write Cloudflare/Netlify-style _headers into dist so Pages will set COOP/COEP and wasm MIME
+            const headers = `/*
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
 
 /assets/*.wasm
   Content-Type: application/wasm
 `;
-                    await writeFile(pathResolve(distDir, "_headers"), headers, "utf8");
-                } catch (e) {
-                    // ignore
+            await writeFile(pathResolve(distDir, "_headers"), headers, "utf8");
+
+            // Post-process all copied snippet JS files to ensure they import the package entry.
+            const fs = await import('node:fs/promises');
+            const assetFiles = await fs.readdir(destAssets);
+            if (!assetFiles.length) throw new Error(`No files found in assets after copying packages from: ${pkgDirs.join(',')}`);
+
+            // Build a deterministic map of crate -> entry JS filename.
+            const crateEntryMap = Object.create(null);
+            for (let i = 0; i < pkgDirs.length; i++) {
+                const pd = pkgDirs[i];
+                const crate = crateNames[i] ?? pathBasename(String(pd)).replace(/[^A-Za-z0-9_\-]/g, '_');
+                const entriesInPkg = await fs.readdir(pd);
+
+                const pj = await readFile(pathResolve(pd, 'package.json'), 'utf8')
+                    .then(text => JSON.parse(text))
+                    .catch(() => undefined);
+                const declaredMain = (pj && typeof pj.main === 'string') ? pj.main : undefined;
+
+                let candidate;
+                if (declaredMain && entriesInPkg.includes(declaredMain)) candidate = declaredMain;
+                if (!candidate) candidate = entriesInPkg.find(n => n.includes(crate) && n.endsWith('.js'));
+                if (!candidate) candidate = entriesInPkg.find(n => n.endsWith('.js'));
+
+                if (candidate && assetFiles.includes(candidate)) {
+                    crateEntryMap[crate] = candidate;
+                } else if (candidate) {
+                    crateEntryMap[crate] = candidate;
+                } else {
+                    crateEntryMap[crate] = undefined;
                 }
-                // Post-process all copied snippet JS files to ensure they import the package entry.
-                // The entry must be the verbatim wasm-bindgen glue of *this* pkg: a hashed Rollup chunk may be
-                // tree-shaken, and a leftover glue of another crate would instantiate the wasm with wrong imports.
-                try {
-                    const fs = await import('node:fs/promises');
-                    const assetFiles = await fs.readdir(destAssets).catch(() => []);
+            }
 
-                    // Build a deterministic map of crate -> entry JS filename.
-                    // For each produced pkg dir prefer `package.json`'s `main`,
-                    // otherwise pick a JS that contains the crate basename, or any JS.
-                    const crateEntryMap = Object.create(null);
-                    for (let i = 0; i < (pkgDirs.length || 0); i++) {
-                        const pd = pkgDirs[i];
-                        const crate = crateNames[i] ?? pathBasename(String(pd)).replace(/[^A-Za-z0-9_\-]/g, '_');
-                        const entriesInPkg = await fs.readdir(pd).catch(() => []);
+            // Primary pkgMain is the entry for the first crate or a fallback JS in assets
+            const primaryCrate = crateNames[0];
+            const pkgMain = (primaryCrate && crateEntryMap[primaryCrate])
+                || assetFiles.find(n => n.endsWith('.js'))
+                || 'index.js';
 
-                        let declaredMain;
-                        try {
-                            const pj = await readFile(pathResolve(pd, 'package.json'), 'utf8')
-                                .then(text => JSON.parse(text))
-                                .catch(() => undefined);
-                            if (pj && typeof pj.main === 'string') declaredMain = pj.main;
-                        } catch (e) {
-                            declaredMain = undefined;
-                        }
+            async function visit(dir) {
+                const entries = await fs.readdir(dir, { withFileTypes: true });
+                for (const ent of entries) {
+                    const p = pathResolve(dir, ent.name);
+                    if (ent.isDirectory()) {
+                        await visit(p);
+                    } else if (ent.isFile() && p.endsWith('.js')) {
+                        let content = await readFile(p, 'utf8');
 
-                        let candidate;
-                        if (declaredMain && entriesInPkg.includes(declaredMain)) candidate = declaredMain;
-                        if (!candidate) candidate = entriesInPkg.find(n => n.includes(crate) && n.endsWith('.js'));
-                        if (!candidate) candidate = entriesInPkg.find(n => n.endsWith('.js'));
+                        // compute relative path from file's dir to assets dir (posix-style)
+                        const fileDir = pathResolve(p, '..').replace(/\\/g, '/');
+                        const assetsPath = destAssets.replace(/\\/g, '/');
+                        let relToAssets = pathRelative(fileDir, assetsPath).replace(/\\/g, '/');
+                        if (!relToAssets || relToAssets === '') relToAssets = '.';
+                        if (!relToAssets.endsWith('/')) relToAssets += '/';
 
-                        // Prefer the filename as present in the final assets directory when possible.
-                        if (candidate && assetFiles.includes(candidate)) {
-                            crateEntryMap[crate] = candidate;
-                        } else if (candidate) {
-                            crateEntryMap[crate] = candidate;
-                        } else {
-                            crateEntryMap[crate] = undefined;
-                        }
+                        const fileReplacement = `import(new URL('${relToAssets}', import.meta.url).href + '${pkgMain}')`;
+
+                        content = content.split('import("../../../../..")').join(fileReplacement);
+                        content = content.split("import('../../../../..')").join(fileReplacement);
+                        content = content.replace(/import\(\s*['\"]?\.\.\/\.\.\/\.\.\.\s*['\"]?\s*\)/g, fileReplacement);
+                        await writeFile(p, content, 'utf8');
                     }
-
-                    // Primary pkgMain is the entry for the first crate or a fallback JS in assets
-                    const primaryCrate = crateNames[0];
-                    const pkgMain = (primaryCrate && crateEntryMap[primaryCrate])
-                        || assetFiles.find(n => n.endsWith('.js'))
-                        || 'index.js';
-
-                    const replacement = `import(new URL('../../../../..', import.meta.url).href + '${pkgMain}')`;
-
-                    async function visit(dir) {
-                        const entries = await fs.readdir(dir, { withFileTypes: true });
-                        for (const ent of entries) {
-                            const p = pathResolve(dir, ent.name);
-                            if (ent.isDirectory()) {
-                                await visit(p);
-                            } else if (ent.isFile() && p.endsWith('.js')) {
-                                try {
-                                    let content = await readFile(p, 'utf8');
-
-                                    // compute a relative URL from this file to the assets directory
-                                    // e.g. '../../../../../' so the snippet can import the asset file by name
-                                    const rel = pathResolve(p).replace(/\\/g, '/');
-                                    const assetsPath = destAssets.replace(/\\/g, '/');
-                                    // dirname of the file
-                                    const fileDir = pathResolve(p, '..').replace(/\\/g, '/');
-                                    // compute relative path from file's dir to assets dir (posix-style)
-                                    let relToAssets = pathRelative(fileDir, assetsPath).replace(/\\/g, '/');
-                                    if (!relToAssets || relToAssets === '') relToAssets = '.';
-                                    if (!relToAssets.endsWith('/')) relToAssets += '/';
-
-                                    const fileReplacement = `import(new URL('${relToAssets}', import.meta.url).href + '${pkgMain}')`;
-
-                                    content = content.split('import("../../../../..")').join(fileReplacement);
-                                    content = content.split("import('../../../../..')").join(fileReplacement);
-                                    content = content.replace(/import\(\s*['\"]?\.\.\/\.\.\/\.\.\.\s*['\"]?\s*\)/g, fileReplacement);
-                                    await writeFile(p, content, 'utf8');
-                                } catch (e) {
-                                    // ignore per-file errors
-                                }
-                            }
-                        }
-                    }
-
-                    const snippetsRoot = pathResolve(distDir, 'assets', 'snippets');
-                    await visit(snippetsRoot).catch(() => { });
-
-                    // Ensure there's a stable assets/index.js shim that forwards to the pkgMain
-                    try {
-                        const shimPath = pathResolve(destAssets, 'index.js');
-                        const shimContent = `import './${pkgMain}';\nexport * from './${pkgMain}';\n`;
-                        await writeFile(shimPath, shimContent, 'utf8');
-                    } catch (e) {
-                        // ignore
-                    }
-                    // Duplicate common worker files to stable filenames (worker, worker_helpers)
-                    try {
-                        const duplicates = [];
-                        for (const f of assetFiles) {
-                            if (/^worker[-_].*\.js$/.test(f) || /^workerHelpers[-_].*\.js$/i.test(f)) {
-                                duplicates.push({ src: f, dest: 'worker.js' });
-                            }
-                            if (/^worker_helpers[-_].*\.js$/.test(f)) {
-                                duplicates.push({ src: f, dest: 'worker_helpers.js' });
-                            }
-                        }
-                        for (const { src, dest } of duplicates.filter(d => d.dest !== pkgMain)) {
-                            try {
-                                const srcPath = pathResolve(destAssets, src);
-                                const destPath = pathResolve(destAssets, dest);
-                                await cp(srcPath, destPath, { force: true });
-                            } catch (e) {
-                                // ignore per-file duplicate errors
-                            }
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
-                    // Create explicit shims for each built crate named by its basename
-                    try {
-                        for (let i = 0; i < (crateNames.length || 0); i++) {
-                            const crate = crateNames[i];
-                            const candidate = crateEntryMap[crate] || assetFiles.find(n => n.endsWith('.js')) || pkgMain;
-                            if (candidate) {
-                                const shimName = `${crate}.js`;
-                                const shimPath = pathResolve(destAssets, shimName);
-                                const shimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
-                                try {
-                                    await writeFile(shimPath, shimContent, 'utf8');
-                                } catch (e) {
-                                    // ignore per-file errors
-                                }
-                            }
-                        }
-                        // ensure a compatibility shim `wasm_bindings.js` pointing at first crate's entry
-                        if (crateNames.length > 0) {
-                            const first = crateNames[0];
-                            const candidate = crateEntryMap[first] || pkgMain || 'index.js';
-                            const shimPath = pathResolve(destAssets, 'wasm_bindings.js');
-                            const shimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
-                            await writeFile(shimPath, shimContent, 'utf8').catch(() => { /* ignore */ });
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
-                    // Create wrapper modules for wasm-imported JS namespaces like `components_bg.js`
-                    try {
-                        const wasmFiles = assetFiles.filter(n => /_?bg[-_]?.*\.wasm$/.test(n));
-                        for (const wasmName of wasmFiles) {
-                            // derive base like 'components_bg' from 'components_bg-XXX.wasm' or 'components_bg.wasm'
-                            const base = wasmName.replace(/(-[A-Za-z0-9_]+)?\.wasm$/, '').replace(/-bg$/, '_bg');
-                            // find a JS candidate that likely provides the glue by name match
-                            const jsCandidate = assetFiles.find(n => n.includes(base.replace('_bg', '')) && n.endsWith('.js'))
-                                || assetFiles.find(n => n.startsWith(base.replace('_bg', '')) && n.endsWith('.js'))
-                                || assetFiles.find(n => n.endsWith('.js'));
-                            if (jsCandidate) {
-                                const wrapperName = `${base}.js`;
-                                const wrapperPath = pathResolve(destAssets, wrapperName);
-                                const wrapperContent = `export * from './${jsCandidate}';\nexport { default } from './${jsCandidate}';\n`;
-                                try {
-                                    await writeFile(wrapperPath, wrapperContent, 'utf8');
-                                } catch (e) {
-                                    // ignore per-file errors
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
-                } catch (e) {
-                    // ignore
                 }
+            }
 
-                // Ensure there's a stable assets/index.js shim that forwards to the real built entry
-                try {
-                    const fs = await import('node:fs/promises');
-                    const assetFiles = await fs.readdir(destAssets);
-                    // prefer a hashed Vite entry like index-*.js, or wasm pkg entry wasm_bindings.js
-                    const candidate = assetFiles.find(n => /^index-.*\.js$/.test(n)) || assetFiles.find(n => n === 'wasm_bindings.js');
-                    if (candidate) {
-                        const shimPath = pathResolve(destAssets, 'index.js');
-                        const shimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
-                        await writeFile(shimPath, shimContent, 'utf8');
-                    }
-                } catch (e) {
-                    // ignore
+            const snippetsRoot = pathResolve(distDir, 'assets', 'snippets');
+            // ensure snippets exist — treat absence as error
+            const stat = await fs.stat(snippetsRoot).catch(() => null);
+            if (!stat || !stat.isDirectory()) {
+                throw new Error(`Expected snippets directory at ${snippetsRoot} but none found`);
+            }
+            await visit(snippetsRoot);
+
+            // Ensure there's a stable assets/index.js shim that forwards to the pkgMain
+            const shimPath = pathResolve(destAssets, 'index.js');
+            const shimContent = `import './${pkgMain}';\nexport * from './${pkgMain}';\n`;
+            await writeFile(shimPath, shimContent, 'utf8');
+
+            // Duplicate common worker files to stable filenames (worker, worker_helpers)
+            const duplicates = [];
+            for (const f of assetFiles) {
+                if (/^worker[-_].*\.js$/.test(f) || /^workerHelpers[-_].*\.js$/i.test(f)) {
+                    duplicates.push({ src: f, dest: 'worker.js' });
                 }
-            } catch (e) {
-                // copying is best-effort; consumer build may not produce pkg
+                if (/^worker_helpers[-_].*\.js$/.test(f)) {
+                    duplicates.push({ src: f, dest: 'worker_helpers.js' });
+                }
+            }
+            for (const { src, dest } of duplicates.filter(d => d.dest !== pkgMain)) {
+                const srcPath = pathResolve(destAssets, src);
+                const destPath = pathResolve(destAssets, dest);
+                await cp(srcPath, destPath, { force: true });
+            }
+
+            // Create explicit shims for each built crate named by its basename
+            for (let i = 0; i < crateNames.length; i++) {
+                const crate = crateNames[i];
+                const candidate = crateEntryMap[crate] || assetFiles.find(n => n.endsWith('.js')) || pkgMain;
+                if (candidate) {
+                    const shimName = `${crate}.js`;
+                    const shimPath = pathResolve(destAssets, shimName);
+                    const shimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
+                    await writeFile(shimPath, shimContent, 'utf8');
+                }
+            }
+            // ensure a compatibility shim `wasm_bindings.js` pointing at first crate's entry
+            if (crateNames.length > 0) {
+                const first = crateNames[0];
+                const candidate = crateEntryMap[first] || pkgMain || 'index.js';
+                const wasmShimPath = pathResolve(destAssets, 'wasm_bindings.js');
+                const wasmShimContent = `import './${candidate}';\nexport * from './${candidate}';\n`;
+                await writeFile(wasmShimPath, wasmShimContent, 'utf8');
+            }
+
+            // Create wrapper modules for wasm-imported JS namespaces like `*_bg.wasm`
+            const wasmFiles = assetFiles.filter(n => /_?bg[-_]?.*\.wasm$/.test(n));
+            for (const wasmName of wasmFiles) {
+                const base = wasmName.replace(/(-[A-Za-z0-9_]+)?\.wasm$/, '').replace(/-bg$/, '_bg');
+                const jsCandidate = assetFiles.find(n => n.includes(base.replace('_bg', '')) && n.endsWith('.js'))
+                    || assetFiles.find(n => n.startsWith(base.replace('_bg', '')) && n.endsWith('.js'))
+                    || assetFiles.find(n => n.endsWith('.js'));
+                if (jsCandidate) {
+                    const wrapperName = `${base}.js`;
+                    const wrapperPath = pathResolve(destAssets, wrapperName);
+                    const wrapperContent = `export * from './${jsCandidate}';\nexport { default } from './${jsCandidate}';\n`;
+                    await writeFile(wrapperPath, wrapperContent, 'utf8');
+                }
             }
         },
         configureServer(server) {
