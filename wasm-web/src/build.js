@@ -22,7 +22,7 @@ export function normalizeThreads(value) {
     return threads;
 }
 
-export async function prepareWasm({ outDir, bindingsFile, threads }) {
+export async function prepareWasm({ outDir, bindingsFile }) {
     const outputDir = resolve(outDir);
     const entry = bindingsFile ?? await readFile(join(outputDir, "package.json"), "utf8")
         .then(text => JSON.parse(text).main)
@@ -42,7 +42,6 @@ export async function prepareWasm({ outDir, bindingsFile, threads }) {
 
     const manifest = {
         bindingsUrl: `./${entry}`,
-        threads: normalizeThreads(threads),
         workerHelpers: workerSources.map((source) => relative(outputDir, join(dirname(source), "worker_helpers.js")))
     };
     await writeFile(join(outputDir, "orx-parallel-web.json"), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -53,7 +52,6 @@ export async function buildWasm({
     bindings,
     outDir,
     bindingsFile,
-    threads,
     wasmPack = "wasm-pack",
     rustupToolchain = "nightly",
     rustflags = DEFAULT_RUSTFLAGS
@@ -85,7 +83,7 @@ export async function buildWasm({
         }
     });
 
-    return prepareWasm({ outDir: outputDir, bindingsFile, threads });
+    return prepareWasm({ outDir: outputDir, bindingsFile });
 }
 
 async function findFiles(directory, filename) {

@@ -1,4 +1,4 @@
-import { buildWasm, normalizeThreads } from "./build.js";
+import { buildWasm } from "./build.js";
 import { fileURLToPath } from "node:url";
 import { cp, mkdir, writeFile } from "node:fs/promises";
 import { readFile } from "node:fs/promises";
@@ -21,12 +21,6 @@ const packageRoot = fileURLToPath(new URL("..", import.meta.url));
  * Returns a Vite plugin object.
  */
 export function orxParallelWasm(options) {
-    if (options?.threads === undefined) {
-        throw new Error(
-            "`threads` is required: you may set `threads: 16` to limit the number of threads in the pool to 16, or `threads: 0` to use all available threads."
-        );
-    }
-
     if (options?.bindings === undefined) {
         throw new Error(
             "`bindings` is required: path to the Rust crate directory containing Cargo.toml that `wasm-pack` should build (for example '../wasm_bindings'). This plugin always builds the crate with `wasm-pack` during the build step; prebuilt packages are not accepted here. You may run the prepare script separately if you need to work with an existing pkg directory. `outDir` is optional — when omitted the plugin defaults to './pkg'."
@@ -34,7 +28,6 @@ export function orxParallelWasm(options) {
     }
 
     let buildPromise;
-    const threads = normalizeThreads(options.threads);
     let resolvedConfig;
 
     return {
@@ -46,9 +39,7 @@ export function orxParallelWasm(options) {
                         allow: [config.root ?? process.cwd(), packageRoot]
                     }
                 },
-                define: {
-                    __ORX_PARALLEL_MAX_NUM_THREADS__: JSON.stringify(threads)
-                }
+                // no compile-time defines are injected
             };
         },
         configResolved(config) {
