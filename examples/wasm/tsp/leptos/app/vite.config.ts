@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import { orxParallelWasm } from "orx-parallel-web/vite";
+import { orxParallelWasm } from "orx-parallel-wasm/vite";
 
 export default defineConfig({
     base: "./",
