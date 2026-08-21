@@ -1,4 +1,4 @@
-import { ParallelWorker } from "orx-parallel-web";
+import { ParallelWorker } from "orx-parallel-wasm";
 import bindingsUrl from "../pkg/components.js?url";
 import { normalizeSeed, type Location, type RunSettings, type SearchResult } from "./shared-types.js";
 
