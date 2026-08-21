@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve, basename as pathBasename } from "node:path";
 
 const DEFAULT_RUSTFLAGS = [
     "-C target-feature=+atomics",
@@ -14,6 +14,14 @@ const DEFAULT_RUSTFLAGS = [
     "-C link-arg=--export=__tls_base"
 ].join(" ");
 
+/**
+ * Prepare a wasm package directory for consumption by the plugin.
+ * - Reads `package.json` (or uses `bindingsFile`) to determine the JS entry
+ * - Copies worker helper sources and writes `orx-parallel-web.json` manifest
+ *
+ * @param {{outDir: string, bindingsFile?: string}} options
+ * @returns {{bindingsUrl: string, workerHelpers: string[]}} manifest
+ */
 export async function prepareWasm({ outDir, bindingsFile }) {
     const outputDir = resolve(outDir);
     const entry = bindingsFile ?? await readFile(join(outputDir, "package.json"), "utf8")
@@ -40,6 +48,13 @@ export async function prepareWasm({ outDir, bindingsFile }) {
     return manifest;
 }
 
+/**
+ * Build a Rust crate with `wasm-pack` (web target) into `outDir` and then
+ * prepare the produced package with `prepareWasm()`.
+ *
+ * @param {{bindings: string, outDir: string, bindingsFile?: string, wasmPack?: string, rustupToolchain?: string, rustflags?: string}} options
+ * @returns {Promise<ReturnType<typeof prepareWasm>>}
+ */
 export async function buildWasm({
     bindings,
     outDir,
@@ -78,6 +93,14 @@ export async function buildWasm({
     return prepareWasm({ outDir: outputDir, bindingsFile });
 }
 
+/**
+ * Recursively find files with the given `filename` under `directory`.
+ * Returns an array of absolute paths to matching files.
+ *
+ * @param {string} directory
+ * @param {string} filename
+ * @returns {Promise<string[]>}
+ */
 async function findFiles(directory, filename) {
     const matches = [];
     let entries;
@@ -99,20 +122,53 @@ async function findFiles(directory, filename) {
     return matches;
 }
 
+/**
+ * CLI entry for this script. Usage: `node src/build.js <build|prepare>`.
+ * Reads env vars `ORX_PARALLEL_WASM_BINDINGS`, `ORX_PARALLEL_WASM_OUT_DIR`,
+ * and `ORX_PARALLEL_WASM_BINDINGS_FILE` to configure the operation.
+ */
 async function main() {
     const mode = process.argv[2];
-    const bindings = process.env.ORX_PARALLEL_WASM_BINDINGS ?? "../wasm_bindings";
-    const outDir = process.env.ORX_PARALLEL_WASM_OUT_DIR ?? "../app/pkg";
-    const options = {
-        bindings,
-        outDir,
-        bindingsFile: process.env.ORX_PARALLEL_WASM_BINDINGS_FILE
-    };
+    const bindingsEnv = process.env.ORX_PARALLEL_WASM_BINDINGS;
+    if (!bindingsEnv) {
+        throw new Error('ORX_PARALLEL_WASM_BINDINGS must be set to the path (or list) of Rust crate(s) to build');
+    }
+
+    // Accept either a JSON array string or a comma-separated list
+    let bindingsList;
+    try {
+        if (bindingsEnv.trim().startsWith('[')) {
+            bindingsList = JSON.parse(bindingsEnv);
+        } else {
+            bindingsList = bindingsEnv.split(',').map(s => s.trim()).filter(Boolean);
+        }
+    } catch (e) {
+        throw new Error('ORX_PARALLEL_WASM_BINDINGS must be a path, comma-separated list, or JSON array');
+    }
+
+    if (!Array.isArray(bindingsList) || bindingsList.length === 0) {
+        throw new Error('ORX_PARALLEL_WASM_BINDINGS resolved to no bindings');
+    }
+
+    const baseOutDir = process.env.ORX_PARALLEL_WASM_OUT_DIR ?? "../app/pkg";
+    const bindingsFile = process.env.ORX_PARALLEL_WASM_BINDINGS_FILE;
 
     if (mode === "build") {
-        await buildWasm(options);
+        for (let i = 0; i < bindingsList.length; i++) {
+            const binding = bindingsList[i];
+            const perOut = (bindingsList.length === 1)
+                ? baseOutDir
+                : resolve(baseOutDir, pathBasename(String(binding)).replace(/[^A-Za-z0-9_\-]/g, '_'));
+            await buildWasm({ bindings: binding, outDir: perOut, bindingsFile });
+        }
     } else if (mode === "prepare") {
-        await prepareWasm({ outDir, bindingsFile: options.bindingsFile });
+        for (let i = 0; i < bindingsList.length; i++) {
+            const binding = bindingsList[i];
+            const perOut = (bindingsList.length === 1)
+                ? baseOutDir
+                : resolve(baseOutDir, pathBasename(String(binding)).replace(/[^A-Za-z0-9_\-]/g, '_'));
+            await prepareWasm({ outDir: perOut, bindingsFile });
+        }
     } else {
         throw new Error("usage: node src/build.js <build|prepare>");
     }
