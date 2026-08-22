@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build:wasm": "ORX_PARALLEL_WASM_BINDINGS=../components ORX_PARALLEL_WASM_OUT_DIR=./pkg node ./node_modules/orx-parallel-wasm/src/build.js build",
+        "build:wasm": "ORX_PARALLEL_WASM_BINDINGS=../components ORX_PARALLEL_WASM_OUT_DIR=./pkg node ./node_modules/orx-parallel-wasm/dist/build.js build",
         "dev:full": "npm exec -- vite",
         "dev": "npm exec -- vite",
         "typecheck": "tsc --noEmit",
