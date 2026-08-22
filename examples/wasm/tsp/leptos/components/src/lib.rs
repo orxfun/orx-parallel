@@ -22,7 +22,6 @@ use wasm_bindings::RunResult;
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
 const MIN_THREADS: u32 = 0;
-const MAX_THREADS: u32 = 32;
 
 const SEQUENTIAL_CODE: &str = "let mut rng = SmallRng::seed_from_u64(seed);\n(0..iterations)\n    .map(|_| create_tour(&mut rng, locations))\n    .min_by_key(|x| OrderedFloat::from(x.distance))";
 
@@ -73,16 +72,16 @@ unsafe extern "C" {
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn start_app() {
+pub fn start_app(max_threads: u32) {
     console_error_panic_hook::set_once();
-    mount_to_body(App);
+    mount_to_body(move || view! { <App max_threads=max_threads /> });
 }
 
 #[component]
-fn App() -> impl IntoView {
+fn App(max_threads: u32) -> impl IntoView {
     let status = RwSignal::new("Initializing...".to_string());
     let iterations = RwSignal::new(10_000_u32);
-    let threads = RwSignal::new(4_u32);
+    let threads = RwSignal::new(4_u32.min(max_threads));
     let chunk_size = RwSignal::new(0_u32);
     let seed = RwSignal::new(42_u64);
     let num_cities = RwSignal::new(50_u32);
@@ -160,7 +159,7 @@ fn App() -> impl IntoView {
                 </article>
             </section>
 
-            <ControlsSection ui=ui.clone() />
+            <ControlsSection ui=ui.clone() max_threads=max_threads />
 
             <section class="card">
                 <StatusSection ui=ui.clone() />
