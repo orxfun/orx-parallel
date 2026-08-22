@@ -26,6 +26,7 @@ web-sys = { version = "0.3", features = [
     "HtmlCanvasElement",
     "HtmlInputElement",
     "InputEvent",
+    "Navigator",
     "Window",
 ] }
 yew = { version = "0.21", features = ["csr"] }

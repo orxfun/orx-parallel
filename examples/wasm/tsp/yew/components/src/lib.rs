@@ -22,6 +22,24 @@ const MAX_CITIES: u32 = 200;
 const MIN_THREADS: u32 = 0;
 const MAX_THREADS: u32 = 32;
 
+// num_threads passed in from main.ts via start_app; 0 means "use all available threads"
+thread_local! {
+    static NUM_THREADS: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+// mirrors applyThreadsCap in the vanilla TSP example
+fn compute_max_threads() -> u32 {
+    let num_threads = NUM_THREADS.with(|cell| cell.get());
+    if num_threads > 0 {
+        return num_threads;
+    }
+
+    web_sys::window()
+        .map(|window| window.navigator().hardware_concurrency() as u32)
+        .filter(|&concurrency| concurrency > 0)
+        .unwrap_or(MAX_THREADS)
+}
+
 const SEQUENTIAL_CODE: &str = "let mut rng = SmallRng::seed_from_u64(seed);\n(0..iterations)\n    .map(|_| create_tour(&mut rng, locations))\n    .min_by_key(|x| OrderedFloat::from(x.distance))";
 
 const PARALLEL_CODE: &str = "(0..iterations)\n    .into_par()\n    .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))\n    .map(|rng, _| create_tour(rng, locations))\n    .min_by_key(|x| OrderedFloat::from(x.distance))";
@@ -48,7 +66,8 @@ unsafe extern "C" {
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn start_app() {
+pub fn start_app(num_threads: u32) {
+    NUM_THREADS.with(|cell| cell.set(num_threads));
     console_error_panic_hook::set_once();
     yew::Renderer::<App>::new().render();
 }
@@ -57,7 +76,8 @@ pub fn start_app() {
 pub fn app() -> Html {
     let status = use_state(|| "Initializing...".to_string());
     let iterations = use_state(|| 10_000_u32);
-    let threads = use_state(|| 4_u32);
+    let max_threads = use_state(compute_max_threads);
+    let threads = use_state(|| (*max_threads).min(4));
     let chunk_size = use_state(|| 0_u32);
     let seed = use_state(|| 42_u64);
     let num_cities = use_state(|| 50_u32);
@@ -129,8 +149,9 @@ pub fn app() -> Html {
 
     let on_threads_change = {
         let threads = threads.clone();
+        let max_threads = max_threads.clone();
         Callback::from(move |next_value: u32| {
-            threads.set(next_value.clamp(MIN_THREADS, MAX_THREADS));
+            threads.set(next_value.clamp(MIN_THREADS, *max_threads));
         })
     };
 
@@ -163,6 +184,7 @@ pub fn app() -> Html {
     let run_search = {
         let iterations = iterations.clone();
         let threads = threads.clone();
+        let max_threads = max_threads.clone();
         let chunk_size = chunk_size.clone();
         let seed = seed.clone();
         let num_cities = num_cities.clone();
@@ -181,6 +203,7 @@ pub fn app() -> Html {
             spawn_local(run_search_async(
                 iterations.clone(),
                 threads.clone(),
+                max_threads.clone(),
                 chunk_size.clone(),
                 seed.clone(),
                 num_cities.clone(),
@@ -255,6 +278,7 @@ pub fn app() -> Html {
             <ControlsSection
                 iterations={*iterations}
                 threads={*threads}
+                max_threads={*max_threads}
                 chunk_size={*chunk_size}
                 seed={*seed}
                 num_cities={*num_cities}
@@ -287,6 +311,7 @@ pub fn app() -> Html {
 async fn run_search_async(
     iterations: UseStateHandle<u32>,
     threads: UseStateHandle<u32>,
+    max_threads: UseStateHandle<u32>,
     chunk_size: UseStateHandle<u32>,
     seed: UseStateHandle<u64>,
     num_cities: UseStateHandle<u32>,
@@ -304,7 +329,7 @@ async fn run_search_async(
 ) {
     let settings = RunSettings {
         iterations: (*iterations).max(1),
-        threads: (*threads).clamp(MIN_THREADS, MAX_THREADS),
+        threads: (*threads).clamp(MIN_THREADS, *max_threads),
         chunk_size: *chunk_size,
         seed: *seed,
         num_cities: (*num_cities).clamp(MIN_CITIES, MAX_CITIES),
