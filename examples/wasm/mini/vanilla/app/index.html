@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>orx-parallel WASM mini tutorial</title>
+</head>
+
+<body>
+    <main>
+        <p class="eyebrow">orx-parallel / WebAssembly</p>
+        <h1>Two small computations.<br />One shared thread pool.</h1>
+        <p class="intro">Run the same Rust algorithms with different worker counts and compare their timings.</p>
+
+        <section class="panel" aria-labelledby="settings-title">
+            <h2 id="settings-title">Run settings</h2>
+            <label>
+                Threads
+                <input id="threads" type="number" value="0" min="0" step="1" />
+                <span id="threads-help">0 uses all initialized threads</span>
+            </label>
+            <p id="pool-status" role="status">Initializing thread pool...</p>
+        </section>
+
+        <section class="computations" aria-label="Computations">
+            <article class="computation">
+                <p class="index">01</p>
+                <h2>Fibonacci workload</h2>
+                <p>Sum many Fibonacci terms to give each worker useful CPU work.</p>
+                <label>
+                    Number of terms
+                    <input id="fibonacci-workload" type="number" value="50000" min="1" step="1000" />
+                </label>
+                <button id="run-fibonacci" type="button">Calculate Fibonacci</button>
+                <p id="fibonacci-result" class="result">No result yet.</p>
+            </article>
+
+            <article class="computation">
+                <p class="index">02</p>
+                <h2>Prime counting</h2>
+                <p>Count the prime numbers up to a configurable upper bound.</p>
+                <label>
+                    Upper bound
+                    <input id="prime-limit" type="number" value="1000000" min="2" step="10000" />
+                </label>
+                <button id="run-primes" type="button">Count Primes</button>
+                <p id="prime-result" class="result">No result yet.</p>
+            </article>
+        </section>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+</body>
+
+</html>
