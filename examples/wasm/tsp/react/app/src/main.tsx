@@ -9,9 +9,13 @@ import { App } from "./App";
 import { createSearchWorker } from "./search-runner";
 
 // 0 means "use all available threads"; passed to createSearchWorker and used to size the threads input
-const num_threads = 16;
+const num_threads = 0;
+const MAX_THREADS = 32;
 
 hljs.registerLanguage("rust", rust);
+
+// num_threads === 0 means "all available threads", so fall back to hardwareConcurrency
+const maxThreads = num_threads > 0 ? num_threads : (navigator.hardwareConcurrency || MAX_THREADS);
 
 async function bootstrap() {
     await init();
@@ -25,7 +29,7 @@ async function bootstrap() {
 
     createRoot(rootNode).render(
         <StrictMode>
-            <App searchWorker={searchWorker} />
+            <App searchWorker={searchWorker} maxThreads={maxThreads} />
         </StrictMode>
     );
 

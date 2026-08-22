@@ -3,6 +3,7 @@ import type { ChangeEvent } from "react";
 type ControlsSectionProps = {
     iterations: number;
     threads: number;
+    maxThreads: number;
     chunkSize: number;
     seed: number;
     numCities: number;
@@ -52,12 +53,12 @@ export function ControlsSection(props: ControlsSectionProps) {
                         />
                     </label>
                     <label>
-                        Threads (0..32)
+                        Threads (0..{props.maxThreads})
                         <input
                             id="threads"
                             type="number"
                             min="0"
-                            max="32"
+                            max={props.maxThreads}
                             value={props.threads}
                             disabled={props.isRunning}
                             onChange={(event) => props.onThreadsChange(readNumber(event, props.threads))}
