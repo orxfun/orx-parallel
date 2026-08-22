@@ -4,17 +4,17 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build:wasm": "ORX_PARALLEL_WASM_BINDINGS=../wasm_bindings ORX_PARALLEL_WASM_OUT_DIR=./pkg node ../../../../../wasm-web/src/build.js build",
+        "build:wasm": "ORX_PARALLEL_WASM_BINDINGS=../wasm_bindings ORX_PARALLEL_WASM_OUT_DIR=./pkg node ./node_modules/orx-parallel-wasm/src/build.js build",
         "dev:full": "npm exec -- vite",
         "dev": "npm exec -- vite",
         "typecheck": "tsc --noEmit",
-        "build": "npm run typecheck && npm exec -- vite build",
+        "build": "npm run build:wasm && npm run typecheck && npm exec -- vite build",
         "preview": "npm run build && npm exec -- vite preview",
         "serve:dist": "node scripts/serve-dist.mjs"
     },
     "dependencies": {
         "highlight.js": "^11.11.1",
-        "orx-parallel-web": "file:../../../../../wasm-web",
+        "orx-parallel-wasm": "git+https://github.com/orxfun/orx-parallel-wasm.git",
         "react": "^19.1.1",
         "react-dom": "^19.1.1"
     },
