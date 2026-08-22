@@ -6,6 +6,7 @@ use yew::prelude::*;
 pub struct ControlsSectionProps {
     pub iterations: u32,
     pub threads: u32,
+    pub max_threads: u32,
     pub chunk_size: u32,
     pub seed: u64,
     pub num_cities: u32,
@@ -89,12 +90,12 @@ pub fn controls_section(props: &ControlsSectionProps) -> Html {
                         />
                     </label>
                     <label>
-                        {"Threads (0..32)"}
+                        {format!("Threads (0..{})", props.max_threads)}
                         <input
                             id="threads"
                             type="number"
                             min="0"
-                            max="32"
+                            max={props.max_threads.to_string()}
                             value={props.threads.to_string()}
                             oninput={on_threads}
                         />
