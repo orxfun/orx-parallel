@@ -10,7 +10,6 @@ import type { Location, RunSettings, SearchResult } from "./shared-types";
 
 const MIN_CITIES = 5;
 const MAX_CITIES = 200;
-const MAX_THREADS = 32;
 
 function readCssColor(variableName: string): string {
     return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
@@ -43,12 +42,13 @@ function generatePoints(seed: bigint, numCities: number) {
 
 type AppProps = {
     searchWorker: SearchWorker;
+    maxThreads: number;
 };
 
-export function App({ searchWorker }: AppProps) {
+export function App({ searchWorker, maxThreads }: AppProps) {
     const [status, setStatus] = useState("Initializing...");
     const [iterations, setIterations] = useState(10_000);
-    const [threads, setThreads] = useState(4);
+    const [threads, setThreads] = useState(() => Math.min(4, maxThreads));
     const [chunkSize, setChunkSize] = useState(0);
     const [seed, setSeed] = useState(42);
     const [numCities, setNumCities] = useState(50);
@@ -124,7 +124,7 @@ export function App({ searchWorker }: AppProps) {
     function readRunSettings(): RunSettings {
         return {
             iterations: clamp(iterations, 1, 200_000),
-            threads: clamp(threads, 0, MAX_THREADS),
+            threads: clamp(threads, 0, maxThreads),
             chunkSize: Math.max(0, Math.trunc(chunkSize)),
             seed: normalizeSeed(seed),
             numCities: clamp(numCities, MIN_CITIES, MAX_CITIES)
@@ -232,6 +232,7 @@ export function App({ searchWorker }: AppProps) {
             <ControlsSection
                 iterations={iterations}
                 threads={threads}
+                maxThreads={maxThreads}
                 chunkSize={chunkSize}
                 seed={seed}
                 numCities={numCities}
@@ -239,7 +240,7 @@ export function App({ searchWorker }: AppProps) {
                 status={status}
                 onIterationsChange={(next) => setIterations(clamp(next, 1, 200_000))}
                 onThreadsChange={(next) => {
-                    const normalized = clamp(next, 0, MAX_THREADS);
+                    const normalized = clamp(next, 0, maxThreads);
                     setThreads(normalized);
                     setStatus(`Thread limit set to ${normalized}.`);
                 }}
