@@ -62,7 +62,4 @@ pub use use_var::{Use, UseVec};
 
 /// Initializes the browser's shared wasm thread pool.
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
-#[wasm_bindgen::prelude::wasm_bindgen]
-pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
-    pool::init_wasm_thread_pool(num_threads as usize)
-}
+pub use pool::init_wasm_parallel_runtime;

@@ -90,14 +90,14 @@ Note that `main.js` is responsible for updating the UI state and creating the wo
 **>_** Create `app/src/worker.js`:
 
 ```js
-import init, { init_parallel_runtime, compute } from "../pkg/wasm_bindings.js";
+import init, { init_wasm_parallel_runtime, compute } from "../pkg/wasm_bindings.js";
 
 self.addEventListener("message", async (event) => {
     try {
         const { input, threads } = event.data;
 
         await init();
-        await init_parallel_runtime(threads);
+        await init_wasm_parallel_runtime(threads);
 
         const result = compute(input, threads);
         self.postMessage({ type: "ok", result });

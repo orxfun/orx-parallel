@@ -15,7 +15,7 @@ We will add dependencies to:
 * to our `computation` crate, again with `wasm` feature.
 
 The `computation` dependency enables the `wasm` feature of `orx-parallel`. That
-feature supplies the `init_parallel_runtime` export used by the worker, so the
+feature supplies the `init_wasm_parallel_runtime` export used by the worker, so the
 application bindings crate does not need to implement the runtime initializer
 or depend on `js-sys` directly.
 

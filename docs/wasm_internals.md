@@ -177,7 +177,7 @@ The example apps keep browser concerns outside the computation crate.
 That mirrors the runtime design:
 
 - `orx-parallel` owns scheduling and scoped execution
-- `wasm_bindings` exposes a small API such as `init_parallel_runtime(...)`
+- `wasm_bindings` exposes a small API such as `init_wasm_parallel_runtime(...)`
 - the browser host owns `wasm-pack` output loading, worker lifecycle, and COOP/COEP headers
 
 This separation is not accidental; it matches the actual responsibility boundaries in the implementation.
