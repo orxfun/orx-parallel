@@ -10,8 +10,8 @@
 <body>
     <main>
         <p class="eyebrow">orx-parallel / WebAssembly</p>
-        <h1>Two small computations.<br />One shared thread pool.</h1>
-        <p class="intro">Run the same Rust algorithms with different worker counts and compare their timings.</p>
+        <h1>Parallel computations using one shared thread pool</h1>
+        <p class="intro">Run Rust algorithms with different worker counts and compare their timings.</p>
 
         <section class="panel" aria-labelledby="settings-title">
             <h2 id="settings-title">Run settings</h2>
@@ -38,14 +38,14 @@
 
             <article class="computation">
                 <p class="index">02</p>
-                <h2>Prime counting</h2>
-                <p>Count the prime numbers up to a configurable upper bound.</p>
+                <h2>Mandelbrot checksum</h2>
+                <p>Calculate a checksum across a configurable number of Mandelbrot points.</p>
                 <label>
-                    Upper bound
-                    <input id="prime-limit" type="number" value="50000000" min="2" step="10000" />
+                    Number of points
+                    <input id="mandelbrot-workload" type="number" value="50000" min="1" step="1000" />
                 </label>
-                <button id="run-primes" type="button">Count Primes</button>
-                <p id="prime-result" class="result">No result yet.</p>
+                <button id="run-mandelbrot" type="button">Calculate Checksum</button>
+                <p id="mandelbrot-result" class="result">No result yet.</p>
             </article>
         </section>
     </main>

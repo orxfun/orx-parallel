@@ -2,9 +2,13 @@ import { ParallelWorker } from "orx-parallel-wasm";
 import bindingsUrl from "../pkg/wasm_bindings.js?url";
 import "../style.css";
 
+// Desired number of threads in the thread pool, if the hardware allows.
+// Setting it to 0 allows using all available threads.
+const THREADS_IN_POOL = 0;
+
 type Computations = {
     calculate_fibonacci: (workload: number, threads: number) => bigint;
-    count_primes: (limit: number, threads: number) => number;
+    mandelbrot_checksum: (limit: number, threads: number) => number;
 };
 
 const ui = {
@@ -12,19 +16,21 @@ const ui = {
     threadsHelp: document.querySelector<HTMLSpanElement>("#threads-help")!,
     poolStatus: document.querySelector<HTMLParagraphElement>("#pool-status")!,
     fibonacciWorkload: document.querySelector<HTMLInputElement>("#fibonacci-workload")!,
-    primeLimit: document.querySelector<HTMLInputElement>("#prime-limit")!,
+    mandelbrotWorkload: document.querySelector<HTMLInputElement>("#mandelbrot-workload")!,
     runFibonacci: document.querySelector<HTMLButtonElement>("#run-fibonacci")!,
-    runPrimes: document.querySelector<HTMLButtonElement>("#run-primes")!,
+    runMandelbrot: document.querySelector<HTMLButtonElement>("#run-mandelbrot")!,
     fibonacciResult: document.querySelector<HTMLParagraphElement>("#fibonacci-result")!,
-    primeResult: document.querySelector<HTMLParagraphElement>("#prime-result")!
+    mandelbrotResult: document.querySelector<HTMLParagraphElement>("#mandelbrot-result")!
 };
 
 const worker = new ParallelWorker<Computations>({
     bindingsUrl,
-    methods: ["calculate_fibonacci", "count_primes"],
-    threads: 0
+    methods: ["calculate_fibonacci", "mandelbrot_checksum"],
+    threads: THREADS_IN_POOL
 });
 
+// Per-computation thread limit.
+// Setting it to 0 allows using all threads in the thread pool.
 function readThreads(): number {
     const value = Number.parseInt(ui.threads.value, 10);
     const maxThreads = worker.initializedThreads ?? 1;
@@ -63,7 +69,7 @@ void worker.ready().then(
     (error: unknown) => {
         ui.poolStatus.textContent = `Thread pool error: ${error instanceof Error ? error.message : String(error)}`;
         ui.runFibonacci.disabled = true;
-        ui.runPrimes.disabled = true;
+        ui.runMandelbrot.disabled = true;
     }
 );
 
@@ -73,9 +79,9 @@ ui.runFibonacci.addEventListener("click", () => {
     );
 });
 
-ui.runPrimes.addEventListener("click", () => {
-    void run(ui.runPrimes, ui.primeResult, () =>
-        worker.call("count_primes", [readPositive(ui.primeLimit), readThreads()])
+ui.runMandelbrot.addEventListener("click", () => {
+    void run(ui.runMandelbrot, ui.mandelbrotResult, () =>
+        worker.call("mandelbrot_checksum", [readPositive(ui.mandelbrotWorkload), readThreads()])
     );
 });
 

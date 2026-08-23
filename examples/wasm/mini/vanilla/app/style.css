@@ -31,7 +31,7 @@ main {
 h1 {
     max-width: 760px;
     margin: 1rem 0;
-    font-size: clamp(2.8rem, 7vw, 6.5rem);
+    font-size: clamp(1.4rem, 3.5vw, 3.25rem);
     line-height: 0.92;
     font-weight: 400;
 }
@@ -141,6 +141,6 @@ button:disabled {
     }
 
     h1 {
-        font-size: 3.5rem;
+        font-size: 2rem;
     }
 }
