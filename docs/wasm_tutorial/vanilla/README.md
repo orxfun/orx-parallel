@@ -3,7 +3,7 @@
 This tutorial builds a small TypeScript browser app that runs two Rust computations through `orx-parallel-wasm`:
 
 - a Fibonacci workload
-- a prime-number counter
+- a Mandelbrot checksum
 
 The finished example is in [`examples/wasm/mini/vanilla`](../../../examples/wasm/mini/vanilla).
 
