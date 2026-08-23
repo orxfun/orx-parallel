@@ -15,6 +15,6 @@ pub fn calculate_fibonacci(workload: u32, num_threads: u32) -> u64 {
 }
 
 #[wasm_bindgen]
-pub fn count_primes(limit: u32, num_threads: u32) -> u32 {
-    computation::count_primes(limit as usize, num_threads as usize) as u32
+pub fn mandelbrot_checksum(limit: u32, num_threads: u32) -> u32 {
+    computation::mandelbrot_checksum(limit as usize, num_threads as usize) as u32
 }

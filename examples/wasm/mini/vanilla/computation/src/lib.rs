@@ -19,30 +19,38 @@ pub fn calculate_fibonacci(workload: usize, num_threads: usize) -> u64 {
         .sum()
 }
 
-fn is_prime(candidate: usize) -> bool {
-    match candidate {
-        0 | 1 => false,
-        2 => true,
-        n if n.is_multiple_of(2) => false,
-        n => {
-            let mut divisor = 3;
-            while divisor <= n / divisor {
-                if n.is_multiple_of(divisor) {
-                    return false;
-                }
-                divisor += 2;
-            }
-            true
+const MAX_MANDELBROT_ITERATIONS: u64 = 10000;
+
+fn mandelbrot_escape_iterations(point_index: usize, workload: usize) -> u64 {
+    let width = (workload as f64).sqrt().ceil() as usize;
+    let height = workload.div_ceil(width);
+    let x = point_index % width;
+    let y = point_index / width;
+
+    let real = -2.0 + 3.0 * x as f64 / width.saturating_sub(1).max(1) as f64;
+    let imaginary = -1.5 + 3.0 * y as f64 / height.saturating_sub(1).max(1) as f64;
+    let (mut z_real, mut z_imaginary) = (0.0, 0.0);
+
+    for iteration in 1..=MAX_MANDELBROT_ITERATIONS {
+        (z_real, z_imaginary) = (
+            z_real * z_real - z_imaginary * z_imaginary + real,
+            2.0 * z_real * z_imaginary + imaginary,
+        );
+
+        if z_real * z_real + z_imaginary * z_imaginary > 4.0 {
+            return iteration;
         }
     }
+
+    MAX_MANDELBROT_ITERATIONS
 }
 
-pub fn count_primes(limit: usize, num_threads: usize) -> usize {
-    (2..limit)
+pub fn mandelbrot_checksum(workload: usize, num_threads: usize) -> u64 {
+    (0..workload)
         .par()
         .num_threads(num_threads)
-        .filter(|&candidate| is_prime(candidate))
-        .count()
+        .map(|point_index| mandelbrot_escape_iterations(point_index, workload))
+        .sum()
 }
 
 #[cfg(test)]
@@ -55,7 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn counts_primes() {
-        assert_eq!(count_primes(10, 2), 4);
+    fn calculates_mandelbrot_checksum() {
+        assert_eq!(mandelbrot_checksum(4, 2), 6);
     }
 }
