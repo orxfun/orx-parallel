@@ -24,5 +24,3 @@ Create your example application's directory
 mkdir par_wasm
 cd par_wasm
 ```
-
-The next chapter creates the first crate. Run later commands from the repository root unless a chapter says to change directories.

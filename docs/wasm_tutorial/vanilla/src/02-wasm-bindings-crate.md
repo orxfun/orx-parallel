@@ -14,9 +14,7 @@ We will add dependencies to:
 * `wasm-bindgen` for creating WebAssembly bindings,
 * to `js-sys` for the `Promise` type,
 * to `orx-parallel` with `wasm` feature, and
-* to our `computation` create again with `wasm` feature.
-
-Finally, we will set the crate type.
+* to our `computation` crate, again with `wasm` feature.
 
 Update `par_wasm/wasm_bindings/Cargo.toml` as follows:
 
