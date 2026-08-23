@@ -14,7 +14,7 @@ Live examples:
 The documented browser-hosted wasm path uses the `wasm` feature.
 
 - exported pool type: `WasmWebPool`
-- exported init function: `init_thread_pool(...)` on atomics-enabled `wasm32`
+- exported init function: `init_wasm_thread_pool(...)` on atomics-enabled `wasm32`
 - implementation: custom worker-backed runtime in `src/pool/pool_impl/wasm_web.rs`
 
 The examples under `examples/wasm/` use this backend.
@@ -77,7 +77,7 @@ See:
 - `examples/wasm/tsp/vanilla/app/package.json`
 - `examples/wasm/mini/vanilla_persistent_pool/app/package.json`
 
-If the build is not atomics-enabled, `init_thread_pool(...)` is not available and the parallel runtime cannot be initialized.
+If the build is not atomics-enabled, `init_wasm_thread_pool(...)` is not available and the parallel runtime cannot be initialized.
 
 ### 2. Serve with cross-origin isolation headers
 
@@ -106,7 +106,7 @@ In the example `wasm_bindings` crates, the public wrapper looks like this:
 #[wasm_bindgen]
 pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
     #[cfg(target_feature = "atomics")]
-    return orx_parallel::init_thread_pool(num_threads as usize);
+    return orx_parallel::init_wasm_thread_pool(num_threads as usize);
 
     #[cfg(not(target_feature = "atomics"))]
     panic!("init_parallel_runtime requires a wasm target with atomics and shared memory enabled")
@@ -119,7 +119,7 @@ Notes:
 
 - `num_threads = 0` means automatic thread selection
 - `0` uses the crate's resource/env-based auto choice
-- calling `init_thread_pool(...)` again with the same thread count resolves successfully
+- calling `init_wasm_thread_pool(...)` again with the same thread count resolves successfully
 - calling it again with a different thread count is rejected
 
 ## Recommended crate structure
@@ -164,7 +164,7 @@ If parallel wasm does not work as expected, check these first:
 - the `wasm` feature is enabled
 - the wasm build includes atomics and shared-memory flags
 - the app is served with COOP/COEP headers
-- `init_thread_pool(...)` was awaited before the first parallel run
+- `init_wasm_thread_pool(...)` was awaited before the first parallel run
 - you did not attempt to reinitialize with a different thread count
 - your build or packaging step preserved the worker helper files used by the selected backend
 
