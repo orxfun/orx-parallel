@@ -49,6 +49,12 @@ pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 pub use pool::WasmWebPool;
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
+#[wasm_bindgen::prelude::wasm_bindgen]
+/// Initializes the browser's shared wasm thread pool.
+pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
+    pool::init_thread_pool(num_threads as usize)
+}
 #[cfg(all(feature = "wasm-experimental", target_arch = "wasm32"))]
 pub use pool::WasmWebPoolExp;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
