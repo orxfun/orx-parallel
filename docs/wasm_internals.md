@@ -19,7 +19,7 @@ the crate exports:
 
 Additionally, when `target_feature = "atomics"` is also enabled, it exports:
 
-- `init_thread_pool(...)`
+- `init_wasm_thread_pool(...)`
 - `wasm_web_runtime_info()`
 - `wasm_web_start_worker()`
 
@@ -65,7 +65,7 @@ The worker-shared state contains:
 
 ## Initialization flow in the main backend
 
-`init_thread_pool(num_threads)` is the explicit entrypoint.
+`init_wasm_thread_pool(num_threads)` is the explicit entrypoint.
 
 Its behavior is:
 
@@ -168,7 +168,7 @@ In browser wasm, the runtime depends on external conditions that are not owned b
 - JS worker creation
 - cross-origin isolation headers
 
-Surfacing initialization directly through `init_thread_pool(...)` makes these preconditions explicit and moves failures closer to application startup.
+Surfacing initialization directly through `init_wasm_thread_pool(...)` makes these preconditions explicit and moves failures closer to application startup.
 
 ## Relationship to the examples
 

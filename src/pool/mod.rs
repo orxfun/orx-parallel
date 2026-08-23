@@ -14,7 +14,7 @@ pub use pool_impl::WasmWebPool;
     target_arch = "wasm32",
     target_feature = "atomics",
 ))]
-pub use pool_impl::init_thread_pool;
+pub use pool_impl::init_wasm_thread_pool;
 
 #[cfg(all(
     feature = "std",

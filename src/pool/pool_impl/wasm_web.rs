@@ -253,7 +253,7 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
 
 /// Initializes the worker-backed wasm thread runtime for `WasmWebPool`.
 #[cfg(target_feature = "atomics")]
-pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
+pub fn init_wasm_thread_pool(num_threads: usize) -> js_sys::Promise {
     #[allow(clippy::missing_panics_doc)]
     let num_threads = match num_threads {
         0 => crate::pool::env::max_num_threads_by_env_and_resource(),
@@ -283,7 +283,7 @@ pub fn init_thread_pool(num_threads: usize) -> js_sys::Promise {
             match configured_threads == num_threads.get() {
                 true => js_sys::Promise::resolve(&wasm_bindgen::JsValue::UNDEFINED),
                 false => js_sys::Promise::reject(&wasm_bindgen::JsValue::from_str(&format!(
-                    "init_thread_pool was already called with {configured_threads} threads; refusing to reinitialize with {} threads",
+                    "init_wasm_thread_pool was already called with {configured_threads} threads; refusing to reinitialize with {} threads",
                     num_threads.get()
                 ))),
             }
@@ -319,7 +319,7 @@ fn assert_wasm_thread_pool_initialized() {
     assert_eq!(
         WASM_WEB3_THREAD_POOL_STATE.load(Ordering::SeqCst),
         WASM_WEB3_THREAD_POOL_INITIALIZED,
-        "Wasm web thread pool is not initialized. Call and await init_thread_pool(...) before running parallel computations."
+        "Wasm web thread pool is not initialized. Call and await init_wasm_thread_pool(...) before running parallel computations."
     )
 }
 
@@ -328,7 +328,7 @@ fn runtime() -> &'static Arc<Inner> {
     WASM_WEB3_RUNTIME.get_or_init(|| {
         let num_threads = WASM_WEB3_THREAD_POOL_NUM_THREADS.load(Ordering::SeqCst);
         let num_threads = NonZeroUsize::new(num_threads)
-            .expect("wasm web configured thread count must be > 0 after init_thread_pool");
+            .expect("wasm web configured thread count must be > 0 after init_wasm_thread_pool");
         init_runtime(num_threads)
     })
 }

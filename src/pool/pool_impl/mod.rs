@@ -24,7 +24,7 @@ mod wasm_web;
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 pub use wasm_web::WasmWebPool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
-pub use wasm_web::init_thread_pool;
+pub use wasm_web::init_wasm_thread_pool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use wasm_web::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]

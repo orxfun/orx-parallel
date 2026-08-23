@@ -51,8 +51,6 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use pool::WasmWebPool;
 
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
-pub use pool::init_thread_pool;
-#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::wasm_web_start_worker;
@@ -66,5 +64,5 @@ pub use use_var::{Use, UseVec};
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
-    pool::init_thread_pool(num_threads as usize)
+    pool::init_wasm_thread_pool(num_threads as usize)
 }

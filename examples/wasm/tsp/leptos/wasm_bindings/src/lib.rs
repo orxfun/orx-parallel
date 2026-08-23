@@ -12,19 +12,6 @@ pub struct RunResult {
 }
 
 #[wasm_bindgen]
-/// Initializes the shared thread pool used by the parallel search path.
-///
-/// This function must be called once before invoking `run_search`.
-#[allow(unused_variables)]
-pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
-    #[cfg(target_feature = "atomics")]
-    return orx_parallel::init_thread_pool(num_threads as usize);
-
-    #[cfg(not(target_feature = "atomics"))]
-    panic!("init_parallel_runtime requires a wasm target with atomics and shared memory enabled")
-}
-
-#[wasm_bindgen]
 /// Generates a random set of locations for a TSP instance.
 pub fn locations(seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
     let locations = create_locations(seed, num_cities);
