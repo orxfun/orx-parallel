@@ -4,32 +4,14 @@ mod new_pool;
 mod par_thread_pool;
 mod pool_impl;
 
-// 1. wasm-experimental
-#[cfg(all(feature = "std", feature = "wasm-experimental", target_arch = "wasm32"))]
-pub use pool_impl::WasmWebPoolExp;
-
-#[cfg(all(
-    feature = "std",
-    feature = "wasm-experimental",
-    target_arch = "wasm32",
-    target_feature = "atomics"
-))]
-pub use pool_impl::init_thread_pool;
-
-// 2. wasm
-#[cfg(all(
-    feature = "std",
-    feature = "wasm",
-    target_arch = "wasm32",
-    not(feature = "wasm-experimental"),
-))]
+// 1. wasm
+#[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
 pub use pool_impl::WasmWebPool;
 
 #[cfg(all(
     feature = "std",
     feature = "wasm",
     target_arch = "wasm32",
-    not(feature = "wasm-experimental"),
     target_feature = "atomics",
 ))]
 pub use pool_impl::init_thread_pool;
@@ -38,7 +20,6 @@ pub use pool_impl::init_thread_pool;
     feature = "std",
     feature = "wasm",
     target_arch = "wasm32",
-    not(feature = "wasm-experimental"),
     target_feature = "atomics",
 ))]
 pub use pool_impl::wasm_web_runtime_info;
@@ -47,26 +28,24 @@ pub use pool_impl::wasm_web_runtime_info;
     feature = "std",
     feature = "wasm",
     target_arch = "wasm32",
-    not(feature = "wasm-experimental"),
     target_feature = "atomics",
 ))]
 pub use pool_impl::wasm_web_start_worker;
 
-// 4. basic
+// 2. basic
 #[cfg(feature = "std")]
 pub use pool_impl::BasicPool;
 
-// 5. once
+// 3. once
 #[cfg(feature = "std")]
 pub use pool_impl::OncePool;
 
-// 6. sequential
+// 4. sequential
 #[cfg(all(
     not(feature = "std"),
     not(feature = "persistent-pool"),
     not(feature = "persistent-pool-rayon"),
     not(feature = "wasm"),
-    not(feature = "wasm-experimental"),
 ))]
 pub use pool_impl::SequentialPool;
 
