@@ -5,7 +5,14 @@ This tutorial builds a small TypeScript browser app that runs two Rust computati
 - a Fibonacci workload
 - a Mandelbrot checksum
 
-The finished example is in [`examples/wasm/mini/vanilla`](../../../examples/wasm/mini/vanilla).
+The finished example is in [`examples/wasm/mini/vanilla`](../../../examples/wasm/mini/vanilla), but you can create it by following the tutorial without opening that directory.
+
+The chapters create the project in this order:
+
+1. Create the Rust computation crate.
+2. Add the WASM bindings crate.
+3. Create the Vite app and its worker-backed TypeScript UI.
+4. Build and run the app.
 
 To build and run it:
 
