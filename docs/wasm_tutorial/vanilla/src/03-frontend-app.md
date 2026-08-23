@@ -1,12 +1,17 @@
 # The vanilla app
 
-The browser app lives in `examples/wasm/mini/vanilla/app`. Change to that directory before creating these files:
+Create the directory for the browser app:
 
-```text
-cd examples/wasm/mini/vanilla/app
+```bash
+mkdir app
+cd app
 ```
 
-The `package.json`, `tsconfig.json`, and `vite.config.ts` files are the complete app configuration:
+## Configuration
+
+### `package.json`
+
+Create `par_wasm/app/package.json` as follows:
 
 ```json
 {
@@ -30,9 +35,19 @@ The `package.json`, `tsconfig.json`, and `vite.config.ts` files are the complete
 }
 ```
 
-Save this as `package.json`, then run `npm install`. This creates `package-lock.json` and `node_modules`; neither needs to be written by hand.
+PLACEHOLDER: explain a bit this package.json
 
-Save the following as `tsconfig.json`:
+Install the dependencies:
+
+```bash
+npm install
+```
+
+This creates `package-lock.json` and `node_modules`.
+
+### `tsconfig.json`
+
+Create `par_wasm/app/tsconfig.json` as follows:
 
 ```json
 {
@@ -53,7 +68,11 @@ Save the following as `tsconfig.json`:
 }
 ```
 
-Save the following as `vite.config.ts`:
+PLACEHOLDER: explain a bit this tsconfig.json, anything special? say nothing special otherwise
+
+### `vite.config.ts`
+
+Create `par_wasm/app/vite.config.ts` as follows:
 
 ```ts
 import { defineConfig } from "vite";
@@ -80,9 +99,15 @@ export default defineConfig({
 });
 ```
 
-The plugin compiles the sibling bindings crate and writes generated files to `pkg`. The two server headers enable `SharedArrayBuffer`, which is required by threaded WebAssembly. `worker.format` makes the generated worker an ES module.
+The plugin compiles the sibling bindings crate and writes generated files to `pkg`.
+
+The two server headers enable `SharedArrayBuffer`, which is required by threaded WebAssembly.
+
+`worker.format` makes the generated worker an ES module.
 
 ## Page markup
+
+Create `par_wasm/app/index.html`:
 
 Save this as `index.html`:
 
@@ -146,7 +171,7 @@ Save this as `index.html`:
 
 ## Styling
 
-Save this as `style.css`:
+Create `par_wasm/app/style.css`:
 
 ```css
 :root {
@@ -299,7 +324,9 @@ button:disabled {
 
 ## TypeScript client
 
-Save the following as `src/main.ts`:
+We are ready to create the Typescript client where we will create the thread pool and call exposed parallel computations.
+
+Create `par_wasm/app/src/main.ts`:
 
 ```ts
 import { ParallelWorker } from "orx-parallel-wasm";
@@ -393,3 +420,11 @@ window.addEventListener("beforeunload", () => worker.terminate());
 ```
 
 The generated `pkg/wasm_bindings.js` import is intentionally present before the first build. The `build:wasm` script creates it; after `npm install`, continue with the build instructions in the next chapter.
+
+PLACEHOLDER: mention here how we create the `worker` and how we call the exposed computation functions. they are the important bits.
+
+One level up into `par_wasm` directory:
+
+```bash
+cd ..
+```
