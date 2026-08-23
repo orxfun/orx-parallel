@@ -35,15 +35,7 @@ Create `par_wasm/app/package.json` as follows:
 }
 ```
 
-PLACEHOLDER: explain a bit this package.json
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-This creates `package-lock.json` and `node_modules`.
+The `dependencies` section installs `orx-parallel-wasm`, which provides the `ParallelWorker` client and the Vite integration used below. The scripts keep the build reproducible: `build:wasm` compiles the sibling `wasm_bindings` crate into `pkg`, `typecheck` checks the TypeScript source, `build` runs both steps and then creates the production bundle, and `dev` starts Vite's development server.
 
 ### `tsconfig.json`
 
@@ -68,7 +60,7 @@ Create `par_wasm/app/tsconfig.json` as follows:
 }
 ```
 
-PLACEHOLDER: explain a bit this tsconfig.json, anything special? say nothing special otherwise
+This is a small, otherwise standard TypeScript configuration for a Vite application. `moduleResolution: "Bundler"` lets TypeScript resolve Vite-style imports such as `?url`, `strict` enables type checking, and `types: ["vite/client"]` supplies Vite's client-side type declarations. Only the `src` directory is typechecked.
 
 ### `vite.config.ts`
 
@@ -82,9 +74,7 @@ export default defineConfig({
     base: "./",
     plugins: [
         orxParallelWasm({
-            bindings: "../wasm_bindings",
-            outDir: "./pkg",
-            threads: 0
+            bindings: "../wasm_bindings"
         })
     ],
     server: {
@@ -421,7 +411,9 @@ window.addEventListener("beforeunload", () => worker.terminate());
 
 The generated `pkg/wasm_bindings.js` import is intentionally present before the first build. The `build:wasm` script creates it; after `npm install`, continue with the build instructions in the next chapter.
 
-PLACEHOLDER: mention here how we create the `worker` and how we call the exposed computation functions. they are the important bits.
+The `ParallelWorker` is the bridge between the page and the Rust WASM module. `bindingsUrl` points to the generated bindings package, `methods` lists the exported Rust functions that the worker may call, and `THREADS_IN_POOL: 0` asks the runtime to size the shared pool automatically. The worker initializes that pool when `ready()` resolves and exposes the resulting capacity through `initializedThreads`.
+
+Each computation is invoked with `worker.call(method, arguments)`. The method name must be one of the names listed in `methods`, and the arguments must match the corresponding `#[wasm_bindgen]` function. For example, the Fibonacci button sends the workload and selected thread count to `calculate_fibonacci`; the Mandelbrot button does the same for `mandelbrot_checksum`. `readThreads()` clamps the selected value to the initialized pool capacity, while `readPositive()` keeps each workload at least `1`. The shared `run()` helper disables the active button, waits for the worker result, and displays the result and elapsed time.
 
 One level up into `par_wasm` directory:
 
