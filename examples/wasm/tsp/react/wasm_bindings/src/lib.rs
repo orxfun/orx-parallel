@@ -22,7 +22,7 @@ pub fn locations(seed: u64, num_cities: u32) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 /// Runs the TSP search over the provided locations and returns the best tour.
 ///
-/// Call `init_parallel_runtime` first.
+/// Call `init_wasm_parallel_runtime` first.
 ///
 /// `locations` should be a JS array of objects shaped like `{ x: number, y: number }`.
 ///

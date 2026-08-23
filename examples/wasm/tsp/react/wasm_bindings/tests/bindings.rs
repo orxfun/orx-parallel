@@ -6,7 +6,7 @@ use wasm_bindgen_test::*;
 use wasm_bindings::{RunResult, locations, run_search};
 
 #[cfg(target_feature = "atomics")]
-use wasm_bindings::init_parallel_runtime;
+use wasm_bindings::init_wasm_parallel_runtime;
 
 wasm_bindgen_test_configure!(run_in_browser);
 

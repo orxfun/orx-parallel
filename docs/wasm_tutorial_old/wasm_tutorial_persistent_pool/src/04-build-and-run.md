@@ -60,5 +60,5 @@ Open the Vite URL and run a computation:
 ## Common pitfalls
 
 - Missing COOP/COEP headers: browser threads will not work.
-- Skipping `init_parallel_runtime`: parallel path will not initialize.
+- Skipping `init_wasm_parallel_runtime`: parallel path will not initialize.
 - Reusing stale `pkg`: rerun `npm run build:wasm` after Rust changes.

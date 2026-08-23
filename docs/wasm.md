@@ -104,12 +104,12 @@ In the example `wasm_bindings` crates, the public wrapper looks like this:
 
 ```rust
 #[wasm_bindgen]
-pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
+pub fn init_wasm_parallel_runtime(num_threads: u32) -> js_sys::Promise {
     #[cfg(target_feature = "atomics")]
     return orx_parallel::init_wasm_thread_pool(num_threads as usize);
 
     #[cfg(not(target_feature = "atomics"))]
-    panic!("init_parallel_runtime requires a wasm target with atomics and shared memory enabled")
+    panic!("init_wasm_parallel_runtime requires a wasm target with atomics and shared memory enabled")
 }
 ```
 

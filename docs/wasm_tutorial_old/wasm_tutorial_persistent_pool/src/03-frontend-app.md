@@ -93,7 +93,7 @@ Note that `main.js` is responsible for updating the UI state, creating the persi
 **>_** Create `app/src/worker.js`:
 
 ```js
-import init, { init_parallel_runtime, compute } from "../pkg/wasm_bindings.js";
+import init, { init_wasm_parallel_runtime, compute } from "../pkg/wasm_bindings.js";
 
 self.addEventListener("message", async (event) => {
     try {
@@ -101,7 +101,7 @@ self.addEventListener("message", async (event) => {
 
         if (data.type === "init") {
             await init();
-            await init_parallel_runtime(data.threadsInPool);
+            await init_wasm_parallel_runtime(data.threadsInPool);
         } else if (data.type === "compute") {
             const result = compute(data.input, data.threadsForComputation);
             self.postMessage({ type: "ok", result });

@@ -35,7 +35,7 @@ wasm-bindgen = "0.2"
 
 **>_** Define the required wasm bindings in `wasm_bindings/src/lib.rs`
 
-Replace the contents of `lib.rs` with the following code. Note that we expose only the functions that we want to call from the frontend, and additionally the `init_parallel_runtime` function to start up the thread pool.
+Replace the contents of `lib.rs` with the following code. Note that we expose only the functions that we want to call from the frontend, and additionally the `init_wasm_parallel_runtime` function to start up the thread pool.
 
 ```rust
 use wasm_bindgen::prelude::*;
@@ -44,12 +44,12 @@ use wasm_bindgen::prelude::*;
 /// Initializes the shared thread pool used by the parallel computation.
 ///
 /// This function must be called once before invoking `compute`.
-pub fn init_parallel_runtime(num_threads: u32) -> js_sys::Promise {
+pub fn init_wasm_parallel_runtime(num_threads: u32) -> js_sys::Promise {
     #[cfg(target_feature = "atomics")]
     return orx_parallel::init_wasm_thread_pool(num_threads as usize);
 
     #[cfg(not(target_feature = "atomics"))]
-    panic!("init_parallel_runtime requires a wasm target with atomics and shared memory enabled")
+    panic!("init_wasm_parallel_runtime requires a wasm target with atomics and shared memory enabled")
 }
 
 #[wasm_bindgen]

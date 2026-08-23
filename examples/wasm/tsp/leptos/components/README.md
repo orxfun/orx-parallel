@@ -8,7 +8,7 @@ It is responsible for rendering the page, managing UI state, and invoking the se
 
 - render the interactive UI with Leptos
 - keep search settings and view state in Rust
-- call into the generated wasm exports such as `start_app`, `init_parallel_runtime`, and `run_search`
+- call into the generated wasm exports such as `start_app`, `init_wasm_parallel_runtime`, and `run_search`
 - hand off worker lifecycle concerns to the JavaScript host application
 
 ## How it fits into the example
@@ -32,7 +32,7 @@ This crate also calls into the wasm bindings to execute searches, but it does th
 
 ## Parallel execution
 
-The UI itself does not create the thread pool directly. Instead, it sends a request to the TypeScript worker bridge, and the worker calls `init_parallel_runtime(thread_count)` before the first parallel `run_search`.
+The UI itself does not create the thread pool directly. Instead, it sends a request to the TypeScript worker bridge, and the worker calls `init_wasm_parallel_runtime(thread_count)` before the first parallel `run_search`.
 
 This separation matters because browser workers own their own wasm instances and runtime initialization.
 

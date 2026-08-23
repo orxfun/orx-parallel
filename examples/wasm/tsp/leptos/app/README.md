@@ -15,7 +15,7 @@ The browser app imports the generated bindings from `./pkg/components.js`:
 
 - call `init()` once before using wasm exports
 - call `start_app()` to mount the Leptos UI
-- the worker also imports `init_parallel_runtime(...)` and `run_search(...)` from the same generated package
+- the worker also imports `init_wasm_parallel_runtime(...)` and `run_search(...)` from the same generated package
 
 ## build:wasm
 
@@ -48,9 +48,9 @@ Inside it:
 
 Inside the worker:
 
-- import `init`, `init_parallel_runtime`, and `run_search` from `./pkg/components.js`
+- import `init`, `init_wasm_parallel_runtime`, and `run_search` from `./pkg/components.js`
 - call `init()` in the worker before touching wasm exports
-- call `init_parallel_runtime(threadCount)` before the first parallel search in that worker
+- call `init_wasm_parallel_runtime(threadCount)` before the first parallel search in that worker
 - send search results back to the main thread with `postMessage`
 
 In this example, the worker is short-lived and created per search. That means each worker owns its own pool, and a new worker implies a new pool.
