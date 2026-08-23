@@ -1,18 +1,28 @@
 # Introduction
 
-This tutorial demonstrates how to enable parallel computation expressed as `orx-parallel`s parallel iterator in WebAssembly.
+This tutorial demonstrates how to run computations expressed with `orx-parallel`'s parallel iterators in a threaded WebAssembly browser app.
 
-The application in this tutorial is implemented in three parts, each with different responsibilities:
+The project has three parts:
 
-1. `computation/` contains ordinary, testable Rust code; uses `orx-parallel` for parallel computations.
-2. `wasm_bindings/` exposes a small JavaScript-facing API.
-3. `app/` owns the page and talks to WASM through a worker.
+1. `computation/` contains ordinary Rust code and tests.
+2. `wasm_bindings/` exposes the Rust functions to JavaScript and initializes the parallel runtime.
+3. `app/` contains the HTML, CSS, TypeScript, and Vite configuration. The TypeScript client calls WASM through a worker.
 
-This example uses the `orx-parallel-wasm` package to build the bindings and create the worker.
+The app starts one shared thread pool. `threads: 0` lets the runtime choose the available capacity. Each computation also receives a thread count: `0` uses all initialized threads, while a positive value limits that computation.
 
-The app is started with one thread pool. Number of threads in the pool can be capped with `threads: N` when `N` is positive; or the pool is allowed to use all threads when `N` is zero.
+## Prerequisites
 
-Each computation also accepts a thread count:
+Install Rust and Cargo, Node.js and npm, and the `wasm32-unknown-unknown` Rust target:
 
-* `0` uses all initialized threads in the pool,
-* while a positive value limits the number of threads that can be assigned to the particular computation.
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
+Create your example application's directory
+
+```bash
+mkdir par_wasm
+cd par_wasm
+```
+
+The next chapter creates the first crate. Run later commands from the repository root unless a chapter says to change directories.
