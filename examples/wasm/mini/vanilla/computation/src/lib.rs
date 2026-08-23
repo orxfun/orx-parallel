@@ -15,31 +15,26 @@ pub fn calculate_fibonacci(workload: usize, num_threads: usize) -> u64 {
     (0..workload)
         .par()
         .num_threads(num_threads)
-        .map(|index| fibonacci_term(index % 40))
+        .map(|index| fibonacci_term(index))
         .sum()
 }
 
 fn is_prime(candidate: usize) -> bool {
-    if candidate < 2 {
-        return false;
-    }
-
-    if candidate == 2 {
-        return true;
-    }
-
-    if candidate.is_multiple_of(2) {
-        return false;
-    }
-
-    let mut divisor = 3;
-    while divisor <= candidate / divisor {
-        if candidate.is_multiple_of(divisor) {
-            return false;
+    match candidate {
+        0 | 1 => false,
+        2 => true,
+        n if n.is_multiple_of(2) => false,
+        n => {
+            let mut divisor = 3;
+            while divisor <= n / divisor {
+                if n.is_multiple_of(divisor) {
+                    return false;
+                }
+                divisor += 2;
+            }
+            true
         }
-        divisor += 2;
     }
-    true
 }
 
 pub fn count_primes(limit: usize, num_threads: usize) -> usize {
@@ -48,7 +43,6 @@ pub fn count_primes(limit: usize, num_threads: usize) -> usize {
         .num_threads(num_threads)
         .filter(|&candidate| is_prime(candidate))
         .count()
-        + usize::from(is_prime(limit))
 }
 
 #[cfg(test)]
