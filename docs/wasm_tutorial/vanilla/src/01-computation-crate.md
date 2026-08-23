@@ -4,10 +4,12 @@ Keep the algorithm independent from the browser. The example exposes two functio
 
 ```rust
 pub fn calculate_fibonacci(workload: usize, num_threads: usize) -> u64
-pub fn count_primes(limit: usize, num_threads: usize) -> usize
+pub fn mandelbrot_checksum(workload: usize, num_threads: usize) -> u64
 ```
 
-`calculate_fibonacci` maps a range of independent Fibonacci terms across a parallel iterator and sums them. `count_primes` tests candidates in a parallel range and counts the matches. Both functions receive `num_threads` through `.num_threads(...)`, so the UI can compare execution settings without moving algorithm code into TypeScript.
+`calculate_fibonacci` maps a range of independent Fibonacci terms across a parallel iterator and sums them. `mandelbrot_checksum` maps a range of points across a parallel iterator, calculates the escape iterations for each point, and sums the results.
+
+Both functions receive `num_threads` through `.num_threads(...)`, so the UI can compare execution settings.
 
 The crate has a `wasm` feature that forwards to `orx-parallel/wasm`:
 
@@ -17,8 +19,4 @@ default = []
 wasm = ["orx-parallel/wasm"]
 ```
 
-It can still be tested as a normal Rust crate:
-
-```text
-cargo test --manifest-path examples/wasm/mini/vanilla/computation/Cargo.toml
-```
+The crate and parallel computations can be used in regular builds without the `wasm` feature, and the computations can be tested as a normal Rust crate.

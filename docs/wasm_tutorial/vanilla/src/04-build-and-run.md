@@ -4,12 +4,11 @@ From the app directory:
 
 ```text
 npm install
-npm run typecheck
 npm run build
 npm run dev
 ```
 
-`npm run build` first runs the package build script. The Vite plugin compiles `wasm_bindings/`, enables threaded WASM, and writes the generated module to `app/pkg`. Vite then typechecks and bundles the TypeScript app.
+`npm run build` first compiles `wasm_bindings/` with the `orx-parallel-wasm` build script, writing the generated module to `app/pkg`. It then typechecks and bundles the TypeScript app with Vite. The Vite configuration points the plugin at the sibling `wasm_bindings/` crate, uses a thread pool size of `0` for automatic sizing, and emits a relative build suitable for the example.
 
 The development server sends these headers:
 
