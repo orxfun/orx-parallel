@@ -111,9 +111,14 @@ mod tests {
 
 `.num_threads(num_threads)` lets the caller control the thread limit per-computation. Omitting the `.num_threads` call or calling it with `0` allows to use all threads available in the pool.
 
-Test this crate before adding the browser layer:
+Test this crate before defining WASM bindings:
 
 ```bash
 cargo test
-cd .. # one level up into par_wasm directory
+```
+
+One level up into `par_wasm` directory:
+
+```bash
+cd ..
 ```
