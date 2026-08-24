@@ -29,4 +29,4 @@ examples/wasm/*/hub/site/
 examples/wasm/**/package-lock.json
 
 /docs/task*
-/docs/*/*/book
+/docs/*/book
