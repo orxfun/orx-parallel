@@ -6,7 +6,7 @@ This tutorial uses vanilla JavaScript and TypeScript to keep the browser-facing 
 
 The [React + Vite mini example](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/react-vite) provides the same Fibonacci and Mandelbrot demo using React. Its `computation/` and `wasm_bindings/` crates are identical to the ones used by the other `examples/wasm/mini` projects, and its stylesheet and output match the vanilla example.
 
-The worker is created in the React entrypoint in the same way as in the vanilla app: it is given the generated bindings URL, the exported method names, and the desired thread count. The worker instance is then passed to the `App` component as a prop. `App` uses React state for input values, status messages, results, and button state, while calls still cross the same `ParallelWorker` boundary.
+The React entrypoint creates a `ParallelWorker` client in the same way as the vanilla app, giving it the generated bindings URL, exported method names, and desired thread count. `ParallelWorker` creates the module worker internally, and the client instance is passed to the `App` component as a prop. `App` uses React state for input values, status messages, results, and button state, while calls still cross the same worker and `ParallelWorker` boundary.
 
 This separation is useful in a larger application: React owns rendering and UI state, while `ParallelWorker` owns communication with the module worker and the WASM bindings. The computation itself remains in Rust.
 
