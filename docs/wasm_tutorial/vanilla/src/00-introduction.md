@@ -1,6 +1,6 @@
 # Introduction
 
-This tutorial demonstrates how to run computations expressed with `orx-parallel`'s parallel iterators in a threaded WebAssembly browser app.
+This is a step-by-step tutorial to demonstrate how to run computations expressed with `orx-parallel`'s parallel iterators in a threaded WebAssembly browser app.
 
 The project has three parts:
 
