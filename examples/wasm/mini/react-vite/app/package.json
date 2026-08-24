@@ -1,0 +1,24 @@
+{
+    "name": "par-wasm-react-vite-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build:wasm": "ORX_PARALLEL_WASM_BINDINGS=../wasm_bindings ORX_PARALLEL_WASM_OUT_DIR=./pkg node ./node_modules/orx-parallel-wasm/dist/build.js build",
+        "dev": "npm exec -- vite",
+        "typecheck": "tsc --noEmit",
+        "build": "npm run build:wasm && npm run typecheck && npm exec -- vite build"
+    },
+    "dependencies": {
+        "orx-parallel-wasm": "git+https://github.com/orxfun/orx-parallel-wasm.git",
+        "react": "^19.1.1",
+        "react-dom": "^19.1.1"
+    },
+    "devDependencies": {
+        "@types/react": "^19.1.10",
+        "@types/react-dom": "^19.1.7",
+        "@vitejs/plugin-react": "^5.0.0",
+        "typescript": "^5.6.3",
+        "vite": "^5.4.10"
+    }
+}
