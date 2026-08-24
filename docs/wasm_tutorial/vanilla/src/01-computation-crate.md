@@ -33,7 +33,7 @@ Note that `wasm` feature is kept optional. This allows:
 
 ## Example computations
 
-We will implement two example computations in `par_wasm/computation/src/lib.rs` as follows:
+We will implement two parallel computations in `par_wasm/computation/src/lib.rs` as follows:
 
 ```rust
 use orx_parallel::*;
@@ -107,7 +107,7 @@ mod tests {
 }
 ```
 
-`calculate_fibonacci` maps independent Fibonacci terms across a parallel iterator and sums them. `mandelbrot_checksum` maps points across a parallel iterator, calculates escape iterations, and sums the results. Just two example parallel computations.
+Computations are just examples using `orx-parallel`s parallel iterator. Briefly, `calculate_fibonacci` maps independent Fibonacci terms and sums them. `mandelbrot_checksum` maps points, calculates escape iterations, and sums the results.
 
 `.num_threads(num_threads)` lets the caller control the thread limit per-computation. Omitting the `.num_threads` call or calling it with `0` allows to use all threads available in the pool.
 

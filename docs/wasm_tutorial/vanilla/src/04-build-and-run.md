@@ -58,4 +58,9 @@ Start Vite from the same directory:
 npm run dev
 ```
 
-Open the URL printed by Vite. The page reports the number of initialized threads when the worker is ready. If initialization fails, check that you opened the Vite URL and that both cross-origin isolation headers are present; opening `index.html` directly does not provide them.
+Open the URL printed by Vite and try it out with different number of threads:
+* The page reports the number of initialized threads when the worker is ready. 
+* If initialization fails, check that both cross-origin isolation headers are present; opening `index.html` directly does not provide them.
+
+> Source code of the app built by following this tutorial can be found [here](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla).
+
