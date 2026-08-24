@@ -1,5 +1,5 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { build } from "esbuild";
 
 const appRoot = new URL(".", import.meta.url).pathname;
@@ -15,6 +15,7 @@ await cp(resolve(appRoot, "pkg"), resolve(distDir, "pkg"), { recursive: true });
 await cp(resolve(appRoot, "node_modules/orx-parallel-wasm/dist/worker.js"), resolve(distDir, "assets/worker.js"));
 
 const packageMetadata = JSON.parse(await readFile(resolve(distDir, "pkg/orx-parallel-wasm.json"), "utf8"));
+const entryFile = packageMetadata.bindingsUrl.replace(/^\.\//, "");
 const workerFiles = packageMetadata.workerHelpers.flatMap((workerHelper) => [
     workerHelper,
     workerHelper.replace("worker_helpers.js", "wasm_web_start_workers.js")
@@ -22,7 +23,11 @@ const workerFiles = packageMetadata.workerHelpers.flatMap((workerHelper) => [
 for (const workerFile of workerFiles) {
     const workerPath = resolve(distDir, "pkg", workerFile);
     const workerSource = await readFile(workerPath, "utf8");
-    await writeFile(workerPath, workerSource.replace('import("../../../../..")', 'import("../../../../../wasm_bindings.js")'));
+    const entryImport = relative(resolve(workerPath, ".."), resolve(distDir, "pkg", entryFile)).replaceAll("\\", "/");
+    const replacement = `import("${entryImport.startsWith(".") ? entryImport : `./${entryImport}`}")`;
+    await writeFile(workerPath, workerSource
+        .replaceAll('import("../../../../..")', replacement)
+        .replaceAll("import('../../../../..')", replacement));
 }
 
 await build({
