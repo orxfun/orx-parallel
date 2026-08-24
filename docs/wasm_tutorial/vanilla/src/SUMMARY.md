@@ -6,3 +6,4 @@
 - [The vanilla app](03-frontend-app.md)
 - [Build and run](04-build-and-run.md)
 - [Other bundlers](05-bundler-plugins.md)
+- [Other frameworks](06-other-frameworks.md)
