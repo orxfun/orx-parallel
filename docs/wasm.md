@@ -7,7 +7,7 @@ If you want to understand the internal runtime design, see [wasm_internals.md](w
 Live examples:
 
 - TSP demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
-- tutorials: https://orx-parallel-wasm-tutorials.pages.dev/
+- Tutorial: https://orx-parallel-wasm-tutorials.pages.dev/
 
 ## Overview
 
@@ -18,6 +18,10 @@ The documented browser-hosted wasm path uses the `wasm` feature.
 - implementation: custom worker-backed runtime in `src/pool/pool_impl/wasm_web.rs`
 
 The examples under `examples/wasm/` use this backend.
+
+Browser packaging is provided by the companion `orx-parallel-wasm` crate. It
+provides the typed `ParallelWorker` client, the bundler-neutral WASM build and
+preparation commands, and integrations for Vite, Webpack, Rspack, and Rollup.
 
 ## Which feature to enable
 
@@ -75,7 +79,8 @@ wasm-pack build ../wasm_bindings --target web --out-dir ../app/pkg -- -Z build-s
 See:
 
 - `examples/wasm/tsp/vanilla/app/package.json`
-- `examples/wasm/mini/vanilla_persistent_pool/app/package.json`
+- `examples/wasm/mini/vanilla-vite/app/package.json`
+- `examples/wasm/mini/vanilla-manual/app/package.json`
 
 If the build is not atomics-enabled, `init_wasm_thread_pool(...)` is not available and the parallel runtime cannot be initialized.
 
@@ -91,7 +96,7 @@ The host must send:
 See:
 
 - `examples/wasm/tsp/vanilla/app/vite.config.ts`
-- `examples/wasm/mini/vanilla_persistent_pool/app/vite.config.js`
+- `examples/wasm/mini/vanilla-vite/app/vite.config.ts`
 - `examples/wasm/tsp/vanilla/app/scripts/serve-dist.mjs`
 
 Vite dev servers in the examples are configured accordingly. If you serve a production `dist/` directory yourself, your production server must set the same headers.
@@ -148,13 +153,33 @@ See:
 - `examples/wasm/tsp/vanilla/wasm_bindings/Cargo.toml`
 - `examples/wasm/tsp/vanilla/app/README.md`
 
-## Important note about the `wasm` backend build flow
+## `orx-parallel-wasm` integration
 
-The custom `wasm` backend uses a JS helper module from `src/pool/pool_impl/wasm_web_start_workers.js`, and the example build scripts include one extra post-build step that copies a worker helper file next to the generated wasm-pack snippet.
+The `orx-parallel-wasm` package handles the JavaScript and bundler-specific
+parts of a threaded WASM application. Its `build` command runs `wasm-pack`
+with the required threaded-WASM flags and prepares the generated package. The
+preparation step copies the worker helper beside the generated worker entry,
+records the package entry in `orx-parallel-wasm.json`, and prepares the helper
+for worker-local WASM initialization with shared memory.
 
-That is why the example `build:wasm` scripts do more than just call `wasm-pack build`.
+Use the bundler adapter that matches the application:
 
-If you are building your own app, the safest path is to start from one of the existing example scripts and adapt it rather than reconstructing the worker bootstrap from scratch.
+- `orx-parallel-wasm/vite`
+- `orx-parallel-wasm/webpack`
+- `orx-parallel-wasm/rspack`
+- `orx-parallel-wasm/rollup`
+
+The adapters emit the generated bindings, WASM, and worker assets, rewrite
+worker entry paths for the output layout, create stable binding shims, and add
+COOP/COEP headers for development or static hosting output. The
+`examples/wasm/mini/vanilla-manual` app demonstrates the bundler-neutral API
+without using one of these adapters: its `build.mjs` performs the asset
+packaging and its `server.mjs` supplies the headers.
+
+The tutorial in `docs/wasm_tutorial/vanilla/` follows the Vite path for
+simplicity, then covers the manual build, other bundlers, and other UI
+frameworks. The mini examples include vanilla Vite, a plugin-free vanilla
+build, React with Vite, Webpack, Rspack, and Rollup.
 
 ## Troubleshooting
 
@@ -167,6 +192,7 @@ If parallel wasm does not work as expected, check these first:
 - `init_wasm_thread_pool(...)` was awaited before the first parallel run
 - you did not attempt to reinitialize with a different thread count
 - your build or packaging step preserved the worker helper files used by the selected backend
+- the deployed files were rebuilt after updating `orx-parallel-wasm` and do not contain stale generated shims
 
 ## Example entry points
 
@@ -176,7 +202,11 @@ For end-to-end working references, start with:
 - `examples/wasm/tsp/react`
 - `examples/wasm/tsp/leptos`
 - `examples/wasm/tsp/yew`
-- `examples/wasm/mini/vanilla_persistent_pool`
-- `examples/wasm/mini/vanilla_temporary_pool`
+- `examples/wasm/mini/vanilla-vite`
+- `examples/wasm/mini/vanilla-manual`
+- `examples/wasm/mini/react-vite`
+- `examples/wasm/mini/vanilla-webpack`
+- `examples/wasm/mini/vanilla-rspack`
+- `examples/wasm/mini/vanilla-rollup`
 
 All of them follow the same basic rule: initialize once, then run parallel computations through the same Rust API you would use natively.
