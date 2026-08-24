@@ -54,11 +54,11 @@ pub fn mandelbrot_checksum(limit: u32, num_threads: u32) -> u32 {
 Notice that we keep this layer as thin as possible:
 
 * we make necessary type conversions,
-* call our computation create functions.
+* call our computation crate functions.
 
-## Build
+## Build (optional)
 
-Try building this crate before implementing the frontend:
+You may try building this crate before implementing the frontend:
 
 ```bash
 RUSTUP_TOOLCHAIN=nightly \
