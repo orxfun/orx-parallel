@@ -33,4 +33,6 @@ It is possible to build the application without one of these plugins. The essent
 5. Configure the development server to send `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`.
 6. Configure the production server or hosting platform to send the same headers when serving the built application.
 
+A complete plugin-free version of this demo is available in the [vanilla-manual example](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla-manual). It uses the bundler-neutral build command, `esbuild` only to bundle the application TypeScript, and a small Node.js server to serve the generated assets with the required headers.
+
 This approach gives more control over output names, caching, deployment, and bundler behavior, but it also makes the integration the application's responsibility. The examples above are useful references when implementing that workflow manually or when adapting the plugin to a different build system.
