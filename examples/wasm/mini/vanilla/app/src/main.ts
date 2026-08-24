@@ -11,6 +11,13 @@ type Computations = {
     mandelbrot_checksum: (limit: number, threads: number) => number;
 };
 
+// Create worker with exported parallel, or sequential, computations
+const worker = new ParallelWorker<Computations>({
+    bindingsUrl,
+    methods: ["calculate_fibonacci", "mandelbrot_checksum"],
+    threads: THREADS_IN_POOL
+});
+
 const ui = {
     threads: document.querySelector<HTMLInputElement>("#threads")!,
     threadsHelp: document.querySelector<HTMLSpanElement>("#threads-help")!,
@@ -22,12 +29,6 @@ const ui = {
     fibonacciResult: document.querySelector<HTMLParagraphElement>("#fibonacci-result")!,
     mandelbrotResult: document.querySelector<HTMLParagraphElement>("#mandelbrot-result")!
 };
-
-const worker = new ParallelWorker<Computations>({
-    bindingsUrl,
-    methods: ["calculate_fibonacci", "mandelbrot_checksum"],
-    threads: THREADS_IN_POOL
-});
 
 // Per-computation thread limit.
 // Setting it to 0 allows using all threads in the thread pool.

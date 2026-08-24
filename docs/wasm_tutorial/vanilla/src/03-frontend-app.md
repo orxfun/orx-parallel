@@ -15,7 +15,7 @@ Create `par_wasm/app/package.json` as follows:
 
 ```json
 {
-    "name": "orx-parallel-wasm-mini-vanilla-app",
+    "name": "par-wasm-app",
     "version": "0.1.0",
     "private": true,
     "type": "module",
@@ -35,7 +35,14 @@ Create `par_wasm/app/package.json` as follows:
 }
 ```
 
-The `dependencies` section installs `orx-parallel-wasm`, which provides the `ParallelWorker` client and the Vite integration used below. The scripts keep the build reproducible: `build:wasm` compiles the sibling `wasm_bindings` crate into `pkg`, `typecheck` checks the TypeScript source, `build` runs both steps and then creates the production bundle, and `dev` starts Vite's development server.
+The `dependencies` section installs `orx-parallel-wasm`, which provides the `ParallelWorker` client and the Vite integration used below.
+
+The scripts keep the build reproducible:
+
+* `build:wasm` compiles the sibling `wasm_bindings` crate into `pkg`,
+* `typecheck` checks the TypeScript source,
+* `build` runs both steps and then creates the production bundle, and
+* `dev` starts Vite's development server.
 
 ### `tsconfig.json`
 
@@ -99,8 +106,6 @@ The two server headers enable `SharedArrayBuffer`, which is required by threaded
 
 Create `par_wasm/app/index.html`:
 
-Save this as `index.html`:
-
 ```html
 <!doctype html>
 <html lang="en">
@@ -115,7 +120,7 @@ Save this as `index.html`:
     <main>
         <p class="eyebrow">orx-parallel / WebAssembly</p>
         <h1>Parallel computations using one shared thread pool</h1>
-        <p class="intro">Run Rust algorithms with different worker counts and compare their timings.</p>
+        <p class="intro">Run <code>orx-parallel</code> computations with different worker counts.</p>
 
         <section class="panel" aria-labelledby="settings-title">
             <h2 id="settings-title">Run settings</h2>
@@ -332,6 +337,13 @@ type Computations = {
     mandelbrot_checksum: (limit: number, threads: number) => number;
 };
 
+// Create worker with exported parallel, or sequential, computations
+const worker = new ParallelWorker<Computations>({
+    bindingsUrl,
+    methods: ["calculate_fibonacci", "mandelbrot_checksum"],
+    threads: THREADS_IN_POOL
+});
+
 const ui = {
     threads: document.querySelector<HTMLInputElement>("#threads")!,
     threadsHelp: document.querySelector<HTMLSpanElement>("#threads-help")!,
@@ -343,12 +355,6 @@ const ui = {
     fibonacciResult: document.querySelector<HTMLParagraphElement>("#fibonacci-result")!,
     mandelbrotResult: document.querySelector<HTMLParagraphElement>("#mandelbrot-result")!
 };
-
-const worker = new ParallelWorker<Computations>({
-    bindingsUrl,
-    methods: ["calculate_fibonacci", "mandelbrot_checksum"],
-    threads: THREADS_IN_POOL
-});
 
 // Per-computation thread limit.
 // Setting it to 0 allows using all threads in the thread pool.
@@ -409,11 +415,23 @@ ui.runMandelbrot.addEventListener("click", () => {
 window.addEventListener("beforeunload", () => worker.terminate());
 ```
 
-The generated `pkg/wasm_bindings.js` import is intentionally present before the first build. The `build:wasm` script creates it; after `npm install`, continue with the build instructions in the next chapter.
+The generated `pkg/wasm_bindings.js` import is intentionally present before the first build, the `build:wasm` script creates it.
 
-The `ParallelWorker` is the bridge between the page and the Rust WASM module. `bindingsUrl` points to the generated bindings package, `methods` lists the exported Rust functions that the worker may call, and `THREADS_IN_POOL: 0` asks the runtime to size the shared pool automatically. The worker initializes that pool when `ready()` resolves and exposes the resulting capacity through `initializedThreads`.
+The `ParallelWorker` is the bridge between the page and the Rust WASM module:
 
-Each computation is invoked with `worker.call(method, arguments)`. The method name must be one of the names listed in `methods`, and the arguments must match the corresponding `#[wasm_bindgen]` function. For example, the Fibonacci button sends the workload and selected thread count to `calculate_fibonacci`; the Mandelbrot button does the same for `mandelbrot_checksum`. `readThreads()` clamps the selected value to the initialized pool capacity, while `readPositive()` keeps each workload at least `1`. The shared `run()` helper disables the active button, waits for the worker result, and displays the result and elapsed time.
+* `bindingsUrl` points to the generated bindings package,
+* `methods` lists the exported Rust functions that the worker may call, 
+* and `THREADS_IN_POOL: 0` asks the runtime to size the shared pool automatically.
+
+The worker initializes that pool when `ready()` resolves and exposes the resulting capacity through `initializedThreads`.
+
+Each computation is invoked with `worker.call(method, arguments)`:
+
+* The method name must be one of the names listed in `methods`, and the arguments must match the corresponding `#[wasm_bindgen]` function.
+* For example, the Fibonacci button sends the workload and selected thread count to `calculate_fibonacci`;
+* the Mandelbrot button does the same for `mandelbrot_checksum`.
+
+The shared `run()` helper disables the active button, waits for the worker result, and displays the result and elapsed time.
 
 One level up into `par_wasm` directory:
 

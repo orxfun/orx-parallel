@@ -5,8 +5,8 @@ This is a step-by-step tutorial to demonstrate how to run computations expressed
 The project has three parts:
 
 1. `computation/` contains ordinary Rust code and tests.
-2. `wasm_bindings/` exposes the Rust functions to JavaScript and initializes the parallel runtime.
-3. `app/` contains the HTML, CSS, TypeScript, and Vite configuration. The TypeScript client calls WASM through a worker.
+2. `wasm_bindings/` exposes the Rust functions to JavaScript.
+3. `app/` contains the HTML, CSS, TypeScript, and Vite configuration. TypeScript client calls parallel computations through a worker.
 
 The app starts one shared thread pool. `threads: 0` lets the runtime choose the available capacity. Each computation also receives a thread count: `0` uses all initialized threads, while a positive value limits that computation.
 
@@ -17,6 +17,8 @@ Install Rust and Cargo, Node.js and npm, and the `wasm32-unknown-unknown` Rust t
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
+
+## Get started
 
 Create your example application's directory
 

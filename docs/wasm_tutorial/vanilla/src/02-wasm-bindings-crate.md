@@ -11,13 +11,10 @@ cd wasm_bindings
 
 We will add dependencies to:
 
-* `wasm-bindgen` for creating WebAssembly bindings,
-* to our `computation` crate, again with `wasm` feature.
+* `wasm-bindgen` for creating WebAssembly bindings, and
+* to our own `computation` crate using the `wasm` feature.
 
-The `computation` dependency enables the `wasm` feature of `orx-parallel`. That
-feature supplies the `init_wasm_parallel_runtime` export used by the worker, so the
-application bindings crate does not need to implement the runtime initializer
-or depend on `js-sys` directly.
+> Recall that `wasm` feature of `computation` crate enables the `wasm` feature of `orx-parallel`.
 
 Update `par_wasm/wasm_bindings/Cargo.toml` as follows:
 
@@ -54,6 +51,13 @@ pub fn mandelbrot_checksum(limit: u32, num_threads: u32) -> u32 {
 }
 ```
 
+Notice that we keep this layer as thin as possible:
+
+* we make necessary type conversions,
+* call our computation create functions.
+
+## Build
+
 Try building this crate before implementing the frontend:
 
 ```bash
@@ -64,6 +68,8 @@ cargo build \
   --release \
   -Z build-std=panic_abort,std
 ```
+
+> These flags enable multi-threaded WebAssembly execution: `+atomics` and `--shared-memory` enable atomic operations and shared linear memory for thread coordination, `--max-memory` sets the memory limit, `--import-memory` allows the host to provide memory, and the `__*` exports expose thread-local storage (TLS) setup functions needed for proper thread initialization. <br /><br /> As we will see in the next section, this build step will be automated using `orx-parallel-wasm`.
 
 One level up into `par_wasm` directory:
 
