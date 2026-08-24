@@ -5,3 +5,4 @@
 - [The WASM bindings crate](02-wasm-bindings-crate.md)
 - [The vanilla app](03-frontend-app.md)
 - [Build and run](04-build-and-run.md)
+- [Other bundlers](05-bundler-plugins.md)

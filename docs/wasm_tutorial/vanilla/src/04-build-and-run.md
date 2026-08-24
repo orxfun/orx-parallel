@@ -1,5 +1,7 @@
 # Build and run
 
+This tutorial uses Vite for the frontend build because its configuration is compact and its development server makes the required cross-origin isolation headers easy to configure. The same `orx-parallel-wasm` package also provides integrations for Webpack, Rspack, and Rollup; the next section links to equivalent examples and explains what those integrations handle.
+
 At this point the project has this source layout:
 
 ```text
@@ -62,5 +64,5 @@ Open the URL printed by Vite and try it out with different number of threads:
 * The page reports the number of initialized threads when the worker is ready. 
 * If initialization fails, check that both cross-origin isolation headers are present; opening `index.html` directly does not provide them.
 
-> Source code of the app built by following this tutorial can be found [here](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla).
+> Source code of the app built by following this tutorial can be found [here](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/mini/vanilla-vite).
 
