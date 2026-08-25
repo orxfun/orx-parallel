@@ -5,6 +5,7 @@ use crate::parameters::{ChunkSize, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
 
+#[derive(Clone)]
 pub struct AdaptiveChunkRunner<P: ParThreadPool> {
     pool: P,
 }

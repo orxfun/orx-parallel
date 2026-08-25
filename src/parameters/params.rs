@@ -41,7 +41,7 @@ impl Params {
         self.num_threads.is_sequential()
     }
 
-    pub fn configure_par<P: Par>(&self, par: P) -> P {
+    pub fn apply<P: Par>(&self, par: P) -> P {
         par.num_threads(self.num_threads)
             .chunk_size(self.chunk_size)
             .iteration_order(self.iteration_order)
