@@ -1,3 +1,5 @@
+use crate::Par;
+
 use super::{chunk_size::ChunkSize, iteration_order::IterationOrder, num_threads::NumThreads};
 
 /// Parameters of a parallel computation.
@@ -37,6 +39,12 @@ impl Params {
     /// Note that in this case the computation will be executed sequentially using regular iterators.
     pub fn is_sequential(self) -> bool {
         self.num_threads.is_sequential()
+    }
+
+    pub fn configure_par<P: Par>(&self, par: P) -> P {
+        par.num_threads(self.num_threads)
+            .chunk_size(self.chunk_size)
+            .iteration_order(self.iteration_order)
     }
 
     // helpers
