@@ -9,7 +9,7 @@ use rand_chacha::ChaCha8Rng;
 use test_case::test_matrix;
 
 #[test_matrix([2, 3, 4], [2, 3, 4])]
-fn recursive_collect(depth: usize, fan_out: usize) {
+fn recursive_collect_arb(depth: usize, fan_out: usize) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
     let tree = Node::build_tree(depth, fan_out, &mut rng);
 
