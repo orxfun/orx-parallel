@@ -17,4 +17,6 @@ pub trait ParCore {
 
     /// Destructs the parallel iterator into its members.
     fn destruct(self) -> (Self::Input, Self::Xap, Self::Runner, Params);
+
+    fn get_runner(&self) -> &Self::Runner;
 }

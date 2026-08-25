@@ -20,7 +20,7 @@ mod xap_enum;
 pub mod xap_variants;
 
 pub use par::Par;
-pub use par_core::ParCore;
+pub(crate) use par_core::ParCore;
 pub use par_enum::EnumeratePar;
 pub use par_iter::ParIter;
 pub(crate) use par_runner::ParRunnerInfallible;
