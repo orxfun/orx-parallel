@@ -16,13 +16,13 @@ fn main() {
         },
         InputVariant {
             depth: 8,
-            fan_out: 8,
-            threshold: 10_000,
+            fan_out: 6,
+            threshold: 20_000,
         },
         InputVariant {
-            depth: 10,
+            depth: 8,
             fan_out: 8,
-            threshold: 20_000,
+            threshold: 10_000,
         },
     ];
     runner::run(&args, Exp, &input_variants, &Method::get());
