@@ -1,6 +1,0 @@
-[book]
-title = "Vanilla orx-parallel WASM tutorial"
-authors = ["orx-parallel contributors"]
-language = "en"
-
-[output.html]
