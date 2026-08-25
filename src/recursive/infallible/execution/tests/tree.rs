@@ -4,7 +4,7 @@ use core::ops::Range;
 use rand::prelude::*;
 use rand_chacha::ChaCha8Rng;
 
-const RANGE: Range<u64> = 0..100_000;
+pub const RANGE: Range<u64> = 0..100_000;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
