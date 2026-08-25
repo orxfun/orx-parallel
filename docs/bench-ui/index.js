@@ -6,7 +6,7 @@ const BRANCH = "v4";
 const BASE_RESULT_URL = 'results/';
 const CATALOG_MANIFEST_URL = `${BASE_RESULT_URL}catalog.json`;
 const BASE_CODE_URL = `https://github.com/orxfun/orx-parallel/blob/${BRANCH}/benches/`;
-const INCLUDE_ORX_RAYON = true;
+const INCLUDE_ORX_RAYON = false;
 
 const CATALOG = Object.create(null);
 
@@ -145,6 +145,14 @@ function sortFilterValues(col, values) {
     return [...values].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
+function shouldIncludeRow(row) {
+    return shouldIncludeMethod(row['method']);
+}
+
+function shouldIncludeMethod(method) {
+    return INCLUDE_ORX_RAYON || method !== 'orx-rayon';
+}
+
 
 /** Assign a consistent color to a method name. */
 function methodColor(method) {
@@ -260,7 +268,7 @@ async function loadBench(category, bench) {
         const { headers, rows } = parseCsv(text);
 
         state.headers = headers;
-        state.rows = rows;
+        state.rows = rows.filter(shouldIncludeRow);
         state.filterCols = headers.filter(h => !SKIP_COLS.has(h));
 
         // Initialize filters: all methods selected by default, only first value for other columns
@@ -371,9 +379,10 @@ function renderChart() {
 
     // Determine selected methods from the method filter (or all distinct if method isn't a filter col)
     const methodSel = state.filters['method'];
-    const methods = methodSel
+    const methodsAll = methodSel
         ? sortMethodsForChart([...methodSel])
         : sortMethodsForChart([...new Set(filtered.map(r => r['method']))]);
+    const methods = methodsAll.filter(shouldIncludeMethod);
 
     // For each selected method, average time over filtered rows where method == that method
     const sums = Object.fromEntries(methods.map(m => [m, 0]));
