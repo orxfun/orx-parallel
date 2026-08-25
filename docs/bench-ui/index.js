@@ -105,8 +105,8 @@ async function loadCatalog() {
 function sortMethods(methods) {
     const order = (m) => {
         if (m === 'seq') return [0, m];
-        if (m === 'orx-once') return [1, m];
-        if (m === 'orx-basic') return [2, m];
+        if (m === 'orx-basic') return [1, m];
+        if (m === 'orx-once') return [2, m];
         if (m === 'orx-rayon') return [3, m];
         if (m.startsWith('rayon')) return [4, m];
         return [5, m];
@@ -128,7 +128,7 @@ function sortFilterValues(col, values) {
         return sortMethods(values);
     }
 
-    if (col === 'threads') {
+    if (col === 'threads' || col === 'num_threads') {
         return [...values].sort((a, b) => {
             const na = Number(a);
             const nb = Number(b);

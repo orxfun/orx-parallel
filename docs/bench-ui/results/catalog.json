@@ -1,4 +1,10 @@
 {
+  "algorithms": [
+    "genetic_alg",
+    "n_body",
+    "simulated_annealing",
+    "tsp_two_opt"
+  ],
   "arbitrary_iter": [
     "generic_iter",
     "map_set_processing"
