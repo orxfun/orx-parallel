@@ -14,12 +14,4 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-benches/results/*.txt
-
-# wasm examples
-
-node_modules/
-dist/
-pkg/
-
 /docs/task*
