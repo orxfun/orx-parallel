@@ -22,11 +22,4 @@ node_modules/
 dist/
 pkg/
 
-# wasm hub generated artifacts
-examples/wasm/*/hub/apps/
-examples/wasm/*/hub/site/
-examples/wasm/*/hub/site/
-examples/wasm/**/package-lock.json
-
 /docs/task*
-/docs/*/book
