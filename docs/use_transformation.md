@@ -52,7 +52,7 @@ let best_tour = (0..num_tours)
     .min_by_key(|t| t.duration());
 ```
 
-Did something bother you?
+Does something bother you?
 
 `Tour::random` function needs a random number generator (RNG). However, RNGs are stateful and are only useful with mutable references. This means, if we create one RNG and share it with all threads, we would have a race condition, and hence, an undefined behavior.
 
