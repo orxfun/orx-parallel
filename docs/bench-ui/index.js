@@ -123,22 +123,21 @@ function sortMethodsForChart(methods) {
     return sortMethods(methods);
 }
 
+function isNumericValue(value) {
+    const trimmed = String(value).trim();
+    return trimmed !== '' && Number.isFinite(Number(trimmed));
+}
+
 function sortFilterValues(col, values) {
     if (col === 'method') {
         return sortMethods(values);
     }
 
-    if (col === 'threads' || col === 'num_threads') {
+    if (values.length > 0 && values.every(isNumericValue)) {
         return [...values].sort((a, b) => {
             const na = Number(a);
             const nb = Number(b);
-            const aIsNum = Number.isFinite(na);
-            const bIsNum = Number.isFinite(nb);
-
-            if (aIsNum && bIsNum) return nb - na;
-            if (aIsNum) return -1;
-            if (bIsNum) return 1;
-            return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+            return nb - na;
         });
     }
 
