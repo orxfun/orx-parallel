@@ -37,3 +37,28 @@ impl Node {
         self.value == search_value
     }
 }
+
+pub fn flatten<I, E>(initial: impl IntoIterator<Item = I::Item>, extend: &E) -> Vec<I::Item>
+where
+    I: IntoIterator,
+    E: Fn(&I::Item) -> I + Send + Sync,
+{
+    fn collect_into<I, E>(
+        extend: &E,
+        initial: impl IntoIterator<Item = I::Item>,
+        dest: &mut Vec<I::Item>,
+    ) where
+        I: IntoIterator,
+        E: Fn(&I::Item) -> I + Send + Sync,
+    {
+        for x in initial {
+            let children = extend(&x);
+            collect_into(extend, children, dest);
+            dest.push(x);
+        }
+    }
+
+    let mut dest = vec![];
+    collect_into(extend, initial, &mut dest);
+    dest
+}
