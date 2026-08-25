@@ -21,8 +21,7 @@ orx-split-vec = { version = "4.0.0", default-features = false }
 orx-pinned-concurrent-col = { version = "3.0.0", default-features = false }
 orx-concurrent-bag = { version = "4.0.0", default-features = false }
 orx-concurrent-ordered-bag = { version = "4.0.0", default-features = false }
-# orx-concurrent-recursive-iter = { version = "3.0.0", default-features = false }
-orx-concurrent-recursive-iter = { path = "/home/uarikan/orx/orx-concurrent-recursive-iter", default-features = false }
+orx-concurrent-recursive-iter = { version = "3.0.0", default-features = false }
 
 # optional: thread pool
 rayon-core = { version = "1.13.0", optional = true, default-features = false }
