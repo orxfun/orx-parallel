@@ -29,6 +29,7 @@ mod option_use;
 mod parameters;
 /// Thread pool module
 pub mod pool;
+mod recursive;
 mod result;
 mod result_use;
 mod results;
