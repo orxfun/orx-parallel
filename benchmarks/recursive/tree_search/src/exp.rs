@@ -26,7 +26,8 @@ fn build_tree(depth: usize, fan_out: usize, seed: u64) -> Node {
 }
 
 fn matches(node: &Node, threshold: u64) -> bool {
-    node.value % 10_000 < threshold
+    let node_value = cpu_mix(10, node.value);
+    node_value % 10_000 < threshold
 }
 fn search_seq(node: &Node, threshold: u64) -> usize {
     usize::from(matches(node, threshold))
@@ -48,6 +49,8 @@ fn search_orx(node: &Node, threshold: u64) -> usize {
     [node]
         .into_par_recursive(|node| &node.children)
         .filter(|node| matches(node, threshold))
+        // .chunk_size(128)
+        // .runner_with_diagnostics()
         .count()
 }
 
