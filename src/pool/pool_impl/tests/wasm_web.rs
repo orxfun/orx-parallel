@@ -1,6 +1,5 @@
-#![cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
-
-use orx_parallel::{IntoParIter, Par, Pool, init_wasm_thread_pool};
+use crate::pool::pool_impl::init_wasm_thread_pool;
+use crate::{IntoParIter, Par, Pool};
 use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen_test::*;
 
