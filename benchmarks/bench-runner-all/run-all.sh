@@ -20,5 +20,6 @@ cargo run --release -- \
     --categories heterogeneous \
     --categories memory_pressure \
     --categories reduce \
+    --categories recursive \
     --categories stateful_using \
     --categories throughput_linear
