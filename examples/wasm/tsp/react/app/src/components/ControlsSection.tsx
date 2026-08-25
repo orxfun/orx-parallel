@@ -3,6 +3,7 @@ import type { ChangeEvent } from "react";
 type ControlsSectionProps = {
     iterations: number;
     threads: number;
+    maxThreads: number;
     chunkSize: number;
     seed: number;
     numCities: number;
@@ -13,8 +14,7 @@ type ControlsSectionProps = {
     onChunkSizeChange: (value: number) => void;
     onSeedChange: (value: number) => void;
     onNumCitiesChange: (value: number) => void;
-    onRunParallel: () => void;
-    onRunSequential: () => void;
+    onRun: () => void;
     onReset: () => void;
 };
 
@@ -53,12 +53,12 @@ export function ControlsSection(props: ControlsSectionProps) {
                         />
                     </label>
                     <label>
-                        Threads (1..16)
+                        Threads (0..{props.maxThreads})
                         <input
                             id="threads"
                             type="number"
-                            min="1"
-                            max="16"
+                            min="0"
+                            max={props.maxThreads}
                             value={props.threads}
                             disabled={props.isRunning}
                             onChange={(event) => props.onThreadsChange(readNumber(event, props.threads))}
@@ -91,11 +91,8 @@ export function ControlsSection(props: ControlsSectionProps) {
                 </div>
 
                 <div className="actions">
-                    <button id="runParallel" disabled={props.isRunning} onClick={props.onRunParallel}>
-                        Run parallel
-                    </button>
-                    <button id="runSequential" disabled={props.isRunning} onClick={props.onRunSequential}>
-                        Run sequential
+                    <button id="run" disabled={props.isRunning} onClick={props.onRun}>
+                        Run
                     </button>
                     <button id="reset" disabled={props.isRunning} onClick={props.onReset}>
                         Reset

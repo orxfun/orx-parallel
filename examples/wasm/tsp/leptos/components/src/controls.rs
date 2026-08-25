@@ -2,12 +2,12 @@ use leptos::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
 use super::{
-    MAX_CITIES, MAX_THREADS, MIN_CITIES, MIN_THREADS, SearchMode, UiState, clear_best,
-    create_locations, parse_u32_input, parse_u64_input, run_search,
+    MAX_CITIES, MIN_CITIES, MIN_THREADS, UiState, clear_best, create_locations, parse_u32_input,
+    parse_u64_input, run_search,
 };
 
 #[component]
-pub fn ControlsSection(ui: UiState) -> impl IntoView {
+pub fn ControlsSection(ui: UiState, max_threads: u32) -> impl IntoView {
     view! {
         <section class="card">
             <div class="control-panel">
@@ -50,18 +50,18 @@ pub fn ControlsSection(ui: UiState) -> impl IntoView {
                         />
                     </label>
                     <label>
-                        Threads (1..16)
+                        {format!("Threads (0..{max_threads})")}
                         <input
                             id="threads"
                             type="number"
-                            min="1"
-                            max="16"
+                            min=MIN_THREADS.to_string()
+                            max=max_threads.to_string()
                             prop:value=move || ui.threads.get().to_string()
                             on:input={
                                 let ui = ui.clone();
                                 move |ev| {
                                     let next_value = parse_u32_input(event_target_value(&ev), ui.threads.get_untracked());
-                                    ui.threads.set(next_value.clamp(MIN_THREADS, MAX_THREADS));
+                                    ui.threads.set(next_value.clamp(MIN_THREADS, max_threads));
                                 }
                             }
                         />
@@ -109,28 +109,16 @@ pub fn ControlsSection(ui: UiState) -> impl IntoView {
 
                 <div class="actions">
                     <button
-                        id="runParallel"
+                        id="run"
                         prop:disabled=move || ui.is_running.get()
                         on:click={
                             let ui = ui.clone();
                             move |_| {
-                                spawn_local(run_search(ui.clone(), SearchMode::Parallel));
+                                spawn_local(run_search(ui.clone()));
                             }
                         }
                     >
-                        Run parallel
-                    </button>
-                    <button
-                        id="runSequential"
-                        prop:disabled=move || ui.is_running.get()
-                        on:click={
-                            let ui = ui.clone();
-                            move |_| {
-                                spawn_local(run_search(ui.clone(), SearchMode::Sequential));
-                            }
-                        }
-                    >
-                        Run sequential
+                        Run
                     </button>
                     <button
                         id="reset"

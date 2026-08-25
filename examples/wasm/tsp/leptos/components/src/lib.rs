@@ -11,7 +11,7 @@ use gloo_timers::{callback::Interval, future::TimeoutFuture};
 use js_sys::Date;
 use leptos::html;
 use leptos::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use status::StatusSection;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -21,8 +21,7 @@ use wasm_bindings::RunResult;
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
-const MIN_THREADS: u32 = 1;
-const MAX_THREADS: u32 = 16;
+const MIN_THREADS: u32 = 0;
 
 const SEQUENTIAL_CODE: &str = "let mut rng = SmallRng::seed_from_u64(seed);\n(0..iterations)\n    .map(|_| create_tour(&mut rng, locations))\n    .min_by_key(|x| OrderedFloat::from(x.distance))";
 
@@ -32,29 +31,14 @@ const SEQUENTIAL_HELP: &str = "// random-number-generator to construct initial r
 
 const PARALLEL_HELP: &str = "// we will construct & improve `iterations` tours\n(0..iterations)\n\n    // convert the iterator into parallel iterator\n    .into_par()\n\n    // `use_new` enables mutable variables in parallel computations\n    // each thread will have its own random number generator\n    // `t` here is the thread index, with value in (0..num_threads)\n    .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))\n\n    // `create_tour` constructs a random tour and locally optimizes within 2-opt\n    .map(|rng, _| create_tour(rng, locations))\n\n    // among all created tours, we pick the one with minimum distance\n    .min_by_key(|x| OrderedFloat::from(x.distance))";
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "lowercase")]
-enum SearchMode {
-    Parallel,
-    Sequential,
-}
-
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct RunSettings {
-    mode: SearchMode,
     iterations: u32,
     threads: u32,
     chunk_size: u32,
     seed: u64,
     num_cities: u32,
-}
-
-#[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct SearchRequest {
-    settings: RunSettings,
-    locations: Vec<Location>,
 }
 
 #[derive(Clone)]
@@ -72,7 +56,6 @@ struct UiState {
     elapsed: RwSignal<String>,
     ips: RwSignal<String>,
     is_running: RwSignal<bool>,
-    run_mode: RwSignal<SearchMode>,
     run_subtitle: RwSignal<String>,
     run_elapsed: RwSignal<String>,
     run_started_at_ms: RwSignal<f64>,
@@ -84,21 +67,21 @@ struct UiState {
 
 #[wasm_bindgen(js_namespace = globalThis)]
 unsafe extern "C" {
-    fn runSearchAlgorithm(request: JsValue) -> js_sys::Promise;
+    fn runSearchAlgorithm(settings: JsValue, locations: JsValue) -> js_sys::Promise;
 }
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn start_app() {
+pub fn start_app(max_threads: u32) {
     console_error_panic_hook::set_once();
-    mount_to_body(App);
+    mount_to_body(move || view! { <App max_threads=max_threads /> });
 }
 
 #[component]
-fn App() -> impl IntoView {
+fn App(max_threads: u32) -> impl IntoView {
     let status = RwSignal::new("Initializing...".to_string());
     let iterations = RwSignal::new(10_000_u32);
-    let threads = RwSignal::new(4_u32);
+    let threads = RwSignal::new(4_u32.min(max_threads));
     let chunk_size = RwSignal::new(0_u32);
     let seed = RwSignal::new(42_u64);
     let num_cities = RwSignal::new(50_u32);
@@ -111,7 +94,6 @@ fn App() -> impl IntoView {
     let elapsed = RwSignal::new("-".to_string());
     let ips = RwSignal::new("-".to_string());
     let is_running = RwSignal::new(false);
-    let run_mode = RwSignal::new(SearchMode::Parallel);
     let run_subtitle =
         RwSignal::new("Working through candidate tours. Larger runs can take a while.".to_string());
     let run_elapsed = RwSignal::new("Elapsed: 0.0 s".to_string());
@@ -133,7 +115,6 @@ fn App() -> impl IntoView {
         elapsed,
         ips,
         is_running,
-        run_mode,
         run_subtitle,
         run_elapsed,
         run_started_at_ms,
@@ -178,7 +159,7 @@ fn App() -> impl IntoView {
                 </article>
             </section>
 
-            <ControlsSection ui=ui.clone() />
+            <ControlsSection ui=ui.clone() max_threads=max_threads />
 
             <section class="card">
                 <StatusSection ui=ui.clone() />
@@ -193,35 +174,38 @@ fn App() -> impl IntoView {
     }
 }
 
-async fn run_search(ui: UiState, mode: SearchMode) {
+async fn run_search(ui: UiState) {
     let settings = RunSettings {
-        mode,
         iterations: ui.iterations.get_untracked(),
         threads: ui.threads.get_untracked(),
         chunk_size: ui.chunk_size.get_untracked(),
         seed: ui.seed.get_untracked(),
         num_cities: ui.num_cities.get_untracked(),
     };
-    let request = SearchRequest {
-        settings: settings.clone(),
-        locations: ui.points.get_untracked(),
-    };
-
-    set_running_view(&ui, settings.mode, true);
+    set_running_view(&ui, true);
     allow_running_overlay_to_render().await;
-    ui.status.set(run_label(settings.mode).to_string());
+    ui.status.set("Running search...".to_string());
 
-    let request = match serde_wasm_bindgen::to_value(&request) {
+    let settings_value = match serde_wasm_bindgen::to_value(&settings) {
         Ok(value) => value,
         Err(err) => {
             ui.status
-                .set(format!("Error: failed to serialize run request: {err}"));
-            set_running_view(&ui, settings.mode, false);
+                .set(format!("Error: failed to serialize run settings: {err}"));
+            set_running_view(&ui, false);
+            return;
+        }
+    };
+    let locations_value = match serde_wasm_bindgen::to_value(&ui.points.get_untracked()) {
+        Ok(value) => value,
+        Err(err) => {
+            ui.status
+                .set(format!("Error: failed to serialize locations: {err}"));
+            set_running_view(&ui, false);
             return;
         }
     };
 
-    let response = JsFuture::from(runSearchAlgorithm(request)).await;
+    let response = JsFuture::from(runSearchAlgorithm(settings_value, locations_value)).await;
 
     match response {
         Ok(value) => match serde_wasm_bindgen::from_value::<RunResult>(value) {
@@ -261,11 +245,7 @@ async fn run_search(ui: UiState, mode: SearchMode) {
                     "Processed {} iterations in one call.",
                     settings.iterations
                 ));
-                ui.status.set(if settings.mode == SearchMode::Parallel {
-                    "Parallel run completed.".to_string()
-                } else {
-                    "Sequential run completed.".to_string()
-                });
+                ui.status.set("Run completed.".to_string());
             }
             Err(err) => {
                 ui.status
@@ -277,12 +257,11 @@ async fn run_search(ui: UiState, mode: SearchMode) {
         }
     }
 
-    set_running_view(&ui, settings.mode, false);
+    set_running_view(&ui, false);
 }
 
-fn set_running_view(ui: &UiState, mode: SearchMode, running: bool) {
+fn set_running_view(ui: &UiState, running: bool) {
     ui.is_running.set(running);
-    ui.run_mode.set(mode);
 
     if running {
         ui.run_started_at_ms.set(Date::now());
@@ -332,13 +311,6 @@ fn parse_u32_input(value: String, fallback: u32) -> u32 {
 
 fn parse_u64_input(value: String, fallback: u64) -> u64 {
     value.parse::<u64>().unwrap_or(fallback)
-}
-
-fn run_label(mode: SearchMode) -> &'static str {
-    match mode {
-        SearchMode::Parallel => "Running parallel search...",
-        SearchMode::Sequential => "Running sequential search...",
-    }
 }
 
 fn read_css_color(variable_name: &str) -> String {

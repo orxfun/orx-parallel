@@ -2,13 +2,16 @@ import init, { locations } from "../pkg/wasm_bindings.js";
 import hljs from "highlight.js/lib/core";
 import rust from "highlight.js/lib/languages/rust";
 import "highlight.js/styles/github-dark.css";
-import type { Location, RunSettings, SearchMode, SearchRequest, SearchResult } from "./shared-types.js";
-import { runSearchAlgorithm } from "./search-runner.js";
+import type { Location, RunSettings, SearchResult } from "./shared-types";
+import { createSearchWorker, type SearchWorker } from "./search-runner.js";
 
 hljs.registerLanguage("rust", rust);
 
+// 0 means "use all available threads"; passed to createSearchWorker and used to size the threads input
+const num_threads = 0;
+
 const MAX_CITIES = 200;
-const MAX_THREADS = 16;
+const MAX_THREADS = 32;
 const CITY_NODE_COLOR = readCssColor("--city-node");
 const TOUR_LINE_COLOR = readCssColor("--tour-line");
 const CANVAS_BACKGROUND_COLOR = readCssColor("--canvas-bg");
@@ -32,8 +35,8 @@ const ui = {
     chunkSize: mustElement<HTMLInputElement>("chunkSize"),
     seed: mustElement<HTMLInputElement>("seed"),
     numCities: mustElement<HTMLInputElement>("numCities"),
-    runParallel: mustElement<HTMLButtonElement>("runParallel"),
-    runSequential: mustElement<HTMLButtonElement>("runSequential"),
+    threadsMax: mustElement<HTMLSpanElement>("threadsMax"),
+    run: mustElement<HTMLButtonElement>("run"),
     reset: mustElement<HTMLButtonElement>("reset"),
     runOverlay: mustElement<HTMLDivElement>("runOverlay"),
     runTitle: mustElement<HTMLParagraphElement>("runTitle"),
@@ -75,9 +78,18 @@ function readThreads() {
         return 0;
     }
 
-    const threads = Math.max(0, Math.min(MAX_THREADS, Math.trunc(parsed)));
+    const threads = Math.max(0, Math.min(state.maxThreads, Math.trunc(parsed)));
     ui.threads.value = String(threads);
     return threads;
+}
+
+function applyThreadsCap() {
+    // num_threads === 0 means "all available threads", so fall back to hardwareConcurrency
+    const maxThreads = num_threads > 0 ? num_threads : (navigator.hardwareConcurrency || MAX_THREADS);
+    state.maxThreads = maxThreads;
+    ui.threadsMax.textContent = `Threads (0..${maxThreads})`
+    ui.threads.max = String(maxThreads);
+    ui.threads.value = String(Math.min(4, maxThreads));
 }
 
 function readChunkSize() {
@@ -179,18 +191,20 @@ const state = {
     points: [] as Location[],
     best: null as SearchResult | null,
     currentNumCities: 50,
+    maxThreads: MAX_THREADS,
     runStartedAtMs: 0,
     runTicker: undefined as number | undefined
 };
 
+let searchWorker: SearchWorker | undefined;
+
 // search
 
-function readRunSettings(mode: SearchMode): RunSettings {
+function readRunSettings(): RunSettings {
     const iterations = Math.max(1, Number(ui.iterations.value) || 1);
     const threads = readThreads();
     const chunkSize = readChunkSize();
     return {
-        mode,
         iterations,
         threads,
         chunkSize,
@@ -210,8 +224,7 @@ function ensurePointsForCities(numCities: number) {
 }
 
 function setControlsDisabled(disabled: boolean) {
-    ui.runParallel.disabled = disabled;
-    ui.runSequential.disabled = disabled;
+    ui.run.disabled = disabled;
     ui.reset.disabled = disabled;
     ui.iterations.disabled = disabled;
     ui.threads.disabled = disabled;
@@ -220,10 +233,10 @@ function setControlsDisabled(disabled: boolean) {
     ui.numCities.disabled = disabled;
 }
 
-function setRunningView(mode: SearchMode, running: boolean) {
+function setRunningView(running: boolean) {
     if (running) {
         state.runStartedAtMs = performance.now();
-        ui.runTitle.textContent = mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+        ui.runTitle.textContent = "Running search...";
         ui.runSubtitle.textContent = "Evaluating tours with 2-opt local search. Larger instances can take longer.";
         ui.runElapsed.textContent = "Elapsed: 0.0 s";
         ui.runOverlay.classList.add("active");
@@ -269,18 +282,18 @@ function updateStats(result: SearchResult) {
     ui.ips.textContent = ips.toFixed(0);
 }
 
-async function runSearch(mode: SearchMode) {
-    const settings = readRunSettings(mode);
+async function runSearch() {
+    const settings = readRunSettings();
     ensurePointsForCities(settings.numCities);
 
     setControlsDisabled(true);
-    setRunningView(settings.mode, true);
+    setRunningView(true);
     await allowRunningOverlayToRender();
 
-    ui.status.textContent = settings.mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
+    ui.status.textContent = "Running search...";
 
     try {
-        const result = await runSearchAlgorithm(settings, state.points);
+        const result = await searchWorker!.runSearchAlgorithm(settings, state.points);
 
         if (!state.best || result.best_distance < state.best.best_distance) {
             state.best = result;
@@ -289,11 +302,11 @@ async function runSearch(mode: SearchMode) {
 
         updateStats(result);
         ui.runSubtitle.textContent = `Processed ${settings.iterations.toLocaleString()} iterations in one call.`;
-        ui.status.textContent = `${settings.mode === "parallel" ? "Parallel" : "Sequential"} run completed.`;
+        ui.status.textContent = "Run completed.";
     } catch (err) {
         ui.status.textContent = `Error: ${String(err)}`;
     } finally {
-        setRunningView(settings.mode, false);
+        setRunningView(false);
         setControlsDisabled(false);
     }
 }
@@ -302,6 +315,8 @@ async function runSearch(mode: SearchMode) {
 
 async function setupApp() {
     await init();
+    applyThreadsCap();
+    searchWorker = await createSearchWorker(num_threads);
 
     state.currentNumCities = readNumCities();
     state.points = generatePoints(readSeed(), state.currentNumCities);
@@ -310,12 +325,8 @@ async function setupApp() {
     highlightCodeBlocks();
     ui.status.textContent = "Ready";
 
-    ui.runParallel.addEventListener("click", async () => {
-        await runSearch("parallel");
-    });
-
-    ui.runSequential.addEventListener("click", async () => {
-        await runSearch("sequential");
+    ui.run.addEventListener("click", async () => {
+        await runSearch();
     });
 
     ui.reset.addEventListener("click", () => {
@@ -352,4 +363,8 @@ async function setupApp() {
     });
 }
 
-setupApp();
+void setupApp().catch((error: unknown) => {
+    ui.status.textContent = `Error: ${String(error)}`;
+});
+
+window.addEventListener("beforeunload", () => searchWorker?.terminate());

@@ -1,18 +1,11 @@
-import type { SearchMode } from "../shared-types";
-
 type StatusSectionProps = {
     isRunning: boolean;
-    runMode: SearchMode;
     runSubtitle: string;
     runElapsed: string;
     bestDistance: string;
     elapsed: string;
     ips: string;
 };
-
-function runTitle(mode: SearchMode) {
-    return mode === "parallel" ? "Running parallel search..." : "Running sequential search...";
-}
 
 export function StatusSection(props: StatusSectionProps) {
     return (
@@ -22,7 +15,7 @@ export function StatusSection(props: StatusSectionProps) {
                     <div className="run-overlay-top">
                         <span className="spinner" aria-hidden="true"></span>
                         <p id="runTitle" className="run-title">
-                            {runTitle(props.runMode)}
+                            Running search...
                         </p>
                     </div>
                     <p id="runSubtitle" className="run-subtitle">

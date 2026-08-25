@@ -6,6 +6,7 @@ use yew::prelude::*;
 pub struct ControlsSectionProps {
     pub iterations: u32,
     pub threads: u32,
+    pub max_threads: u32,
     pub chunk_size: u32,
     pub seed: u64,
     pub num_cities: u32,
@@ -16,8 +17,7 @@ pub struct ControlsSectionProps {
     pub on_threads_change: Callback<u32>,
     pub on_chunk_size_change: Callback<u32>,
     pub on_seed_change: Callback<u64>,
-    pub on_run_parallel: Callback<MouseEvent>,
-    pub on_run_sequential: Callback<MouseEvent>,
+    pub on_run: Callback<MouseEvent>,
     pub on_reset: Callback<MouseEvent>,
 }
 
@@ -90,12 +90,12 @@ pub fn controls_section(props: &ControlsSectionProps) -> Html {
                         />
                     </label>
                     <label>
-                        {"Threads (1..16)"}
+                        {format!("Threads (0..{})", props.max_threads)}
                         <input
                             id="threads"
                             type="number"
-                            min="1"
-                            max="16"
+                            min="0"
+                            max={props.max_threads.to_string()}
                             value={props.threads.to_string()}
                             oninput={on_threads}
                         />
@@ -125,8 +125,7 @@ pub fn controls_section(props: &ControlsSectionProps) -> Html {
                 </div>
 
                 <div class="actions">
-                    <button id="runParallel" onclick={props.on_run_parallel.clone()} disabled={props.is_running}>{"Run parallel"}</button>
-                    <button id="runSequential" onclick={props.on_run_sequential.clone()} disabled={props.is_running}>{"Run sequential"}</button>
+                    <button id="run" onclick={props.on_run.clone()} disabled={props.is_running}>{"Run"}</button>
                     <button id="reset" onclick={props.on_reset.clone()} disabled={props.is_running}>{"Reset"}</button>
                 </div>
 

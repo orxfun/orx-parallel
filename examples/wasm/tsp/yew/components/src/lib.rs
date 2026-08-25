@@ -9,7 +9,7 @@ use computation::{Location, create_locations};
 use controls::ControlsSection;
 use gloo_timers::callback::Interval;
 use js_sys::Date;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use status::StatusSection;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{JsFuture, spawn_local};
@@ -19,8 +19,26 @@ use yew::prelude::*;
 
 const MIN_CITIES: u32 = 5;
 const MAX_CITIES: u32 = 200;
-const MIN_THREADS: u32 = 1;
-const MAX_THREADS: u32 = 16;
+const MIN_THREADS: u32 = 0;
+const MAX_THREADS: u32 = 32;
+
+// num_threads passed in from main.ts via start_app; 0 means "use all available threads"
+thread_local! {
+    static NUM_THREADS: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+// mirrors applyThreadsCap in the vanilla TSP example
+fn compute_max_threads() -> u32 {
+    let num_threads = NUM_THREADS.with(|cell| cell.get());
+    if num_threads > 0 {
+        return num_threads;
+    }
+
+    web_sys::window()
+        .map(|window| window.navigator().hardware_concurrency() as u32)
+        .filter(|&concurrency| concurrency > 0)
+        .unwrap_or(MAX_THREADS)
+}
 
 const SEQUENTIAL_CODE: &str = "let mut rng = SmallRng::seed_from_u64(seed);\n(0..iterations)\n    .map(|_| create_tour(&mut rng, locations))\n    .min_by_key(|x| OrderedFloat::from(x.distance))";
 
@@ -30,17 +48,9 @@ const SEQUENTIAL_HELP: &str = "// random-number-generator to construct initial r
 
 const PARALLEL_HELP: &str = "// we will construct & improve `iterations` tours\n(0..iterations)\n\n    // convert the iterator into parallel iterator\n    .into_par()\n\n    // `use_new` enables mutable variables in parallel computations\n    // each thread will have its own random number generator\n    // `t` here is the thread index, with value in (0..num_threads)\n    .use_new(|t| SmallRng::seed_from_u64(seed + t as u64))\n\n    // `create_tour` constructs a random tour and locally optimizes within 2-opt\n    .map(|rng, _| create_tour(rng, locations))\n\n    // among all created tours, we pick the one with minimum distance\n    .min_by_key(|x| OrderedFloat::from(x.distance))";
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub(crate) enum SearchMode {
-    Parallel,
-    Sequential,
-}
-
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct RunSettings {
-    mode: SearchMode,
     iterations: u32,
     threads: u32,
     chunk_size: u32,
@@ -48,22 +58,16 @@ struct RunSettings {
     num_cities: u32,
 }
 
-#[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct SearchRequest {
-    settings: RunSettings,
-    locations: Vec<Location>,
-}
-
 #[wasm_bindgen(js_namespace = globalThis)]
 unsafe extern "C" {
-    fn runSearchAlgorithm(request: JsValue) -> js_sys::Promise;
+    fn runSearchAlgorithm(settings: JsValue, locations: JsValue) -> js_sys::Promise;
     fn highlightCodeBlocks();
 }
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn start_app() {
+pub fn start_app(num_threads: u32) {
+    NUM_THREADS.with(|cell| cell.set(num_threads));
     console_error_panic_hook::set_once();
     yew::Renderer::<App>::new().render();
 }
@@ -72,7 +76,8 @@ pub fn start_app() {
 pub fn app() -> Html {
     let status = use_state(|| "Initializing...".to_string());
     let iterations = use_state(|| 10_000_u32);
-    let threads = use_state(|| 4_u32);
+    let max_threads = use_state(compute_max_threads);
+    let threads = use_state(|| (*max_threads).min(4));
     let chunk_size = use_state(|| 0_u32);
     let seed = use_state(|| 42_u64);
     let num_cities = use_state(|| 50_u32);
@@ -82,7 +87,6 @@ pub fn app() -> Html {
     let elapsed = use_state(|| "-".to_string());
     let ips = use_state(|| "-".to_string());
     let is_running = use_state(|| false);
-    let run_mode = use_state(|| SearchMode::Parallel);
     let run_subtitle =
         use_state(|| "Working through candidate tours. Larger runs can take a while.".to_string());
     let run_elapsed = use_state(|| "Elapsed: 0.0 s".to_string());
@@ -145,8 +149,9 @@ pub fn app() -> Html {
 
     let on_threads_change = {
         let threads = threads.clone();
+        let max_threads = max_threads.clone();
         Callback::from(move |next_value: u32| {
-            threads.set(next_value.clamp(MIN_THREADS, MAX_THREADS));
+            threads.set(next_value.clamp(MIN_THREADS, *max_threads));
         })
     };
 
@@ -176,9 +181,10 @@ pub fn app() -> Html {
         })
     };
 
-    let run_parallel = {
+    let run_search = {
         let iterations = iterations.clone();
         let threads = threads.clone();
+        let max_threads = max_threads.clone();
         let chunk_size = chunk_size.clone();
         let seed = seed.clone();
         let num_cities = num_cities.clone();
@@ -188,7 +194,6 @@ pub fn app() -> Html {
         let elapsed = elapsed.clone();
         let ips = ips.clone();
         let is_running = is_running.clone();
-        let run_mode = run_mode.clone();
         let run_subtitle = run_subtitle.clone();
         let run_elapsed = run_elapsed.clone();
         let run_started_at_ms = run_started_at_ms.clone();
@@ -196,9 +201,9 @@ pub fn app() -> Html {
         let status = status.clone();
         Callback::from(move |_event: MouseEvent| {
             spawn_local(run_search_async(
-                SearchMode::Parallel,
                 iterations.clone(),
                 threads.clone(),
+                max_threads.clone(),
                 chunk_size.clone(),
                 seed.clone(),
                 num_cities.clone(),
@@ -208,49 +213,6 @@ pub fn app() -> Html {
                 elapsed.clone(),
                 ips.clone(),
                 is_running.clone(),
-                run_mode.clone(),
-                run_subtitle.clone(),
-                run_elapsed.clone(),
-                run_started_at_ms.clone(),
-                run_ticker.clone(),
-                status.clone(),
-            ));
-        })
-    };
-
-    let run_sequential = {
-        let iterations = iterations.clone();
-        let threads = threads.clone();
-        let chunk_size = chunk_size.clone();
-        let seed = seed.clone();
-        let num_cities = num_cities.clone();
-        let points = points.clone();
-        let best_so_far = best_so_far.clone();
-        let best_distance = best_distance.clone();
-        let elapsed = elapsed.clone();
-        let ips = ips.clone();
-        let is_running = is_running.clone();
-        let run_mode = run_mode.clone();
-        let run_subtitle = run_subtitle.clone();
-        let run_elapsed = run_elapsed.clone();
-        let run_started_at_ms = run_started_at_ms.clone();
-        let run_ticker = run_ticker.clone();
-        let status = status.clone();
-        Callback::from(move |_event: MouseEvent| {
-            spawn_local(run_search_async(
-                SearchMode::Sequential,
-                iterations.clone(),
-                threads.clone(),
-                chunk_size.clone(),
-                seed.clone(),
-                num_cities.clone(),
-                points.clone(),
-                best_so_far.clone(),
-                best_distance.clone(),
-                elapsed.clone(),
-                ips.clone(),
-                is_running.clone(),
-                run_mode.clone(),
                 run_subtitle.clone(),
                 run_elapsed.clone(),
                 run_started_at_ms.clone(),
@@ -316,6 +278,7 @@ pub fn app() -> Html {
             <ControlsSection
                 iterations={*iterations}
                 threads={*threads}
+                max_threads={*max_threads}
                 chunk_size={*chunk_size}
                 seed={*seed}
                 num_cities={*num_cities}
@@ -326,15 +289,13 @@ pub fn app() -> Html {
                 on_threads_change={on_threads_change}
                 on_chunk_size_change={on_chunk_size_change}
                 on_seed_change={on_seed_change}
-                on_run_parallel={run_parallel}
-                on_run_sequential={run_sequential}
+                on_run={run_search}
                 on_reset={on_reset}
             />
 
             <section class="card">
                 <StatusSection
                     is_running={*is_running}
-                    run_mode={*run_mode}
                     run_subtitle={(*run_subtitle).clone()}
                     run_elapsed={(*run_elapsed).clone()}
                     best_distance={(*best_distance).clone()}
@@ -348,9 +309,9 @@ pub fn app() -> Html {
 }
 
 async fn run_search_async(
-    mode: SearchMode,
     iterations: UseStateHandle<u32>,
     threads: UseStateHandle<u32>,
+    max_threads: UseStateHandle<u32>,
     chunk_size: UseStateHandle<u32>,
     seed: UseStateHandle<u64>,
     num_cities: UseStateHandle<u32>,
@@ -360,7 +321,6 @@ async fn run_search_async(
     elapsed: UseStateHandle<String>,
     ips: UseStateHandle<String>,
     is_running: UseStateHandle<bool>,
-    run_mode: UseStateHandle<SearchMode>,
     run_subtitle: UseStateHandle<String>,
     run_elapsed: UseStateHandle<String>,
     run_started_at_ms: UseStateHandle<f64>,
@@ -368,9 +328,8 @@ async fn run_search_async(
     status: UseStateHandle<String>,
 ) {
     let settings = RunSettings {
-        mode,
         iterations: (*iterations).max(1),
-        threads: (*threads).clamp(MIN_THREADS, MAX_THREADS),
+        threads: (*threads).clamp(MIN_THREADS, *max_threads),
         chunk_size: *chunk_size,
         seed: *seed,
         num_cities: (*num_cities).clamp(MIN_CITIES, MAX_CITIES),
@@ -386,25 +345,12 @@ async fn run_search_async(
         settings.num_cities,
     );
 
-    let request = SearchRequest {
-        settings: settings.clone(),
-        locations: (*points).clone(),
-    };
-
     is_running.set(true);
-    run_mode.set(mode);
     run_subtitle.set(
         "Evaluating tours with 2-opt local search. Larger instances can take longer.".to_string(),
     );
     run_elapsed.set("Elapsed: 0.0 s".to_string());
-    status.set(
-        if mode == SearchMode::Parallel {
-            "Running parallel search..."
-        } else {
-            "Running sequential search..."
-        }
-        .to_string(),
-    );
+    status.set("Running search...".to_string());
     let started_at = Date::now();
     run_started_at_ms.set(started_at);
 
@@ -415,7 +361,7 @@ async fn run_search_async(
         run_elapsed_state.set(format!("Elapsed: {secs:.1} s"));
     })));
 
-    let result = match run_search_once(&request).await {
+    let result = match run_search_once(&settings, &points).await {
         Ok(result) => result,
         Err(err) => {
             status.set(format!("Error: {err:?}"));
@@ -440,23 +386,21 @@ async fn run_search_async(
         "Processed {} iterations in one call.",
         settings.iterations
     ));
-    status.set(
-        if mode == SearchMode::Parallel {
-            "Parallel run completed."
-        } else {
-            "Sequential run completed."
-        }
-        .to_string(),
-    );
+    status.set("Run completed.".to_string());
 
     is_running.set(false);
     run_ticker.set(None);
 }
 
-async fn run_search_once(request: &SearchRequest) -> Result<RunResult, JsValue> {
-    let request_js = serde_wasm_bindgen::to_value(request)
-        .map_err(|e| JsValue::from_str(&format!("failed to serialize run request: {e}")))?;
-    let result = JsFuture::from(runSearchAlgorithm(request_js)).await?;
+async fn run_search_once(
+    settings: &RunSettings,
+    points: &UseStateHandle<Vec<Location>>,
+) -> Result<RunResult, JsValue> {
+    let settings_js = serde_wasm_bindgen::to_value(settings)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize run settings: {e}")))?;
+    let locations_js = serde_wasm_bindgen::to_value(&**points)
+        .map_err(|e| JsValue::from_str(&format!("failed to serialize locations: {e}")))?;
+    let result = JsFuture::from(runSearchAlgorithm(settings_js, locations_js)).await?;
     serde_wasm_bindgen::from_value(result)
         .map_err(|e| JsValue::from_str(&format!("failed to deserialize run result: {e}")))
 }

@@ -1,6 +1,6 @@
 use leptos::prelude::*;
 
-use super::{run_label, UiState};
+use super::UiState;
 
 #[component]
 pub fn StatusSection(ui: UiState) -> impl IntoView {
@@ -15,7 +15,7 @@ pub fn StatusSection(ui: UiState) -> impl IntoView {
             <div class="run-overlay-card">
                 <div class="run-overlay-top">
                     <span class="spinner" aria-hidden="true"></span>
-                    <p id="runTitle" class="run-title">{move || run_label(ui.run_mode.get())}</p>
+                    <p id="runTitle" class="run-title">"Running search..."</p>
                 </div>
                 <p id="runSubtitle" class="run-subtitle">{move || ui.run_subtitle.get()}</p>
                 <p id="runElapsed" class="run-elapsed">{move || ui.run_elapsed.get()}</p>

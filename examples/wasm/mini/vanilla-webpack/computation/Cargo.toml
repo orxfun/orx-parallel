@@ -1,0 +1,12 @@
+[package]
+name = "computation"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+orx-parallel = { path = "/home/uarikan/orx/orx-parallel", default-features = false }
+
+[features]
+default = []
+wasm = ["orx-parallel/wasm"]

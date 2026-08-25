@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,17 +8,15 @@
   <link rel="icon" href="./favicon.ico" />
   <link rel="stylesheet" href="./style.css" />
 </head>
+
 <body>
   <main class="page">
     <section class="panel" aria-label="Framework switcher">
       <div class="panel-head">
         <a href="https://github.com/orxfun" target="_blank" rel="noreferrer" aria-label="ORX GitHub">
-          <img
-            class="panel-logo"
+          <img class="panel-logo"
             src="https://avatars.githubusercontent.com/u/132661625?s=400&u=e13dbda1a79636fa7d02dd9ac8dfc02705694144&v=4"
-            alt="ORX logo"
-            onerror="this.onerror=null;this.src='./assets/logos/orx.png';"
-          />
+            alt="ORX logo" onerror="this.onerror=null;this.src='./assets/logos/orx.png';" />
         </a>
         <div class="panel-head-copy">
           <h1>Parallel Computation in WASM using <code>orx-parallel</code></h1>
@@ -27,7 +26,7 @@
       <div class="panel-head">
         <div>&nbsp;</div>
         <div class="panel-head-copy">
-            <div class="hub-note" aria-label="Hub explanation">
+          <div class="hub-note" aria-label="Hub explanation">
             <p>This hub demonstrates how <code>orx-parallel</code> can enable parallel computation in WebAssembly.</p>
             <p class="hint">The TSP solver is included only as an example workload; it is not the central focus.</p>
             <br />
@@ -36,11 +35,11 @@
             <p>These demo apps allow to test out parallel computation on the client-side using web workers.</p>
             <br />
             <p>
-                Each <strong>README</strong> leads to the documentation how to enable parallel computation in the
-                corresponding framework.
+              Each <strong>README</strong> leads to the documentation how to enable parallel computation in the
+              corresponding framework.
             </p>
             <p class="hint">You may also browse the code used to create these demo applications.</p>
-            </div>
+          </div>
         </div>
       </div>
       <div class="framework-cards" aria-label="Framework pages">
@@ -94,10 +93,10 @@
 
   <script type="module">
     const demoUrls = {
-      vanilla: "./apps/vanilla/index.html",
-      react: "./apps/react/index.html",
-      yew: "./apps/yew/index.html",
-      leptos: "./apps/leptos/index.html"
+      vanilla: "https://orx-parallel-wasm-demo-tsp-vanilla.pages.dev/",
+      react: "https://orx-parallel-wasm-demo-tsp-react.pages.dev/",
+      yew: "https://orx-parallel-wasm-demo-tsp-yew.pages.dev/",
+      leptos: "https://orx-parallel-wasm-demo-tsp-leptos.pages.dev/",
     };
 
     const readmeUrls = {
@@ -153,4 +152,5 @@
     }
   </script>
 </body>
+
 </html>

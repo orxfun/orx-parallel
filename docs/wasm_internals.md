@@ -2,6 +2,12 @@
 
 This document explains how wasm support in `orx-parallel` is structured.
 
+It focuses on the Rust runtime and its JavaScript boundary. The companion
+[`orx-parallel-wasm`](https://github.com/orxfun/orx-parallel-wasm) package owns
+the browser packaging layer: it runs or prepares `wasm-pack` output, adapts
+worker assets for the selected bundler, and provides the `ParallelWorker`
+client used by the examples.
+
 ## Export matrix
 
 The crate exposes different wasm items depending on feature flags and target configuration.
@@ -19,7 +25,7 @@ the crate exports:
 
 Additionally, when `target_feature = "atomics"` is also enabled, it exports:
 
-- `init_thread_pool(...)`
+- `init_wasm_thread_pool(...)`
 - `wasm_web_runtime_info()`
 - `wasm_web_start_worker()`
 
@@ -65,7 +71,7 @@ The worker-shared state contains:
 
 ## Initialization flow in the main backend
 
-`init_thread_pool(num_threads)` is the explicit entrypoint.
+`init_wasm_thread_pool(num_threads)` is the explicit entrypoint.
 
 Its behavior is:
 
@@ -99,14 +105,28 @@ The JS bootstrap file is `src/pool/pool_impl/wasm_web_start_workers.js`.
 Its job is to:
 
 1. create module workers
-2. send each worker the wasm module and shared memory handles
+2. send each worker the WASM initialization data and shared memory handle
 3. wait for a ready/error/timeout result from each worker
 
 Inside the worker helper:
 
 - the generated wasm package is imported dynamically
-- wasm initialization is awaited
+- the generated package's default initializer is awaited with the shared memory
+	supplied by the parent runtime
 - the exported Rust worker entrypoint `wasm_web_start_worker()` is called
+
+`orx-parallel-wasm` prepares copies of this helper for bundler output. During
+preparation it replaces the package-directory placeholder with the actual
+generated bindings entry, copies the helper beside the generated worker entry,
+and keeps the worker's package import and WASM assets in the same emitted asset
+graph. The worker therefore initializes its own generated JS/WASM module while
+sharing the `WebAssembly.Memory` created by the parent runtime.
+
+The package's `ParallelWorker` client creates the top-level module worker,
+sends it the bindings URL and requested thread count, and serializes calls made
+through that client. The generated nested helpers then create the workers owned
+by the Rust pool. This gives the application one client-facing worker boundary
+while the Rust runtime manages its internal worker pool.
 
 That exported Rust function enters the Rust-side `worker_loop(...)` and begins consuming queued tasks.
 
@@ -168,7 +188,27 @@ In browser wasm, the runtime depends on external conditions that are not owned b
 - JS worker creation
 - cross-origin isolation headers
 
-Surfacing initialization directly through `init_thread_pool(...)` makes these preconditions explicit and moves failures closer to application startup.
+Surfacing initialization directly through `init_wasm_thread_pool(...)` makes these preconditions explicit and moves failures closer to application startup.
+
+## JavaScript packaging layer
+
+The generated `wasm-bindgen` package is not, by itself, a complete application
+integration. It contains the bindings glue, the WASM binary, and snippets that
+spawn workers, but a browser build still needs to preserve those relationships
+in its output asset graph.
+
+`orx-parallel-wasm` provides two levels of support:
+
+- `buildWasm` and `prepareWasm` are bundler-neutral APIs. They build or prepare
+	a generated package and write its asset manifest.
+- The Vite, Webpack, Rspack, and Rollup adapters emit those assets, rewrite
+	worker imports for their output layouts, create stable entries without
+	colliding with the generated package entry, and provide COOP/COEP headers.
+
+An application can use the neutral APIs directly. The
+`examples/wasm/mini/vanilla-manual` example does this in `build.mjs` and uses
+`server.mjs` to serve the output with the required headers. The other mini
+examples use the bundler adapters.
 
 ## Relationship to the examples
 
@@ -177,8 +217,10 @@ The example apps keep browser concerns outside the computation crate.
 That mirrors the runtime design:
 
 - `orx-parallel` owns scheduling and scoped execution
-- `wasm_bindings` exposes a small API such as `init_parallel_runtime(...)`
-- the browser host owns `wasm-pack` output loading, worker lifecycle, and COOP/COEP headers
+- `wasm_bindings` exposes a small API such as `init_wasm_parallel_runtime(...)`
+- `orx-parallel-wasm` owns generated-package preparation, bundler integration,
+  and the `ParallelWorker` client
+- the browser host owns the client lifecycle and deployment configuration
 
 This separation is not accidental; it matches the actual responsibility boundaries in the implementation.
 
@@ -189,7 +231,7 @@ When adjusting wasm support, the places that usually need to stay aligned are:
 - Rust exports in `src/lib.rs` and `src/pool/mod.rs`
 - backend implementation in `src/pool/pool_impl/wasm_web.rs`
 - JS bootstrap in `src/pool/pool_impl/wasm_web_start_workers.js`
-- example build scripts that package the worker helper files
+- `orx-parallel-wasm` preparation and bundler adapters that package worker helper files
 - host server configuration for COOP/COEP headers
 
-Most documentation drift happens when one of those layers changes without updating the others. The current examples are the best source of truth for a working browser-hosted setup.
+Most documentation drift happens when one of those layers changes without updating the others. The current mini and TSP examples, together with the `orx-parallel-wasm` package README, are the best source of truth for a working browser-hosted setup.

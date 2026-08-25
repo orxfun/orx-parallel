@@ -1,6 +1,6 @@
 # computation
 
-This crate contains the pure Rust TSP implementation used by the wasm React example.
+This crate contains the pure Rust TSP implementation used by the wasm TSP example.
 
 It is intentionally free of wasm-bindgen, JavaScript, and UI concerns, which keeps it easy to test and benchmark as an ordinary Rust crate.
 
@@ -8,11 +8,11 @@ It is intentionally free of wasm-bindgen, JavaScript, and UI concerns, which kee
 
 - generate TSP instances
 - build and improve tours
-- run sequential and parallel search strategies
+- run parallel search
 
 ## How it enables parallelization
 
-This crate uses `orx-parallel` in `run_search_parallel`.
+This crate uses `orx-parallel` in `run_search`.
 
 That is enough for native builds, but wasm needs the additional `wasm` feature so the same parallel code can run with browser threads.
 

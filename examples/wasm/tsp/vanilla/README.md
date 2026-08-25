@@ -47,7 +47,7 @@ This crate is the boundary between Rust and JavaScript. It should stay thin.
 
 Its job is to:
 
-- expose wasm-safe functions such as `locations`, `init_parallel_runtime`, and `run_search`
+- expose wasm-safe functions such as `locations`, `init_wasm_parallel_runtime`, and `run_search`
 - serialize and deserialize values at the edge
 - initialize the parallel runtime before the first parallel search
 
@@ -62,11 +62,11 @@ The UI should call into the wasm package, but it should not reimplement TSP logi
 1. The UI creates or loads a TSP instance.
 2. The UI sends the request to a worker.
 3. The worker calls `init()` for the generated wasm package.
-4. If the request is parallel, the worker calls `init_parallel_runtime(thread_count)` before the first `run_search`.
+4. If the request is parallel, the worker calls `init_wasm_parallel_runtime(thread_count)` before the first `run_search`.
 5. `run_search` executes the Rust computation and returns the result to the worker.
 6. The worker posts the result back to the UI.
 
-The worker can be short-lived, or it can be kept alive and reused across searches. In either case, each worker that runs parallel work must call `init_parallel_runtime` once before its first parallel search.
+The worker can be short-lived, or it can be kept alive and reused across searches. In either case, each worker that runs parallel work must call `init_wasm_parallel_runtime` once before its first parallel search.
 
 ## Important rules for parallel wasm on the web
 
@@ -100,7 +100,7 @@ export default defineConfig({
 
 ### 3. Initialize the parallel runtime once before the first parallel search
 
-Call `init_parallel_runtime` once in each worker that will execute parallel work.
+Call `init_wasm_parallel_runtime` once in each worker that will execute parallel work.
 
 Do not assume that one worker initializing the runtime automatically prepares every other worker. If you create a new worker, that worker must initialize its own runtime before parallel search.
 
@@ -132,7 +132,7 @@ The `app/README.md` contains the exact setup and run commands for the browser ap
 
 2. Expose only a thin wasm API.
 
-   Add `wasm_bindings/` as the bridge between Rust and JavaScript. Its job is always the same: expose `init_parallel_runtime` and re-export the computation functions with `wasm_bindgen` so the UI can call them from the browser.
+   Add `wasm_bindings/` as the bridge between Rust and JavaScript. Its job is always the same: expose `init_wasm_parallel_runtime` and re-export the computation functions with `wasm_bindgen` so the UI can call them from the browser.
 
 3. Build the UI around a worker boundary.
 
@@ -150,7 +150,7 @@ The `app/README.md` contains the exact setup and run commands for the browser ap
 
 6. Initialize wasm inside each worker before running search.
 
-    Call `init()` first, then call `init_parallel_runtime(thread_count)` once per worker before the first parallel execution. If you create a new worker, that worker must initialize its own runtime too.
+    Call `init()` first, then call `init_wasm_parallel_runtime(thread_count)` once per worker before the first parallel execution. If you create a new worker, that worker must initialize its own runtime too.
 
     The same worker can then invoke any exposed computation function, parallel or sequential.
 

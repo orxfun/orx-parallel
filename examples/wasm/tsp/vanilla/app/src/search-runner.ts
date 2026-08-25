@@ -1,41 +1,43 @@
-import type { SearchRequest, SearchResult, SearchResponse } from "./shared-types.js";
+import { ParallelWorker } from "orx-parallel-wasm";
+import bindingsUrl from "../pkg/wasm_bindings.js?url";
+import type { Location, RunSettings, SearchResult } from "./shared-types";
 
-export function runSearchAlgorithm(settings: SearchRequest["settings"], locations: SearchRequest["locations"]): Promise<SearchResult> {
-    return new Promise<SearchResult>((resolve, reject) => {
-        const worker = new Worker(new URL("./search-worker.ts", import.meta.url), {
-            type: "module"
-        });
+type TspComputations = {
+    run_search: (
+        iterations: number,
+        seed: bigint,
+        threads: number,
+        chunkSize: number,
+        locations: Location[]
+    ) => SearchResult;
+};
 
-        const cleanup = () => {
-            worker.terminate();
-        };
+export class SearchWorker {
+    constructor(private readonly worker: ParallelWorker<TspComputations>) {
+    }
 
-        worker.addEventListener(
-            "message",
-            (event: MessageEvent) => {
-                const data = event.data as SearchResponse;
+    runSearchAlgorithm(settings: RunSettings, locations: Location[]): Promise<SearchResult> {
+        return this.worker.call("run_search", [
+            settings.iterations,
+            settings.seed,
+            settings.threads,
+            settings.chunkSize,
+            locations
+        ]);
+    }
 
-                if (data.type === "search-error") {
-                    cleanup();
-                    reject(new Error(data.message));
-                    return;
-                }
-
-                cleanup();
-                resolve(data.result);
-            },
-            { once: true }
-        );
-
-        worker.addEventListener(
-            "error",
-            (event) => {
-                cleanup();
-                reject(new Error(event.message || "search worker failed"));
-            },
-            { once: true }
-        );
-
-        worker.postMessage({ settings, locations } satisfies SearchRequest);
-    });
+    terminate(): void {
+        this.worker.terminate();
+    }
 }
+
+export async function createSearchWorker(threads: number): Promise<SearchWorker> {
+    const searchWorker = new ParallelWorker<TspComputations>({
+        bindingsUrl,
+        methods: ["run_search"],
+        threads,
+    });
+    await searchWorker.ready();
+    return new SearchWorker(searchWorker);
+}
+
