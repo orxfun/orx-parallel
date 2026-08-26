@@ -1,4 +1,5 @@
 use crate::infallible::recursive::utils;
+use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
@@ -20,7 +21,7 @@ pub fn collect_arb<R, C, X, I, E>(
     mut runner: R,
     params: Params,
     iter: C,
-    x: X,
+    xap: X,
     extend: E,
 ) -> Vec<Vec<X::O>>
 where
@@ -29,11 +30,10 @@ where
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
     E: Fn(&X::I) -> I + Send + Sync,
-    // TODO: revisit these requirements
     X::O: Send + Sync,
     X::I: Send + Sync,
-    X: Send + Sync,
 {
+    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
@@ -45,7 +45,7 @@ where
 
     par.for_each(|u, i| {
         u.input.extend(extend(&i));
-        u.output.extend(x.xap(i));
+        u.output.extend(xap.xap(i));
     });
     let len = data.iter().map(|x| x.input.len()).sum();
     utils::into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
@@ -56,7 +56,7 @@ where
 
         par.for_each(|u, i| {
             u.input.extend(extend(&i));
-            u.output.extend(x.xap(i));
+            u.output.extend(xap.xap(i));
         });
 
         let len = data.iter().map(|x| x.input.len()).sum();
