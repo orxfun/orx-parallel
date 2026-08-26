@@ -42,7 +42,7 @@ use core::cmp::Ordering;
 ///
 /// assert_eq!(sum_of_even_squares, 220);
 /// ```
-pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
+pub trait ParRec: Sized + ParRecCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.

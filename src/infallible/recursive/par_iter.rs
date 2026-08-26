@@ -1,11 +1,9 @@
-use crate::common_par_traits::ParInfCommon;
 use crate::infallible::Xap;
 use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::{Par, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
@@ -71,25 +69,6 @@ where
 
     fn destruct(self) -> (Self::Input, Self::Xap, Self::Runner, Params) {
         (self.iter, self.xap, self.exe, self.params)
-    }
-}
-
-impl<I, X, Ix, Ex, R> ParInfCommon for ParIter<I, X, Ix, Ex, R>
-where
-    I: IntoIterator,
-    X: Xap<I = I::Item>,
-    R: ParRunner,
-    Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
-{
-    type CommonItem = X::O;
-
-    fn common_collect_into<C>(self, dst: &mut C)
-    where
-        C: ParCollectInto<Self::CommonItem>,
-        Self::CommonItem: Send,
-    {
-        self.collect_into(dst);
     }
 }
 
