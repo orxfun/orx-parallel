@@ -1,8 +1,9 @@
 use crate::common_par_traits::ParInfCommon;
-use crate::infallible::Xap;
+use crate::infallible::fun::FnCopied;
 use crate::infallible::par_core::ParCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
+use crate::infallible::{MappedOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
@@ -189,6 +190,17 @@ where
     {
         let xap = self.xap.flatten();
         self.with_xap(xap)
+    }
+
+    fn copied<'a, O>(
+        self,
+    ) -> ParIter<Self::Input, MappedOf<Self::Xap, FnCopied<'a, O>>, Self::Runner>
+    where
+        Self: Par<Item = &'a O>,
+        O: Copy + 'a,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
     }
 
     // compute
