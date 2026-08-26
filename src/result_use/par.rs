@@ -5,7 +5,6 @@ use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse,
 };
-use crate::pool::ParThreadPool;
 use crate::result_use::{ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;

@@ -5,7 +5,6 @@ use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::sizes::SizePair;
 use crate::use_var::Use;
