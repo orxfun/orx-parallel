@@ -20,7 +20,7 @@ where
     // TODO: revisit these requirements
     X::O: Send,
     X::I: Send + Sync,
-    X: Send + Sync,
+    X: Sync,
 {
     let max_threads: usize = runner.pool().max_num_threads().into();
 

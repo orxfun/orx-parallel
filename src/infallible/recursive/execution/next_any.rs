@@ -1,4 +1,5 @@
 use crate::infallible::recursive::utils;
+use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
@@ -6,7 +7,7 @@ pub fn next_any<R, C, X, I, E>(
     mut runner: R,
     params: Params,
     iter: C,
-    x: X,
+    xap: X,
     extend: E,
 ) -> Option<X::O>
 where
@@ -17,9 +18,10 @@ where
     E: Fn(&X::I) -> I + Send + Sync,
     // TODO: revisit these requirements
     X::O: Send,
-    X::I: Send + Sync,
-    X: Send + Sync,
+    X::I: Sync,
+    X::I: Send,
 {
+    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Vec::<X::I>::new()).collect();
@@ -32,7 +34,7 @@ where
     let result = par
         .flat_map(|u, i| {
             u.extend(extend(&i));
-            x.xap(i)
+            xap.xap(i)
         })
         .first();
 
@@ -49,7 +51,7 @@ where
                 let result = par
                     .flat_map(|u, i| {
                         u.extend(extend(&i));
-                        x.xap(i)
+                        xap.xap(i)
                     })
                     .first();
 

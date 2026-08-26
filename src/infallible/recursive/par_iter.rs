@@ -1,5 +1,6 @@
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::Xap;
+use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
@@ -209,13 +210,17 @@ where
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send,
+        // X: Xap<I = I::Item> + Sync,
+        // I::Item: Send + Sync,
     {
-        todo!()
-        // let (iter, x, mut exe, params) = self.destruct();
+        let (iter, x, exe, params, extend) = self.destruct_x();
+        // execution::next_any(exe, params, iter, x, extend);
+
         // match params.iteration_order {
         //     IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.val),
         //     IterationOrder::Arbitrary => exe.next_any(params, iter, x),
         // }
+        todo!()
     }
 
     fn reduce<F>(self, f: F) -> Option<Self::Item>
