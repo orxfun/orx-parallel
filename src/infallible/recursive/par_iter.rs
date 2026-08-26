@@ -210,11 +210,10 @@ where
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send,
-        // X: Xap<I = I::Item> + Sync,
-        // I::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
-        // execution::next_any(exe, params, iter, x, extend);
+        execution::next_any(exe, params, iter, x, extend);
 
         // match params.iteration_order {
         //     IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.val),

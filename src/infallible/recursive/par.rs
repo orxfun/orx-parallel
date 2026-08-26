@@ -411,7 +411,8 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     fn first(self) -> Option<Self::Item>
     where
-        Self::Item: Send;
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Reduces items into one value using associative reducer `f`.
     ///
@@ -487,6 +488,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     fn all<F>(self, f: F) -> bool
     where
         F: Fn(&Self::Item) -> bool + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.map(|x| f(&x)).find(|x| !*x).is_none()
     }
@@ -509,6 +511,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     fn any<F>(self, f: F) -> bool
     where
         F: Fn(&Self::Item) -> bool + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.map(|x| f(&x)).find(|x| *x).is_some()
     }
@@ -549,6 +552,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     where
         Self::Item: Send,
         F: Fn(&Self::Item) -> bool + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.filter(&f).first()
     }

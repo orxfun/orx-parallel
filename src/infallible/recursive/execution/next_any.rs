@@ -16,10 +16,8 @@ where
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
     E: Fn(&X::I) -> I + Send + Sync,
-    // TODO: revisit these requirements
     X::O: Send,
-    X::I: Sync,
-    X::I: Send,
+    X::I: Send + Sync,
 {
     let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
@@ -64,6 +62,23 @@ where
             }
 
             None
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+    use alloc::vec::Vec;
+
+    #[test]
+    fn abc() {
+        fn take<T>(mut vec: Vec<T>)
+        where
+            // T: Sync,
+            T: Send,
+        {
+            let par = vec.par_drain(..);
         }
     }
 }
