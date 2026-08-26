@@ -1,13 +1,11 @@
+use crate::ParCollectInto;
 use crate::infallible::Xap;
 use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
-use crate::infallible_use::xap_variants::UDummyPair;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::use_var::UseFold;
-use crate::{ParCollectInto, UseVec};
 use alloc::vec::Vec;
 
 /// Parallel iterator.

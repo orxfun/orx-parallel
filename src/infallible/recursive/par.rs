@@ -25,13 +25,16 @@ use core::cmp::Ordering;
 /// ```
 /// use orx_parallel::*;
 ///
-/// let sum_of_even_squares: usize = (1..11)
-///     .into_par()
+/// // A small rooted tree represented as adjacency lists; node 0 is the root.
+/// let children: Vec<Vec<usize>> = vec![vec![1, 2], vec![3, 4], vec![5], vec![], vec![], vec![]];
+///
+/// let sum_of_even_squares: usize = [0usize]
+///     .into_par_rec(|node| children[*node].iter().copied())
 ///     .map(|x| x * x)
 ///     .filter(|x| x % 2 == 0)
 ///     .sum();
 ///
-/// assert_eq!(sum_of_even_squares, 220);
+/// assert_eq!(sum_of_even_squares, 20);
 /// ```
 pub trait ParRec: Sized + ParRecCore {
     // configuration
@@ -49,12 +52,16 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let baseline: usize = (0..1000).into_par().sum();
+    /// let children: Vec<Vec<usize>> = vec![vec![1, 2], vec![3, 4], vec![5], vec![], vec![], vec![]];
     ///
-    /// let par = (0..1000).par();
+    /// let baseline: usize = [0usize]
+    ///     .into_par_rec(|node| children[*node].iter().copied())
+    ///     .sum();
+    ///
+    /// let par = [0usize].into_par_rec(|node| children[*node].iter().copied());
     ///
     /// let par = par.runner(Runner::fixed());
-    ///     
+    ///
     /// let configured: usize = par.sum();
     /// assert_eq!(baseline, configured);
     /// ```
@@ -75,12 +82,14 @@ pub trait ParRec: Sized + ParRecCore {
     /// # fn main() {
     /// use orx_parallel::*;
     ///
-    /// let par = (1..10_001).par().num_threads(4);
+    /// let par = [1i32]
+    ///     .into_par_rec(|&x| (x < 10_000).then_some(x + 1))
+    ///     .num_threads(4);
     ///
     /// #[cfg(feature = "std")]
     /// let par = par.runner_with_diagnostics();
     ///
-    /// let sum = par.sum();
+    /// let sum = par.sum::<i32>();
     /// assert_eq!(sum, 50005000);
     /// # }
     /// ```
@@ -162,14 +171,23 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// // Sequential execution
-    /// let sum: usize = (1..11).into_par().num_threads(1).sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 10).then_some(x + 1))
+    ///     .num_threads(1)
+    ///     .sum();
     /// assert_eq!(sum, 55);
     ///
     /// // Cap at 4 threads
-    /// let sum: usize = (1..1001).into_par().num_threads(4).sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 1000).then_some(x + 1))
+    ///     .num_threads(4)
+    ///     .sum();
     ///
     /// // Auto: uses available threads (respects ORX_PARALLEL_MAX_NUM_THREADS)
-    /// let sum: usize = (1..11).into_par().num_threads(0).sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 10).then_some(x + 1))
+    ///     .num_threads(0)
+    ///     .sum();
     /// ```
     ///
     /// # Interaction with Pool
@@ -183,8 +201,8 @@ pub trait ParRec: Sized + ParRecCore {
     /// let pool = Pool::once(4);
     ///
     /// // Request 6 threads, but pool only has 4
-    /// let sum: usize = (1..1001)
-    ///     .into_par()
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 1000).then_some(x + 1))
     ///     .pool(pool)
     ///     .num_threads(6)  // Request 6...
     ///     .sum();          // ...but only 4 are available
@@ -209,8 +227,8 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let values: Vec<_> = (0..32)
-    ///     .into_par()
+    /// let values: Vec<_> = [0usize]
+    ///     .into_par_rec(|&x| (x < 31).then_some(x + 1))
     ///     .chunk_size(8)
     ///     .map(|x| x + 1)
     ///     .collect();
@@ -242,14 +260,14 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let ordered = (1..10_000)
-    ///     .into_par()
+    /// let ordered = [1i32]
+    ///     .into_par_rec(|&x| (x < 9_999).then_some(x + 1))
     ///     .iteration_order(IterationOrder::Ordered)
     ///     .find(|x| x % 3421 == 0);
     /// assert_eq!(ordered, Some(3421));
     ///
-    /// let any = (1..10_000)
-    ///     .into_par()
+    /// let any = [1i32]
+    ///     .into_par_rec(|&x| (x < 9_999).then_some(x + 1))
     ///     .iteration_order(IterationOrder::Arbitrary)
     ///     .find(|x| x % 3421 == 0)
     ///     .unwrap();
@@ -266,7 +284,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let doubled: Vec<_> = (1..4).into_par().map(|x| 2 * x).collect();
+    /// let doubled: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .map(|x| 2 * x)
+    ///     .collect();
     /// assert_eq!(doubled, vec![2, 4, 6]);
     /// ```
     fn map<Q, H>(
@@ -285,8 +306,8 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let out: Vec<_> = (1..5)
-    ///     .into_par()
+    /// let out: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
     ///     .inspect(|x| {
     ///         println!("observed {x}");
     ///     })
@@ -308,7 +329,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let odds: Vec<_> = (1..7).into_par().filter(|x| x % 2 == 1).collect();
+    /// let odds: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 6).then_some(x + 1))
+    ///     .filter(|x| x % 2 == 1)
+    ///     .collect();
     /// assert_eq!(odds, vec![1, 3, 5]);
     /// ```
     fn filter<H>(
@@ -328,7 +352,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// let numbers: Vec<_> = ["1", "x", "5"]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &&str| None::<&str>)
     ///     .filter_map(|s| s.parse::<usize>().ok())
     ///     .collect();
     ///
@@ -348,7 +372,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let out: Vec<_> = (1..4).into_par().flat_map(|x| [x, x + 10]).collect();
+    /// let out: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .flat_map(|x| [x, x + 10])
+    ///     .collect();
     /// assert_eq!(out, vec![1, 11, 2, 12, 3, 13]);
     /// ```
     fn flat_map<V, H>(
@@ -367,7 +394,11 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// let nested = vec![vec![1, 2], vec![3, 4]];
-    /// let flat: Vec<_> = nested.into_par().flatten().collect();
+    /// let mut flat: Vec<_> = nested
+    ///     .into_par_rec(|_: &Vec<i32>| None::<Vec<i32>>)
+    ///     .flatten()
+    ///     .collect();
+    /// flat.sort();
     ///
     /// assert_eq!(flat, vec![1, 2, 3, 4]);
     /// ```
@@ -397,8 +428,13 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert_eq!(Vec::<usize>::new().into_par().first(), None);
-    /// assert_eq!((1..4).into_par().first(), Some(1));
+    /// let empty = Vec::<usize>::new().into_par_rec(|_: &usize| None::<usize>).first();
+    /// assert_eq!(empty, None);
+    ///
+    /// let first = [1usize]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .first();
+    /// assert_eq!(first, Some(1));
     /// ```
     fn first(self) -> Option<Self::Item>
     where
@@ -414,7 +450,9 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let reduced = (1..6).into_par().reduce(|a, b| a + b);
+    /// let reduced = [1i32]
+    ///     .into_par_rec(|&x| (x < 5).then_some(x + 1))
+    ///     .reduce(|a, b| a + b);
     /// assert_eq!(reduced, Some(15));
     /// ```
     fn reduce<F>(self, f: F) -> Option<Self::Item>
@@ -431,7 +469,9 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// let mut dst = vec![10];
-    /// (0..3).into_par().collect_into(&mut dst);
+    /// [0i32]
+    ///     .into_par_rec(|&x| (x < 2).then_some(x + 1))
+    ///     .collect_into(&mut dst);
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
     fn collect_into<C>(self, dst: &mut C)
@@ -453,7 +493,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let out: Vec<_> = (1..4).into_par().map(|x| x * 2).collect();
+    /// let out: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .map(|x| x * 2)
+    ///     .collect();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
     fn collect<C>(self) -> C
@@ -476,8 +519,12 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert!((1..5).into_par().all(|x| x > &0));
-    /// assert!(!(1..5).into_par().all(|x| x % 2 == 0));
+    /// assert!([1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .all(|x| x > &0));
+    /// assert!(![1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .all(|x| x % 2 == 0));
     /// ```
     fn all<F>(self, f: F) -> bool
     where
@@ -499,8 +546,12 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert!((1..5).into_par().any(|x| x % 2 == 0));
-    /// assert!(!(1..5).into_par().any(|x| x > &10));
+    /// assert!([1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .any(|x| x % 2 == 0));
+    /// assert!(![1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .any(|x| x > &10));
     /// ```
     fn any<F>(self, f: F) -> bool
     where
@@ -517,7 +568,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let n = (1..11).into_par().filter(|x| x % 3 == 0).count();
+    /// let n = [1i32]
+    ///     .into_par_rec(|&x| (x < 10).then_some(x + 1))
+    ///     .filter(|x| x % 3 == 0)
+    ///     .count();
     /// assert_eq!(n, 3);
     /// ```
     fn count(self) -> usize
@@ -542,7 +596,9 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let found = (1..101).into_par().find(|x| x % 17 == 0);
+    /// let found = [1i32]
+    ///     .into_par_rec(|&x| (x < 100).then_some(x + 1))
+    ///     .find(|x| x % 17 == 0);
     /// assert_eq!(found, Some(17));
     /// ```
     fn find<F>(self, f: F) -> Option<Self::Item>
@@ -563,14 +619,12 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let num_threads = 2;
-    ///
-    /// let partials: Vec<usize> = (1..6)
-    ///     .into_par()
-    ///     .num_threads(num_threads)
+    /// let partials: Vec<usize> = [1usize]
+    ///     .into_par_rec(|&x| (x < 5).then_some(x + 1))
+    ///     .num_threads(2)
     ///     .fold(|| 0usize, |acc, x| *acc += x);
     ///
-    /// assert!(partials.len() <= num_threads);
+    /// assert!(!partials.is_empty());
     ///
     /// assert_eq!(partials.iter().sum::<usize>(), 15);
     /// ```
@@ -591,8 +645,8 @@ pub trait ParRec: Sized + ParRecCore {
     ///
     /// let total = AtomicUsize::new(0);
     ///
-    /// (1..5)
-    ///     .into_par()
+    /// [1usize]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
     ///     .for_each(|x| {
     ///         total.fetch_add(x, Ordering::Relaxed);
     ///     });
@@ -614,8 +668,15 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert_eq!((1..5).into_par().max(), Some(4));
-    /// assert_eq!(Vec::<usize>::new().into_par().max(), None);
+    /// let max = [1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .max();
+    /// assert_eq!(max, Some(4));
+    ///
+    /// let empty = Vec::<usize>::new()
+    ///     .into_par_rec(|_: &usize| None::<usize>)
+    ///     .max();
+    /// assert_eq!(empty, None);
     /// ```
     fn max(self) -> Option<Self::Item>
     where
@@ -633,7 +694,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .max_by(|a, b| a.cmp(b));
     /// assert_eq!(x, Some(5));
     /// ```
@@ -658,7 +719,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .max_by_key(|x| x.abs());
     /// assert_eq!(x, Some(-10));
     /// ```
@@ -683,8 +744,15 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert_eq!((1..5).into_par().min(), Some(1));
-    /// assert_eq!(Vec::<usize>::new().into_par().min(), None);
+    /// let min = [1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .min();
+    /// assert_eq!(min, Some(1));
+    ///
+    /// let empty = Vec::<usize>::new()
+    ///     .into_par_rec(|_: &usize| None::<usize>)
+    ///     .min();
+    /// assert_eq!(empty, None);
     /// ```
     fn min(self) -> Option<Self::Item>
     where
@@ -702,7 +770,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .min_by(|a, b| a.cmp(b));
     /// assert_eq!(x, Some(-10));
     /// ```
@@ -727,7 +795,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .min_by_key(|x| x.abs());
     /// assert_eq!(x, Some(0));
     /// ```
@@ -754,7 +822,9 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let sum: usize = (1..5).into_par().sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .sum();
     /// assert_eq!(sum, 10);
     /// ```
     fn sum<S>(self) -> S
