@@ -2,9 +2,15 @@ use crate::infallible::recursive::utils;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
-pub fn next_any<R, C, X, I, E>(runner: R, params: Params, iter: C, x: X, extend: E) -> Option<X::O>
+pub fn next_any<R, C, X, I, E>(
+    mut runner: R,
+    params: Params,
+    iter: C,
+    x: X,
+    extend: E,
+) -> Option<X::O>
 where
-    R: ParRunner + Clone,
+    R: ParRunner,
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
@@ -20,7 +26,7 @@ where
 
     let mut outer: Vec<_> = iter.into_iter().collect();
 
-    let par = outer.par_drain(..).runner(runner.clone());
+    let par = outer.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
     let result = par
@@ -37,7 +43,7 @@ where
             utils::into_outer(&mut outer, len, &mut data);
 
             while !outer.is_empty() {
-                let par = outer.par_drain(..).runner(runner.clone());
+                let par = outer.par_drain(..).runner(&mut runner);
                 let par = params.apply(par).use_slice(&mut data);
 
                 let result = par

@@ -3,7 +3,7 @@ use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runne
 use alloc::vec::Vec;
 
 pub fn reduce<R, C, X, F, I, E>(
-    runner: R,
+    mut runner: R,
     params: Params,
     iter: C,
     x: X,
@@ -11,7 +11,7 @@ pub fn reduce<R, C, X, F, I, E>(
     f: F,
 ) -> Option<X::O>
 where
-    R: ParRunner + Clone,
+    R: ParRunner,
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
@@ -28,7 +28,7 @@ where
 
     let mut outer: Vec<_> = iter.into_iter().collect();
 
-    let par = outer.par_drain(..).runner(runner.clone());
+    let par = outer.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
     let mut result = par
@@ -41,7 +41,7 @@ where
     utils::into_outer(&mut outer, len, &mut data);
 
     while !outer.is_empty() {
-        let par = outer.par_drain(..).runner(runner.clone());
+        let par = outer.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data);
 
         let result_wave = par
