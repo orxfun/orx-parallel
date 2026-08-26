@@ -10,10 +10,10 @@ pub fn run(root: &Node) {
         r#"# REDUCTION ON SUBSET OF THE TREE
         
 // orx_rec: recursive
-[root].into_par_recursive(|node| node.children.iter().filter(filter)).map(compute).sum()
+[root].into_par_rec(|node| node.children.iter().filter(filter)).map(compute).sum()
 
 // orx_rec_linearized: recursive to linearize, then regular parallel iter
-let linearized: Vec<_> = [root].into_par_recursive(|node| node.children.iter().filter(filter)).collect();
+let linearized: Vec<_> = [root].into_par_rec(|node| node.children.iter().filter(filter)).collect();
 linearized.into_par().map(compute).sum()
     "#
     );
@@ -74,7 +74,7 @@ fn rayon(root: &Node) -> u64 {
 /// # orx-parallel: parallel recursive iterator
 fn orx_rec(root: &Node) -> u64 {
     [root]
-        .into_par_recursive(|node| node.children.iter().filter(filter))
+        .into_par_rec(|node| node.children.iter().filter(filter))
         .map(compute)
         .sum()
 }
@@ -85,7 +85,7 @@ fn orx_rec(root: &Node) -> u64 {
 /// parallel computation on linearized inputs.
 fn orx_rec_linearized(root: &Node) -> u64 {
     let linearized: Vec<_> = [root]
-        .into_par_recursive(|node| node.children.iter().filter(filter))
+        .into_par_rec(|node| node.children.iter().filter(filter))
         .collect();
     linearized.into_par().map(compute).sum()
 }
