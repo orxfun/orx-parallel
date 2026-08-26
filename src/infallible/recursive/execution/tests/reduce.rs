@@ -1,7 +1,8 @@
+use crate::Params;
 use crate::infallible::recursive::execution::reduce::reduce;
 use crate::infallible::recursive::execution::tests::tree::{Node, flatten};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::{Params, Runner};
+use crate::runner::default_runner;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use test_case::test_matrix;
@@ -15,7 +16,7 @@ fn recursive_reduce(depth: usize, fan_out: usize) {
         .map(|x| x.value)
         .filter(|x| !x.is_multiple_of(7));
 
-    let runner = Runner::adaptive();
+    let runner = default_runner();
     let params = Params::default();
 
     let expected = flatten([&tree], &|x: &&Node| &x.children)

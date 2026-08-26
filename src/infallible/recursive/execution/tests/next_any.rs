@@ -1,7 +1,8 @@
+use crate::Params;
 use crate::infallible::recursive::execution::next_any::next_any;
 use crate::infallible::recursive::execution::tests::tree::{Node, RANGE};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::{Params, Runner};
+use crate::runner::default_runner;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use test_case::test_matrix;
@@ -17,7 +18,7 @@ fn recursive_next_any(depth: usize, fan_out: usize, find: bool) {
     };
 
     let xap = Id::<&Node>::new().map(|x| x.value).filter(filter);
-    let runner = Runner::adaptive();
+    let runner = default_runner();
     let params = Params::default();
 
     let result = next_any(runner, params, [&tree], xap, |x| &x.children);

@@ -825,7 +825,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
 
     /// Collects all items into a new collection.
     ///
-    /// When a flat structure is not required, collecting into [`Vec2`] might lead to significant
+    /// When a flat structure is not required, collecting into [`Vec2`] might lead to
     /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
     /// _number of threads_ inner vectors.
     ///
