@@ -59,10 +59,6 @@ where
     fn destruct(self) -> (Self::Input, Self::Xap, Self::Runner, Params) {
         (self.iter, self.xap, self.exe, self.params)
     }
-
-    fn get_runner(&self) -> &Self::Runner {
-        &self.exe
-    }
 }
 
 impl<I, X, R> Par for ParIter<I, X, R>
