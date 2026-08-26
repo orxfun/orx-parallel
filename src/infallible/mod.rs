@@ -25,5 +25,6 @@ pub(crate) use par_core::ParCore;
 pub use par_enum::EnumeratePar;
 pub use par_iter::ParIter;
 pub(crate) use par_runner::ParRunnerInfallible;
+pub use recursive::{ParRec, ParRecIter};
 pub use xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap, XapBin, XapOne};
 pub use xap_enum::XapEnumByInput;
