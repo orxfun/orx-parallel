@@ -1,5 +1,4 @@
 use alloc::vec::Vec;
-use orx_iterable::CollectionMut;
 
 pub fn into_outer<'a, T>(
     outer: &'a mut Vec<T>,
