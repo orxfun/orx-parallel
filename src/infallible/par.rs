@@ -9,12 +9,11 @@ use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads, Runner};
+use crate::{ChunkSize, IterationOrder, NumThreads};
 use crate::{ParCollectInto, ParOption, ParResult, ParUse, Sum};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
-use orx_concurrent_iter::ConcurrentIter;
 
 /// Infallible parallel iterator.
 ///
@@ -645,18 +644,14 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     fn copied<'a, O>(
         self,
-    ) -> ParIter<Self::Input, MappedOf<Self::Xap, FnCopied<'a, O>>, Self::Runner>
-    /*
-     impl Par<
-        Item = O,
-        Runner = Self::Runner,
-        Input = Self::Input,
-        Xap = MappedOf<Self::Xap, FnCopied<'a, O>>,
-    >
-    */
+    ) -> impl Par<Item = O, Xap = MappedOf<Self::Xap, FnCopied<'a, O>>, Input = Self::Input>
     where
         Self: Par<Item = &'a O>,
-        O: Copy + 'a;
+        O: Copy + 'a,
+    {
+        let (iter, xap, exe, params) = self.destruct();
+        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
+    }
 
     /// Clones elements of a reference iterator.
     ///
@@ -753,12 +748,12 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let nums: Vec<_> = ["1", "x", "5"]
+    /// let numbers: Vec<_> = ["1", "x", "5"]
     ///     .into_par()
     ///     .filter_map(|s| s.parse::<usize>().ok())
     ///     .collect();
     ///
-    /// assert_eq!(nums, vec![1, 5]);
+    /// assert_eq!(numbers, vec![1, 5]);
     /// ```
     fn filter_map<Q, H>(
         self,
