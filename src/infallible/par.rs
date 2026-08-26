@@ -9,11 +9,12 @@ use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads};
+use crate::{ChunkSize, IterationOrder, NumThreads, Runner};
 use crate::{ParCollectInto, ParOption, ParResult, ParUse, Sum};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
+use orx_concurrent_iter::ConcurrentIter;
 
 /// Infallible parallel iterator.
 ///
@@ -644,14 +645,18 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     fn copied<'a, O>(
         self,
-    ) -> impl Par<Item = O, Xap = MappedOf<Self::Xap, FnCopied<'a, O>>, Input = Self::Input>
+    ) -> ParIter<Self::Input, MappedOf<Self::Xap, FnCopied<'a, O>>, Self::Runner>
+    /*
+     impl Par<
+        Item = O,
+        Runner = Self::Runner,
+        Input = Self::Input,
+        Xap = MappedOf<Self::Xap, FnCopied<'a, O>>,
+    >
+    */
     where
         Self: Par<Item = &'a O>,
-        O: Copy + 'a,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
-    }
+        O: Copy + 'a;
 
     /// Clones elements of a reference iterator.
     ///
