@@ -1,6 +1,5 @@
-use crate::Par;
-
 use super::{chunk_size::ChunkSize, iteration_order::IterationOrder, num_threads::NumThreads};
+use crate::Par;
 
 /// Parameters of a parallel computation.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
