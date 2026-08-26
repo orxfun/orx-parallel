@@ -74,12 +74,7 @@ where
         runner: Q,
     ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
         let (iter, xap, _, params) = self.destruct();
-        ParIter {
-            iter,
-            xap,
-            exe: runner,
-            params,
-        }
+        ParIter::new(iter, xap, runner, params)
     }
 
     #[cfg(feature = "std")]
@@ -87,12 +82,7 @@ where
         self,
     ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
         let (iter, xap, exe, params) = self.destruct();
-        ParIter {
-            iter,
-            xap,
-            exe: exe.with_diagnostics(),
-            params,
-        }
+        ParIter::new(iter, xap, exe.with_diagnostics(), params)
     }
 
     fn pool<P: ParThreadPool>(
@@ -100,8 +90,7 @@ where
         pool: P,
     ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
         let (iter, xap, exe, params) = self.destruct();
-        let exe = exe.with_pool(pool);
-        ParIter::new(iter, xap, exe, params)
+        ParIter::new(iter, xap, exe.with_pool(pool), params)
     }
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {

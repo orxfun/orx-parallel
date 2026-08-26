@@ -1,7 +1,8 @@
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::recursive::par::ParRec;
 use crate::infallible::recursive::par_core::ParRecCore;
-use crate::infallible::{ParCore, ParIter, Xap};
+use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
+use crate::infallible::{ParCore, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
@@ -9,13 +10,13 @@ use crate::{Par, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Parallel iterator.
-pub struct ParIterRecursive<I, X, Ix, Ex, R = DefaultRunner>
+pub struct ParIter<I, X, Ix, Ex, R = DefaultRunner>
 where
     I: IntoIterator,
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&X::I) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Sync,
 {
     iter: I,
     xap: X,
@@ -24,13 +25,13 @@ where
     extend: Ex,
 }
 
-impl<I, X, Ix, Ex, R> ParIterRecursive<I, X, Ix, Ex, R>
+impl<I, X, Ix, Ex, R> ParIter<I, X, Ix, Ex, R>
 where
     I: IntoIterator,
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&X::I) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Sync,
 {
     pub(crate) fn new(iter: I, xap: X, exe: R, params: Params, extend: Ex) -> Self {
         Self {
@@ -42,8 +43,8 @@ where
         }
     }
 
-    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> ParIterRecursive<I, Y, Ix, Ex, R> {
-        ParIterRecursive::new(self.iter, xap, self.exe, self.params, self.extend)
+    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> ParIter<I, Y, Ix, Ex, R> {
+        ParIter::new(self.iter, xap, self.exe, self.params, self.extend)
     }
 
     fn destruct_x(self) -> (I, X, R, Params, Ex) {
@@ -51,13 +52,13 @@ where
     }
 }
 
-impl<I, X, Ix, Ex, R> ParRecCore for ParIterRecursive<I, X, Ix, Ex, R>
+impl<I, X, Ix, Ex, R> ParRecCore for ParIter<I, X, Ix, Ex, R>
 where
     I: IntoIterator,
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&X::I) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Sync,
 {
     type Item = X::O;
 
@@ -72,177 +73,175 @@ where
     }
 }
 
-// impl<I, X, I2, E, R> ParInfCommon for ParIterRecursive<I, X, I2, E, R>
-// where
-//     I: IntoIterator,
-//     X: Xap<I = I::Item>,
-//     R: ParRunner,
-//     I2: IntoIterator<Item = X::I>,
-//     E: Fn(&X::I) -> I2 + Send + Sync,
-// {
-//     type CommonItem = X::O;
+impl<I, X, Ix, Ex, R> ParInfCommon for ParIter<I, X, Ix, Ex, R>
+where
+    I: IntoIterator,
+    X: Xap<I = I::Item>,
+    R: ParRunner,
+    Ix: IntoIterator<Item = X::I>,
+    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+{
+    type CommonItem = X::O;
 
-//     fn common_collect_into<C>(self, dst: &mut C)
-//     where
-//         C: ParCollectInto<Self::CommonItem>,
-//         Self::CommonItem: Send,
-//     {
-//     }
+    fn common_collect_into<C>(self, dst: &mut C)
+    where
+        C: ParCollectInto<Self::CommonItem>,
+        Self::CommonItem: Send,
+    {
+        self.collect_into(dst);
+    }
+}
 
-//     // type CommonItem = <Self as ParRecCore>::Item;
+impl<I, X, Ix, Ex, R> ParRec for ParIter<I, X, Ix, Ex, R>
+where
+    I: IntoIterator,
+    X: Xap<I = I::Item>,
+    R: ParRunner,
+    Ix: IntoIterator<Item = X::I>,
+    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+{
+    // configuration
 
-//     // fn common_collect_into<C>(self, dst: &mut C)
-//     // where
-//     //     C: ParCollectInto<Self::CommonItem>,
-//     //     Self::CommonItem: Send,
-//     // {
-//     //     // self.collect_into(dst);
-//     // }
-// }
+    fn runner<Q: ParRunner>(
+        self,
+        runner: Q,
+    ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
+        let (iter, xap, _, params, extend) = self.destruct_x();
+        ParIter::new(iter, xap, runner, params, extend)
+    }
 
-// impl<I, X, C, E, R> ParRec for ParIterRecursive<I, X, C, E, R>
-// where
-//     I: IntoIterator,
-//     X: Xap<I = I::Item>,
-//     R: ParRunner,
-//     C: IntoIterator<Item = X::I>,
-//     E: Fn(&X::I) -> C + Send + Sync,
-// {
-//     fn runner<Q: ParRunner>(
-//         self,
-//         runner: Q,
-//     ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
-//         let (iter, xap, _, params, extend) = self.destruct();
-//         ParIterRecursive {
-//             iter,
-//             xap,
-//             exe: runner,
-//             params,
-//             extend,
-//         }
-//     }
+    fn runner_with_diagnostics(
+        self,
+    ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
+        let (iter, xap, exe, params, extend) = self.destruct_x();
+        ParIter::new(iter, xap, exe.with_diagnostics(), params, extend)
+    }
 
-//     fn runner_with_diagnostics(
-//         self,
-//     ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
-//         todo!()
-//     }
+    fn pool<P: ParThreadPool>(
+        self,
+        pool: P,
+    ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
+        let (iter, xap, exe, params, extend) = self.destruct_x();
+        ParIter::new(iter, xap, exe.with_pool(pool), params, extend)
+    }
 
-//     fn pool<P: ParThreadPool>(
-//         self,
-//         pool: P,
-//     ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
-//         todo!()
-//     }
+    fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
+        self.params = self.params.with_num_threads(num_threads);
+        self
+    }
 
-//     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self {
-//         todo!()
-//     }
+    fn chunk_size(mut self, chunk_size: impl Into<ChunkSize>) -> Self {
+        self.params = self.params.with_chunk_size(chunk_size);
+        self
+    }
 
-//     fn chunk_size(self, chunk_size: impl Into<ChunkSize>) -> Self {
-//         todo!()
-//     }
+    fn iteration_order(mut self, collect: IterationOrder) -> Self {
+        self.params = self.params.with_collect_ordering(collect);
+        self
+    }
 
-//     fn iteration_order(self, collect: IterationOrder) -> Self {
-//         todo!()
-//     }
+    // transformations
 
-//     fn map<Q, H>(
-//         self,
-//         h: H,
-//     ) -> impl ParRec<Item = Q, Xap = crate::infallible::MapOf<Self::Xap, Q, H>, Input = Self::Input>
-//     where
-//         H: Fn(Self::Item) -> Q + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParRec<Item = Q, Xap = MapOf<Self::Xap, Q, H>, Input = Self::Input>
+    where
+        H: Fn(Self::Item) -> Q + Copy + Send,
+    {
+        let xap = self.xap.map(h);
+        self.with_xap(xap)
+    }
 
-//     fn inspect<H>(
-//         self,
-//         h: H,
-//     ) -> impl ParRec<Item = Self::Item, Xap = crate::infallible::InsOf<Self::Xap, H>, Input = Self::Input>
-//     where
-//         H: Fn(&Self::Item) + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn inspect<H>(
+        self,
+        h: H,
+    ) -> impl ParRec<Item = Self::Item, Xap = InsOf<Self::Xap, H>, Input = Self::Input>
+    where
+        H: Fn(&Self::Item) + Copy + Send,
+    {
+        let xap = self.xap.inspect(h);
+        self.with_xap(xap)
+    }
 
-//     fn filter<H>(
-//         self,
-//         h: H,
-//     ) -> impl ParRec<Item = Self::Item, Xap = crate::infallible::FilOf<Self::Xap, H>, Input = Self::Input>
-//     where
-//         H: Fn(&Self::Item) -> bool + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn filter<H>(
+        self,
+        h: H,
+    ) -> impl ParRec<Item = Self::Item, Xap = FilOf<Self::Xap, H>, Input = Self::Input>
+    where
+        H: Fn(&Self::Item) -> bool + Copy + Send,
+    {
+        let xap = self.xap.filter(h);
+        self.with_xap(xap)
+    }
 
-//     fn filter_map<Q, H>(
-//         self,
-//         h: H,
-//     ) -> impl ParRec<Item = Q, Xap = crate::infallible::FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
-//     where
-//         H: Fn(Self::Item) -> Option<Q> + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn filter_map<Q, H>(
+        self,
+        h: H,
+    ) -> impl ParRec<Item = Q, Xap = FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
+    where
+        H: Fn(Self::Item) -> Option<Q> + Copy + Send,
+    {
+        let xap = self.xap.filter_map(h);
+        self.with_xap(xap)
+    }
 
-//     fn flat_map<V, H>(
-//         self,
-//         h: H,
-//     ) -> impl ParRec<
-//         Item = V::Item,
-//         Xap = crate::infallible::FlatMapOf<Self::Xap, V, H>,
-//         Input = Self::Input,
-//     >
-//     where
-//         V: IntoIterator,
-//         H: Fn(Self::Item) -> V + Copy + Send,
-//     {
-//         todo!()
-//     }
+    fn flat_map<V, H>(
+        self,
+        h: H,
+    ) -> impl ParRec<Item = V::Item, Xap = FlatMapOf<Self::Xap, V, H>, Input = Self::Input>
+    where
+        V: IntoIterator,
+        H: Fn(Self::Item) -> V + Copy + Send,
+    {
+        let xap = self.xap.flat_map(h);
+        self.with_xap(xap)
+    }
 
-//     fn flatten(
-//         self,
-//     ) -> impl ParRec<
-//         Item = <Self::Item as IntoIterator>::Item,
-//         Xap = crate::infallible::FlattenOf<Self::Xap>,
-//         Input = Self::Input,
-//     >
-//     where
-//         Self::Item: IntoIterator,
-//     {
-//         todo!()
-//     }
+    fn flatten(
+        self,
+    ) -> impl ParRec<
+        Item = <Self::Item as IntoIterator>::Item,
+        Xap = FlattenOf<Self::Xap>,
+        Input = Self::Input,
+    >
+    where
+        Self::Item: IntoIterator,
+    {
+        let xap = self.xap.flatten();
+        self.with_xap(xap)
+    }
 
-//     fn first(self) -> Option<Self::Item>
-//     where
-//         Self::Item: Send,
-//     {
-//         todo!()
-//     }
+    // compute
 
-//     fn reduce<F>(self, f: F) -> Option<Self::Item>
-//     where
-//         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
-//         Self::Item: Send,
-//     {
-//         todo!()
-//     }
+    fn first(self) -> Option<Self::Item>
+    where
+        Self::Item: Send,
+    {
+        todo!()
+    }
 
-//     fn collect_into<C>(self, dst: &mut C)
-//     where
-//         C: ParCollectInto<Self::Item>,
-//         Self::Item: Send,
-//     {
-//         todo!()
-//     }
+    fn reduce<F>(self, f: F) -> Option<Self::Item>
+    where
+        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
+        Self::Item: Send,
+    {
+        todo!()
+    }
 
-//     fn collect<C>(self) -> C
-//     where
-//         C: ParCollectInto<Self::Item>,
-//         Self::Item: Send,
-//     {
-//         todo!()
-//     }
-// }
+    fn collect_into<C>(self, dst: &mut C)
+    where
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+    {
+        todo!()
+    }
+
+    fn collect<C>(self) -> C
+    where
+        C: ParCollectInto<Self::Item>,
+        Self::Item: Send,
+    {
+        todo!()
+    }
+}
