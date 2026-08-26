@@ -9,9 +9,8 @@ use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParOption, ParResult, ParUse, Sum,
-};
+use crate::{ChunkSize, IterationOrder, NumThreads};
+use crate::{ParCollectInto, ParOption, ParResult, ParUse, Sum};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
