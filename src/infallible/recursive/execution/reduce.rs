@@ -1,4 +1,5 @@
 use crate::infallible::recursive::utils;
+use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
@@ -6,7 +7,7 @@ pub fn reduce<R, C, X, F, I, E>(
     mut runner: R,
     params: Params,
     iter: C,
-    x: X,
+    xap: X,
     extend: E,
     f: F,
 ) -> Option<X::O>
@@ -16,12 +17,11 @@ where
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
     E: Fn(&X::I) -> I + Send + Sync,
-    F: Fn(X::O, X::O) -> X::O + Sync,
-    // TODO: revisit these requirements
+    F: Fn(X::O, X::O) -> X::O + Send + Copy,
     X::O: Send,
     X::I: Send + Sync,
-    X: Sync,
 {
+    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Vec::<X::I>::new()).collect();
@@ -34,9 +34,9 @@ where
     let mut result = par
         .flat_map(|u, i| {
             u.extend(extend(&i));
-            x.xap(i)
+            xap.xap(i)
         })
-        .reduce(|_, a, b| f(a, b));
+        .reduce(move |_, a, b| f(a, b));
     let len = data.iter().map(|x| x.len()).sum();
     utils::into_outer(&mut outer, len, &mut data);
 
@@ -47,9 +47,9 @@ where
         let result_wave = par
             .flat_map(|u, i| {
                 u.extend(extend(&i));
-                x.xap(i)
+                xap.xap(i)
             })
-            .reduce(|_, a, b| f(a, b));
+            .reduce(move |_, a, b| f(a, b));
 
         result = match (result, result_wave) {
             (Some(a), Some(b)) => Some(f(a, b)),

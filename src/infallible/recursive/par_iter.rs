@@ -213,21 +213,22 @@ where
         <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
-        execution::next_any(exe, params, iter, x, extend);
 
-        // match params.iteration_order {
-        //     IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.val),
-        //     IterationOrder::Arbitrary => exe.next_any(params, iter, x),
-        // }
-        todo!()
+        // TODO: handle ordered, or document it
+        match params.iteration_order {
+            IterationOrder::Ordered => execution::next_any(exe, params, iter, x, extend),
+            IterationOrder::Arbitrary => execution::next_any(exe, params, iter, x, extend),
+        }
     }
 
     fn reduce<F>(self, f: F) -> Option<Self::Item>
     where
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
-        todo!()
+        let (iter, x, exe, params, extend) = self.destruct_x();
+        execution::reduce(exe, params, iter, x, extend, f)
     }
 
     fn collect_into<C>(self, dst: &mut C)

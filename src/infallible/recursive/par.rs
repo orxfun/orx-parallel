@@ -429,7 +429,8 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     fn reduce<F>(self, f: F) -> Option<Self::Item>
     where
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
-        Self::Item: Send;
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Collects all items into `dst`.
     ///
@@ -526,7 +527,10 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     /// let n = (1..11).into_par().filter(|x| x % 3 == 0).count();
     /// assert_eq!(n, 3);
     /// ```
-    fn count(self) -> usize {
+    fn count(self) -> usize
+    where
+        <Self::Input as IntoIterator>::Item: Send + Sync,
+    {
         self.map(|_| 1).reduce(|a, b| a + b).unwrap_or(0)
     }
 
@@ -611,6 +615,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     fn for_each<F>(self, f: F)
     where
         F: Fn(Self::Item) + Send + Copy,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let _ = self.map(f).reduce(|_, _| {});
     }
@@ -628,6 +633,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     fn max(self) -> Option<Self::Item>
     where
         Self::Item: Ord + Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.reduce(Ord::max)
     }
@@ -648,6 +654,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     where
         Self::Item: Send,
         F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
@@ -673,6 +680,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
         Self::Item: Send,
         B: Ord,
         F: Fn(&Self::Item) -> B + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Greater | Ordering::Equal => x,
@@ -694,6 +702,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     fn min(self) -> Option<Self::Item>
     where
         Self::Item: Ord + Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.reduce(Ord::min)
     }
@@ -714,6 +723,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     where
         Self::Item: Send,
         F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x, &y) {
             Ordering::Less | Ordering::Equal => x,
@@ -739,6 +749,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
         Self::Item: Send,
         B: Ord,
         F: Fn(&Self::Item) -> B + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Less | Ordering::Equal => x,
@@ -763,6 +774,7 @@ pub trait ParRec: Sized + ParRecCore + ParInfCommon<CommonItem = Self::Item> {
     where
         Self::Item: Sum<S>,
         S: Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.map(Self::Item::owned)
             .reduce(Self::Item::add)
