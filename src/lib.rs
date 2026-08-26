@@ -29,7 +29,6 @@ mod option_use;
 mod parameters;
 /// Thread pool module
 pub mod pool;
-mod recursive;
 mod result;
 mod result_use;
 mod results;
@@ -38,10 +37,10 @@ mod sizes;
 mod use_var;
 
 pub use collectables::{ParCollectInto, Vec2};
-pub use infallible::{EnumeratePar, Par};
+pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
-    IntoParIter, IntoParIterRecursive, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain,
+    IntoParIter, IntoParRec, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain,
     Parallelizable,
 };
 pub use ops::{ParExtend, Sum};

@@ -5,6 +5,7 @@ use crate::parameters::{ChunkSize, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
 
+#[derive(Clone)]
 pub struct AdaptiveChunkRunner<P: ParThreadPool> {
     pool: P,
 }
@@ -30,13 +31,6 @@ impl<P: ParThreadPool> ParRunner for AdaptiveChunkRunner<P> {
 
     fn pool_mut(&mut self) -> &mut Self::Pool {
         &mut self.pool
-    }
-
-    fn with_pool<Q: ParThreadPool>(
-        self,
-        pool: Q,
-    ) -> impl ParRunner<State = Self::State, ChunkState = Self::ChunkState, Pool = Q> {
-        AdaptiveChunkRunner::new(pool)
     }
 
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {

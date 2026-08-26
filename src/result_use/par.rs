@@ -5,7 +5,6 @@ use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse,
 };
-use crate::pool::ParThreadPool;
 use crate::result_use::{ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
@@ -129,40 +128,6 @@ pub trait ParUseResult:
     /// ```
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParUseResult<
-        Item = Self::Item,
-        Error = Self::Error,
-        Use = Self::Use,
-        Xap1 = Self::Xap1,
-        M = Self::M,
-        Xap2 = Self::Xap2,
-        Input = Self::Input,
-        Size = Self::Size,
-    >;
-
-    /// Replaces the pool used by the current runner.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// #[cfg(feature = "std")]
-    /// {
-    ///     let out: Result<Vec<_>, _> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>())
-    ///         .into_fallible()
-    ///         .use_new(|_| ())
-    ///         .pool(Pool::once(4))
-    ///         .collect();
-    ///
-    ///     assert_eq!(out, Ok(vec![1, 2, 3]));
-    /// }
-    /// ```
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
     ) -> impl ParUseResult<
         Item = Self::Item,
         Error = Self::Error,

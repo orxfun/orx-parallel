@@ -5,7 +5,6 @@ use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::sizes::SizePair;
 use crate::use_var::Use;
@@ -161,31 +160,6 @@ where
             x1,
             x2,
             exe: exe.with_diagnostics(),
-            s,
-            params,
-        }
-    }
-
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl ParUseOption<
-        Item = Self::Item,
-        Use = Self::Use,
-        Xap1 = Self::Xap1,
-        M = Self::M,
-        Xap2 = Self::Xap2,
-        Input = Self::Input,
-        Size = Self::Size,
-    > {
-        let (using, iter, x1, x2, exe, s, params) = self.destruct();
-        let exe = exe.with_pool(pool);
-        ParUseOptionIter {
-            using,
-            iter,
-            x1,
-            x2,
-            exe,
             s,
             params,
         }

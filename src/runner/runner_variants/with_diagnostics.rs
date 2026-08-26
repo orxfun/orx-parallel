@@ -27,13 +27,6 @@ impl<R: ParRunner> ParRunner for WithDiagnostics<R> {
         self.0.pool_mut()
     }
 
-    fn with_pool<Q: crate::pool::ParThreadPool>(
-        self,
-        pool: Q,
-    ) -> impl ParRunner<State = Self::State, ChunkState = Self::ChunkState, Pool = Q> {
-        self.0.with_pool(pool).with_diagnostics()
-    }
-
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
         R::do_spawn_new(spawned, &state.inner)
     }

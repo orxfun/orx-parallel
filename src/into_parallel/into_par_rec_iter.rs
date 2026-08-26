@@ -1,15 +1,15 @@
-use crate::infallible::{ParIter, xap_variants::Id};
+use crate::infallible::ParRecIter;
+use crate::infallible::xap_variants::Id;
 use crate::runner::default_runner;
-use orx_concurrent_recursive_iter::ConcurrentRecursiveIter;
 
 /// Converts dynamically expanding recursive structures into an infallible parallel iterator.
 ///
 /// Unlike flat sources (such as slices or ranges), recursive workloads discover new items
 /// while they are being processed. This trait is useful when each item can produce additional
 /// items, such as traversing a tree from its root(s).
-pub trait IntoParIterRecursive
+pub trait IntoParRec
 where
-    Self: IntoIterator,
+    Self: IntoIterator + Sized,
     Self::Item: Send,
 {
     /// Creates a parallel recursive iterator using `extend` to discover children.
@@ -35,7 +35,7 @@ where
     ///
     /// // Start from the root and expand recursively.
     /// let mut visited: Vec<_> = [0usize]
-    ///     .into_par_recursive(|node| children[*node].iter().copied())
+    ///     .into_par_rec(|node| children[*node].iter().copied())
     ///     .map(|x| 2 * x + 1)
     ///     .collect();
     ///
@@ -43,29 +43,28 @@ where
     /// visited.sort();
     /// assert_eq!(visited, vec![1, 3, 5, 7, 9, 11]);
     /// ```
-    fn into_par_recursive<I, F>(
-        self,
-        extend: F,
-    ) -> ParIter<ConcurrentRecursiveIter<I, F>, Id<Self::Item>>
+    fn into_par_rec<I, F>(self, extend: F) -> ParRecIter<Self, Id<Self::Item>, I, F>
     where
         I: IntoIterator<Item = Self::Item>,
         F: Fn(&Self::Item) -> I + Send + Sync;
 }
 
-impl<X> IntoParIterRecursive for X
+impl<S> IntoParRec for S
 where
-    X: IntoIterator,
-    X::Item: Send,
+    S: IntoIterator + Sized,
+    S::Item: Send,
 {
-    fn into_par_recursive<I, F>(
-        self,
-        extend: F,
-    ) -> ParIter<ConcurrentRecursiveIter<I, F>, Id<Self::Item>>
+    fn into_par_rec<I, F>(self, extend: F) -> ParRecIter<Self, Id<Self::Item>, I, F>
     where
         I: IntoIterator<Item = Self::Item>,
         F: Fn(&Self::Item) -> I + Send + Sync,
     {
-        let iter = ConcurrentRecursiveIter::new(self, extend, None, None);
-        ParIter::new(iter, Id::new(), default_runner(), Default::default())
+        ParRecIter::new(
+            self,
+            Id::new(),
+            default_runner(),
+            Default::default(),
+            extend,
+        )
     }
 }

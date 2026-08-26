@@ -1,16 +1,9 @@
-use crate::common_par_traits::ParInfCommon;
-use crate::infallible::fun::{FnCloned, FnCopied};
+use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::FlattenOf;
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
-use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParUseIter, xap_variants::IdUse};
-use crate::option::ParOptionIter;
-use crate::result::ParResultIter;
-use crate::sizes::Size;
-use crate::use_var::{UseSlice, UseVec};
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
+use crate::runner::ParRunner;
 use crate::{ChunkSize, IterationOrder, NumThreads};
-use crate::{ParCollectInto, ParOption, ParResult, ParUse, Sum};
-use crate::{infallible::par_core::ParCore, runner::ParRunner};
+use crate::{ParCollectInto, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -32,15 +25,18 @@ use core::cmp::Ordering;
 /// ```
 /// use orx_parallel::*;
 ///
-/// let sum_of_even_squares: usize = (1..11)
-///     .into_par()
+/// // A small rooted tree represented as adjacency lists; node 0 is the root.
+/// let children: Vec<Vec<usize>> = vec![vec![1, 2], vec![3, 4], vec![5], vec![], vec![], vec![]];
+///
+/// let sum_of_even_squares: usize = [0usize]
+///     .into_par_rec(|node| children[*node].iter().copied())
 ///     .map(|x| x * x)
 ///     .filter(|x| x % 2 == 0)
 ///     .sum();
 ///
-/// assert_eq!(sum_of_even_squares, 220);
+/// assert_eq!(sum_of_even_squares, 20);
 /// ```
-pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
+pub trait ParRec: Sized + ParRecCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -56,19 +52,23 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let baseline: usize = (0..1000).into_par().sum();
+    /// let children: Vec<Vec<usize>> = vec![vec![1, 2], vec![3, 4], vec![5], vec![], vec![], vec![]];
     ///
-    /// let par = (0..1000).par();
+    /// let baseline: usize = [0usize]
+    ///     .into_par_rec(|node| children[*node].iter().copied())
+    ///     .sum();
+    ///
+    /// let par = [0usize].into_par_rec(|node| children[*node].iter().copied());
     ///
     /// let par = par.runner(Runner::fixed());
-    ///     
+    ///
     /// let configured: usize = par.sum();
     /// assert_eq!(baseline, configured);
     /// ```
     fn runner<Q: ParRunner>(
         self,
         runner: Q,
-    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
+    ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
 
     /// Wraps the current parallel runner with a diagnostics-enabled runner.
     ///
@@ -82,12 +82,14 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// # fn main() {
     /// use orx_parallel::*;
     ///
-    /// let par = (1..10_001).par().num_threads(4);
+    /// let par = [1i32]
+    ///     .into_par_rec(|&x| (x < 10_000).then_some(x + 1))
+    ///     .num_threads(4);
     ///
     /// #[cfg(feature = "std")]
     /// let par = par.runner_with_diagnostics();
     ///
-    /// let sum = par.sum();
+    /// let sum = par.sum::<i32>();
     /// assert_eq!(sum, 50005000);
     /// # }
     /// ```
@@ -128,7 +130,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
-    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
+    ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
 
     /// Sets the maximum number of worker threads for this computation.
     ///
@@ -169,14 +171,23 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// // Sequential execution
-    /// let sum: usize = (1..11).into_par().num_threads(1).sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 10).then_some(x + 1))
+    ///     .num_threads(1)
+    ///     .sum();
     /// assert_eq!(sum, 55);
     ///
     /// // Cap at 4 threads
-    /// let sum: usize = (1..1001).into_par().num_threads(4).sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 1000).then_some(x + 1))
+    ///     .num_threads(4)
+    ///     .sum();
     ///
     /// // Auto: uses available threads (respects ORX_PARALLEL_MAX_NUM_THREADS)
-    /// let sum: usize = (1..11).into_par().num_threads(0).sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 10).then_some(x + 1))
+    ///     .num_threads(0)
+    ///     .sum();
     /// ```
     ///
     /// # Interaction with Pool
@@ -190,8 +201,8 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// let pool = Pool::once(4);
     ///
     /// // Request 6 threads, but pool only has 4
-    /// let sum: usize = (1..1001)
-    ///     .into_par()
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 1000).then_some(x + 1))
     ///     .pool(pool)
     ///     .num_threads(6)  // Request 6...
     ///     .sum();          // ...but only 4 are available
@@ -216,8 +227,8 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let values: Vec<_> = (0..32)
-    ///     .into_par()
+    /// let values: Vec<_> = [0usize]
+    ///     .into_par_rec(|&x| (x < 31).then_some(x + 1))
     ///     .chunk_size(8)
     ///     .map(|x| x + 1)
     ///     .collect();
@@ -249,399 +260,20 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let ordered = (1..10_000)
-    ///     .into_par()
+    /// let ordered = [1i32]
+    ///     .into_par_rec(|&x| (x < 9_999).then_some(x + 1))
     ///     .iteration_order(IterationOrder::Ordered)
     ///     .find(|x| x % 3421 == 0);
     /// assert_eq!(ordered, Some(3421));
     ///
-    /// let any = (1..10_000)
-    ///     .into_par()
+    /// let any = [1i32]
+    ///     .into_par_rec(|&x| (x < 9_999).then_some(x + 1))
     ///     .iteration_order(IterationOrder::Arbitrary)
     ///     .find(|x| x % 3421 == 0)
     ///     .unwrap();
     /// assert!([3421, 6842].contains(&any));
     /// ```
     fn iteration_order(self, collect: IterationOrder) -> Self;
-
-    // kind transformations
-
-    /// Converts `Par<Item = Option<T>>` into `ParOption<Item = T>`.
-    ///
-    /// The resulting fallible iterator **short-circuits** to `None` if any element is `None`.
-    ///
-    /// Similar to pattern using the `?` operator, fallible iterators allow us to work with
-    /// the **success path**.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let ok: Option<Vec<_>> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<i32>().ok())
-    ///     .into_optional()
-    ///     .map(|x| x * 2)
-    ///     .filter(|x| *x > 3)
-    ///     .collect();
-    /// assert_eq!(ok, Some(vec![4, 6]));
-    ///
-    /// let fail: Option<Vec<_>> = ["1", "x", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<i32>().ok())
-    ///     .into_optional()
-    ///     .map(|x| x * 2)
-    ///     .filter(|x| *x > 3)
-    ///     .collect();
-    /// assert_eq!(fail, None);
-    /// ```
-    ///
-    /// Notice that `x` is of type `i32`, rather than `Option<i32>`, which allows for concise
-    /// expressions.
-    ///
-    /// Without fallible iterators, the above result could be obtained by the following version,
-    /// which is not only more verbose, but also lacks the short-circuiting mechanism.
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let ok: Option<Vec<_>> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<i32>().ok())
-    ///     .map(|x| x.map(|x| x * 2))
-    ///     .filter(|x| x.as_ref().map(|x| *x > 3).unwrap_or(true))
-    ///     .collect::<Vec<_>>()
-    ///     .into_iter()
-    ///     .collect();
-    /// assert_eq!(ok, Some(vec![4, 6]));
-    /// ```
-    fn into_optional<T>(
-        self,
-    ) -> impl ParOption<
-        Item = T,
-        Xap1 = Self::Xap,
-        M = T,
-        Xap2 = Id<T>,
-        Input = Self::Input,
-        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
-    >
-    where
-        Self::Xap: Xap<O = Option<T>>,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-
-        ParOptionIter::new(iter, xap, Id::new(), exe, params)
-    }
-
-    /// Converts `Par<Item = Result<T, E>>` into `ParResult<Item = T, Error = E>`.
-    ///
-    /// The resulting fallible iterator **short-circuits** and returns the first
-    /// observed error.
-    ///
-    /// Similar to pattern using the `?` operator, fallible iterators allow us to
-    /// work with the **success path**.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let ok: Result<Vec<_>, _> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<i32>())
-    ///     .into_fallible()
-    ///     .map(|x| x * 2)
-    ///     .filter(|x| *x > 3)
-    ///     .collect();
-    /// assert_eq!(ok, Ok(vec![4, 6]));
-    ///
-    /// let fail: Result<Vec<_>, _> = ["1", "x", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<i32>())
-    ///     .into_fallible()
-    ///     .map(|x| x * 2)
-    ///     .filter(|x| *x > 3)
-    ///     .collect();
-    /// assert!(fail.is_err());
-    /// ```
-    ///
-    /// Notice that `x` is of type `i32`, rather than `Result<i32, _>`, which
-    /// allows for concise expressions.
-    ///
-    /// Without fallible iterators, the above result could be obtained by the
-    /// following version, which is not only more verbose, but also lacks the
-    /// short-circuiting mechanism.
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let ok: Result<Vec<_>, _> = ["1", "2", "3"]
-    ///     .into_par()
-    ///     .map(|s| s.parse::<i32>())
-    ///     .map(|x| x.map(|x| x * 2))
-    ///     .filter(|x| x.as_ref().map(|x| *x > 3).unwrap_or(true))
-    ///     .collect::<Vec<_>>()
-    ///     .into_iter()
-    ///     .collect();
-    /// assert_eq!(ok, Ok(vec![4, 6]));
-    /// ```
-    fn into_fallible<T, E>(
-        self,
-    ) -> impl ParResult<
-        Item = T,
-        Error = E,
-        Xap1 = Self::Xap,
-        M = T,
-        Xap2 = Id<T>,
-        Input = Self::Input,
-        Size = <<Self::Xap as Xap>::Size as Size>::IntoPair,
-    >
-    where
-        Self::Xap: Xap<O = Result<T, E>>,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        ParResultIter::new(iter, xap, Id::new(), exe, params)
-    }
-
-    /// Creates one mutable `Use` value per participating worker.
-    ///
-    /// The initializer `f` is called with the worker's thread index, and the
-    /// returned value is then passed as `&mut Use` to downstream [`ParUse`]
-    /// operations such as `map`, `filter`, `flat_map`, `reduce`, and `for_each`.
-    ///
-    /// This is useful for thread-local scratch buffers, counters, or other
-    /// mutable state that should not be shared across workers.
-    ///
-    /// # Examples
-    ///
-    /// Reusing one buffer per worker avoids allocating a fresh String
-    /// for every parsed item.
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let values: Vec<_> = (1..4)
-    ///     .into_par()
-    ///     .num_threads(1)
-    ///     .use_new(|_| String::new())
-    ///     .map(|buffer, x| {
-    ///         buffer.clear();
-    ///         buffer.push_str(&x.to_string());
-    ///         buffer.parse::<usize>().unwrap() * 10
-    ///     })
-    ///     .collect();
-    ///
-    /// assert_eq!(values, vec![10, 20, 30]);
-    /// ```
-    ///
-    /// Some pipelines need fast worker-local randomness, for example for
-    /// sampling, randomized search, or simulation.
-    /// Seeding one RNG per worker with thread_idx creates independent
-    /// thread-local random streams without shared mutable state.
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    /// use rand::{Rng, RngExt, SeedableRng};
-    /// use rand_chacha::ChaCha8Rng;
-    ///
-    /// let values: Vec<_> = (0..8)
-    ///     .into_par()
-    ///     .num_threads(2)
-    ///     .use_new(|thread_idx| ChaCha8Rng::seed_from_u64(thread_idx as u64 + 1))
-    ///     .map(|rng, _| rng.random_range(0..100usize))
-    ///     .collect();
-    ///
-    /// assert_eq!(values.len(), 8);
-    /// assert!(values.into_iter().all(|x| x < 100));
-    /// ```
-    fn use_new<U, F>(
-        self,
-        f: F,
-    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
-    where
-        U: Send,
-        F: Fn(usize) -> U + Sync,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        let xap = IdUse::new(xap);
-        let using = UseVec::new(f);
-        ParUseIter::new(using, iter, xap, exe, params)
-    }
-
-    /// Uses an externally owned [`UseVec`] as worker-local mutable state.
-    ///
-    /// Unlike [`Par::use_new`], the state container is provided by the caller,
-    /// which allows reading back per-worker values after the computation.
-    ///
-    /// This is practical when we need thread-local accumulation with a final
-    /// merge step, such as per-thread partial sums or local metrics.
-    ///
-    /// Note that the resulting `UseVec` length equals the number of worker
-    /// threads that actually participated in the computation. Exactly one
-    /// element is created per participating thread.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let n = 10_000usize;
-    /// let mut use_vec = UseVec::new(|_| 0usize);
-    ///
-    /// (0..n)
-    ///     .into_par()
-    ///     .map(|x| 2 * x)
-    ///     .use_vec(&mut use_vec)
-    ///     .for_each(|thread_sum, x| *thread_sum += x);
-    ///
-    /// let partial_sums = use_vec.into_vec();
-    /// let total: usize = partial_sums.into_iter().sum();
-    ///
-    /// assert_eq!(total, (n - 1) * n);
-    /// ```
-    ///
-    /// The following example demonstrates an expensive per-thread state:
-    /// a pre-allocated scratch buffer.
-    ///
-    /// ```
-    /// use core::fmt::Write;
-    /// use core::sync::atomic::{AtomicUsize, Ordering};
-    /// use orx_parallel::*;
-    ///
-    /// let created = AtomicUsize::new(0);
-    /// let mut use_vec = UseVec::new(|_| {
-    ///     created.fetch_add(1, Ordering::Relaxed);
-    ///     String::with_capacity(4096)
-    /// });
-    ///
-    /// let out: Vec<_> = (0..64)
-    ///     .into_par()
-    ///     .num_threads(4)
-    ///     .use_vec(&mut use_vec)
-    ///     .map(|buffer, x| {
-    ///         buffer.clear();
-    ///         write!(buffer, "{x}").unwrap();
-    ///         buffer.parse::<usize>().unwrap()
-    ///     })
-    ///     .collect();
-    ///
-    /// assert_eq!(out, (0..64).collect::<Vec<_>>());
-    ///
-    /// let buffers = use_vec.into_vec();
-    /// assert_eq!(created.load(Ordering::Relaxed), buffers.len());
-    /// assert!(buffers.len() <= 4);
-    /// ```
-    fn use_vec<U, F>(
-        self,
-        use_vec: &mut UseVec<U, F>,
-    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
-    where
-        U: Send,
-        F: Fn(usize) -> U + Sync,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        let xap = IdUse::new(xap);
-        ParUseIter::new(use_vec, iter, xap, exe, params)
-    }
-
-    /// Uses a caller-provided mutable slice as worker-local mutable state.
-    ///
-    /// This is similar to [`Par::use_vec`], but the state storage is a
-    /// borrowed slice instead of an owned `UseVec`. Therefore, no per-thread
-    /// state objects are created by this method; existing slice elements are
-    /// reused as thread-local state.
-    ///
-    /// The number of worker threads that can participate in the computation is
-    /// limited by `slice.len()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let n = 10_000usize;
-    /// let mut thread_sums = vec![0usize; 4];
-    ///
-    /// (0..n)
-    ///     .into_par()
-    ///     .map(|x| 2 * x)
-    ///     .use_slice(&mut thread_sums)    // participating workers are limited to 4
-    ///     .for_each(|thread_sum, x| *thread_sum += x);
-    ///
-    /// let total: usize = thread_sums.into_iter().sum();
-    /// assert_eq!(total, (n - 1) * n);
-    /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics if `slice` is empty.
-    fn use_slice<'a, U>(
-        self,
-        slice: &'a mut [U],
-    ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
-    where
-        U: Sync + 'a,
-    {
-        assert!(
-            !slice.is_empty(),
-            "Number of parallel threads is limited to slice.len(); and hence, slice cannot be empty."
-        );
-        let (iter, xap, exe, params) = self.destruct();
-        let xap = IdUse::new(xap);
-        let using = UseSlice::new(slice);
-        ParUseIter::new(using, iter, xap, exe, params)
-    }
-
-    /// Copies elements of a reference iterator.
-    ///
-    /// Equivalent to `.map(|&x| x)`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let data = vec![1, 2, 3];
-    /// let copied: Vec<_> = data.par().copied().collect();
-    ///
-    /// assert_eq!(copied, vec![1, 2, 3]);
-    /// ```
-    fn copied<'a, O>(
-        self,
-    ) -> impl Par<Item = O, Xap = MappedOf<Self::Xap, FnCopied<'a, O>>, Input = Self::Input>
-    where
-        Self: Par<Item = &'a O>,
-        O: Copy + 'a,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap.mapped(FnCopied::new()), exe, params)
-    }
-
-    /// Clones elements of a reference iterator.
-    ///
-    /// Equivalent to `.map(|x| x.clone())`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// let data = vec!["a".to_string(), "b".to_string()];
-    /// let cloned: Vec<_> = data.par().cloned().collect();
-    ///
-    /// assert_eq!(cloned, vec!["a".to_string(), "b".to_string()]);
-    /// ```
-    fn cloned<'a, O>(
-        self,
-    ) -> impl Par<Item = O, Xap = MappedOf<Self::Xap, FnCloned<'a, O>>, Input = Self::Input>
-    where
-        Self: Par<Item = &'a O>,
-        O: Clone + 'a,
-    {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap.mapped(FnCloned::new()), exe, params)
-    }
 
     // transformations
 
@@ -652,13 +284,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let doubled: Vec<_> = (1..4).into_par().map(|x| 2 * x).collect();
+    /// let doubled: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .map(|x| 2 * x)
+    ///     .collect();
     /// assert_eq!(doubled, vec![2, 4, 6]);
     /// ```
     fn map<Q, H>(
         self,
         h: H,
-    ) -> impl Par<Item = Q, Xap = MapOf<Self::Xap, Q, H>, Input = Self::Input>
+    ) -> impl ParRec<Item = Q, Xap = MapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(Self::Item) -> Q + Copy + Send;
 
@@ -671,8 +306,8 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let out: Vec<_> = (1..5)
-    ///     .into_par()
+    /// let out: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
     ///     .inspect(|x| {
     ///         println!("observed {x}");
     ///     })
@@ -683,7 +318,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     fn inspect<H>(
         self,
         h: H,
-    ) -> impl Par<Item = Self::Item, Xap = InsOf<Self::Xap, H>, Input = Self::Input>
+    ) -> impl ParRec<Item = Self::Item, Xap = InsOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&Self::Item) + Copy + Send;
 
@@ -694,13 +329,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let odds: Vec<_> = (1..7).into_par().filter(|x| x % 2 == 1).collect();
+    /// let odds: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 6).then_some(x + 1))
+    ///     .filter(|x| x % 2 == 1)
+    ///     .collect();
     /// assert_eq!(odds, vec![1, 3, 5]);
     /// ```
     fn filter<H>(
         self,
         h: H,
-    ) -> impl Par<Item = Self::Item, Xap = FilOf<Self::Xap, H>, Input = Self::Input>
+    ) -> impl ParRec<Item = Self::Item, Xap = FilOf<Self::Xap, H>, Input = Self::Input>
     where
         H: Fn(&Self::Item) -> bool + Copy + Send;
 
@@ -714,7 +352,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// let numbers: Vec<_> = ["1", "x", "5"]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &&str| None::<&str>)
     ///     .filter_map(|s| s.parse::<usize>().ok())
     ///     .collect();
     ///
@@ -723,7 +361,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     fn filter_map<Q, H>(
         self,
         h: H,
-    ) -> impl Par<Item = Q, Xap = FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
+    ) -> impl ParRec<Item = Q, Xap = FilMapOf<Self::Xap, Q, H>, Input = Self::Input>
     where
         H: Fn(Self::Item) -> Option<Q> + Copy + Send;
 
@@ -734,13 +372,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let out: Vec<_> = (1..4).into_par().flat_map(|x| [x, x + 10]).collect();
+    /// let out: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .flat_map(|x| [x, x + 10])
+    ///     .collect();
     /// assert_eq!(out, vec![1, 11, 2, 12, 3, 13]);
     /// ```
     fn flat_map<V, H>(
         self,
         h: H,
-    ) -> impl Par<Item = V::Item, Xap = FlatMapOf<Self::Xap, V, H>, Input = Self::Input>
+    ) -> impl ParRec<Item = V::Item, Xap = FlatMapOf<Self::Xap, V, H>, Input = Self::Input>
     where
         V: IntoIterator,
         H: Fn(Self::Item) -> V + Copy + Send;
@@ -753,13 +394,17 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// let nested = vec![vec![1, 2], vec![3, 4]];
-    /// let flat: Vec<_> = nested.into_par().flatten().collect();
+    /// let mut flat: Vec<_> = nested
+    ///     .into_par_rec(|_: &Vec<i32>| None::<Vec<i32>>)
+    ///     .flatten()
+    ///     .collect();
+    /// flat.sort();
     ///
     /// assert_eq!(flat, vec![1, 2, 3, 4]);
     /// ```
     fn flatten(
         self,
-    ) -> impl Par<
+    ) -> impl ParRec<
         Item = <Self::Item as IntoIterator>::Item,
         Xap = FlattenOf<Self::Xap>,
         Input = Self::Input,
@@ -783,12 +428,18 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert_eq!(Vec::<usize>::new().into_par().first(), None);
-    /// assert_eq!((1..4).into_par().first(), Some(1));
+    /// let empty = Vec::<usize>::new().into_par_rec(|_: &usize| None::<usize>).first();
+    /// assert_eq!(empty, None);
+    ///
+    /// let first = [1usize]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .first();
+    /// assert_eq!(first, Some(1));
     /// ```
     fn first(self) -> Option<Self::Item>
     where
-        Self::Item: Send;
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Reduces items into one value using associative reducer `f`.
     ///
@@ -799,13 +450,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let reduced = (1..6).into_par().reduce(|a, b| a + b);
+    /// let reduced = [1i32]
+    ///     .into_par_rec(|&x| (x < 5).then_some(x + 1))
+    ///     .reduce(|a, b| a + b);
     /// assert_eq!(reduced, Some(15));
     /// ```
     fn reduce<F>(self, f: F) -> Option<Self::Item>
     where
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
-        Self::Item: Send;
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Collects all items into `dst`.
     ///
@@ -815,13 +469,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// let mut dst = vec![10];
-    /// (0..3).into_par().collect_into(&mut dst);
+    /// [0i32]
+    ///     .into_par_rec(|&x| (x < 2).then_some(x + 1))
+    ///     .collect_into(&mut dst);
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
     fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        Self::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Collects all items into a new collection.
     ///
@@ -836,13 +493,17 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let out: Vec<_> = (1..4).into_par().map(|x| x * 2).collect();
+    /// let out: Vec<_> = [1i32]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .map(|x| x * 2)
+    ///     .collect();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
     fn collect<C>(self) -> C
     where
         C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        Self::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     // compute - derived
 
@@ -858,12 +519,17 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert!((1..5).into_par().all(|x| x > &0));
-    /// assert!(!(1..5).into_par().all(|x| x % 2 == 0));
+    /// assert!([1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .all(|x| x > &0));
+    /// assert!(![1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .all(|x| x % 2 == 0));
     /// ```
     fn all<F>(self, f: F) -> bool
     where
         F: Fn(&Self::Item) -> bool + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.map(|x| f(&x)).find(|x| !*x).is_none()
     }
@@ -880,12 +546,17 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert!((1..5).into_par().any(|x| x % 2 == 0));
-    /// assert!(!(1..5).into_par().any(|x| x > &10));
+    /// assert!([1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .any(|x| x % 2 == 0));
+    /// assert!(![1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .any(|x| x > &10));
     /// ```
     fn any<F>(self, f: F) -> bool
     where
         F: Fn(&Self::Item) -> bool + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.map(|x| f(&x)).find(|x| *x).is_some()
     }
@@ -897,10 +568,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let n = (1..11).into_par().filter(|x| x % 3 == 0).count();
+    /// let n = [1i32]
+    ///     .into_par_rec(|&x| (x < 10).then_some(x + 1))
+    ///     .filter(|x| x % 3 == 0)
+    ///     .count();
     /// assert_eq!(n, 3);
     /// ```
-    fn count(self) -> usize {
+    fn count(self) -> usize
+    where
+        <Self::Input as IntoIterator>::Item: Send + Sync,
+    {
         self.map(|_| 1).reduce(|a, b| a + b).unwrap_or(0)
     }
 
@@ -919,13 +596,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let found = (1..101).into_par().find(|x| x % 17 == 0);
+    /// let found = [1i32]
+    ///     .into_par_rec(|&x| (x < 100).then_some(x + 1))
+    ///     .find(|x| x % 17 == 0);
     /// assert_eq!(found, Some(17));
     /// ```
     fn find<F>(self, f: F) -> Option<Self::Item>
     where
         Self::Item: Send,
         F: Fn(&Self::Item) -> bool + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.filter(&f).first()
     }
@@ -939,28 +619,21 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let num_threads = 2;
-    ///
-    /// let partials: Vec<usize> = (1..6)
-    ///     .into_par()
-    ///     .num_threads(num_threads)
+    /// let partials: Vec<usize> = [1usize]
+    ///     .into_par_rec(|&x| (x < 5).then_some(x + 1))
+    ///     .num_threads(2)
     ///     .fold(|| 0usize, |acc, x| *acc += x);
     ///
-    /// assert!(partials.len() <= num_threads);
+    /// assert!(!partials.is_empty());
     ///
     /// assert_eq!(partials.iter().sum::<usize>(), 15);
     /// ```
     fn fold<B, I, F>(self, init: I, f: F) -> Vec<B>
     where
-        B: Send,
+        B: Send + Sync,
         I: Fn() -> B + Sync,
-        F: Fn(&mut B, Self::Item) + Copy + Send,
-    {
-        let mut use_vec = UseVec::new(|_| init());
-        let par_use = self.use_vec(&mut use_vec);
-        par_use.for_each(move |u: &mut B, x| f(u, x));
-        use_vec.into_vec()
-    }
+        F: Fn(&mut B, Self::Item) + Copy + Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Executes `f` for each item.
     ///
@@ -972,8 +645,8 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// let total = AtomicUsize::new(0);
     ///
-    /// (1..5)
-    ///     .into_par()
+    /// [1usize]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
     ///     .for_each(|x| {
     ///         total.fetch_add(x, Ordering::Relaxed);
     ///     });
@@ -983,6 +656,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     fn for_each<F>(self, f: F)
     where
         F: Fn(Self::Item) + Send + Copy,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let _ = self.map(f).reduce(|_, _| {});
     }
@@ -994,12 +668,20 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert_eq!((1..5).into_par().max(), Some(4));
-    /// assert_eq!(Vec::<usize>::new().into_par().max(), None);
+    /// let max = [1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .max();
+    /// assert_eq!(max, Some(4));
+    ///
+    /// let empty = Vec::<usize>::new()
+    ///     .into_par_rec(|_: &usize| None::<usize>)
+    ///     .max();
+    /// assert_eq!(empty, None);
     /// ```
     fn max(self) -> Option<Self::Item>
     where
         Self::Item: Ord + Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.reduce(Ord::max)
     }
@@ -1012,7 +694,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .max_by(|a, b| a.cmp(b));
     /// assert_eq!(x, Some(5));
     /// ```
@@ -1020,6 +702,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     where
         Self::Item: Send,
         F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
@@ -1036,7 +719,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .max_by_key(|x| x.abs());
     /// assert_eq!(x, Some(-10));
     /// ```
@@ -1045,6 +728,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         Self::Item: Send,
         B: Ord,
         F: Fn(&Self::Item) -> B + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Greater | Ordering::Equal => x,
@@ -1060,12 +744,20 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// assert_eq!((1..5).into_par().min(), Some(1));
-    /// assert_eq!(Vec::<usize>::new().into_par().min(), None);
+    /// let min = [1i32]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .min();
+    /// assert_eq!(min, Some(1));
+    ///
+    /// let empty = Vec::<usize>::new()
+    ///     .into_par_rec(|_: &usize| None::<usize>)
+    ///     .min();
+    /// assert_eq!(empty, None);
     /// ```
     fn min(self) -> Option<Self::Item>
     where
         Self::Item: Ord + Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.reduce(Ord::min)
     }
@@ -1078,7 +770,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .min_by(|a, b| a.cmp(b));
     /// assert_eq!(x, Some(-10));
     /// ```
@@ -1086,6 +778,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     where
         Self::Item: Send,
         F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x, &y) {
             Ordering::Less | Ordering::Equal => x,
@@ -1102,7 +795,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// use orx_parallel::*;
     ///
     /// let x = vec![-3_i32, 0, 1, 5, -10]
-    ///     .into_par()
+    ///     .into_par_rec(|_: &i32| None::<i32>)
     ///     .min_by_key(|x| x.abs());
     /// assert_eq!(x, Some(0));
     /// ```
@@ -1111,6 +804,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         Self::Item: Send,
         B: Ord,
         F: Fn(&Self::Item) -> B + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let reduce = |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Less | Ordering::Equal => x,
@@ -1128,13 +822,16 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let sum: usize = (1..5).into_par().sum();
+    /// let sum: usize = [1usize]
+    ///     .into_par_rec(|&x| (x < 4).then_some(x + 1))
+    ///     .sum();
     /// assert_eq!(sum, 10);
     /// ```
     fn sum<S>(self) -> S
     where
         Self::Item: Sum<S>,
         S: Send,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         self.map(Self::Item::owned)
             .reduce(Self::Item::add)

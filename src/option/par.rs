@@ -5,7 +5,6 @@ use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::option::ParOptionIter;
-use crate::pool::ParThreadPool;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::use_var::{UseSlice, UseVec};
@@ -112,47 +111,6 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// ```
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParOption<
-        Item = Self::Item,
-        Xap1 = Self::Xap1,
-        M = Self::M,
-        Xap2 = Self::Xap2,
-        Input = Self::Input,
-        Size = Self::Size,
-    >;
-
-    /// Replaces the pool used by the current runner.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// #[cfg(feature = "std")]
-    /// {
-    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>().ok())
-    ///         .into_optional()
-    ///         .pool(Pool::once(4))
-    ///         .collect();
-    ///     assert_eq!(out, Some(vec![1, 2, 3]));
-    /// }
-    ///
-    /// #[cfg(feature = "rayon-core")]
-    /// {
-    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>().ok())
-    ///         .into_optional()
-    ///         .pool(Pool::rayon(4).unwrap())
-    ///         .collect();
-    ///     assert_eq!(out, Some(vec![1, 2, 3]));
-    /// }
-    /// ```
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
     ) -> impl ParOption<
         Item = Self::Item,
         Xap1 = Self::Xap1,

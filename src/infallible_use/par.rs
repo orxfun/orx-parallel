@@ -9,7 +9,6 @@ use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
 };
 use crate::option_use::ParUseOptionIter;
-use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
@@ -123,40 +122,6 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     /// ```
     fn runner_with_diagnostics(
         self,
-    ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = Self::Xap, Input = Self::Input>;
-
-    /// Replaces the pool used by the current runner.
-    ///
-    /// Please see [`Pool`](crate::Pool) for available thread pools.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// #[cfg(feature = "std")]
-    /// {
-    ///     let sum: usize = (1..101)
-    ///         .into_par()
-    ///         .use_new(|_| ())
-    ///         .pool(Pool::once(4))
-    ///         .sum();
-    ///     assert_eq!(sum, 5050);
-    /// }
-    ///
-    /// #[cfg(feature = "rayon-core")]
-    /// {
-    ///     let sum: usize = (1..101)
-    ///         .into_par()
-    ///         .use_new(|_| ())
-    ///         .pool(Pool::rayon(4).unwrap())
-    ///         .sum();
-    ///     assert_eq!(sum, 5050);
-    /// }
-    /// ```
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
     ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = Self::Xap, Input = Self::Input>;
 
     /// Sets the maximum number of worker threads for this computation.

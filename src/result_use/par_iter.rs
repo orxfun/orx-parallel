@@ -2,7 +2,6 @@ use crate::ParCollectInto;
 use crate::common_par_traits::ParResCommon;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultCore;
 use crate::result_use::par::ParUseResult;
 use crate::result_use::par_runner::ParRunnerUseRes;
@@ -167,32 +166,6 @@ where
             x1,
             x2,
             exe: exe.with_diagnostics(),
-            s,
-            params,
-        }
-    }
-
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl ParUseResult<
-        Item = Self::Item,
-        Error = Self::Error,
-        Use = Self::Use,
-        Xap1 = Self::Xap1,
-        M = Self::M,
-        Xap2 = Self::Xap2,
-        Input = Self::Input,
-        Size = Self::Size,
-    > {
-        let (using, iter, x1, x2, exe, s, params) = self.destruct();
-        let exe = exe.with_pool(pool);
-        ParUseResultIter {
-            using,
-            iter,
-            x1,
-            x2,
-            exe,
             s,
             params,
         }
