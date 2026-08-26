@@ -495,7 +495,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let out: Vec<_> = [1i32]
+    /// let mut out: Vec<_> = [1i32]
     ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
     ///     .map(|x| x * 2)
     ///     .collect();
