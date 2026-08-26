@@ -1,4 +1,4 @@
-use crate::recursive::infallible::utils;
+use crate::infallible::recursive::utils;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 

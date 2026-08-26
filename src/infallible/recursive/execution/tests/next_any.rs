@@ -1,6 +1,6 @@
+use crate::infallible::recursive::execution::next_any::next_any;
+use crate::infallible::recursive::execution::tests::tree::{Node, RANGE};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::recursive::infallible::execution::next_any::next_any;
-use crate::recursive::infallible::execution::tests::tree::{Node, RANGE};
 use crate::{Params, Runner};
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;

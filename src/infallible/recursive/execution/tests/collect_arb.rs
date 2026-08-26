@@ -1,7 +1,7 @@
 use crate::collectables::alg::merge_collected::merge_arb_into_vec;
+use crate::infallible::recursive::execution::collect_arb::collect_arb;
+use crate::infallible::recursive::execution::tests::tree::{Node, flatten};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::recursive::infallible::execution::collect_arb::collect_arb;
-use crate::recursive::infallible::execution::tests::tree::{Node, flatten};
 use crate::{Params, Runner};
 use alloc::vec::Vec;
 use rand::SeedableRng;

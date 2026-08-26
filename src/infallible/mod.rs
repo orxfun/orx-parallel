@@ -11,6 +11,7 @@ mod par_core;
 mod par_enum;
 mod par_iter;
 mod par_runner;
+mod recursive;
 mod thread_execution;
 mod xap;
 mod xap_enum;
