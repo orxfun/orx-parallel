@@ -33,13 +33,6 @@ impl<P: ParThreadPool> ParRunner for AdaptiveChunkRunner<P> {
         &mut self.pool
     }
 
-    fn with_pool<Q: ParThreadPool>(
-        self,
-        pool: Q,
-    ) -> impl ParRunner<State = Self::State, ChunkState = Self::ChunkState, Pool = Q> {
-        AdaptiveChunkRunner::new(pool)
-    }
-
     fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
         (spawned < state.max_num_threads).then_some(spawned)
     }

@@ -109,15 +109,6 @@ where
         }
     }
 
-    fn pool<P: crate::pool::ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl ParUse<Item = Self::Item, Use = Self::Use, Xap = Self::Xap, Input = Self::Input> {
-        let (using, iter, xap, exe, params) = self.destruct();
-        let exe = exe.with_pool(pool);
-        ParUseIter::new(using, iter, xap, exe, params)
-    }
-
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
