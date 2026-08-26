@@ -91,4 +91,55 @@ pub trait ParRunner: Sized + Sync {
     }
 }
 
-// impl<P:ParRunner>
+impl<P: ParRunner> ParRunner for &mut P {
+    type Pool = P::Pool;
+
+    type State = P::State;
+
+    type ChunkState = P::ChunkState;
+
+    fn pool(&self) -> &Self::Pool {
+        <P as ParRunner>::pool(self)
+    }
+
+    fn pool_mut(&mut self) -> &mut Self::Pool {
+        <P as ParRunner>::pool_mut(self)
+    }
+
+    fn do_spawn_new(spawned: usize, state: &Self::State) -> Option<usize> {
+        <P as ParRunner>::do_spawn_new(spawned, state)
+    }
+
+    fn new_state(
+        &mut self,
+        params: Params,
+        max_num_threads: usize,
+        size_hint: (usize, Option<usize>),
+    ) -> Self::State {
+        <P as ParRunner>::new_state(self, params, max_num_threads, size_hint)
+    }
+
+    fn begin_thread(state: &Self::State, th_idx: usize) {
+        <P as ParRunner>::begin_thread(state, th_idx);
+    }
+
+    fn next_chunk_size(state: &Self::State, size_hint: (usize, Option<usize>)) -> usize {
+        <P as ParRunner>::next_chunk_size(state, size_hint)
+    }
+
+    fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState {
+        <P as ParRunner>::begin_chunk(th_idx, chunk_size)
+    }
+
+    fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState) {
+        <P as ParRunner>::complete_chunk(state, chunk_state);
+    }
+
+    fn complete_thread(state: &Self::State, th_idx: usize) {
+        <P as ParRunner>::complete_thread(state, th_idx);
+    }
+
+    fn complete_computation(state: Self::State) {
+        <P as ParRunner>::complete_computation(state);
+    }
+}
