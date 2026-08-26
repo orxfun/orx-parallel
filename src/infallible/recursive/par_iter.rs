@@ -234,6 +234,8 @@ where
         Self::Item: Send + Sync,
         <Self::Input as IntoIterator>::Item: Send + Sync,
     {
-        todo!()
+        let mut dst = C::new_empty();
+        self.collect_into(&mut dst);
+        dst
     }
 }
