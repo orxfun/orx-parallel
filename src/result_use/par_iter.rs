@@ -2,7 +2,6 @@ use crate::ParCollectInto;
 use crate::common_par_traits::ParResCommon;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::pool::ParThreadPool;
 use crate::result_use::ParUseResultCore;
 use crate::result_use::par::ParUseResult;
 use crate::result_use::par_runner::ParRunnerUseRes;
