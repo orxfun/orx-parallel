@@ -78,10 +78,10 @@ fn build_tree() -> Dir {
 fn main() {
     let root = build_tree();
 
-    // After `into_par_recursive` we have a regular `ParIter` — all the usual
+    // After `into_par_rec` we have a regular `ParIter` — all the usual
     // iterator adaptors work here, just as on any other parallel iterator.
     let total_files: usize = [&root]
-        .into_par_recursive(|dir| dir.children.iter())
+        .into_par_rec(|dir| dir.children.iter())
         .map(|dir| dir.file_count)
         .sum();
 
@@ -92,7 +92,7 @@ fn main() {
     // Because we have a full `ParIter` we can chain `filter` to restrict the
     // computation to a subset of nodes — here, directories with no children.
     let files_in_leaves: usize = [&root]
-        .into_par_recursive(|dir| dir.children.iter())
+        .into_par_rec(|dir| dir.children.iter())
         .filter(|dir| dir.children.is_empty())
         .map(|dir| dir.file_count)
         .sum();
@@ -104,7 +104,7 @@ fn main() {
     // `collect` works too — here we gather the names of all `tests` directories
     // anywhere in the tree.
     let mut test_dirs: Vec<&str> = [&root]
-        .into_par_recursive(|dir| dir.children.iter())
+        .into_par_rec(|dir| dir.children.iter())
         .filter(|dir| dir.name == "tests")
         .map(|dir| dir.name)
         .collect();
