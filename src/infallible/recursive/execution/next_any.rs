@@ -65,20 +65,3 @@ where
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-    use alloc::vec::Vec;
-
-    #[test]
-    fn abc() {
-        fn take<T>(mut vec: Vec<T>)
-        where
-            // T: Sync,
-            T: Send,
-        {
-            let par = vec.par_drain(..);
-        }
-    }
-}

@@ -5,7 +5,6 @@ use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParI
 use crate::infallible::{Xap, xap_variants::Id};
 use crate::infallible_use::{ParUseIter, xap_variants::IdUse};
 use crate::option::ParOptionIter;
-use crate::pool::ParThreadPool;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::use_var::{UseSlice, UseVec};
