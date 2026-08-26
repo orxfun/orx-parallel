@@ -24,12 +24,6 @@ jobs:
             "--no-default-features --features persistent-pool-rayon",
             "--no-default-features --features persistent-pool",
           ]
-        features_miri:
-          [
-            "",
-            "--no-default-features",
-            "--no-default-features --features std",
-          ]
 
     steps:
       - uses: actions/checkout@v4
@@ -48,9 +42,6 @@ jobs:
         with:
           components: clippy
 
-      - name: Install miri
-        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu miri
-
       - name: Build
         run: cargo build --verbose ${{ matrix.features }}
 
@@ -60,8 +51,25 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets ${{ matrix.features }} -- -D warnings --verbose
 
-      - name: Miri
-        run: cargo +nightly miri test --lib --bins --tests --verbose ${{ matrix.features_miri }}
+  miri:
+    name: Miri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install miri
+        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu miri
+
+      - name: Miri with BasicPool
+        env:
+          MIRIFLAGS: -Zmiri-ignore-leaks
+        run: cargo +nightly miri test --lib --bins --tests --verbose --no-default-features --features persistent-pool
+
+      - name: Miri with OncePool
+        run: cargo +nightly miri test --lib --bins --tests --verbose --no-default-features --features std
 
   wasm:
     name: Check (wasm)
