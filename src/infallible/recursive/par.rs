@@ -1,18 +1,9 @@
-use crate::common_par_traits::ParInfCommon;
-use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::FlattenOf;
-use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
-use crate::infallible::{Xap, xap_variants::Id};
-use crate::infallible_use::{ParUseIter, xap_variants::IdUse};
-use crate::option::ParOptionIter;
-use crate::pool::ParThreadPool;
-use crate::result::ParResultIter;
+use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::runner::ParRunner;
-use crate::sizes::Size;
-use crate::use_var::{UseSlice, UseVec};
 use crate::{ChunkSize, IterationOrder, NumThreads};
-use crate::{ParCollectInto, ParOption, ParResult, ParUse, Sum};
+use crate::{ParCollectInto, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 

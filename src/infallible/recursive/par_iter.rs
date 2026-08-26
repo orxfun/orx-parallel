@@ -1,3 +1,4 @@
+use crate::ParCollectInto;
 use crate::infallible::Xap;
 use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
@@ -5,11 +6,9 @@ use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::{Par, ParCollectInto};
-use orx_concurrent_iter::ConcurrentIter;
 
 /// Parallel iterator.
-pub struct ParIter<I, X, Ix, Ex, R = DefaultRunner>
+pub struct ParRecIter<I, X, Ix, Ex, R = DefaultRunner>
 where
     I: IntoIterator,
     X: Xap<I = I::Item>,
@@ -24,7 +23,7 @@ where
     extend: Ex,
 }
 
-impl<I, X, Ix, Ex, R> ParIter<I, X, Ix, Ex, R>
+impl<I, X, Ix, Ex, R> ParRecIter<I, X, Ix, Ex, R>
 where
     I: IntoIterator,
     X: Xap<I = I::Item>,
@@ -42,8 +41,8 @@ where
         }
     }
 
-    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> ParIter<I, Y, Ix, Ex, R> {
-        ParIter::new(self.iter, xap, self.exe, self.params, self.extend)
+    pub(super) fn with_xap<Y: Xap<I = I::Item>>(self, xap: Y) -> ParRecIter<I, Y, Ix, Ex, R> {
+        ParRecIter::new(self.iter, xap, self.exe, self.params, self.extend)
     }
 
     fn destruct_x(self) -> (I, X, R, Params, Ex) {
@@ -51,7 +50,7 @@ where
     }
 }
 
-impl<I, X, Ix, Ex, R> ParRecCore for ParIter<I, X, Ix, Ex, R>
+impl<I, X, Ix, Ex, R> ParRecCore for ParRecIter<I, X, Ix, Ex, R>
 where
     I: IntoIterator,
     X: Xap<I = I::Item>,
@@ -72,7 +71,7 @@ where
     }
 }
 
-impl<I, X, Ix, Ex, R> ParRec for ParIter<I, X, Ix, Ex, R>
+impl<I, X, Ix, Ex, R> ParRec for ParRecIter<I, X, Ix, Ex, R>
 where
     I: IntoIterator,
     X: Xap<I = I::Item>,
@@ -87,14 +86,14 @@ where
         runner: Q,
     ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
         let (iter, xap, _, params, extend) = self.destruct_x();
-        ParIter::new(iter, xap, runner, params, extend)
+        ParRecIter::new(iter, xap, runner, params, extend)
     }
 
     fn runner_with_diagnostics(
         self,
     ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
         let (iter, xap, exe, params, extend) = self.destruct_x();
-        ParIter::new(iter, xap, exe.with_diagnostics(), params, extend)
+        ParRecIter::new(iter, xap, exe.with_diagnostics(), params, extend)
     }
 
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
