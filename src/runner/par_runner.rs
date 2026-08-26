@@ -95,3 +95,5 @@ pub trait ParRunner: Sized + Sync {
         Self::complete_chunk(state, chunk_state);
     }
 }
+
+// impl<P:ParRunner>
