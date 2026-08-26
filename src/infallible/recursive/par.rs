@@ -2,7 +2,7 @@ use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::runner::ParRunner;
-use crate::{ChunkSize, IterationOrder, NumThreads};
+use crate::{ChunkSize, IterationOrder, NumThreads, UseVec};
 use crate::{ParCollectInto, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
@@ -576,16 +576,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     fn fold<B, I, F>(self, init: I, f: F) -> Vec<B>
     where
-        B: Send,
+        B: Send + Sync,
         I: Fn() -> B + Sync,
-        F: Fn(&mut B, Self::Item) + Copy + Send,
-    {
-        // let mut use_vec = UseVec::new(|_| init());
-        // let par_use = self.use_vec(&mut use_vec);
-        // par_use.for_each(move |u: &mut B, x| f(u, x));
-        // use_vec.into_vec()
-        todo!()
-    }
+        F: Fn(&mut B, Self::Item) + Copy + Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Executes `f` for each item.
     ///
