@@ -40,8 +40,8 @@ pub use collectables::{ParCollectInto, Vec2};
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
-    IntoParIter, IntoParIterRecursive, IntoParRec, IterIntoParIter, ParCollection,
-    ParCollectionMut, ParDrain, Parallelizable,
+    IntoParIter, IntoParRec, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain,
+    Parallelizable,
 };
 pub use ops::{ParExtend, Sum};
 pub use option::ParOption;
