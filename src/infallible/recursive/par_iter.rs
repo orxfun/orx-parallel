@@ -1,8 +1,8 @@
 use crate::common_par_traits::ParInfCommon;
+use crate::infallible::Xap;
 use crate::infallible::recursive::par::ParRec;
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
-use crate::infallible::{ParCore, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
@@ -219,6 +219,11 @@ where
         Self::Item: Send,
     {
         todo!()
+        // let (iter, x, mut exe, params) = self.destruct();
+        // match params.iteration_order {
+        //     IterationOrder::Ordered => exe.next(params, iter, x).map(|x| x.val),
+        //     IterationOrder::Arbitrary => exe.next_any(params, iter, x),
+        // }
     }
 
     fn reduce<F>(self, f: F) -> Option<Self::Item>
