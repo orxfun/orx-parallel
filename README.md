@@ -146,7 +146,7 @@ assert_eq!(total_price(&["1,2300", "4,???", "5,1100"]), None);
 
 ## Configurable Resource Usage
 
-`orx-parallel` is not tied to any specific thread pool; it can work with transient threads or persistent thread pools. The default thread pool can be configured by features and `ORX_PARALLEL_MAX_NUM_THREADS` environment variable.
+`orx-parallel` is not tied to any specific thread pool; it can work with transient threads or persistent thread pools. The default thread pool can be configured by features and `ORX_NUM_THREADS` environment variable.
 
 ```toml
 # default features ("std") -> transient threads

@@ -126,7 +126,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// The actual number of threads used is determined by combining:
     ///
     /// 1. **Pool constraint** (from `pool()` method or default pool)
-    ///    - Already includes `ORX_PARALLEL_MAX_NUM_THREADS` environment variable constraint
+    ///    - Already includes `ORX_NUM_THREADS` environment variable constraint
     /// 2. **Computation constraint** (this method)
     ///    - Your per-computation thread preference
     /// 3. **Input size constraint**
@@ -158,7 +158,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// use orx_parallel::*;
     /// use std::num::NonZeroUsize;
     ///
-    /// // Auto: uses all available threads (respects ORX_PARALLEL_MAX_NUM_THREADS)
+    /// // Auto: uses all available threads (respects ORX_NUM_THREADS)
     /// let out: Option<Vec<_>> = ["1", "2", "3"]
     ///     .into_par()
     ///     .map(|s| s.parse::<usize>().ok())
@@ -185,7 +185,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     ///     .collect();
     /// assert_eq!(out.as_ref().map(|v| v.len()), Some(1000));
     ///
-    /// // With environment constraint: ORX_PARALLEL_MAX_NUM_THREADS=2
+    /// // With environment constraint: ORX_NUM_THREADS=2
     /// let out: Option<Vec<_>> = (0..1000)
     ///     .into_par()
     ///     .map(Some)

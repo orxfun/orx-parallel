@@ -5,11 +5,11 @@
 
   or
 
-  ORX_PARALLEL_MAX_NUM_THREADS=0 cargo run --release --example max_num_threads_config
+  ORX_NUM_THREADS=0 cargo run --release --example max_num_threads_config
 
 2. to allow parallel computation at most 4 threads:
 
-  ORX_PARALLEL_MAX_NUM_THREADS=4 cargo run --release --example max_num_threads_config
+  ORX_NUM_THREADS=4 cargo run --release --example max_num_threads_config
 
 */
 use orx_parallel::*;
@@ -27,7 +27,7 @@ fn fib(n: &u64) -> u64 {
 }
 
 // A: what should name of the variable be?
-const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_PARALLEL_MAX_NUM_THREADS";
+const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_NUM_THREADS";
 
 fn max_num_threads_by_env_variable() -> Option<usize> {
     match std::env::var(MAX_NUM_THREADS_ENV_VARIABLE) {
