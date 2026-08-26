@@ -90,6 +90,7 @@ where
         ParRecIter::new(iter, xap, runner, params, extend)
     }
 
+    #[cfg(feature = "std")]
     fn runner_with_diagnostics(
         self,
     ) -> impl ParRec<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
