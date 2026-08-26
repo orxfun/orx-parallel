@@ -414,11 +414,10 @@ pub trait ParRec: Sized + ParRecCore {
 
     // compute
 
-    /// Returns the first item according to iteration order, or `None` if empty.
+    /// Returns an item, or `None` if empty.
     ///
-    /// With `IterationOrder::Ordered` (default), this is the earliest matching item by
-    /// input position. With `IterationOrder::Arbitrary`, this may be any
-    /// matching item reached first in parallel execution.
+    /// The item returned by a recursive iterator is not defined by input or traversal order.
+    /// `IterationOrder` does not impose an ordering guarantee on recursive iterators.
     ///
     /// This operation is short-circuiting: once a first candidate is determined,
     /// remaining work is cancelled.
@@ -434,7 +433,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// let first = [1usize]
     ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
     ///     .first();
-    /// assert_eq!(first, Some(1));
+    /// assert!(first.is_some_and(|x| [1, 2, 3].contains(&x)));
     /// ```
     fn first(self) -> Option<Self::Item>
     where
@@ -463,6 +462,8 @@ pub trait ParRec: Sized + ParRecCore {
 
     /// Collects all items into `dst`.
     ///
+    /// Items are appended in an unspecified order for recursive iterators.
+    ///
     /// # Examples
     ///
     /// ```
@@ -472,6 +473,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// [0i32]
     ///     .into_par_rec(|&x| (x < 2).then_some(x + 1))
     ///     .collect_into(&mut dst);
+    /// dst[1..].sort();
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
     fn collect_into<C>(self, dst: &mut C)
@@ -480,9 +482,9 @@ pub trait ParRec: Sized + ParRecCore {
         Self::Item: Send + Sync,
         <Self::Input as IntoIterator>::Item: Send + Sync;
 
-    /// Collects all items into a new collection.
+    /// Collects all items into a new collection in an unspecified order.
     ///
-    /// When a flat structure is not required, collecting into [`Vec2`] might lead to significant
+    /// When a flat structure is not required, collecting into [`Vec2`] might lead to
     /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
     /// _number of threads_ inner vectors.
     ///
@@ -497,6 +499,7 @@ pub trait ParRec: Sized + ParRecCore {
     ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
     ///     .map(|x| x * 2)
     ///     .collect();
+    /// out.sort();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
     fn collect<C>(self) -> C

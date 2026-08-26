@@ -1,8 +1,9 @@
+use crate::Params;
 use crate::collectables::alg::merge_collected::merge_arb_into_vec;
 use crate::infallible::recursive::execution::collect_arb::collect_arb;
 use crate::infallible::recursive::execution::tests::tree::{Node, flatten};
 use crate::infallible::{Xap, xap_variants::Id};
-use crate::{Params, Runner};
+use crate::runner::default_runner;
 use alloc::vec::Vec;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
@@ -17,7 +18,7 @@ fn recursive_collect_arb(depth: usize, fan_out: usize) {
         .map(|x| x.value)
         .filter(|x| !x.is_multiple_of(7));
 
-    let runner = Runner::adaptive();
+    let runner = default_runner();
     let params = Params::default();
 
     let mut expected: Vec<_> = flatten([&tree], &|x: &&Node| &x.children)
