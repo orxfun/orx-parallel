@@ -1,11 +1,14 @@
-use crate::ParCollectInto;
 use crate::infallible::Xap;
 use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
+use crate::infallible_use::xap_variants::UDummyPair;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
+use crate::use_var::UseFold;
+use crate::{ParCollectInto, UseVec};
+use alloc::vec::Vec;
 
 /// Parallel iterator.
 pub struct ParRecIter<I, X, Ix, Ex, R = DefaultRunner>
@@ -208,6 +211,17 @@ where
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         execution::reduce(exe, params, iter, x, extend, f)
+    }
+
+    fn fold<B, Id, F>(self, init: Id, f: F) -> Vec<B>
+    where
+        B: Send + Sync,
+        Id: Fn() -> B + Sync,
+        F: Fn(&mut B, Self::Item) + Copy + Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
+    {
+        let (iter, x, exe, params, extend) = self.destruct_x();
+        execution::fold(exe, params, iter, x, extend, init, f)
     }
 
     fn collect_into<C>(self, dst: &mut C)
