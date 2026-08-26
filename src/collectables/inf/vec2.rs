@@ -38,4 +38,11 @@ impl<T> ColIntoInf<T> for Vec2<T> {
         let results = exe.collect_arb(params, iter, x);
         dst.inner.extend(results);
     }
+
+    fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
+    where
+        T: Send,
+    {
+        dst.inner.extend(thread_collections);
+    }
 }

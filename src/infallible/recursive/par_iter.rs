@@ -195,8 +195,9 @@ where
 
         // TODO: handle ordered, or document it
         match params.iteration_order {
-            IterationOrder::Ordered => execution::next_any(exe, params, iter, x, extend),
-            IterationOrder::Arbitrary => execution::next_any(exe, params, iter, x, extend),
+            IterationOrder::Arbitrary | IterationOrder::Ordered => {
+                execution::next_any(exe, params, iter, x, extend)
+            }
         }
     }
 
@@ -213,15 +214,25 @@ where
     fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<Self::Item>,
-        Self::Item: Send,
+        Self::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
-        todo!()
+        let (iter, x, exe, params, extend) = self.destruct_x();
+
+        // TODO: handle ordered, or document it
+        match params.iteration_order {
+            IterationOrder::Arbitrary | IterationOrder::Ordered => {
+                let thread_collections = execution::collect_arb(exe, params, iter, x, extend);
+                C::inf_arb_col_into_from_jagged(dst, thread_collections)
+            }
+        }
     }
 
     fn collect<C>(self) -> C
     where
         C: ParCollectInto<Self::Item>,
-        Self::Item: Send,
+        Self::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         todo!()
     }

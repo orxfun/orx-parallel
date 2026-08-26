@@ -446,7 +446,8 @@ pub trait ParRec: Sized + ParRecCore {
     fn collect_into<C>(self, dst: &mut C)
     where
         C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        Self::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     /// Collects all items into a new collection.
     ///
@@ -467,7 +468,8 @@ pub trait ParRec: Sized + ParRecCore {
     fn collect<C>(self) -> C
     where
         C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        Self::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send + Sync;
 
     // compute - derived
 
