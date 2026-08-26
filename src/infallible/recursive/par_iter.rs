@@ -4,6 +4,8 @@ use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
+use crate::infallible::xap_variants::Id;
+use crate::option::{ParRecOption, ParRecOptionIter};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use alloc::vec::Vec;
@@ -182,6 +184,17 @@ where
     {
         let xap = self.xap.flatten();
         self.with_xap(xap)
+    }
+
+    fn into_optional<T>(
+        self,
+    ) -> impl ParRecOption<Item = T, Xap1 = Self::Xap, M = T, Xap2 = Id<T>, Input = Self::Input>
+    where
+        Self::Xap: Xap<O = Option<T>>,
+        T: Send + Sync,
+    {
+        let (iter, xap, exe, params, extend) = self.destruct_x();
+        ParRecOptionIter::new(iter, xap, Id::new(), exe, params, extend)
     }
 
     // compute

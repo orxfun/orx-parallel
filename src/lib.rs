@@ -44,7 +44,7 @@ pub use into_parallel::{
     Parallelizable,
 };
 pub use ops::{ParExtend, Sum};
-pub use option::ParOption;
+pub use option::{ParOption, ParRecOption};
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]

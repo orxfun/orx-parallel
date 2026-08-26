@@ -1,6 +1,8 @@
 use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::FlattenOf;
+use crate::infallible::xap_variants::Id;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
+use crate::option::ParRecOption;
 use crate::runner::ParRunner;
 use crate::{ChunkSize, IterationOrder, NumThreads};
 use crate::{ParCollectInto, Sum};
@@ -411,6 +413,31 @@ pub trait ParRec: Sized + ParRecCore {
     >
     where
         Self::Item: IntoIterator;
+
+    /// Converts `ParRec<Item = Option<T>>` into `ParRecOption<Item = T>`.
+    ///
+    /// The resulting fallible recursive iterator **short-circuits** to `None` as soon as
+    /// any visited node maps to `None`; children of a node that maps to `None` are not
+    /// discovered.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let ok: Option<Vec<_>> = [1i32]
+    ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
+    ///     .map(Some)
+    ///     .into_optional()
+    ///     .collect();
+    /// assert_eq!(ok, Some(vec![1, 2, 3]));
+    /// ```
+    fn into_optional<T>(
+        self,
+    ) -> impl ParRecOption<Item = T, Xap1 = Self::Xap, M = T, Xap2 = Id<T>, Input = Self::Input>
+    where
+        Self::Xap: crate::infallible::Xap<O = Option<T>>,
+        T: Send + Sync;
 
     // compute
 
