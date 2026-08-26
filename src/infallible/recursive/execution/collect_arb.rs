@@ -17,14 +17,14 @@ impl<I, O> Local<I, O> {
 }
 
 pub fn collect_arb<R, C, X, I, E>(
-    runner: R,
+    mut runner: R,
     params: Params,
     iter: C,
     x: X,
     extend: E,
 ) -> Vec<Vec<X::O>>
 where
-    R: ParRunner + Clone,
+    R: ParRunner,
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
@@ -40,7 +40,7 @@ where
 
     let mut outer: Vec<_> = iter.into_iter().collect();
 
-    let par = outer.par_drain(..).runner(runner.clone());
+    let par = outer.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
     par.for_each(|u, i| {
@@ -51,7 +51,7 @@ where
     utils::into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
 
     while !outer.is_empty() {
-        let par = outer.par_drain(..).runner(runner.clone());
+        let par = outer.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data);
 
         par.for_each(|u, i| {
