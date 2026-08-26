@@ -7,6 +7,7 @@ use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf
 use crate::infallible::xap_variants::Id;
 use crate::option::{ParRecOption, ParRecOptionIter};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::result::{ParRecResult, ParRecResultIter};
 use crate::runner::{DefaultRunner, ParRunner};
 use alloc::vec::Vec;
 
@@ -195,6 +196,18 @@ where
     {
         let (iter, xap, exe, params, extend) = self.destruct_x();
         ParRecOptionIter::new(iter, xap, Id::new(), exe, params, extend)
+    }
+
+    fn into_fallible<T, E>(
+        self,
+    ) -> impl ParRecResult<Item = T, Error = E, Xap1 = Self::Xap, M = T, Xap2 = Id<T>, Input = Self::Input>
+    where
+        Self::Xap: Xap<O = Result<T, E>>,
+        T: Send + Sync,
+        E: Send + Sync,
+    {
+        let (iter, xap, exe, params, extend) = self.destruct_x();
+        ParRecResultIter::new(iter, xap, Id::new(), exe, params, extend)
     }
 
     // compute
