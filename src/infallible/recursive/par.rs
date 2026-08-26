@@ -2,7 +2,7 @@ use crate::infallible::recursive::par_core::ParRecCore;
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::runner::ParRunner;
-use crate::{ChunkSize, IterationOrder, NumThreads, UseVec};
+use crate::{ChunkSize, IterationOrder, NumThreads};
 use crate::{ParCollectInto, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
