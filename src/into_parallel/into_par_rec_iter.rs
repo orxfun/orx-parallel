@@ -12,6 +12,37 @@ where
     Self: IntoIterator + Sized,
     Self::Item: Send,
 {
+    /// Creates a parallel recursive iterator using `extend` to discover children.
+    ///
+    /// This differs from regular `into_par()` in that the final work set is not known upfront.
+    /// Instead, each visited item can contribute more items dynamically through `extend`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// // A small rooted tree represented as adjacency lists.
+    /// // Node 0 is the root.
+    /// let children: Vec<Vec<usize>> = vec![
+    ///     vec![1, 2], // children of 0
+    ///     vec![3, 4], // children of 1
+    ///     vec![5],    // children of 2
+    ///     vec![],
+    ///     vec![],
+    ///     vec![],
+    /// ];
+    ///
+    /// // Start from the root and expand recursively.
+    /// let mut visited: Vec<_> = [0usize]
+    ///     .into_par_rec(|node| children[*node].iter().copied())
+    ///     .map(|x| 2 * x + 1)
+    ///     .collect();
+    ///
+    /// // Traversal order may vary in parallel, so compare as a set via sorting.
+    /// visited.sort();
+    /// assert_eq!(visited, vec![1, 3, 5, 7, 9, 11]);
+    /// ```
     fn into_par_rec<I, F>(self, extend: F) -> ParRecIter<Self, Id<Self::Item>, I, F>
     where
         I: IntoIterator<Item = Self::Item>,

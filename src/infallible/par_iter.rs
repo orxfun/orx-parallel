@@ -4,7 +4,6 @@ use crate::infallible::par_core::ParCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
-use crate::pool::ParThreadPool;
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::{Par, ParCollectInto};
 use orx_concurrent_iter::ConcurrentIter;

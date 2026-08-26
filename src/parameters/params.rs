@@ -40,6 +40,7 @@ impl Params {
         self.num_threads.is_sequential()
     }
 
+    /// Applies itself to the provided parallel computation `par` and returns it back.
     pub fn apply<P: Par>(&self, par: P) -> P {
         par.num_threads(self.num_threads)
             .chunk_size(self.chunk_size)
