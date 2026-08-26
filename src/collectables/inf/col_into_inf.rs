@@ -1,5 +1,6 @@
 use crate::infallible::{ParIter, Xap};
 use crate::runner::ParRunner;
+use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ColIntoInf<T>: Sized {
@@ -17,5 +18,9 @@ pub trait ColIntoInf<T>: Sized {
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,
         R: ParRunner,
+        T: Send;
+
+    fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
+    where
         T: Send;
 }

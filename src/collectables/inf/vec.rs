@@ -34,4 +34,11 @@ impl<T> ColIntoInf<T> for Vec<T> {
         let results = exe.collect_arb(params, iter, x);
         merge_arb_into_vec(results, dst);
     }
+
+    fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
+    where
+        T: Send,
+    {
+        merge_arb_into_vec(thread_collections, dst);
+    }
 }
