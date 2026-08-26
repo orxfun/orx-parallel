@@ -1,5 +1,5 @@
 #[cfg(feature = "std")]
-const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_PARALLEL_MAX_NUM_THREADS";
+const MAX_NUM_THREADS_ENV_VARIABLE: &str = "ORX_NUM_THREADS";
 
 #[cfg(feature = "std")]
 const MAX_UNSET_NUM_THREADS: core::num::NonZeroUsize = core::num::NonZeroUsize::new(8).expect(">0");

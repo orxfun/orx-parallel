@@ -18,7 +18,7 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 /// When creating a pool, the thread count is determined by combining:
 ///
 /// 1. **Requested count** - Passed to factory methods
-/// 2. **Environment limit** - `ORX_PARALLEL_MAX_NUM_THREADS` if set
+/// 2. **Environment limit** - `ORX_NUM_THREADS` if set
 /// 3. **System availability** - Number of logical CPUs available
 ///
 /// The pool will use the minimum of these constraints.
@@ -28,7 +28,7 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 /// ```ignore
 /// use orx_parallel::*;
 ///
-/// // Create a OncePool with auto-detection (subject to ORX_PARALLEL_MAX_NUM_THREADS)
+/// // Create a OncePool with auto-detection (subject to ORX_NUM_THREADS)
 /// let pool = Pool::once(NumThreads::Auto);
 ///
 /// // Create a OncePool capped at 4 threads
@@ -61,7 +61,7 @@ impl Pool {
     ///
     /// The actual thread count is determined by:
     /// - The `num_threads` parameter
-    /// - The `ORX_PARALLEL_MAX_NUM_THREADS` environment variable (if set)
+    /// - The `ORX_NUM_THREADS` environment variable (if set)
     /// - The number of available system CPU cores
     ///
     /// The minimum of these constraints will be used.
@@ -107,7 +107,7 @@ impl Pool {
     ///
     /// Thread count is determined the same way as [`Self::once`]:
     /// - The `num_threads` parameter
-    /// - The `ORX_PARALLEL_MAX_NUM_THREADS` environment variable (if set)
+    /// - The `ORX_NUM_THREADS` environment variable (if set)
     /// - Available system CPU cores
     ///
     /// The minimum of these constraints will be used.
@@ -156,7 +156,7 @@ impl Pool {
     /// - When `num_threads` is `n > 0` or `NumThreads::Max(n)`:
     ///   - Rayon will start at most `n` threads
     ///
-    /// Note: `ORX_PARALLEL_MAX_NUM_THREADS` is not automatically applied to Rayon pools.
+    /// Note: `ORX_NUM_THREADS` is not automatically applied to Rayon pools.
     /// See Rayon documentation for its configuration options.
     ///
     /// # Parameters

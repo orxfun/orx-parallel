@@ -136,7 +136,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// The actual number of threads used is determined by combining:
     ///
     /// 1. **Pool constraint** (from `pool()` method or default pool)
-    ///    - Already includes `ORX_PARALLEL_MAX_NUM_THREADS` environment variable constraint
+    ///    - Already includes `ORX_NUM_THREADS` environment variable constraint
     /// 2. **Computation constraint** (this method)
     ///    - Your per-computation thread preference
     /// 3. **Input size constraint**
@@ -175,7 +175,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// // Cap at 4 threads
     /// let sum: usize = (1..1001).into_par().num_threads(4).sum();
     ///
-    /// // Auto: uses available threads (respects ORX_PARALLEL_MAX_NUM_THREADS)
+    /// // Auto: uses available threads (respects ORX_NUM_THREADS)
     /// let sum: usize = (1..11).into_par().num_threads(0).sum();
     /// ```
     ///

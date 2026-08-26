@@ -12,7 +12,7 @@ use core::num::NonZeroUsize;
 /// configuration layers:
 ///
 /// 1. **Pool Layer** (`max_num_threads()`) - The thread pool's maximum capacity
-/// 2. **Environment Layer** (`ORX_PARALLEL_MAX_NUM_THREADS`) - Global limit from environment variable
+/// 2. **Environment Layer** (`ORX_NUM_THREADS`) - Global limit from environment variable
 /// 3. **Computation Layer** (`.num_threads()` on Par) - Per-computation request
 /// 4. **Input Size** - Cannot exceed the number of input elements
 ///
@@ -25,7 +25,7 @@ use core::num::NonZeroUsize;
 /// use orx_parallel::*;
 ///
 /// // Pool setup: 8 threads requested, but env limits to 4
-/// // ORX_PARALLEL_MAX_NUM_THREADS=4 is set
+/// // ORX_NUM_THREADS=4 is set
 /// let pool = Pool::once(8);  // pool.max_num_threads() == 4
 ///
 /// // Computation: request 6 threads on 100-element input
@@ -69,7 +69,7 @@ pub trait ParThreadPool {
     ///
     /// This value reflects all constraints applied up to pool creation time, including:
     /// - The requested thread count from pool construction
-    /// - The `ORX_PARALLEL_MAX_NUM_THREADS` environment variable (if set)
+    /// - The `ORX_NUM_THREADS` environment variable (if set)
     /// - The system's available CPU cores
     ///
     /// Individual computations can further limit this via `.num_threads()` method.

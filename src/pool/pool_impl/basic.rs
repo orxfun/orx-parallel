@@ -204,7 +204,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 /// Value of [`max_num_threads`] is determined as the minimum of:
 ///
 /// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
-/// * the upper bound set by the environment variable "ORX_PARALLEL_MAX_NUM_THREADS", when set.
+/// * the upper bound set by the environment variable "ORX_NUM_THREADS", when set.
 ///
 /// [`max_num_threads`]: ParThreadPool::max_num_threads
 /// [`runner`]: crate::Par::runner
@@ -224,7 +224,7 @@ impl BasicPool {
     /// Creates a `BasicPool` with persistent worker threads.
     ///
     /// The effective thread count is the minimum of the requested `num_threads`,
-    /// the `ORX_PARALLEL_MAX_NUM_THREADS` environment limit when set, and the
+    /// the `ORX_NUM_THREADS` environment limit when set, and the
     /// available system parallelism.
     pub fn new(num_threads: impl Into<NumThreads>) -> Self {
         let num_threads = match num_threads.into() {

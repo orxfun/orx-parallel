@@ -34,7 +34,7 @@ impl OncePool {
     ///
     /// Note that, this desired number of threads can be overwritten by the following:
     /// - if the system has `n < num_threads` available threads, computation will use `n` threads.
-    /// - if ORX_PARALLEL_MAX_NUM_THREADS environment variable exists with value `m < num_threads`,
+    /// - if ORX_NUM_THREADS environment variable exists with value `m < num_threads`,
     ///   computation will use `m` threads.
     ///
     /// (*) This is not an actual thread pool, rather a configuration on number of threads to be spawned.

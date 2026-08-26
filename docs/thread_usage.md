@@ -26,7 +26,7 @@ This design fits naturally with `orx-parallel`'s execution model: regardless of 
 If thread-spawn overhead is measurable in your workload, enable the `persistent-pool` feature to use `BasicPool`. The pool spawns worker threads the first time a parallel computation runs, and those threads are kept alive for the entire lifetime of the application, ready to be reused for every subsequent computation.
 
 The number of worker threads is fixed at startup to the minimum of:
-- the value of `ORX_PARALLEL_MAX_NUM_THREADS` environment variable (if set to a positive integer), and
+- the value of `ORX_NUM_THREADS` environment variable (if set to a positive integer), and
 - the available system parallelism (`std::thread::available_parallelism()`).
 
 If neither is available, a fallback of 8 threads is used.
@@ -43,7 +43,7 @@ For a step-by-step guide see [docs/wasm_tutorial](wasm_tutorial/). Working examp
 
 ### Global thread-count cap
 
-Any pool respects the `ORX_PARALLEL_MAX_NUM_THREADS` environment variable. Set it to a positive integer to impose a hard upper bound on the number of threads any pool will use. When unset or set to `0`, pools are free to use all threads available on the system.
+Any pool respects the `ORX_NUM_THREADS` environment variable. Set it to a positive integer to impose a hard upper bound on the number of threads any pool will use. When unset or set to `0`, pools are free to use all threads available on the system.
 
 ---
 

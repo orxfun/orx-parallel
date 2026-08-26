@@ -130,7 +130,7 @@ pub trait ParResult:
     /// The actual number of threads used is determined by combining:
     ///
     /// 1. **Pool constraint** (from `pool()` method or default pool)
-    ///    - Already includes `ORX_PARALLEL_MAX_NUM_THREADS` environment variable constraint
+    ///    - Already includes `ORX_NUM_THREADS` environment variable constraint
     /// 2. **Computation constraint** (this method)
     ///    - Your per-computation thread preference
     /// 3. **Input size constraint**
