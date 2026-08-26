@@ -44,7 +44,7 @@ pub use into_parallel::{
     Parallelizable,
 };
 pub use ops::{ParExtend, Sum};
-pub use option::{ParOption, ParRecOption};
+pub use option::ParOption;
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
@@ -55,7 +55,7 @@ pub use pool::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::wasm_web_start_worker;
 pub use pool::{ParThreadPool, Pool};
-pub use result::{ParRecResult, ParResult};
+pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
 pub use use_var::{Use, UseVec};
