@@ -131,40 +131,6 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         self,
     ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
 
-    /// Replaces the pool used by the current runner.
-    ///
-    /// Please see [`Pool`] for thread pools that can be used for parallel computations.
-    ///
-    /// [`Pool`]: crate::Pool
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// #[cfg(feature = "std")]
-    /// {
-    ///     let sum: usize = (1..101)
-    ///         .into_par()
-    ///         .pool(Pool::once(4))
-    ///         .sum();
-    ///     assert_eq!(sum, 5050);
-    /// }
-    ///
-    /// #[cfg(feature = "rayon-core")]
-    /// {
-    ///     let sum: usize = (1..101)
-    ///         .into_par()
-    ///         .pool(Pool::rayon(8).unwrap())
-    ///         .sum();
-    ///     assert_eq!(sum, 5050);
-    /// }
-    /// ```
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input>;
-
     /// Sets the maximum number of worker threads for this computation.
     ///
     /// This method configures the **computation layer** of the thread count decision.

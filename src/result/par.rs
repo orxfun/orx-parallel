@@ -125,37 +125,6 @@ pub trait ParResult:
         Size = Self::Size,
     >;
 
-    /// Replaces the pool used by the current runner.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// #[cfg(feature = "std")]
-    /// {
-    ///     let out: Result<Vec<_>, _> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>())
-    ///         .into_fallible()
-    ///         .pool(Pool::once(4))
-    ///         .collect();
-    ///     assert_eq!(out, Ok(vec![1, 2, 3]));
-    /// }
-    /// ```
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl ParResult<
-        Item = Self::Item,
-        Error = Self::Error,
-        Xap1 = Self::Xap1,
-        M = Self::M,
-        Xap2 = Self::Xap2,
-        Input = Self::Input,
-        Size = Self::Size,
-    >;
-
     /// Sets the maximum number of worker threads for this computation.
     ///
     /// This method configures the **computation layer** of the thread count decision.

@@ -140,38 +140,6 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
         Size = Self::Size,
     >;
 
-    /// Replaces the pool used by the current runner.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use orx_parallel::*;
-    ///
-    /// #[cfg(feature = "std")]
-    /// {
-    ///     let out: Option<Vec<_>> = ["1", "2", "3"]
-    ///         .into_par()
-    ///         .map(|s| s.parse::<usize>().ok())
-    ///         .into_optional()
-    ///         .use_new(|_| ())
-    ///         .pool(Pool::once(4))
-    ///         .collect();
-    ///     assert_eq!(out, Some(vec![1, 2, 3]));
-    /// }
-    /// ```
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl ParUseOption<
-        Item = Self::Item,
-        Use = Self::Use,
-        Xap1 = Self::Xap1,
-        M = Self::M,
-        Xap2 = Self::Xap2,
-        Input = Self::Input,
-        Size = Self::Size,
-    >;
-
     /// Sets the maximum number of worker threads for this computation.
     ///
     /// # Examples

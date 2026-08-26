@@ -85,14 +85,6 @@ where
         ParIter::new(iter, xap, exe.with_diagnostics(), params)
     }
 
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl Par<Item = Self::Item, Xap = Self::Xap, Input = Self::Input> {
-        let (iter, xap, exe, params) = self.destruct();
-        ParIter::new(iter, xap, exe.with_pool(pool), params)
-    }
-
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self

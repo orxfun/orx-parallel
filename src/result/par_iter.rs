@@ -148,30 +148,6 @@ where
         }
     }
 
-    fn pool<P: ParThreadPool>(
-        self,
-        pool: P,
-    ) -> impl ParResult<
-        Item = Self::Item,
-        Error = Self::Error,
-        Xap1 = Self::Xap1,
-        M = Self::M,
-        Xap2 = Self::Xap2,
-        Input = Self::Input,
-        Size = Self::Size,
-    > {
-        let (iter, x1, x2, exe, s, params) = self.destruct();
-        let exe = exe.with_pool(pool);
-        ParResultIter {
-            iter,
-            x1,
-            x2,
-            exe,
-            s,
-            params,
-        }
-    }
-
     fn num_threads(mut self, num_threads: impl Into<NumThreads>) -> Self {
         self.params = self.params.with_num_threads(num_threads);
         self
