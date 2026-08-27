@@ -3,13 +3,12 @@ use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
-pub fn reduce<R, C, X, F, I, E>(
+pub fn next<R, C, X, I, E>(
     mut runner: R,
     params: Params,
     iter: C,
     xap: X,
     extend: E,
-    f: F,
 ) -> Option<X::O>
 where
     R: ParRunner,
@@ -17,7 +16,6 @@ where
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
     E: Fn(&X::I) -> I + Send + Sync,
-    F: Fn(X::O, X::O) -> X::O + Send + Copy,
     X::O: Send,
     X::I: Send + Sync,
 {
@@ -31,33 +29,36 @@ where
     let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
-    let mut result = par
+    let result = par
         .flat_map(|u, i| {
             u.extend(extend(&i));
             xap.xap(i)
         })
-        .reduce(move |_, a, b| f(a, b));
-    utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
+        .first();
 
-    while !inputs.is_empty() {
-        let par = inputs.par_drain(..).runner(&mut runner);
-        let par = params.apply(par).use_slice(&mut data);
+    match result.is_some() {
+        true => result,
+        false => {
+            utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
 
-        let result_wave = par
-            .flat_map(|u, i| {
-                u.extend(extend(&i));
-                xap.xap(i)
-            })
-            .reduce(move |_, a, b| f(a, b));
+            while !inputs.is_empty() {
+                let par = inputs.par_drain(..).runner(&mut runner);
+                let par = params.apply(par).use_slice(&mut data);
 
-        result = match (result, result_wave) {
-            (Some(a), Some(b)) => Some(f(a, b)),
-            (Some(a), None) => Some(a),
-            (None, Some(b)) => Some(b),
-            (None, None) => None,
-        };
-        utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
+                let result = par
+                    .flat_map(|u, i| {
+                        u.extend(extend(&i));
+                        xap.xap(i)
+                    })
+                    .first();
+
+                if result.is_some() {
+                    return result;
+                }
+                utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
+            }
+
+            None
+        }
     }
-
-    result
 }

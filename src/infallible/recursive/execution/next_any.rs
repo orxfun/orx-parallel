@@ -24,9 +24,9 @@ where
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Vec::<X::I>::new()).collect();
 
-    let mut outer: Vec<_> = iter.into_iter().collect();
+    let mut inputs: Vec<_> = iter.into_iter().collect();
 
-    let par = outer.par_drain(..).runner(&mut runner);
+    let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
     let result = par
@@ -39,10 +39,10 @@ where
     match result.is_some() {
         true => result,
         false => {
-            utils::into_outer_par(&mut outer, &mut data, |x| x, &mut runner);
+            utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
 
-            while !outer.is_empty() {
-                let par = outer.par_drain(..).runner(&mut runner);
+            while !inputs.is_empty() {
+                let par = inputs.par_drain(..).runner(&mut runner);
                 let par = params.apply(par).use_slice(&mut data);
 
                 let result = par
@@ -55,7 +55,7 @@ where
                 if result.is_some() {
                     return result;
                 }
-                utils::into_outer_par(&mut outer, &mut data, |x| x, &mut runner);
+                utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
             }
 
             None
