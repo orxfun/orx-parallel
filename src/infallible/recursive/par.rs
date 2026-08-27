@@ -462,7 +462,15 @@ pub trait ParRec: Sized + ParRecCore {
 
     /// Collects all items into `dst`.
     ///
-    /// Items are appended in an unspecified order for recursive iterators.
+    /// When [`IterationOrder::Ordered`] (default) is set, items are collected in a deterministic
+    /// breadth-first order (level by level, left-to-right following input and child generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered collection is also optimized so the performance difference
+    /// is generally small.
+    ///
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     ///
     /// # Examples
     ///
@@ -473,7 +481,6 @@ pub trait ParRec: Sized + ParRecCore {
     /// [0i32]
     ///     .into_par_rec(|&x| (x < 2).then_some(x + 1))
     ///     .collect_into(&mut dst);
-    /// dst[1..].sort();
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
     fn collect_into<C>(self, dst: &mut C)
@@ -482,12 +489,21 @@ pub trait ParRec: Sized + ParRecCore {
         Self::Item: Send + Sync,
         <Self::Input as IntoIterator>::Item: Send + Sync;
 
-    /// Collects all items into a new collection in an unspecified order.
+    /// Collects all items into a new collection.
+    ///
+    /// When [`IterationOrder::Ordered`] (default) is set, items are collected in a deterministic
+    /// breadth-first order (level by level, left-to-right following input and child generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered collection is also optimized so the performance difference
+    /// is generally small.
     ///
     /// When a flat structure is not required, collecting into [`Vec2`] might lead to
     /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
     /// _number of threads_ inner vectors.
     ///
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     /// [`Vec2`]: crate::Vec2
     ///
     /// # Examples
@@ -495,11 +511,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let mut out: Vec<_> = [1i32]
+    /// let out: Vec<_> = [1i32]
     ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
     ///     .map(|x| x * 2)
     ///     .collect();
-    /// out.sort();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
     fn collect<C>(self) -> C
