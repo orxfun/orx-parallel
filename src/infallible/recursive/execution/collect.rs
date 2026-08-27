@@ -5,49 +5,59 @@ use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runne
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
-struct Item<O> {
-    value: O,
+struct Elem<T> {
+    value: T,
     depth: usize,
     width: usize,
 }
 
-impl<O> Item<O> {
-    fn new(value: O, depth: usize, width: usize) -> Self {
+impl<T> Elem<T> {
+    fn new(value: T, depth: usize, width: usize) -> Self {
         Self {
             value,
             depth,
             width,
         }
     }
+
+    fn normalize_depths(elements: &mut [Self]) {
+        if let Some(max_width) = elements.iter().map(|x| x.width).max() {
+            let depth_coef = max_width + 1;
+            for elem in elements {
+                elem.depth = elem.depth * depth_coef + elem.width;
+            }
+        }
+    }
 }
 
-impl<O> PartialEq for Item<O> {
+impl<T> PartialEq for Elem<T> {
     fn eq(&self, other: &Self) -> bool {
         self.depth == other.depth && self.width == other.width
     }
 }
 
-impl<O> Eq for Item<O> {}
+impl<T> Eq for Elem<T> {}
 
-impl<O> PartialOrd for Item<O> {
+impl<T> PartialOrd for Elem<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<O> Ord for Item<O> {
+impl<T> Ord for Elem<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.depth.cmp(&other.depth) {
             Ordering::Equal => {}
             ord => return ord,
         }
+        debug_assert_ne!(self.width, other.width);
         self.width.cmp(&other.width)
     }
 }
 
 struct Local<I, O> {
-    input: Vec<I>,
-    output: Vec<Item<O>>,
+    input: Vec<Elem<I>>,
+    output: Vec<Elem<O>>,
 }
 
 impl<I, O> Local<I, O> {
@@ -80,34 +90,52 @@ where
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
 
-    let mut outer: Vec<_> = iter.into_iter().collect();
+    let mut inputs: Vec<_> = iter
+        .into_iter()
+        .enumerate()
+        .map(|(width, value)| Elem::new(value, 0, width))
+        .collect();
     let mut result = Vec::new();
 
     let mut depth = 0;
 
-    let par = outer.par_drain(..).runner(&mut runner);
+    let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data).enumerate();
-    par.for_each(|u, (width, i)| {
-        u.input.extend(extend(&i));
-        let values = xap.xap(i).into_iter();
-        let items = values.map(|value| Item::new(value, depth, width));
-        u.output.extend(items);
+    par.for_each(|u, (out_width, input)| {
+        let new_inputs = extend(&input.value)
+            .into_iter()
+            .enumerate()
+            .map(|(width, value)| Elem::new(value, input.depth, width));
+        u.input.extend(new_inputs);
+
+        let values = xap.xap(input.value).into_iter();
+        let outputs = values.map(|value| Elem::new(value, depth, out_width));
+        u.output.extend(outputs);
     });
-    utils::into_outer_par(&mut outer, &mut data, |x| &mut x.input, &mut runner);
+    utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
+    Elem::normalize_depths(&mut inputs);
+    inputs.sort_by_key(|x| x.depth);
     utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
 
-    while !outer.is_empty() {
+    while !inputs.is_empty() {
         depth += 1;
 
-        let par = outer.par_drain(..).runner(&mut runner);
+        let par = inputs.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data).enumerate();
-        par.for_each(|u, (width, i)| {
-            u.input.extend(extend(&i));
-            let values = xap.xap(i).into_iter();
-            let items = values.map(|value| Item::new(value, depth, width));
-            u.output.extend(items);
+        par.for_each(|u, (out_width, input)| {
+            let new_inputs = extend(&input.value)
+                .into_iter()
+                .enumerate()
+                .map(|(width, value)| Elem::new(value, input.depth, width));
+            u.input.extend(new_inputs);
+
+            let values = xap.xap(input.value).into_iter();
+            let outputs = values.map(|value| Elem::new(value, depth, out_width));
+            u.output.extend(outputs);
         });
-        utils::into_outer_par(&mut outer, &mut data, |x| &mut x.input, &mut runner);
+        utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
+        Elem::normalize_depths(&mut inputs);
+        inputs.sort_by_key(|x| x.depth);
         utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
     }
 

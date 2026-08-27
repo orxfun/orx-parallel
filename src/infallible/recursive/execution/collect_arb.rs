@@ -38,21 +38,21 @@ where
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
 
-    let mut outer: Vec<_> = iter.into_iter().collect();
+    let mut inputs: Vec<_> = iter.into_iter().collect();
     let mut result = Vec::new();
 
-    let par = outer.par_drain(..).runner(&mut runner);
+    let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
     par.for_each(|u, i| {
         u.input.extend(extend(&i));
         u.output.extend(xap.xap(i));
     });
-    utils::into_outer_par(&mut outer, &mut data, |x| &mut x.input, &mut runner);
+    utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
     utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
 
-    while !outer.is_empty() {
-        let par = outer.par_drain(..).runner(&mut runner);
+    while !inputs.is_empty() {
+        let par = inputs.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data);
 
         par.for_each(|u, i| {
@@ -60,7 +60,7 @@ where
             u.output.extend(xap.xap(i));
         });
 
-        utils::into_outer_par(&mut outer, &mut data, |x| &mut x.input, &mut runner);
+        utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
         utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
     }
 
