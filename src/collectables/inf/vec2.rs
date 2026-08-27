@@ -45,4 +45,14 @@ impl<T> ColIntoInf<T> for Vec2<T> {
     {
         dst.inner.extend(thread_collections);
     }
+
+    fn extend_from_vec(dst: &mut Self, values: Vec<T>) {
+        dst.inner.push(values);
+    }
+
+    fn create_from_vec(values: Vec<T>) -> Self {
+        let mut vec = Self::new_empty();
+        vec.inner.push(values);
+        vec
+    }
 }
