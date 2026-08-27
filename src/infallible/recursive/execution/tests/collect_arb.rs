@@ -1,5 +1,4 @@
 use crate::Params;
-use crate::collectables::alg::merge_collected::merge_arb_into_vec;
 use crate::infallible::recursive::execution::collect_arb::collect_arb;
 use crate::infallible::recursive::execution::tests::tree::{Node, flatten};
 use crate::infallible::{Xap, xap_variants::Id};
@@ -27,10 +26,9 @@ fn recursive_collect_arb(depth: usize, fan_out: usize) {
         .collect();
     expected.sort();
 
-    let results = collect_arb(runner, params, [&tree], xap, |x| &x.children);
-    let mut result = Vec::new();
-    merge_arb_into_vec(results, &mut result);
+    let mut result = collect_arb(runner, params, [&tree], xap, |x| &x.children);
     result.sort();
 
+    assert_eq!(result.len(), expected.len());
     assert_eq!(result, expected);
 }

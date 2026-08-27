@@ -7,13 +7,19 @@ use crate::{ParCollectInto, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
-/// Infallible parallel iterator.
+/// Infallible parallel recursive iterator.
 ///
-/// `Par` is the central trait for describing parallel computations as iterator
+/// `ParRec` is the central trait for describing recursive parallel computations as iterator
 /// pipelines. It mirrors common sequential iterator operations (`map`,
 /// `filter`, `flat_map`, `collect`, `reduce`, ...) while allowing runtime
 /// configuration of execution details such as number of threads, chunk size,
 /// iteration order, and runner/pool selection.
+///
+/// Recursive traversal can be deterministic: with [`IterationOrder::Ordered`] (the default),
+/// order-sensitive operations use breadth-first order, level by level and left-to-right following
+/// input and child generation order.
+///
+/// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
 ///
 /// Related traits:
 /// - [`ParUse`](crate::ParUse) for worker-local mutable state,
@@ -416,11 +422,18 @@ pub trait ParRec: Sized + ParRecCore {
 
     /// Returns an item, or `None` if empty.
     ///
-    /// The item returned by a recursive iterator is not defined by input or traversal order.
-    /// `IterationOrder` does not impose an ordering guarantee on recursive iterators.
+    /// When [`IterationOrder::Ordered`] (default) is set, returns the first item in deterministic
+    /// breadth-first order (level by level, left-to-right following input and child generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered traversal is also optimized so the performance difference
+    /// is generally small.
     ///
     /// This operation is short-circuiting: once a first candidate is determined,
     /// remaining work is cancelled.
+    ///
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     ///
     /// # Examples
     ///
@@ -433,7 +446,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// let first = [1usize]
     ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
     ///     .first();
-    /// assert!(first.is_some_and(|x| [1, 2, 3].contains(&x)));
+    /// assert_eq!(first, Some(1));
     /// ```
     fn first(self) -> Option<Self::Item>
     where
@@ -462,7 +475,15 @@ pub trait ParRec: Sized + ParRecCore {
 
     /// Collects all items into `dst`.
     ///
-    /// Items are appended in an unspecified order for recursive iterators.
+    /// When [`IterationOrder::Ordered`] (default) is set, items are collected in a deterministic
+    /// breadth-first order (level by level, left-to-right following input and child generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered collection is also optimized so the performance difference
+    /// is generally small.
+    ///
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     ///
     /// # Examples
     ///
@@ -473,7 +494,6 @@ pub trait ParRec: Sized + ParRecCore {
     /// [0i32]
     ///     .into_par_rec(|&x| (x < 2).then_some(x + 1))
     ///     .collect_into(&mut dst);
-    /// dst[1..].sort();
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
     fn collect_into<C>(self, dst: &mut C)
@@ -482,12 +502,21 @@ pub trait ParRec: Sized + ParRecCore {
         Self::Item: Send + Sync,
         <Self::Input as IntoIterator>::Item: Send + Sync;
 
-    /// Collects all items into a new collection in an unspecified order.
+    /// Collects all items into a new collection.
+    ///
+    /// When [`IterationOrder::Ordered`] (default) is set, items are collected in a deterministic
+    /// breadth-first order (level by level, left-to-right following input and child generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered collection is also optimized so the performance difference
+    /// is generally small.
     ///
     /// When a flat structure is not required, collecting into [`Vec2`] might lead to
     /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
     /// _number of threads_ inner vectors.
     ///
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     /// [`Vec2`]: crate::Vec2
     ///
     /// # Examples
@@ -495,11 +524,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let mut out: Vec<_> = [1i32]
+    /// let out: Vec<_> = [1i32]
     ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
     ///     .map(|x| x * 2)
     ///     .collect();
-    /// out.sort();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
     fn collect<C>(self) -> C
@@ -584,15 +612,23 @@ pub trait ParRec: Sized + ParRecCore {
         self.map(|_| 1).reduce(|a, b| a + b).unwrap_or(0)
     }
 
-    /// Finds first ([`Ordered`], default) or any ([`Arbitrary`]) item satisfying predicate `f`.
+    /// Finds the first item satisfying predicate `f`, or `None` if none match.
+    ///
+    /// When [`IterationOrder::Ordered`] (default) is set, returns the first matching item in
+    /// deterministic breadth-first order (level by level, left-to-right following input and child
+    /// generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered traversal is also optimized so the performance difference
+    /// is generally small.
     ///
     /// This is equivalent to `self.filter(f).first()`.
     ///
     /// This operation is short-circuiting: once a matching item is found,
     /// remaining work is cancelled.
     ///
-    /// [`Ordered`]: crate::IterationOrder::Ordered
-    /// [`Arbitrary`]: crate::IterationOrder::Arbitrary
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     ///
     /// # Examples
     ///

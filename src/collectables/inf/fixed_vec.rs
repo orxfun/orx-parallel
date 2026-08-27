@@ -39,4 +39,13 @@ impl<T> ColIntoInf<T> for FixedVec<T> {
         let dst = dst.as_mut_vec();
         <Vec<T> as ColIntoInf<T>>::inf_arb_col_into_from_jagged(dst, thread_collections);
     }
+
+    fn extend_from_vec(dst: &mut Self, values: Vec<T>) {
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoInf<T>>::extend_from_vec(dst, values);
+    }
+
+    fn create_from_vec(values: Vec<T>) -> Self {
+        values.into()
+    }
 }
