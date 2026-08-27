@@ -14,7 +14,7 @@ The crate focuses on practical parallelization with a convenient iterator API wi
 * recursive traversal on non-linear data,
 * WebAssembly support,
 * determinism,
-* customizable runner strategies to support research, experimentation and advanced tuning.
+* customizable runner strategies to support experimentation and advanced tuning.
 
 ## Parallelization with Iterator Ergonomics
 
@@ -118,7 +118,7 @@ This broad path is generic, rather than being optimized for a specific collectio
 `orx-parallel` builds on concurrent iterator traits from `orx-concurrent-iter`.
 If a collection provides a suitable concurrent iterator implementation (for example `IntoConcurrentIter` / `ConcurrentIterable`), it can integrate naturally with `orx-parallel`.
 
-In practice, this means collection-specific parallelization can live in the collection crate itself, where internals are available for optimized implementations (do not hesitate to ask for support if you need help with this).
+In practice, this means collection-specific parallelization can live in the collection crate itself, where internals are available for optimized implementations (do not hesitate to ask for support here if you need help with `ConcurrentIter` implementation).
 
 ## First-Class Fallible Computation
 
@@ -142,9 +142,9 @@ fn parse_qty_and_price(row: &str) -> Option<(u64, u64)> {
 fn total_price(rows: &[&str]) -> Option<u64> {
     rows.par()
         .map(|row| parse_qty_and_price(row)) // ← some might return None
-        .into_optional() // ← uplift
-        .filter(|(qty, _)| *qty >= 2) // ← then focus only on success path
-        .map(|(qty, unit_price)| qty * unit_price)
+        .into_optional() // ← ascend
+        .filter(|(qty, _)| *qty >= 2) // ← focus only on success path
+        .map(|(qty, unit_price)| qty * unit_price) // ← success path
         .sum()
 }
 
@@ -154,7 +154,9 @@ assert_eq!(total_price(&["1,2300", "4,???", "5,1100"]), None);
 
 ## Configurable Resource Usage
 
-`orx-parallel` is not tied to any specific thread pool; it can work with transient threads or persistent thread pools. By default, the library uses the persistent built-in `BasicPool`, which reuses its workers across computations. You can configure the pool by features and the `ORX_NUM_THREADS` environment variable.
+`orx-parallel` is not tied to any specific thread pool; it can work with transient threads or persistent thread pools. By default, the library uses the persistent built-in `BasicPool`, which reuses its workers across computations.
+
+You can configure the pool by features and the `ORX_NUM_THREADS` environment variable; if the environment variable is set, it is used as the thread limit, otherwise all available threads can be used.
 
 ```toml
 # default: BasicPool (persistent workers, reused across computations)
@@ -173,7 +175,7 @@ The pool's scheduling strategy is usually less important than the work being per
 
 If your application performs only occasional parallel computations and should not retain worker threads between them, enable the `transient-pool` feature. This selects `OncePool`, which spawns the required threads just before a computation and joins them immediately after. The tradeoff is the cost of thread creation and cleanup on each parallel operation.
 
-The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement, so you can also plug in a custom pool with `.pool(...)`.
+> Consider a parallel computation of `W` tasks to be executed by `N` threads. Number of thread `spawn` calls in `OncePool` is `N`, regardless how large `W` is.
 
 In addition, you can conveniently tune the thread count for each individual computation:
 
@@ -189,14 +191,28 @@ let result: Vec<_> = (0..1000)
 assert_eq!(result.len(), 1000);
 ```
 
+The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement. Since thread pools are independent of runner strategies, you can plug in a custom pool as follows:
+
+```rust ignore
+use orx_parallel::*;
+
+let runner = Runner.adaptive_with_pool(MyPool::new());
+let sum = (0..1000)
+	.par() // ← using default runner with default pool (Adaptive runner with BasicPool)
+    .runner(&mut runner) // ← using Adaptive runner with my pool
+	.sum();
+```
+
 Please see [`thread-usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) for detailed information.
 
 ## Performance and Benchmarks
 
-The crate is benchmarked extensively with the goal to achieve practical performance and continued improvement.
+The crate is benchmarked extensively with the goal to achieve practical performance and continued improvement. The benchmarks live in a separate repository so each benchmark can run in isolation with accurate measurements, especially when comparing different thread pools.
 
-- Live benchmark dashboard: https://orx-parallel-benchmarks.pages.dev/
-- Benchmark sources: [`benches`](https://github.com/orxfun/orx-parallel/tree/main/benches)
+- Live benchmark dashboard: https://orx-parallel-benchmarks.pages.dev/ displays results generated from the benchmark repository.
+- Benchmark sources: https://github.com/orxfun/orx-parallel-benchmarks
+
+You can also use the benchmark repository as a starting point for measuring your own computations.
 
 ## Use Transformations: Safe Mutable Per-Thread State
 
@@ -230,27 +246,29 @@ For practical use cases, please see [`use_transformation.md`](https://github.com
 
 Parallel traversal over recursive structures (such as trees or graphs) is supported out of the box without losing convenient iterator ergonomics.
 
+Even though new work is discovered dynamically, deterministic traversal is still possible: with the default ordered mode, order-sensitive operations follow breadth-first order.
+
 Notice below that after the `par_recursive` call, we use regular iterator methods without additional complexity.
 
 ```rust ignore
-par_recursive([root], |node| &node.children) // ← initial tasks and how to explore new ones
+let result = par_recursive([root], |node| &node.children) // ← initial tasks and how to explore new ones
 	.map(process_node) // ← we process nodes as if they were in a linear data structure
-	.reduce(merge_agg)
-	.unwrap_or_default();
+	.reduce(merge_agg);
 ```
 
 For practical examples, see:
 
 - [`examples/recursive_tree/main.rs`](https://github.com/orxfun/orx-parallel/tree/main/examples/recursive_tree)
 - [`examples/recursive_file_system.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/recursive_file_system.rs)
+- [`benchmarks/tree_collect.rs`](https://github.com/orxfun/orx-parallel-benchmarks/tree/main/recursive/tree_collect)
 
 ## WASM Support
 
 `orx-parallel` supports browser-hosted wasm with dedicated examples and guides.
 
-- demos (vanilla, React, Leptos, Yew): [`examples/wasm/tsp/`](https://github.com/orxfun/orx-parallel/tree/main/examples/wasm/tsp/)
 - live demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
-- tutorials: https://orx-parallel-wasm-tutorials.pages.dev/
+- tutorial: https://orx-parallel-wasm-tutorials.pages.dev/
+- demo and tutorial sources: https://github.com/orxfun/orx-parallel-wasm-demos
 - wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
 - internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
 
@@ -293,6 +311,10 @@ This separation makes it easy to:
 ## Contributing
 
 Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR.
+
+Parallel runner strategies are especially open for research and improvement. You can start by looking at the current [`adaptive`](https://github.com/orxfun/orx-parallel/tree/main/src/runner/runner_variants/adaptive_chunk) and [`fixed`](https://github.com/orxfun/orx-parallel/tree/main/src/runner/runner_variants/fixed_chunk) runners, then experiment with a new `ParRunner` implementation. Please run the tests in this repository. You may use the [`orx-parallel-benchmarks`](https://github.com/orxfun/orx-parallel-benchmarks) repository to measure the performance impact. Benchmark manifests can point to your own branch; if you want to benchmark your runner as the default, update the `DefaultRunner` alias and `default_runner()` wiring in [`src/runner/mod.rs`](https://github.com/orxfun/orx-parallel/blob/main/src/runner/mod.rs) on that branch. You can also use the benchmark repository as a template for measuring your own specific computation.
+
+If there is an input type or collection you would like to parallelize, please open an issue. Collection-specific support can often be added by implementing the appropriate `ConcurrentIter` integration in the collection crate.
 
 ## License
 
