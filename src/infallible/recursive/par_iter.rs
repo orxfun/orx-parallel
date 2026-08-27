@@ -235,7 +235,8 @@ where
         match params.iteration_order {
             IterationOrder::Arbitrary | IterationOrder::Ordered => {
                 let thread_collections = execution::collect_arb(exe, params, iter, x, extend);
-                C::inf_arb_col_into_from_jagged(dst, thread_collections)
+                // C::inf_arb_col_into_from_jagged(dst, thread_collections)
+                todo!()
             }
         }
     }
