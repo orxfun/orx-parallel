@@ -37,7 +37,7 @@ where
             xap.xap(i)
         })
         .reduce(move |_, a, b| f(a, b));
-    utils::into_outer(&mut outer, &mut data, |x| x);
+    utils::into_outer_par(&mut outer, &mut data, |x| x, &mut runner);
 
     while !outer.is_empty() {
         let par = outer.par_drain(..).runner(&mut runner);
@@ -56,7 +56,7 @@ where
             (None, Some(b)) => Some(b),
             (None, None) => None,
         };
-        utils::into_outer(&mut outer, &mut data, |x| x);
+        utils::into_outer_par(&mut outer, &mut data, |x| x, &mut runner);
     }
 
     result
