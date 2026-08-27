@@ -230,14 +230,11 @@ where
         <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
-
-        // TODO: handle ordered, or document it
-        match params.iteration_order {
-            IterationOrder::Arbitrary | IterationOrder::Ordered => {
-                let values = execution::collect_arb(exe, params, iter, x, extend);
-                C::extend_from_vec(dst, values);
-            }
-        }
+        let values = match params.iteration_order {
+            IterationOrder::Ordered => execution::collect_arb(exe, params, iter, x, extend),
+            IterationOrder::Arbitrary => execution::collect(exe, params, iter, x, extend),
+        };
+        C::extend_from_vec(dst, values);
     }
 
     fn collect<C>(self) -> C
@@ -247,13 +244,10 @@ where
         <Self::Input as IntoIterator>::Item: Send + Sync,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
-
-        // TODO: handle ordered, or document it
-        match params.iteration_order {
-            IterationOrder::Arbitrary | IterationOrder::Ordered => {
-                let values = execution::collect_arb(exe, params, iter, x, extend);
-                C::create_from_vec(values)
-            }
-        }
+        let values = match params.iteration_order {
+            IterationOrder::Ordered => execution::collect_arb(exe, params, iter, x, extend),
+            IterationOrder::Arbitrary => execution::collect(exe, params, iter, x, extend),
+        };
+        C::create_from_vec(values)
     }
 }

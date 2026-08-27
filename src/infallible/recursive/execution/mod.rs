@@ -7,6 +7,7 @@ mod fold;
 mod next_any;
 mod reduce;
 
+pub use collect::collect;
 pub use collect_arb::collect_arb;
 pub use fold::fold;
 pub use next_any::next_any;
