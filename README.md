@@ -233,6 +233,8 @@ assert_eq!(sum, (1..=10_000).sum());
 
 You may also implement your own `ParRunner`, either for a specific workload or to explore different scheduling tradeoffs more generally.
 
+For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/parallel_runner.md).
+
 This separation makes it easy to:
 
 - tune per-workload execution behavior
