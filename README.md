@@ -222,11 +222,10 @@ For practical use cases, please see [`use_transformation.md`](https://github.com
 
 Parallel traversal over recursive structures (such as trees or graphs) is supported out of the box without losing convenient iterator ergonomics.
 
-Notice below that after the `into_par_rec` call, we use regular iterator methods without additional complexity.
+Notice below that after the `par_recursive` call, we use regular iterator methods without additional complexity.
 
 ```rust ignore
-[root] // ← we start with initial set of tasks
-	.into_par_rec(|node| &node.children) // ← we define how to explore new tasks
+par_recursive([root], |node| &node.children) // ← initial tasks and how to explore new ones
 	.map(process_node) // ← we process nodes as if they were in a linear data structure
 	.reduce(merge_agg)
 	.unwrap_or_default();
