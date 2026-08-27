@@ -19,7 +19,7 @@ fn recursive_fold(depth: usize, fan_out: usize) {
     let runner = default_runner();
     let params = Params::default();
 
-    let expected = flatten([&tree], &|x: &&Node| &x.children)
+    let expected: u64 = flatten([&tree], &|x: &&Node| &x.children)
         .into_iter()
         .flat_map(|x| xap.xap(x))
         .sum();
