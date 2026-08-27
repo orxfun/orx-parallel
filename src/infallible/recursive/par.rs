@@ -416,11 +416,18 @@ pub trait ParRec: Sized + ParRecCore {
 
     /// Returns an item, or `None` if empty.
     ///
-    /// The item returned by a recursive iterator is not defined by input or traversal order.
-    /// `IterationOrder` does not impose an ordering guarantee on recursive iterators.
+    /// When [`IterationOrder::Ordered`] (default) is set, returns the first item in deterministic
+    /// breadth-first order (level by level, left-to-right following input and child generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered traversal is also optimized so the performance difference
+    /// is generally small.
     ///
     /// This operation is short-circuiting: once a first candidate is determined,
     /// remaining work is cancelled.
+    ///
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     ///
     /// # Examples
     ///
@@ -433,7 +440,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// let first = [1usize]
     ///     .into_par_rec(|&x| (x < 3).then_some(x + 1))
     ///     .first();
-    /// assert!(first.is_some_and(|x| [1, 2, 3].contains(&x)));
+    /// assert_eq!(first, Some(1));
     /// ```
     fn first(self) -> Option<Self::Item>
     where
@@ -599,15 +606,23 @@ pub trait ParRec: Sized + ParRecCore {
         self.map(|_| 1).reduce(|a, b| a + b).unwrap_or(0)
     }
 
-    /// Finds first ([`Ordered`], default) or any ([`Arbitrary`]) item satisfying predicate `f`.
+    /// Finds the first item satisfying predicate `f`, or `None` if none match.
+    ///
+    /// When [`IterationOrder::Ordered`] (default) is set, returns the first matching item in
+    /// deterministic breadth-first order (level by level, left-to-right following input and child
+    /// generation order).
+    ///
+    /// Setting [`IterationOrder::Arbitrary`] may provide speed improvements when ordering is not
+    /// important; however, ordered traversal is also optimized so the performance difference
+    /// is generally small.
     ///
     /// This is equivalent to `self.filter(f).first()`.
     ///
     /// This operation is short-circuiting: once a matching item is found,
     /// remaining work is cancelled.
     ///
-    /// [`Ordered`]: crate::IterationOrder::Ordered
-    /// [`Arbitrary`]: crate::IterationOrder::Arbitrary
+    /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
+    /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
     ///
     /// # Examples
     ///
