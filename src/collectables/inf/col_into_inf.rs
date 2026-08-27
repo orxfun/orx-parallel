@@ -23,4 +23,8 @@ pub trait ColIntoInf<T>: Sized {
     fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
     where
         T: Send;
+
+    fn extend_from_vec(dst: &mut Self, values: Vec<T>);
+
+    fn create_from_vec(values: Vec<T>) -> Self;
 }

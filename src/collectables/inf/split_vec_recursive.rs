@@ -44,4 +44,14 @@ impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
     {
         merge_arb_into_split_vec(thread_collections, dst);
     }
+
+    fn extend_from_vec(dst: &mut Self, values: Vec<T>) {
+        dst.append(values);
+    }
+
+    fn create_from_vec(values: Vec<T>) -> Self {
+        let mut vec = Self::new_empty();
+        vec.append(values);
+        vec
+    }
 }
