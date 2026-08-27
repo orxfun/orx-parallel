@@ -146,18 +146,20 @@ assert_eq!(total_price(&["1,2300", "4,???", "5,1100"]), None);
 
 ## Configurable Resource Usage
 
-`orx-parallel` is not tied to any specific thread pool; it can work with transient threads or persistent thread pools. The default thread pool can be configured by features and `ORX_NUM_THREADS` environment variable.
+`orx-parallel` is not tied to any specific thread pool; it can work with transient threads or persistent thread pools. The default is the persistent built-in `BasicPool`, which reuses its workers across computations. The default thread pool can be configured by features and the `ORX_NUM_THREADS` environment variable.
 
 ```toml
-# default features ("std") -> transient threads
+# default features -> persistent built-in BasicPool
 orx-parallel = { version = "4.0" }
 
-# persistent built-in pool
-orx-parallel = { version = "4.0", features = ["persistent-pool"] }
+# transient threads: spawn, compute, and join for each computation
+orx-parallel = { version = "4.0", default-features = false, features = ["std"] }
 
 # rayon-core pool integration
-orx-parallel = { version = "4.0", features = ["persistent-pool-rayon"] }
+orx-parallel = { version = "4.0", default-features = false, features = ["persistent-pool-rayon"] }
 ```
+
+The pool's scheduling strategy is usually less important than the work being performed, so `BasicPool` is a suitable default for most applications. Its workers are created once and kept alive, avoiding repeated thread-spawn overhead. If the application performs only occasional parallel computations and should not retain worker threads between them, use the `std`-only dependency configuration above; it selects `OncePool`, which creates the required threads for each computation and joins them afterward.
 
 The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement, so you can also plug in a custom pool with `.pool(...)`.
 
@@ -251,7 +253,7 @@ Built-in runners:
 - `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
 
 ```rust
-use orx_parallel::*; // assume default features used: ["std"]
+use orx_parallel::*; // assume default features used: ["std", "persistent-pool"]
 
 let sum: usize = (0..10_000)
 	.par()
