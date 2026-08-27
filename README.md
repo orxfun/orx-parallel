@@ -4,9 +4,17 @@
 [![orx-parallel crate](https://img.shields.io/crates/d/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 
-High-performance, expressive, configurable parallel computations with an iterator-style API.
+High-performance, expressive, configurable parallel computations with an iterator API.
 
-The crate focuses on practical parallelization with a convenient iterator API, broad input coverage, first-class fallible flows, configurable resource usage, safe per-thread mutable state, recursive traversal support, browser-hosted wasm support, and customizable runner strategies for advanced tuning.
+The crate focuses on practical parallelization with a convenient iterator API with the following goals:
+
+* first-class fallible flows,
+* configurable resource usage,
+* safe per-thread mutable state,
+* recursive traversal on non-linear data,
+* WebAssembly support,
+* determinism,
+* customizable runner strategies to support research, experimentation and advanced tuning.
 
 ## Parallelization with Iterator Ergonomics
 
