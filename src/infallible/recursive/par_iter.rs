@@ -194,11 +194,9 @@ where
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
 
-        // TODO: handle ordered, or document it
         match params.iteration_order {
-            IterationOrder::Arbitrary | IterationOrder::Ordered => {
-                execution::next_any(exe, params, iter, x, extend)
-            }
+            IterationOrder::Ordered => execution::next(exe, params, iter, x, extend),
+            IterationOrder::Arbitrary => execution::next_any(exe, params, iter, x, extend),
         }
     }
 
