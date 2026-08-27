@@ -58,7 +58,7 @@ where
         u.input.extend(new_inputs);
 
         let values = xap.xap(input.value).into_iter();
-        let outputs = values.map(|value| Elem::new(value, depth, input.depth));
+        let outputs = values.map(|value| Elem::new(value, depth, input.width));
         u.output.extend(outputs);
     });
     utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
