@@ -1,3 +1,4 @@
+use crate::ParThreadPool;
 use crate::pool::DefaultPool;
 use crate::pool::get_global_pool;
 #[cfg(feature = "std")]
@@ -48,6 +49,26 @@ impl Runner {
         FixedChunkRunner::new(get_global_pool())
     }
 
+    /// Creates a fixed chunk runner backed by `pool`.
+    ///
+    /// Use this when a computation should use a specific thread pool instead of the global
+    /// default pool. The returned runner keeps the fixed-size chunking strategy of
+    /// [`Self::fixed`] while delegating execution to the provided pool.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let pool = Pool::basic(4);
+    /// let par = (0..100).par().runner(Runner::fixed_with_pool(pool));
+    ///
+    /// let result: Vec<_> = par.collect();
+    /// ```
+    pub fn fixed_with_pool<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
+        FixedChunkRunner::new(pool)
+    }
+
     /// Creates an adaptive chunk runner.
     ///
     /// This strategy explores and selects chunk sizes based on observed runtime behavior.
@@ -67,5 +88,25 @@ impl Runner {
     #[cfg(feature = "std")]
     pub fn adaptive() -> AdaptiveChunkRunner<DefaultPool> {
         AdaptiveChunkRunner::new(get_global_pool())
+    }
+
+    /// Creates an adaptive chunk runner backed by `pool`.
+    ///
+    /// Use this when a computation should combine a specific thread pool with adaptive chunk
+    /// sizing. The returned runner keeps the adaptive strategy of [`Self::adaptive`] while
+    /// delegating execution to the provided pool.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let pool = Pool::once(4);
+    /// let par = (0..100).par().runner(Runner::adaptive_with_pool(pool));
+    ///
+    /// let result: Vec<_> = par.collect();
+    /// ```
+    pub fn adaptive_with_pool<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
+        AdaptiveChunkRunner::new(pool)
     }
 }
