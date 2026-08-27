@@ -1,6 +1,5 @@
 use crate::Params;
 use crate::infallible::recursive::execution::collect::collect;
-use crate::infallible::recursive::execution::collect_arb::collect_arb;
 use crate::infallible::recursive::execution::tests::tree::{Node, flatten};
 use crate::infallible::{Xap, xap_variants::Id};
 use crate::runner::default_runner;

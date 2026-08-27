@@ -41,12 +41,7 @@ pub use pool_impl::BasicPool;
 pub use pool_impl::OncePool;
 
 // 4. sequential
-#[cfg(all(
-    not(feature = "std"),
-    not(feature = "persistent-pool"),
-    not(feature = "persistent-pool-rayon"),
-    not(feature = "wasm"),
-))]
+#[cfg(not(feature = "std"))]
 pub use pool_impl::SequentialPool;
 
 pub use global_pool::{DefaultPool, get_global_pool};

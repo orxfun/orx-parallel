@@ -43,8 +43,8 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 ///
 /// # Pool Types
 ///
-/// - **OncePool** - Spawns threads only when needed, releases after computation
-/// - **BasicPool** (default native pool) - Maintains persistent workers across multiple computations
+/// - **OncePool** (with `transient-pool` feature) - Spawns threads only when needed, releases after computation
+/// - **BasicPool** (default) - Maintains persistent workers across multiple computations
 /// - **Rayon** - Uses the Rayon parallel runtime (external crate)
 ///
 /// See the [`threading_model.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/threading_model.md) documentation for complete details.
@@ -89,9 +89,9 @@ impl Pool {
     ///
     /// # Default Behavior
     ///
-    /// This is the default pool when `std` is enabled without the persistent-pool
-    /// features. Applications do not need to explicitly create an `OncePool` unless
-    /// they want custom thread configuration.
+    /// This is available when the `transient-pool` feature is enabled.
+    /// Applications can explicitly create an `OncePool` to configure custom thread settings
+    /// for on-demand thread spawning and cleanup.
     #[cfg(feature = "std")]
     pub fn once(num_threads: impl Into<NumThreads>) -> OncePool {
         OncePool::new(num_threads)

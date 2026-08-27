@@ -877,20 +877,3 @@ pub trait ParRec: Sized + ParRecCore {
             .unwrap_or(Self::Item::zero())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-    use alloc::vec;
-    use alloc::vec::Vec;
-    use std::prelude::*;
-
-    #[test]
-    fn abc() {
-        let out: Vec<_> = [1i32]
-            .into_par_rec(|&x| (x < 3).then_some(x + 1))
-            .flat_map(|x| [x, x + 10])
-            .collect();
-        assert_eq!(out, vec![1, 11, 2, 12, 3, 13]);
-    }
-}

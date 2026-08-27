@@ -197,8 +197,8 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 
 /// Native standard thread pool with persistent workers.
 ///
-/// This is the default thread pool when the `persistent-pool` feature is enabled
-/// without `persistent-pool-rayon` or `wasm`.
+/// This is the default thread pool when the `std` feature is enabled without
+/// `transient-pool`, `persistent-pool-rayon`, or `wasm` features.
 /// Note that the thread pool to be used for a parallel computation can be set by the
 /// [`runner`] transformation separately for each parallel iterator.
 ///
