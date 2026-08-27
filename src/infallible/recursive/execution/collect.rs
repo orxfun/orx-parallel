@@ -1,4 +1,3 @@
-use crate::EnumerateParUse;
 use crate::infallible::recursive::utils;
 use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
@@ -100,8 +99,8 @@ where
     let mut depth = 0;
 
     let par = inputs.par_drain(..).runner(&mut runner);
-    let par = params.apply(par).use_slice(&mut data).enumerate();
-    par.for_each(|u, (out_width, input)| {
+    let par = params.apply(par).use_slice(&mut data);
+    par.for_each(|u, input| {
         let new_inputs = extend(&input.value)
             .into_iter()
             .enumerate()
@@ -109,20 +108,19 @@ where
         u.input.extend(new_inputs);
 
         let values = xap.xap(input.value).into_iter();
-        let outputs = values.map(|value| Elem::new(value, depth, out_width));
+        let outputs = values.map(|value| Elem::new(value, depth, input.depth));
         u.output.extend(outputs);
     });
     utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
     Elem::normalize_depths(&mut inputs);
-    inputs.sort_by_key(|x| x.depth);
     utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
 
     while !inputs.is_empty() {
         depth += 1;
 
         let par = inputs.par_drain(..).runner(&mut runner);
-        let par = params.apply(par).use_slice(&mut data).enumerate();
-        par.for_each(|u, (out_width, input)| {
+        let par = params.apply(par).use_slice(&mut data);
+        par.for_each(|u, input| {
             let new_inputs = extend(&input.value)
                 .into_iter()
                 .enumerate()
@@ -130,12 +128,11 @@ where
             u.input.extend(new_inputs);
 
             let values = xap.xap(input.value).into_iter();
-            let outputs = values.map(|value| Elem::new(value, depth, out_width));
+            let outputs = values.map(|value| Elem::new(value, depth, input.depth));
             u.output.extend(outputs);
         });
         utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
         Elem::normalize_depths(&mut inputs);
-        inputs.sort_by_key(|x| x.depth);
         utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
     }
 
