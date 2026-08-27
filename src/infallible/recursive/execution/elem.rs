@@ -45,7 +45,6 @@ impl<T> Ord for Elem<T> {
             Ordering::Equal => {}
             ord => return ord,
         }
-        debug_assert_ne!(self.width, other.width);
         self.width.cmp(&other.width)
     }
 }

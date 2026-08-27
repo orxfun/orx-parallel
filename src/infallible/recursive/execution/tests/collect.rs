@@ -1,5 +1,6 @@
 use crate::Params;
 use crate::infallible::recursive::execution::collect::collect;
+use crate::infallible::recursive::execution::collect_arb::collect_arb;
 use crate::infallible::recursive::execution::tests::tree::{Node, flatten};
 use crate::infallible::{Xap, xap_variants::Id};
 use crate::runner::default_runner;
@@ -40,6 +41,27 @@ fn recursive_collect_determinism(depth: usize, fan_out: usize) {
 
     let xap = Id::<&Node>::new()
         .map(|x| x.value)
+        .filter(|x| !x.is_multiple_of(7));
+
+    let mut runner = default_runner();
+    let params = Params::default();
+
+    let expected = collect(&mut runner, params, [&tree], xap, |x| &x.children);
+
+    for _ in 0..10 {
+        let result = collect(&mut runner, params, [&tree], xap, |x| &x.children);
+        assert_eq!(expected, result);
+    }
+}
+
+#[cfg(not(miri))]
+#[test_matrix([4, 5, 6], [4, 5, 6])]
+fn recursive_collect_determinism_with_flat_map(depth: usize, fan_out: usize) {
+    let mut rng = ChaCha8Rng::seed_from_u64(42);
+    let tree = Node::build_tree(depth, fan_out, &mut rng);
+
+    let xap = Id::<&Node>::new()
+        .flat_map(|x| (0..10).map(|i| x.value + i))
         .filter(|x| !x.is_multiple_of(7));
 
     let mut runner = default_runner();
