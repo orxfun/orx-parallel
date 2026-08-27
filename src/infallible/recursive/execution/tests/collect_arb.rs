@@ -35,8 +35,9 @@ fn recursive_collect_arb(depth: usize, fan_out: usize) {
 
 #[test]
 fn abc() {
-    let depth = 2;
+    let depth = 3;
     let fan_out = 2;
+
     let mut rng = ChaCha8Rng::seed_from_u64(42);
     let tree = Node::build_tree(depth, fan_out, &mut rng);
 
@@ -56,6 +57,6 @@ fn abc() {
     let mut result = collect_arb(runner, params, [&tree], xap, |x| &x.children);
     result.sort();
 
-    // assert_eq!(result.len(), expected.len());
+    assert_eq!(result.len(), expected.len());
     assert_eq!(result, expected);
 }
