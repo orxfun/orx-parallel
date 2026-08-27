@@ -51,13 +51,13 @@ wasm-bindgen-test = "0.3"
 all-features = true
 
 [features]
-default = ["persistent-pool"]
+default = ["std"]
 std = []
 experimental = []
 long-tests = []
 wasm = ["std", "dep:wasm-bindgen", "dep:js-sys"]
 persistent-pool-rayon = ["std", "rayon-core"]
-persistent-pool = ["std"]
+transient-pool = ["std"]
 
 
 # examples
