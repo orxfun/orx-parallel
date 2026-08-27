@@ -22,7 +22,7 @@ jobs:
             "--no-default-features",
             "--no-default-features --features std",
             "--no-default-features --features persistent-pool-rayon",
-            "--no-default-features --features persistent-pool",
+            "--no-default-features --features transient-pool",
           ]
 
     steps:
@@ -63,13 +63,13 @@ jobs:
       - name: Install miri
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu miri
 
-      - name: Miri with BasicPool
+      - name: Miri with BasicPool (default)
         env:
           MIRIFLAGS: -Zmiri-ignore-leaks
-        run: cargo +nightly miri test --lib --bins --tests --verbose --no-default-features --features persistent-pool
-
-      - name: Miri with OncePool
         run: cargo +nightly miri test --lib --bins --tests --verbose --no-default-features --features std
+
+      - name: Miri with OncePool (transient-pool)
+        run: cargo +nightly miri test --lib --bins --tests --verbose --no-default-features --features transient-pool
 
   wasm:
     name: Check (wasm)
