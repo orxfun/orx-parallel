@@ -7,13 +7,19 @@ use crate::{ParCollectInto, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
-/// Infallible parallel iterator.
+/// Infallible parallel recursive iterator.
 ///
-/// `Par` is the central trait for describing parallel computations as iterator
+/// `ParRec` is the central trait for describing recursive parallel computations as iterator
 /// pipelines. It mirrors common sequential iterator operations (`map`,
 /// `filter`, `flat_map`, `collect`, `reduce`, ...) while allowing runtime
 /// configuration of execution details such as number of threads, chunk size,
 /// iteration order, and runner/pool selection.
+///
+/// Recursive traversal can be deterministic: with [`IterationOrder::Ordered`] (the default),
+/// order-sensitive operations use breadth-first order, level by level and left-to-right following
+/// input and child generation order.
+///
+/// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
 ///
 /// Related traits:
 /// - [`ParUse`](crate::ParUse) for worker-local mutable state,

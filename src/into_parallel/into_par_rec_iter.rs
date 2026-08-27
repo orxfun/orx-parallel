@@ -7,6 +7,12 @@ use crate::runner::default_runner;
 /// Unlike flat sources (such as slices or ranges), recursive workloads discover new items
 /// while they are being processed. This trait is useful when each item can produce additional
 /// items, such as traversing a tree from its root(s).
+///
+/// Despite parallel execution, recursive traversal can be deterministic. With
+/// [`IterationOrder::Ordered`] (the default), order-sensitive operations use breadth-first order,
+/// level by level and left-to-right following input and child generation order.
+///
+/// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
 pub trait IntoParRec
 where
     Self: IntoIterator + Sized,
@@ -34,13 +40,12 @@ where
     /// ];
     ///
     /// // Start from the root and expand recursively.
-    /// let mut visited: Vec<_> = [0usize]
+    /// let visited: Vec<_> = [0usize]
     ///     .into_par_rec(|node| children[*node].iter().copied())
     ///     .map(|x| 2 * x + 1)
     ///     .collect();
     ///
-    /// // Traversal order may vary in parallel, so compare as a set via sorting.
-    /// visited.sort();
+    /// // Ordered traversal is deterministic and breadth-first by default.
     /// assert_eq!(visited, vec![1, 3, 5, 7, 9, 11]);
     /// ```
     fn into_par_rec<I, F>(self, extend: F) -> ParRecIter<Self, Id<Self::Item>, I, F>
