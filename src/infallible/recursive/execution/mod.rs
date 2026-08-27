@@ -3,6 +3,7 @@ mod tests;
 
 mod collect;
 mod collect_arb;
+mod elem;
 mod fold;
 mod next;
 mod next_any;
