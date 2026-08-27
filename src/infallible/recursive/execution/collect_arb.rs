@@ -48,11 +48,8 @@ where
         u.input.extend(extend(&i));
         u.output.extend(xap.xap(i));
     });
-    let len = data.iter().map(|x| x.input.len()).sum();
-    utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
-
-    let len = data.iter().map(|x| x.output.len()).sum();
-    utils::outputs_into_outer(&mut result, len, data.iter_mut().map(|x| &mut x.output));
+    utils::into_outer(&mut outer, &mut data, |x| &mut x.input);
+    utils::into_outer(&mut result, &mut data, |x| &mut x.output);
 
     while !outer.is_empty() {
         let par = outer.par_drain(..).runner(&mut runner);
@@ -63,11 +60,8 @@ where
             u.output.extend(xap.xap(i));
         });
 
-        let len = data.iter().map(|x| x.input.len()).sum();
-        utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
-
-        let len = data.iter().map(|x| x.output.len()).sum();
-        utils::outputs_into_outer(&mut result, len, data.iter_mut().map(|x| &mut x.output));
+        utils::into_outer(&mut outer, &mut data, |x| &mut x.input);
+        utils::into_outer(&mut result, &mut data, |x| &mut x.output);
     }
 
     result

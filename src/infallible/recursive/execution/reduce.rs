@@ -37,8 +37,7 @@ where
             xap.xap(i)
         })
         .reduce(move |_, a, b| f(a, b));
-    let len = data.iter().map(|x| x.len()).sum();
-    utils::inputs_into_outer(&mut outer, len, &mut data);
+    utils::into_outer(&mut outer, &mut data, |x| x);
 
     while !outer.is_empty() {
         let par = outer.par_drain(..).runner(&mut runner);
@@ -57,9 +56,7 @@ where
             (None, Some(b)) => Some(b),
             (None, None) => None,
         };
-
-        let len = data.iter().map(|x| x.len()).sum();
-        utils::inputs_into_outer(&mut outer, len, &mut data);
+        utils::into_outer(&mut outer, &mut data, |x| x);
     }
 
     result

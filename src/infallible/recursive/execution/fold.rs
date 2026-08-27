@@ -56,8 +56,7 @@ where
             f(&mut u.fold, i);
         }
     });
-    let len = data.iter().map(|x| x.input.len()).sum();
-    utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
+    utils::into_outer(&mut outer, &mut data, |x| &mut x.input);
 
     while !outer.is_empty() {
         let par = outer.par_drain(..).runner(&mut runner);
@@ -70,9 +69,7 @@ where
                 f(&mut u.fold, i);
             }
         });
-
-        let len = data.iter().map(|x| x.input.len()).sum();
-        utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
+        utils::into_outer(&mut outer, &mut data, |x| &mut x.input);
     }
 
     data.into_iter().map(|x| x.fold).collect()
