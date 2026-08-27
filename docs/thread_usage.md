@@ -8,18 +8,36 @@ This document explains how `orx-parallel` manages threads and how you can contro
 
 There are four ways to use `orx-parallel` depending on which features you enable:
 
-| Feature flags           | Thread pool used         |
-| ----------------------- | ------------------------ |
-| (default, `std` only)   | `OncePool`               |
-| `persistent-pool`       | `BasicPool`              |
-| `persistent-pool-rayon` | `rayon_core::ThreadPool` |
-| `wasm`                  | `WasmWebPool`            |
+| Feature flags                           | Thread pool used         |
+| --------------------------------------- | ------------------------ |
+| default (`std` + `persistent-pool`)     | `BasicPool`              |
+| `std` only (`default-features = false`) | `OncePool`               |
+| `persistent-pool-rayon`                 | `rayon_core::ThreadPool` |
+| `wasm`                                  | `WasmWebPool`            |
 
-### OncePool (default)
+### BasicPool (default)
+
+`BasicPool` is the default native thread pool. It creates its worker threads once and keeps them alive for the lifetime of the application, reusing them across parallel computations. This avoids repeated thread-spawn overhead and is a good general-purpose choice. The pool's scheduling strategy is usually less important than the amount and shape of the work being performed.
+
+The default dependency configuration is:
+
+```toml
+orx-parallel = "4.0"
+```
+
+### OncePool (`std` only)
 
 `OncePool` is not a persistent thread pool — it does not hold on to any threads between computations. If a computation uses `T` threads, exactly `T` threads are spawned just before the computation starts and released immediately after it completes. When no parallel computation is running, no threads are blocked or held in reserve.
 
-This design fits naturally with `orx-parallel`'s execution model: regardless of the number of tasks in the input, the library always spawns exactly `T` threads. Those `T` threads live for the duration of the computation, continuously pulling tasks from a concurrent task queue, and are all released once the computation completes. Because the number of `thread::spawn` calls is constant — not proportional to input size — the spawning overhead is often insignificant. This makes `OncePool` the default for most use cases.
+This design fits naturally with `orx-parallel`'s execution model: regardless of the number of tasks in the input, the library always spawns exactly `T` threads. Those `T` threads live for the duration of the computation, continuously pulling tasks from a concurrent task queue, and are all released once the computation completes. Because the number of `thread::spawn` calls is constant — not proportional to input size — the spawning overhead is often insignificant.
+
+To use this mode, disable the crate's default features and enable only `std`:
+
+```toml
+orx-parallel = { version = "4.0", default-features = false, features = ["std"] }
+```
+
+This is useful for applications with occasional parallel computations that want to create threads, compute, and join them without keeping a persistent worker pool alive between computations. The tradeoff is the cost of spawning threads again for each computation.
 
 ### BasicPool (`persistent-pool`)
 

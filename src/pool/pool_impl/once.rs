@@ -8,8 +8,9 @@ use core::num::NonZeroUsize;
 /// Desired threads will be spawned just before the computation starts and will be released right after.
 /// Therefore, it may be considered as a _one-time-use_ thread pool.
 ///
-/// This is also the default thread pool used when "std" feature is enabled.
-/// Therefore, "orx-parallel" will not create and hold on to a thread pool unless it is explicitly created.
+/// This is the default thread pool when the `std` feature is enabled without
+/// `persistent-pool` or `persistent-pool-rayon`.
+/// Therefore, "orx-parallel" will not create and hold on to a persistent thread pool in this configuration.
 ///
 /// On the other hand, in order to reduce the overhead of spawning threads, thread pools can be created
 /// using [`Pool`] methods and passed to the parallel iterators using the [`pool`] transformation.
