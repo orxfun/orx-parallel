@@ -202,7 +202,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
     /// - [`pool()`](crate::Par::pool) - Configure thread pool
     /// - [`Pool`](crate::Pool) - Factory for creating pools
-    /// - [`threading_model.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/threading_model.md) - Complete threading guide
+    /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
     /// Sets chunk size used when pulling items from the concurrent input.

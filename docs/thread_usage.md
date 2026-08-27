@@ -57,7 +57,7 @@ orx-parallel = { version = "4.0", features = ["persistent-pool-rayon"] }
 
 When targeting WebAssembly, enable the `wasm` feature to use `WasmWebPool`, which is backed by Web Workers. The setup differs from native targets: you must initialize the pool explicitly (by calling and awaiting the initialization function from JavaScript) before any parallel computation runs.
 
-For a step-by-step guide see [docs/wasm_tutorial](wasm_tutorial/). Working examples are in [examples/wasm/mini](../examples/wasm/) and [examples/wasm/tsp](../examples/wasm/).
+For step-by-step browser examples, see the tutorial and demo sources in [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos).
 
 ### Global thread-count cap
 

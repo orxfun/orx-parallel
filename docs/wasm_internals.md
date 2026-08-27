@@ -25,7 +25,7 @@ the crate exports:
 
 Additionally, when `target_feature = "atomics"` is also enabled, it exports:
 
-- `init_wasm_thread_pool(...)`
+- `init_wasm_parallel_runtime(...)`
 - `wasm_web_runtime_info()`
 - `wasm_web_start_worker()`
 
@@ -71,7 +71,7 @@ The worker-shared state contains:
 
 ## Initialization flow in the main backend
 
-`init_wasm_thread_pool(num_threads)` is the explicit entrypoint.
+`init_wasm_parallel_runtime(num_threads)` is the public explicit entrypoint. It delegates to the internal `init_wasm_thread_pool(num_threads)` backend function.
 
 Its behavior is:
 
@@ -188,7 +188,7 @@ In browser wasm, the runtime depends on external conditions that are not owned b
 - JS worker creation
 - cross-origin isolation headers
 
-Surfacing initialization directly through `init_wasm_thread_pool(...)` makes these preconditions explicit and moves failures closer to application startup.
+Surfacing initialization directly through `init_wasm_parallel_runtime(...)` makes these preconditions explicit and moves failures closer to application startup.
 
 ## JavaScript packaging layer
 
@@ -205,10 +205,10 @@ in its output asset graph.
 	worker imports for their output layouts, create stable entries without
 	colliding with the generated package entry, and provide COOP/COEP headers.
 
-An application can use the neutral APIs directly. The
-`examples/wasm/mini/vanilla-manual` example does this in `build.mjs` and uses
-`server.mjs` to serve the output with the required headers. The other mini
-examples use the bundler adapters.
+An application can use the neutral APIs directly. The manual vanilla example in
+[`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos)
+does this in `build.mjs` and uses `server.mjs` to serve the output with the
+required headers. The other mini examples use the bundler adapters.
 
 ## Relationship to the examples
 
@@ -234,4 +234,4 @@ When adjusting wasm support, the places that usually need to stay aligned are:
 - `orx-parallel-wasm` preparation and bundler adapters that package worker helper files
 - host server configuration for COOP/COEP headers
 
-Most documentation drift happens when one of those layers changes without updating the others. The current mini and TSP examples, together with the `orx-parallel-wasm` package README, are the best source of truth for a working browser-hosted setup.
+Most documentation drift happens when one of those layers changes without updating the others. The current mini and TSP examples in [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos), together with the `orx-parallel-wasm` package README, are the best source of truth for a working browser-hosted setup.

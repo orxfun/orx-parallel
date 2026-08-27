@@ -312,14 +312,14 @@ fn assert_wasm_thread_pool_initialized() {
     const {
         assert!(
             cfg!(target_feature = "atomics"),
-            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm-plan-b.md."
+            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm.md."
         );
     }
 
     assert_eq!(
         WASM_WEB3_THREAD_POOL_STATE.load(Ordering::SeqCst),
         WASM_WEB3_THREAD_POOL_INITIALIZED,
-        "Wasm web thread pool is not initialized. Call and await init_wasm_thread_pool(...) before running parallel computations."
+        "Wasm web thread pool is not initialized. Call and await init_wasm_parallel_runtime(...) before running parallel computations."
     )
 }
 

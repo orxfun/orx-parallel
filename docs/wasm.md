@@ -8,16 +8,17 @@ Live examples:
 
 - TSP demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
 - Tutorial: https://orx-parallel-wasm-tutorials.pages.dev/
+- Demo and tutorial sources: https://github.com/orxfun/orx-parallel-wasm-demos
 
 ## Overview
 
 The documented browser-hosted wasm path uses the `wasm` feature.
 
 - exported pool type: `WasmWebPool`
-- exported init function: `init_wasm_thread_pool(...)` on atomics-enabled `wasm32`
+- exported init function: `init_wasm_parallel_runtime(...)` on atomics-enabled `wasm32`
 - implementation: custom worker-backed runtime in `src/pool/pool_impl/wasm_web.rs`
 
-The examples under `examples/wasm/` use this backend.
+The examples in [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos) use this backend.
 
 Browser packaging is provided by the companion `orx-parallel-wasm` crate. It
 provides the typed `ParallelWorker` client, the bundler-neutral WASM build and
@@ -43,7 +44,7 @@ default = []
 wasm = ["orx-parallel/wasm"]
 ```
 
-This is the pattern used by the computation crates under `examples/wasm/tsp/*/computation`.
+This is the pattern used by the computation crates in the wasm demo repository.
 
 ## What stays the same
 
@@ -76,13 +77,9 @@ RUSTFLAGS='-C target-feature=+atomics -C link-arg=--shared-memory -C link-arg=--
 wasm-pack build ../wasm_bindings --target web --out-dir ../app/pkg -- -Z build-std=panic_abort,std
 ```
 
-See:
+See the app package scripts in [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos).
 
-- `examples/wasm/tsp/vanilla/app/package.json`
-- `examples/wasm/mini/vanilla-vite/app/package.json`
-- `examples/wasm/mini/vanilla-manual/app/package.json`
-
-If the build is not atomics-enabled, `init_wasm_thread_pool(...)` is not available and the parallel runtime cannot be initialized.
+If the build is not atomics-enabled, `init_wasm_parallel_runtime(...)` is not available and the parallel runtime cannot be initialized.
 
 ### 2. Serve with cross-origin isolation headers
 
@@ -93,11 +90,7 @@ The host must send:
 - `Cross-Origin-Opener-Policy: same-origin`
 - `Cross-Origin-Embedder-Policy: require-corp`
 
-See:
-
-- `examples/wasm/tsp/vanilla/app/vite.config.ts`
-- `examples/wasm/mini/vanilla-vite/app/vite.config.ts`
-- `examples/wasm/tsp/vanilla/app/scripts/serve-dist.mjs`
+See the app server and bundler configuration in [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos).
 
 Vite dev servers in the examples are configured accordingly. If you serve a production `dist/` directory yourself, your production server must set the same headers.
 
@@ -111,7 +104,7 @@ In the example `wasm_bindings` crates, the public wrapper looks like this:
 #[wasm_bindgen]
 pub fn init_wasm_parallel_runtime(num_threads: u32) -> js_sys::Promise {
     #[cfg(target_feature = "atomics")]
-    return orx_parallel::init_wasm_thread_pool(num_threads as usize);
+    return orx_parallel::init_wasm_parallel_runtime(num_threads);
 
     #[cfg(not(target_feature = "atomics"))]
     panic!("init_wasm_parallel_runtime requires a wasm target with atomics and shared memory enabled")
@@ -124,7 +117,7 @@ Notes:
 
 - `num_threads = 0` means automatic thread selection
 - `0` uses the crate's resource/env-based auto choice
-- calling `init_wasm_thread_pool(...)` again with the same thread count resolves successfully
+- calling `init_wasm_parallel_runtime(...)` again with the same thread count resolves successfully
 - calling it again with a different thread count is rejected
 
 ## Recommended crate structure
@@ -147,11 +140,7 @@ In the TSP examples:
 - `wasm_bindings` enables that `wasm` feature and exposes a small JS-friendly API
 - `app` imports the generated `pkg/wasm_bindings.js` and handles browser orchestration
 
-See:
-
-- `examples/wasm/tsp/vanilla/computation/Cargo.toml`
-- `examples/wasm/tsp/vanilla/wasm_bindings/Cargo.toml`
-- `examples/wasm/tsp/vanilla/app/README.md`
+See the TSP example crates in [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos).
 
 ## `orx-parallel-wasm` integration
 
@@ -172,14 +161,13 @@ Use the bundler adapter that matches the application:
 The adapters emit the generated bindings, WASM, and worker assets, rewrite
 worker entry paths for the output layout, create stable binding shims, and add
 COOP/COEP headers for development or static hosting output. The
-`examples/wasm/mini/vanilla-manual` app demonstrates the bundler-neutral API
-without using one of these adapters: its `build.mjs` performs the asset
+The manual vanilla example demonstrates the bundler-neutral API without using
+one of these adapters: its `build.mjs` performs the asset
 packaging and its `server.mjs` supplies the headers.
 
-The tutorial in `docs/wasm_tutorial/vanilla/` follows the Vite path for
-simplicity, then covers the manual build, other bundlers, and other UI
-frameworks. The mini examples include vanilla Vite, a plugin-free vanilla
-build, React with Vite, Webpack, Rspack, and Rollup.
+The tutorial follows the Vite path for simplicity, then covers the manual build,
+other bundlers, and other UI frameworks. The mini examples include vanilla Vite,
+a plugin-free vanilla build, React with Vite, Webpack, Rspack, and Rollup.
 
 ## Troubleshooting
 
@@ -189,24 +177,14 @@ If parallel wasm does not work as expected, check these first:
 - the `wasm` feature is enabled
 - the wasm build includes atomics and shared-memory flags
 - the app is served with COOP/COEP headers
-- `init_wasm_thread_pool(...)` was awaited before the first parallel run
+- `init_wasm_parallel_runtime(...)` was awaited before the first parallel run
 - you did not attempt to reinitialize with a different thread count
 - your build or packaging step preserved the worker helper files used by the selected backend
 - the deployed files were rebuilt after updating `orx-parallel-wasm` and do not contain stale generated shims
 
 ## Example entry points
 
-For end-to-end working references, start with:
-
-- `examples/wasm/tsp/vanilla`
-- `examples/wasm/tsp/react`
-- `examples/wasm/tsp/leptos`
-- `examples/wasm/tsp/yew`
-- `examples/wasm/mini/vanilla-vite`
-- `examples/wasm/mini/vanilla-manual`
-- `examples/wasm/mini/react-vite`
-- `examples/wasm/mini/vanilla-webpack`
-- `examples/wasm/mini/vanilla-rspack`
-- `examples/wasm/mini/vanilla-rollup`
+For end-to-end working references, start with the TSP demo, tutorial, and mini
+examples in [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos).
 
 All of them follow the same basic rule: initialize once, then run parallel computations through the same Rust API you would use natively.

@@ -14,7 +14,7 @@ Highlights:
 
 > `use_new` creates one variable per thread and makes its mutable reference available to thread-local computations. Created *use variables* are dropped once the computation finalizes.
 
-Recall the entry example in the library which demonstrates parallelization with iterator api:
+Recall the entry example in the library, which demonstrates parallelization with the iterator API:
 
 ```rust
 use orx_parallel::*;
@@ -54,7 +54,7 @@ let best_tour = (0..num_tours)
 
 Does something bother you?
 
-`Tour::random` function needs a random number generator (RNG). However, RNGs are stateful and are only useful with mutable references. This means, if we create one RNG and share it with all threads, we would have a race condition, and hence, an undefined behavior.
+The `Tour::random` function needs a random number generator (RNG). However, RNGs are stateful and are only useful with mutable references. If we created one RNG and shared it with all threads, we would have a race condition.
 
 Therefore, in the example above, we create a new random RNG per created tour. This is not how we normally use RNGs; we normally create one and consume the sequence of random numbers it produces.
 
@@ -184,12 +184,12 @@ for (th_idx, metrics) in thread_metrics.iter().enumerate() {
 
 > `use_slice` works exactly like `use_vec` except that the thread local variables are pre-created.
 
-`use_slice` will not create any use variables; instead it safely allows to use the provided slice of use variables. Therefore, unlike `use_vec`, the length of the provided slice will be an upper bound on the number of threads that the parallel computation can use.
+`use_slice` will not create any use variables; instead, it safely uses the provided slice of use variables. Therefore, unlike `use_vec`, the length of the provided slice is an upper bound on the number of threads that the parallel computation can use.
 
 ```rust
 use orx_parallel::*;
 
-let mut thread_results = vec![Vec::new(); 8]; // ← caps num threads to to 8
+let mut thread_results = vec![Vec::new(); 8]; // ← caps num threads to 8
 
 (0..1_000)
     .par()
@@ -207,7 +207,7 @@ We use a traveling salesperson problem to demonstrate a possible use of *use tra
 
 * we create many random tours,
 * we locally optimize each of them (heavy computation part),
-* pick and return the the shortest one found.
+* pick and return the shortest one found.
 
 ### Initial approach, immutable design
 
