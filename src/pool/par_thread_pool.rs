@@ -44,7 +44,7 @@ use core::num::NonZeroUsize;
 /// - [`BasicPool`](crate::BasicPool) - Persistent thread pool
 /// - Rayon thread pools via `Pool::rayon()`
 ///
-/// See the [`threading_model.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/threading_model.md) documentation for a complete guide.
+/// See the [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) documentation for a complete guide.
 pub trait ParThreadPool {
     /// Scope type of the thread pool.
     type ScopeRef<'s, 'env, 'scope>

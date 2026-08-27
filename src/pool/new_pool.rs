@@ -47,7 +47,7 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 /// - **BasicPool** (default) - Maintains persistent workers across multiple computations
 /// - **Rayon** - Uses the Rayon parallel runtime (external crate)
 ///
-/// See the [`threading_model.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/threading_model.md) documentation for complete details.
+/// See the [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) documentation for complete details.
 pub struct Pool;
 
 impl Pool {

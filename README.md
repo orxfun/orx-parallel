@@ -203,7 +203,7 @@ let sum = (0..1000)
     .sum();
 ```
 
-Please see [`thread-usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) for detailed information.
+Please see [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) for detailed information.
 
 ## Runner Strategies and Extensibility
 
