@@ -108,7 +108,7 @@ impl ScopeRuntime {
 
 pub struct ScopeRef<'env> {
     shared: *const WorkerShared,
-    runtime: *const ScopeRuntime,
+    runtime: Arc<ScopeRuntime>,
     _marker: PhantomData<&'env ()>,
 }
 
@@ -118,7 +118,7 @@ impl<'env> ScopeRef<'env> {
     }
 
     fn runtime(&self) -> &ScopeRuntime {
-        unsafe { &*self.runtime }
+        &self.runtime
     }
 }
 
@@ -126,13 +126,13 @@ struct Task {
     data: *mut (),
     run_fn: unsafe fn(*mut ()),
     drop_fn: unsafe fn(*mut ()),
-    runtime: *const ScopeRuntime,
+    runtime: Arc<ScopeRuntime>,
 }
 
 unsafe impl Send for Task {}
 
 impl Task {
-    fn new<W>(work: W, runtime: *const ScopeRuntime) -> Self
+    fn new<W>(work: W, runtime: Arc<ScopeRuntime>) -> Self
     where
         W: Fn() + Send,
     {
@@ -186,7 +186,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
             }
         };
 
-        let runtime = unsafe { &*task.runtime };
+        let runtime = Arc::clone(&task.runtime);
         let result = catch_unwind(AssertUnwindSafe(|| unsafe { task.run() }));
         if let Err(err) = result {
             runtime.record_panic(err);
@@ -261,11 +261,11 @@ impl BasicPool {
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        let runtime = ScopeRuntime::new();
+        let runtime = Arc::new(ScopeRuntime::new());
 
         let scope_ref = ScopeRef {
             shared: Arc::as_ptr(&self.inner.shared),
-            runtime: &runtime,
+            runtime: Arc::clone(&runtime),
             _marker: PhantomData,
         };
 
@@ -310,7 +310,7 @@ impl ParThreadPool for BasicPool {
     {
         s.runtime().begin_task();
 
-        let task = Task::new(work, s.runtime());
+        let task = Task::new(work, Arc::clone(&s.runtime));
         {
             let mut state = s.shared().state.lock().expect("poisoned pool lock");
             state.queue.push_back(task);
