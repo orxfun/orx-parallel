@@ -10,10 +10,10 @@ pub fn run(root: &Node) {
         r#"# COLLECTION ON ENTIRE TREE
         
 // orx_rec: recursive
-[root].into_par_rec(|node| &node.children).map(compute).collect()
+    par_recursive([root], |node| &node.children).map(compute).collect()
 
 // orx_rec_linearized: recursive to linearize, then regular parallel iter
-let linearized: Vec<_> = [root].into_par_rec(|node| &node.children).collect();
+    let linearized: Vec<_> = par_recursive([root], |node| &node.children).collect();
 linearized.into_par().map(compute).collect()
     "#
     );
@@ -79,8 +79,7 @@ fn rayon(root: &Node) -> Vec<u64> {
 
 /// # orx-parallel: parallel recursive iterator
 fn orx_rec(root: &Node) -> Vec<u64> {
-    [root]
-        .into_par_rec(|node| &node.children)
+    par_recursive([root], |node| &node.children)
         .map(compute)
         .collect()
 }
@@ -90,6 +89,6 @@ fn orx_rec(root: &Node) -> Vec<u64> {
 /// Alternatively, we can collect children in a vector and then perform
 /// parallel computation on linearized inputs.
 fn orx_rec_linearized(root: &Node) -> Vec<u64> {
-    let linearized: Vec<_> = [root].into_par_rec(|node| &node.children).collect();
+    let linearized: Vec<_> = par_recursive([root], |node| &node.children).collect();
     linearized.into_par().map(compute).collect()
 }
