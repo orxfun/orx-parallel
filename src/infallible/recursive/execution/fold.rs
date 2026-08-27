@@ -44,9 +44,9 @@ where
         .map(|_| Local::<X::I, B>::new(init()))
         .collect();
 
-    let mut outer: Vec<_> = iter.into_iter().collect();
+    let mut inputs: Vec<_> = iter.into_iter().collect();
 
-    let par = outer.par_drain(..).runner(&mut runner);
+    let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
     par.for_each(|u, i| {
@@ -56,10 +56,10 @@ where
             f(&mut u.fold, i);
         }
     });
-    utils::into_outer_par(&mut outer, &mut data, |x| &mut x.input, &mut runner);
+    utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
 
-    while !outer.is_empty() {
-        let par = outer.par_drain(..).runner(&mut runner);
+    while !inputs.is_empty() {
+        let par = inputs.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data);
 
         par.for_each(|u, i| {
@@ -69,7 +69,7 @@ where
                 f(&mut u.fold, i);
             }
         });
-        utils::into_outer_par(&mut outer, &mut data, |x| &mut x.input, &mut runner);
+        utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
     }
 
     data.into_iter().map(|x| x.fold).collect()
