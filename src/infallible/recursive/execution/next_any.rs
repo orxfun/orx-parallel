@@ -40,7 +40,7 @@ where
         true => result,
         false => {
             let len = data.iter().map(|x| x.len()).sum();
-            utils::into_outer(&mut outer, len, &mut data);
+            utils::inputs_into_outer(&mut outer, len, &mut data);
 
             while !outer.is_empty() {
                 let par = outer.par_drain(..).runner(&mut runner);
@@ -58,7 +58,7 @@ where
                 }
 
                 let len = data.iter().map(|x| x.len()).sum();
-                utils::into_outer(&mut outer, len, &mut data);
+                utils::inputs_into_outer(&mut outer, len, &mut data);
             }
 
             None

@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+mod collect;
 mod collect_arb;
 mod fold;
 mod next_any;

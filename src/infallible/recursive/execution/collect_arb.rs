@@ -23,7 +23,7 @@ pub fn collect_arb<R, C, X, I, E>(
     iter: C,
     xap: X,
     extend: E,
-) -> Vec<Vec<X::O>>
+) -> Vec<X::O>
 where
     R: ParRunner,
     C: IntoIterator,
@@ -39,6 +39,7 @@ where
     let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
 
     let mut outer: Vec<_> = iter.into_iter().collect();
+    let mut result = Vec::new();
 
     let par = outer.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
@@ -48,7 +49,10 @@ where
         u.output.extend(xap.xap(i));
     });
     let len = data.iter().map(|x| x.input.len()).sum();
-    utils::into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
+    utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
+
+    let len = data.iter().map(|x| x.output.len()).sum();
+    utils::outputs_into_outer(&mut result, len, data.iter_mut().map(|x| &mut x.output));
 
     while !outer.is_empty() {
         let par = outer.par_drain(..).runner(&mut runner);
@@ -60,8 +64,11 @@ where
         });
 
         let len = data.iter().map(|x| x.input.len()).sum();
-        utils::into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
+        utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
+
+        let len = data.iter().map(|x| x.output.len()).sum();
+        utils::outputs_into_outer(&mut result, len, data.iter_mut().map(|x| &mut x.output));
     }
 
-    data.into_iter().map(|x| x.output).collect()
+    result
 }

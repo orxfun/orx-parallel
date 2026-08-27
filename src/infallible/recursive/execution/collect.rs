@@ -3,46 +3,40 @@ use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
-struct Local<I, B> {
+struct Local<I, O> {
     input: Vec<I>,
-    fold: B,
+    output: Vec<O>,
 }
 
-impl<I, B> Local<I, B> {
-    fn new(init: B) -> Self {
+impl<I, O> Local<I, O> {
+    fn new() -> Self {
         Self {
             input: Default::default(),
-            fold: init,
+            output: Default::default(),
         }
     }
 }
 
-pub fn fold<R, C, X, B, Id, F, I, E>(
+pub fn collect_arb<R, C, X, I, E>(
     mut runner: R,
     params: Params,
     iter: C,
     xap: X,
     extend: E,
-    init: Id,
-    f: F,
-) -> Vec<B>
+) -> Vec<Vec<X::O>>
 where
     R: ParRunner,
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
     E: Fn(&X::I) -> I + Send + Sync,
-    B: Send + Sync,
-    Id: Fn() -> B + Sync,
-    F: Fn(&mut B, X::O) + Copy + Send + Sync,
+    X::O: Send + Sync,
     X::I: Send + Sync,
 {
     let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
-    let mut data: Vec<_> = (0..max_threads)
-        .map(|_| Local::<X::I, B>::new(init()))
-        .collect();
+    let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
 
     let mut outer: Vec<_> = iter.into_iter().collect();
 
@@ -51,10 +45,7 @@ where
 
     par.for_each(|u, i| {
         u.input.extend(extend(&i));
-
-        for i in xap.xap(i) {
-            f(&mut u.fold, i);
-        }
+        u.output.extend(xap.xap(i));
     });
     let len = data.iter().map(|x| x.input.len()).sum();
     utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
@@ -65,15 +56,12 @@ where
 
         par.for_each(|u, i| {
             u.input.extend(extend(&i));
-
-            for i in xap.xap(i) {
-                f(&mut u.fold, i);
-            }
+            u.output.extend(xap.xap(i));
         });
 
         let len = data.iter().map(|x| x.input.len()).sum();
         utils::inputs_into_outer(&mut outer, len, data.iter_mut().map(|x| &mut x.input));
     }
 
-    data.into_iter().map(|x| x.fold).collect()
+    data.into_iter().map(|x| x.output).collect()
 }
