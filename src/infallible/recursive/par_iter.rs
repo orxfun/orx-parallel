@@ -231,8 +231,8 @@ where
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         let values = match params.iteration_order {
-            IterationOrder::Ordered => execution::collect_arb(exe, params, iter, x, extend),
-            IterationOrder::Arbitrary => execution::collect(exe, params, iter, x, extend),
+            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
+            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
         };
         C::extend_from_vec(dst, values);
     }
@@ -245,8 +245,8 @@ where
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         let values = match params.iteration_order {
-            IterationOrder::Ordered => execution::collect_arb(exe, params, iter, x, extend),
-            IterationOrder::Arbitrary => execution::collect(exe, params, iter, x, extend),
+            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
+            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
         };
         C::create_from_vec(values)
     }
