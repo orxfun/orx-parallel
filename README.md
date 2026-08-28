@@ -239,22 +239,30 @@ For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfu
 - exactly one use-variable per worker thread
 - minimized and deterministic allocation behavior for stateful workloads
 
+For example, rather than allocating a new `String` for every element, we can reuse one scratch buffer per worker thread:
+
 ```rust
 use orx_parallel::*;
 
-struct ThreadData {
-    sum: usize,
-}
+let words = vec![" Hello ", "WORLD", "  ", "Rust", " PARALLEL "];
 
-// define how to create thread-local variables
-let mut data = UseVec::new(|_th_idx| ThreadData { sum: 0 });
+// one reusable scratch buffer per thread, instead of allocating for every element
+let mut buffers = UseVec::new(|_th_idx| String::new());
 
-(0..100_000)
-    .par() // ← mutably lend it to parallel iterator
-    .use_vec(&mut data)
-    .for_each(|d, x| d.sum += x); // ← d: &mut ThreadData
+let total_len: usize = words
+    .par()
+    .use_vec(&mut buffers) // ← mutably lend it to parallel iterator
+    .map(|buf, w| { // ← buf: &mut String, reused across elements on this thread
+        buf.clear();
+        buf.push_str(w.trim());
+        buf.make_ascii_lowercase();
+        buf.clone()
+    })
+    .filter(|_, w| !w.is_empty()) // ← still `use`-aware, but buf is not needed here
+    .map(|_, w| w.len())
+    .sum();
 
-let results: Vec<ThreadData> = data.into_vec(); // ← get created vars back
+assert_eq!(total_len, "hello".len() + "world".len() + "rust".len() + "parallel".len());
 ```
 
 For practical use cases, please see [`use_transformation.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md).
