@@ -106,6 +106,7 @@ impl Runner {
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
+    #[cfg(feature = "std")]
     pub fn adaptive_with_pool<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
         AdaptiveChunkRunner::new(pool)
     }
