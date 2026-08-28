@@ -196,7 +196,7 @@ use orx_parallel::*;
 let runner = Runner::adaptive_with_pool(MyPool::new());
 let sum = (0..1000)
     .par()
-    .runner(runner) // ← using Adaptive runner with my pool
+    .runner(runner) // ← using adaptive runner with my pool
     .sum();
 ```
 
@@ -208,8 +208,8 @@ Scheduling is abstracted by [`ParRunner`](https://docs.rs/orx-parallel/latest/or
 
 Built-in runners:
 
-- `Runner::fixed()`: fixed chunking strategy (default in `no-std` builds)
 - `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
+- `Runner::fixed()`: pre-computed fixed chunking strategy (default in `no-std` builds)
 
 ```rust
 use orx_parallel::*; // assume default features used: ["std"]
@@ -228,14 +228,9 @@ let sum: usize = (0..10_000)
 assert_eq!(sum, (1..=10_000).sum());
 ```
 
-You may also implement your own `ParRunner`, either for a specific workload or to explore different scheduling tradeoffs more generally.
+You may also implement your own `ParRunner`, either to tune a specific workload or to explore different scheduling ideas.
 
 For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/parallel_runner.md).
-
-This separation makes it easy to:
-
-- tune per-workload execution behavior
-- prototype custom runners and benchmark new scheduling ideas
 
 ## Use Transformations: Safe Mutable Per-Thread State
 
