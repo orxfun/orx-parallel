@@ -19,7 +19,6 @@ extern crate std;
 
 mod collectables;
 mod common_par_traits;
-mod experimental_sort;
 /// Core module for infallible computations.
 pub mod infallible;
 mod infallible_use;
@@ -35,10 +34,10 @@ mod result_use;
 mod results;
 mod runner;
 mod sizes;
+mod sort;
 mod use_var;
 
 pub use collectables::{ParCollectInto, Vec2};
-pub use experimental_sort::par_experimental_sort;
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
@@ -65,3 +64,7 @@ pub use use_var::{Use, UseVec};
 /// Initializes the browser's shared wasm thread pool.
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pool::init_wasm_parallel_runtime;
+
+// experimental
+#[cfg(feature = "experimental")]
+pub use sort::par_experimental_sort;
