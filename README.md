@@ -229,7 +229,6 @@ assert_eq!(sum, (1..=10_000).sum());
 ```
 
 You may also implement your own `ParRunner`, either to tune a specific workload or to explore different scheduling ideas.
-
 For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/parallel_runner.md).
 
 ## Use Transformations: Safe Mutable Per-Thread State
@@ -238,7 +237,7 @@ For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfu
 
 - no unsafe code in application-level iterator logic
 - exactly one use-variable per worker thread
-- predictable allocation behavior for stateful workloads
+- minimized and deterministic allocation behavior for stateful workloads
 
 ```rust
 use orx_parallel::*;
