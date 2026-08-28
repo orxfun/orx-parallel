@@ -244,25 +244,24 @@ For example, rather than allocating a new `String` for every element, we can reu
 ```rust
 use orx_parallel::*;
 
-let words = vec![" Hello ", "WORLD", "  ", "Rust", " PARALLEL "];
+let words = vec!["Love Rust ", " Hello WORLD", "?"];
 
 // one reusable scratch buffer per thread, instead of allocating for every element
 let mut buffers = UseVec::new(|_th_idx| String::new());
 
-let total_len: usize = words
+let greetings: Vec<String> = words
     .par()
     .use_vec(&mut buffers) // ← mutably lend it to parallel iterator
-    .map(|buf, w| { // ← buf: &mut String, reused across elements on this thread
-        buf.clear();
+    .filter_map(|buf, w| {
+        buf.clear(); // ← buf: &mut String, reused across elements on this thread
         buf.push_str(w.trim());
         buf.make_ascii_lowercase();
-        buf.clone()
+        buf.find(' ')
     })
-    .filter(|_, w| !w.is_empty()) // ← still `use`-aware, but buf is not needed here
-    .map(|_, w| w.len())
-    .sum();
+    .map(|buf, space_idx| buf.chars().skip(space_idx + 1).collect())
+    .collect();
 
-assert_eq!(total_len, "hello".len() + "world".len() + "rust".len() + "parallel".len());
+assert_eq!(greetings, ["rust", "world"]);
 ```
 
 For practical use cases, please see [`use_transformation.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md).
