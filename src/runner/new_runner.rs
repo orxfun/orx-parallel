@@ -60,8 +60,10 @@ impl Runner {
     /// ```
     /// use orx_parallel::*;
     ///
-    /// let pool = Pool::basic(4);
-    /// let par = (0..100).par().runner(Runner::fixed_with_pool(pool));
+    /// let par = (0..100).par();
+    ///
+    /// #[cfg(feature = "std")]
+    /// let par = par.runner(Runner::fixed_with_pool(Pool::basic(4)));
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
