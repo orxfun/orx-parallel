@@ -19,6 +19,7 @@ extern crate std;
 
 mod collectables;
 mod common_par_traits;
+mod experimental_sort;
 /// Core module for infallible computations.
 pub mod infallible;
 mod infallible_use;
@@ -37,6 +38,7 @@ mod sizes;
 mod use_var;
 
 pub use collectables::{ParCollectInto, Vec2};
+pub use experimental_sort::par_experimental_sort;
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
