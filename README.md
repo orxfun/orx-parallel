@@ -319,6 +319,8 @@ Parallel runner strategies are open for research and improvement. You can start 
 
 A useful workflow is to run the tests in this repository and use the [`orx-parallel-benchmarks`](https://github.com/orxfun/orx-parallel-benchmarks) repository to measure the performance impact. Benchmark manifests can point to your own branch; to benchmark your runner as the default, update the `DefaultRunner` alias and `default_runner()` wiring in [`src/runner/mod.rs`](https://github.com/orxfun/orx-parallel/blob/main/src/runner/mod.rs) on that branch. You can also use the benchmark repository as a template for measuring your own specific computation.
 
+### New Parallelizable Collection
+
 If there is an input type or collection you would like to parallelize, please open an issue. Collection-specific support can often be added by implementing the appropriate `ConcurrentIter` integration in the collection crate.
 
 ## License
