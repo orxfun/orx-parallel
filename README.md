@@ -14,7 +14,7 @@ The crate focuses on practical parallelization through a convenient iterator API
 * recursive traversal on non-linear data,
 * WebAssembly support,
 * determinism,
-* customizable runner strategies to support experimentation and advanced tuning.
+* customizable runner strategies to enable experimentation and advanced tuning.
 
 ## Parallelization with Iterator Ergonomics
 
@@ -80,20 +80,17 @@ Any regular iterator can be parallelized with `iter_into_par()`.
 ```rust
 use orx_parallel::*;
 
-fn par_compute(inputs: impl IntoIterator<Item = u64>) -> u64 {
+fn par_compute(inputs: impl Iterator<Item = u64>) -> u64 {
     inputs
-        .into_iter()
         .iter_into_par() // ← parallelization over arbitrary iterator
         .filter(|x| !x.is_multiple_of(7))
         .sum()
 }
 
-assert_eq!(par_compute(0..100), 4215);
+let numbers = vec![4, 2, 9, 14, 1];
+assert_eq!(par_compute(numbers.iter().copied()), 16);
 
-assert_eq!(par_compute(vec![4, 2, 9, 14, 1]), 16);
-
-let source: Vec<u64> = (0..100).collect();
-let iter = source.iter().copied().filter(|x| !x.is_power_of_two());
+let iter = (0u64..100).filter(|x| !x.is_power_of_two());
 assert_eq!(par_compute(iter), 4088);
 ```
 
