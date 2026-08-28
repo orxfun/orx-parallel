@@ -4,7 +4,7 @@
 [![orx-parallel crate](https://img.shields.io/crates/d/orx-parallel.svg)](https://crates.io/crates/orx-parallel)
 [![orx-parallel documentation](https://docs.rs/orx-parallel/badge.svg)](https://docs.rs/orx-parallel)
 
-Expressive, performant and convenient parallel computations with an iterator API.
+Performant parallel computations with an expressive iterator API.
 
 The crate focuses on practical parallelization through a convenient iterator API, with support for:
 
