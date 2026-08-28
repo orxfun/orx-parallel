@@ -311,6 +311,12 @@ You can also use the benchmark repository as a starting point for measuring your
 
 Contributions are welcome! If you notice an error, have a question or think something could be improved, please open an [issue](https://github.com/orxfun/orx-parallel/issues/new) or create a PR.
 
+### Experimental Features
+
+The crate provides an `experimental` feature flag for new capabilities that are actively under development and optimization work. For example, `par_experimental_sort` is a parallel slice sorting implementation currently undergoing evaluation and tuning. Contributions, alternative algorithm designs, performance optimizations, and benchmarks for experimental features are very welcome!
+
+### Research & Runner Development
+
 Parallel runner strategies are open for research and improvement. You can start by looking at the current [`adaptive`](https://github.com/orxfun/orx-parallel/tree/main/src/runner/runner_variants/adaptive_chunk) and [`fixed`](https://github.com/orxfun/orx-parallel/tree/main/src/runner/runner_variants/fixed_chunk) runners, then experiment with a new `ParRunner` implementation.
 
 A useful workflow is to run the tests in this repository and use the [`orx-parallel-benchmarks`](https://github.com/orxfun/orx-parallel-benchmarks) repository to measure the performance impact. Benchmark manifests can point to your own branch; to benchmark your runner as the default, update the `DefaultRunner` alias and `default_runner()` wiring in [`src/runner/mod.rs`](https://github.com/orxfun/orx-parallel/blob/main/src/runner/mod.rs) on that branch. You can also use the benchmark repository as a template for measuring your own specific computation.
