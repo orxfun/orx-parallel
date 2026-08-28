@@ -112,7 +112,7 @@ This broad path is generic, rather than being optimized for a specific collectio
 
 ### 3. Extensible via concurrent iterator abstractions
 
-`orx-parallel` builds on concurrent iterator traits from `orx-concurrent-iter`.
+`orx-parallel` builds on concurrent iterator traits from [`orx-concurrent-iter`](https://github.com/orxfun/orx-concurrent-iter/).
 If a collection provides a suitable concurrent iterator implementation (for example `IntoConcurrentIter` / `ConcurrentIterable`), it can integrate naturally with `orx-parallel`.
 
 In practice, this means collection-specific parallelization can live in the collection crate itself, where internals are available for optimized implementations. If you need help with a `ConcurrentIter` implementation, please open an issue.
@@ -172,7 +172,7 @@ The pool's scheduling strategy is usually less important than the work being per
 
 If your application performs only occasional parallel computations and should not retain worker threads between them, enable the `transient-pool` feature. This selects `OncePool`, which spawns the required threads just before a computation and joins them immediately after. The tradeoff is the cost of thread creation and cleanup on each parallel operation.
 
-> Consider a parallel computation of `W` tasks to be executed by `N` threads. The number of thread `spawn` calls in `OncePool` is `N`, regardless of how large `W` is.
+> Consider a parallel computation of *W* tasks to be executed by *N* threads. The number of thread `spawn` calls in `OncePool` is *N*, regardless of how large *W* is.
 
 In addition, you can conveniently tune the thread count for each individual computation:
 
