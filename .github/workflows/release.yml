@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - Rust
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-plz
+  cancel-in-progress: false
+
+jobs:
+  release-pr:
+    name: Create or update release PR
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: release-plz/action@v0.5
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish release
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_commit.message, 'chore: release v')
+    runs-on: ubuntu-latest
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Check out verified release commit
+        run: git reset --hard ${{ github.event.workflow_run.head_sha }}
+      - uses: release-plz/action@v0.5
+        with:
+          command: release
+          token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
