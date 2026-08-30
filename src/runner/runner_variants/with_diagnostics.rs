@@ -41,6 +41,10 @@ impl<R: ParRunner> ParRunner for WithDiagnostics<R> {
         StateWithDiagnostics::new(max_num_threads, inner)
     }
 
+    fn configure_for_serialized_input(state: &mut Self::State, size_hint: (usize, Option<usize>)) {
+        R::configure_for_serialized_input(&mut state.inner, size_hint);
+    }
+
     fn begin_thread(state: &Self::State, th_idx: usize) {
         state.thread_lifetimes.begin(th_idx);
         R::begin_thread(&state.inner, th_idx);

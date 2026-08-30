@@ -4,6 +4,7 @@ use super::state::State;
 use crate::parameters::{ChunkSize, Params};
 use crate::pool::ParThreadPool;
 use crate::runner::par_runner::ParRunner;
+use crate::runner::runner_variants::fixed_chunk::heuristic;
 
 #[derive(Clone)]
 pub struct AdaptiveChunkRunner<P: ParThreadPool> {
@@ -66,6 +67,12 @@ impl<P: ParThreadPool> ParRunner for AdaptiveChunkRunner<P> {
             fixed_chunk_size,
             initial_len,
         )
+    }
+
+    fn configure_for_serialized_input(state: &mut Self::State, size_hint: (usize, Option<usize>)) {
+        let chunk_size =
+            heuristic::compute_chunk_size(ChunkSize::Auto, size_hint, state.max_num_threads);
+        state.set_fixed_chunk_size(chunk_size);
     }
 
     #[inline(always)]

@@ -23,7 +23,8 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 .map(|(idx, val)| ValIdx::new(val, idx)),
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let (max_nt, state) =
+                    self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, x) = (&iter, &state, &results_bag, x);
@@ -58,7 +59,8 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 .next(),
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let (max_nt, state) =
+                    self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, x) = (&iter, &state, &results_bag, x);
@@ -94,7 +96,8 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 .reduce(f),
             _ => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let (max_nt, state) =
+                    self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, x) = (&iter, &state, &results_bag, x);
@@ -132,7 +135,8 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
             }
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let (max_nt, state) =
+                    self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results) = (&iter, &state, &results_bag);
@@ -168,7 +172,8 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
             ],
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), None);
+                let (max_nt, state) =
+                    self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results) = (&iter, &state, &results_bag);
@@ -208,7 +213,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
         };
 
         let mut spawned = 0;
-        let (_, state) = self.nt_state(params, iter.size_hint(), None);
+        let (_, state) = self.nt_state(params, &iter, iter.size_hint(), None);
 
         let (iter, st, bag) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {
