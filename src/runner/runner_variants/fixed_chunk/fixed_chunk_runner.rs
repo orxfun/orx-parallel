@@ -48,6 +48,12 @@ impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
         }
     }
 
+    fn configure_for_serialized_input(
+        _state: &mut Self::State,
+        _size_hint: (usize, Option<usize>),
+    ) {
+    }
+
     #[inline(always)]
     fn begin_thread(_: &Self::State, _: usize) {}
 

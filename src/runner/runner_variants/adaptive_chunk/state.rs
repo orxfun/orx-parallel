@@ -62,6 +62,11 @@ impl State {
         self.mode.complete_exploration();
     }
 
+    pub(super) fn set_fixed_chunk_size(&self, chunk_size: usize) {
+        self.chosen_chunk_size.store(chunk_size, Ordering::Relaxed);
+        self.mode.complete_exploration();
+    }
+
     pub(super) fn record_chunk(&self, chunk_state: ChunkState) {
         let elapsed_ns = chunk_state.elapsed_ns();
         let items = chunk_state.requested_chunk_size.max(1);

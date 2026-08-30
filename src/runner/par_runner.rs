@@ -38,6 +38,8 @@ pub trait ParRunner: Sized + Sync {
         size_hint: (usize, Option<usize>),
     ) -> Self::State;
 
+    fn configure_for_serialized_input(state: &mut Self::State, size_hint: (usize, Option<usize>));
+
     fn begin_thread(state: &Self::State, th_idx: usize);
 
     /// Returns the next chunk size to be pulled from the input with remaining length
@@ -64,6 +66,7 @@ pub trait ParRunner: Sized + Sync {
     fn nt_state(
         &mut self,
         params: Params,
+        is_source_serialized: bool,
         size_hint: (usize, Option<usize>),
         computation_max_nt: Option<usize>,
     ) -> (usize, Self::State) {
@@ -77,7 +80,10 @@ pub trait ParRunner: Sized + Sync {
             _ => max_nt,
         };
 
-        let state = self.new_state(params, max_nt, size_hint);
+        let mut state = self.new_state(params, max_nt, size_hint);
+        if is_source_serialized {
+            Self::configure_for_serialized_input(&mut state, size_hint);
+        }
         (max_nt, state)
     }
 
@@ -141,5 +147,9 @@ impl<P: ParRunner> ParRunner for &mut P {
 
     fn complete_computation(state: Self::State) {
         <P as ParRunner>::complete_computation(state);
+    }
+
+    fn configure_for_serialized_input(state: &mut Self::State, size_hint: (usize, Option<usize>)) {
+        <P as ParRunner>::configure_for_serialized_input(state, size_hint);
     }
 }

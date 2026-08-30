@@ -48,7 +48,12 @@ pub trait ParRunnerUseRes: ParRunner {
             }
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -108,7 +113,12 @@ pub trait ParRunnerUseRes: ParRunner {
             }
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -173,7 +183,12 @@ pub trait ParRunnerUseRes: ParRunner {
             }
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 {
@@ -233,7 +248,12 @@ pub trait ParRunnerUseRes: ParRunner {
             }
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
@@ -290,7 +310,12 @@ pub trait ParRunnerUseRes: ParRunner {
             }
             false => {
                 let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(params, iter.size_hint(), u.max_threads());
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
