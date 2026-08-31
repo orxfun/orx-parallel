@@ -1,3 +1,4 @@
+use alloc::vec;
 use alloc::vec::Vec;
 
 /// A dedicated 2D collection target for parallel `.collect()` operations.
@@ -42,5 +43,28 @@ impl<T> From<Vec<Vec<T>>> for Vec2<T> {
 impl<T> From<Vec2<T>> for Vec<Vec<T>> {
     fn from(value: Vec2<T>) -> Self {
         value.inner
+    }
+}
+
+impl<T> FromIterator<T> for Vec2<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self {
+            inner: vec![iter.into_iter().collect()],
+        }
+    }
+}
+
+impl<T> Extend<T> for Vec2<T> {
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        self.inner.push(iter.into_iter().collect());
+    }
+}
+
+impl<T> IntoIterator for Vec2<T> {
+    type Item = T;
+    type IntoIter = core::iter::Flatten<alloc::vec::IntoIter<Vec<T>>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.into_iter().flatten()
     }
 }

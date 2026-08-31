@@ -1,3 +1,4 @@
+use crate::collectables::Collectable;
 use crate::infallible::{ParIter, Xap};
 use crate::runner::ParRunner;
 use alloc::vec::Vec;
@@ -27,6 +28,10 @@ pub trait ColIntoInf<T>: Sized {
     fn extend_from_vec(dst: &mut Self, values: Vec<T>);
 
     fn create_from_vec(values: Vec<T>) -> Self;
+
+    // newcol
+
+    // type ColArbSrc: Collectable<T>;
 
     fn inf_arb_col_into_x<I, X, R, D>(dst: &mut Self, par: ParIter<I, X, R>)
     where

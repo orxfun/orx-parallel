@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Recursive, SplitVec};
 
-impl<T> ColIntoInf<T> for SplitVec<T, Recursive> {
+impl<T: Send> ColIntoInf<T> for SplitVec<T, Recursive> {
     fn new_empty() -> Self {
         Self::with_recursive_growth()
     }

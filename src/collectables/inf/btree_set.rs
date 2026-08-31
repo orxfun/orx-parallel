@@ -7,7 +7,7 @@ use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<T> ColIntoInf<T> for BTreeSet<T> {
+impl<T: Send> ColIntoInf<T> for BTreeSet<T> {
     fn new_empty() -> Self {
         Self::new()
     }
@@ -48,4 +48,8 @@ impl<T> ColIntoInf<T> for BTreeSet<T> {
     fn create_from_vec(values: Vec<T>) -> Self {
         todo!()
     }
+
+    // newcol
+
+    // type ColArbSrc = alloc::vec::Vec<T>;
 }

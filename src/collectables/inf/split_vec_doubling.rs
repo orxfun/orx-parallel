@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Doubling, SplitVec};
 
-impl<T> ColIntoInf<T> for SplitVec<T, Doubling> {
+impl<T: Send> ColIntoInf<T> for SplitVec<T, Doubling> {
     fn new_empty() -> Self {
         Self::with_doubling_growth()
     }

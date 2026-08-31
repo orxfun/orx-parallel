@@ -6,7 +6,7 @@ use crate::runner::ParRunner;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<T> ColIntoInf<T> for Vec<T> {
+impl<T: Send> ColIntoInf<T> for Vec<T> {
     fn new_empty() -> Self {
         Self::new()
     }

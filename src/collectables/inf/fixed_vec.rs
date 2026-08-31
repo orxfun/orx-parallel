@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
-impl<T> ColIntoInf<T> for FixedVec<T> {
+impl<T: Send> ColIntoInf<T> for FixedVec<T> {
     fn new_empty() -> Self {
         Self::new(0)
     }

@@ -9,7 +9,7 @@ where
     X: Xap<I = I::Item>,
     D: Collectable<X::O>,
 {
-    let mut collected = D::default();
+    let mut collected = D::col_empty();
     let vec = &mut collected;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);

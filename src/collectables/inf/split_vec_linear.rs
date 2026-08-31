@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_split_vec::{Linear, SplitVec};
 
-impl<T> ColIntoInf<T> for SplitVec<T, Linear> {
+impl<T: Send> ColIntoInf<T> for SplitVec<T, Linear> {
     fn new_empty() -> Self {
         Self::with_linear_growth(10)
     }
