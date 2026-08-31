@@ -183,7 +183,10 @@ fn inf_for_each() {
         input
             .par()
             .for_each(|x| _ = total_len.fetch_add(x.len(), Ordering::Relaxed));
-        assert_eq!(total_len.into_inner(), input.iter().map(|x| x.len()).sum());
+        assert_eq!(
+            total_len.into_inner(),
+            input.iter().map(|x| x.len()).sum::<usize>()
+        );
     }
 }
 
@@ -269,7 +272,11 @@ fn inf_sum() {
         let result = input.par().filter(|x| x.len() > 1).map(|x| x.len()).sum();
         assert_eq!(
             result,
-            input.iter().filter(|x| x.len() > 1).map(|x| x.len()).sum()
+            input
+                .iter()
+                .filter(|x| x.len() > 1)
+                .map(|x| x.len())
+                .sum::<usize>()
         );
     }
 }
