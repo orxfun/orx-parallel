@@ -1,5 +1,7 @@
 use crate::collectables::Collectable;
-use crate::infallible::{ParIter, Xap};
+use crate::collectables::alg::merge_collected::merge_arb;
+use crate::infallible::ParRunnerInfallible;
+use crate::infallible::{ParCore, ParIter, Xap};
 use crate::runner::ParRunner;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
@@ -39,6 +41,10 @@ pub trait ColIntoInf<T>: Sized {
         X: Xap<I = I::Item, O = T>,
         R: ParRunner,
         T: Send,
+        Self: Collectable<T>,
     {
+        let (iter, x, mut exe, params) = par.destruct();
+        let results = exe.collect_arb::<_, _, Self::ColArbSrc>(params, iter, x);
+        merge_arb(results, dst);
     }
 }

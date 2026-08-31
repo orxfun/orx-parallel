@@ -58,16 +58,4 @@ impl<T: Send> ColIntoInf<T> for SplitVec<T, Recursive> {
     // newcol
 
     type ColArbSrc = alloc::vec::Vec<T>;
-
-    fn inf_arb_col_into_x<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send,
-    {
-        let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb::<_, _, Self::ColArbSrc>(params, iter, x);
-        merge_arb(results, dst);
-    }
 }
