@@ -1,3 +1,4 @@
+use crate::collectables::Collectable;
 use crate::infallible::Xap;
 use crate::option::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};
@@ -227,29 +228,30 @@ pub trait ParRunnerOpt: ParRunner {
         }
     }
 
-    fn collect_arb<I, M, X1, X2, S>(
+    fn collect_arb<I, M, X1, X2, S, D>(
         &mut self,
         sizes: S,
         params: Params,
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Option<Vec<Vec<X2::O>>>
+    ) -> Option<Vec<D>>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Option<M>>,
         X2: Xap<I = M>,
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
+        D: Collectable<X2::O>,
     {
         match params.is_sequential() {
             true => {
                 let iter = iter
                     .into_seq_iter()
                     .flat_map(|i| S::xap_opt(x1, x2, i).into_iter());
-                let mut values = vec![];
+                let mut values = D::col_empty();
                 for maybe in iter {
-                    values.push(maybe?);
+                    values.col_push(maybe?);
                 }
                 Some(vec![values])
             }
@@ -265,7 +267,7 @@ pub trait ParRunnerOpt: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect_arb::<Self, _, _, _, _, _>(
+                            let value = th::collect_arb::<Self, _, _, _, _, _, D>(
                                 sizes, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);

@@ -11,6 +11,8 @@ pub trait Collectable<O>: IntoIterator<Item = O> + Send {
 
     fn col_reserve(&mut self, additional: usize);
 
+    fn col_push(&mut self, elem: O);
+
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>);
 }
 
@@ -31,6 +33,10 @@ impl<O: Send> Collectable<O> for alloc::vec::Vec<O> {
 
     fn col_reserve(&mut self, additional: usize) {
         self.reserve(additional);
+    }
+
+    fn col_push(&mut self, elem: O) {
+        self.push(elem);
     }
 
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
@@ -54,6 +60,10 @@ impl<O: Send + Ord> Collectable<O> for alloc::collections::BTreeSet<O> {
     }
 
     fn col_reserve(&mut self, _additional: usize) {}
+
+    fn col_push(&mut self, elem: O) {
+        self.insert(elem);
+    }
 
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
         self.extend(iter);
@@ -79,6 +89,13 @@ impl<O: Send> Collectable<O> for Vec2<O> {
 
     fn col_reserve(&mut self, _: usize) {}
 
+    fn col_push(&mut self, elem: O) {
+        match self.inner.last_mut() {
+            Some(x) => x.push(elem),
+            None => self.inner.push(alloc::vec![elem]),
+        }
+    }
+
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
         self.extend(iter);
     }
@@ -101,6 +118,10 @@ impl<O: Send> Collectable<O> for SplitVec<O, Doubling> {
 
     fn col_reserve(&mut self, _additional: usize) {}
 
+    fn col_push(&mut self, elem: O) {
+        self.push(elem);
+    }
+
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
         self.extend(iter);
     }
@@ -122,6 +143,10 @@ impl<O: Send> Collectable<O> for SplitVec<O, Recursive> {
     }
 
     fn col_reserve(&mut self, _additional: usize) {}
+
+    fn col_push(&mut self, elem: O) {
+        self.push(elem);
+    }
 
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
         self.append(iter.into_iter().collect::<alloc::vec::Vec<_>>());
@@ -146,6 +171,10 @@ impl<O: Send> Collectable<O> for SplitVec<O, Linear> {
     }
 
     fn col_reserve(&mut self, _additional: usize) {}
+
+    fn col_push(&mut self, elem: O) {
+        self.push(elem);
+    }
 
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
         self.extend(iter);

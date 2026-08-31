@@ -1,24 +1,24 @@
 use crate::runner::ParRunner;
-use crate::{infallible::Xap, sizes::SizePair};
-use alloc::vec::Vec;
+use crate::{collectables::Collectable, infallible::Xap, sizes::SizePair};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_arb<Q, I, M, X1, X2, S>(
+pub fn collect_arb<Q, I, M, X1, X2, S, D>(
     _: S,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Option<Vec<X2::O>>
+) -> Option<D>
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Option<M>>,
     X2: Xap<I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    D: Collectable<X2::O>,
 {
-    let mut collected = Vec::new();
+    let mut collected = D::col_empty();
     let vec = &mut collected;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
@@ -32,7 +32,7 @@ where
                 Some(i) => {
                     for a in S::xap_opt(x1, x2, i) {
                         match a {
-                            Some(a) => vec.push(a),
+                            Some(a) => vec.col_push(a),
                             None => {
                                 Q::broadcast_stop(iter, state, chunk_state);
                                 return None;
@@ -50,7 +50,7 @@ where
                     Some(chunk) => {
                         for a in chunk.flat_map(|i| S::xap_opt(x1, x2, i)) {
                             match a {
-                                Some(a) => vec.push(a),
+                                Some(a) => vec.col_push(a),
                                 None => {
                                     Q::broadcast_stop(iter, state, chunk_state);
                                     return None;

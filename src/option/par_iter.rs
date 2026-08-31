@@ -297,7 +297,10 @@ where
     {
         match self.params.iteration_order {
             IterationOrder::Ordered => C::opt_col_into(dst, self),
-            IterationOrder::Arbitrary => C::opt_arb_col_into(dst, self),
+            IterationOrder::Arbitrary => {
+                todo!()
+                // C::opt_arb_col_into(dst, self)
+            }
         }
     }
 
@@ -309,7 +312,10 @@ where
         let mut dst = C::new_empty();
         match self.params.iteration_order {
             IterationOrder::Ordered => C::opt_col_into(&mut dst, self),
-            IterationOrder::Arbitrary => C::opt_arb_col_into(&mut dst, self),
+            IterationOrder::Arbitrary => {
+                todo!()
+                // C::opt_arb_col_into(&mut dst, self)
+            }
         }
         .map(|_| dst)
     }

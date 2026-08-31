@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 use orx_fixed_vec::FixedVec;
 
-impl<T> ColIntoOpt<T> for FixedVec<T> {
+impl<T: Send> ColIntoOpt<T> for FixedVec<T> {
     fn opt_col_into<I, M, X1, X2, S, R>(
         dst: &mut Self,
         par: ParOptionIter<I, M, X1, X2, S, R>,
@@ -23,19 +23,4 @@ impl<T> ColIntoOpt<T> for FixedVec<T> {
         <Vec<T> as ColIntoOpt<T>>::opt_col_into(dst, par)
     }
 
-    fn opt_arb_col_into<I, M, X1, X2, S, R>(
-        dst: &mut Self,
-        par: ParOptionIter<I, M, X1, X2, S, R>,
-    ) -> Option<()>
-    where
-        I: ConcurrentIter,
-        X1: Xap<I = I::Item, O = Option<M>>,
-        X2: Xap<I = M, O = T>,
-        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-        R: ParRunnerOpt,
-        T: Send,
-    {
-        let dst = dst.as_mut_vec();
-        <Vec<T> as ColIntoOpt<T>>::opt_arb_col_into(dst, par)
-    }
 }
