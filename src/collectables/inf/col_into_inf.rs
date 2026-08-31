@@ -27,4 +27,13 @@ pub trait ColIntoInf<T>: Sized {
     fn extend_from_vec(dst: &mut Self, values: Vec<T>);
 
     fn create_from_vec(values: Vec<T>) -> Self;
+
+    fn inf_arb_col_into_x<I, X, R, D>(dst: &mut Self, par: ParIter<I, X, R>)
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+    }
 }

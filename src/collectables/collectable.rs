@@ -1,17 +1,25 @@
 pub trait Collectable<O>:
     Extend<O> + Default + FromIterator<O> + IntoIterator<Item = O> + Send
 {
-    fn len(&self) -> usize;
+    fn col_len(&self) -> usize;
+
+    fn col_reserve(&mut self, additional: usize);
 }
 
 impl<O: Send> Collectable<O> for alloc::vec::Vec<O> {
-    fn len(&self) -> usize {
-        alloc::vec::Vec::len(self)
+    fn col_len(&self) -> usize {
+        self.len()
+    }
+
+    fn col_reserve(&mut self, additional: usize) {
+        self.reserve(additional);
     }
 }
 
 impl<O: Send + Ord> Collectable<O> for alloc::collections::BTreeSet<O> {
-    fn len(&self) -> usize {
-        alloc::collections::BTreeSet::len(self)
+    fn col_len(&self) -> usize {
+        self.len()
     }
+
+    fn col_reserve(&mut self, _additional: usize) {}
 }
