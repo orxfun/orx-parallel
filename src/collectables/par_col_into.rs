@@ -1,6 +1,6 @@
 use crate::collectables::{
-    Vec2, inf::ColIntoInf, inf_use::ColIntoInfUse, opt::ColIntoOpt, opt_use::ColIntoOptUse,
-    res::ColIntoRes, res_use::ColIntoResUse,
+    Collectable, Vec2, inf::ColIntoInf, inf_use::ColIntoInfUse, opt::ColIntoOpt,
+    opt_use::ColIntoOptUse, res::ColIntoRes, res_use::ColIntoResUse,
 };
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
@@ -18,6 +18,7 @@ pub trait ParCollectInto<T>:
     + ColIntoInfUse<T>
     + ColIntoResUse<T>
     + ColIntoOptUse<T>
+    + Collectable<T>
 {
 }
 

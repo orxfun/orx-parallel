@@ -200,10 +200,7 @@ where
     {
         match self.params.iteration_order {
             IterationOrder::Ordered => C::inf_col_into(dst, self),
-            IterationOrder::Arbitrary => {
-                todo!()
-                //  C::inf_arb_col_into_x(dst, self)
-            }
+            IterationOrder::Arbitrary => C::inf_arb_col_into(dst, self),
         }
     }
 

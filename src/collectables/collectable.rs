@@ -1,4 +1,5 @@
 use crate::Vec2;
+use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{Doubling, Linear, Recursive, SplitVec};
 
@@ -98,6 +99,37 @@ impl<O: Send> Collectable<O> for Vec2<O> {
 
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
         self.extend(iter);
+    }
+}
+
+// fixed-vec
+
+impl<O: Send> Collectable<O> for FixedVec<O> {
+    fn col_empty() -> Self {
+        Self::new(0)
+    }
+
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self {
+        iter.into_iter().collect()
+    }
+
+    fn col_len(&self) -> usize {
+        self.len()
+    }
+
+    fn col_reserve(&mut self, _additional: usize) {
+        // TODO: waiting for https://github.com/orxfun/orx-fixed-vec/issues/56 to be resolved
+    }
+
+    fn col_push(&mut self, elem: O) {
+        self.push(elem);
+    }
+
+    fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
+        for x in iter {
+            self.push(x);
+        }
+        // TODO: waiting for https://github.com/orxfun/orx-fixed-vec/issues/55 to be resolved
     }
 }
 
