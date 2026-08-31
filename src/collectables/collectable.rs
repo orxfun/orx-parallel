@@ -117,8 +117,8 @@ impl<O: Send> Collectable<O> for FixedVec<O> {
         self.len()
     }
 
-    fn col_reserve(&mut self, _additional: usize) {
-        // TODO: waiting for https://github.com/orxfun/orx-fixed-vec/issues/56 to be resolved
+    fn col_reserve(&mut self, additional: usize) {
+        self.as_mut_vec().reserve(additional);
     }
 
     fn col_push(&mut self, elem: O) {
@@ -126,10 +126,7 @@ impl<O: Send> Collectable<O> for FixedVec<O> {
     }
 
     fn col_extend(&mut self, iter: impl IntoIterator<Item = O>) {
-        for x in iter {
-            self.push(x);
-        }
-        // TODO: waiting for https://github.com/orxfun/orx-fixed-vec/issues/55 to be resolved
+        self.as_mut_vec().extend(iter);
     }
 }
 
