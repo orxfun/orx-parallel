@@ -24,6 +24,6 @@ where
     let total_len: usize = results.iter().map(|x| x.col_len()).sum();
     dst.col_reserve(total_len);
     for vec in results {
-        dst.extend(vec);
+        dst.col_extend(vec);
     }
 }

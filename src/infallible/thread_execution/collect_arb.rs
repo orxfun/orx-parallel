@@ -20,7 +20,7 @@ where
 
         match chunk_size {
             0 | 1 => match iter.next_by(th_idx) {
-                Some(i) => vec.extend(x.xap(i)),
+                Some(i) => vec.col_extend(x.xap(i)),
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
             },
@@ -28,7 +28,7 @@ where
                 chunk_puller.resize_for_chunk_size(c);
 
                 match chunk_puller.pull() {
-                    Some(chunk) => vec.extend(chunk.flat_map(|i| x.xap(i))),
+                    Some(chunk) => vec.col_extend(chunk.flat_map(|i| x.xap(i))),
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
                 }
