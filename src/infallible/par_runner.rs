@@ -1,3 +1,4 @@
+use crate::collectables::Collectable;
 use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
 use crate::results::{Val, ValIdx, ValsAndIdx};
@@ -158,11 +159,12 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
         }
     }
 
-    fn collect_arb<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<Vec<X::O>>
+    fn collect_arb<I, X, D>(&mut self, params: Params, iter: I, x: X) -> Vec<D>
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
+        D: Collectable<X::O>,
     {
         match params.is_sequential() {
             true => vec![
@@ -182,7 +184,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect_arb::<Self, _, _, _>(th_idx, st, iter, x);
+                            let value = th::collect_arb::<Self, _, _, D>(th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
                         });
