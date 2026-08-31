@@ -213,7 +213,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
         };
 
         let mut spawned = 0;
-        let (_, state) = self.nt_state(params, &iter, iter.size_hint(), None);
+        let (_, state) = self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
 
         let (iter, st, bag) = (&iter, &state, &results_bag);
         self.pool_mut().scoped_computation(move |s| {

@@ -64,7 +64,7 @@ impl ParThreadPool for &rayon_core::ThreadPool {
 #[cfg(all(
     feature = "std",
     feature = "persistent-pool-rayon",
-    not(feature = "wasm"),
+    not(all(feature = "wasm", target_arch = "wasm32")),
 ))]
 pub fn build_default_rayon_thread_pool() -> rayon_core::ThreadPool {
     let num_threads = crate::pool::env::max_num_threads_by_env_and_resource();
