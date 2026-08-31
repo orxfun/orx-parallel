@@ -11,6 +11,7 @@ mod opt_use;
 mod par_col_into;
 mod res;
 mod res_use;
+mod vals_and_idx;
 mod vec2;
 
 pub use collectable::Collectable;
