@@ -5,7 +5,7 @@ use orx_fixed_vec::FixedVec;
 use orx_pinned_vec::PinnedVec;
 use orx_split_vec::{Doubling, Linear, PseudoDefault, SplitVec};
 
-pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug + Ord>:
+pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug + Ord + Send>:
     ParCollectInto<T> + Clone + PartialEq + Debug + Sized
 {
     fn empty() -> Self;
@@ -57,7 +57,7 @@ pub trait ParCollectIntoTest<T: Clone + PartialEq + Debug + Ord>:
     }
 }
 
-impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for FixedVec<T> {
+impl<T: Clone + PartialEq + Debug + Ord + Send> ParCollectIntoTest<T> for FixedVec<T> {
     fn empty() -> Self {
         Self::new(12345)
     }
@@ -71,7 +71,7 @@ impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for FixedVec<T> {
     }
 }
 
-impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for SplitVec<T, Doubling> {
+impl<T: Clone + PartialEq + Debug + Ord + Send> ParCollectIntoTest<T> for SplitVec<T, Doubling> {
     fn empty() -> Self {
         Self::with_doubling_growth()
     }
@@ -85,7 +85,7 @@ impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for SplitVec<T, D
     }
 }
 
-impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for SplitVec<T, Linear> {
+impl<T: Clone + PartialEq + Debug + Ord + Send> ParCollectIntoTest<T> for SplitVec<T, Linear> {
     fn empty() -> Self {
         Self::with_linear_growth(6)
     }
@@ -99,7 +99,7 @@ impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for SplitVec<T, L
     }
 }
 
-impl<T: Clone + PartialEq + Debug + Ord> ParCollectIntoTest<T> for Vec<T> {
+impl<T: Clone + PartialEq + Debug + Ord + Send> ParCollectIntoTest<T> for Vec<T> {
     fn empty() -> Self {
         PseudoDefault::pseudo_default()
     }
