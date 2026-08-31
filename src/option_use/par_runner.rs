@@ -1,5 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 
+use crate::collectables::Collectable;
 use crate::infallible_use::XapUse;
 use crate::option_use::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};
@@ -271,7 +272,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         }
     }
 
-    fn collect_arb<U, I, M, X1, X2, S>(
+    fn collect_arb<U, I, M, X1, X2, S, D>(
         &mut self,
         sizes: S,
         params: Params,
@@ -279,7 +280,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Option<Vec<Vec<X2::O>>>
+    ) -> Option<Vec<D>>
     where
         U: Use,
         I: ConcurrentIter,
@@ -287,6 +288,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         X2: XapUse<U = U::Item, I = M>,
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
+        D: Collectable<X2::O>,
     {
         match params.is_sequential() {
             true => {
@@ -294,9 +296,9 @@ pub trait ParRunnerUseOpt: ParRunner {
                 let iter = iter
                     .into_seq_iter()
                     .flat_map(|i| S::xap_use_opt(u, x1, x2, i).into_iter());
-                let mut values = vec![];
+                let mut values = D::col_empty();
                 for maybe in iter {
-                    values.push(maybe?);
+                    values.col_push(maybe?);
                 }
                 Some(vec![values])
             }
@@ -317,7 +319,7 @@ pub trait ParRunnerUseOpt: ParRunner {
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
                             let u = u.init_get(th_idx);
-                            let value = th::collect_arb::<Self, _, _, _, _, _, _>(
+                            let value = th::collect_arb::<Self, _, _, _, _, _, _, D>(
                                 sizes, u, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);
