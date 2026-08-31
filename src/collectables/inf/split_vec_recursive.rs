@@ -54,4 +54,8 @@ impl<T: Send> ColIntoInf<T> for SplitVec<T, Recursive> {
         vec.append(values);
         vec
     }
+
+    // newcol
+
+    type ColArbSrc = alloc::vec::Vec<T>;
 }

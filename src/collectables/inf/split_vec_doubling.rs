@@ -52,4 +52,8 @@ impl<T: Send> ColIntoInf<T> for SplitVec<T, Doubling> {
     fn create_from_vec(values: Vec<T>) -> Self {
         values.into_iter().collect()
     }
+
+    // newcol
+
+    type ColArbSrc = alloc::vec::Vec<T>;
 }

@@ -48,4 +48,8 @@ impl<T: Send> ColIntoInf<T> for FixedVec<T> {
     fn create_from_vec(values: Vec<T>) -> Self {
         values.into()
     }
+
+    // newcol
+
+    type ColArbSrc = alloc::vec::Vec<T>;
 }

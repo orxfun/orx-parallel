@@ -31,9 +31,9 @@ pub trait ColIntoInf<T>: Sized {
 
     // newcol
 
-    // type ColArbSrc: Collectable<T>;
+    type ColArbSrc: Collectable<T>;
 
-    fn inf_arb_col_into_x<I, X, R, D>(dst: &mut Self, par: ParIter<I, X, R>)
+    fn inf_arb_col_into_x<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item, O = T>,

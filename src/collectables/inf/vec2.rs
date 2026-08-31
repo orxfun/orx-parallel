@@ -55,4 +55,8 @@ impl<T: Send> ColIntoInf<T> for Vec2<T> {
         vec.inner.push(values);
         vec
     }
+
+    // newcol
+
+    type ColArbSrc = alloc::vec::Vec<T>;
 }

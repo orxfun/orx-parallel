@@ -51,5 +51,5 @@ impl<T: Send> ColIntoInf<T> for BTreeSet<T> {
 
     // newcol
 
-    // type ColArbSrc = alloc::vec::Vec<T>;
+    type ColArbSrc = alloc::vec::Vec<T>;
 }
