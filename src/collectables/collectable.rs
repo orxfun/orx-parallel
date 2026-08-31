@@ -1,7 +1,11 @@
 use crate::Vec2;
+use orx_pinned_vec::PinnedVec;
+use orx_split_vec::{Doubling, Linear, Recursive, SplitVec};
 
-pub trait Collectable<O>: Extend<O> + FromIterator<O> + IntoIterator<Item = O> + Send {
+pub trait Collectable<O>: Extend<O> + IntoIterator<Item = O> + Send {
     fn col_empty() -> Self;
+
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self;
 
     fn col_len(&self) -> usize;
 
@@ -13,6 +17,10 @@ pub trait Collectable<O>: Extend<O> + FromIterator<O> + IntoIterator<Item = O> +
 impl<O: Send> Collectable<O> for alloc::vec::Vec<O> {
     fn col_empty() -> Self {
         Self::new()
+    }
+
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self {
+        iter.into_iter().collect()
     }
 
     fn col_len(&self) -> usize {
@@ -31,6 +39,10 @@ impl<O: Send + Ord> Collectable<O> for alloc::collections::BTreeSet<O> {
         Self::new()
     }
 
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self {
+        iter.into_iter().collect()
+    }
+
     fn col_len(&self) -> usize {
         self.len()
     }
@@ -47,9 +59,69 @@ impl<O: Send> Collectable<O> for Vec2<O> {
         }
     }
 
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self {
+        iter.into_iter().collect()
+    }
+
     fn col_len(&self) -> usize {
         self.inner.iter().map(|x| x.len()).sum()
     }
 
     fn col_reserve(&mut self, _: usize) {}
+}
+
+// split-vec - doubling
+
+impl<O: Send> Collectable<O> for SplitVec<O, Doubling> {
+    fn col_empty() -> Self {
+        Self::with_doubling_growth()
+    }
+
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self {
+        iter.into_iter().collect()
+    }
+
+    fn col_len(&self) -> usize {
+        self.len()
+    }
+
+    fn col_reserve(&mut self, _additional: usize) {}
+}
+
+// split-vec - recursive
+
+impl<O: Send> Collectable<O> for SplitVec<O, Recursive> {
+    fn col_empty() -> Self {
+        Self::with_recursive_growth()
+    }
+
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self {
+        iter.into_iter().collect()
+    }
+
+    fn col_len(&self) -> usize {
+        self.len()
+    }
+
+    fn col_reserve(&mut self, _additional: usize) {}
+}
+
+// split-vec - linear
+
+impl<O: Send> Collectable<O> for SplitVec<O, Linear> {
+    fn col_empty() -> Self {
+        Self::with_linear_growth(10)
+    }
+
+    fn col_from_iter(iter: impl IntoIterator<Item = O>) -> Self {
+        let mut vec = Self::col_empty();
+        vec.extend(iter);
+        vec
+    }
+
+    fn col_len(&self) -> usize {
+        self.len()
+    }
+
+    fn col_reserve(&mut self, _additional: usize) {}
 }

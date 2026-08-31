@@ -52,4 +52,15 @@ impl<T: Send> ColIntoInf<T> for FixedVec<T> {
     // newcol
 
     type ColArbSrc = alloc::vec::Vec<T>;
+
+    fn inf_arb_col_into_x<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+        let dst = dst.as_mut_vec();
+        <Vec<T> as ColIntoInf<T>>::inf_arb_col_into_x(dst, par);
+    }
 }

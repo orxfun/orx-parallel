@@ -1,4 +1,6 @@
-use crate::collectables::alg::merge_collected::{merge_arb_into_vec, merge_ord_into_vec};
+use crate::collectables::alg::merge_collected::{
+    merge_arb, merge_arb_into_vec, merge_ord_into_vec,
+};
 use crate::collectables::inf::ColIntoInf;
 use crate::infallible::ParRunnerInfallible;
 use crate::infallible::{ParCore, ParIter, Xap};
@@ -7,7 +9,7 @@ use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use orx_concurrent_iter::ConcurrentIter;
 
-impl<T: Send> ColIntoInf<T> for BTreeSet<T> {
+impl<T: Send + Ord> ColIntoInf<T> for BTreeSet<T> {
     fn new_empty() -> Self {
         Self::new()
     }
@@ -51,5 +53,17 @@ impl<T: Send> ColIntoInf<T> for BTreeSet<T> {
 
     // newcol
 
-    type ColArbSrc = alloc::vec::Vec<T>;
+    type ColArbSrc = BTreeSet<T>;
+
+    fn inf_arb_col_into_x<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+        let (iter, x, mut exe, params) = par.destruct();
+        let results = exe.collect_arb::<_, _, Self::ColArbSrc>(params, iter, x);
+        merge_arb(results, dst);
+    }
 }

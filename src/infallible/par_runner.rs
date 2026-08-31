@@ -167,11 +167,9 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
         D: Collectable<X::O>,
     {
         match params.is_sequential() {
-            true => vec![
-                iter.into_seq_iter()
-                    .flat_map(|i| x.xap(i).into_iter())
-                    .collect(),
-            ],
+            true => vec![D::col_from_iter(
+                iter.into_seq_iter().flat_map(|i| x.xap(i).into_iter()),
+            )],
             false => {
                 let mut spawned = 0;
                 let (max_nt, state) =

@@ -2,6 +2,7 @@ use crate::collectables::{
     Vec2, inf::ColIntoInf, inf_use::ColIntoInfUse, opt::ColIntoOpt, opt_use::ColIntoOptUse,
     res::ColIntoRes, res_use::ColIntoResUse,
 };
+use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use orx_fixed_vec::FixedVec;
 use orx_split_vec::{Doubling, Linear, Recursive, SplitVec};
@@ -31,3 +32,5 @@ impl<T: Send> ParCollectInto<T> for SplitVec<T, Recursive> {}
 impl<T: Send> ParCollectInto<T> for Vec<T> {}
 
 impl<T: Send> ParCollectInto<T> for Vec2<T> {}
+
+// impl<T: Send + Ord> ParCollectInto<T> for BTreeSet<T> {}
