@@ -1,3 +1,4 @@
+use crate::collectables::alg::merge_collected::Collect;
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::Xap;
 use crate::infallible::par_core::ParCore;
@@ -200,7 +201,11 @@ where
     {
         match self.params.iteration_order {
             IterationOrder::Ordered => C::inf_col_into(dst, self),
-            IterationOrder::Arbitrary => C::inf_arb_col_into(dst, self),
+            IterationOrder::Arbitrary => {
+                let (iter, x, mut exe, params) = self.destruct();
+                let results = exe.collect_arb::<_, _, C::ThreadColArb>(params, iter, x);
+                Collect::merge_results_arb(results, dst);
+            }
         }
     }
 

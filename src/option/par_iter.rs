@@ -1,4 +1,5 @@
 use crate::ParCollectInto;
+use crate::collectables::alg::merge_collected::{Collect, merge_arb};
 use crate::common_par_traits::ParOptCommon;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::option::ParOptionCore;
@@ -297,7 +298,12 @@ where
     {
         match self.params.iteration_order {
             IterationOrder::Ordered => C::opt_col_into(dst, self),
-            IterationOrder::Arbitrary => C::opt_arb_col_into(dst, self),
+            IterationOrder::Arbitrary => {
+                let (iter, x1, x2, mut exe, s, params) = self.destruct();
+                let results =
+                    exe.collect_arb::<_, _, _, _, _, C::ThreadColArb>(s, params, iter, x1, x2);
+                results.map(|results| Collect::merge_results_arb(results, dst))
+            }
         }
     }
 

@@ -1,4 +1,5 @@
 use crate::ParCollectInto;
+use crate::collectables::alg::merge_collected::Collect;
 use crate::common_par_traits::ParResCommon;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
@@ -342,7 +343,13 @@ where
     {
         match self.params.iteration_order {
             IterationOrder::Ordered => C::res_use_col_into(dst, self),
-            IterationOrder::Arbitrary => C::res_use_arb_col_into(dst, self),
+            IterationOrder::Arbitrary => {
+                let (u, iter, x1, x2, mut exe, s, params) = self.destruct();
+                let results = exe.collect_arb::<_, _, _, _, _, _, _, C::ThreadColArb>(
+                    s, params, u, iter, x1, x2,
+                );
+                results.map(|results| Collect::merge_results_arb(results, dst))
+            }
         }
     }
 
