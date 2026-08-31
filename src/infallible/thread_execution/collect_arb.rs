@@ -1,15 +1,15 @@
-use crate::infallible::xap::Xap;
 use crate::runner::ParRunner;
-use alloc::vec::Vec;
+use crate::{collectables::Collectable, infallible::xap::Xap};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_arb<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> Vec<X::O>
+pub fn collect_arb<Q, I, X, D>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> D
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
+    D: Collectable<X::O>,
 {
-    let mut collected = Vec::new();
+    let mut collected = D::default();
     let vec = &mut collected;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);

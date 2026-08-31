@@ -182,7 +182,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect_arb::<Self, _, _>(th_idx, st, iter, x);
+                            let value = th::collect_arb::<Self, _, _, _>(th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
                         });
