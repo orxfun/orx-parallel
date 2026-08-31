@@ -18,6 +18,7 @@ where
     X1: XapUse<U = U, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U, I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    X2::O: Send,
 {
     let mut collected = ValsAndIdx::new();
     let out = &mut collected;

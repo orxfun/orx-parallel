@@ -7,6 +7,7 @@ where
     Q: ParRunner,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
+    X::O: Send,
 {
     let mut collected = ValsAndIdx::new();
     let out = &mut collected;

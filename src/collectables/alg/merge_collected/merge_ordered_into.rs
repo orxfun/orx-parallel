@@ -22,7 +22,7 @@ impl VecPos {
 // vec
 
 // TODO: performance: this method can be parallelized by pairwise merging
-pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: &mut Vec<T>) {
+pub fn merge_ord_into_vec<T: Send>(mut results: Vec<ValsAndIdx<T>>, dst: &mut Vec<T>) {
     let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
     dst.reserve(collected_len);
     let initial_len = dst.len();
@@ -67,7 +67,7 @@ pub fn merge_ord_into_vec<T>(mut results: Vec<ValsAndIdx<T>>, dst: &mut Vec<T>) 
 // splitvec
 
 // TODO: performance: this method can be parallelized by pairwise merging
-pub fn merge_ord_into_split_vec<T, G: Growth + PseudoDefault>(
+pub fn merge_ord_into_split_vec<T: Send, G: Growth + PseudoDefault>(
     mut results: Vec<ValsAndIdx<T>>,
     dst: &mut SplitVec<T, G>,
 ) {

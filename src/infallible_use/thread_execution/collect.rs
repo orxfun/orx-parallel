@@ -14,6 +14,7 @@ where
     Q: ParRunner,
     I: ConcurrentIter,
     X: XapUse<U = U, I = I::Item>,
+    X::O: Send,
 {
     let mut collected = ValsAndIdx::new();
     let out = &mut collected;
