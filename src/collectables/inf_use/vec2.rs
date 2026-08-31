@@ -22,17 +22,4 @@ impl<T> ColIntoInfUse<T> for Vec2<T> {
         merge_ord_into_vec(results, &mut ordered);
         dst.inner.push(ordered);
     }
-
-    fn inf_use_arb_col_into<U, I, X, R>(dst: &mut Self, par: ParUseIter<U, I, X, R>)
-    where
-        U: Use,
-        I: ConcurrentIter,
-        X: XapUse<U = U::Item, I = I::Item, O = T>,
-        R: ParRunnerInfallibleUse,
-        T: Send,
-    {
-        let (u, iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb(params, u, iter, x);
-        dst.inner.extend(results);
-    }
 }
