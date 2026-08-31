@@ -16,13 +16,6 @@ pub trait ColIntoInf<T>: Sized {
         R: ParRunner,
         T: Send;
 
-    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send;
-
     fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
     where
         T: Send;
@@ -33,7 +26,7 @@ pub trait ColIntoInf<T>: Sized {
 
     // newcol
 
-    type ColArbSrc: Collectable<T>;
+    type ThreadColArb: Collectable<T>;
 
     fn inf_arb_col_into_x<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
     where
@@ -44,7 +37,7 @@ pub trait ColIntoInf<T>: Sized {
         Self: Collectable<T>,
     {
         let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb::<_, _, Self::ColArbSrc>(params, iter, x);
+        let results = exe.collect_arb::<_, _, Self::ThreadColArb>(params, iter, x);
         merge_arb(results, dst);
     }
 }

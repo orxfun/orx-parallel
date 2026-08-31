@@ -26,16 +26,6 @@ impl<T: Send + Ord> ColIntoInf<T> for BTreeSet<T> {
         todo!()
     }
 
-    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send,
-    {
-        todo!()
-    }
-
     fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
     where
         T: Send,
@@ -53,5 +43,5 @@ impl<T: Send + Ord> ColIntoInf<T> for BTreeSet<T> {
 
     // newcol
 
-    type ColArbSrc = BTreeSet<T>;
+    type ThreadColArb = BTreeSet<T>;
 }

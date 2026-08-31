@@ -25,18 +25,6 @@ impl<T: Send> ColIntoInf<T> for Vec<T> {
         merge_ord_into_vec(results, dst);
     }
 
-    fn inf_arb_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item, O = T>,
-        R: ParRunner,
-        T: Send,
-    {
-        let (iter, x, mut exe, params) = par.destruct();
-        let results = exe.collect_arb(params, iter, x);
-        merge_arb_into_vec(results, dst);
-    }
-
     fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
     where
         T: Send,
@@ -54,5 +42,5 @@ impl<T: Send> ColIntoInf<T> for Vec<T> {
 
     // newcol
 
-    type ColArbSrc = Vec<T>;
+    type ThreadColArb = Vec<T>;
 }
