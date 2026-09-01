@@ -1,5 +1,5 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::vec::VecAndPositions;
+use crate::collectables::par_extend_impl::col_and_pos::ColAndPos;
 use alloc::{vec, vec::Vec};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 #[test]
 fn extend_from_ordered_thread_results_empty() {
     let mut vec: Vec<i32> = Vec::new();
-    let results: Vec<VecAndPositions<i32>> = Vec::new();
+    let results: Vec<ColAndPos<Vec<i32>>> = Vec::new();
 
     vec.extend_from_ordered_thread_results(results);
     assert!(vec.is_empty());
@@ -16,8 +16,8 @@ fn extend_from_ordered_thread_results_empty() {
 #[test]
 fn extend_from_ordered_thread_results_empty_threads() {
     let mut vec: Vec<i32> = vec![1, 2, 3];
-    let t0 = VecAndPositions::<i32>::default();
-    let t1 = VecAndPositions::<i32>::default();
+    let t0 = ColAndPos::<Vec<i32>>::default();
+    let t1 = ColAndPos::<Vec<i32>>::default();
 
     vec.extend_from_ordered_thread_results(vec![t0, t1]);
     assert_eq!(vec, vec![1, 2, 3]);
@@ -26,7 +26,7 @@ fn extend_from_ordered_thread_results_empty_threads() {
 #[test]
 fn extend_from_ordered_thread_results_single_thread_single_chunk() {
     let mut vec = Vec::new();
-    let mut t0 = VecAndPositions::default();
+    let mut t0 = ColAndPos::default();
 
     Vec::add_ordered_thread_values(&mut t0, 0, vec![10, 20, 30]);
 
@@ -37,7 +37,7 @@ fn extend_from_ordered_thread_results_single_thread_single_chunk() {
 #[test]
 fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     let mut vec = Vec::new();
-    let mut t0 = VecAndPositions::default();
+    let mut t0 = ColAndPos::default();
 
     Vec::add_ordered_thread_values(&mut t0, 0, vec![1, 2]);
     Vec::add_ordered_thread_value(&mut t0, 1, 3);
@@ -50,8 +50,8 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
 #[test]
 fn extend_from_ordered_thread_results_multiple_threads_in_order() {
     let mut vec = Vec::new();
-    let mut t0 = VecAndPositions::default();
-    let mut t1 = VecAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
 
     Vec::add_ordered_thread_values(&mut t0, 0, vec![1, 2]);
     Vec::add_ordered_thread_values(&mut t0, 2, vec![5, 6]);
@@ -66,9 +66,9 @@ fn extend_from_ordered_thread_results_multiple_threads_in_order() {
 #[test]
 fn extend_from_ordered_thread_results_interleaved_threads() {
     let mut vec = Vec::new();
-    let mut t0 = VecAndPositions::default();
-    let mut t1 = VecAndPositions::default();
-    let mut t2 = VecAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
+    let mut t2 = ColAndPos::default();
 
     // t0 has chunks 3 and 5
     Vec::add_ordered_thread_values(&mut t0, 3, vec![7, 8]);
@@ -89,8 +89,8 @@ fn extend_from_ordered_thread_results_interleaved_threads() {
 #[test]
 fn extend_from_ordered_thread_results_append_to_non_empty_vec() {
     let mut vec = vec![100, 200];
-    let mut t0 = VecAndPositions::default();
-    let mut t1 = VecAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
 
     Vec::add_ordered_thread_value(&mut t0, 0, 1);
     Vec::add_ordered_thread_value(&mut t1, 1, 2);
@@ -102,7 +102,7 @@ fn extend_from_ordered_thread_results_append_to_non_empty_vec() {
 #[test]
 fn extend_from_ordered_thread_results_empty_iterators_ignored() {
     let mut vec = Vec::new();
-    let mut t0 = VecAndPositions::default();
+    let mut t0 = ColAndPos::default();
 
     // Empty iterator added should not create a chunk
     Vec::add_ordered_thread_values(&mut t0, 0, Vec::<i32>::new());
@@ -124,8 +124,8 @@ fn extend_from_ordered_thread_results_non_copy_drop() {
 
     let drop_count = Arc::new(AtomicUsize::new(0));
 
-    let mut t0 = VecAndPositions::default();
-    let mut t1 = VecAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
 
     Vec::add_ordered_thread_value(&mut t0, 0, DropCounter(drop_count.clone()));
     Vec::add_ordered_thread_value(&mut t1, 1, DropCounter(drop_count.clone()));
@@ -149,9 +149,8 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
     let num_threads = 8;
     let chunks_per_thread = 10;
 
-    let mut thread_results: Vec<VecAndPositions<(usize, usize)>> = (0..num_threads)
-        .map(|_| VecAndPositions::default())
-        .collect();
+    let mut thread_results: Vec<ColAndPos<Vec<(usize, usize)>>> =
+        (0..num_threads).map(|_| ColAndPos::default()).collect();
 
     for chunk_idx in 0..chunks_per_thread {
         for (t_idx, thread_res) in thread_results.iter_mut().enumerate() {

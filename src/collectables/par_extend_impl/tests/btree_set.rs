@@ -1,12 +1,12 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::btree_set::SetAndPositions;
+use crate::collectables::par_extend_impl::col_and_pos::ColAndPos;
 use alloc::collections::BTreeSet;
 use alloc::{vec, vec::Vec};
 
 #[test]
 fn extend_from_ordered_thread_results_empty() {
     let mut set: BTreeSet<i32> = BTreeSet::new();
-    let results: Vec<SetAndPositions<i32>> = Vec::new();
+    let results: Vec<ColAndPos<BTreeSet<i32>>> = Vec::new();
 
     set.extend_from_ordered_thread_results(results);
     assert!(set.is_empty());
@@ -15,8 +15,8 @@ fn extend_from_ordered_thread_results_empty() {
 #[test]
 fn extend_from_ordered_thread_results_empty_threads() {
     let mut set: BTreeSet<i32> = BTreeSet::from([1, 2, 3]);
-    let t0 = SetAndPositions::<i32>::default();
-    let t1 = SetAndPositions::<i32>::default();
+    let t0 = ColAndPos::<BTreeSet<i32>>::default();
+    let t1 = ColAndPos::<BTreeSet<i32>>::default();
 
     set.extend_from_ordered_thread_results(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3]);
@@ -26,7 +26,7 @@ fn extend_from_ordered_thread_results_empty_threads() {
 #[test]
 fn extend_from_ordered_thread_results_single_thread_single_chunk() {
     let mut set = BTreeSet::new();
-    let mut t0 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
 
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![10, 20, 30]);
 
@@ -38,7 +38,7 @@ fn extend_from_ordered_thread_results_single_thread_single_chunk() {
 #[test]
 fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     let mut set = BTreeSet::new();
-    let mut t0 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
 
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![1, 2]);
     BTreeSet::add_ordered_thread_value(&mut t0, 1, 3);
@@ -52,8 +52,8 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
 #[test]
 fn extend_from_ordered_thread_results_multiple_threads_in_order() {
     let mut set = BTreeSet::new();
-    let mut t0 = SetAndPositions::default();
-    let mut t1 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
 
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![1, 2]);
     BTreeSet::add_ordered_thread_values(&mut t0, 2, vec![5, 6]);
@@ -69,9 +69,9 @@ fn extend_from_ordered_thread_results_multiple_threads_in_order() {
 #[test]
 fn extend_from_ordered_thread_results_interleaved_threads() {
     let mut set = BTreeSet::new();
-    let mut t0 = SetAndPositions::default();
-    let mut t1 = SetAndPositions::default();
-    let mut t2 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
+    let mut t2 = ColAndPos::default();
 
     // t0 has chunks 3 and 5
     BTreeSet::add_ordered_thread_values(&mut t0, 3, vec![7, 8]);
@@ -93,8 +93,8 @@ fn extend_from_ordered_thread_results_interleaved_threads() {
 #[test]
 fn extend_from_ordered_thread_results_append_to_non_empty_set() {
     let mut set = BTreeSet::from([100, 200]);
-    let mut t0 = SetAndPositions::default();
-    let mut t1 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
 
     BTreeSet::add_ordered_thread_value(&mut t0, 0, 1);
     BTreeSet::add_ordered_thread_value(&mut t1, 1, 2);
@@ -107,7 +107,7 @@ fn extend_from_ordered_thread_results_append_to_non_empty_set() {
 #[test]
 fn extend_from_ordered_thread_results_empty_iterators_ignored() {
     let mut set = BTreeSet::new();
-    let mut t0 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
 
     // Empty iterator added should not create a chunk
     BTreeSet::add_ordered_thread_values(&mut t0, 0, Vec::<i32>::new());
@@ -123,9 +123,8 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
     let mut set = BTreeSet::new();
     let num_threads = 8;
     let chunks_per_thread = 10;
-    let mut thread_results: Vec<SetAndPositions<i32>> = (0..num_threads)
-        .map(|_| SetAndPositions::default())
-        .collect();
+    let mut thread_results: Vec<ColAndPos<BTreeSet<i32>>> =
+        (0..num_threads).map(|_| ColAndPos::default()).collect();
 
     for chunk_idx in 0..(num_threads * chunks_per_thread) {
         let t = chunk_idx % num_threads;
@@ -143,7 +142,7 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
 #[test]
 fn extend_from_ordered_thread_results_duplicate_values_within_thread() {
     let mut set = BTreeSet::new();
-    let mut t0 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
 
     // Add duplicate values within the same chunk and across chunks of the same thread
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![5, 5, 10, 5]);
@@ -160,9 +159,9 @@ fn extend_from_ordered_thread_results_duplicate_values_within_thread() {
 #[test]
 fn extend_from_ordered_thread_results_duplicate_values_across_threads() {
     let mut set = BTreeSet::new();
-    let mut t0 = SetAndPositions::default();
-    let mut t1 = SetAndPositions::default();
-    let mut t2 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
+    let mut t2 = ColAndPos::default();
 
     // Chunk 0 on t1, Chunk 1 on t0, Chunk 2 on t2, Chunk 3 on t0
     BTreeSet::add_ordered_thread_values(&mut t1, 0, vec![10, 20, 30]);
@@ -180,8 +179,8 @@ fn extend_from_ordered_thread_results_duplicate_values_across_threads() {
 #[test]
 fn extend_from_ordered_thread_results_duplicate_values_with_existing_elements() {
     let mut set = BTreeSet::from([20, 40, 60]);
-    let mut t0 = SetAndPositions::default();
-    let mut t1 = SetAndPositions::default();
+    let mut t0 = ColAndPos::default();
+    let mut t1 = ColAndPos::default();
 
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![10, 20, 30]);
     BTreeSet::add_ordered_thread_values(&mut t1, 1, vec![40, 50, 60]);

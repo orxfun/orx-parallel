@@ -1,11 +1,12 @@
 use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_impl::{col_and_pos::ColAndPos, idx_len::IdxLen};
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
 impl<T> ParExtend<T> for Vec<T> {
     type ThreadValues = Self;
 
-    type OrderedThreadValues = VecAndPositions<T>;
+    type OrderedThreadValues = ColAndPos<Vec<T>>;
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
         collected.push(value);
@@ -76,27 +77,6 @@ impl<T> ParExtend<T> for Vec<T> {
         }
 
         unsafe { self.set_len(total_len) };
-    }
-}
-
-// ordered thread values
-
-struct IdxLen {
-    idx: usize,
-    len: usize,
-}
-
-pub struct VecAndPositions<T> {
-    values: Vec<T>,
-    positions: Vec<IdxLen>,
-}
-
-impl<T> Default for VecAndPositions<T> {
-    fn default() -> Self {
-        Self {
-            values: Vec::new(),
-            positions: Vec::new(),
-        }
     }
 }
 

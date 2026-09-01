@@ -1,4 +1,6 @@
 use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_impl::col_and_pos::ColAndPos;
+use crate::collectables::par_extend_impl::idx_len::IdxLen;
 use alloc::collections::BTreeSet;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
@@ -6,7 +8,7 @@ use orx_priority_queue::{BinaryHeap, PriorityQueue};
 impl<T: Ord> ParExtend<T> for BTreeSet<T> {
     type ThreadValues = Self;
 
-    type OrderedThreadValues = SetAndPositions<T>;
+    type OrderedThreadValues = ColAndPos<BTreeSet<T>>;
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
         _ = collected.insert(value);
@@ -71,25 +73,6 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
                 Some(pos) => Some(queue.push_then_pop(ThAndLen::new(t, pos.len), pos.idx).0),
                 None => queue.pop_node(),
             };
-        }
-    }
-}
-
-struct IdxLen {
-    idx: usize,
-    len: usize,
-}
-
-pub struct SetAndPositions<T> {
-    values: BTreeSet<T>,
-    positions: Vec<IdxLen>,
-}
-
-impl<T> Default for SetAndPositions<T> {
-    fn default() -> Self {
-        Self {
-            values: BTreeSet::new(),
-            positions: Vec::new(),
         }
     }
 }

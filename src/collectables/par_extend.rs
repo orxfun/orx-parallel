@@ -20,6 +20,5 @@ pub trait ParExtend<T> {
     fn extend_from_ordered_thread_results(
         &mut self,
         thread_results: Vec<Self::OrderedThreadValues>,
-    ) {
-    }
+    );
 }
