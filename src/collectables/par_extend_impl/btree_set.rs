@@ -85,6 +85,15 @@ pub struct SetAndPositions<T> {
     positions: Vec<IdxLen>,
 }
 
+impl<T> Default for SetAndPositions<T> {
+    fn default() -> Self {
+        Self {
+            values: BTreeSet::new(),
+            positions: Vec::new(),
+        }
+    }
+}
+
 // merge helpers
 
 #[derive(Clone)]
