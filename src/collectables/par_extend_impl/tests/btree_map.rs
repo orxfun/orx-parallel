@@ -48,11 +48,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
 
     BTreeMap::add_ordered_thread_values(&mut t0, 0, vec![(1, "one"), (2, "two")]);
     BTreeMap::add_ordered_thread_value(&mut t0, 1, (3, "three"));
-    BTreeMap::add_ordered_thread_values(
-        &mut t0,
-        2,
-        vec![(4, "four"), (5, "five"), (6, "six")],
-    );
+    BTreeMap::add_ordered_thread_values(&mut t0, 2, vec![(4, "four"), (5, "five"), (6, "six")]);
 
     map.extend_from_ordered_thread_results(vec![t0]);
     let expected = BTreeMap::from([
@@ -166,9 +162,8 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
     let mut map = BTreeMap::new();
     let num_threads = 8;
     let chunks_per_thread = 10;
-    let mut thread_results: Vec<MapResults<i32, i32>> = (0..num_threads)
-        .map(|_| MapResults::default())
-        .collect();
+    let mut thread_results: Vec<MapResults<i32, i32>> =
+        (0..num_threads).map(|_| MapResults::default()).collect();
 
     for chunk_idx in 0..(num_threads * chunks_per_thread) {
         let t = chunk_idx % num_threads;
@@ -191,21 +186,12 @@ fn extend_from_ordered_thread_results_duplicate_keys_within_thread() {
 
     // In add_ordered_thread_value, if a key is already in collected.values (which is a BTreeMap),
     // insert updates the value and returns Some(old_val), so inserted = false and position is not pushed.
-    BTreeMap::add_ordered_thread_values(
-        &mut t0,
-        0,
-        vec![(5, "v1"), (10, "v2")],
-    );
+    BTreeMap::add_ordered_thread_values(&mut t0, 0, vec![(5, "v1"), (10, "v2")]);
     BTreeMap::add_ordered_thread_value(&mut t0, 1, (5, "v1_updated"));
     BTreeMap::add_ordered_thread_values(&mut t0, 2, vec![(15, "v3"), (20, "v4")]);
 
     map.extend_from_ordered_thread_results(vec![t0]);
-    let expected = BTreeMap::from([
-        (5, "v1_updated"),
-        (10, "v2"),
-        (15, "v3"),
-        (20, "v4"),
-    ]);
+    let expected = BTreeMap::from([(5, "v1_updated"), (10, "v2"), (15, "v3"), (20, "v4")]);
     assert_eq!(map, expected);
 }
 
