@@ -17,6 +17,8 @@ pub trait ParExtend<T> {
         values: impl IntoIterator<Item = T>,
     );
 
+    // extend
+
     fn extend_from_ordered_thread_results(
         &mut self,
         thread_results: Vec<Self::OrderedThreadValues>,
