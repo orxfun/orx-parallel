@@ -40,17 +40,46 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
     // extend
 
     fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
-        let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
-        let initial_len = self.len();
-        let total_len = initial_len + collected_len;
+        let outer_len = results.len();
+        let mut all_values = Vec::with_capacity(outer_len);
+        let mut all_positions = Vec::with_capacity(outer_len);
 
-        // let mut queue = BinaryHeap::with_capacity(results.len());
-        let mut pos_indices = vec![0; results.len()];
-        // for (v, vec) in results.iter().enumerate() {
-        //     if let Some(pos) = vec.positions.first() {
-        //         queue.push(VecPos::new(v, 0, pos.len), pos.idx);
-        //     }
-        // }
+        for x in results {
+            all_values.push(x.values.into_iter());
+            all_positions.push(x.positions);
+        }
+
+        // let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
+        // let initial_len = self.len();
+        // let total_len = initial_len + collected_len;
+
+        let mut queue = BinaryHeap::with_capacity(outer_len);
+        let mut pos_indices = vec![0; outer_len];
+        for (v, positions) in all_positions.iter().enumerate() {
+            if let Some(pos) = positions.first() {
+                queue.push(VecPos::new(v, 0, pos.len), pos.idx);
+            }
+        }
+        let mut curr_t = queue.pop_node();
+        // let mut ptr_dst = unsafe { self.as_mut_ptr().add(initial_len) };
+
+        while let Some(VecPos { t, beg, len }) = curr_t {
+            for _ in 0..len {
+                let value = all_values[t].next();
+                // TODO: add safety note
+                let value = unsafe { value.unwrap_unchecked() };
+                _ = self.insert(value);
+            }
+
+            pos_indices[t] += 1;
+            curr_t = match all_positions[t].get(pos_indices[t]) {
+                Some(pos) => {
+                    let beg = beg + len;
+                    Some(queue.push_then_pop(VecPos::new(t, beg, pos.len), pos.idx).0)
+                }
+                None => queue.pop_node(),
+            };
+        }
     }
 }
 
@@ -62,4 +91,20 @@ struct IdxLen {
 pub struct SetAndPositions<T> {
     values: BTreeSet<T>,
     positions: Vec<IdxLen>,
+}
+
+// merge helpers
+
+#[derive(Clone)]
+struct VecPos {
+    t: usize,
+    beg: usize,
+    len: usize,
+}
+
+impl VecPos {
+    #[inline(always)]
+    fn new(t: usize, beg: usize, len: usize) -> Self {
+        Self { t, beg, len }
+    }
 }
