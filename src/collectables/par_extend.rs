@@ -15,11 +15,3 @@ pub trait ParExtend<T> {
         values: impl IntoIterator<Item = T>,
     );
 }
-
-pub trait Contiguous<T> {
-    fn reserve(&mut self, additional: usize);
-
-    unsafe fn ptr(&mut self, idx: usize) -> *mut T;
-
-    unsafe fn set_len(&mut self, new_len: usize);
-}
