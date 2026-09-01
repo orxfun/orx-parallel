@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 pub trait ParExtend<T> {
     type ThreadValues;
 
@@ -14,4 +16,10 @@ pub trait ParExtend<T> {
         idx: usize,
         values: impl IntoIterator<Item = T>,
     );
+
+    fn extend_from_ordered_thread_results(
+        &mut self,
+        thread_results: Vec<Self::OrderedThreadValues>,
+    ) {
+    }
 }
