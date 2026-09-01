@@ -1,0 +1,47 @@
+use crate::collectables_old::alg::merge_collected::{
+    merge_arb, merge_arb_into_vec, merge_ord_into_vec,
+};
+use crate::collectables_old::inf::ColIntoInf;
+use crate::infallible::ParRunnerInfallible;
+use crate::infallible::{ParCore, ParIter, Xap};
+use crate::runner::ParRunner;
+use alloc::collections::BTreeSet;
+use alloc::vec::Vec;
+use orx_concurrent_iter::ConcurrentIter;
+
+impl<T: Send + Ord> ColIntoInf<T> for BTreeSet<T> {
+    fn new_empty() -> Self {
+        Self::new()
+    }
+
+    fn inf_col_into<I, X, R>(dst: &mut Self, par: ParIter<I, X, R>)
+    where
+        I: ConcurrentIter,
+        X: Xap<I = I::Item, O = T>,
+        R: ParRunner,
+        T: Send,
+    {
+        let (iter, x, mut exe, params) = par.destruct();
+        let results = exe.collect(params, iter, x);
+        todo!()
+    }
+
+    fn inf_arb_col_into_from_jagged(dst: &mut Self, thread_collections: Vec<Vec<T>>)
+    where
+        T: Send,
+    {
+        todo!()
+    }
+
+    fn extend_from_vec(dst: &mut Self, values: Vec<T>) {
+        todo!()
+    }
+
+    fn create_from_vec(values: Vec<T>) -> Self {
+        todo!()
+    }
+
+    // newcol
+
+    type ThreadColArb = BTreeSet<T>;
+}

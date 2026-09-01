@@ -1,4 +1,4 @@
-use crate::collectables::alg::merge_collected::Collect;
+use crate::collectables_old::alg::merge_collected::Collect;
 use crate::common_par_traits::ParInfCommon;
 use crate::infallible::Xap;
 use crate::infallible::par_core::ParCore;

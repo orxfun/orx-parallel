@@ -17,7 +17,7 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-mod collectables;
+mod collectables_old;
 mod common_par_traits;
 /// Core module for infallible computations.
 pub mod infallible;
@@ -37,7 +37,7 @@ mod sizes;
 mod sort;
 mod use_var;
 
-pub use collectables::{ParCollectInto, Vec2};
+pub use collectables_old::{ParCollectInto, Vec2};
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{

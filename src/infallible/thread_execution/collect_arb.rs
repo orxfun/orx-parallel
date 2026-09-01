@@ -1,5 +1,5 @@
 use crate::runner::ParRunner;
-use crate::{collectables::Collectable, infallible::xap::Xap};
+use crate::{collectables_old::Collectable, infallible::xap::Xap};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn collect_arb<Q, I, X, D>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> D

@@ -1,4 +1,4 @@
-use crate::collectables::Collectable;
+use crate::collectables_old::Collectable;
 use crate::infallible_use::XapUse;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;

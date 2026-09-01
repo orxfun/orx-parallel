@@ -1,4 +1,4 @@
-use crate::collectables::Collectable;
+use crate::collectables_old::Collectable;
 use crate::infallible::Xap;
 use crate::result::thread_execution as th;
 use crate::results::{Val, ValIdx, ValsAndIdx};

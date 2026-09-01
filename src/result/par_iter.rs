@@ -1,5 +1,5 @@
 use crate::ParCollectInto;
-use crate::collectables::alg::merge_collected::Collect;
+use crate::collectables_old::alg::merge_collected::Collect;
 use crate::common_par_traits::ParResCommon;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};

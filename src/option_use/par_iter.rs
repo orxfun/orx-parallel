@@ -1,5 +1,5 @@
 use crate::ParCollectInto;
-use crate::collectables::alg::merge_collected::Collect;
+use crate::collectables_old::alg::merge_collected::Collect;
 use crate::common_par_traits::ParOptCommon;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::option_use::par::ParUseOption;
