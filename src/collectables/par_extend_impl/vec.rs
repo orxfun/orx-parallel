@@ -6,7 +6,7 @@ use orx_priority_queue::{BinaryHeap, PriorityQueue};
 impl<T> ParExtend<T> for Vec<T> {
     type ThreadValues = Self;
 
-    type OrderedThreadValues = ColAndPos<Vec<T>>;
+    type OrderedThreadValues = ColAndPos<Self>;
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
         collected.push(value);
@@ -48,21 +48,23 @@ impl<T> ParExtend<T> for Vec<T> {
 
         for (t, vec) in results.iter().enumerate() {
             if let Some(pos) = vec.positions.first() {
-                queue.push(VecPos::new(t, 0, pos.len), pos.idx);
+                let node = ThBegLen::new(t, 0, pos.len);
+                queue.push(node, pos.idx);
             }
         }
         let mut curr_t = queue.pop_node();
         let mut ptr_dst = unsafe { self.as_mut_ptr().add(initial_len) };
 
-        while let Some(VecPos { t, beg, len }) = curr_t {
-            let ptr_src = unsafe { results[t].values.as_ptr().add(beg) };
+        while let Some(ThBegLen { th, beg, len }) = curr_t {
+            let ptr_src = unsafe { results[th].values.as_ptr().add(beg) };
             unsafe { ptr_dst.copy_from_nonoverlapping(ptr_src, len) };
 
-            pos_indices[t] += 1;
-            curr_t = match results[t].positions.get(pos_indices[t]) {
+            pos_indices[th] += 1;
+            curr_t = match results[th].positions.get(pos_indices[th]) {
                 Some(pos) => {
                     let beg = beg + len;
-                    Some(queue.push_then_pop(VecPos::new(t, beg, pos.len), pos.idx).0)
+                    let node = ThBegLen::new(th, beg, pos.len);
+                    Some(queue.push_then_pop(node, pos.idx).0)
                 }
                 None => queue.pop_node(),
             };
@@ -83,15 +85,15 @@ impl<T> ParExtend<T> for Vec<T> {
 // merge helpers
 
 #[derive(Clone)]
-struct VecPos {
-    t: usize,
+struct ThBegLen {
+    th: usize,
     beg: usize,
     len: usize,
 }
 
-impl VecPos {
+impl ThBegLen {
     #[inline(always)]
-    fn new(t: usize, beg: usize, len: usize) -> Self {
-        Self { t, beg, len }
+    fn new(th: usize, beg: usize, len: usize) -> Self {
+        Self { th, beg, len }
     }
 }

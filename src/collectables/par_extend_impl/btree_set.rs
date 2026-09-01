@@ -8,7 +8,7 @@ use orx_priority_queue::{BinaryHeap, PriorityQueue};
 impl<T: Ord> ParExtend<T> for BTreeSet<T> {
     type ThreadValues = Self;
 
-    type OrderedThreadValues = ColAndPos<BTreeSet<T>>;
+    type OrderedThreadValues = ColAndPos<Self>;
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
         _ = collected.insert(value);
@@ -53,24 +53,28 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
 
         let mut queue = BinaryHeap::with_capacity(outer_len);
         let mut pos_indices = vec![0; outer_len];
-        for (v, positions) in all_positions.iter().enumerate() {
+        for (th, positions) in all_positions.iter().enumerate() {
             if let Some(pos) = positions.first() {
-                queue.push(ThAndLen::new(v, pos.len), pos.idx);
+                let node = ThLen::new(th, pos.len);
+                queue.push(node, pos.idx);
             }
         }
         let mut curr_t = queue.pop_node();
 
-        while let Some(ThAndLen { t, len }) = curr_t {
+        while let Some(ThLen { th, len }) = curr_t {
             for _ in 0..len {
-                let value = all_values[t].next();
+                let value = all_values[th].next();
                 // TODO: add safety note
                 let value = unsafe { value.unwrap_unchecked() };
                 _ = self.insert(value);
             }
 
-            pos_indices[t] += 1;
-            curr_t = match all_positions[t].get(pos_indices[t]) {
-                Some(pos) => Some(queue.push_then_pop(ThAndLen::new(t, pos.len), pos.idx).0),
+            pos_indices[th] += 1;
+            curr_t = match all_positions[th].get(pos_indices[th]) {
+                Some(pos) => {
+                    let node = ThLen::new(th, pos.len);
+                    Some(queue.push_then_pop(node, pos.idx).0)
+                }
                 None => queue.pop_node(),
             };
         }
@@ -80,14 +84,14 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
 // merge helpers
 
 #[derive(Clone)]
-struct ThAndLen {
-    t: usize,
+struct ThLen {
+    th: usize,
     len: usize,
 }
 
-impl ThAndLen {
+impl ThLen {
     #[inline(always)]
-    fn new(t: usize, len: usize) -> Self {
-        Self { t, len }
+    fn new(th: usize, len: usize) -> Self {
+        Self { th, len }
     }
 }
