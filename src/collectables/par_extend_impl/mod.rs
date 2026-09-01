@@ -8,4 +8,6 @@ mod idx_len;
 mod vec;
 
 #[cfg(feature = "std")]
+mod hash_map;
+#[cfg(feature = "std")]
 mod hash_set;
