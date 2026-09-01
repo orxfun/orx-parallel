@@ -1,6 +1,7 @@
 use crate::collectables::par_extend::ParExtend;
 use alloc::collections::BTreeSet;
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
+use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
 impl<T: Ord> ParExtend<T> for BTreeSet<T> {
     type ThreadValues = Self;
@@ -34,6 +35,22 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
         if len > 0 {
             collected.positions.push(IdxLen { idx, len });
         }
+    }
+
+    // extend
+
+    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
+        let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
+        let initial_len = self.len();
+        let total_len = initial_len + collected_len;
+
+        // let mut queue = BinaryHeap::with_capacity(results.len());
+        let mut pos_indices = vec![0; results.len()];
+        // for (v, vec) in results.iter().enumerate() {
+        //     if let Some(pos) = vec.positions.first() {
+        //         queue.push(VecPos::new(v, 0, pos.len), pos.idx);
+        //     }
+        // }
     }
 }
 

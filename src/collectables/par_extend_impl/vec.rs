@@ -34,6 +34,8 @@ impl<T> ParExtend<T> for Vec<T> {
         }
     }
 
+    // extend
+
     fn extend_from_ordered_thread_results(&mut self, mut results: Vec<Self::OrderedThreadValues>) {
         let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
         self.reserve(collected_len);
@@ -43,23 +45,23 @@ impl<T> ParExtend<T> for Vec<T> {
         let mut queue = BinaryHeap::with_capacity(results.len());
         let mut pos_indices = vec![0; results.len()];
 
-        for (v, vec) in results.iter().enumerate() {
+        for (t, vec) in results.iter().enumerate() {
             if let Some(pos) = vec.positions.first() {
-                queue.push(VecPos::new(v, 0, pos.len), pos.idx);
+                queue.push(VecPos::new(t, 0, pos.len), pos.idx);
             }
         }
-        let mut curr_v = queue.pop_node();
+        let mut curr_t = queue.pop_node();
         let mut ptr_dst = unsafe { self.as_mut_ptr().add(initial_len) };
 
-        while let Some(VecPos { v, beg, len }) = curr_v {
-            let ptr_src = unsafe { results[v].values.as_ptr().add(beg) };
+        while let Some(VecPos { t, beg, len }) = curr_t {
+            let ptr_src = unsafe { results[t].values.as_ptr().add(beg) };
             unsafe { ptr_dst.copy_from_nonoverlapping(ptr_src, len) };
 
-            pos_indices[v] += 1;
-            curr_v = match results[v].positions.get(pos_indices[v]) {
+            pos_indices[t] += 1;
+            curr_t = match results[t].positions.get(pos_indices[t]) {
                 Some(pos) => {
                     let beg = beg + len;
-                    Some(queue.push_then_pop(VecPos::new(v, beg, pos.len), pos.idx).0)
+                    Some(queue.push_then_pop(VecPos::new(t, beg, pos.len), pos.idx).0)
                 }
                 None => queue.pop_node(),
             };
@@ -98,16 +100,18 @@ impl<T> Default for VecAndPositions<T> {
     }
 }
 
+// merge helpers
+
 #[derive(Clone)]
 struct VecPos {
-    v: usize,
+    t: usize,
     beg: usize,
     len: usize,
 }
 
 impl VecPos {
     #[inline(always)]
-    fn new(v: usize, beg: usize, len: usize) -> Self {
-        Self { v, beg, len }
+    fn new(t: usize, beg: usize, len: usize) -> Self {
+        Self { t, beg, len }
     }
 }
