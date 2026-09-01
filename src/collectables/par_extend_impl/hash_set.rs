@@ -1,9 +1,6 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::col_and_pos::ColAndPos;
-use crate::collectables::par_extend_impl::idx_len::IdxLen;
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 use core::hash::Hash;
-use orx_priority_queue::{BinaryHeap, PriorityQueue};
 use std::collections::HashSet;
 
 impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
@@ -33,22 +30,13 @@ impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
 
     // extend
 
-    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
-        todo!()
+    fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {
+        for result in results {
+            self.extend(result);
+        }
     }
-}
 
-// merge helpers
-
-#[derive(Clone)]
-struct ThLen {
-    th: usize,
-    len: usize,
-}
-
-impl ThLen {
-    #[inline(always)]
-    fn new(th: usize, len: usize) -> Self {
-        Self { th, len }
+    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
+        self.extend_from_thread_results(results);
     }
 }

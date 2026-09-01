@@ -41,6 +41,12 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
 
     // extend
 
+    fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {
+        for result in results {
+            self.extend(result);
+        }
+    }
+
     fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
         let outer_len = results.len();
         let mut all_values = Vec::with_capacity(outer_len);

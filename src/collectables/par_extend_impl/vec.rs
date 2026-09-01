@@ -37,6 +37,14 @@ impl<T> ParExtend<T> for Vec<T> {
 
     // extend
 
+    fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {
+        let collected_len: usize = results.iter().map(|x| x.len()).sum();
+        self.reserve(collected_len);
+        for result in results {
+            self.extend(result);
+        }
+    }
+
     fn extend_from_ordered_thread_results(&mut self, mut results: Vec<Self::OrderedThreadValues>) {
         let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
         self.reserve(collected_len);
