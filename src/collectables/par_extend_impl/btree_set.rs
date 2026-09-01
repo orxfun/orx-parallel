@@ -28,9 +28,8 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
         values: impl IntoIterator<Item = T>,
     ) {
         let len_before = collected.values.len();
-        for value in values {
-            _ = collected.values.insert(value);
-        }
+        collected.values.extend(values);
+
         let len = collected.values.len() - len_before;
         if len > 0 {
             collected.positions.push(IdxLen { idx, len });

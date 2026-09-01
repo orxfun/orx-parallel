@@ -28,7 +28,9 @@ impl<T> ParExtend<T> for Vec<T> {
         collected.values.extend(values);
 
         let len = collected.values.len() - len_begin;
-        collected.positions.push(IdxLen { idx, len });
+        if len > 0 {
+            collected.positions.push(IdxLen { idx, len });
+        }
     }
 }
 
