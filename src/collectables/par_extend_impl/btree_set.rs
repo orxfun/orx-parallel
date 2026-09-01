@@ -49,10 +49,6 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
             all_positions.push(x.positions);
         }
 
-        // let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
-        // let initial_len = self.len();
-        // let total_len = initial_len + collected_len;
-
         let mut queue = BinaryHeap::with_capacity(outer_len);
         let mut pos_indices = vec![0; outer_len];
         for (v, positions) in all_positions.iter().enumerate() {
