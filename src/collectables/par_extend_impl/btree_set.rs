@@ -53,13 +53,12 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
         let mut pos_indices = vec![0; outer_len];
         for (v, positions) in all_positions.iter().enumerate() {
             if let Some(pos) = positions.first() {
-                queue.push(VecPos::new(v, 0, pos.len), pos.idx);
+                queue.push(ThAndLen::new(v, pos.len), pos.idx);
             }
         }
         let mut curr_t = queue.pop_node();
-        // let mut ptr_dst = unsafe { self.as_mut_ptr().add(initial_len) };
 
-        while let Some(VecPos { t, beg, len }) = curr_t {
+        while let Some(ThAndLen { t, len }) = curr_t {
             for _ in 0..len {
                 let value = all_values[t].next();
                 // TODO: add safety note
@@ -69,10 +68,7 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
 
             pos_indices[t] += 1;
             curr_t = match all_positions[t].get(pos_indices[t]) {
-                Some(pos) => {
-                    let beg = beg + len;
-                    Some(queue.push_then_pop(VecPos::new(t, beg, pos.len), pos.idx).0)
-                }
+                Some(pos) => Some(queue.push_then_pop(ThAndLen::new(t, pos.len), pos.idx).0),
                 None => queue.pop_node(),
             };
         }
@@ -92,15 +88,14 @@ pub struct SetAndPositions<T> {
 // merge helpers
 
 #[derive(Clone)]
-struct VecPos {
+struct ThAndLen {
     t: usize,
-    beg: usize,
     len: usize,
 }
 
-impl VecPos {
+impl ThAndLen {
     #[inline(always)]
-    fn new(t: usize, beg: usize, len: usize) -> Self {
-        Self { t, beg, len }
+    fn new(t: usize, len: usize) -> Self {
+        Self { t, len }
     }
 }
