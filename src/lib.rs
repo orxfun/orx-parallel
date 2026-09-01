@@ -17,6 +17,7 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+mod collectables;
 mod collectables_old;
 mod common_par_traits;
 /// Core module for infallible computations.
