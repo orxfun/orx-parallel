@@ -46,11 +46,45 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
         }
     }
 
-    fn extend_from_ordered_thread_results(
-        &mut self,
-        thread_results: Vec<Self::OrderedThreadValues>,
-    ) {
-        todo!()
+    // extend
+
+    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
+        let outer_len = results.len();
+        let mut all_values = Vec::with_capacity(outer_len);
+        let mut all_positions = Vec::with_capacity(outer_len);
+
+        for x in results {
+            all_values.push(x.values.into_iter());
+            all_positions.push(x.positions);
+        }
+
+        let mut queue = BinaryHeap::with_capacity(outer_len);
+        let mut pos_indices = vec![0; outer_len];
+        for (th, positions) in all_positions.iter().enumerate() {
+            if let Some(pos) = positions.first() {
+                let node = ThLen::new(th, pos.len);
+                queue.push(node, pos.idx);
+            }
+        }
+        let mut curr_t = queue.pop_node();
+
+        while let Some(ThLen { th, len }) = curr_t {
+            for _ in 0..len {
+                let value = all_values[th].next();
+                // TODO: add safety note
+                let (key, value) = unsafe { value.unwrap_unchecked() };
+                _ = self.insert(key, value);
+            }
+
+            pos_indices[th] += 1;
+            curr_t = match all_positions[th].get(pos_indices[th]) {
+                Some(pos) => {
+                    let node = ThLen::new(th, pos.len);
+                    Some(queue.push_then_pop(node, pos.idx).0)
+                }
+                None => queue.pop_node(),
+            };
+        }
     }
 }
 
