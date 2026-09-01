@@ -23,7 +23,7 @@ impl Collect {
         S: Collectable<T>,
         D: Collectable<T>,
     {
-        todo!()
+        todo!();
         // let collected_len: usize = results.iter().map(|x| x.values.col_len()).sum();
         // dst.col_reserve(collected_len);
         // let initial_len = dst.col_len();
