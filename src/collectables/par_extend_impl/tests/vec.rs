@@ -170,3 +170,96 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
         assert_eq!(vec[i * 2 + 1], (i, 1));
     }
 }
+
+// extend_from_thread_results tests
+
+#[test]
+fn extend_from_thread_results_empty() {
+    let mut vec: Vec<i32> = Vec::new();
+    let results: Vec<Vec<i32>> = Vec::new();
+
+    vec.extend_from_thread_results(results);
+    assert!(vec.is_empty());
+}
+
+#[test]
+fn extend_from_thread_results_empty_threads() {
+    let mut vec: Vec<i32> = vec![1, 2, 3];
+    let t0 = Vec::<i32>::new();
+    let t1 = Vec::<i32>::new();
+
+    vec.extend_from_thread_results(vec![t0, t1]);
+    assert_eq!(vec, vec![1, 2, 3]);
+}
+
+#[test]
+fn extend_from_thread_results_single_thread() {
+    let mut vec = Vec::new();
+    let mut t0 = Vec::new();
+
+    Vec::add_thread_value(&mut t0, 10);
+    Vec::add_thread_values(&mut t0, vec![20, 30]);
+
+    vec.extend_from_thread_results(vec![t0]);
+    assert_eq!(vec, vec![10, 20, 30]);
+}
+
+#[test]
+fn extend_from_thread_results_multiple_threads() {
+    let mut vec = Vec::new();
+    let mut t0 = Vec::new();
+    let mut t1 = Vec::new();
+
+    Vec::add_thread_value(&mut t0, 1);
+    Vec::add_thread_values(&mut t0, vec![2, 3]);
+
+    Vec::add_thread_value(&mut t1, 4);
+    Vec::add_thread_values(&mut t1, vec![5, 6]);
+
+    vec.extend_from_thread_results(vec![t0, t1]);
+    assert_eq!(vec, vec![1, 2, 3, 4, 5, 6]);
+}
+
+#[test]
+fn extend_from_thread_results_append_to_non_empty_vec() {
+    let mut vec = vec![100, 200];
+    let mut t0 = Vec::new();
+    let mut t1 = Vec::new();
+
+    Vec::add_thread_value(&mut t0, 1);
+    Vec::add_thread_value(&mut t1, 2);
+
+    vec.extend_from_thread_results(vec![t0, t1]);
+    assert_eq!(vec, vec![100, 200, 1, 2]);
+}
+
+#[test]
+fn extend_from_thread_results_non_copy_drop() {
+    struct DropCounter(Arc<AtomicUsize>);
+
+    impl Drop for DropCounter {
+        fn drop(&mut self) {
+            self.0.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    let drop_count = Arc::new(AtomicUsize::new(0));
+
+    let mut t0 = Vec::new();
+    let mut t1 = Vec::new();
+
+    Vec::add_thread_value(&mut t0, DropCounter(drop_count.clone()));
+    Vec::add_thread_value(&mut t1, DropCounter(drop_count.clone()));
+    Vec::add_thread_value(&mut t0, DropCounter(drop_count.clone()));
+
+    assert_eq!(drop_count.load(Ordering::Relaxed), 0);
+
+    {
+        let mut vec = Vec::new();
+        vec.extend_from_thread_results(vec![t0, t1]);
+        assert_eq!(vec.len(), 3);
+        assert_eq!(drop_count.load(Ordering::Relaxed), 0);
+    }
+
+    assert_eq!(drop_count.load(Ordering::Relaxed), 3);
+}

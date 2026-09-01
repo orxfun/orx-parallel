@@ -189,3 +189,83 @@ fn extend_from_ordered_thread_results_duplicate_values_with_existing_elements() 
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30, 40, 50, 60]);
     assert_eq!(set, expected);
 }
+
+// extend_from_thread_results tests
+
+#[test]
+fn extend_from_thread_results_empty() {
+    let mut set: BTreeSet<i32> = BTreeSet::new();
+    let results: Vec<BTreeSet<i32>> = Vec::new();
+
+    set.extend_from_thread_results(results);
+    assert!(set.is_empty());
+}
+
+#[test]
+fn extend_from_thread_results_empty_threads() {
+    let mut set: BTreeSet<i32> = BTreeSet::from([1, 2, 3]);
+    let t0 = BTreeSet::<i32>::default();
+    let t1 = BTreeSet::<i32>::default();
+
+    set.extend_from_thread_results(vec![t0, t1]);
+    let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3]);
+    assert_eq!(set, expected);
+}
+
+#[test]
+fn extend_from_thread_results_single_thread() {
+    let mut set = BTreeSet::new();
+    let mut t0 = BTreeSet::default();
+
+    BTreeSet::add_thread_value(&mut t0, 10);
+    BTreeSet::add_thread_values(&mut t0, vec![20, 30]);
+
+    set.extend_from_thread_results(vec![t0]);
+    let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30]);
+    assert_eq!(set, expected);
+}
+
+#[test]
+fn extend_from_thread_results_multiple_threads() {
+    let mut set = BTreeSet::new();
+    let mut t0 = BTreeSet::default();
+    let mut t1 = BTreeSet::default();
+
+    BTreeSet::add_thread_value(&mut t0, 1);
+    BTreeSet::add_thread_values(&mut t0, vec![2, 3]);
+
+    BTreeSet::add_thread_value(&mut t1, 4);
+    BTreeSet::add_thread_values(&mut t1, vec![5, 6]);
+
+    set.extend_from_thread_results(vec![t0, t1]);
+    let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3, 4, 5, 6]);
+    assert_eq!(set, expected);
+}
+
+#[test]
+fn extend_from_thread_results_append_to_non_empty_set() {
+    let mut set = BTreeSet::from([100, 200]);
+    let mut t0 = BTreeSet::default();
+    let mut t1 = BTreeSet::default();
+
+    BTreeSet::add_thread_value(&mut t0, 1);
+    BTreeSet::add_thread_value(&mut t1, 2);
+
+    set.extend_from_thread_results(vec![t0, t1]);
+    let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 100, 200]);
+    assert_eq!(set, expected);
+}
+
+#[test]
+fn extend_from_thread_results_duplicate_values() {
+    let mut set = BTreeSet::from([10]);
+    let mut t0 = BTreeSet::default();
+    let mut t1 = BTreeSet::default();
+
+    BTreeSet::add_thread_values(&mut t0, vec![10, 20]);
+    BTreeSet::add_thread_values(&mut t1, vec![20, 30]);
+
+    set.extend_from_thread_results(vec![t0, t1]);
+    let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30]);
+    assert_eq!(set, expected);
+}
