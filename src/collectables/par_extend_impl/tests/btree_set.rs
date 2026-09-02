@@ -1,5 +1,5 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::col_and_pos::ColAndPos;
+use crate::collectables::par_extend_impl::utils::ColAndPos;
 use alloc::collections::BTreeSet;
 use alloc::{vec, vec::Vec};
 

@@ -1,6 +1,5 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::col_and_pos::ColAndPos;
-use crate::collectables::par_extend_impl::idx_len::IdxLen;
+use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen};
 use alloc::collections::BTreeMap;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};

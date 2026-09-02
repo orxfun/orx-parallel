@@ -1,5 +1,5 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::{col_and_pos::ColAndPos, idx_len::IdxLen};
+use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen};
 use alloc::collections::VecDeque;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
@@ -46,63 +46,73 @@ impl<T> ParExtend<T> for VecDeque<T> {
         }
     }
 
-    fn extend_from_ordered_thread_results(&mut self, mut results: Vec<Self::OrderedThreadValues>) {
+    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
+        // let mut vec = Vec::new();
+        // Vec::extend_from_ordered_thread_results(&mut vec, results);
+        // match self.is_empty() {
+        //     true => {
+        //         let mut vec_deque = VecDeque::from(vec);
+        //         core::mem::swap(self, &mut vec_deque);
+        //     }
+        //     false => self.extend(vec),
+        // }
+
         let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
         self.reserve(collected_len);
-        let initial_len = self.len();
-        let total_len = initial_len + collected_len;
 
-        let mut queue = BinaryHeap::with_capacity(results.len());
-        let mut pos_indices = vec![0; results.len()];
+        let outer_len = results.len();
+        let mut all_values = Vec::with_capacity(outer_len);
+        let mut all_positions = Vec::with_capacity(outer_len);
 
-        for (t, vec) in results.iter().enumerate() {
-            if let Some(pos) = vec.positions.first() {
-                let node = ThBegLen::new(t, 0, pos.len);
+        for x in results {
+            all_values.push(x.values.into_iter());
+            all_positions.push(x.positions);
+        }
+
+        let mut queue = BinaryHeap::with_capacity(outer_len);
+        let mut pos_indices = vec![0; outer_len];
+        for (th, positions) in all_positions.iter().enumerate() {
+            if let Some(pos) = positions.first() {
+                let node = ThLen::new(th, pos.len);
                 queue.push(node, pos.idx);
             }
         }
         let mut curr_t = queue.pop_node();
-        let mut ptr_dst = unsafe { self.as_mut_slices().0.as_mut_ptr().add(initial_len) };
 
-        while let Some(ThBegLen { th, beg, len }) = curr_t {
-            let ptr_src = unsafe { results[th].values.as_ptr().add(beg) };
-            unsafe { ptr_dst.copy_from_nonoverlapping(ptr_src, len) };
+        // while let Some(ThLen { th, len }) = curr_t {
+        //     unsafe {
+        //         self.extend(iter);
+        //     };
+        //     for _ in 0..len {
+        //         let value = all_values[th].next();
+        //         // TODO: add safety note
+        //         let value = unsafe { value.unwrap_unchecked() };
+        //         _ = self.insert(value);
+        //     }
 
-            pos_indices[th] += 1;
-            curr_t = match results[th].positions.get(pos_indices[th]) {
-                Some(pos) => {
-                    let beg = beg + len;
-                    let node = ThBegLen::new(th, beg, pos.len);
-                    Some(queue.push_then_pop(node, pos.idx).0)
-                }
-                None => queue.pop_node(),
-            };
-
-            ptr_dst = unsafe { ptr_dst.add(len) };
-        }
-
-        for vec in results.iter_mut() {
-            // SAFETY: this prevents to drop the elements which are already moved to pinned_vec
-            // allocation within vec.capacity() will still be reclaimed; however, as uninitialized memory
-            unsafe { vec.values.set_len(0) };
-        }
-
-        self.resize_with(total_len, || unreachable!());
+        //     pos_indices[th] += 1;
+        //     curr_t = match all_positions[th].get(pos_indices[th]) {
+        //         Some(pos) => {
+        //             let node = ThLen::new(th, pos.len);
+        //             Some(queue.push_then_pop(node, pos.idx).0)
+        //         }
+        //         None => queue.pop_node(),
+        //     };
+        // }
     }
 }
 
 // merge helpers
 
 #[derive(Clone)]
-struct ThBegLen {
+struct ThLen {
     th: usize,
-    beg: usize,
     len: usize,
 }
 
-impl ThBegLen {
+impl ThLen {
     #[inline(always)]
-    fn new(th: usize, beg: usize, len: usize) -> Self {
-        Self { th, beg, len }
+    fn new(th: usize, len: usize) -> Self {
+        Self { th, len }
     }
 }

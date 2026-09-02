@@ -1,5 +1,5 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::col_and_pos::ColAndPos;
+use crate::collectables::par_extend_impl::utils::ColAndPos;
 use alloc::{vec, vec::Vec};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
