@@ -40,7 +40,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     let mut t0 = HashSet::default();
 
     HashSet::add_ordered_thread_values(&mut t0, 0, vec![1, 2]);
-    HashSet::add_ordered_thread_val_and_pos(&mut t0, 1, 3);
+    HashSet::add_ordered_thread_value(&mut t0, 1, 3);
     HashSet::add_ordered_thread_values(&mut t0, 2, vec![4, 5, 6]);
 
     set.extend_from_ordered_thread_results(vec![t0]);
@@ -71,8 +71,8 @@ fn extend_from_ordered_thread_results_append_to_non_empty_set() {
     let mut t0 = HashSet::default();
     let mut t1 = HashSet::default();
 
-    HashSet::add_ordered_thread_val_and_pos(&mut t0, 0, 1);
-    HashSet::add_ordered_thread_val_and_pos(&mut t1, 1, 2);
+    HashSet::add_ordered_thread_value(&mut t0, 0, 1);
+    HashSet::add_ordered_thread_value(&mut t1, 1, 2);
 
     set.extend_from_ordered_thread_results(vec![t0, t1]);
     let expected: HashSet<i32> = HashSet::from([1, 2, 100, 200]);

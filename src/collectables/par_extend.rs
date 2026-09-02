@@ -15,11 +15,7 @@ pub trait ParExtend<T> {
 
     fn add_thread_values(collected: &mut Self::ThreadValues, values: impl IntoIterator<Item = T>);
 
-    fn add_ordered_thread_val_and_pos(
-        collected: &mut Self::OrderedThreadValues,
-        idx: usize,
-        value: T,
-    );
+    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, idx: usize, value: T);
 
     fn add_ordered_thread_values(
         collected: &mut Self::OrderedThreadValues,

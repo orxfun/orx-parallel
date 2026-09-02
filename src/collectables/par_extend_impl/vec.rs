@@ -26,11 +26,7 @@ impl<T> ParExtend<T> for Vec<T> {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_val_and_pos(
-        collected: &mut Self::OrderedThreadValues,
-        idx: usize,
-        value: T,
-    ) {
+    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, idx: usize, value: T) {
         collected.values.push(value);
         collected.positions.push(IdxLen { idx, len: 1 });
     }

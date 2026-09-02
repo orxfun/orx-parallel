@@ -38,6 +38,7 @@ mod sizes;
 mod sort;
 mod use_var;
 
+pub use collectables::ParExtend;
 pub use collectables_old::{ParCollectInto, Vec2};
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};

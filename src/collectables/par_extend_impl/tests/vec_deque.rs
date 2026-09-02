@@ -41,7 +41,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     let mut t0 = ColAndPos::default();
 
     VecDeque::add_ordered_thread_values(&mut t0, 0, vec![1, 2]);
-    VecDeque::add_ordered_thread_val_and_pos(&mut t0, 1, 3);
+    VecDeque::add_ordered_thread_value(&mut t0, 1, 3);
     VecDeque::add_ordered_thread_values(&mut t0, 2, vec![4, 5, 6]);
 
     deque.extend_from_ordered_thread_results(vec![t0]);
@@ -73,11 +73,11 @@ fn extend_from_ordered_thread_results_interleaved_threads() {
 
     // t0 has chunks 3 and 5
     VecDeque::add_ordered_thread_values(&mut t0, 3, vec![7, 8]);
-    VecDeque::add_ordered_thread_val_and_pos(&mut t0, 5, 11);
+    VecDeque::add_ordered_thread_value(&mut t0, 5, 11);
 
     // t1 has chunks 0 and 2
     VecDeque::add_ordered_thread_values(&mut t1, 0, vec![1, 2, 3]);
-    VecDeque::add_ordered_thread_val_and_pos(&mut t1, 2, 6);
+    VecDeque::add_ordered_thread_value(&mut t1, 2, 6);
 
     // t2 has chunks 1 and 4
     VecDeque::add_ordered_thread_values(&mut t2, 1, vec![4, 5]);
@@ -93,8 +93,8 @@ fn extend_from_ordered_thread_results_append_to_non_empty_deque() {
     let mut t0 = ColAndPos::default();
     let mut t1 = ColAndPos::default();
 
-    VecDeque::add_ordered_thread_val_and_pos(&mut t0, 0, 1);
-    VecDeque::add_ordered_thread_val_and_pos(&mut t1, 1, 2);
+    VecDeque::add_ordered_thread_value(&mut t0, 0, 1);
+    VecDeque::add_ordered_thread_value(&mut t1, 1, 2);
 
     deque.extend_from_ordered_thread_results(vec![t0, t1]);
     assert_eq!(deque, VecDeque::from([100, 200, 1, 2]));
@@ -128,9 +128,9 @@ fn extend_from_ordered_thread_results_non_copy_drop() {
     let mut t0 = ColAndPos::default();
     let mut t1 = ColAndPos::default();
 
-    VecDeque::add_ordered_thread_val_and_pos(&mut t0, 0, DropCounter(drop_count.clone()));
-    VecDeque::add_ordered_thread_val_and_pos(&mut t1, 1, DropCounter(drop_count.clone()));
-    VecDeque::add_ordered_thread_val_and_pos(&mut t0, 2, DropCounter(drop_count.clone()));
+    VecDeque::add_ordered_thread_value(&mut t0, 0, DropCounter(drop_count.clone()));
+    VecDeque::add_ordered_thread_value(&mut t1, 1, DropCounter(drop_count.clone()));
+    VecDeque::add_ordered_thread_value(&mut t0, 2, DropCounter(drop_count.clone()));
 
     assert_eq!(drop_count.load(Ordering::Relaxed), 0);
 

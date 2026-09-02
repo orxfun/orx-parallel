@@ -30,7 +30,7 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_val_and_pos(
+    fn add_ordered_thread_value(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         (key, value): (K, V),
