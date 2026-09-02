@@ -5,5 +5,5 @@ mod tests;
 mod extend;
 mod sum;
 
-pub use extend::ParExtend;
+pub use extend::ParExtendOld;
 pub use sum::Sum;

@@ -16,7 +16,7 @@ use crate::common_par_traits::{ParInfCommon, ParOptCommon, ParResCommon};
 /// assert_eq!(out.len(), 11);
 /// assert_eq!(out[0], 42);
 /// ```
-pub trait ParExtend<T>: ParCollectInto<T> {
+pub trait ParExtendOld<T>: ParCollectInto<T> {
     /// Extends `self` with items produced by an infallible parallel iterator.
     ///
     /// # Example
@@ -91,4 +91,4 @@ pub trait ParExtend<T>: ParCollectInto<T> {
     }
 }
 
-impl<T, C: ParCollectInto<T>> ParExtend<T> for C {}
+impl<T, C: ParCollectInto<T>> ParExtendOld<T> for C {}

@@ -45,7 +45,7 @@ pub use into_parallel::{
     IntoParIter, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain, Parallelizable,
     par_recursive,
 };
-pub use ops::{ParExtend, Sum};
+pub use ops::{ParExtendOld, Sum};
 pub use option::ParOption;
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
