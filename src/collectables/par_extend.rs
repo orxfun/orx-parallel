@@ -39,7 +39,20 @@ pub trait ParExtend<T> {
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         values: impl IntoIterator<Item = Option<T>>,
-    ) -> Option<()> {
+    ) -> Option<()>;
+
+    // res: thread collect
+
+    fn add_thread_fallibles<E>(
+        collected: &mut Self::ThreadValues,
+        values: impl IntoIterator<Item = Result<T, E>>,
+    ) -> Option<E> {
+        for value in values {
+            match value {
+                Ok(value) => Self::add_thread_value(collected, value),
+                Err(e) => return Some(e),
+            }
+        }
         None
     }
 
