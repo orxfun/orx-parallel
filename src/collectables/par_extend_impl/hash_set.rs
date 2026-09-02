@@ -57,14 +57,11 @@ impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
         collected: &mut Self::OrderedThreadValues,
         _idx: usize,
         values: impl IntoIterator<Item = Result<T, E>>,
-    ) -> Option<E> {
+    ) -> Result<(), E> {
         for value in values {
-            match value {
-                Ok(value) => _ = collected.insert(value),
-                Err(e) => return Some(e),
-            }
+            _ = collected.insert(value?);
         }
-        None
+        Ok(())
     }
 
     // extend

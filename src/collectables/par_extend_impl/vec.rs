@@ -71,13 +71,10 @@ impl<T> ParExtend<T> for Vec<T> {
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         values: impl IntoIterator<Item = Result<T, E>>,
-    ) -> Option<E> {
+    ) -> Result<(), E> {
         let len_begin = collected.values.len();
         for value in values {
-            match value {
-                Ok(value) => collected.values.push(value),
-                Err(e) => return Some(e),
-            }
+            collected.values.push(value?);
         }
 
         let len = collected.values.len() - len_begin;
@@ -85,7 +82,7 @@ impl<T> ParExtend<T> for Vec<T> {
             collected.positions.push(IdxLen { idx, len });
         }
 
-        None
+        Ok(())
     }
 
     // extend

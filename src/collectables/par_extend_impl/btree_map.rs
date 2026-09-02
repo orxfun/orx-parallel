@@ -82,13 +82,11 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         values: impl IntoIterator<Item = Result<(K, V), E>>,
-    ) -> Option<E> {
+    ) -> Result<(), E> {
         let len_begin = collected.values.len();
         for value in values {
-            match value {
-                Ok((key, value)) => _ = collected.values.insert(key, value),
-                Err(e) => return Some(e),
-            }
+            let (key, value) = value?;
+            collected.values.insert(key, value);
         }
 
         let len = collected.values.len() - len_begin;
@@ -96,7 +94,7 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
             collected.positions.push(IdxLen { idx, len });
         }
 
-        None
+        Ok(())
     }
 
     // extend

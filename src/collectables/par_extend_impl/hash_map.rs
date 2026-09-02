@@ -65,14 +65,12 @@ impl<K: Hash + Eq, V> ParExtend<(K, V)> for HashMap<K, V> {
         collected: &mut Self::OrderedThreadValues,
         _idx: usize,
         values: impl IntoIterator<Item = Result<(K, V), E>>,
-    ) -> Option<E> {
+    ) -> Result<(), E> {
         for value in values {
-            match value {
-                Ok((key, value)) => _ = collected.insert(key, value),
-                Err(e) => return Some(e),
-            }
+            let (key, value) = value?;
+            collected.insert(key, value);
         }
-        None
+        Ok(())
     }
 
     // extend

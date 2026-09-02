@@ -1,5 +1,7 @@
 use alloc::vec::Vec;
 
+// TODO: document the trait
+#[allow(missing_docs)]
 pub trait ParExtend<T> {
     type ThreadValues;
 
@@ -46,21 +48,18 @@ pub trait ParExtend<T> {
     fn add_thread_fallibles<E>(
         collected: &mut Self::ThreadValues,
         values: impl IntoIterator<Item = Result<T, E>>,
-    ) -> Option<E> {
+    ) -> Result<(), E> {
         for value in values {
-            match value {
-                Ok(value) => Self::add_thread_value(collected, value),
-                Err(e) => return Some(e),
-            }
+            Self::add_thread_value(collected, value?)
         }
-        None
+        Ok(())
     }
 
     fn add_ordered_thread_fallibles<E>(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         values: impl IntoIterator<Item = Result<T, E>>,
-    ) -> Option<E>;
+    ) -> Result<(), E>;
 
     // extend
 
