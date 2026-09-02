@@ -1,5 +1,5 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen};
+use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
 use alloc::collections::BTreeSet;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
@@ -67,12 +67,8 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
         let mut curr_t = queue.pop_node();
 
         while let Some(ThLen { th, len }) = curr_t {
-            for _ in 0..len {
-                let value = all_values[th].next();
-                // TODO: add safety note
-                let value = unsafe { value.unwrap_unchecked() };
-                _ = self.insert(value);
-            }
+            let chunk = NextN::new(&mut all_values[th], len);
+            self.extend(chunk);
 
             pos_indices[th] += 1;
             curr_t = match all_positions[th].get(pos_indices[th]) {

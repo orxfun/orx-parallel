@@ -1,5 +1,5 @@
 use crate::collectables::par_extend::ParExtend;
-use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen};
+use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
 use alloc::collections::VecDeque;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
@@ -47,16 +47,6 @@ impl<T> ParExtend<T> for VecDeque<T> {
     }
 
     fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
-        // let mut vec = Vec::new();
-        // Vec::extend_from_ordered_thread_results(&mut vec, results);
-        // match self.is_empty() {
-        //     true => {
-        //         let mut vec_deque = VecDeque::from(vec);
-        //         core::mem::swap(self, &mut vec_deque);
-        //     }
-        //     false => self.extend(vec),
-        // }
-
         let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
         self.reserve(collected_len);
 
@@ -79,26 +69,19 @@ impl<T> ParExtend<T> for VecDeque<T> {
         }
         let mut curr_t = queue.pop_node();
 
-        // while let Some(ThLen { th, len }) = curr_t {
-        //     unsafe {
-        //         self.extend(iter);
-        //     };
-        //     for _ in 0..len {
-        //         let value = all_values[th].next();
-        //         // TODO: add safety note
-        //         let value = unsafe { value.unwrap_unchecked() };
-        //         _ = self.insert(value);
-        //     }
+        while let Some(ThLen { th, len }) = curr_t {
+            let chunk = NextN::new(&mut all_values[th], len);
+            self.extend(chunk);
 
-        //     pos_indices[th] += 1;
-        //     curr_t = match all_positions[th].get(pos_indices[th]) {
-        //         Some(pos) => {
-        //             let node = ThLen::new(th, pos.len);
-        //             Some(queue.push_then_pop(node, pos.idx).0)
-        //         }
-        //         None => queue.pop_node(),
-        //     };
-        // }
+            pos_indices[th] += 1;
+            curr_t = match all_positions[th].get(pos_indices[th]) {
+                Some(pos) => {
+                    let node = ThLen::new(th, pos.len);
+                    Some(queue.push_then_pop(node, pos.idx).0)
+                }
+                None => queue.pop_node(),
+            };
+        }
     }
 }
 
