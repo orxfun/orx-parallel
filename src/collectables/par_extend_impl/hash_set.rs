@@ -47,6 +47,22 @@ impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
         None
     }
 
+    // res: thread collect
+
+    fn add_ordered_thread_fallibles<E>(
+        collected: &mut Self::OrderedThreadValues,
+        _idx: usize,
+        values: impl IntoIterator<Item = Result<T, E>>,
+    ) -> Option<E> {
+        for value in values {
+            match value {
+                Ok(value) => _ = collected.insert(value),
+                Err(e) => return Some(e),
+            }
+        }
+        None
+    }
+
     // extend
 
     fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {

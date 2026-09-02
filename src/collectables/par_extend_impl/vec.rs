@@ -61,6 +61,29 @@ impl<T> ParExtend<T> for Vec<T> {
         None
     }
 
+    // res: thread collect
+
+    fn add_ordered_thread_fallibles<E>(
+        collected: &mut Self::OrderedThreadValues,
+        idx: usize,
+        values: impl IntoIterator<Item = Result<T, E>>,
+    ) -> Option<E> {
+        let len_begin = collected.values.len();
+        for value in values {
+            match value {
+                Ok(value) => collected.values.push(value),
+                Err(e) => return Some(e),
+            }
+        }
+
+        let len = collected.values.len() - len_begin;
+        if len > 0 {
+            collected.positions.push(IdxLen { idx, len });
+        }
+
+        None
+    }
+
     // extend
 
     fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {

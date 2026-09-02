@@ -51,6 +51,22 @@ impl<K: Hash + Eq, V> ParExtend<(K, V)> for HashMap<K, V> {
         None
     }
 
+    // res: thread collect
+
+    fn add_ordered_thread_fallibles<E>(
+        collected: &mut Self::OrderedThreadValues,
+        _idx: usize,
+        values: impl IntoIterator<Item = Result<(K, V), E>>,
+    ) -> Option<E> {
+        for value in values {
+            match value {
+                Ok((key, value)) => _ = collected.insert(key, value),
+                Err(e) => return Some(e),
+            }
+        }
+        None
+    }
+
     // extend
 
     fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {

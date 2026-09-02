@@ -56,6 +56,14 @@ pub trait ParExtend<T> {
         None
     }
 
+    fn add_ordered_thread_fallibles<E>(
+        collected: &mut Self::OrderedThreadValues,
+        idx: usize,
+        values: impl IntoIterator<Item = Result<T, E>>,
+    ) -> Option<E> {
+        None
+    }
+
     // extend
 
     fn extend_from_thread_results(&mut self, thread_results: Vec<Self::ThreadValues>);
