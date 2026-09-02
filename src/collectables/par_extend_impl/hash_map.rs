@@ -56,7 +56,7 @@ impl<K: Hash + Eq, V> ParExtend<(K, V)> for HashMap<K, V> {
             let (key, value) = value?;
             _ = collected.insert(key, value);
         }
-        None
+        Some(())
     }
 
     // res: thread collect

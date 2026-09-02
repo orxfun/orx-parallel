@@ -32,7 +32,7 @@ pub trait ParExtend<T> {
         for value in values {
             Self::add_thread_value(collected, value?);
         }
-        None
+        Some(())
     }
 
     fn add_ordered_thread_optionals(
@@ -60,9 +60,7 @@ pub trait ParExtend<T> {
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         values: impl IntoIterator<Item = Result<T, E>>,
-    ) -> Option<E> {
-        None
-    }
+    ) -> Option<E>;
 
     // extend
 

@@ -63,7 +63,7 @@ impl<T> ParExtend<T> for VecDeque<T> {
             collected.positions.push(IdxLen { idx, len });
         }
 
-        None
+        Some(())
     }
 
     // res: thread collect

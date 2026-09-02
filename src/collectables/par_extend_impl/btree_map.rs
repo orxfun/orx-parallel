@@ -73,7 +73,7 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
             collected.positions.push(IdxLen { idx, len });
         }
 
-        None
+        Some(())
     }
 
     // res: thread collect

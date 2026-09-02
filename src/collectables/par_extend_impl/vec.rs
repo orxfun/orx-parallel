@@ -62,7 +62,7 @@ impl<T> ParExtend<T> for Vec<T> {
             collected.positions.push(IdxLen { idx, len });
         }
 
-        None
+        Some(())
     }
 
     // res: thread collect

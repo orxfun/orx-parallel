@@ -26,11 +26,7 @@ impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(
-        collected: &mut Self::OrderedThreadValues,
-        _idx: usize,
-        value: T,
-    ) {
+    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, _idx: usize, value: T) {
         Self::add_thread_value(collected, value);
     }
 
@@ -52,7 +48,7 @@ impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
         for value in values {
             _ = collected.insert(value?);
         }
-        None
+        Some(())
     }
 
     // res: thread collect

@@ -27,11 +27,7 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(
-        collected: &mut Self::OrderedThreadValues,
-        idx: usize,
-        value: T,
-    ) {
+    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, idx: usize, value: T) {
         let inserted = collected.values.insert(value);
         if inserted {
             collected.positions.push(IdxLen { idx, len: 1 });
@@ -69,7 +65,7 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
             collected.positions.push(IdxLen { idx, len });
         }
 
-        None
+        Some(())
     }
 
     // res: thread collect
