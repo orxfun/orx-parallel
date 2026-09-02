@@ -8,6 +8,8 @@ impl<K: Hash + Eq, V> ParExtend<(K, V)> for HashMap<K, V> {
 
     type OrderedThreadValues = Self;
 
+    // thread collect
+
     fn add_thread_value(collected: &mut Self::ThreadValues, (key, value): (K, V)) {
         _ = collected.insert(key, value);
     }
@@ -19,7 +21,7 @@ impl<K: Hash + Eq, V> ParExtend<(K, V)> for HashMap<K, V> {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(
+    fn add_ordered_thread_val_and_pos(
         collected: &mut Self::OrderedThreadValues,
         _idx: usize,
         value: (K, V),
@@ -33,6 +35,20 @@ impl<K: Hash + Eq, V> ParExtend<(K, V)> for HashMap<K, V> {
         values: impl IntoIterator<Item = (K, V)>,
     ) {
         Self::add_thread_values(collected, values);
+    }
+
+    // opt: thread collect
+
+    fn add_ordered_thread_optionals(
+        collected: &mut Self::OrderedThreadValues,
+        _idx: usize,
+        values: impl IntoIterator<Item = Option<(K, V)>>,
+    ) -> Option<()> {
+        for value in values {
+            let (key, value) = value?;
+            _ = collected.insert(key, value);
+        }
+        None
     }
 
     // extend

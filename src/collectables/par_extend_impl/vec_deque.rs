@@ -9,6 +9,8 @@ impl<T> ParExtend<T> for VecDeque<T> {
 
     type OrderedThreadValues = ColAndPos<Vec<T>>;
 
+    // thread collect
+
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
         collected.push_back(value);
     }
@@ -17,7 +19,11 @@ impl<T> ParExtend<T> for VecDeque<T> {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, idx: usize, value: T) {
+    fn add_ordered_thread_val_and_pos(
+        collected: &mut Self::OrderedThreadValues,
+        idx: usize,
+        value: T,
+    ) {
         collected.values.push(value);
         collected.positions.push(IdxLen { idx, len: 1 });
     }
@@ -34,6 +40,26 @@ impl<T> ParExtend<T> for VecDeque<T> {
         if len > 0 {
             collected.positions.push(IdxLen { idx, len });
         }
+    }
+
+    // opt: thread collect
+
+    fn add_ordered_thread_optionals(
+        collected: &mut Self::OrderedThreadValues,
+        idx: usize,
+        values: impl IntoIterator<Item = Option<T>>,
+    ) -> Option<()> {
+        let len_begin = collected.values.len();
+        for value in values {
+            collected.values.push(value?);
+        }
+
+        let len = collected.values.len() - len_begin;
+        if len > 0 {
+            collected.positions.push(IdxLen { idx, len });
+        }
+
+        None
     }
 
     // extend

@@ -41,7 +41,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     let mut t0 = ColAndPos::default();
 
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![1, 2]);
-    BTreeSet::add_ordered_thread_value(&mut t0, 1, 3);
+    BTreeSet::add_ordered_thread_val_and_pos(&mut t0, 1, 3);
     BTreeSet::add_ordered_thread_values(&mut t0, 2, vec![4, 5, 6]);
 
     set.extend_from_ordered_thread_results(vec![t0]);
@@ -75,11 +75,11 @@ fn extend_from_ordered_thread_results_interleaved_threads() {
 
     // t0 has chunks 3 and 5
     BTreeSet::add_ordered_thread_values(&mut t0, 3, vec![7, 8]);
-    BTreeSet::add_ordered_thread_value(&mut t0, 5, 11);
+    BTreeSet::add_ordered_thread_val_and_pos(&mut t0, 5, 11);
 
     // t1 has chunks 0 and 2
     BTreeSet::add_ordered_thread_values(&mut t1, 0, vec![1, 2, 3]);
-    BTreeSet::add_ordered_thread_value(&mut t1, 2, 6);
+    BTreeSet::add_ordered_thread_val_and_pos(&mut t1, 2, 6);
 
     // t2 has chunks 1 and 4
     BTreeSet::add_ordered_thread_values(&mut t2, 1, vec![4, 5]);
@@ -96,8 +96,8 @@ fn extend_from_ordered_thread_results_append_to_non_empty_set() {
     let mut t0 = ColAndPos::default();
     let mut t1 = ColAndPos::default();
 
-    BTreeSet::add_ordered_thread_value(&mut t0, 0, 1);
-    BTreeSet::add_ordered_thread_value(&mut t1, 1, 2);
+    BTreeSet::add_ordered_thread_val_and_pos(&mut t0, 0, 1);
+    BTreeSet::add_ordered_thread_val_and_pos(&mut t1, 1, 2);
 
     set.extend_from_ordered_thread_results(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 100, 200]);
@@ -129,7 +129,7 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
     for chunk_idx in 0..(num_threads * chunks_per_thread) {
         let t = chunk_idx % num_threads;
         let val = chunk_idx as i32 * 10;
-        BTreeSet::add_ordered_thread_value(&mut thread_results[t], chunk_idx, val);
+        BTreeSet::add_ordered_thread_val_and_pos(&mut thread_results[t], chunk_idx, val);
     }
 
     set.extend_from_ordered_thread_results(thread_results);
@@ -146,7 +146,7 @@ fn extend_from_ordered_thread_results_duplicate_values_within_thread() {
 
     // Add duplicate values within the same chunk and across chunks of the same thread
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![5, 5, 10, 5]);
-    BTreeSet::add_ordered_thread_value(&mut t0, 1, 10);
+    BTreeSet::add_ordered_thread_val_and_pos(&mut t0, 1, 10);
     BTreeSet::add_ordered_thread_values(&mut t0, 2, vec![15, 5, 20]);
 
     set.extend_from_ordered_thread_results(vec![t0]);

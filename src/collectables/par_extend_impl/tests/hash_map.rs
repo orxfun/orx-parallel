@@ -44,7 +44,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     let mut t0 = HashMap::default();
 
     HashMap::add_ordered_thread_values(&mut t0, 0, vec![(1, "one"), (2, "two")]);
-    HashMap::add_ordered_thread_value(&mut t0, 1, (3, "three"));
+    HashMap::add_ordered_thread_val_and_pos(&mut t0, 1, (3, "three"));
     HashMap::add_ordered_thread_values(&mut t0, 2, vec![(4, "four"), (5, "five"), (6, "six")]);
 
     map.extend_from_ordered_thread_results(vec![t0]);
@@ -91,8 +91,8 @@ fn extend_from_ordered_thread_results_append_to_non_empty_map() {
     let mut t0 = HashMap::default();
     let mut t1 = HashMap::default();
 
-    HashMap::add_ordered_thread_value(&mut t0, 0, (1, "one"));
-    HashMap::add_ordered_thread_value(&mut t1, 1, (2, "two"));
+    HashMap::add_ordered_thread_val_and_pos(&mut t0, 0, (1, "one"));
+    HashMap::add_ordered_thread_val_and_pos(&mut t1, 1, (2, "two"));
 
     map.extend_from_ordered_thread_results(vec![t0, t1]);
     let expected = HashMap::from([

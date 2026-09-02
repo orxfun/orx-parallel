@@ -9,6 +9,8 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
 
     type OrderedThreadValues = ColAndPos<Self>;
 
+    // thread collect
+
     fn add_thread_value(collected: &mut Self::ThreadValues, (key, value): (K, V)) {
         _ = collected.insert(key, value);
     }
@@ -20,7 +22,7 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(
+    fn add_ordered_thread_val_and_pos(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         (key, value): (K, V),
@@ -43,6 +45,27 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
         if len > 0 {
             collected.positions.push(IdxLen { idx, len });
         }
+    }
+
+    // opt: thread collect
+
+    fn add_ordered_thread_optionals(
+        collected: &mut Self::OrderedThreadValues,
+        idx: usize,
+        values: impl IntoIterator<Item = Option<(K, V)>>,
+    ) -> Option<()> {
+        let len_begin = collected.values.len();
+        for value in values {
+            let (key, value) = value?;
+            _ = collected.values.insert(key, value);
+        }
+
+        let len = collected.values.len() - len_begin;
+        if len > 0 {
+            collected.positions.push(IdxLen { idx, len });
+        }
+
+        None
     }
 
     // extend
