@@ -5,6 +5,10 @@ pub trait ParExtend<T> {
 
     type OrderedThreadValues;
 
+    fn new_thread_values() -> Self::ThreadValues;
+
+    fn new_ordered_thread_values() -> Self::OrderedThreadValues;
+
     // thread collect
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T);

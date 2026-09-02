@@ -9,6 +9,14 @@ impl<T> ParExtend<T> for VecDeque<T> {
 
     type OrderedThreadValues = ColAndPos<Vec<T>>;
 
+    fn new_thread_values() -> Self::ThreadValues {
+        Default::default()
+    }
+
+    fn new_ordered_thread_values() -> Self::OrderedThreadValues {
+        Default::default()
+    }
+
     // thread collect
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {

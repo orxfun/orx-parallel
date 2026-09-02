@@ -9,6 +9,14 @@ impl<T: Ord> ParExtend<T> for BTreeSet<T> {
 
     type OrderedThreadValues = ColAndPos<Self>;
 
+    fn new_thread_values() -> Self::ThreadValues {
+        Default::default()
+    }
+
+    fn new_ordered_thread_values() -> Self::OrderedThreadValues {
+        Default::default()
+    }
+
     // thread collect
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {

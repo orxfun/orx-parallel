@@ -8,6 +8,14 @@ impl<K: Hash + Eq, V> ParExtend<(K, V)> for HashMap<K, V> {
 
     type OrderedThreadValues = Self;
 
+    fn new_thread_values() -> Self::ThreadValues {
+        Default::default()
+    }
+
+    fn new_ordered_thread_values() -> Self::OrderedThreadValues {
+        Default::default()
+    }
+
     // thread collect
 
     fn add_thread_value(collected: &mut Self::ThreadValues, (key, value): (K, V)) {

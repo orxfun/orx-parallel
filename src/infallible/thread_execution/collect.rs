@@ -40,3 +40,13 @@ where
 
     collected
 }
+
+pub fn collect_x<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> ValsAndIdx<X::O>
+where
+    Q: ParRunner,
+    I: ConcurrentIter,
+    X: Xap<I = I::Item>,
+    X::O: Send,
+{
+    todo!()
+}
