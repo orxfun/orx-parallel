@@ -4,7 +4,7 @@ use alloc::collections::VecDeque;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-impl<T> ParExtend<T> for VecDeque<T> {
+impl<T: Send> ParExtend<T> for VecDeque<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = ColAndPos<Vec<T>>;

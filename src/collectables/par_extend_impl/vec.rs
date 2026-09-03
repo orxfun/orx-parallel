@@ -3,7 +3,7 @@ use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen};
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-impl<T> ParExtend<T> for Vec<T> {
+impl<T: Send> ParExtend<T> for Vec<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = ColAndPos<Self>;

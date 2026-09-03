@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use core::hash::Hash;
 use std::collections::HashSet;
 
-impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
+impl<T: Hash + Eq + Send> ParExtend<T> for HashSet<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = Self;

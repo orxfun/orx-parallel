@@ -4,7 +4,7 @@ use alloc::collections::BTreeSet;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-impl<T: Ord> ParExtend<T> for BTreeSet<T> {
+impl<T: Ord + Send> ParExtend<T> for BTreeSet<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = ColAndPos<Self>;

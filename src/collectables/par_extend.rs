@@ -3,9 +3,9 @@ use alloc::vec::Vec;
 // TODO: document the trait
 #[allow(missing_docs)]
 pub trait ParExtend<T>: Extend<T> {
-    type ThreadValues;
+    type ThreadValues: Send;
 
-    type OrderedThreadValues;
+    type OrderedThreadValues: Send;
 
     fn new_thread_values() -> Self::ThreadValues;
 

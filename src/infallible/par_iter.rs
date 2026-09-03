@@ -1,12 +1,10 @@
-use crate::collectables_old::alg::merge_collected::Collect;
-use crate::common_par_traits::ParInfCommon;
 use crate::infallible::Xap;
 use crate::infallible::par_core::ParCore;
 use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::{Par, ParCollectInto};
+use crate::{Par, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Parallel iterator.
@@ -194,45 +192,15 @@ where
         exe.reduce(params, iter, x, f)
     }
 
-    fn collect_into<C>(self, dst: &mut C)
+    fn collect_into<P>(self, dst: &mut P)
     where
-        C: ParCollectInto<X::O>,
+        P: ParExtend<X::O>,
         X::O: Send,
     {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_col_into(dst, self),
-            IterationOrder::Arbitrary => {
-                let (iter, x, mut exe, params) = self.destruct();
-                let results = exe.collect_arb::<_, _, C::ThreadColArb>(params, iter, x);
-                Collect::merge_results_arb(results, dst);
-            }
+        let (iter, x, mut exe, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.collect_x(params, iter, x, dst),
+            IterationOrder::Arbitrary => exe.collect_arb_x(params, iter, x, dst),
         }
-    }
-
-    fn collect<C>(self) -> C
-    where
-        C: ParCollectInto<X::O>,
-        X::O: Send,
-    {
-        let mut dst = C::new_empty();
-        self.collect_into(&mut dst);
-        dst
-    }
-}
-
-impl<I, X, R> ParInfCommon for ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item>,
-    R: ParRunner,
-{
-    type CommonItem = <Self as ParCore>::Item;
-
-    fn common_collect_into<C>(self, dst: &mut C)
-    where
-        C: ParCollectInto<Self::CommonItem>,
-        Self::CommonItem: Send,
-    {
-        self.collect_into(dst);
     }
 }

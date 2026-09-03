@@ -4,7 +4,7 @@ use alloc::collections::BTreeMap;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
+impl<K: Ord + Send, V: Send> ParExtend<(K, V)> for BTreeMap<K, V> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = ColAndPos<Self>;
