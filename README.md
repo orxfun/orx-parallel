@@ -290,9 +290,9 @@ For practical examples, see:
 
 `orx-parallel` supports browser-hosted wasm with dedicated examples and guides.
 
-- live demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
-- tutorial: https://orx-parallel-wasm-tutorials.pages.dev/
-- demo and tutorial sources: https://github.com/orxfun/orx-parallel-wasm-demos
+- live demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
+- tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
+- demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
 - wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
 - internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
 
@@ -300,8 +300,8 @@ For practical examples, see:
 
 The crate is benchmarked with the goal of maintaining practical performance and guiding future improvements. The benchmarks live in a separate repository so each benchmark can run in isolation with accurate measurements, especially when comparing different thread pools.
 
-- Live benchmark dashboard: https://orx-parallel-benchmarks.pages.dev/ displays results generated from the benchmark repository.
-- Benchmark sources: https://github.com/orxfun/orx-parallel-benchmarks
+- Live benchmark dashboard: <https://orx-parallel-benchmarks.pages.dev/> displays results generated from the benchmark repository.
+- Benchmark sources: <https://github.com/orxfun/orx-parallel-benchmarks>
 
 You can also use the benchmark repository as a starting point for measuring your own computations.
 

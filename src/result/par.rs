@@ -177,31 +177,9 @@ pub trait ParResult: Sized + ParResultCore {
     ///     .collect();
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Request 6 threads, but pool only has 4
-    /// let out: Result<Vec<_>, _> = (1..1001)
-    ///     .into_par()
-    ///     .map(Ok::<_, String>)
-    ///     .into_fallible()
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .collect();      // ...but only 4 are available
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 

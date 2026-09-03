@@ -1,8 +1,6 @@
 use crate::{Par, collectables::ParExtendCore};
 
 /// Extends an existing collection with items produced by a parallel iterator.
-///
-/// Implemented for collection types supported by [`ParExtendCore`].
 pub trait ParExtend<T>: ParExtendCore<T> {
     /// Collects items from `iter` into this collection.
     ///

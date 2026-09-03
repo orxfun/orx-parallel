@@ -194,37 +194,9 @@ pub trait ParOption: Sized + ParOptionCore {
     ///     .collect();      // Result: 2 threads used
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count also respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Computation requests 6 threads, but pool only has 4
-    /// let result = (0..1000)
-    ///     .into_par()
-    ///     .map(|x| x * 2)
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .collect();      // ...but only 4 are available
-    /// ```
-    ///
-    /// # Checking Sequential Execution
-    ///
-    /// ```ignore
-    /// let nt = NumThreads::Max(std::num::NonZeroUsize::new(1).unwrap());
-    /// assert!(nt.is_sequential());  // true
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 

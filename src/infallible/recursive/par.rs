@@ -189,28 +189,9 @@ pub trait ParRec: Sized + ParRecCore {
     ///     .sum();
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Request 6 threads, but pool only has 4
-    /// let sum: usize = par_recursive([1usize], |&x| (x < 1000).then_some(x + 1))
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .sum();          // ...but only 4 are available
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -491,13 +472,8 @@ pub trait ParRec: Sized + ParRecCore {
     /// important; however, ordered collection is also optimized so the performance difference
     /// is generally small.
     ///
-    /// When a flat structure is not required, collecting into [`Vec2`] might lead to
-    /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
-    /// _number of threads_ inner vectors.
-    ///
     /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
     /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
-    /// [`Vec2`]: crate::Vec2
     ///
     /// # Examples
     ///

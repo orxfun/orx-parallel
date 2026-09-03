@@ -178,29 +178,9 @@ pub trait Par: Sized + ParCore {
     /// let sum: usize = (1..11).into_par().num_threads(0).sum();
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Request 6 threads, but pool only has 4
-    /// let sum: usize = (1..1001)
-    ///     .into_par()
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .sum();          // ...but only 4 are available
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -823,12 +803,6 @@ pub trait Par: Sized + ParCore {
         Self::Item: Send;
 
     /// Collects all items into a new collection.
-    ///
-    /// When a flat structure is not required, collecting into [`Vec2`] might lead to
-    /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
-    /// _number of threads_ inner vectors.
-    ///
-    /// [`Vec2`]: crate::Vec2
     ///
     /// # Examples
     ///
