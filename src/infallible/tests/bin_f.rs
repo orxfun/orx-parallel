@@ -3,6 +3,7 @@ use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
 use core::fmt::Debug;
+use std::collections::*;
 use std::string::{String, ToString};
 use test_case::test_matrix;
 
@@ -78,7 +79,10 @@ fn bin_f_fold() {
     assert_eq!(&result, &expected);
 }
 
-#[test_matrix([Vec::new()], [false, true], [IterationOrder::Ordered])]
+#[test_matrix(
+    [Vec::new(), BTreeSet::new(), VecDeque::new()],
+    [false, true],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary])]
 fn bin_f_collect<C>(_: C, has_some: bool, order: IterationOrder)
 where
     C: ParExtend<String> + Default + Debug + PartialEq + IntoIterator<Item = String>,
