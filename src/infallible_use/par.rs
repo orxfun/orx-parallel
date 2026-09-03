@@ -2,10 +2,11 @@
 
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
+use crate::infallible_use::par_core::ParUseCore;
 use crate::infallible_use::xap::FlattenOf;
 use crate::infallible_use::xap_variants::{IdUse, UDummyPair};
 use crate::infallible_use::{
-    FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseCore, ParUseIter, XapUse,
+    FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParUseIter, XapUse,
 };
 use crate::option_use::ParUseOptionIter;
 use crate::result_use::ParUseResultIter;

@@ -1,7 +1,7 @@
 use crate::ParExtend;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
-use crate::option::ParOptionCore;
 use crate::option::par::ParOption;
+use crate::option::par_core::ParOptionCore;
 use crate::option::par_runner::ParRunnerOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};

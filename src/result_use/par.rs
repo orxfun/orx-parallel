@@ -4,7 +4,8 @@ use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse,
 };
-use crate::result_use::{ParUseResultCore, ParUseResultIter};
+use crate::result_use::ParUseResultIter;
+use crate::result_use::par_core::ParUseResultCore;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, Sum};

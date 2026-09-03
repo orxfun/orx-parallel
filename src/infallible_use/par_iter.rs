@@ -1,7 +1,8 @@
+use crate::infallible_use::XapUse;
 use crate::infallible_use::par::ParUse;
+use crate::infallible_use::par_core::ParUseCore;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
-use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::use_var::Use;
