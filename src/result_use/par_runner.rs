@@ -1,15 +1,12 @@
 #![allow(clippy::too_many_arguments)]
 
 use crate::ParExtend;
-use crate::collectables_old::Collectable;
 use crate::infallible_use::XapUse;
 use crate::result_use::thread_execution as th;
-use crate::results::{Val, ValIdx, ValsAndIdx};
+use crate::results::{Val, ValIdx};
 use crate::sizes::SizePair;
 use crate::use_var::Use;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
-use alloc::vec;
-use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -214,131 +211,6 @@ pub trait ParRunnerUseRes: ParRunner {
                 Self::complete_computation(state);
                 let u = u.get(0);
                 Val::reduce_res(results_bag.into_inner().into_inner(), |a, b| f(u, a, b))
-            }
-        }
-    }
-
-    fn collect<U, I, M, E, X1, X2, S>(
-        &mut self,
-        sizes: S,
-        params: Params,
-        u: U,
-        iter: I,
-        x1: X1,
-        x2: X2,
-    ) -> Result<Vec<ValsAndIdx<X2::O>>, E>
-    where
-        U: Use,
-        I: ConcurrentIter,
-        X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
-        X2: XapUse<U = U::Item, I = M>,
-        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-        X2::O: Send,
-        E: Send,
-    {
-        match params.is_sequential() {
-            true => {
-                let u = u.init_get(0);
-                let iter = iter
-                    .into_seq_iter()
-                    .flat_map(|i| S::xap_use_res(u, x1, x2, i).into_iter());
-                let mut values = vec![];
-                for maybe in iter {
-                    values.push(maybe?);
-                }
-                Ok(vec![ValsAndIdx::new_seq(values)])
-            }
-            false => {
-                let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(
-                    params,
-                    I::is_source_serialized(),
-                    iter.size_hint(),
-                    u.max_threads(),
-                );
-                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
-
-                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
-                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                        spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                            Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
-                            let value = th::collect::<Self, _, _, _, _, _, _, _>(
-                                sizes, u, th_idx, st, iter, x1, x2,
-                            );
-                            results.push(value);
-                            Self::complete_thread(st, th_idx);
-                        });
-                    }
-                });
-
-                Self::complete_computation(state);
-                results_bag.into_inner().into_inner().into_iter().collect()
-            }
-        }
-    }
-
-    fn collect_arb<U, I, M, E, X1, X2, S, D>(
-        &mut self,
-        sizes: S,
-        params: Params,
-        u: U,
-        iter: I,
-        x1: X1,
-        x2: X2,
-    ) -> Result<Vec<D>, E>
-    where
-        U: Use,
-        I: ConcurrentIter,
-        X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
-        X2: XapUse<U = U::Item, I = M>,
-        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-        X2::O: Send,
-        E: Send,
-        D: Collectable<X2::O>,
-    {
-        match params.is_sequential() {
-            true => {
-                let u = u.init_get(0);
-                let iter = iter
-                    .into_seq_iter()
-                    .flat_map(|i| S::xap_use_res(u, x1, x2, i).into_iter());
-                let mut values = D::col_empty();
-                for maybe in iter {
-                    values.col_push(maybe?);
-                }
-                Ok(vec![values])
-            }
-            false => {
-                let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(
-                    params,
-                    I::is_source_serialized(),
-                    iter.size_hint(),
-                    u.max_threads(),
-                );
-                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
-
-                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
-                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                        spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                            Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
-                            let value = th::collect_arb::<Self, _, _, _, _, _, _, _, D>(
-                                sizes, u, th_idx, st, iter, x1, x2,
-                            );
-                            results.push(value);
-                            Self::complete_thread(st, th_idx);
-                        });
-                    }
-                });
-
-                Self::complete_computation(state);
-                results_bag.into_inner().into_inner().into_iter().collect()
             }
         }
     }

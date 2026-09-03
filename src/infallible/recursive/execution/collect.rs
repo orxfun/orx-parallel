@@ -1,3 +1,4 @@
+use crate::ParExtend;
 use crate::infallible::recursive::execution::elem::Elem;
 use crate::infallible::recursive::utils;
 use crate::infallible::recursive::xap_sync::XapSync;
@@ -18,14 +19,14 @@ impl<I, O> Local<I, O> {
     }
 }
 
-pub fn collect<R, C, X, I, E>(
+pub fn collect<R, C, X, I, E, P>(
     mut runner: R,
     params: Params,
     iter: C,
     xap: X,
     extend: E,
-) -> Vec<X::O>
-where
+    dst: &mut P,
+) where
     R: ParRunner,
     C: IntoIterator,
     X: Xap<I = C::Item>,
@@ -33,6 +34,7 @@ where
     E: Fn(&X::I) -> I + Send + Sync,
     X::O: Send + Sync,
     X::I: Send + Sync,
+    P: ParExtend<X::O>,
 {
     let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();

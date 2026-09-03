@@ -1,4 +1,4 @@
-use crate::ParCollectInto;
+use crate::ParExtend;
 use crate::infallible::Xap;
 use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
@@ -223,29 +223,15 @@ where
 
     fn collect_into<C>(self, dst: &mut C)
     where
-        C: ParCollectInto<Self::Item>,
+        C: ParExtend<Self::Item>,
         Self::Item: Send + Sync,
         <Self::Input as IntoIterator>::Item: Send + Sync,
     {
-        let (iter, x, exe, params, extend) = self.destruct_x();
-        let values = match params.iteration_order {
-            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
-            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
-        };
-        C::extend_from_vec(dst, values);
-    }
-
-    fn collect<C>(self) -> C
-    where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
-    {
-        let (iter, x, exe, params, extend) = self.destruct_x();
-        let values = match params.iteration_order {
-            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
-            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
-        };
-        C::create_from_vec(values)
+        // let (iter, x, exe, params, extend) = self.destruct_x();
+        // let values = match params.iteration_order {
+        //     IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
+        //     IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
+        // };
+        // C::extend_from_vec(dst, values);
     }
 }

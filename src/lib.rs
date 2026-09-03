@@ -18,8 +18,6 @@ extern crate alloc;
 extern crate std;
 
 mod collectables;
-mod collectables_old;
-mod common_par_traits;
 /// Core module for infallible computations.
 pub mod infallible;
 mod infallible_use;
@@ -39,14 +37,13 @@ mod sort;
 mod use_var;
 
 pub use collectables::ParExtend;
-pub use collectables_old::{ParCollectInto, Vec2};
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
     IntoParIter, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain, Parallelizable,
     par_recursive,
 };
-pub use ops::{ParExtendOld, Sum};
+pub use ops::Sum;
 pub use option::ParOption;
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};

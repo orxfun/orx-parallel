@@ -12,10 +12,7 @@ use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::use_var::{PairPtr, UseFold};
-use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParExtend, ParUseOption, ParUseResult,
-    Sum,
-};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, ParUseResult, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;

@@ -1,9 +1,0 @@
-mod col_into_opt_use;
-mod fixed_vec;
-mod split_vec_doubling;
-mod split_vec_linear;
-mod split_vec_recursive;
-mod vec;
-mod vec2;
-
-pub use col_into_opt_use::ColIntoOptUse;

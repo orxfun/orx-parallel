@@ -3,7 +3,7 @@ use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::runner::ParRunner;
 use crate::{ChunkSize, IterationOrder, NumThreads};
-use crate::{ParCollectInto, Sum};
+use crate::{ParExtend, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -476,9 +476,9 @@ pub trait ParRec: Sized + ParRecCore {
     ///     .collect_into(&mut dst);
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
-    fn collect_into<C>(self, dst: &mut C)
+    fn collect_into<P>(self, dst: &mut P)
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send + Sync,
         <Self::Input as IntoIterator>::Item: Send + Sync;
 
@@ -509,11 +509,16 @@ pub trait ParRec: Sized + ParRecCore {
     ///     .collect();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
-    fn collect<C>(self) -> C
+    fn collect<P>(self) -> P
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item> + Default,
         Self::Item: Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync;
+        <Self::Input as IntoIterator>::Item: Send + Sync,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst);
+        dst
+    }
 
     // compute - derived
 

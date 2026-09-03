@@ -1,13 +1,9 @@
 use crate::ParExtend;
-use crate::collectables_old::Collectable;
 use crate::infallible_use::XapUse;
 use crate::infallible_use::thread_execution as th;
-use crate::results::ValsAndIdx;
 use crate::results::{Val, ValIdx};
 use crate::use_var::Use;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
-use alloc::vec;
-use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -147,98 +143,6 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 Self::complete_computation(state);
                 let u = u.get(0);
                 Val::reduce(results_bag.into_inner().into_inner(), |a, b| f(u, a, b))
-            }
-        }
-    }
-
-    fn collect<U, I, X>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<ValsAndIdx<X::O>>
-    where
-        U: Use,
-        I: ConcurrentIter,
-        X: XapUse<U = U::Item, I = I::Item>,
-        X::O: Send,
-    {
-        match params.is_sequential() {
-            true => {
-                let u = u.init_get(0);
-                let values = iter
-                    .into_seq_iter()
-                    .flat_map(|i| x.xap_use(u, i).into_iter())
-                    .collect();
-                vec![ValsAndIdx::new_seq(values)]
-            }
-            false => {
-                let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(
-                    params,
-                    I::is_source_serialized(),
-                    iter.size_hint(),
-                    u.max_threads(),
-                );
-                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
-
-                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
-                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                        spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                            Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
-                            let value = th::collect::<Self, _, _, _>(u, th_idx, st, iter, x);
-                            results.push(value);
-                            Self::complete_thread(st, th_idx);
-                        });
-                    }
-                });
-
-                Self::complete_computation(state);
-                results_bag.into_inner().into_inner()
-            }
-        }
-    }
-
-    fn collect_arb<U, I, X, D>(&mut self, params: Params, u: U, iter: I, x: X) -> Vec<D>
-    where
-        U: Use,
-        I: ConcurrentIter,
-        X: XapUse<U = U::Item, I = I::Item>,
-        X::O: Send,
-        D: Collectable<X::O>,
-    {
-        match params.is_sequential() {
-            true => {
-                let u = u.init_get(0);
-                vec![D::col_from_iter(
-                    iter.into_seq_iter()
-                        .flat_map(|i| x.xap_use(u, i).into_iter()),
-                )]
-            }
-            false => {
-                let mut spawned = 0;
-                let (max_nt, state) = self.nt_state(
-                    params,
-                    I::is_source_serialized(),
-                    iter.size_hint(),
-                    u.max_threads(),
-                );
-                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
-
-                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
-                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                        spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                            Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
-                            let value = th::collect_arb::<Self, _, _, _, D>(u, th_idx, st, iter, x);
-                            results.push(value);
-                            Self::complete_thread(st, th_idx);
-                        });
-                    }
-                });
-
-                Self::complete_computation(state);
-                results_bag.into_inner().into_inner()
             }
         }
     }
