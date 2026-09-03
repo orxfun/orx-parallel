@@ -22,7 +22,7 @@
 /// ```
 pub trait Use: Sync {
     /// Type of the worker-local mutable value stored for each thread.
-    type Item;
+    type Item: Send;
 
     /// Returns the mutable worker-local value for `thread_idx`, creating it if needed.
     #[allow(clippy::mut_from_ref)]
