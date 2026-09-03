@@ -227,11 +227,10 @@ where
         Self::Item: Send + Sync,
         <Self::Input as IntoIterator>::Item: Send + Sync,
     {
-        // let (iter, x, exe, params, extend) = self.destruct_x();
-        // let values = match params.iteration_order {
-        //     IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
-        //     IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
-        // };
-        // C::extend_from_vec(dst, values);
+        let (iter, x, exe, params, extend) = self.destruct_x();
+        match params.iteration_order {
+            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend, dst),
+            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend, dst),
+        }
     }
 }

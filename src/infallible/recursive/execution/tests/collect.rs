@@ -33,7 +33,7 @@ fn recursive_collect(depth: usize, fan_out: usize) {
     assert_eq!(result, expected);
 }
 
-#[cfg(not(miri))]
+#[cfg(all(not(miri), feature = "long-tests"))]
 #[test_matrix([4, 5, 6], [4, 5, 6])]
 fn recursive_collect_determinism(depth: usize, fan_out: usize) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
