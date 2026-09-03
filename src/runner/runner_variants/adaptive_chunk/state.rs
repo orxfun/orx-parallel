@@ -105,7 +105,7 @@ impl State {
         let explored = self.explored_tasks.load(Ordering::Relaxed);
         let explored_x100 = explored.saturating_mul(100);
         let fraction_capped = match self.initial_len {
-            Some(total) if total > 0 => explored_x100 >= total * EXPLORATION_CAP_PCT,
+            Some(total) if total > 0 => explored_x100 >= total.saturating_mul(EXPLORATION_CAP_PCT),
             _ => false,
         };
         if fraction_capped {
@@ -117,7 +117,9 @@ impl State {
         }
 
         let fraction_reached = match self.initial_len {
-            Some(total) if total > 0 => explored_x100 >= total * EXPLORATION_TARGET_PCT,
+            Some(total) if total > 0 => {
+                explored_x100 >= total.saturating_mul(EXPLORATION_TARGET_PCT)
+            }
             _ => false,
         };
 
