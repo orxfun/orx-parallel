@@ -1,4 +1,3 @@
-use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::parameters::IterationOrder;
 use crate::result_use::tests::utils::{UseValue, inputs};
 use crate::*;

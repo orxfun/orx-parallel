@@ -1,4 +1,4 @@
-#[cfg(feature = "long-tests")]
+// #[cfg(feature = "long-tests")]
 #[cfg(test)]
 mod tests;
 
