@@ -9,16 +9,15 @@ pub trait ParExtend<T>: ParExtendCore<T> {
     ///
     /// ```
     /// use orx_parallel::{IntoParIter, Par, ParExtend};
+    /// use std::collections::BTreeSet;
     ///
     /// let mut values = vec![0];
     /// values.par_extend((1..=4).into_par());
     /// assert_eq!(values, vec![0, 1, 2, 3, 4]);
     ///
-    /// use std::collections::HashSet;
-    ///
-    /// let mut values = HashSet::from([0]);
+    /// let mut values = BTreeSet::from([0]);
     /// values.par_extend((1..=4).into_par());
-    /// assert_eq!(values, HashSet::from([0, 1, 2, 3, 4]));
+    /// assert_eq!(values, BTreeSet::from([0, 1, 2, 3, 4]));
     /// ```
     fn par_extend(&mut self, iter: impl Par<Item = T>)
     where
