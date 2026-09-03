@@ -3,8 +3,6 @@ use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
-use alloc::vec;
-use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
