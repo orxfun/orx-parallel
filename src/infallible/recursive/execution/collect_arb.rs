@@ -1,4 +1,4 @@
-use crate::ParExtend;
+use crate::ParExtendCore;
 use crate::infallible::recursive::utils;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
@@ -32,7 +32,7 @@ pub fn collect_arb<R, C, X, I, E, P>(
     E: Fn(&X::I) -> I + Send + Copy,
     X::O: Send,
     X::I: Send,
-    P: ParExtend<X::O>,
+    P: ParExtendCore<X::O>,
 {
     let max_threads: usize = runner.pool().max_num_threads().into();
 

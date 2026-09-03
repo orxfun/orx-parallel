@@ -1,9 +1,9 @@
-use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_core::ParExtendCore;
 use alloc::vec::Vec;
 use core::hash::Hash;
 use std::collections::HashMap;
 
-impl<K: Hash + Eq + Send, V: Send> ParExtend<(K, V)> for HashMap<K, V> {
+impl<K: Hash + Eq + Send, V: Send> ParExtendCore<(K, V)> for HashMap<K, V> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = Self;

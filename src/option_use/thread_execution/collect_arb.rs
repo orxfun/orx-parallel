@@ -1,4 +1,4 @@
-use crate::ParExtend;
+use crate::ParExtendCore;
 use crate::infallible_use::XapUse;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
@@ -19,7 +19,7 @@ where
     X1: XapUse<U = U, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U, I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    P: ParExtend<X2::O>,
+    P: ParExtendCore<X2::O>,
 {
     let mut collected = P::new_thread_values();
     let out = &mut collected;

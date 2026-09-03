@@ -1,4 +1,4 @@
-use crate::ParExtend;
+use crate::ParExtendCore;
 use crate::infallible::Xap;
 use crate::result::thread_execution as th;
 use crate::results::{Val, ValIdx};
@@ -199,7 +199,7 @@ pub trait ParRunnerRes: ParRunner {
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
         E: Send,
-        P: ParExtend<X2::O>,
+        P: ParExtendCore<X2::O>,
         P::OrderedThreadValues: Send,
     {
         match params.is_sequential() {
@@ -250,7 +250,7 @@ pub trait ParRunnerRes: ParRunner {
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
         E: Send,
-        P: ParExtend<X2::O>,
+        P: ParExtendCore<X2::O>,
         P::ThreadValues: Send,
     {
         match params.is_sequential() {

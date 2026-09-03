@@ -1,8 +1,8 @@
-use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_core::ParExtendCore;
 use alloc::collections::LinkedList;
 use alloc::vec::Vec;
 
-impl<T: Send> ParExtend<T> for LinkedList<T> {
+impl<T: Send> ParExtendCore<T> for LinkedList<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = Self;

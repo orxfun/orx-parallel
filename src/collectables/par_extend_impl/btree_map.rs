@@ -1,10 +1,10 @@
-use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_core::ParExtendCore;
 use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
 use alloc::collections::BTreeMap;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-impl<K: Ord + Send, V: Send> ParExtend<(K, V)> for BTreeMap<K, V> {
+impl<K: Ord + Send, V: Send> ParExtendCore<(K, V)> for BTreeMap<K, V> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = ColAndPos<Self>;

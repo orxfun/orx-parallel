@@ -1,5 +1,5 @@
 use crate::runner::ParRunner;
-use crate::{ParExtend, infallible_use::xap::XapUse};
+use crate::{ParExtendCore, infallible_use::xap::XapUse};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
 pub fn collect<Q, U, I, X, P>(
@@ -14,7 +14,7 @@ where
     I: ConcurrentIter,
     X: XapUse<U = U, I = I::Item>,
     X::O: Send,
-    P: ParExtend<X::O>,
+    P: ParExtendCore<X::O>,
 {
     let mut collected = P::new_ordered_thread_values();
     let out = &mut collected;

@@ -1,4 +1,4 @@
-use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_core::ParExtendCore;
 use crate::collectables::par_extend_impl::utils::ColAndPos;
 use crate::{IntoParIter, IterationOrder, Par};
 use alloc::collections::VecDeque;

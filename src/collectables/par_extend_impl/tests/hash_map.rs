@@ -1,4 +1,4 @@
-use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_core::ParExtendCore;
 use crate::{IntoParIter, IterationOrder, Par};
 use alloc::string::{String, ToString};
 use alloc::{vec, vec::Vec};

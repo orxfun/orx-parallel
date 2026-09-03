@@ -4,7 +4,7 @@ use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::{Par, ParExtend};
+use crate::{Par, ParExtendCore};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Parallel iterator.
@@ -194,7 +194,7 @@ where
 
     fn collect_into<P>(self, dst: &mut P)
     where
-        P: ParExtend<X::O>,
+        P: ParExtendCore<X::O>,
         X::O: Send,
     {
         let (iter, x, mut exe, params) = self.destruct();

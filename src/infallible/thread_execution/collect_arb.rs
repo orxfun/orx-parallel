@@ -1,4 +1,4 @@
-use crate::ParExtend;
+use crate::ParExtendCore;
 use crate::infallible::xap::Xap;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
@@ -8,7 +8,7 @@ where
     Q: ParRunner,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
-    P: ParExtend<X::O>,
+    P: ParExtendCore<X::O>,
 {
     let mut collected = P::new_thread_values();
     let out = &mut collected;

@@ -8,7 +8,7 @@ use crate::result_use::ParUseResultIter;
 use crate::result_use::par_core::ParUseResultCore;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtendCore, Sum};
 use core::cmp::Ordering;
 
 /// Fallible parallel iterator with worker-local mutable state.
@@ -567,7 +567,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P) -> Result<(), Self::Error>
     where
-        P: ParExtend<Self::Item>,
+        P: ParExtendCore<Self::Item>,
         Self::Item: Send,
         Self::Error: Send;
 
@@ -591,7 +591,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn collect<P>(self) -> Result<P, Self::Error>
     where
-        P: ParExtend<Self::Item> + Default,
+        P: ParExtendCore<Self::Item> + Default,
         Self::Item: Send,
         Self::Error: Send,
     {

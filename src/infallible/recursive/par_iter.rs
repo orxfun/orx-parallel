@@ -1,4 +1,4 @@
-use crate::ParExtend;
+use crate::ParExtendCore;
 use crate::infallible::Xap;
 use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
@@ -223,7 +223,7 @@ where
 
     fn collect_into<C>(self, dst: &mut C)
     where
-        C: ParExtend<Self::Item>,
+        C: ParExtendCore<Self::Item>,
         Self::Item: Send,
         <Self::Input as IntoIterator>::Item: Send,
     {

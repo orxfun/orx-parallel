@@ -3,7 +3,7 @@ use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::runner::ParRunner;
 use crate::{ChunkSize, IterationOrder, NumThreads};
-use crate::{ParExtend, Sum};
+use crate::{ParExtendCore, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -478,7 +478,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P)
     where
-        P: ParExtend<Self::Item>,
+        P: ParExtendCore<Self::Item>,
         Self::Item: Send,
         <Self::Input as IntoIterator>::Item: Send;
 
@@ -511,7 +511,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     fn collect<P>(self) -> P
     where
-        P: ParExtend<Self::Item> + Default,
+        P: ParExtendCore<Self::Item> + Default,
         Self::Item: Send,
         <Self::Input as IntoIterator>::Item: Send,
     {

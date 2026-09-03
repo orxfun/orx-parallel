@@ -1,8 +1,8 @@
-use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_core::ParExtendCore;
 use alloc::collections::BinaryHeap;
 use alloc::vec::Vec;
 
-impl<T: Ord + Send> ParExtend<T> for BinaryHeap<T> {
+impl<T: Ord + Send> ParExtendCore<T> for BinaryHeap<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = Self;

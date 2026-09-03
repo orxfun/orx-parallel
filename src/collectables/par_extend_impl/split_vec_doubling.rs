@@ -1,11 +1,11 @@
-use crate::collectables::par_extend::ParExtend;
+use crate::collectables::par_extend_core::ParExtendCore;
 use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
 use alloc::{vec, vec::Vec};
 use orx_pinned_vec::PinnedVec;
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 use orx_split_vec::{Doubling, SplitVec};
 
-impl<T: Send> ParExtend<T> for SplitVec<T, Doubling> {
+impl<T: Send> ParExtendCore<T> for SplitVec<T, Doubling> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = ColAndPos<Self>;

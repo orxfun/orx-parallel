@@ -9,7 +9,7 @@ use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseResult, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtendCore, ParUseResult, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -698,7 +698,7 @@ pub trait ParResult: Sized + ParResultCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P) -> Result<(), Self::Error>
     where
-        P: ParExtend<Self::Item>,
+        P: ParExtendCore<Self::Item>,
         Self::Item: Send,
         Self::Error: Send;
 
@@ -719,7 +719,7 @@ pub trait ParResult: Sized + ParResultCore {
     /// ```
     fn collect<P>(self) -> Result<P, Self::Error>
     where
-        P: ParExtend<Self::Item> + Default,
+        P: ParExtendCore<Self::Item> + Default,
         Self::Item: Send,
         Self::Error: Send,
     {

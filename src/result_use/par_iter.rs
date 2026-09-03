@@ -1,4 +1,4 @@
-use crate::ParExtend;
+use crate::ParExtendCore;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result_use::par::ParUseResult;
@@ -335,7 +335,7 @@ where
 
     fn collect_into<P>(self, dst: &mut P) -> Result<(), E>
     where
-        P: ParExtend<X2::O>,
+        P: ParExtendCore<X2::O>,
         X2::O: Send,
         E: Send,
     {

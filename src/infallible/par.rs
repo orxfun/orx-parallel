@@ -7,7 +7,7 @@ use crate::option::ParOptionIter;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtendCore};
 use crate::{ParOption, ParResult, ParUse, Sum};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 use alloc::vec::Vec;
@@ -819,7 +819,7 @@ pub trait Par: Sized + ParCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P)
     where
-        P: ParExtend<Self::Item>,
+        P: ParExtendCore<Self::Item>,
         Self::Item: Send;
 
     /// Collects all items into a new collection.
@@ -840,7 +840,7 @@ pub trait Par: Sized + ParCore {
     /// ```
     fn collect<P>(self) -> P
     where
-        P: ParExtend<Self::Item> + Default,
+        P: ParExtendCore<Self::Item> + Default,
         Self::Item: Send,
     {
         let mut dst = P::default();
