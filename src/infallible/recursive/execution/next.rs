@@ -1,4 +1,4 @@
-use crate::infallible::recursive::execution::elem::ElemOut;
+use crate::infallible::recursive::execution::elem::ElemIn;
 use crate::infallible::recursive::utils;
 use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
@@ -28,7 +28,7 @@ where
     let mut inputs: Vec<_> = iter
         .into_iter()
         .enumerate()
-        .map(|(width, value)| ElemOut::new(value, 0, width))
+        .map(|(ch, value)| ElemIn::new(value, 0, ch))
         .collect();
 
     let par = inputs.par_drain(..).runner(&mut runner);
@@ -39,7 +39,7 @@ where
             let new_inputs = extend(&input.value)
                 .into_iter()
                 .enumerate()
-                .map(|(width, value)| ElemOut::new(value, input.depth, width));
+                .map(|(width, value)| ElemIn::new(value, input.parent_idx, width));
             u.extend(new_inputs);
             xap.xap(input.value)
         })
@@ -49,8 +49,8 @@ where
         true => result,
         false => {
             utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
-            ElemOut::normalize_depths(&mut inputs);
-            inputs.sort_unstable_by_key(|x| x.depth);
+            ElemIn::normalize_parent_indices(&mut inputs);
+            inputs.sort_unstable_by_key(|x| x.parent_idx);
 
             while !inputs.is_empty() {
                 let par = inputs.par_drain(..).runner(&mut runner);
@@ -61,7 +61,7 @@ where
                         let new_inputs = extend(&input.value)
                             .into_iter()
                             .enumerate()
-                            .map(|(width, value)| ElemOut::new(value, input.depth, width));
+                            .map(|(width, value)| ElemIn::new(value, input.parent_idx, width));
                         u.extend(new_inputs);
                         xap.xap(input.value)
                     })
@@ -71,8 +71,8 @@ where
                     return result;
                 }
                 utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
-                ElemOut::normalize_depths(&mut inputs);
-                inputs.sort_unstable_by_key(|x| x.depth);
+                ElemIn::normalize_parent_indices(&mut inputs);
+                inputs.sort_unstable_by_key(|x| x.parent_idx);
             }
 
             None
