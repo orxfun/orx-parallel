@@ -41,7 +41,6 @@ pub fn collect_arb<R, C, X, I, E, P>(
     let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
 
     let mut inputs: Vec<_> = iter.into_iter().collect();
-    let mut result = Vec::new();
 
     let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
@@ -51,7 +50,7 @@ pub fn collect_arb<R, C, X, I, E, P>(
         u.output.extend(xap.xap(i));
     });
     utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-    utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
+    dst.extend(data.iter_mut().flat_map(|x| x.output.drain(..)));
 
     while !inputs.is_empty() {
         let par = inputs.par_drain(..).runner(&mut runner);
@@ -63,8 +62,6 @@ pub fn collect_arb<R, C, X, I, E, P>(
         });
 
         utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-        utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
+        dst.extend(data.iter_mut().flat_map(|x| x.output.drain(..)));
     }
-
-    dst.extend(result);
 }

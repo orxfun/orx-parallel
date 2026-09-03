@@ -1,4 +1,4 @@
-use crate::runner::ParRunner;
+use crate::{ParExtend, runner::ParRunner};
 use alloc::vec::Vec;
 
 #[allow(dead_code)]
