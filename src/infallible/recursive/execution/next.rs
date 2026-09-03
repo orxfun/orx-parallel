@@ -1,4 +1,4 @@
-use crate::infallible::recursive::execution::elem::Elem;
+use crate::infallible::recursive::execution::elem::ElemOut;
 use crate::infallible::recursive::utils;
 use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
@@ -28,7 +28,7 @@ where
     let mut inputs: Vec<_> = iter
         .into_iter()
         .enumerate()
-        .map(|(width, value)| Elem::new(value, 0, width))
+        .map(|(width, value)| ElemOut::new(value, 0, width))
         .collect();
 
     let par = inputs.par_drain(..).runner(&mut runner);
@@ -39,7 +39,7 @@ where
             let new_inputs = extend(&input.value)
                 .into_iter()
                 .enumerate()
-                .map(|(width, value)| Elem::new(value, input.depth, width));
+                .map(|(width, value)| ElemOut::new(value, input.depth, width));
             u.extend(new_inputs);
             xap.xap(input.value)
         })
@@ -49,7 +49,7 @@ where
         true => result,
         false => {
             utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
-            Elem::normalize_depths(&mut inputs);
+            ElemOut::normalize_depths(&mut inputs);
             inputs.sort_unstable_by_key(|x| x.depth);
 
             while !inputs.is_empty() {
@@ -61,7 +61,7 @@ where
                         let new_inputs = extend(&input.value)
                             .into_iter()
                             .enumerate()
-                            .map(|(width, value)| Elem::new(value, input.depth, width));
+                            .map(|(width, value)| ElemOut::new(value, input.depth, width));
                         u.extend(new_inputs);
                         xap.xap(input.value)
                     })
@@ -71,7 +71,7 @@ where
                     return result;
                 }
                 utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
-                Elem::normalize_depths(&mut inputs);
+                ElemOut::normalize_depths(&mut inputs);
                 inputs.sort_unstable_by_key(|x| x.depth);
             }
 

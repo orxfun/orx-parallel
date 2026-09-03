@@ -1,13 +1,13 @@
 use crate::ParExtend;
-use crate::infallible::recursive::execution::elem::Elem;
+use crate::infallible::recursive::execution::elem::ElemOut;
 use crate::infallible::recursive::utils;
 use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
 struct Local<I, O> {
-    input: Vec<Elem<I>>,
-    output: Vec<Elem<O>>,
+    input: Vec<ElemOut<I>>,
+    output: Vec<ElemOut<O>>,
 }
 
 impl<I, O> Local<I, O> {
@@ -44,7 +44,7 @@ pub fn collect<R, C, X, I, E, P>(
     let mut inputs: Vec<_> = iter
         .into_iter()
         .enumerate()
-        .map(|(width, value)| Elem::new(value, 0, width))
+        .map(|(width, value)| ElemOut::new(value, 0, width))
         .collect();
     let mut result = Vec::new();
 
@@ -56,15 +56,15 @@ pub fn collect<R, C, X, I, E, P>(
         let new_inputs = extend(&input.value)
             .into_iter()
             .enumerate()
-            .map(|(width, value)| Elem::new(value, input.depth, width));
+            .map(|(width, value)| ElemOut::new(value, input.depth, width));
         u.input.extend(new_inputs);
 
         let values = xap.xap(input.value).into_iter();
-        let outputs = values.map(|value| Elem::new(value, depth, input.width));
+        let outputs = values.map(|value| ElemOut::new(value, depth, input.width));
         u.output.extend(outputs);
     });
     utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-    Elem::normalize_depths(&mut inputs);
+    ElemOut::normalize_depths(&mut inputs);
     utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
 
     while !inputs.is_empty() {
@@ -76,15 +76,15 @@ pub fn collect<R, C, X, I, E, P>(
             let new_inputs = extend(&input.value)
                 .into_iter()
                 .enumerate()
-                .map(|(width, value)| Elem::new(value, input.depth, width));
+                .map(|(width, value)| ElemOut::new(value, input.depth, width));
             u.input.extend(new_inputs);
 
             let values = xap.xap(input.value).into_iter();
-            let outputs = values.map(|value| Elem::new(value, depth, input.depth));
+            let outputs = values.map(|value| ElemOut::new(value, depth, input.depth));
             u.output.extend(outputs);
         });
         utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-        Elem::normalize_depths(&mut inputs);
+        ElemOut::normalize_depths(&mut inputs);
         utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
     }
 
