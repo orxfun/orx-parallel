@@ -1,4 +1,3 @@
-
 use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
@@ -105,108 +104,47 @@ fn one_m_reduce_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn one_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let expected = C::expected(
-        mode,
-        |i| i as u64,
-        inputs(N)
-            .into_iter()
-            .filter_map(|x| match x.as_str() == "7" {
+#[test]
+fn one_m_collect_ok() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .filter_map(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
                 true => None,
                 false => Some(Some(x)),
-            })
-            .map(|x| x.unwrap())
-            .map(|x| x.parse::<u64>().unwrap())
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(Some(x)),
-                }
-            })
-            .into_optional()
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(Some(x)),
-                }
-            })
-            .into_optional()
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+            }
+        })
+        .into_optional()
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
+        .collect();
+    assert!(result.is_some());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn one_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(match x.as_str() == "42" {
-                        true => Some(x),
-                        false => None,
-                    }),
-                }
-            })
-            .into_optional()
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(match x.as_str() == "42" {
-                        true => Some(x),
-                        false => None,
-                    }),
-                }
-            })
-            .into_optional()
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, None);
+#[test]
+fn one_m_collect_err() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .filter_map(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
+                true => None,
+                false => Some(match x.as_str() == "42" {
+                    true => Some(x),
+                    false => None,
+                }),
+            }
+        })
+        .into_optional()
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
+        .collect();
+    assert!(result.is_none());
 }

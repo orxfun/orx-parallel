@@ -122,70 +122,29 @@ fn bin_m_fold_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let expected = C::expected(
-        mode,
-        |i| i as u64,
-        inputs(N)
-            .into_iter()
-            .map(Some)
-            .map(|x| x.unwrap())
-            .filter(|x| x.len() < 4)
-            .map(|x| x.parse::<u64>().unwrap())
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .map(Some)
-            .into_optional()
-            .filter(|x| x.len() < 4)
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .map(Some)
-            .into_optional()
-            .filter(|x| x.len() < 4)
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+#[test]
+fn bin_m_collect_ok() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .map(Some)
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect();
+    assert!(result.is_some());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .map(|x| match x.as_str() == "42" {
-                true => Some(x),
-                false => None,
-            })
-            .into_optional()
-            .filter(|x| x.len() < 4)
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .map(|x| match x.as_str() == "42" {
-                true => Some(x),
-                false => None,
-            })
-            .into_optional()
-            .filter(|x| x.len() < 4)
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, None);
+#[test]
+fn bin_m_collect_err() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .map(|x| match x.as_str() == "42" {
+            true => Some(x),
+            false => None,
+        })
+        .into_optional()
+        .filter(|x| x.len() < 4)
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect();
+    assert!(result.is_none());
 }

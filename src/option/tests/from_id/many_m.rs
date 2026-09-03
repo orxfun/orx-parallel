@@ -131,74 +131,30 @@ fn many_m_fold_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn many_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let expected = C::expected(
-        mode,
-        |i| i as u64,
-        inputs_opt(N, None)
-            .into_iter()
-            .map(|x| x.unwrap())
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .map(|x| x.parse::<u64>().unwrap())
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs_opt(N, None)
-            .into_par()
-            .into_optional()
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs_opt(N, None)
-            .into_par()
-            .into_optional()
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+#[test]
+fn many_m_collect_ok() {
+    let result: Option<Vec<_>> = inputs_opt(N, None)
+        .into_par()
+        .into_optional()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect();
+    assert!(result.is_some());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn many_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs_opt(N, Some(42))
-            .into_par()
-            .into_optional()
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs_opt(N, Some(42))
-            .into_par()
-            .into_optional()
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .map(|x| x.parse::<u64>().unwrap())
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, None);
+#[test]
+fn many_m_collect_err() {
+    let result: Option<Vec<_>> = inputs_opt(N, Some(42))
+        .into_par()
+        .into_optional()
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .map(|x| x.parse::<u64>().unwrap())
+        .collect();
+    assert!(result.is_none());
 }

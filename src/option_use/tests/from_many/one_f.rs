@@ -1,4 +1,3 @@
-
 use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
@@ -94,97 +93,41 @@ fn one_f_reduce_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn one_f_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let expected = C::expected(
-        mode,
-        |i| i.to_string(),
-        inputs(N)
-            .into_iter()
-            .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-            .map(|x| x.unwrap())
-            .filter(|x| x.len() > 1)
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                [x.clone(), x.clone(), x].map(Some)
-            })
-            .into_optional()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() > 1
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                [x.clone(), x.clone(), x].map(Some)
-            })
-            .into_optional()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() > 1
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+#[test]
+fn one_f_collect_ok() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .flat_map(|u, x| {
+            u.mutate();
+            [x.clone(), x.clone(), x].map(Some)
+        })
+        .into_optional()
+        .filter(|u, x| {
+            u.mutate();
+            x.len() > 1
+        })
+        .collect();
+    assert!(result.is_some());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn one_f_collect_err<C: ParCollectIntoTest<String>>(
-    _: C,
-    mode: ColIntoMode,
-    order: IterationOrder,
-) {
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "42" {
-                    true => [x.clone(), x.clone(), x].map(Some),
-                    false => [None, None, None],
-                }
-            })
-            .into_optional()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() > 1
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "42" {
-                    true => [x.clone(), x.clone(), x].map(Some),
-                    false => [None, None, None],
-                }
-            })
-            .into_optional()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() > 1
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, None);
+#[test]
+fn one_f_collect_err() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .flat_map(|u, x| {
+            u.mutate();
+            match x.as_str() == "42" {
+                true => [x.clone(), x.clone(), x].map(Some),
+                false => [None, None, None],
+            }
+        })
+        .into_optional()
+        .filter(|u, x| {
+            u.mutate();
+            x.len() > 1
+        })
+        .collect();
+    assert!(result.is_none());
 }

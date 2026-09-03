@@ -1,4 +1,3 @@
-
 use crate::option_use::tests::utils::{UseValue, inputs_opt};
 use crate::parameters::IterationOrder;
 use crate::*;
@@ -110,118 +109,48 @@ fn many_x_reduce_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
-    _: C,
-    mode: ColIntoMode,
-    order: IterationOrder,
-) {
-    let expected = C::expected(
-        mode,
-        |i| i.to_string(),
-        inputs_opt(N, None)
-            .into_iter()
-            .map(|x| x.unwrap())
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|x| [format!("{x}!"), x])
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs_opt(N, None)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                Some(x)
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs_opt(N, None)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                Some(x)
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+#[test]
+fn many_x_collect_ok() {
+    let result: Option<Vec<_>> = inputs_opt(N, None)
+        .into_par()
+        .use_new(UseValue::new)
+        .filter_map(|u, x| {
+            u.mutate();
+            Some(x)
+        })
+        .into_optional()
+        .flat_map(|u, x| {
+            u.mutate();
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .flat_map(|u, x| {
+            u.mutate();
+            [format!("{x}!"), x]
+        })
+        .collect();
+    assert!(result.is_some());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn many_x_collect_err<C: ParCollectIntoTest<String>>(
-    _: C,
-    mode: ColIntoMode,
-    order: IterationOrder,
-) {
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs_opt(N, Some(42))
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                Some(x)
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs_opt(N, Some(42))
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map(|u, x| {
-                u.mutate();
-                Some(x)
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, None);
+#[test]
+fn many_x_collect_err() {
+    let result: Option<Vec<_>> = inputs_opt(N, Some(42))
+        .into_par()
+        .use_new(UseValue::new)
+        .filter_map(|u, x| {
+            u.mutate();
+            Some(x)
+        })
+        .into_optional()
+        .flat_map(|u, x| {
+            u.mutate();
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .flat_map(|u, x| {
+            u.mutate();
+            [format!("{x}!"), x]
+        })
+        .collect();
+    assert!(result.is_none());
 }

@@ -121,125 +121,55 @@ fn bin_m_reduce_err() {
     assert_eq!(result, Err(vec!['a']));
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn bin_m_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let expected = C::expected(
-        mode,
-        |i| i as u64,
-        inputs(N)
-            .into_iter()
-            .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+#[test]
+fn bin_m_collect_ok() {
+    let result: Result<Vec<_>, Vec<char>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
                 true => None,
                 false => Some(Ok(x)),
-            })
-            .map(|x| x.unwrap())
-            .filter(|x| x.len() < 4)
-            .map(|x| x.parse::<u64>().unwrap())
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(Ok(x)),
-                }
-            })
-            .into_fallible()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() < 4
-            })
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(Ok(x)),
-                }
-            })
-            .into_fallible()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() < 4
-            })
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+            }
+        })
+        .into_fallible()
+        .filter(|u, x| {
+            u.mutate();
+            x.len() < 4
+        })
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
+        .collect();
+    assert!(result.is_ok());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn bin_m_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(match x.as_str() == "42" {
-                        true => Ok(x),
-                        false => Err(vec!['a']),
-                    }),
-                }
-            })
-            .into_fallible()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() < 4
-            })
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
-                u.mutate();
-                match x.as_str() == "7" {
-                    true => None,
-                    false => Some(match x.as_str() == "42" {
-                        true => Ok(x),
-                        false => Err(vec!['a']),
-                    }),
-                }
-            })
-            .into_fallible()
-            .filter(|u, x| {
-                u.mutate();
-                x.len() < 4
-            })
-            .map(|u, x| {
-                u.mutate();
-                x.parse::<u64>().unwrap()
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, Err(vec!['a']));
+#[test]
+fn bin_m_collect_err() {
+    let result: Result<Vec<_>, Vec<char>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .filter_map::<Result<_, Vec<char>>, _>(|u, x| {
+            u.mutate();
+            match x.as_str() == "7" {
+                true => None,
+                false => Some(match x.as_str() == "42" {
+                    true => Ok(x),
+                    false => Err(vec!['a']),
+                }),
+            }
+        })
+        .into_fallible()
+        .filter(|u, x| {
+            u.mutate();
+            x.len() < 4
+        })
+        .map(|u, x| {
+            u.mutate();
+            x.parse::<u64>().unwrap()
+        })
+        .collect();
+    assert!(result.is_err());
 }

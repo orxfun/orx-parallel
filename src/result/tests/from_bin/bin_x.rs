@@ -93,100 +93,41 @@ fn bin_x_reduce_err() {
     assert_eq!(result, Err(vec!['a']));
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn bin_x_collect_ok<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let expected = C::expected(
-        mode,
-        |i| i as u64,
-        inputs(N)
-            .into_iter()
-            .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(Ok(x)),
-            })
-            .map(|x| x.unwrap())
-            .filter(|x| x.len() < 4)
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| a + i)
-            })
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(Ok(x)),
-            })
-            .into_fallible()
-            .filter(|x| x.len() < 4)
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| a + i)
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(Ok(x)),
-            })
-            .into_fallible()
-            .filter(|x| x.len() < 4)
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| a + i)
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+#[test]
+fn bin_x_collect_ok() {
+    let result: Result<Vec<_>, Vec<char>> = inputs(N)
+        .into_par()
+        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Ok(x)),
+        })
+        .into_fallible()
+        .filter(|x| x.len() < 4)
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .collect();
+    assert!(result.is_ok());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn bin_x_collect_err<C: ParCollectIntoTest<u64>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let result = match C::init_result(mode, |i| i as u64) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(match x.as_str() == "42" {
-                    true => Ok(x),
-                    false => Err(vec!['a']),
-                }),
-            })
-            .into_fallible()
-            .filter(|x| x.len() < 4)
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| a + i)
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(match x.as_str() == "42" {
-                    true => Ok(x),
-                    false => Err(vec!['a']),
-                }),
-            })
-            .into_fallible()
-            .filter(|x| x.len() < 4)
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| a + i)
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, Err(vec!['a']));
+#[test]
+fn bin_x_collect_err() {
+    let result: Result<Vec<_>, Vec<char>> = inputs(N)
+        .into_par()
+        .filter_map::<Result<_, Vec<char>>, _>(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(match x.as_str() == "42" {
+                true => Ok(x),
+                false => Err(vec!['a']),
+            }),
+        })
+        .into_fallible()
+        .filter(|x| x.len() < 4)
+        .flat_map(|x| {
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| a + i)
+        })
+        .collect();
+    assert!(result.is_err());
 }

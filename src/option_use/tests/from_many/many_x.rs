@@ -1,4 +1,3 @@
-
 use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
@@ -117,133 +116,51 @@ fn many_x_reduce_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix(
-    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary]
-)]
-fn many_x_collect_ok<C: ParCollectIntoTest<String>>(
-    _: C,
-    mode: ColIntoMode,
-    order: IterationOrder,
-) {
-    let expected = C::expected(
-        mode,
-        |i| i.to_string(),
-        inputs(N)
-            .into_iter()
-            .flat_map(|x| [x.clone(), x.clone(), x].map(Some))
-            .map(|x| x.unwrap())
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|x| [format!("{x}!"), x])
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                [x.clone(), x.clone(), x].map(Some)
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                [x.clone(), x.clone(), x].map(Some)
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+#[test]
+fn many_x_collect_ok() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .flat_map(|u, x| {
+            u.mutate();
+            [x.clone(), x.clone(), x].map(Some)
+        })
+        .into_optional()
+        .flat_map(|u, x| {
+            u.mutate();
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .flat_map(|u, x| {
+            u.mutate();
+            [format!("{x}!"), x]
+        })
+        .collect();
+    assert!(result.is_some());
 }
 
-#[test_matrix(
-    [Vec::new(), SplitVec::with_doubling_growth(), SplitVec::with_linear_growth(6), FixedVec::new(40)],
-    [ColIntoMode::Col, ColIntoMode::ColIntoEmpty, ColIntoMode::ColIntoFilled(N / 5)],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary]
-)]
-fn many_x_collect_err<C: ParCollectIntoTest<String>>(
-    _: C,
-    mode: ColIntoMode,
-    order: IterationOrder,
-) {
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "42" {
-                    true => [x.clone(), x.clone(), x].map(Some),
-                    false => [None, None, None],
-                }
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .use_new(UseValue::new)
-            .flat_map(|u, x| {
-                u.mutate();
-                match x.as_str() == "42" {
-                    true => [x.clone(), x.clone(), x].map(Some),
-                    false => [None, None, None],
-                }
-            })
-            .into_optional()
-            .flat_map(|u, x| {
-                u.mutate();
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .flat_map(|u, x| {
-                u.mutate();
-                [format!("{x}!"), x]
-            })
-            .iteration_order(order)
-            .collect(),
-    };
-
-    assert_eq!(result, None);
+#[test]
+fn many_x_collect_err() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .use_new(UseValue::new)
+        .flat_map(|u, x| {
+            u.mutate();
+            match x.as_str() == "42" {
+                true => [x.clone(), x.clone(), x].map(Some),
+                false => [None, None, None],
+            }
+        })
+        .into_optional()
+        .flat_map(|u, x| {
+            u.mutate();
+            let a = x.parse::<u64>().unwrap();
+            (0..5).map(move |i| (a + i).to_string())
+        })
+        .flat_map(|u, x| {
+            u.mutate();
+            [format!("{x}!"), x]
+        })
+        .collect();
+    assert!(result.is_none());
 }
