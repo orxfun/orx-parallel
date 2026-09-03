@@ -3,7 +3,7 @@ mod tests;
 
 mod btree_map;
 mod btree_set;
-mod split_vec;
+mod split_vec_doubling;
 mod utils;
 mod vec;
 mod vec_deque;
