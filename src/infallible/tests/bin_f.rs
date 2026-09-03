@@ -82,7 +82,8 @@ fn bin_f_fold() {
 #[test_matrix(
     [Vec::new(), BTreeSet::new(), VecDeque::new()],
     [false, true],
-    [IterationOrder::Ordered, IterationOrder::Arbitrary])]
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
 fn bin_f_collect<C>(_: C, has_some: bool, order: IterationOrder)
 where
     C: ParExtend<String> + Default + Debug + PartialEq + IntoIterator<Item = String>,
