@@ -61,12 +61,70 @@ pub trait ParExtend<T>: Extend<T> {
         values: impl IntoIterator<Item = Result<T, E>>,
     ) -> Result<(), E>;
 
+    // add
+
+    fn add_one(&mut self, value: T);
+
     // extend
 
-    fn extend_from_thread_results(&mut self, thread_results: Vec<Self::ThreadValues>);
+    fn extend_optionals(&mut self, optionals: impl IntoIterator<Item = Option<T>>) -> Option<()> {
+        for value in optionals {
+            self.add_one(value?);
+        }
+        Some(())
+    }
 
-    fn extend_from_ordered_thread_results(
+    fn extend_fallibles<E>(
         &mut self,
-        thread_results: Vec<Self::OrderedThreadValues>,
-    );
+        fallibles: impl IntoIterator<Item = Result<T, E>>,
+    ) -> Result<(), E> {
+        for value in fallibles {
+            self.add_one(value?);
+        }
+        Ok(())
+    }
+
+    // extend - merge
+
+    fn extend_merge_infallibles(&mut self, thread_results: Vec<Self::ThreadValues>);
+
+    fn extend_merge_ordered_infallibles(&mut self, thread_results: Vec<Self::OrderedThreadValues>);
+
+    fn extend_merge_optionals(
+        &mut self,
+        thread_results: Vec<Option<Self::ThreadValues>>,
+    ) -> Option<()> {
+        let infallibles: Option<Vec<Self::ThreadValues>> = thread_results.into_iter().collect();
+        self.extend_merge_infallibles(infallibles?);
+        Some(())
+    }
+
+    fn extend_merge_ordered_optionals(
+        &mut self,
+        thread_results: Vec<Option<Self::OrderedThreadValues>>,
+    ) -> Option<()> {
+        let infallibles: Option<Vec<Self::OrderedThreadValues>> =
+            thread_results.into_iter().collect();
+        self.extend_merge_ordered_infallibles(infallibles?);
+        Some(())
+    }
+
+    fn extend_merge_fallibles<E>(
+        &mut self,
+        thread_results: Vec<Result<Self::ThreadValues, E>>,
+    ) -> Result<(), E> {
+        let infallibles: Result<Vec<Self::ThreadValues>, E> = thread_results.into_iter().collect();
+        self.extend_merge_infallibles(infallibles?);
+        Ok(())
+    }
+
+    fn extend_merge_ordered_fallibles<E>(
+        &mut self,
+        thread_results: Vec<Result<Self::OrderedThreadValues, E>>,
+    ) -> Result<(), E> {
+        let infallibles: Result<Vec<Self::OrderedThreadValues>, E> =
+            thread_results.into_iter().collect();
+        self.extend_merge_ordered_infallibles(infallibles?);
+        Ok(())
+    }
 }

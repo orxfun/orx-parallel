@@ -97,15 +97,21 @@ impl<K: Ord, V> ParExtend<(K, V)> for BTreeMap<K, V> {
         Ok(())
     }
 
-    // extend
+    // add
 
-    fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {
+    fn add_one(&mut self, (key, value): (K, V)) {
+        _ = self.insert(key, value);
+    }
+
+    // extend - merge
+
+    fn extend_merge_infallibles(&mut self, results: Vec<Self::ThreadValues>) {
         for result in results {
             self.extend(result);
         }
     }
 
-    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
+    fn extend_merge_ordered_infallibles(&mut self, results: Vec<Self::OrderedThreadValues>) {
         let outer_len = results.len();
         let mut all_values = Vec::with_capacity(outer_len);
         let mut all_positions = Vec::with_capacity(outer_len);

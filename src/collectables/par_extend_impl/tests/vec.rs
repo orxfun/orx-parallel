@@ -9,7 +9,7 @@ fn extend_from_ordered_thread_results_empty() {
     let mut vec: Vec<i32> = Vec::new();
     let results: Vec<ColAndPos<Vec<i32>>> = Vec::new();
 
-    vec.extend_from_ordered_thread_results(results);
+    vec.extend_merge_ordered_infallibles(results);
     assert!(vec.is_empty());
 }
 
@@ -19,7 +19,7 @@ fn extend_from_ordered_thread_results_empty_threads() {
     let t0 = ColAndPos::<Vec<i32>>::default();
     let t1 = ColAndPos::<Vec<i32>>::default();
 
-    vec.extend_from_ordered_thread_results(vec![t0, t1]);
+    vec.extend_merge_ordered_infallibles(vec![t0, t1]);
     assert_eq!(vec, vec![1, 2, 3]);
 }
 
@@ -30,7 +30,7 @@ fn extend_from_ordered_thread_results_single_thread_single_chunk() {
 
     Vec::add_ordered_thread_values(&mut t0, 0, vec![10, 20, 30]);
 
-    vec.extend_from_ordered_thread_results(vec![t0]);
+    vec.extend_merge_ordered_infallibles(vec![t0]);
     assert_eq!(vec, vec![10, 20, 30]);
 }
 
@@ -43,7 +43,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     Vec::add_ordered_thread_value(&mut t0, 1, 3);
     Vec::add_ordered_thread_values(&mut t0, 2, vec![4, 5, 6]);
 
-    vec.extend_from_ordered_thread_results(vec![t0]);
+    vec.extend_merge_ordered_infallibles(vec![t0]);
     assert_eq!(vec, vec![1, 2, 3, 4, 5, 6]);
 }
 
@@ -59,7 +59,7 @@ fn extend_from_ordered_thread_results_multiple_threads_in_order() {
     Vec::add_ordered_thread_values(&mut t1, 1, vec![3, 4]);
     Vec::add_ordered_thread_values(&mut t1, 3, vec![7, 8]);
 
-    vec.extend_from_ordered_thread_results(vec![t0, t1]);
+    vec.extend_merge_ordered_infallibles(vec![t0, t1]);
     assert_eq!(vec, vec![1, 2, 3, 4, 5, 6, 7, 8]);
 }
 
@@ -82,7 +82,7 @@ fn extend_from_ordered_thread_results_interleaved_threads() {
     Vec::add_ordered_thread_values(&mut t2, 1, vec![4, 5]);
     Vec::add_ordered_thread_values(&mut t2, 4, vec![9, 10]);
 
-    vec.extend_from_ordered_thread_results(vec![t0, t1, t2]);
+    vec.extend_merge_ordered_infallibles(vec![t0, t1, t2]);
     assert_eq!(vec, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
 }
 
@@ -95,7 +95,7 @@ fn extend_from_ordered_thread_results_append_to_non_empty_vec() {
     Vec::add_ordered_thread_value(&mut t0, 0, 1);
     Vec::add_ordered_thread_value(&mut t1, 1, 2);
 
-    vec.extend_from_ordered_thread_results(vec![t0, t1]);
+    vec.extend_merge_ordered_infallibles(vec![t0, t1]);
     assert_eq!(vec, vec![100, 200, 1, 2]);
 }
 
@@ -108,7 +108,7 @@ fn extend_from_ordered_thread_results_empty_iterators_ignored() {
     Vec::add_ordered_thread_values(&mut t0, 0, Vec::<i32>::new());
     Vec::add_ordered_thread_values(&mut t0, 1, vec![10, 20]);
 
-    vec.extend_from_ordered_thread_results(vec![t0]);
+    vec.extend_merge_ordered_infallibles(vec![t0]);
     assert_eq!(vec, vec![10, 20]);
 }
 
@@ -135,7 +135,7 @@ fn extend_from_ordered_thread_results_non_copy_drop() {
 
     {
         let mut vec = Vec::new();
-        vec.extend_from_ordered_thread_results(vec![t0, t1]);
+        vec.extend_merge_ordered_infallibles(vec![t0, t1]);
         assert_eq!(vec.len(), 3);
         assert_eq!(drop_count.load(Ordering::Relaxed), 0);
     } // vec drops here
@@ -160,7 +160,7 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
         }
     }
 
-    vec.extend_from_ordered_thread_results(thread_results);
+    vec.extend_merge_ordered_infallibles(thread_results);
 
     let expected_len = num_threads * chunks_per_thread * 2;
     assert_eq!(vec.len(), expected_len);
@@ -178,7 +178,7 @@ fn extend_from_thread_results_empty() {
     let mut vec: Vec<i32> = Vec::new();
     let results: Vec<Vec<i32>> = Vec::new();
 
-    vec.extend_from_thread_results(results);
+    vec.extend_merge_infallibles(results);
     assert!(vec.is_empty());
 }
 
@@ -188,7 +188,7 @@ fn extend_from_thread_results_empty_threads() {
     let t0 = Vec::<i32>::new();
     let t1 = Vec::<i32>::new();
 
-    vec.extend_from_thread_results(vec![t0, t1]);
+    vec.extend_merge_infallibles(vec![t0, t1]);
     assert_eq!(vec, vec![1, 2, 3]);
 }
 
@@ -200,7 +200,7 @@ fn extend_from_thread_results_single_thread() {
     Vec::add_thread_value(&mut t0, 10);
     Vec::add_thread_values(&mut t0, vec![20, 30]);
 
-    vec.extend_from_thread_results(vec![t0]);
+    vec.extend_merge_infallibles(vec![t0]);
     assert_eq!(vec, vec![10, 20, 30]);
 }
 
@@ -216,7 +216,7 @@ fn extend_from_thread_results_multiple_threads() {
     Vec::add_thread_value(&mut t1, 4);
     Vec::add_thread_values(&mut t1, vec![5, 6]);
 
-    vec.extend_from_thread_results(vec![t0, t1]);
+    vec.extend_merge_infallibles(vec![t0, t1]);
     assert_eq!(vec, vec![1, 2, 3, 4, 5, 6]);
 }
 
@@ -229,7 +229,7 @@ fn extend_from_thread_results_append_to_non_empty_vec() {
     Vec::add_thread_value(&mut t0, 1);
     Vec::add_thread_value(&mut t1, 2);
 
-    vec.extend_from_thread_results(vec![t0, t1]);
+    vec.extend_merge_infallibles(vec![t0, t1]);
     assert_eq!(vec, vec![100, 200, 1, 2]);
 }
 
@@ -256,7 +256,7 @@ fn extend_from_thread_results_non_copy_drop() {
 
     {
         let mut vec = Vec::new();
-        vec.extend_from_thread_results(vec![t0, t1]);
+        vec.extend_merge_infallibles(vec![t0, t1]);
         assert_eq!(vec.len(), 3);
         assert_eq!(drop_count.load(Ordering::Relaxed), 0);
     }

@@ -8,7 +8,7 @@ fn extend_from_ordered_thread_results_empty() {
     let mut set: BTreeSet<i32> = BTreeSet::new();
     let results: Vec<ColAndPos<BTreeSet<i32>>> = Vec::new();
 
-    set.extend_from_ordered_thread_results(results);
+    set.extend_merge_ordered_infallibles(results);
     assert!(set.is_empty());
 }
 
@@ -18,7 +18,7 @@ fn extend_from_ordered_thread_results_empty_threads() {
     let t0 = ColAndPos::<BTreeSet<i32>>::default();
     let t1 = ColAndPos::<BTreeSet<i32>>::default();
 
-    set.extend_from_ordered_thread_results(vec![t0, t1]);
+    set.extend_merge_ordered_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3]);
     assert_eq!(set, expected);
 }
@@ -30,7 +30,7 @@ fn extend_from_ordered_thread_results_single_thread_single_chunk() {
 
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![10, 20, 30]);
 
-    set.extend_from_ordered_thread_results(vec![t0]);
+    set.extend_merge_ordered_infallibles(vec![t0]);
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30]);
     assert_eq!(set, expected);
 }
@@ -44,7 +44,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     BTreeSet::add_ordered_thread_value(&mut t0, 1, 3);
     BTreeSet::add_ordered_thread_values(&mut t0, 2, vec![4, 5, 6]);
 
-    set.extend_from_ordered_thread_results(vec![t0]);
+    set.extend_merge_ordered_infallibles(vec![t0]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3, 4, 5, 6]);
     assert_eq!(set, expected);
 }
@@ -61,7 +61,7 @@ fn extend_from_ordered_thread_results_multiple_threads_in_order() {
     BTreeSet::add_ordered_thread_values(&mut t1, 1, vec![3, 4]);
     BTreeSet::add_ordered_thread_values(&mut t1, 3, vec![7, 8]);
 
-    set.extend_from_ordered_thread_results(vec![t0, t1]);
+    set.extend_merge_ordered_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3, 4, 5, 6, 7, 8]);
     assert_eq!(set, expected);
 }
@@ -85,7 +85,7 @@ fn extend_from_ordered_thread_results_interleaved_threads() {
     BTreeSet::add_ordered_thread_values(&mut t2, 1, vec![4, 5]);
     BTreeSet::add_ordered_thread_values(&mut t2, 4, vec![9, 10]);
 
-    set.extend_from_ordered_thread_results(vec![t0, t1, t2]);
+    set.extend_merge_ordered_infallibles(vec![t0, t1, t2]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     assert_eq!(set, expected);
 }
@@ -99,7 +99,7 @@ fn extend_from_ordered_thread_results_append_to_non_empty_set() {
     BTreeSet::add_ordered_thread_value(&mut t0, 0, 1);
     BTreeSet::add_ordered_thread_value(&mut t1, 1, 2);
 
-    set.extend_from_ordered_thread_results(vec![t0, t1]);
+    set.extend_merge_ordered_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 100, 200]);
     assert_eq!(set, expected);
 }
@@ -113,7 +113,7 @@ fn extend_from_ordered_thread_results_empty_iterators_ignored() {
     BTreeSet::add_ordered_thread_values(&mut t0, 0, Vec::<i32>::new());
     BTreeSet::add_ordered_thread_values(&mut t0, 1, vec![10, 20]);
 
-    set.extend_from_ordered_thread_results(vec![t0]);
+    set.extend_merge_ordered_infallibles(vec![t0]);
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20]);
     assert_eq!(set, expected);
 }
@@ -132,7 +132,7 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
         BTreeSet::add_ordered_thread_value(&mut thread_results[t], chunk_idx, val);
     }
 
-    set.extend_from_ordered_thread_results(thread_results);
+    set.extend_merge_ordered_infallibles(thread_results);
     let expected: BTreeSet<i32> = (0..(num_threads * chunks_per_thread))
         .map(|i| i as i32 * 10)
         .collect();
@@ -149,7 +149,7 @@ fn extend_from_ordered_thread_results_duplicate_values_within_thread() {
     BTreeSet::add_ordered_thread_value(&mut t0, 1, 10);
     BTreeSet::add_ordered_thread_values(&mut t0, 2, vec![15, 5, 20]);
 
-    set.extend_from_ordered_thread_results(vec![t0]);
+    set.extend_merge_ordered_infallibles(vec![t0]);
     let expected: BTreeSet<i32> = BTreeSet::from([5, 10, 15, 20]);
     assert_eq!(set, expected);
     let vec_collected: Vec<i32> = set.into_iter().collect();
@@ -169,7 +169,7 @@ fn extend_from_ordered_thread_results_duplicate_values_across_threads() {
     BTreeSet::add_ordered_thread_values(&mut t2, 2, vec![10, 40, 50]);
     BTreeSet::add_ordered_thread_values(&mut t0, 3, vec![30, 50, 60]);
 
-    set.extend_from_ordered_thread_results(vec![t0, t1, t2]);
+    set.extend_merge_ordered_infallibles(vec![t0, t1, t2]);
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30, 40, 50, 60]);
     assert_eq!(set, expected);
     let vec_collected: Vec<i32> = set.into_iter().collect();
@@ -185,7 +185,7 @@ fn extend_from_ordered_thread_results_duplicate_values_with_existing_elements() 
     BTreeSet::add_ordered_thread_values(&mut t0, 0, vec![10, 20, 30]);
     BTreeSet::add_ordered_thread_values(&mut t1, 1, vec![40, 50, 60]);
 
-    set.extend_from_ordered_thread_results(vec![t0, t1]);
+    set.extend_merge_ordered_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30, 40, 50, 60]);
     assert_eq!(set, expected);
 }
@@ -197,7 +197,7 @@ fn extend_from_thread_results_empty() {
     let mut set: BTreeSet<i32> = BTreeSet::new();
     let results: Vec<BTreeSet<i32>> = Vec::new();
 
-    set.extend_from_thread_results(results);
+    set.extend_merge_infallibles(results);
     assert!(set.is_empty());
 }
 
@@ -207,7 +207,7 @@ fn extend_from_thread_results_empty_threads() {
     let t0 = BTreeSet::<i32>::default();
     let t1 = BTreeSet::<i32>::default();
 
-    set.extend_from_thread_results(vec![t0, t1]);
+    set.extend_merge_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3]);
     assert_eq!(set, expected);
 }
@@ -220,7 +220,7 @@ fn extend_from_thread_results_single_thread() {
     BTreeSet::add_thread_value(&mut t0, 10);
     BTreeSet::add_thread_values(&mut t0, vec![20, 30]);
 
-    set.extend_from_thread_results(vec![t0]);
+    set.extend_merge_infallibles(vec![t0]);
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30]);
     assert_eq!(set, expected);
 }
@@ -237,7 +237,7 @@ fn extend_from_thread_results_multiple_threads() {
     BTreeSet::add_thread_value(&mut t1, 4);
     BTreeSet::add_thread_values(&mut t1, vec![5, 6]);
 
-    set.extend_from_thread_results(vec![t0, t1]);
+    set.extend_merge_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 3, 4, 5, 6]);
     assert_eq!(set, expected);
 }
@@ -251,7 +251,7 @@ fn extend_from_thread_results_append_to_non_empty_set() {
     BTreeSet::add_thread_value(&mut t0, 1);
     BTreeSet::add_thread_value(&mut t1, 2);
 
-    set.extend_from_thread_results(vec![t0, t1]);
+    set.extend_merge_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([1, 2, 100, 200]);
     assert_eq!(set, expected);
 }
@@ -265,7 +265,7 @@ fn extend_from_thread_results_duplicate_values() {
     BTreeSet::add_thread_values(&mut t0, vec![10, 20]);
     BTreeSet::add_thread_values(&mut t1, vec![20, 30]);
 
-    set.extend_from_thread_results(vec![t0, t1]);
+    set.extend_merge_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30]);
     assert_eq!(set, expected);
 }

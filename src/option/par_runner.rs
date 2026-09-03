@@ -1,3 +1,4 @@
+use crate::ParExtend;
 use crate::collectables_old::Collectable;
 use crate::infallible::Xap;
 use crate::option::thread_execution as th;
@@ -278,6 +279,106 @@ pub trait ParRunnerOpt: ParRunner {
 
                 Self::complete_computation(state);
                 results_bag.into_inner().into_inner().into_iter().collect()
+            }
+        }
+    }
+
+    fn collect_x<I, M, X1, X2, S, P>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        iter: I,
+        x1: X1,
+        x2: X2,
+        dst: &mut P,
+    ) -> Option<()>
+    where
+        I: ConcurrentIter,
+        X1: Xap<I = I::Item, O = Option<M>>,
+        X2: Xap<I = M>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+        X2::O: Send,
+        P: ParExtend<X2::O>,
+        P::OrderedThreadValues: Send,
+    {
+        match params.is_sequential() {
+            true => {
+                let optionals = iter.into_seq_iter().flat_map(|i| S::xap_opt(x1, x2, i));
+                dst.extend_optionals(optionals)
+            }
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) =
+                    self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+                let (iter, st, results) = (&iter, &state, &results_bag);
+                self.pool_mut().scoped_computation(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            Self::begin_thread(st, th_idx);
+                            let value = th::collect_x::<Self, _, _, _, _, _, P>(
+                                sizes, th_idx, st, iter, x1, x2,
+                            );
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
+                });
+
+                Self::complete_computation(state);
+                P::extend_merge_ordered_optionals(dst, results_bag.into_inner().into_inner())
+            }
+        }
+    }
+
+    fn collect_arb_x<I, M, X1, X2, S, P>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        iter: I,
+        x1: X1,
+        x2: X2,
+        dst: &mut P,
+    ) -> Option<()>
+    where
+        I: ConcurrentIter,
+        X1: Xap<I = I::Item, O = Option<M>>,
+        X2: Xap<I = M>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+        X2::O: Send,
+        P: ParExtend<X2::O>,
+        P::ThreadValues: Send,
+    {
+        match params.is_sequential() {
+            true => {
+                let optionals = iter.into_seq_iter().flat_map(|i| S::xap_opt(x1, x2, i));
+                dst.extend_optionals(optionals)
+            }
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) =
+                    self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+                let (iter, st, results) = (&iter, &state, &results_bag);
+                self.pool_mut().scoped_computation(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            Self::begin_thread(st, th_idx);
+                            let value = th::collect_arb_x::<Self, _, _, _, _, _, P>(
+                                sizes, th_idx, st, iter, x1, x2,
+                            );
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
+                });
+
+                Self::complete_computation(state);
+                P::extend_merge_optionals(dst, results_bag.into_inner().into_inner())
             }
         }
     }

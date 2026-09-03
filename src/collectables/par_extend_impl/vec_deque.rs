@@ -86,9 +86,15 @@ impl<T> ParExtend<T> for VecDeque<T> {
         Ok(())
     }
 
-    // extend
+    // add
 
-    fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {
+    fn add_one(&mut self, value: T) {
+        self.push_back(value);
+    }
+
+    // extend - merge
+
+    fn extend_merge_infallibles(&mut self, results: Vec<Self::ThreadValues>) {
         let collected_len: usize = results.iter().map(|x| x.len()).sum();
         self.reserve(collected_len);
         for result in results {
@@ -96,7 +102,7 @@ impl<T> ParExtend<T> for VecDeque<T> {
         }
     }
 
-    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
+    fn extend_merge_ordered_infallibles(&mut self, results: Vec<Self::OrderedThreadValues>) {
         let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
         self.reserve(collected_len);
 

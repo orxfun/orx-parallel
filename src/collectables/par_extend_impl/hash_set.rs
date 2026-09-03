@@ -64,15 +64,21 @@ impl<T: Hash + Eq> ParExtend<T> for HashSet<T> {
         Ok(())
     }
 
-    // extend
+    // add
 
-    fn extend_from_thread_results(&mut self, results: Vec<Self::ThreadValues>) {
+    fn add_one(&mut self, value: T) {
+        _ = self.insert(value);
+    }
+
+    // extend - merge
+
+    fn extend_merge_infallibles(&mut self, results: Vec<Self::ThreadValues>) {
         for result in results {
             self.extend(result);
         }
     }
 
-    fn extend_from_ordered_thread_results(&mut self, results: Vec<Self::OrderedThreadValues>) {
-        self.extend_from_thread_results(results);
+    fn extend_merge_ordered_infallibles(&mut self, results: Vec<Self::OrderedThreadValues>) {
+        self.extend_merge_infallibles(results);
     }
 }

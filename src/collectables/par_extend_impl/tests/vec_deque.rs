@@ -10,7 +10,7 @@ fn extend_from_ordered_thread_results_empty() {
     let mut deque: VecDeque<i32> = VecDeque::new();
     let results: Vec<ColAndPos<Vec<i32>>> = Vec::new();
 
-    deque.extend_from_ordered_thread_results(results);
+    deque.extend_merge_ordered_infallibles(results);
     assert!(deque.is_empty());
 }
 
@@ -20,7 +20,7 @@ fn extend_from_ordered_thread_results_empty_threads() {
     let t0 = ColAndPos::<Vec<i32>>::default();
     let t1 = ColAndPos::<Vec<i32>>::default();
 
-    deque.extend_from_ordered_thread_results(vec![t0, t1]);
+    deque.extend_merge_ordered_infallibles(vec![t0, t1]);
     assert_eq!(deque, VecDeque::from([1, 2, 3]));
 }
 
@@ -31,7 +31,7 @@ fn extend_from_ordered_thread_results_single_thread_single_chunk() {
 
     VecDeque::add_ordered_thread_values(&mut t0, 0, vec![10, 20, 30]);
 
-    deque.extend_from_ordered_thread_results(vec![t0]);
+    deque.extend_merge_ordered_infallibles(vec![t0]);
     assert_eq!(deque, VecDeque::from([10, 20, 30]));
 }
 
@@ -44,7 +44,7 @@ fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
     VecDeque::add_ordered_thread_value(&mut t0, 1, 3);
     VecDeque::add_ordered_thread_values(&mut t0, 2, vec![4, 5, 6]);
 
-    deque.extend_from_ordered_thread_results(vec![t0]);
+    deque.extend_merge_ordered_infallibles(vec![t0]);
     assert_eq!(deque, VecDeque::from([1, 2, 3, 4, 5, 6]));
 }
 
@@ -60,7 +60,7 @@ fn extend_from_ordered_thread_results_multiple_threads_in_order() {
     VecDeque::add_ordered_thread_values(&mut t1, 1, vec![3, 4]);
     VecDeque::add_ordered_thread_values(&mut t1, 3, vec![7, 8]);
 
-    deque.extend_from_ordered_thread_results(vec![t0, t1]);
+    deque.extend_merge_ordered_infallibles(vec![t0, t1]);
     assert_eq!(deque, VecDeque::from([1, 2, 3, 4, 5, 6, 7, 8]));
 }
 
@@ -83,7 +83,7 @@ fn extend_from_ordered_thread_results_interleaved_threads() {
     VecDeque::add_ordered_thread_values(&mut t2, 1, vec![4, 5]);
     VecDeque::add_ordered_thread_values(&mut t2, 4, vec![9, 10]);
 
-    deque.extend_from_ordered_thread_results(vec![t0, t1, t2]);
+    deque.extend_merge_ordered_infallibles(vec![t0, t1, t2]);
     assert_eq!(deque, VecDeque::from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]));
 }
 
@@ -96,7 +96,7 @@ fn extend_from_ordered_thread_results_append_to_non_empty_deque() {
     VecDeque::add_ordered_thread_value(&mut t0, 0, 1);
     VecDeque::add_ordered_thread_value(&mut t1, 1, 2);
 
-    deque.extend_from_ordered_thread_results(vec![t0, t1]);
+    deque.extend_merge_ordered_infallibles(vec![t0, t1]);
     assert_eq!(deque, VecDeque::from([100, 200, 1, 2]));
 }
 
@@ -109,7 +109,7 @@ fn extend_from_ordered_thread_results_empty_iterators_ignored() {
     VecDeque::add_ordered_thread_values(&mut t0, 0, Vec::<i32>::new());
     VecDeque::add_ordered_thread_values(&mut t0, 1, vec![10, 20]);
 
-    deque.extend_from_ordered_thread_results(vec![t0]);
+    deque.extend_merge_ordered_infallibles(vec![t0]);
     assert_eq!(deque, VecDeque::from([10, 20]));
 }
 
@@ -136,7 +136,7 @@ fn extend_from_ordered_thread_results_non_copy_drop() {
 
     {
         let mut deque = VecDeque::new();
-        deque.extend_from_ordered_thread_results(vec![t0, t1]);
+        deque.extend_merge_ordered_infallibles(vec![t0, t1]);
         assert_eq!(deque.len(), 3);
         assert_eq!(drop_count.load(Ordering::Relaxed), 0);
     } // deque drops here
@@ -161,7 +161,7 @@ fn extend_from_ordered_thread_results_many_threads_and_chunks() {
         }
     }
 
-    deque.extend_from_ordered_thread_results(thread_results);
+    deque.extend_merge_ordered_infallibles(thread_results);
 
     let expected_len = num_threads * chunks_per_thread * 2;
     assert_eq!(deque.len(), expected_len);
@@ -179,7 +179,7 @@ fn extend_from_thread_results_empty() {
     let mut deque: VecDeque<i32> = VecDeque::new();
     let results: Vec<VecDeque<i32>> = Vec::new();
 
-    deque.extend_from_thread_results(results);
+    deque.extend_merge_infallibles(results);
     assert!(deque.is_empty());
 }
 
@@ -189,7 +189,7 @@ fn extend_from_thread_results_empty_threads() {
     let t0 = VecDeque::<i32>::new();
     let t1 = VecDeque::<i32>::new();
 
-    deque.extend_from_thread_results(vec![t0, t1]);
+    deque.extend_merge_infallibles(vec![t0, t1]);
     assert_eq!(deque, VecDeque::from([1, 2, 3]));
 }
 
@@ -201,7 +201,7 @@ fn extend_from_thread_results_single_thread() {
     VecDeque::add_thread_value(&mut t0, 10);
     VecDeque::add_thread_values(&mut t0, vec![20, 30]);
 
-    deque.extend_from_thread_results(vec![t0]);
+    deque.extend_merge_infallibles(vec![t0]);
     assert_eq!(deque, VecDeque::from([10, 20, 30]));
 }
 
@@ -217,7 +217,7 @@ fn extend_from_thread_results_multiple_threads() {
     VecDeque::add_thread_value(&mut t1, 4);
     VecDeque::add_thread_values(&mut t1, vec![5, 6]);
 
-    deque.extend_from_thread_results(vec![t0, t1]);
+    deque.extend_merge_infallibles(vec![t0, t1]);
     assert_eq!(deque, VecDeque::from([1, 2, 3, 4, 5, 6]));
 }
 
@@ -230,7 +230,7 @@ fn extend_from_thread_results_append_to_non_empty_deque() {
     VecDeque::add_thread_value(&mut t0, 1);
     VecDeque::add_thread_value(&mut t1, 2);
 
-    deque.extend_from_thread_results(vec![t0, t1]);
+    deque.extend_merge_infallibles(vec![t0, t1]);
     assert_eq!(deque, VecDeque::from([100, 200, 1, 2]));
 }
 
@@ -257,7 +257,7 @@ fn extend_from_thread_results_non_copy_drop() {
 
     {
         let mut deque = VecDeque::new();
-        deque.extend_from_thread_results(vec![t0, t1]);
+        deque.extend_merge_infallibles(vec![t0, t1]);
         assert_eq!(deque.len(), 3);
         assert_eq!(drop_count.load(Ordering::Relaxed), 0);
     }

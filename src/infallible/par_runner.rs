@@ -154,7 +154,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                P::extend_from_ordered_thread_results(dst, results_bag.into_inner().into_inner());
+                P::extend_merge_ordered_infallibles(dst, results_bag.into_inner().into_inner());
             }
         }
     }
@@ -192,7 +192,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                P::extend_from_thread_results(dst, results_bag.into_inner().into_inner());
+                P::extend_merge_infallibles(dst, results_bag.into_inner().into_inner());
             }
         };
     }
