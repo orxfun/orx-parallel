@@ -12,7 +12,7 @@
 /// use orx_parallel::{Use, UseVec};
 ///
 /// fn bump_first_thread<U: Use<Item = usize>>(use_var: &mut U) -> usize {
-///     *use_var.init_get(0) += 1;
+///     *unsafe { use_var.init_get(0) } += 1;
 ///     *use_var.get(0)
 /// }
 ///
