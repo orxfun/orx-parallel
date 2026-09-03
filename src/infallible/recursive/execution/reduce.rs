@@ -18,7 +18,7 @@ where
     E: Fn(&X::I) -> I + Send + Copy,
     F: Fn(X::O, X::O) -> X::O + Send + Copy,
     X::O: Send,
-    X::I: Send + Sync,
+    X::I: Send,
 {
     let max_threads: usize = runner.pool().max_num_threads().into();
 

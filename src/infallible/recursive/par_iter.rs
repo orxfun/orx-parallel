@@ -190,7 +190,7 @@ where
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
 
@@ -204,7 +204,7 @@ where
     where
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         execution::reduce(exe, params, iter, x, extend, f)
@@ -212,10 +212,10 @@ where
 
     fn fold<B, Id, F>(self, init: Id, f: F) -> Vec<B>
     where
-        B: Send + Sync,
-        Id: Fn() -> B + Sync,
-        F: Fn(&mut B, Self::Item) + Copy + Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        B: Send,
+        Id: Fn() -> B,
+        F: Fn(&mut B, Self::Item) + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         execution::fold(exe, params, iter, x, extend, init, f)
@@ -224,8 +224,8 @@ where
     fn collect_into<C>(self, dst: &mut C)
     where
         C: ParExtend<Self::Item>,
-        Self::Item: Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         match params.iteration_order {

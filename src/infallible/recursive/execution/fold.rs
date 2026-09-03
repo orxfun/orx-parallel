@@ -31,10 +31,10 @@ where
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
     E: Fn(&X::I) -> I + Send + Copy,
-    B: Send + Sync,
-    Id: Fn() -> B + Sync,
-    F: Fn(&mut B, X::O) + Copy + Send + Sync,
-    X::I: Send + Sync,
+    B: Send,
+    Id: Fn() -> B,
+    F: Fn(&mut B, X::O) + Copy + Send,
+    X::I: Send,
 {
     let max_threads: usize = runner.pool().max_num_threads().into();
 

@@ -30,8 +30,8 @@ pub fn collect_arb<R, C, X, I, E, P>(
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
     E: Fn(&X::I) -> I + Send + Copy,
-    X::O: Send + Sync,
-    X::I: Send + Sync,
+    X::O: Send,
+    X::I: Send,
     P: ParExtend<X::O>,
 {
     let max_threads: usize = runner.pool().max_num_threads().into();
