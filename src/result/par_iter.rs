@@ -1,6 +1,4 @@
-use crate::ParCollectInto;
-use crate::collectables_old::alg::merge_collected::Collect;
-use crate::common_par_traits::ParResCommon;
+use crate::ParExtend;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::par::ParResult;
@@ -303,52 +301,16 @@ where
         exe.reduce(s, params, iter, x1, x2, f)
     }
 
-    fn collect_into<C>(self, dst: &mut C) -> Result<(), E>
+    fn collect_into<P>(self, dst: &mut P) -> Result<(), E>
     where
-        C: ParCollectInto<X2::O>,
+        P: ParExtend<X2::O>,
         X2::O: Send,
         E: Send,
     {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::res_col_into(dst, self),
-            IterationOrder::Arbitrary => {
-                let (iter, x1, x2, mut exe, s, params) = self.destruct();
-                let results =
-                    exe.collect_arb::<_, _, _, _, _, _, C::ThreadColArb>(s, params, iter, x1, x2);
-                results.map(|results| Collect::merge_results_arb(results, dst))
-            }
+        let (iter, x1, x2, mut exe, s, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.collect_x(s, params, iter, x1, x2, dst),
+            IterationOrder::Arbitrary => exe.collect_arb_x(s, params, iter, x1, x2, dst),
         }
-    }
-
-    fn collect<C>(self) -> Result<C, E>
-    where
-        C: ParCollectInto<X2::O>,
-        X2::O: Send,
-        E: Send,
-    {
-        let mut dst = C::new_empty();
-        self.collect_into(&mut dst).map(|_| dst)
-    }
-}
-
-impl<I, M, E, X1, X2, S, R> ParResCommon for ParResultIter<I, M, E, X1, X2, S, R>
-where
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    type CommonItem = <Self as ParResultCore>::Item;
-
-    type CommonError = <Self as ParResultCore>::Error;
-
-    fn common_collect_into<C>(self, dst: &mut C) -> Result<(), Self::CommonError>
-    where
-        C: ParCollectInto<Self::CommonItem>,
-        Self::CommonItem: Send,
-        Self::CommonError: Send,
-    {
-        self.collect_into(dst)
     }
 }

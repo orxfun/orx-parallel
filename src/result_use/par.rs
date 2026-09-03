@@ -1,6 +1,5 @@
 #![allow(clippy::type_complexity)]
 
-use crate::common_par_traits::ParResCommon;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse,
@@ -8,7 +7,7 @@ use crate::infallible_use::{
 use crate::result_use::{ParUseResultCore, ParUseResultIter};
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, Sum};
 use core::cmp::Ordering;
 
 /// Fallible parallel iterator with worker-local mutable state.
@@ -69,9 +68,7 @@ use core::cmp::Ordering;
 ///
 /// assert_eq!(out.as_ref().map(Vec::len), Ok(8));
 /// ```
-pub trait ParUseResult:
-    Sized + ParUseResultCore + ParResCommon<CommonItem = Self::Item, CommonError = Self::Error>
-{
+pub trait ParUseResult: Sized + ParUseResultCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -567,9 +564,9 @@ pub trait ParUseResult:
     /// assert_eq!(ok, Ok(()));
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
-    fn collect_into<C>(self, dst: &mut C) -> Result<(), Self::Error>
+    fn collect_into<P>(self, dst: &mut P) -> Result<(), Self::Error>
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send,
         Self::Error: Send;
 
@@ -591,11 +588,16 @@ pub trait ParUseResult:
     ///
     /// assert_eq!(out, Ok(vec![1, 2, 3]));
     /// ```
-    fn collect<C>(self) -> Result<C, Self::Error>
+    fn collect<P>(self) -> Result<P, Self::Error>
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item> + Default,
         Self::Item: Send,
-        Self::Error: Send;
+        Self::Error: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst)?;
+        Ok(dst)
+    }
 
     // compute - derived
 

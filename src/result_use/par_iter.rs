@@ -1,6 +1,3 @@
-use crate::ParCollectInto;
-use crate::collectables_old::alg::merge_collected::Collect;
-use crate::common_par_traits::ParResCommon;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result_use::ParUseResultCore;
@@ -9,6 +6,7 @@ use crate::result_use::par_runner::ParRunnerUseRes;
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::sizes::SizePair;
 use crate::use_var::Use;
+use crate::ParExtend;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseResultIter<U, I, M, E, X1, X2, S, R = DefaultRunner>
@@ -335,54 +333,16 @@ where
         exe.reduce(s, params, u, iter, x1, x2, f)
     }
 
-    fn collect_into<C>(self, dst: &mut C) -> Result<(), E>
+    fn collect_into<P>(self, dst: &mut P) -> Result<(), E>
     where
-        C: ParCollectInto<X2::O>,
+        P: ParExtend<X2::O>,
         X2::O: Send,
         E: Send,
     {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::res_use_col_into(dst, self),
-            IterationOrder::Arbitrary => {
-                let (u, iter, x1, x2, mut exe, s, params) = self.destruct();
-                let results = exe.collect_arb::<_, _, _, _, _, _, _, C::ThreadColArb>(
-                    s, params, u, iter, x1, x2,
-                );
-                results.map(|results| Collect::merge_results_arb(results, dst))
-            }
+        let (u, iter, x1, x2, mut exe, s, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.collect_x(s, params, u, iter, x1, x2, dst),
+            IterationOrder::Arbitrary => exe.collect_arb_x(s, params, u, iter, x1, x2, dst),
         }
-    }
-
-    fn collect<C>(self) -> Result<C, E>
-    where
-        C: ParCollectInto<X2::O>,
-        X2::O: Send,
-        E: Send,
-    {
-        let mut dst = C::new_empty();
-        self.collect_into(&mut dst).map(|_| dst)
-    }
-}
-
-impl<U, I, M, E, X1, X2, S, R> ParResCommon for ParUseResultIter<U, I, M, E, X1, X2, S, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
-    X2: XapUse<U = U::Item, I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    type CommonItem = <Self as ParUseResultCore>::Item;
-
-    type CommonError = <Self as ParUseResultCore>::Error;
-
-    fn common_collect_into<C>(self, dst: &mut C) -> Result<(), Self::CommonError>
-    where
-        C: ParCollectInto<Self::CommonItem>,
-        Self::CommonItem: Send,
-        Self::CommonError: Send,
-    {
-        self.collect_into(dst)
     }
 }
