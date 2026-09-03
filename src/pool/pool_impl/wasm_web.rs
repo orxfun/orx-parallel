@@ -1,6 +1,11 @@
+#[cfg(not(target_feature = "atomics"))]
+compile_error!(
+    "orx-parallel: wasm web threading requires atomics-enabled wasm build flags (-C target-feature=+atomics); see docs/wasm.md"
+);
+
 use crate::NumThreads;
 use crate::pool::ParThreadPool;
-#[allow(unused_imports)]
+#[cfg(target_feature = "atomics")]
 use alloc::format;
 use core::num::NonZeroUsize;
 use core::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
@@ -309,18 +314,11 @@ pub fn wasm_web_start_worker() {
 }
 
 fn assert_wasm_thread_pool_initialized() {
-    const {
-        assert!(
-            cfg!(target_feature = "atomics"),
-            "Wasm web threading requires atomics-enabled wasm build flags; see docs/wasm.md."
-        );
-    }
-
     assert_eq!(
         WASM_WEB3_THREAD_POOL_STATE.load(Ordering::SeqCst),
         WASM_WEB3_THREAD_POOL_INITIALIZED,
         "Wasm web thread pool is not initialized. Call and await init_wasm_parallel_runtime(...) before running parallel computations."
-    )
+    );
 }
 
 fn runtime() -> &'static Arc<Inner> {
