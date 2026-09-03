@@ -41,7 +41,7 @@ pub fn par_recursive<I, C, F>(initial_elements: I, extend: F) -> ParRecIter<I, I
 where
     I: IntoIterator,
     C: IntoIterator<Item = I::Item>,
-    F: Fn(&I::Item) -> C + Send + Sync,
+    F: Fn(&I::Item) -> C + Send + Copy,
 {
     ParRecIter::new(
         initial_elements,

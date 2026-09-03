@@ -1,22 +1,23 @@
+use crate::ParExtend;
 use crate::infallible_use::xap::XapUse;
 use crate::runner::ParRunner;
-use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_arb<Q, U, I, X>(
+pub fn collect_arb<Q, U, I, X, P>(
     u: &mut U,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
     x: X,
-) -> Vec<X::O>
+) -> P::ThreadValues
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X: XapUse<U = U, I = I::Item>,
+    P: ParExtend<X::O>,
 {
-    let mut collected = Vec::new();
-    let vec = &mut collected;
+    let mut collected = P::new_thread_values();
+    let out = &mut collected;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
 
@@ -26,7 +27,10 @@ where
 
         match chunk_size {
             0 | 1 => match iter.next_by(th_idx) {
-                Some(i) => vec.extend(x.xap_use(u, i)),
+                Some(i) => {
+                    let values = x.xap_use(u, i);
+                    P::add_thread_values(out, values);
+                }
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
             },
@@ -34,7 +38,10 @@ where
                 chunk_puller.resize_for_chunk_size(c);
 
                 match chunk_puller.pull() {
-                    Some(chunk) => vec.extend(chunk.flat_map(|i| x.xap_use(u, i))),
+                    Some(chunk) => {
+                        let values = chunk.flat_map(|i| x.xap_use(u, i));
+                        P::add_thread_values(out, values);
+                    }
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
                 }

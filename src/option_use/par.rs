@@ -1,7 +1,6 @@
 // TODO: remove this
 #![allow(clippy::type_complexity)]
 
-use crate::common_par_traits::ParOptCommon;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse,
@@ -10,7 +9,7 @@ use crate::option_use::ParUseOptionIter;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, Sum};
 use core::cmp::Ordering;
 
 /// Fallible parallel iterator with worker-local mutable state.
@@ -73,7 +72,7 @@ use core::cmp::Ordering;
 /// assert_eq!(out.as_ref().map(Vec::len), Some(32));
 /// assert!(out.unwrap().into_iter().enumerate().all(|(i, v)| v >= i));
 /// ```
-pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Self::Item> {
+pub trait ParUseOption: Sized + ParUseOptionCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -551,9 +550,9 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
     /// assert_eq!(ok, Some(()));
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
-    fn collect_into<C>(self, dst: &mut C) -> Option<()>
+    fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects successful items into a new collection.
@@ -574,10 +573,15 @@ pub trait ParUseOption: Sized + ParUseOptionCore + ParOptCommon<CommonItem = Sel
     ///
     /// assert_eq!(out, Some(vec![1, 2, 3]));
     /// ```
-    fn collect<C>(self) -> Option<C>
+    fn collect<P>(self) -> Option<P>
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        P: ParExtend<Self::Item> + Default,
+        Self::Item: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst)?;
+        Some(dst)
+    }
 
     // compute - derived
 

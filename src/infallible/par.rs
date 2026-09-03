@@ -1,4 +1,3 @@
-use crate::common_par_traits::ParInfCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf, MappedOf, ParIter};
@@ -8,8 +7,8 @@ use crate::option::ParOptionIter;
 use crate::result::ParResultIter;
 use crate::sizes::Size;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads};
-use crate::{ParCollectInto, ParOption, ParResult, ParUse, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend};
+use crate::{ParOption, ParResult, ParUse, Sum};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
@@ -40,7 +39,7 @@ use core::cmp::Ordering;
 ///
 /// assert_eq!(sum_of_even_squares, 220);
 /// ```
-pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
+pub trait Par: Sized + ParCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -179,29 +178,9 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// let sum: usize = (1..11).into_par().num_threads(0).sum();
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Request 6 threads, but pool only has 4
-    /// let sum: usize = (1..1001)
-    ///     .into_par()
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .sum();          // ...but only 4 are available
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -581,7 +560,7 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
         slice: &'a mut [U],
     ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
-        U: Sync + 'a,
+        U: Send + 'a,
     {
         assert!(
             !slice.is_empty(),
@@ -818,18 +797,12 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// (0..3).into_par().collect_into(&mut dst);
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
-    fn collect_into<C>(self, dst: &mut C)
+    fn collect_into<P>(self, dst: &mut P)
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects all items into a new collection.
-    ///
-    /// When a flat structure is not required, collecting into [`Vec2`] might lead to
-    /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
-    /// _number of threads_ inner vectors.
-    ///
-    /// [`Vec2`]: crate::Vec2
     ///
     /// # Examples
     ///
@@ -839,10 +812,15 @@ pub trait Par: Sized + ParCore + ParInfCommon<CommonItem = Self::Item> {
     /// let out: Vec<_> = (1..4).into_par().map(|x| x * 2).collect();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
-    fn collect<C>(self) -> C
+    fn collect<P>(self) -> P
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        P: ParExtend<Self::Item> + Default,
+        Self::Item: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst);
+        dst
+    }
 
     // compute - derived
 

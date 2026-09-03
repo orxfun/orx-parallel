@@ -1,8 +1,7 @@
-use crate::ParCollectInto;
-use crate::common_par_traits::ParOptCommon;
+use crate::ParExtend;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
-use crate::option::ParOptionCore;
 use crate::option::par::ParOption;
+use crate::option::par_core::ParOptionCore;
 use crate::option::par_runner::ParRunnerOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
@@ -290,46 +289,15 @@ where
         exe.reduce(s, params, iter, x1, x2, f)
     }
 
-    fn collect_into<C>(self, dst: &mut C) -> Option<()>
+    fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        C: ParCollectInto<X2::O>,
+        P: ParExtend<X2::O>,
         X2::O: Send,
     {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::opt_col_into(dst, self),
-            IterationOrder::Arbitrary => C::opt_arb_col_into(dst, self),
+        let (iter, x1, x2, mut exe, s, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.collect(s, params, iter, x1, x2, dst),
+            IterationOrder::Arbitrary => exe.collect_arb(s, params, iter, x1, x2, dst),
         }
-    }
-
-    fn collect<C>(self) -> Option<C>
-    where
-        C: ParCollectInto<X2::O>,
-        X2::O: Send,
-    {
-        let mut dst = C::new_empty();
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::opt_col_into(&mut dst, self),
-            IterationOrder::Arbitrary => C::opt_arb_col_into(&mut dst, self),
-        }
-        .map(|_| dst)
-    }
-}
-
-impl<I, M, X1, X2, S, R> ParOptCommon for ParOptionIter<I, M, X1, X2, S, R>
-where
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Option<M>>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    type CommonItem = <Self as ParOptionCore>::Item;
-
-    fn common_collect_into<C>(self, dst: &mut C) -> Option<()>
-    where
-        C: ParCollectInto<Self::CommonItem>,
-        Self::CommonItem: Send,
-    {
-        self.collect_into(dst)
     }
 }

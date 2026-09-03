@@ -223,7 +223,10 @@ fn inf_use_for_each() {
             .par()
             .use_new(|_| ())
             .for_each(|_, x| _ = total_len.fetch_add(x.len(), Ordering::Relaxed));
-        assert_eq!(total_len.into_inner(), input.iter().map(|x| x.len()).sum());
+        assert_eq!(
+            total_len.into_inner(),
+            input.iter().map(|x| x.len()).sum::<usize>()
+        );
     }
 }
 
@@ -324,7 +327,11 @@ fn inf_use_sum() {
             .sum();
         assert_eq!(
             result,
-            input.iter().filter(|x| x.len() > 1).map(|x| x.len()).sum()
+            input
+                .iter()
+                .filter(|x| x.len() > 1)
+                .map(|x| x.len())
+                .sum::<usize>()
         );
     }
 }

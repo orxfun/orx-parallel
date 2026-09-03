@@ -88,7 +88,7 @@ impl<T: Send, F: Fn(usize) -> T + Sync> UseVec<T, F> {
 impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseVec<T, F> {
     type Item = T;
 
-    fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
+    unsafe fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
         let use_var = (self.init)(thread_idx);
         unsafe { self.cache.set_value(thread_idx, use_var) };
 
@@ -113,7 +113,7 @@ impl<T: Send, F: Fn(usize) -> T + Sync> Use for UseVec<T, F> {
 impl<T: Send, F: Fn(usize) -> T + Sync> Use for &mut UseVec<T, F> {
     type Item = T;
 
-    fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
+    unsafe fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
         let use_var = (self.init)(thread_idx);
         unsafe { self.cache.set_value(thread_idx, use_var) };
 

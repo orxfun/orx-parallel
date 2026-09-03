@@ -1,15 +1,15 @@
 #![allow(clippy::type_complexity)]
 
-use crate::common_par_traits::ParOptCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
 use crate::option::ParOptionIter;
+use crate::option::par_core::ParOptionCore;
+use crate::option_use::ParUseOptionIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, Sum};
-use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -58,7 +58,7 @@ use core::cmp::Ordering;
 ///
 /// assert_eq!(with_failure, None);
 /// ```
-pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Item> {
+pub trait ParOption: Sized + ParOptionCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -194,37 +194,9 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     ///     .collect();      // Result: 2 threads used
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count also respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Computation requests 6 threads, but pool only has 4
-    /// let result = (0..1000)
-    ///     .into_par()
-    ///     .map(|x| x * 2)
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .collect();      // ...but only 4 are available
-    /// ```
-    ///
-    /// # Checking Sequential Execution
-    ///
-    /// ```ignore
-    /// let nt = NumThreads::Max(std::num::NonZeroUsize::new(1).unwrap());
-    /// assert!(nt.is_sequential());  // true
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -397,7 +369,7 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
         Size = Self::Size,
     >
     where
-        U: Sync + 'a,
+        U: Send + 'a,
     {
         let (iter, x1, x2, exe, _, params) = self.destruct();
         let x1 = IdUse::<_, U>::new(x1);
@@ -711,9 +683,9 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     ///     .collect_into(&mut dst_fail);
     /// assert_eq!(fail, None);
     /// ```
-    fn collect_into<C>(self, dst: &mut C) -> Option<()>
+    fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects successful items into a new collection.
@@ -731,10 +703,15 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// let fail: Option<Vec<_>> = vec![Some(1), None, Some(3)].into_par().into_optional().collect();
     /// assert_eq!(fail, None);
     /// ```
-    fn collect<C>(self) -> Option<C>
+    fn collect<P>(self) -> Option<P>
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        P: ParExtend<Self::Item> + Default,
+        Self::Item: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst)?;
+        Some(dst)
+    }
 
     // compute - derived
 

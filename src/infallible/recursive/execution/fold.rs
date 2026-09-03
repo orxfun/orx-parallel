@@ -1,5 +1,4 @@
 use crate::infallible::recursive::utils;
-use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
@@ -31,13 +30,12 @@ where
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
-    E: Fn(&X::I) -> I + Send + Sync,
-    B: Send + Sync,
-    Id: Fn() -> B + Sync,
-    F: Fn(&mut B, X::O) + Copy + Send + Sync,
-    X::I: Send + Sync,
+    E: Fn(&X::I) -> I + Send + Copy,
+    B: Send,
+    Id: Fn() -> B,
+    F: Fn(&mut B, X::O) + Copy + Send,
+    X::I: Send,
 {
-    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads)
@@ -49,7 +47,7 @@ where
     let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
-    par.for_each(|u, i| {
+    par.for_each(move |u, i| {
         u.input.extend(extend(&i));
 
         for i in xap.xap(i) {
@@ -62,7 +60,7 @@ where
         let par = inputs.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data);
 
-        par.for_each(|u, i| {
+        par.for_each(move |u, i| {
             u.input.extend(extend(&i));
 
             for i in xap.xap(i) {

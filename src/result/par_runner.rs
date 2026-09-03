@@ -1,10 +1,9 @@
+use crate::ParExtend;
 use crate::infallible::Xap;
 use crate::result::thread_execution as th;
-use crate::results::{Val, ValIdx, ValsAndIdx};
+use crate::results::{Val, ValIdx};
 use crate::sizes::SizePair;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
-use alloc::vec;
-use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -184,14 +183,15 @@ pub trait ParRunnerRes: ParRunner {
         }
     }
 
-    fn collect<I, M, E, X1, X2, S>(
+    fn collect<I, M, E, X1, X2, S, P>(
         &mut self,
         sizes: S,
         params: Params,
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Result<Vec<ValsAndIdx<X2::O>>, E>
+        dst: &mut P,
+    ) -> Result<(), E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
@@ -199,17 +199,13 @@ pub trait ParRunnerRes: ParRunner {
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
         E: Send,
+        P: ParExtend<X2::O>,
+        P::OrderedThreadValues: Send,
     {
         match params.is_sequential() {
             true => {
-                let iter = iter
-                    .into_seq_iter()
-                    .flat_map(|i| S::xap_res(x1, x2, i).into_iter());
-                let mut values = vec![];
-                for maybe in iter {
-                    values.push(maybe?);
-                }
-                Ok(vec![ValsAndIdx::new_seq(values)])
+                let fallibles = iter.into_seq_iter().flat_map(|i| S::xap_res(x1, x2, i));
+                dst.extend_fallibles(fallibles)
             }
             false => {
                 let mut spawned = 0;
@@ -223,7 +219,7 @@ pub trait ParRunnerRes: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect::<Self, _, _, _, _, _, _>(
+                            let value = th::collect::<Self, _, _, _, _, _, _, P>(
                                 sizes, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);
@@ -233,19 +229,20 @@ pub trait ParRunnerRes: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                results_bag.into_inner().into_inner().into_iter().collect()
+                P::extend_merge_ordered_fallibles(dst, results_bag.into_inner().into_inner())
             }
         }
     }
 
-    fn collect_arb<I, M, E, X1, X2, S>(
+    fn collect_arb<I, M, E, X1, X2, S, P>(
         &mut self,
         sizes: S,
         params: Params,
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Result<Vec<Vec<X2::O>>, E>
+        dst: &mut P,
+    ) -> Result<(), E>
     where
         I: ConcurrentIter,
         X1: Xap<I = I::Item, O = Result<M, E>>,
@@ -253,17 +250,13 @@ pub trait ParRunnerRes: ParRunner {
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
         E: Send,
+        P: ParExtend<X2::O>,
+        P::ThreadValues: Send,
     {
         match params.is_sequential() {
             true => {
-                let iter = iter
-                    .into_seq_iter()
-                    .flat_map(|i| S::xap_res(x1, x2, i).into_iter());
-                let mut values = vec![];
-                for maybe in iter {
-                    values.push(maybe?);
-                }
-                Ok(vec![values])
+                let fallibles = iter.into_seq_iter().flat_map(|i| S::xap_res(x1, x2, i));
+                dst.extend_fallibles(fallibles)
             }
             false => {
                 let mut spawned = 0;
@@ -277,7 +270,7 @@ pub trait ParRunnerRes: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect_arb::<Self, _, _, _, _, _, _>(
+                            let value = th::collect_arb::<Self, _, _, _, _, _, _, P>(
                                 sizes, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);
@@ -287,7 +280,7 @@ pub trait ParRunnerRes: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                results_bag.into_inner().into_inner().into_iter().collect()
+                P::extend_merge_fallibles(dst, results_bag.into_inner().into_inner())
             }
         }
     }

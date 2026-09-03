@@ -1,24 +1,26 @@
-use crate::results::ValsAndIdx;
+use crate::ParExtend;
 use crate::sizes::SizePair;
 use crate::{infallible::Xap, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect<Q, I, M, E, X1, X2, S>(
+pub fn collect<Q, I, M, E, X1, X2, S, P>(
     _: S,
     th_idx: usize,
     state: &Q::State,
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Result<ValsAndIdx<X2::O>, E>
+) -> Result<P::OrderedThreadValues, E>
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X1: Xap<I = I::Item, O = Result<M, E>>,
     X2: Xap<I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    X2::O: Send,
+    P: ParExtend<X2::O>,
 {
-    let mut collected = ValsAndIdx::new();
+    let mut collected = P::new_ordered_thread_values();
     let out = &mut collected;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
@@ -30,8 +32,9 @@ where
         match chunk_size {
             0 | 1 => match iter.next_with_idx_by(th_idx) {
                 Some((idx, i)) => {
-                    let result = out.extend_res(idx, S::xap_res(x1, x2, i));
-                    if let Some(e) = result {
+                    let values = S::xap_res(x1, x2, i);
+                    let result = P::add_ordered_thread_fallibles(out, idx, values);
+                    if let Err(e) = result {
                         Q::broadcast_stop(iter, state, chunk_state);
                         return Err(e);
                     }
@@ -45,8 +48,8 @@ where
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
                         let values = chunk.flat_map(|i| S::xap_res(x1, x2, i));
-                        let result = out.extend_res(idx, values);
-                        if let Some(e) = result {
+                        let result = P::add_ordered_thread_fallibles(out, idx, values);
+                        if let Err(e) = result {
                             Q::broadcast_stop(iter, state, chunk_state);
                             return Err(e);
                         }

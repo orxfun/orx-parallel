@@ -1,5 +1,4 @@
-use crate::ParCollectInto;
-use crate::common_par_traits::ParOptCommon;
+use crate::ParExtend;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
@@ -329,47 +328,15 @@ where
         exe.reduce(s, params, u, iter, x1, x2, f)
     }
 
-    fn collect_into<C>(self, dst: &mut C) -> Option<()>
+    fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        C: ParCollectInto<X2::O>,
+        P: ParExtend<X2::O>,
         X2::O: Send,
     {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::opt_use_col_into(dst, self),
-            IterationOrder::Arbitrary => C::opt_use_arb_col_into(dst, self),
+        let (u, iter, x1, x2, mut exe, s, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.collect(s, params, u, iter, x1, x2, dst),
+            IterationOrder::Arbitrary => exe.collect_arb(s, params, u, iter, x1, x2, dst),
         }
-    }
-
-    fn collect<C>(self) -> Option<C>
-    where
-        C: ParCollectInto<X2::O>,
-        X2::O: Send,
-    {
-        let mut dst = C::new_empty();
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::opt_use_col_into(&mut dst, self),
-            IterationOrder::Arbitrary => C::opt_use_arb_col_into(&mut dst, self),
-        }
-        .map(|_| dst)
-    }
-}
-
-impl<U, I, M, X1, X2, S, R> ParOptCommon for ParUseOptionIter<U, I, M, X1, X2, S, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
-    X2: XapUse<U = U::Item, I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    type CommonItem = <Self as ParUseOptionCore>::Item;
-
-    fn common_collect_into<C>(self, dst: &mut C) -> Option<()>
-    where
-        C: ParCollectInto<Self::CommonItem>,
-        Self::CommonItem: Send,
-    {
-        self.collect_into(dst)
     }
 }

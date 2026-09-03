@@ -1,6 +1,5 @@
-use crate::infallible::recursive::execution::elem::Elem;
+use crate::infallible::recursive::execution::elem::ElemIn;
 use crate::infallible::recursive::utils;
-use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
@@ -16,11 +15,10 @@ where
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
-    E: Fn(&X::I) -> I + Send + Sync,
+    E: Fn(&X::I) -> I + Send + Copy,
     X::O: Send,
-    X::I: Send + Sync,
+    X::I: Send,
 {
-    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Vec::new()).collect();
@@ -28,18 +26,18 @@ where
     let mut inputs: Vec<_> = iter
         .into_iter()
         .enumerate()
-        .map(|(width, value)| Elem::new(value, 0, width))
+        .map(|(ch, value)| ElemIn::new(value, 0, ch))
         .collect();
 
     let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
     let result = par
-        .flat_map(|u, input| {
+        .flat_map(move |u, input| {
             let new_inputs = extend(&input.value)
                 .into_iter()
                 .enumerate()
-                .map(|(width, value)| Elem::new(value, input.depth, width));
+                .map(|(width, value)| ElemIn::new(value, input.parent_idx, width));
             u.extend(new_inputs);
             xap.xap(input.value)
         })
@@ -49,19 +47,19 @@ where
         true => result,
         false => {
             utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
-            Elem::normalize_depths(&mut inputs);
-            inputs.sort_unstable_by_key(|x| x.depth);
+            ElemIn::normalize_parent_indices(&mut inputs);
+            inputs.sort_unstable_by_key(|x| x.parent_idx);
 
             while !inputs.is_empty() {
                 let par = inputs.par_drain(..).runner(&mut runner);
                 let par = params.apply(par).use_slice(&mut data);
 
                 let result = par
-                    .flat_map(|u, input| {
+                    .flat_map(move |u, input| {
                         let new_inputs = extend(&input.value)
                             .into_iter()
                             .enumerate()
-                            .map(|(width, value)| Elem::new(value, input.depth, width));
+                            .map(|(width, value)| ElemIn::new(value, input.parent_idx, width));
                         u.extend(new_inputs);
                         xap.xap(input.value)
                     })
@@ -71,8 +69,8 @@ where
                     return result;
                 }
                 utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
-                Elem::normalize_depths(&mut inputs);
-                inputs.sort_unstable_by_key(|x| x.depth);
+                ElemIn::normalize_parent_indices(&mut inputs);
+                inputs.sort_unstable_by_key(|x| x.parent_idx);
             }
 
             None

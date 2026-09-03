@@ -3,7 +3,7 @@ use crate::infallible::xap::FlattenOf;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, InsOf, MapOf};
 use crate::runner::ParRunner;
 use crate::{ChunkSize, IterationOrder, NumThreads};
-use crate::{ParCollectInto, Sum};
+use crate::{ParExtend, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -189,28 +189,9 @@ pub trait ParRec: Sized + ParRecCore {
     ///     .sum();
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Request 6 threads, but pool only has 4
-    /// let sum: usize = par_recursive([1usize], |&x| (x < 1000).then_some(x + 1))
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .sum();          // ...but only 4 are available
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -433,7 +414,7 @@ pub trait ParRec: Sized + ParRecCore {
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync;
+        <Self::Input as IntoIterator>::Item: Send;
 
     /// Reduces items into one value using associative reducer `f`.
     ///
@@ -452,7 +433,7 @@ pub trait ParRec: Sized + ParRecCore {
     where
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync;
+        <Self::Input as IntoIterator>::Item: Send;
 
     /// Collects all items into `dst`.
     ///
@@ -476,11 +457,11 @@ pub trait ParRec: Sized + ParRecCore {
     ///     .collect_into(&mut dst);
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
-    fn collect_into<C>(self, dst: &mut C)
+    fn collect_into<P>(self, dst: &mut P)
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync;
+        P: ParExtend<Self::Item>,
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send;
 
     /// Collects all items into a new collection.
     ///
@@ -491,13 +472,8 @@ pub trait ParRec: Sized + ParRecCore {
     /// important; however, ordered collection is also optimized so the performance difference
     /// is generally small.
     ///
-    /// When a flat structure is not required, collecting into [`Vec2`] might lead to
-    /// improvements in certain scenarios. Note that `Vec2<T>` is simply `Vec<Vec<T>>` with at most
-    /// _number of threads_ inner vectors.
-    ///
     /// [`IterationOrder::Ordered`]: crate::IterationOrder::Ordered
     /// [`IterationOrder::Arbitrary`]: crate::IterationOrder::Arbitrary
-    /// [`Vec2`]: crate::Vec2
     ///
     /// # Examples
     ///
@@ -509,11 +485,16 @@ pub trait ParRec: Sized + ParRecCore {
     ///     .collect();
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
-    fn collect<C>(self) -> C
+    fn collect<P>(self) -> P
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync;
+        P: ParExtend<Self::Item> + Default,
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst);
+        dst
+    }
 
     // compute - derived
 
@@ -536,10 +517,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     fn all<F>(self, f: F) -> bool
     where
-        F: Fn(&Self::Item) -> bool + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        F: Fn(&Self::Item) -> bool + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
-        self.map(|x| f(&x)).find(|x| !*x).is_none()
+        self.map(move |x| f(&x)).find(|x| !*x).is_none()
     }
 
     /// Returns `true` if any item satisfies predicate `f`.
@@ -561,10 +542,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     fn any<F>(self, f: F) -> bool
     where
-        F: Fn(&Self::Item) -> bool + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        F: Fn(&Self::Item) -> bool + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
-        self.map(|x| f(&x)).find(|x| *x).is_some()
+        self.map(move |x| f(&x)).find(|x| *x).is_some()
     }
 
     /// Counts elements.
@@ -581,7 +562,7 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     fn count(self) -> usize
     where
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         self.map(|_| 1).reduce(|a, b| a + b).unwrap_or(0)
     }
@@ -616,10 +597,10 @@ pub trait ParRec: Sized + ParRecCore {
     fn find<F>(self, f: F) -> Option<Self::Item>
     where
         Self::Item: Send,
-        F: Fn(&Self::Item) -> bool + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        F: Fn(&Self::Item) -> bool + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
-        self.filter(&f).first()
+        self.filter(f).first()
     }
 
     /// Folds elements into per-thread accumulators and returns them.
@@ -641,10 +622,10 @@ pub trait ParRec: Sized + ParRecCore {
     /// ```
     fn fold<B, I, F>(self, init: I, f: F) -> Vec<B>
     where
-        B: Send + Sync,
-        I: Fn() -> B + Sync,
-        F: Fn(&mut B, Self::Item) + Copy + Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync;
+        B: Send,
+        I: Fn() -> B,
+        F: Fn(&mut B, Self::Item) + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send;
 
     /// Executes `f` for each item.
     ///
@@ -666,7 +647,7 @@ pub trait ParRec: Sized + ParRecCore {
     fn for_each<F>(self, f: F)
     where
         F: Fn(Self::Item) + Send + Copy,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let _ = self.map(f).reduce(|_, _| {});
     }
@@ -689,7 +670,7 @@ pub trait ParRec: Sized + ParRecCore {
     fn max(self) -> Option<Self::Item>
     where
         Self::Item: Ord + Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         self.reduce(Ord::max)
     }
@@ -708,10 +689,10 @@ pub trait ParRec: Sized + ParRecCore {
     fn max_by<F>(self, f: F) -> Option<Self::Item>
     where
         Self::Item: Send,
-        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
-        let reduce = |x, y| match f(&x, &y) {
+        let reduce = move |x, y| match f(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -733,10 +714,10 @@ pub trait ParRec: Sized + ParRecCore {
     where
         Self::Item: Send,
         B: Ord,
-        F: Fn(&Self::Item) -> B + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        F: Fn(&Self::Item) -> B + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
-        let reduce = |x, y| match f(&x).cmp(&f(&y)) {
+        let reduce = move |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Greater | Ordering::Equal => x,
             Ordering::Less => y,
         };
@@ -761,7 +742,7 @@ pub trait ParRec: Sized + ParRecCore {
     fn min(self) -> Option<Self::Item>
     where
         Self::Item: Ord + Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         self.reduce(Ord::min)
     }
@@ -780,10 +761,10 @@ pub trait ParRec: Sized + ParRecCore {
     fn min_by<F>(self, f: F) -> Option<Self::Item>
     where
         Self::Item: Send,
-        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        F: Fn(&Self::Item, &Self::Item) -> Ordering + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
-        let reduce = |x, y| match f(&x, &y) {
+        let reduce = move |x, y| match f(&x, &y) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };
@@ -805,10 +786,10 @@ pub trait ParRec: Sized + ParRecCore {
     where
         Self::Item: Send,
         B: Ord,
-        F: Fn(&Self::Item) -> B + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        F: Fn(&Self::Item) -> B + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
-        let reduce = |x, y| match f(&x).cmp(&f(&y)) {
+        let reduce = move |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Less | Ordering::Equal => x,
             Ordering::Greater => y,
         };
@@ -832,7 +813,7 @@ pub trait ParRec: Sized + ParRecCore {
     where
         Self::Item: Sum<S>,
         S: Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         self.map(Self::Item::owned)
             .reduce(Self::Item::add)

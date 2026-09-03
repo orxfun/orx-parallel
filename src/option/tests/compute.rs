@@ -319,7 +319,7 @@ fn opt_for_each() {
         assert_eq!(result, Some(()));
         assert_eq!(
             total_len_ok.into_inner(),
-            input.iter().map(|x| x.len()).sum()
+            input.iter().map(|x| x.len()).sum::<usize>()
         );
 
         let input = inputs(core::cmp::max(100, n));

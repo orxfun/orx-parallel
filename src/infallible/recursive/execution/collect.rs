@@ -1,12 +1,12 @@
-use crate::infallible::recursive::execution::elem::Elem;
+use crate::ParExtend;
+use crate::infallible::recursive::execution::elem::{ElemIn, ElemOut};
 use crate::infallible::recursive::utils;
-use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
 struct Local<I, O> {
-    input: Vec<Elem<I>>,
-    output: Vec<Elem<O>>,
+    input: Vec<ElemIn<I>>,
+    output: Vec<ElemOut<O>>,
 }
 
 impl<I, O> Local<I, O> {
@@ -18,23 +18,23 @@ impl<I, O> Local<I, O> {
     }
 }
 
-pub fn collect<R, C, X, I, E>(
+pub fn collect<R, C, X, I, E, P>(
     mut runner: R,
     params: Params,
     iter: C,
     xap: X,
     extend: E,
-) -> Vec<X::O>
-where
+    dst: &mut P,
+) where
     R: ParRunner,
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
-    E: Fn(&X::I) -> I + Send + Sync,
-    X::O: Send + Sync,
-    X::I: Send + Sync,
+    E: Fn(&X::I) -> I + Send + Copy,
+    X::O: Send,
+    X::I: Send,
+    P: ParExtend<X::O>,
 {
-    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
@@ -42,7 +42,7 @@ where
     let mut inputs: Vec<_> = iter
         .into_iter()
         .enumerate()
-        .map(|(width, value)| Elem::new(value, 0, width))
+        .map(|(ch, value)| ElemIn::new(value, 0, ch))
         .collect();
     let mut result = Vec::new();
 
@@ -50,19 +50,19 @@ where
 
     let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
-    par.for_each(|u, input| {
+    par.for_each(move |u, input| {
         let new_inputs = extend(&input.value)
             .into_iter()
             .enumerate()
-            .map(|(width, value)| Elem::new(value, input.depth, width));
+            .map(|(ch, value)| ElemIn::new(value, 0, ch));
         u.input.extend(new_inputs);
 
         let values = xap.xap(input.value).into_iter();
-        let outputs = values.map(|value| Elem::new(value, depth, input.width));
+        let outputs = values.map(|value| ElemOut::new(value, 0, input.child_idx));
         u.output.extend(outputs);
     });
     utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-    Elem::normalize_depths(&mut inputs);
+    ElemIn::normalize_parent_indices(&mut inputs);
     utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
 
     while !inputs.is_empty() {
@@ -70,22 +70,22 @@ where
 
         let par = inputs.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data);
-        par.for_each(|u, input| {
+        par.for_each(move |u, input| {
             let new_inputs = extend(&input.value)
                 .into_iter()
                 .enumerate()
-                .map(|(width, value)| Elem::new(value, input.depth, width));
+                .map(|(width, value)| ElemIn::new(value, input.parent_idx, width));
             u.input.extend(new_inputs);
 
             let values = xap.xap(input.value).into_iter();
-            let outputs = values.map(|value| Elem::new(value, depth, input.depth));
+            let outputs = values.map(|value| ElemOut::new(value, depth, input.parent_idx));
             u.output.extend(outputs);
         });
         utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-        Elem::normalize_depths(&mut inputs);
+        ElemIn::normalize_parent_indices(&mut inputs);
         utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
     }
 
     result.sort();
-    result.into_iter().map(|x| x.value).collect()
+    dst.extend(result.into_iter().map(|x| x.value));
 }

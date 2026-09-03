@@ -3,7 +3,7 @@ pub struct PairPtr<U, V> {
     v: *mut V,
 }
 
-unsafe impl<U, V> Send for PairPtr<U, V> {}
+unsafe impl<U: Send, V: Send> Send for PairPtr<U, V> {}
 
 impl<U, V> PairPtr<U, V> {
     #[inline(always)]

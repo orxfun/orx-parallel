@@ -1,5 +1,5 @@
+use crate::ParExtend;
 use crate::infallible::recursive::utils;
-use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
@@ -17,52 +17,49 @@ impl<I, O> Local<I, O> {
     }
 }
 
-pub fn collect_arb<R, C, X, I, E>(
+pub fn collect_arb<R, C, X, I, E, P>(
     mut runner: R,
     params: Params,
     iter: C,
     xap: X,
     extend: E,
-) -> Vec<X::O>
-where
+    dst: &mut P,
+) where
     R: ParRunner,
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
-    E: Fn(&X::I) -> I + Send + Sync,
-    X::O: Send + Sync,
-    X::I: Send + Sync,
+    E: Fn(&X::I) -> I + Send + Copy,
+    X::O: Send,
+    X::I: Send,
+    P: ParExtend<X::O>,
 {
-    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Local::new()).collect();
 
     let mut inputs: Vec<_> = iter.into_iter().collect();
-    let mut result = Vec::new();
 
     let par = inputs.par_drain(..).runner(&mut runner);
     let par = params.apply(par).use_slice(&mut data);
 
-    par.for_each(|u, i| {
+    par.for_each(move |u, i| {
         u.input.extend(extend(&i));
         u.output.extend(xap.xap(i));
     });
     utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-    utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
+    dst.extend(data.iter_mut().flat_map(|x| x.output.drain(..)));
 
     while !inputs.is_empty() {
         let par = inputs.par_drain(..).runner(&mut runner);
         let par = params.apply(par).use_slice(&mut data);
 
-        par.for_each(|u, i| {
+        par.for_each(move |u, i| {
             u.input.extend(extend(&i));
             u.output.extend(xap.xap(i));
         });
 
         utils::into_outer_par(&mut inputs, &mut data, |x| &mut x.input, &mut runner);
-        utils::into_outer_par(&mut result, &mut data, |x| &mut x.output, &mut runner);
+        dst.extend(data.iter_mut().flat_map(|x| x.output.drain(..)));
     }
-
-    result
 }

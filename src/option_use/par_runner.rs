@@ -1,13 +1,12 @@
 #![allow(clippy::too_many_arguments)]
 
+use crate::ParExtend;
 use crate::infallible_use::XapUse;
 use crate::option_use::thread_execution as th;
-use crate::results::{Val, ValIdx, ValsAndIdx};
+use crate::results::{Val, ValIdx};
 use crate::sizes::SizePair;
 use crate::use_var::Use;
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
-use alloc::vec;
-use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -31,7 +30,8 @@ pub trait ParRunnerUseOpt: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
                 let first = iter
                     .into_seq_iter()
                     .flat_map(|i| S::xap_use_opt(u, x1, x2, i).into_iter())
@@ -61,7 +61,9 @@ pub trait ParRunnerUseOpt: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
                             let value = th::next::<Self, _, _, _, _, _, _>(
                                 sizes, u, th_idx, st, iter, x1, x2,
                             );
@@ -96,7 +98,8 @@ pub trait ParRunnerUseOpt: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
                 let first = iter
                     .into_seq_iter()
                     .flat_map(|i| S::xap_use_opt(u, x1, x2, i).into_iter())
@@ -122,7 +125,9 @@ pub trait ParRunnerUseOpt: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
                             let value = th::next_any::<Self, _, _, _, _, _, _>(
                                 sizes, u, th_idx, st, iter, x1, x2,
                             );
@@ -159,7 +164,8 @@ pub trait ParRunnerUseOpt: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u_xap = u.init_get(0) as *mut U::Item;
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u_xap = unsafe { u.init_get(0) } as *mut U::Item;
                 let u_f = u_xap;
                 let mut iter = iter
                     .into_seq_iter()
@@ -192,7 +198,9 @@ pub trait ParRunnerUseOpt: ParRunner {
                             spawned += 1;
                             <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                                 Self::begin_thread(st, th_idx);
-                                let u = u.init_get(th_idx);
+                                // SAFETY: `do_spawn_new` returns sequential thread indices;
+                                // therefore, `u.init_get` will be called exactly once per thread
+                                let u = unsafe { u.init_get(th_idx) };
                                 let value = th::reduce::<Self, _, _, _, _, _, _, _>(
                                     sizes, u, th_idx, st, iter, x1, x2, f,
                                 );
@@ -210,7 +218,7 @@ pub trait ParRunnerUseOpt: ParRunner {
         }
     }
 
-    fn collect<U, I, M, X1, X2, S>(
+    fn collect<U, I, M, X1, X2, S, P>(
         &mut self,
         sizes: S,
         params: Params,
@@ -218,7 +226,8 @@ pub trait ParRunnerUseOpt: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Option<Vec<ValsAndIdx<X2::O>>>
+        dst: &mut P,
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -226,18 +235,17 @@ pub trait ParRunnerUseOpt: ParRunner {
         X2: XapUse<U = U::Item, I = M>,
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
+        P: ParExtend<X2::O>,
+        P::OrderedThreadValues: Send,
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
-                let iter = iter
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
+                let optionals = iter
                     .into_seq_iter()
-                    .flat_map(|i| S::xap_use_opt(u, x1, x2, i).into_iter());
-                let mut values = vec![];
-                for maybe in iter {
-                    values.push(maybe?);
-                }
-                Some(vec![ValsAndIdx::new_seq(values)])
+                    .flat_map(|i| S::xap_use_opt(u, x1, x2, i));
+                dst.extend_optionals(optionals)
             }
             false => {
                 let mut spawned = 0;
@@ -255,8 +263,10 @@ pub trait ParRunnerUseOpt: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
-                            let value = th::collect::<Self, _, _, _, _, _, _>(
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
+                            let value = th::collect::<Self, _, _, _, _, _, _, P>(
                                 sizes, u, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);
@@ -266,12 +276,12 @@ pub trait ParRunnerUseOpt: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                results_bag.into_inner().into_inner().into_iter().collect()
+                P::extend_merge_ordered_optionals(dst, results_bag.into_inner().into_inner())
             }
         }
     }
 
-    fn collect_arb<U, I, M, X1, X2, S>(
+    fn collect_arb<U, I, M, X1, X2, S, P>(
         &mut self,
         sizes: S,
         params: Params,
@@ -279,7 +289,8 @@ pub trait ParRunnerUseOpt: ParRunner {
         iter: I,
         x1: X1,
         x2: X2,
-    ) -> Option<Vec<Vec<X2::O>>>
+        dst: &mut P,
+    ) -> Option<()>
     where
         U: Use,
         I: ConcurrentIter,
@@ -287,18 +298,17 @@ pub trait ParRunnerUseOpt: ParRunner {
         X2: XapUse<U = U::Item, I = M>,
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
+        P: ParExtend<X2::O>,
+        P::ThreadValues: Send,
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
-                let iter = iter
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
+                let optionals = iter
                     .into_seq_iter()
-                    .flat_map(|i| S::xap_use_opt(u, x1, x2, i).into_iter());
-                let mut values = vec![];
-                for maybe in iter {
-                    values.push(maybe?);
-                }
-                Some(vec![values])
+                    .flat_map(|i| S::xap_use_opt(u, x1, x2, i));
+                dst.extend_optionals(optionals)
             }
             false => {
                 let mut spawned = 0;
@@ -316,8 +326,10 @@ pub trait ParRunnerUseOpt: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
-                            let value = th::collect_arb::<Self, _, _, _, _, _, _>(
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
+                            let value = th::collect_arb::<Self, _, _, _, _, _, _, P>(
                                 sizes, u, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);
@@ -327,7 +339,7 @@ pub trait ParRunnerUseOpt: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                results_bag.into_inner().into_inner().into_iter().collect()
+                P::extend_merge_optionals(dst, results_bag.into_inner().into_inner())
             }
         }
     }

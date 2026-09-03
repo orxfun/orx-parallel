@@ -10,12 +10,6 @@ use core::num::NonZeroUsize;
 ///
 /// `OncePool` is used when the `transient-pool` feature is enabled.
 /// In this configuration, "orx-parallel" does not create and hold on to a persistent thread pool.
-///
-/// On the other hand, in order to reduce the overhead of spawning threads, thread pools can be created
-/// using [`Pool`] methods and passed to the parallel iterators using the [`pool`] transformation.
-///
-/// [`pool`]: crate::Par::pool
-/// [`Pool`]: crate::Pool
 #[derive(Clone, Copy, Debug)]
 pub struct OncePool {
     num_threads: NonZeroUsize,

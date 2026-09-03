@@ -1,14 +1,22 @@
+use crate::ParExtend;
+use crate::infallible::xap::Xap;
 use crate::runner::ParRunner;
-use crate::{infallible::xap::Xap, results::ValsAndIdx};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect<Q, I, X>(th_idx: usize, state: &Q::State, iter: &I, x: X) -> ValsAndIdx<X::O>
+pub fn collect<Q, I, X, P>(
+    th_idx: usize,
+    state: &Q::State,
+    iter: &I,
+    x: X,
+) -> P::OrderedThreadValues
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
+    X::O: Send,
+    P: ParExtend<X::O>,
 {
-    let mut collected = ValsAndIdx::new();
+    let mut collected = P::new_ordered_thread_values();
     let out = &mut collected;
 
     let mut chunk_puller = iter.chunk_puller_by(0, th_idx);
@@ -19,7 +27,10 @@ where
 
         match chunk_size {
             0 | 1 => match iter.next_with_idx_by(th_idx) {
-                Some((idx, i)) => out.extend(idx, x.xap(i)),
+                Some((idx, i)) => {
+                    let values = x.xap(i);
+                    P::add_ordered_thread_values(out, idx, values);
+                }
                 None if iter.is_completed_when_none_returned() => break,
                 None => {}
             },
@@ -27,7 +38,10 @@ where
                 chunk_puller.resize_for_chunk_size(c);
 
                 match chunk_puller.pull_with_idx() {
-                    Some((idx, chunk)) => out.extend(idx, chunk.flat_map(|i| x.xap(i))),
+                    Some((idx, chunk)) => {
+                        let values = chunk.flat_map(|i| x.xap(i));
+                        P::add_ordered_thread_values(out, idx, values);
+                    }
                     None if iter.is_completed_when_none_returned() => break,
                     None => {}
                 }

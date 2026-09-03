@@ -1,9 +1,9 @@
-use crate::results::ValsAndIdx;
+use crate::ParExtend;
 use crate::sizes::SizePair;
 use crate::{infallible_use::XapUse, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect<Q, U, I, M, E, X1, X2, S>(
+pub fn collect<Q, U, I, M, E, X1, X2, S, P>(
     _: S,
     u: &mut U,
     th_idx: usize,
@@ -11,15 +11,17 @@ pub fn collect<Q, U, I, M, E, X1, X2, S>(
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Result<ValsAndIdx<X2::O>, E>
+) -> Result<P::OrderedThreadValues, E>
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X1: XapUse<U = U, I = I::Item, O = Result<M, E>>,
     X2: XapUse<U = U, I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    X2::O: Send,
+    P: ParExtend<X2::O>,
 {
-    let mut collected = ValsAndIdx::new();
+    let mut collected = P::new_ordered_thread_values();
     let out = &mut collected;
 
     let u = u as *mut U;
@@ -33,8 +35,9 @@ where
         match chunk_size {
             0 | 1 => match iter.next_with_idx_by(th_idx) {
                 Some((idx, i)) => {
-                    let result = out.extend_res(idx, S::xap_use_res(u, x1, x2, i));
-                    if let Some(e) = result {
+                    let values = S::xap_use_res(u, x1, x2, i);
+                    let result = P::add_ordered_thread_fallibles(out, idx, values);
+                    if let Err(e) = result {
                         Q::broadcast_stop(iter, state, chunk_state);
                         return Err(e);
                     }
@@ -48,8 +51,8 @@ where
                 match chunk_puller.pull_with_idx() {
                     Some((idx, chunk)) => {
                         let values = chunk.flat_map(|i| S::xap_use_res(u, x1, x2, i));
-                        let result = out.extend_res(idx, values);
-                        if let Some(e) = result {
+                        let result = P::add_ordered_thread_fallibles(out, idx, values);
+                        if let Err(e) = result {
                             Q::broadcast_stop(iter, state, chunk_state);
                             return Err(e);
                         }

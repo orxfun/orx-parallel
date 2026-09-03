@@ -39,9 +39,12 @@ where
 {
     type Item = PairPtr<U::Item, T>;
 
-    fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
-        let u = self.u.init_get(thread_idx) as *mut U::Item;
-        let v = self.v.init_get(thread_idx) as *mut T;
+    unsafe fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
+        // SAFETY: Outer `init_get` must be called only once per thread;
+        // this in turn satisfies that `init_get` will be called only
+        // once per thread for `u` and `v`.
+        let u = unsafe { self.u.init_get(thread_idx) as *mut U::Item };
+        let v = unsafe { self.v.init_get(thread_idx) as *mut T };
         let pair_ptr = PairPtr::new(u, v);
         unsafe { self.cache.set_value(thread_idx, pair_ptr) };
 

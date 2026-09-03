@@ -1,9 +1,8 @@
+use crate::ParExtend;
 use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
-use crate::results::{Val, ValIdx, ValsAndIdx};
+use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
-use alloc::vec;
-use alloc::vec::Vec;
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -119,19 +118,18 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
         }
     }
 
-    fn collect<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<ValsAndIdx<X::O>>
+    fn collect<I, X, P>(&mut self, params: Params, iter: I, x: X, dst: &mut P)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
+        P: ParExtend<X::O>,
+        P::OrderedThreadValues: Send,
     {
         match params.is_sequential() {
             true => {
-                let values = iter
-                    .into_seq_iter()
-                    .flat_map(|i| x.xap(i).into_iter())
-                    .collect();
-                vec![ValsAndIdx::new_seq(values)]
+                let values = iter.into_seq_iter().flat_map(|i| x.xap(i));
+                dst.extend(values);
             }
             false => {
                 let mut spawned = 0;
@@ -145,7 +143,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect::<Self, _, _>(th_idx, st, iter, x);
+                            let value = th::collect::<Self, _, _, P>(th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
                         });
@@ -153,23 +151,24 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                results_bag.into_inner().into_inner()
+                P::extend_merge_ordered_infallibles(dst, results_bag.into_inner().into_inner());
             }
         }
     }
 
-    fn collect_arb<I, X>(&mut self, params: Params, iter: I, x: X) -> Vec<Vec<X::O>>
+    fn collect_arb<I, X, P>(&mut self, params: Params, iter: I, x: X, dst: &mut P)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
         X::O: Send,
+        P: ParExtend<X::O>,
+        P::ThreadValues: Send,
     {
         match params.is_sequential() {
-            true => vec![
-                iter.into_seq_iter()
-                    .flat_map(|i| x.xap(i).into_iter())
-                    .collect(),
-            ],
+            true => {
+                let values = iter.into_seq_iter().flat_map(|i| x.xap(i));
+                dst.extend(values);
+            }
             false => {
                 let mut spawned = 0;
                 let (max_nt, state) =
@@ -182,7 +181,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect_arb::<Self, _, _>(th_idx, st, iter, x);
+                            let value = th::collect_arb::<Self, _, _, P>(th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
                         });
@@ -190,45 +189,9 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 });
 
                 Self::complete_computation(state);
-                results_bag.into_inner().into_inner()
+                P::extend_merge_infallibles(dst, results_bag.into_inner().into_inner());
             }
-        }
-    }
-
-    #[cfg(feature = "experimental")]
-    #[allow(unused)]
-    fn collect_arb_over_bag<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item>,
-        X::O: Send,
-        P: orx_pinned_vec::IntoConcurrentPinnedVec<X::O>,
-    {
-        let capacity_bound = pinned_vec.capacity_bound();
-        let offset = pinned_vec.len();
-        let mut results_bag: ConcurrentBag<X::O, P> = pinned_vec.into();
-        match iter.try_get_len() {
-            Some(iter_len) => results_bag.reserve_maximum_capacity(offset + iter_len),
-            None => results_bag.reserve_maximum_capacity(capacity_bound),
         };
-
-        let mut spawned = 0;
-        let (_, state) = self.nt_state(params, &iter, iter.size_hint(), None);
-
-        let (iter, st, bag) = (&iter, &state, &results_bag);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    Self::begin_thread(st, th_idx);
-                    th::collect_arb_over_bag::<Self, _, _, _>(th_idx, st, iter, x, bag);
-                    Self::complete_thread(st, th_idx);
-                });
-            }
-        });
-
-        Self::complete_computation(state);
-        results_bag.into_inner()
     }
 }
 

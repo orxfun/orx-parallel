@@ -7,7 +7,6 @@ use rand_chacha::ChaCha8Rng;
 pub const RANGE: Range<u64> = 0..100_000;
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub struct Node {
     pub value: u64,
     pub children: Vec<Node>,
@@ -25,11 +24,6 @@ impl Node {
 
         let value = rng.random_range(RANGE);
         Self { value, children }
-    }
-
-    #[allow(dead_code)]
-    pub fn matches(self: &Node, threshold: u64) -> bool {
-        self.value % 10_000 < threshold
     }
 
     #[allow(dead_code)]

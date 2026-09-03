@@ -1,8 +1,9 @@
-use crate::collectables::par_col_into_test::{ColIntoMode, ParCollectIntoTest};
 use crate::infallible::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
+use core::fmt::Debug;
+use std::collections::*;
 use std::string::{String, ToString};
 use test_case::test_matrix;
 
@@ -83,8 +84,15 @@ fn one_x_fold() {
     assert_eq!(&result, &expected);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn one_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+#[test_matrix(
+    [Vec::new(), BTreeSet::new(), VecDeque::new()],
+    [false, true],
+    [IterationOrder::Ordered, IterationOrder::Arbitrary]
+)]
+fn one_x_collect<C>(_: C, has_some: bool, order: IterationOrder)
+where
+    C: ParExtend<String> + Default + Debug + PartialEq + IntoIterator<Item = String>,
+{
     let iter = || {
         inputs(N).into_iter().flat_map(|x| {
             let a = x.parse::<u64>().unwrap();
@@ -92,29 +100,36 @@ fn one_x_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
         })
     };
 
-    let expected = C::expected(mode, |i| i.to_string(), iter());
+    let mut expected = C::default();
+    if has_some {
+        expected.add_one("42".to_string());
+        expected.add_one("7".to_string());
+    }
+    expected.extend(iter().map(|i| i.to_string()));
 
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => {
-            inputs(N)
-                .into_par()
-                .iteration_order(order)
-                .flat_map(|x| {
-                    let a = x.parse::<u64>().unwrap();
-                    (0..5).map(move |i| (a + i).to_string())
-                })
-                .collect_into(&mut c);
-            c
+    let par = inputs(N).into_par().iteration_order(order).flat_map(|x| {
+        let a = x.parse::<u64>().unwrap();
+        (0..5).map(move |i| (a + i).to_string())
+    });
+    let result = match has_some {
+        true => {
+            let mut result = C::default();
+            result.add_one("42".to_string());
+            result.add_one("7".to_string());
+            par.collect_into(&mut result);
+            result
         }
-        None => inputs(N)
-            .into_par()
-            .iteration_order(order)
-            .flat_map(|x| {
-                let a = x.parse::<u64>().unwrap();
-                (0..5).map(move |i| (a + i).to_string())
-            })
-            .collect(),
+        false => par.collect(),
     };
 
-    C::assert_eq(result, expected, order);
+    match order {
+        IterationOrder::Ordered => assert_eq!(expected, result),
+        IterationOrder::Arbitrary => {
+            let mut expected: Vec<_> = expected.into_iter().collect();
+            let mut result: Vec<_> = result.into_iter().collect();
+            expected.sort();
+            result.sort();
+            assert_eq!(expected, result);
+        }
+    }
 }

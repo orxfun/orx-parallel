@@ -1,4 +1,4 @@
-use crate::ParCollectInto;
+use crate::ParExtend;
 use crate::infallible::Xap;
 use crate::infallible::recursive::execution;
 use crate::infallible::recursive::par::ParRec;
@@ -15,7 +15,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     iter: I,
     xap: X,
@@ -30,7 +30,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     pub(crate) fn new(iter: I, xap: X, exe: R, params: Params, extend: Ex) -> Self {
         Self {
@@ -57,7 +57,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     type Item = X::O;
 
@@ -78,7 +78,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     // configuration
 
@@ -190,7 +190,7 @@ where
     fn first(self) -> Option<Self::Item>
     where
         Self::Item: Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
 
@@ -204,7 +204,7 @@ where
     where
         F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
         Self::Item: Send,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         execution::reduce(exe, params, iter, x, extend, f)
@@ -212,10 +212,10 @@ where
 
     fn fold<B, Id, F>(self, init: Id, f: F) -> Vec<B>
     where
-        B: Send + Sync,
-        Id: Fn() -> B + Sync,
-        F: Fn(&mut B, Self::Item) + Copy + Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        B: Send,
+        Id: Fn() -> B,
+        F: Fn(&mut B, Self::Item) + Copy + Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
         execution::fold(exe, params, iter, x, extend, init, f)
@@ -223,29 +223,14 @@ where
 
     fn collect_into<C>(self, dst: &mut C)
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
+        C: ParExtend<Self::Item>,
+        Self::Item: Send,
+        <Self::Input as IntoIterator>::Item: Send,
     {
         let (iter, x, exe, params, extend) = self.destruct_x();
-        let values = match params.iteration_order {
-            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
-            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
-        };
-        C::extend_from_vec(dst, values);
-    }
-
-    fn collect<C>(self) -> C
-    where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send + Sync,
-        <Self::Input as IntoIterator>::Item: Send + Sync,
-    {
-        let (iter, x, exe, params, extend) = self.destruct_x();
-        let values = match params.iteration_order {
-            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend),
-            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend),
-        };
-        C::create_from_vec(values)
+        match params.iteration_order {
+            IterationOrder::Ordered => execution::collect(exe, params, iter, x, extend, dst),
+            IterationOrder::Arbitrary => execution::collect_arb(exe, params, iter, x, extend, dst),
+        }
     }
 }

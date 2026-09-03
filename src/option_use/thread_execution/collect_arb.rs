@@ -1,10 +1,10 @@
+use crate::ParExtend;
 use crate::infallible_use::XapUse;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use alloc::vec::Vec;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_arb<Q, U, I, M, X1, X2, S>(
+pub fn collect_arb<Q, U, I, M, X1, X2, S, P>(
     _: S,
     u: &mut U,
     th_idx: usize,
@@ -12,16 +12,17 @@ pub fn collect_arb<Q, U, I, M, X1, X2, S>(
     iter: &I,
     x1: X1,
     x2: X2,
-) -> Option<Vec<X2::O>>
+) -> Option<P::ThreadValues>
 where
     Q: ParRunner,
     I: ConcurrentIter,
     X1: XapUse<U = U, I = I::Item, O = Option<M>>,
     X2: XapUse<U = U, I = M>,
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    P: ParExtend<X2::O>,
 {
-    let mut collected = Vec::new();
-    let vec = &mut collected;
+    let mut collected = P::new_thread_values();
+    let out = &mut collected;
 
     let u = u as *mut U;
 
@@ -34,14 +35,11 @@ where
         match chunk_size {
             0 | 1 => match iter.next_by(th_idx) {
                 Some(i) => {
-                    for a in S::xap_use_opt(u, x1, x2, i) {
-                        match a {
-                            Some(a) => vec.push(a),
-                            None => {
-                                Q::broadcast_stop(iter, state, chunk_state);
-                                return None;
-                            }
-                        }
+                    let values = S::xap_use_opt(u, x1, x2, i);
+                    let result = P::add_thread_optionals(out, values);
+                    if result.is_none() {
+                        Q::broadcast_stop(iter, state, chunk_state);
+                        return None;
                     }
                 }
                 None if iter.is_completed_when_none_returned() => break,
@@ -52,14 +50,11 @@ where
 
                 match chunk_puller.pull() {
                     Some(chunk) => {
-                        for a in chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i)) {
-                            match a {
-                                Some(a) => vec.push(a),
-                                None => {
-                                    Q::broadcast_stop(iter, state, chunk_state);
-                                    return None;
-                                }
-                            }
+                        let values = chunk.flat_map(|i| S::xap_use_opt(u, x1, x2, i));
+                        let result = P::add_thread_optionals(out, values);
+                        if result.is_none() {
+                            Q::broadcast_stop(iter, state, chunk_state);
+                            return None;
                         }
                     }
                     None if iter.is_completed_when_none_returned() => break,

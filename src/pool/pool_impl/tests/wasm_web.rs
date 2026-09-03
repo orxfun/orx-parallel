@@ -1,5 +1,5 @@
 use crate::pool::pool_impl::init_wasm_thread_pool;
-use crate::{IntoParIter, Par, Pool};
+use crate::{IntoParIter, Par};
 use std::vec::Vec;
 use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen_test::*;

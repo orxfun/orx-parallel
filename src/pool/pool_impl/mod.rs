@@ -18,7 +18,7 @@ mod rayon_core;
 #[cfg(all(
     feature = "std",
     feature = "persistent-pool-rayon",
-    not(feature = "wasm"),
+    not(all(feature = "wasm", target_arch = "wasm32")),
 ))]
 pub use rayon_core::build_default_rayon_thread_pool;
 
@@ -28,7 +28,12 @@ mod wasm_web;
 pub use wasm_web::WasmWebPool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use wasm_web::init_wasm_parallel_runtime;
-#[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
+#[cfg(all(
+    test,
+    feature = "wasm",
+    target_arch = "wasm32",
+    target_feature = "atomics"
+))]
 pub(super) use wasm_web::init_wasm_thread_pool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use wasm_web::wasm_web_runtime_info;

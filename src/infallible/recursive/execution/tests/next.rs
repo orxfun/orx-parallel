@@ -29,7 +29,7 @@ fn recursive_next(depth: usize, fan_out: usize, find: bool) {
     }
 }
 
-#[cfg(not(miri))]
+#[cfg(all(not(miri), feature = "long-tests"))]
 #[test_matrix([7, 8], [8, 9], [true])]
 fn recursive_next_determinism(depth: usize, fan_out: usize, find: bool) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);
@@ -52,7 +52,7 @@ fn recursive_next_determinism(depth: usize, fan_out: usize, find: bool) {
     }
 }
 
-#[cfg(not(miri))]
+#[cfg(all(not(miri), feature = "long-tests"))]
 #[test_matrix([7, 8], [8, 9], [true])]
 fn recursive_next_determinism_with_flat_map(depth: usize, fan_out: usize, find: bool) {
     let mut rng = ChaCha8Rng::seed_from_u64(42);

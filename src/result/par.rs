@@ -1,6 +1,5 @@
 #![allow(clippy::type_complexity)]
 
-use crate::common_par_traits::ParResCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
@@ -10,7 +9,7 @@ use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseResult, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseResult, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -58,9 +57,7 @@ use core::cmp::Ordering;
 ///
 /// assert!(with_failure.is_err());
 /// ```
-pub trait ParResult:
-    Sized + ParResultCore + ParResCommon<CommonItem = Self::Item, CommonError = Self::Error>
-{
+pub trait ParResult: Sized + ParResultCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -180,31 +177,9 @@ pub trait ParResult:
     ///     .collect();
     /// ```
     ///
-    /// # Interaction with Pool
-    ///
-    /// The actual thread count respects the thread pool's constraints:
-    ///
-    /// ```ignore
-    /// use orx_parallel::*;
-    ///
-    /// // Pool provides 4 threads max
-    /// let pool = Pool::once(4);
-    ///
-    /// // Request 6 threads, but pool only has 4
-    /// let out: Result<Vec<_>, _> = (1..1001)
-    ///     .into_par()
-    ///     .map(Ok::<_, String>)
-    ///     .into_fallible()
-    ///     .pool(pool)
-    ///     .num_threads(6)  // Request 6...
-    ///     .collect();      // ...but only 4 are available
-    /// ```
-    ///
     /// # See Also
     ///
     /// - [`NumThreads`](crate::NumThreads) - Type for thread configuration
-    /// - [`pool()`](crate::Par::pool) - Configure thread pool
-    /// - [`Pool`](crate::Pool) - Factory for creating pools
     /// - [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) - Complete threading guide
     fn num_threads(self, num_threads: impl Into<NumThreads>) -> Self;
 
@@ -366,7 +341,7 @@ pub trait ParResult:
         Size = Self::Size,
     >
     where
-        U: Sync + 'a,
+        U: Send + 'a,
     {
         let (iter, x1, x2, exe, _, params) = self.destruct();
         let x1 = IdUse::<_, U>::new(x1);
@@ -699,9 +674,9 @@ pub trait ParResult:
     /// assert_eq!(ok, Ok(()));
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
-    fn collect_into<C>(self, dst: &mut C) -> Result<(), Self::Error>
+    fn collect_into<P>(self, dst: &mut P) -> Result<(), Self::Error>
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send,
         Self::Error: Send;
 
@@ -720,11 +695,16 @@ pub trait ParResult:
     ///
     /// assert_eq!(out, Ok(vec![1, 2, 3]));
     /// ```
-    fn collect<C>(self) -> Result<C, Self::Error>
+    fn collect<P>(self) -> Result<P, Self::Error>
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item> + Default,
         Self::Item: Send,
-        Self::Error: Send;
+        Self::Error: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst)?;
+        Ok(dst)
+    }
 
     // compute - derived
 

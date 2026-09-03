@@ -40,9 +40,9 @@ use core::num::NonZeroUsize;
 ///
 /// # Implementations
 ///
-/// - [`Pool::once`](crate::Pool::once) - Lightweight virtual pool, spawns threads on-demand
-/// - [`BasicPool`](crate::BasicPool) - Persistent thread pool
-/// - Rayon thread pools via `Pool::rayon()`
+/// - `Pool::basic` - Persistent thread pool (default)
+/// - `Pool::once` - Lightweight virtual pool, spawns threads on-demand
+/// - `Pool::rayon` - rayon thread pools
 ///
 /// See the [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) documentation for a complete guide.
 pub trait ParThreadPool {
