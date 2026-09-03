@@ -17,7 +17,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
                 iter.into_seq_iter()
                     .flat_map(|i| x.xap_use(u, i).into_iter())
                     .enumerate()
@@ -40,7 +41,9 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
                             let value = th::next::<Self, _, _, _>(u, th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
@@ -63,7 +66,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
                 iter.into_seq_iter()
                     .flat_map(|i| x.xap_use(u, i).into_iter())
                     .next()
@@ -84,7 +88,9 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
                             let value = th::next_any::<Self, _, _, _>(u, th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
@@ -108,7 +114,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0) as *mut U::Item;
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) } as *mut U::Item;
                 iter.into_seq_iter()
                     .flat_map(|i| x.xap_use(u, i).into_iter())
                     .reduce(|a, b| f(unsafe { &mut *u }, a, b))
@@ -130,7 +137,9 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                             spawned += 1;
                             <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                                 Self::begin_thread(st, th_idx);
-                                let u = u.init_get(th_idx);
+                                // SAFETY: `do_spawn_new` returns sequential thread indices;
+                                // therefore, `u.init_get` will be called exactly once per thread
+                                let u = unsafe { u.init_get(th_idx) };
                                 let value =
                                     th::reduce::<Self, _, _, _, _>(u, th_idx, st, iter, x, f);
                                 results.push(value);
@@ -158,7 +167,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
                 let values = iter.into_seq_iter().flat_map(|i| x.xap_use(u, i));
                 dst.extend(values);
             }
@@ -178,7 +188,9 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
                             let value = th::collect_x::<Self, _, _, _, P>(u, th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
@@ -203,7 +215,8 @@ pub trait ParRunnerInfallibleUse: ParRunner {
     {
         match params.is_sequential() {
             true => {
-                let u = u.init_get(0);
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
                 let values = iter.into_seq_iter().flat_map(|i| x.xap_use(u, i));
                 dst.extend(values);
             }
@@ -223,7 +236,9 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let u = u.init_get(th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
                             let value =
                                 th::collect_arb_x::<Self, _, _, _, P>(u, th_idx, st, iter, x);
                             results.push(value);
