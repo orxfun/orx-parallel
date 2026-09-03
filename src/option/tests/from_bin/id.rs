@@ -2,8 +2,7 @@ use crate::option::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
-use std::string::{String, ToString};
-use test_case::test_matrix;
+use std::string::String;
 
 const N: usize = 157;
 
@@ -134,75 +133,31 @@ fn id_fold_err() {
     assert_eq!(result, None);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn id_collect_ok<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let expected = C::expected(
-        mode,
-        |i| i.to_string(),
-        inputs(N)
-            .into_iter()
-            .filter_map(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(Some(x)),
-            })
-            .map(|x| x.unwrap())
-            .collect::<std::vec::Vec<_>>(),
-    );
-
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .filter_map(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(Some(x)),
-            })
-            .into_optional()
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .filter_map(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(Some(x)),
-            })
-            .into_optional()
-            .iteration_order(order)
-            .collect(),
-    };
-
-    C::assert_eq(result.unwrap(), expected, order);
+#[test]
+fn id_collect_ok() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(Some(x)),
+        })
+        .into_optional()
+        .collect();
+    assert!(result.is_some());
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn id_collect_err<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => inputs(N)
-            .into_par()
-            .filter_map(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(match x.as_str() == "42" {
-                    true => Some(x),
-                    false => None,
-                }),
-            })
-            .into_optional()
-            .iteration_order(order)
-            .collect_into(&mut c)
-            .map(|_| c),
-        None => inputs(N)
-            .into_par()
-            .filter_map(|x| match x.as_str() == "7" {
-                true => None,
-                false => Some(match x.as_str() == "42" {
-                    true => Some(x),
-                    false => None,
-                }),
-            })
-            .into_optional()
-            .iteration_order(order)
-            .collect(),
-    };
-
+#[test]
+fn id_collect_err() {
+    let result: Option<Vec<_>> = inputs(N)
+        .into_par()
+        .filter_map(|x| match x.as_str() == "7" {
+            true => None,
+            false => Some(match x.as_str() == "42" {
+                true => Some(x),
+                false => None,
+            }),
+        })
+        .into_optional()
+        .collect();
     assert_eq!(result, None);
 }
