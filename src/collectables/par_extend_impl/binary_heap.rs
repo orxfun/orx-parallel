@@ -1,6 +1,6 @@
 use crate::collectables::par_extend::ParExtend;
+use alloc::collections::BinaryHeap;
 use alloc::vec::Vec;
-use std::collections::BinaryHeap;
 
 impl<T: Ord + Send> ParExtend<T> for BinaryHeap<T> {
     type ThreadValues = Self;

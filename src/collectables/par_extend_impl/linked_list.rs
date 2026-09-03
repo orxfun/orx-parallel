@@ -1,6 +1,6 @@
 use crate::collectables::par_extend::ParExtend;
+use alloc::collections::LinkedList;
 use alloc::vec::Vec;
-use std::collections::LinkedList;
 
 impl<T: Send> ParExtend<T> for LinkedList<T> {
     type ThreadValues = Self;
