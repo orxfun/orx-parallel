@@ -1,6 +1,5 @@
 #![allow(clippy::type_complexity)]
 
-use crate::common_par_traits::ParOptCommon;
 use crate::infallible::fun::{FnCloned, FnCopied};
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap};
 use crate::infallible_use::xap_variants::IdUse;
@@ -8,7 +7,7 @@ use crate::option::ParOptionIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, Sum};
 use crate::{option::ParOptionCore, option_use::ParUseOptionIter};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
@@ -58,7 +57,7 @@ use core::cmp::Ordering;
 ///
 /// assert_eq!(with_failure, None);
 /// ```
-pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Item> {
+pub trait ParOption: Sized + ParOptionCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -711,9 +710,9 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     ///     .collect_into(&mut dst_fail);
     /// assert_eq!(fail, None);
     /// ```
-    fn collect_into<C>(self, dst: &mut C) -> Option<()>
+    fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects successful items into a new collection.
@@ -731,10 +730,15 @@ pub trait ParOption: Sized + ParOptionCore + ParOptCommon<CommonItem = Self::Ite
     /// let fail: Option<Vec<_>> = vec![Some(1), None, Some(3)].into_par().into_optional().collect();
     /// assert_eq!(fail, None);
     /// ```
-    fn collect<C>(self) -> Option<C>
+    fn collect<P>(self) -> Option<P>
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        P: ParExtend<Self::Item> + Default,
+        Self::Item: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst)?;
+        Some(dst)
+    }
 
     // compute - derived
 
