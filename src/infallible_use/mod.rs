@@ -1,4 +1,4 @@
-#[cfg(feature = "long-tests")]
+// #[cfg(feature = "long-tests")]
 #[cfg(test)]
 mod tests;
 
@@ -14,7 +14,6 @@ mod xap_enum;
 pub mod xap_variants;
 
 pub use par::ParUse;
-// pub use par_core::ParUseCore;
 pub use par_enum::EnumerateParUse;
 pub use par_iter::ParUseIter;
 pub use xap::{
