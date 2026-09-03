@@ -4,7 +4,7 @@ use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_arb_x<Q, U, I, M, E, X1, X2, S, P>(
+pub fn collect_arb<Q, U, I, M, E, X1, X2, S, P>(
     _: S,
     u: &mut U,
     th_idx: usize,

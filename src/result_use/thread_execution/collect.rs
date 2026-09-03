@@ -3,7 +3,7 @@ use crate::sizes::SizePair;
 use crate::{infallible_use::XapUse, runner::ParRunner};
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_x<Q, U, I, M, E, X1, X2, S, P>(
+pub fn collect<Q, U, I, M, E, X1, X2, S, P>(
     _: S,
     u: &mut U,
     th_idx: usize,

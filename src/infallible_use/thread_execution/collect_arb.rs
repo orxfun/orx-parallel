@@ -3,7 +3,7 @@ use crate::infallible_use::xap::XapUse;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_arb_x<Q, U, I, X, P>(
+pub fn collect_arb<Q, U, I, X, P>(
     u: &mut U,
     th_idx: usize,
     state: &Q::State,

@@ -3,7 +3,7 @@ use crate::infallible::xap::Xap;
 use crate::runner::ParRunner;
 use orx_concurrent_iter::{ChunkPuller, ConcurrentIter};
 
-pub fn collect_x<Q, I, X, P>(
+pub fn collect<Q, I, X, P>(
     th_idx: usize,
     state: &Q::State,
     iter: &I,

@@ -224,7 +224,7 @@ pub trait ParRunnerUseRes: ParRunner {
         }
     }
 
-    fn collect_x<U, I, M, E, X1, X2, S, P>(
+    fn collect<U, I, M, E, X1, X2, S, P>(
         &mut self,
         sizes: S,
         params: Params,
@@ -273,7 +273,7 @@ pub trait ParRunnerUseRes: ParRunner {
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
                             let u = unsafe { u.init_get(th_idx) };
-                            let value = th::collect_x::<Self, _, _, _, _, _, _, _, P>(
+                            let value = th::collect::<Self, _, _, _, _, _, _, _, P>(
                                 sizes, u, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);
@@ -288,7 +288,7 @@ pub trait ParRunnerUseRes: ParRunner {
         }
     }
 
-    fn collect_arb_x<U, I, M, E, X1, X2, S, P>(
+    fn collect_arb<U, I, M, E, X1, X2, S, P>(
         &mut self,
         sizes: S,
         params: Params,
@@ -337,7 +337,7 @@ pub trait ParRunnerUseRes: ParRunner {
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
                             let u = unsafe { u.init_get(th_idx) };
-                            let value = th::collect_arb_x::<Self, _, _, _, _, _, _, _, P>(
+                            let value = th::collect_arb::<Self, _, _, _, _, _, _, _, P>(
                                 sizes, u, th_idx, st, iter, x1, x2,
                             );
                             results.push(value);

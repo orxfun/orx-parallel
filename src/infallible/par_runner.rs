@@ -118,7 +118,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
         }
     }
 
-    fn collect_x<I, X, P>(&mut self, params: Params, iter: I, x: X, dst: &mut P)
+    fn collect<I, X, P>(&mut self, params: Params, iter: I, x: X, dst: &mut P)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
@@ -143,7 +143,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect_x::<Self, _, _, P>(th_idx, st, iter, x);
+                            let value = th::collect::<Self, _, _, P>(th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
                         });
@@ -156,7 +156,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
         }
     }
 
-    fn collect_arb_x<I, X, P>(&mut self, params: Params, iter: I, x: X, dst: &mut P)
+    fn collect_arb<I, X, P>(&mut self, params: Params, iter: I, x: X, dst: &mut P)
     where
         I: ConcurrentIter,
         X: Xap<I = I::Item>,
@@ -181,7 +181,7 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                         spawned += 1;
                         <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
                             Self::begin_thread(st, th_idx);
-                            let value = th::collect_arb_x::<Self, _, _, P>(th_idx, st, iter, x);
+                            let value = th::collect_arb::<Self, _, _, P>(th_idx, st, iter, x);
                             results.push(value);
                             Self::complete_thread(st, th_idx);
                         });

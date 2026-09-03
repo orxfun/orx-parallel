@@ -199,8 +199,8 @@ where
     {
         let (iter, x, mut exe, params) = self.destruct();
         match params.iteration_order {
-            IterationOrder::Ordered => exe.collect_x(params, iter, x, dst),
-            IterationOrder::Arbitrary => exe.collect_arb_x(params, iter, x, dst),
+            IterationOrder::Ordered => exe.collect(params, iter, x, dst),
+            IterationOrder::Arbitrary => exe.collect_arb(params, iter, x, dst),
         }
     }
 }
