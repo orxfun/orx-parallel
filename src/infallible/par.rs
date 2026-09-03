@@ -580,7 +580,7 @@ pub trait Par: Sized + ParCore {
         slice: &'a mut [U],
     ) -> impl ParUse<Item = Self::Item, Use = U, Xap = IdUse<Self::Xap, U>, Input = Self::Input>
     where
-        U: Sync + 'a,
+        U: Send + 'a,
     {
         assert!(
             !slice.is_empty(),

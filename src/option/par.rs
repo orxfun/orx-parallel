@@ -397,7 +397,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = Self::Size,
     >
     where
-        U: Sync + 'a,
+        U: Send + 'a,
     {
         let (iter, x1, x2, exe, _, params) = self.destruct();
         let x1 = IdUse::<_, U>::new(x1);
