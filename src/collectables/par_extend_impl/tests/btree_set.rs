@@ -1,5 +1,6 @@
 use crate::collectables::par_extend::ParExtend;
 use crate::collectables::par_extend_impl::utils::ColAndPos;
+use crate::{IntoParIter, IterationOrder, Par};
 use alloc::collections::BTreeSet;
 use alloc::{vec, vec::Vec};
 
@@ -268,4 +269,62 @@ fn extend_from_thread_results_duplicate_values() {
     set.extend_merge_infallibles(vec![t0, t1]);
     let expected: BTreeSet<i32> = BTreeSet::from([10, 20, 30]);
     assert_eq!(set, expected);
+}
+
+// parallel iterator collect tests
+
+#[test]
+fn par_collect_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let collected: BTreeSet<i32> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| x * 2)
+        .collect();
+    let expected: BTreeSet<i32> = input.into_iter().map(|x| x * 2).collect();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = BTreeSet::from([-2, -1]);
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| x * 2)
+        .collect_into(&mut dst);
+    let mut expected = BTreeSet::from([-2, -1]);
+    expected.extend(input.into_iter().map(|x| x * 2));
+    assert_eq!(dst, expected);
+}
+
+#[test]
+fn par_collect_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let collected: BTreeSet<i32> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| x * 2)
+        .collect();
+    let expected: BTreeSet<i32> = input.into_iter().map(|x| x * 2).collect();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = BTreeSet::from([-2, -1]);
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| x * 2)
+        .collect_into(&mut dst);
+    let mut expected = BTreeSet::from([-2, -1]);
+    expected.extend(input.into_iter().map(|x| x * 2));
+    assert_eq!(dst, expected);
 }

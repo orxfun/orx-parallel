@@ -1,6 +1,8 @@
 use crate::collectables::par_extend::ParExtend;
 use crate::collectables::par_extend_impl::utils::ColAndPos;
+use crate::{IntoParIter, IterationOrder, Par};
 use alloc::collections::BTreeMap;
+use alloc::string::{String, ToString};
 use alloc::{vec, vec::Vec};
 
 type MapResults<K, V> = ColAndPos<BTreeMap<K, V>>;
@@ -328,4 +330,68 @@ fn extend_from_thread_results_duplicate_keys() {
     assert!(map.contains_key(&10));
     assert!(map.contains_key(&20));
     assert_eq!(map.get(&30), Some(&"t1_30"));
+}
+
+// parallel iterator collect tests
+
+#[test]
+fn par_collect_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let collected: BTreeMap<i32, String> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    let expected: BTreeMap<i32, String> = input
+        .into_iter()
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = BTreeMap::from([(-1, "-2".to_string())]);
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect_into(&mut dst);
+    let mut expected = BTreeMap::from([(-1, "-2".to_string())]);
+    expected.extend(input.into_iter().map(|x| (x, (x * 2).to_string())));
+    assert_eq!(dst, expected);
+}
+
+#[test]
+fn par_collect_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let collected: BTreeMap<i32, String> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    let expected: BTreeMap<i32, String> = input
+        .into_iter()
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = BTreeMap::from([(-1, "-2".to_string())]);
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect_into(&mut dst);
+    let mut expected = BTreeMap::from([(-1, "-2".to_string())]);
+    expected.extend(input.into_iter().map(|x| (x, (x * 2).to_string())));
+    assert_eq!(dst, expected);
 }

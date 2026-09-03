@@ -1,5 +1,6 @@
 use crate::collectables::par_extend::ParExtend;
 use crate::collectables::par_extend_impl::utils::ColAndPos;
+use crate::{IntoParIter, IterationOrder, Par};
 use alloc::{vec, vec::Vec};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -262,4 +263,66 @@ fn extend_from_thread_results_non_copy_drop() {
     }
 
     assert_eq!(drop_count.load(Ordering::Relaxed), 3);
+}
+
+// parallel iterator collect tests
+
+#[test]
+fn par_collect_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let collected: Vec<i32> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| x * 2)
+        .collect();
+    let expected: Vec<i32> = input.into_iter().map(|x| x * 2).collect();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = vec![-2, -1];
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| x * 2)
+        .collect_into(&mut dst);
+    let mut expected = vec![-2, -1];
+    expected.extend(input.into_iter().map(|x| x * 2));
+    assert_eq!(dst, expected);
+}
+
+#[test]
+fn par_collect_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut collected: Vec<i32> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| x * 2)
+        .collect();
+    let mut expected: Vec<i32> = input.into_iter().map(|x| x * 2).collect();
+    collected.sort();
+    expected.sort();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = vec![-2, -1];
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| x * 2)
+        .collect_into(&mut dst);
+    let mut expected = vec![-2, -1];
+    expected.extend(input.into_iter().map(|x| x * 2));
+    dst.sort();
+    expected.sort();
+    assert_eq!(dst, expected);
 }
