@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 
 // TODO: document the trait
 #[allow(missing_docs)]
-pub trait ParExtend<T> {
+pub trait ParExtend<T>: Extend<T> {
     type ThreadValues;
 
     type OrderedThreadValues;
