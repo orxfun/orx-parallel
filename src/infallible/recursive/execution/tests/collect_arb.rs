@@ -26,7 +26,8 @@ fn recursive_collect_arb(depth: usize, fan_out: usize) {
         .collect();
     expected.sort();
 
-    let mut result = collect_arb(runner, params, [&tree], xap, |x| &x.children);
+    let mut result = Vec::new();
+    collect_arb(runner, params, [&tree], xap, |x| &x.children, &mut result);
     result.sort();
 
     assert_eq!(result.len(), expected.len());

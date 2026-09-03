@@ -89,5 +89,5 @@ pub fn collect<R, C, X, I, E, P>(
     }
 
     result.sort();
-    result.into_iter().map(|x| x.value).collect()
+    dst.extend(result.into_iter().map(|x| x.value));
 }

@@ -26,7 +26,8 @@ fn recursive_collect(depth: usize, fan_out: usize) {
         .collect();
     expected.sort();
 
-    let mut result = collect(runner, params, [&tree], xap, |x| &x.children);
+    let mut result = Vec::new();
+    collect(runner, params, [&tree], xap, |x| &x.children, &mut result);
     result.sort();
 
     assert_eq!(result, expected);
@@ -45,10 +46,26 @@ fn recursive_collect_determinism(depth: usize, fan_out: usize) {
     let mut runner = default_runner();
     let params = Params::default();
 
-    let expected = collect(&mut runner, params, [&tree], xap, |x| &x.children);
+    let mut expected = Vec::new();
+    collect(
+        &mut runner,
+        params,
+        [&tree],
+        xap,
+        |x| &x.children,
+        &mut expected,
+    );
 
     for _ in 0..10 {
-        let result = collect(&mut runner, params, [&tree], xap, |x| &x.children);
+        let mut result = Vec::new();
+        collect(
+            &mut runner,
+            params,
+            [&tree],
+            xap,
+            |x| &x.children,
+            &mut result,
+        );
         assert_eq!(expected, result);
     }
 }
@@ -66,10 +83,26 @@ fn recursive_collect_determinism_with_flat_map(depth: usize, fan_out: usize) {
     let mut runner = default_runner();
     let params = Params::default();
 
-    let expected = collect(&mut runner, params, [&tree], xap, |x| &x.children);
+    let mut expected = Vec::new();
+    collect(
+        &mut runner,
+        params,
+        [&tree],
+        xap,
+        |x| &x.children,
+        &mut expected,
+    );
 
     for _ in 0..10 {
-        let result = collect(&mut runner, params, [&tree], xap, |x| &x.children);
+        let mut result = Vec::new();
+        collect(
+            &mut runner,
+            params,
+            [&tree],
+            xap,
+            |x| &x.children,
+            &mut result,
+        );
         assert_eq!(expected, result);
     }
 }
