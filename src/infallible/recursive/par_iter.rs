@@ -15,7 +15,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     iter: I,
     xap: X,
@@ -30,7 +30,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     pub(crate) fn new(iter: I, xap: X, exe: R, params: Params, extend: Ex) -> Self {
         Self {
@@ -57,7 +57,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     type Item = X::O;
 
@@ -78,7 +78,7 @@ where
     X: Xap<I = I::Item>,
     R: ParRunner,
     Ix: IntoIterator<Item = X::I>,
-    Ex: Fn(&I::Item) -> Ix + Send + Sync,
+    Ex: Fn(&I::Item) -> Ix + Send + Copy,
 {
     // configuration
 

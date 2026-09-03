@@ -1,6 +1,5 @@
 use crate::infallible::recursive::execution::elem::ElemIn;
 use crate::infallible::recursive::utils;
-use crate::infallible::recursive::xap_sync::XapSync;
 use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
@@ -16,11 +15,10 @@ where
     C: IntoIterator,
     X: Xap<I = C::Item>,
     I: IntoIterator<Item = X::I>,
-    E: Fn(&X::I) -> I + Send + Sync,
+    E: Fn(&X::I) -> I + Send + Copy,
     X::O: Send,
     X::I: Send + Sync,
 {
-    let xap = XapSync::new(xap);
     let max_threads: usize = runner.pool().max_num_threads().into();
 
     let mut data: Vec<_> = (0..max_threads).map(|_| Vec::new()).collect();
@@ -35,7 +33,7 @@ where
     let par = params.apply(par).use_slice(&mut data);
 
     let result = par
-        .flat_map(|u, input| {
+        .flat_map(move |u, input| {
             let new_inputs = extend(&input.value)
                 .into_iter()
                 .enumerate()
@@ -57,7 +55,7 @@ where
                 let par = params.apply(par).use_slice(&mut data);
 
                 let result = par
-                    .flat_map(|u, input| {
+                    .flat_map(move |u, input| {
                         let new_inputs = extend(&input.value)
                             .into_iter()
                             .enumerate()
