@@ -1,5 +1,3 @@
-use crate::collectables_old::alg::merge_collected::Collect;
-use crate::common_par_traits::ParInfCommon;
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
@@ -7,7 +5,7 @@ use crate::infallible_use::{ParUseCore, XapUse};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::use_var::Use;
-use crate::{ChunkSize, NumThreads, ParCollectInto};
+use crate::{ChunkSize, NumThreads, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseIter<U, I, X, R = DefaultRunner>
@@ -225,46 +223,15 @@ where
         exe.reduce(params, u, iter, x, f)
     }
 
-    fn collect_into<C>(self, dst: &mut C)
+    fn collect_into<P>(self, dst: &mut P)
     where
-        C: ParCollectInto<X::O>,
+        P: ParExtend<X::O>,
         X::O: Send,
     {
-        match self.params.iteration_order {
-            IterationOrder::Ordered => C::inf_use_col_into(dst, self),
-            IterationOrder::Arbitrary => {
-                let (u, iter, x, mut exe, params) = self.destruct();
-                let results = exe.collect_arb::<_, _, _, C::ThreadColArb>(params, u, iter, x);
-                Collect::merge_results_arb(results, dst);
-            }
+        let (u, iter, x, mut exe, params) = self.destruct();
+        match params.iteration_order {
+            IterationOrder::Ordered => exe.collect_x(params, u, iter, x, dst),
+            IterationOrder::Arbitrary => exe.collect_arb_x(params, u, iter, x, dst),
         }
-    }
-
-    fn collect<C>(self) -> C
-    where
-        C: ParCollectInto<X::O>,
-        X::O: Send,
-    {
-        let mut dst = C::new_empty();
-        self.collect_into(&mut dst);
-        dst
-    }
-}
-
-impl<U, I, X, R> ParInfCommon for ParUseIter<U, I, X, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
-    R: ParRunner,
-{
-    type CommonItem = <Self as ParUseCore>::Item;
-
-    fn common_collect_into<C>(self, dst: &mut C)
-    where
-        C: ParCollectInto<Self::CommonItem>,
-        Self::CommonItem: Send,
-    {
-        self.collect_into(dst);
     }
 }

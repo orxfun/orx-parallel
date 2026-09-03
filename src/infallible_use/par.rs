@@ -1,6 +1,5 @@
 #![allow(clippy::type_complexity)]
 
-use crate::common_par_traits::ParInfCommon;
 use crate::infallible::xap_variants::Id;
 use crate::infallible_use::fun::{UFnCloned, UFnCopied};
 use crate::infallible_use::xap::FlattenOf;
@@ -14,7 +13,8 @@ use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::use_var::{PairPtr, UseFold};
 use crate::{
-    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParUseOption, ParUseResult, Sum,
+    ChunkSize, IterationOrder, NumThreads, ParCollectInto, ParExtend, ParUseOption, ParUseResult,
+    Sum,
 };
 use alloc::vec::Vec;
 use core::cmp::Ordering;
@@ -75,7 +75,7 @@ use orx_concurrent_iter::ConcurrentIter;
 ///         .all(|(i, v)| *v >= i && *v < i + 10)
 /// );
 /// ```
-pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
+pub trait ParUse: Sized + ParUseCore {
     // configuration
 
     /// Replaces the current parallel runner with `runner`.
@@ -552,9 +552,9 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     /// (0..3).into_par().use_new(|_| ()).collect_into(&mut dst);
     /// assert_eq!(dst, vec![10, 0, 1, 2]);
     /// ```
-    fn collect_into<C>(self, dst: &mut C)
+    fn collect_into<P>(self, dst: &mut P)
     where
-        C: ParCollectInto<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects all items into a new collection.
@@ -572,10 +572,15 @@ pub trait ParUse: Sized + ParUseCore + ParInfCommon<CommonItem = Self::Item> {
     ///
     /// assert_eq!(out, vec![2, 4, 6]);
     /// ```
-    fn collect<C>(self) -> C
+    fn collect<P>(self) -> P
     where
-        C: ParCollectInto<Self::Item>,
-        Self::Item: Send;
+        P: ParExtend<Self::Item> + Default,
+        Self::Item: Send,
+    {
+        let mut dst = P::default();
+        self.collect_into(&mut dst);
+        dst
+    }
 
     // compute - derived
 
