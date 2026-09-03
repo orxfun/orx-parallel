@@ -13,7 +13,7 @@ use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
 use crate::sizes::Size;
 use crate::use_var::{PairPtr, UseFold};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParExtendCore, ParUseOption, ParUseResult, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, ParUseResult, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 use orx_concurrent_iter::ConcurrentIter;
@@ -552,7 +552,7 @@ pub trait ParUse: Sized + ParUseCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P)
     where
-        P: ParExtendCore<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects all items into a new collection.
@@ -572,7 +572,7 @@ pub trait ParUse: Sized + ParUseCore {
     /// ```
     fn collect<P>(self) -> P
     where
-        P: ParExtendCore<Self::Item> + Default,
+        P: ParExtend<Self::Item> + Default,
         Self::Item: Send,
     {
         let mut dst = P::default();

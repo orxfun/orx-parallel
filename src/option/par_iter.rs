@@ -1,4 +1,4 @@
-use crate::ParExtendCore;
+use crate::ParExtend;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::option::par::ParOption;
 use crate::option::par_core::ParOptionCore;
@@ -291,7 +291,7 @@ where
 
     fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        P: ParExtendCore<X2::O>,
+        P: ParExtend<X2::O>,
         X2::O: Send,
     {
         let (iter, x1, x2, mut exe, s, params) = self.destruct();

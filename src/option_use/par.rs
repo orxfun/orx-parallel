@@ -9,7 +9,7 @@ use crate::option_use::ParUseOptionIter;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
-use crate::{ChunkSize, IterationOrder, NumThreads, ParExtendCore, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, Sum};
 use core::cmp::Ordering;
 
 /// Fallible parallel iterator with worker-local mutable state.
@@ -552,7 +552,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        P: ParExtendCore<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects successful items into a new collection.
@@ -575,7 +575,7 @@ pub trait ParUseOption: Sized + ParUseOptionCore {
     /// ```
     fn collect<P>(self) -> Option<P>
     where
-        P: ParExtendCore<Self::Item> + Default,
+        P: ParExtend<Self::Item> + Default,
         Self::Item: Send,
     {
         let mut dst = P::default();

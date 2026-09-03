@@ -6,7 +6,7 @@ use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, M
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::use_var::Use;
-use crate::{ChunkSize, NumThreads, ParExtendCore};
+use crate::{ChunkSize, NumThreads, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseIter<U, I, X, R = DefaultRunner>
@@ -226,7 +226,7 @@ where
 
     fn collect_into<P>(self, dst: &mut P)
     where
-        P: ParExtendCore<X::O>,
+        P: ParExtend<X::O>,
         X::O: Send,
     {
         let (u, iter, x, mut exe, params) = self.destruct();

@@ -1,6 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 
-use crate::ParExtendCore;
+use crate::ParExtend;
 use crate::infallible_use::XapUse;
 use crate::result_use::thread_execution as th;
 use crate::results::{Val, ValIdx};
@@ -242,7 +242,7 @@ pub trait ParRunnerUseRes: ParRunner {
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
         E: Send,
-        P: ParExtendCore<X2::O>,
+        P: ParExtend<X2::O>,
         P::OrderedThreadValues: Send,
     {
         match params.is_sequential() {
@@ -306,7 +306,7 @@ pub trait ParRunnerUseRes: ParRunner {
         S: SizePair<S1 = X1::Size, S2 = X2::Size>,
         X2::O: Send,
         E: Send,
-        P: ParExtendCore<X2::O>,
+        P: ParExtend<X2::O>,
         P::ThreadValues: Send,
     {
         match params.is_sequential() {

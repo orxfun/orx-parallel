@@ -9,7 +9,7 @@ use crate::option_use::ParUseOptionIter;
 use crate::runner::ParRunner;
 use crate::sizes::SizePair;
 use crate::use_var::{UseSlice, UseVec};
-use crate::{ChunkSize, IterationOrder, NumThreads, ParExtendCore, ParUseOption, Sum};
+use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 
@@ -713,7 +713,7 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        P: ParExtendCore<Self::Item>,
+        P: ParExtend<Self::Item>,
         Self::Item: Send;
 
     /// Collects successful items into a new collection.
@@ -733,7 +733,7 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn collect<P>(self) -> Option<P>
     where
-        P: ParExtendCore<Self::Item> + Default,
+        P: ParExtend<Self::Item> + Default,
         Self::Item: Send,
     {
         let mut dst = P::default();
