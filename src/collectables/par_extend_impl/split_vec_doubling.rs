@@ -101,7 +101,7 @@ impl<T: Send> ParExtend<T> for SplitVec<T, Doubling> {
         }
     }
 
-    fn extend_merge_ordered_infallibles(&mut self, mut results: Vec<Self::OrderedThreadValues>) {
+    fn extend_merge_ordered_infallibles(&mut self, results: Vec<Self::OrderedThreadValues>) {
         let outer_len = results.len();
         let mut all_values = Vec::with_capacity(outer_len);
         let mut all_positions = Vec::with_capacity(outer_len);

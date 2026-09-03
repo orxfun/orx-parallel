@@ -193,42 +193,6 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
             }
         };
     }
-
-    #[cfg(feature = "experimental")]
-    #[allow(unused)]
-    fn collect_arb_over_bag<I, X, P>(&mut self, params: Params, iter: I, x: X, pinned_vec: P) -> P
-    where
-        I: ConcurrentIter,
-        X: Xap<I = I::Item>,
-        X::O: Send,
-        P: orx_pinned_vec::IntoConcurrentPinnedVec<X::O>,
-    {
-        let capacity_bound = pinned_vec.capacity_bound();
-        let offset = pinned_vec.len();
-        let mut results_bag: ConcurrentBag<X::O, P> = pinned_vec.into();
-        match iter.try_get_len() {
-            Some(iter_len) => results_bag.reserve_maximum_capacity(offset + iter_len),
-            None => results_bag.reserve_maximum_capacity(capacity_bound),
-        };
-
-        let mut spawned = 0;
-        let (_, state) = self.nt_state(params, I::is_source_serialized(), iter.size_hint(), None);
-
-        let (iter, st, bag) = (&iter, &state, &results_bag);
-        self.pool_mut().scoped_computation(move |s| {
-            while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
-                spawned += 1;
-                <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
-                    Self::begin_thread(st, th_idx);
-                    th::collect_arb_over_bag::<Self, _, _, _>(th_idx, st, iter, x, bag);
-                    Self::complete_thread(st, th_idx);
-                });
-            }
-        });
-
-        Self::complete_computation(state);
-        results_bag.into_inner()
-    }
 }
 
 impl<R: ParRunner> ParRunnerInfallible for R {}

@@ -51,7 +51,7 @@ wasm-bindgen-test = "0.3"
 all-features = true
 
 [features]
-default = ["std"]
+default = ["std", "experimental"]
 std = []
 experimental = []
 long-tests = []
