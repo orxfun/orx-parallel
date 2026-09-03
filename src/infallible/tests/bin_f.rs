@@ -2,6 +2,7 @@ use crate::infallible::tests::utils::inputs;
 use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
+use core::fmt::Debug;
 use std::string::{String, ToString};
 use test_case::test_matrix;
 
@@ -77,8 +78,11 @@ fn bin_f_fold() {
     assert_eq!(&result, &expected);
 }
 
-#[test_matrix([Vec::new()], [ColIntoMode::Col], [IterationOrder::Ordered])]
-fn bin_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: IterationOrder) {
+#[test_matrix([Vec::new()], [false, true], [IterationOrder::Ordered])]
+fn bin_f_collect<C>(_: C, has_some: bool, order: IterationOrder)
+where
+    C: ParExtend<String> + Default + Debug + PartialEq + IntoIterator<Item = String>,
+{
     let iter = || {
         inputs(N)
             .into_iter()
@@ -86,25 +90,37 @@ fn bin_f_collect<C: ParCollectIntoTest<String>>(_: C, mode: ColIntoMode, order: 
             .filter(|x| x.len() < 4)
     };
 
-    let expected = C::expected(mode, |i| i.to_string(), iter());
+    let mut expected = C::default();
+    if has_some {
+        expected.add_one("42".to_string());
+        expected.add_one("7".to_string());
+    }
+    expected.extend(iter().map(|i| i.to_string()));
 
-    let result = match C::init_result(mode, |i| i.to_string()) {
-        Some(mut c) => {
-            inputs(N)
-                .into_par()
-                .iteration_order(order)
-                .filter(|x| x.len() > 1)
-                .filter(|x| x.len() < 4)
-                .collect_into(&mut c);
-            c
+    let par = inputs(N)
+        .into_par()
+        .iteration_order(order)
+        .filter(|x| x.len() > 1)
+        .filter(|x| x.len() < 4);
+    let result = match has_some {
+        true => {
+            let mut result = C::default();
+            result.add_one("42".to_string());
+            result.add_one("7".to_string());
+            par.collect_into(&mut result);
+            result
         }
-        None => inputs(N)
-            .into_par()
-            .iteration_order(order)
-            .filter(|x| x.len() > 1)
-            .filter(|x| x.len() < 4)
-            .collect(),
+        false => par.collect(),
     };
 
-    C::assert_eq(result, expected, order);
+    match order {
+        IterationOrder::Ordered => assert_eq!(expected, result),
+        IterationOrder::Arbitrary => {
+            let mut expected: Vec<_> = expected.into_iter().collect();
+            let mut result: Vec<_> = result.into_iter().collect();
+            expected.sort();
+            result.sort();
+            assert_eq!(expected, result);
+        }
+    }
 }
