@@ -26,7 +26,7 @@ impl<'a, T: 'a + Send> Use for UseSlice<'a, T> {
     type Item = T;
 
     #[inline]
-    fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
+    unsafe fn init_get(&self, thread_idx: usize) -> &mut Self::Item {
         assert!(
             thread_idx < self.len,
             "Out of bounds UseSlice access; slice has length {}, but access by {}-th thread.",
@@ -39,7 +39,8 @@ impl<'a, T: 'a + Send> Use for UseSlice<'a, T> {
 
     #[inline]
     fn get(&mut self, thread_idx: usize) -> &mut Self::Item {
-        self.init_get(thread_idx)
+        // SAFETY: Panics if `init_get` was not called beforehand
+        unsafe { self.init_get(thread_idx) }
     }
 
     fn max_threads(&self) -> Option<usize> {
