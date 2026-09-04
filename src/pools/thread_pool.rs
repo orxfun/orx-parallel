@@ -1,5 +1,6 @@
 use crate::parameters::{NumThreads, Params, non_zero_or_one};
 use crate::pools::scope::Scope;
+use crate::pools::tasks::TaskQueue;
 use core::num::NonZeroUsize;
 
 /// Abstraction for parallel execution environments and thread pool management.
@@ -68,6 +69,10 @@ pub trait ThreadPool {
     ///
     /// Individual computations can further limit this via `.num_threads()` method.
     fn max_num_threads(&self) -> NonZeroUsize;
+
+    fn run_all(&self, tasks: impl TaskQueue + Send) {
+        self.scope(|s| tasks.run_in_scope(s));
+    }
 }
 
 /// Calculates the actual thread count for a computation considering multiple constraints.
@@ -127,4 +132,66 @@ pub fn max_num_threads_for_computation(
     };
 
     core::cmp::min(req, ava).into()
+}
+
+#[cfg(test)]
+#[test]
+fn abc() {
+    use crate::{pools::tasks::Tasks, *};
+    use std::*;
+
+    let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
+
+    let tasks = Tasks::new()
+        .push(|| {
+            work_for(90);
+            println!("t1 completes 4th");
+        })
+        .push(|| println!("t2 completes 1st"))
+        .push(|| {
+            work_for(10);
+            println!("t3 completes 2nd");
+        })
+        .push(|| {
+            work_for(50);
+            println!("t4 completes 3rd");
+        });
+
+    Pool::global().run_all(tasks);
+
+    assert_eq!(Pool::global().max_num_threads(), NonZeroUsize::MAX);
+
+    // prints:
+    // t2 completes 1st
+    // t3 completes 2nd
+    // t4 completes 3rd
+    // t1 completes 4th
+}
+
+#[cfg(test)]
+#[test]
+fn def() {
+    use crate::{pools::tasks::Tasks, *};
+    use std::sync::Mutex;
+    use std::*;
+
+    let numbers = [4, 8, 15, 16, 23, 42];
+
+    let sum = Mutex::new(0);
+    let max = Mutex::new(i32::MIN);
+    let all_positive = Mutex::new(false);
+
+    let tasks = Tasks::new()
+        .push(|| *sum.lock().unwrap() = numbers.iter().sum())
+        .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
+        .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0));
+
+    Pool::global().run_all(tasks);
+
+    println!(
+        "sum={}, max={}, all_positive={}",
+        sum.into_inner().unwrap(),
+        max.into_inner().unwrap(),
+        all_positive.into_inner().unwrap(),
+    );
 }

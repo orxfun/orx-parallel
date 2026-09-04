@@ -54,7 +54,7 @@ pub use pools::WasmWebPool;
 pub use pools::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pools::wasm_web_start_worker;
-pub use pools::{Pool, Scope, TaskQueue, ThreadPool};
+pub use pools::{Pool, Scope, Tasks, ThreadPool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
