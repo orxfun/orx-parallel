@@ -614,6 +614,26 @@ pub trait ParResult: Sized + ParResultCore {
     where
         Self::Item: IntoIterator;
 
+    /// Returns a lower and optional upper bound on the number of successful output items.
+    ///
+    /// The bounds follow the usual [`Iterator::size_hint`] convention.
+    /// The upper bound includes items that may be removed by filtering or short-circuiting.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let values = (0..4)
+    ///     .into_par()
+    ///     .map(Ok::<_, ()>)
+    ///     .into_fallible()
+    ///     .filter(|x| x % 2 == 0);
+    ///
+    /// assert_eq!(values.size_hint(), (0, Some(4)));
+    /// ```
+    fn size_hint(&self) -> (usize, Option<usize>);
+
     // compute
 
     /// Returns the first successful item according to iteration order.

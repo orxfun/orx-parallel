@@ -267,6 +267,10 @@ where
         self.with_xap2(x2)
     }
 
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        <S as SizePair>::transformed_size_hint(self.iter.size_hint())
+    }
+
     // compute
 
     fn first(self) -> Option<Option<X2::O>>
