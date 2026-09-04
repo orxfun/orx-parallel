@@ -1,15 +1,26 @@
 use crate::Scope;
 use core::marker::PhantomData;
 
+/// Entry point for building a statically typed [`TaskQueue`] to run in parallel
+/// via [`ThreadPool::run_all`].
+///
+/// Since the queue is typed rather than relying on dynamic dispatch, pushed tasks
+/// are stored inline: no object safety, boxing or heap allocation is required.
+///
+/// [`ThreadPool::run_all`]: crate::ThreadPool::run_all
 pub struct Tasks;
 
 impl Tasks {
+    /// Creates a new, empty task queue to [`push`] tasks onto.
+    ///
+    /// [`push`]: TaskQueue::push
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> TasksEmpty<impl FnOnce() + Send> {
         TasksEmpty::new(|| {})
     }
 }
 
-/// A statically typed queue of tasks to be run in parallel on a [`Scope`].
+/// A statically typed queue of tasks to be run in parallel on a thread pool [`Scope`].
 ///
 /// Since the queue is typed rather than relying on dynamic dispatch, pushed tasks
 /// are stored inline: no object safety, boxing or heap allocation is required.
@@ -31,10 +42,20 @@ pub trait TaskQueue {
     /// Queue obtained when front of the queue is popped.
     type Back: TaskQueue;
 
+    /// Pushes the `task` and returns the new typed task queue.
+    ///
+    /// Note that the `task`:
+    /// * is not boxed, and
+    /// * it does not immediately start on `push`.
+    ///
+    /// All tasks pushed to the task queue will start in parallel when [`run_in_scope`] is called.
+    ///
+    /// [`run_in_scope`]: Self::run_in_scope
     fn push<T>(self, task: T) -> Self::PushBack<T>
     where
         T: FnOnce() + Send;
 
+    /// Runs all tasks [`push`]ed to the queue in parallel on the given thread pool `scope`.
     fn run_in_scope<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
     where
         'scope: 's,
