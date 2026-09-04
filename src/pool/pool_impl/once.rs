@@ -62,7 +62,7 @@ impl ParThreadPool for OncePool {
         std::thread::scope(f)
     }
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
@@ -91,7 +91,7 @@ impl ParThreadPool for &OncePool {
         std::thread::scope(f)
     }
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
@@ -120,7 +120,7 @@ impl ParThreadPool for &mut OncePool {
         std::thread::scope(f)
     }
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,

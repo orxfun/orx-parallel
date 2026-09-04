@@ -405,7 +405,7 @@ impl ParThreadPool for WasmWebPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
@@ -452,13 +452,13 @@ impl ParThreadPool for &WasmWebPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        <WasmWebPool as ParThreadPool>::run_in_scope(s, work)
+        <WasmWebPool as ParThreadPool>::run(s, work)
     }
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)

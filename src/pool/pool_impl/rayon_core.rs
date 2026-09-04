@@ -10,7 +10,7 @@ impl ParThreadPool for ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
@@ -39,7 +39,7 @@ impl ParThreadPool for &rayon_core::ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,

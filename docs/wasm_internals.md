@@ -157,7 +157,7 @@ This is the key mechanism that keeps the external iterator API synchronous from 
 
 ### Task scheduling
 
-`run_in_scope(...)` does the following:
+`run(...)` does the following:
 
 - increments the scope's pending count
 - if the runtime is `inline_only`, runs the work immediately

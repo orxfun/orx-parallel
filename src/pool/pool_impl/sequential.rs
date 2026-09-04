@@ -28,7 +28,7 @@ impl ParThreadPool for SequentialPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(_: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(_: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,

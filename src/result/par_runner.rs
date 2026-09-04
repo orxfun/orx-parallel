@@ -49,7 +49,7 @@ pub trait ParRunnerRes: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             let value =
                                 th::next::<Self, _, _, _, _, _, _>(sizes, th_idx, st, iter, x1, x2);
@@ -105,7 +105,7 @@ pub trait ParRunnerRes: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::next_any::<Self, _, _, _, _, _, _>(
                                 sizes, th_idx, st, iter, x1, x2,
@@ -166,7 +166,7 @@ pub trait ParRunnerRes: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::reduce::<Self, _, _, _, _, _, _, _>(
                                 sizes, th_idx, st, iter, x1, x2, f,
@@ -217,7 +217,7 @@ pub trait ParRunnerRes: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::collect::<Self, _, _, _, _, _, _, P>(
                                 sizes, th_idx, st, iter, x1, x2,
@@ -268,7 +268,7 @@ pub trait ParRunnerRes: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::collect_arb::<Self, _, _, _, _, _, _, P>(
                                 sizes, th_idx, st, iter, x1, x2,

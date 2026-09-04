@@ -303,7 +303,7 @@ impl ParThreadPool for BasicPool {
         self.scoped_computation_impl(f)
     }
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
@@ -339,13 +339,13 @@ impl ParThreadPool for &BasicPool {
         (*self).scoped_computation_impl(f)
     }
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        <BasicPool as ParThreadPool>::run_in_scope(s, work)
+        <BasicPool as ParThreadPool>::run(s, work)
     }
 }
 
@@ -368,12 +368,12 @@ impl ParThreadPool for &mut BasicPool {
         (*self).scoped_computation_impl(f)
     }
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        <BasicPool as ParThreadPool>::run_in_scope(s, work)
+        <BasicPool as ParThreadPool>::run(s, work)
     }
 }

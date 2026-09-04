@@ -39,7 +39,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
@@ -86,7 +86,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
@@ -135,7 +135,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                     self.pool_mut().scoped_computation(move |s| {
                         while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                             spawned += 1;
-                            <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            <Self::Pool as ParThreadPool>::run(&s, move || {
                                 Self::begin_thread(st, th_idx);
                                 // SAFETY: `do_spawn_new` returns sequential thread indices;
                                 // therefore, `u.init_get` will be called exactly once per thread
@@ -186,7 +186,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
@@ -234,7 +234,7 @@ pub trait ParRunnerInfallibleUse: ParRunner {
                 self.pool_mut().scoped_computation(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        <Self::Pool as ParThreadPool>::run(&s, move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
