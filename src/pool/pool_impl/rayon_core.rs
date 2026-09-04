@@ -7,7 +7,7 @@ impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s rayon_core::Scope<'scope>
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
+        W: FnOnce() + Send + 'scope + 'env,
     {
         self.spawn(move |_| work());
     }

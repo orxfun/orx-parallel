@@ -177,11 +177,11 @@ unsafe impl Send for Task {}
 impl Task {
     fn new<W>(work: W) -> Self
     where
-        W: Fn() + Send,
+        W: FnOnce() + Send,
     {
         unsafe fn run_impl<W>(data: *mut ())
         where
-            W: Fn() + Send,
+            W: FnOnce() + Send,
         {
             let work = unsafe { Box::from_raw(data as *mut W) };
             (*work)();
@@ -189,7 +189,7 @@ impl Task {
 
         unsafe fn drop_impl<W>(data: *mut ())
         where
-            W: Fn() + Send,
+            W: FnOnce() + Send,
         {
             drop(unsafe { Box::from_raw(data as *mut W) });
         }
@@ -404,7 +404,7 @@ impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s ScopeRef<'env> {
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
+        W: FnOnce() + Send + 'scope + 'env,
     {
         self.runtime().begin_task();
 

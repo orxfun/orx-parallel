@@ -52,7 +52,7 @@ wasm-bindgen-test = "0.3"
 all-features = true
 
 [features]
-default = ["rayon-core"]
+default = ["std"]
 std = []
 experimental = []
 long-tests = []

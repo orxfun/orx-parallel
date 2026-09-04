@@ -49,7 +49,7 @@ impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s std::thread::Scope<'s, 'e
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
+        W: FnOnce() + Send + 'scope + 'env,
     {
         self.spawn(work);
     }

@@ -29,7 +29,7 @@ impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for SequentialScope {
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
+        W: FnOnce() + Send + 'scope + 'env,
     {
         work();
     }

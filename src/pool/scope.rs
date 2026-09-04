@@ -9,5 +9,5 @@ pub trait Scope<'s, 'env, 'scope>: Copy {
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env;
+        W: FnOnce() + Send + 'scope + 'env;
 }
