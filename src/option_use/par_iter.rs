@@ -1,4 +1,3 @@
-use crate::ParExtend;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::option_use::XapUseOptionIter;
 use crate::option_use::par::ParUseOption;
@@ -6,9 +5,10 @@ use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::sizes::SizePair;
+use crate::sizes::{OneOne, SizePair};
 use crate::use_var::Use;
-use orx_concurrent_iter::ConcurrentIter;
+use crate::{ExactSizePar, ParExtend};
+use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 
 pub struct ParUseOptionIter<U, I, M, X1, X2, S, R = DefaultRunner>
 where
@@ -343,6 +343,20 @@ where
             IterationOrder::Ordered => exe.collect(s, params, u, iter, x1, x2, dst),
             IterationOrder::Arbitrary => exe.collect_arb(s, params, u, iter, x1, x2, dst),
         }
+    }
+}
+
+impl<U, I, M, X1, X2, S, R> ExactSizePar for ParUseOptionIter<U, I, M, X1, X2, S, R>
+where
+    U: Use,
+    I: ConcurrentIter + ExactSizeConcurrentIter,
+    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>, Size = OneOne>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    fn len(&self) -> usize {
+        self.size_hint().0
     }
 }
 
