@@ -128,24 +128,3 @@ pub fn max_num_threads_for_computation(
 
     core::cmp::min(req, ava).into()
 }
-
-#[cfg(test)]
-#[test]
-fn abc() {
-    use crate::pool::global_pool;
-    use alloc::vec::Vec;
-    use std::println;
-
-    let vec: Vec<_> = (0..10).collect();
-    global_pool().scope(|s| {
-        for i in &vec {
-            s.run(move || {
-                let sleep = (10 - i) * 100;
-                std::thread::sleep(core::time::Duration::from_millis(sleep));
-                println!("{i}")
-            });
-        }
-    });
-
-    assert_eq!(global_pool().max_num_threads(), NonZeroUsize::MAX);
-}

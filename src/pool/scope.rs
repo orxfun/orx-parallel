@@ -3,7 +3,8 @@
 ///
 /// [`ThreadPool`]: crate::ThreadPool
 pub trait Scope<'s, 'env, 'scope> {
-    /// Runs `work` within this scope, either immediately or on a worker thread.
+    /// Runs `work` within this scope on a worker thread of the pool this
+    /// scope is created from.
     fn run<W>(&self, work: W)
     where
         'scope: 's,
