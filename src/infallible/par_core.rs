@@ -2,10 +2,7 @@ use crate::{Params, infallible::Xap, runner::ParRunner};
 use orx_concurrent_iter::ConcurrentIter;
 
 /// Core trait for all parallel computation variants.
-pub trait ParCore {
-    /// Type of elements of the iterator.
-    type Item;
-
+pub trait ParCore: IntoIterator {
     /// Type of the parallel runner.
     type Runner: ParRunner;
 

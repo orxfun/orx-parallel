@@ -42,7 +42,7 @@ where
     }
 }
 
-impl<I, X, R> ParCore for ParIter<I, X, R>
+impl<I, X, R> IntoIterator for ParIter<I, X, R>
 where
     I: ConcurrentIter,
     X: Xap<I = I::Item>,
@@ -50,6 +50,19 @@ where
 {
     type Item = X::O;
 
+    type IntoIter = XapIter<I::SequentialIter, X>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapIter::new(self.iter.into_seq_iter(), self.xap)
+    }
+}
+
+impl<I, X, R> ParCore for ParIter<I, X, R>
+where
+    I: ConcurrentIter,
+    X: Xap<I = I::Item>,
+    R: ParRunner,
+{
     type Runner = R;
 
     type Input = I;
@@ -210,20 +223,5 @@ where
             IterationOrder::Ordered => exe.collect(params, iter, x, dst),
             IterationOrder::Arbitrary => exe.collect_arb(params, iter, x, dst),
         }
-    }
-}
-
-impl<I, X, R> IntoIterator for ParIter<I, X, R>
-where
-    I: ConcurrentIter,
-    X: Xap<I = I::Item>,
-    R: ParRunner,
-{
-    type Item = X::O;
-
-    type IntoIter = XapIter<I::SequentialIter, X>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        XapIter::new(self.iter.into_seq_iter(), self.xap)
     }
 }
