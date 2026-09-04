@@ -1,7 +1,5 @@
-use crate::{
-    parameters::{NumThreads, Params, non_zero_or_one},
-    pool::scope::Scope,
-};
+use crate::parameters::{NumThreads, Params, non_zero_or_one};
+use crate::pool::scope::Scope;
 use core::num::NonZeroUsize;
 
 /// Abstraction for parallel execution environments and thread pool management.
