@@ -202,6 +202,15 @@ let sum = (0..1000)
 
 Please see [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) for detailed information.
 
+### Sequential Execution
+
+Every parallel iterator can also run sequentially on the calling thread:
+
+- use `.num_threads(1)` to keep the parallel pipeline API while disabling parallel execution;
+- use `.into_iter()` to consume the pipeline as a regular sequential iterator.
+
+Both options avoid spawning worker threads and avoid using the thread pool.
+
 ## Runner Strategies and Extensibility
 
 Scheduling is abstracted by [`ParRunner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParRunner.html) and selected with `.runner(...)`.
