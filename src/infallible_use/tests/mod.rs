@@ -22,3 +22,5 @@ mod one_m;
 mod one_x;
 #[cfg(feature = "long-tests")]
 mod utils;
+
+mod size_hint;

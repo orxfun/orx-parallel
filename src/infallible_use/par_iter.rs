@@ -5,6 +5,7 @@ use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
+use crate::sizes::Size;
 use crate::use_var::Use;
 use crate::{ChunkSize, NumThreads, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
@@ -200,6 +201,12 @@ where
     {
         let xap = self.xap.flatten();
         self.with_xap(xap)
+    }
+
+    // get
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        <X::Size as Size>::transformed_size_hint(self.iter.size_hint())
     }
 
     // compute

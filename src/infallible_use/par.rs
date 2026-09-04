@@ -498,6 +498,20 @@ pub trait ParUse: Sized + ParUseCore {
     where
         Self::Item: IntoIterator;
 
+    // get
+
+    /// Returns a lower and optional upper bound on the number of output items.
+    ///
+    /// The bounds follow the usual [`Iterator::size_hint`] convention. For an
+    /// exact-size input and a one-to-one transformation, both bounds are exact.
+    /// Transformations such as `filter` may reduce the lower bound while keeping
+    /// the input length as the upper bound.
+    ///
+    /// # Examples
+    ///
+    /// TODO
+    fn size_hint(&self) -> (usize, Option<usize>);
+
     // compute
 
     /// Returns the first item according to iteration order, or `None` if empty.
