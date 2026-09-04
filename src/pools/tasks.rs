@@ -66,6 +66,7 @@ pub trait TaskQueue {
 
 // empty
 
+/// Empty tasks queue.
 pub struct TasksEmpty<F>
 where
     F: FnOnce() + Send,
@@ -77,7 +78,7 @@ impl<F> TasksEmpty<F>
 where
     F: FnOnce() + Send,
 {
-    pub fn new(_do_nothing: F) -> Self {
+    pub(crate) fn new(_do_nothing: F) -> Self {
         Self { p: PhantomData }
     }
 }
@@ -107,6 +108,7 @@ where
 
 // single
 
+/// A single task of type `F`.
 pub struct TasksSingle<F>
 where
     F: FnOnce() + Send,
@@ -118,7 +120,7 @@ impl<F> TasksSingle<F>
 where
     F: FnOnce() + Send,
 {
-    pub fn new(front: F) -> Self {
+    pub(crate) fn new(front: F) -> Self {
         Self { front }
     }
 }
@@ -154,8 +156,9 @@ where
     }
 }
 
-// pair
+// multi
 
+/// A tasks queue with front task `F` and remaining queue `B`.
 pub struct TasksMulti<F, B>
 where
     F: FnOnce() + Send,
@@ -170,7 +173,7 @@ where
     F: FnOnce() + Send,
     B: TaskQueue,
 {
-    pub fn new(front: F, back: B) -> Self {
+    pub(crate) fn new(front: F, back: B) -> Self {
         Self { front, back }
     }
 }
