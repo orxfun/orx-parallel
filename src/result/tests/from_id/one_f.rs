@@ -1,10 +1,9 @@
 use crate::parameters::IterationOrder;
 use crate::result::tests::utils::inputs_res;
 use crate::*;
-use std::string::{String, ToString};
+use std::string::String;
 use std::vec;
 use std::vec::Vec;
-use test_case::test_matrix;
 
 const N: usize = 157;
 

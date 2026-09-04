@@ -1,13 +1,10 @@
 use crate::parameters::IterationOrder;
 use crate::result::tests::utils::inputs;
 use crate::*;
-use orx_fixed_vec::FixedVec;
-use orx_split_vec::SplitVec;
 use std::format;
 use std::string::{String, ToString};
 use std::vec;
 use std::vec::Vec;
-use test_case::test_matrix;
 
 const N: usize = 157;
 

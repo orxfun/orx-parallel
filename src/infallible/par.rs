@@ -748,6 +748,7 @@ pub trait Par: Sized + ParCore {
 
     // get
 
+    /// TODO: placeholder
     fn size_hint(&self) -> (usize, Option<usize>);
 
     // compute

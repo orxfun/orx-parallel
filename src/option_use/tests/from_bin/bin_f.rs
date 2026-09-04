@@ -2,8 +2,7 @@ use crate::option_use::tests::utils::{UseValue, inputs};
 use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
-use std::string::{String, ToString};
-use test_case::test_matrix;
+use std::string::String;
 
 const N: usize = 157;
 
