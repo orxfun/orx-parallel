@@ -98,7 +98,7 @@ pub type DefaultPool = &'static SequentialPool;
 
 // 1. wasm on wasm32
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
-pub fn global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -108,7 +108,7 @@ pub fn global_pool() -> DefaultPool {
     feature = "persistent-pool-rayon",
     not(all(feature = "wasm", target_arch = "wasm32")),
 ))]
-pub fn global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -119,7 +119,7 @@ pub fn global_pool() -> DefaultPool {
     not(all(feature = "wasm", target_arch = "wasm32")),
     not(feature = "persistent-pool-rayon"),
 ))]
-pub fn global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -130,7 +130,7 @@ pub fn global_pool() -> DefaultPool {
     not(feature = "persistent-pool-rayon"),
     not(feature = "transient-pool"),
 ))]
-pub fn global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -163,6 +163,6 @@ pub fn global_pool() -> DefaultPool {
 /// ```
 ///
 /// [`scope`]: crate::ThreadPool::scope
-pub fn global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
