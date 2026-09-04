@@ -1,6 +1,7 @@
 use crate::NumThreads;
 use crate::pool::ThreadPool;
 use crate::pool::env::max_num_threads_by_env_and_resource;
+use crate::pool::scope::Scope;
 use core::num::NonZeroUsize;
 use std::any::Any;
 use std::boxed::Box;
@@ -281,6 +282,24 @@ impl BasicPool {
         if let Some(err) = runtime.take_panic() {
             resume_unwind(err);
         }
+    }
+}
+
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s ScopeRef<'env> {
+    fn run<W>(&self, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        self.runtime().begin_task();
+
+        let task = Task::new(work, Arc::clone(&self.runtime));
+        {
+            let mut state = self.shared().state.lock().expect("poisoned pool lock");
+            state.queue.push_back(task);
+        }
+        self.shared().cv.notify_one();
     }
 }
 

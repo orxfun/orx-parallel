@@ -2,6 +2,7 @@ mod env;
 mod global_pool;
 mod new_pool;
 mod pool_impl;
+mod scope;
 mod thread_pool;
 
 // 1. wasm

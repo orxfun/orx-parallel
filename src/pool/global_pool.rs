@@ -39,6 +39,15 @@ static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
 ))]
 static PERSISTENT_POOL: LazyLock<BasicPool> = LazyLock::new(Default::default);
 
+// 4b. default without std (fallback - sequential pool)
+#[cfg(all(
+    not(feature = "std"),
+    not(all(feature = "wasm", target_arch = "wasm32")),
+    not(feature = "persistent-pool-rayon"),
+    not(feature = "transient-pool"),
+))]
+static PERSISTENT_POOL: SequentialPool = SequentialPool;
+
 // DEFAULT POOL
 
 // 1. wasm on wasm32
@@ -83,7 +92,7 @@ pub type DefaultPool = &'static BasicPool;
     not(feature = "transient-pool"),
 ))]
 /// Default thread pool
-pub type DefaultPool = SequentialPool;
+pub type DefaultPool = &'static SequentialPool;
 
 // GET POOL
 
@@ -138,5 +147,5 @@ pub fn global_pool() -> DefaultPool {
 ))]
 /// Returns the default global thread pool.
 pub fn global_pool() -> DefaultPool {
-    Default::default()
+    &PERSISTENT_POOL
 }

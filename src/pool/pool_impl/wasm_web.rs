@@ -6,6 +6,7 @@ compile_error!(
 use crate::NumThreads;
 use crate::parameters::non_zero_or_one;
 use crate::pool::ThreadPool;
+use crate::pool::scope::Scope;
 #[cfg(target_feature = "atomics")]
 use alloc::format;
 use core::num::NonZeroUsize;
@@ -395,6 +396,35 @@ impl WasmWebPool {
         if let Some(err) = scope_runtime.take_panic() {
             resume_unwind(err);
         }
+    }
+}
+
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s ScopeRef<'env> {
+    fn run<W>(&self, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        self.runtime().begin_task();
+
+        if self.inline_only {
+            let result = catch_unwind(AssertUnwindSafe(work));
+            if let Err(err) = result {
+                self.runtime().record_panic(err);
+            }
+            self.runtime().complete_task();
+            return;
+        }
+
+        let task = Task::new(work);
+
+        {
+            let mut state = self.shared().state.lock().expect("poisoned pool lock");
+            state.queue.push_back(task);
+        }
+
+        self.shared().cv.notify_one();
     }
 }
 

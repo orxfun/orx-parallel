@@ -1,5 +1,5 @@
-use crate::pool::ThreadPool;
-use core::num::NonZeroUsize;
+use crate::pool::{ThreadPool, scope::Scope};
+use core::{marker::PhantomData, num::NonZeroUsize};
 
 /// A placeholder _thread pool_ allowed to use only the executing thread.
 /// Therefore, all computations using this thread pool are executed sequentially.
@@ -21,9 +21,22 @@ use core::num::NonZeroUsize;
 #[derive(Default, Clone, Copy, Debug)]
 pub struct SequentialPool;
 
+pub struct SequentialScope;
+
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for SequentialScope {
+    fn run<W>(&self, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        work();
+    }
+}
+
 impl ThreadPool for SequentialPool {
     type ScopeRef<'s, 'env, 'scope>
-        = ()
+        = SequentialScope
     where
         'scope: 's,
         'env: 'scope + 's;
@@ -37,12 +50,41 @@ impl ThreadPool for SequentialPool {
         work()
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
-        for<'s> F: FnOnce(()) + Send,
+        for<'s> F: FnOnce(SequentialScope) + Send,
     {
-        f(())
+        f(SequentialScope)
+    }
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        NonZeroUsize::MIN
+    }
+}
+
+impl ThreadPool for &SequentialPool {
+    type ScopeRef<'s, 'env, 'scope>
+        = SequentialScope
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn run<'s, 'env, 'scope, W>(_: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        work()
+    }
+
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(SequentialScope) + Send,
+    {
+        f(SequentialScope)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {

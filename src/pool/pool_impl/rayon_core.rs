@@ -1,6 +1,17 @@
-use crate::parameters::non_zero_or_one;
+use crate::{parameters::non_zero_or_one, pool::scope::Scope};
 use core::num::NonZeroUsize;
 use rayon_core::ThreadPool;
+
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s rayon_core::Scope<'scope> {
+    fn run<W>(&self, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        self.spawn(move |_| work());
+    }
+}
 
 impl crate::pool::ThreadPool for ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
@@ -18,7 +29,7 @@ impl crate::pool::ThreadPool for ThreadPool {
         s.spawn(move |_| work());
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,
@@ -47,7 +58,7 @@ impl crate::pool::ThreadPool for &rayon_core::ThreadPool {
         s.spawn(move |_| work());
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,

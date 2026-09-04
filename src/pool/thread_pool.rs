@@ -1,4 +1,7 @@
-use crate::parameters::{NumThreads, Params, non_zero_or_one};
+use crate::{
+    parameters::{NumThreads, Params, non_zero_or_one},
+    pool::scope::Scope,
+};
 use core::num::NonZeroUsize;
 
 /// Abstraction for parallel execution environments and thread pool management.
@@ -47,7 +50,7 @@ use core::num::NonZeroUsize;
 /// See the [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) documentation for a complete guide.
 pub trait ThreadPool {
     /// Scope type of the thread pool.
-    type ScopeRef<'s, 'env, 'scope>
+    type ScopeRef<'s, 'env, 'scope>: Scope<'s, 'env, 'scope>
     where
         'scope: 's,
         'env: 'scope + 's;
@@ -140,8 +143,8 @@ pub fn max_num_threads_for_computation(
 fn abc() {
     use crate::pool::global_pool;
 
-    let mut pool1 = global_pool();
-    let pool = &mut pool1;
+    let pool = global_pool();
+    // let pool = &mut pool1;
 
     pool.scoped_computation(|s| {
         //

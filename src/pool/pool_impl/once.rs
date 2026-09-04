@@ -1,4 +1,5 @@
 use crate::NumThreads;
+use crate::pool::scope::Scope;
 use crate::pool::{ThreadPool, env::max_num_threads_by_env_and_resource};
 use core::num::NonZeroUsize;
 
@@ -40,6 +41,17 @@ impl OncePool {
             NumThreads::Max(n) => max_num_threads_by_env_and_resource().min(n),
         };
         Self { num_threads }
+    }
+}
+
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s std::thread::Scope<'s, 'env> {
+    fn run<W>(&self, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: Fn() + Send + 'scope + 'env,
+    {
+        self.spawn(work);
     }
 }
 
