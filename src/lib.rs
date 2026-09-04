@@ -18,7 +18,6 @@ extern crate alloc;
 extern crate std;
 
 mod collectables;
-mod exact_size_par;
 /// Core module for infallible computations.
 pub mod infallible;
 mod infallible_use;
@@ -38,7 +37,6 @@ mod sort;
 mod use_var;
 
 pub use collectables::ParExtend;
-pub use exact_size_par::ExactSizePar;
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
