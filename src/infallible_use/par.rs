@@ -509,7 +509,21 @@ pub trait ParUse: Sized + ParUseCore {
     ///
     /// # Examples
     ///
-    /// TODO
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mapped = (0..4)
+    ///     .into_par()
+    ///     .use_new(|_| ())
+    ///     .map(|_, x| x * 2);
+    /// assert_eq!(mapped.size_hint(), (4, Some(4)));
+    ///
+    /// let filtered = (0..4)
+    ///     .into_par()
+    ///     .use_new(|_| ())
+    ///     .filter(|_, x| x % 2 == 0);
+    /// assert_eq!(filtered.size_hint(), (0, Some(4)));
+    /// ```
     fn size_hint(&self) -> (usize, Option<usize>);
 
     // compute
