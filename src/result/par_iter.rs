@@ -1,3 +1,4 @@
+use crate::ParExtend;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::result::XapResultIter;
@@ -5,9 +6,8 @@ use crate::result::par::ParResult;
 use crate::result::par_core::ParResultCore;
 use crate::result::par_runner::ParRunnerRes;
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::sizes::{OneOne, SizePair};
-use crate::{ExactSizePar, ParExtend};
-use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
+use crate::sizes::SizePair;
+use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParResultIter<I, M, E, X1, X2, S, R = DefaultRunner>
 where
@@ -317,19 +317,6 @@ where
             IterationOrder::Ordered => exe.collect(s, params, iter, x1, x2, dst),
             IterationOrder::Arbitrary => exe.collect_arb(s, params, iter, x1, x2, dst),
         }
-    }
-}
-
-impl<I, M, E, X1, X2, S, R> ExactSizePar for ParResultIter<I, M, E, X1, X2, S, R>
-where
-    I: ConcurrentIter + ExactSizeConcurrentIter,
-    X1: Xap<I = I::Item, O = Result<M, E>, Size = OneOne>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    fn len(&self) -> usize {
-        self.size_hint().0
     }
 }
 

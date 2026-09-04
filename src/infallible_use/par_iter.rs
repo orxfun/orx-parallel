@@ -8,7 +8,7 @@ use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
 use crate::sizes::Size;
 use crate::use_var::Use;
-use crate::{ChunkSize, ExactSizePar, NumThreads, ParExtend};
+use crate::{ChunkSize, NumThreads, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
 
 pub struct ParUseIter<U, I, X, R = DefaultRunner>
@@ -242,18 +242,6 @@ where
             IterationOrder::Ordered => exe.collect(params, u, iter, x, dst),
             IterationOrder::Arbitrary => exe.collect_arb(params, u, iter, x, dst),
         }
-    }
-}
-
-impl<U, I, X, R> ExactSizePar for ParUseIter<U, I, X, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
-    R: ParRunner,
-{
-    fn len(&self) -> usize {
-        self.size_hint().0
     }
 }
 

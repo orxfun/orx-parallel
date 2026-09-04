@@ -7,9 +7,10 @@ use crate::infallible_use::{
 use crate::result_use::ParUseResultIter;
 use crate::result_use::par_core::ParUseResultCore;
 use crate::runner::ParRunner;
-use crate::sizes::SizePair;
+use crate::sizes::{OneOne, SizePair};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, Sum};
 use core::cmp::Ordering;
+use orx_concurrent_iter::ExactSizeConcurrentIter;
 
 /// Fallible parallel iterator with worker-local mutable state.
 ///
@@ -499,6 +500,24 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// assert_eq!(values.size_hint(), (0, Some(4)));
     /// ```
     fn size_hint(&self) -> (usize, Option<usize>);
+
+    /// Returns the exact number of output items.
+    fn len(&self) -> usize
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap1: XapUse<Size = OneOne>,
+    {
+        self.size_hint().0
+    }
+
+    /// Returns `true` when the parallel iterator has no output items.
+    fn is_empty(&self) -> bool
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap1: XapUse<Size = OneOne>,
+    {
+        self.len() == 0
+    }
 
     // compute
 

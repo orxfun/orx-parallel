@@ -7,11 +7,12 @@ use crate::option::ParOptionIter;
 use crate::option::par_core::ParOptionCore;
 use crate::option_use::ParUseOptionIter;
 use crate::runner::ParRunner;
-use crate::sizes::SizePair;
+use crate::sizes::{OneOne, SizePair};
 use crate::use_var::{UseSlice, UseVec};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
+use orx_concurrent_iter::ExactSizeConcurrentIter;
 
 /// Fallible parallel iterator over `Option` values.
 ///
@@ -636,6 +637,24 @@ pub trait ParOption: Sized + ParOptionCore {
     /// assert_eq!(values.size_hint(), (0, Some(4)));
     /// ```
     fn size_hint(&self) -> (usize, Option<usize>);
+
+    /// Returns the exact number of output items.
+    fn len(&self) -> usize
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap1: Xap<Size = OneOne>,
+    {
+        self.size_hint().0
+    }
+
+    /// Returns `true` when the parallel iterator has no output items.
+    fn is_empty(&self) -> bool
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap1: Xap<Size = OneOne>,
+    {
+        self.len() == 0
+    }
 
     // compute
 

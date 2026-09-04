@@ -11,12 +11,13 @@ use crate::infallible_use::{
 use crate::option_use::ParUseOptionIter;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
+use crate::sizes::One;
 use crate::sizes::Size;
 use crate::use_var::{PairPtr, UseFold};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, ParUseResult, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 
 /// Parallel iterator pipelines with worker-local mutable state.
 ///
@@ -525,6 +526,24 @@ pub trait ParUse: Sized + ParUseCore {
     /// assert_eq!(filtered.size_hint(), (0, Some(4)));
     /// ```
     fn size_hint(&self) -> (usize, Option<usize>);
+
+    /// Returns the exact number of output items.
+    fn len(&self) -> usize
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap: XapUse<Size = One>,
+    {
+        self.size_hint().0
+    }
+
+    /// Returns `true` when the parallel iterator has no output items.
+    fn is_empty(&self) -> bool
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap: XapUse<Size = One>,
+    {
+        self.len() == 0
+    }
 
     // compute
 
