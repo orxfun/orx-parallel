@@ -19,8 +19,8 @@ fn trait_bounds_parallelizable() {
 
 #[test]
 fn trait_bounds_parallelizable_collection() {
-    use orx_parallel::ParallelizableCollection;
-    fn fun(source: impl ParallelizableCollection) {
+    use orx_parallel::ParCollection;
+    fn fun(source: impl ParCollection) {
         let _iter = source.par();
     }
 

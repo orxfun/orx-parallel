@@ -1,0 +1,265 @@
+#[cfg(any(feature = "std", feature = "rayon-core"))]
+use crate::NumThreads;
+#[cfg(feature = "std")]
+use crate::pools::pool_impl::{BasicPool, OncePool};
+use crate::pools::{DefaultPool, global_pool};
+
+/// Factory for creating thread pools with different characteristics.
+///
+/// `Pool` provides builder methods to create various types of thread pools that can be used
+/// for parallel computations. Each pool type has different properties regarding thread lifecycle
+/// and persistence.
+///
+/// > **Note:** `Pool` is a convenience factory for thread pools provided or adapted by this crate.
+/// > You can also implement [`ThreadPool`](crate::ThreadPool) yourself and pass it directly
+/// > to `.pool(...)` or to runner constructors that accept any thread pool implementing the trait.
+///
+/// # Thread Count Configuration
+///
+/// When creating a pool, the thread count is determined by combining:
+///
+/// 1. **Requested count** - Passed to factory methods
+/// 2. **Environment limit** - `ORX_NUM_THREADS` if set
+/// 3. **System availability** - Number of logical CPUs available
+///
+/// The pool will use the minimum of these constraints.
+///
+/// # Examples
+///
+/// ```ignore
+/// use orx_parallel::*;
+///
+/// // Create a OncePool with auto-detection (subject to ORX_NUM_THREADS)
+/// let pool = Pool::once(NumThreads::Auto);
+///
+/// // Create a OncePool capped at 4 threads
+/// let pool = Pool::once(4);  // Converted from usize via From impl
+///
+/// // Create a persistent BasicPool with 8 threads
+/// let pool = Pool::basic(8);
+///
+/// // Create a Rayon pool (requires rayon-core feature)
+/// let pool = Pool::rayon(NumThreads::Auto)?;
+/// ```
+///
+/// # Pool Types
+///
+/// - **OncePool** (with `transient-pool` feature) - Spawns threads only when needed, releases after computation
+/// - **BasicPool** (default) - Maintains persistent workers across multiple computations
+/// - **Rayon** - Uses the Rayon parallel runtime (external crate)
+///
+/// See the [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) documentation for complete details.
+pub struct Pool;
+
+impl Pool {
+    /// Returns the default global thread pool.
+    ///
+    /// This exposes the thread pool's functionality directly, allowing convenient
+    /// **ad-hoc** parallel computation, on top of the parallel iterators of this
+    /// crate. Note, however, that such ad-hoc parallelization does not benefit from
+    /// the input concurrent iterator and parallel runner strategy optimizations that
+    /// parallel iterators build on. Therefore, it is best suited for a handful of
+    /// large enough, independent tasks rather than for computations with numerous
+    /// small tasks.
+    ///
+    /// There are two ways to use it:
+    ///
+    /// * Manually via [`scope`] and [`run`]:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// Pool::global().scope(|s| {
+    ///     s.run(|| println!("task A"));
+    ///     s.run(|| println!("task B"));
+    /// });
+    /// ```
+    ///
+    /// * Or via [`Tasks`] and [`run_all`], which builds a statically typed queue of
+    ///   tasks to be run in parallel:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    /// use std::sync::Mutex;
+    ///
+    /// let numbers = [4, 8, 15, 16, 23, 42];
+    ///
+    /// let sum = Mutex::new(0);
+    /// let max = Mutex::new(i32::MIN);
+    /// let all_positive = Mutex::new(false);
+    ///
+    /// let tasks = Tasks::new()
+    ///     .push(|| *sum.lock().unwrap() = numbers.iter().sum())
+    ///     .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
+    ///     .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0));
+    ///
+    /// Pool::global().run_all(tasks);
+    ///
+    /// println!(
+    ///     "sum={}, max={}, all_positive={}",
+    ///     sum.into_inner().unwrap(),
+    ///     max.into_inner().unwrap(),
+    ///     all_positive.into_inner().unwrap(),
+    /// );
+    /// ```
+    ///
+    /// [`scope`]: crate::ThreadPool::scope
+    /// [`run`]: crate::Scope::run
+    /// [`run_all`]: crate::ThreadPool::run_all
+    pub fn global() -> DefaultPool {
+        global_pool()
+    }
+
+    /// Creates a lightweight on-demand pool with the specified thread configuration.
+    ///
+    /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before
+    /// a computation starts and releases them immediately after. This reduces overhead when
+    /// a persistent thread pool isn't needed.
+    ///
+    /// # Thread Count Decision
+    ///
+    /// The actual thread count is determined by:
+    /// - The `num_threads` parameter
+    /// - The `ORX_NUM_THREADS` environment variable (if set)
+    /// - The number of available system CPU cores
+    ///
+    /// The minimum of these constraints will be used.
+    ///
+    /// # Parameters
+    ///
+    /// - `num_threads` - Either:
+    ///   - `0` or `NumThreads::Auto` - Use all available threads (respecting constraints)
+    ///   - `n > 0` or `NumThreads::Max(n)` - Cap at `n` threads (respecting constraints)
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use orx_parallel::*;
+    ///
+    /// // Auto-detect threads
+    /// let pool = Pool::once(NumThreads::Auto);
+    ///
+    /// // Cap at 4 threads
+    /// let pool = Pool::once(4);
+    ///
+    /// // Same as above (usize converts via From impl)
+    /// let pool = Pool::once(NumThreads::Max(std::num::NonZeroUsize::new(4).unwrap()));
+    /// ```
+    ///
+    /// # Default Behavior
+    ///
+    /// This is available when the `transient-pool` feature is enabled.
+    /// Applications can explicitly create an `OncePool` to configure custom thread settings
+    /// for on-demand thread spawning and cleanup.
+    #[cfg(feature = "std")]
+    pub fn once(num_threads: impl Into<NumThreads>) -> OncePool {
+        OncePool::new(num_threads)
+    }
+
+    /// Creates a [`BasicPool`] with the specified thread configuration.
+    ///
+    /// A `BasicPool` maintains persistent worker threads that remain alive across
+    /// multiple parallel computations. This is more efficient than `OncePool` when
+    /// running many parallel operations sequentially.
+    ///
+    /// # Thread Count Decision
+    ///
+    /// Thread count is determined the same way as [`Self::once`]:
+    /// - The `num_threads` parameter
+    /// - The `ORX_NUM_THREADS` environment variable (if set)
+    /// - Available system CPU cores
+    ///
+    /// The minimum of these constraints will be used.
+    ///
+    /// # Parameters
+    ///
+    /// - `num_threads` - Configuration as described in [`Self::once`]
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use orx_parallel::*;
+    ///
+    /// // Create and reuse a persistent pool
+    /// let pool = Pool::basic(8);
+    ///
+    /// for data in datasets {
+    ///     let result = data.into_par()
+    ///         .map(|x| process(x))
+    ///         .pool(pool)
+    ///         .collect();
+    /// }
+    /// ```
+    ///
+    /// # Benefits Over OncePool
+    ///
+    /// - Worker threads persist between computations
+    /// - Avoids overhead of repeated thread spawning
+    /// - Ideal for applications with many parallel tasks
+    #[cfg(feature = "std")]
+    pub fn basic(num_threads: impl Into<NumThreads>) -> BasicPool {
+        BasicPool::new(num_threads)
+    }
+
+    /// Creates a Rayon [`ThreadPool`](https://docs.rs/rayon-core/latest/rayon_core/struct.ThreadPool.html).
+    ///
+    /// This method integrates with the Rayon parallel runtime. Rayon pools can be used
+    /// with orx-parallel parallel iterators through the `.pool()` method.
+    ///
+    /// # Thread Count Decision
+    ///
+    /// Rayon's thread count is determined similarly to other pools:
+    /// - When `num_threads` is `0` or `NumThreads::Auto`:
+    ///   - Rayon uses `RAYON_NUM_THREADS` environment variable if set
+    ///   - Otherwise uses the number of logical CPUs
+    /// - When `num_threads` is `n > 0` or `NumThreads::Max(n)`:
+    ///   - Rayon will start at most `n` threads
+    ///
+    /// Note: `ORX_NUM_THREADS` is not automatically applied to Rayon pools.
+    /// See Rayon documentation for its configuration options.
+    ///
+    /// # Parameters
+    ///
+    /// - `num_threads` - Configuration for the Rayon thread pool
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(ThreadPool)` - Successfully created Rayon pool
+    /// - `Err(ThreadPoolBuildError)` - Failed to create pool (e.g., invalid configuration)
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use orx_parallel::*;
+    ///
+    /// // Create a Rayon pool with automatic thread detection
+    /// let pool = Pool::rayon(NumThreads::Auto)?;
+    ///
+    /// // Create a Rayon pool capped at 4 threads
+    /// let pool = Pool::rayon(4)?;
+    ///
+    /// let result = (0..1000)
+    ///     .into_par()
+    ///     .map(|x| x * 2)
+    ///     .pool(pool)
+    ///     .collect();
+    /// ```
+    ///
+    /// # Features
+    ///
+    /// Requires the `rayon-core` feature to be enabled.
+    ///
+    /// [`ThreadPool`]: https://docs.rs/rayon-core/latest/rayon_core/struct.ThreadPool.html
+    #[cfg(feature = "rayon-core")]
+    pub fn rayon(
+        num_threads: impl Into<NumThreads>,
+    ) -> Result<rayon_core::ThreadPool, rayon_core::ThreadPoolBuildError> {
+        let num_threads = match num_threads.into() {
+            NumThreads::Auto => 0,
+            NumThreads::Max(nt) => nt.into(),
+        };
+        rayon_core::ThreadPoolBuilder::new()
+            .num_threads(num_threads)
+            .build()
+    }
+}

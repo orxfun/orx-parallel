@@ -1,0 +1,279 @@
+use crate::collectables::par_extend_core::ParExtendCore;
+use crate::{IntoParIter, IterationOrder, Par};
+use alloc::string::{String, ToString};
+use alloc::{vec, vec::Vec};
+use std::collections::HashMap;
+
+#[test]
+fn extend_from_ordered_thread_results_empty() {
+    let mut map: HashMap<i32, &'static str> = HashMap::new();
+    let results: Vec<HashMap<i32, &'static str>> = Vec::new();
+
+    map.extend_merge_ordered_infallibles(results);
+    assert!(map.is_empty());
+}
+
+#[test]
+fn extend_from_ordered_thread_results_empty_threads() {
+    let mut map: HashMap<i32, &'static str> = HashMap::from([(1, "a"), (2, "b"), (3, "c")]);
+    let t0 = HashMap::<i32, &'static str>::default();
+    let t1 = HashMap::<i32, &'static str>::default();
+
+    map.extend_merge_ordered_infallibles(vec![t0, t1]);
+    let expected = HashMap::from([(1, "a"), (2, "b"), (3, "c")]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_ordered_thread_results_single_thread_single_chunk() {
+    let mut map = HashMap::new();
+    let mut t0 = HashMap::default();
+
+    HashMap::add_ordered_thread_values(
+        &mut t0,
+        0,
+        vec![(10, "ten"), (20, "twenty"), (30, "thirty")],
+    );
+
+    map.extend_merge_ordered_infallibles(vec![t0]);
+    let expected = HashMap::from([(10, "ten"), (20, "twenty"), (30, "thirty")]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_ordered_thread_results_single_thread_multiple_chunks() {
+    let mut map = HashMap::new();
+    let mut t0 = HashMap::default();
+
+    HashMap::add_ordered_thread_values(&mut t0, 0, vec![(1, "one"), (2, "two")]);
+    HashMap::add_ordered_thread_value(&mut t0, 1, (3, "three"));
+    HashMap::add_ordered_thread_values(&mut t0, 2, vec![(4, "four"), (5, "five"), (6, "six")]);
+
+    map.extend_merge_ordered_infallibles(vec![t0]);
+    let expected = HashMap::from([
+        (1, "one"),
+        (2, "two"),
+        (3, "three"),
+        (4, "four"),
+        (5, "five"),
+        (6, "six"),
+    ]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_ordered_thread_results_multiple_threads() {
+    let mut map = HashMap::new();
+    let mut t0 = HashMap::default();
+    let mut t1 = HashMap::default();
+
+    HashMap::add_ordered_thread_values(&mut t0, 0, vec![(1, "one"), (2, "two")]);
+    HashMap::add_ordered_thread_values(&mut t0, 2, vec![(5, "five"), (6, "six")]);
+
+    HashMap::add_ordered_thread_values(&mut t1, 1, vec![(3, "three"), (4, "four")]);
+    HashMap::add_ordered_thread_values(&mut t1, 3, vec![(7, "seven"), (8, "eight")]);
+
+    map.extend_merge_ordered_infallibles(vec![t0, t1]);
+    let expected = HashMap::from([
+        (1, "one"),
+        (2, "two"),
+        (3, "three"),
+        (4, "four"),
+        (5, "five"),
+        (6, "six"),
+        (7, "seven"),
+        (8, "eight"),
+    ]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_ordered_thread_results_append_to_non_empty_map() {
+    let mut map = HashMap::from([(100, "hundred"), (200, "two_hundred")]);
+    let mut t0 = HashMap::default();
+    let mut t1 = HashMap::default();
+
+    HashMap::add_ordered_thread_value(&mut t0, 0, (1, "one"));
+    HashMap::add_ordered_thread_value(&mut t1, 1, (2, "two"));
+
+    map.extend_merge_ordered_infallibles(vec![t0, t1]);
+    let expected = HashMap::from([
+        (1, "one"),
+        (2, "two"),
+        (100, "hundred"),
+        (200, "two_hundred"),
+    ]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_ordered_thread_results_duplicate_keys() {
+    let mut map = HashMap::from([(10, "initial_10")]);
+    let mut t0 = HashMap::default();
+    let mut t1 = HashMap::default();
+
+    HashMap::add_ordered_thread_values(&mut t0, 0, vec![(10, "t0_10"), (20, "t0_20")]);
+    HashMap::add_ordered_thread_values(&mut t1, 1, vec![(20, "t1_20"), (30, "t1_30")]);
+
+    map.extend_merge_ordered_infallibles(vec![t0, t1]);
+    assert!(map.contains_key(&10));
+    assert!(map.contains_key(&20));
+    assert_eq!(map.get(&30), Some(&"t1_30"));
+}
+
+// extend_from_thread_results tests
+
+#[test]
+fn extend_from_thread_results_empty() {
+    let mut map: HashMap<i32, &'static str> = HashMap::new();
+    let results: Vec<HashMap<i32, &'static str>> = Vec::new();
+
+    map.extend_merge_infallibles(results);
+    assert!(map.is_empty());
+}
+
+#[test]
+fn extend_from_thread_results_empty_threads() {
+    let mut map: HashMap<i32, &'static str> = HashMap::from([(1, "a"), (2, "b"), (3, "c")]);
+    let t0 = HashMap::<i32, &'static str>::default();
+    let t1 = HashMap::<i32, &'static str>::default();
+
+    map.extend_merge_infallibles(vec![t0, t1]);
+    let expected = HashMap::from([(1, "a"), (2, "b"), (3, "c")]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_thread_results_single_thread() {
+    let mut map = HashMap::new();
+    let mut t0 = HashMap::default();
+
+    HashMap::add_thread_value(&mut t0, (10, "ten"));
+    HashMap::add_thread_values(&mut t0, vec![(20, "twenty"), (30, "thirty")]);
+
+    map.extend_merge_infallibles(vec![t0]);
+    let expected = HashMap::from([(10, "ten"), (20, "twenty"), (30, "thirty")]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_thread_results_multiple_threads() {
+    let mut map = HashMap::new();
+    let mut t0 = HashMap::default();
+    let mut t1 = HashMap::default();
+
+    HashMap::add_thread_value(&mut t0, (1, "one"));
+    HashMap::add_thread_values(&mut t0, vec![(2, "two"), (3, "three")]);
+
+    HashMap::add_thread_value(&mut t1, (4, "four"));
+    HashMap::add_thread_values(&mut t1, vec![(5, "five"), (6, "six")]);
+
+    map.extend_merge_infallibles(vec![t0, t1]);
+    let expected = HashMap::from([
+        (1, "one"),
+        (2, "two"),
+        (3, "three"),
+        (4, "four"),
+        (5, "five"),
+        (6, "six"),
+    ]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_thread_results_append_to_non_empty_map() {
+    let mut map = HashMap::from([(100, "hundred"), (200, "two_hundred")]);
+    let mut t0 = HashMap::default();
+    let mut t1 = HashMap::default();
+
+    HashMap::add_thread_value(&mut t0, (1, "one"));
+    HashMap::add_thread_value(&mut t1, (2, "two"));
+
+    map.extend_merge_infallibles(vec![t0, t1]);
+    let expected = HashMap::from([
+        (1, "one"),
+        (2, "two"),
+        (100, "hundred"),
+        (200, "two_hundred"),
+    ]);
+    assert_eq!(map, expected);
+}
+
+#[test]
+fn extend_from_thread_results_duplicate_keys() {
+    let mut map = HashMap::from([(10, "initial_10")]);
+    let mut t0 = HashMap::default();
+    let mut t1 = HashMap::default();
+
+    HashMap::add_thread_values(&mut t0, vec![(10, "t0_10"), (20, "t0_20")]);
+    HashMap::add_thread_values(&mut t1, vec![(20, "t1_20"), (30, "t1_30")]);
+
+    map.extend_merge_infallibles(vec![t0, t1]);
+    assert!(map.contains_key(&10));
+    assert!(map.contains_key(&20));
+    assert_eq!(map.get(&30), Some(&"t1_30"));
+}
+
+// parallel iterator collect tests
+
+#[test]
+fn par_collect_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let collected: HashMap<i32, String> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    let expected: HashMap<i32, String> = input
+        .into_iter()
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_ordered() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = HashMap::from([(-1, "-2".to_string())]);
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Ordered)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect_into(&mut dst);
+    let mut expected = HashMap::from([(-1, "-2".to_string())]);
+    expected.extend(input.into_iter().map(|x| (x, (x * 2).to_string())));
+    assert_eq!(dst, expected);
+}
+
+#[test]
+fn par_collect_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let collected: HashMap<i32, String> = input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    let expected: HashMap<i32, String> = input
+        .into_iter()
+        .map(|x| (x, (x * 2).to_string()))
+        .collect();
+    assert_eq!(collected, expected);
+}
+
+#[test]
+fn par_collect_into_arbitrary() {
+    let input: Vec<i32> = (0..100).collect();
+    let mut dst = HashMap::from([(-1, "-2".to_string())]);
+    input
+        .clone()
+        .into_par()
+        .iteration_order(IterationOrder::Arbitrary)
+        .map(|x| (x, (x * 2).to_string()))
+        .collect_into(&mut dst);
+    let mut expected = HashMap::from([(-1, "-2".to_string())]);
+    expected.extend(input.into_iter().map(|x| (x, (x * 2).to_string())));
+    assert_eq!(dst, expected);
+}

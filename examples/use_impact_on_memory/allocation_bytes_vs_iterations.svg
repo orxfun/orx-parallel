@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="500" viewBox="0 0 920 500" role="img" aria-labelledby="title desc">
+  <title id="title">Allocation bytes vs iterations</title>
+  <desc id="desc">Line chart comparing immutable and use_vec allocation bytes across iteration counts for 50 and 100 cities.</desc>
+  <style>
+    .bg { fill: #ffffff; }
+    .axis { stroke: #222222; stroke-width: 1.5; }
+    .grid { stroke: #d9d9d9; stroke-width: 1; }
+    .label { fill: #222222; font: 14px sans-serif; }
+    .small { fill: #444444; font: 12px sans-serif; }
+    .title { fill: #111111; font: 18px sans-serif; font-weight: 600; }
+    .imm50 { fill: none; stroke: #c94f4f; stroke-width: 3; }
+    .use50 { fill: none; stroke: #2b7a78; stroke-width: 3; }
+    .imm100 { fill: none; stroke: #dd8a2d; stroke-width: 3; stroke-dasharray: 8 5; }
+    .use100 { fill: none; stroke: #20639b; stroke-width: 3; stroke-dasharray: 8 5; }
+    .point-imm50 { fill: #c94f4f; }
+    .point-use50 { fill: #2b7a78; }
+    .point-imm100 { fill: #dd8a2d; }
+    .point-use100 { fill: #20639b; }
+    .legend-box { fill: #ffffff; stroke: #cccccc; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="920" height="500" />
+
+  <text class="title" x="70" y="36">Average Allocation Bytes vs Iterations</text>
+  <text class="small" x="70" y="56">Measured with threads = 4 for num_cities = 50 and 100</text>
+
+  <line class="axis" x1="70" y1="390" x2="820" y2="390" />
+  <line class="axis" x1="70" y1="80" x2="70" y2="390" />
+
+  <line class="grid" x1="70" y1="390" x2="820" y2="390" />
+  <line class="grid" x1="70" y1="331" x2="820" y2="331" />
+  <line class="grid" x1="70" y1="271" x2="820" y2="271" />
+  <line class="grid" x1="70" y1="212" x2="820" y2="212" />
+  <line class="grid" x1="70" y1="152" x2="820" y2="152" />
+  <line class="grid" x1="70" y1="93" x2="820" y2="93" />
+
+  <text class="small" x="36" y="394">0</text>
+  <text class="small" x="8" y="335">1.0M</text>
+  <text class="small" x="8" y="275">2.0M</text>
+  <text class="small" x="8" y="216">3.0M</text>
+  <text class="small" x="8" y="156">4.0M</text>
+  <text class="small" x="8" y="97">5.0M</text>
+
+  <text class="label" x="108" y="420">100</text>
+  <text class="label" x="208" y="420">200</text>
+  <text class="label" x="308" y="420">400</text>
+  <text class="label" x="408" y="420">800</text>
+  <text class="label" x="500" y="420">1600</text>
+  <text class="label" x="600" y="420">3200</text>
+  <text class="label" x="700" y="420">6400</text>
+
+  <text class="label" x="405" y="458">iterations</text>
+  <text class="label" x="18" y="30" transform="rotate(-90 18 30)">allocation bytes</text>
+
+  <polyline class="imm50" points="120,388 220,385 320,380 420,371 520,352 620,313 720,237" />
+  <polyline class="use50" points="120,390 220,390 320,390 420,390 520,390 620,390 720,390" />
+  <polyline class="imm100" points="120,385 220,380 320,371 420,352 520,313 620,237 720,85" />
+  <polyline class="use100" points="120,389 220,389 320,389 420,389 520,389 620,389 720,389" />
+
+  <circle class="point-imm50" cx="120" cy="388" r="4" />
+  <circle class="point-imm50" cx="220" cy="385" r="4" />
+  <circle class="point-imm50" cx="320" cy="380" r="4" />
+  <circle class="point-imm50" cx="420" cy="371" r="4" />
+  <circle class="point-imm50" cx="520" cy="352" r="4" />
+  <circle class="point-imm50" cx="620" cy="313" r="4" />
+  <circle class="point-imm50" cx="720" cy="237" r="4" />
+
+  <circle class="point-use50" cx="120" cy="390" r="4" />
+  <circle class="point-use50" cx="220" cy="390" r="4" />
+  <circle class="point-use50" cx="320" cy="390" r="4" />
+  <circle class="point-use50" cx="420" cy="390" r="4" />
+  <circle class="point-use50" cx="520" cy="390" r="4" />
+  <circle class="point-use50" cx="620" cy="390" r="4" />
+  <circle class="point-use50" cx="720" cy="390" r="4" />
+
+  <circle class="point-imm100" cx="120" cy="385" r="4" />
+  <circle class="point-imm100" cx="220" cy="380" r="4" />
+  <circle class="point-imm100" cx="320" cy="371" r="4" />
+  <circle class="point-imm100" cx="420" cy="352" r="4" />
+  <circle class="point-imm100" cx="520" cy="313" r="4" />
+  <circle class="point-imm100" cx="620" cy="237" r="4" />
+  <circle class="point-imm100" cx="720" cy="85" r="4" />
+
+  <circle class="point-use100" cx="120" cy="389" r="4" />
+  <circle class="point-use100" cx="220" cy="389" r="4" />
+  <circle class="point-use100" cx="320" cy="389" r="4" />
+  <circle class="point-use100" cx="420" cy="389" r="4" />
+  <circle class="point-use100" cx="520" cy="389" r="4" />
+  <circle class="point-use100" cx="620" cy="389" r="4" />
+  <circle class="point-use100" cx="720" cy="389" r="4" />
+
+  <rect class="legend-box" x="610" y="100" width="240" height="104" rx="6" />
+  <line class="imm50" x1="630" y1="123" x2="670" y2="123" />
+  <circle class="point-imm50" cx="650" cy="123" r="4" />
+  <text class="label" x="680" y="128">immutable, 50 cities</text>
+  <line class="use50" x1="630" y1="147" x2="670" y2="147" />
+  <circle class="point-use50" cx="650" cy="147" r="4" />
+  <text class="label" x="680" y="152">use_vec, 50 cities</text>
+  <line class="imm100" x1="630" y1="171" x2="670" y2="171" />
+  <circle class="point-imm100" cx="650" cy="171" r="4" />
+  <text class="label" x="680" y="176">immutable, 100 cities</text>
+  <line class="use100" x1="630" y1="195" x2="670" y2="195" />
+  <circle class="point-use100" cx="650" cy="195" r="4" />
+  <text class="label" x="680" y="200">use_vec, 100 cities</text>
+</svg>

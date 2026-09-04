@@ -1,0 +1,62 @@
+use crate::infallible::recursive::utils;
+use crate::{Par, ParDrain, ThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
+use alloc::vec::Vec;
+
+pub fn next_any<R, C, X, I, E>(
+    mut runner: R,
+    params: Params,
+    iter: C,
+    xap: X,
+    extend: E,
+) -> Option<X::O>
+where
+    R: ParRunner,
+    C: IntoIterator,
+    X: Xap<I = C::Item>,
+    I: IntoIterator<Item = X::I>,
+    E: Fn(&X::I) -> I + Send + Copy,
+    X::O: Send,
+    X::I: Send,
+{
+    let max_threads: usize = runner.pool().max_num_threads().into();
+
+    let mut data: Vec<_> = (0..max_threads).map(|_| Vec::<X::I>::new()).collect();
+
+    let mut inputs: Vec<_> = iter.into_iter().collect();
+
+    let par = inputs.par_drain(..).runner(&mut runner);
+    let par = params.apply(par).use_slice(&mut data);
+
+    let result = par
+        .flat_map(move |u, i| {
+            u.extend(extend(&i));
+            xap.xap(i)
+        })
+        .first();
+
+    match result.is_some() {
+        true => result,
+        false => {
+            utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
+
+            while !inputs.is_empty() {
+                let par = inputs.par_drain(..).runner(&mut runner);
+                let par = params.apply(par).use_slice(&mut data);
+
+                let result = par
+                    .flat_map(move |u, i| {
+                        u.extend(extend(&i));
+                        xap.xap(i)
+                    })
+                    .first();
+
+                if result.is_some() {
+                    return result;
+                }
+                utils::into_outer_par(&mut inputs, &mut data, |x| x, &mut runner);
+            }
+
+            None
+        }
+    }
+}

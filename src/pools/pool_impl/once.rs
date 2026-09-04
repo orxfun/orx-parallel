@@ -1,0 +1,116 @@
+use crate::NumThreads;
+use crate::pools::scope::Scope;
+use crate::pools::{ThreadPool, env::max_num_threads_by_env_and_resource};
+use core::num::NonZeroUsize;
+
+/// A _one-time-use_ thread pool.
+///
+/// This is not an actual thread pool, rather a configuration on number of threads to be spawned.
+/// Desired threads will be spawned just before the computation starts and will be released right after.
+/// Therefore, it may be considered as a _one-time-use_ thread pool.
+///
+/// `OncePool` is used when the `transient-pool` feature is enabled.
+/// In this configuration, "orx-parallel" does not create and hold on to a persistent thread pool.
+#[derive(Clone, Copy, Debug)]
+pub struct OncePool {
+    num_threads: NonZeroUsize,
+}
+
+impl Default for OncePool {
+    fn default() -> Self {
+        Self::new(NumThreads::Auto)
+    }
+}
+
+unsafe impl Sync for OncePool {}
+
+impl OncePool {
+    /// Assumes (*) a thread pool of `num_threads` threads.
+    ///
+    /// Note that, this desired number of threads can be overwritten by the following:
+    /// - if the system has `n < num_threads` available threads, computation will use `n` threads.
+    /// - if ORX_NUM_THREADS environment variable exists with value `m < num_threads`,
+    ///   computation will use `m` threads.
+    ///
+    /// (*) This is not an actual thread pool, rather a configuration on number of threads to be spawned.
+    /// Desired threads will be spawned just before the computation starts and will be released right after.
+    /// Therefore, it may be considered as a _one-time-use_ thread pool.
+    pub fn new(num_threads: impl Into<NumThreads>) -> Self {
+        let num_threads = match num_threads.into() {
+            NumThreads::Auto => max_num_threads_by_env_and_resource(),
+            NumThreads::Max(n) => max_num_threads_by_env_and_resource().min(n),
+        };
+        Self { num_threads }
+    }
+}
+
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s std::thread::Scope<'s, 'env> {
+    fn run<W>(self, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: FnOnce() + Send + 'scope + 'env,
+    {
+        self.spawn(work);
+    }
+}
+
+impl ThreadPool for OncePool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s std::thread::Scope<'s, 'env>
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        self.num_threads
+    }
+
+    fn scope<'env, 'scope, F>(&'env self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
+    {
+        std::thread::scope(f)
+    }
+}
+
+impl ThreadPool for &OncePool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s std::thread::Scope<'s, 'env>
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        self.num_threads
+    }
+
+    fn scope<'env, 'scope, F>(&'env self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
+    {
+        std::thread::scope(f)
+    }
+}
+
+impl ThreadPool for &mut OncePool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s std::thread::Scope<'s, 'env>
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        self.num_threads
+    }
+
+    fn scope<'env, 'scope, F>(&'env self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
+    {
+        std::thread::scope(f)
+    }
+}

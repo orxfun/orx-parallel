@@ -1,0 +1,357 @@
+#![allow(clippy::too_many_arguments)]
+
+use crate::ParExtend;
+use crate::infallible_use::XapUse;
+use crate::pools::{Scope, ThreadPool};
+use crate::result_use::thread_execution as th;
+use crate::results::{Val, ValIdx};
+use crate::sizes::SizePair;
+use crate::use_var::Use;
+use crate::{parameters::Params, runner::ParRunner};
+use orx_concurrent_bag::ConcurrentBag;
+use orx_concurrent_iter::ConcurrentIter;
+
+pub trait ParRunnerUseRes: ParRunner {
+    fn next<U, I, M, E, X1, X2, S>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        u: U,
+        iter: I,
+        x1: X1,
+        x2: X2,
+    ) -> Result<Option<ValIdx<X2::O>>, E>
+    where
+        U: Use,
+        I: ConcurrentIter,
+        X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+        X2: XapUse<U = U::Item, I = M>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+        X2::O: Send,
+        E: Send,
+    {
+        match params.is_sequential() {
+            true => {
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
+                let first = iter
+                    .into_seq_iter()
+                    .flat_map(|i| S::xap_use_res(u, x1, x2, i).into_iter())
+                    .enumerate()
+                    .next();
+                match first {
+                    None => Ok(None),
+                    Some((idx, result)) => match result {
+                        Ok(val) => Ok(Some(ValIdx { val, idx })),
+                        Err(e) => Err(e),
+                    },
+                }
+            }
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
+                self.pool_mut().scope(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        s.run(move || {
+                            Self::begin_thread(st, th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
+                            let value = th::next::<Self, _, _, _, _, _, _, _>(
+                                sizes, u, th_idx, st, iter, x1, x2,
+                            );
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
+                });
+
+                Self::complete_computation(state);
+                ValIdx::first_res(results_bag.into_inner().into_inner())
+            }
+        }
+    }
+
+    fn next_any<U, I, M, E, X1, X2, S>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        u: U,
+        iter: I,
+        x1: X1,
+        x2: X2,
+    ) -> Result<Option<X2::O>, E>
+    where
+        U: Use,
+        I: ConcurrentIter,
+        X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+        X2: XapUse<U = U::Item, I = M>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+        X2::O: Send,
+        E: Send,
+    {
+        match params.is_sequential() {
+            true => {
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
+                let first = iter
+                    .into_seq_iter()
+                    .flat_map(|i| S::xap_use_res(u, x1, x2, i).into_iter())
+                    .next();
+                match first {
+                    None => Ok(None),
+                    Some(result) => match result {
+                        Ok(val) => Ok(Some(val)),
+                        Err(e) => Err(e),
+                    },
+                }
+            }
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
+                self.pool_mut().scope(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        s.run(move || {
+                            Self::begin_thread(st, th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
+                            let value = th::next_any::<Self, _, _, _, _, _, _, _>(
+                                sizes, u, th_idx, st, iter, x1, x2,
+                            );
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
+                });
+
+                Self::complete_computation(state);
+                Val::first_res(results_bag.into_inner().into_inner())
+            }
+        }
+    }
+
+    fn reduce<U, I, M, E, X1, X2, S, F>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        mut u: U,
+        iter: I,
+        x1: X1,
+        x2: X2,
+        f: F,
+    ) -> Result<Option<X2::O>, E>
+    where
+        U: Use,
+        I: ConcurrentIter,
+        X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+        X2: XapUse<U = U::Item, I = M>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+        F: Fn(&mut U::Item, X2::O, X2::O) -> X2::O + Send + Copy,
+        X2::O: Send,
+        E: Send,
+    {
+        match params.is_sequential() {
+            true => {
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u_xap = unsafe { u.init_get(0) } as *mut U::Item;
+                let u_f = u_xap;
+                let mut iter = iter
+                    .into_seq_iter()
+                    .flat_map(|i| S::xap_use_res(u_xap, x1, x2, i).into_iter());
+                match iter.next() {
+                    None => Ok(None),
+                    Some(Err(e)) => Err(e),
+                    Some(Ok(mut acc)) => {
+                        for maybe in iter {
+                            acc = f(unsafe { &mut *u_f }, acc, maybe?);
+                        }
+                        Ok(Some(acc))
+                    }
+                }
+            }
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+                {
+                    let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
+                    self.pool_mut().scope(move |s| {
+                        while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                            spawned += 1;
+                            s.run(move || {
+                                Self::begin_thread(st, th_idx);
+                                // SAFETY: `do_spawn_new` returns sequential thread indices;
+                                // therefore, `u.init_get` will be called exactly once per thread
+                                let u = unsafe { u.init_get(th_idx) };
+                                let value = th::reduce::<Self, _, _, _, _, _, _, _, _>(
+                                    sizes, u, th_idx, st, iter, x1, x2, f,
+                                );
+                                results.push(value);
+                                Self::complete_thread(st, th_idx);
+                            });
+                        }
+                    });
+                }
+
+                Self::complete_computation(state);
+                let u = u.get(0);
+                Val::reduce_res(results_bag.into_inner().into_inner(), |a, b| f(u, a, b))
+            }
+        }
+    }
+
+    fn collect<U, I, M, E, X1, X2, S, P>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        u: U,
+        iter: I,
+        x1: X1,
+        x2: X2,
+        dst: &mut P,
+    ) -> Result<(), E>
+    where
+        U: Use,
+        I: ConcurrentIter,
+        X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+        X2: XapUse<U = U::Item, I = M>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+        X2::O: Send,
+        E: Send,
+        P: ParExtend<X2::O>,
+        P::OrderedThreadValues: Send,
+    {
+        match params.is_sequential() {
+            true => {
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
+                let fallibles = iter
+                    .into_seq_iter()
+                    .flat_map(|i| S::xap_use_res(u, x1, x2, i));
+                dst.extend_fallibles(fallibles)
+            }
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
+                self.pool_mut().scope(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        s.run(move || {
+                            Self::begin_thread(st, th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
+                            let value = th::collect::<Self, _, _, _, _, _, _, _, P>(
+                                sizes, u, th_idx, st, iter, x1, x2,
+                            );
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
+                });
+
+                Self::complete_computation(state);
+                P::extend_merge_ordered_fallibles(dst, results_bag.into_inner().into_inner())
+            }
+        }
+    }
+
+    fn collect_arb<U, I, M, E, X1, X2, S, P>(
+        &mut self,
+        sizes: S,
+        params: Params,
+        u: U,
+        iter: I,
+        x1: X1,
+        x2: X2,
+        dst: &mut P,
+    ) -> Result<(), E>
+    where
+        U: Use,
+        I: ConcurrentIter,
+        X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+        X2: XapUse<U = U::Item, I = M>,
+        S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+        X2::O: Send,
+        E: Send,
+        P: ParExtend<X2::O>,
+        P::ThreadValues: Send,
+    {
+        match params.is_sequential() {
+            true => {
+                // SAFETY: `u.init_get` is called only once, for thread index 0
+                let u = unsafe { u.init_get(0) };
+                let fallibles = iter
+                    .into_seq_iter()
+                    .flat_map(|i| S::xap_use_res(u, x1, x2, i));
+                dst.extend_fallibles(fallibles)
+            }
+            false => {
+                let mut spawned = 0;
+                let (max_nt, state) = self.nt_state(
+                    params,
+                    I::is_source_serialized(),
+                    iter.size_hint(),
+                    u.max_threads(),
+                );
+                let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
+
+                let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
+                self.pool_mut().scope(move |s| {
+                    while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
+                        spawned += 1;
+                        s.run(move || {
+                            Self::begin_thread(st, th_idx);
+                            // SAFETY: `do_spawn_new` returns sequential thread indices;
+                            // therefore, `u.init_get` will be called exactly once per thread
+                            let u = unsafe { u.init_get(th_idx) };
+                            let value = th::collect_arb::<Self, _, _, _, _, _, _, _, P>(
+                                sizes, u, th_idx, st, iter, x1, x2,
+                            );
+                            results.push(value);
+                            Self::complete_thread(st, th_idx);
+                        });
+                    }
+                });
+
+                Self::complete_computation(state);
+                P::extend_merge_fallibles(dst, results_bag.into_inner().into_inner())
+            }
+        }
+    }
+}
+
+impl<R: ParRunner> ParRunnerUseRes for R {}
