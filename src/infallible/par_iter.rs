@@ -170,6 +170,12 @@ where
         self.with_xap(xap)
     }
 
+    // get
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+
     // compute
 
     fn first(self) -> Option<X::O>

@@ -11,6 +11,8 @@ pub trait Size: Clone + Copy + Send + Default {
 
     fn elem_len() -> Option<usize>;
 
+    fn transformed_size_hint(size_hint: (usize, Option<usize>)) -> (usize, Option<usize>);
+
     fn output_len(input_len: Option<usize>) -> Option<usize> {
         match (input_len, Self::elem_len()) {
             (Some(input_len), Some(elem_len)) => Some(input_len * elem_len),

@@ -746,6 +746,10 @@ pub trait Par: Sized + ParCore {
     where
         Self::Item: IntoIterator;
 
+    // get
+
+    fn size_hint(&self) -> (usize, Option<usize>);
+
     // compute
 
     /// Returns the first item according to iteration order, or `None` if empty.
