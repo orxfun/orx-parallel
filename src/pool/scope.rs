@@ -1,4 +1,4 @@
-use crate::pool::typed_task_queue::TasksEmpty;
+use crate::pool::task_queue::TasksEmpty;
 
 /// A scope within which work can be spawned onto a [`ThreadPool`], bounded by the
 /// lifetimes of the borrowed environment.

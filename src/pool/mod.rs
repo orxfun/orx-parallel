@@ -3,8 +3,8 @@ mod global_pool;
 mod new_pool;
 mod pool_impl;
 mod scope;
+mod task_queue;
 mod thread_pool;
-mod typed_task_queue;
 
 // 1. wasm
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
@@ -49,5 +49,5 @@ pub use pool_impl::SequentialPool;
 pub use global_pool::{DefaultPool, global_pool};
 pub use new_pool::Pool;
 pub use scope::Scope;
+pub use task_queue::TaskQueue;
 pub use thread_pool::{ThreadPool, max_num_threads_for_computation};
-pub use typed_task_queue::TaskQueue;
