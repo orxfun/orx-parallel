@@ -254,23 +254,3 @@ pub fn global_pool() -> DefaultPool {
 pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
-
-#[cfg(test)]
-#[test]
-fn abc() {
-    use crate::pool::global_pool;
-    use crate::*;
-    use alloc::vec::Vec;
-    use std::println;
-
-    let vec: Vec<_> = (0..10).collect();
-    global_pool().scope(|s| {
-        for i in &vec {
-            s.run(move || {
-                let sleep = (10 - i) * 100;
-                std::thread::sleep(core::time::Duration::from_millis(sleep));
-                println!("{i}")
-            });
-        }
-    });
-}
