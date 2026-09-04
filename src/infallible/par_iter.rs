@@ -1,4 +1,3 @@
-use crate::ExactSizePar;
 use crate::infallible::Xap;
 use crate::infallible::XapIter;
 use crate::infallible::par_core::ParCore;
@@ -6,11 +5,9 @@ use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
-use crate::sizes::One;
 use crate::sizes::Size;
 use crate::{Par, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
-use orx_concurrent_iter::ExactSizeConcurrentIter;
 
 /// Parallel iterator.
 pub struct ParIter<I, X, R = DefaultRunner>
