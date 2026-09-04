@@ -2,7 +2,6 @@ use crate::option::tests::utils::inputs_opt;
 use crate::parameters::IterationOrder;
 use crate::*;
 use alloc::vec::Vec;
-use test_case::test_matrix;
 
 const N: usize = 157;
 
