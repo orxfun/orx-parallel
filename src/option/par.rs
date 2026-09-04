@@ -642,7 +642,7 @@ pub trait ParOption: Sized + ParOptionCore {
     fn len(&self) -> usize
     where
         Self::Input: ExactSizeConcurrentIter,
-        Self::Xap1: Xap<Size = OneOne>,
+        Self: ParOption<Size = OneOne>,
     {
         self.size_hint().0
     }
@@ -651,7 +651,7 @@ pub trait ParOption: Sized + ParOptionCore {
     fn is_empty(&self) -> bool
     where
         Self::Input: ExactSizeConcurrentIter,
-        Self::Xap1: Xap<Size = OneOne>,
+        Self: ParOption<Size = OneOne>,
     {
         self.len() == 0
     }

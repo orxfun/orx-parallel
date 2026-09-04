@@ -505,7 +505,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn len(&self) -> usize
     where
         Self::Input: ExactSizeConcurrentIter,
-        Self::Xap1: XapUse<Size = OneOne>,
+        Self: ParUseResult<Size = OneOne>,
     {
         self.size_hint().0
     }
@@ -514,7 +514,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn is_empty(&self) -> bool
     where
         Self::Input: ExactSizeConcurrentIter,
-        Self::Xap1: XapUse<Size = OneOne>,
+        Self: ParUseResult<Size = OneOne>,
     {
         self.len() == 0
     }
