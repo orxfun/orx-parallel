@@ -52,6 +52,46 @@ use crate::pools::{DefaultPool, global_pool};
 pub struct Pool;
 
 impl Pool {
+    /// Returns the default global thread pool.
+    ///
+    /// This exposes the thread pool's functionality directly, allowing convenient
+    /// **ad-hoc** parallel computation, on top of the parallel iterators of this
+    /// crate. Note, however, that such ad-hoc parallelization does not benefit from
+    /// the input concurrent iterator and parallel runner strategy optimizations that
+    /// parallel iterators build on. Therefore, it is best suited for a handful of
+    /// large enough, independent tasks rather than for computations with numerous
+    /// small tasks.
+    ///
+    /// There are two ways to use it:
+    ///
+    /// * Manually via [`scope`] and [`run`]:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// Pool::global().scope(|s| {
+    ///     s.run(|| println!("task A"));
+    ///     s.run(|| println!("task B"));
+    /// });
+    /// ```
+    ///
+    /// * Or via [`Tasks`] and [`run_all`], which builds a statically typed queue of
+    ///   tasks to be run in parallel:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    /// use orx_parallel::pools::tasks::TaskQueue;
+    ///
+    /// let tasks = Tasks::new()
+    ///     .push(|| println!("task A"))
+    ///     .push(|| println!("task B"));
+    ///
+    /// Pool::global().run_all(tasks);
+    /// ```
+    ///
+    /// [`scope`]: crate::ThreadPool::scope
+    /// [`run`]: crate::Scope::run
+    /// [`run_all`]: crate::ThreadPool::run_all
     pub fn global() -> DefaultPool {
         global_pool()
     }
