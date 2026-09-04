@@ -3,7 +3,7 @@ use core::num::NonZeroUsize;
 
 /// Abstraction for parallel execution environments and thread pool management.
 ///
-/// `ParThreadPool` defines how parallel computations are executed on a set of worker threads.
+/// `ThreadPool` defines how parallel computations are executed on a set of worker threads.
 /// Any type implementing this trait can serve as a thread pool for orx-parallel computations.
 ///
 /// # Thread Count Decision
@@ -45,7 +45,7 @@ use core::num::NonZeroUsize;
 /// - `Pool::rayon` - rayon thread pools
 ///
 /// See the [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) documentation for a complete guide.
-pub trait ParThreadPool {
+pub trait ThreadPool {
     /// Scope type of the thread pool.
     type ScopeRef<'s, 'env, 'scope>
     where
@@ -119,7 +119,7 @@ pub trait ParThreadPool {
 ///   - If upper_bound is `None`, input size is unknown
 ///   - If upper_bound is `Some(n)`, input has at most n elements
 pub fn max_num_threads_for_computation(
-    pool: &impl ParThreadPool,
+    pool: &impl ThreadPool,
     params: Params,
     size_hint: (usize, Option<usize>),
 ) -> usize {

@@ -1,4 +1,4 @@
-use crate::ParThreadPool;
+use crate::ThreadPool;
 use crate::pool::DefaultPool;
 use crate::pool::global_pool;
 #[cfg(feature = "std")]
@@ -67,7 +67,7 @@ impl Runner {
     ///
     /// let result: Vec<_> = par.collect();
     /// ```
-    pub fn fixed_with_pool<P: ParThreadPool>(pool: P) -> FixedChunkRunner<P> {
+    pub fn fixed_with_pool<P: ThreadPool>(pool: P) -> FixedChunkRunner<P> {
         FixedChunkRunner::new(pool)
     }
 
@@ -109,7 +109,7 @@ impl Runner {
     /// let result: Vec<_> = par.collect();
     /// ```
     #[cfg(feature = "std")]
-    pub fn adaptive_with_pool<P: ParThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
+    pub fn adaptive_with_pool<P: ThreadPool>(pool: P) -> AdaptiveChunkRunner<P> {
         AdaptiveChunkRunner::new(pool)
     }
 }

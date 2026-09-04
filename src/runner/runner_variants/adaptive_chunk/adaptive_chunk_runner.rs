@@ -2,24 +2,24 @@ use super::chunk_state::ChunkState;
 use super::mode::Mode;
 use super::state::State;
 use crate::parameters::{ChunkSize, Params};
-use crate::pool::ParThreadPool;
+use crate::pool::ThreadPool;
 use crate::runner::par_runner::ParRunner;
 use crate::runner::runner_variants::fixed_chunk::heuristic;
 
 #[derive(Clone)]
-pub struct AdaptiveChunkRunner<P: ParThreadPool> {
+pub struct AdaptiveChunkRunner<P: ThreadPool> {
     pool: P,
 }
 
-unsafe impl<P: ParThreadPool> Sync for AdaptiveChunkRunner<P> {}
+unsafe impl<P: ThreadPool> Sync for AdaptiveChunkRunner<P> {}
 
-impl<P: ParThreadPool> AdaptiveChunkRunner<P> {
+impl<P: ThreadPool> AdaptiveChunkRunner<P> {
     pub fn new(pool: P) -> Self {
         Self { pool }
     }
 }
 
-impl<P: ParThreadPool> ParRunner for AdaptiveChunkRunner<P> {
+impl<P: ThreadPool> ParRunner for AdaptiveChunkRunner<P> {
     type Pool = P;
 
     type State = State;

@@ -1,20 +1,20 @@
 use crate::runner::par_runner::ParRunner;
 use crate::runner::runner_variants::fixed_chunk::{heuristic, state::State};
-use crate::{parameters::Params, pool::ParThreadPool};
+use crate::{parameters::Params, pool::ThreadPool};
 
-pub struct FixedChunkRunner<P: ParThreadPool> {
+pub struct FixedChunkRunner<P: ThreadPool> {
     pool: P,
 }
 
-unsafe impl<P: ParThreadPool> Sync for FixedChunkRunner<P> {}
+unsafe impl<P: ThreadPool> Sync for FixedChunkRunner<P> {}
 
-impl<P: ParThreadPool> FixedChunkRunner<P> {
+impl<P: ThreadPool> FixedChunkRunner<P> {
     pub fn new(pool: P) -> Self {
         Self { pool }
     }
 }
 
-impl<P: ParThreadPool> ParRunner for FixedChunkRunner<P> {
+impl<P: ThreadPool> ParRunner for FixedChunkRunner<P> {
     type Pool = P;
 
     type State = State;

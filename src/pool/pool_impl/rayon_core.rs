@@ -1,9 +1,8 @@
 use crate::parameters::non_zero_or_one;
-use crate::pool::ParThreadPool;
 use core::num::NonZeroUsize;
 use rayon_core::ThreadPool;
 
-impl ParThreadPool for ThreadPool {
+impl crate::pool::ThreadPool for ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s rayon_core::Scope<'scope>
     where
@@ -32,7 +31,7 @@ impl ParThreadPool for ThreadPool {
     }
 }
 
-impl ParThreadPool for &rayon_core::ThreadPool {
+impl crate::pool::ThreadPool for &rayon_core::ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s rayon_core::Scope<'scope>
     where

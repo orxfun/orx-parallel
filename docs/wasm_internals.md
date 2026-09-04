@@ -132,7 +132,7 @@ That exported Rust function enters the Rust-side `worker_loop(...)` and begins c
 
 ## Scoped execution model
 
-The `wasm` backend implements `ParThreadPool` for `WasmWebPool`.
+The `wasm` backend implements `ThreadPool` for `WasmWebPool`.
 
 Each parallel computation is wrapped in a scoped execution.
 

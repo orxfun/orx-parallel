@@ -10,7 +10,7 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 /// and persistence.
 ///
 /// > **Note:** `Pool` is a convenience factory for thread pools provided or adapted by this crate.
-/// > You can also implement [`ParThreadPool`](crate::ParThreadPool) yourself and pass it directly
+/// > You can also implement [`ThreadPool`](crate::ThreadPool) yourself and pass it directly
 /// > to `.pool(...)` or to runner constructors that accept any thread pool implementing the trait.
 ///
 /// # Thread Count Configuration

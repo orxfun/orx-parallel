@@ -1,4 +1,4 @@
-use crate::pool::ParThreadPool;
+use crate::pool::ThreadPool;
 use core::num::NonZeroUsize;
 
 /// A placeholder _thread pool_ allowed to use only the executing thread.
@@ -8,7 +8,7 @@ use core::num::NonZeroUsize;
 /// Normally, in no-std environments thread pool to be used by the parallel computation
 /// must be provided by the [`pool`] method to the parallel iterator.
 ///
-/// Provided pool must implement [`ParThreadPool`].
+/// Provided pool must implement [`ThreadPool`].
 /// This crate provides optional or default implementations, which can be constructed
 /// using the [`Pool`] helper type.
 ///
@@ -16,12 +16,12 @@ use core::num::NonZeroUsize;
 /// [`with_runner`] transformation separately for each parallel iterator.
 ///
 /// [`pool`]: crate::Par::pool
-/// [`ParThreadPool`]: crate::ParThreadPool
+/// [`ThreadPool`]: crate::ThreadPool
 /// [`Pool`]: crate::Pool
 #[derive(Default, Clone, Copy, Debug)]
 pub struct SequentialPool;
 
-impl ParThreadPool for SequentialPool {
+impl ThreadPool for SequentialPool {
     type ScopeRef<'s, 'env, 'scope>
         = ()
     where

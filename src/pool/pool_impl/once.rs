@@ -1,5 +1,5 @@
 use crate::NumThreads;
-use crate::pool::{ParThreadPool, env::max_num_threads_by_env_and_resource};
+use crate::pool::{ThreadPool, env::max_num_threads_by_env_and_resource};
 use core::num::NonZeroUsize;
 
 /// A _one-time-use_ thread pool.
@@ -43,7 +43,7 @@ impl OncePool {
     }
 }
 
-impl ParThreadPool for OncePool {
+impl ThreadPool for OncePool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s std::thread::Scope<'s, 'env>
     where
@@ -72,7 +72,7 @@ impl ParThreadPool for OncePool {
     }
 }
 
-impl ParThreadPool for &OncePool {
+impl ThreadPool for &OncePool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s std::thread::Scope<'s, 'env>
     where
@@ -101,7 +101,7 @@ impl ParThreadPool for &OncePool {
     }
 }
 
-impl ParThreadPool for &mut OncePool {
+impl ThreadPool for &mut OncePool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s std::thread::Scope<'s, 'env>
     where

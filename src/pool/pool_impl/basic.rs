@@ -1,5 +1,5 @@
 use crate::NumThreads;
-use crate::pool::ParThreadPool;
+use crate::pool::ThreadPool;
 use crate::pool::env::max_num_threads_by_env_and_resource;
 use core::num::NonZeroUsize;
 use std::any::Any;
@@ -207,7 +207,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 /// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
 /// * the upper bound set by the environment variable "ORX_NUM_THREADS", when set.
 ///
-/// [`max_num_threads`]: ParThreadPool::max_num_threads
+/// [`max_num_threads`]: ThreadPool::max_num_threads
 /// [`runner`]: crate::Par::runner
 #[derive(Clone)]
 pub struct BasicPool {
@@ -284,7 +284,7 @@ impl BasicPool {
     }
 }
 
-impl ParThreadPool for BasicPool {
+impl ThreadPool for BasicPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -320,7 +320,7 @@ impl ParThreadPool for BasicPool {
     }
 }
 
-impl ParThreadPool for &BasicPool {
+impl ThreadPool for &BasicPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -345,11 +345,11 @@ impl ParThreadPool for &BasicPool {
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        <BasicPool as ParThreadPool>::run(s, work)
+        <BasicPool as ThreadPool>::run(s, work)
     }
 }
 
-impl ParThreadPool for &mut BasicPool {
+impl ThreadPool for &mut BasicPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -374,6 +374,6 @@ impl ParThreadPool for &mut BasicPool {
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        <BasicPool as ParThreadPool>::run(s, work)
+        <BasicPool as ThreadPool>::run(s, work)
     }
 }

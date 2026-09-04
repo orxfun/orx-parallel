@@ -188,7 +188,7 @@ let result: Vec<_> = (0..1000)
 assert_eq!(result.len(), 1000);
 ```
 
-The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement. Since thread pools are independent of runner strategies, you can plug in a custom pool as follows:
+The [`ThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ThreadPool.html) trait is small and straightforward to implement. Since thread pools are independent of runner strategies, you can plug in a custom pool as follows:
 
 ```rust ignore
 use orx_parallel::*;

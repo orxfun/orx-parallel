@@ -5,7 +5,7 @@ compile_error!(
 
 use crate::NumThreads;
 use crate::parameters::non_zero_or_one;
-use crate::pool::ParThreadPool;
+use crate::pool::ThreadPool;
 #[cfg(target_feature = "atomics")]
 use alloc::format;
 use core::num::NonZeroUsize;
@@ -398,7 +398,7 @@ impl WasmWebPool {
     }
 }
 
-impl ParThreadPool for WasmWebPool {
+impl ThreadPool for WasmWebPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -445,7 +445,7 @@ impl ParThreadPool for WasmWebPool {
     }
 }
 
-impl ParThreadPool for &WasmWebPool {
+impl ThreadPool for &WasmWebPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -458,7 +458,7 @@ impl ParThreadPool for &WasmWebPool {
         'env: 'scope + 's,
         W: Fn() + Send + 'scope + 'env,
     {
-        <WasmWebPool as ParThreadPool>::run(s, work)
+        <WasmWebPool as ThreadPool>::run(s, work)
     }
 
     fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)

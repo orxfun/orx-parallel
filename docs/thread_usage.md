@@ -88,7 +88,7 @@ The actual number of threads used by any computation is always `min(pool_capacit
 
 ## Pool-Agnostic Design
 
-`orx-parallel` is not tied to any specific thread pool. The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement, so you can plug in any executor. To use a custom pool for a single computation, pass it with `.pool(...)`:
+`orx-parallel` is not tied to any specific thread pool. The [`ThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ThreadPool.html) trait is small and straightforward to implement, so you can plug in any executor. To use a custom pool for a single computation, pass it with `.pool(...)`:
 
 ```rust
 inputs.par().pool(my_custom_pool).sum()
