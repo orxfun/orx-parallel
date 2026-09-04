@@ -37,7 +37,7 @@ mod sort;
 mod use_var;
 
 pub use collectables::ParExtend;
-pub use infallible::{EnumeratePar, Par, ParRec};
+pub use infallible::{EnumeratePar, ExactSizePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
     IntoParIter, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain, Parallelizable,
