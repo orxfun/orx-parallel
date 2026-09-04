@@ -1,4 +1,4 @@
-use crate::pool::pool_impl::init_wasm_thread_pool;
+use crate::pools::pool_impl::init_wasm_thread_pool;
 use crate::{IntoParIter, Par};
 use std::vec::Vec;
 use wasm_bindgen_futures::JsFuture;
