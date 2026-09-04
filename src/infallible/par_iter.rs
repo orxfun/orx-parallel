@@ -216,17 +216,6 @@ where
     }
 }
 
-impl<I, X, R> ExactSizePar for ParIter<I, X, R>
-where
-    I: ConcurrentIter + ExactSizeConcurrentIter,
-    X: Xap<I = I::Item, Size = One>,
-    R: ParRunner,
-{
-    fn len(&self) -> usize {
-        self.size_hint().0
-    }
-}
-
 impl<I, X, R> IntoIterator for ParIter<I, X, R>
 where
     I: ConcurrentIter,
