@@ -41,7 +41,7 @@ where
     ///
     /// let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
     ///
-    /// global_pool().scope(|s| {
+    /// Pool::global().scope(|s| {
     ///     s.tasks()
     ///         .push(|| {
     ///             work_for(90);
@@ -58,6 +58,12 @@ where
     ///         })
     ///         .run_all();
     /// });
+    ///
+    /// // prints:
+    /// // t2 completes 1st
+    /// // t3 completes 2nd
+    /// // t4 completes 3rd
+    /// // t1 completes 4th
     /// ```
     ///
     /// Below is a more practical example: computing independent statistics over the same
@@ -73,7 +79,7 @@ where
     /// let max = Mutex::new(i32::MIN);
     /// let all_positive = Mutex::new(false);
     ///
-    /// global_pool().scope(|s| {
+    /// Pool::global().scope(|s| {
     ///     s.tasks()
     ///         .push(|| *sum.lock().unwrap() = numbers.iter().sum())
     ///         .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
@@ -274,14 +280,14 @@ where
 #[cfg(test)]
 #[test]
 fn abc() {
-    use crate::{ThreadPool, global_pool};
+    use crate::*;
     use core::num::NonZeroUsize;
     use core::time::Duration;
     use std::*;
 
     let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
 
-    global_pool().scope(|s| {
+    Pool::global().scope(|s| {
         s.tasks()
             .push(|| {
                 work_for(90);
@@ -299,5 +305,5 @@ fn abc() {
             .run_all();
     });
 
-    assert_eq!(global_pool().max_num_threads(), NonZeroUsize::MAX);
+    assert_eq!(Pool::global().max_num_threads(), NonZeroUsize::MAX);
 }

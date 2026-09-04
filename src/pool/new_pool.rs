@@ -2,6 +2,7 @@
 use crate::NumThreads;
 #[cfg(feature = "std")]
 use crate::pool::pool_impl::{BasicPool, OncePool};
+use crate::pool::{DefaultPool, global_pool};
 
 /// Factory for creating thread pools with different characteristics.
 ///
@@ -51,6 +52,10 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 pub struct Pool;
 
 impl Pool {
+    pub fn global() -> DefaultPool {
+        global_pool()
+    }
+
     /// Creates a lightweight on-demand pool with the specified thread configuration.
     ///
     /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before

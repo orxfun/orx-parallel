@@ -98,28 +98,6 @@ pub type DefaultPool = &'static SequentialPool;
 
 // 1. wasm on wasm32
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
-/// Returns the default global thread pool.
-///
-/// This is handy for **ad-hoc** parallel work: spawn a few tasks into a [`scope`]
-/// and let them run side by side. Note, however, that this pool plays only a
-/// minimal role in this crate's performance; the real speedups come from the
-/// concurrent iterators and parallel runner strategies used underneath parallel
-/// iterators. So prefer expressing computations through parallel iterators, and
-/// avoid calling `s.run` thousands of times in a loop, as this pool is not
-/// optimized for that.
-///
-/// # Examples
-///
-/// ```
-/// use orx_parallel::{Scope, ThreadPool, global_pool};
-///
-/// global_pool().scope(|s| {
-///     s.run(|| println!("computing part A"));
-///     s.run(|| println!("computing part B"));
-/// });
-/// ```
-///
-/// [`scope`]: crate::ThreadPool::scope
 pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
@@ -130,28 +108,6 @@ pub fn global_pool() -> DefaultPool {
     feature = "persistent-pool-rayon",
     not(all(feature = "wasm", target_arch = "wasm32")),
 ))]
-/// Returns the default global thread pool.
-///
-/// This is handy for **ad-hoc** parallel work: spawn a few tasks into a [`scope`]
-/// and let them run side by side. Note, however, that this pool plays only a
-/// minimal role in this crate's performance; the real speedups come from the
-/// concurrent iterators and parallel runner strategies used underneath parallel
-/// iterators. So prefer expressing computations through parallel iterators, and
-/// avoid calling `s.run` thousands of times in a loop, as this pool is not
-/// optimized for that.
-///
-/// # Examples
-///
-/// ```
-/// use orx_parallel::{Scope, ThreadPool, global_pool};
-///
-/// global_pool().scope(|s| {
-///     s.run(|| println!("computing part A"));
-///     s.run(|| println!("computing part B"));
-/// });
-/// ```
-///
-/// [`scope`]: crate::ThreadPool::scope
 pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
@@ -163,28 +119,6 @@ pub fn global_pool() -> DefaultPool {
     not(all(feature = "wasm", target_arch = "wasm32")),
     not(feature = "persistent-pool-rayon"),
 ))]
-/// Returns the default global thread pool.
-///
-/// This is handy for **ad-hoc** parallel work: spawn a few tasks into a [`scope`]
-/// and let them run side by side. Note, however, that this pool plays only a
-/// minimal role in this crate's performance; the real speedups come from the
-/// concurrent iterators and parallel runner strategies used underneath parallel
-/// iterators. So prefer expressing computations through parallel iterators, and
-/// avoid calling `s.run` thousands of times in a loop, as this pool is not
-/// optimized for that.
-///
-/// # Examples
-///
-/// ```
-/// use orx_parallel::{Scope, ThreadPool, global_pool};
-///
-/// global_pool().scope(|s| {
-///     s.run(|| println!("computing part A"));
-///     s.run(|| println!("computing part B"));
-/// });
-/// ```
-///
-/// [`scope`]: crate::ThreadPool::scope
 pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
@@ -196,28 +130,6 @@ pub fn global_pool() -> DefaultPool {
     not(feature = "persistent-pool-rayon"),
     not(feature = "transient-pool"),
 ))]
-/// Returns the default global thread pool.
-///
-/// This is handy for **ad-hoc** parallel work: spawn a few tasks into a [`scope`]
-/// and let them run side by side. Note, however, that this pool plays only a
-/// minimal role in this crate's performance; the real speedups come from the
-/// concurrent iterators and parallel runner strategies used underneath parallel
-/// iterators. So prefer expressing computations through parallel iterators, and
-/// avoid calling `s.run` thousands of times in a loop, as this pool is not
-/// optimized for that.
-///
-/// # Examples
-///
-/// ```
-/// use orx_parallel::{Scope, ThreadPool, global_pool};
-///
-/// global_pool().scope(|s| {
-///     s.run(|| println!("computing part A"));
-///     s.run(|| println!("computing part B"));
-/// });
-/// ```
-///
-/// [`scope`]: crate::ThreadPool::scope
 pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
@@ -253,31 +165,4 @@ pub fn global_pool() -> DefaultPool {
 /// [`scope`]: crate::ThreadPool::scope
 pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
-}
-
-pub trait Do {
-    fn run(self);
-}
-
-impl<X: FnOnce()> Do for X {
-    fn run(self) {
-        (self)()
-    }
-}
-
-orx_meta::define_queue!(
-    elements => [ Do ];
-    queue => [ Q; Single, Pair ];
-);
-
-impl<F: Do> Do for Single<F> {
-    fn run(self) {
-        todo!()
-    }
-}
-
-impl<F: Do, B: Q> Do for Pair<F, B> {
-    fn run(self) {
-        todo!()
-    }
 }
