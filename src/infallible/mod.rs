@@ -28,3 +28,4 @@ pub use par_iter::ParIter;
 pub use recursive::{ParRec, ParRecIter};
 pub use xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, Xap, XapBin, XapOne};
 pub use xap_enum::XapEnumByInput;
+pub use xap_iter::XapIter;
