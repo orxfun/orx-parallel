@@ -73,15 +73,6 @@ impl ThreadPool for OncePool {
     {
         std::thread::scope(f)
     }
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.spawn(work);
-    }
 }
 
 impl ThreadPool for &OncePool {
@@ -102,15 +93,6 @@ impl ThreadPool for &OncePool {
     {
         std::thread::scope(f)
     }
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.spawn(work);
-    }
 }
 
 impl ThreadPool for &mut OncePool {
@@ -130,14 +112,5 @@ impl ThreadPool for &mut OncePool {
         for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
     {
         std::thread::scope(f)
-    }
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.spawn(work);
     }
 }

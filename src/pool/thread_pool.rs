@@ -55,13 +55,6 @@ pub trait ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    /// Executes the `work` within scope `s`.
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env;
-
     /// Executes the scoped computation `f`.
     fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where

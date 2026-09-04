@@ -435,33 +435,6 @@ impl ThreadPool for WasmWebPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.runtime().begin_task();
-
-        if s.inline_only {
-            let result = catch_unwind(AssertUnwindSafe(work));
-            if let Err(err) = result {
-                s.runtime().record_panic(err);
-            }
-            s.runtime().complete_task();
-            return;
-        }
-
-        let task = Task::new(work);
-
-        {
-            let mut state = s.shared().state.lock().expect("poisoned pool lock");
-            state.queue.push_back(task);
-        }
-
-        s.shared().cv.notify_one();
-    }
-
     fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
@@ -481,15 +454,6 @@ impl ThreadPool for &WasmWebPool {
     where
         'scope: 's,
         'env: 'scope + 's;
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        <WasmWebPool as ThreadPool>::run(s, work)
-    }
 
     fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where

@@ -1,5 +1,5 @@
 use crate::pool::{ThreadPool, scope::Scope};
-use core::{marker::PhantomData, num::NonZeroUsize};
+use core::num::NonZeroUsize;
 
 /// A placeholder _thread pool_ allowed to use only the executing thread.
 /// Therefore, all computations using this thread pool are executed sequentially.
@@ -41,15 +41,6 @@ impl ThreadPool for SequentialPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run<'s, 'env, 'scope, W>(_: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        work()
-    }
-
     fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
@@ -69,15 +60,6 @@ impl ThreadPool for &SequentialPool {
     where
         'scope: 's,
         'env: 'scope + 's;
-
-    fn run<'s, 'env, 'scope, W>(_: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        work()
-    }
 
     fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where

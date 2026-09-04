@@ -321,22 +321,6 @@ impl ThreadPool for BasicPool {
     {
         self.scoped_computation_impl(f)
     }
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.runtime().begin_task();
-
-        let task = Task::new(work, Arc::clone(&s.runtime));
-        {
-            let mut state = s.shared().state.lock().expect("poisoned pool lock");
-            state.queue.push_back(task);
-        }
-        s.shared().cv.notify_one();
-    }
 }
 
 impl ThreadPool for &BasicPool {
@@ -357,15 +341,6 @@ impl ThreadPool for &BasicPool {
     {
         (*self).scoped_computation_impl(f)
     }
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        <BasicPool as ThreadPool>::run(s, work)
-    }
 }
 
 impl ThreadPool for &mut BasicPool {
@@ -385,14 +360,5 @@ impl ThreadPool for &mut BasicPool {
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
         (*self).scoped_computation_impl(f)
-    }
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        <BasicPool as ThreadPool>::run(s, work)
     }
 }

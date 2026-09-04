@@ -20,15 +20,6 @@ impl crate::pool::ThreadPool for ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.spawn(move |_| work());
-    }
-
     fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
@@ -48,15 +39,6 @@ impl crate::pool::ThreadPool for &rayon_core::ThreadPool {
     where
         'scope: 's,
         'env: 'scope + 's;
-
-    fn run<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        s.spawn(move |_| work());
-    }
 
     fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
