@@ -4,7 +4,7 @@ mod pool;
 mod pool_impl;
 mod scope;
 mod task_queue;
-mod tasks;
+pub mod tasks;
 mod thread_pool;
 
 // 1. wasm
