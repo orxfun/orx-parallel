@@ -1,18 +1,18 @@
 use crate::Scope;
 use core::marker::PhantomData;
 
-pub trait WhenAll<'s, 'env, 'scope>
+pub trait TypedTaskQueue<'s, 'env, 'scope>
 where
     'scope: 's,
     'env: 'scope + 's,
 {
-    type PushBack<Elem>: WhenAll<'s, 'env, 'scope>
+    type PushBack<Elem>: TypedTaskQueue<'s, 'env, 'scope>
     where
         Elem: FnOnce() + Send + 'scope + 'env;
 
     type Front: FnOnce() + Send + 'scope + 'env;
 
-    type Back: WhenAll<'s, 'env, 'scope>;
+    type Back: TypedTaskQueue<'s, 'env, 'scope>;
 
     fn push<Elem>(self, element: Elem) -> Self::PushBack<Elem>
     where
@@ -23,7 +23,7 @@ where
 
 // empty
 
-pub struct WhenAllEmpty<'s, 'env, 'scope, S, F>
+pub struct TasksEmpty<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
@@ -33,7 +33,7 @@ where
     p: PhantomData<&'s &'env &'scope F>,
 }
 
-impl<'s, 'env, 'scope, S, F> WhenAllEmpty<'s, 'env, 'scope, S, F>
+impl<'s, 'env, 'scope, S, F> TasksEmpty<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl<'s, 'env, 'scope, S, F> WhenAll<'s, 'env, 'scope> for WhenAllEmpty<'s, 'env, 'scope, S, F>
+impl<'s, 'env, 'scope, S, F> TypedTaskQueue<'s, 'env, 'scope> for TasksEmpty<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
@@ -56,7 +56,7 @@ where
     F: FnOnce() + Send + 'scope + 'env,
 {
     type PushBack<Elem>
-        = WhenAllSingle<'s, 'env, 'scope, S, Elem>
+        = TasksSingle<'s, 'env, 'scope, S, Elem>
     where
         Elem: FnOnce() + Send + 'scope + 'env;
 
@@ -68,7 +68,7 @@ where
     where
         Elem: FnOnce() + Send + 'scope + 'env,
     {
-        WhenAllSingle::new(self.scope, element)
+        TasksSingle::new(self.scope, element)
     }
 
     fn run_all(self) {}
@@ -76,7 +76,7 @@ where
 
 // single
 
-pub struct WhenAllSingle<'s, 'env, 'scope, S, F>
+pub struct TasksSingle<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
@@ -88,7 +88,7 @@ where
     p: PhantomData<&'s &'env &'scope ()>,
 }
 
-impl<'s, 'env, 'scope, S, F> WhenAllSingle<'s, 'env, 'scope, S, F>
+impl<'s, 'env, 'scope, S, F> TasksSingle<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
@@ -104,7 +104,8 @@ where
     }
 }
 
-impl<'s, 'env, 'scope, S, F> WhenAll<'s, 'env, 'scope> for WhenAllSingle<'s, 'env, 'scope, S, F>
+impl<'s, 'env, 'scope, S, F> TypedTaskQueue<'s, 'env, 'scope>
+    for TasksSingle<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
@@ -112,7 +113,7 @@ where
     F: FnOnce() + Send + 'scope + 'env,
 {
     type PushBack<Elem>
-        = WhenAllPair<'s, 'env, 'scope, S, F, WhenAllSingle<'s, 'env, 'scope, S, Elem>>
+        = TasksMulti<'s, 'env, 'scope, S, F, TasksSingle<'s, 'env, 'scope, S, Elem>>
     where
         Elem: FnOnce() + Send + 'scope + 'env;
 
@@ -124,8 +125,8 @@ where
     where
         Elem: FnOnce() + Send + 'scope + 'env,
     {
-        let back = WhenAllSingle::new(self.scope, element);
-        WhenAllPair::new(self.scope, self.front, back)
+        let back = TasksSingle::new(self.scope, element);
+        TasksMulti::new(self.scope, self.front, back)
     }
 
     fn run_all(self) {
@@ -136,13 +137,13 @@ where
 
 // pair
 
-pub struct WhenAllPair<'s, 'env, 'scope, S, F, B>
+pub struct TasksMulti<'s, 'env, 'scope, S, F, B>
 where
     'scope: 's,
     'env: 'scope + 's,
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
-    B: WhenAll<'s, 'env, 'scope>,
+    B: TypedTaskQueue<'s, 'env, 'scope>,
 {
     scope: S,
     front: F,
@@ -150,13 +151,13 @@ where
     p: PhantomData<&'s &'env &'scope ()>,
 }
 
-impl<'s, 'env, 'scope, S, F, B> WhenAllPair<'s, 'env, 'scope, S, F, B>
+impl<'s, 'env, 'scope, S, F, B> TasksMulti<'s, 'env, 'scope, S, F, B>
 where
     'scope: 's,
     'env: 'scope + 's,
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
-    B: WhenAll<'s, 'env, 'scope>,
+    B: TypedTaskQueue<'s, 'env, 'scope>,
 {
     pub fn new(scope: S, front: F, back: B) -> Self {
         Self {
@@ -168,16 +169,17 @@ where
     }
 }
 
-impl<'s, 'env, 'scope, S, F, B> WhenAll<'s, 'env, 'scope> for WhenAllPair<'s, 'env, 'scope, S, F, B>
+impl<'s, 'env, 'scope, S, F, B> TypedTaskQueue<'s, 'env, 'scope>
+    for TasksMulti<'s, 'env, 'scope, S, F, B>
 where
     'scope: 's,
     'env: 'scope + 's,
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
-    B: WhenAll<'s, 'env, 'scope>,
+    B: TypedTaskQueue<'s, 'env, 'scope>,
 {
     type PushBack<Elem>
-        = WhenAllPair<'s, 'env, 'scope, S, F, B::PushBack<Elem>>
+        = TasksMulti<'s, 'env, 'scope, S, F, B::PushBack<Elem>>
     where
         Elem: FnOnce() + Send + 'scope + 'env;
 
@@ -190,7 +192,7 @@ where
         Elem: FnOnce() + Send + 'scope + 'env,
     {
         let back = self.back.push(element);
-        WhenAllPair::new(self.scope, self.front, back)
+        TasksMulti::new(self.scope, self.front, back)
     }
 
     fn run_all(self) {
@@ -211,40 +213,20 @@ fn abc() {
     let work_for = |n| std::thread::sleep(Duration::from_millis(n));
 
     global_pool().scope(|s| {
-        let t1 = || {
-            work_for(90);
-            println!("t1 completes 4th");
-        };
-
-        let t2 = || println!("t2 completes 1st");
-
-        let t3 = || {
-            work_for(10);
-            println!("t3 completes 2nd");
-        };
-
-        let t4 = || {
-            work_for(50);
-            println!("t4 completes 3rd");
-        };
-
-        let t5 = || {
-            work_for(200);
-            println!("t5 completes 6th");
-        };
-
-        let t6 = || {
-            work_for(150);
-            println!("t6 completes 5th");
-        };
-
         s.tasks()
-            .push(t1)
-            .push(t2)
-            .push(t3)
-            .push(t4)
-            .push(t5)
-            .push(t6)
+            .push(|| {
+                work_for(90);
+                println!("t1 completes 4th");
+            })
+            .push(|| println!("t2 completes 1st"))
+            .push(|| {
+                work_for(10);
+                println!("t3 completes 2nd");
+            })
+            .push(|| {
+                work_for(50);
+                println!("t4 completes 3rd");
+            })
             .run_all();
     });
 

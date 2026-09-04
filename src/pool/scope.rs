@@ -1,4 +1,4 @@
-use crate::pool::when_all::WhenAllEmpty;
+use crate::pool::typed_task_queue::TasksEmpty;
 
 /// A scope within which work can be spawned onto a [`ThreadPool`], bounded by the
 /// lifetimes of the borrowed environment.
@@ -13,7 +13,7 @@ pub trait Scope<'s, 'env, 'scope>: Copy {
         'env: 'scope + 's,
         W: FnOnce() + Send + 'scope + 'env;
 
-    fn tasks(self) -> WhenAllEmpty<'s, 'env, 'scope, Self, impl FnOnce()> {
-        WhenAllEmpty::new(self, || {})
+    fn tasks(self) -> TasksEmpty<'s, 'env, 'scope, Self, impl FnOnce()> {
+        TasksEmpty::new(self, || {})
     }
 }

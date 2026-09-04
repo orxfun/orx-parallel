@@ -4,7 +4,7 @@ mod new_pool;
 mod pool_impl;
 mod scope;
 mod thread_pool;
-mod when_all;
+mod typed_task_queue;
 
 // 1. wasm
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
