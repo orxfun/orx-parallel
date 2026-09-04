@@ -4,6 +4,7 @@ use crate::infallible::par_runner::ParRunnerInfallible;
 use crate::infallible::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 use crate::runner::{DefaultRunner, ParRunner};
+use crate::sizes::Size;
 use crate::{Par, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -173,7 +174,7 @@ where
     // get
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
+        <X::Size as Size>::transformed_size_hint(self.iter.size_hint())
     }
 
     // compute
