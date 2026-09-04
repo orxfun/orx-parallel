@@ -18,11 +18,21 @@ where
     type Back: TaskQueue<'s, 'env, 'scope>;
 
     /// Pushes the `task` and returns the new typed task queue.
+    ///
+    /// Note that the `task`:
+    /// * is not boxed, and
+    /// * it does not immediately start on `push`.
+    ///
+    /// All tasks pushed to the task queue will start in parallel when [`run_all`] is called.
+    ///
+    /// [`run_all`]: Self::run_all
     fn push<T>(self, task: T) -> Self::PushBack<T>
     where
         T: FnOnce() + Send + 'scope + 'env;
 
-    /// Runs all tasks in the queue in parallel.
+    /// Runs all tasks [`push`]ed to the queue in parallel.
+    ///
+    /// [`push`]: Self::push
     ///
     /// # Example
     ///
@@ -48,6 +58,35 @@ where
     ///         })
     ///         .run_all();
     /// });
+    /// ```
+    ///
+    /// Below is a more practical example: computing independent statistics over the same
+    /// input concurrently and collecting the results:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    /// use std::sync::Mutex;
+    ///
+    /// let numbers = vec![4, 8, 15, 16, 23, 42];
+    ///
+    /// let sum = Mutex::new(0);
+    /// let max = Mutex::new(i32::MIN);
+    /// let all_positive = Mutex::new(false);
+    ///
+    /// global_pool().scope(|s| {
+    ///     s.tasks()
+    ///         .push(|| *sum.lock().unwrap() = numbers.iter().sum())
+    ///         .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
+    ///         .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0))
+    ///         .run_all();
+    /// });
+    ///
+    /// println!(
+    ///     "sum={}, max={}, all_positive={}",
+    ///     sum.into_inner().unwrap(),
+    ///     max.into_inner().unwrap(),
+    ///     all_positive.into_inner().unwrap(),
+    /// );
     /// ```
     fn run_all(self);
 }
@@ -135,8 +174,7 @@ where
     }
 }
 
-impl<'s, 'env, 'scope, S, F> TaskQueue<'s, 'env, 'scope>
-    for TasksSingle<'s, 'env, 'scope, S, F>
+impl<'s, 'env, 'scope, S, F> TaskQueue<'s, 'env, 'scope> for TasksSingle<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
