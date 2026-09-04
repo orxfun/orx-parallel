@@ -432,7 +432,7 @@ impl ThreadPool for WasmWebPool {
         s.shared().cv.notify_one();
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
@@ -461,7 +461,7 @@ impl ThreadPool for &WasmWebPool {
         <WasmWebPool as ThreadPool>::run(s, work)
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,

@@ -54,7 +54,7 @@ impl ThreadPool for OncePool {
         self.num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
@@ -83,7 +83,7 @@ impl ThreadPool for &OncePool {
         self.num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,
@@ -112,7 +112,7 @@ impl ThreadPool for &mut OncePool {
         self.num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s std::thread::Scope<'s, 'env>) + Send,

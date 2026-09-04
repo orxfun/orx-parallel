@@ -60,7 +60,7 @@ pub trait ThreadPool {
         W: Fn() + Send + 'scope + 'env;
 
     /// Executes the scoped computation `f`.
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(Self::ScopeRef<'s, 'env, 'scope>) + Send;
@@ -133,4 +133,17 @@ pub fn max_num_threads_for_computation(
     };
 
     core::cmp::min(req, ava).into()
+}
+
+#[cfg(test)]
+#[test]
+fn abc() {
+    use crate::pool::global_pool;
+
+    let mut pool1 = global_pool();
+    let pool = &mut pool1;
+
+    pool.scoped_computation(|s| {
+        //
+    });
 }

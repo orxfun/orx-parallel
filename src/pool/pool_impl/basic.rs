@@ -295,7 +295,7 @@ impl ThreadPool for BasicPool {
         self.max_num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
@@ -331,7 +331,7 @@ impl ThreadPool for &BasicPool {
         self.max_num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
@@ -360,7 +360,7 @@ impl ThreadPool for &mut BasicPool {
         self.max_num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
