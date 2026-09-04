@@ -20,12 +20,12 @@ impl crate::pool::ThreadPool for ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,
     {
-        self.scope(f)
+        rayon_core::ThreadPool::scope(self, f)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
@@ -40,12 +40,12 @@ impl crate::pool::ThreadPool for &rayon_core::ThreadPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s rayon_core::Scope<'scope>) + Send,
     {
-        self.scope(f)
+        rayon_core::ThreadPool::scope(self, f)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {

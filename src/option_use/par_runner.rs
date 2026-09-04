@@ -57,7 +57,7 @@ pub trait ParRunnerUseOpt: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
                         s.run(move || {
@@ -121,7 +121,7 @@ pub trait ParRunnerUseOpt: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
                         s.run(move || {
@@ -194,7 +194,7 @@ pub trait ParRunnerUseOpt: ParRunner {
 
                 {
                     let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                    self.pool_mut().scoped_computation(move |s| {
+                    self.pool_mut().scope(move |s| {
                         while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                             spawned += 1;
                             s.run(move || {
@@ -259,7 +259,7 @@ pub trait ParRunnerUseOpt: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
                         s.run(move || {
@@ -322,7 +322,7 @@ pub trait ParRunnerUseOpt: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
                         s.run(move || {

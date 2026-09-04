@@ -54,7 +54,7 @@ pub trait ThreadPool {
         'env: 'scope + 's;
 
     /// Executes the scoped computation `f`.
-    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(Self::ScopeRef<'s, 'env, 'scope>) + Send;
@@ -137,7 +137,7 @@ fn abc() {
     let pool = global_pool();
     // let pool = &mut pool1;
 
-    pool.scoped_computation(|s| {
+    pool.scope(|s| {
         //
     });
 }

@@ -69,7 +69,7 @@ Most terminal operations follow the same shape. The exact code lives in modules 
 2. The execution layer calls `runner.nt_state(params, iter.size_hint(), computation_max_nt)`.
 3. `nt_state` asks the pool for the maximum usable thread count with `pool.max_num_threads_for_computation(params, size_hint)`.
 4. `nt_state` calls `new_state(...)` to create one shared state value for this computation.
-5. The execution layer enters `pool_mut().scoped_computation(...)`.
+5. The execution layer enters `pool_mut().scope(...)`.
 6. Inside that scope, `do_spawn_new(spawned, &state)` is called sequentially until it returns `None`.
 7. For every returned thread index, the pool starts one scoped worker task.
 8. Each worker calls `begin_thread(&state, th_idx)` once.

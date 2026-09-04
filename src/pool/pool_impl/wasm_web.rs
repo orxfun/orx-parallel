@@ -357,7 +357,7 @@ impl WasmWebPool {
         Self { max_num_threads }
     }
 
-    fn scoped_computation_impl<'env, 'scope, F>(&'env self, f: F)
+    fn scope_impl<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
@@ -435,12 +435,12 @@ impl ThreadPool for WasmWebPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        self.scoped_computation_impl(f)
+        self.scope_impl(f)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
@@ -455,12 +455,12 @@ impl ThreadPool for &WasmWebPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        (*self).scoped_computation_impl(f)
+        (*self).scope_impl(f)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {

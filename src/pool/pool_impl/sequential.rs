@@ -41,7 +41,7 @@ impl ThreadPool for SequentialPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(SequentialScope) + Send,
@@ -61,7 +61,7 @@ impl ThreadPool for &SequentialPool {
         'scope: 's,
         'env: 'scope + 's;
 
-    fn scoped_computation<'env, 'scope, F>(&'env self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(SequentialScope) + Send,
