@@ -202,6 +202,29 @@ let sum = (0..1000)
 
 Please see [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) for detailed information.
 
+**Ad-hoc Parallel Computation:**
+
+The thread pool itself is also exposed directly through [`Pool::global()`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.Pool.html#method.global).
+
+```rust
+use orx_parallel::*;
+
+Pool::global().scope(|s| {
+    s.run(|| println!("task A"));
+    s.run(|| println!("task B"));
+});
+
+// or
+
+let tasks = Tasks::new()
+    .push(|| println!("task A"))
+    .push(|| println!("task B"));
+
+Pool::global().run_all(tasks);
+```
+
+Note that this bypasses the concurrent iterator and runner strategy optimizations that parallel iterators rely on, so it is best suited for a few large, independent tasks rather than many small ones.
+
 ### Sequential Execution
 
 Every parallel iterator can also run sequentially on the calling thread:

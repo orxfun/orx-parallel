@@ -80,13 +80,27 @@ impl Pool {
     ///
     /// ```rust
     /// use orx_parallel::*;
-    /// use orx_parallel::pools::tasks::TaskQueue;
+    /// use std::sync::Mutex;
+    ///
+    /// let numbers = [4, 8, 15, 16, 23, 42];
+    ///
+    /// let sum = Mutex::new(0);
+    /// let max = Mutex::new(i32::MIN);
+    /// let all_positive = Mutex::new(false);
     ///
     /// let tasks = Tasks::new()
-    ///     .push(|| println!("task A"))
-    ///     .push(|| println!("task B"));
+    ///     .push(|| *sum.lock().unwrap() = numbers.iter().sum())
+    ///     .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
+    ///     .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0));
     ///
     /// Pool::global().run_all(tasks);
+    ///
+    /// println!(
+    ///     "sum={}, max={}, all_positive={}",
+    ///     sum.into_inner().unwrap(),
+    ///     max.into_inner().unwrap(),
+    ///     all_positive.into_inner().unwrap(),
+    /// );
     /// ```
     ///
     /// [`scope`]: crate::ThreadPool::scope

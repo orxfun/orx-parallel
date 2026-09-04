@@ -82,7 +82,6 @@ pub trait ThreadPool {
     ///
     /// ```rust
     /// use orx_parallel::*;
-    /// use orx_parallel::pools::tasks::TaskQueue;
     ///
     /// let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
     ///
@@ -115,7 +114,6 @@ pub trait ThreadPool {
     ///
     /// ```rust
     /// use orx_parallel::*;
-    /// use orx_parallel::pools::tasks::TaskQueue;
     /// use std::sync::Mutex;
     ///
     /// let numbers = [4, 8, 15, 16, 23, 42];
