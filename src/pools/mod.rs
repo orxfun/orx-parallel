@@ -3,7 +3,7 @@ mod global_pool;
 mod pool;
 mod pool_impl;
 mod scope;
-pub mod tasks;
+mod tasks;
 mod thread_pool;
 
 // 1. wasm
