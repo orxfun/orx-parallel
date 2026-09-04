@@ -32,7 +32,7 @@ mod result;
 mod result_use;
 mod results;
 mod runner;
-pub mod sizes;
+mod sizes;
 mod sort;
 mod use_var;
 
