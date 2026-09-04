@@ -1,4 +1,5 @@
 use crate::infallible_use::XapUse;
+use crate::infallible_use::XapUseIter;
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_core::ParUseCore;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
@@ -253,5 +254,21 @@ where
 {
     fn len(&self) -> usize {
         self.size_hint().0
+    }
+}
+
+impl<U, I, X, R> IntoIterator for ParUseIter<U, I, X, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
+    type Item = X::O;
+
+    type IntoIter = XapUseIter<U, I::SequentialIter, X>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapUseIter::new(self.using, self.iter.into_seq_iter(), self.xap)
     }
 }

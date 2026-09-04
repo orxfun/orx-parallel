@@ -227,14 +227,3 @@ where
         XapIter::new(self.iter.into_seq_iter(), self.xap)
     }
 }
-
-// impl<I, X, R> ExactSizePar for ParIter<I, X, R>
-// where
-//     I: ConcurrentIter + ExactSizeConcurrentIter,
-//     X: Xap<I = I::Item, Size = One>,
-//     R: ParRunner,
-// {
-//     fn len(&self) -> usize {
-//         self.size_hint().0
-//     }
-// }
