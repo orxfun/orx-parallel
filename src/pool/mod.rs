@@ -1,8 +1,8 @@
 mod env;
 mod global_pool;
 mod new_pool;
-mod par_thread_pool;
 mod pool_impl;
+mod thread_pool;
 
 // 1. wasm
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
@@ -46,4 +46,4 @@ pub use pool_impl::SequentialPool;
 
 pub use global_pool::{DefaultPool, global_pool};
 pub use new_pool::Pool;
-pub use par_thread_pool::{ParThreadPool, max_num_threads_for_computation};
+pub use thread_pool::{ParThreadPool, max_num_threads_for_computation};
