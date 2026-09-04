@@ -3,7 +3,6 @@ mod global_pool;
 mod pool;
 mod pool_impl;
 mod scope;
-mod task_queue;
 pub mod tasks;
 mod thread_pool;
 
@@ -51,6 +50,5 @@ pub use global_pool::DefaultPool;
 pub(crate) use global_pool::global_pool;
 pub use pool::Pool;
 pub use scope::Scope;
-pub use task_queue::TaskQueue;
 pub use tasks::Tasks;
 pub use thread_pool::{ThreadPool, max_num_threads_for_computation};
