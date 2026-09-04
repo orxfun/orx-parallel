@@ -1,5 +1,4 @@
-use crate::{Par, infallible::Xap, sizes::One};
-use orx_concurrent_iter::ExactSizeConcurrentIter;
+use crate::Par;
 
 /// Parallel iterator with an exact number of output items.
 ///
@@ -40,16 +39,5 @@ pub trait ExactSizePar: Par {
     /// ```
     fn is_empty(&self) -> bool {
         self.len() == 0
-    }
-}
-
-impl<P> ExactSizePar for P
-where
-    P: Par,
-    P::Input: ExactSizeConcurrentIter,
-    P::Xap: Xap<Size = One>,
-{
-    fn len(&self) -> usize {
-        self.size_hint().0
     }
 }
