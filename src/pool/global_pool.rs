@@ -254,3 +254,30 @@ pub fn global_pool() -> DefaultPool {
 pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
+
+pub trait Do {
+    fn run(self);
+}
+
+impl<X: FnOnce()> Do for X {
+    fn run(self) {
+        (self)()
+    }
+}
+
+orx_meta::define_queue!(
+    elements => [ Do ];
+    queue => [ Q; Single, Pair ];
+);
+
+impl<F: Do> Do for Single<F> {
+    fn run(self) {
+        todo!()
+    }
+}
+
+impl<F: Do, B: Q> Do for Pair<F, B> {
+    fn run(self) {
+        todo!()
+    }
+}

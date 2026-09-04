@@ -2,7 +2,7 @@
 /// lifetimes of the borrowed environment.
 ///
 /// [`ThreadPool`]: crate::ThreadPool
-pub trait Scope<'s, 'env, 'scope> {
+pub trait Scope<'s, 'env, 'scope>: Copy {
     /// Runs `work` within this scope on a worker thread of the pool this
     /// scope is created from.
     fn run<W>(&self, work: W)

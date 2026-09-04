@@ -21,6 +21,7 @@ use core::num::NonZeroUsize;
 #[derive(Default, Clone, Copy, Debug)]
 pub struct SequentialPool;
 
+#[derive(Clone, Copy)]
 pub struct SequentialScope;
 
 impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for SequentialScope {
