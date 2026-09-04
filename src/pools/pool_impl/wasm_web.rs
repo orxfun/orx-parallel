@@ -5,8 +5,7 @@ compile_error!(
 
 use crate::NumThreads;
 use crate::parameters::non_zero_or_one;
-use crate::pool::ThreadPool;
-use crate::pool::scope::Scope;
+use crate::{Scope, ThreadPool};
 #[cfg(target_feature = "atomics")]
 use alloc::format;
 use core::num::NonZeroUsize;
@@ -30,7 +29,7 @@ static WASM_WEB3_THREAD_POOL_STATE: AtomicU8 = AtomicU8::new(WASM_WEB3_THREAD_PO
 static WASM_WEB3_THREAD_POOL_NUM_THREADS: AtomicUsize = AtomicUsize::new(0);
 static WASM_WEB3_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 
-#[wasm_bindgen(module = "/src/pool/pool_impl/wasm_web_start_workers.js")]
+#[wasm_bindgen(module = "/src/pools/pool_impl/wasm_web_start_workers.js")]
 extern "C" {
     #[wasm_bindgen(js_name = startWorkers)]
     fn start_workers(module: JsValue, memory: JsValue, num_threads: usize) -> Promise;
@@ -263,7 +262,7 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
 pub fn init_wasm_thread_pool(num_threads: usize) -> js_sys::Promise {
     #[allow(clippy::missing_panics_doc)]
     let num_threads = match num_threads {
-        0 => crate::pool::env::max_num_threads_by_env_and_resource(),
+        0 => crate::pools::env::max_num_threads_by_env_and_resource(),
         n => non_zero_or_one(n),
     };
 

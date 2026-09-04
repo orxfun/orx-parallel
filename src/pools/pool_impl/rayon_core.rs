@@ -1,4 +1,4 @@
-use crate::{parameters::non_zero_or_one, pool::scope::Scope};
+use crate::{Scope, parameters::non_zero_or_one};
 use core::num::NonZeroUsize;
 use rayon_core::ThreadPool;
 
@@ -13,7 +13,7 @@ impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s rayon_core::Scope<'scope>
     }
 }
 
-impl crate::pool::ThreadPool for ThreadPool {
+impl crate::ThreadPool for ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s rayon_core::Scope<'scope>
     where
@@ -33,7 +33,7 @@ impl crate::pool::ThreadPool for ThreadPool {
     }
 }
 
-impl crate::pool::ThreadPool for &rayon_core::ThreadPool {
+impl crate::ThreadPool for &rayon_core::ThreadPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s rayon_core::Scope<'scope>
     where
@@ -60,7 +60,9 @@ impl crate::pool::ThreadPool for &rayon_core::ThreadPool {
     not(all(feature = "wasm", target_arch = "wasm32")),
 ))]
 pub fn build_default_rayon_thread_pool() -> rayon_core::ThreadPool {
-    let num_threads = crate::pool::env::max_num_threads_by_env_and_resource();
+    use crate::pools::env::max_num_threads_by_env_and_resource;
+
+    let num_threads = max_num_threads_by_env_and_resource();
     rayon_core::ThreadPoolBuilder::new()
         .num_threads(num_threads.into())
         .build()
