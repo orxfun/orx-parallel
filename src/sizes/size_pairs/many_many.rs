@@ -15,6 +15,10 @@ impl SizePair for ManyMany {
 
     type ThenMany = ManyMany;
 
+    fn transformed_size_hint(_: (usize, Option<usize>)) -> (usize, Option<usize>) {
+        (0, None)
+    }
+
     // option
 
     type XapOptResult<M, X1, X2>

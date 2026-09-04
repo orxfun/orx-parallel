@@ -11,6 +11,8 @@ pub trait SizePair: Clone + Copy + Send + Default {
 
     type ThenMany: SizePair<S1 = Self::S1, S2 = Many>;
 
+    fn transformed_size_hint(size_hint: (usize, Option<usize>)) -> (usize, Option<usize>);
+
     // option
 
     type XapOptResult<M, X1, X2>: IntoIterator<Item = Option<X2::O>>
