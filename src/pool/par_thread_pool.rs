@@ -1,4 +1,4 @@
-use crate::parameters::{NumThreads, Params};
+use crate::parameters::{NumThreads, Params, non_zero_or_one};
 use core::num::NonZeroUsize;
 
 /// Abstraction for parallel execution environments and thread pool management.
@@ -74,67 +74,63 @@ pub trait ParThreadPool {
     ///
     /// Individual computations can further limit this via `.num_threads()` method.
     fn max_num_threads(&self) -> NonZeroUsize;
+}
 
-    // provided
+/// Calculates the actual thread count for a computation considering multiple constraints.
+///
+/// This method implements the core thread count decision logic by combining:
+///
+/// 1. **Pool constraint** (`self.max_num_threads()`)
+///    - The thread pool's maximum capacity
+///    - Already includes environment variable constraints
+///
+/// 2. **Computation constraint** (`params.num_threads`)
+///    - Per-computation request from `.num_threads()` method
+///    - Can be `NumThreads::Auto` (use all available)
+///    - Or `NumThreads::Max(n)` (hard limit)
+///
+/// 3. **Input size constraint** (known upper bound from `size_hint.1`)
+///    - Cannot spawn more threads than input elements
+///    - When input size is unknown (None), this constraint doesn't apply
+///
+/// # Returns
+///
+/// The minimum of all constraints, representing the actual thread count to use.
+///
+/// # Decision Logic
+///
+/// ```text
+/// let available = self.max_num_threads()           // Pool limit
+///
+/// let requested = match (size_hint.1, params.num_threads) {
+///     (Some(len), Auto) => min(len, MaxUsize),     // Cap by input size
+///     (Some(len), Max(n)) => min(len, n),          // Cap by input size and request
+///     (None, Auto) => MaxUsize,                    // No constraints
+///     (None, Max(n)) => n,                         // Only respect request
+/// };
+///
+/// return min(requested, available)                 // Final decision
+/// ```
+///
+/// # Parameters
+///
+/// - `params` - Contains `.num_threads` setting from `.num_threads()` method
+/// - `size_hint` - Tuple of (lower_bound, Option<upper_bound>) for input size
+///   - If upper_bound is `None`, input size is unknown
+///   - If upper_bound is `Some(n)`, input has at most n elements
+pub fn max_num_threads_for_computation(
+    pool: &impl ParThreadPool,
+    params: Params,
+    size_hint: (usize, Option<usize>),
+) -> usize {
+    let ava = pool.max_num_threads();
 
-    /// Calculates the actual thread count for a computation considering multiple constraints.
-    ///
-    /// This method implements the core thread count decision logic by combining:
-    ///
-    /// 1. **Pool constraint** (`self.max_num_threads()`)
-    ///    - The thread pool's maximum capacity
-    ///    - Already includes environment variable constraints
-    ///
-    /// 2. **Computation constraint** (`params.num_threads`)
-    ///    - Per-computation request from `.num_threads()` method
-    ///    - Can be `NumThreads::Auto` (use all available)
-    ///    - Or `NumThreads::Max(n)` (hard limit)
-    ///
-    /// 3. **Input size constraint** (known upper bound from `size_hint.1`)
-    ///    - Cannot spawn more threads than input elements
-    ///    - When input size is unknown (None), this constraint doesn't apply
-    ///
-    /// # Returns
-    ///
-    /// The minimum of all constraints, representing the actual thread count to use.
-    ///
-    /// # Decision Logic
-    ///
-    /// ```text
-    /// let available = self.max_num_threads()           // Pool limit
-    ///
-    /// let requested = match (size_hint.1, params.num_threads) {
-    ///     (Some(len), Auto) => min(len, MaxUsize),     // Cap by input size
-    ///     (Some(len), Max(n)) => min(len, n),          // Cap by input size and request
-    ///     (None, Auto) => MaxUsize,                    // No constraints
-    ///     (None, Max(n)) => n,                         // Only respect request
-    /// };
-    ///
-    /// return min(requested, available)                 // Final decision
-    /// ```
-    ///
-    /// # Parameters
-    ///
-    /// - `params` - Contains `.num_threads` setting from `.num_threads()` method
-    /// - `size_hint` - Tuple of (lower_bound, Option<upper_bound>) for input size
-    ///   - If upper_bound is `None`, input size is unknown
-    ///   - If upper_bound is `Some(n)`, input has at most n elements
-    fn max_num_threads_for_computation(
-        &self,
-        params: Params,
-        size_hint: (usize, Option<usize>),
-    ) -> usize {
-        let ava = self.max_num_threads();
+    let req = match (size_hint.1, params.num_threads) {
+        (Some(len_ub), NumThreads::Auto) => non_zero_or_one(len_ub),
+        (Some(len_ub), NumThreads::Max(nt)) => non_zero_or_one(len_ub).min(nt),
+        (None, NumThreads::Auto) => NonZeroUsize::MAX,
+        (None, NumThreads::Max(nt)) => nt,
+    };
 
-        let req = match (size_hint.1, params.num_threads) {
-            (Some(len_ub), NumThreads::Auto) => NonZeroUsize::new(len_ub.max(1)).expect(">0"),
-            (Some(len_ub), NumThreads::Max(nt)) => {
-                NonZeroUsize::new(len_ub.max(1)).expect(">0").min(nt)
-            }
-            (None, NumThreads::Auto) => NonZeroUsize::MAX,
-            (None, NumThreads::Max(nt)) => nt,
-        };
-
-        core::cmp::min(req, ava).into()
-    }
+    core::cmp::min(req, ava).into()
 }

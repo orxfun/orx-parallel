@@ -46,4 +46,4 @@ pub use pool_impl::SequentialPool;
 
 pub use global_pool::{DefaultPool, global_pool};
 pub use new_pool::Pool;
-pub use par_thread_pool::ParThreadPool;
+pub use par_thread_pool::{ParThreadPool, max_num_threads_for_computation};
