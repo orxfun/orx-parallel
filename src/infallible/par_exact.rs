@@ -1,7 +1,4 @@
-use crate::Par;
-
-/// Parallel iterator with an exact number of output items.
-///
+/// Parallel iterator with an exact number of output items.///
 /// This trait is implemented when the input is exact-sized and the pipeline
 /// applies a one-to-one transformation.
 ///
@@ -14,7 +11,7 @@ use crate::Par;
 /// assert_eq!(values.len(), 4);
 /// assert!(!values.is_empty());
 /// ```
-pub trait ExactSizePar: Par {
+pub trait ExactSizePar {
     /// Returns the exact number of output items.
     ///
     /// # Examples

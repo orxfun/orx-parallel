@@ -212,13 +212,30 @@ where
     }
 }
 
-impl<I, X, R> ExactSizePar for ParIter<I, X, R>
+impl<I, X, R> IntoIterator for ParIter<I, X, R>
 where
-    I: ConcurrentIter + ExactSizeConcurrentIter,
-    X: Xap<I = I::Item, Size = One>,
+    I: ConcurrentIter,
+    X: Xap<I = I::Item>,
     R: ParRunner,
 {
-    fn len(&self) -> usize {
-        self.size_hint().0
+    type Item = X::O;
+
+    type IntoIter = alloc::vec::IntoIter<X::O>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let a: I::SequentialIter = self.iter.into_seq_iter();
+        let b = a.flat_map(|i| self.xap.xap(i));
+        todo!()
     }
 }
+
+// impl<I, X, R> ExactSizePar for ParIter<I, X, R>
+// where
+//     I: ConcurrentIter + ExactSizeConcurrentIter,
+//     X: Xap<I = I::Item, Size = One>,
+//     R: ParRunner,
+// {
+//     fn len(&self) -> usize {
+//         self.size_hint().0
+//     }
+// }
