@@ -45,7 +45,7 @@ impl OncePool {
 }
 
 impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s std::thread::Scope<'s, 'env> {
-    fn run<W>(&self, work: W)
+    fn run<W>(self, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,

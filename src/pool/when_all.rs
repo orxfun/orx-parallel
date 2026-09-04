@@ -18,7 +18,7 @@ where
     where
         Elem: FnOnce() + Send + 'scope + 'env;
 
-    fn run(self);
+    fn run_all(self);
 }
 
 // empty
@@ -71,7 +71,7 @@ where
         WhenAllSingle::new(self.scope, element)
     }
 
-    fn run(self) {}
+    fn run_all(self) {}
 }
 
 // single
@@ -128,7 +128,7 @@ where
         WhenAllPair::new(self.scope, self.front, back)
     }
 
-    fn run(self) {
+    fn run_all(self) {
         let (scope, work) = (self.scope, self.front);
         scope.run(work);
     }
@@ -193,10 +193,10 @@ where
         WhenAllPair::new(self.scope, self.front, back)
     }
 
-    fn run(self) {
+    fn run_all(self) {
         let (scope, work, remaining) = (self.scope, self.front, self.back);
         scope.run(work);
-        remaining.run();
+        remaining.run_all();
     }
 }
 
@@ -228,7 +228,24 @@ fn abc() {
             println!("t4 completes 3rd");
         };
 
-        WhenAllSingle::new(s, t1).push(t2).push(t3).push(t4).run();
+        let t5 = || {
+            work_for(200);
+            println!("t5 completes 6th");
+        };
+
+        let t6 = || {
+            work_for(150);
+            println!("t6 completes 5th");
+        };
+
+        s.tasks()
+            .push(t1)
+            .push(t2)
+            .push(t3)
+            .push(t4)
+            .push(t5)
+            .push(t6)
+            .run_all();
     });
 
     assert_eq!(global_pool().max_num_threads(), NonZeroUsize::MAX);

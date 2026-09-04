@@ -3,7 +3,7 @@ use core::num::NonZeroUsize;
 use rayon_core::ThreadPool;
 
 impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s rayon_core::Scope<'scope> {
-    fn run<W>(&self, work: W)
+    fn run<W>(self, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,

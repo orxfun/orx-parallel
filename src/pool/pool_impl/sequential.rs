@@ -25,7 +25,7 @@ pub struct SequentialPool;
 pub struct SequentialScope;
 
 impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for SequentialScope {
-    fn run<W>(&self, work: W)
+    fn run<W>(self, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
