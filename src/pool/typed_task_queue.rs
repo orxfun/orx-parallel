@@ -1,24 +1,54 @@
 use crate::Scope;
 use core::marker::PhantomData;
 
-pub trait TypedTaskQueue<'s, 'env, 'scope>
+pub trait TaskQueue<'s, 'env, 'scope>
 where
     'scope: 's,
     'env: 'scope + 's,
 {
     /// Type of the typed task queue obtained when the new task is pushed.
-    type PushBack<T>: TypedTaskQueue<'s, 'env, 'scope>
+    type PushBack<T>: TaskQueue<'s, 'env, 'scope>
     where
         T: FnOnce() + Send + 'scope + 'env;
 
+    /// Task in the front of the queue.
     type Front: FnOnce() + Send + 'scope + 'env;
 
-    type Back: TypedTaskQueue<'s, 'env, 'scope>;
+    /// Queue obtained when front of the queue is popped.
+    type Back: TaskQueue<'s, 'env, 'scope>;
 
-    fn push<T>(self, element: T) -> Self::PushBack<T>
+    /// Pushes the `task` and returns the new typed task queue.
+    fn push<T>(self, task: T) -> Self::PushBack<T>
     where
         T: FnOnce() + Send + 'scope + 'env;
 
+    /// Runs all tasks in the queue in parallel.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
+    ///
+    /// global_pool().scope(|s| {
+    ///     s.tasks()
+    ///         .push(|| {
+    ///             work_for(90);
+    ///             println!("t1 completes 4th");
+    ///         })
+    ///         .push(|| println!("t2 completes 1st"))
+    ///         .push(|| {
+    ///             work_for(10);
+    ///             println!("t3 completes 2nd");
+    ///         })
+    ///         .push(|| {
+    ///             work_for(50);
+    ///             println!("t4 completes 3rd");
+    ///         })
+    ///         .run_all();
+    /// });
+    /// ```
     fn run_all(self);
 }
 
@@ -49,7 +79,7 @@ where
     }
 }
 
-impl<'s, 'env, 'scope, S, F> TypedTaskQueue<'s, 'env, 'scope> for TasksEmpty<'s, 'env, 'scope, S, F>
+impl<'s, 'env, 'scope, S, F> TaskQueue<'s, 'env, 'scope> for TasksEmpty<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
     'env: 'scope + 's,
@@ -65,11 +95,11 @@ where
 
     type Back = Self;
 
-    fn push<T>(self, element: T) -> Self::PushBack<T>
+    fn push<T>(self, task: T) -> Self::PushBack<T>
     where
         T: FnOnce() + Send + 'scope + 'env,
     {
-        TasksSingle::new(self.scope, element)
+        TasksSingle::new(self.scope, task)
     }
 
     fn run_all(self) {}
@@ -105,7 +135,7 @@ where
     }
 }
 
-impl<'s, 'env, 'scope, S, F> TypedTaskQueue<'s, 'env, 'scope>
+impl<'s, 'env, 'scope, S, F> TaskQueue<'s, 'env, 'scope>
     for TasksSingle<'s, 'env, 'scope, S, F>
 where
     'scope: 's,
@@ -122,11 +152,11 @@ where
 
     type Back = Self;
 
-    fn push<T>(self, element: T) -> Self::PushBack<T>
+    fn push<T>(self, task: T) -> Self::PushBack<T>
     where
         T: FnOnce() + Send + 'scope + 'env,
     {
-        let back = TasksSingle::new(self.scope, element);
+        let back = TasksSingle::new(self.scope, task);
         TasksMulti::new(self.scope, self.front, back)
     }
 
@@ -144,7 +174,7 @@ where
     'env: 'scope + 's,
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
-    B: TypedTaskQueue<'s, 'env, 'scope>,
+    B: TaskQueue<'s, 'env, 'scope>,
 {
     scope: S,
     front: F,
@@ -158,7 +188,7 @@ where
     'env: 'scope + 's,
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
-    B: TypedTaskQueue<'s, 'env, 'scope>,
+    B: TaskQueue<'s, 'env, 'scope>,
 {
     pub fn new(scope: S, front: F, back: B) -> Self {
         Self {
@@ -170,14 +200,14 @@ where
     }
 }
 
-impl<'s, 'env, 'scope, S, F, B> TypedTaskQueue<'s, 'env, 'scope>
+impl<'s, 'env, 'scope, S, F, B> TaskQueue<'s, 'env, 'scope>
     for TasksMulti<'s, 'env, 'scope, S, F, B>
 where
     'scope: 's,
     'env: 'scope + 's,
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
-    B: TypedTaskQueue<'s, 'env, 'scope>,
+    B: TaskQueue<'s, 'env, 'scope>,
 {
     type PushBack<T>
         = TasksMulti<'s, 'env, 'scope, S, F, B::PushBack<T>>
@@ -188,11 +218,11 @@ where
 
     type Back = B;
 
-    fn push<T>(self, element: T) -> Self::PushBack<T>
+    fn push<T>(self, task: T) -> Self::PushBack<T>
     where
         T: FnOnce() + Send + 'scope + 'env,
     {
-        let back = self.back.push(element);
+        let back = self.back.push(task);
         TasksMulti::new(self.scope, self.front, back)
     }
 
@@ -211,7 +241,7 @@ fn abc() {
     use core::time::Duration;
     use std::*;
 
-    let work_for = |n| std::thread::sleep(Duration::from_millis(n));
+    let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
 
     global_pool().scope(|s| {
         s.tasks()
