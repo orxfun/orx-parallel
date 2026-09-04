@@ -46,6 +46,6 @@ impl ParThreadPool for SequentialPool {
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
-        NonZeroUsize::new(1).expect(">0")
+        NonZeroUsize::MIN
     }
 }

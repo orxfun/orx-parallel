@@ -4,6 +4,7 @@ compile_error!(
 );
 
 use crate::NumThreads;
+use crate::parameters::non_zero_or_one;
 use crate::pool::ParThreadPool;
 #[cfg(target_feature = "atomics")]
 use alloc::format;
@@ -262,7 +263,7 @@ pub fn init_wasm_thread_pool(num_threads: usize) -> js_sys::Promise {
     #[allow(clippy::missing_panics_doc)]
     let num_threads = match num_threads {
         0 => crate::pool::env::max_num_threads_by_env_and_resource(),
-        n => NonZeroUsize::new(n).expect(">0"),
+        n => non_zero_or_one(n),
     };
 
     match WASM_WEB3_THREAD_POOL_STATE.compare_exchange(

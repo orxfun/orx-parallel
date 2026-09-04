@@ -1,3 +1,4 @@
+use crate::parameters::non_zero_or_one;
 use crate::pool::ParThreadPool;
 use core::num::NonZeroUsize;
 use rayon_core::ThreadPool;
@@ -27,7 +28,7 @@ impl ParThreadPool for ThreadPool {
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
-        NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
+        non_zero_or_one(self.current_num_threads())
     }
 }
 
@@ -56,7 +57,7 @@ impl ParThreadPool for &rayon_core::ThreadPool {
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
-        NonZeroUsize::new(self.current_num_threads().max(1)).expect(">0")
+        non_zero_or_one(self.current_num_threads())
     }
 }
 
