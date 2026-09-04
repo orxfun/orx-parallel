@@ -1,6 +1,6 @@
 use crate::ThreadPool;
-use crate::pool::DefaultPool;
-use crate::pool::global_pool;
+use crate::pools::DefaultPool;
+use crate::pools::global_pool;
 #[cfg(feature = "std")]
 use crate::runner::runner_variants::AdaptiveChunkRunner;
 use crate::runner::runner_variants::FixedChunkRunner;

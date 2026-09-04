@@ -27,7 +27,7 @@ mod option;
 mod option_use;
 mod parameters;
 /// Thread pool module
-pub mod pool;
+pub mod pools;
 mod result;
 mod result_use;
 mod results;
@@ -48,13 +48,13 @@ pub use option::ParOption;
 pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
-pub use pool::WasmWebPool;
+pub use pools::WasmWebPool;
 
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
-pub use pool::wasm_web_runtime_info;
+pub use pools::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
-pub use pool::wasm_web_start_worker;
-pub use pool::{Pool, Scope, TaskQueue, ThreadPool};
+pub use pools::wasm_web_start_worker;
+pub use pools::{Pool, Scope, TaskQueue, ThreadPool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
 pub use runner::Runner;
@@ -62,7 +62,7 @@ pub use use_var::{Use, UseVec};
 
 /// Initializes the browser's shared wasm thread pool.
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
-pub use pool::init_wasm_parallel_runtime;
+pub use pools::init_wasm_parallel_runtime;
 
 // experimental
 #[cfg(feature = "experimental")]

@@ -1,5 +1,5 @@
 use crate::parameters::Params;
-use crate::pool::{ThreadPool, max_num_threads_for_computation};
+use crate::pools::{ThreadPool, max_num_threads_for_computation};
 #[cfg(feature = "std")]
 use crate::runner::runner_variants::WithDiagnostics;
 use orx_concurrent_iter::ConcurrentIter;

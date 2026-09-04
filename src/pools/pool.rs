@@ -1,8 +1,8 @@
 #[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
 #[cfg(feature = "std")]
-use crate::pool::pool_impl::{BasicPool, OncePool};
-use crate::pool::{DefaultPool, global_pool};
+use crate::pools::pool_impl::{BasicPool, OncePool};
+use crate::pools::{DefaultPool, global_pool};
 
 /// Factory for creating thread pools with different characteristics.
 ///

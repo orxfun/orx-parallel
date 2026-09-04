@@ -1,6 +1,6 @@
 mod env;
 mod global_pool;
-mod new_pool;
+mod pool;
 mod pool_impl;
 mod scope;
 mod task_queue;
@@ -47,7 +47,7 @@ pub use pool_impl::OncePool;
 pub use pool_impl::SequentialPool;
 
 pub use global_pool::{DefaultPool, global_pool};
-pub use new_pool::Pool;
+pub use pool::Pool;
 pub use scope::Scope;
 pub use task_queue::TaskQueue;
 pub use thread_pool::{ThreadPool, max_num_threads_for_computation};

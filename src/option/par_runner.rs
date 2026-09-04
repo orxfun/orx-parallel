@@ -1,7 +1,7 @@
 use crate::ParExtend;
 use crate::infallible::Xap;
 use crate::option::thread_execution as th;
-use crate::pool::{Scope, ThreadPool};
+use crate::pools::{Scope, ThreadPool};
 use crate::results::{Val, ValIdx};
 use crate::sizes::SizePair;
 use crate::{parameters::Params, runner::ParRunner};

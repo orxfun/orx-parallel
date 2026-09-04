@@ -3,7 +3,7 @@
 use crate::ParExtend;
 use crate::infallible_use::XapUse;
 use crate::option_use::thread_execution as th;
-use crate::pool::{Scope, ThreadPool};
+use crate::pools::{Scope, ThreadPool};
 use crate::results::{Val, ValIdx};
 use crate::sizes::SizePair;
 use crate::use_var::Use;

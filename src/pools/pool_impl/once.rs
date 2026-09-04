@@ -1,6 +1,6 @@
 use crate::NumThreads;
-use crate::pool::scope::Scope;
-use crate::pool::{ThreadPool, env::max_num_threads_by_env_and_resource};
+use crate::pools::scope::Scope;
+use crate::pools::{ThreadPool, env::max_num_threads_by_env_and_resource};
 use core::num::NonZeroUsize;
 
 /// A _one-time-use_ thread pool.

@@ -1,7 +1,7 @@
 use crate::NumThreads;
-use crate::pool::ThreadPool;
-use crate::pool::env::max_num_threads_by_env_and_resource;
-use crate::pool::scope::Scope;
+use crate::pools::ThreadPool;
+use crate::pools::env::max_num_threads_by_env_and_resource;
+use crate::pools::scope::Scope;
 use core::num::NonZeroUsize;
 use std::any::Any;
 use std::boxed::Box;

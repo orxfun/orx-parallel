@@ -1,7 +1,7 @@
 use crate::ParExtend;
 use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
-use crate::pool::{Scope, ThreadPool};
+use crate::pools::{Scope, ThreadPool};
 use crate::results::{Val, ValIdx};
 use crate::{parameters::Params, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;

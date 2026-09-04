@@ -2,7 +2,7 @@ use super::chunk_state::ChunkState;
 use super::mode::Mode;
 use super::state::State;
 use crate::parameters::{ChunkSize, Params};
-use crate::pool::ThreadPool;
+use crate::pools::ThreadPool;
 use crate::runner::par_runner::ParRunner;
 use crate::runner::runner_variants::fixed_chunk::heuristic;
 

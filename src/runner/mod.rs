@@ -2,17 +2,17 @@ mod new_runner;
 mod par_runner;
 mod runner_variants;
 
-use crate::pool::global_pool;
+use crate::pools::global_pool;
 pub use new_runner::Runner;
 pub use par_runner::ParRunner;
 
 // default
 
 #[cfg(not(feature = "std"))]
-pub type DefaultRunner = runner_variants::FixedChunkRunner<crate::pool::DefaultPool>;
+pub type DefaultRunner = runner_variants::FixedChunkRunner<crate::pools::DefaultPool>;
 
 #[cfg(feature = "std")]
-pub type DefaultRunner = runner_variants::AdaptiveChunkRunner<crate::pool::DefaultPool>;
+pub type DefaultRunner = runner_variants::AdaptiveChunkRunner<crate::pools::DefaultPool>;
 
 pub fn default_runner() -> DefaultRunner {
     DefaultRunner::new(global_pool())
