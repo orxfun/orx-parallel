@@ -1,4 +1,4 @@
-use crate::pool::{ThreadPool, scope::Scope};
+use crate::{Scope, ThreadPool};
 use core::num::NonZeroUsize;
 
 /// A placeholder _thread pool_ allowed to use only the executing thread.
