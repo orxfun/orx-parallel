@@ -1,6 +1,7 @@
 use crate::ParExtend;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::result_use::XapUseResultIter;
 use crate::result_use::par::ParUseResult;
 use crate::result_use::par_core::ParUseResultCore;
 use crate::result_use::par_runner::ParRunnerUseRes;
@@ -348,5 +349,22 @@ where
             IterationOrder::Ordered => exe.collect(s, params, u, iter, x1, x2, dst),
             IterationOrder::Arbitrary => exe.collect_arb(s, params, u, iter, x1, x2, dst),
         }
+    }
+}
+
+impl<U, I, M, E, X1, X2, S, R> IntoIterator for ParUseResultIter<U, I, M, E, X1, X2, S, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = Result<X2::O, E>;
+    type IntoIter = XapUseResultIter<U, I::SequentialIter, M, E, X1, X2, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapUseResultIter::new(self.using, self.iter.into_seq_iter(), self.x1, self.x2)
     }
 }

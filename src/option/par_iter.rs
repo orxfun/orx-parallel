@@ -1,5 +1,6 @@
 use crate::ParExtend;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
+use crate::option::XapOptionIter;
 use crate::option::par::ParOption;
 use crate::option::par_core::ParOptionCore;
 use crate::option::par_runner::ParRunnerOpt;
@@ -303,5 +304,21 @@ where
             IterationOrder::Ordered => exe.collect(s, params, iter, x1, x2, dst),
             IterationOrder::Arbitrary => exe.collect_arb(s, params, iter, x1, x2, dst),
         }
+    }
+}
+
+impl<I, M, X1, X2, S, R> IntoIterator for ParOptionIter<I, M, X1, X2, S, R>
+where
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Option<M>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = Option<X2::O>;
+    type IntoIter = XapOptionIter<I::SequentialIter, M, X1, X2, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapOptionIter::new(self.iter.into_seq_iter(), self.x1, self.x2)
     }
 }

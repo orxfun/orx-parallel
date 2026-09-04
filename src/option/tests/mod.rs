@@ -12,3 +12,4 @@ mod from_map;
 mod utils;
 
 mod size_hint;
+mod xap_iter;

@@ -1,6 +1,7 @@
 use crate::ParExtend;
 use crate::infallible::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, Xap};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::result::XapResultIter;
 use crate::result::par::ParResult;
 use crate::result::par_core::ParResultCore;
 use crate::result::par_runner::ParRunnerRes;
@@ -316,5 +317,21 @@ where
             IterationOrder::Ordered => exe.collect(s, params, iter, x1, x2, dst),
             IterationOrder::Arbitrary => exe.collect_arb(s, params, iter, x1, x2, dst),
         }
+    }
+}
+
+impl<I, M, E, X1, X2, S, R> IntoIterator for ParResultIter<I, M, E, X1, X2, S, R>
+where
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Result<M, E>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = Result<X2::O, E>;
+    type IntoIter = XapResultIter<I::SequentialIter, M, E, X1, X2, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapResultIter::new(self.iter.into_seq_iter(), self.x1, self.x2)
     }
 }
