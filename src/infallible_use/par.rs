@@ -11,12 +11,13 @@ use crate::infallible_use::{
 use crate::option_use::ParUseOptionIter;
 use crate::result_use::ParUseResultIter;
 use crate::runner::ParRunner;
+use crate::sizes::One;
 use crate::sizes::Size;
 use crate::use_var::{PairPtr, UseFold};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, ParUseOption, ParUseResult, Sum};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
-use orx_concurrent_iter::ConcurrentIter;
+use orx_concurrent_iter::{ConcurrentIter, ExactSizeConcurrentIter};
 
 /// Parallel iterator pipelines with worker-local mutable state.
 ///
@@ -226,7 +227,7 @@ pub trait ParUse: Sized + ParUseCore {
     fn into_optional<T>(
         self,
     ) -> impl ParUseOption<
-        Item = T,
+        Elem = T,
         Use = Self::Use,
         Xap1 = Self::Xap,
         M = T,
@@ -271,7 +272,7 @@ pub trait ParUse: Sized + ParUseCore {
     fn into_fallible<T, E>(
         self,
     ) -> impl ParUseResult<
-        Item = T,
+        Elem = T,
         Error = E,
         Use = Self::Use,
         Xap1 = Self::Xap,
@@ -497,6 +498,52 @@ pub trait ParUse: Sized + ParUseCore {
     >
     where
         Self::Item: IntoIterator;
+
+    // get
+
+    /// Returns a lower and optional upper bound on the number of output items.
+    ///
+    /// The bounds follow the usual [`Iterator::size_hint`] convention. For an
+    /// exact-size input and a one-to-one transformation, both bounds are exact.
+    /// Transformations such as `filter` may reduce the lower bound while keeping
+    /// the input length as the upper bound.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mapped = (0..4)
+    ///     .into_par()
+    ///     .use_new(|_| ())
+    ///     .map(|_, x| x * 2);
+    /// assert_eq!(mapped.size_hint(), (4, Some(4)));
+    ///
+    /// let filtered = (0..4)
+    ///     .into_par()
+    ///     .use_new(|_| ())
+    ///     .filter(|_, x| x % 2 == 0);
+    /// assert_eq!(filtered.size_hint(), (0, Some(4)));
+    /// ```
+    fn size_hint(&self) -> (usize, Option<usize>);
+
+    /// Returns the exact number of output items.
+    fn len(&self) -> usize
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap: XapUse<Size = One>,
+    {
+        self.size_hint().0
+    }
+
+    /// Returns `true` when the parallel iterator has no output items.
+    fn is_empty(&self) -> bool
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap: XapUse<Size = One>,
+    {
+        self.len() == 0
+    }
 
     // compute
 

@@ -14,6 +14,10 @@ impl SizePair for OneBin {
 
     type ThenMany = OneMany;
 
+    fn transformed_size_hint((_lb, ub): (usize, Option<usize>)) -> (usize, Option<usize>) {
+        (0, ub)
+    }
+
     // option
 
     type XapOptResult<M, X1, X2>

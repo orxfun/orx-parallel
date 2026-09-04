@@ -1,7 +1,8 @@
 #[cfg(any(feature = "std", feature = "rayon-core"))]
 use crate::NumThreads;
 #[cfg(feature = "std")]
-use crate::pool::pool_impl::{BasicPool, OncePool};
+use crate::pools::pool_impl::{BasicPool, OncePool};
+use crate::pools::{DefaultPool, global_pool};
 
 /// Factory for creating thread pools with different characteristics.
 ///
@@ -10,7 +11,7 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 /// and persistence.
 ///
 /// > **Note:** `Pool` is a convenience factory for thread pools provided or adapted by this crate.
-/// > You can also implement [`ParThreadPool`](crate::ParThreadPool) yourself and pass it directly
+/// > You can also implement [`ThreadPool`](crate::ThreadPool) yourself and pass it directly
 /// > to `.pool(...)` or to runner constructors that accept any thread pool implementing the trait.
 ///
 /// # Thread Count Configuration
@@ -51,6 +52,64 @@ use crate::pool::pool_impl::{BasicPool, OncePool};
 pub struct Pool;
 
 impl Pool {
+    /// Returns the default global thread pool.
+    ///
+    /// This exposes the thread pool's functionality directly, allowing convenient
+    /// **ad-hoc** parallel computation, on top of the parallel iterators of this
+    /// crate. Note, however, that such ad-hoc parallelization does not benefit from
+    /// the input concurrent iterator and parallel runner strategy optimizations that
+    /// parallel iterators build on. Therefore, it is best suited for a handful of
+    /// large enough, independent tasks rather than for computations with numerous
+    /// small tasks.
+    ///
+    /// There are two ways to use it:
+    ///
+    /// * Manually via [`scope`] and [`run`]:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// Pool::global().scope(|s| {
+    ///     s.run(|| println!("task A"));
+    ///     s.run(|| println!("task B"));
+    /// });
+    /// ```
+    ///
+    /// * Or via [`Tasks`] and [`run_all`], which builds a statically typed queue of
+    ///   tasks to be run in parallel:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    /// use std::sync::Mutex;
+    ///
+    /// let numbers = [4, 8, 15, 16, 23, 42];
+    ///
+    /// let sum = Mutex::new(0);
+    /// let max = Mutex::new(i32::MIN);
+    /// let all_positive = Mutex::new(false);
+    ///
+    /// let tasks = Tasks::new()
+    ///     .push(|| *sum.lock().unwrap() = numbers.iter().sum())
+    ///     .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
+    ///     .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0));
+    ///
+    /// Pool::global().run_all(tasks);
+    ///
+    /// println!(
+    ///     "sum={}, max={}, all_positive={}",
+    ///     sum.into_inner().unwrap(),
+    ///     max.into_inner().unwrap(),
+    ///     all_positive.into_inner().unwrap(),
+    /// );
+    /// ```
+    ///
+    /// [`scope`]: crate::ThreadPool::scope
+    /// [`run`]: crate::Scope::run
+    /// [`run_all`]: crate::ThreadPool::run_all
+    pub fn global() -> DefaultPool {
+        global_pool()
+    }
+
     /// Creates a lightweight on-demand pool with the specified thread configuration.
     ///
     /// A `OncePool` is a lightweight virtual pool that spawns worker threads just before

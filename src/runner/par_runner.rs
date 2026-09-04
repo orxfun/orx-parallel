@@ -1,12 +1,12 @@
 use crate::parameters::Params;
-use crate::pool::ParThreadPool;
+use crate::pools::{ThreadPool, max_num_threads_for_computation};
 #[cfg(feature = "std")]
 use crate::runner::runner_variants::WithDiagnostics;
 use orx_concurrent_iter::ConcurrentIter;
 
 pub trait ParRunner: Sized + Sync {
     /// Underlying thread pool.
-    type Pool: ParThreadPool;
+    type Pool: ThreadPool;
 
     /// Parallel computation state that is shared among thread computations.
     type State: Send + Sync;
@@ -70,9 +70,7 @@ pub trait ParRunner: Sized + Sync {
         size_hint: (usize, Option<usize>),
         computation_max_nt: Option<usize>,
     ) -> (usize, Self::State) {
-        let max_nt = self
-            .pool()
-            .max_num_threads_for_computation(params, size_hint);
+        let max_nt = max_num_threads_for_computation(self.pool(), params, size_hint);
 
         let max_nt = match computation_max_nt {
             Some(0) => 1,

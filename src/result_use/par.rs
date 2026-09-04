@@ -7,9 +7,10 @@ use crate::infallible_use::{
 use crate::result_use::ParUseResultIter;
 use crate::result_use::par_core::ParUseResultCore;
 use crate::runner::ParRunner;
-use crate::sizes::SizePair;
+use crate::sizes::{OneOne, SizePair};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend, Sum};
 use core::cmp::Ordering;
+use orx_concurrent_iter::ExactSizeConcurrentIter;
 
 /// Fallible parallel iterator with worker-local mutable state.
 ///
@@ -94,7 +95,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         runner: Q,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -127,7 +128,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -219,7 +220,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn copied<'a, O>(
         self,
     ) -> impl ParUseResult<
-        Item = O,
+        Elem = O,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -229,7 +230,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = Self::Size,
     >
     where
-        Self: ParUseResult<Item = &'a O>,
+        Self: ParUseResult<Elem = &'a O>,
         O: Copy + 'a,
         Self::Use: 'a,
     {
@@ -258,7 +259,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn cloned<'a, O>(
         self,
     ) -> impl ParUseResult<
-        Item = O,
+        Elem = O,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -268,7 +269,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = Self::Size,
     >
     where
-        Self: ParUseResult<Item = &'a O>,
+        Self: ParUseResult<Elem = &'a O>,
         O: Clone + 'a,
         Self::Use: 'a,
     {
@@ -299,7 +300,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Q,
+        Elem = Q,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -309,7 +310,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = Self::Size,
     >
     where
-        H: Fn(&mut Self::Use, Self::Item) -> Q + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Elem) -> Q + Copy + Send;
 
     /// Runs `h` on each successful element and forwards the item unchanged.
     ///
@@ -334,7 +335,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -344,7 +345,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = Self::Size,
     >
     where
-        H: Fn(&mut Self::Use, &Self::Item) + Copy + Send;
+        H: Fn(&mut Self::Use, &Self::Elem) + Copy + Send;
 
     /// Keeps successful elements satisfying predicate `h`.
     ///
@@ -367,7 +368,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -377,7 +378,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(&mut Self::Use, &Self::Item) -> bool + Copy + Send;
+        H: Fn(&mut Self::Use, &Self::Elem) -> bool + Copy + Send;
 
     /// Maps and filters successful elements in one pass.
     ///
@@ -400,7 +401,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Q,
+        Elem = Q,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -410,7 +411,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(&mut Self::Use, Self::Item) -> Option<Q> + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Elem) -> Option<Q> + Copy + Send;
 
     /// Maps each successful element to an iterator and flattens one level.
     ///
@@ -433,7 +434,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = V::Item,
+        Elem = V::Item,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -444,7 +445,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     >
     where
         V: IntoIterator,
-        H: Fn(&mut Self::Use, Self::Item) -> V + Copy + Send;
+        H: Fn(&mut Self::Use, Self::Elem) -> V + Copy + Send;
 
     /// Flattens one level of nested iterables on the success path.
     ///
@@ -467,7 +468,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     fn flatten(
         self,
     ) -> impl ParUseResult<
-        Item = <Self::Item as IntoIterator>::Item,
+        Elem = <Self::Elem as IntoIterator>::Item,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -477,7 +478,46 @@ pub trait ParUseResult: Sized + ParUseResultCore {
         Size = <Self::Size as SizePair>::ThenMany,
     >
     where
-        Self::Item: IntoIterator;
+        Self::Elem: IntoIterator;
+
+    /// Returns a lower and optional upper bound on the number of successful output items.
+    ///
+    /// The bounds follow the usual [`Iterator::size_hint`] convention.
+    /// The upper bound includes items that may be removed by filtering or short-circuiting.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let values = (0..4)
+    ///     .into_par()
+    ///     .map(Ok::<_, ()>)
+    ///     .into_fallible()
+    ///     .use_new(|_| ())
+    ///     .filter(|_, x| x % 2 == 0);
+    ///
+    /// assert_eq!(values.size_hint(), (0, Some(4)));
+    /// ```
+    fn size_hint(&self) -> (usize, Option<usize>);
+
+    /// Returns the exact number of output items.
+    fn len(&self) -> usize
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self: ParUseResult<Size = OneOne>,
+    {
+        self.size_hint().0
+    }
+
+    /// Returns `true` when the parallel iterator has no output items.
+    fn is_empty(&self) -> bool
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self: ParUseResult<Size = OneOne>,
+    {
+        self.len() == 0
+    }
 
     // compute
 
@@ -509,9 +549,9 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///     .first();
     /// assert!(fail.is_err());
     /// ```
-    fn first(self) -> Result<Option<Self::Item>, Self::Error>
+    fn first(self) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Send,
+        Self::Elem: Send,
         Self::Error: Send;
 
     /// Reduces successful items into one value using `f`.
@@ -539,10 +579,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///     .reduce(|_, a, b| a + b);
     /// assert_eq!(fail, Err("parse"));
     /// ```
-    fn reduce<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    fn reduce<F>(self, f: F) -> Result<Option<Self::Elem>, Self::Error>
     where
-        F: Fn(&mut Self::Use, Self::Item, Self::Item) -> Self::Item + Send + Copy,
-        Self::Item: Send,
+        F: Fn(&mut Self::Use, Self::Elem, Self::Elem) -> Self::Elem + Send + Copy,
+        Self::Elem: Send,
         Self::Error: Send;
 
     /// Collects successful items into `dst`.
@@ -567,8 +607,8 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P) -> Result<(), Self::Error>
     where
-        P: ParExtend<Self::Item>,
-        Self::Item: Send,
+        P: ParExtend<Self::Elem>,
+        Self::Elem: Send,
         Self::Error: Send;
 
     /// Collects successful items into a new collection.
@@ -591,8 +631,8 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn collect<P>(self) -> Result<P, Self::Error>
     where
-        P: ParExtend<Self::Item> + Default,
-        Self::Item: Send,
+        P: ParExtend<Self::Elem> + Default,
+        Self::Elem: Send,
         Self::Error: Send,
     {
         let mut dst = P::default();
@@ -621,8 +661,8 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn all<F>(self, f: F) -> Result<bool, Self::Error>
     where
-        Self::Item: Send,
-        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
+        Self::Elem: Send,
+        F: Fn(&mut Self::Use, &Self::Elem) -> bool + Sync,
         Self::Error: Send,
     {
         self.map(|u, x| f(u, &x))
@@ -649,8 +689,8 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn any<F>(self, f: F) -> Result<bool, Self::Error>
     where
-        Self::Item: Send,
-        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
+        Self::Elem: Send,
+        F: Fn(&mut Self::Use, &Self::Elem) -> bool + Sync,
         Self::Error: Send,
     {
         self.map(|u, x| f(u, &x))
@@ -679,7 +719,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn count(self) -> Result<usize, Self::Error>
     where
-        Self::Item: Send,
+        Self::Elem: Send,
         Self::Error: Send,
     {
         self.map(|_, _| 1)
@@ -707,10 +747,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///
     /// assert_eq!(found, Ok(Some(17)));
     /// ```
-    fn find<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    fn find<F>(self, f: F) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Send,
-        F: Fn(&mut Self::Use, &Self::Item) -> bool + Sync,
+        Self::Elem: Send,
+        F: Fn(&mut Self::Use, &Self::Elem) -> bool + Sync,
         Self::Error: Send,
     {
         self.filter(&f).first()
@@ -738,7 +778,7 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn for_each<F>(self, f: F) -> Result<(), Self::Error>
     where
-        F: Fn(&mut Self::Use, Self::Item) + Send + Copy,
+        F: Fn(&mut Self::Use, Self::Elem) + Send + Copy,
         Self::Error: Send,
     {
         self.map(f).reduce(|_, _, _| {}).map(|_| ())
@@ -762,9 +802,9 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///
     /// assert_eq!(m, Ok(Some(4)));
     /// ```
-    fn max(self) -> Result<Option<Self::Item>, Self::Error>
+    fn max(self) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Ord + Send,
+        Self::Elem: Ord + Send,
         Self::Error: Send,
     {
         self.reduce(|_, a, b| Ord::max(a, b))
@@ -788,10 +828,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///
     /// assert_eq!(x, Ok(Some(5)));
     /// ```
-    fn max_by<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    fn max_by<F>(self, f: F) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Send,
-        F: Fn(&mut Self::Use, &Self::Item, &Self::Item) -> Ordering + Sync,
+        Self::Elem: Send,
+        F: Fn(&mut Self::Use, &Self::Elem, &Self::Elem) -> Ordering + Sync,
         Self::Error: Send,
     {
         let reduce = |u: &mut Self::Use, x, y| match f(u, &x, &y) {
@@ -819,11 +859,11 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///
     /// assert_eq!(x, Ok(Some(-10)));
     /// ```
-    fn max_by_key<B, F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    fn max_by_key<B, F>(self, f: F) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Send,
+        Self::Elem: Send,
         B: Ord,
-        F: Fn(&mut Self::Use, &Self::Item) -> B + Sync,
+        F: Fn(&mut Self::Use, &Self::Elem) -> B + Sync,
         Self::Error: Send,
     {
         let reduce = |u: &mut Self::Use, x, y| match f(u, &x).cmp(&f(u, &y)) {
@@ -851,9 +891,9 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///
     /// assert_eq!(m, Ok(Some(1)));
     /// ```
-    fn min(self) -> Result<Option<Self::Item>, Self::Error>
+    fn min(self) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Ord + Send,
+        Self::Elem: Ord + Send,
         Self::Error: Send,
     {
         self.reduce(|_, a, b| Ord::min(a, b))
@@ -877,10 +917,10 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///
     /// assert_eq!(x, Ok(Some(-10)));
     /// ```
-    fn min_by<F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    fn min_by<F>(self, f: F) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Send,
-        F: Fn(&mut Self::Use, &Self::Item, &Self::Item) -> Ordering + Sync,
+        Self::Elem: Send,
+        F: Fn(&mut Self::Use, &Self::Elem, &Self::Elem) -> Ordering + Sync,
         Self::Error: Send,
     {
         let reduce = |u: &mut Self::Use, x, y| match f(u, &x, &y) {
@@ -908,11 +948,11 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     ///
     /// assert_eq!(x, Ok(Some(0)));
     /// ```
-    fn min_by_key<B, F>(self, f: F) -> Result<Option<Self::Item>, Self::Error>
+    fn min_by_key<B, F>(self, f: F) -> Result<Option<Self::Elem>, Self::Error>
     where
-        Self::Item: Send,
+        Self::Elem: Send,
         B: Ord,
-        F: Fn(&mut Self::Use, &Self::Item) -> B + Sync,
+        F: Fn(&mut Self::Use, &Self::Elem) -> B + Sync,
         Self::Error: Send,
     {
         let reduce = |u: &mut Self::Use, x, y| match f(u, &x).cmp(&f(u, &y)) {
@@ -942,12 +982,12 @@ pub trait ParUseResult: Sized + ParUseResultCore {
     /// ```
     fn sum<S>(self) -> Result<S, Self::Error>
     where
-        Self::Item: Sum<S>,
+        Self::Elem: Sum<S>,
         S: Send,
         Self::Error: Send,
     {
-        self.map(|_, x| Self::Item::owned(x))
-            .reduce(|_, a, b| Self::Item::add(a, b))
-            .map(|x| x.unwrap_or(Self::Item::zero()))
+        self.map(|_, x| Self::Elem::owned(x))
+            .reduce(|_, a, b| Self::Elem::add(a, b))
+            .map(|x| x.unwrap_or(Self::Elem::zero()))
     }
 }

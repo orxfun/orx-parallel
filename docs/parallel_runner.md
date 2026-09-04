@@ -6,7 +6,7 @@ A parallel runner controls how work is distributed across threads. It does not o
 
 - `ConcurrentIter` owns concurrent access to input items.
 - `Xap` variants own iterator transformations such as `map`, `filter`, and `flat_map`.
-- `ParThreadPool` owns scoped execution and worker lifecycle.
+- `ThreadPool` owns scoped execution and worker lifecycle.
 - `ParRunner` owns scheduling decisions: how many workers to start and how large each pulled chunk should be.
 
 This separation is why a new runner can usually be implemented without changing iterator APIs or collection internals.
@@ -34,7 +34,7 @@ The trait is defined in `src/runner/par_runner.rs`:
 
 ```rust ignore
 pub trait ParRunner: Sized + Sync {
-    type Pool: ParThreadPool;
+    type Pool: ThreadPool;
     type State: Send + Sync;
     type ChunkState;
 
@@ -69,7 +69,7 @@ Most terminal operations follow the same shape. The exact code lives in modules 
 2. The execution layer calls `runner.nt_state(params, iter.size_hint(), computation_max_nt)`.
 3. `nt_state` asks the pool for the maximum usable thread count with `pool.max_num_threads_for_computation(params, size_hint)`.
 4. `nt_state` calls `new_state(...)` to create one shared state value for this computation.
-5. The execution layer enters `pool_mut().scoped_computation(...)`.
+5. The execution layer enters `pool_mut().scope(...)`.
 6. Inside that scope, `do_spawn_new(spawned, &state)` is called sequentially until it returns `None`.
 7. For every returned thread index, the pool starts one scoped worker task.
 8. Each worker calls `begin_thread(&state, th_idx)` once.
@@ -85,7 +85,7 @@ A runner therefore sees the computation only through thread counts, size hints, 
 
 A runner does not choose the pool capacity by itself. The helper `nt_state` combines:
 
-- pool capacity from `ParThreadPool::max_num_threads()`
+- pool capacity from `ThreadPool::max_num_threads()`
 - `ORX_NUM_THREADS`, already reflected in the pool capacity
 - per-computation `.num_threads(...)`
 - input-size upper bound when it is known
@@ -149,11 +149,11 @@ If the runner does not need per-chunk feedback, set `type ChunkState = ()`.
 A simple starting point is a fixed-size runner with a custom chunk heuristic. This can live under a new module such as `src/runner/runner_variants/my_runner` while it is being tested.
 
 ```rust ignore
-use orx_parallel::{ChunkSize, NumThreads, Params, ParThreadPool};
+use orx_parallel::{ChunkSize, NumThreads, Params, ThreadPool};
 use orx_parallel::Runner;
 use orx_parallel::runner::ParRunner; // if the trait is exported through your branch/module layout
 
-pub struct MyRunner<P: ParThreadPool> {
+pub struct MyRunner<P: ThreadPool> {
     pool: P,
 }
 
@@ -162,15 +162,15 @@ pub struct MyState {
     chunk_size: usize,
 }
 
-impl<P: ParThreadPool> MyRunner<P> {
+impl<P: ThreadPool> MyRunner<P> {
     pub fn new(pool: P) -> Self {
         Self { pool }
     }
 }
 
-unsafe impl<P: ParThreadPool> Sync for MyRunner<P> {}
+unsafe impl<P: ThreadPool> Sync for MyRunner<P> {}
 
-impl<P: ParThreadPool> ParRunner for MyRunner<P> {
+impl<P: ThreadPool> ParRunner for MyRunner<P> {
     type Pool = P;
     type State = MyState;
     type ChunkState = ();
@@ -237,7 +237,7 @@ During early experimentation, it is often easier to add a temporary factory meth
 
 ```rust ignore
 impl Runner {
-    pub fn my_runner_with_pool<P: ParThreadPool>(pool: P) -> MyRunner<P> {
+    pub fn my_runner_with_pool<P: ThreadPool>(pool: P) -> MyRunner<P> {
         MyRunner::new(pool)
     }
 }
@@ -257,11 +257,11 @@ pub type DefaultRunner = runner_variants::FixedChunkRunner<crate::pool::DefaultP
 pub type DefaultRunner = runner_variants::AdaptiveChunkRunner<crate::pool::DefaultPool>;
 
 pub fn default_runner() -> DefaultRunner {
-    DefaultRunner::new(get_global_pool())
+    DefaultRunner::new(global_pool())
 }
 ```
 
-For a new runner, expose it from `src/runner/runner_variants/mod.rs`, then point the relevant `DefaultRunner` alias at it. Keep `DefaultRunner::new(get_global_pool())` working, or update `default_runner()` if the constructor needs additional configuration.
+For a new runner, expose it from `src/runner/runner_variants/mod.rs`, then point the relevant `DefaultRunner` alias at it. Keep `DefaultRunner::new(global_pool())` working, or update `default_runner()` if the constructor needs additional configuration.
 
 ## Testing checklist
 

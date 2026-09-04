@@ -1,6 +1,7 @@
 use crate::NumThreads;
-use crate::pool::ParThreadPool;
-use crate::pool::env::max_num_threads_by_env_and_resource;
+use crate::pools::ThreadPool;
+use crate::pools::env::max_num_threads_by_env_and_resource;
+use crate::pools::scope::Scope;
 use core::num::NonZeroUsize;
 use std::any::Any;
 use std::boxed::Box;
@@ -134,11 +135,11 @@ unsafe impl Send for Task {}
 impl Task {
     fn new<W>(work: W, runtime: Arc<ScopeRuntime>) -> Self
     where
-        W: Fn() + Send,
+        W: FnOnce() + Send,
     {
         unsafe fn run_impl<W>(data: *mut ())
         where
-            W: Fn() + Send,
+            W: FnOnce() + Send,
         {
             let work = unsafe { Box::from_raw(data as *mut W) };
             (*work)();
@@ -146,7 +147,7 @@ impl Task {
 
         unsafe fn drop_impl<W>(data: *mut ())
         where
-            W: Fn() + Send,
+            W: FnOnce() + Send,
         {
             drop(unsafe { Box::from_raw(data as *mut W) });
         }
@@ -207,7 +208,7 @@ fn worker_loop(shared: Arc<WorkerShared>) {
 /// * the available parallelism of the host obtained via `std::thread::available_parallelism()`, and
 /// * the upper bound set by the environment variable "ORX_NUM_THREADS", when set.
 ///
-/// [`max_num_threads`]: ParThreadPool::max_num_threads
+/// [`max_num_threads`]: ThreadPool::max_num_threads
 /// [`runner`]: crate::Par::runner
 #[derive(Clone)]
 pub struct BasicPool {
@@ -257,7 +258,7 @@ impl BasicPool {
         }
     }
 
-    fn scoped_computation_impl<'env, 'scope, F>(&'env self, f: F)
+    fn scope_impl<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
@@ -284,43 +285,25 @@ impl BasicPool {
     }
 }
 
-impl ParThreadPool for BasicPool {
-    type ScopeRef<'s, 'env, 'scope>
-        = &'s ScopeRef<'env>
-    where
-        'scope: 's,
-        'env: 'scope + 's;
-
-    fn max_num_threads(&self) -> NonZeroUsize {
-        self.max_num_threads
-    }
-
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
-    where
-        'env: 'scope,
-        for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
-    {
-        self.scoped_computation_impl(f)
-    }
-
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s ScopeRef<'env> {
+    fn run<W>(self, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
+        W: FnOnce() + Send + 'scope + 'env,
     {
-        s.runtime().begin_task();
+        self.runtime().begin_task();
 
-        let task = Task::new(work, Arc::clone(&s.runtime));
+        let task = Task::new(work, Arc::clone(&self.runtime));
         {
-            let mut state = s.shared().state.lock().expect("poisoned pool lock");
+            let mut state = self.shared().state.lock().expect("poisoned pool lock");
             state.queue.push_back(task);
         }
-        s.shared().cv.notify_one();
+        self.shared().cv.notify_one();
     }
 }
 
-impl ParThreadPool for &BasicPool {
+impl ThreadPool for BasicPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -331,25 +314,16 @@ impl ParThreadPool for &BasicPool {
         self.max_num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        (*self).scoped_computation_impl(f)
-    }
-
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        <BasicPool as ParThreadPool>::run_in_scope(s, work)
+        self.scope_impl(f)
     }
 }
 
-impl ParThreadPool for &mut BasicPool {
+impl ThreadPool for &BasicPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
@@ -360,20 +334,31 @@ impl ParThreadPool for &mut BasicPool {
         self.max_num_threads
     }
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        (*self).scoped_computation_impl(f)
+        (*self).scope_impl(f)
     }
+}
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+impl ThreadPool for &mut BasicPool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s ScopeRef<'env>
     where
         'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
+        'env: 'scope + 's;
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        self.max_num_threads
+    }
+
+    fn scope<'env, 'scope, F>(&'env self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        <BasicPool as ParThreadPool>::run_in_scope(s, work)
+        (*self).scope_impl(f)
     }
 }

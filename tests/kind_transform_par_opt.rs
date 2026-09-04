@@ -9,7 +9,7 @@ use std::string::{String, ToString};
 
 #[test]
 fn kind_transform_par_opt() {
-    fn get_par(n: usize) -> impl ParOption<Item = String> {
+    fn get_par(n: usize) -> impl ParOption<Elem = String> {
         (0..n)
             .par()
             .map(|x| x.to_string())
@@ -17,11 +17,11 @@ fn kind_transform_par_opt() {
             .into_optional()
     }
 
-    fn collect(par: impl ParOption<Item = String>) -> Option<Vec<String>> {
+    fn collect(par: impl ParOption<Elem = String>) -> Option<Vec<String>> {
         par.num_threads(3).chunk_size(1).collect()
     }
 
-    fn count(par: impl ParOption<Item = String>) -> Option<usize> {
+    fn count(par: impl ParOption<Elem = String>) -> Option<usize> {
         par.num_threads(1)
             .chunk_size(7)
             .map(|_| 1)
@@ -29,26 +29,26 @@ fn kind_transform_par_opt() {
             .map(|x| x.unwrap_or(0))
     }
 
-    fn find(par: impl ParOption<Item = String>) -> Option<Option<String>> {
+    fn find(par: impl ParOption<Elem = String>) -> Option<Option<String>> {
         par.filter(|x| x.len() > 2)
             .num_threads(6)
             .chunk_size(3)
             .first()
     }
 
-    fn map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+    fn map(par: impl ParOption<Elem = String>) -> impl ParOption<Elem = String> {
         par.map(|x| format!("{x}!"))
     }
 
-    fn filter(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+    fn filter(par: impl ParOption<Elem = String>) -> impl ParOption<Elem = String> {
         par.filter(|x| !x.is_empty())
     }
 
-    fn filter_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+    fn filter_map(par: impl ParOption<Elem = String>) -> impl ParOption<Elem = String> {
         par.filter_map(Some)
     }
 
-    fn flat_map(par: impl ParOption<Item = String>) -> impl ParOption<Item = String> {
+    fn flat_map(par: impl ParOption<Elem = String>) -> impl ParOption<Elem = String> {
         par.flat_map(|x| [x])
     }
 
@@ -68,15 +68,15 @@ fn kind_transform_par_opt() {
     assert!(result.is_some());
 
     fn map_to_use(
-        par: impl ParOption<Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
+        par: impl ParOption<Elem = String>,
+    ) -> impl ParUseOption<Use = char, Elem = String> {
         par.use_new(|_| 'x')
     }
     let par = map_to_use(get_par(42));
     assert_eq!(par.first(), Some(Some(String::from("0"))));
 
     // copied & cloned
-    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParOption<Item = &T> {
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParOption<Elem = &T> {
         values.par().map(Some).into_optional()
     }
     let vals: Vec<_> = (0..42).collect();

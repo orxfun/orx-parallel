@@ -4,7 +4,6 @@ use crate::*;
 use alloc::vec::Vec;
 use std::format;
 use std::string::{String, ToString};
-use test_case::test_matrix;
 
 const N: usize = 157;
 

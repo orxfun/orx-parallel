@@ -1,10 +1,12 @@
 use crate::infallible_use::XapUse;
+use crate::infallible_use::XapUseIter;
 use crate::infallible_use::par::ParUse;
 use crate::infallible_use::par_core::ParUseCore;
 use crate::infallible_use::par_runner::ParRunnerInfallibleUse;
 use crate::infallible_use::xap::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf};
 use crate::parameters::{IterationOrder, Params};
 use crate::runner::{DefaultRunner, ParRunner};
+use crate::sizes::Size;
 use crate::use_var::Use;
 use crate::{ChunkSize, NumThreads, ParExtend};
 use orx_concurrent_iter::ConcurrentIter;
@@ -48,7 +50,7 @@ where
     }
 }
 
-impl<U, I, X, R> ParUseCore for ParUseIter<U, I, X, R>
+impl<U, I, X, R> IntoIterator for ParUseIter<U, I, X, R>
 where
     U: Use,
     I: ConcurrentIter,
@@ -57,6 +59,20 @@ where
 {
     type Item = X::O;
 
+    type IntoIter = XapUseIter<U, I::SequentialIter, X>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapUseIter::new(self.using, self.iter.into_seq_iter(), self.xap)
+    }
+}
+
+impl<U, I, X, R> ParUseCore for ParUseIter<U, I, X, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
     type Runner = R;
 
     type Using = U;
@@ -200,6 +216,12 @@ where
     {
         let xap = self.xap.flatten();
         self.with_xap(xap)
+    }
+
+    // get
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        <X::Size as Size>::transformed_size_hint(self.iter.size_hint())
     }
 
     // compute

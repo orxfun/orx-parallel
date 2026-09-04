@@ -1,8 +1,10 @@
 mod env;
 mod global_pool;
-mod new_pool;
-mod par_thread_pool;
+mod pool;
 mod pool_impl;
+mod scope;
+mod tasks;
+mod thread_pool;
 
 // 1. wasm
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
@@ -44,6 +46,9 @@ pub use pool_impl::OncePool;
 #[cfg(not(feature = "std"))]
 pub use pool_impl::SequentialPool;
 
-pub use global_pool::{DefaultPool, get_global_pool};
-pub use new_pool::Pool;
-pub use par_thread_pool::ParThreadPool;
+pub use global_pool::DefaultPool;
+pub(crate) use global_pool::global_pool;
+pub use pool::Pool;
+pub use scope::Scope;
+pub use tasks::{TaskQueue, Tasks};
+pub use thread_pool::{ThreadPool, max_num_threads_for_computation};

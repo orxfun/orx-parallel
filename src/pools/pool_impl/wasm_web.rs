@@ -4,7 +4,8 @@ compile_error!(
 );
 
 use crate::NumThreads;
-use crate::pool::ParThreadPool;
+use crate::parameters::non_zero_or_one;
+use crate::{Scope, ThreadPool};
 #[cfg(target_feature = "atomics")]
 use alloc::format;
 use core::num::NonZeroUsize;
@@ -28,7 +29,7 @@ static WASM_WEB3_THREAD_POOL_STATE: AtomicU8 = AtomicU8::new(WASM_WEB3_THREAD_PO
 static WASM_WEB3_THREAD_POOL_NUM_THREADS: AtomicUsize = AtomicUsize::new(0);
 static WASM_WEB3_RUNTIME: OnceLock<Arc<Inner>> = OnceLock::new();
 
-#[wasm_bindgen(module = "/src/pool/pool_impl/wasm_web_start_workers.js")]
+#[wasm_bindgen(module = "/src/pools/pool_impl/wasm_web_start_workers.js")]
 extern "C" {
     #[wasm_bindgen(js_name = startWorkers)]
     fn start_workers(module: JsValue, memory: JsValue, num_threads: usize) -> Promise;
@@ -175,11 +176,11 @@ unsafe impl Send for Task {}
 impl Task {
     fn new<W>(work: W) -> Self
     where
-        W: Fn() + Send,
+        W: FnOnce() + Send,
     {
         unsafe fn run_impl<W>(data: *mut ())
         where
-            W: Fn() + Send,
+            W: FnOnce() + Send,
         {
             let work = unsafe { Box::from_raw(data as *mut W) };
             (*work)();
@@ -187,7 +188,7 @@ impl Task {
 
         unsafe fn drop_impl<W>(data: *mut ())
         where
-            W: Fn() + Send,
+            W: FnOnce() + Send,
         {
             drop(unsafe { Box::from_raw(data as *mut W) });
         }
@@ -261,8 +262,8 @@ fn init_runtime(num_threads: NonZeroUsize) -> Arc<Inner> {
 pub fn init_wasm_thread_pool(num_threads: usize) -> js_sys::Promise {
     #[allow(clippy::missing_panics_doc)]
     let num_threads = match num_threads {
-        0 => crate::pool::env::max_num_threads_by_env_and_resource(),
-        n => NonZeroUsize::new(n).expect(">0"),
+        0 => crate::pools::env::max_num_threads_by_env_and_resource(),
+        n => non_zero_or_one(n),
     };
 
     match WASM_WEB3_THREAD_POOL_STATE.compare_exchange(
@@ -355,7 +356,7 @@ impl WasmWebPool {
         Self { max_num_threads }
     }
 
-    fn scoped_computation_impl<'env, 'scope, F>(&'env self, f: F)
+    fn scope_impl<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
@@ -397,46 +398,48 @@ impl WasmWebPool {
     }
 }
 
-impl ParThreadPool for WasmWebPool {
-    type ScopeRef<'s, 'env, 'scope>
-        = &'s ScopeRef<'env>
-    where
-        'scope: 's,
-        'env: 'scope + 's;
-
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for &'s ScopeRef<'env> {
+    fn run<W>(self, work: W)
     where
         'scope: 's,
         'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
+        W: FnOnce() + Send + 'scope + 'env,
     {
-        s.runtime().begin_task();
+        self.runtime().begin_task();
 
-        if s.inline_only {
+        if self.inline_only {
             let result = catch_unwind(AssertUnwindSafe(work));
             if let Err(err) = result {
-                s.runtime().record_panic(err);
+                self.runtime().record_panic(err);
             }
-            s.runtime().complete_task();
+            self.runtime().complete_task();
             return;
         }
 
         let task = Task::new(work);
 
         {
-            let mut state = s.shared().state.lock().expect("poisoned pool lock");
+            let mut state = self.shared().state.lock().expect("poisoned pool lock");
             state.queue.push_back(task);
         }
 
-        s.shared().cv.notify_one();
+        self.shared().cv.notify_one();
     }
+}
 
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+impl ThreadPool for WasmWebPool {
+    type ScopeRef<'s, 'env, 'scope>
+        = &'s ScopeRef<'env>
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        self.scoped_computation_impl(f)
+        self.scope_impl(f)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
@@ -444,28 +447,19 @@ impl ParThreadPool for WasmWebPool {
     }
 }
 
-impl ParThreadPool for &WasmWebPool {
+impl ThreadPool for &WasmWebPool {
     type ScopeRef<'s, 'env, 'scope>
         = &'s ScopeRef<'env>
     where
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(s: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        <WasmWebPool as ParThreadPool>::run_in_scope(s, work)
-    }
-
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
         for<'s> F: FnOnce(&'s ScopeRef<'env>) + Send,
     {
-        (*self).scoped_computation_impl(f)
+        (*self).scope_impl(f)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {

@@ -1,6 +1,7 @@
 use crate::ParExtend;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
 use crate::parameters::{ChunkSize, IterationOrder, NumThreads, Params};
+use crate::result_use::XapUseResultIter;
 use crate::result_use::par::ParUseResult;
 use crate::result_use::par_core::ParUseResultCore;
 use crate::result_use::par_runner::ParRunnerUseRes;
@@ -57,6 +58,23 @@ where
     }
 }
 
+impl<U, I, M, E, X1, X2, S, R> IntoIterator for ParUseResultIter<U, I, M, E, X1, X2, S, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X1: XapUse<U = U::Item, I = I::Item, O = Result<M, E>>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = Result<X2::O, E>;
+    type IntoIter = XapUseResultIter<U, I::SequentialIter, M, E, X1, X2, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapUseResultIter::new(self.using, self.iter.into_seq_iter(), self.x1, self.x2)
+    }
+}
+
 impl<U, I, M, E, X1, X2, S, R> ParUseResultCore for ParUseResultIter<U, I, M, E, X1, X2, S, R>
 where
     U: Use,
@@ -66,7 +84,7 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    type Item = X2::O;
+    type Elem = X2::O;
 
     type Error = E;
 
@@ -124,7 +142,7 @@ where
         self,
         runner: Q,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -149,7 +167,7 @@ where
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -191,7 +209,7 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Q,
+        Elem = Q,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -211,7 +229,7 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -231,7 +249,7 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -251,7 +269,7 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = Q,
+        Elem = Q,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -271,7 +289,7 @@ where
         self,
         h: H,
     ) -> impl ParUseResult<
-        Item = V::Item,
+        Elem = V::Item,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -291,7 +309,7 @@ where
     fn flatten(
         self,
     ) -> impl ParUseResult<
-        Item = <Self::Item as IntoIterator>::Item,
+        Elem = <Self::Elem as IntoIterator>::Item,
         Error = Self::Error,
         Use = Self::Use,
         Xap1 = Self::Xap1,
@@ -301,10 +319,14 @@ where
         Size = <Self::Size as SizePair>::ThenMany,
     >
     where
-        Self::Item: IntoIterator,
+        Self::Elem: IntoIterator,
     {
         let x2 = self.x2.flatten();
         self.with_xap2(x2)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        <S as SizePair>::transformed_size_hint(self.iter.size_hint())
     }
 
     // compute

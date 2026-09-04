@@ -14,6 +14,10 @@ impl SizePair for BinBin {
 
     type ThenMany = BinMany;
 
+    fn transformed_size_hint((_lb, ub): (usize, Option<usize>)) -> (usize, Option<usize>) {
+        (0, ub)
+    }
+
     // option
 
     type XapOptResult<M, X1, X2>

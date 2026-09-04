@@ -1,5 +1,6 @@
 use crate::ParExtend;
 use crate::infallible_use::{FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, XapUse};
+use crate::option_use::XapUseOptionIter;
 use crate::option_use::par::ParUseOption;
 use crate::option_use::par_core::ParUseOptionCore;
 use crate::option_use::par_runner::ParRunnerUseOpt;
@@ -57,6 +58,23 @@ where
     }
 }
 
+impl<U, I, M, X1, X2, S, R> IntoIterator for ParUseOptionIter<U, I, M, X1, X2, S, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X1: XapUse<U = U::Item, I = I::Item, O = Option<M>>,
+    X2: XapUse<U = U::Item, I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = Option<X2::O>;
+    type IntoIter = XapUseOptionIter<U, I::SequentialIter, M, X1, X2, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapUseOptionIter::new(self.using, self.iter.into_seq_iter(), self.x1, self.x2)
+    }
+}
+
 impl<U, I, M, X1, X2, S, R> ParUseOptionCore for ParUseOptionIter<U, I, M, X1, X2, S, R>
 where
     U: Use,
@@ -66,7 +84,7 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    type Item = X2::O;
+    type Elem = X2::O;
 
     type Runner = R;
 
@@ -120,7 +138,7 @@ where
         self,
         runner: Q,
     ) -> impl ParUseOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -144,7 +162,7 @@ where
     fn runner_with_diagnostics(
         self,
     ) -> impl ParUseOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -194,7 +212,7 @@ where
         self,
         h: H,
     ) -> impl ParUseOption<
-        Item = Q,
+        Elem = Q,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -213,7 +231,7 @@ where
         self,
         h: H,
     ) -> impl ParUseOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -232,7 +250,7 @@ where
         self,
         h: H,
     ) -> impl ParUseOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -251,7 +269,7 @@ where
         self,
         h: H,
     ) -> impl ParUseOption<
-        Item = Q,
+        Elem = Q,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -270,7 +288,7 @@ where
         self,
         h: H,
     ) -> impl ParUseOption<
-        Item = V::Item,
+        Elem = V::Item,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -289,7 +307,7 @@ where
     fn flatten(
         self,
     ) -> impl ParUseOption<
-        Item = <Self::Item as IntoIterator>::Item,
+        Elem = <Self::Elem as IntoIterator>::Item,
         Use = Self::Use,
         Xap1 = Self::Xap1,
         M = Self::M,
@@ -298,10 +316,14 @@ where
         Size = <Self::Size as SizePair>::ThenMany,
     >
     where
-        Self::Item: IntoIterator,
+        Self::Elem: IntoIterator,
     {
         let x2 = self.x2.flatten();
         self.with_xap2(x2)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        <S as SizePair>::transformed_size_hint(self.iter.size_hint())
     }
 
     // compute

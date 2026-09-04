@@ -188,7 +188,7 @@ let result: Vec<_> = (0..1000)
 assert_eq!(result.len(), 1000);
 ```
 
-The [`ParThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParThreadPool.html) trait is small and straightforward to implement. Since thread pools are independent of runner strategies, you can plug in a custom pool as follows:
+The [`ThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ThreadPool.html) trait is small and straightforward to implement. Since thread pools are independent of runner strategies, you can plug in a custom pool as follows:
 
 ```rust ignore
 use orx_parallel::*;
@@ -201,6 +201,38 @@ let sum = (0..1000)
 ```
 
 Please see [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/thread_usage.md) for detailed information.
+
+**Ad-hoc Parallel Computation:**
+
+The thread pool itself is also exposed directly through [`Pool::global()`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.Pool.html#method.global).
+
+```rust
+use orx_parallel::*;
+
+Pool::global().scope(|s| {
+    s.run(|| println!("task A"));
+    s.run(|| println!("task B"));
+});
+
+// or
+
+let tasks = Tasks::new()
+    .push(|| println!("task A"))
+    .push(|| println!("task B"));
+
+Pool::global().run_all(tasks);
+```
+
+Note that this bypasses the concurrent iterator and runner strategy optimizations that parallel iterators rely on, so it is best suited for a few large, independent tasks rather than many small ones.
+
+### Sequential Execution
+
+Every parallel iterator can also run sequentially on the calling thread:
+
+- use `.num_threads(1)` to keep the parallel pipeline API while disabling parallel execution;
+- use `.into_iter()` to consume the pipeline as a regular sequential iterator.
+
+Both options avoid spawning worker threads and avoid using the thread pool.
 
 ## Runner Strategies and Extensibility
 

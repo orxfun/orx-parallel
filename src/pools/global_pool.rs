@@ -1,4 +1,4 @@
-use crate::pool::pool_impl::*;
+use crate::pools::pool_impl::*;
 #[cfg(feature = "std")]
 use std::sync::LazyLock;
 
@@ -38,6 +38,15 @@ static PERSISTENT_POOL: LazyLock<OncePool> = LazyLock::new(Default::default);
     not(feature = "transient-pool"),
 ))]
 static PERSISTENT_POOL: LazyLock<BasicPool> = LazyLock::new(Default::default);
+
+// 4b. default without std (fallback - sequential pool)
+#[cfg(all(
+    not(feature = "std"),
+    not(all(feature = "wasm", target_arch = "wasm32")),
+    not(feature = "persistent-pool-rayon"),
+    not(feature = "transient-pool"),
+))]
+static PERSISTENT_POOL: SequentialPool = SequentialPool;
 
 // DEFAULT POOL
 
@@ -83,14 +92,13 @@ pub type DefaultPool = &'static BasicPool;
     not(feature = "transient-pool"),
 ))]
 /// Default thread pool
-pub type DefaultPool = SequentialPool;
+pub type DefaultPool = &'static SequentialPool;
 
 // GET POOL
 
 // 1. wasm on wasm32
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
-/// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -100,8 +108,7 @@ pub fn get_global_pool() -> DefaultPool {
     feature = "persistent-pool-rayon",
     not(all(feature = "wasm", target_arch = "wasm32")),
 ))]
-/// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -112,8 +119,7 @@ pub fn get_global_pool() -> DefaultPool {
     not(all(feature = "wasm", target_arch = "wasm32")),
     not(feature = "persistent-pool-rayon"),
 ))]
-/// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -124,8 +130,7 @@ pub fn get_global_pool() -> DefaultPool {
     not(feature = "persistent-pool-rayon"),
     not(feature = "transient-pool"),
 ))]
-/// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -137,6 +142,27 @@ pub fn get_global_pool() -> DefaultPool {
     not(feature = "transient-pool"),
 ))]
 /// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
-    Default::default()
+///
+/// This is handy for **ad-hoc** parallel work: spawn a few tasks into a [`scope`]
+/// and let them run side by side. Note, however, that this pool plays only a
+/// minimal role in this crate's performance; the real speedups come from the
+/// concurrent iterators and parallel runner strategies used underneath parallel
+/// iterators. So prefer expressing computations through parallel iterators, and
+/// avoid calling `s.run` thousands of times in a loop, as this pool is not
+/// optimized for that.
+///
+/// # Examples
+///
+/// ```
+/// use orx_parallel::{Scope, ThreadPool, global_pool};
+///
+/// global_pool().scope(|s| {
+///     s.run(|| println!("computing part A"));
+///     s.run(|| println!("computing part B"));
+/// });
+/// ```
+///
+/// [`scope`]: crate::ThreadPool::scope
+pub(crate) fn global_pool() -> DefaultPool {
+    &PERSISTENT_POOL
 }

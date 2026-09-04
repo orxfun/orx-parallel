@@ -132,7 +132,7 @@ That exported Rust function enters the Rust-side `worker_loop(...)` and begins c
 
 ## Scoped execution model
 
-The `wasm` backend implements `ParThreadPool` for `WasmWebPool`.
+The `wasm` backend implements `ThreadPool` for `WasmWebPool`.
 
 Each parallel computation is wrapped in a scoped execution.
 
@@ -157,7 +157,7 @@ This is the key mechanism that keeps the external iterator API synchronous from 
 
 ### Task scheduling
 
-`run_in_scope(...)` does the following:
+`run(...)` does the following:
 
 - increments the scope's pending count
 - if the runtime is `inline_only`, runs the work immediately

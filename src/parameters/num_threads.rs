@@ -68,3 +68,7 @@ impl NumThreads {
         matches!(self, Self::Max(n) if n == ONE)
     }
 }
+
+pub(crate) fn non_zero_or_one(number: usize) -> NonZeroUsize {
+    NonZeroUsize::new(number).unwrap_or(NonZeroUsize::MIN)
+}

@@ -1,4 +1,3 @@
-#[cfg(feature = "long-tests")]
 #[cfg(test)]
 mod tests;
 
@@ -11,6 +10,7 @@ mod par_runner;
 mod thread_execution;
 mod xap;
 mod xap_enum;
+mod xap_iter;
 pub mod xap_variants;
 
 pub use par::ParUse;
@@ -20,3 +20,4 @@ pub use xap::{
     FilMapOf, FilOf, FlatMapOf, FlattenOf, InsOf, MapOf, MappedOf, XapUse, XapUseBin, XapUseOne,
 };
 pub use xap_enum::XapUseEnumByInput;
+pub use xap_iter::XapUseIter;

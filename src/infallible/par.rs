@@ -5,13 +5,14 @@ use crate::infallible::{Xap, xap_variants::Id};
 use crate::infallible_use::{ParUseIter, xap_variants::IdUse};
 use crate::option::ParOptionIter;
 use crate::result::ParResultIter;
-use crate::sizes::Size;
+use crate::sizes::{One, Size};
 use crate::use_var::{UseSlice, UseVec};
 use crate::{ChunkSize, IterationOrder, NumThreads, ParExtend};
 use crate::{ParOption, ParResult, ParUse, Sum};
 use crate::{infallible::par_core::ParCore, runner::ParRunner};
 use alloc::vec::Vec;
 use core::cmp::Ordering;
+use orx_concurrent_iter::ExactSizeConcurrentIter;
 
 /// Infallible parallel iterator.
 ///
@@ -298,7 +299,7 @@ pub trait Par: Sized + ParCore {
     fn into_optional<T>(
         self,
     ) -> impl ParOption<
-        Item = T,
+        Elem = T,
         Xap1 = Self::Xap,
         M = T,
         Xap2 = Id<T>,
@@ -368,7 +369,7 @@ pub trait Par: Sized + ParCore {
     fn into_fallible<T, E>(
         self,
     ) -> impl ParResult<
-        Item = T,
+        Elem = T,
         Error = E,
         Xap1 = Self::Xap,
         M = T,
@@ -745,6 +746,64 @@ pub trait Par: Sized + ParCore {
     >
     where
         Self::Item: IntoIterator;
+
+    // get
+
+    /// Returns a lower and optional upper bound on the number of output items.
+    ///
+    /// The bounds follow the usual [`Iterator::size_hint`] convention. For an
+    /// exact-size input and a one-to-one transformation, both bounds are exact.
+    /// Transformations such as `filter` may reduce the lower bound while keeping
+    /// the input length as the upper bound.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mapped = (0..4).into_par().map(|x| x * 2);
+    /// assert_eq!(mapped.size_hint(), (4, Some(4)));
+    ///
+    /// let filtered = (0..4).into_par().filter(|x| x % 2 == 0);
+    /// assert_eq!(filtered.size_hint(), (0, Some(4)));
+    /// ```
+    fn size_hint(&self) -> (usize, Option<usize>);
+
+    /// Returns the exact number of output items.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// assert_eq!((0..10).into_par().len(), 10);
+    /// assert_eq!((0..10).into_par().map(|x| x + 2).len(), 10);
+    /// ```
+    fn len(&self) -> usize
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap: Xap<Size = One>,
+    {
+        self.size_hint().0
+    }
+
+    /// Returns `true` when the parallel iterator has no output items.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// assert!((0..0).into_par().is_empty());
+    /// assert!(!(0..1).into_par().is_empty());
+    /// ```
+    fn is_empty(&self) -> bool
+    where
+        Self::Input: ExactSizeConcurrentIter,
+        Self::Xap: Xap<Size = One>,
+    {
+        self.len() == 0
+    }
 
     // compute
 

@@ -2,11 +2,12 @@
 
 use crate::ParExtend;
 use crate::infallible_use::XapUse;
+use crate::pools::{Scope, ThreadPool};
 use crate::result_use::thread_execution as th;
 use crate::results::{Val, ValIdx};
 use crate::sizes::SizePair;
 use crate::use_var::Use;
-use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
+use crate::{parameters::Params, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -57,10 +58,10 @@ pub trait ParRunnerUseRes: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
@@ -125,10 +126,10 @@ pub trait ParRunnerUseRes: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
@@ -199,10 +200,10 @@ pub trait ParRunnerUseRes: ParRunner {
 
                 {
                     let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                    self.pool_mut().scoped_computation(move |s| {
+                    self.pool_mut().scope(move |s| {
                         while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                             spawned += 1;
-                            <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                            s.run(move || {
                                 Self::begin_thread(st, th_idx);
                                 // SAFETY: `do_spawn_new` returns sequential thread indices;
                                 // therefore, `u.init_get` will be called exactly once per thread
@@ -265,10 +266,10 @@ pub trait ParRunnerUseRes: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread
@@ -329,10 +330,10 @@ pub trait ParRunnerUseRes: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, u) = (&iter, &state, &results_bag, &u);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             // SAFETY: `do_spawn_new` returns sequential thread indices;
                             // therefore, `u.init_get` will be called exactly once per thread

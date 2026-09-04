@@ -1,8 +1,9 @@
 use crate::ParExtend;
 use crate::infallible::thread_execution as th;
 use crate::infallible::xap::Xap;
+use crate::pools::{Scope, ThreadPool};
 use crate::results::{Val, ValIdx};
-use crate::{parameters::Params, pool::ParThreadPool, runner::ParRunner};
+use crate::{parameters::Params, runner::ParRunner};
 use orx_concurrent_bag::ConcurrentBag;
 use orx_concurrent_iter::ConcurrentIter;
 
@@ -27,10 +28,10 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, x) = (&iter, &state, &results_bag, x);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::next::<Self, _, _>(th_idx, st, iter, x);
                             results.push(value);
@@ -63,10 +64,10 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, x) = (&iter, &state, &results_bag, x);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::next_any::<Self, _, _>(th_idx, st, iter, x);
                             results.push(value);
@@ -100,10 +101,10 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results, x) = (&iter, &state, &results_bag, x);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::reduce::<Self, _, _, _>(th_idx, st, iter, x, f);
                             results.push(value);
@@ -138,10 +139,10 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results) = (&iter, &state, &results_bag);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::collect::<Self, _, _, P>(th_idx, st, iter, x);
                             results.push(value);
@@ -176,10 +177,10 @@ pub(crate) trait ParRunnerInfallible: ParRunner {
                 let results_bag = ConcurrentBag::with_fixed_capacity(max_nt);
 
                 let (iter, st, results) = (&iter, &state, &results_bag);
-                self.pool_mut().scoped_computation(move |s| {
+                self.pool_mut().scope(move |s| {
                     while let Some(th_idx) = Self::do_spawn_new(spawned, st) {
                         spawned += 1;
-                        <Self::Pool as ParThreadPool>::run_in_scope(&s, move || {
+                        s.run(move || {
                             Self::begin_thread(st, th_idx);
                             let value = th::collect_arb::<Self, _, _, P>(th_idx, st, iter, x);
                             results.push(value);

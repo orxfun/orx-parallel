@@ -14,6 +14,10 @@ impl Size for Many {
         None
     }
 
+    fn transformed_size_hint(_: (usize, Option<usize>)) -> (usize, Option<usize>) {
+        (0, None)
+    }
+
     // transformations
 
     type Map<X, Q, H>

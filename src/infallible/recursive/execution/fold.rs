@@ -1,5 +1,5 @@
 use crate::infallible::recursive::utils;
-use crate::{Par, ParDrain, ParThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
+use crate::{Par, ParDrain, ThreadPool, ParUse, Params, infallible::Xap, runner::ParRunner};
 use alloc::vec::Vec;
 
 struct Local<I, B> {

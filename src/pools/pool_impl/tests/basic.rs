@@ -1,4 +1,4 @@
-use crate::pool::BasicPool;
+use crate::pools::BasicPool;
 
 #[test]
 fn basic_pool_drops_cleanly() {

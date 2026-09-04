@@ -1,4 +1,4 @@
-use crate::pool::ParThreadPool;
+use crate::{Scope, ThreadPool};
 use core::num::NonZeroUsize;
 
 /// A placeholder _thread pool_ allowed to use only the executing thread.
@@ -8,7 +8,7 @@ use core::num::NonZeroUsize;
 /// Normally, in no-std environments thread pool to be used by the parallel computation
 /// must be provided by the [`pool`] method to the parallel iterator.
 ///
-/// Provided pool must implement [`ParThreadPool`].
+/// Provided pool must implement [`ThreadPool`].
 /// This crate provides optional or default implementations, which can be constructed
 /// using the [`Pool`] helper type.
 ///
@@ -16,36 +16,61 @@ use core::num::NonZeroUsize;
 /// [`with_runner`] transformation separately for each parallel iterator.
 ///
 /// [`pool`]: crate::Par::pool
-/// [`ParThreadPool`]: crate::ParThreadPool
+/// [`ThreadPool`]: crate::ThreadPool
 /// [`Pool`]: crate::Pool
 #[derive(Default, Clone, Copy, Debug)]
 pub struct SequentialPool;
 
-impl ParThreadPool for SequentialPool {
+#[derive(Clone, Copy)]
+pub struct SequentialScope;
+
+impl<'s, 'env, 'scope> Scope<'s, 'env, 'scope> for SequentialScope {
+    fn run<W>(self, work: W)
+    where
+        'scope: 's,
+        'env: 'scope + 's,
+        W: FnOnce() + Send + 'scope + 'env,
+    {
+        work();
+    }
+}
+
+impl ThreadPool for SequentialPool {
     type ScopeRef<'s, 'env, 'scope>
-        = ()
+        = SequentialScope
     where
         'scope: 's,
         'env: 'scope + 's;
 
-    fn run_in_scope<'s, 'env, 'scope, W>(_: &Self::ScopeRef<'s, 'env, 'scope>, work: W)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        W: Fn() + Send + 'scope + 'env,
-    {
-        work()
-    }
-
-    fn scoped_computation<'env, 'scope, F>(&'env mut self, f: F)
+    fn scope<'env, 'scope, F>(&'env self, f: F)
     where
         'env: 'scope,
-        for<'s> F: FnOnce(()) + Send,
+        for<'s> F: FnOnce(SequentialScope) + Send,
     {
-        f(())
+        f(SequentialScope)
     }
 
     fn max_num_threads(&self) -> NonZeroUsize {
-        NonZeroUsize::new(1).expect(">0")
+        NonZeroUsize::MIN
+    }
+}
+
+impl ThreadPool for &SequentialPool {
+    type ScopeRef<'s, 'env, 'scope>
+        = SequentialScope
+    where
+        'scope: 's,
+        'env: 'scope + 's;
+
+    fn scope<'env, 'scope, F>(&'env self, f: F)
+    where
+        'env: 'scope,
+        for<'s> F: FnOnce(SequentialScope) + Send,
+    {
+        f(SequentialScope)
+    }
+
+    fn max_num_threads(&self) -> NonZeroUsize {
+        NonZeroUsize::MIN
     }
 }

@@ -14,6 +14,10 @@ impl Size for Bin {
         None
     }
 
+    fn transformed_size_hint((_lb, ub): (usize, Option<usize>)) -> (usize, Option<usize>) {
+        (0, ub)
+    }
+
     // transformations
 
     type Map<X, Q, H>

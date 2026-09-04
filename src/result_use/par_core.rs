@@ -4,8 +4,8 @@ use crate::use_var::Use;
 use crate::{Params, infallible_use::XapUse, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParUseResultCore {
-    type Item;
+pub trait ParUseResultCore: IntoIterator<Item = Result<Self::Elem, Self::Error>> {
+    type Elem;
 
     type Error;
 
@@ -25,7 +25,7 @@ pub trait ParUseResultCore {
             O = Result<Self::M, Self::Error>,
         >;
 
-    type Xap2: XapUse<U = Self::Use, I = Self::M, O = Self::Item>;
+    type Xap2: XapUse<U = Self::Use, I = Self::M, O = Self::Elem>;
 
     type Size: SizePair<S1 = <Self::Xap1 as XapUse>::Size, S2 = <Self::Xap2 as XapUse>::Size>;
 

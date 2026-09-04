@@ -14,6 +14,10 @@ impl Size for One {
         Some(1)
     }
 
+    fn transformed_size_hint(size_hint: (usize, Option<usize>)) -> (usize, Option<usize>) {
+        size_hint
+    }
+
     // transformations
 
     type Map<X, Q, H>
