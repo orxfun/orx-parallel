@@ -1,6 +1,16 @@
 use crate::Scope;
 use core::marker::PhantomData;
 
+/// A statically typed queue of tasks to be run in parallel on a [`Scope`].
+///
+/// Since the queue is typed rather than relying on dynamic dispatch, pushed tasks
+/// are stored inline: no object safety, boxing or heap allocation is required.
+///
+/// Tasks are [`push`]ed one by one, none of which start running immediately;
+/// they all start in parallel only when [`run_all`] is called.
+///
+/// [`push`]: Self::push
+/// [`run_all`]: Self::run_all
 pub trait TaskQueue<'s, 'env, 'scope>
 where
     'scope: 's,
