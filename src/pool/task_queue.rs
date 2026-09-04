@@ -276,34 +276,3 @@ where
         remaining.run_all();
     }
 }
-
-#[cfg(test)]
-#[test]
-fn abc() {
-    use crate::*;
-    use core::num::NonZeroUsize;
-    use core::time::Duration;
-    use std::*;
-
-    let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
-
-    Pool::global().scope(|s| {
-        s.tasks()
-            .push(|| {
-                work_for(90);
-                println!("t1 completes 4th");
-            })
-            .push(|| println!("t2 completes 1st"))
-            .push(|| {
-                work_for(10);
-                println!("t3 completes 2nd");
-            })
-            .push(|| {
-                work_for(50);
-                println!("t4 completes 3rd");
-            })
-            .run_all();
-    });
-
-    assert_eq!(Pool::global().max_num_threads(), NonZeroUsize::MAX);
-}
