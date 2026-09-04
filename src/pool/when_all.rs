@@ -21,6 +21,59 @@ where
     fn run(self);
 }
 
+// empty
+
+pub struct WhenAllEmpty<'s, 'env, 'scope, S, F>
+where
+    'scope: 's,
+    'env: 'scope + 's,
+    S: Scope<'s, 'env, 'scope>,
+{
+    scope: S,
+    p: PhantomData<&'s &'env &'scope F>,
+}
+
+impl<'s, 'env, 'scope, S, F> WhenAllEmpty<'s, 'env, 'scope, S, F>
+where
+    'scope: 's,
+    'env: 'scope + 's,
+    S: Scope<'s, 'env, 'scope>,
+    F: FnOnce() + Send + 'scope + 'env,
+{
+    pub fn new(scope: S, _do_nothing: F) -> Self {
+        Self {
+            scope,
+            p: PhantomData,
+        }
+    }
+}
+
+impl<'s, 'env, 'scope, S, F> WhenAll<'s, 'env, 'scope> for WhenAllEmpty<'s, 'env, 'scope, S, F>
+where
+    'scope: 's,
+    'env: 'scope + 's,
+    S: Scope<'s, 'env, 'scope>,
+    F: FnOnce() + Send + 'scope + 'env,
+{
+    type PushBack<Elem>
+        = WhenAllSingle<'s, 'env, 'scope, S, Elem>
+    where
+        Elem: FnOnce() + Send + 'scope + 'env;
+
+    type Front = F;
+
+    type Back = Self;
+
+    fn push<Elem>(self, element: Elem) -> Self::PushBack<Elem>
+    where
+        Elem: FnOnce() + Send + 'scope + 'env,
+    {
+        WhenAllSingle::new(self.scope, element)
+    }
+
+    fn run(self) {}
+}
+
 // single
 
 pub struct WhenAllSingle<'s, 'env, 'scope, S, F>
