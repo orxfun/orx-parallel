@@ -9,7 +9,7 @@ use std::string::{String, ToString};
 
 #[test]
 fn kind_transform_par_use_res() {
-    fn get_par(n: usize) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+    fn get_par(n: usize) -> impl ParUseResult<Use = char, Elem = String, Error = char> {
         (0..n)
             .par()
             .map(|x| x.to_string())
@@ -19,13 +19,13 @@ fn kind_transform_par_use_res() {
     }
 
     fn collect(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+        par: impl ParUseResult<Use = char, Elem = String, Error = char>,
     ) -> Result<Vec<String>, char> {
         par.num_threads(3).chunk_size(1).collect()
     }
 
     fn count(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+        par: impl ParUseResult<Use = char, Elem = String, Error = char>,
     ) -> Result<usize, char> {
         par.num_threads(1)
             .chunk_size(7)
@@ -35,7 +35,7 @@ fn kind_transform_par_use_res() {
     }
 
     fn find(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
+        par: impl ParUseResult<Use = char, Elem = String, Error = char>,
     ) -> Result<Option<String>, char> {
         par.filter(|_u, x| x.len() > 2)
             .num_threads(6)
@@ -44,26 +44,26 @@ fn kind_transform_par_use_res() {
     }
 
     fn map(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par: impl ParUseResult<Use = char, Elem = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Elem = String, Error = char> {
         par.map(|_u, x| format!("{x}!"))
     }
 
     fn filter(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par: impl ParUseResult<Use = char, Elem = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Elem = String, Error = char> {
         par.filter(|_u, x| !x.is_empty())
     }
 
     fn filter_map(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par: impl ParUseResult<Use = char, Elem = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Elem = String, Error = char> {
         par.filter_map(|_u, x| Some(x))
     }
 
     fn flat_map(
-        par: impl ParUseResult<Use = char, Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par: impl ParUseResult<Use = char, Elem = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Elem = String, Error = char> {
         par.flat_map(|_u, x| [x])
     }
 
@@ -85,7 +85,7 @@ fn kind_transform_par_use_res() {
     // copied & cloned
     fn get_ref_par<T: Sync>(
         values: &[T],
-    ) -> impl ParUseResult<Use = char, Item = &T, Error = char> {
+    ) -> impl ParUseResult<Use = char, Elem = &T, Error = char> {
         values.par().map(Ok).use_new(|_| 'x').into_fallible()
     }
     let vals: Vec<_> = (0..42).collect();

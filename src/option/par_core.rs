@@ -3,8 +3,8 @@
 use crate::{Params, infallible::Xap, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParOptionCore {
-    type Item;
+pub trait ParOptionCore: IntoIterator<Item = Option<Self::Elem>> {
+    type Elem;
 
     type Runner: ParRunner;
 
@@ -14,7 +14,7 @@ pub trait ParOptionCore {
 
     type Xap1: Xap<I = <Self::Input as ConcurrentIter>::Item, O = Option<Self::M>>;
 
-    type Xap2: Xap<I = Self::M, O = Self::Item>;
+    type Xap2: Xap<I = Self::M, O = Self::Elem>;
 
     type Size: SizePair<S1 = <Self::Xap1 as Xap>::Size, S2 = <Self::Xap2 as Xap>::Size>;
 

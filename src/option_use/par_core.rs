@@ -5,8 +5,8 @@ use crate::use_var::Use;
 use crate::{Params, runner::ParRunner, sizes::SizePair};
 use orx_concurrent_iter::ConcurrentIter;
 
-pub trait ParUseOptionCore {
-    type Item;
+pub trait ParUseOptionCore: IntoIterator<Item = Option<Self::Elem>> {
+    type Elem;
 
     type Runner: ParRunner;
 
@@ -20,7 +20,7 @@ pub trait ParUseOptionCore {
 
     type Xap1: XapUse<U = Self::Use, I = <Self::Input as ConcurrentIter>::Item, O = Option<Self::M>>;
 
-    type Xap2: XapUse<U = Self::Use, I = Self::M, O = Self::Item>;
+    type Xap2: XapUse<U = Self::Use, I = Self::M, O = Self::Elem>;
 
     type Size: SizePair<S1 = <Self::Xap1 as XapUse>::Size, S2 = <Self::Xap2 as XapUse>::Size>;
 

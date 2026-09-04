@@ -53,6 +53,22 @@ where
     }
 }
 
+impl<I, M, X1, X2, S, R> IntoIterator for ParOptionIter<I, M, X1, X2, S, R>
+where
+    I: ConcurrentIter,
+    X1: Xap<I = I::Item, O = Option<M>>,
+    X2: Xap<I = M>,
+    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
+    R: ParRunner,
+{
+    type Item = Option<X2::O>;
+    type IntoIter = XapOptionIter<I::SequentialIter, M, X1, X2, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapOptionIter::new(self.iter.into_seq_iter(), self.x1, self.x2)
+    }
+}
+
 impl<I, M, X1, X2, S, R> ParOptionCore for ParOptionIter<I, M, X1, X2, S, R>
 where
     I: ConcurrentIter,
@@ -61,7 +77,7 @@ where
     S: SizePair<S1 = X1::Size, S2 = X2::Size>,
     R: ParRunner,
 {
-    type Item = X2::O;
+    type Elem = X2::O;
 
     type Runner = R;
 
@@ -103,7 +119,7 @@ where
         self,
         runner: Q,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = Self::Xap2,
@@ -125,7 +141,7 @@ where
     fn runner_with_diagnostics(
         self,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = Self::Xap2,
@@ -164,7 +180,7 @@ where
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Q,
+        Elem = Q,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = MapOf<Self::Xap2, Q, H>,
@@ -182,7 +198,7 @@ where
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = InsOf<Self::Xap2, H>,
@@ -200,7 +216,7 @@ where
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FilOf<Self::Xap2, H>,
@@ -218,7 +234,7 @@ where
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Q,
+        Elem = Q,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FilMapOf<Self::Xap2, Q, H>,
@@ -236,7 +252,7 @@ where
         self,
         h: H,
     ) -> impl ParOption<
-        Item = V::Item,
+        Elem = V::Item,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FlatMapOf<Self::Xap2, V, H>,
@@ -254,7 +270,7 @@ where
     fn flatten(
         self,
     ) -> impl ParOption<
-        Item = <Self::Item as IntoIterator>::Item,
+        Elem = <Self::Elem as IntoIterator>::Item,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FlattenOf<Self::Xap2>,
@@ -262,7 +278,7 @@ where
         Size = <Self::Size as SizePair>::ThenMany,
     >
     where
-        Self::Item: IntoIterator,
+        Self::Elem: IntoIterator,
     {
         let x2 = self.x2.flatten();
         self.with_xap2(x2)
@@ -304,21 +320,5 @@ where
             IterationOrder::Ordered => exe.collect(s, params, iter, x1, x2, dst),
             IterationOrder::Arbitrary => exe.collect_arb(s, params, iter, x1, x2, dst),
         }
-    }
-}
-
-impl<I, M, X1, X2, S, R> IntoIterator for ParOptionIter<I, M, X1, X2, S, R>
-where
-    I: ConcurrentIter,
-    X1: Xap<I = I::Item, O = Option<M>>,
-    X2: Xap<I = M>,
-    S: SizePair<S1 = X1::Size, S2 = X2::Size>,
-    R: ParRunner,
-{
-    type Item = Option<X2::O>;
-    type IntoIter = XapOptionIter<I::SequentialIter, M, X1, X2, S>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        XapOptionIter::new(self.iter.into_seq_iter(), self.x1, self.x2)
     }
 }

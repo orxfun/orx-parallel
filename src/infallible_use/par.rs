@@ -227,7 +227,7 @@ pub trait ParUse: Sized + ParUseCore {
     fn into_optional<T>(
         self,
     ) -> impl ParUseOption<
-        Item = T,
+        Elem = T,
         Use = Self::Use,
         Xap1 = Self::Xap,
         M = T,
@@ -272,7 +272,7 @@ pub trait ParUse: Sized + ParUseCore {
     fn into_fallible<T, E>(
         self,
     ) -> impl ParUseResult<
-        Item = T,
+        Elem = T,
         Error = E,
         Use = Self::Use,
         Xap1 = Self::Xap,

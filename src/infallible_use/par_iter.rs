@@ -50,7 +50,7 @@ where
     }
 }
 
-impl<U, I, X, R> ParUseCore for ParUseIter<U, I, X, R>
+impl<U, I, X, R> IntoIterator for ParUseIter<U, I, X, R>
 where
     U: Use,
     I: ConcurrentIter,
@@ -59,6 +59,20 @@ where
 {
     type Item = X::O;
 
+    type IntoIter = XapUseIter<U, I::SequentialIter, X>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        XapUseIter::new(self.using, self.iter.into_seq_iter(), self.xap)
+    }
+}
+
+impl<U, I, X, R> ParUseCore for ParUseIter<U, I, X, R>
+where
+    U: Use,
+    I: ConcurrentIter,
+    X: XapUse<U = U::Item, I = I::Item>,
+    R: ParRunner,
+{
     type Runner = R;
 
     type Using = U;
@@ -242,21 +256,5 @@ where
             IterationOrder::Ordered => exe.collect(params, u, iter, x, dst),
             IterationOrder::Arbitrary => exe.collect_arb(params, u, iter, x, dst),
         }
-    }
-}
-
-impl<U, I, X, R> IntoIterator for ParUseIter<U, I, X, R>
-where
-    U: Use,
-    I: ConcurrentIter,
-    X: XapUse<U = U::Item, I = I::Item>,
-    R: ParRunner,
-{
-    type Item = X::O;
-
-    type IntoIter = XapUseIter<U, I::SequentialIter, X>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        XapUseIter::new(self.using, self.iter.into_seq_iter(), self.xap)
     }
 }

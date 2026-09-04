@@ -9,7 +9,7 @@ use std::string::{String, ToString};
 
 #[test]
 fn kind_transform_par_use_opt() {
-    fn get_par(n: usize) -> impl ParUseOption<Use = char, Item = String> {
+    fn get_par(n: usize) -> impl ParUseOption<Use = char, Elem = String> {
         (0..n)
             .par()
             .map(|x| x.to_string())
@@ -18,11 +18,11 @@ fn kind_transform_par_use_opt() {
             .use_new(|_| 'x')
     }
 
-    fn collect(par: impl ParUseOption<Use = char, Item = String>) -> Option<Vec<String>> {
+    fn collect(par: impl ParUseOption<Use = char, Elem = String>) -> Option<Vec<String>> {
         par.num_threads(3).chunk_size(1).collect()
     }
 
-    fn count(par: impl ParUseOption<Use = char, Item = String>) -> Option<usize> {
+    fn count(par: impl ParUseOption<Use = char, Elem = String>) -> Option<usize> {
         par.num_threads(1)
             .chunk_size(7)
             .map(|_u, _| 1)
@@ -30,7 +30,7 @@ fn kind_transform_par_use_opt() {
             .map(|x| x.unwrap_or(0))
     }
 
-    fn find(par: impl ParUseOption<Use = char, Item = String>) -> Option<Option<String>> {
+    fn find(par: impl ParUseOption<Use = char, Elem = String>) -> Option<Option<String>> {
         par.filter(|_u, x| x.len() > 2)
             .num_threads(6)
             .chunk_size(3)
@@ -38,26 +38,26 @@ fn kind_transform_par_use_opt() {
     }
 
     fn map(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
+        par: impl ParUseOption<Use = char, Elem = String>,
+    ) -> impl ParUseOption<Use = char, Elem = String> {
         par.map(|_u, x| format!("{x}!"))
     }
 
     fn filter(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
+        par: impl ParUseOption<Use = char, Elem = String>,
+    ) -> impl ParUseOption<Use = char, Elem = String> {
         par.filter(|_u, x| !x.is_empty())
     }
 
     fn filter_map(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
+        par: impl ParUseOption<Use = char, Elem = String>,
+    ) -> impl ParUseOption<Use = char, Elem = String> {
         par.filter_map(|_u, x| Some(x))
     }
 
     fn flat_map(
-        par: impl ParUseOption<Use = char, Item = String>,
-    ) -> impl ParUseOption<Use = char, Item = String> {
+        par: impl ParUseOption<Use = char, Elem = String>,
+    ) -> impl ParUseOption<Use = char, Elem = String> {
         par.flat_map(|_u, x| [x])
     }
 
@@ -77,7 +77,7 @@ fn kind_transform_par_use_opt() {
     assert!(result.is_some());
 
     // copied & cloned
-    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUseOption<Use = char, Item = &T> {
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParUseOption<Use = char, Elem = &T> {
         values.par().map(Some).into_optional().use_new(|_| 'x')
     }
     let vals: Vec<_> = (0..42).collect();

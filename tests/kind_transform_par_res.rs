@@ -9,15 +9,15 @@ use std::string::{String, ToString};
 
 #[test]
 fn kind_transform_par_res() {
-    fn get_par(n: usize) -> impl ParResult<Item = String, Error = char> {
+    fn get_par(n: usize) -> impl ParResult<Elem = String, Error = char> {
         (0..n).par().map(|x| x.to_string()).map(Ok).into_fallible()
     }
 
-    fn collect(par: impl ParResult<Item = String, Error = char>) -> Result<Vec<String>, char> {
+    fn collect(par: impl ParResult<Elem = String, Error = char>) -> Result<Vec<String>, char> {
         par.num_threads(3).chunk_size(1).collect()
     }
 
-    fn count(par: impl ParResult<Item = String, Error = char>) -> Result<usize, char> {
+    fn count(par: impl ParResult<Elem = String, Error = char>) -> Result<usize, char> {
         par.num_threads(1)
             .chunk_size(7)
             .map(|_| 1)
@@ -25,7 +25,7 @@ fn kind_transform_par_res() {
             .map(|x| x.unwrap_or(0))
     }
 
-    fn find(par: impl ParResult<Item = String, Error = char>) -> Result<Option<String>, char> {
+    fn find(par: impl ParResult<Elem = String, Error = char>) -> Result<Option<String>, char> {
         par.filter(|x| x.len() > 2)
             .num_threads(6)
             .chunk_size(3)
@@ -33,26 +33,26 @@ fn kind_transform_par_res() {
     }
 
     fn map(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
+        par: impl ParResult<Elem = String, Error = char>,
+    ) -> impl ParResult<Elem = String, Error = char> {
         par.map(|x| format!("{x}!"))
     }
 
     fn filter(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
+        par: impl ParResult<Elem = String, Error = char>,
+    ) -> impl ParResult<Elem = String, Error = char> {
         par.filter(|x| !x.is_empty())
     }
 
     fn filter_map(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
+        par: impl ParResult<Elem = String, Error = char>,
+    ) -> impl ParResult<Elem = String, Error = char> {
         par.filter_map(Some)
     }
 
     fn flat_map(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParResult<Item = String, Error = char> {
+        par: impl ParResult<Elem = String, Error = char>,
+    ) -> impl ParResult<Elem = String, Error = char> {
         par.flat_map(|x| [x])
     }
 
@@ -72,15 +72,15 @@ fn kind_transform_par_res() {
     assert!(result.is_some());
 
     fn map_to_use(
-        par: impl ParResult<Item = String, Error = char>,
-    ) -> impl ParUseResult<Use = char, Item = String, Error = char> {
+        par: impl ParResult<Elem = String, Error = char>,
+    ) -> impl ParUseResult<Use = char, Elem = String, Error = char> {
         par.use_new(|_| 'x')
     }
     let par = map_to_use(get_par(42));
     assert_eq!(par.first(), Ok(Some(String::from("0"))));
 
     // copied & cloned
-    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParResult<Item = &T, Error = char> {
+    fn get_ref_par<T: Sync>(values: &[T]) -> impl ParResult<Elem = &T, Error = char> {
         values.par().map(Ok).into_fallible()
     }
     let vals: Vec<_> = (0..42).collect();

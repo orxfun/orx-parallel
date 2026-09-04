@@ -299,7 +299,7 @@ pub trait Par: Sized + ParCore {
     fn into_optional<T>(
         self,
     ) -> impl ParOption<
-        Item = T,
+        Elem = T,
         Xap1 = Self::Xap,
         M = T,
         Xap2 = Id<T>,
@@ -369,7 +369,7 @@ pub trait Par: Sized + ParCore {
     fn into_fallible<T, E>(
         self,
     ) -> impl ParResult<
-        Item = T,
+        Elem = T,
         Error = E,
         Xap1 = Self::Xap,
         M = T,

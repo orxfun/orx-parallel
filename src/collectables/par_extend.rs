@@ -45,7 +45,7 @@ pub trait ParExtend<T>: ParExtendCore<T> {
     ///     .into_optional();
     /// assert_eq!(values.par_extend_optional(result), None);
     /// ```
-    fn par_extend_optional(&mut self, iter: impl ParOption<Item = T>) -> Option<()>
+    fn par_extend_optional(&mut self, iter: impl ParOption<Elem = T>) -> Option<()>
     where
         T: Send;
 
@@ -76,7 +76,7 @@ pub trait ParExtend<T>: ParExtendCore<T> {
     /// ```
     fn par_extend_fallible<I>(&mut self, iter: I) -> Result<(), I::Error>
     where
-        I: ParResult<Item = T>,
+        I: ParResult<Elem = T>,
         I::Error: Send,
         T: Send;
 }
@@ -89,7 +89,7 @@ impl<T, P: ParExtendCore<T>> ParExtend<T> for P {
         iter.collect_into(self);
     }
 
-    fn par_extend_optional(&mut self, iter: impl ParOption<Item = T>) -> Option<()>
+    fn par_extend_optional(&mut self, iter: impl ParOption<Elem = T>) -> Option<()>
     where
         T: Send,
     {
@@ -98,7 +98,7 @@ impl<T, P: ParExtendCore<T>> ParExtend<T> for P {
 
     fn par_extend_fallible<I>(&mut self, iter: I) -> Result<(), I::Error>
     where
-        I: ParResult<Item = T>,
+        I: ParResult<Elem = T>,
         I::Error: Send,
         T: Send,
     {

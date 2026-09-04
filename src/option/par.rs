@@ -83,7 +83,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         runner: Q,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = Self::Xap2,
@@ -113,7 +113,7 @@ pub trait ParOption: Sized + ParOptionCore {
     fn runner_with_diagnostics(
         self,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = Self::Xap2,
@@ -275,7 +275,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         f: F,
     ) -> impl ParUseOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Use = U,
         Xap1 = IdUse<Self::Xap1, U>,
         M = Self::M,
@@ -317,7 +317,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         use_vec: &mut UseVec<U, F>,
     ) -> impl ParUseOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Use = U,
         Xap1 = IdUse<Self::Xap1, U>,
         M = Self::M,
@@ -361,7 +361,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         slice: &'a mut [U],
     ) -> impl ParUseOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Use = U,
         Xap1 = IdUse<Self::Xap1, U>,
         M = Self::M,
@@ -396,7 +396,7 @@ pub trait ParOption: Sized + ParOptionCore {
     fn copied<'a, O>(
         self,
     ) -> impl ParOption<
-        Item = O,
+        Elem = O,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = MappedOf<Self::Xap2, FnCopied<'a, O>>,
@@ -404,7 +404,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = Self::Size,
     >
     where
-        Self: ParOption<Item = &'a O>,
+        Self: ParOption<Elem = &'a O>,
         O: Copy + 'a,
     {
         let (iter, x1, x2, exe, _, params) = self.destruct();
@@ -426,7 +426,7 @@ pub trait ParOption: Sized + ParOptionCore {
     fn cloned<'a, O>(
         self,
     ) -> impl ParOption<
-        Item = O,
+        Elem = O,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = MappedOf<Self::Xap2, FnCloned<'a, O>>,
@@ -434,7 +434,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = Self::Size,
     >
     where
-        Self: ParOption<Item = &'a O>,
+        Self: ParOption<Elem = &'a O>,
         O: Clone + 'a,
     {
         let (iter, x1, x2, exe, _, params) = self.destruct();
@@ -457,7 +457,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Q,
+        Elem = Q,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = MapOf<Self::Xap2, Q, H>,
@@ -465,7 +465,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = Self::Size,
     >
     where
-        H: Fn(Self::Item) -> Q + Copy + Send;
+        H: Fn(Self::Elem) -> Q + Copy + Send;
 
     /// Runs `h` on each successful element and forwards the element unchanged.
     ///
@@ -492,7 +492,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = InsOf<Self::Xap2, H>,
@@ -500,7 +500,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = Self::Size,
     >
     where
-        H: Fn(&Self::Item) + Copy + Send;
+        H: Fn(&Self::Elem) + Copy + Send;
 
     /// Keeps successful elements satisfying predicate `h`.
     ///
@@ -522,7 +522,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Self::Item,
+        Elem = Self::Elem,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FilOf<Self::Xap2, H>,
@@ -530,7 +530,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(&Self::Item) -> bool + Copy + Send;
+        H: Fn(&Self::Elem) -> bool + Copy + Send;
 
     /// Maps and filters successful elements in a single pass.
     ///
@@ -552,7 +552,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         h: H,
     ) -> impl ParOption<
-        Item = Q,
+        Elem = Q,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FilMapOf<Self::Xap2, Q, H>,
@@ -560,7 +560,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = <Self::Size as SizePair>::ThenBin,
     >
     where
-        H: Fn(Self::Item) -> Option<Q> + Copy + Send;
+        H: Fn(Self::Elem) -> Option<Q> + Copy + Send;
 
     /// Maps each successful element to an iterator and flattens one level.
     ///
@@ -582,7 +582,7 @@ pub trait ParOption: Sized + ParOptionCore {
         self,
         h: H,
     ) -> impl ParOption<
-        Item = V::Item,
+        Elem = V::Item,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FlatMapOf<Self::Xap2, V, H>,
@@ -591,7 +591,7 @@ pub trait ParOption: Sized + ParOptionCore {
     >
     where
         V: IntoIterator,
-        H: Fn(Self::Item) -> V + Copy + Send;
+        H: Fn(Self::Elem) -> V + Copy + Send;
 
     /// Flattens one level of nested iterables on the success path.
     ///
@@ -608,7 +608,7 @@ pub trait ParOption: Sized + ParOptionCore {
     fn flatten(
         self,
     ) -> impl ParOption<
-        Item = <Self::Item as IntoIterator>::Item,
+        Elem = <Self::Elem as IntoIterator>::Item,
         Xap1 = Self::Xap1,
         M = Self::M,
         Xap2 = FlattenOf<Self::Xap2>,
@@ -616,7 +616,7 @@ pub trait ParOption: Sized + ParOptionCore {
         Size = <Self::Size as SizePair>::ThenMany,
     >
     where
-        Self::Item: IntoIterator;
+        Self::Elem: IntoIterator;
 
     /// Returns a lower and optional upper bound on the number of successful output items.
     ///
@@ -674,9 +674,9 @@ pub trait ParOption: Sized + ParOptionCore {
     /// assert_eq!(Vec::<usize>::new().into_par().map(Some).into_optional().first(), Some(None));
     /// assert_eq!(vec![None, Some(1), Some(3)].into_par().into_optional().first(), None);
     /// ```
-    fn first(self) -> Option<Option<Self::Item>>
+    fn first(self) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Send;
+        Self::Elem: Send;
 
     /// Reduces successful items into one value using `f`.
     ///
@@ -696,10 +696,10 @@ pub trait ParOption: Sized + ParOptionCore {
     /// let fail = vec![Some(1), None, Some(3)].into_par().into_optional().reduce(|a, b| a + b);
     /// assert_eq!(fail, None);
     /// ```
-    fn reduce<F>(self, f: F) -> Option<Option<Self::Item>>
+    fn reduce<F>(self, f: F) -> Option<Option<Self::Elem>>
     where
-        F: Fn(Self::Item, Self::Item) -> Self::Item + Send + Copy,
-        Self::Item: Send;
+        F: Fn(Self::Elem, Self::Elem) -> Self::Elem + Send + Copy,
+        Self::Elem: Send;
 
     /// Collects successful items into `dst`.
     ///
@@ -724,8 +724,8 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn collect_into<P>(self, dst: &mut P) -> Option<()>
     where
-        P: ParExtend<Self::Item>,
-        Self::Item: Send;
+        P: ParExtend<Self::Elem>,
+        Self::Elem: Send;
 
     /// Collects successful items into a new collection.
     ///
@@ -744,8 +744,8 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn collect<P>(self) -> Option<P>
     where
-        P: ParExtend<Self::Item> + Default,
-        Self::Item: Send,
+        P: ParExtend<Self::Elem> + Default,
+        Self::Elem: Send,
     {
         let mut dst = P::default();
         self.collect_into(&mut dst)?;
@@ -769,8 +769,8 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn all<F>(self, f: F) -> Option<bool>
     where
-        Self::Item: Send,
-        F: Fn(&Self::Item) -> bool + Sync,
+        Self::Elem: Send,
+        F: Fn(&Self::Elem) -> bool + Sync,
     {
         self.map(|x| f(&x)).find(|x| !*x).map(|x| x.is_none())
     }
@@ -790,8 +790,8 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn any<F>(self, f: F) -> Option<bool>
     where
-        Self::Item: Send,
-        F: Fn(&Self::Item) -> bool + Sync,
+        Self::Elem: Send,
+        F: Fn(&Self::Elem) -> bool + Sync,
     {
         self.map(|x| f(&x)).find(|x| *x).map(|x| x.is_some())
     }
@@ -839,10 +839,10 @@ pub trait ParOption: Sized + ParOptionCore {
     /// let fail = vec![Some(1usize), None, Some(34)].into_par().into_optional().find(|x| x % 17 == 0);
     /// assert_eq!(fail, None);
     /// ```
-    fn find<F>(self, f: F) -> Option<Option<Self::Item>>
+    fn find<F>(self, f: F) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Send,
-        F: Fn(&Self::Item) -> bool + Sync,
+        Self::Elem: Send,
+        F: Fn(&Self::Elem) -> bool + Sync,
     {
         self.filter(&f).first()
     }
@@ -873,7 +873,7 @@ pub trait ParOption: Sized + ParOptionCore {
     where
         B: Send,
         I: Fn() -> B + Sync,
-        F: Fn(&mut B, Self::Item) + Copy + Send,
+        F: Fn(&mut B, Self::Elem) + Copy + Send,
     {
         let mut use_vec = UseVec::new(|_| init());
         let par_use = self.use_vec(&mut use_vec);
@@ -905,7 +905,7 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn for_each<F>(self, f: F) -> Option<()>
     where
-        F: Fn(Self::Item) + Send + Copy,
+        F: Fn(Self::Elem) + Send + Copy,
     {
         self.map(f).reduce(|_, _| {}).map(|_| ())
     }
@@ -923,9 +923,9 @@ pub trait ParOption: Sized + ParOptionCore {
     /// assert_eq!(Vec::<usize>::new().into_par().map(Some).into_optional().max(), Some(None));
     /// assert_eq!(vec![Some(1usize), None, Some(3)].into_par().into_optional().max(), None);
     /// ```
-    fn max(self) -> Option<Option<Self::Item>>
+    fn max(self) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Ord + Send,
+        Self::Elem: Ord + Send,
     {
         self.reduce(Ord::max)
     }
@@ -946,10 +946,10 @@ pub trait ParOption: Sized + ParOptionCore {
     ///     .max_by(|a, b| a.cmp(b));
     /// assert_eq!(x, Some(Some(5)));
     /// ```
-    fn max_by<F>(self, f: F) -> Option<Option<Self::Item>>
+    fn max_by<F>(self, f: F) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Send,
-        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        Self::Elem: Send,
+        F: Fn(&Self::Elem, &Self::Elem) -> Ordering + Sync,
     {
         let reduce = |x, y| match f(&x, &y) {
             Ordering::Greater | Ordering::Equal => x,
@@ -974,11 +974,11 @@ pub trait ParOption: Sized + ParOptionCore {
     ///     .max_by_key(|x| x.abs());
     /// assert_eq!(x, Some(Some(-10)));
     /// ```
-    fn max_by_key<B, F>(self, f: F) -> Option<Option<Self::Item>>
+    fn max_by_key<B, F>(self, f: F) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Send,
+        Self::Elem: Send,
         B: Ord,
-        F: Fn(&Self::Item) -> B + Sync,
+        F: Fn(&Self::Elem) -> B + Sync,
     {
         let reduce = |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Greater | Ordering::Equal => x,
@@ -1000,9 +1000,9 @@ pub trait ParOption: Sized + ParOptionCore {
     /// assert_eq!(Vec::<usize>::new().into_par().map(Some).into_optional().min(), Some(None));
     /// assert_eq!(vec![Some(1usize), None, Some(3)].into_par().into_optional().min(), None);
     /// ```
-    fn min(self) -> Option<Option<Self::Item>>
+    fn min(self) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Ord + Send,
+        Self::Elem: Ord + Send,
     {
         self.reduce(Ord::min)
     }
@@ -1023,10 +1023,10 @@ pub trait ParOption: Sized + ParOptionCore {
     ///     .min_by(|a, b| a.cmp(b));
     /// assert_eq!(x, Some(Some(-10)));
     /// ```
-    fn min_by<F>(self, f: F) -> Option<Option<Self::Item>>
+    fn min_by<F>(self, f: F) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Send,
-        F: Fn(&Self::Item, &Self::Item) -> Ordering + Sync,
+        Self::Elem: Send,
+        F: Fn(&Self::Elem, &Self::Elem) -> Ordering + Sync,
     {
         let reduce = |x, y| match f(&x, &y) {
             Ordering::Less | Ordering::Equal => x,
@@ -1051,11 +1051,11 @@ pub trait ParOption: Sized + ParOptionCore {
     ///     .min_by_key(|x| x.abs());
     /// assert_eq!(x, Some(Some(0)));
     /// ```
-    fn min_by_key<B, F>(self, f: F) -> Option<Option<Self::Item>>
+    fn min_by_key<B, F>(self, f: F) -> Option<Option<Self::Elem>>
     where
-        Self::Item: Send,
+        Self::Elem: Send,
         B: Ord,
-        F: Fn(&Self::Item) -> B + Sync,
+        F: Fn(&Self::Elem) -> B + Sync,
     {
         let reduce = |x, y| match f(&x).cmp(&f(&y)) {
             Ordering::Less | Ordering::Equal => x,
@@ -1081,11 +1081,11 @@ pub trait ParOption: Sized + ParOptionCore {
     /// ```
     fn sum<S>(self) -> Option<S>
     where
-        Self::Item: Sum<S>,
+        Self::Elem: Sum<S>,
         S: Send,
     {
-        self.map(Self::Item::owned)
-            .reduce(Self::Item::add)
-            .map(|x| x.unwrap_or(Self::Item::zero()))
+        self.map(Self::Elem::owned)
+            .reduce(Self::Elem::add)
+            .map(|x| x.unwrap_or(Self::Elem::zero()))
     }
 }
