@@ -50,3 +50,4 @@ pub use global_pool::{DefaultPool, global_pool};
 pub use new_pool::Pool;
 pub use scope::Scope;
 pub use thread_pool::{ThreadPool, max_num_threads_for_computation};
+pub use typed_task_queue::TypedTaskQueue;

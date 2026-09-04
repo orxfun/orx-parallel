@@ -6,17 +6,18 @@ where
     'scope: 's,
     'env: 'scope + 's,
 {
-    type PushBack<Elem>: TypedTaskQueue<'s, 'env, 'scope>
+    /// Type of the typed task queue obtained when the new task is pushed.
+    type PushBack<T>: TypedTaskQueue<'s, 'env, 'scope>
     where
-        Elem: FnOnce() + Send + 'scope + 'env;
+        T: FnOnce() + Send + 'scope + 'env;
 
     type Front: FnOnce() + Send + 'scope + 'env;
 
     type Back: TypedTaskQueue<'s, 'env, 'scope>;
 
-    fn push<Elem>(self, element: Elem) -> Self::PushBack<Elem>
+    fn push<T>(self, element: T) -> Self::PushBack<T>
     where
-        Elem: FnOnce() + Send + 'scope + 'env;
+        T: FnOnce() + Send + 'scope + 'env;
 
     fn run_all(self);
 }
@@ -55,18 +56,18 @@ where
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
 {
-    type PushBack<Elem>
-        = TasksSingle<'s, 'env, 'scope, S, Elem>
+    type PushBack<T>
+        = TasksSingle<'s, 'env, 'scope, S, T>
     where
-        Elem: FnOnce() + Send + 'scope + 'env;
+        T: FnOnce() + Send + 'scope + 'env;
 
     type Front = F;
 
     type Back = Self;
 
-    fn push<Elem>(self, element: Elem) -> Self::PushBack<Elem>
+    fn push<T>(self, element: T) -> Self::PushBack<T>
     where
-        Elem: FnOnce() + Send + 'scope + 'env,
+        T: FnOnce() + Send + 'scope + 'env,
     {
         TasksSingle::new(self.scope, element)
     }
@@ -112,18 +113,18 @@ where
     S: Scope<'s, 'env, 'scope>,
     F: FnOnce() + Send + 'scope + 'env,
 {
-    type PushBack<Elem>
-        = TasksMulti<'s, 'env, 'scope, S, F, TasksSingle<'s, 'env, 'scope, S, Elem>>
+    type PushBack<T>
+        = TasksMulti<'s, 'env, 'scope, S, F, TasksSingle<'s, 'env, 'scope, S, T>>
     where
-        Elem: FnOnce() + Send + 'scope + 'env;
+        T: FnOnce() + Send + 'scope + 'env;
 
     type Front = F;
 
     type Back = Self;
 
-    fn push<Elem>(self, element: Elem) -> Self::PushBack<Elem>
+    fn push<T>(self, element: T) -> Self::PushBack<T>
     where
-        Elem: FnOnce() + Send + 'scope + 'env,
+        T: FnOnce() + Send + 'scope + 'env,
     {
         let back = TasksSingle::new(self.scope, element);
         TasksMulti::new(self.scope, self.front, back)
@@ -178,18 +179,18 @@ where
     F: FnOnce() + Send + 'scope + 'env,
     B: TypedTaskQueue<'s, 'env, 'scope>,
 {
-    type PushBack<Elem>
-        = TasksMulti<'s, 'env, 'scope, S, F, B::PushBack<Elem>>
+    type PushBack<T>
+        = TasksMulti<'s, 'env, 'scope, S, F, B::PushBack<T>>
     where
-        Elem: FnOnce() + Send + 'scope + 'env;
+        T: FnOnce() + Send + 'scope + 'env;
 
     type Front = F;
 
     type Back = B;
 
-    fn push<Elem>(self, element: Elem) -> Self::PushBack<Elem>
+    fn push<T>(self, element: T) -> Self::PushBack<T>
     where
-        Elem: FnOnce() + Send + 'scope + 'env,
+        T: FnOnce() + Send + 'scope + 'env,
     {
         let back = self.back.push(element);
         TasksMulti::new(self.scope, self.front, back)
