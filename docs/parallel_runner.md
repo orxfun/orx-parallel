@@ -257,11 +257,11 @@ pub type DefaultRunner = runner_variants::FixedChunkRunner<crate::pool::DefaultP
 pub type DefaultRunner = runner_variants::AdaptiveChunkRunner<crate::pool::DefaultPool>;
 
 pub fn default_runner() -> DefaultRunner {
-    DefaultRunner::new(get_global_pool())
+    DefaultRunner::new(global_pool())
 }
 ```
 
-For a new runner, expose it from `src/runner/runner_variants/mod.rs`, then point the relevant `DefaultRunner` alias at it. Keep `DefaultRunner::new(get_global_pool())` working, or update `default_runner()` if the constructor needs additional configuration.
+For a new runner, expose it from `src/runner/runner_variants/mod.rs`, then point the relevant `DefaultRunner` alias at it. Keep `DefaultRunner::new(global_pool())` working, or update `default_runner()` if the constructor needs additional configuration.
 
 ## Testing checklist
 

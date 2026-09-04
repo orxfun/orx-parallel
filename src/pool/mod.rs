@@ -44,6 +44,6 @@ pub use pool_impl::OncePool;
 #[cfg(not(feature = "std"))]
 pub use pool_impl::SequentialPool;
 
-pub use global_pool::{DefaultPool, get_global_pool};
+pub use global_pool::{DefaultPool, global_pool};
 pub use new_pool::Pool;
 pub use par_thread_pool::ParThreadPool;

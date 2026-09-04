@@ -90,7 +90,7 @@ pub type DefaultPool = SequentialPool;
 // 1. wasm on wasm32
 #[cfg(all(feature = "std", feature = "wasm", target_arch = "wasm32"))]
 /// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -101,7 +101,7 @@ pub fn get_global_pool() -> DefaultPool {
     not(all(feature = "wasm", target_arch = "wasm32")),
 ))]
 /// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -113,7 +113,7 @@ pub fn get_global_pool() -> DefaultPool {
     not(feature = "persistent-pool-rayon"),
 ))]
 /// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -125,7 +125,7 @@ pub fn get_global_pool() -> DefaultPool {
     not(feature = "transient-pool"),
 ))]
 /// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
 
@@ -137,6 +137,6 @@ pub fn get_global_pool() -> DefaultPool {
     not(feature = "transient-pool"),
 ))]
 /// Returns the default global thread pool.
-pub fn get_global_pool() -> DefaultPool {
+pub fn global_pool() -> DefaultPool {
     Default::default()
 }
