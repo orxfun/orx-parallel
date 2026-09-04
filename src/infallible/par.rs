@@ -748,7 +748,24 @@ pub trait Par: Sized + ParCore {
 
     // get
 
-    /// TODO: placeholder
+    /// Returns a lower and optional upper bound on the number of output items.
+    ///
+    /// The bounds follow the usual [`Iterator::size_hint`] convention. For an
+    /// exact-size input and a one-to-one transformation, both bounds are exact.
+    /// Transformations such as `filter` may reduce the lower bound while keeping
+    /// the input length as the upper bound.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use orx_parallel::*;
+    ///
+    /// let mapped = (0..4).into_par().map(|x| x * 2);
+    /// assert_eq!(mapped.size_hint(), (4, Some(4)));
+    ///
+    /// let filtered = (0..4).into_par().filter(|x| x % 2 == 0);
+    /// assert_eq!(filtered.size_hint(), (0, Some(4)));
+    /// ```
     fn size_hint(&self) -> (usize, Option<usize>);
 
     // compute
