@@ -141,28 +141,6 @@ pub(crate) fn global_pool() -> DefaultPool {
     not(feature = "persistent-pool-rayon"),
     not(feature = "transient-pool"),
 ))]
-/// Returns the default global thread pool.
-///
-/// This is handy for **ad-hoc** parallel work: spawn a few tasks into a [`scope`]
-/// and let them run side by side. Note, however, that this pool plays only a
-/// minimal role in this crate's performance; the real speedups come from the
-/// concurrent iterators and parallel runner strategies used underneath parallel
-/// iterators. So prefer expressing computations through parallel iterators, and
-/// avoid calling `s.run` thousands of times in a loop, as this pool is not
-/// optimized for that.
-///
-/// # Examples
-///
-/// ```
-/// use orx_parallel::{Scope, ThreadPool, global_pool};
-///
-/// global_pool().scope(|s| {
-///     s.run(|| println!("computing part A"));
-///     s.run(|| println!("computing part B"));
-/// });
-/// ```
-///
-/// [`scope`]: crate::ThreadPool::scope
 pub(crate) fn global_pool() -> DefaultPool {
     &PERSISTENT_POOL
 }
