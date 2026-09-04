@@ -15,6 +15,7 @@ mod recursive;
 mod thread_execution;
 mod xap;
 mod xap_enum;
+mod xap_iter;
 /// Variants of [Xap] computations.
 ///
 /// [`Xap`]: crate::infallible::xap::Xap
