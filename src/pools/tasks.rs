@@ -99,26 +99,3 @@ impl<F: FnOnce() + Send> ParFun for F {
         scope.run(self);
     }
 }
-
-// impl<F: ParFun> ParFun for TasksSingle<F> {
-//     fn run<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
-//     where
-//         'scope: 's,
-//         'env: 'scope + 's,
-//         Self: 'scope + 'env,
-//     {
-//         self.f.run(scope);
-//     }
-// }
-
-// impl<F: ParFun, B: TaskQueue> ParFun for TasksMulti<F, B> {
-//     fn run<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
-//     where
-//         'scope: 's,
-//         'env: 'scope + 's,
-//         Self: 'scope + 'env,
-//     {
-//         self.f.run(scope);
-//         self.b.run(scope);
-//     }
-// }
