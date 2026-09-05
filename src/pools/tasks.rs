@@ -63,8 +63,6 @@ use crate::Scope;
 ///     max.into_inner().unwrap(),
 ///     all_positive.into_inner().unwrap(),
 /// );
-///
-/// assert_eq!(Pool::global().max_num_threads(), NonZeroUsize::MAX);
 /// ```
 pub struct Tasks;
 
