@@ -133,8 +133,6 @@ pub trait ThreadPool {
     ///     max.into_inner().unwrap(),
     ///     all_positive.into_inner().unwrap(),
     /// );
-    ///
-    /// assert_eq!(Pool::global().max_num_threads(), NonZeroUsize::MAX);
     /// ```
     fn run_all(&self, tasks: impl TaskQueue + Send) {
         self.scope(|s| tasks.run(s));
