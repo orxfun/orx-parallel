@@ -1,4 +1,5 @@
 use crate::Scope;
+use orx_meta::queue;
 
 /// Entry point for building a statically typed [`TaskQueue`] to run in parallel
 /// via [`ThreadPool::run_all`].
@@ -71,19 +72,15 @@ impl Tasks {
     ///
     /// [`push`]: TaskQueue::push
     #[allow(clippy::new_ret_no_self)]
-    pub fn new<F>(f: F) -> TasksSingle<F>
+    pub fn new<F>() -> TasksEmpty
     where
         F: FnOnce() + Send,
     {
-        TasksSingle::new(f)
+        TasksEmpty::new()
     }
 }
 
-orx_meta::define_queue!(
-    elements => [ ParFun ];
-    queue => [ TaskQueue; TasksSingle, TasksMulti ];
-);
-
+#[queue(TaskQueue; TasksEmpty, TasksSingle, TasksMulti)]
 pub trait ParFun {
     fn run<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
     where
@@ -104,25 +101,25 @@ impl<F: FnOnce() + Send> ParFun for F {
     }
 }
 
-impl<F: ParFun> ParFun for TasksSingle<F> {
-    fn run<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        Self: 'scope + 'env,
-    {
-        self.f.run(scope);
-    }
-}
+// impl<F: ParFun> ParFun for TasksSingle<F> {
+//     fn run<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
+//     where
+//         'scope: 's,
+//         'env: 'scope + 's,
+//         Self: 'scope + 'env,
+//     {
+//         self.f.run(scope);
+//     }
+// }
 
-impl<F: ParFun, B: TaskQueue> ParFun for TasksMulti<F, B> {
-    fn run<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
-    where
-        'scope: 's,
-        'env: 'scope + 's,
-        Self: 'scope + 'env,
-    {
-        self.f.run(scope);
-        self.b.run(scope);
-    }
-}
+// impl<F: ParFun, B: TaskQueue> ParFun for TasksMulti<F, B> {
+//     fn run<'s, 'env, 'scope>(self, scope: impl Scope<'s, 'env, 'scope>)
+//     where
+//         'scope: 's,
+//         'env: 'scope + 's,
+//         Self: 'scope + 'env,
+//     {
+//         self.f.run(scope);
+//         self.b.run(scope);
+//     }
+// }
