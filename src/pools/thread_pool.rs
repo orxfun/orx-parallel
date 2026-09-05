@@ -137,7 +137,7 @@ pub trait ThreadPool {
     /// );
     /// ```
     fn run_all(&self, tasks: impl TaskQueue + Send) {
-        self.scope(|s| tasks.run_in_scope(s));
+        self.scope(|s| tasks.run(s));
     }
 }
 
