@@ -21,6 +21,7 @@ orx-split-vec = { version = "4.0", default-features = false }
 orx-pinned-concurrent-col = { version = "3.0", default-features = false }
 orx-concurrent-bag = { version = "4.0", default-features = false }
 orx-concurrent-ordered-bag = { version = "4.0", default-features = false }
+orx-meta = { version = "1.1", default-features = false }
 
 # optional: thread pool
 rayon-core = { version = "1.13", optional = true, default-features = false }
