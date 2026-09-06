@@ -110,6 +110,9 @@ impl Tasks {
 /// assert_eq!(*max.lock().unwrap(), 42);
 /// assert!(*all_positive.lock().unwrap());
 /// ```
+///
+/// See [`adhoc_tasks.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/adhoc_tasks.rs)
+/// for a complete example of running independent ad-hoc tasks concurrently.
 #[macro_export]
 macro_rules! tasks {
     () => {
