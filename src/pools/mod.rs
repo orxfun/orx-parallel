@@ -51,4 +51,5 @@ pub(crate) use global_pool::global_pool;
 pub use pool::Pool;
 pub use scope::Scope;
 pub use tasks::{TaskQueue, Tasks};
+pub use crate::tasks;
 pub use thread_pool::{ThreadPool, max_num_threads_for_computation};
