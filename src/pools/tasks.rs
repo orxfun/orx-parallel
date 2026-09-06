@@ -108,7 +108,7 @@ impl Tasks {
 ///
 /// assert_eq!(*sum.lock().unwrap(), 108);
 /// assert_eq!(*max.lock().unwrap(), 42);
-/// assert!(all_positive.lock().unwrap());
+/// assert!(*all_positive.lock().unwrap());
 /// ```
 #[macro_export]
 macro_rules! tasks {
