@@ -1,4 +1,4 @@
-use crate::{IntoParIter, Par, ThreadPool, Params, runner::ParRunner};
+use crate::{IntoParIter, Par, Params, ThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 

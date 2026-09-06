@@ -65,8 +65,14 @@ fn main() {
 
     println!("\n--- Collected Results ---");
     println!("Activity logs: {:?}", activity_logs.into_inner().unwrap());
-    println!("Financial summary: {:?}", financial_summary.into_inner().unwrap());
-    println!("Recommendations: {:?}", recommendations.into_inner().unwrap());
+    println!(
+        "Financial summary: {:?}",
+        financial_summary.into_inner().unwrap()
+    );
+    println!(
+        "Recommendations: {:?}",
+        recommendations.into_inner().unwrap()
+    );
 
     println!("\nTotal parallel execution time: {:?}", total_duration);
 }
