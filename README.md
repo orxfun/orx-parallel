@@ -216,10 +216,10 @@ Pool::global().scope(|s| {
 
 // or
 
-let tasks = Tasks::new()
-    .push(|| println!("task A"))
-    .push(|| println!("task B"));
-
+let tasks = tasks![
+    || println!("task A"),
+    || println!("task B"),
+];
 Pool::global().run_all(tasks);
 ```
 

@@ -75,7 +75,7 @@ impl Pool {
     /// });
     /// ```
     ///
-    /// * Or via [`Tasks`] and [`run_all`], which builds a statically typed queue of
+    /// * Or via [`tasks!`] and [`run_all`], which builds a statically typed queue of
     ///   tasks to be run in parallel:
     ///
     /// ```rust
@@ -88,10 +88,11 @@ impl Pool {
     /// let max = Mutex::new(i32::MIN);
     /// let all_positive = Mutex::new(false);
     ///
-    /// let tasks = Tasks::new()
-    ///     .push(|| *sum.lock().unwrap() = numbers.iter().sum())
-    ///     .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
-    ///     .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0));
+    /// let tasks = tasks![
+    ///     || *sum.lock().unwrap() = numbers.iter().sum(),
+    ///     || *max.lock().unwrap() = numbers.iter().copied().max().unwrap(),
+    ///     || *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0),
+    /// ];
     ///
     /// Pool::global().run_all(tasks);
     ///

@@ -72,9 +72,11 @@ pub trait ThreadPool {
 
     /// Runs all `tasks` in parallel on this pool.
     ///
-    /// `tasks` is a statically typed [`Tasks`] queue: pushed tasks are stored inline,
+    /// `tasks` is a statically typed [`TaskQueue`]: pushed tasks are stored inline,
     /// requiring no object safety, boxing or heap allocation. None of the tasks start
-    /// running on [`push`]; they all start in parallel only when `run_all` is called.
+    /// running until `run_all` is called.
+    ///
+    /// Tasks can be created using the [`tasks!`] macro, or fluently via [`Tasks::new()`] and [`push`].
     ///
     /// [`push`]: crate::pools::tasks::TaskQueue::push
     ///
@@ -85,20 +87,21 @@ pub trait ThreadPool {
     ///
     /// let work_for = |n| std::thread::sleep(std::time::Duration::from_millis(n));
     ///
-    /// let tasks = Tasks::new()
-    ///     .push(|| {
+    /// let tasks = tasks![
+    ///     || {
     ///         work_for(90);
     ///         println!("t1 completes 4th");
-    ///     })
-    ///     .push(|| println!("t2 completes 1st"))
-    ///     .push(|| {
+    ///     },
+    ///     || println!("t2 completes 1st"),
+    ///     || {
     ///         work_for(10);
     ///         println!("t3 completes 2nd");
-    ///     })
-    ///     .push(|| {
+    ///     },
+    ///     || {
     ///         work_for(50);
     ///         println!("t4 completes 3rd");
-    ///     });
+    ///     },
+    /// ];
     ///
     /// Pool::global().run_all(tasks);
     ///
@@ -122,10 +125,11 @@ pub trait ThreadPool {
     /// let max = Mutex::new(i32::MIN);
     /// let all_positive = Mutex::new(false);
     ///
-    /// let tasks = Tasks::new()
-    ///     .push(|| *sum.lock().unwrap() = numbers.iter().sum())
-    ///     .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
-    ///     .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0));
+    /// let tasks = tasks![
+    ///     || *sum.lock().unwrap() = numbers.iter().sum(),
+    ///     || *max.lock().unwrap() = numbers.iter().copied().max().unwrap(),
+    ///     || *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0),
+    /// ];
     ///
     /// Pool::global().run_all(tasks);
     ///
@@ -135,6 +139,18 @@ pub trait ThreadPool {
     ///     max.into_inner().unwrap(),
     ///     all_positive.into_inner().unwrap(),
     /// );
+    /// ```
+    ///
+    /// Tasks can also be created fluently via [`Tasks::new`]:
+    ///
+    /// ```rust
+    /// use orx_parallel::*;
+    ///
+    /// let tasks = Tasks::new()
+    ///     .push(|| println!("task 1"))
+    ///     .push(|| println!("task 2"));
+    ///
+    /// Pool::global().run_all(tasks);
     /// ```
     fn run_all(&self, tasks: impl TaskQueue + Send) {
         self.scope(|s| tasks.run(s));

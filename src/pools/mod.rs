@@ -46,6 +46,7 @@ pub use pool_impl::OncePool;
 #[cfg(not(feature = "std"))]
 pub use pool_impl::SequentialPool;
 
+pub use crate::tasks;
 pub use global_pool::DefaultPool;
 pub(crate) use global_pool::global_pool;
 pub use pool::Pool;

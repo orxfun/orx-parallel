@@ -53,10 +53,11 @@ use orx_meta::queue;
 /// let max = Mutex::new(i32::MIN);
 /// let all_positive = Mutex::new(false);
 ///
-/// let tasks = Tasks::new()
-///     .push(|| *sum.lock().unwrap() = numbers.iter().sum())
-///     .push(|| *max.lock().unwrap() = numbers.iter().copied().max().unwrap())
-///     .push(|| *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0));
+/// let tasks = tasks![
+///     || *sum.lock().unwrap() = numbers.iter().sum(),
+///     || *max.lock().unwrap() = numbers.iter().copied().max().unwrap(),
+///     || *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0),
+/// ];
 ///
 /// Pool::global().run_all(tasks);
 ///
@@ -67,6 +68,8 @@ use orx_meta::queue;
 ///     all_positive.into_inner().unwrap(),
 /// );
 /// ```
+///
+/// Tasks can also be built fluently via [`Tasks::new`] and [`TaskQueue::push`].
 pub struct Tasks;
 
 impl Tasks {
@@ -77,6 +80,48 @@ impl Tasks {
     pub fn new() -> TasksEmpty {
         TasksEmpty::new()
     }
+}
+
+/// Macro helper to build a statically typed [`TaskQueue`] with the given tasks.
+///
+/// Returns a task queue (equivalent to chaining [`Tasks::new().push(...)`](Tasks::new)).
+///
+/// # Example
+///
+/// ```rust
+/// use orx_parallel::*;
+/// use std::sync::Mutex;
+///
+/// let numbers = [4, 8, 15, 16, 23, 42];
+///
+/// let sum = Mutex::new(0);
+/// let max = Mutex::new(i32::MIN);
+/// let all_positive = Mutex::new(false);
+///
+/// let tasks = tasks![
+///     || *sum.lock().unwrap() = numbers.iter().sum(),
+///     || *max.lock().unwrap() = numbers.iter().copied().max().unwrap(),
+///     || *all_positive.lock().unwrap() = numbers.iter().all(|&x| x > 0),
+/// ];
+///
+/// Pool::global().run_all(tasks);
+///
+/// assert_eq!(*sum.lock().unwrap(), 108);
+/// assert_eq!(*max.lock().unwrap(), 42);
+/// assert!(*all_positive.lock().unwrap());
+/// ```
+///
+/// See [`adhoc_tasks.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/adhoc_tasks.rs)
+/// for a complete example of running independent ad-hoc tasks concurrently.
+#[macro_export]
+macro_rules! tasks {
+    () => {
+        $crate::Tasks::new()
+    };
+    ( $( $task:expr ),* $(,)? ) => {
+        $crate::Tasks::new()
+            $( .push($task) )*
+    };
 }
 
 #[queue(TaskQueue; TasksEmpty, TasksSingle, TasksMulti)]
