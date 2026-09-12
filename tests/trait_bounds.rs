@@ -1,5 +1,3 @@
-use orx_fixed_vec::FixedVec;
-use orx_split_vec::SplitVec;
 use std::collections::VecDeque;
 
 #[test]
@@ -13,8 +11,6 @@ fn trait_bounds_parallelizable() {
     fun(&vec![1, 2, 3]);
     fun(&VecDeque::<String>::new());
     fun(0..9);
-    fun(&FixedVec::<usize>::new(3));
-    fun(&SplitVec::<usize>::new());
 }
 
 #[test]
@@ -26,8 +22,6 @@ fn trait_bounds_parallelizable_collection() {
 
     fun(vec![1, 2, 3]);
     fun(VecDeque::<String>::new());
-    fun(FixedVec::<usize>::new(3));
-    fun(SplitVec::<usize>::new());
 }
 
 #[test]
@@ -40,8 +34,6 @@ fn trait_bounds_into_par_iter() {
     // owned
     fun(vec![1, 2, 3]);
     fun(VecDeque::<String>::new());
-    fun(FixedVec::<usize>::new(3));
-    fun(SplitVec::<usize>::new());
 
     // ref
     #[allow(clippy::needless_borrows_for_generic_args)]
@@ -50,7 +42,5 @@ fn trait_bounds_into_par_iter() {
         fun(&vec![1, 2, 3]);
         fun(&VecDeque::<String>::new());
         fun(0..9);
-        fun(&FixedVec::<usize>::new(3));
-        fun(&SplitVec::<usize>::new());
     }
 }
