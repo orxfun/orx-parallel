@@ -19,3 +19,6 @@ mod hash_set;
 
 pub use soa2::Soa2;
 pub use utils::{ColAndPos, IdxLen};
+
+// TODO: move to utils
+pub use vec::ThBegLen;
