@@ -87,6 +87,7 @@ impl<T: Send> ParExtendCore<T> for Vec<T> {
 
     // add
 
+    #[inline(always)]
     fn add_one(&mut self, value: T) {
         self.push(value);
     }

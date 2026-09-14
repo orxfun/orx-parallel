@@ -1,6 +1,7 @@
 use crate::collectables::ParExtendCore;
 use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen};
-use alloc::vec::Vec;
+use alloc::vec::{IntoIter, Vec};
+use core::iter::Zip;
 
 pub struct Soa2<T1, T2> {
     v1: Vec<T1>,
@@ -37,6 +38,11 @@ impl<T1, T2> Soa2<T1, T2> {
     pub fn is_empty(&self) -> bool {
         self.v1.is_empty()
     }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.v1.reserve(additional);
+        self.v2.reserve(additional);
+    }
 }
 
 impl<T1, T2> Default for Soa2<T1, T2> {
@@ -51,6 +57,16 @@ impl<T1, T2> Extend<(T1, T2)> for Soa2<T1, T2> {
             self.v1.push(i1);
             self.v2.push(i2);
         }
+    }
+}
+
+impl<T1, T2> IntoIterator for Soa2<T1, T2> {
+    type Item = (T1, T2);
+
+    type IntoIter = Zip<IntoIter<T1>, IntoIter<T2>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.v1.into_iter().zip(self.v2)
     }
 }
 
@@ -143,17 +159,22 @@ impl<T1: Send, T2: Send> ParExtendCore<(T1, T2)> for Soa2<T1, T2> {
 
     // add
 
+    #[inline(always)]
     fn add_one(&mut self, value: (T1, T2)) {
-        todo!()
+        self.push(value);
     }
 
     // extend - merge
 
-    fn extend_merge_infallibles(&mut self, thread_results: Vec<Self::ThreadValues>) {
-        todo!()
+    fn extend_merge_infallibles(&mut self, results: Vec<Self::ThreadValues>) {
+        let collected_len: usize = results.iter().map(|x| x.len()).sum();
+        self.reserve(collected_len);
+        for result in results {
+            self.extend(result);
+        }
     }
 
-    fn extend_merge_ordered_infallibles(&mut self, thread_results: Vec<Self::OrderedThreadValues>) {
+    fn extend_merge_ordered_infallibles(&mut self, results: Vec<Self::OrderedThreadValues>) {
         todo!()
     }
 }
