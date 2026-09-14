@@ -150,15 +150,15 @@ impl<T: Send> ParExtendCore<T> for Vec<T> {
 // merge helpers
 
 #[derive(Clone)]
-struct ThBegLen {
-    th: usize,
-    beg: usize,
-    len: usize,
+pub(super) struct ThBegLen {
+    pub th: usize,
+    pub beg: usize,
+    pub len: usize,
 }
 
 impl ThBegLen {
     #[inline(always)]
-    fn new(th: usize, beg: usize, len: usize) -> Self {
+    pub fn new(th: usize, beg: usize, len: usize) -> Self {
         Self { th, beg, len }
     }
 }
