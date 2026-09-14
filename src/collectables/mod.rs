@@ -4,3 +4,4 @@ mod par_extend_impl;
 
 pub use par_extend::ParExtend;
 pub use par_extend_core::ParExtendCore;
+pub use par_extend_impl::Soa2;

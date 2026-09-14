@@ -16,3 +16,5 @@ mod vec_deque;
 mod hash_map;
 #[cfg(feature = "std")]
 mod hash_set;
+
+pub use soa2::Soa2;
