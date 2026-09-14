@@ -18,3 +18,4 @@ mod hash_map;
 mod hash_set;
 
 pub use soa2::Soa2;
+pub use utils::{ColAndPos, IdxLen};
