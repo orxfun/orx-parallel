@@ -1,4 +1,5 @@
-use crate::collectables::{ParExtendCore, par_extend_impl::utils::ColAndPos};
+use crate::collectables::ParExtendCore;
+use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen};
 use alloc::vec::Vec;
 
 pub struct Soa2<T1, T2> {
@@ -20,6 +21,28 @@ impl<T1, T2> Soa2<T1, T2> {
             v2: Vec::with_capacity(capacity),
         }
     }
+
+    #[inline(always)]
+    pub fn push(&mut self, (i1, i2): (T1, T2)) {
+        self.v1.push(i1);
+        self.v2.push(i2);
+    }
+
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.v1.len()
+    }
+
+    #[inline(always)]
+    pub fn is_empty(&self) -> bool {
+        self.v1.is_empty()
+    }
+}
+
+impl<T1, T2> Default for Soa2<T1, T2> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T1, T2> Extend<(T1, T2)> for Soa2<T1, T2> {
@@ -37,22 +60,22 @@ impl<T1: Send, T2: Send> ParExtendCore<(T1, T2)> for Soa2<T1, T2> {
     type OrderedThreadValues = ColAndPos<Self>;
 
     fn new_thread_values() -> Self::ThreadValues {
-        todo!()
+        Self::ThreadValues::new()
     }
 
     fn new_ordered_thread_values() -> Self::OrderedThreadValues {
-        todo!()
+        Default::default()
     }
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: (T1, T2)) {
-        todo!()
+        collected.push(value);
     }
 
     fn add_thread_values(
         collected: &mut Self::ThreadValues,
         values: impl IntoIterator<Item = (T1, T2)>,
     ) {
-        todo!()
+        collected.extend(values)
     }
 
     fn add_ordered_thread_value(
@@ -60,7 +83,8 @@ impl<T1: Send, T2: Send> ParExtendCore<(T1, T2)> for Soa2<T1, T2> {
         idx: usize,
         value: (T1, T2),
     ) {
-        todo!()
+        collected.values.push(value);
+        collected.positions.push(IdxLen { idx, len: 1 });
     }
 
     fn add_ordered_thread_values(
@@ -68,7 +92,13 @@ impl<T1: Send, T2: Send> ParExtendCore<(T1, T2)> for Soa2<T1, T2> {
         idx: usize,
         values: impl IntoIterator<Item = (T1, T2)>,
     ) {
-        todo!()
+        let len_begin = collected.values.len();
+        collected.values.extend(values);
+
+        let len = collected.values.len() - len_begin;
+        if len > 0 {
+            collected.positions.push(IdxLen { idx, len });
+        }
     }
 
     fn add_ordered_thread_optionals(
