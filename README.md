@@ -68,10 +68,10 @@ let best_tour = (0..num_tours)
 
 Common inputs are directly supported, including:
 
-- vectors and slices
-- `VecDeque`
-- ranges
-- draining iterators (`par_drain`)
+* vectors and slices
+* `VecDeque`
+* ranges
+* draining iterators (`par_drain`)
 
 ### 2. Any arbitrary iterator
 
@@ -121,8 +121,8 @@ In practice, this means collection-specific parallelization can live in the coll
 
 Fallible parallel flows are a core feature.
 
-- `into_optional()` for `Option<T>` pipelines
-- `into_fallible()` for `Result<T, E>` pipelines
+* `into_optional()` for `Option<T>` pipelines
+* `into_fallible()` for `Result<T, E>` pipelines
 
 After the transformation, you continue writing only the success path, similar in spirit to using `?` in regular Rust code. Any failure short-circuits with early exit.
 
@@ -181,9 +181,9 @@ use orx_parallel::*;
 
 let result: Vec<_> = (0..1000)
     .par() // ← can use all threads in the pool
-	.map(|x| x * 2)
-	.num_threads(4) // ← limit this computation to use <=4 threads
-	.collect();
+ .map(|x| x * 2)
+ .num_threads(4) // ← limit this computation to use <=4 threads
+ .collect();
 
 assert_eq!(result.len(), 1000);
 ```
@@ -206,31 +206,36 @@ Please see [`thread_usage.md`](https://github.com/orxfun/orx-parallel/blob/main/
 
 The thread pool itself is also exposed directly through [`Pool::global()`](https://docs.rs/orx-parallel/latest/orx_parallel/struct.Pool.html#method.global).
 
-```rust
+```rust,ignore
 use orx_parallel::*;
 
+fn prepare_breakfast(ingredients: &[&str]) {}
+fn pack_lunch(ingredients: &[&str]) {}
+
+let ingredients = vec!["apple", "tomato"];
+
 Pool::global().scope(|s| {
-    s.run(|| println!("task A"));
-    s.run(|| println!("task B"));
+    s.run(|| prepare_breakfast(&ingredients));
+    s.run(|| pack_lunch(&ingredients));
 });
 
 // or
 
 let tasks = tasks![
-    || println!("task A"),
-    || println!("task B"),
+    || prepare_breakfast(&ingredients),
+    || pack_lunch(&ingredients)
 ];
 Pool::global().run_all(tasks);
 ```
 
-Note that this bypasses the concurrent iterator and runner strategy optimizations that parallel iterators rely on, so it is best suited for a few large, independent tasks rather than many small ones.
+Note that the tasks are not boxed. On the other hand, this approach bypasses the concurrent iterator and runner strategy optimizations that parallel iterators rely on, so it is best suited for a few large, independent tasks rather than many small ones.
 
 ### Sequential Execution
 
 Every parallel iterator can also run sequentially on the calling thread:
 
-- use `.num_threads(1)` to keep the parallel pipeline API while disabling parallel execution;
-- use `.into_iter()` to consume the pipeline as a regular sequential iterator.
+* use `.num_threads(1)` to keep the parallel pipeline API while disabling parallel execution;
+* use `.into_iter()` to consume the pipeline as a regular sequential iterator.
 
 Both options avoid spawning worker threads and avoid using the thread pool.
 
@@ -240,8 +245,8 @@ Scheduling is abstracted by [`ParRunner`](https://docs.rs/orx-parallel/latest/or
 
 Built-in runners:
 
-- `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
-- `Runner::fixed()`: pre-computed fixed chunking strategy (default in `no-std` builds)
+* `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
+* `Runner::fixed()`: pre-computed fixed chunking strategy (default in `no-std` builds)
 
 ```rust
 use orx_parallel::*; // assume default features used: ["std"]
@@ -267,9 +272,9 @@ For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfu
 
 `use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines:
 
-- no unsafe code in application-level iterator logic
-- exactly one use-variable per worker thread
-- minimized and deterministic allocation behavior for stateful workloads
+* no unsafe code in application-level iterator logic
+* exactly one use-variable per worker thread
+* minimized and deterministic allocation behavior for stateful workloads
 
 For example, rather than allocating a new `String` for every element, we can reuse one scratch buffer per worker thread:
 
@@ -308,32 +313,32 @@ Notice below that after the `par_recursive` call, we use regular iterator method
 
 ```rust ignore
 let result = par_recursive([root], |node| &node.children) // ← initial tasks and how to explore new ones
-	.map(process_node) // ← we process nodes as if they were in a linear data structure
-	.reduce(merge_agg);
+ .map(process_node) // ← we process nodes as if they were in a linear data structure
+ .reduce(merge_agg);
 ```
 
 For practical examples, see:
 
-- [`examples/recursive_tree/main.rs`](https://github.com/orxfun/orx-parallel/tree/main/examples/recursive_tree)
-- [`examples/recursive_file_system.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/recursive_file_system.rs)
-- [`recursive/tree_collect`](https://github.com/orxfun/orx-parallel-benchmarks/tree/main/recursive/tree_collect)
+* [`examples/recursive_tree/main.rs`](https://github.com/orxfun/orx-parallel/tree/main/examples/recursive_tree)
+* [`examples/recursive_file_system.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/recursive_file_system.rs)
+* [`recursive/tree_collect`](https://github.com/orxfun/orx-parallel-benchmarks/tree/main/recursive/tree_collect)
 
 ## WASM Support
 
 `orx-parallel` supports browser-hosted wasm with dedicated examples and guides.
 
-- live demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
-- tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
-- demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
-- wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
-- internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
+* live demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
+* tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
+* demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
+* wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
+* internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
 
 ## Performance and Benchmarks
 
 The crate is benchmarked with the goal of maintaining practical performance and guiding future improvements. The benchmarks live in a separate repository so each benchmark can run in isolation with accurate measurements, especially when comparing different thread pools.
 
-- Live benchmark dashboard: <https://orx-parallel-benchmarks.pages.dev/> displays results generated from the benchmark repository.
-- Benchmark sources: <https://github.com/orxfun/orx-parallel-benchmarks>
+* Live benchmark dashboard: <https://orx-parallel-benchmarks.pages.dev/> displays results generated from the benchmark repository.
+* Benchmark sources: <https://github.com/orxfun/orx-parallel-benchmarks>
 
 You can also use the benchmark repository as a starting point for measuring your own computations.
 
