@@ -6,6 +6,15 @@ pub struct Soa2<T1, T2> {
     v2: Vec<T2>,
 }
 
+impl<T1, T2> Extend<(T1, T2)> for Soa2<T1, T2> {
+    fn extend<I: IntoIterator<Item = (T1, T2)>>(&mut self, iter: I) {
+        for (i1, i2) in iter {
+            self.v1.push(i1);
+            self.v2.push(i2);
+        }
+    }
+}
+
 // impl<T1: Send, T2: Send> ParExtendCore<(T1, T2)> for Soa2<T1, T2> {
 //     type ThreadValues = Self;
 
