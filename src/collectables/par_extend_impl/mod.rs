@@ -5,6 +5,7 @@ mod binary_heap;
 mod btree_map;
 mod btree_set;
 mod linked_list;
+mod soa2;
 mod split_vec_doubling;
 mod utils;
 mod vec;
