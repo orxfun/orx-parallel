@@ -101,25 +101,53 @@ impl<T1: Send, T2: Send> ParExtendCore<(T1, T2)> for Soa2<T1, T2> {
         }
     }
 
+    // opt: thread collect
+
     fn add_ordered_thread_optionals(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         values: impl IntoIterator<Item = Option<(T1, T2)>>,
     ) -> Option<()> {
-        todo!()
+        let len_begin = collected.values.len();
+        for value in values {
+            collected.values.push(value?);
+        }
+
+        let len = collected.values.len() - len_begin;
+        if len > 0 {
+            collected.positions.push(IdxLen { idx, len });
+        }
+
+        Some(())
     }
+
+    // res: thread collect
 
     fn add_ordered_thread_fallibles<E>(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
         values: impl IntoIterator<Item = Result<(T1, T2), E>>,
     ) -> Result<(), E> {
-        todo!()
+        let len_begin = collected.values.len();
+        for value in values {
+            collected.values.push(value?);
+        }
+
+        let len = collected.values.len() - len_begin;
+        if len > 0 {
+            collected.positions.push(IdxLen { idx, len });
+        }
+
+        Ok(())
     }
+
+    // add
 
     fn add_one(&mut self, value: (T1, T2)) {
         todo!()
     }
+
+    // extend - merge
 
     fn extend_merge_infallibles(&mut self, thread_results: Vec<Self::ThreadValues>) {
         todo!()
