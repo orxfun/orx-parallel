@@ -1,6 +1,6 @@
-use crate::{IntoParIter, Par, Params, ThreadPool, runner::ParRunner};
+use crate::{IntoParIter, NumThreads, Par, Params, ThreadPool, runner::ParRunner};
 use alloc::vec::Vec;
-use core::mem::MaybeUninit;
+use core::{mem::MaybeUninit, num::NonZeroUsize};
 
 /// Task for sorting a disjoint chunk of the slice in parallel.
 struct SortChunkTask<T> {
@@ -167,9 +167,11 @@ where
         return;
     }
 
-    let max_threads = runner
-        .pool()
-        .max_num_threads_for_computation(params, (n, Some(n)));
+    let par_num_threads = match params.num_threads {
+        NumThreads::Auto => NonZeroUsize::MAX,
+        NumThreads::Max(x) => x,
+    };
+    let max_threads: usize = runner.pool().max_num_threads().min(par_num_threads).into();
 
     if max_threads <= 1 || n < 1024 {
         slice.sort_unstable();
