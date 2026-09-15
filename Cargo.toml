@@ -1,6 +1,6 @@
 [package]
 name = "orx-parallel"
-version = "3.4.0"
+version = "4.0.0"
 edition = "2024"
 authors = ["orxfun <orx.ugur.arikan@gmail.com>"]
 readme = "README.md"
