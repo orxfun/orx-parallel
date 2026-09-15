@@ -1,0 +1,243 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [4.0.0](https://github.com/orxfun/orx-parallel/compare/v3.4.0...v4.0.0) - 2026-09-15
+
+### Added
+
+- [**breaking**] redesign abstractions, api, add wasm support ([#197](https://github.com/orxfun/orx-parallel/pull/197))
+
+### Fixed
+
+- fix mermory safety error
+- fix binary search index
+- fix linear search in sequential merge
+- fix write_rest_from
+- fix non-overlapping tests
+- fix sequential tests
+- fix bench name
+- fix memory leak issue in merge sorted slices tests
+- fix miri issues in slice sort
+- fix merge_slices test
+- fix generic values reduce computation to use mut-ptr for the using variable
+- fix tests for the mut-ptr xap signature of using-transformed computations
+- fix fallible reductions to use mut-ptr signature for the xap's using variable
+- fix fallible xap to xap transformation to use mut-ptr signature for the using variable
+- fix ordered collection xap signature to use mut ptr of using variable
+- fix collect computation's xap signature to use mut ptr for used variable
+- fix reduce computation's xap signature to use mut ptr
+- fix next computation's xap signature to use mut ptr
+- fix next-any computation to use xap signature with mut ptr
+- fix xap to xap_using transformation to use mut ptr fn signature
+
+### Other
+
+- Add release-plz configuration file ([#196](https://github.com/orxfun/orx-parallel/pull/196))
+- Merge pull request #131 from orxfun/par-sort-slice
+- set up experiment feature for examples, tests and benchmarks
+- revise example arguments
+- introduce min_split_len to parallel merging
+- example for parallel merging of sorted slices
+- pass runner to parallel merge
+- init par-merge benchmark
+- implement parallel merge with binary pivot search
+- parameterize the search for the pivot position for splitting slices
+- clippy fixes
+- clippy fixes
+- clippy fixes
+- clippy fixes
+- clippy fixes
+- clippy fixes
+- clippy fixes
+- add missing safety notes
+- clippy fixes
+- document StdDefaultPool::with_max_num_threads
+- remove sort module
+- clean up sort
+- clean up algorithms
+- benchmark clean up
+- reorganize test code
+- reorganize test code
+- add large data tests on parallel merge
+- add missing safety documentation
+- add parallel sequential merge tests
+- set parallelization num_threads and chunk_size from par parameters
+- implement parallel merge of sorted arrays
+- implement recursive handle function
+- split right from the pivot position
+- add safety documentation
+- slice_first_unchecked tests added
+- extend slice_split_unchecked tests for edge cases
+- slice_split_unchecked tests
+- define split_at_unchecked
+- handle base case for parallel merge
+- require only shared ref to params
+- prepeare benchmark
+- document ParamsSeqMergeSortedSlices
+- document StreakSearch
+- clean up
+- clean up
+- missing documentation is added
+- documentation added
+- documentation and clean up
+- add documentation
+- miri safe is_non_overlapping implementation
+- miri green sequential merge
+- miri fix for slice over iterator
+- tests for seq merge
+- safe seq_merge_streak_binary implementation
+- clean up
+- refactoring to use core slice
+- complete safe seq_merge_streak_linear implementation
+- complete safe implementation of no streak sequential merge
+- handle empty conditions
+- setup seq_merge_streak_none
+- define safe `current` wrapper for source iterators
+- safe slice to iterator transformations defined
+- document safety conditions of sequential merge
+- wip
+- improve safety conditions of slices
+- add slice overlap tests
+- strengthen SliceDst safety conditions
+- wip compile
+- SliceSrc construction and safety conditions
+- constructors and safety conditions for SliceDst
+- revisit slice constructors wrt safety conditions
+- add lifetime to slices
+- finialize seq_merge_streak_linear implementation with safety documentation
+- implement write_many_from with safety documentation
+- implement next_n_unchecked
+- safety notes added
+- complete seq_merge_streak_none implementation with safety notes
+- implement write_one for destination
+- implement iterator for SliceIterPtr
+- implement progressing iterator methods
+- safety documentation of sequential merge methods
+- define Slice methods
+- define raw slice wrapper
+- wip safety
+- instantiate slice extensions
+- define tuning as feature
+- test input utilities
+- define sequential variants
+- define experimentation parameters
+- wip
+- implement seq_merge_streak_binary
+- implement seq_merge_streak_linear
+- implement seq_merge_streak_linear
+- define sequential and parallel parameters for tuning
+- rename sequential experiments module
+- handle empty left or right cases
+- implement sequential copy tasks
+- copy one side condition of parallel extend
+- simplify task definitions
+- define sequential task variants for parallel merge
+- init parallel merge algorithm
+- update benchmark for the update in criterion lib
+- shorten factor names in the benchmark
+- adapt tuning benchmark for short names
+- integrate orx-criterion to tune merge-sorted-slices algorithm
+- upgrade criterion
+- benchmark more variants of merging sorted arrays
+- working prototype of merge_sorted_slices_by_dividing
+- divide and conquer in progress
+- split functionality to Slice
+- introduce sequential_merge_threshold parameter for parallel executions
+- wip
+- introduce StreakSearch as enum of three algorithmic variants
+- update benchmark to evaluate impact of streaks in sequential sorted array merging
+- clean up test
+- parameterized streak implementation for merging sorted arrays
+- initiate merge_sorted_slices benchmarks
+- export merge_sorted_slices
+- implement merge_sorted_slices_seq tests
+- add utility test methods for merge_sorted_slices
+- temporarily disable sort benchmarks
+- separate Slice and SliceMut to improve safety
+- implement sequential algorithm for merge_sorted_slices
+- add tests for writing to slices destination iterator
+- :iter_as_dst is implemented
+- SliceIterDst write methods are implemented
+- implement SliceIterMutPtr
+- implement iterator over pointers for SliceIterPtr
+- rename slice iterator modules
+- instantiate merge_sorted_slices module
+- add slice and slice_over_iter tests
+- :iter_over_ref is implemented
+- implement SliceIterCore constructor from slice
+- implement slice constructor
+- implement SliceIterRef
+- add SliceIterCore documentation
+- provide slice iter core methods
+- initiate slice that can be shared across threads
+- wip commit pre reorganization for slice computations
+- sequential poc version of the parallel merge algorithm
+- implement ptr and val iter, and index for slices
+- revise sequential implementation by using iterators and writers
+- impl IntoIterator for slice reference
+- implement SliceIter
+- reorganize slice chunks code
+- refactor slice chunks creation
+- simplify test
+- create merge_ordered_slices tests
+- refactor test utility methods for sorting
+- reorganize slice chunks code
+- wip
+- parallelize merging
+- define alternative sort with logarithmic merge
+- add alternative chunk sorting without queue
+- introduce benchmark for par-sort
+- update tests
+- serial heap sort finalized version of parallel sort is implemented
+- introduce SliceChunk and slice_chunks method to split the slice into smaller chunks
+- parallelize sorting of each chunk
+- add slice_ranges tests
+- implement uniform slicing utility function
+- parametrize sort tests over thread pools
+- define with_max_num_threads constructor for std default pool
+- pass thread pool to sort
+- initiate sort module
+- Merge pull request #122 from TechnoPorg/relax-lifetimes
+- Update ci.yml
+- Modify CI workflow for main branch and 32-bit tests
+- Disable 32-bit test in CI configuration
+- Update ci.yml
+- Update CI triggers to remove main branch restriction
+- clean up small example
+- revise par to xap transformation of fallible computation to use mut-ptr signature for the using variable
+- update map to xap transformation of fallible iterator to use mut-ptr signature
+- update try-collect computation's xap signature to use mut-ptr for the used variable
+- revise xap result signature to use mut ptr
+- revise map to xap transformations to use mut ptr fn signature
+- revise par to xap transformations for the mut ptr fn signature
+- update xap function signature from mut ref to ptr
+- example on different potential fixes to the problem
+- small_example to capture miri issue
+- add fallible option and result tests for `using` transformation
+- reorganize fallible test modules
+- add fallible result tests
+- add fallible option tests
+- add vectors tests for `using`
+- add sum tests for `using`
+- add slice tests for `using`
+- add range tests for `using`
+- add min-max tests for `using`
+- add xap reduce tests for `using`
+- add xap->find tests for `using`
+- add xap collect tests for `using`
+- add map tests for `using`
+- implement iter_ref tests for `using`
+- add consuming iterator tests for `using`
+- add inspect tests for 'using'
+- add for_each tests for 'using'
+- add 'using' tests for flatten
+- count tests with using transformation
+- copied test for using computations
+- Update documentation for fallible using
+- Initial fallibility implementation for ParIterUsing
