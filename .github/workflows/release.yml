@@ -9,7 +9,6 @@ on:
       - Rust
     types:
       - completed
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,7 +16,7 @@ permissions:
 
 concurrency:
   group: release-plz
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   release-pr:
@@ -37,10 +36,9 @@ jobs:
   publish:
     name: Publish release
     if: >-
-      (github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'workflow_run' &&
+      github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      startsWith(github.event.workflow_run.head_commit.message, 'chore: release v'))
+      startsWith(github.event.workflow_run.head_commit.message, 'chore: release v')
     runs-on: ubuntu-latest
     environment: crates-io
     steps:
@@ -49,7 +47,6 @@ jobs:
           fetch-depth: 0
           ref: main
       - name: Check out verified release commit
-        if: github.event_name == 'workflow_run'
         run: git reset --hard ${{ github.event.workflow_run.head_sha }}
       - uses: release-plz/action@v0.5
         with:
