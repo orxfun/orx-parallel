@@ -76,9 +76,11 @@ pub trait ThreadPool {
     /// requiring no object safety, boxing or heap allocation. None of the tasks start
     /// running until `run_all` is called.
     ///
-    /// Tasks can be created using the [`tasks!`] macro, or fluently via [`Tasks::new()`] and [`push`].
+    /// Tasks can be created using the [`tasks!`] macro, or fluently via [`Tasks::new`] and [`push`].
     ///
     /// [`push`]: crate::pools::tasks::TaskQueue::push
+    /// [`Tasks::new`]: crate::Tasks::new
+    /// [`tasks!`]: crate::tasks
     ///
     /// # Example
     ///

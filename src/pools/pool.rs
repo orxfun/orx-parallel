@@ -107,6 +107,7 @@ impl Pool {
     /// [`scope`]: crate::ThreadPool::scope
     /// [`run`]: crate::Scope::run
     /// [`run_all`]: crate::ThreadPool::run_all
+    /// [`tasks!`]: crate::tasks
     pub fn global() -> DefaultPool {
         global_pool()
     }

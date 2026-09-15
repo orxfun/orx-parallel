@@ -1,5 +1,5 @@
-use crate::collectables::par_extend_core::ParExtendCore;
-use crate::collectables::par_extend_impl::utils::ColAndPos;
+use crate::extendable::par_extend_core::ParExtendCore;
+use crate::extendable::par_extend_impl::utils::ColAndPos;
 use crate::{IntoParIter, IterationOrder, Par};
 use alloc::collections::BTreeMap;
 use alloc::string::{String, ToString};

@@ -1,8 +1,9 @@
-use crate::collectables::par_extend_core::ParExtendCore;
-use alloc::collections::LinkedList;
+use crate::extendable::par_extend_core::ParExtendCore;
 use alloc::vec::Vec;
+use core::hash::Hash;
+use std::collections::HashSet;
 
-impl<T: Send> ParExtendCore<T> for LinkedList<T> {
+impl<T: Hash + Eq + Send> ParExtendCore<T> for HashSet<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = Self;
@@ -18,7 +19,7 @@ impl<T: Send> ParExtendCore<T> for LinkedList<T> {
     // thread collect
 
     fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
-        collected.push_back(value);
+        _ = collected.insert(value);
     }
 
     fn add_thread_values(collected: &mut Self::ThreadValues, values: impl IntoIterator<Item = T>) {
@@ -45,7 +46,7 @@ impl<T: Send> ParExtendCore<T> for LinkedList<T> {
         values: impl IntoIterator<Item = Option<T>>,
     ) -> Option<()> {
         for value in values {
-            collected.push_back(value?);
+            _ = collected.insert(value?);
         }
         Some(())
     }
@@ -58,7 +59,7 @@ impl<T: Send> ParExtendCore<T> for LinkedList<T> {
         values: impl IntoIterator<Item = Result<T, E>>,
     ) -> Result<(), E> {
         for value in values {
-            collected.push_back(value?);
+            _ = collected.insert(value?);
         }
         Ok(())
     }
@@ -66,7 +67,7 @@ impl<T: Send> ParExtendCore<T> for LinkedList<T> {
     // add
 
     fn add_one(&mut self, value: T) {
-        self.push_back(value);
+        _ = self.insert(value);
     }
 
     // extend - merge

@@ -1,4 +1,4 @@
-use crate::collectables::par_extend_core::ParExtendCore;
+use crate::extendable::par_extend_core::ParExtendCore;
 use alloc::collections::BinaryHeap;
 use alloc::vec::Vec;
 
