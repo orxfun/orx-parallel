@@ -44,11 +44,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: crates-io
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
       - name: Check out verified release commit
+        if: github.event_name == 'workflow_run'
         run: git reset --hard ${{ github.event.workflow_run.head_sha }}
       - uses: release-plz/action@v0.5
         with:
