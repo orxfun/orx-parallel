@@ -149,14 +149,19 @@ impl<T: Send> ParExtendCore<T> for Vec<T> {
 
 // merge helpers
 
+/// Merge segment metadata for ordered thread values.
 #[derive(Clone)]
 pub struct ThBegLen {
+    /// Thread index.
     pub th: usize,
+    /// Start offset within the thread buffer.
     pub beg: usize,
+    /// Segment length.
     pub len: usize,
 }
 
 impl ThBegLen {
+    /// Creates a new merge segment.
     #[inline(always)]
     pub fn new(th: usize, beg: usize, len: usize) -> Self {
         Self { th, beg, len }

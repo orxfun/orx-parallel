@@ -17,6 +17,7 @@ extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+/// Extendable parallel collection helpers.
 pub mod extendable;
 /// Core module for infallible computations.
 pub mod infallible;
