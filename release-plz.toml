@@ -2,5 +2,5 @@
 git_tag_name = "v{{ version }}"
 git_release_name = "v{{ version }}"
 publish_all_features = true
-release_always = true
+release_always = false
 release_commits = "^(feat|fix)(\\([^)]*\\))?!?:"
