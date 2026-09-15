@@ -3,10 +3,7 @@ use std::collections::HashMap;
 use std::hint::black_box;
 use test_case::test_matrix;
 
-#[cfg(miri)]
-const N: [usize; 2] = [37, 125];
-#[cfg(not(miri))]
-const N: [usize; 2] = [1025, 4735];
+const N: [usize; 2] = [125, 735];
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 struct Data {

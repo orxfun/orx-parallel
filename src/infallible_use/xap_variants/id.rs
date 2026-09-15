@@ -1,0 +1,52 @@
+use crate::infallible::{Xap, XapEnumByInput};
+use crate::infallible_use::{XapUse, XapUseEnumByInput};
+use crate::sizes::One;
+use core::marker::PhantomData;
+
+pub struct IdUse<X: Xap, U> {
+    x: X,
+    p: PhantomData<U>,
+}
+
+impl<X: Xap, U> Clone for IdUse<X, U> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<X: Xap, U> Copy for IdUse<X, U> {}
+
+unsafe impl<X: Xap, U> Send for IdUse<X, U> {}
+
+impl<X: Xap, U> IdUse<X, U> {
+    pub fn new(x: X) -> Self {
+        let p = PhantomData;
+        Self { x, p }
+    }
+}
+
+impl<X: Xap, U> XapUse for IdUse<X, U> {
+    type U = U;
+
+    type I = X::I;
+
+    type O = X::O;
+
+    type Size = X::Size;
+
+    type Values = X::Values;
+
+    #[inline(always)]
+    fn xap_use(&self, _: *mut Self::U, i: Self::I) -> Self::Values {
+        self.x.xap(i)
+    }
+}
+
+impl<X: XapEnumByInput<Size = One>, U> XapUseEnumByInput for IdUse<X, U> {
+    type Enumerated = IdUse<X::Enumerated, U>;
+
+    fn enumerate(self) -> Self::Enumerated {
+        let x = self.x.enumerate();
+        IdUse::new(x)
+    }
+}

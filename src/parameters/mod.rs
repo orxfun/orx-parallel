@@ -7,3 +7,5 @@ pub use chunk_size::ChunkSize;
 pub use iteration_order::IterationOrder;
 pub use num_threads::NumThreads;
 pub use params::Params;
+
+pub(crate) use num_threads::non_zero_or_one;

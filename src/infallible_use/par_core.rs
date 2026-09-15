@@ -1,0 +1,22 @@
+use crate::infallible_use::XapUse;
+use crate::use_var::Use;
+use crate::{Params, runner::ParRunner};
+use orx_concurrent_iter::ConcurrentIter;
+
+pub trait ParUseCore: IntoIterator {
+    type Runner: ParRunner;
+
+    type Use;
+
+    type Using: Use<Item = Self::Use>;
+
+    type Input: ConcurrentIter;
+
+    type Xap: XapUse<
+            U = Self::Use,
+            I = <Self::Input as ConcurrentIter>::Item,
+            O = <Self as IntoIterator>::Item,
+        >;
+
+    fn destruct(self) -> (Self::Using, Self::Input, Self::Xap, Self::Runner, Params);
+}
