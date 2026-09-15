@@ -312,8 +312,9 @@ Even though new work is discovered dynamically, deterministic traversal is still
 Notice below that after the `par_recursive` call, we use regular iterator methods without additional complexity.
 
 ```rust ignore
-let result = par_recursive([root], |node| &node.children) // ← initial tasks and how to explore new ones
- .map(process_node) // ← we process nodes as if they were in a linear data structure
+// provide initial tasks and define how to explore new ones
+let result = par_recursive([root], |node| &node.children)
+ .map(process_node) // ← regular iterator transformations
  .reduce(merge_agg);
 ```
 
