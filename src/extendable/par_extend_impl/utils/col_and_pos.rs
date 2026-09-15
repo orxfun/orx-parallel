@@ -1,4 +1,4 @@
-use crate::collectables::par_extend_impl::utils::IdxLen;
+use crate::extendable::par_extend_impl::utils::IdxLen;
 use alloc::vec::Vec;
 
 pub struct ColAndPos<C> {

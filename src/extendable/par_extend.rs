@@ -1,4 +1,4 @@
-use crate::collectables::ParExtendCore;
+use crate::extendable::ParExtendCore;
 use crate::{Par, ParOption, ParResult};
 
 /// Extends an existing collection with items produced by a parallel iterator.

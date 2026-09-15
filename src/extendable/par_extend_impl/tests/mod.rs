@@ -2,7 +2,6 @@ mod binary_heap;
 mod btree_map;
 mod btree_set;
 mod linked_list;
-mod soa2;
 mod vec;
 mod vec_deque;
 

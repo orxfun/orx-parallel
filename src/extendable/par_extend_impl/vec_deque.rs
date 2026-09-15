@@ -1,13 +1,13 @@
-use crate::collectables::par_extend_core::ParExtendCore;
-use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
-use alloc::collections::BTreeMap;
+use crate::extendable::par_extend_core::ParExtendCore;
+use crate::extendable::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
+use alloc::collections::VecDeque;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-impl<K: Ord + Send, V: Send> ParExtendCore<(K, V)> for BTreeMap<K, V> {
+impl<T: Send> ParExtendCore<T> for VecDeque<T> {
     type ThreadValues = Self;
 
-    type OrderedThreadValues = ColAndPos<Self>;
+    type OrderedThreadValues = ColAndPos<Vec<T>>;
 
     fn new_thread_values() -> Self::ThreadValues {
         Default::default()
@@ -19,37 +19,28 @@ impl<K: Ord + Send, V: Send> ParExtendCore<(K, V)> for BTreeMap<K, V> {
 
     // thread collect
 
-    fn add_thread_value(collected: &mut Self::ThreadValues, (key, value): (K, V)) {
-        _ = collected.insert(key, value);
+    fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
+        collected.push_back(value);
     }
 
-    fn add_thread_values(
-        collected: &mut Self::ThreadValues,
-        values: impl IntoIterator<Item = (K, V)>,
-    ) {
+    fn add_thread_values(collected: &mut Self::ThreadValues, values: impl IntoIterator<Item = T>) {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(
-        collected: &mut Self::OrderedThreadValues,
-        idx: usize,
-        (key, value): (K, V),
-    ) {
-        let inserted = collected.values.insert(key, value).is_none();
-        if inserted {
-            collected.positions.push(IdxLen { idx, len: 1 });
-        }
+    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, idx: usize, value: T) {
+        collected.values.push(value);
+        collected.positions.push(IdxLen { idx, len: 1 });
     }
 
     fn add_ordered_thread_values(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
-        values: impl IntoIterator<Item = (K, V)>,
+        values: impl IntoIterator<Item = T>,
     ) {
-        let len_before = collected.values.len();
+        let len_begin = collected.values.len();
         collected.values.extend(values);
 
-        let len = collected.values.len() - len_before;
+        let len = collected.values.len() - len_begin;
         if len > 0 {
             collected.positions.push(IdxLen { idx, len });
         }
@@ -60,12 +51,11 @@ impl<K: Ord + Send, V: Send> ParExtendCore<(K, V)> for BTreeMap<K, V> {
     fn add_ordered_thread_optionals(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
-        values: impl IntoIterator<Item = Option<(K, V)>>,
+        values: impl IntoIterator<Item = Option<T>>,
     ) -> Option<()> {
         let len_begin = collected.values.len();
         for value in values {
-            let (key, value) = value?;
-            _ = collected.values.insert(key, value);
+            collected.values.push(value?);
         }
 
         let len = collected.values.len() - len_begin;
@@ -81,12 +71,11 @@ impl<K: Ord + Send, V: Send> ParExtendCore<(K, V)> for BTreeMap<K, V> {
     fn add_ordered_thread_fallibles<E>(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
-        values: impl IntoIterator<Item = Result<(K, V), E>>,
+        values: impl IntoIterator<Item = Result<T, E>>,
     ) -> Result<(), E> {
         let len_begin = collected.values.len();
         for value in values {
-            let (key, value) = value?;
-            collected.values.insert(key, value);
+            collected.values.push(value?);
         }
 
         let len = collected.values.len() - len_begin;
@@ -99,19 +88,24 @@ impl<K: Ord + Send, V: Send> ParExtendCore<(K, V)> for BTreeMap<K, V> {
 
     // add
 
-    fn add_one(&mut self, (key, value): (K, V)) {
-        _ = self.insert(key, value);
+    fn add_one(&mut self, value: T) {
+        self.push_back(value);
     }
 
     // extend - merge
 
     fn extend_merge_infallibles(&mut self, results: Vec<Self::ThreadValues>) {
+        let collected_len: usize = results.iter().map(|x| x.len()).sum();
+        self.reserve(collected_len);
         for result in results {
             self.extend(result);
         }
     }
 
     fn extend_merge_ordered_infallibles(&mut self, results: Vec<Self::OrderedThreadValues>) {
+        let collected_len: usize = results.iter().map(|x| x.values.len()).sum();
+        self.reserve(collected_len);
+
         let outer_len = results.len();
         let mut all_values = Vec::with_capacity(outer_len);
         let mut all_positions = Vec::with_capacity(outer_len);

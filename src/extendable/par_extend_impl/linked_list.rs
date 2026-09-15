@@ -1,9 +1,8 @@
-use crate::collectables::par_extend_core::ParExtendCore;
+use crate::extendable::par_extend_core::ParExtendCore;
+use alloc::collections::LinkedList;
 use alloc::vec::Vec;
-use core::hash::Hash;
-use std::collections::HashMap;
 
-impl<K: Hash + Eq + Send, V: Send> ParExtendCore<(K, V)> for HashMap<K, V> {
+impl<T: Send> ParExtendCore<T> for LinkedList<T> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = Self;
@@ -18,29 +17,22 @@ impl<K: Hash + Eq + Send, V: Send> ParExtendCore<(K, V)> for HashMap<K, V> {
 
     // thread collect
 
-    fn add_thread_value(collected: &mut Self::ThreadValues, (key, value): (K, V)) {
-        _ = collected.insert(key, value);
+    fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
+        collected.push_back(value);
     }
 
-    fn add_thread_values(
-        collected: &mut Self::ThreadValues,
-        values: impl IntoIterator<Item = (K, V)>,
-    ) {
+    fn add_thread_values(collected: &mut Self::ThreadValues, values: impl IntoIterator<Item = T>) {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(
-        collected: &mut Self::OrderedThreadValues,
-        _idx: usize,
-        value: (K, V),
-    ) {
+    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, _idx: usize, value: T) {
         Self::add_thread_value(collected, value);
     }
 
     fn add_ordered_thread_values(
         collected: &mut Self::OrderedThreadValues,
         _idx: usize,
-        values: impl IntoIterator<Item = (K, V)>,
+        values: impl IntoIterator<Item = T>,
     ) {
         Self::add_thread_values(collected, values);
     }
@@ -50,11 +42,10 @@ impl<K: Hash + Eq + Send, V: Send> ParExtendCore<(K, V)> for HashMap<K, V> {
     fn add_ordered_thread_optionals(
         collected: &mut Self::OrderedThreadValues,
         _idx: usize,
-        values: impl IntoIterator<Item = Option<(K, V)>>,
+        values: impl IntoIterator<Item = Option<T>>,
     ) -> Option<()> {
         for value in values {
-            let (key, value) = value?;
-            _ = collected.insert(key, value);
+            collected.push_back(value?);
         }
         Some(())
     }
@@ -64,19 +55,18 @@ impl<K: Hash + Eq + Send, V: Send> ParExtendCore<(K, V)> for HashMap<K, V> {
     fn add_ordered_thread_fallibles<E>(
         collected: &mut Self::OrderedThreadValues,
         _idx: usize,
-        values: impl IntoIterator<Item = Result<(K, V), E>>,
+        values: impl IntoIterator<Item = Result<T, E>>,
     ) -> Result<(), E> {
         for value in values {
-            let (key, value) = value?;
-            collected.insert(key, value);
+            collected.push_back(value?);
         }
         Ok(())
     }
 
     // add
 
-    fn add_one(&mut self, (key, value): (K, V)) {
-        _ = self.insert(key, value);
+    fn add_one(&mut self, value: T) {
+        self.push_back(value);
     }
 
     // extend - merge

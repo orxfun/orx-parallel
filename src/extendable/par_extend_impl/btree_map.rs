@@ -1,10 +1,10 @@
-use crate::collectables::par_extend_core::ParExtendCore;
-use crate::collectables::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
-use alloc::collections::BTreeSet;
+use crate::extendable::par_extend_core::ParExtendCore;
+use crate::extendable::par_extend_impl::utils::{ColAndPos, IdxLen, NextN};
+use alloc::collections::BTreeMap;
 use alloc::{vec, vec::Vec};
 use orx_priority_queue::{BinaryHeap, PriorityQueue};
 
-impl<T: Ord + Send> ParExtendCore<T> for BTreeSet<T> {
+impl<K: Ord + Send, V: Send> ParExtendCore<(K, V)> for BTreeMap<K, V> {
     type ThreadValues = Self;
 
     type OrderedThreadValues = ColAndPos<Self>;
@@ -19,16 +19,23 @@ impl<T: Ord + Send> ParExtendCore<T> for BTreeSet<T> {
 
     // thread collect
 
-    fn add_thread_value(collected: &mut Self::ThreadValues, value: T) {
-        _ = collected.insert(value);
+    fn add_thread_value(collected: &mut Self::ThreadValues, (key, value): (K, V)) {
+        _ = collected.insert(key, value);
     }
 
-    fn add_thread_values(collected: &mut Self::ThreadValues, values: impl IntoIterator<Item = T>) {
+    fn add_thread_values(
+        collected: &mut Self::ThreadValues,
+        values: impl IntoIterator<Item = (K, V)>,
+    ) {
         collected.extend(values)
     }
 
-    fn add_ordered_thread_value(collected: &mut Self::OrderedThreadValues, idx: usize, value: T) {
-        let inserted = collected.values.insert(value);
+    fn add_ordered_thread_value(
+        collected: &mut Self::OrderedThreadValues,
+        idx: usize,
+        (key, value): (K, V),
+    ) {
+        let inserted = collected.values.insert(key, value).is_none();
         if inserted {
             collected.positions.push(IdxLen { idx, len: 1 });
         }
@@ -37,7 +44,7 @@ impl<T: Ord + Send> ParExtendCore<T> for BTreeSet<T> {
     fn add_ordered_thread_values(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
-        values: impl IntoIterator<Item = T>,
+        values: impl IntoIterator<Item = (K, V)>,
     ) {
         let len_before = collected.values.len();
         collected.values.extend(values);
@@ -53,11 +60,12 @@ impl<T: Ord + Send> ParExtendCore<T> for BTreeSet<T> {
     fn add_ordered_thread_optionals(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
-        values: impl IntoIterator<Item = Option<T>>,
+        values: impl IntoIterator<Item = Option<(K, V)>>,
     ) -> Option<()> {
         let len_begin = collected.values.len();
         for value in values {
-            _ = collected.values.insert(value?);
+            let (key, value) = value?;
+            _ = collected.values.insert(key, value);
         }
 
         let len = collected.values.len() - len_begin;
@@ -73,11 +81,12 @@ impl<T: Ord + Send> ParExtendCore<T> for BTreeSet<T> {
     fn add_ordered_thread_fallibles<E>(
         collected: &mut Self::OrderedThreadValues,
         idx: usize,
-        values: impl IntoIterator<Item = Result<T, E>>,
+        values: impl IntoIterator<Item = Result<(K, V), E>>,
     ) -> Result<(), E> {
         let len_begin = collected.values.len();
         for value in values {
-            collected.values.insert(value?);
+            let (key, value) = value?;
+            collected.values.insert(key, value);
         }
 
         let len = collected.values.len() - len_begin;
@@ -90,8 +99,8 @@ impl<T: Ord + Send> ParExtendCore<T> for BTreeSet<T> {
 
     // add
 
-    fn add_one(&mut self, value: T) {
-        _ = self.insert(value);
+    fn add_one(&mut self, (key, value): (K, V)) {
+        _ = self.insert(key, value);
     }
 
     // extend - merge
