@@ -337,7 +337,7 @@ For practical examples, see:
 
 The crate is benchmarked with the goal of maintaining practical performance and guiding future improvements. The benchmarks live in a separate repository so each benchmark can run in isolation with accurate measurements, especially when comparing different thread pools.
 
-* Live benchmark dashboard: <https://orx-parallel-benchmarks.pages.dev/> displays results generated from the benchmark repository.
+* Live benchmark dashboard: <https://orxfun.github.io/orx-parallel-benchmarks/> displays results generated from the benchmark repository.
 * Benchmark sources: <https://github.com/orxfun/orx-parallel-benchmarks>
 
 You can also use the benchmark repository as a starting point for measuring your own computations.
