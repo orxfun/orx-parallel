@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/orxfun/orx-parallel/compare/v4.0.0...v5.0.0) - 2026-10-01
+
+### Added
+
+- special allocator for wasm parallelization under memory pressure ([#213](https://github.com/orxfun/orx-parallel/pull/213))
+
+### Other
+
+- change-benchmarks-webpage ([#212](https://github.com/orxfun/orx-parallel/pull/212))
+- Improve comments in README code example ([#211](https://github.com/orxfun/orx-parallel/pull/211))
+- Modify release workflow settings and conditions ([#210](https://github.com/orxfun/orx-parallel/pull/210))
+
 ## [4.0.0](https://github.com/orxfun/orx-parallel/compare/v3.4.0...v4.0.0) - 2026-09-15
 
 ### Added
