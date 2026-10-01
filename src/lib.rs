@@ -54,6 +54,8 @@ pub use pools::WasmWebPool;
 #[cfg(all(feature = "wasm-allocator", target_arch = "wasm32"))]
 pub use orx_parallel_wasm_allocator::WasmParallelAllocator;
 
+#[cfg(not(feature = "std"))]
+pub use pools::SequentialPool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pools::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
