@@ -6,7 +6,7 @@
 
 High-performance parallel computations with an expressive iterator API.
 
-* [🚀](#performance-and-benchmarks) performant parallelization | [📊 benchmarks](https://orx-parallel-benchmarks.pages.dev/)
+* [🚀](#performance-and-benchmarks) performant parallelization | [📊 benchmarks](https://orxfun.github.io/orx-parallel-benchmarks/)
 * [🛡️](#safe-mutable-per-thread-state) safe per-thread mutable state
 * [❓](#first-class-fallible-computation) first-class fallible flows
 * [🔁](#recursive-iterators-for-non-linear-data) recursive computation on non-linear data

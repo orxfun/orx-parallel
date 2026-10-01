@@ -27,7 +27,8 @@ mod ops;
 mod option;
 mod option_use;
 mod parameters;
-mod pools;
+/// Thread pools.
+pub mod pools;
 mod result;
 mod result_use;
 mod results;
