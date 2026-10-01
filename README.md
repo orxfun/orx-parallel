@@ -6,15 +6,13 @@
 
 Performant parallel computations with an expressive iterator API.
 
-The crate focuses on practical parallelization through a convenient iterator API, with support for:
-
-* first-class fallible flows,
-* configurable resource usage,
-* safe per-thread mutable state,
-* recursive traversal on non-linear data,
-* WebAssembly support,
-* determinism,
-* customizable runner strategies to enable experimentation and advanced tuning.
+* [🚀](#performance-and-benchmarks) performant parallelization | [📊 benchmarks](https://orx-parallel-benchmarks.pages.dev/)
+* [⚙️](#configurable-resource-usage) configurable resource usage
+* [❓](#first-class-fallible-computation) first-class fallible flows
+* [🛡️](#safe-mutable-per-thread-state) safe per-thread mutable state | [📖](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md)
+* [🔁](#recursive-iterators-for-non-linear-data) recursive computation on non-linear data
+* [🌐](#wasm-support) WebAssembly support | [▶️ live demo](https://orx-parallel-wasm-demo-tsp.pages.dev/) | [📖](https://orx-parallel-wasm-tutorials.pages.dev/)
+* [🧱](#runner-strategies-and-extensibility) customizable runner strategies for advanced tuning & experimentation
 
 ## Parallelization with Iterator Ergonomics
 
@@ -190,7 +188,7 @@ assert_eq!(result.len(), 1000);
 
 The [`ThreadPool`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ThreadPool.html) trait is small and straightforward to implement. Since thread pools are independent of runner strategies, you can plug in a custom pool as follows:
 
-```rust ignore
+```rust,ignore
 use orx_parallel::*;
 
 let runner = Runner::adaptive_with_pool(MyPool::new());
@@ -312,10 +310,12 @@ Even though new work is discovered dynamically, deterministic traversal is still
 Notice below that after the `par_recursive` call, we use regular iterator methods without additional complexity.
 
 ```rust ignore
-// provide initial tasks and define how to explore new ones
+// provide initial tasks => [root]
+// define how to explore new ones => |node| &node.children
+// then use regular parallel iterator API
 let result = par_recursive([root], |node| &node.children)
- .map(process_node) // ← regular iterator transformations
- .reduce(merge_agg);
+    .map(process_node)
+    .reduce(merge_agg);
 ```
 
 For practical examples, see:
