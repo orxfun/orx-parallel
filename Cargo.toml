@@ -28,8 +28,9 @@ rayon-core = { version = "1.13", optional = true, default-features = false }
 
 # wasm
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2", optional = true, default-features = false }
 js-sys = { version = "0.3", default-features = false }
+orx-parallel-wasm-allocator = { path = "/home/uarikan/orx/orx-parallel-wasm-allocator", optional = true }
+wasm-bindgen = { version = "0.2", optional = true, default-features = false }
 
 [dev-dependencies]
 clap = { version = "4.6.5", features = ["derive"] }
@@ -38,7 +39,6 @@ rand = { version = "0.10.2" }
 rand_chacha = { version = "0.10" }
 rayon = { version = "1.12" }
 test-case = { version = "3.3.1" }
-
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }
@@ -57,6 +57,7 @@ std = []
 experimental = []
 long-tests = []
 wasm = ["std", "dep:wasm-bindgen"]
+wasm-allocator = ["wasm", "dep:orx-parallel-wasm-allocator"]
 persistent-pool-rayon = ["std", "rayon-core"]
 transient-pool = ["std"]
 
