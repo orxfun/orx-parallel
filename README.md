@@ -6,11 +6,11 @@
 
 High-performance parallel computations with an expressive iterator API.
 
-* [🚀](#performance-and-benchmarks) performant parallelization | [📊 benchmarks](https://orx-parallel-benchmarks.pages.dev/)
+* [🚀](#performance-and-benchmarks) performant parallelization | [📊 benchmarks](https://orxfun.github.io/orx-parallel-benchmarks/)
 * [🛡️](#safe-mutable-per-thread-state) safe per-thread mutable state
 * [❓](#first-class-fallible-computation) first-class fallible flows
 * [🔁](#recursive-iterators-for-non-linear-data) recursive computation on non-linear data
-* [🌐](#wasm-support) WebAssembly support | [▶️ live demo](https://orx-parallel-wasm-demo-tsp.pages.dev/) | [📖 tutorial](https://orx-parallel-wasm-tutorials.pages.dev/)
+* [🌐](#wasm-support) WebAssembly support | [▶️ live demo](https://orx-parallel-wasm-demo-tsp.pages.dev/) | [📖 tutorial](https://orxfun.github.io/orx-parallel-wasm-demos/)
 * [🧩](#runner-strategies-and-extensibility) customizable runner strategies for advanced tuning & experimentation
 * [⚙️](#configurable-resource-usage) configurable resource usage
 
@@ -219,7 +219,7 @@ For practical examples, see:
 `orx-parallel` supports browser-based WebAssembly, with dedicated examples and guides.
 
 * live demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
-* tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
+* tutorial: <https://orxfun.github.io/orx-parallel-wasm-demos/>
 * demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
 * wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
 * internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
