@@ -41,8 +41,8 @@ pub use extendable::ParExtend;
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
-    IntoParIter, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain, Parallelizable,
-    par_recursive,
+    par_recursive, IntoParIter, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain,
+    Parallelizable,
 };
 pub use ops::Sum;
 pub use option::ParOption;
@@ -50,6 +50,10 @@ pub use option_use::ParUseOption;
 pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 pub use pools::WasmWebPool;
+
+/// Re-export the optional sharded allocator for atomics-enabled WebAssembly.
+#[cfg(all(feature = "wasm-allocator", target_arch = "wasm32"))]
+pub use orx_parallel_wasm_allocator::WasmParallelAllocator;
 
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pools::wasm_web_runtime_info;
