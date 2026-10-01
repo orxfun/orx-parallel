@@ -7,7 +7,7 @@ If you want to understand the internal runtime design, see [wasm_internals.md](w
 Live examples:
 
 - TSP demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
-- Tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
+- Tutorial: <https://orxfun.github.io/orx-parallel-wasm-demos/>
 - Demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
 
 ## Overview
