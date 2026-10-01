@@ -111,8 +111,7 @@ Its job is to:
 Inside the worker helper:
 
 - the generated wasm package is imported dynamically
-- the generated package's default initializer is awaited with the shared memory
-	supplied by the parent runtime
+- the generated package's default initializer is awaited with the shared memory supplied by the parent runtime
 - the exported Rust worker entrypoint `wasm_web_start_worker()` is called
 
 `orx-parallel-wasm` prepares copies of this helper for bundler output. During
@@ -200,10 +199,10 @@ in its output asset graph.
 `orx-parallel-wasm` provides two levels of support:
 
 - `buildWasm` and `prepareWasm` are bundler-neutral APIs. They build or prepare
-	a generated package and write its asset manifest.
+ a generated package and write its asset manifest.
 - The Vite, Webpack, Rspack, and Rollup adapters emit those assets, rewrite
-	worker imports for their output layouts, create stable entries without
-	colliding with the generated package entry, and provide COOP/COEP headers.
+ worker imports for their output layouts, create stable entries without
+ colliding with the generated package entry, and provide COOP/COEP headers.
 
 An application can use the neutral APIs directly. The manual vanilla example in
 [`orx-parallel-wasm-demos`](https://github.com/orxfun/orx-parallel-wasm-demos)
