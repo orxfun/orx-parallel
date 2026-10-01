@@ -27,8 +27,7 @@ mod ops;
 mod option;
 mod option_use;
 mod parameters;
-/// Thread pool module
-pub mod pools;
+mod pools;
 mod result;
 mod result_use;
 mod results;
@@ -59,6 +58,8 @@ pub use orx_parallel_wasm_allocator::WasmParallelAllocator;
 pub use pools::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pools::wasm_web_start_worker;
+#[cfg(feature = "std")]
+pub use pools::{BasicPool, OncePool};
 pub use pools::{Pool, Scope, TaskQueue, Tasks, ThreadPool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
