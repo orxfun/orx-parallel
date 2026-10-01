@@ -268,7 +268,7 @@ assert_eq!(sum, (1..=10_000).sum());
 You may also implement your own `ParRunner`, either to tune a specific workload or to explore different scheduling ideas.
 For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/parallel_runner.md).
 
-## Use Transformations: Safe Mutable Per-Thread State
+## Safe Mutable Per-Thread State
 
 `use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines:
 
