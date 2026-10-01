@@ -27,8 +27,7 @@ mod ops;
 mod option;
 mod option_use;
 mod parameters;
-/// Thread pool module
-pub mod pools;
+mod pools;
 mod result;
 mod result_use;
 mod results;
@@ -51,14 +50,22 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
 pub use pools::WasmWebPool;
 
+/// Re-export the optional sharded allocator for atomics-enabled WebAssembly.
+#[cfg(all(feature = "wasm-allocator", target_arch = "wasm32"))]
+pub use orx_parallel_wasm_allocator::WasmParallelAllocator;
+
+#[cfg(not(feature = "std"))]
+pub use pools::SequentialPool;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pools::wasm_web_runtime_info;
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_feature = "atomics"))]
 pub use pools::wasm_web_start_worker;
+#[cfg(feature = "std")]
+pub use pools::{BasicPool, OncePool};
 pub use pools::{Pool, Scope, TaskQueue, Tasks, ThreadPool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
-pub use runner::Runner;
+pub use runner::{ParRunner, Runner};
 pub use use_var::{Use, UseVec};
 
 /// Initializes the browser's shared wasm thread pool.

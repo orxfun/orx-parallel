@@ -4,6 +4,7 @@ use crate::pools::{ThreadPool, max_num_threads_for_computation};
 use crate::runner::runner_variants::WithDiagnostics;
 use orx_concurrent_iter::ConcurrentIter;
 
+/// Controls how parallel computations are divided into chunks and run on a thread pool.
 pub trait ParRunner: Sized + Sync {
     /// Underlying thread pool.
     type Pool: ThreadPool;
@@ -11,6 +12,7 @@ pub trait ParRunner: Sized + Sync {
     /// Parallel computation state that is shared among thread computations.
     type State: Send + Sync;
 
+    /// State local to a chunk, created when the chunk begins and consumed when it completes.
     type ChunkState;
 
     // required
@@ -38,24 +40,31 @@ pub trait ParRunner: Sized + Sync {
         size_hint: (usize, Option<usize>),
     ) -> Self::State;
 
+    /// Adjusts runner state for an input source that is consumed serially.
     fn configure_for_serialized_input(state: &mut Self::State, size_hint: (usize, Option<usize>));
 
+    /// Called when a worker thread begins processing the computation.
     fn begin_thread(state: &Self::State, th_idx: usize);
 
     /// Returns the next chunk size to be pulled from the input with remaining length
     /// provided by the `size_hint` for the current `state`.
     fn next_chunk_size(state: &Self::State, size_hint: (usize, Option<usize>)) -> usize;
 
+    /// Creates state for a chunk before its items are processed.
     fn begin_chunk(th_idx: usize, chunk_size: usize) -> Self::ChunkState;
 
+    /// Called when a chunk completes, with the state returned by [`Self::begin_chunk`].
     fn complete_chunk(state: &Self::State, chunk_state: Self::ChunkState);
 
+    /// Called when a worker thread finishes processing the computation.
     fn complete_thread(state: &Self::State, th_idx: usize);
 
+    /// Called after all worker threads finish, consuming the shared computation state.
     fn complete_computation(state: Self::State);
 
     // provided
 
+    /// Wraps this runner to print diagnostics about thread usage and chunk sizes (`std` only).
     #[cfg(feature = "std")]
     fn with_diagnostics(self) -> WithDiagnostics<Self> {
         WithDiagnostics::new(self)
@@ -63,6 +72,10 @@ pub trait ParRunner: Sized + Sync {
 
     // provided - helpers
 
+    /// Creates computation state and returns the effective thread limit with that state.
+    ///
+    /// Applies the pool limit and any per-computation limit, then configures the state for
+    /// serialized input when needed.
     fn nt_state(
         &mut self,
         params: Params,
@@ -85,6 +98,7 @@ pub trait ParRunner: Sized + Sync {
         (max_nt, state)
     }
 
+    /// Exhausts the iterator and completes the active chunk when processing stops early.
     fn broadcast_stop<I: ConcurrentIter>(
         iter: &I,
         state: &Self::State,
