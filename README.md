@@ -115,6 +115,50 @@ If a collection provides a suitable concurrent iterator implementation (for exam
 
 In practice, this means collection-specific parallelization can live in the collection crate itself, where internals are available for optimized implementations. If you need help with a `ConcurrentIter` implementation, please open an issue.
 
+## Performance and Benchmarks
+
+The crate is benchmarked with the goal of maintaining practical performance and guiding future improvements. The benchmarks live in a separate repository so each benchmark can run in isolation with accurate measurements, especially when comparing different thread pools.
+
+* Live benchmark dashboard: <https://orxfun.github.io/orx-parallel-benchmarks/> displays results generated from the benchmark repository.
+* Benchmark sources: <https://github.com/orxfun/orx-parallel-benchmarks>
+
+You can also use the benchmark repository as a starting point for measuring your own computations.
+
+## Safe Mutable Per-Thread State
+
+`use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines:
+
+* no unsafe code in application-level iterator logic
+* exactly one use-variable per worker thread
+* minimized and deterministic allocation behavior for stateful workloads
+
+For example, rather than allocating a new `String` for every element, we can reuse one scratch buffer per worker thread:
+
+```rust
+use orx_parallel::*;
+
+let words = vec!["Love Rust ", " Hello WORLD", "?"];
+
+// one reusable scratch buffer per thread, instead of allocating for every element
+let mut buffers = UseVec::new(|_th_idx| String::new());
+
+let greetings: Vec<String> = words
+    .par()
+    .use_vec(&mut buffers) // ← mutably lend it to parallel iterator
+    .filter_map(|buf, w| {
+        buf.clear(); // ← buf: &mut String, reused across elements on this thread
+        buf.push_str(w.trim());
+        buf.make_ascii_lowercase();
+        buf.find(' ')
+    })
+    .map(|buf, space_idx| buf.chars().skip(space_idx + 1).collect())
+    .collect();
+
+assert_eq!(greetings, ["rust", "world"]);
+```
+
+For practical use cases, please see [`use_transformation.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md).
+
 ## First-Class Fallible Computation
 
 Fallible parallel flows are a core feature.
@@ -146,6 +190,68 @@ fn total_price(rows: &[&str]) -> Option<u64> {
 assert_eq!(total_price(&["1,2300", "4,499", "5,1100"]), Some(7496));
 assert_eq!(total_price(&["1,2300", "4,???", "5,1100"]), None);
 ```
+
+## Recursive Iterators for Non-Linear Data
+
+Parallel traversal over recursive structures (such as trees or graphs) is supported out of the box without losing convenient iterator ergonomics.
+
+Even though new work is discovered dynamically, deterministic traversal is still possible: with the default ordered mode, order-sensitive operations follow breadth-first order.
+
+Notice below that after the `par_recursive` call, we use regular iterator methods without additional complexity.
+
+```rust ignore
+// provide initial tasks => [root]
+// define how to explore new ones => |node| &node.children
+// then use regular parallel iterator API
+let result = par_recursive([root], |node| &node.children)
+    .map(process_node)
+    .reduce(merge_agg);
+```
+
+For practical examples, see:
+
+* [`examples/recursive_tree/main.rs`](https://github.com/orxfun/orx-parallel/tree/main/examples/recursive_tree)
+* [`examples/recursive_file_system.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/recursive_file_system.rs)
+* [`recursive/tree_collect`](https://github.com/orxfun/orx-parallel-benchmarks/tree/main/recursive/tree_collect)
+
+## WASM Support
+
+`orx-parallel` supports browser-hosted wasm with dedicated examples and guides.
+
+* live demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
+* tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
+* demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
+* wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
+* internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
+
+## Runner Strategies and Extensibility
+
+Scheduling is abstracted by [`ParRunner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParRunner.html) and selected with `.runner(...)`.
+
+Built-in runners:
+
+* `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
+* `Runner::fixed()`: pre-computed fixed chunking strategy (default in `no-std` builds)
+
+```rust
+use orx_parallel::*; // assume default features used: ["std"]
+
+let sum: usize = (0..10_000)
+    .par()
+    .map(|x| x + 1)
+    .sum(); // ← uses adaptive runner by default
+assert_eq!(sum, (1..=10_000).sum());
+
+let sum: usize = (0..10_000)
+    .par()
+    .runner(Runner::fixed()) // ← uses fixed runner
+    .map(|x| x + 1)
+    .sum();
+assert_eq!(sum, (1..=10_000).sum());
+```
+
+You may also implement your own `ParRunner`, either to tune a specific workload or to explore different scheduling ideas.
+For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/parallel_runner.md).
 
 ## Configurable Resource Usage
 
@@ -236,112 +342,6 @@ Every parallel iterator can also run sequentially on the calling thread:
 * use `.into_iter()` to consume the pipeline as a regular sequential iterator.
 
 Both options avoid spawning worker threads and avoid using the thread pool.
-
-## Runner Strategies and Extensibility
-
-Scheduling is abstracted by [`ParRunner`](https://docs.rs/orx-parallel/latest/orx_parallel/trait.ParRunner.html) and selected with `.runner(...)`.
-
-Built-in runners:
-
-* `Runner::adaptive()`: adaptive chunking strategy (default with `std` feature)
-* `Runner::fixed()`: pre-computed fixed chunking strategy (default in `no-std` builds)
-
-```rust
-use orx_parallel::*; // assume default features used: ["std"]
-
-let sum: usize = (0..10_000)
-    .par()
-    .map(|x| x + 1)
-    .sum(); // ← uses adaptive runner by default
-assert_eq!(sum, (1..=10_000).sum());
-
-let sum: usize = (0..10_000)
-    .par()
-    .runner(Runner::fixed()) // ← uses fixed runner
-    .map(|x| x + 1)
-    .sum();
-assert_eq!(sum, (1..=10_000).sum());
-```
-
-You may also implement your own `ParRunner`, either to tune a specific workload or to explore different scheduling ideas.
-For implementation guidance, see [`parallel_runner.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/parallel_runner.md).
-
-## Safe Mutable Per-Thread State
-
-`use` transformations provide a safe and ergonomic way to use mutable thread-local state in parallel pipelines:
-
-* no unsafe code in application-level iterator logic
-* exactly one use-variable per worker thread
-* minimized and deterministic allocation behavior for stateful workloads
-
-For example, rather than allocating a new `String` for every element, we can reuse one scratch buffer per worker thread:
-
-```rust
-use orx_parallel::*;
-
-let words = vec!["Love Rust ", " Hello WORLD", "?"];
-
-// one reusable scratch buffer per thread, instead of allocating for every element
-let mut buffers = UseVec::new(|_th_idx| String::new());
-
-let greetings: Vec<String> = words
-    .par()
-    .use_vec(&mut buffers) // ← mutably lend it to parallel iterator
-    .filter_map(|buf, w| {
-        buf.clear(); // ← buf: &mut String, reused across elements on this thread
-        buf.push_str(w.trim());
-        buf.make_ascii_lowercase();
-        buf.find(' ')
-    })
-    .map(|buf, space_idx| buf.chars().skip(space_idx + 1).collect())
-    .collect();
-
-assert_eq!(greetings, ["rust", "world"]);
-```
-
-For practical use cases, please see [`use_transformation.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md).
-
-## Recursive Iterators for Non-Linear Data
-
-Parallel traversal over recursive structures (such as trees or graphs) is supported out of the box without losing convenient iterator ergonomics.
-
-Even though new work is discovered dynamically, deterministic traversal is still possible: with the default ordered mode, order-sensitive operations follow breadth-first order.
-
-Notice below that after the `par_recursive` call, we use regular iterator methods without additional complexity.
-
-```rust ignore
-// provide initial tasks => [root]
-// define how to explore new ones => |node| &node.children
-// then use regular parallel iterator API
-let result = par_recursive([root], |node| &node.children)
-    .map(process_node)
-    .reduce(merge_agg);
-```
-
-For practical examples, see:
-
-* [`examples/recursive_tree/main.rs`](https://github.com/orxfun/orx-parallel/tree/main/examples/recursive_tree)
-* [`examples/recursive_file_system.rs`](https://github.com/orxfun/orx-parallel/blob/main/examples/recursive_file_system.rs)
-* [`recursive/tree_collect`](https://github.com/orxfun/orx-parallel-benchmarks/tree/main/recursive/tree_collect)
-
-## WASM Support
-
-`orx-parallel` supports browser-hosted wasm with dedicated examples and guides.
-
-* live demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
-* tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
-* demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
-* wasm guide: [`docs/wasm.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm.md)
-* internals: [`docs/wasm_internals.md`](https://github.com/orxfun/orx-parallel/blob/main/docs/wasm_internals.md)
-
-## Performance and Benchmarks
-
-The crate is benchmarked with the goal of maintaining practical performance and guiding future improvements. The benchmarks live in a separate repository so each benchmark can run in isolation with accurate measurements, especially when comparing different thread pools.
-
-* Live benchmark dashboard: <https://orxfun.github.io/orx-parallel-benchmarks/> displays results generated from the benchmark repository.
-* Benchmark sources: <https://github.com/orxfun/orx-parallel-benchmarks>
-
-You can also use the benchmark repository as a starting point for measuring your own computations.
 
 ## Contributing
 
