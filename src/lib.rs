@@ -51,7 +51,7 @@ pub use parameters::{ChunkSize, IterationOrder, NumThreads, Params};
 pub use pools::WasmWebPool;
 
 /// Re-export the optional sharded allocator for atomics-enabled WebAssembly.
-#[cfg(all(feature = "wasm-allocator", target_arch = "wasm32"))]
+#[cfg(feature = "wasm-allocator")]
 pub use orx_parallel_wasm_allocator::WasmParallelAllocator;
 
 #[cfg(not(feature = "std"))]
