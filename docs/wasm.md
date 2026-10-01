@@ -43,18 +43,13 @@ orx-parallel = {
 ```
 
 Enabling `wasm-allocator` re-exports `WasmParallelAllocator`; it does not
-install a global allocator automatically. Select the shard count in the final WASM crate:
-
-This feature is intended for `wasm32` builds with `target_feature = "atomics"` and shared memory. It should not be enabled for single-threaded WASM builds.
+install a global allocator automatically. Select the shard count in the final WASM crate.
 
 ```rust
 #[cfg(target_arch = "wasm32")]
-use orx_parallel::WasmParallelAllocator;
-
-#[cfg(target_arch = "wasm32")]
 #[global_allocator]
-static GLOBAL_ALLOCATOR: WasmParallelAllocator<32> =
-    WasmParallelAllocator::<32>::new();
+static GLOBAL_ALLOCATOR: orx_parallel::WasmParallelAllocator<32> =
+    orx_parallel::WasmParallelAllocator::new();
 ```
 
 If your crate needs to build both natively and for the browser, keep the wasm feature optional and forward it:
