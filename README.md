@@ -7,10 +7,10 @@
 High-performance parallel computations with an expressive iterator API.
 
 * [🚀](#performance-and-benchmarks) performant parallelization | [📊 benchmarks](https://orx-parallel-benchmarks.pages.dev/)
-* [🛡️](#safe-mutable-per-thread-state) safe per-thread mutable state | [📖](https://github.com/orxfun/orx-parallel/blob/main/docs/use_transformation.md)
+* [🛡️](#safe-mutable-per-thread-state) safe per-thread mutable state
 * [❓](#first-class-fallible-computation) first-class fallible flows
 * [🔁](#recursive-iterators-for-non-linear-data) recursive computation on non-linear data
-* [🌐](#wasm-support) WebAssembly support | [▶️ live demo](https://orx-parallel-wasm-demo-tsp.pages.dev/) | [📖](https://orx-parallel-wasm-tutorials.pages.dev/)
+* [🌐](#wasm-support) WebAssembly support | [▶️ live demo](https://orx-parallel-wasm-demo-tsp.pages.dev/) | [📖 tutorial](https://orx-parallel-wasm-tutorials.pages.dev/)
 * [🧩](#runner-strategies-and-extensibility) customizable runner strategies for advanced tuning & experimentation
 * [⚙️](#configurable-resource-usage) configurable resource usage
 
