@@ -41,8 +41,8 @@ pub use extendable::ParExtend;
 pub use infallible::{EnumeratePar, Par, ParRec};
 pub use infallible_use::{EnumerateParUse, ParUse};
 pub use into_parallel::{
-    par_recursive, IntoParIter, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain,
-    Parallelizable,
+    IntoParIter, IterIntoParIter, ParCollection, ParCollectionMut, ParDrain, Parallelizable,
+    par_recursive,
 };
 pub use ops::Sum;
 pub use option::ParOption;
@@ -62,7 +62,7 @@ pub use pools::wasm_web_start_worker;
 pub use pools::{Pool, Scope, TaskQueue, Tasks, ThreadPool};
 pub use result::ParResult;
 pub use result_use::ParUseResult;
-pub use runner::Runner;
+pub use runner::{ParRunner, Runner};
 pub use use_var::{Use, UseVec};
 
 /// Initializes the browser's shared wasm thread pool.
