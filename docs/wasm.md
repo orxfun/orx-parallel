@@ -6,9 +6,9 @@ If you want to understand the internal runtime design, see [wasm_internals.md](w
 
 Live examples:
 
-- TSP demo: https://orx-parallel-wasm-demo-tsp.pages.dev/
-- Tutorial: https://orx-parallel-wasm-tutorials.pages.dev/
-- Demo and tutorial sources: https://github.com/orxfun/orx-parallel-wasm-demos
+- TSP demo: <https://orx-parallel-wasm-demo-tsp.pages.dev/>
+- Tutorial: <https://orx-parallel-wasm-tutorials.pages.dev/>
+- Demo and tutorial sources: <https://github.com/orxfun/orx-parallel-wasm-demos>
 
 ## Overview
 
@@ -26,11 +26,39 @@ preparation commands, and integrations for Vite, Webpack, Rspack, and Rollup.
 
 ## Which feature to enable
 
-For browser-hosted parallel wasm, use the `wasm` feature.
+For browser-hosted parallel wasm, use the `wasm` feature. If the workload is
+allocation-heavy and the default allocator becomes a bottleneck, also enable
+the optional `wasm-allocator` feature.
 
 ```toml
 [dependencies]
 orx-parallel = { version = "4.0", default-features = false, features = ["wasm"] }
+```
+
+The allocator integration is opt-in:
+
+```toml
+[dependencies]
+orx-parallel = {
+    version = "4.0",
+    default-features = false,
+    features = ["wasm", "wasm-allocator"],
+}
+```
+
+Enabling `wasm-allocator` re-exports `WasmParallelAllocator`; it does not
+install a global allocator automatically. Select the shard count in the final
+WASM crate:
+
+This feature is intended for `wasm32` builds with `target_feature = "atomics"`
+and shared memory. It should not be enabled for single-threaded WASM builds.
+
+```rust
+use orx_parallel::WasmParallelAllocator;
+
+#[global_allocator]
+static GLOBAL_ALLOCATOR: WasmParallelAllocator<32> =
+    WasmParallelAllocator::<32>::new();
 ```
 
 If your crate needs to build both natively and for the browser, keep the wasm feature optional and forward it:
