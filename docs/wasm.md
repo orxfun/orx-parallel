@@ -52,6 +52,13 @@ static GLOBAL_ALLOCATOR: orx_parallel::WasmParallelAllocator<32> =
     orx_parallel::WasmParallelAllocator::new();
 ```
 
+For a practical comparison, these allocation-heavy TSP demos show how the
+default allocator can make parallel execution slower, while enabling
+`wasm-allocator` lets parallelization speed up the computation:
+
+- [Without `wasm-allocator` (live demo)](https://orx-parallel-wasm-demo-tsp-vanilla-mem-issue.pages.dev/) | [source](https://github.com/orxfun/orx-parallel-wasm-demos/tree/main/tsp/vanilla-mem-issue)
+- [With `wasm-allocator` (live demo)](https://orx-parallel-wasm-demo-tsp-vanilla-mem-fixed.pages.dev/) | [source](https://github.com/orxfun/orx-parallel-wasm-demos/tree/main/tsp/vanilla-mem-fixed)
+
 If your crate needs to build both natively and for the browser, keep the wasm feature optional and forward it:
 
 ```toml
